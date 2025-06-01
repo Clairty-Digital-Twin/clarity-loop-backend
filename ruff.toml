@@ -1,0 +1,149 @@
+# Ruff configuration for Clarity Loop Backend
+# Ultra-fast Python linter and formatter
+
+target-version = "py311"
+line-length = 88
+indent-width = 4
+
+# Enable Pyflakes (`F`) and a subset of the pycodestyle (`E`) codes by default.
+# Unlike Flake8, Ruff doesn't enable pycodestyle warnings (`W`) or
+# McCabe complexity (`C901`) by default.
+select = [
+    # Pyflakes
+    "F",
+    # pycodestyle
+    "E",
+    # isort
+    "I",
+    # pydocstyle
+    "D",
+    # pyupgrade
+    "UP",
+    # flake8-bugbear
+    "B",
+    # flake8-simplify
+    "SIM",
+    # flake8-return
+    "RET",
+    # flake8-unused-arguments
+    "ARG",
+    # flake8-use-pathlib
+    "PTH",
+    # flake8-errmsg
+    "EM",
+    # flake8-async
+    "ASYNC",
+    # flake8-bandit
+    "S",
+    # flake8-comprehensions
+    "C4",
+    # flake8-datetime-utc
+    "DTZ",
+    # flake8-logging-format
+    "G",
+    # flake8-pie
+    "PIE",
+    # flake8-pytest-style
+    "PT",
+    # flake8-quotes
+    "Q",
+    # flake8-raise
+    "RSE",
+    # flake8-self
+    "SLF",
+    # flake8-slots
+    "SLOT",
+    # flake8-tidy-imports
+    "TID",
+    # tryceratops
+    "TRY",
+    # pygrep-hooks
+    "PGH",
+    # Pylint
+    "PL",
+    # NumPy-specific rules
+    "NPY",
+    # Pandas-specific rules
+    "PD",
+    # FastAPI-specific rules
+    "FAST",
+]
+
+ignore = [
+    # Allow non-abstract empty methods in abstract base classes
+    "B027",
+    # Allow boolean positional values in function calls, like `dict.get(... True)`
+    "FBT003",
+    # Ignore checks for possible passwords
+    "S105", "S106", "S107",
+    # Ignore complexity
+    "C901", "PLR0911", "PLR0912", "PLR0913", "PLR0915",
+    # Allow print statements (we'll use structured logging)
+    "T201",
+    # Allow relative imports
+    "TID252",
+]
+
+# Allow fix for all enabled rules (when `--fix`) is provided.
+fixable = ["ALL"]
+unfixable = []
+
+# Exclude a variety of commonly ignored directories.
+exclude = [
+    ".bzr",
+    ".direnv",
+    ".eggs",
+    ".git",
+    ".git-rewrite",
+    ".hg",
+    ".mypy_cache",
+    ".nox",
+    ".pants.d",
+    ".pytype",
+    ".ruff_cache",
+    ".svn",
+    ".tox",
+    ".venv",
+    "__pypackages__",
+    "_build",
+    "buck-out",
+    "build",
+    "dist",
+    "node_modules",
+    "venv",
+    "migrations",
+    "alembic/versions",
+]
+
+[per-file-ignores]
+# Tests can use magic values, assertions, and relative imports
+"tests/**/*" = ["PLR2004", "S101", "TID252"]
+# Scripts can use print statements
+"scripts/**/*" = ["T201"]
+# Config files can have unused imports
+"**/config.py" = ["F401"]
+# Init files can have unused imports
+"**/__init__.py" = ["F401"]
+
+[mccabe]
+max-complexity = 10
+
+[pydocstyle]
+convention = "google"
+
+[isort]
+force-single-line = true
+force-sort-within-sections = true
+known-first-party = ["clarity"]
+
+[flake8-tidy-imports]
+ban-relative-imports = "all"
+
+[flake8-type-checking]
+runtime-evaluated-base-classes = ["pydantic.BaseModel"]
+
+[pylint]
+max-args = 8
+max-branches = 15
+max-returns = 8
+max-statements = 60

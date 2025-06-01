@@ -1,0 +1,304 @@
+name: 🚀 Clarity Loop CI/CD Pipeline
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+  workflow_dispatch:
+
+env:
+  PYTHON_VERSION: "3.11"
+  NODE_VERSION: "18"
+  REGISTRY: gcr.io
+  IMAGE_NAME: clarity-loop-backend
+
+jobs:
+  # 🔍 Code Quality & Linting
+  lint:
+    name: 🔍 Lint & Format Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: 📦 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🐍 Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+
+      - name: 📋 Install Python dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -e .[dev]
+
+      - name: 🔧 Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: 📋 Install Node.js dependencies
+        run: npm ci
+
+      - name: 🔍 Run Ruff linting
+        run: ruff check . --output-format=github
+
+      - name: 🎨 Check Black formatting
+        run: black --check .
+
+      - name: 📝 Check import sorting
+        run: ruff check . --select I --diff
+
+      - name: 🔒 Run security checks (Bandit)
+        run: bandit -r clarity/ -f json -o bandit-report.json || true
+
+      - name: 🛡️ Check for vulnerabilities (Safety)
+        run: safety check --json --output safety-report.json || true
+
+      - name: 📚 Lint documentation
+        run: npm run lint:md
+
+      - name: 🏥 Check link health
+        run: npm run check:links || true
+
+      - name: 📊 Upload security reports
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: security-reports
+          path: |
+            bandit-report.json
+            safety-report.json
+
+  # 🧪 Testing Suite
+  test:
+    name: 🧪 Test Suite
+    runs-on: ubuntu-latest
+    needs: lint
+    strategy:
+      matrix:
+        python-version: ["3.11", "3.12"]
+
+    services:
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: 📦 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🐍 Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: 'pip'
+
+      - name: 📋 Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -e .[test]
+
+      - name: 🔥 Start Firebase Emulators
+        run: |
+          npm install -g firebase-tools
+          firebase emulators:start --only firestore,auth,pubsub --project demo-test &
+          sleep 10
+
+      - name: 🧪 Run unit tests
+        env:
+          TESTING: 1
+          REDIS_URL: redis://localhost:6379
+          FIRESTORE_EMULATOR_HOST: localhost:8080
+          FIREBASE_AUTH_EMULATOR_HOST: localhost:9099
+          PUBSUB_EMULATOR_HOST: localhost:8085
+        run: |
+          pytest tests/unit/ -v --cov=clarity --cov-report=xml --cov-report=html
+
+      - name: 🔗 Run integration tests
+        env:
+          TESTING: 1
+          REDIS_URL: redis://localhost:6379
+          FIRESTORE_EMULATOR_HOST: localhost:8080
+          FIREBASE_AUTH_EMULATOR_HOST: localhost:9099
+          PUBSUB_EMULATOR_HOST: localhost:8085
+        run: |
+          pytest tests/integration/ -v --maxfail=5
+
+      - name: 📊 Upload coverage reports
+        uses: codecov/codecov-action@v3
+        with:
+          file: ./coverage.xml
+          flags: unittests
+          name: codecov-umbrella
+
+  # 🔍 Type Checking
+  type-check:
+    name: 🔍 Type Check
+    runs-on: ubuntu-latest
+    needs: lint
+    steps:
+      - name: 📦 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🐍 Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+
+      - name: 📋 Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -e .[dev]
+
+      - name: 🔍 Run MyPy type checking
+        run: mypy clarity/ --strict
+
+  # 🤖 ML Model Tests
+  ml-tests:
+    name: 🤖 ML Model Tests
+    runs-on: ubuntu-latest
+    needs: lint
+    if: contains(github.event.head_commit.message, '[ml]') || github.event_name == 'workflow_dispatch'
+    steps:
+      - name: 📦 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🐍 Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+
+      - name: 📋 Install ML dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -e .[dev]
+          pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
+
+      - name: 🧠 Test PAT model components
+        run: pytest tests/ml/ -v -m "pat"
+
+      - name: 🔮 Test Gemini integration
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: pytest tests/ml/ -v -m "gemini"
+
+  # 🏗️ Build & Security Scan
+  build:
+    name: 🏗️ Build & Security Scan
+    runs-on: ubuntu-latest
+    needs: [test, type-check]
+    steps:
+      - name: 📦 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🔧 Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: 🏗️ Build Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: false
+          tags: ${{ env.REGISTRY }}/${{ github.repository }}:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: 🛡️ Run Trivy security scan
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ env.REGISTRY }}/${{ github.repository }}:${{ github.sha }}
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+
+      - name: 📊 Upload Trivy results
+        uses: github/codeql-action/upload-sarif@v2
+        if: always()
+        with:
+          sarif_file: 'trivy-results.sarif'
+
+  # 📚 Documentation Build
+  docs:
+    name: 📚 Build Documentation
+    runs-on: ubuntu-latest
+    steps:
+      - name: 📦 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🐍 Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+
+      - name: 📋 Install documentation dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -e .[docs]
+
+      - name: 📚 Build documentation
+        run: mkdocs build --strict
+
+      - name: 📤 Upload documentation artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: documentation
+          path: site/
+
+  # 🚀 Deploy to Google Cloud Run (Production)
+  deploy:
+    name: 🚀 Deploy to Production
+    runs-on: ubuntu-latest
+    needs: [build, docs]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    environment: production
+    steps:
+      - name: 📦 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🔑 Authenticate to Google Cloud
+        uses: google-github-actions/auth@v1
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: 🔧 Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v1
+
+      - name: 🔧 Configure Docker to use gcloud
+        run: gcloud auth configure-docker
+
+      - name: 🏗️ Build and push Docker image
+        run: |
+          docker build -t ${{ env.REGISTRY }}/${{ secrets.GCP_PROJECT_ID }}/${{ env.IMAGE_NAME }}:${{ github.sha }} .
+          docker tag ${{ env.REGISTRY }}/${{ secrets.GCP_PROJECT_ID }}/${{ env.IMAGE_NAME }}:${{ github.sha }} ${{ env.REGISTRY }}/${{ secrets.GCP_PROJECT_ID }}/${{ env.IMAGE_NAME }}:latest
+          docker push ${{ env.REGISTRY }}/${{ secrets.GCP_PROJECT_ID }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+          docker push ${{ env.REGISTRY }}/${{ secrets.GCP_PROJECT_ID }}/${{ env.IMAGE_NAME }}:latest
+
+      - name: 🚀 Deploy to Cloud Run
+        run: |
+          gcloud run deploy clarity-loop-backend \
+            --image ${{ env.REGISTRY }}/${{ secrets.GCP_PROJECT_ID }}/${{ env.IMAGE_NAME }}:${{ github.sha }} \
+            --platform managed \
+            --region us-central1 \
+            --allow-unauthenticated \
+            --memory 4Gi \
+            --cpu 2 \
+            --concurrency 1000 \
+            --timeout 300 \
+            --max-instances 100 \
+            --set-env-vars="ENVIRONMENT=production" \
+            --project ${{ secrets.GCP_PROJECT_ID }}
+
+      - name: 📤 Deploy documentation
+        if: success()
+        run: mkdocs gh-deploy --force

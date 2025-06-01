@@ -11,7 +11,7 @@ __version__ = "0.1.0"
 __author__ = "CLARITY Digital Twin Platform"
 
 # Export main API components for easy importing
-from .v1 import router as v1_router
+from clarity.api.v1 import router as v1_router
 
 __all__ = [
     "v1_router",

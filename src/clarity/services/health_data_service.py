@@ -354,32 +354,32 @@ class HealthDataService:
             raise HealthDataServiceError(f"Failed to delete health data: {str(e)}")
 
     def _validate_metric_business_rules(self, metric: HealthMetric) -> bool:
-        """Validate individual health metric against business rules.
-        
-        Args:
-            metric: Health metric to validate
-            
-        Returns:
-            bool: True if metric passes validation
-        """
+        """Validate health metric against business rules."""
         try:
-            # Check if metric has required data for its type
-            if metric.metric_type == "heart_rate":
-                return metric.biometric_data is not None and metric.biometric_data.heart_rate is not None
-            elif metric.metric_type == "blood_pressure":
-                return (metric.biometric_data is not None and 
-                       metric.biometric_data.systolic_bp is not None and 
-                       metric.biometric_data.diastolic_bp is not None)
-            elif metric.metric_type == "sleep_analysis":
-                return metric.sleep_data is not None
-            elif metric.metric_type == "activity_level":
-                return metric.activity_data is not None
-            elif metric.metric_type in ["mood_assessment", "stress_indicators"]:
-                return metric.mental_health_data is not None
-            else:
-                # For other types, basic validation
+            # Check for required metric type
+            if not metric.metric_type:
+                return False
+            
+            # Validate biometric data ranges
+            if metric.metric_type.value in ["HEART_RATE", "BLOOD_PRESSURE"] and metric.biometric_data:
                 return True
-        except Exception:
+            
+            # Validate sleep data
+            if metric.metric_type.value == "SLEEP" and metric.sleep_data:
+                return True
+            
+            # Validate activity data
+            if metric.metric_type.value == "ACTIVITY" and metric.activity_data:
+                return True
+            
+            # Validate mental health data
+            if metric.metric_type.value == "MENTAL_HEALTH" and metric.mental_health_data:
+                return True
+            
+            return False
+            
+        except Exception as e:
+            logger.warning(f"Business rule validation failed: {e}")
             return False
 
     async def _store_metrics(self, user_id: str, metrics: list[HealthMetric], processing_id: str) -> None:
@@ -390,36 +390,35 @@ class HealthDataService:
             metrics: List of validated health metrics
             processing_id: Processing job identifier
         """
-        documents = []
-        
+        # Store metrics in batch for better performance
         for metric in metrics:
-            doc_data = {
+            metric_data = {
+                "user_id": user_id,
                 "metric_id": str(metric.metric_id),
-                "user_id": str(user_id),
-                "processing_id": processing_id,
                 "metric_type": metric.metric_type.value,
-                "biometric_data": metric.biometric_data.model_dump() if metric.biometric_data else None,
-                "sleep_data": metric.sleep_data.model_dump() if metric.sleep_data else None,
-                "activity_data": metric.activity_data.model_dump() if metric.activity_data else None,
-                "mental_health_data": metric.mental_health_data.model_dump() if metric.mental_health_data else None,
-                "device_id": metric.device_id,
-                "raw_data": metric.raw_data,
-                "metadata": metric.metadata,
-                "created_at": metric.created_at.isoformat(),
-                "stored_at": datetime.now(timezone.utc).isoformat()
+                "data": metric.model_dump(),
+                "processing_id": processing_id,
+                "created_at": metric.created_at,
+                "device_id": metric.device_id or "unknown"
             }
-            documents.append({
-                "id": str(metric.metric_id),
-                "data": doc_data
-            })
-        
-        # Store documents individually for now (we'll add batch later)
-        for doc in documents:
-            await self.firestore_client.create_document(
-                collection="health_data",
-                document_id=doc["id"],
-                data=doc["data"]
-            )
+            
+            # Validate metric data before storing
+            if not metric.metric_type:
+                logger.warning(f"Metric missing type, skipping: {metric.metric_id}")
+                continue
+                
+            if metric.metric_type.value in {"HEART_RATE", "BLOOD_PRESSURE"} and not metric.biometric_data:
+                logger.warning(f"Biometric metric missing data: {metric.metric_id}")
+                continue
+                
+            try:
+                # Create individual documents for each metric
+                doc_id = await self.firestore_client.create_document(
+                    collection="health_metrics",
+                    document_data=metric_data
+                )
+            except FirestoreError as e:
+                logger.error(f"Error storing metric: {e}")
 
     def _calculate_progress(self, processing_doc: dict[str, Any]) -> float:
         """Calculate processing progress percentage."""

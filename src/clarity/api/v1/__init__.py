@@ -9,7 +9,7 @@ Routes:
 
 from fastapi import APIRouter
 
-from .health_data import router as health_data_router
+from clarity.api.v1.health_data import router as health_data_router
 
 # Create the main v1 router and include all sub-routers
 router = APIRouter(prefix="/api/v1", tags=["v1"])

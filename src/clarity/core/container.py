@@ -4,7 +4,8 @@ Following Robert C. Martin's Clean Architecture and Gang of Four Factory Pattern
 This container manages all dependencies and wiring according to SOLID principles.
 """
 
-from typing import Any, Protocol
+from contextlib import asynccontextmanager
+from typing import Any
 
 from fastapi import FastAPI
 
@@ -44,11 +45,10 @@ class DependencyContainer:
             if config_provider.get_setting("enable_auth", False):
                 from clarity.auth.firebase_auth import FirebaseAuthProvider
 
+                firebase_config = config_provider.get_firebase_config()
                 self._instances[IAuthProvider] = FirebaseAuthProvider(
-                    credentials_path=config_provider.get_setting(
-                        "firebase_credentials"
-                    ),
-                    project_id=config_provider.get_setting("firebase_project_id"),
+                    credentials_path=firebase_config.get("credentials_path"),
+                    project_id=firebase_config.get("project_id"),
                 )
             else:
                 from clarity.auth.mock_auth import MockAuthProvider
@@ -63,9 +63,37 @@ class DependencyContainer:
 
             config_provider = self.get_config_provider()
             self._instances[IHealthDataRepository] = FirestoreHealthDataRepository(
-                project_id=config_provider.get_setting("gcp_project_id")
+                project_id=config_provider.get_gcp_project_id(),
+                credentials_path=config_provider.get_firebase_config().get(
+                    "credentials_path"
+                ),
             )
         return self._instances[IHealthDataRepository]
+
+    @asynccontextmanager
+    async def app_lifespan(self, app: FastAPI):
+        """Application lifespan context manager for FastAPI."""
+        # Startup
+        from clarity.core.logging_config import setup_logging
+
+        setup_logging(self._settings.log_level, self._settings.environment)
+
+        # Initialize any async resources
+        auth_provider = self.get_auth_provider()
+        if hasattr(auth_provider, "initialize"):
+            await auth_provider.initialize()
+
+        repository = self.get_health_data_repository()
+        if hasattr(repository, "initialize"):
+            await repository.initialize()
+
+        yield
+
+        # Shutdown
+        # Clean up resources
+        for instance in self._instances.values():
+            if hasattr(instance, "cleanup"):
+                await instance.cleanup()
 
     def create_fastapi_app(self) -> FastAPI:
         """Factory method creates FastAPI app with all dependencies wired.
@@ -73,11 +101,12 @@ class DependencyContainer:
         This is the main Factory Pattern implementation that creates
         the complete application with proper dependency injection.
         """
-        # Create FastAPI application
+        # Create FastAPI application with lifespan
         app = FastAPI(
             title="CLARITY Digital Twin Platform",
             description="Healthcare AI platform built with Clean Architecture",
             version="1.0.0",
+            lifespan=self.app_lifespan,
         )
 
         # Wire middleware (Decorator Pattern)
@@ -86,18 +115,16 @@ class DependencyContainer:
         # Wire routers with dependencies injected
         self._configure_routes(app)
 
-        # Configure startup/shutdown events
-        self._configure_events(app)
-
         return app
 
     def _configure_middleware(self, app: FastAPI) -> None:
         """Configure middleware with dependency injection."""
-        from clarity.auth.firebase_auth import FirebaseAuthMiddleware
+        config_provider = self.get_config_provider()
 
         # Add authentication middleware if enabled
-        config_provider = self.get_config_provider()
-        if config_provider.get_setting("enable_auth", False):
+        if config_provider.is_auth_enabled():
+            from clarity.auth.firebase_auth import FirebaseAuthMiddleware
+
             auth_provider = self.get_auth_provider()
             app.add_middleware(FirebaseAuthMiddleware, auth_provider=auth_provider)
 
@@ -114,29 +141,6 @@ class DependencyContainer:
 
         # Include routers
         app.include_router(health_data.router, prefix="/api/v1", tags=["health-data"])
-
-    def _configure_events(self, app: FastAPI) -> None:
-        """Configure startup and shutdown events."""
-
-        @app.on_event("startup")
-        async def startup_event() -> None:
-            """Application startup event."""
-            from clarity.core.logging_config import setup_logging
-
-            setup_logging(self._settings.log_level, self._settings.environment)
-
-            # Initialize any async resources
-            auth_provider = self.get_auth_provider()
-            if hasattr(auth_provider, "initialize"):
-                await auth_provider.initialize()
-
-        @app.on_event("shutdown")
-        async def shutdown_event() -> None:
-            """Application shutdown event."""
-            # Clean up resources
-            for instance in self._instances.values():
-                if hasattr(instance, "cleanup"):
-                    await instance.cleanup()
 
 
 # Global container instance (Singleton)

@@ -55,3 +55,19 @@ class IConfigProvider(ABC):
     @abstractmethod
     def is_development(self) -> bool:
         """Check if running in development mode."""
+
+    @abstractmethod
+    def is_auth_enabled(self) -> bool:
+        """Check if authentication is enabled."""
+
+    @abstractmethod
+    def get_firebase_config(self) -> dict[str, Any]:
+        """Get Firebase configuration."""
+
+    @abstractmethod
+    def get_gcp_project_id(self) -> str:
+        """Get Google Cloud Platform project ID."""
+
+    @abstractmethod
+    def get_log_level(self) -> str:
+        """Get logging level."""

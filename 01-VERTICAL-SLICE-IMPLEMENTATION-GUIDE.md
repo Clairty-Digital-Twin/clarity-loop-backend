@@ -15,9 +15,9 @@
 ├─────────────────────────────────────────────────────────┤
 │ API Gateway (FastAPI + Firebase Auth)                   │
 ├─────────────────────────────────────────────────────────┤
-│ Business Logic (AsyncIO + Pydantic)                    │
+│ Business Logic (AsyncIO + Pydantic)                     │
 ├─────────────────────────────────────────────────────────┤
-│ ML Processing (PyTorch + Gemini 2.5)                   │
+│ ML Processing (PyTorch + Gemini 2.5 Pro)                │
 ├─────────────────────────────────────────────────────────┤
 │ Storage Layer (Firestore + Cloud Storage)               │
 └─────────────────────────────────────────────────────────┘
@@ -103,7 +103,7 @@ async def test_health_data_upload_flow():
 **Goal**: Uploaded data triggers AI analysis and generates insights
 
 #### Checklist:
-- [ ] Create `src/ml/gemini_client.py` - AI integration
+- [ ] Create `src/ml/gemini_client.py` - AI integration (Gemini 2.5 Pro) [See Vertex AI documentation](https://cloud.google.com/vertex-ai/docs)
 - [ ] Create `src/services/insights_service.py` - Insight generation
 - [ ] Create `src/api/v1/insights.py` - Insights endpoints
 - [ ] Create `src/models/insights.py` - Insight models
@@ -120,7 +120,7 @@ async def process_health_data_insights(message: dict):
     # Retrieve user's recent data
     health_data = await get_user_health_data(user_id, days=7)
     
-    # Generate insights with Gemini
+    # Generate insights with Gemini 2.5 Pro
     insights = await gemini_client.generate_health_insights(
         data=health_data,
         user_context=await get_user_context(user_id)
@@ -295,7 +295,7 @@ src/
 │   └── auth_service.py
 ├── ml/                  # AI/ML components
 │   ├── __init__.py
-│   ├── gemini_client.py
+│   ├── gemini_client.py         # Vertex AI Gemini 2.5 Pro client [See Vertex AI documentation](https://cloud.google.com/vertex-ai/docs)
 │   ├── actigraphy_transformer.py
 │   ├── preprocessing.py
 │   └── conversation_context.py

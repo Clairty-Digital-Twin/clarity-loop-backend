@@ -245,12 +245,13 @@ python scripts/test_healthkit_upload_e2e.py
 
 ## 📊 VERTICAL SLICE 4: Advanced Analytics (6-8 hours)
 
-**Goal**: Gemini LLM integration and advanced insights.
+**Goal**: Gemini 2.5 Pro LLM integration and advanced insights.
 
 **Key Components**:
-- Gemini LLM integration with quota handling
+- Gemini 2.5 Pro (`gemini-2.5-pro-preview-05-06`) integration with quota handling
 - Complex insights generation
 - Historical trend analysis
+- See [Vertex AI Gemini documentation](https://cloud.google.com/vertex-ai/generative-ai/docs/models/gemini/2-5-pro) for model specifications.
 
 ## ⚠️ Risk Mitigation Strategies
 

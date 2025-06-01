@@ -136,7 +136,10 @@ FIREBASE_WEB_API_KEY="your-web-api-key"
 
 # Vertex AI
 VERTEX_AI_LOCATION="us-central1"
+VERTEX_AI_PROJECT_ID="your-gcp-project-id"
 VERTEX_AI_ENDPOINT="your-vertex-endpoint"
+GEMINI_MODEL_ID="gemini-2.5-pro-preview-05-06"
+# See: https://cloud.google.com/vertex-ai/generative-ai/docs/models/gemini/2-5-pro
 
 # Redis (optional)
 REDIS_URL="redis://localhost:6379"
@@ -169,6 +172,9 @@ def test_environment_variables():
         'FIREBASE_PROJECT_ID',
         'FIREBASE_WEB_API_KEY',
         'VERTEX_AI_LOCATION',
+        'VERTEX_AI_PROJECT_ID',
+        'VERTEX_AI_ENDPOINT',
+        'GEMINI_MODEL_ID',
         'ENCRYPTION_KEY'
     ]
     

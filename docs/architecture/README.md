@@ -64,12 +64,27 @@ Clarity Loop Backend implements an **async-first, event-driven architecture** op
 ### 4. AI Insights Engine
 
 - **Purpose**: Natural language insight generation
-- **Technology**: Vertex AI with Gemini 2.5 Pro
+- **Technology**: Vertex AI with Gemini 2.5 Pro (`gemini-2.5-pro-preview-05-06`)
+- **Model Specifications**:
+  - Input Token Limit: 1,048,576 tokens (1M+ context window)
+  - Output Token Limit: 65,535 tokens
+  - Supported Input Types: Text, Code, Images, Audio, Video
+  - Launch Stage: Public Preview
+  - Primary Region: us-central1
+- **Advanced Capabilities**:
+  - Grounding with Google Search for factual accuracy
+  - Code execution for dynamic analysis
+  - System instructions for consistent clinical behavior
+  - Controlled generation for precise output formatting
+  - Function calling for external API integration
+  - Context caching for optimized performance
+  - Vertex AI RAG Engine integration
+  - Chat completions for interactive interfaces
 - **Responsibilities**:
-  - Health trend analysis
-  - Personalized recommendations
-  - Natural language report generation
-  - Predictive health insights
+  - Health trend analysis with evidence-based insights
+  - Personalized recommendations based on clinical guidelines
+  - Natural language report generation with medical accuracy
+  - Predictive health insights using multimodal analysis
 
 ## Data Flow Architecture
 

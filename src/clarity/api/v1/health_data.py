@@ -220,7 +220,7 @@ async def health_check(
         return health_status
 
     except Exception as e:
-        logger.exception("Health check failed: %s", e)
+        logger.exception("Health check failed")
         return {
             "status": "unhealthy",
             "service": "health-data-api",

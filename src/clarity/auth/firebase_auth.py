@@ -157,16 +157,10 @@ class FirebaseAuthMiddleware(BaseHTTPMiddleware):
                     "timestamp": datetime.now(UTC).isoformat(),
                 },
             )
-        except Exception as e:
-            logger.exception("Unexpected authentication error")
-            return JSONResponse(
-                status_code=500,
-                content={
-                    "error": "internal_error",
-                    "message": "Internal authentication error",
-                    "timestamp": datetime.now(UTC).isoformat(),
-                },
-            )
+        except Exception:
+            logger.exception("Token verification error")
+            msg = "Token verification failed"
+            raise AuthError(msg, 500, "verification_failed") from None
 
     def _is_exempt_path(self, path: str) -> bool:
         """Check if the path is exempt from authentication."""
@@ -250,7 +244,7 @@ class FirebaseAuthMiddleware(BaseHTTPMiddleware):
         except auth.CertificateFetchError:
             msg = "Unable to verify token"
             raise AuthError(msg, 500, "verification_error") from None
-        except Exception as e:
+        except Exception:
             logger.exception("Token verification error")
             msg = "Token verification failed"
             raise AuthError(msg, 500, "verification_failed") from None

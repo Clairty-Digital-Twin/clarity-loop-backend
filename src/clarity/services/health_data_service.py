@@ -197,7 +197,7 @@ class HealthDataService:
             msg = f"Processing job {processing_id} not found"
             raise DataNotFoundError(msg) from None
         except FirestoreError as e:
-            self.logger.exception("Firestore error retrieving processing status: %s", e)
+            self.logger.exception("Firestore error retrieving processing status")
             msg = f"Failed to retrieve processing status: {e!s}"
             raise HealthDataServiceError(msg) from None
 

@@ -7,13 +7,12 @@ Following Robert C. Martin's Clean Architecture with proper dependency injection
 """
 
 import logging
-from typing import Any
 
 from fastapi import FastAPI
 import uvicorn
 
 from clarity.core.config import get_settings
-from clarity.core.container import create_application
+from clarity.core.container import create_application as create_app_with_di
 from clarity.core.logging_config import setup_logging
 
 # Configure logging
@@ -41,9 +40,7 @@ def create_application() -> FastAPI:
     Uses dependency injection container for proper Clean Architecture.
     """
     # Use the DI container to create the application
-    from clarity.core.container import create_application as container_create_app
-
-    return container_create_app()
+    return create_app_with_di()
 
 
 # Conditional app creation - only when explicitly requested
@@ -68,7 +65,7 @@ def get_application() -> FastAPI:
 if __name__ == "__main__":
     # Setup logging first
     settings = get_settings()
-    setup_logging(settings.log_level, settings.environment)
+    setup_logging()
 
     # Create app using Clean Architecture container
     application = create_application()

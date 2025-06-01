@@ -2,6 +2,8 @@
 
 RESTful API endpoints for health data upload, processing, and retrieval.
 Implements enterprise-grade security, validation, and HIPAA compliance.
+
+Following Robert C. Martin's Clean Architecture with proper dependency injection.
 """
 
 from datetime import UTC, datetime
@@ -12,12 +14,16 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 
 from clarity.auth import Permission, UserContext, get_current_user, require_auth
+from clarity.core.interfaces import (
+    IAuthProvider,
+    IConfigProvider,
+    IHealthDataRepository,
+)
 from clarity.models.health_data import HealthDataResponse, HealthDataUpload
 from clarity.services.health_data_service import (
     HealthDataService,
     HealthDataServiceError,
 )
-from clarity.storage.firestore_client import FirestoreClient
 
 # Configure logger
 logger = logging.getLogger(__name__)
@@ -25,12 +31,55 @@ logger = logging.getLogger(__name__)
 # Initialize router
 router = APIRouter(prefix="/health-data", tags=["Health Data"])
 
+# Dependency injection - these will be set by the container
+_auth_provider: IAuthProvider | None = None
+_repository: IHealthDataRepository | None = None
+_config_provider: IConfigProvider | None = None
 
-# Dependency injection for services
-async def get_health_data_service() -> HealthDataService:
-    """Get health data service instance."""
-    firestore_client = FirestoreClient(project_id="your-project-id")
-    return HealthDataService(firestore_client)
+
+def set_dependencies(
+    auth_provider: IAuthProvider,
+    repository: IHealthDataRepository,
+    config_provider: IConfigProvider,
+) -> None:
+    """Set dependencies from the DI container.
+
+    Called by the container during application initialization.
+    Follows Dependency Inversion Principle - depends on abstractions, not concretions.
+    """
+    global _auth_provider, _repository, _config_provider
+    _auth_provider = auth_provider
+    _repository = repository
+    _config_provider = config_provider
+    logger.info("Health data API dependencies injected successfully")
+
+
+def get_health_data_service() -> HealthDataService:
+    """Get health data service instance with injected dependencies.
+
+    Uses dependency injection container instead of hardcoded dependencies.
+    Follows Clean Architecture principles.
+    """
+    if _repository is None:
+        raise RuntimeError(
+            "Health data repository not injected. Container not initialized?"
+        )
+
+    return HealthDataService(_repository)
+
+
+def get_auth_provider() -> IAuthProvider:
+    """Get authentication provider from dependency injection."""
+    if _auth_provider is None:
+        raise RuntimeError("Auth provider not injected. Container not initialized?")
+    return _auth_provider
+
+
+def get_config_provider() -> IConfigProvider:
+    """Get configuration provider from dependency injection."""
+    if _config_provider is None:
+        raise RuntimeError("Config provider not injected. Container not initialized?")
+    return _config_provider
 
 
 @router.post(

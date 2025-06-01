@@ -29,7 +29,7 @@ logger = logging.getLogger(__name__)
 class HealthDataServiceError(Exception):
     """Base exception for health data service operations."""
 
-    def __init__(self, message: str, status_code: int = 500):
+    def __init__(self, message: str, status_code: int = 500) -> None:
         self.message = message
         self.status_code = status_code
         super().__init__(self.message)
@@ -38,7 +38,7 @@ class HealthDataServiceError(Exception):
 class DataNotFoundError(HealthDataServiceError):
     """Exception raised when requested data is not found."""
 
-    def __init__(self, message: str):
+    def __init__(self, message: str) -> None:
         super().__init__(message, status_code=404)
 
 

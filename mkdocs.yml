@@ -1,0 +1,180 @@
+site_name: Clarity Loop Backend
+site_description: Production-grade HealthKit wellness platform with AI-powered health insights
+site_author: Clarity AI Team
+site_url: https://clarity-ai.github.io/clarity-loop-backend/
+
+# Repository
+repo_name: clarity-ai/clarity-loop-backend
+repo_url: https://github.com/clarity-ai/clarity-loop-backend
+edit_uri: edit/main/docs/
+
+# Configuration
+theme:
+  name: material
+  custom_dir: docs/overrides
+  features:
+    - navigation.tabs
+    - navigation.tabs.sticky
+    - navigation.sections
+    - navigation.expand
+    - navigation.path
+    - navigation.indexes
+    - toc.follow
+    - toc.integrate
+    - search.suggest
+    - search.highlight
+    - search.share
+    - header.autohide
+    - content.code.copy
+    - content.code.annotate
+    - content.action.edit
+    - content.action.view
+    - announce.dismiss
+  palette:
+    # Light mode
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    # Dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  font:
+    text: Roboto
+    code: Roboto Mono
+  icon:
+    logo: material/heart-pulse
+    repo: fontawesome/brands/github
+
+# Plugins
+plugins:
+  - search:
+      separator: '[\s\-,:!=\[\]()"`/]+|\.(?!\d)|&[lg]t;|(?!\b)(?=[A-Z][a-z])'
+  - mermaid2:
+      version: 10.6.1
+  - mkdocstrings:
+      handlers:
+        python:
+          paths: [.]
+          options:
+            docstring_style: google
+            show_source: true
+            show_root_heading: true
+            show_object_full_path: false
+            show_category_heading: true
+            members_order: source
+            group_by_category: true
+            show_signature_annotations: true
+  - git-revision-date-localized:
+      enable_creation_date: true
+
+# Extensions
+markdown_extensions:
+  - abbr
+  - admonition
+  - attr_list
+  - def_list
+  - footnotes
+  - md_in_html
+  - toc:
+      permalink: true
+      title: Page contents
+  - pymdownx.arithmatex:
+      generic: true
+  - pymdownx.betterem:
+      smart_enable: all
+  - pymdownx.caret
+  - pymdownx.details
+  - pymdownx.emoji:
+      emoji_generator: !!python/name:materialx.emoji.to_svg
+      emoji_index: !!python/name:materialx.emoji.twemoji
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.keys
+  - pymdownx.magiclink:
+      repo_url_shorthand: true
+      user: clarity-ai
+      repo: clarity-loop-backend
+  - pymdownx.mark
+  - pymdownx.smartsymbols
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - pymdownx.tilde
+
+# Page tree
+nav:
+  - Home: index.md
+  - Getting Started:
+    - Overview: README.md
+    - Quick Start: quickstart.md
+    - Blueprint: blueprint.md
+  - Architecture:
+    - Overview: architecture/README.md
+    - Components: architecture/components.md
+    - Data Models: architecture/data-models.md
+    - Security: architecture/security.md
+  - API Documentation:
+    - Overview: api/README.md
+    - Authentication: api/authentication.md
+    - Health Data: api/health-data.md
+    - ML Endpoints: api/ml-endpoints.md
+    - Insights & Analytics: api/insights.md
+    - Explainability: api/explainability.md
+    - User Management: api/user-management.md
+  - Development:
+    - Setup: development/
+    - Testing: development/
+    - Deployment: development/
+  - Integrations:
+    - Overview: integrations/
+  - Literature:
+    - Research Papers: literature/
+
+# Extra configuration
+extra:
+  version:
+    provider: mike
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/clarity-ai
+    - icon: fontawesome/brands/twitter
+      link: https://twitter.com/clarity-ai
+    - icon: fontawesome/brands/linkedin
+      link: https://linkedin.com/company/clarity-ai
+  analytics:
+    provider: google
+    property: !ENV GOOGLE_ANALYTICS_KEY
+  consent:
+    title: Cookie consent
+    description: >- 
+      We use cookies to recognize your repeated visits and preferences, as well
+      as to measure the effectiveness of our documentation and whether users
+      find what they're searching for. With your consent, you're helping us to
+      make our documentation better.
+
+# Copyright
+copyright: >
+  Copyright &copy; 2024 Clarity AI –
+  <a href="#__consent">Change cookie settings</a>
+
+# Watch files
+watch:
+  - clarity/

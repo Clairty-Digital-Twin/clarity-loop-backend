@@ -491,6 +491,60 @@ Submit batch analysis request for multiple users or large datasets.
 }
 ```
 
+## Actigraphy Transformer I/O Contract (PAT-L 2025)
+
+### 1. Input tensor
+* **Shape**: `[B, 10 080]` where 10 080 = minutes in 1 week (pp 18-21)
+* **Datatype**: `float32` – standardized (z-score) accelerometer magnitude.  
+* **Standardisation rule**: z-score _per NHANES year_ **before** patching; during fine-tune, compute μ/σ on **train split only** to prevent leakage (pp 22-24).  
+* **Padding / variable length**: If shorter than 10 080, left-pad with value `0` (already zero-mean); if longer, slide a 1-week window with stride = patch size (18 min).
+
+### 2. Patch embedding
+* **Patch size S** = 18 min ⇒ **N tokens** = 560 per week (pp 18-21).  
+* Linear projection to **D = 128** (identical for S/M/L) – matches source code default.  
+* Optionally replace with 1-D conv patchizer; models get suffix "`-conv`" (pp 18-21).
+
+### 3. Backbone variants
+| ID | #Layers | D (embed) | MLP hidden | #Heads | Params |
+|----|---------|-----------|-----------|--------|--------|
+| PAT-S | 3 | 128 | 256 | 4 | **285 K** (p 15) |
+| PAT-M | 6 | 128 | 512 | 4 | **1.00 M** (p 15) |
+| PAT-L | 12 | 128 | 512 | 8 | **1.99 M** (p 15) |
+
+### 4. Positional encoding
+* Fixed sine/cosine tables, added **twice**: once before encoder, once before decoder (pp 18-21).
+
+### 5. Pre-training recipe (masked auto-encoder)
+* **Mask ratio** = 0.90, random without replacement (pp 20, 31-36).  
+* **Encoder** sees only un-masked tokens.  
+* **Decoder** receives encoder tokens **plus** learned `[MASK]` embeddings; 2 transformer layers.  
+* **Loss**: MSE over **all 10 080 minutes** – not just masked positions (pp 20, 31-36).  
+* **Optimizer**: AdamW, lr = 1e-4, β=(0.9,0.95), weight-decay = 0.05, batch = 256, epochs = 400 (source code default).
+
+### 6. Fine-tuning head
+* `nn.Linear(D,1)` + sigmoid.  End-to-end un-frozen (FT); LP offers no gain (see Table 3) (pp 20, 31-36).
+
+### 7. Explainability endpoint `/explain`
+* Returns JSON:
+```json
+{
+  "layer": 12,
+  "attention": [H, N, N]  // summed-key then averaged over heads
+}
+```
+* Generation rule: extract last transformer block, sum attention over keys per query, average heads, min-max normalise (pp 11-13).
+
+### 8. Performance envelope
+* Pre-train PAT-L ≤ 6 h on single A100; inference fits 2 vCPU / 4 GB RAM --concurrency 1 on Cloud Run (p 16).
+
+## Training Do-Nots
+
+> ⚠️ **Critical Training Guidelines** - Avoid these patterns to prevent performance degradation:
+
+* **Don't** lower the mask ratio below 0.75 – AUC drops ≈ 3–6 pp (pp 31-36).
+* **Don't** apply Savitzky-Golay smoothing – hurts AUC by ~3 pp (pp 31-36).
+* **Don't** compute loss only on masked patches – collapses to AUC ≈ 0.54 (pp 31-36).
+
 ## Rate Limits
 
 | Endpoint | Rate Limit | Window |

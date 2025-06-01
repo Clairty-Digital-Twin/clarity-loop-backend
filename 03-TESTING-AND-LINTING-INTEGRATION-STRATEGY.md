@@ -1001,3 +1001,96 @@ class TestAPIPerformance:
         assert throughput > 5.0  # Should handle at least 5 requests per second
         
     @pytest.mark.benchmark
+    def test_ml_model_inference_speed(self, pat_model):
+        """Benchmark ML model inference speed"""
+        import numpy as np
+        
+        test_data = np.random.randint(0, 2, size=(1440,))
+        processed_data = preprocess_actigraphy(test_data)
+        
+        # Warm up the model
+        for _ in range(5):
+            pat_model.predict_depression_risk(processed_data)
+        
+        # Benchmark inference
+        iterations = 100
+        start_time = time.time()
+        
+        for _ in range(iterations):
+            prediction = pat_model.predict_depression_risk(processed_data)
+        
+        duration = time.time() - start_time
+        avg_inference_time = duration / iterations
+        
+        # Should process each sample in under 50ms
+        assert avg_inference_time < 0.05
+        
+        print(f"Average inference time: {avg_inference_time*1000:.2f}ms")
+```
+
+## Healthcare Compliance Testing
+
+### HIPAA Compliance Tests
+
+```python
+# tests/compliance/test_hipaa_compliance.py
+import pytest
+from clarity.models.health_data import HealthDataUpload
+from clarity.security.encryption import encrypt_pii, decrypt_pii
+
+class TestHIPAACompliance:
+    """HIPAA compliance testing for healthcare data handling"""
+    
+    @pytest.mark.security
+    def test_pii_encryption_at_rest(self):
+        """Verify PII is encrypted when stored"""
+        sensitive_data = "John Doe - DOB: 1990-01-01 - SSN: 123-45-6789"
+        
+        encrypted = encrypt_pii(sensitive_data)
+        decrypted = decrypt_pii(encrypted)
+        
+        # Verify encryption worked
+        assert encrypted != sensitive_data
+        assert decrypted == sensitive_data
+        
+        # Verify no plaintext PII in encrypted data
+        assert "John Doe" not in encrypted
+        assert "123-45-6789" not in encrypted
+        
+    @pytest.mark.security
+    async def test_data_access_logging(self, health_data_repository):
+        """Verify all data access is logged for audit trails"""
+        user_id = "test_user_audit"
+        
+        # Access should be logged
+        data = await health_data_repository.get_user_data(user_id, "heart_rate")
+        
+        # Verify audit log entry was created
+        audit_logs = await health_data_repository.get_audit_logs(user_id)
+        
+        assert len(audit_logs) > 0
+        latest_log = audit_logs[-1]
+        assert latest_log["action"] == "data_access"
+        assert latest_log["user_id"] == user_id
+        assert latest_log["data_type"] == "heart_rate"
+        
+    @pytest.mark.security
+    def test_data_minimization(self):
+        """Verify only necessary data is collected and processed"""
+        health_upload = HealthDataUpload(
+            user_id="test_user",
+            data_type="heart_rate",
+            values=[{"timestamp": "2024-01-01T12:00:00Z", "value": 72.0}],
+            source="apple_watch"
+        )
+        
+        # Verify no unnecessary fields are included
+        serialized = health_upload.dict()
+        
+        # Should not include any identifying information beyond necessary
+        forbidden_fields = ["ssn", "full_name", "address", "phone_number"]
+        for field in forbidden_fields:
+            assert field not in serialized
+```
+
+This comprehensive testing and linting strategy ensures that the Clarity Loop Backend maintains the highest quality standards while developing at speed. The progressive quality gates catch issues early, automated tooling prevents regressions, and healthcare-specific compliance testing ensures HIPAA requirements are met.

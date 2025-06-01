@@ -33,6 +33,9 @@ ensuring HIPAA-compliant health data protection.
 
 ### Firebase Authentication Integration
 
+**See External References** → [Identity Platform JWT](../external-links.md#external-references--google-cloud-backend-critical)
+for canonical JWT claim specifications.
+
 ```python
 # src/clarity/auth/firebase_auth.py
 from firebase_admin import auth, credentials

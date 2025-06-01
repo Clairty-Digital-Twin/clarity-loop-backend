@@ -57,6 +57,7 @@ This document provides a detailed reference for interacting with Taskmaster, cov
 ## AI Model Configuration
 
 ### 2. Manage Models (`models`)
+
 - **MCP Tool:** `models`
 - **CLI Command:** `task-master models [options]`
 - **Description:** `View the current AI model configuration or set specific models for different roles (main, research, fallback). Allows setting custom model IDs for Ollama and OpenRouter.`

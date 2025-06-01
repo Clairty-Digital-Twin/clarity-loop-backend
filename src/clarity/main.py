@@ -4,6 +4,7 @@ Production-grade FastAPI application for health data processing and AI-powered i
 Implements enterprise authentication, monitoring, and HIPAA-compliant data handling.
 """
 
+import asyncio
 from collections.abc import AsyncGenerator, Awaitable, Callable
 from contextlib import asynccontextmanager
 import logging
@@ -36,6 +37,7 @@ async def lifespan(_app: FastAPI) -> AsyncGenerator[None, None]:
 
         # Initialize any async resources here
         # (database connections, external service clients, etc.)
+        await asyncio.sleep(0)  # Make function properly async
 
         logger.info("Application startup completed successfully")
         yield
@@ -181,8 +183,8 @@ def create_app() -> FastAPI:
             },
         ]
 
-    env_msg = f"FastAPI application created successfully for {settings.environment} environment"
-    logger.info("%s", env_msg)
+    env_msg = "FastAPI application created successfully for %s environment"
+    logger.info(env_msg, settings.environment)
     return app
 
 

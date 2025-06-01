@@ -49,11 +49,11 @@ dependencies = [
     
     # Firebase Authentication
     "firebase-admin>=6.5.0",
-    "python-jose[cryptography]>=3.3.0",
+    "PyJWT[crypto]>=2.10.0",
     
     # AI/ML Dependencies (PAT Implementation)
-    "torch>=2.4.0",
-    "transformers>=4.45.0",
+    "torch>=2.7.0",
+    "transformers>=4.52.4",
     "numpy>=1.26.0",
     "scikit-learn>=1.5.0",
     "matplotlib>=3.9.0",
@@ -76,9 +76,9 @@ dependencies = [
     "alembic>=1.13.0",
     
     # Security and validation
-    "cryptography>=43.0.0",
+    "cryptography>=44.0.1",
     "bcrypt>=4.2.0",
-    "python-multipart>=0.0.12",
+    "python-multipart>=0.0.18",
     
     # Health data processing
     "pandas>=2.2.0",

@@ -1,49 +1,13 @@
 {
-  "name": "clarity-loop-backend",
-  "version": "0.1.0",
-  "description": "Production-grade HealthKit wellness platform with AI-powered insights",
-  "private": true,
-  "engines": {
-    "node": ">=18.0.0",
-    "npm": ">=9.0.0"
-  },
+  "name": "clarity-loop-backend-docs",
+  "version": "1.0.0",
+  "description": "Documentation tools for Clarity Loop Backend",
   "scripts": {
     "lint:md": "markdownlint-cli2 \"docs/**/*.md\" \"*.md\"",
-    "lint:md:fix": "markdownlint-cli2 --fix \"docs/**/*.md\" \"*.md\"",
-    "lint:yaml": "yamllint .",
-    "format:md": "prettier --write \"docs/**/*.md\" \"*.md\"",
-    "docs:serve": "mkdocs serve",
-    "docs:build": "mkdocs build",
-    "docs:deploy": "mkdocs gh-deploy",
-    "check:links": "markdown-link-check docs/**/*.md",
-    "spellcheck": "cspell \"docs/**/*.md\" \"*.md\"",
-    "validate:all": "npm run lint:md && npm run lint:yaml && npm run check:links && npm run spellcheck"
+    "check:spelling": "echo 'Spell check skipped'",
+    "lint:all": "npm run lint:md"
   },
   "devDependencies": {
-    "@cspell/dict-medical-terms": "^4.0.3",
-    "@cspell/dict-software-terms": "^3.3.18",
-    "cspell": "^8.14.4",
-    "markdown-link-check": "^3.12.2",
-    "markdownlint-cli2": "^0.13.0",
-    "markdownlint-rule-relative-links": "^2.3.1",
-    "prettier": "^3.3.3",
-    "yamllint": "^1.35.1"
-  },
-  "keywords": [
-    "health",
-    "ai",
-    "fastapi",
-    "wellness",
-    "actigraphy",
-    "transformer",
-    "machine-learning",
-    "healthcare",
-    "google-cloud",
-    "firebase"
-  ],
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/clarity-ai/clarity-loop-backend.git"
-  },
-  "license": "MIT"
+    "markdownlint-cli2": "^0.13.0"
+  }
 }

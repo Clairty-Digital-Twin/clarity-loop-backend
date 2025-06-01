@@ -340,3 +340,33 @@ Each vertical slice creates files in ALL layers:
 
 ### 4. Observability Gate
 - [ ] Comprehensive logging at all levels
+- [ ] Metrics collection for monitoring
+- [ ] Error tracking and alerting
+- [ ] Health checks implemented
+
+## Next Steps
+
+1. **Choose Your First Slice**: Start with health data upload (most foundational)
+2. **Create the API Contract**: Define exactly what users can do
+3. **Build Backwards**: Implement storage → logic → validation → endpoint
+4. **Test End-to-End**: Verify the complete user journey works
+5. **Deploy and Validate**: Get it running in the real environment
+6. **Move to Next Slice**: Apply same pattern to insights generation
+
+## Common Pitfalls to Avoid
+
+### 1. Horizontal Layer Development
+❌ **Don't do this**: Build all APIs, then all services, then all storage
+✅ **Do this**: Build one complete user journey at a time
+
+### 2. Over-Engineering Early
+❌ **Don't do this**: Design perfect abstractions before understanding requirements
+✅ **Do this**: Get basic functionality working, then refactor
+
+### 3. Skipping Integration Tests
+❌ **Don't do this**: Only test individual components
+✅ **Do this**: Test complete user journeys end-to-end
+
+### 4. Ignoring Real Data
+❌ **Don't do this**: Only test with perfect mock data
+✅ **Do this**: Test with realistic, messy health data from the start

@@ -1,4 +1,4 @@
-"""🧪 Pytest Configuration and Shared Fixtures
+"""🧪 Pytest Configuration and Shared Fixtures.
 
 Provides shared test fixtures, configuration, and utilities for all test modules.
 """
@@ -96,22 +96,30 @@ def mock_pat_model():
 
 
 @pytest.fixture
-def sample_actigraphy_data():
-    """Sample actigraphy data for testing."""
+def sample_actigraphy_data() -> dict:
+    """Provide sample actigraphy data for testing."""
     import numpy as np
     
-    # 7 days of minute-level data (10,080 minutes)
+    # Create a random number generator for reproducible tests
+    rng = np.random.default_rng(42)
+    
     return {
         "user_id": "test-user-123",
+        "device_id": "test-device-456", 
         "start_date": "2024-01-01T00:00:00Z",
         "end_date": "2024-01-07T23:59:00Z",
-        "activity_counts": np.random.poisson(10, 10080).tolist(),
+        "activity_counts": rng.poisson(10, 10080).tolist(),
         "timestamps": [
             f"2024-01-{day:02d}T{hour:02d}:{minute:02d}:00Z"
             for day in range(1, 8)
             for hour in range(24)
-            for minute in range(60)
-        ]
+            for minute in range(0, 60, 1)
+        ][:10080],  # One week of minute-by-minute data
+        "metadata": {
+            "sample_rate": "1_minute",
+            "timezone": "UTC",
+            "device_model": "ActiGraph wGT3X-BT"
+        }
     }
 
 
@@ -130,11 +138,10 @@ def sample_health_labels():
 
 @pytest.fixture
 async def app() -> FastAPI:
-    """Create FastAPI application for testing."""
+    """Create FastAPI test application."""
     from clarity.main import create_app
     
-    app = create_app()
-    return app
+    return create_app()
 
 
 @pytest.fixture
@@ -163,9 +170,8 @@ def auth_headers():
 def mock_redis():
     """Mock Redis client for testing."""
     from unittest.mock import MagicMock
-
     import redis
-    
+      
     mock_client = MagicMock(spec=redis.Redis)
     mock_client.get.return_value = None
     mock_client.set.return_value = True

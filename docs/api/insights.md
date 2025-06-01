@@ -47,6 +47,52 @@ graph TD
     I --> J[Final Insights]
 ```
 
+## Gemini 2.5 Pro LLM Integration (PAT Research-Based)
+
+The insights pipeline leverages Google's Gemini 2.5 Pro LLM for natural language generation from structured ML outputs:
+
+### Input Processing
+- **PAT Model Output**: Structured embeddings and predictions from Actigraphy Transformer
+- **Context Injection**: User profile, historical patterns, and temporal context
+- **Prompt Engineering**: Research-validated prompts for health insight generation
+
+### LLM Configuration
+```python
+# Gemini 2.5 Pro Configuration (from PAT paper implementation)
+gemini_config = {
+    "model": "gemini-2.5-pro",
+    "temperature": 0.3,  # Low temperature for factual health insights
+    "max_tokens": 1024,  # Sufficient for detailed insights
+    "top_p": 0.8,       # Balanced creativity vs. accuracy
+    "safety_settings": "high",  # Maximum safety for health content
+}
+
+# Structured prompt template for health insights
+health_insight_prompt = """
+Based on the following actigraphy analysis for a {age}-year-old {gender}:
+
+PAT Model Predictions:
+- Depression Risk: {depression_prob:.3f}
+- Sleep Quality Score: {sleep_quality:.2f}
+- Activity Level: {activity_level}
+- Weekly Patterns: {weekly_patterns}
+
+Generate a personalized health insight that:
+1. Explains patterns in accessible language
+2. Provides actionable recommendations
+3. Maintains encouraging tone
+4. Respects user privacy and sensitivity
+
+Previous context: {previous_insights}
+"""
+```
+
+### Output Processing
+- **Fact Verification**: Cross-validation against clinical thresholds
+- **Tone Adjustment**: Positive framing while maintaining clinical accuracy
+- **Personalization**: Integration with user goals and preferences
+- **Safety Filtering**: Health misinformation prevention
+
 ## Insights API Endpoints
 
 ### Get Daily Insights

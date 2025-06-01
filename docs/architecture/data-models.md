@@ -436,6 +436,70 @@ class DailyInsight(BaseModel):
 }
 ```
 
+## Data Normalization Pipeline (PAT Research-Based)
+
+### Standardization Rules
+- **Per-year z-scaling**: Compute standardization statistics per NHANES year before patching (pp 22-24)
+- **Training Split Safety**: During fine-tuning, compute μ/σ on **train split only** to prevent data leakage (pp 22-24)  
+- **Patch Processing**: Apply z-score normalization before 18-minute patch embedding
+- **Zero-mean Property**: Left-pad shorter sequences with value `0` (already zero-mean after normalization)
+
+### Binary Label Derivation Rules
+- **Depression**: PHQ-9 score ≥ 10 (pp 23-25)
+- **Sleep Abnormality**: sleep > 12 h or sleep < 5 h total per day (pp 23-25)
+- **Sleep Disorder**: self-reported diagnosis flag in NHANES (pp 23-25)
+- **Label Computation**: Labels computed per participant before train/val split (pp 23-25)
+
+### Implementation Notes
+```python
+# Normalization pipeline for PAT model input
+def normalize_actigraphy_data(data: np.ndarray, year: int, split: str = 'train') -> np.ndarray:
+    """
+    Apply PAT-compliant normalization to actigraphy data
+    
+    Args:
+        data: Raw accelerometer magnitude data [N, 10080] 
+        year: NHANES year for per-year standardization
+        split: 'train', 'val', or 'test' - use train stats for val/test
+    
+    Returns:
+        Normalized data with zero mean, unit variance per year
+    """
+    if split == 'train':
+        # Compute statistics on training data only
+        mu = np.mean(data, axis=1, keepdims=True)
+        sigma = np.std(data, axis=1, keepdims=True)
+        # Store for validation/test splits
+        save_normalization_stats(year, mu, sigma)
+    else:
+        # Load pre-computed training statistics
+        mu, sigma = load_normalization_stats(year)
+    
+    return (data - mu) / (sigma + 1e-8)
+
+def derive_binary_labels(questionnaire_data: Dict) -> Dict[str, bool]:
+    """
+    Derive binary labels according to PAT paper definitions
+    
+    Returns:
+        Dictionary with binary labels for each condition
+    """
+    labels = {}
+    
+    # Depression from PHQ-9 score
+    phq9_score = questionnaire_data.get('phq9_total', 0)
+    labels['depression'] = phq9_score >= 10
+    
+    # Sleep abnormality from total sleep duration
+    daily_sleep_hours = questionnaire_data.get('daily_sleep_hours', 8.0)
+    labels['sleep_abnormality'] = daily_sleep_hours > 12.0 or daily_sleep_hours < 5.0
+    
+    # Sleep disorder from self-report
+    labels['sleep_disorder'] = questionnaire_data.get('sleep_disorder_diagnosis', False)
+    
+    return labels
+```
+
 ## Database Relationships and Indexing
 
 ### Firestore Collection Structure

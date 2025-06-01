@@ -639,6 +639,52 @@ class QualityIssueDetector:
         return issues
 ```
 
+## Binary Label Derivation for Test Fixtures (PAT Research-Based)
+
+When creating synthetic test data or fixtures, apply these binary classification rules derived from PAT research (pp 23-25):
+
+#### Depression Classification
+- **Rule**: PHQ-9 score ≥ 10
+- **Implementation**: Sum all PHQ-9 questionnaire responses; label as depression if total ≥ 10
+- **Test fixture usage**: Generate synthetic users with known PHQ-9 scores to validate depression detection
+
+#### Sleep Abnormality Classification  
+- **Rule**: Daily sleep duration > 12 hours OR < 5 hours
+- **Implementation**: Calculate average daily sleep from HealthKit sleep analysis data
+- **Test fixture usage**: Create sleep data with various durations to test abnormality detection
+
+#### Sleep Disorder Classification
+- **Rule**: Self-reported sleep disorder diagnosis flag in health records
+- **Implementation**: Check user health profile for sleep disorder diagnosis boolean
+- **Test fixture usage**: Generate user profiles with known sleep disorder status
+
+#### Implementation Example
+```python
+def create_test_fixtures_with_labels():
+    """Create synthetic test data with known ground truth labels"""
+    
+    # Depression test case
+    depression_user = {
+        "phq9_responses": [2, 2, 3, 1, 2, 1, 1, 1, 1],  # Sum = 14 ≥ 10 → Depression
+        "expected_label": {"depression": True}
+    }
+    
+    # Sleep abnormality test case  
+    sleep_abnormal_user = {
+        "daily_sleep_hours": [3.5, 4.0, 3.8, 4.2],  # All < 5h → Sleep abnormality
+        "expected_label": {"sleep_abnormality": True}
+    }
+    
+    # Normal control case
+    healthy_user = {
+        "phq9_responses": [0, 1, 0, 0, 1, 0, 0, 0, 1],  # Sum = 3 < 10 → No depression
+        "daily_sleep_hours": [7.5, 8.0, 7.8, 8.2],     # 5h ≤ sleep ≤ 12h → Normal
+        "expected_label": {"depression": False, "sleep_abnormality": False}
+    }
+    
+    return [depression_user, sleep_abnormal_user, healthy_user]
+```
+
 ## Rate Limiting and Quotas
 
 ### Upload Rate Limits
@@ -673,8 +719,9 @@ class QualityIssueDetector:
       "quality_issues": [
         {
           "type": "physiological_anomaly",
-          "severity": "error",
-          "message": "Heart rate values contain physiological anomalies"
+          "field": "heart_rate_data[0].value",
+          "message": "Heart rate value outside normal human range",
+          "severity": "error"
         }
       ]
     }

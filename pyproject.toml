@@ -1,0 +1,313 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "clarity-loop-backend"
+version = "0.1.0"
+description = "Async-first HealthKit wellness backend with AI-powered health insights"
+readme = "README.md"
+license = { file = "LICENSE" }
+requires-python = ">=3.11"
+authors = [
+    { name = "Clarity Team", email = "team@clarityloop.com" },
+]
+keywords = ["health", "ai", "fastapi", "wellness", "backend"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Web Environment",
+    "Framework :: FastAPI",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Healthcare Industry",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Internet :: WWW/HTTP :: HTTP Servers",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Scientific/Engineering :: Medical Science Apps.",
+    "Typing :: Typed",
+]
+
+dependencies = [
+    # Core FastAPI and async framework
+    "fastapi>=0.115.0",
+    "uvicorn[standard]>=0.32.0",
+    "pydantic>=2.9.0",
+    "pydantic-settings>=2.6.0",
+    
+    # Google Cloud Platform
+    "google-cloud-firestore>=2.19.0",
+    "google-cloud-storage>=2.18.0",
+    "google-cloud-pubsub>=2.25.0",
+    "google-cloud-secret-manager>=2.21.1",
+    "google-cloud-aiplatform>=1.70.0",
+    
+    # Firebase Authentication
+    "firebase-admin>=6.5.0",
+    "python-jose[cryptography]>=3.3.0",
+    
+    # HTTP and networking
+    "httpx>=0.27.0",
+    "aiofiles>=24.1.0",
+    
+    # Data processing and validation
+    "pandas>=2.2.0",
+    "numpy>=2.1.0",
+    "pydantic[email]>=2.9.0",
+    
+    # AI and ML libraries
+    "google-generativeai>=0.8.0",
+    "tensorflow>=2.18.0",
+    "scikit-learn>=1.5.0",
+    "transformers>=4.46.0",
+    "torch>=2.5.0",
+    
+    # Utilities
+    "python-multipart>=0.0.12",
+    "python-dateutil>=2.9.0",
+    "pytz>=2024.2",
+    "structlog>=24.4.0",
+    "rich>=13.9.0",
+    
+    # Security and encryption
+    "cryptography>=43.0.0",
+    "passlib[bcrypt]>=1.7.4",
+    
+    # Health data processing
+    "scipy>=1.14.0",
+    "matplotlib>=3.9.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    # Testing
+    "pytest>=8.3.0",
+    "pytest-asyncio>=0.24.0",
+    "pytest-cov>=6.0.0",
+    "pytest-mock>=3.14.0",
+    "pytest-httpx>=0.32.0",
+    "httpx>=0.27.0",
+    
+    # Code quality
+    "ruff>=0.7.0",
+    "black>=24.10.0",
+    "mypy>=1.13.0",
+    "pre-commit>=4.0.0",
+    
+    # Documentation
+    "mkdocs>=1.6.0",
+    "mkdocs-material>=9.5.0",
+    "mkdocs-swagger-ui-tag>=0.6.0",
+    
+    # Development tools
+    "watchdog>=5.0.0",
+    "ipython>=8.29.0",
+    "jupyter>=1.1.0",
+    
+    # Security scanning
+    "bandit>=1.7.0",
+    "safety>=3.2.0",
+]
+
+test = [
+    "pytest>=8.3.0",
+    "pytest-asyncio>=0.24.0",
+    "pytest-cov>=6.0.0",
+    "pytest-mock>=3.14.0",
+    "pytest-httpx>=0.32.0",
+    "httpx>=0.27.0",
+    "faker>=30.8.0",
+]
+
+docs = [
+    "mkdocs>=1.6.0",
+    "mkdocs-material>=9.5.0",
+    "mkdocs-swagger-ui-tag>=0.6.0",
+    "mkdocs-mermaid2-plugin>=1.1.0",
+]
+
+ml = [
+    "jupyter>=1.1.0",
+    "tensorboard>=2.18.0",
+    "mlflow>=2.16.0",
+    "optuna>=4.1.0",
+]
+
+[project.scripts]
+clarity-server = "clarity.main:main"
+clarity-cli = "clarity.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/clarity-loop/clarity-loop-backend"
+Documentation = "https://docs.clarityloop.com"
+Repository = "https://github.com/clarity-loop/clarity-loop-backend.git"
+Issues = "https://github.com/clarity-loop/clarity-loop-backend/issues"
+
+# Hatchling configuration
+[tool.hatch.version]
+path = "src/clarity/__init__.py"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/clarity"]
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "/src",
+    "/tests",
+    "/docs",
+    "/scripts",
+    "/config",
+]
+
+# Ruff configuration (replaces flake8, isort, and more)
+[tool.ruff]
+target-version = "py311"
+line-length = 88
+fix = true
+
+[tool.ruff.lint]
+select = [
+    "E",  # pycodestyle errors
+    "W",  # pycodestyle warnings
+    "F",  # pyflakes
+    "I",  # isort
+    "B",  # flake8-bugbear
+    "C4", # flake8-comprehensions
+    "UP", # pyupgrade
+    "ARG001", # unused-function-args
+    "SIM", # flake8-simplify
+    "TCH", # flake8-type-checking
+    "TID", # flake8-tidy-imports
+    "Q", # flake8-quotes
+    "FLY", # flynt
+    "PERF", # perflint
+    "RUF", # ruff-specific rules
+]
+ignore = [
+    "E501",  # line too long, handled by black
+    "B008",  # do not perform function calls in argument defaults
+    "C901",  # too complex
+    "W191",  # indentation contains tabs
+]
+
+[tool.ruff.lint.pyupgrade]
+# Preserve types, even if a file imports `from __future__ import annotations`.
+keep-runtime-typing = true
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**/*" = ["ARG", "FBT", "PLR2004", "S101", "TID252"]
+
+# Black configuration
+[tool.black]
+line-length = 88
+target-version = ['py311']
+include = '\.pyi?$'
+extend-exclude = '''
+/(
+  \.eggs
+  | \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | _build
+  | buck-out
+  | build
+  | dist
+  | migrations
+)/
+'''
+
+# MyPy configuration
+[tool.mypy]
+python_version = "3.11"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+disallow_untyped_decorators = true
+strict_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_no_return = true
+warn_unreachable = true
+strict_equality = true
+show_error_codes = true
+
+[[tool.mypy.overrides]]
+module = [
+    "firebase_admin.*",
+    "google.cloud.*",
+    "tensorflow.*",
+    "torch.*",
+    "transformers.*",
+    "scipy.*",
+    "sklearn.*",
+]
+ignore_missing_imports = true
+
+# Pytest configuration
+[tool.pytest.ini_options]
+minversion = "8.0"
+addopts = [
+    "--strict-markers",
+    "--strict-config",
+    "--cov=src/clarity",
+    "--cov-report=term-missing",
+    "--cov-report=html",
+    "--cov-report=xml",
+    "--cov-fail-under=80",
+    "-v",
+]
+testpaths = ["tests"]
+filterwarnings = [
+    "error",
+    "ignore::UserWarning",
+    "ignore::DeprecationWarning",
+]
+markers = [
+    "unit: Unit tests",
+    "integration: Integration tests",
+    "api: API endpoint tests",
+    "ml: Machine learning tests",
+    "auth: Authentication tests",
+    "slow: Slow running tests",
+    "requires_gcp: Tests requiring Google Cloud Platform",
+    "requires_firebase: Tests requiring Firebase",
+]
+
+# Coverage configuration
+[tool.coverage.run]
+source = ["src"]
+omit = [
+    "*/tests/*",
+    "*/venv/*",
+    "*/migrations/*",
+    "*/scripts/*",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "if self.debug:",
+    "if settings.DEBUG",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if 0:",
+    "if __name__ == .__main__.:",
+    "class .*\\bProtocol\\):",
+    "@(abc\\.)?abstractmethod",
+]
+
+[tool.coverage.html]
+directory = "htmlcov"
+
+# Bandit security linting
+[tool.bandit]
+exclude_dirs = ["tests", "migrations"]
+tests = ["B201", "B301"]
+skips = ["B101", "B601"]

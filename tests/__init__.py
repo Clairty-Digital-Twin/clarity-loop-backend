@@ -1,4 +1,4 @@
-"""🧪 Clarity Loop Backend Test Suite
+"""🧪 Clarity Loop Backend Test Suite.
 
 This package contains all tests for the Clarity Loop Backend:
 - unit/: Unit tests for individual components

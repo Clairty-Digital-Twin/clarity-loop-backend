@@ -119,9 +119,8 @@ class FirebaseAuthMiddleware(BaseHTTPMiddleware):
                 logger.info("Firebase Admin SDK already initialized")
         except Exception as e:
             logger.exception("Failed to initialize Firebase Admin SDK: %s", e)
-            raise AuthError(
-                f"Firebase initialization failed: {e}", status_code=500
-            ) from None
+            msg = f"Firebase initialization failed: {e}"
+            raise AuthError(msg, status_code=500) from None
 
     async def dispatch(
         self, request: Request, call_next: Callable[[Request], Any]
@@ -201,17 +200,18 @@ class FirebaseAuthMiddleware(BaseHTTPMiddleware):
         auth_header = request.headers.get("Authorization")
 
         if not auth_header:
-            raise AuthError("Missing Authorization header", 401, "missing_token")
+            msg = "Missing Authorization header"
+            raise AuthError(msg, 401, "missing_token")
 
         if not auth_header.startswith("Bearer "):
-            raise AuthError(
-                "Invalid Authorization header format", 401, "invalid_token_format"
-            )
+            msg = "Invalid Authorization header format"
+            raise AuthError(msg, 401, "invalid_token_format")
 
         token = auth_header[7:]  # Remove "Bearer " prefix
 
         if not token:
-            raise AuthError("Empty authentication token", 401, "empty_token")
+            msg = "Empty authentication token"
+            raise AuthError(msg, 401, "empty_token")
 
         return token
 
@@ -233,31 +233,27 @@ class FirebaseAuthMiddleware(BaseHTTPMiddleware):
 
             # Check if token is expired
             if token_info.expires_at < datetime.now(UTC):
-                raise AuthError("Token has expired", 401, "token_expired")
+                msg = "Token has expired"
+                raise AuthError(msg, 401, "token_expired")
 
             return token_info
 
         except auth.ExpiredIdTokenError:
-            raise AuthError(
-                "Authentication token has expired", 401, "token_expired"
-            ) from None
+            msg = "Authentication token has expired"
+            raise AuthError(msg, 401, "token_expired") from None
         except auth.RevokedIdTokenError:
-            raise AuthError(
-                "Authentication token has been revoked", 401, "token_revoked"
-            ) from None
+            msg = "Authentication token has been revoked"
+            raise AuthError(msg, 401, "token_revoked") from None
         except auth.InvalidIdTokenError:
-            raise AuthError(
-                "Invalid authentication token", 401, "invalid_token"
-            ) from None
+            msg = "Invalid authentication token"
+            raise AuthError(msg, 401, "invalid_token") from None
         except auth.CertificateFetchError:
-            raise AuthError(
-                "Unable to verify token", 500, "verification_error"
-            ) from None
+            msg = "Unable to verify token"
+            raise AuthError(msg, 500, "verification_error") from None
         except Exception as e:
             logger.exception("Token verification error: %s", e)
-            raise AuthError(
-                "Token verification failed", 500, "verification_failed"
-            ) from None
+            msg = "Token verification failed"
+            raise AuthError(msg, 500, "verification_failed") from None
 
     async def _create_user_context(self, token_info: TokenInfo) -> UserContext:
         """Create user context from verified token."""

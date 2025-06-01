@@ -459,11 +459,13 @@ class TestAuthenticationSecurity:
 
 ### Active Security Vulnerabilities
 
-The following vulnerabilities are currently present in our dependency tree but **ignored by Safety Platform policy** due to unpinned version specifications. These require immediate evaluation and remediation:
+The following vulnerabilities are currently present in our dependency tree but 
+**ignored by Safety Platform policy** due to unpinned version specifications. 
+These require immediate evaluation and remediation:
 
-#### 🔴 **CRITICAL - Authentication & Cryptography**
+#### Critical - Authentication & Cryptography
 
-**1. python-jose (JWT Authentication Library)**
+##### python-jose (JWT Authentication Library)
 
 - **Vulnerability IDs**: 70716, 70715  
 - **Affected Versions**: All versions (vulnerable spec: ">=0")  
@@ -471,7 +473,7 @@ The following vulnerabilities are currently present in our dependency tree but *
 - **Status**: ⚠️ PRODUCTION RISK - Core authentication component  
 - **Priority**: IMMEDIATE
 
-**2. cryptography (Core Cryptographic Library)**
+##### cryptography (Core Cryptographic Library)
 
 - **Vulnerability IDs**: 73711, 76170  
 - **Affected Versions**: 37.0.0-43.0.0, 42.0.0-44.0.0  
@@ -479,9 +481,9 @@ The following vulnerabilities are currently present in our dependency tree but *
 - **Status**: ⚠️ HIGH RISK - All encrypted communications affected  
 - **Priority**: IMMEDIATE
 
-#### 🟠 **HIGH - AI/ML Components**
+#### High - AI/ML Components
 
-**3. torch (PyTorch Deep Learning Framework)**
+##### torch (PyTorch Deep Learning Framework)
 
 - **Vulnerability IDs**: 76771, 76769  
 - **Affected Versions**: <2.6.0, <=2.6.0  
@@ -489,7 +491,7 @@ The following vulnerabilities are currently present in our dependency tree but *
 - **Impact**: ML model security vulnerabilities  
 - **Status**: ⚠️ MONITORING - Verify patch effectiveness
 
-**4. transformers (Hugging Face Transformers)**
+##### transformers (Hugging Face Transformers)
 
 - **Vulnerability IDs**: 74882, 76262, 77149  
 - **Affected Versions**: <4.48.0, <4.48.0, <4.50.0  
@@ -497,16 +499,16 @@ The following vulnerabilities are currently present in our dependency tree but *
 - **Impact**: NLP model security issues  
 - **Status**: ⚠️ MONITORING - Verify patch effectiveness
 
-#### 🟡 **MEDIUM - Development & Infrastructure**
+#### Medium - Development & Infrastructure
 
-**5. python-multipart (File Upload Handling)**
+##### python-multipart (File Upload Handling)
 
 - **Vulnerability ID**: 74427  
 - **Affected Versions**: <0.0.18  
 - **Impact**: File upload vulnerabilities  
 - **Status**: ⚠️ MEDIUM RISK
 
-**6. notebook (Jupyter Development Environment)**
+##### notebook (Jupyter Development Environment)
 
 - **Vulnerability ID**: 72963  
 - **Affected Versions**: 7.0.0-7.2.1  
@@ -514,7 +516,7 @@ The following vulnerabilities are currently present in our dependency tree but *
 - **Impact**: Development environment security  
 - **Status**: ✅ LOW RISK - Development only
 
-**7. mkdocs-material (Documentation Framework)**
+##### mkdocs-material (Documentation Framework)
 
 - **Vulnerability IDs**: 64496, 72715  
 - **Affected Versions**: <9.5.5, <9.5.32  
@@ -621,4 +623,5 @@ vulnerability-rules:
 3. Conduct formal security review after vulnerability resolution
 4. Update security documentation with final remediation details
 
-This security implementation ensures the Clarity Loop Backend meets enterprise-grade security standards while maintaining HIPAA compliance for health data protection.
+This security implementation ensures the Clarity Loop Backend meets enterprise-grade 
+security standards while maintaining HIPAA compliance for health data protection.

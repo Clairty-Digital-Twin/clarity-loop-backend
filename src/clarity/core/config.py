@@ -32,6 +32,9 @@ class Settings(BaseSettings):
         default=["http://localhost:3000", "http://localhost:8080"], alias="CORS_ORIGINS"
     )
 
+    # Authentication settings
+    enable_auth: bool = Field(default=False, alias="ENABLE_AUTH")
+
     # Firebase settings
     firebase_project_id: str = Field(default="", alias="FIREBASE_PROJECT_ID")
     firebase_credentials_path: str = Field(

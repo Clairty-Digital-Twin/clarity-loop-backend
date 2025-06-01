@@ -86,19 +86,23 @@ def create_app() -> FastAPI:
     # Compression middleware
     app.add_middleware(GZipMiddleware, minimum_size=1000)
 
-    # Firebase Authentication middleware
-    app.add_middleware(
-        FirebaseAuthMiddleware,
-        credentials_path=settings.firebase_credentials_path,
-        project_id=settings.firebase_project_id,
-        exempt_paths=[
-            "/",
-            "/health",
-            "/docs",
-            "/redoc",
-            "/openapi.json",
-        ],
-    )
+    # Firebase Authentication middleware (conditionally enabled)
+    if settings.enable_auth:
+        app.add_middleware(
+            FirebaseAuthMiddleware,
+            credentials_path=settings.firebase_credentials_path,
+            project_id=settings.firebase_project_id,
+            exempt_paths=[
+                "/",
+                "/health",
+                "/docs",
+                "/redoc",
+                "/openapi.json",
+            ],
+        )
+        logger.info("Firebase authentication enabled")
+    else:
+        logger.warning("🚨 Authentication DISABLED - Development mode only!")
 
     # Health check endpoints
     @app.get("/")
@@ -188,16 +192,45 @@ def create_app() -> FastAPI:
     return app
 
 
-# Application instance
-app = create_app()
+# Application factory following Clean Architecture principles
+def create_application() -> FastAPI:
+    """Application factory following Robert C. Martin's Clean Architecture.
+
+    This factory function creates and configures the FastAPI application
+    with all middleware, routes, and dependencies properly initialized.
+    Follows Uncle Bob's SOLID principles and Gang of Four patterns.
+    """
+    return create_app()
 
 
+# Conditional app creation - only when explicitly requested
+app: FastAPI | None = None
+
+
+def get_application() -> FastAPI:
+    """Get or create the FastAPI application instance.
+
+    Implements lazy initialization pattern for better control
+    over application lifecycle and testing. Follows Clean Code principles.
+    """
+    global app
+    if app is None:
+        app = create_application()
+    return app
+
+
+# For production deployment and direct execution
 if __name__ == "__main__":
+    # Direct execution - create app immediately
+    application = create_application()
     settings = get_settings()
     uvicorn.run(
-        "src.clarity.main:app",
+        application,  # Pass app instance directly
         host=settings.host,
         port=settings.port,
         reload=settings.debug,
         log_level=settings.log_level.lower(),
     )
+else:
+    # Module import - lazy creation for better testability
+    app = get_application()

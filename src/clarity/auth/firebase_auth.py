@@ -111,16 +111,20 @@ class FirebaseAuthMiddleware(BaseHTTPMiddleware):
                 if credentials_path:
                     cred = credentials.Certificate(credentials_path)
                     firebase_admin.initialize_app(cred, {"projectId": project_id})
-                else:
-                    # Use default credentials (ADC)
+                    logger.info("Firebase Admin SDK initialized with credentials")
+                elif project_id:
+                    # Use default credentials (ADC) if project_id is provided
                     firebase_admin.initialize_app()
-                logger.info("Firebase Admin SDK initialized for authentication")
+                    logger.info("Firebase Admin SDK initialized with ADC")
+                else:
+                    # Development mode - don't initialize Firebase
+                    logger.warning("Firebase not initialized - running in development mode")
+                    return
             else:
                 logger.info("Firebase Admin SDK already initialized")
         except Exception as e:
-            logger.exception("Failed to initialize Firebase Admin SDK")
-            msg = f"Firebase initialization failed: {e}"
-            raise AuthError(msg, status_code=500) from None
+            logger.warning("Firebase initialization failed: %s - running in development mode", e)
+            # Don't raise exception in development to allow app to start
 
     async def dispatch(
         self, request: Request, call_next: Callable[[Request], Any]

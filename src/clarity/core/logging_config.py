@@ -36,11 +36,11 @@ def setup_logging() -> None:
                 "datefmt": "%Y-%m-%d %H:%M:%S",
             },
             "json": {
-                "()": "pythonjsonlogger.jsonlogger.JsonFormatter",
                 "format": (
-                    "%(asctime)s %(name)s %(levelname)s %(filename)s "
-                    "%(lineno)d %(funcName)s %(message)s"
+                    "%(asctime)s | %(name)s | %(levelname)s | "
+                    "%(filename)s:%(lineno)d | %(funcName)s | %(message)s"
                 ),
+                "datefmt": "%Y-%m-%d %H:%M:%S",
             },
         },
         "handlers": {

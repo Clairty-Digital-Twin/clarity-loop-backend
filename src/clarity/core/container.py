@@ -4,9 +4,11 @@ Following Robert C. Martin's Clean Architecture and Gang of Four Factory Pattern
 This container manages all dependencies and wiring according to SOLID principles.
 """
 
-from collections.abc import AsyncGenerator
+from __future__ import annotations
+
+from collections.abc import AsyncGenerator, Callable
 from contextlib import asynccontextmanager
-from typing import Any, cast
+from typing import TYPE_CHECKING, Any, TypeVar, cast
 
 from fastapi import FastAPI
 
@@ -16,6 +18,23 @@ from clarity.core.interfaces import (
     IConfigProvider,
     IHealthDataRepository,
 )
+
+if TYPE_CHECKING:
+    from clarity.auth.firebase_auth import (  # noqa: F401
+        FirebaseAuthMiddleware,
+        FirebaseAuthProvider,
+    )
+    from clarity.auth.mock_auth import MockAuthProvider  # noqa: F401
+    from clarity.core.config_provider import ConfigProvider  # noqa: F401
+    from clarity.storage.firestore_client import (
+        FirestoreHealthDataRepository,  # noqa: F401
+    )
+    from clarity.storage.mock_repository import MockHealthDataRepository  # noqa: F401
+
+T = TypeVar("T")
+
+# Factory type for creating instances
+Factory = Callable[[], Any]
 
 
 class DependencyContainer:
@@ -28,57 +47,78 @@ class DependencyContainer:
     def __init__(self) -> None:
         """Initialize dependency container."""
         self._instances: dict[type, Any] = {}
+        self._factories: dict[type, Factory] = {}
         self._settings = get_settings()
+        self._register_factories()
+
+    def _register_factories(self) -> None:
+        """Register factory functions for each interface (Factory Pattern)."""
+        self._factories[IConfigProvider] = self._create_config_provider
+        self._factories[IAuthProvider] = self._create_auth_provider
+        self._factories[IHealthDataRepository] = self._create_health_data_repository
+
+    def _create_config_provider(self) -> IConfigProvider:
+        """Factory method for creating configuration provider."""
+        from clarity.core.config_provider import ConfigProvider
+
+        return ConfigProvider(self._settings)
+
+    def _create_auth_provider(self) -> IAuthProvider:
+        """Factory method for creating authentication provider."""
+        config_provider = self.get_config_provider()
+
+        if config_provider.get_setting("enable_auth", False):
+            from clarity.auth.firebase_auth import FirebaseAuthProvider
+
+            firebase_config = config_provider.get_firebase_config()
+            return FirebaseAuthProvider(
+                credentials_path=firebase_config.get("credentials_path"),
+                project_id=firebase_config.get("project_id"),
+            )
+        from clarity.auth.mock_auth import MockAuthProvider
+
+        return MockAuthProvider()
+
+    def _create_health_data_repository(self) -> IHealthDataRepository:
+        """Factory method for creating health data repository."""
+        config_provider = self.get_config_provider()
+
+        # Use mock repository in development or when Firestore credentials aren't available
+        if config_provider.is_development():
+            from clarity.storage.mock_repository import MockHealthDataRepository
+
+            return MockHealthDataRepository()
+        from clarity.storage.firestore_client import FirestoreHealthDataRepository
+
+        return FirestoreHealthDataRepository(
+            project_id=config_provider.get_gcp_project_id(),
+            credentials_path=config_provider.get_firebase_config().get(
+                "credentials_path"
+            ),
+        )
+
+    def get_instance(self, interface: type[T]) -> T:
+        """Get instance using Singleton pattern with lazy initialization."""
+        if interface not in self._instances:
+            if interface not in self._factories:
+                msg = f"No factory registered for {interface.__name__}"
+                raise ValueError(msg)
+
+            self._instances[interface] = self._factories[interface]()
+
+        return cast("T", self._instances[interface])
 
     def get_config_provider(self) -> IConfigProvider:
         """Get configuration provider (Singleton pattern)."""
-        if IConfigProvider not in self._instances:
-            from clarity.core.config_provider import ConfigProvider
-
-            self._instances[IConfigProvider] = ConfigProvider(self._settings)
-        return cast("IConfigProvider", self._instances[IConfigProvider])
+        return self.get_instance(IConfigProvider)
 
     def get_auth_provider(self) -> IAuthProvider:
         """Get authentication provider (Singleton pattern)."""
-        if IAuthProvider not in self._instances:
-            # Only create if authentication is enabled
-            config_provider = self.get_config_provider()
-            if config_provider.get_setting("enable_auth", False):
-                from clarity.auth.firebase_auth import FirebaseAuthProvider
-
-                firebase_config = config_provider.get_firebase_config()
-                self._instances[IAuthProvider] = FirebaseAuthProvider(
-                    credentials_path=firebase_config.get("credentials_path"),
-                    project_id=firebase_config.get("project_id"),
-                )
-            else:
-                from clarity.auth.mock_auth import MockAuthProvider
-
-                self._instances[IAuthProvider] = MockAuthProvider()
-        return cast("IAuthProvider", self._instances[IAuthProvider])
+        return self.get_instance(IAuthProvider)
 
     def get_health_data_repository(self) -> IHealthDataRepository:
         """Get health data repository (Singleton pattern)."""
-        if IHealthDataRepository not in self._instances:
-            config_provider = self.get_config_provider()
-
-            # Use mock repository in development or when Firestore credentials aren't available
-            if config_provider.is_development():
-                from clarity.storage.mock_repository import MockHealthDataRepository
-
-                self._instances[IHealthDataRepository] = MockHealthDataRepository()
-            else:
-                from clarity.storage.firestore_client import (
-                    FirestoreHealthDataRepository,
-                )
-
-                self._instances[IHealthDataRepository] = FirestoreHealthDataRepository(
-                    project_id=config_provider.get_gcp_project_id(),
-                    credentials_path=config_provider.get_firebase_config().get(
-                        "credentials_path"
-                    ),
-                )
-        return cast("IHealthDataRepository", self._instances[IHealthDataRepository])
+        return self.get_instance(IHealthDataRepository)
 
     @asynccontextmanager
     async def app_lifespan(self, app: FastAPI) -> AsyncGenerator[None, None]:
@@ -99,8 +139,7 @@ class DependencyContainer:
 
         yield
 
-        # Shutdown
-        # Clean up resources
+        # Shutdown - Clean up resources
         for instance in self._instances.values():
             if hasattr(instance, "cleanup"):
                 await instance.cleanup()
@@ -159,7 +198,7 @@ _container: DependencyContainer | None = None
 
 def get_container() -> DependencyContainer:
     """Get global dependency container (Singleton pattern)."""
-    global _container
+    global _container  # noqa: PLW0603
     if _container is None:
         _container = DependencyContainer()
     return _container

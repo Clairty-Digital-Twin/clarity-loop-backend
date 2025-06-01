@@ -233,14 +233,14 @@ class FirebaseAuthMiddleware(BaseHTTPMiddleware):
 
             return token_info
 
-        except auth.InvalidIdTokenError:
-            raise AuthError("Invalid authentication token", 401, "invalid_token")
         except auth.ExpiredIdTokenError:
             raise AuthError("Authentication token has expired", 401, "token_expired")
         except auth.RevokedIdTokenError:
             raise AuthError(
                 "Authentication token has been revoked", 401, "token_revoked"
             )
+        except auth.InvalidIdTokenError:
+            raise AuthError("Invalid authentication token", 401, "invalid_token")
         except auth.CertificateFetchError:
             raise AuthError("Unable to verify token", 500, "verification_error")
         except Exception as e:

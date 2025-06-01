@@ -251,7 +251,7 @@ class FirebaseAuthMiddleware(BaseHTTPMiddleware):
             msg = "Unable to verify token"
             raise AuthError(msg, 500, "verification_error") from None
         except Exception as e:
-            logger.exception("Token verification error: %s", e)
+            logger.exception("Token verification error")
             msg = "Token verification failed"
             raise AuthError(msg, 500, "verification_failed") from None
 
@@ -302,7 +302,7 @@ class FirebaseAuthMiddleware(BaseHTTPMiddleware):
             msg = "User not found"
             raise AuthError(msg, 401, "user_not_found") from None
         except Exception as e:
-            logger.exception("Error creating user context: %s", e)
+            logger.exception("Error creating user context")
             msg = "Failed to create user context"
             raise AuthError(msg, 500, "context_creation_failed") from None
 

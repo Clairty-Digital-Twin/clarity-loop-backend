@@ -198,3 +198,145 @@ class ActigraphyProcessor:
         raw_data = await get_actigraphy_data(user_id, days)
         
         # Apply PAT preprocessing (per-year z-scaling)
+        processed_data = self.preprocessor.apply_pat_preprocessing(
+            raw_data, 
+            user_baseline=await get_user_baseline(user_id)
+        )
+        
+        # Run PAT model inference
+        with torch.no_grad():
+            sleep_stages = self.pat_model.predict_sleep_stages(processed_data)
+            circadian_features = self.pat_model.extract_circadian_features(processed_data)
+        
+        # Generate clinical insights
+        insights = await self.generate_sleep_insights(
+            sleep_stages, circadian_features, user_id
+        )
+        
+        return {
+            "sleep_stages": sleep_stages.tolist(),
+            "circadian_rhythm": circadian_features,
+            "clinical_insights": insights,
+            "depression_risk": self.assess_depression_risk(sleep_stages)
+        }
+```
+
+## Vertical Slice Development Rules
+
+### 1. Always Start with API Contract
+Define the user interaction first, then build backward:
+```python
+# This is what users can do - define this FIRST
+@router.post("/health-data/upload", response_model=UploadResponse)
+async def upload_health_data(
+    data: HealthDataUpload,
+    current_user: User = Depends(get_current_user)
+):
+    # Implementation comes after contract is clear
+    pass
+```
+
+### 2. Build Backwards from User Value
+- Start with the endpoint that delivers user value
+- Work backward through business logic → data models → storage
+- Always maintain the connection to user experience
+
+### 3. Make It Work, Then Make It Right
+- Get the simplest possible implementation working first
+- Add error handling, validation, and optimization incrementally
+- Each commit should maintain a working vertical slice
+
+### 4. Test the Complete Flow
+Every vertical slice must have an integration test that verifies the complete user journey:
+```python
+async def test_complete_health_data_journey():
+    # 1. User uploads data
+    upload_response = await client.post("/api/v1/health-data/upload", 
+        json=sample_data)
+    processing_id = upload_response.json()["processing_id"]
+    
+    # 2. System processes data
+    await asyncio.sleep(2)  # Wait for async processing
+    
+    # 3. User gets insights
+    insights = await client.get(f"/api/v1/insights/daily?processing_id={processing_id}")
+    assert insights.status_code == 200
+    assert "recommendations" in insights.json()
+    
+    # 4. User can chat about data
+    async with client.websocket_connect(f"/chat/{user_id}") as websocket:
+        await websocket.send_text("What does my heart rate data show?")
+        response = await websocket.receive_text()
+        assert "heart rate" in response.lower()
+```
+
+## File Organization per Slice
+
+### Standard Structure:
+```
+src/
+├── api/v1/              # FastAPI routers
+│   ├── __init__.py
+│   ├── health_data.py   # Health data endpoints
+│   ├── insights.py      # Insights endpoints
+│   ├── chat.py          # Chat/WebSocket endpoints
+│   └── auth.py          # Authentication endpoints
+├── models/              # Pydantic models
+│   ├── __init__.py
+│   ├── health_data.py   # Health data models
+│   ├── insights.py      # Insight models
+│   ├── chat.py          # Chat models
+│   └── user.py          # User models
+├── services/            # Business logic
+│   ├── __init__.py
+│   ├── health_data_service.py
+│   ├── insights_service.py
+│   ├── chat_service.py
+│   └── auth_service.py
+├── ml/                  # AI/ML components
+│   ├── __init__.py
+│   ├── gemini_client.py
+│   ├── actigraphy_transformer.py
+│   ├── preprocessing.py
+│   └── conversation_context.py
+├── storage/             # Database/storage
+│   ├── __init__.py
+│   ├── firestore_client.py
+│   ├── cloud_storage.py
+│   └── repositories/
+└── config/              # Configuration
+    ├── __init__.py
+    ├── settings.py
+    └── dependencies.py
+```
+
+### Slice-Specific Files:
+Each vertical slice creates files in ALL layers:
+- `api/v1/{feature}.py` - User interface
+- `models/{feature}.py` - Data validation
+- `services/{feature}_service.py` - Business logic
+- `storage/{feature}_repository.py` - Data persistence
+- `tests/integration/test_{feature}_flow.py` - E2E verification
+
+## Quality Gates per Slice
+
+### 1. Functionality Gate
+- [ ] API endpoint responds correctly
+- [ ] Data is validated and stored
+- [ ] Business logic executes without errors
+- [ ] Integration test passes
+
+### 2. Performance Gate
+- [ ] Response time < 2 seconds for sync operations
+- [ ] Async operations complete < 30 seconds
+- [ ] Memory usage stays within bounds
+- [ ] Database queries are optimized
+
+### 3. Security Gate
+- [ ] Authentication required for protected endpoints
+- [ ] Input validation prevents injection attacks
+- [ ] HIPAA-compliant data handling
+- [ ] Audit logging implemented
+
+### 4. Observability Gate
+- [ ] Comprehensive logging at all levels

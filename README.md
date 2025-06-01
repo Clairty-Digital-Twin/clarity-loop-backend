@@ -10,6 +10,7 @@ Enterprise-grade async-first backend for HealthKit wellness applications with AI
 ## 🚀 Quick Start
 
 ### Prerequisites
+
 - Python 3.11+
 - [uv](https://astral.sh/uv) package manager
 - Google Cloud SDK
@@ -17,6 +18,7 @@ Enterprise-grade async-first backend for HealthKit wellness applications with AI
 - Docker Desktop
 
 ### Installation
+
 ```bash
 # Install uv (modern Python package manager)
 curl -LsSf https://astral.sh/uv/install.sh | sh
@@ -37,6 +39,7 @@ uv run uvicorn src.clarity.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
 ### Docker Development
+
 ```bash
 # Build and run with Docker Compose
 docker-compose up --build
@@ -49,6 +52,7 @@ docker-compose up ml-processor
 ## 🏗️ Architecture Overview
 
 ### Async-First Design
+
 ```
 ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
 │   iOS/watchOS   │───▶│   FastAPI       │───▶│  Cloud Run      │
@@ -69,6 +73,7 @@ docker-compose up ml-processor
 ```
 
 ### Core Services
+
 - **API Gateway** (FastAPI + Cloud Run) - REST endpoints with authentication
 - **ML Processor** (Actigraphy Transformer) - Health data analytics service  
 - **AI Insights** (Gemini 2.5 Pro) - Natural language health recommendations
@@ -78,6 +83,7 @@ docker-compose up ml-processor
 ## 🔐 Security & Compliance
 
 ### HIPAA-Inspired Security
+
 - **End-to-end encryption** with Google Cloud KMS
 - **Zero-trust architecture** with least privilege access
 - **Audit logging** for all health data operations
@@ -85,6 +91,7 @@ docker-compose up ml-processor
 - **Secure networking** via VPC and private endpoints
 
 ### Authentication Flow
+
 ```python
 # Example: Secure health data upload
 @app.post("/api/v1/health-data/upload")
@@ -104,6 +111,7 @@ async def upload_health_data(
 ## 🤖 AI-Powered Features
 
 ### Health Data Chat
+
 Users can interact with their health data through natural language:
 
 **User**: *"How has my sleep quality changed this month?"*
@@ -111,6 +119,7 @@ Users can interact with their health data through natural language:
 **AI Response**: *"Your sleep quality has improved by 15% this month. You're averaging 7.2 hours per night with 85% deep sleep efficiency. Key improvements: consistent bedtime routine and reduced late-evening screen time."*
 
 ### ML Pipeline
+
 1. **Data Ingestion** - Real-time HealthKit data processing
 2. **Actigraphy Analysis** - Sleep stages, activity patterns, circadian rhythm
 3. **Trend Analysis** - Weekly/monthly health pattern recognition  
@@ -120,6 +129,7 @@ Users can interact with their health data through natural language:
 ## 📊 API Documentation
 
 ### Health Data Endpoints
+
 ```http
 POST   /api/v1/health-data/upload     # Upload health data
 GET    /api/v1/health-data/export     # Export user data  
@@ -134,6 +144,7 @@ PUT    /api/v1/user/preferences       # Update preferences
 ```
 
 ### Example Request
+
 ```bash
 curl -X POST "https://api.clarityloop.com/api/v1/health-data/upload" \
   -H "Authorization: Bearer $FIREBASE_TOKEN" \
@@ -151,6 +162,7 @@ curl -X POST "https://api.clarityloop.com/api/v1/health-data/upload" \
 ## 🛠️ Development
 
 ### Project Structure
+
 ```
 clarity-loop-backend/
 ├── src/clarity/               # Main application code
@@ -173,6 +185,7 @@ clarity-loop-backend/
 ```
 
 ### Development Workflow
+
 ```bash
 # Start development environment
 uv sync --extra dev
@@ -195,6 +208,7 @@ uv run uvicorn src.clarity.main:app --reload
 ## 🚢 Deployment
 
 ### Production Deployment
+
 ```bash
 # Deploy to Google Cloud Run
 gcloud run deploy clarity-api \
@@ -211,6 +225,7 @@ gcloud run deploy ml-processor \
 ```
 
 ### Environment Configuration
+
 - **Local**: SQLite + Firebase Emulator
 - **Staging**: Cloud SQL + Firebase Auth
 - **Production**: Firestore + Full Google Cloud stack
@@ -218,11 +233,13 @@ gcloud run deploy ml-processor \
 ## 📈 Monitoring & Observability
 
 ### Health Checks
+
 - **Liveness**: `/health/live` - Basic application health
 - **Readiness**: `/health/ready` - Ready to serve requests
 - **Detailed**: `/health/detailed` - Full dependency status
 
 ### Metrics & Logging
+
 - **Structured logging** with Google Cloud Logging
 - **Distributed tracing** via OpenTelemetry
 - **Custom metrics** for business KPIs
@@ -231,6 +248,7 @@ gcloud run deploy ml-processor \
 ## 📚 Documentation
 
 ### Complete Documentation Suite
+
 - **[Setup Guide](docs/development/setup.md)** - Environment setup and installation
 - **[API Reference](docs/api/)** - Complete API documentation
 - **[Architecture](docs/architecture/)** - System design and patterns
@@ -248,6 +266,7 @@ gcloud run deploy ml-processor \
 5. **Open** a Pull Request
 
 ### Development Standards
+
 - **Test Coverage**: Minimum 80% overall, 95% for critical paths
 - **Code Style**: Black + Ruff for formatting and linting
 - **Type Safety**: Full mypy compliance
@@ -260,10 +279,10 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 🔗 Links
 
-- **Production API**: https://api.clarityloop.com
-- **Documentation**: https://docs.clarityloop.com  
-- **Status Page**: https://status.clarityloop.com
-- **Support**: support@clarityloop.com
+- **Production API**: <https://api.clarityloop.com>
+- **Documentation**: <https://docs.clarityloop.com>  
+- **Status Page**: <https://status.clarityloop.com>
+- **Support**: <support@clarityloop.com>
 
 ---
 

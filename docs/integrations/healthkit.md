@@ -7,6 +7,7 @@ Comprehensive technical guide for seamless HealthKit data ingestion, validation,
 ### Core Data Types
 
 #### Activity & Motion Data
+
 ```python
 # HKQuantityType mappings for actigraphy
 HEALTHKIT_ACTIVITY_TYPES = {
@@ -30,6 +31,7 @@ MOVEMENT_DISORDER_TYPES = {
 ```
 
 #### Heart Rate & Variability
+
 ```python
 HEART_RATE_TYPES = {
     'HKQuantityTypeIdentifierHeartRate': 'heart_rate_bpm',
@@ -46,6 +48,7 @@ ECG_TYPES = {
 ```
 
 #### Sleep & Recovery
+
 ```python
 SLEEP_TYPES = {
     'HKCategoryTypeIdentifierSleepAnalysis': 'sleep_analysis',

@@ -5,6 +5,7 @@ This document outlines monitoring, logging, and observability for the Clarity Lo
 ## Observability Stack
 
 ### Three Pillars of Observability
+
 ```
 ┌─────────────────┬─────────────────┬─────────────────┐
 │     METRICS     │      LOGS       │     TRACES      │
@@ -17,6 +18,7 @@ This document outlines monitoring, logging, and observability for the Clarity Lo
 ```
 
 ### Technology Stack
+
 - **Metrics**: Google Cloud Monitoring (formerly Stackdriver)
 - **Logging**: Google Cloud Logging with structured logs
 - **Tracing**: Google Cloud Trace with OpenTelemetry
@@ -26,6 +28,7 @@ This document outlines monitoring, logging, and observability for the Clarity Lo
 ## Application Monitoring
 
 ### FastAPI Metrics Integration
+
 ```python
 # src/clarity/monitoring/metrics.py
 from prometheus_client import Counter, Histogram, Gauge, generate_latest
@@ -114,6 +117,7 @@ async def metrics():
 ```
 
 ### Business Metrics Tracking
+
 ```python
 # src/clarity/monitoring/business_metrics.py
 from google.cloud import monitoring_v3
@@ -188,6 +192,7 @@ class BusinessMetrics:
 ## Structured Logging
 
 ### Logging Configuration
+
 ```python
 # src/clarity/monitoring/logging.py
 import structlog
@@ -276,6 +281,7 @@ class LoggingMiddleware:
 ```
 
 ### Health Data Processing Logs
+
 ```python
 # src/clarity/monitoring/health_data_logging.py
 import structlog
@@ -350,6 +356,7 @@ class HealthDataLogger:
 ## Distributed Tracing
 
 ### OpenTelemetry Integration
+
 ```python
 # src/clarity/monitoring/tracing.py
 from opentelemetry import trace
@@ -437,6 +444,7 @@ class HealthDataProcessor:
 ## Health Checks & Uptime Monitoring
 
 ### Comprehensive Health Checks
+
 ```python
 # src/clarity/monitoring/health.py
 from fastapi import APIRouter, HTTPException
@@ -587,6 +595,7 @@ async def liveness_check():
 ## Alerting & Incident Response
 
 ### Alert Configuration
+
 ```python
 # src/clarity/monitoring/alerts.py
 from google.cloud import monitoring_v3
@@ -692,6 +701,7 @@ class IncidentResponder:
 ## Performance Monitoring
 
 ### SLA Metrics & Dashboards
+
 ```yaml
 # monitoring/sla_objectives.yaml
 service_level_objectives:
@@ -717,6 +727,7 @@ error_budgets:
 ```
 
 ### Dashboard Configuration
+
 ```python
 # monitoring/dashboards.py
 DASHBOARD_CONFIG = {

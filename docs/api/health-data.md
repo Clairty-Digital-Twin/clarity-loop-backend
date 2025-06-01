@@ -9,6 +9,7 @@ The Health Data API enables iOS and watchOS applications to upload, retrieve, an
 ## Core Concepts
 
 ### Data Types Supported
+
 - **Heart Rate**: BPM measurements with context
 - **Activity**: Steps, distance, calories, workouts
 - **Sleep**: Sleep stages, quality metrics, duration
@@ -17,13 +18,16 @@ The Health Data API enables iOS and watchOS applications to upload, retrieve, an
 - **Health Records**: Clinical data and vitals
 
 ### Data Quality Assessment
+
 All uploaded health data undergoes automatic quality assessment:
+
 - **Physiological Validation**: Range checking against normal human values
 - **Temporal Consistency**: Logical timestamp relationships
 - **Sensor Reliability**: Data source and confidence scoring
 - **Anomaly Detection**: Statistical outlier identification
 
 ### Processing Pipeline
+
 ```mermaid
 graph TD
     A[Health Data Upload] --> B[Input Validation]
@@ -42,6 +46,7 @@ graph TD
 Upload a batch of health data from HealthKit for processing.
 
 #### Request
+
 ```http
 POST /v1/health/data/upload
 Content-Type: application/json
@@ -137,6 +142,7 @@ Authorization: Bearer <firebase-jwt-token>
 ```
 
 #### Response (Immediate Acknowledgment)
+
 ```json
 {
   "success": true,
@@ -170,6 +176,7 @@ Authorization: Bearer <firebase-jwt-token>
 ```
 
 #### Validation Errors
+
 ```json
 {
   "error": {
@@ -198,12 +205,14 @@ Authorization: Bearer <firebase-jwt-token>
 Check the status of a health data processing job.
 
 #### Request
+
 ```http
 GET /v1/health/data/processing/{job_id}
 Authorization: Bearer <firebase-jwt-token>
 ```
 
 #### Response
+
 ```json
 {
   "success": true,
@@ -250,12 +259,14 @@ Authorization: Bearer <firebase-jwt-token>
 Retrieve a list of health data sessions for the authenticated user.
 
 #### Request
+
 ```http
 GET /v1/health/data/sessions?start_date=2024-01-15&end_date=2024-01-20&limit=20&offset=0
 Authorization: Bearer <firebase-jwt-token>
 ```
 
 #### Query Parameters
+
 - `start_date` (optional): Filter sessions from this date (ISO 8601)
 - `end_date` (optional): Filter sessions to this date (ISO 8601)
 - `data_types` (optional): Comma-separated list (heart_rate,activity,sleep)
@@ -264,6 +275,7 @@ Authorization: Bearer <firebase-jwt-token>
 - `quality_min` (optional): Minimum data quality score (0.0-1.0)
 
 #### Response
+
 ```json
 {
   "success": true,
@@ -305,12 +317,14 @@ Authorization: Bearer <firebase-jwt-token>
 Retrieve detailed data for a specific health session.
 
 #### Request
+
 ```http
 GET /v1/health/data/session/{session_id}
 Authorization: Bearer <firebase-jwt-token>
 ```
 
 #### Response
+
 ```json
 {
   "success": true,
@@ -376,6 +390,7 @@ Authorization: Bearer <firebase-jwt-token>
 Export health data in various formats for user download or sharing.
 
 #### Request
+
 ```http
 POST /v1/health/data/export
 Content-Type: application/json
@@ -398,6 +413,7 @@ Authorization: Bearer <firebase-jwt-token>
 ```
 
 #### Response (Async Job)
+
 ```json
 {
   "success": true,
@@ -416,6 +432,7 @@ Authorization: Bearer <firebase-jwt-token>
 Delete a specific health data session and all associated data.
 
 #### Request
+
 ```http
 DELETE /v1/health/data/session/{session_id}
 Authorization: Bearer <firebase-jwt-token>
@@ -430,6 +447,7 @@ Authorization: Bearer <firebase-jwt-token>
 ```
 
 #### Response
+
 ```json
 {
   "success": true,
@@ -449,6 +467,7 @@ Authorization: Bearer <firebase-jwt-token>
 ## Data Validation Rules
 
 ### Heart Rate Validation
+
 ```python
 from pydantic import BaseModel, validator
 from typing import Optional, List
@@ -480,6 +499,7 @@ class HeartRateData(BaseModel):
 ```
 
 ### Activity Data Validation
+
 ```python
 class ActivityData(BaseModel):
     timestamp: datetime
@@ -508,6 +528,7 @@ class ActivityData(BaseModel):
 ```
 
 ### Sleep Data Validation
+
 ```python
 class SleepStage(BaseModel):
     start_time: datetime
@@ -536,6 +557,7 @@ class SleepStage(BaseModel):
 ## Data Quality Assessment
 
 ### Quality Scoring Algorithm
+
 ```python
 class DataQualityAssessor:
     """Assess health data quality using multiple criteria"""
@@ -591,6 +613,7 @@ class DataQualityAssessor:
 ```
 
 ### Quality Issues Detection
+
 ```python
 class QualityIssueDetector:
     """Detect and classify data quality issues"""
@@ -644,21 +667,25 @@ class QualityIssueDetector:
 When creating synthetic test data or fixtures, apply these binary classification rules derived from PAT research (pp 23-25):
 
 #### Depression Classification
+
 - **Rule**: PHQ-9 score ≥ 10
 - **Implementation**: Sum all PHQ-9 questionnaire responses; label as depression if total ≥ 10
 - **Test fixture usage**: Generate synthetic users with known PHQ-9 scores to validate depression detection
 
 #### Sleep Abnormality Classification  
+
 - **Rule**: Daily sleep duration > 12 hours OR < 5 hours
 - **Implementation**: Calculate average daily sleep from HealthKit sleep analysis data
 - **Test fixture usage**: Create sleep data with various durations to test abnormality detection
 
 #### Sleep Disorder Classification
+
 - **Rule**: Self-reported sleep disorder diagnosis flag in health records
 - **Implementation**: Check user health profile for sleep disorder diagnosis boolean
 - **Test fixture usage**: Generate user profiles with known sleep disorder status
 
 #### Implementation Example
+
 ```python
 def create_test_fixtures_with_labels():
     """Create synthetic test data with known ground truth labels"""
@@ -688,12 +715,14 @@ def create_test_fixtures_with_labels():
 ## Rate Limiting and Quotas
 
 ### Upload Rate Limits
+
 - **Individual Uploads**: 100 per hour per user
 - **Batch Size**: Maximum 1000 data points per upload
 - **Total Data**: 10MB per hour per user
 - **Concurrent Uploads**: 5 simultaneous uploads per user
 
 ### Query Rate Limits
+
 - **Session Queries**: 300 per hour per user
 - **Export Requests**: 10 per day per user
 - **Status Checks**: 1000 per hour per user
@@ -703,6 +732,7 @@ def create_test_fixtures_with_labels():
 ### Common Error Scenarios
 
 #### Data Validation Errors
+
 ```json
 {
   "error": {
@@ -730,6 +760,7 @@ def create_test_fixtures_with_labels():
 ```
 
 #### Processing Errors
+
 ```json
 {
   "error": {

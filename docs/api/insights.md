@@ -9,24 +9,28 @@ The Insights API leverages the Actigraphy Transformer ML model and Gemini 2.5 Pr
 ## Insight Types and Levels
 
 ### 1. Real-time Insights
+
 - **Immediate feedback** on current activity
 - **Heart rate zone** notifications
 - **Workout performance** metrics
 - **Sleep disturbance** alerts
 
 ### 2. Daily Insights
+
 - **Comprehensive daily summaries** of all health metrics
 - **Achievement recognition** and goal progress
 - **Personalized recommendations** for improvement
 - **Comparative analysis** with previous days
 
 ### 3. Weekly/Monthly Trends
+
 - **Pattern recognition** in sleep, activity, and recovery
 - **Long-term trend analysis** with statistical significance
 - **Behavioral correlations** between different metrics
 - **Predictive insights** for health optimization
 
 ### 4. Personalized Coaching
+
 - **Adaptive recommendations** based on user patterns
 - **Goal setting** with realistic targets
 - **Intervention suggestions** for health improvement
@@ -52,11 +56,13 @@ graph TD
 The insights pipeline leverages Google's Gemini 2.5 Pro LLM for natural language generation from structured ML outputs:
 
 ### Input Processing
+
 - **PAT Model Output**: Structured embeddings and predictions from Actigraphy Transformer
 - **Context Injection**: User profile, historical patterns, and temporal context
 - **Prompt Engineering**: Research-validated prompts for health insight generation
 
 ### LLM Configuration
+
 ```python
 # Gemini 2.5 Pro Configuration (from PAT paper implementation)
 gemini_config = {
@@ -88,6 +94,7 @@ Previous context: {previous_insights}
 ```
 
 ### Output Processing
+
 - **Fact Verification**: Cross-validation against clinical thresholds
 - **Tone Adjustment**: Positive framing while maintaining clinical accuracy
 - **Personalization**: Integration with user goals and preferences
@@ -100,21 +107,25 @@ Previous context: {previous_insights}
 Retrieve comprehensive daily health insights for a specific date.
 
 #### Request
+
 ```http
 GET /v1/insights/daily/{date}
 Authorization: Bearer <firebase-jwt-token>
 ```
 
 #### Path Parameters
+
 - `date` (required): Date in YYYY-MM-DD format
 
 #### Query Parameters
+
 - `include_raw_metrics` (optional): Include raw metric summaries (default: false)
 - `include_recommendations` (optional): Include actionable recommendations (default: true)
 - `language` (optional): Language code for insights (default: en)
 - `detail_level` (optional): brief|standard|detailed (default: standard)
 
 #### Response
+
 ```json
 {
   "success": true,
@@ -254,15 +265,18 @@ Authorization: Bearer <firebase-jwt-token>
 Retrieve weekly health trends and pattern analysis.
 
 #### Request
+
 ```http
 GET /v1/insights/weekly/{week}
 Authorization: Bearer <firebase-jwt-token>
 ```
 
 #### Path Parameters
+
 - `week` (required): Week in YYYY-WXX format (e.g., 2024-W03)
 
 #### Response
+
 ```json
 {
   "success": true,
@@ -329,18 +343,21 @@ Authorization: Bearer <firebase-jwt-token>
 Retrieve long-term health trends and predictive insights.
 
 #### Request
+
 ```http
 GET /v1/insights/trends?period=3months&metrics=sleep,activity,heart_rate
 Authorization: Bearer <firebase-jwt-token>
 ```
 
 #### Query Parameters
+
 - `period` (required): 1month|3months|6months|1year
 - `metrics` (optional): Comma-separated list of metrics to analyze
 - `include_predictions` (optional): Include predictive insights (default: true)
 - `confidence_threshold` (optional): Minimum confidence for trends (default: 0.7)
 
 #### Response
+
 ```json
 {
   "success": true,
@@ -443,6 +460,7 @@ Authorization: Bearer <firebase-jwt-token>
 Trigger generation of custom insights based on specific queries or focus areas.
 
 #### Request
+
 ```http
 POST /v1/insights/generate
 Content-Type: application/json
@@ -469,6 +487,7 @@ Authorization: Bearer <firebase-jwt-token>
 ```
 
 #### Response (Async Processing)
+
 ```json
 {
   "success": true,
@@ -493,12 +512,14 @@ Authorization: Bearer <firebase-jwt-token>
 Check the status of a custom insight generation job.
 
 #### Request
+
 ```http
 GET /v1/insights/generate/{job_id}
 Authorization: Bearer <firebase-jwt-token>
 ```
 
 #### Response
+
 ```json
 {
   "success": true,
@@ -530,6 +551,7 @@ Authorization: Bearer <firebase-jwt-token>
 ## Insight Personalization
 
 ### User Context Integration
+
 The insights engine considers multiple personalization factors:
 
 ```json
@@ -563,6 +585,7 @@ The insights engine considers multiple personalization factors:
 ```
 
 ### Adaptive Recommendations
+
 Recommendations evolve based on user response and progress:
 
 ```python
@@ -605,6 +628,7 @@ class AdaptiveRecommendationEngine:
 ## Real-time Insight Streaming
 
 ### WebSocket Connection for Live Insights
+
 ```javascript
 // JavaScript client example
 const insightSocket = new WebSocket('wss://api.clarityloop.com/v1/insights/stream');
@@ -635,6 +659,7 @@ insightSocket.onmessage = function(event) {
 ```
 
 ### Real-time Insight Types
+
 ```json
 {
   "real_time_insights": [
@@ -669,6 +694,7 @@ insightSocket.onmessage = function(event) {
 ## Error Handling and Edge Cases
 
 ### Insufficient Data Scenarios
+
 ```json
 {
   "error": {
@@ -685,6 +711,7 @@ insightSocket.onmessage = function(event) {
 ```
 
 ### Model Processing Errors
+
 ```json
 {
   "error": {
@@ -706,12 +733,14 @@ insightSocket.onmessage = function(event) {
 ## Performance and Caching
 
 ### Response Caching Strategy
+
 - **Daily Insights**: 6-hour cache (regenerated overnight)
 - **Weekly Insights**: 24-hour cache
 - **Trend Analysis**: 48-hour cache
 - **Real-time Insights**: No caching (live generation)
 
 ### Performance Characteristics
+
 - **Daily Insight Generation**: 30-60 seconds
 - **Weekly Analysis**: 2-5 minutes
 - **Trend Analysis**: 5-10 minutes

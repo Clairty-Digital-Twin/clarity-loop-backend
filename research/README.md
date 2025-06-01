@@ -27,6 +27,7 @@ This directory contains research repositories and reference materials used in th
 ### Citation
 
 If you use this research in publications, please cite:
+
 ```
 @article{jacobson2024foundation,
   title={AI Foundation Models for Wearable Movement Data in Mental Health Research},

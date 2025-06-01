@@ -5,6 +5,7 @@ This guide covers the complete deployment process for the Clarity Loop Backend a
 ## Overview
 
 ### Deployment Architecture
+
 ```
 ┌─────────────────────────────────────────────────────────────────┐
 │                    Multi-Environment Architecture                │
@@ -30,6 +31,7 @@ This guide covers the complete deployment process for the Clarity Loop Backend a
 ```
 
 ### Deployment Strategy
+
 - **Blue-Green Deployment**: Zero-downtime deployments with automatic rollback
 - **Canary Releases**: Gradual traffic shifting for production deployments
 - **Infrastructure as Code**: All infrastructure managed via Terraform
@@ -38,6 +40,7 @@ This guide covers the complete deployment process for the Clarity Loop Backend a
 ## Prerequisites
 
 ### Required Access and Permissions
+
 ```bash
 # Google Cloud Platform access required
 - clarity-loop-dev: Editor role
@@ -54,6 +57,7 @@ This guide covers the complete deployment process for the Clarity Loop Backend a
 ```
 
 ### Required Tools
+
 ```bash
 # Install deployment tools
 pip install google-cloud-build google-cloud-run
@@ -69,6 +73,7 @@ firebase login
 ## Environment Configuration
 
 ### Development Environment (clarity-loop-dev)
+
 ```yaml
 # .env.development
 ENVIRONMENT=development
@@ -100,6 +105,7 @@ CORS_ORIGINS=["https://dev.clarityloop.com", "http://localhost:3000"]
 ```
 
 ### Staging Environment (clarity-loop-staging)
+
 ```yaml
 # .env.staging
 ENVIRONMENT=staging
@@ -130,6 +136,7 @@ CORS_ORIGINS=["https://staging.clarityloop.com"]
 ```
 
 ### Production Environment (clarity-loop-prod)
+
 ```yaml
 # .env.production
 ENVIRONMENT=production
@@ -162,6 +169,7 @@ CORS_ORIGINS=["https://app.clarityloop.com"]
 ## CI/CD Pipeline
 
 ### GitHub Actions Workflow
+
 ```yaml
 # .github/workflows/deploy.yml
 name: Deploy Clarity Backend
@@ -292,6 +300,7 @@ jobs:
 ## Manual Deployment Process
 
 ### Development Deployment
+
 ```bash
 # 1. Authenticate and set project
 gcloud config set project clarity-loop-dev
@@ -320,6 +329,7 @@ curl https://clarity-backend-dev-XXXXXXXXXX-uc.a.run.app/health
 ```
 
 ### Staging Deployment
+
 ```bash
 # 1. Set staging project
 gcloud config set project clarity-loop-staging
@@ -348,6 +358,7 @@ python scripts/staging-tests.py
 ```
 
 ### Production Deployment (Blue-Green)
+
 ```bash
 # 1. Set production project
 gcloud config set project clarity-loop-prod
@@ -389,6 +400,7 @@ curl https://clarity-backend-prod-XXXXXXXXXX-uc.a.run.app/health
 ## Infrastructure as Code
 
 ### Terraform Configuration
+
 ```hcl
 # terraform/main.tf
 terraform {
@@ -531,6 +543,7 @@ resource "google_kms_crypto_key" "storage_key" {
 ```
 
 ### Environment-Specific Variables
+
 ```hcl
 # terraform/environments/prod/terraform.tfvars
 project_id     = "clarity-loop-prod"
@@ -552,6 +565,7 @@ env_vars = {
 ## Database Migrations
 
 ### Firestore Schema Management
+
 ```python
 # scripts/migrate_firestore.py
 import asyncio
@@ -642,6 +656,7 @@ if __name__ == "__main__":
 ## Deployment Scripts
 
 ### Automated Deployment Script
+
 ```bash
 #!/bin/bash
 # scripts/deploy.sh
@@ -757,6 +772,7 @@ echo "📚 API Docs: $SERVICE_URL/docs"
 ## Monitoring and Alerting
 
 ### Health Check Configuration
+
 ```python
 # src/health.py
 from fastapi import APIRouter, HTTPException
@@ -827,6 +843,7 @@ async def liveness_check():
 ## Rollback Procedures
 
 ### Automatic Rollback Script
+
 ```bash
 #!/bin/bash
 # scripts/rollback.sh
@@ -888,6 +905,7 @@ echo "🎉 Rollback successful and service is healthy"
 ## Security Considerations
 
 ### Deployment Security Checklist
+
 - [ ] Service accounts use least privilege permissions
 - [ ] Secrets managed via Google Secret Manager
 - [ ] Container images scanned for vulnerabilities
@@ -898,6 +916,7 @@ echo "🎉 Rollback successful and service is healthy"
 - [ ] IAM policies reviewed and approved
 
 ### Secret Management
+
 ```bash
 # Store secrets in Secret Manager
 gcloud secrets create jwt-secret-key --data-file=jwt-key.txt

@@ -350,6 +350,7 @@ kill -9 PID
 ### VS Code (Recommended)
 
 Install these extensions:
+
 - Python (Microsoft)
 - Pylance (Microsoft)
 - Ruff (Astral Software)
@@ -357,6 +358,7 @@ Install these extensions:
 - Firebase (Firebase)
 
 Workspace settings (`.vscode/settings.json`):
+
 ```json
 {
   "python.defaultInterpreterPath": "./.venv/bin/python",

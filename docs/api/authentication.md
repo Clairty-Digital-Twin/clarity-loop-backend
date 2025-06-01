@@ -9,6 +9,7 @@ The authentication system is built on Firebase Authentication with custom claims
 ## Authentication Flow
 
 ### 1. Client Authentication
+
 ```mermaid
 sequenceDiagram
     participant iOS as iOS App
@@ -27,6 +28,7 @@ sequenceDiagram
 ```
 
 ### 2. Token Lifecycle
+
 - **Initial Token**: 1-hour expiration
 - **Refresh Token**: 30-day expiration (renewable)
 - **Custom Claims**: Updated on profile changes
@@ -39,6 +41,7 @@ sequenceDiagram
 Verify a Firebase authentication token and return user information.
 
 #### Request
+
 ```http
 POST /v1/auth/token/verify
 Content-Type: application/json
@@ -53,6 +56,7 @@ Authorization: Bearer <firebase-jwt-token>
 ```
 
 #### Response
+
 ```json
 {
   "success": true,
@@ -82,6 +86,7 @@ Authorization: Bearer <firebase-jwt-token>
 ```
 
 #### Error Responses
+
 ```json
 {
   "error": {
@@ -101,6 +106,7 @@ Authorization: Bearer <firebase-jwt-token>
 Refresh an expired or near-expiring authentication token.
 
 #### Request
+
 ```http
 POST /v1/auth/token/refresh
 Content-Type: application/json
@@ -115,6 +121,7 @@ Authorization: Bearer <firebase-jwt-token>
 ```
 
 #### Response
+
 ```json
 {
   "success": true,
@@ -136,12 +143,14 @@ Authorization: Bearer <firebase-jwt-token>
 Retrieve the authenticated user's profile information.
 
 #### Request
+
 ```http
 GET /v1/auth/user/profile
 Authorization: Bearer <firebase-jwt-token>
 ```
 
 #### Response
+
 ```json
 {
   "success": true,
@@ -184,6 +193,7 @@ Authorization: Bearer <firebase-jwt-token>
 Invalidate the current authentication session.
 
 #### Request
+
 ```http
 DELETE /v1/auth/logout
 Authorization: Bearer <firebase-jwt-token>
@@ -197,6 +207,7 @@ Authorization: Bearer <firebase-jwt-token>
 ```
 
 #### Response
+
 ```json
 {
   "success": true,
@@ -211,6 +222,7 @@ Authorization: Bearer <firebase-jwt-token>
 ## Custom Claims Management
 
 ### Claim Structure
+
 ```json
 {
   "custom_claims": {
@@ -245,6 +257,7 @@ Authorization: Bearer <firebase-jwt-token>
 | **Admin** | All data | System config | All insights | All data | Full access |
 
 ### Claim Validation
+
 ```python
 from functools import wraps
 from fastapi import HTTPException, Depends
@@ -284,6 +297,7 @@ async def get_health_data(user_id: str, current_user: User = Depends(get_current
 ## Security Implementation
 
 ### Token Validation Process
+
 ```python
 import jwt
 from google.auth.transport import requests
@@ -337,12 +351,14 @@ class FirebaseTokenValidator:
 ### Rate Limiting for Auth Endpoints
 
 #### Rate Limits
+
 - **Token Verification**: 100 requests/minute per user
 - **Token Refresh**: 10 requests/minute per user
 - **Profile Access**: 60 requests/minute per user
 - **Logout**: 10 requests/minute per user
 
 #### Implementation
+
 ```python
 from fastapi import HTTPException
 from slowapi import Limiter, _rate_limit_exceeded_handler
@@ -378,6 +394,7 @@ async def refresh_token(request: Request, refresh_data: TokenRefreshRequest):
 | `RATE_LIMIT_EXCEEDED` | 429 | Too many auth requests | Wait and retry |
 
 ### Error Response Format
+
 ```json
 {
   "error": {
@@ -398,6 +415,7 @@ async def refresh_token(request: Request, refresh_data: TokenRefreshRequest):
 ## Client Integration Examples
 
 ### iOS Swift Integration
+
 ```swift
 import FirebaseAuth
 import Foundation
@@ -443,6 +461,7 @@ class ClarityAuthManager {
 ```
 
 ### Error Handling
+
 ```swift
 enum AuthError: Error, LocalizedError {
     case notAuthenticated
@@ -471,6 +490,7 @@ enum AuthError: Error, LocalizedError {
 ## Testing Authentication
 
 ### Test Token Generation
+
 ```python
 # For testing purposes only
 import jwt
@@ -506,6 +526,7 @@ def generate_test_token(user_id: str, custom_claims: dict = None) -> str:
 ```
 
 ### Authentication Test Cases
+
 ```python
 import pytest
 from httpx import AsyncClient

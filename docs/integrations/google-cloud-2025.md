@@ -5,6 +5,7 @@ Modern Google Cloud architecture patterns and best practices for the Clarity Loo
 ## Cloud Run Best Practices
 
 ### Service Configuration
+
 ```yaml
 # service.yaml - Modern Cloud Run configuration
 apiVersion: serving.knative.dev/v1
@@ -40,6 +41,7 @@ spec:
 ```
 
 ### Performance Optimization
+
 ```python
 # Startup optimization for 2025
 import asyncio
@@ -64,6 +66,7 @@ app = FastAPI(lifespan=lifespan)
 ## Firestore Advanced Patterns
 
 ### Document Design 2025
+
 ```javascript
 // Optimal document structure for health data
 {
@@ -95,6 +98,7 @@ app = FastAPI(lifespan=lifespan)
 ```
 
 ### Query Optimization
+
 ```python
 # Efficient Firestore queries
 async def get_user_insights_optimized(user_id: str, days: int = 7):
@@ -115,6 +119,7 @@ async def get_user_insights_optimized(user_id: str, days: int = 7):
 ## Pub/Sub Modern Patterns
 
 ### Message Schema 2025
+
 ```python
 # CloudEvents compliant message format
 @dataclass
@@ -129,6 +134,7 @@ class HealthKitMessage:
 ```
 
 ### Push Subscription with Cloud Run
+
 ```python
 # Modern push endpoint
 @app.post("/pubsub/healthkit-process")
@@ -164,6 +170,7 @@ async def process_healthkit_message(request: Request):
 ## IAM & Security 2025
 
 ### Service Account Patterns
+
 ```bash
 # Minimal privilege service accounts
 gcloud iam service-accounts create clarity-api-gateway \
@@ -180,6 +187,7 @@ gcloud projects add-iam-policy-binding PROJECT_ID \
 ```
 
 ### Workload Identity Federation
+
 ```yaml
 # Modern authentication without service account keys
 apiVersion: v1
@@ -193,6 +201,7 @@ metadata:
 ## Monitoring & Observability
 
 ### Custom Metrics 2025
+
 ```python
 # OpenTelemetry integration
 from opentelemetry import trace, metrics
@@ -225,6 +234,7 @@ async def metrics_middleware(request: Request, call_next):
 ```
 
 ### SLI/SLO Dashboard
+
 ```yaml
 # monitoring/slo-config.yaml
 displayName: "Clarity Backend SLOs"
@@ -241,6 +251,7 @@ serviceLevelObjectives:
 ## Vertex AI Integration
 
 ### Model Deployment 2025
+
 ```python
 # Modern Vertex AI client
 from google.cloud import aiplatform
@@ -277,6 +288,7 @@ async def get_pat_predictions(features: Dict[str, Any]) -> Dict[str, Any]:
 ## Cost Optimization 2025
 
 ### Resource Management
+
 ```python
 # Smart scaling based on usage patterns
 @app.on_event("startup")
@@ -296,6 +308,7 @@ async def configure_scaling():
 ```
 
 ### Storage Lifecycle
+
 ```bash
 # Automatic data lifecycle management
 gsutil lifecycle set - gs://clarity-health-data <<EOF
@@ -321,6 +334,7 @@ EOF
 ## Terraform Configuration
 
 ### Modern Infrastructure as Code
+
 ```hcl
 # terraform/main.tf - 2025 patterns
 resource "google_cloud_run_v2_service" "api_gateway" {

@@ -5,18 +5,21 @@ This document outlines the comprehensive security architecture for Clarity Loop 
 ## Security Design Principles
 
 ### 1. Zero-Trust Architecture
+
 - **Never Trust, Always Verify**: No implicit trust between any components
 - **Least Privilege Access**: Minimal necessary permissions for all entities
 - **Continuous Verification**: Ongoing authentication and authorization
 - **Assume Breach**: Design for compromise detection and containment
 
 ### 2. Defense in Depth
+
 - **Multiple Security Layers**: Redundant security controls at every level
 - **Network Segmentation**: Isolated security zones and micro-perimeters
 - **Application Security**: Secure coding practices and runtime protection
 - **Data Protection**: Encryption, masking, and access controls
 
 ### 3. Privacy by Design
+
 - **Data Minimization**: Collect only necessary health data
 - **Purpose Limitation**: Use data only for stated purposes
 - **Consent Management**: Granular user consent and control
@@ -27,6 +30,7 @@ This document outlines the comprehensive security architecture for Clarity Loop 
 ### Firebase Identity Platform Integration
 
 #### User Authentication Flow
+
 ```
 iOS/watchOS App → Firebase Auth → Custom Claims → API Gateway
                        ↓
@@ -36,12 +40,14 @@ iOS/watchOS App → Firebase Auth → Custom Claims → API Gateway
 ```
 
 #### Supported Authentication Methods
+
 - **Sign in with Apple**: Primary authentication for iOS users
 - **Google Authentication**: Secondary option with enhanced security
 - **Email/Password**: Backup authentication with strong password policies
 - **Multi-Factor Authentication**: TOTP, SMS, and biometric options
 
 #### Security Features
+
 - **Account Protection**: Suspicious activity detection and account lockout
 - **Session Management**: Secure token lifecycle and refresh policies
 - **Device Binding**: Optional device registration and verification
@@ -50,6 +56,7 @@ iOS/watchOS App → Firebase Auth → Custom Claims → API Gateway
 ### Service-to-Service Authentication
 
 #### Workload Identity Federation
+
 ```
 Cloud Run Service → Service Account → Workload Identity → GCP APIs
                          ↓
@@ -57,6 +64,7 @@ Cloud Run Service → Service Account → Workload Identity → GCP APIs
 ```
 
 #### Service Account Management
+
 - **Principle of Least Privilege**: Minimal necessary permissions
 - **Key Rotation**: Automated service account key rotation
 - **Impersonation**: Short-lived token impersonation
@@ -67,6 +75,7 @@ Cloud Run Service → Service Account → Workload Identity → GCP APIs
 ### Role-Based Access Control (RBAC)
 
 #### User Roles
+
 ```json
 {
   "patient": {
@@ -89,6 +98,7 @@ Cloud Run Service → Service Account → Workload Identity → GCP APIs
 ```
 
 #### Permission Model
+
 - **Resource-Based**: Permissions tied to specific data resources
 - **Contextual**: Time, location, and device-based access controls
 - **Hierarchical**: Inherited permissions from parent resources
@@ -97,6 +107,7 @@ Cloud Run Service → Service Account → Workload Identity → GCP APIs
 ### API Authorization
 
 #### JWT Token Validation
+
 ```python
 # Pseudo-code for token validation flow
 async def validate_token(token: str) -> TokenClaims:
@@ -118,6 +129,7 @@ async def validate_token(token: str) -> TokenClaims:
 ```
 
 #### Resource-Level Authorization
+
 - **Path-Based**: URL path pattern matching for resource access
 - **Method-Based**: HTTP method restrictions per resource
 - **Data-Level**: Row and column-level data access controls
@@ -128,18 +140,21 @@ async def validate_token(token: str) -> TokenClaims:
 ### Encryption Strategy
 
 #### Encryption at Rest
+
 - **Database Encryption**: AES-256 encryption for all Firestore data
 - **Storage Encryption**: Customer-managed encryption keys (CMEK) for Cloud Storage
 - **Key Management**: Cloud KMS for encryption key lifecycle
 - **Backup Encryption**: Encrypted backups with separate key management
 
 #### Encryption in Transit
+
 - **TLS 1.3**: All network communication encrypted with latest TLS
 - **Certificate Management**: Automated SSL certificate lifecycle
 - **Perfect Forward Secrecy**: Ephemeral key exchange for session security
 - **HSTS**: HTTP Strict Transport Security enforcement
 
 #### Application-Level Encryption
+
 ```python
 # Client-side encryption for sensitive health data
 from cryptography.fernet import Fernet
@@ -164,12 +179,14 @@ class HealthDataEncryption:
 ### Data Classification and Handling
 
 #### Health Data Classification
+
 - **PHI (Protected Health Information)**: HIPAA-defined identifiable health data
 - **De-identified Data**: Anonymized data for research and analytics
 - **Aggregate Data**: Statistical data without individual identification
 - **System Data**: Non-health operational and performance data
 
 #### Data Handling Policies
+
 ```yaml
 data_policies:
   phi_data:
@@ -199,6 +216,7 @@ data_policies:
 ### VPC Architecture
 
 #### Network Segmentation
+
 ```
 Internet → Cloud Load Balancer → WAF → Cloud Armor
     ↓
@@ -210,6 +228,7 @@ Database Subnet → Firestore/Cloud SQL (Private)
 ```
 
 #### Firewall Rules
+
 - **Ingress Controls**: Strict inbound traffic filtering
 - **Egress Controls**: Outbound traffic monitoring and restriction
 - **Service-to-Service**: Internal communication controls
@@ -218,12 +237,14 @@ Database Subnet → Firestore/Cloud SQL (Private)
 ### Web Application Firewall (WAF)
 
 #### Cloud Armor Configuration
+
 - **OWASP Top 10 Protection**: Automated protection against common vulnerabilities
 - **Rate Limiting**: Request rate limits per IP and user
 - **Geographic Filtering**: Country and region-based access controls
 - **Custom Rules**: Application-specific attack pattern detection
 
 #### DDoS Protection
+
 - **Infrastructure Protection**: Google's global DDoS protection
 - **Application Layer**: Layer 7 DDoS mitigation
 - **Adaptive Protection**: Machine learning-based attack detection
@@ -234,12 +255,14 @@ Database Subnet → Firestore/Cloud SQL (Private)
 ### Secure Development Practices
 
 #### Code Security
+
 - **Static Analysis**: Automated code security scanning (Snyk, SonarQube)
 - **Dependency Scanning**: Third-party library vulnerability detection
 - **Secret Scanning**: Prevention of hardcoded secrets in code
 - **Security Linting**: Real-time security issue detection
 
 #### Input Validation
+
 ```python
 from pydantic import BaseModel, validator
 from typing import Optional
@@ -270,6 +293,7 @@ class HealthDataInput(BaseModel):
 ```
 
 #### API Security
+
 - **Rate Limiting**: Per-endpoint and user-based rate limits
 - **Request Size Limits**: Maximum payload size enforcement
 - **Timeout Controls**: Request timeout and connection limits
@@ -278,12 +302,14 @@ class HealthDataInput(BaseModel):
 ### Runtime Security
 
 #### Container Security
+
 - **Minimal Base Images**: Distroless container images
 - **Vulnerability Scanning**: Continuous container image scanning
 - **Runtime Monitoring**: Container behavior analysis
 - **Immutable Infrastructure**: Read-only container filesystems
 
 #### Secret Management
+
 - **Cloud Secret Manager**: Centralized secret storage and rotation
 - **Environment Variables**: Secure injection at runtime
 - **Key Rotation**: Automated secret rotation policies
@@ -294,18 +320,21 @@ class HealthDataInput(BaseModel):
 ### HIPAA-Inspired Controls
 
 #### Administrative Safeguards
+
 - **Security Officer**: Designated security responsibility
 - **Workforce Training**: Regular security awareness training
 - **Access Management**: Formal access request and approval process
 - **Incident Response**: Documented incident response procedures
 
 #### Physical Safeguards
+
 - **Google Cloud Security**: Inherited physical security controls
 - **Workstation Security**: Secure development environment requirements
 - **Media Controls**: Secure data storage and disposal
 - **Access Controls**: Physical access logging and monitoring
 
 #### Technical Safeguards
+
 - **Access Control**: Unique user identification and authentication
 - **Audit Controls**: Comprehensive audit trail generation
 - **Integrity**: Data integrity verification and protection
@@ -314,6 +343,7 @@ class HealthDataInput(BaseModel):
 ### Audit Trail Management
 
 #### Log Categories
+
 ```yaml
 audit_logs:
   authentication:
@@ -338,6 +368,7 @@ audit_logs:
 ```
 
 #### Audit Trail Protection
+
 - **Immutable Logs**: Write-once audit log storage
 - **Cryptographic Integrity**: Hash chains for log integrity verification
 - **Separate Storage**: Audit logs stored separately from application data
@@ -346,12 +377,14 @@ audit_logs:
 ## Incident Response
 
 ### Security Incident Classification
+
 - **P0 - Critical**: Data breach or system compromise
 - **P1 - High**: Security vulnerability exploitation
 - **P2 - Medium**: Policy violation or suspicious activity
 - **P3 - Low**: Security configuration issue
 
 ### Response Procedures
+
 1. **Detection**: Automated monitoring and alerting
 2. **Assessment**: Rapid impact and scope assessment
 3. **Containment**: Immediate threat containment measures
@@ -360,6 +393,7 @@ audit_logs:
 6. **Lessons Learned**: Post-incident review and improvement
 
 ### Breach Notification
+
 - **User Notification**: Affected user notification within 24 hours
 - **Regulatory Reporting**: Compliance with applicable regulations
 - **Documentation**: Complete incident documentation and timeline
@@ -368,18 +402,21 @@ audit_logs:
 ## Security Monitoring
 
 ### Continuous Monitoring
+
 - **Security Information and Event Management (SIEM)**: Cloud Security Command Center
 - **Behavioral Analytics**: User and entity behavior analysis
 - **Threat Intelligence**: Integration with threat intelligence feeds
 - **Vulnerability Management**: Continuous vulnerability assessment
 
 ### Key Security Metrics
+
 - **Authentication Success Rate**: Failed login attempt monitoring
 - **API Abuse Detection**: Unusual API usage pattern detection
 - **Data Access Patterns**: Abnormal data access behavior
 - **System Performance**: Security control performance impact
 
 ### Alerting and Response
+
 - **Real-time Alerts**: Critical security event notifications
 - **Escalation Procedures**: Tiered response escalation
 - **Automated Response**: Immediate threat mitigation actions

@@ -5,6 +5,7 @@ This guide provides step-by-step instructions for setting up the Clarity Loop Ba
 ## Prerequisites
 
 ### System Requirements
+
 - **Operating System**: macOS 10.15+, Ubuntu 18.04+, or Windows 10+
 - **Memory**: Minimum 8GB RAM (16GB recommended)
 - **Storage**: 20GB available disk space
@@ -13,6 +14,7 @@ This guide provides step-by-step instructions for setting up the Clarity Loop Ba
 ### Required Software
 
 #### 1. Python 3.9+
+
 ```bash
 # macOS (using Homebrew)
 brew install python@3.9
@@ -29,6 +31,7 @@ python3 --version  # Should show 3.9.x or higher
 ```
 
 #### 2. Google Cloud SDK
+
 ```bash
 # macOS
 brew install --cask google-cloud-sdk
@@ -46,6 +49,7 @@ gcloud --version
 ```
 
 #### 3. Firebase CLI
+
 ```bash
 # Install via npm (requires Node.js)
 npm install -g firebase-tools
@@ -58,6 +62,7 @@ firebase --version
 ```
 
 #### 4. Docker Desktop
+
 ```bash
 # macOS
 brew install --cask docker
@@ -74,6 +79,7 @@ docker-compose --version
 ```
 
 #### 5. Git
+
 ```bash
 # macOS
 brew install git
@@ -91,6 +97,7 @@ git --version
 ## Project Setup
 
 ### 1. Clone Repository
+
 ```bash
 # Clone the repository
 git clone https://github.com/your-org/clarity-loop-backend.git
@@ -101,6 +108,7 @@ ls -la  # Should show project files
 ```
 
 ### 2. Python Environment Setup
+
 ```bash
 # Install uv (modern Python package manager)
 # macOS/Linux
@@ -133,6 +141,7 @@ uv pip install -e ".[dev,test,docs]"
 ```
 
 ### 3. Environment Configuration
+
 ```bash
 # Copy environment template
 cp .env.template .env.local
@@ -142,6 +151,7 @@ nano .env.local  # or your preferred editor
 ```
 
 #### Environment Variables Configuration
+
 ```bash
 # .env.local
 # =============================================
@@ -276,6 +286,7 @@ TEST_PARALLEL_WORKERS=4
 ```
 
 ### 4. Google Cloud Authentication
+
 ```bash
 # Authenticate with Google Cloud
 gcloud auth login
@@ -316,6 +327,7 @@ gcloud projects add-iam-policy-binding clarity-loop-dev \
 ```
 
 ### 5. Firebase Setup
+
 ```bash
 # Login to Firebase
 firebase login
@@ -337,6 +349,7 @@ firebase init emulators
 ```
 
 ### 6. Docker Environment (Optional)
+
 ```bash
 # Build development Docker image
 docker build -f Dockerfile.dev -t clarity-backend-dev .
@@ -354,6 +367,7 @@ docker-compose -f docker-compose.dev.yml ps
 ## Development Tools Setup
 
 ### 1. Code Quality Tools
+
 ```bash
 # Install pre-commit hooks
 pip install pre-commit
@@ -372,6 +386,7 @@ pip install -r requirements-dev.txt
 ```
 
 ### 2. Testing Framework
+
 ```bash
 # Install pytest and plugins
 pip install pytest pytest-asyncio pytest-cov pytest-mock
@@ -401,6 +416,7 @@ EOF
 ```
 
 ### 3. ML Development Environment
+
 ```bash
 # Install ML dependencies
 pip install tensorflow scikit-learn pandas numpy jupyter
@@ -421,6 +437,7 @@ tensorboard --logdir=./logs/tensorboard --port=6006
 ## Verification and Testing
 
 ### 1. Environment Verification
+
 ```bash
 # Run environment check script
 python scripts/check-environment.py
@@ -435,6 +452,7 @@ python scripts/check-environment.py
 ```
 
 ### 2. Service Health Checks
+
 ```bash
 # Start Firebase emulators
 firebase emulators:start --import=./firebase-export --export-on-exit
@@ -450,6 +468,7 @@ curl http://localhost:9099  # Auth Emulator
 ```
 
 ### 3. Run Test Suite
+
 ```bash
 # Run quick tests
 make test-quick
@@ -462,6 +481,7 @@ make test
 ```
 
 ### 4. API Documentation Access
+
 ```bash
 # Start server (if not already running)
 uvicorn src.main:app --reload
@@ -474,6 +494,7 @@ open http://localhost:8000/redoc    # ReDoc
 ## Common Setup Issues and Solutions
 
 ### Issue 1: Python Version Conflicts
+
 ```bash
 # Problem: Multiple Python versions causing conflicts
 # Solution: Use pyenv for Python version management
@@ -492,6 +513,7 @@ source venv/bin/activate
 ```
 
 ### Issue 2: Google Cloud Authentication
+
 ```bash
 # Problem: Authentication errors with Google Cloud
 # Solution: Re-authenticate and check permissions
@@ -509,6 +531,7 @@ gcloud config list
 ```
 
 ### Issue 3: Firebase Emulator Issues
+
 ```bash
 # Problem: Firebase emulators not starting
 # Solution: Check ports and restart
@@ -528,6 +551,7 @@ firebase emulators:start --import=./firebase-export
 ```
 
 ### Issue 4: Dependency Installation Issues
+
 ```bash
 # Problem: Package installation failures
 # Solution: Update pip and use specific package versions
@@ -546,6 +570,7 @@ pip install tensorflow==2.13.0  # Use specific versions
 ```
 
 ### Issue 5: Docker Issues
+
 ```bash
 # Problem: Docker containers not starting
 # Solution: Check Docker daemon and resources
@@ -567,6 +592,7 @@ sudo systemctl restart docker
 ## IDE Configuration
 
 ### VS Code Setup
+
 ```json
 // .vscode/settings.json
 {
@@ -590,6 +616,7 @@ sudo systemctl restart docker
 ```
 
 ### PyCharm Setup
+
 1. Open project in PyCharm
 2. Go to Settings > Project > Python Interpreter
 3. Select existing virtual environment: `./venv/bin/python`

@@ -5,6 +5,7 @@ This directory contains comprehensive development guides and documentation for b
 ## Documentation Structure
 
 ### Core Development Guides
+
 - **[Setup & Installation](./setup.md)** - Development environment setup and local installation
 - **[Development Workflow](./workflow.md)** - Git workflow, branching strategy, and development practices
 - **[Testing Strategy](./testing.md)** - Unit testing, integration testing, and test automation
@@ -12,6 +13,7 @@ This directory contains comprehensive development guides and documentation for b
 - **[Contributing Guidelines](./contributing.md)** - Code style, review process, and contribution standards
 
 ### Technical References
+
 - **[API Development](./api-development.md)** - FastAPI development patterns and best practices
 - **[Database Management](./database.md)** - Firestore operations, indexing, and data migration
 - **[ML Pipeline Development](./ml-pipeline.md)** - Actigraphy Transformer integration and ML ops
@@ -19,6 +21,7 @@ This directory contains comprehensive development guides and documentation for b
 - **[Performance Optimization](./performance.md)** - Performance monitoring and optimization techniques
 
 ### Tools and Utilities
+
 - **[Local Development Tools](./tools.md)** - Development utilities and helper scripts
 - **[Debugging Guide](./debugging.md)** - Debugging techniques and troubleshooting
 - **[Monitoring & Observability](./monitoring.md)** - Local and production monitoring setup
@@ -26,6 +29,7 @@ This directory contains comprehensive development guides and documentation for b
 ## Quick Start for New Developers
 
 ### Prerequisites
+
 - **Python**: 3.9+ with pip and virtualenv
 - **Google Cloud SDK**: Latest version with authentication
 - **Docker**: For containerized development and testing
@@ -33,6 +37,7 @@ This directory contains comprehensive development guides and documentation for b
 - **Git**: Version control with SSH key setup
 
 ### Initial Setup (5 minutes)
+
 ```bash
 # 1. Clone repository
 git clone https://github.com/your-org/clarity-loop-backend.git
@@ -51,6 +56,7 @@ make test-quick
 ### Development Environment Overview
 
 #### Local Development Stack
+
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │                    Development Environment                  │
@@ -78,6 +84,7 @@ make test-quick
 ```
 
 #### Development Workflow
+
 1. **Feature Development**: Branch from `develop`, implement feature, write tests
 2. **Local Testing**: Run unit tests, integration tests, and manual testing
 3. **Code Review**: Submit PR, address feedback, ensure CI passes
@@ -87,12 +94,14 @@ make test-quick
 ## Technology Stack Details
 
 ### Backend Framework
+
 - **FastAPI**: Async Python web framework with automatic API documentation
 - **Pydantic**: Data validation and serialization with type hints
 - **Asyncio**: Asynchronous programming for high concurrency
 - **Uvicorn**: ASGI server for production deployment
 
 ### Cloud Infrastructure
+
 - **Google Cloud Run**: Serverless container platform for API services
 - **Cloud Firestore**: NoSQL document database for user data
 - **Cloud Storage**: Object storage for files and ML model artifacts
@@ -100,18 +109,21 @@ make test-quick
 - **Vertex AI**: ML model serving and training platform
 
 ### Authentication & Security
+
 - **Firebase Authentication**: User identity and authentication
 - **Cloud IAM**: Service-to-service authentication and authorization
 - **Cloud KMS**: Encryption key management
 - **Cloud Security Command Center**: Security monitoring and alerts
 
 ### ML & Analytics
+
 - **TensorFlow**: ML model development and training
 - **Scikit-learn**: Classical ML algorithms and preprocessing
 - **Pandas/NumPy**: Data manipulation and numerical computing
 - **Google AI Platform**: Model training and hyperparameter tuning
 
 ### Development Tools
+
 - **Poetry**: Python dependency management and packaging
 - **Black**: Code formatting
 - **Flake8**: Code linting and style checking
@@ -121,6 +133,7 @@ make test-quick
 ## Development Standards
 
 ### Code Quality Standards
+
 - **Type Hints**: All functions must include type annotations
 - **Documentation**: Comprehensive docstrings for all public APIs
 - **Test Coverage**: Minimum 80% code coverage required
@@ -128,12 +141,14 @@ make test-quick
 - **Security**: All user inputs validated, no hardcoded secrets
 
 ### Performance Requirements
+
 - **API Response Time**: P95 < 500ms for simple queries
 - **Database Queries**: Efficient indexing, avoid N+1 queries
 - **Memory Usage**: < 512MB per container instance
 - **Concurrent Users**: Support 1000+ concurrent users per instance
 
 ### Security Requirements
+
 - **Input Validation**: All inputs validated with Pydantic models
 - **Authentication**: All endpoints require valid Firebase tokens
 - **Authorization**: Role-based access control implemented
@@ -143,6 +158,7 @@ make test-quick
 ## Environment Configuration
 
 ### Local Development
+
 ```yaml
 # .env.local
 ENVIRONMENT=development
@@ -175,6 +191,7 @@ CORS_ORIGINS=["http://localhost:3000", "http://localhost:8080"]
 ```
 
 ### Staging Environment
+
 ```yaml
 # .env.staging
 ENVIRONMENT=staging
@@ -207,6 +224,7 @@ CORS_ORIGINS=["https://staging.clarityloop.com"]
 ## Common Development Tasks
 
 ### Running Tests
+
 ```bash
 # Run all tests
 make test
@@ -225,6 +243,7 @@ make test-watch
 ```
 
 ### Database Operations
+
 ```bash
 # Start Firestore emulator
 make db-start
@@ -243,6 +262,7 @@ make db-reset
 ```
 
 ### ML Development
+
 ```bash
 # Start ML development environment
 make ml-dev-start
@@ -261,6 +281,7 @@ make ml-deploy-staging
 ```
 
 ### Code Quality Checks
+
 ```bash
 # Format code
 make format
@@ -283,6 +304,7 @@ make quality-check
 ### Common Issues and Solutions
 
 #### Issue: Import Errors
+
 ```bash
 # Solution: Ensure virtual environment is activated
 source venv/bin/activate
@@ -290,6 +312,7 @@ pip install -r requirements-dev.txt
 ```
 
 #### Issue: Firebase Emulator Connection
+
 ```bash
 # Solution: Restart Firebase emulators
 firebase emulators:kill
@@ -297,6 +320,7 @@ firebase emulators:start --import=./firebase-export
 ```
 
 #### Issue: ML Model Loading
+
 ```bash
 # Solution: Check model path and version
 export ACTIGRAPHY_MODEL_PATH=/path/to/model
@@ -304,6 +328,7 @@ python scripts/verify-model.py
 ```
 
 ### Debug Mode Configuration
+
 ```python
 # main.py - Enable debug mode
 import logging
@@ -319,6 +344,7 @@ else:
 ## Performance Profiling
 
 ### Local Performance Testing
+
 ```bash
 # API load testing
 make load-test-local
@@ -334,6 +360,7 @@ make profile-memory
 ```
 
 ### Monitoring Setup
+
 ```bash
 # Start monitoring stack
 make monitoring-start
@@ -351,17 +378,20 @@ make health-check
 ## Getting Help
 
 ### Resources
-- **API Documentation**: http://localhost:8000/docs (when running locally)
+
+- **API Documentation**: <http://localhost:8000/docs> (when running locally)
 - **Architecture Docs**: `docs/architecture/`
 - **Troubleshooting Guide**: `docs/development/debugging.md`
 - **Team Wiki**: [Internal Wiki Link]
 
 ### Support Channels
+
 - **Slack**: #clarity-backend-dev
-- **Email**: backend-team@clarityloop.com
+- **Email**: <backend-team@clarityloop.com>
 - **Office Hours**: Tuesday/Thursday 2-3 PM PST
 
 ### Onboarding Checklist
+
 - [ ] Development environment setup completed
 - [ ] All tests passing locally
 - [ ] Access to required Google Cloud projects

@@ -5,6 +5,7 @@ This document outlines security implementation for the Clarity Loop Backend, ens
 ## Security Architecture
 
 ### Zero-Trust Security Model
+
 - **Identity Verification**: Multi-factor authentication via Firebase
 - **Least Privilege**: Role-based access control (RBAC)
 - **Data Encryption**: End-to-end encryption at rest and in transit
@@ -12,6 +13,7 @@ This document outlines security implementation for the Clarity Loop Backend, ens
 - **Audit Logging**: Complete activity tracking
 
 ### Defense in Depth
+
 ```
 ┌─────────────────────────────────────────┐
 │ Application Layer (FastAPI + Auth)     │ ← Input validation, rate limiting
@@ -27,6 +29,7 @@ This document outlines security implementation for the Clarity Loop Backend, ens
 ## Authentication & Authorization
 
 ### Firebase Authentication Integration
+
 ```python
 # src/clarity/auth/firebase_auth.py
 from firebase_admin import auth, credentials
@@ -57,6 +60,7 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(H
 ```
 
 ### Role-Based Access Control
+
 ```python
 # src/clarity/auth/rbac.py
 from enum import Enum
@@ -118,6 +122,7 @@ def require_permission(permission: Permission):
 ## Data Encryption
 
 ### Field-Level Encryption
+
 ```python
 # src/clarity/security/encryption.py
 from cryptography.fernet import Fernet
@@ -167,6 +172,7 @@ class HealthDataPoint(BaseModel):
 ## Input Validation & Sanitization
 
 ### Pydantic Security Models
+
 ```python
 # src/clarity/models/security.py
 from pydantic import BaseModel, EmailStr, Field, validator
@@ -208,6 +214,7 @@ class SecureUserMessage(BaseModel):
 ## Rate Limiting & DDoS Protection
 
 ### Rate Limiting Implementation
+
 ```python
 # src/clarity/security/rate_limit.py
 from fastapi import HTTPException, Request
@@ -243,6 +250,7 @@ async def login(request: Request, credentials: LoginCredentials):
 ## Security Headers & CORS
 
 ### FastAPI Security Configuration
+
 ```python
 # src/clarity/main.py
 from fastapi import FastAPI
@@ -290,6 +298,7 @@ async def add_security_headers(request: Request, call_next):
 ## Audit Logging
 
 ### Security Event Logging
+
 ```python
 # src/clarity/security/audit_log.py
 import structlog
@@ -343,6 +352,7 @@ class SecurityAuditLogger:
 ## Environment Security
 
 ### Secret Management
+
 ```python
 # src/clarity/config/secrets.py
 from google.cloud import secretmanager
@@ -382,6 +392,7 @@ class Settings(BaseSettings):
 ## Security Testing
 
 ### Security Test Cases
+
 ```python
 # tests/security/test_auth_security.py
 import pytest
@@ -420,6 +431,7 @@ class TestAuthenticationSecurity:
 ## Compliance & Standards
 
 ### HIPAA Compliance Checklist
+
 - ✅ Administrative Safeguards: Access controls, audit logs, training
 - ✅ Physical Safeguards: Google Cloud data center security
 - ✅ Technical Safeguards: Encryption, authentication, audit logs
@@ -427,6 +439,7 @@ class TestAuthenticationSecurity:
 - ✅ Business Associate Agreements: Google Cloud BAA in place
 
 ### Security Monitoring
+
 - **Real-time Alerts**: Failed authentication, permission violations
 - **Log Analysis**: Automated security event correlation
 - **Vulnerability Scanning**: Regular dependency and code scanning

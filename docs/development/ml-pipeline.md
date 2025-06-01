@@ -84,6 +84,7 @@ PAT_MODEL_CONFIGS = {
 #### Core Implementation Components
 
 **1. Patch Embedding Layer**
+
 ```python
 def create_patch_embeddings(input_size=10080, patch_size=18, embed_dim=96):
     """
@@ -102,6 +103,7 @@ def create_patch_embeddings(input_size=10080, patch_size=18, embed_dim=96):
 ```
 
 **2. Positional Embeddings**
+
 ```python
 def get_positional_embeddings(num_patches, embed_dim):
     """
@@ -117,6 +119,7 @@ def get_positional_embeddings(num_patches, embed_dim):
 ```
 
 **3. Transformer Encoder Block**
+
 ```python
 class TransformerBlock(layers.Layer):
     """
@@ -748,21 +751,25 @@ PERFORMANCE_BENCHMARKS = {
 ## Integration Points
 
 ### 1. HealthKit Data Ingestion
+
 - **Real-time streaming** via iOS app
 - **Batch processing** for historical data
 - **Data validation** and quality checks
 
 ### 2. Gemini AI Integration
+
 - **Feature vectors** from PAT → **Natural language insights** via Gemini
 - **Contextual prompting** with actigraphy metrics
 - **Safety filtering** for health recommendations
 
 ### 3. Firestore Integration
+
 - **Real-time results** delivery
 - **Feature storage** for trend analysis
 - **User preference** tracking
 
 ### 4. Monitoring Integration
+
 - **Cloud Monitoring** metrics
 - **Performance tracking** and alerting
 - **Data drift detection** and retraining triggers
@@ -778,16 +785,19 @@ PERFORMANCE_BENCHMARKS = {
 ## Future Enhancements
 
 ### 1. Advanced Model Features
+
 - **Multi-modal fusion** (heart rate + steps + sleep)
 - **Personalized model fine-tuning**
 - **Federated learning** for privacy-preserving updates
 
 ### 2. Real-time Processing
+
 - **Streaming ML** with Apache Beam
 - **Edge deployment** for on-device inference
 - **Continuous learning** from user feedback
 
 ### 3. Clinical Integration
+
 - **FDA compliance** pathways
 - **Clinical trial** data collection
 - **Healthcare provider** dashboard integration

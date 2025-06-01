@@ -85,12 +85,15 @@ As the platform evolves, this directory will include additional research papers 
 ## License and Ethics
 
 ### Research License
+
 The original research is published under academic standards with proper attribution requirements.
 
 ### Implementation License
+
 Our production implementation follows MIT license terms while respecting academic citation requirements.
 
 ### Ethical Considerations
+
 - **Data Privacy**: All implementations follow HIPAA compliance standards
 - **Bias Mitigation**: Regular evaluation for demographic and clinical bias
 - **Transparency**: Open documentation of model decisions and limitations

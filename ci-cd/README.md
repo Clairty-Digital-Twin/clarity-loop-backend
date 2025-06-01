@@ -90,6 +90,7 @@ main branch (protected)
 Triggered on: Pull requests to `main` and `develop`
 
 **Quality Gates:**
+
 ```yaml
 jobs:
   code-quality:
@@ -118,6 +119,7 @@ jobs:
 Triggered on: Push to `main` and `develop` branches
 
 **Deployment Pipeline:**
+
 ```yaml
 jobs:
   build:
@@ -147,6 +149,7 @@ jobs:
 Triggered on: Schedule (daily) and security events
 
 **Security Checks:**
+
 - SAST (Static Application Security Testing)
 - DAST (Dynamic Application Security Testing)  
 - Dependency vulnerability scanning
@@ -169,6 +172,7 @@ Triggered on: Schedule (daily) and security events
 ### Core Infrastructure Modules
 
 #### 1. Google Cloud Run Services
+
 ```hcl
 module "api_gateway" {
   source = "./modules/cloud-run"
@@ -191,6 +195,7 @@ module "api_gateway" {
 ```
 
 #### 2. Pub/Sub Topics and Subscriptions
+
 ```hcl
 module "messaging" {
   source = "./modules/pubsub"
@@ -209,6 +214,7 @@ module "messaging" {
 ```
 
 #### 3. Firestore and Storage
+
 ```hcl
 module "databases" {
   source = "./modules/firestore"
@@ -231,6 +237,7 @@ module "databases" {
 ```
 
 #### 4. Security and IAM
+
 ```hcl
 module "security" {
   source = "./modules/iam"
@@ -255,6 +262,7 @@ module "security" {
 ### Environment Configurations
 
 #### Development Environment
+
 ```hcl
 # terraform/environments/dev/terraform.tfvars
 project_id = "clarity-loop-dev"
@@ -273,6 +281,7 @@ use_emulators = true
 ```
 
 #### Production Environment  
+
 ```hcl
 # terraform/environments/prod/terraform.tfvars
 project_id = "clarity-loop-production"
@@ -295,6 +304,7 @@ monitoring_enabled = true
 ## Docker Configuration
 
 ### Multi-stage Dockerfile (API Gateway)
+
 ```dockerfile
 # docker/api-gateway/Dockerfile
 FROM python:3.11-slim as builder
@@ -334,6 +344,7 @@ CMD ["uvicorn", "src.api_gateway.main:app", "--host", "0.0.0.0", "--port", "8000
 ```
 
 ### Docker Compose for Local Development
+
 ```yaml
 # docker/docker-compose.yml
 version: '3.8'
@@ -377,6 +388,7 @@ services:
 ## Deployment Scripts
 
 ### Deployment Script (`scripts/deploy.sh`)
+
 ```bash
 #!/bin/bash
 set -euo pipefail
@@ -416,6 +428,7 @@ echo "✅ Deployment complete!"
 ```
 
 ### Health Check Script (`scripts/health-check.sh`)
+
 ```bash
 #!/bin/bash
 set -euo pipefail
@@ -451,6 +464,7 @@ echo "✅ All health checks passed!"
 ### Release Process
 
 1. **Feature Development**
+
    ```bash
    git checkout -b feature/new-feature
    # Develop feature
@@ -459,6 +473,7 @@ echo "✅ All health checks passed!"
    ```
 
 2. **Release Preparation**
+
    ```bash
    git checkout -b release/1.2.0
    # Update version numbers
@@ -468,6 +483,7 @@ echo "✅ All health checks passed!"
    ```
 
 3. **Production Deployment**
+
    ```bash
    # Merge to main triggers staging deployment
    # Manual approval for production
@@ -507,16 +523,19 @@ gcloud run services update-traffic clarity-api-gateway \
 ## Security Best Practices
 
 ### Secrets Management
+
 - Google Secret Manager for production secrets
 - GitHub Secrets for CI/CD credentials
 - No secrets in code or Terraform files
 
 ### Image Security
+
 - Distroless base images where possible
 - Regular vulnerability scanning
 - Signed container images
 
 ### Access Control
+
 - Least privilege IAM roles
 - Service account authentication
 - Branch protection rules
@@ -525,11 +544,13 @@ gcloud run services update-traffic clarity-api-gateway \
 ## Cost Optimization
 
 ### Resource Management
+
 - Auto-scaling based on demand
 - Preemptible instances for non-critical workloads
 - Scheduled shutdowns for development environments
 
 ### Monitoring
+
 - Cost alerts at 80% of budget
 - Resource utilization dashboards
 - Automated cleanup of unused resources

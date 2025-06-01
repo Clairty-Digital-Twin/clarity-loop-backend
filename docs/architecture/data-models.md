@@ -16,6 +16,7 @@ The system uses a hybrid data storage approach optimized for different use cases
 ### 1. User Profile Model
 
 #### Firestore Document Structure
+
 ```json
 {
   "users/{userId}": {
@@ -63,6 +64,7 @@ The system uses a hybrid data storage approach optimized for different use cases
 ```
 
 #### Pydantic Model Definition
+
 ```python
 from pydantic import BaseModel, Field, validator
 from typing import Optional, List, Dict
@@ -115,6 +117,7 @@ class UserProfile(BaseModel):
 ### 2. Health Data Model
 
 #### Raw Health Data Structure
+
 ```json
 {
   "healthData/{userId}/sessions/{sessionId}": {
@@ -181,6 +184,7 @@ class UserProfile(BaseModel):
 ```
 
 #### Health Data Pydantic Models
+
 ```python
 from typing import List, Union, Optional
 from pydantic import BaseModel, Field
@@ -234,6 +238,7 @@ class HealthSession(BaseModel):
 ### 3. Insights and Analytics Model
 
 #### AI-Generated Insights Structure
+
 ```json
 {
   "insights/{userId}/daily/{date}": {
@@ -297,6 +302,7 @@ class HealthSession(BaseModel):
 ```
 
 #### Insights Pydantic Models
+
 ```python
 from typing import List, Dict, Any, Optional
 from pydantic import BaseModel, Field
@@ -348,6 +354,7 @@ class DailyInsight(BaseModel):
 ### 4. ML Model Metadata
 
 #### Model Tracking Structure
+
 ```json
 {
   "models/actigraphy_transformer": {
@@ -393,6 +400,7 @@ class DailyInsight(BaseModel):
 ### 5. Processing Jobs and Tasks
 
 #### Job Queue Structure
+
 ```json
 {
   "jobs/{jobId}": {
@@ -439,18 +447,21 @@ class DailyInsight(BaseModel):
 ## Data Normalization Pipeline (PAT Research-Based)
 
 ### Standardization Rules
+
 - **Per-year z-scaling**: Compute standardization statistics per NHANES year before patching (pp 22-24)
 - **Training Split Safety**: During fine-tuning, compute μ/σ on **train split only** to prevent data leakage (pp 22-24)  
 - **Patch Processing**: Apply z-score normalization before 18-minute patch embedding
 - **Zero-mean Property**: Left-pad shorter sequences with value `0` (already zero-mean after normalization)
 
 ### Binary Label Derivation Rules
+
 - **Depression**: PHQ-9 score ≥ 10 (pp 23-25)
 - **Sleep Abnormality**: sleep > 12 h or sleep < 5 h total per day (pp 23-25)
 - **Sleep Disorder**: self-reported diagnosis flag in NHANES (pp 23-25)
 - **Label Computation**: Labels computed per participant before train/val split (pp 23-25)
 
 ### Implementation Notes
+
 ```python
 # Normalization pipeline for PAT model input
 def normalize_actigraphy_data(data: np.ndarray, year: int, split: str = 'train') -> np.ndarray:
@@ -503,6 +514,7 @@ def derive_binary_labels(questionnaire_data: Dict) -> Dict[str, bool]:
 ## Database Relationships and Indexing
 
 ### Firestore Collection Structure
+
 ```
 /users/{userId}
   /healthSessions/{sessionId}
@@ -526,6 +538,7 @@ def derive_binary_labels(questionnaire_data: Dict) -> Dict[str, bool]:
 ```
 
 ### Firestore Indexing Strategy
+
 ```javascript
 // Composite indexes for efficient queries
 const indexes = [
@@ -565,6 +578,7 @@ const indexes = [
 ### Cloud SQL Schema (Analytics)
 
 #### User Analytics Table
+
 ```sql
 CREATE TABLE user_analytics (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -604,6 +618,7 @@ CREATE INDEX idx_user_analytics_quality ON user_analytics(data_quality_score);
 ```
 
 #### Aggregated Trends Table
+
 ```sql
 CREATE TABLE user_trends (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -634,6 +649,7 @@ CREATE INDEX idx_user_trends_user_period ON user_trends(user_id, trend_type, per
 ## Data Validation and Constraints
 
 ### Input Validation Rules
+
 ```python
 from pydantic import BaseModel, validator, root_validator
 from typing import Optional, List
@@ -700,6 +716,7 @@ class HealthDataValidation(BaseModel):
 ## Data Retention and Archival
 
 ### Retention Policies
+
 ```yaml
 data_retention_policies:
   user_profiles:
@@ -733,6 +750,7 @@ data_retention_policies:
 ```
 
 ### Automated Data Lifecycle
+
 ```python
 from google.cloud import firestore
 from datetime import datetime, timedelta

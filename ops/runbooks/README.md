@@ -44,6 +44,7 @@ Comprehensive incident response procedures and service level objectives for the 
 ### Critical Alerts (Immediate Response)
 
 #### Service Availability
+
 ```yaml
 # API Gateway Down
 alert: api_gateway_down
@@ -54,6 +55,7 @@ description: "API Gateway is completely unavailable"
 ```
 
 #### Data Loss Risk
+
 ```yaml
 # Pub/Sub Message Backlog
 alert: pubsub_message_backlog_critical
@@ -64,6 +66,7 @@ description: "Pub/Sub backlog exceeding critical threshold - data loss risk"
 ```
 
 #### Security Breach
+
 ```yaml
 # Authentication Failures
 alert: auth_failure_spike
@@ -76,6 +79,7 @@ description: "Potential security breach - authentication failure spike"
 ### Warning Alerts (Response within 1 hour)
 
 #### Performance Degradation
+
 ```yaml
 # API Response Time
 alert: api_response_time_high
@@ -86,6 +90,7 @@ description: "API 95th percentile response time exceeding SLO"
 ```
 
 #### Resource Utilization
+
 ```yaml
 # CPU Utilization
 alert: high_cpu_utilization
@@ -96,6 +101,7 @@ description: "High CPU utilization detected"
 ```
 
 #### ML Model Performance
+
 ```yaml
 # Model Accuracy Drop
 alert: model_accuracy_degradation
@@ -110,16 +116,19 @@ description: "ML model accuracy below SLO threshold"
 ### Severity Levels
 
 **P0 - Critical**: Service completely unavailable or data loss
+
 - **Response Time**: 5 minutes
 - **Escalation**: Immediate on-call notification
 - **Communication**: Status page update within 10 minutes
 
 **P1 - High**: Significant performance degradation
+
 - **Response Time**: 30 minutes
 - **Escalation**: Primary on-call engineer
 - **Communication**: Internal stakeholders notified
 
 **P2 - Medium**: Minor issues affecting subset of users
+
 - **Response Time**: 2 hours during business hours
 - **Escalation**: Assigned to team queue
 - **Communication**: Engineering team notification
@@ -145,11 +154,13 @@ manager_escalation:
 ### 1. Pub/Sub Message Backlog
 
 **Symptoms**:
+
 - Messages accumulating in subscription
 - End-to-end latency increasing
 - Users not receiving insights
 
 **Diagnosis**:
+
 ```bash
 # Check subscription backlog
 gcloud pubsub subscriptions describe healthkit-processing-subscription
@@ -159,12 +170,14 @@ gcloud monitoring metrics list --filter="resource.type=pubsub_subscription"
 ```
 
 **Immediate Actions**:
+
 1. Scale up ML service instances
 2. Check for processing errors in logs
 3. Verify Vertex AI quotas not exceeded
 4. Monitor message processing rate
 
 **Resolution**:
+
 ```bash
 # Scale Cloud Run service
 gcloud run services update clarity-ml-service \
@@ -180,11 +193,13 @@ gcloud logging read "resource.type=cloud_run_revision AND \
 ### 2. PAT Model Cold Start Issues
 
 **Symptoms**:
+
 - First request to ML service taking >2 seconds
 - Intermittent timeouts
 - Users experiencing delays
 
 **Diagnosis**:
+
 ```bash
 # Check Cloud Run cold start metrics
 gcloud monitoring metrics list --filter="resource.type=cloud_run_revision AND \
@@ -195,11 +210,13 @@ gcloud run services describe clarity-ml-service --region=us-central1
 ```
 
 **Immediate Actions**:
+
 1. Increase minimum instances to prevent cold starts
 2. Implement keep-alive requests
 3. Check Vertex AI model loading time
 
 **Resolution**:
+
 ```bash
 # Set minimum instances
 gcloud run services update clarity-ml-service \
@@ -213,11 +230,13 @@ curl http://ml-service/health/model-status
 ### 3. Vertex AI Quota Exceeded
 
 **Symptoms**:
+
 - ML requests failing with quota errors
 - 429 rate limit responses
 - Backup processing queue growing
 
 **Diagnosis**:
+
 ```bash
 # Check current quota usage
 gcloud compute project-info describe --format="value(quotas[].usage,quotas[].limit)"
@@ -227,11 +246,13 @@ gcloud ai quotas list --region=us-central1
 ```
 
 **Immediate Actions**:
+
 1. Implement request queuing with exponential backoff
 2. Request quota increase from Google Cloud
 3. Activate secondary region if configured
 
 **Resolution**:
+
 ```bash
 # Submit quota increase request
 gcloud support cases create \
@@ -245,11 +266,13 @@ gcloud monitoring dashboards list --filter="vertex_ai_quota"
 ### 4. Firestore Write Conflicts
 
 **Symptoms**:
+
 - Transaction failures
 - Data inconsistency reports
 - Increased error rates
 
 **Diagnosis**:
+
 ```bash
 # Check Firestore metrics
 gcloud firestore operations list
@@ -260,11 +283,13 @@ gcloud logging read "resource.type=firestore_database AND \
 ```
 
 **Immediate Actions**:
+
 1. Implement exponential backoff for retries
 2. Review transaction structure for optimization
 3. Check for concurrent write patterns
 
 **Resolution**:
+
 ```bash
 # Optimize document structure
 # Review batch write operations
@@ -274,11 +299,13 @@ gcloud logging read "resource.type=firestore_database AND \
 ### 5. Authentication Service Outage
 
 **Symptoms**:
+
 - Users cannot authenticate
 - 401/403 errors across all endpoints
 - Firebase Auth console showing issues
 
 **Diagnosis**:
+
 ```bash
 # Check Firebase Auth status
 curl https://status.firebase.google.com/
@@ -289,11 +316,13 @@ gcloud logging read "resource.type=cloud_run_revision AND \
 ```
 
 **Immediate Actions**:
+
 1. Check Firebase project configuration
 2. Verify service account credentials
 3. Implement graceful degradation if possible
 
 **Resolution**:
+
 ```bash
 # Verify Firebase project settings
 firebase projects:list
@@ -309,6 +338,7 @@ gcloud iam service-accounts get-iam-policy SERVICE_ACCOUNT_EMAIL
 **When to Use**: Primary region (us-central1) completely unavailable
 
 **Steps**:
+
 ```bash
 # 1. Update DNS to point to secondary region
 gcloud dns record-sets transaction start --zone=clarity-zone
@@ -339,6 +369,7 @@ curl https://api-us-east1.clarity-loop.com/health
 **When to Use**: Primary Firestore instance unavailable
 
 **Steps**:
+
 ```bash
 # 1. Switch to backup database (if configured)
 export FIRESTORE_DATABASE_ID="clarity-backup"
@@ -359,6 +390,7 @@ kubectl set env deployment/api-gateway \
 **When to Use**: Vertex AI unavailable or PAT model failing
 
 **Steps**:
+
 ```bash
 # 1. Switch to fallback model (if available)
 export ML_MODEL_FALLBACK=true
@@ -433,6 +465,7 @@ terraform refresh
 **URL**: `https://console.cloud.google.com/monitoring/dashboards/custom/clarity-kpi`
 
 **Panels**:
+
 - API Gateway request rate and latency
 - ML Service processing time and accuracy
 - Pub/Sub message throughput and lag
@@ -445,6 +478,7 @@ terraform refresh
 **URL**: `https://console.cloud.google.com/monitoring/dashboards/custom/clarity-error-budget`
 
 **Panels**:
+
 - Current error budget consumption
 - Burn rate alerts
 - SLO compliance trends
@@ -456,6 +490,7 @@ terraform refresh
 **URL**: `https://console.cloud.google.com/monitoring/dashboards/custom/clarity-infrastructure`
 
 **Panels**:
+
 - Cloud Run instance utilization
 - Vertex AI quota usage
 - Firestore performance metrics

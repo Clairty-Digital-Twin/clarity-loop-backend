@@ -9,6 +9,7 @@ The User Management API handles user profiles, preferences, settings, and accoun
 ## User Data Architecture
 
 ### User Profile Hierarchy
+
 ```
 User Account (Firebase)
 ├── Profile Information (API)
@@ -20,6 +21,7 @@ User Account (Firebase)
 ```
 
 ### Data Separation
+
 - **Firebase Auth**: Core identity (email, display name, authentication)
 - **Firestore Profile**: Extended profile and health information
 - **Preferences**: Application settings and personalization
@@ -32,17 +34,20 @@ User Account (Firebase)
 Retrieve comprehensive user profile information for the authenticated user.
 
 #### Request
+
 ```http
 GET /v1/user/profile
 Authorization: Bearer <firebase-jwt-token>
 ```
 
 #### Query Parameters
+
 - `include_health_profile` (optional): Include health-specific profile data (default: true)
 - `include_preferences` (optional): Include user preferences (default: true)
 - `include_subscription` (optional): Include subscription details (default: true)
 
 #### Response
+
 ```json
 {
   "success": true,
@@ -138,6 +143,7 @@ Authorization: Bearer <firebase-jwt-token>
 Update user profile information with validation and change tracking.
 
 #### Request
+
 ```http
 PUT /v1/user/profile
 Content-Type: application/json
@@ -162,6 +168,7 @@ Authorization: Bearer <firebase-jwt-token>
 ```
 
 #### Response
+
 ```json
 {
   "success": true,
@@ -206,6 +213,7 @@ Authorization: Bearer <firebase-jwt-token>
 Manage application preferences and notification settings.
 
 #### Request
+
 ```http
 POST /v1/user/preferences
 Content-Type: application/json
@@ -265,6 +273,7 @@ Authorization: Bearer <firebase-jwt-token>
 ```
 
 #### Response
+
 ```json
 {
   "success": true,
@@ -291,17 +300,20 @@ Authorization: Bearer <firebase-jwt-token>
 Retrieve user engagement and usage statistics.
 
 #### Request
+
 ```http
 GET /v1/user/statistics?period=3months&include_health_metrics=true
 Authorization: Bearer <firebase-jwt-token>
 ```
 
 #### Query Parameters
+
 - `period` (optional): 1month|3months|6months|1year|all_time (default: 3months)
 - `include_health_metrics` (optional): Include health data statistics (default: false)
 - `include_app_usage` (optional): Include app usage statistics (default: true)
 
 #### Response
+
 ```json
 {
   "success": true,
@@ -372,6 +384,7 @@ Authorization: Bearer <firebase-jwt-token>
 Configure data retention periods and deletion preferences.
 
 #### Request
+
 ```http
 POST /v1/user/data-retention
 Content-Type: application/json
@@ -405,6 +418,7 @@ Authorization: Bearer <firebase-jwt-token>
 ```
 
 #### Response
+
 ```json
 {
   "success": true,
@@ -430,6 +444,7 @@ Authorization: Bearer <firebase-jwt-token>
 Generate comprehensive data export for user download or transfer.
 
 #### Request
+
 ```http
 POST /v1/user/data-export
 Content-Type: application/json
@@ -460,6 +475,7 @@ Authorization: Bearer <firebase-jwt-token>
 ```
 
 #### Response (Async Job)
+
 ```json
 {
   "success": true,
@@ -484,6 +500,7 @@ Authorization: Bearer <firebase-jwt-token>
 Initiate account deletion process with grace period and data handling options.
 
 #### Request
+
 ```http
 DELETE /v1/user/account
 Content-Type: application/json
@@ -509,6 +526,7 @@ Authorization: Bearer <firebase-jwt-token>
 ```
 
 #### Response
+
 ```json
 {
   "success": true,
@@ -542,6 +560,7 @@ Authorization: Bearer <firebase-jwt-token>
 Send verification email and confirm email ownership.
 
 #### Request
+
 ```http
 POST /v1/user/verify/email
 Content-Type: application/json
@@ -556,6 +575,7 @@ Authorization: Bearer <firebase-jwt-token>
 ```
 
 #### Response
+
 ```json
 {
   "success": true,
@@ -575,6 +595,7 @@ Authorization: Bearer <firebase-jwt-token>
 Set or update password security requirements.
 
 #### Request
+
 ```http
 POST /v1/user/security/password-policy
 Content-Type: application/json
@@ -593,6 +614,7 @@ Authorization: Bearer <firebase-jwt-token>
 ## Error Handling
 
 ### Profile Update Validation Errors
+
 ```json
 {
   "error": {
@@ -617,6 +639,7 @@ Authorization: Bearer <firebase-jwt-token>
 ```
 
 ### Account State Errors
+
 ```json
 {
   "error": {
@@ -635,6 +658,7 @@ Authorization: Bearer <firebase-jwt-token>
 ## Rate Limiting
 
 ### Endpoint Rate Limits
+
 - **Profile Updates**: 10 per hour per user
 - **Preference Updates**: 20 per hour per user
 - **Data Exports**: 3 per day per user

@@ -9,6 +9,7 @@ The Explainability API provides attention visualizations and feature importance 
 ## Core Concepts
 
 ### Attention Mechanisms
+
 The PAT (Pretrained Actigraphy Transformer) model uses multi-head attention to focus on relevant temporal patterns in actigraphy data. The explainability API exposes these attention weights to show:
 
 - **Temporal Attention**: Which time periods were most important for predictions
@@ -16,6 +17,7 @@ The PAT (Pretrained Actigraphy Transformer) model uses multi-head attention to f
 - **Pattern Recognition**: How weekly and daily rhythms influenced outcomes
 
 ### Visualization Types
+
 - **Attention Heatmaps**: 2D visualizations of attention weights across time
 - **Feature Attribution**: Quantified importance scores for different data modalities
 - **Temporal Patterns**: Time-series plots showing critical decision periods
@@ -28,18 +30,21 @@ The PAT (Pretrained Actigraphy Transformer) model uses multi-head attention to f
 Retrieve attention matrices and feature importance for a specific health prediction.
 
 #### Request
+
 ```http
 GET /v1/actigraphy/{jobId}/explain
 Authorization: Bearer <firebase-jwt-token>
 ```
 
 #### Query Parameters
+
 - `visualization_type` (optional): `heatmap`, `attribution`, `temporal`, `weekly`
 - `format` (optional): `json`, `png`, `svg`
 - `resolution` (optional): `high`, `medium`, `low` - affects PNG/SVG detail level
 - `time_range` (optional): `1d`, `7d`, `30d` - temporal scope for analysis
 
 #### Response
+
 ```json
 {
   "success": true,
@@ -109,6 +114,7 @@ Authorization: Bearer <firebase-jwt-token>
 Create a comprehensive explanation document for a health prediction.
 
 #### Request
+
 ```http
 POST /v1/actigraphy/{jobId}/explain/report
 Content-Type: application/json
@@ -126,6 +132,7 @@ Authorization: Bearer <firebase-jwt-token>
 ```
 
 #### Response
+
 ```json
 {
   "success": true,
@@ -280,12 +287,14 @@ def generate_attention_heatmap(attention_matrix, time_labels, output_format="png
 ## Security and Privacy
 
 ### Data Protection
+
 - **Attention matrices**: Aggregated and anonymized before storage
 - **Temporal patterns**: Relative patterns only, no absolute timestamps in logs
 - **Feature attribution**: Statistical summaries only, no raw health data exposed
 - **Visualization storage**: Temporary URLs with 24-hour expiration
 
 ### Access Control
+
 - **Healthcare providers**: Full access to clinical-grade explanations
 - **Patients**: Simplified explanations with encouraging framing
 - **Researchers**: Anonymized aggregate attention patterns only
@@ -294,12 +303,14 @@ def generate_attention_heatmap(attention_matrix, time_labels, output_format="png
 ## Performance Specifications
 
 ### Response Times
+
 - **Attention matrix retrieval**: < 500ms (cached)
 - **Real-time explanation generation**: < 2 seconds
 - **Comprehensive report generation**: < 30 seconds
 - **Visualization rendering**: < 5 seconds
 
 ### Caching Strategy
+
 - **Attention matrices**: 24-hour cache for completed jobs
 - **Visualizations**: 7-day cache in Google Cloud Storage
 - **Reports**: 30-day cache for clinical documentation
@@ -310,6 +321,7 @@ def generate_attention_heatmap(attention_matrix, time_labels, output_format="png
 ### Common Error Responses
 
 #### Model Explanation Not Available
+
 ```json
 {
   "success": false,
@@ -325,6 +337,7 @@ def generate_attention_heatmap(attention_matrix, time_labels, output_format="png
 ```
 
 #### Visualization Generation Failed
+
 ```json
 {
   "success": false,
@@ -343,6 +356,7 @@ def generate_attention_heatmap(attention_matrix, time_labels, output_format="png
 ## Rate Limiting
 
 ### Explanation Request Limits
+
 - **Per user**: 50 explanation requests per hour
 - **Per job**: 5 different visualization types per job
 - **Report generation**: 10 comprehensive reports per day
@@ -351,6 +365,7 @@ def generate_attention_heatmap(attention_matrix, time_labels, output_format="png
 ## Integration Examples
 
 ### Frontend Integration
+
 ```javascript
 // Request attention analysis for a completed job
 async function getAttentionAnalysis(jobId, visualizationType = 'heatmap') {
@@ -396,6 +411,7 @@ async function generateClinicalReport(jobId) {
 ```
 
 ### Clinical Dashboard Integration
+
 ```python
 # Python integration for healthcare provider dashboards
 import requests

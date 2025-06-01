@@ -5,7 +5,7 @@ This directory contains comprehensive documentation for the Clarity Loop Backend
 ## Documentation Structure
 
 - **architecture/** - System architecture diagrams, component interactions, and design decisions
-- **api/** - API specifications, endpoints documentation, and data schemas
+- **API/** - API specifications, endpoints documentation, and data schemas
 - **development/** - Development guides, setup instructions, and best practices
 
 ## Key Documents

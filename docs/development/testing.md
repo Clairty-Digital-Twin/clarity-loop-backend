@@ -5,6 +5,7 @@ This document outlines the comprehensive testing strategy for the Clarity Loop B
 ## Testing Philosophy
 
 ### Core Testing Principles
+
 - **Test-Driven Development (TDD)**: Write tests before implementation
 - **Async-First Testing**: All tests designed for async operations
 - **Health Data Security**: HIPAA-compliant test data handling
@@ -12,6 +13,7 @@ This document outlines the comprehensive testing strategy for the Clarity Loop B
 - **Integration Focused**: End-to-end testing of core user journeys
 
 ### Testing Pyramid
+
 ```
                     ┌─────────────────┐
                     │   E2E Tests     │ ← 10% (Critical user flows)
@@ -28,9 +30,11 @@ This document outlines the comprehensive testing strategy for the Clarity Loop B
 ## Test Categories
 
 ### 1. Unit Tests (70% of test suite)
+
 **Purpose**: Test individual functions and classes in isolation
 
 **Coverage Areas**:
+
 - Pydantic model validation
 - Business logic functions
 - Data transformation utilities
@@ -38,6 +42,7 @@ This document outlines the comprehensive testing strategy for the Clarity Loop B
 - ML model preprocessing
 
 **Example Structure**:
+
 ```python
 # tests/unit/test_health_data_models.py
 import pytest
@@ -79,9 +84,11 @@ class TestHealthDataPoint:
 ```
 
 ### 2. Integration Tests (20% of test suite)
+
 **Purpose**: Test component interactions and external service integration
 
 **Coverage Areas**:
+
 - API endpoints with authentication
 - Database operations with Firestore
 - ML model inference pipeline
@@ -89,6 +96,7 @@ class TestHealthDataPoint:
 - Firebase Authentication flow
 
 **Example Structure**:
+
 ```python
 # tests/integration/test_health_data_api.py
 import pytest
@@ -146,15 +154,18 @@ class TestHealthDataAPI:
 ```
 
 ### 3. End-to-End Tests (10% of test suite)
+
 **Purpose**: Test complete user journeys across the entire system
 
 **Coverage Areas**:
+
 - User registration and authentication flow
 - Health data upload → processing → insights generation
 - Real-time chat with health AI
 - Data export and deletion workflows
 
 **Example Structure**:
+
 ```python
 # tests/e2e/test_user_journey.py
 import pytest
@@ -192,11 +203,13 @@ class TestCompleteUserJourney:
 ## Test Configuration
 
 ### Pytest Configuration
+
 ```toml
 # pyproject.toml [tool.pytest.ini_options] - already included in main pyproject.toml
 ```
 
 ### Environment Setup
+
 ```python
 # tests/conftest.py
 import pytest
@@ -254,6 +267,7 @@ def sample_health_data():
 ## Test Data Management
 
 ### HIPAA-Compliant Test Data
+
 ```python
 # tests/utils/test_data_generator.py
 import faker
@@ -329,6 +343,7 @@ class HealthDataGenerator:
 ```
 
 ### Test Database Management
+
 ```python
 # tests/utils/database.py
 import asyncio
@@ -378,6 +393,7 @@ class TestDatabase:
 ## ML Model Testing
 
 ### Actigraphy Transformer Testing
+
 ```python
 # tests/ml/test_actigraphy_transformer.py
 import pytest
@@ -458,6 +474,7 @@ class TestActigraphyTransformer:
 ```
 
 ### Gemini AI Integration Testing
+
 ```python
 # tests/ml/test_gemini_integration.py
 import pytest
@@ -517,6 +534,7 @@ class TestGeminiIntegration:
 ## Performance Testing
 
 ### Load Testing Configuration
+
 ```python
 # tests/performance/test_api_load.py
 import pytest
@@ -558,6 +576,7 @@ class TestAPIPerformance:
 ## Test Automation
 
 ### CI/CD Integration
+
 ```yaml
 # .github/workflows/test.yml
 name: Test Suite
@@ -611,6 +630,7 @@ jobs:
 ```
 
 ### Pre-commit Hooks
+
 ```yaml
 # .pre-commit-config.yaml
 repos:
@@ -647,6 +667,7 @@ repos:
 ## Testing Utilities
 
 ### Custom Test Decorators
+
 ```python
 # tests/utils/decorators.py
 import functools
@@ -693,12 +714,14 @@ def with_test_user(user_type: str = "standard"):
 ## Test Reporting
 
 ### Coverage Requirements
+
 - **Minimum Coverage**: 80% overall
 - **Critical Paths**: 95% coverage for authentication, health data processing, AI insights
 - **ML Models**: 90% coverage for preprocessing and postprocessing
 - **API Endpoints**: 100% coverage for all public endpoints
 
 ### Test Metrics Dashboard
+
 ```python
 # scripts/test_metrics.py
 import json

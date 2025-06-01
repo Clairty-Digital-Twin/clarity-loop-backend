@@ -286,9 +286,8 @@ class HealthDataService:
 
         except FirestoreError as e:
             self.logger.exception("Firestore error retrieving health data: %s", e)
-            raise HealthDataServiceError(
-                f"Failed to retrieve health data: {e!s}"
-            ) from None
+            msg = f"Failed to retrieve health data: {e!s}"
+            raise HealthDataServiceError(msg) from None
 
     async def delete_health_data(
         self, user_id: str, processing_id: str | None = None

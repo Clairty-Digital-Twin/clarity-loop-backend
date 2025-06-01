@@ -1,0 +1,130 @@
+# 🪝 Pre-commit hooks for Clarity Loop Backend
+# Ensures code quality before every commit
+
+repos:
+  # ===== PYTHON CODE QUALITY =====
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.7.4
+    hooks:
+      - id: ruff
+        name: 🔍 Ruff Linter
+        args: [--fix, --exit-non-zero-on-fix]
+      - id: ruff-format
+        name: 🎨 Ruff Formatter
+
+  - repo: https://github.com/psf/black
+    rev: 24.10.0
+    hooks:
+      - id: black
+        name: 🖤 Black Formatter
+        language_version: python3.11
+
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.11.2
+    hooks:
+      - id: mypy
+        name: 🔍 MyPy Type Checker
+        additional_dependencies: [types-all]
+        args: [--strict, --ignore-missing-imports]
+        files: ^clarity/
+
+  # ===== SECURITY CHECKS =====
+  - repo: https://github.com/PyCQA/bandit
+    rev: 1.7.10
+    hooks:
+      - id: bandit
+        name: 🛡️ Bandit Security Scanner
+        args: [-r, clarity/, --skip, B101]
+        exclude: tests/
+
+  - repo: https://github.com/Yelp/detect-secrets
+    rev: v1.5.0
+    hooks:
+      - id: detect-secrets
+        name: 🔐 Detect Secrets
+        args: ['--baseline', '.secrets.baseline']
+
+  # ===== GENERAL CODE QUALITY =====
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: trailing-whitespace
+        name: 🧹 Remove Trailing Whitespace
+      - id: end-of-file-fixer
+        name: 📝 Fix End of Files
+      - id: check-yaml
+        name: 📋 Check YAML Syntax
+      - id: check-json
+        name: 📋 Check JSON Syntax
+      - id: check-toml
+        name: 📋 Check TOML Syntax
+      - id: check-xml
+        name: 📋 Check XML Syntax
+      - id: check-merge-conflict
+        name: 🔀 Check Merge Conflicts
+      - id: check-case-conflict
+        name: 📁 Check Case Conflicts
+      - id: check-added-large-files
+        name: 📦 Check Large Files
+        args: [--maxkb=1000]
+      - id: debug-statements
+        name: 🐛 Check Debug Statements
+      - id: name-tests-test
+        name: 🧪 Check Test Naming
+        args: [--pytest-test-first]
+
+  # ===== DOCUMENTATION =====
+  - repo: https://github.com/igorshubovych/markdownlint-cli
+    rev: v0.42.0
+    hooks:
+      - id: markdownlint
+        name: 📚 Markdown Linter
+        args: [--fix]
+        files: \.(md|markdown)$
+
+  # ===== DOCKER =====
+  - repo: https://github.com/hadolint/hadolint
+    rev: v2.13.1-beta
+    hooks:
+      - id: hadolint-docker
+        name: 🐳 Dockerfile Linter
+
+  # ===== YAML & CONFIG =====
+  - repo: https://github.com/adrienverge/yamllint
+    rev: v1.35.1
+    hooks:
+      - id: yamllint
+        name: 📋 YAML Linter
+        args: [-d, relaxed]
+
+  # ===== COMMIT MESSAGE =====
+  - repo: https://github.com/commitizen-tools/commitizen
+    rev: v3.29.1
+    hooks:
+      - id: commitizen
+        name: 💬 Commit Message Format
+        stages: [commit-msg]
+
+  # ===== PYTHON IMPORTS =====
+  - repo: https://github.com/asottile/pyupgrade
+    rev: v3.18.0
+    hooks:
+      - id: pyupgrade
+        name: ⬆️ Python Syntax Upgrader
+        args: [--py311-plus]
+
+# ===== GLOBAL CONFIGURATION =====
+default_language_version:
+  python: python3.11
+
+ci:
+  autofix_commit_msg: |
+    🤖 [pre-commit.ci] auto fixes from pre-commit hooks
+
+    for more information, see https://pre-commit.ci
+  autofix_prs: true
+  autoupdate_branch: develop
+  autoupdate_commit_msg: '🤖 [pre-commit.ci] pre-commit autoupdate'
+  autoupdate_schedule: weekly
+  skip: []
+  submodules: false

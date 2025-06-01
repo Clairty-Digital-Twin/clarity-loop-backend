@@ -364,7 +364,7 @@ class HealthDataService:
             }
 
         except FirestoreError as e:
-            self.logger.exception("Firestore error during data deletion: %s", e)
+            self.logger.exception("Firestore error during data deletion")
             msg = f"Failed to delete health data: {e!s}"
             raise HealthDataServiceError(msg) from None
 

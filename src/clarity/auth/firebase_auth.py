@@ -118,7 +118,7 @@ class FirebaseAuthMiddleware(BaseHTTPMiddleware):
             else:
                 logger.info("Firebase Admin SDK already initialized")
         except Exception as e:
-            logger.exception("Failed to initialize Firebase Admin SDK: %s", e)
+            logger.exception("Failed to initialize Firebase Admin SDK")
             msg = f"Firebase initialization failed: {e}"
             raise AuthError(msg, status_code=500) from None
 
@@ -158,7 +158,7 @@ class FirebaseAuthMiddleware(BaseHTTPMiddleware):
                 },
             )
         except Exception as e:
-            logger.exception("Unexpected authentication error: %s", e)
+            logger.exception("Unexpected authentication error")
             return JSONResponse(
                 status_code=500,
                 content={
@@ -234,7 +234,7 @@ class FirebaseAuthMiddleware(BaseHTTPMiddleware):
             # Check if token is expired
             if token_info.expires_at < datetime.now(UTC):
                 msg = "Token has expired"
-                raise AuthError(msg, 401, "token_expired")
+                raise AuthError(msg, 401, "token_expired") from None
 
             return token_info
 

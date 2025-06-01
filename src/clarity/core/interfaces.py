@@ -25,6 +25,14 @@ class IAuthProvider(ABC):
     async def get_user_info(self, user_id: str) -> dict[str, Any] | None:
         """Get user information by ID."""
 
+    @abstractmethod
+    async def initialize(self) -> None:
+        """Initialize the authentication provider."""
+
+    @abstractmethod
+    async def cleanup(self) -> None:
+        """Clean up authentication provider resources."""
+
 
 class IMiddleware(ABC):
     """Abstract middleware interface."""
@@ -124,6 +132,14 @@ class IHealthDataRepository(ABC):
         self, user_id: str, filters: dict[str, Any] | None = None
     ) -> dict[str, Any]:
         """Retrieve health data for a user (legacy method)."""
+
+    @abstractmethod
+    async def initialize(self) -> None:
+        """Initialize the repository."""
+
+    @abstractmethod
+    async def cleanup(self) -> None:
+        """Clean up repository resources."""
 
 
 class IConfigProvider(ABC):

@@ -4,8 +4,9 @@ Following Robert C. Martin's Clean Architecture and Gang of Four Factory Pattern
 This container manages all dependencies and wiring according to SOLID principles.
 """
 
+from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
-from typing import Any
+from typing import Any, cast
 
 from fastapi import FastAPI
 
@@ -35,7 +36,7 @@ class DependencyContainer:
             from clarity.core.config_provider import ConfigProvider
 
             self._instances[IConfigProvider] = ConfigProvider(self._settings)
-        return self._instances[IConfigProvider]
+        return cast("IConfigProvider", self._instances[IConfigProvider])
 
     def get_auth_provider(self) -> IAuthProvider:
         """Get authentication provider (Singleton pattern)."""
@@ -54,29 +55,38 @@ class DependencyContainer:
                 from clarity.auth.mock_auth import MockAuthProvider
 
                 self._instances[IAuthProvider] = MockAuthProvider()
-        return self._instances[IAuthProvider]
+        return cast("IAuthProvider", self._instances[IAuthProvider])
 
     def get_health_data_repository(self) -> IHealthDataRepository:
         """Get health data repository (Singleton pattern)."""
         if IHealthDataRepository not in self._instances:
-            from clarity.storage.firestore_client import FirestoreHealthDataRepository
-
             config_provider = self.get_config_provider()
-            self._instances[IHealthDataRepository] = FirestoreHealthDataRepository(
-                project_id=config_provider.get_gcp_project_id(),
-                credentials_path=config_provider.get_firebase_config().get(
-                    "credentials_path"
-                ),
-            )
-        return self._instances[IHealthDataRepository]
+
+            # Use mock repository in development or when Firestore credentials aren't available
+            if config_provider.is_development():
+                from clarity.storage.mock_repository import MockHealthDataRepository
+
+                self._instances[IHealthDataRepository] = MockHealthDataRepository()
+            else:
+                from clarity.storage.firestore_client import (
+                    FirestoreHealthDataRepository,
+                )
+
+                self._instances[IHealthDataRepository] = FirestoreHealthDataRepository(
+                    project_id=config_provider.get_gcp_project_id(),
+                    credentials_path=config_provider.get_firebase_config().get(
+                        "credentials_path"
+                    ),
+                )
+        return cast("IHealthDataRepository", self._instances[IHealthDataRepository])
 
     @asynccontextmanager
-    async def app_lifespan(self, app: FastAPI):
+    async def app_lifespan(self, app: FastAPI) -> AsyncGenerator[None, None]:
         """Application lifespan context manager for FastAPI."""
         # Startup
         from clarity.core.logging_config import setup_logging
 
-        setup_logging(self._settings.log_level, self._settings.environment)
+        setup_logging()
 
         # Initialize any async resources
         auth_provider = self.get_auth_provider()

@@ -8,25 +8,25 @@ This guide covers the complete deployment process for the Clarity Loop Backend a
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                    Multi-Environment Architecture                │
+│                    Multi-Environment Architecture               │
 ├─────────────────────────────────────────────────────────────────┤
-│  Development (clarity-loop-dev)                               │
-│  ├── Cloud Run: Auto-deploy from feature branches              │
-│  ├── Firestore: Development database with test data           │
-│  ├── Firebase Auth: Development users                         │
-│  └── Vertex AI: Development ML models                         │
+│  Development (clarity-loop-dev)                                 │
+│  ├── Cloud Run: Auto-deploy from feature branches               │
+│  ├── Firestore: Development database with test data             │
+│  ├── Firebase Auth: Development users                           │
+│  └── Vertex AI: Development ML models                           │
 │                                                                 │
-│  Staging (clarity-loop-staging)                               │
-│  ├── Cloud Run: Auto-deploy from develop branch               │
-│  ├── Firestore: Staging database with realistic test data     │
-│  ├── Firebase Auth: Staging users and testing accounts        │
-│  └── Vertex AI: Staging ML models for integration testing     │
+│  Staging (clarity-loop-staging)                                 │
+│  ├── Cloud Run: Auto-deploy from develop branch                 │
+│  ├── Firestore: Staging database with realistic test data       │
+│  ├── Firebase Auth: Staging users and testing accounts          │
+│  └── Vertex AI: Staging ML models for integration testing       │
 │                                                                 │
-│  Production (clarity-loop-prod)                               │
-│  ├── Cloud Run: Manual deploy from main branch                │
-│  ├── Firestore: Production database with real user data       │
-│  ├── Firebase Auth: Production users                          │
-│  └── Vertex AI: Production ML models with monitoring          │
+│  Production (clarity-loop-prod)                                 │
+│  ├── Cloud Run: Manual deploy from main branch                  │
+│  ├── Firestore: Production database with real user data         │
+│  ├── Firebase Auth: Production users                            │
+│  └── Vertex AI: Production ML models with monitoring            │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
@@ -40,6 +40,10 @@ This guide covers the complete deployment process for the Clarity Loop Backend a
 ## Prerequisites
 
 ### Required Access and Permissions
+
+**See External References** → [Cloud Run Gen 2 execution-env](../external-links.md#external-references--google-cloud-backend-critical) 
+and [Workload Identity Federation](../external-links.md#external-references--google-cloud-backend-critical) 
+for canonical deployment configurations.
 
 ```bash
 # Google Cloud Platform access required

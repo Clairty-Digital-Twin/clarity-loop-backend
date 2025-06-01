@@ -1,4 +1,6 @@
-# Python
+# ===== CLARITY LOOP BACKEND - COMPREHENSIVE .GITIGNORE =====
+
+# ===== PYTHON =====
 __pycache__/
 *.py[cod]
 *$py.class
@@ -16,61 +18,231 @@ parts/
 sdist/
 var/
 wheels/
+share/python-wheels/
 *.egg-info/
 .installed.cfg
 *.egg
+MANIFEST
 
-# Virtual Environment
-venv/
+# ===== VIRTUAL ENVIRONMENTS =====
+.env
+.venv
 env/
+venv/
 ENV/
+env.bak/
+venv.bak/
+pyvenv.cfg
 
-# IDE
-.idea/
+# ===== IDE & EDITORS =====
 .vscode/
+.idea/
 *.swp
 *.swo
-
-# Logs
-logs/
-*.log
-
-# Local configuration
-.env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
-
-# Google Cloud / Firebase
-firebase-debug.log
-firebase-debug.*.log
-.firebase/
-serviceAccountKey.json
-
-# macOS
+*~
 .DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
 
-# Distribution / packaging
+# ===== JUPYTER NOTEBOOKS =====
+.ipynb_checkpoints/
+*.ipynb
+
+# ===== PYTEST & TESTING =====
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.nox/
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+
+# ===== MYPY TYPE CHECKING =====
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# ===== LINTING & FORMATTING =====
+.ruff_cache/
+.black_cache/
+.isort.cfg
+
+# ===== NODE.JS & NPM =====
 node_modules/
-
-# Added by Claude Task Master
-logs
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-dev-debug.log
-# Dependency directories
-# Environment variables
-# Editor directories and files
-.idea
-.vscode
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
-*.sw?
-# OS specific
-# Task files
-tasks.json
-tasks/ 
+.npm
+.yarn-integrity
+.pnp.*
+.pnp.js
+
+# ===== DOCUMENTATION =====
+site/
+docs/_build/
+.mkdocs-cache/
+
+# ===== CREDENTIALS & SECRETS =====
+.env.local
+.env.production
+.env.staging
+credentials/
+*.pem
+*.key
+*.p12
+*.json
+service-account*.json
+firebase-admin*.json
+gcp-credentials*.json
+.gcp/
+.firebase/
+
+# ===== GOOGLE CLOUD =====
+.gcloud/
+.config/gcloud/
+
+# ===== ML MODELS & DATA =====
+models/
+*.pth
+*.pkl
+*.joblib
+*.h5
+*.onnx
+*.tflite
+weights/
+checkpoints/
+data/raw/
+data/processed/
+data/external/
+data/exports/
+*.npy
+*.npz
+embeddings/
+features/
+
+# ===== LOGS & MONITORING =====
+logs/
+*.log
+*.log.*
+log_*.txt
+firebase-debug.log
+firestore-debug.log
+
+# ===== TEMPORARY FILES =====
+tmp/
+temp/
+.tmp/
+*.tmp
+*.temp
+.cache/
+
+# ===== DATABASE =====
+*.db
+*.sqlite
+*.sqlite3
+db.sqlite3
+database.db
+
+# ===== DOCKER =====
+.dockerignore
+docker-compose.override.yml
+
+# ===== CLOUD STORAGE =====
+uploads/
+downloads/
+storage/
+
+# ===== PROFILING & PERFORMANCE =====
+*.prof
+.prof/
+profile_*.html
+
+# ===== SECURITY REPORTS =====
+reports/
+bandit-report.*
+safety-report.*
+security-scan.*
+
+# ===== BACKUPS =====
+*.bak
+*.backup
+backup/
+backups/
+
+# ===== REDIS DUMPS =====
+dump.rdb
+
+# ===== CERTIFICATES =====
+*.crt
+*.csr
+*.der
+*.p7b
+*.p7r
+*.p7s
+*.pfx
+*.cer
+
+# ===== JUPYTER EXPERIMENTS =====
+experiments/
+notebooks/checkpoints/
+.jupyter/
+
+# ===== PROMETHEUS & GRAFANA =====
+prometheus_data/
+grafana_data/
+
+# ===== TERRAFORM (if used) =====
+*.tfstate
+*.tfstate.*
+.terraform/
+.terraform.lock.hcl
+
+# ===== KUBERNETES (if used) =====
+*.kubeconfig
+kubeconfig*
+
+# ===== LOCUST LOAD TESTING =====
+locust_*.html
+
+# ===== PYTHON WHEELS =====
+*.whl
+
+# ===== SYSTEM FILES =====
+.fuse_hidden*
+.directory
+.Trash-*
+.nfs*
+
+# ===== PYPROJECT BUILD =====
+.build/
+__pypackages__/
+
+# ===== CELERY =====
+celerybeat-schedule
+celerybeat.pid
+
+# ===== SPYDER =====
+.spyderproject
+.spyproject
+
+# ===== ROPE =====
+.ropeproject
+
+# ===== COVERAGE.PY =====
+.coverage.*
+!.coveragerc
+
+# Keep important configuration files
+!.env.example
+!.gitignore
+!.github/
+!Dockerfile
+!docker-compose.yml
+!pyproject.toml
+!Makefile

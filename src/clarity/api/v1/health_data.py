@@ -107,13 +107,15 @@ async def get_processing_status(
 
     except HealthDataServiceError as e:
         logger.exception("Health data service error: %s", e)
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)
+        ) from None
     except Exception as e:
         logger.exception("Unexpected error getting processing status: %s", e)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Internal server error",
-        )
+        ) from None
 
 
 @router.get("/health-data")
@@ -151,13 +153,15 @@ async def get_health_data(
 
     except HealthDataServiceError as e:
         logger.exception("Health data service error: %s", e)
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)
+        ) from None
     except Exception as e:
         logger.exception("Unexpected error retrieving health data: %s", e)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Internal server error",
-        )
+        ) from None
 
 
 @router.delete("/health-data/{processing_id}")
@@ -190,13 +194,15 @@ async def delete_health_data(
 
     except HealthDataServiceError as e:
         logger.exception("Health data service error: %s", e)
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)
+        ) from None
     except Exception as e:
         logger.exception("Unexpected error deleting health data: %s", e)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Internal server error",
-        )
+        ) from None
 
 
 @router.get("/health")

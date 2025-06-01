@@ -366,7 +366,9 @@ class HealthDataService:
 
         except FirestoreError as e:
             self.logger.exception("Firestore error during data deletion: %s", e)
-            raise HealthDataServiceError(f"Failed to delete health data: {e!s}")
+            raise HealthDataServiceError(
+                f"Failed to delete health data: {e!s}"
+            ) from None
 
     def _validate_metric_business_rules(self, metric: HealthMetric) -> bool:
         """Validate health metric against business rules."""

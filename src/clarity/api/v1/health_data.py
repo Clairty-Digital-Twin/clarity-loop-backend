@@ -68,6 +68,9 @@ async def upload_health_data(
         
         return response
         
+    except HTTPException:
+        # Re-raise HTTP exceptions as-is
+        raise
     except Exception as e:
         # Log the error (TODO: implement proper logging)
         raise HTTPException(

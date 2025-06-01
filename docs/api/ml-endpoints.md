@@ -289,10 +289,24 @@ Generate natural language health insights using Gemini AI based on actigraphy fe
     "trend": "improving"
   },
   "metadata": {
-    "model_version": "gemini-pro-1.5",
+    "model_version": "gemini-2.5-pro-preview-05-06",
     "processing_time_ms": 1200,
     "language": "en",
-    "personalization_applied": true
+    "personalization_applied": true,
+    "model_capabilities": {
+      "input_types": ["text", "code", "images", "audio", "video"],
+      "max_input_tokens": 1048576,
+      "max_output_tokens": 65535,
+      "features": [
+        "grounding_with_google_search",
+        "code_execution",
+        "system_instructions",
+        "controlled_generation",
+        "function_calling",
+        "context_caching",
+        "vertex_ai_rag_engine"
+      ]
+    }
   }
 }
 ```

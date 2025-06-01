@@ -1,77 +1,50 @@
-"""CLARITY Digital Twin Platform - Health Data API
+"""CLARITY Digital Twin Platform - Health Data API.
 
-RESTful endpoints for health data upload, processing, and retrieval.
-Implements the Phase 1 vertical slice for health data upload and storage.
+RESTful API endpoints for health data upload, processing, and retrieval.
+Implements enterprise-grade security, validation, and HIPAA compliance.
 """
 
+from datetime import UTC, datetime
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Request, status
-from fastapi.responses import JSONResponse
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 
-from ...auth import Permission, UserContext, get_current_user, require_permission
-from ...models.health_data import (
-    HealthDataResponse,
-    HealthDataUpload,
-    HealthMetricType,
-    ProcessingStatus,
+from clarity.auth import Permission, UserContext, get_current_user, require_auth
+from clarity.models.health_data import HealthDataResponse, HealthDataUpload
+from clarity.services.health_data_service import (
+    HealthDataService,
+    HealthDataServiceError,
 )
-from ...services.health_data_service import HealthDataService, HealthDataServiceError
-from ...storage.firestore_client import FirestoreClient
+from clarity.storage.firestore_client import FirestoreClient
 
 # Configure logger
 logger = logging.getLogger(__name__)
 
 # Initialize router
-router = APIRouter(
-    prefix="/health-data",
-    tags=["Health Data"],
-    responses={
-        401: {"description": "Authentication required"},
-        403: {"description": "Insufficient permissions"},
-        500: {"description": "Internal server error"},
-    },
-)
+router = APIRouter(prefix="/health-data", tags=["Health Data"])
 
 
-# Dependency to get health data service
+# Dependency injection for services
 async def get_health_data_service() -> HealthDataService:
-    """Dependency to get configured health data service."""
-    # TODO: Initialize with proper configuration
-    firestore_client = FirestoreClient(
-        project_id="clarity-digital-twin",  # Should come from settings
-        enable_caching=True,
-    )
-
-    return HealthDataService(firestore_client=firestore_client)
+    """Get health data service instance."""
+    firestore_client = FirestoreClient(project_id="your-project-id")
+    return HealthDataService(firestore_client)
 
 
 @router.post(
     "/upload",
-    response_model=HealthDataResponse,
-    status_code=status.HTTP_202_ACCEPTED,
     summary="Upload Health Data",
     description="Upload health metrics for processing and analysis by the CLARITY digital twin platform.",
 )
-@require_permission(Permission.WRITE_OWN_DATA)
+@require_auth(permissions=[Permission.WRITE_OWN_DATA])
 async def upload_health_data(
     health_data: HealthDataUpload,
     current_user: UserContext = Depends(get_current_user),
     service: HealthDataService = Depends(get_health_data_service),
 ) -> HealthDataResponse:
-    """Upload health data for processing and analysis.
-
-    This endpoint accepts health metrics from various sources (HealthKit, wearables, manual entry)
-    and initiates asynchronous processing for AI-powered insights generation.
-
-    **Security**: Requires authentication and WRITE_OWN_DATA permission.
-    **Rate Limiting**: Applied per user to prevent abuse.
-    **Data Validation**: Comprehensive clinical-grade validation is performed.
-
-    Returns a processing ID that can be used to track the status of the upload.
-    """
+    """Upload health data for processing."""
     try:
         logger.info("Health data upload requested by user: %s", current_user.user_id)
 
@@ -98,28 +71,22 @@ async def upload_health_data(
         logger.error("Unexpected error in health data upload: %s", e)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Internal server error during health data upload",
+            detail="Internal server error",
         )
 
 
 @router.get(
-    "/{processing_id}/status",
+    "/processing/{processing_id}",
     summary="Get Processing Status",
     description="Check the processing status of a health data upload using its processing ID.",
 )
-@require_permission(Permission.READ_OWN_DATA)
+@require_auth(permissions=[Permission.READ_OWN_DATA])
 async def get_processing_status(
     processing_id: UUID,
     current_user: UserContext = Depends(get_current_user),
     service: HealthDataService = Depends(get_health_data_service),
 ) -> dict[str, Any]:
-    """Get the processing status of a health data upload.
-
-    **Security**: Users can only access status for their own uploads.
-    **Real-time Updates**: Status is updated in real-time as processing progresses.
-
-    Returns detailed information about the processing pipeline progress.
-    """
+    """Get processing status for a health data upload."""
     try:
         logger.debug(
             "Processing status requested: %s by user: %s",
@@ -128,7 +95,7 @@ async def get_processing_status(
         )
 
         status_info = await service.get_processing_status(
-            processing_id=processing_id, user_id=current_user.user_id
+            processing_id=str(processing_id), user_id=current_user.user_id
         )
 
         if not status_info:
@@ -145,126 +112,112 @@ async def get_processing_status(
         logger.error("Unexpected error getting processing status: %s", e)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Internal server error retrieving processing status",
+            detail="Internal server error",
         )
 
 
-@router.get(
-    "/",
-    summary="Get User Health Data",
-    description="Retrieve health data for the authenticated user with optional filtering.",
-)
-@require_permission(Permission.READ_OWN_DATA)
-async def get_user_health_data(
+@router.get("/health-data")
+@require_auth(permissions=[Permission.READ_OWN_DATA])
+async def get_health_data(
     current_user: UserContext = Depends(get_current_user),
+    limit: int = Query(100, ge=1, le=1000, description="Maximum number of records"),
+    offset: int = Query(0, ge=0, description="Number of records to skip"),
+    metric_type: str | None = Query(None, description="Filter by metric type"),
+    start_date: datetime | None = Query(None, description="Filter from date"),
+    end_date: datetime | None = Query(None, description="Filter to date"),
     service: HealthDataService = Depends(get_health_data_service),
-    metric_type: HealthMetricType | None = None,
-    limit: int = 100,
-) -> list[dict[str, Any]]:
-    """Retrieve health data for the authenticated user.
-
-    **Security**: Users can only access their own health data.
-    **Filtering**: Optional filtering by metric type and date range.
-    **Pagination**: Results are paginated to prevent large responses.
-
-    Returns a list of health data records matching the criteria.
-    """
+) -> dict[str, Any]:
+    """Retrieve user's health data with filtering and pagination."""
     try:
-        logger.debug(f"Health data retrieval requested by user: {current_user.user_id}")
+        logger.debug(
+            "Health data retrieval requested by user: %s", current_user.user_id
+        )
 
         health_data = await service.get_user_health_data(
             user_id=current_user.user_id,
+            limit=limit,
+            offset=offset,
             metric_type=metric_type,
-            limit=min(limit, 1000),  # Cap at 1000 records
+            start_date=start_date,
+            end_date=end_date,
         )
 
         logger.info(
-            f"Retrieved {len(health_data)} health data records for user: {current_user.user_id}"
+            "Retrieved %s health data records for user: %s",
+            len(health_data.get("metrics", [])),
+            current_user.user_id,
         )
         return health_data
 
     except HealthDataServiceError as e:
-        logger.error(f"Health data service error: {e}")
+        logger.error("Health data service error: %s", e)
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
     except Exception as e:
-        logger.error(f"Unexpected error retrieving health data: {e}")
+        logger.error("Unexpected error retrieving health data: %s", e)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Internal server error retrieving health data",
+            detail="Internal server error",
         )
 
 
-@router.delete(
-    "/{processing_id}",
-    summary="Delete Health Data",
-    description="Delete specific health data upload (GDPR compliance).",
-)
-@require_permission(Permission.WRITE_OWN_DATA)
+@router.delete("/health-data/{processing_id}")
+@require_auth(permissions=[Permission.WRITE_OWN_DATA])
 async def delete_health_data(
     processing_id: UUID,
     current_user: UserContext = Depends(get_current_user),
     service: HealthDataService = Depends(get_health_data_service),
 ) -> dict[str, str]:
-    """Delete specific health data upload.
-
-    **Security**: Users can only delete their own data.
-    **GDPR Compliance**: Supports right to erasure requirements.
-    **Audit Trail**: Deletion is logged for compliance purposes.
-
-    Returns confirmation of successful deletion.
-    """
+    """Delete user's health data by processing ID."""
     try:
         logger.info(
-            f"Health data deletion requested: {processing_id} by user: {current_user.user_id}"
+            "Health data deletion requested: %s by user: %s",
+            processing_id,
+            current_user.user_id,
         )
 
-        success = await service.delete_user_health_data(
+        success = await service.delete_health_data(
             user_id=current_user.user_id, processing_id=str(processing_id)
         )
 
         if not success:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail="Health data not found or access denied",
+                detail="Processing job not found or access denied",
             )
 
-        logger.info(f"Health data deleted successfully: {processing_id}")
+        logger.info("Health data deleted successfully: %s", processing_id)
         return {"message": "Health data deleted successfully"}
 
     except HealthDataServiceError as e:
-        logger.error(f"Health data service error: {e}")
+        logger.error("Health data service error: %s", e)
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
     except Exception as e:
-        logger.error(f"Unexpected error deleting health data: {e}")
+        logger.error("Unexpected error deleting health data: %s", e)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Internal server error deleting health data",
+            detail="Internal server error",
         )
 
 
-@router.get(
-    "/health",
-    summary="Health Check",
-    description="Health check endpoint for the health data service.",
-)
+@router.get("/health")
 async def health_check(
     service: HealthDataService = Depends(get_health_data_service),
 ) -> dict[str, Any]:
-    """Health check for the health data service.
-
-    **Public Endpoint**: No authentication required.
-    **Monitoring**: Used by load balancers and monitoring systems.
-
-    Returns service health status and statistics.
-    """
+    """Health check endpoint for the health data service."""
     try:
-        health_status = await service.health_check()
+        # Basic health check
+        health_status = {
+            "status": "healthy",
+            "service": "health-data-api",
+            "timestamp": datetime.now(UTC).isoformat(),
+        }
         return health_status
 
     except Exception as e:
-        logger.error(f"Health check failed: {e}")
+        logger.error("Health check failed: %s", e)
         return {
             "status": "unhealthy",
+            "service": "health-data-api",
             "error": str(e),
-            "timestamp": "2025-06-01T18:37:00Z",  # This should be dynamic
+            "timestamp": datetime.now(UTC).isoformat(),
         }

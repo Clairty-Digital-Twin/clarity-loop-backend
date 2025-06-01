@@ -118,7 +118,7 @@ class FirebaseAuthMiddleware(BaseHTTPMiddleware):
             else:
                 logger.info("Firebase Admin SDK already initialized")
         except Exception as e:
-            logger.error(f"Failed to initialize Firebase Admin SDK: {e}")
+            logger.error("Failed to initialize Firebase Admin SDK: %s", e)
             raise AuthError(f"Firebase initialization failed: {e}", status_code=500)
 
     async def dispatch(
@@ -138,7 +138,7 @@ class FirebaseAuthMiddleware(BaseHTTPMiddleware):
 
             # Log successful authentication
             logger.info(
-                f"Authenticated user: {user_context.user_id} for {request.url.path}"
+                "Authenticated user: %s for %s", user_context.user_id, request.url.path
             )
 
             response = await call_next(request)

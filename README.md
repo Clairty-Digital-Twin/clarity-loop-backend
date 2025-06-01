@@ -22,25 +22,28 @@ This backend consists of:
 ### Setup
 
 1. Create a virtual environment:
-   ```
+
+   ```bash
    python -m venv venv
    source venv/bin/activate  # On Windows: venv\Scripts\activate
    ```
 
 2. Install dependencies:
-   ```
+
+   ```bash
    pip install -r requirements.txt
    ```
 
 3. Set up environment variables:
-   ```
+
+   ```bash
    cp .env.example .env
    # Edit .env with your configuration
    ```
 
 ### Running Locally
 
-```
+```bash
 uvicorn app.main:app --reload
 ```
 
@@ -48,13 +51,14 @@ uvicorn app.main:app --reload
 
 The backend is designed to be deployed on Google Cloud Run:
 
-```
+```bash
 gcloud run deploy clarity-loop-backend --source .
 ```
 
 ## Security
 
-This application implements HIPAA-inspired security practices:
+This backend implements HIPAA-inspired security practices including:
+
 - End-to-end encryption
 - Secure authentication
 - Least privilege access
@@ -62,4 +66,4 @@ This application implements HIPAA-inspired security practices:
 
 ## License
 
-Proprietary - All rights reserved
+This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENSE) file for details.

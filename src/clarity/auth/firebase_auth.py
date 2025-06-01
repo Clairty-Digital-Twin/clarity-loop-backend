@@ -238,18 +238,26 @@ class FirebaseAuthMiddleware(BaseHTTPMiddleware):
             return token_info
 
         except auth.ExpiredIdTokenError:
-            raise AuthError("Authentication token has expired", 401, "token_expired")
+            raise AuthError(
+                "Authentication token has expired", 401, "token_expired"
+            ) from None
         except auth.RevokedIdTokenError:
             raise AuthError(
                 "Authentication token has been revoked", 401, "token_revoked"
-            )
+            ) from None
         except auth.InvalidIdTokenError:
-            raise AuthError("Invalid authentication token", 401, "invalid_token")
+            raise AuthError(
+                "Invalid authentication token", 401, "invalid_token"
+            ) from None
         except auth.CertificateFetchError:
-            raise AuthError("Unable to verify token", 500, "verification_error")
+            raise AuthError(
+                "Unable to verify token", 500, "verification_error"
+            ) from None
         except Exception as e:
             logger.exception("Token verification error: %s", e)
-            raise AuthError("Token verification failed", 500, "verification_failed")
+            raise AuthError(
+                "Token verification failed", 500, "verification_failed"
+            ) from None
 
     async def _create_user_context(self, token_info: TokenInfo) -> UserContext:
         """Create user context from verified token."""
@@ -295,12 +303,12 @@ class FirebaseAuthMiddleware(BaseHTTPMiddleware):
             return user_context
 
         except auth.UserNotFoundError:
-            raise AuthError("User not found", 401, "user_not_found")
+            raise AuthError("User not found", 401, "user_not_found") from None
         except Exception as e:
             logger.exception("Error creating user context: %s", e)
             raise AuthError(
                 "Failed to create user context", 500, "context_creation_failed"
-            )
+            ) from None
 
     async def _get_cached_user(self, token: str) -> UserContext | None:
         """Get user context from cache if valid."""

@@ -67,7 +67,7 @@ docker-compose up ml-processor
                                 │                       │
                                 ▼                       ▼
                        ┌─────────────────┐    ┌─────────────────┐
-                       │   Firestore     │◀───│  Gemini 2.5     │
+                       │   Firestore     │◀───│  Gemini 2.5 Pro │
                        │   Real-time DB  │    │  AI Insights    │
                        └─────────────────┘    └─────────────────┘
 ```
@@ -123,7 +123,7 @@ Users can interact with their health data through natural language:
 1. **Data Ingestion** - Real-time HealthKit data processing
 2. **Actigraphy Analysis** - Sleep stages, activity patterns, circadian rhythm
 3. **Trend Analysis** - Weekly/monthly health pattern recognition  
-4. **AI Insights** - Personalized recommendations via Gemini 2.5
+4. **AI Insights** - Personalized recommendations via Gemini 2.5 Pro
 5. **Real-time Delivery** - Push insights to iOS app via Firestore
 
 ## 📊 API Documentation

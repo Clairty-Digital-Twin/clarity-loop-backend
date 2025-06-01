@@ -4,11 +4,9 @@ Provides shared test fixtures, configuration, and utilities for all test modules
 """
 
 import asyncio
-from collections.abc import AsyncGenerator
-from collections.abc import Generator
+from collections.abc import AsyncGenerator, Generator
 import os
-from unittest.mock import AsyncMock
-from unittest.mock import MagicMock
+from unittest.mock import AsyncMock, MagicMock
 
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
@@ -34,12 +32,12 @@ def mock_firestore():
     mock_client = MagicMock()
     mock_collection = MagicMock()
     mock_document = MagicMock()
-    
+
     mock_client.collection.return_value = mock_collection
     mock_collection.document.return_value = mock_document
     mock_document.get.return_value.exists = True
     mock_document.get.return_value.to_dict.return_value = {"test": "data"}
-    
+
     return mock_client
 
 
@@ -61,11 +59,11 @@ def mock_gcs_client():
     mock_client = MagicMock()
     mock_bucket = MagicMock()
     mock_blob = MagicMock()
-    
+
     mock_client.bucket.return_value = mock_bucket
     mock_bucket.blob.return_value = mock_blob
     mock_blob.upload_from_string.return_value = None
-    
+
     return mock_client
 
 
@@ -83,15 +81,15 @@ def mock_gemini_client():
 def mock_pat_model():
     """Mock PAT (Pretrained Actigraphy Transformer) model."""
     import torch
-    
+
     mock_model = MagicMock()
     mock_model.eval.return_value = None
     mock_model.return_value = torch.tensor([[0.1, 0.2, 0.7]])  # Mock predictions
-    
+
     # Mock attention weights for explainability
     mock_attention = torch.rand(1, 8, 560, 560)  # [batch, heads, seq, seq]
     mock_model.get_attention_weights.return_value = mock_attention
-    
+
     return mock_model
 
 
@@ -99,13 +97,13 @@ def mock_pat_model():
 def sample_actigraphy_data() -> dict:
     """Provide sample actigraphy data for testing."""
     import numpy as np
-    
+
     # Create a random number generator for reproducible tests
     rng = np.random.default_rng(42)
-    
+
     return {
         "user_id": "test-user-123",
-        "device_id": "test-device-456", 
+        "device_id": "test-device-456",
         "start_date": "2024-01-01T00:00:00Z",
         "end_date": "2024-01-07T23:59:00Z",
         "activity_counts": rng.poisson(10, 10080).tolist(),
@@ -140,7 +138,7 @@ def sample_health_labels():
 async def app() -> FastAPI:
     """Create FastAPI test application."""
     from clarity.main import create_app
-    
+
     return create_app()
 
 
@@ -170,14 +168,15 @@ def auth_headers():
 def mock_redis():
     """Mock Redis client for testing."""
     from unittest.mock import MagicMock
+
     import redis
-      
+
     mock_client = MagicMock(spec=redis.Redis)
     mock_client.get.return_value = None
     mock_client.set.return_value = True
     mock_client.delete.return_value = 1
     mock_client.exists.return_value = False
-    
+
     return mock_client
 
 
@@ -197,7 +196,7 @@ def mock_environment_variables(monkeypatch):
         "GEMINI_API_KEY": "test-gemini-key",
         "PAT_MODEL_PATH": "./tests/fixtures/mock-pat-model"
     }
-    
+
     for key, value in test_env.items():
         monkeypatch.setenv(key, value)
 

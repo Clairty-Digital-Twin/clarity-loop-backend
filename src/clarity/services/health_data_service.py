@@ -194,14 +194,12 @@ class HealthDataService:
             }
 
         except DocumentNotFoundError:
-            raise DataNotFoundError(
-                f"Processing job {processing_id} not found"
-            ) from None
+            msg = f"Processing job {processing_id} not found"
+            raise DataNotFoundError(msg) from None
         except FirestoreError as e:
             self.logger.exception("Firestore error retrieving processing status: %s", e)
-            raise HealthDataServiceError(
-                f"Failed to retrieve processing status: {e!s}"
-            ) from None
+            msg = f"Failed to retrieve processing status: {e!s}"
+            raise HealthDataServiceError(msg) from None
 
     async def get_user_health_data(
         self,

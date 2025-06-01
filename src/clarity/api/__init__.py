@@ -1,4 +1,4 @@
-"""CLARITY Digital Twin Platform - API Package
+"""CLARITY Digital Twin Platform - API Package.
 
 This module contains the FastAPI application and all API route definitions
 for the psychiatry and mental health digital twin platform.

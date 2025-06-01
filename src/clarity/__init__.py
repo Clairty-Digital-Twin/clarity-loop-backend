@@ -1,4 +1,4 @@
-"""Clarity Loop Backend - Psychiatry & Mental Health Digital Twin Platform
+"""Clarity Loop Backend - Psychiatry & Mental Health Digital Twin Platform.
 
 A paradigm-shattering psychiatry and wellness AI/ML analytics system that establishes
 entirely new standards for clinical data systems.

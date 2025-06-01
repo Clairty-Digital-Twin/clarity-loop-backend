@@ -377,7 +377,7 @@ class HealthDataService:
 
             # Validate biometric data ranges
             if (
-                metric.metric_type.value in ["heart_rate", "blood_pressure"]
+                metric.metric_type.value in {"heart_rate", "blood_pressure"}
                 and metric.biometric_data
             ):
                 return True
@@ -391,13 +391,7 @@ class HealthDataService:
                 return True
 
             # Validate mental health data
-            if (
-                metric.metric_type.value == "mood_assessment"
-                and metric.mental_health_data is not None
-            ):
-                return True
-
-            return False
+            return bool(metric.metric_type.value == "mood_assessment" and metric.mental_health_data is not None)
 
         except Exception as e:
             logger.warning("Business rule validation failed: %s", e)

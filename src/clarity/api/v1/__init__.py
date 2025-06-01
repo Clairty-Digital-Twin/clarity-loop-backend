@@ -1,4 +1,4 @@
-"""CLARITY Digital Twin Platform - API v1 Package
+"""CLARITY Digital Twin Platform - API v1 Package.
 
 Version 1 of the CLARITY platform API endpoints.
 This module contains all the route definitions for the first version of the API.

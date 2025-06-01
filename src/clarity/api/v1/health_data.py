@@ -212,12 +212,11 @@ async def health_check(
     """Health check endpoint for the health data service."""
     try:
         # Basic health check
-        health_status = {
+        return {
             "status": "healthy",
             "service": "health-data-api",
             "timestamp": datetime.now(UTC).isoformat(),
         }
-        return health_status
 
     except Exception as e:
         logger.exception("Health check failed")

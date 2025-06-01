@@ -1,4 +1,4 @@
-"""CLARITY Digital Twin Platform - Firebase Authentication
+"""CLARITY Digital Twin Platform - Firebase Authentication.
 
 Enterprise-grade Firebase authentication middleware with:
 - JWT token validation and verification
@@ -146,8 +146,7 @@ class FirebaseAuthMiddleware(BaseHTTPMiddleware):
                 "Authenticated user: %s for %s", user_context.user_id, request.url.path
             )
 
-            response = await call_next(request)
-            return response
+            return await call_next(request)
 
         except AuthError as e:
             logger.warning(
@@ -274,7 +273,7 @@ class FirebaseAuthMiddleware(BaseHTTPMiddleware):
             # Get permissions for the role
             permissions = self._role_permissions.get(role, [])
 
-            user_context = UserContext(
+            return UserContext(
                 user_id=token_info.user_id,
                 email=user_record.email,
                 role=role,
@@ -293,8 +292,6 @@ class FirebaseAuthMiddleware(BaseHTTPMiddleware):
                     else None
                 ),
             )
-
-            return user_context
 
         except auth.UserNotFoundError:
             msg = "User not found"

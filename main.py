@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-CLARITY Digital Twin Platform - Root Entry Point
+"""CLARITY Digital Twin Platform - Root Entry Point.
 
 Thin wrapper that launches the main FastAPI application from src/clarity/main.py.
 This provides a convenient way to run the application from the project root
@@ -11,23 +10,32 @@ Usage:
     uvicorn main:app --reload
 """
 
-import sys
 from pathlib import Path
+import sys
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from fastapi import FastAPI
 
 # Add src directory to Python path
 src_path = Path(__file__).parent / "src"
 sys.path.insert(0, str(src_path))
 
-# Import and expose the FastAPI app from the proper location
-from clarity.main import app
+
+def get_app() -> "FastAPI":
+    """Lazy import and return the FastAPI app to avoid circular imports."""
+    from clarity.main import (
+        get_application,  # type: ignore[import-untyped]
+    )
+
+    return get_application()  # type: ignore[no-any-return]
+
+
+# Expose app for uvicorn
+app = get_app()
 
 if __name__ == "__main__":
     import uvicorn
-    
-    uvicorn.run(
-        "main:app",
-        host="0.0.0.0",
-        port=8000,
-        reload=True,
-        log_level="info"
-    )
+
+    # Bind to localhost in development for security
+    uvicorn.run("main:app", host="127.0.0.1", port=8000, reload=True, log_level="info")

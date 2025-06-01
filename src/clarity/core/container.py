@@ -6,9 +6,13 @@ This container manages all dependencies and wiring according to SOLID principles
 
 from __future__ import annotations
 
-from collections.abc import AsyncGenerator, Callable
+from collections.abc import Callable
 from contextlib import asynccontextmanager
 from typing import TYPE_CHECKING, Any, TypeVar, cast
+
+# Only needed at runtime, not for type checking
+if not TYPE_CHECKING:
+    from collections.abc import AsyncGenerator
 
 from fastapi import FastAPI
 
@@ -20,16 +24,7 @@ from clarity.core.interfaces import (
 )
 
 if TYPE_CHECKING:
-    from clarity.auth.firebase_auth import (  # noqa: F401
-        FirebaseAuthMiddleware,
-        FirebaseAuthProvider,
-    )
-    from clarity.auth.mock_auth import MockAuthProvider  # noqa: F401
-    from clarity.core.config_provider import ConfigProvider  # noqa: F401
-    from clarity.storage.firestore_client import (
-        FirestoreHealthDataRepository,  # noqa: F401
-    )
-    from clarity.storage.mock_repository import MockHealthDataRepository  # noqa: F401
+    from collections.abc import AsyncGenerator
 
 T = TypeVar("T")
 
@@ -59,7 +54,7 @@ class DependencyContainer:
 
     def _create_config_provider(self) -> IConfigProvider:
         """Factory method for creating configuration provider."""
-        from clarity.core.config_provider import ConfigProvider
+        from clarity.core.config_provider import ConfigProvider  # noqa: PLC0415
 
         return ConfigProvider(self._settings)
 
@@ -67,15 +62,16 @@ class DependencyContainer:
         """Factory method for creating authentication provider."""
         config_provider = self.get_config_provider()
 
-        if config_provider.get_setting("enable_auth", False):
-            from clarity.auth.firebase_auth import FirebaseAuthProvider
+        if config_provider.get_setting("enable_auth", default=False):
+            from clarity.auth.firebase_auth import FirebaseAuthProvider  # noqa: PLC0415
 
             firebase_config = config_provider.get_firebase_config()
             return FirebaseAuthProvider(
                 credentials_path=firebase_config.get("credentials_path"),
                 project_id=firebase_config.get("project_id"),
             )
-        from clarity.auth.mock_auth import MockAuthProvider
+
+        from clarity.auth.mock_auth import MockAuthProvider  # noqa: PLC0415
 
         return MockAuthProvider()
 
@@ -85,10 +81,15 @@ class DependencyContainer:
 
         # Use mock repository in development or when Firestore credentials aren't available
         if config_provider.is_development():
-            from clarity.storage.mock_repository import MockHealthDataRepository
+            from clarity.storage.mock_repository import (
+                MockHealthDataRepository,
+            )
 
             return MockHealthDataRepository()
-        from clarity.storage.firestore_client import FirestoreHealthDataRepository
+
+        from clarity.storage.firestore_client import (
+            FirestoreHealthDataRepository,
+        )
 
         return FirestoreHealthDataRepository(
             project_id=config_provider.get_gcp_project_id(),
@@ -110,21 +111,21 @@ class DependencyContainer:
 
     def get_config_provider(self) -> IConfigProvider:
         """Get configuration provider (Singleton pattern)."""
-        return self.get_instance(IConfigProvider)
+        return cast("IConfigProvider", self.get_instance(IConfigProvider))
 
     def get_auth_provider(self) -> IAuthProvider:
         """Get authentication provider (Singleton pattern)."""
-        return self.get_instance(IAuthProvider)
+        return cast("IAuthProvider", self.get_instance(IAuthProvider))
 
     def get_health_data_repository(self) -> IHealthDataRepository:
         """Get health data repository (Singleton pattern)."""
-        return self.get_instance(IHealthDataRepository)
+        return cast("IHealthDataRepository", self.get_instance(IHealthDataRepository))
 
     @asynccontextmanager
-    async def app_lifespan(self, app: FastAPI) -> AsyncGenerator[None, None]:
+    async def app_lifespan(self, _app: FastAPI) -> AsyncGenerator[None, None]:
         """Application lifespan context manager for FastAPI."""
         # Startup
-        from clarity.core.logging_config import setup_logging
+        from clarity.core.logging_config import setup_logging  # noqa: PLC0415
 
         setup_logging()
 
@@ -172,14 +173,16 @@ class DependencyContainer:
 
         # Add authentication middleware if enabled
         if config_provider.is_auth_enabled():
-            from clarity.auth.firebase_auth import FirebaseAuthMiddleware
+            from clarity.auth.firebase_auth import (
+                FirebaseAuthMiddleware,
+            )
 
             auth_provider = self.get_auth_provider()
             app.add_middleware(FirebaseAuthMiddleware, auth_provider=auth_provider)
 
     def _configure_routes(self, app: FastAPI) -> None:
         """Configure API routes with dependency injection."""
-        from clarity.api.v1 import health_data
+        from clarity.api.v1 import health_data  # noqa: PLC0415
 
         # Inject dependencies into route modules
         health_data.set_dependencies(

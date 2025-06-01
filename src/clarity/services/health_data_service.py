@@ -224,16 +224,22 @@ class HealthDataService:
         """
         try:
             # Build query filters
-            filters = [("user_id", "==", user_id)]
+            filters = [{"field": "user_id", "op": "==", "value": user_id}]
 
             if metric_type:
-                filters.append(("metric_type", "==", metric_type))
+                filters.append(
+                    {"field": "metric_type", "op": "==", "value": metric_type}
+                )
 
             if start_date:
-                filters.append(("created_at", ">=", start_date.isoformat()))
+                filters.append(
+                    {"field": "created_at", "op": ">=", "value": start_date.isoformat()}
+                )
 
             if end_date:
-                filters.append(("created_at", "<=", end_date.isoformat()))
+                filters.append(
+                    {"field": "created_at", "op": "<=", "value": end_date.isoformat()}
+                )
 
             # Query health metrics
             metrics = await self.firestore_client.query_documents(

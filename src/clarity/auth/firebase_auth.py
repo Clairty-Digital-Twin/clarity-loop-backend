@@ -299,12 +299,12 @@ class FirebaseAuthMiddleware(BaseHTTPMiddleware):
             return user_context
 
         except auth.UserNotFoundError:
-            raise AuthError("User not found", 401, "user_not_found") from None
+            msg = "User not found"
+            raise AuthError(msg, 401, "user_not_found") from None
         except Exception as e:
             logger.exception("Error creating user context: %s", e)
-            raise AuthError(
-                "Failed to create user context", 500, "context_creation_failed"
-            ) from None
+            msg = "Failed to create user context"
+            raise AuthError(msg, 500, "context_creation_failed") from None
 
     async def _get_cached_user(self, token: str) -> UserContext | None:
         """Get user context from cache if valid."""

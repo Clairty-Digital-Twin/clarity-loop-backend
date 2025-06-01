@@ -39,6 +39,89 @@ graph TD
     G --> H[Insight Generation]
 ```
 
+## HealthKit Upload v1 (effective: 2025-06-01)
+
+### 1. Payload envelope
+
+```jsonc
+{
+  "deviceTimeZone" : "America/Los_Angeles",        // Olson ID of the source iPhone
+  "samples"        : [ <HKSamplePayload>, … ],     // ordered by startDate ASC
+  "uploadId"       : "U20250601T071557Z_123",      // client-generated, idempotent
+  "sdkVersion"     : "1.4.2"                       // app build that produced the file
+}
+```
+
+- The upload must be gzip-compressed (Content-Encoding: gzip) if > 2 MiB.
+- uploadId MUST be unique per user; the server may safely PUT the same
+  payload again without double-processing (idempotency).
+- deviceTimeZone is captured once, not per sample, to cut payload size.
+  All date strings are still UTC ISO-8601 (2025-06-01T07:15:57Z).
+
+### 2. HKSamplePayload canonical schema
+
+| Field | Type | Required | Notes |
+|-------|------|----------|-------|
+| uuid | string | ✅ | sample.uuid.uuidString – basis for deduplication. |
+| type | string | ✅ | Raw identifier (HKQuantityTypeIdentifierHeartRate, HKCategoryTypeIdentifierSleepAnalysis, etc.). |
+| startDate | string | ✅ | UTC ISO-8601. |
+| endDate | string | ✅ | UTC ISO-8601. For point samples set equal to startDate. |
+| value | number\|int | ⚠ | Present only for HKQuantitySample. |
+| unit | string | ⚠ | count/min, count, bpm, ms, … Apple's canonical unit string. |
+| categoryValue | int | ⚠ | Present only for HKCategorySample (e.g., HKCategoryValueSleepAnalysisAsleep = 1). |
+| metadata | object | ❌ | Mirror sample.metadata; omit keys with NSNull. |
+| source | {bundleId:String, name:String} | ✅ | sample.sourceRevision.source. |
+| device | {model:String, name:String} | ❌ | Populated if sample.device != nil. |
+
+**Validation rules:**
+
+- **Dedup**: uuid must be unique per user; server discards duplicates.
+- **Time order**: startDate ≤ endDate ≤ now + 1 min; else reject 422.
+- **Unit canonicalisation**: backend converts all quantities to the SI unit listed in Table A (below) before storage.
+- **Size cap**: ≤ 10 000 samples per upload; else respond 413 (Request Entity Too Large).
+
+### 3. Table A — quantity-type → canonical SI unit
+
+| Identifier | Canonical unit | Notes |
+|------------|----------------|-------|
+| HKQuantityTypeIdentifierStepCount | count | already integer |
+| HKQuantityTypeIdentifierHeartRate | count/min | bpm |
+| HKQuantityTypeIdentifierHeartRateVariabilitySDNN | ms | — |
+| HKQuantityTypeIdentifierActiveEnergyBurned | kcal | convert from kJ if needed |
+| HKQuantityTypeIdentifierDistanceWalkingRunning | m | — |
+| HKQuantityTypeIdentifierFlightsClimbed | count | — |
+
+(Extend table as new types are enabled.)
+
+### 4. Backend ingest procedure
+
+1. **Auth**: verify Firebase ID token → uid.
+2. **Stream-parse** the gzip JSON to avoid RAM blow-up.
+3. **For each sample**:
+   - Validate against schema & rules above.
+   - Convert units to SI; round value to 6 decimal places.
+   - Write to BigQuery raw partition or append to Parquet in Cloud Storage.
+4. **Insert uploadId** into uploads table (PRIMARY KEY(uid, uploadId)) to guarantee idempotency.
+5. **Publish Pub/Sub msg** {uid, uploadId, weekISO} for PAT micro-service.
+
+### 5. Apple privacy obligations (server-side)
+
+- HealthKit data must remain encrypted at rest (GCS default AES-256 is acceptable).
+- Do NOT log raw sample values or UUIDs to Cloud Logging; emit only counts & timing metrics.
+- Data may be stored solely for the user's benefit (App Store Review §5.1.3(i)).
+  No advertising, no third-party resale.
+- Provide a data-deletion endpoint (DELETE /v1/user/{uid}/purge) and honor within 30 days (App Store §5.1.3(ii)).
+
+**Reference**: [Works with Apple Health privacy guidelines](https://developer.apple.com/health-fitness/works-with-apple-health/)
+
+### 6. External link bookmarks (optional)
+
+| Topic | Doc URL |
+|-------|---------|
+| HKSample subclass reference | [HealthKit HKSample](https://developer.apple.com/documentation/healthkit/hksample) |
+| HKQuantityType identifiers | [HKQuantityType identifiers](https://developer.apple.com/documentation/healthkit/hkquantitytypeidentifier) |
+| HKCategoryType identifiers | [HKCategoryType identifiers](https://developer.apple.com/documentation/healthkit/hkcategorytypeidentifier) |
+
 ## Health Data Endpoints
 
 ### Upload Health Data Batch

@@ -58,29 +58,29 @@ make test-quick
 #### Local Development Stack
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                    Development Environment                  │
-├─────────────────────────────────────────────────────────────┤
-│  FastAPI Server (localhost:8000)                          │
-│  ├── Auto-reload enabled                                   │
-│  ├── Debug logging                                         │
-│  └── Hot-reload on file changes                           │
-│                                                            │
-│  Firebase Emulator Suite (localhost:4000)                 │
-│  ├── Authentication Emulator (localhost:9099)            │
-│  ├── Firestore Emulator (localhost:8080)                 │
-│  └── Functions Emulator (localhost:5001)                 │
-│                                                            │
-│  ML Development Environment                                │
-│  ├── Jupyter Notebooks (localhost:8888)                  │
-│  ├── Model serving endpoint (localhost:8001)             │
-│  └── Tensor flow serving (localhost:8501)                │
-│                                                            │
-│  Monitoring & Debugging                                   │
-│  ├── API Documentation (localhost:8000/docs)             │
-│  ├── Health Dashboard (localhost:3000)                   │
-│  └── Log Aggregation (localhost:5601)                    │
-└─────────────────────────────────────────────────────────────┘
+┌────────────────────────────────────────────────────────┐
+│               Development Environment                  │
+├────────────────────────────────────────────────────────┤
+│  FastAPI Server (localhost:8000)                       │
+│  ├── Auto-reload enabled                               │
+│  ├── Debug logging                                     │
+│  └── Hot-reload on file changes                        │
+│                                                        │
+│  Firebase Emulator Suite (localhost:4000)              │
+│  ├── Authentication Emulator (localhost:9099)          │
+│  ├── Firestore Emulator (localhost:8080)               │
+│  └── Functions Emulator (localhost:5001)               │
+│                                                        │
+│  ML Development Environment                            │
+│  ├── Jupyter Notebooks (localhost:8888)                │
+│  ├── Model serving endpoint (localhost:8001)           │
+│  └── Tensor flow serving (localhost:8501)              │
+│                                                        │
+│  Monitoring & Debugging                                │
+│  ├── API Documentation (localhost:8000/docs)           │
+│  ├── Health Dashboard (localhost:3000)                 │
+│  └── Log Aggregation (localhost:5601)                  │
+└────────────────────────────────────────────────────────┘
 ```
 
 #### Development Workflow

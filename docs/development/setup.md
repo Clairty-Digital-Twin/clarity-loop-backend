@@ -102,28 +102,34 @@ ls -la  # Should show project files
 
 ### 2. Python Environment Setup
 ```bash
-# Create virtual environment
-python3 -m venv venv
-
-# Activate virtual environment
+# Install uv (modern Python package manager)
 # macOS/Linux
-source venv/bin/activate
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# Windows (PowerShell)
+powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
+
+# Verify uv installation
+uv --version
+
+# Initialize project with uv (creates virtual environment automatically)
+uv sync
+
+# For development dependencies
+uv sync --extra dev
+
+# Alternative: Create virtual environment manually
+uv venv
+
+# Activate virtual environment (if created manually)
+# macOS/Linux
+source .venv/bin/activate
 
 # Windows
-venv\Scripts\activate
+.venv\Scripts\activate
 
-# Upgrade pip
-pip install --upgrade pip
-
-# Install Poetry (optional but recommended)
-pip install poetry
-
-# Install dependencies
-# Using pip
-pip install -r requirements-dev.txt
-
-# Or using Poetry
-poetry install --with dev
+# Install project in development mode
+uv pip install -e ".[dev,test,docs]"
 ```
 
 ### 3. Environment Configuration
@@ -420,12 +426,12 @@ tensorboard --logdir=./logs/tensorboard --port=6006
 python scripts/check-environment.py
 
 # Expected output:
-# ✓ Python 3.9+ installed
-# ✓ Google Cloud SDK authenticated
-# ✓ Firebase CLI configured
-# ✓ Docker running
-# ✓ Environment variables set
-# ✓ Dependencies installed
+# Python 3.9+ installed
+# Google Cloud SDK authenticated
+# Firebase CLI configured
+# Docker running
+# Environment variables set
+# Dependencies installed
 ```
 
 ### 2. Service Health Checks

@@ -173,11 +173,13 @@ class HealthDataService:
             )
 
             if not doc:
-                raise DataNotFoundError(f"Processing job {processing_id} not found")
+                msg = f"Processing job {processing_id} not found"
+                raise DataNotFoundError(msg)
 
             # Verify user ownership
             if doc.get("user_id") != user_id:
-                raise DataNotFoundError(f"Processing job {processing_id} not found")
+                msg = f"Processing job {processing_id} not found"
+                raise DataNotFoundError(msg)
 
             return {
                 "processing_id": processing_id,

@@ -24,9 +24,221 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.responses import JSONResponse, Response
 
 from clarity.auth.models import AuthError, Permission, TokenInfo, UserContext, UserRole
+from clarity.core.interfaces import IAuthProvider
 
 # Configure logger
 logger = logging.getLogger(__name__)
+
+
+class FirebaseAuthProvider(IAuthProvider):
+    """Firebase authentication provider implementing IAuthProvider interface.
+
+    Following Clean Architecture and SOLID principles:
+    - Single Responsibility: Only handles Firebase authentication
+    - Open/Closed: Can be extended without modification
+    - Liskov Substitution: Can substitute any IAuthProvider
+    - Interface Segregation: Implements only needed methods
+    - Dependency Inversion: Depends on abstractions
+    """
+
+    def __init__(
+        self, credentials_path: str | None = None, project_id: str | None = None
+    ) -> None:
+        """Initialize Firebase authentication provider.
+
+        Args:
+            credentials_path: Path to Firebase service account credentials
+            project_id: Firebase project ID
+        """
+        self.project_id = project_id
+        self.credentials_path = credentials_path
+        self._initialized = False
+
+        # Token cache for performance optimization
+        self._token_cache: dict[str, dict[str, Any]] = {}
+        self._cache_lock = asyncio.Lock()
+        self._cache_ttl = 300  # 5 minutes
+
+    async def verify_token(self, token: str) -> dict[str, Any] | None:
+        """Verify Firebase authentication token.
+
+        Args:
+            token: Firebase ID token to verify
+
+        Returns:
+            User information if token is valid, None otherwise
+        """
+        try:
+            # Initialize Firebase if not already done
+            await self._ensure_initialized()
+
+            # Check cache first
+            cached_user = await self._get_cached_user(token)
+            if cached_user:
+                return cached_user
+
+            # Verify token with Firebase
+            decoded_token = auth.verify_id_token(token)
+
+            # Get user record for additional info
+            user_record = auth.get_user(decoded_token["uid"])
+
+            # Create user info dict
+            user_info = {
+                "user_id": decoded_token["uid"],
+                "email": user_record.email,
+                "name": user_record.display_name,
+                "verified": user_record.email_verified,
+                "roles": self._extract_roles(decoded_token),
+                "custom_claims": decoded_token.get("custom_claims", {}),
+                "created_at": datetime.fromtimestamp(
+                    user_record.user_metadata.creation_timestamp / 1000, tz=UTC
+                ).isoformat(),
+                "last_login": (
+                    datetime.fromtimestamp(
+                        user_record.user_metadata.last_sign_in_timestamp / 1000, tz=UTC
+                    ).isoformat()
+                    if user_record.user_metadata.last_sign_in_timestamp
+                    else None
+                ),
+            }
+
+            # Cache the result
+            await self._cache_user(token, user_info)
+
+            return user_info
+
+        except auth.ExpiredIdTokenError:
+            logger.warning("Firebase token expired")
+            return None
+        except auth.RevokedIdTokenError:
+            logger.warning("Firebase token revoked")
+            return None
+        except auth.InvalidIdTokenError:
+            logger.warning("Invalid Firebase token")
+            return None
+        except Exception as e:
+            logger.error("Firebase token verification failed: %s", e)
+            return None
+
+    async def get_user_info(self, user_id: str) -> dict[str, Any] | None:
+        """Get user information by ID from Firebase.
+
+        Args:
+            user_id: Firebase user ID
+
+        Returns:
+            User information if found, None otherwise
+        """
+        try:
+            # Initialize Firebase if not already done
+            await self._ensure_initialized()
+
+            # Get user record from Firebase
+            user_record = auth.get_user(user_id)
+
+            return {
+                "user_id": user_record.uid,
+                "email": user_record.email,
+                "name": user_record.display_name,
+                "verified": user_record.email_verified,
+                "disabled": user_record.disabled,
+                "created_at": datetime.fromtimestamp(
+                    user_record.user_metadata.creation_timestamp / 1000, tz=UTC
+                ).isoformat(),
+                "last_login": (
+                    datetime.fromtimestamp(
+                        user_record.user_metadata.last_sign_in_timestamp / 1000, tz=UTC
+                    ).isoformat()
+                    if user_record.user_metadata.last_sign_in_timestamp
+                    else None
+                ),
+            }
+
+        except auth.UserNotFoundError:
+            logger.warning("Firebase user not found: %s", user_id)
+            return None
+        except Exception as e:
+            logger.error("Failed to get Firebase user info: %s", e)
+            return None
+
+    async def initialize(self) -> None:
+        """Initialize Firebase Admin SDK."""
+        await self._ensure_initialized()
+
+    async def cleanup(self) -> None:
+        """Clean up Firebase resources."""
+        # Clear token cache
+        async with self._cache_lock:
+            self._token_cache.clear()
+
+    async def _ensure_initialized(self) -> None:
+        """Ensure Firebase Admin SDK is initialized."""
+        if self._initialized:
+            return
+
+        try:
+            if not firebase_admin._apps:
+                if self.credentials_path:
+                    cred = credentials.Certificate(self.credentials_path)
+                    firebase_admin.initialize_app(cred, {"projectId": self.project_id})
+                    logger.info("Firebase Admin SDK initialized with credentials")
+                elif self.project_id:
+                    # Use default credentials (ADC) if project_id is provided
+                    firebase_admin.initialize_app()
+                    logger.info("Firebase Admin SDK initialized with ADC")
+                else:
+                    logger.warning("Firebase not initialized - missing configuration")
+                    return
+
+            self._initialized = True
+
+        except Exception as e:
+            logger.error("Firebase initialization failed: %s", e)
+            # Don't raise exception to allow app to start in development
+
+    def _extract_roles(self, decoded_token: dict[str, Any]) -> list[str]:
+        """Extract user roles from Firebase token."""
+        # Extract role from custom claims
+        custom_claims = decoded_token.get("custom_claims", {})
+        role = custom_claims.get("role", "patient")
+
+        # Return as list for consistency
+        return [role]
+
+    async def _get_cached_user(self, token: str) -> dict[str, Any] | None:
+        """Get user info from cache if valid."""
+        async with self._cache_lock:
+            cache_entry = self._token_cache.get(token)
+
+            if not cache_entry:
+                return None
+
+            # Check if cache entry is still valid
+            if time.time() - cache_entry["timestamp"] > self._cache_ttl:
+                del self._token_cache[token]
+                return None
+
+            return cache_entry["user_info"]
+
+    async def _cache_user(self, token: str, user_info: dict[str, Any]) -> None:
+        """Cache user info for token."""
+        async with self._cache_lock:
+            self._token_cache[token] = {
+                "user_info": user_info,
+                "timestamp": time.time(),
+            }
+
+            # Clean up expired cache entries
+            current_time = time.time()
+            expired_tokens = [
+                t
+                for t, entry in self._token_cache.items()
+                if current_time - entry["timestamp"] > self._cache_ttl
+            ]
+
+            for expired_token in expired_tokens:
+                del self._token_cache[expired_token]
 
 
 class FirebaseAuthMiddleware(BaseHTTPMiddleware):
@@ -43,25 +255,19 @@ class FirebaseAuthMiddleware(BaseHTTPMiddleware):
     def __init__(
         self,
         app: Any,
-        credentials_path: str | None = None,
-        project_id: str | None = None,
+        auth_provider: IAuthProvider,
         exempt_paths: list[str] | None = None,
-        cache_ttl: int = 300,  # 5 minutes
-        enable_caching: bool = True,
     ) -> None:
         """Initialize Firebase authentication middleware.
 
         Args:
             app: FastAPI application instance
-            credentials_path: Path to Firebase service account credentials
-            project_id: Firebase project ID
+            auth_provider: Authentication provider (dependency injection)
             exempt_paths: Paths that don't require authentication
-            cache_ttl: Token cache time-to-live in seconds
-            enable_caching: Enable token caching for performance
         """
         super().__init__(app)
 
-        self.project_id = project_id
+        self.auth_provider = auth_provider
         self.exempt_paths = exempt_paths or [
             "/",
             "/health",
@@ -69,62 +275,8 @@ class FirebaseAuthMiddleware(BaseHTTPMiddleware):
             "/openapi.json",
             "/redoc",
         ]
-        self.cache_ttl = cache_ttl
-        self.enable_caching = enable_caching
-
-        # Token cache for performance optimization
-        self._token_cache: dict[str, dict[str, Any]] = {}
-        self._cache_lock = asyncio.Lock()
-
-        # Initialize Firebase Admin SDK
-        self._init_firebase(credentials_path, project_id)
-
-        # Role-permission mapping
-        self._role_permissions = {
-            UserRole.PATIENT: [Permission.READ_OWN_DATA, Permission.WRITE_OWN_DATA],
-            UserRole.CLINICIAN: [
-                Permission.READ_OWN_DATA,
-                Permission.WRITE_OWN_DATA,
-                Permission.READ_PATIENT_DATA,
-                Permission.WRITE_PATIENT_DATA,
-            ],
-            UserRole.RESEARCHER: [Permission.READ_ANONYMIZED_DATA],
-            UserRole.ADMIN: [
-                Permission.READ_OWN_DATA,
-                Permission.WRITE_OWN_DATA,
-                Permission.READ_PATIENT_DATA,
-                Permission.WRITE_PATIENT_DATA,
-                Permission.READ_ANONYMIZED_DATA,
-                Permission.MANAGE_USERS,
-                Permission.SYSTEM_ADMIN,
-            ],
-        }
 
         logger.info("Firebase authentication middleware initialized")
-
-    def _init_firebase(
-        self, credentials_path: str | None, project_id: str | None
-    ) -> None:
-        """Initialize Firebase Admin SDK."""
-        try:
-            if not firebase_admin._apps:
-                if credentials_path:
-                    cred = credentials.Certificate(credentials_path)
-                    firebase_admin.initialize_app(cred, {"projectId": project_id})
-                    logger.info("Firebase Admin SDK initialized with credentials")
-                elif project_id:
-                    # Use default credentials (ADC) if project_id is provided
-                    firebase_admin.initialize_app()
-                    logger.info("Firebase Admin SDK initialized with ADC")
-                else:
-                    # Development mode - don't initialize Firebase
-                    logger.warning("Firebase not initialized - running in development mode")
-                    return
-            else:
-                logger.info("Firebase Admin SDK already initialized")
-        except Exception as e:
-            logger.warning("Firebase initialization failed: %s - running in development mode", e)
-            # Don't raise exception in development to allow app to start
 
     async def dispatch(
         self, request: Request, call_next: Callable[[Request], Any]
@@ -174,21 +326,15 @@ class FirebaseAuthMiddleware(BaseHTTPMiddleware):
         # Extract token from Authorization header
         token = self._extract_token(request)
 
-        # Check cache first
-        if self.enable_caching:
-            cached_user = await self._get_cached_user(token)
-            if cached_user:
-                return cached_user
+        # Verify token using auth provider
+        user_info = await self.auth_provider.verify_token(token)
 
-        # Verify token with Firebase
-        token_info = await self._verify_firebase_token(token)
+        if not user_info:
+            msg = "Token verification failed"
+            raise AuthError(msg, 401, "invalid_token")
 
-        # Create user context
-        user_context = await self._create_user_context(token_info)
-
-        # Cache the result
-        if self.enable_caching:
-            await self._cache_user(token, user_context)
+        # Create user context from verified user info
+        user_context = self._create_user_context(user_info)
 
         return user_context
 
@@ -212,128 +358,71 @@ class FirebaseAuthMiddleware(BaseHTTPMiddleware):
 
         return token
 
-    async def _verify_firebase_token(self, token: str) -> TokenInfo:
-        """Verify Firebase ID token."""
+    def _create_user_context(self, user_info: dict[str, Any]) -> UserContext:
+        """Create user context from verified user info."""
         try:
-            # Verify the token with Firebase Admin SDK
-            decoded_token = auth.verify_id_token(token)
+            # Extract role from user info
+            roles = user_info.get("roles", ["patient"])
+            role_str = roles[0] if roles else "patient"
 
-            token_info = TokenInfo(
-                token=token,
-                user_id=decoded_token["uid"],
-                email=decoded_token.get("email"),
-                issued_at=datetime.fromtimestamp(decoded_token["iat"], tz=UTC),
-                expires_at=datetime.fromtimestamp(decoded_token["exp"], tz=UTC),
-                is_admin=decoded_token.get("admin", False),
-                custom_claims=decoded_token.get("custom_claims", {}),
-            )
-
-            # Check if token is expired
-            if token_info.expires_at < datetime.now(UTC):
-                msg = "Token has expired"
-                raise AuthError(msg, 401, "token_expired") from None
-
-            return token_info
-
-        except auth.ExpiredIdTokenError:
-            msg = "Authentication token has expired"
-            raise AuthError(msg, 401, "token_expired") from None
-        except auth.RevokedIdTokenError:
-            msg = "Authentication token has been revoked"
-            raise AuthError(msg, 401, "token_revoked") from None
-        except auth.InvalidIdTokenError:
-            msg = "Invalid authentication token"
-            raise AuthError(msg, 401, "invalid_token") from None
-        except auth.CertificateFetchError:
-            msg = "Unable to verify token"
-            raise AuthError(msg, 500, "verification_error") from None
-        except Exception:
-            logger.exception("Token verification error")
-            msg = "Token verification failed"
-            raise AuthError(msg, 500, "verification_failed") from None
-
-    async def _create_user_context(self, token_info: TokenInfo) -> UserContext:
-        """Create user context from verified token."""
-        try:
-            # Get user record from Firebase
-            user_record = auth.get_user(token_info.user_id)
-
-            # Extract role from custom claims
-            role_claim = token_info.custom_claims.get("role", "patient")
             try:
-                role = UserRole(role_claim)
+                role = UserRole(role_str)
             except ValueError:
                 logger.warning(
                     "Invalid role '%s' for user %s, defaulting to patient",
-                    role_claim,
-                    token_info.user_id,
+                    role_str,
+                    user_info.get("user_id"),
                 )
                 role = UserRole.PATIENT
 
+            # Role-permission mapping
+            role_permissions = {
+                UserRole.PATIENT: [Permission.READ_OWN_DATA, Permission.WRITE_OWN_DATA],
+                UserRole.CLINICIAN: [
+                    Permission.READ_OWN_DATA,
+                    Permission.WRITE_OWN_DATA,
+                    Permission.READ_PATIENT_DATA,
+                    Permission.WRITE_PATIENT_DATA,
+                ],
+                UserRole.RESEARCHER: [Permission.READ_ANONYMIZED_DATA],
+                UserRole.ADMIN: [
+                    Permission.READ_OWN_DATA,
+                    Permission.WRITE_OWN_DATA,
+                    Permission.READ_PATIENT_DATA,
+                    Permission.WRITE_PATIENT_DATA,
+                    Permission.READ_ANONYMIZED_DATA,
+                    Permission.MANAGE_USERS,
+                    Permission.SYSTEM_ADMIN,
+                ],
+            }
+
             # Get permissions for the role
-            permissions = self._role_permissions.get(role, [])
+            permissions = role_permissions.get(role, [])
 
             return UserContext(
-                user_id=token_info.user_id,
-                email=user_record.email,
+                user_id=user_info["user_id"],
+                email=user_info.get("email"),
                 role=role,
                 permissions=permissions,
-                is_verified=user_record.email_verified,
-                is_active=not user_record.disabled,
-                custom_claims=token_info.custom_claims,
-                created_at=datetime.fromtimestamp(
-                    user_record.user_metadata.creation_timestamp / 1000, tz=UTC
+                is_verified=user_info.get("verified", False),
+                is_active=not user_info.get("disabled"),
+                custom_claims=user_info.get("custom_claims", {}),
+                created_at=(
+                    datetime.fromisoformat(user_info["created_at"])
+                    if user_info.get("created_at")
+                    else datetime.now(UTC)
                 ),
                 last_login=(
-                    datetime.fromtimestamp(
-                        user_record.user_metadata.last_sign_in_timestamp / 1000, tz=UTC
-                    )
-                    if user_record.user_metadata.last_sign_in_timestamp
+                    datetime.fromisoformat(user_info["last_login"])
+                    if user_info.get("last_login")
                     else None
                 ),
             )
 
-        except auth.UserNotFoundError:
-            msg = "User not found"
-            raise AuthError(msg, 401, "user_not_found") from None
-        except Exception:
-            logger.exception("Error creating user context")
+        except Exception as e:
+            logger.exception("Error creating user context: %s", e)
             msg = "Failed to create user context"
             raise AuthError(msg, 500, "context_creation_failed") from None
-
-    async def _get_cached_user(self, token: str) -> UserContext | None:
-        """Get user context from cache if valid."""
-        async with self._cache_lock:
-            cache_entry = self._token_cache.get(token)
-
-            if not cache_entry:
-                return None
-
-            # Check if cache entry is still valid
-            if time.time() - cache_entry["timestamp"] > self.cache_ttl:
-                del self._token_cache[token]
-                return None
-
-            return cache_entry["user_context"]
-
-    async def _cache_user(self, token: str, user_context: UserContext) -> None:
-        """Cache user context for token."""
-        async with self._cache_lock:
-            self._token_cache[token] = {
-                "user_context": user_context,
-                "timestamp": time.time(),
-            }
-
-            # Clean up expired cache entries (simple cleanup)
-            current_time = time.time()
-            expired_tokens = [
-                t
-                for t, entry in self._token_cache.items()
-                if current_time - entry["timestamp"] > self.cache_ttl
-            ]
-
-            for expired_token in expired_tokens:
-                del self._token_cache[expired_token]
 
 
 # Dependency injection functions for FastAPI

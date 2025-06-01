@@ -90,6 +90,13 @@ GET  /v1/system/metrics      # System metrics
 - **Accuracy**: > 95% for sleep stage classification
 - **Model Size**: < 100MB for fast loading
 
+### PAT Model Deployment Sizing (Research-Based)
+- **Default Configuration**: 2 vCPU / 4 GB RAM / 0 GPU, concurrency = 1 on Cloud Run (p 16)
+- **Cold Start**: ≈ 1.5 s, p95 inference ≈ 220 ms
+- **Model Footprint**: 150 MB RAM for PAT-L (1.99M parameters)
+- **Scale Threshold**: > 50 RPS ⇒ add Cloud Run revisions with 4 vCPU / 8 GB
+- **Training Requirements**: PAT-L pre-training ≤ 6 h on single A100 GPU (p 16)
+
 ### Monitoring
 - **Model Drift**: Continuous monitoring for data drift
 - **Performance Metrics**: Accuracy, latency, throughput

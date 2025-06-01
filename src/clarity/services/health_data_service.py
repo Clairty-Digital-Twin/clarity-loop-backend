@@ -8,7 +8,7 @@ with HIPAA-compliant audit trails and comprehensive error handling.
 import logging
 import uuid
 from datetime import datetime, timezone
-from typing import List, Dict, Optional, Tuple, Any
+from typing import Optional, Any
 
 from pydantic import ValidationError
 
@@ -167,7 +167,7 @@ class HealthDataService:
             self.logger.error(f"Unexpected error during health data processing: {e}")
             raise HealthDataServiceError(f"Health data processing failed: {str(e)}")
 
-    async def get_processing_status(self, processing_id: str, user_id: str) -> Dict[str, Any]:
+    async def get_processing_status(self, processing_id: str, user_id: str) -> dict[str, Any]:
         """
         Get processing status for a health data upload job.
         
@@ -222,7 +222,7 @@ class HealthDataService:
         metric_type: Optional[str] = None,
         start_date: Optional[datetime] = None,
         end_date: Optional[datetime] = None
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Retrieve user's health data with filtering and pagination.
         
@@ -297,7 +297,7 @@ class HealthDataService:
             self.logger.error(f"Firestore error retrieving health data: {e}")
             raise HealthDataServiceError(f"Failed to retrieve health data: {str(e)}")
 
-    async def delete_health_data(self, user_id: str, processing_id: Optional[str] = None) -> Dict[str, Any]:
+    async def delete_health_data(self, user_id: str, processing_id: Optional[str] = None) -> dict[str, Any]:
         """
         Delete user's health data with audit trail.
         
@@ -409,7 +409,7 @@ class HealthDataService:
         except Exception:
             return False
 
-    async def _store_metrics(self, user_id: str, metrics: List[HealthMetric], processing_id: str) -> None:
+    async def _store_metrics(self, user_id: str, metrics: list[HealthMetric], processing_id: str) -> None:
         """
         Store validated health metrics to Firestore.
         
@@ -440,7 +440,7 @@ class HealthDataService:
             documents=documents
         )
 
-    def _calculate_progress(self, processing_doc: Dict[str, Any]) -> float:
+    def _calculate_progress(self, processing_doc: dict[str, Any]) -> float:
         """Calculate processing progress percentage."""
         status = processing_doc.get("status")
         

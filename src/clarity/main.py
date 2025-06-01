@@ -1,189 +1,201 @@
-"""CLARITY Digital Twin Platform - Main Application
+"""CLARITY Digital Twin Platform - Main Application.
 
 Production-grade FastAPI application for health data processing and AI-powered insights.
 Implements enterprise authentication, monitoring, and HIPAA-compliant data handling.
 """
 
+from collections.abc import AsyncGenerator, Awaitable, Callable
 from contextlib import asynccontextmanager
 import logging
-import os
-from typing import Any, Dict
+from typing import Any
 
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.responses import JSONResponse
 from starlette.middleware.gzip import GZipMiddleware
+from starlette.responses import Response
 import uvicorn
 
-from .api.v1 import health_data
-from .auth import FirebaseAuthMiddleware
-from .core.config import get_settings
-from .core.logging_config import setup_logging
+from clarity.api.v1 import health_data
+from clarity.auth import FirebaseAuthMiddleware
+from clarity.core.config import get_settings
+from clarity.core.logging_config import setup_logging
 
 # Configure logging
+setup_logging()
 logger = logging.getLogger(__name__)
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI):
+async def lifespan(_app: FastAPI) -> AsyncGenerator[None, None]:
     """Application lifespan manager for startup and shutdown tasks."""
     # Startup
-    logger.info("Starting CLARITY Digital Twin Platform...")
-
-    # Initialize Firebase Admin SDK and other services here
     try:
-        # Any additional startup initialization can go here
+        logger.info("Starting CLARITY Digital Twin Platform...")
+
+        # Initialize any async resources here
+        # (database connections, external service clients, etc.)
+
         logger.info("Application startup completed successfully")
         yield
-    except Exception as e:
-        logger.error(f"Application startup failed: {e}")
+    except Exception:
+        logger.exception("Application startup failed")
         raise
     finally:
-        # Shutdown
-        logger.info("Shutting down CLARITY Digital Twin Platform...")
-        # Cleanup tasks here
+        # Cleanup
         logger.info("Application shutdown completed")
 
 
 def create_app() -> FastAPI:
-    """Create and configure the FastAPI application."""
-    # Setup logging first
-    setup_logging()
-
-    # Get application settings
+    """Create and configure the FastAPI application instance."""
     settings = get_settings()
 
-    # Create FastAPI application
+    # Create FastAPI app with lifespan management
     app = FastAPI(
-        title="CLARITY Digital Twin Platform",
+        title=settings.app_name,
+        version=settings.app_version,
         description=(
-            "AI-powered health data processing platform providing personalized insights "
-            "through advanced machine learning and natural language processing."
+            "AI-powered health data processing and insights platform for "
+            "personalized healthcare and research applications."
         ),
-        version="1.0.0",
-        docs_url="/docs" if settings.environment != "production" else None,
-        redoc_url="/redoc" if settings.environment != "production" else None,
-        openapi_url="/openapi.json" if settings.environment != "production" else None,
-        lifespan=lifespan
+        docs_url="/docs" if settings.debug else None,
+        redoc_url="/redoc" if settings.debug else None,
+        openapi_url="/openapi.json" if settings.debug else None,
+        lifespan=lifespan,
     )
 
-    # Add security middleware
-    app.add_middleware(
-        TrustedHostMiddleware,
-        allowed_hosts=settings.allowed_hosts
-    )
-
-    # Add CORS middleware
-    if settings.cors_origins:
+    # Configure CORS middleware
+    if settings.environment != "production":
         app.add_middleware(
             CORSMiddleware,
             allow_origins=settings.cors_origins,
             allow_credentials=True,
-            allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+            allow_methods=["*"],
             allow_headers=["*"],
         )
 
-    # Add compression middleware
+    # Security middleware
+    app.add_middleware(
+        TrustedHostMiddleware,
+        allowed_hosts=settings.allowed_hosts,
+    )
+
+    # Compression middleware
     app.add_middleware(GZipMiddleware, minimum_size=1000)
 
-    # Add Firebase authentication middleware
+    # Firebase Authentication middleware
     app.add_middleware(
         FirebaseAuthMiddleware,
+        credentials_path=settings.firebase_credentials_path,
         project_id=settings.firebase_project_id,
         exempt_paths=[
             "/",
             "/health",
             "/docs",
-            "/openapi.json",
             "/redoc",
-            "/api/v1/health-data/health"  # Public health check
+            "/openapi.json",
         ],
-        cache_ttl=300,  # 5 minutes
-        enable_caching=True
     )
 
-    # Global exception handler
-    @app.exception_handler(Exception)
-    async def global_exception_handler(request: Request, exc: Exception) -> JSONResponse:
-        """Global exception handler for unhandled exceptions."""
-        logger.error(f"Unhandled exception: {exc}", exc_info=True)
-
-        if settings.environment == "production":
-            return JSONResponse(
-                status_code=500,
-                content={
-                    "error": "internal_error",
-                    "message": "An internal error occurred",
-                    "request_id": getattr(request.state, "request_id", "unknown")
-                }
-            )
-        return JSONResponse(
-            status_code=500,
-            content={
-                "error": "internal_error",
-                "message": str(exc),
-                "type": type(exc).__name__,
-                "request_id": getattr(request.state, "request_id", "unknown")
-            }
-        )
-
-    # Health check endpoint
-    @app.get(
-        "/health",
-        summary="Health Check",
-        description="System health check endpoint for load balancers and monitoring."
-    )
-    async def health_check() -> dict[str, Any]:
-        """System health check endpoint."""
-        return {
-            "status": "healthy",
-            "service": "clarity-digital-twin",
-            "version": "1.0.0",
-            "environment": settings.environment,
-            "timestamp": "2025-01-01T00:00:00Z"  # Should be dynamic
-        }
-
-    # Root endpoint
-    @app.get(
-        "/",
-        summary="API Root",
-        description="Root endpoint providing API information and status."
-    )
+    # Health check endpoints
+    @app.get("/")
     async def root() -> dict[str, Any]:
         """Root endpoint with API information."""
         return {
-            "name": "CLARITY Digital Twin Platform",
-            "version": "1.0.0",
+            "name": settings.app_name,
+            "version": settings.app_version,
             "description": "AI-powered health data processing and insights platform",
-            "docs_url": "/docs" if settings.environment != "production" else None,
-            "status": "operational"
+            "docs_url": "/docs",
+            "status": "operational",
         }
+
+    @app.get("/health")
+    async def health_check() -> dict[str, Any]:
+        """Health check endpoint for monitoring and load balancers."""
+        return {
+            "status": "healthy",
+            "service": "clarity-digital-twin",
+            "version": settings.app_version,
+            "environment": settings.environment,
+            "timestamp": "2025-01-01T00:00:00Z",  # This should be dynamic
+        }
+
+    # Global exception handler
+    @app.exception_handler(Exception)
+    def global_exception_handler(request: Request, exc: Exception) -> JSONResponse:
+        """Global exception handler for unhandled exceptions."""
+        logger.error("Unhandled exception: %s", exc)
+
+        if settings.environment == "production":
+            # In production, don't expose internal error details
+            error_detail = "An internal error occurred. Please try again later."
+        else:
+            # In development, include more details for debugging
+            error_detail = str(exc)
+
+        return JSONResponse(
+            status_code=500,
+            content={
+                "error": "internal_server_error",
+                "message": error_detail,
+                "path": str(request.url),
+            },
+        )
 
     # Include API routers
     app.include_router(
         health_data.router,
         prefix="/api/v1",
-        tags=["Health Data API v1"]
+        tags=["Health Data"],
     )
 
-    logger.info(f"FastAPI application created successfully for {settings.environment} environment")
+    # Request logging middleware
+    @app.middleware("http")
+    async def log_requests(
+        request: Request, call_next: Callable[[Request], Awaitable[Response]]
+    ) -> Response:
+        """Log HTTP requests for monitoring and debugging."""
+        response = await call_next(request)
+
+        # Log request details
+        logger.info(
+            "Request: %s %s - Response: %s",
+            request.method,
+            request.url.path,
+            response.status_code,
+        )
+
+        return response
+
+    # Configure OpenAPI documentation
+    if settings.debug:
+        app.openapi_tags = [
+            {
+                "name": "Health Data",
+                "description": "Operations for health data upload, processing, and retrieval",
+            },
+            {
+                "name": "Authentication",
+                "description": "Firebase-based authentication and authorization",
+            },
+        ]
+
+    env_msg = f"FastAPI application created successfully for {settings.environment} environment"
+    logger.info("%s", env_msg)
     return app
 
 
-# Create the application instance
+# Application instance
 app = create_app()
 
 
-# Development server entry point
 if __name__ == "__main__":
     settings = get_settings()
-
     uvicorn.run(
-        "main:app",
+        "src.clarity.main:app",
         host=settings.host,
         port=settings.port,
-        reload=settings.environment == "development",
+        reload=settings.debug,
         log_level=settings.log_level.lower(),
-        access_log=True
     )

@@ -1,23 +1,21 @@
 """CLARITY Digital Twin Platform - Health Data Service.
 
-Business logic layer for processing, validating, and managing health data
-with HIPAA-compliant audit trails and comprehensive error handling.
+Business logic layer for health data processing, validation, and management.
+Provides enterprise-grade health data handling with HIPAA compliance features.
 """
 
-from datetime import UTC, datetime, timezone
+from datetime import UTC, datetime
 import logging
-from typing import Any, Optional
+from typing import Any
 import uuid
 
-from pydantic import ValidationError
-
-from ..models.health_data import (
+from clarity.models.health_data import (
     HealthDataResponse,
     HealthDataUpload,
     HealthMetric,
     ProcessingStatus,
 )
-from ..storage.firestore_client import (
+from clarity.storage.firestore_client import (
     DocumentNotFoundError,
     FirestoreClient,
     FirestoreError,
@@ -27,124 +25,143 @@ from ..storage.firestore_client import (
 logger = logging.getLogger(__name__)
 
 
+# Custom exceptions
 class HealthDataServiceError(Exception):
-    """Base exception for health data service errors."""
+    """Base exception for health data service operations."""
 
-
-class DataValidationError(HealthDataServiceError):
-    """Raised when health data validation fails."""
+    def __init__(self, message: str, status_code: int = 500):
+        self.message = message
+        self.status_code = status_code
+        super().__init__(self.message)
 
 
 class DataNotFoundError(HealthDataServiceError):
-    """Raised when requested health data is not found."""
+    """Exception raised when requested data is not found."""
+
+    def __init__(self, message: str):
+        super().__init__(message, status_code=404)
 
 
 class HealthDataService:
     """Service layer for health data processing and management.
-    
+
     Handles business logic for:
     - Health data validation and processing
-    - Async processing job management
-    - Data retrieval with filtering and pagination
-    - HIPAA-compliant audit logging
+    - Firestore storage operations
+    - Processing status tracking
+    - Business rule enforcement
+    - Audit trail maintenance
     """
 
-    def __init__(self, firestore_client: FirestoreClient):
+    def __init__(self, firestore_client: FirestoreClient) -> None:
         """Initialize health data service.
-        
+
         Args:
             firestore_client: Configured Firestore client for data persistence
         """
         self.firestore_client = firestore_client
         self.logger = logging.getLogger(__name__)
 
-    async def process_health_data(self, upload_data: HealthDataUpload) -> HealthDataResponse:
-        """Process health data upload with validation and storage."""
+    async def process_health_data(
+        self, health_data: HealthDataUpload
+    ) -> HealthDataResponse:
+        """Process and validate health data upload.
+
+        Args:
+            health_data: Health data upload containing metrics and metadata
+
+        Returns:
+            Processing response with job ID and initial status
+
+        Raises:
+            HealthDataServiceError: If processing fails
+        """
         try:
+            # Generate unique processing ID
             processing_id = str(uuid.uuid4())
-            current_time = datetime.now(UTC)
 
-            # Validate metrics using existing Pydantic validation
-            valid_metrics = []
-            validation_errors = []
-
-            for metric in upload_data.metrics:
+            # Validate health metrics
+            validation_errors: list[str] = []
+            for metric in health_data.metrics:
                 try:
-                    # The metric is already validated by Pydantic, but we can add business rules
-                    if self._validate_metric_business_rules(metric):
-                        valid_metrics.append(metric)
-                    else:
-                        validation_errors.append(f"Metric {metric.metric_id} failed business validation")
-                except Exception as e:
+                    # Basic validation - check if metric_type and created_at exist
+                    if not metric.metric_type or not metric.created_at:
+                        validation_errors.append(
+                            f"Metric {metric.metric_id} missing required fields"
+                        )
+                    elif not self._validate_metric_business_rules(metric):
+                        validation_errors.append(
+                            f"Metric {metric.metric_id} failed business validation"
+                        )
+                except ValueError as e:
                     validation_errors.append(f"Metric {metric.metric_id}: {e!s}")
 
-            # Create processing job document
+            # Check if validation passed
+            if validation_errors:
+                error_summary = f"Validation failed: {len(validation_errors)} errors"
+                self.logger.warning("%s", error_summary)
+                msg = f"Health data validation failed: {error_summary}"
+                raise HealthDataServiceError(msg, status_code=400)
+
+            # Create processing document
             processing_doc = {
                 "processing_id": processing_id,
-                "user_id": str(upload_data.user_id),
-                "status": ProcessingStatus.RECEIVED.value,
-                "upload_source": upload_data.upload_source,
-                "client_timestamp": upload_data.client_timestamp.isoformat(),
-                "server_timestamp": current_time.isoformat(),
-                "total_metrics": len(upload_data.metrics),
-                "accepted_metrics": len(valid_metrics),
-                "rejected_metrics": len(upload_data.metrics) - len(valid_metrics),
+                "user_id": str(health_data.user_id),  # Convert UUID to string
+                "upload_source": health_data.upload_source,
+                "client_timestamp": health_data.client_timestamp.isoformat(),
+                "created_at": datetime.now(UTC).isoformat(),
+                "status": ProcessingStatus.PROCESSING.value,
+                "total_metrics": len(health_data.metrics),
+                "processed_metrics": 0,
                 "validation_errors": validation_errors,
-                "sync_token": upload_data.sync_token,
-                "created_at": current_time.isoformat(),
-                "updated_at": current_time.isoformat()
             }
 
-            # Store processing job
+            # Store processing document
             await self.firestore_client.create_document(
-                collection="processing_jobs",
-                document_id=processing_id,
-                data=processing_doc
+                collection="health_data_processing", data=processing_doc
             )
 
-            # Store valid metrics
-            if valid_metrics:
-                await self._store_metrics(upload_data.user_id, valid_metrics, processing_id)
-
-            # Update processing status
-            await self.firestore_client.update_document(
-                collection="processing_jobs",
-                document_id=processing_id,
-                data={
-                    "status": ProcessingStatus.PROCESSING.value,
-                    "updated_at": datetime.now(UTC).isoformat()
-                }
+            # Store metrics asynchronously
+            await self._store_metrics(
+                str(health_data.user_id), health_data.metrics, processing_id
             )
 
             # Log operation
-            self.logger.info(f"Health data processing initiated: {processing_id}")
+            self.logger.info("Health data processing initiated: %s", processing_id)
 
             return HealthDataResponse(
                 processing_id=uuid.UUID(processing_id),
                 status=ProcessingStatus.PROCESSING,
-                accepted_metrics=len(valid_metrics),
-                rejected_metrics=len(validation_errors),
-                validation_errors=[],  # Return empty for now, could enhance later
-                estimated_processing_time=len(valid_metrics) * 2,  # 2 seconds per metric
-                sync_token=upload_data.sync_token,
-                message="Health data processing started",
-                timestamp=current_time
+                accepted_metrics=len(health_data.metrics),
+                rejected_metrics=0,
+                validation_errors=[],  # Return empty list for now
+                estimated_processing_time=len(health_data.metrics)
+                * 2,  # 2 seconds per metric
+                sync_token=health_data.sync_token,
+                message="Health data processing initiated successfully",
+                timestamp=datetime.now(UTC),
             )
 
+        except HealthDataServiceError:
+            # Re-raise our custom exceptions
+            raise
         except Exception as e:
-            self.logger.error(f"Unexpected error during health data processing: {e}")
-            raise HealthDataServiceError(f"Health data processing failed: {e!s}")
+            self.logger.exception("Unexpected error during health data processing")
+            msg = f"Health data processing failed: {e!s}"
+            raise HealthDataServiceError(msg) from e
 
-    async def get_processing_status(self, processing_id: str, user_id: str) -> dict[str, Any]:
+    async def get_processing_status(
+        self, processing_id: str, user_id: str
+    ) -> dict[str, Any]:
         """Get processing status for a health data upload job.
-        
+
         Args:
             processing_id: Unique identifier for the processing job
             user_id: User ID to verify ownership
-            
+
         Returns:
             Processing status information
-            
+
         Raises:
             DataNotFoundError: If processing job not found
             HealthDataServiceError: If retrieval operation fails
@@ -152,8 +169,7 @@ class HealthDataService:
         try:
             # Retrieve processing record
             doc = await self.firestore_client.get_document(
-                collection="processing_jobs",
-                document_id=processing_id
+                collection="processing_jobs", document_id=processing_id
             )
 
             if not doc:
@@ -172,7 +188,7 @@ class HealthDataService:
                 "rejected_metrics": doc.get("rejected_metrics", 0),
                 "validation_errors": doc.get("validation_errors", []),
                 "created_at": doc.get("server_timestamp"),
-                "completed_at": doc.get("completed_at")
+                "completed_at": doc.get("completed_at"),
             }
 
         except DocumentNotFoundError:
@@ -188,10 +204,10 @@ class HealthDataService:
         offset: int = 0,
         metric_type: str | None = None,
         start_date: datetime | None = None,
-        end_date: datetime | None = None
+        end_date: datetime | None = None,
     ) -> dict[str, Any]:
         """Retrieve user's health data with filtering and pagination.
-        
+
         Args:
             user_id: User ID to retrieve data for
             limit: Maximum number of records to return
@@ -199,10 +215,10 @@ class HealthDataService:
             metric_type: Filter by specific metric type
             start_date: Filter by start date
             end_date: Filter by end date
-            
+
         Returns:
             User health data with metadata
-            
+
         Raises:
             HealthDataServiceError: If retrieval operation fails
         """
@@ -225,13 +241,12 @@ class HealthDataService:
                 filters=filters,
                 limit=limit,
                 offset=offset,
-                order_by="created_at"
+                order_by="created_at",
             )
 
             # Get total count for pagination
             total_count = await self.firestore_client.count_documents(
-                collection="health_data",
-                filters=filters
+                collection="health_data", filters=filters
             )
 
             self.logger.info(
@@ -240,8 +255,8 @@ class HealthDataService:
                     "user_id": user_id,
                     "count": len(metrics),
                     "total": total_count,
-                    "filters": len(filters)
-                }
+                    "filters": len(filters),
+                },
             )
 
             return {
@@ -250,29 +265,31 @@ class HealthDataService:
                     "total": total_count,
                     "limit": limit,
                     "offset": offset,
-                    "has_more": offset + len(metrics) < total_count
+                    "has_more": offset + len(metrics) < total_count,
                 },
                 "filters": {
                     "metric_type": metric_type,
                     "start_date": start_date.isoformat() if start_date else None,
-                    "end_date": end_date.isoformat() if end_date else None
-                }
+                    "end_date": end_date.isoformat() if end_date else None,
+                },
             }
 
         except FirestoreError as e:
             self.logger.error(f"Firestore error retrieving health data: {e}")
             raise HealthDataServiceError(f"Failed to retrieve health data: {e!s}")
 
-    async def delete_health_data(self, user_id: str, processing_id: str | None = None) -> dict[str, Any]:
+    async def delete_health_data(
+        self, user_id: str, processing_id: str | None = None
+    ) -> dict[str, Any]:
         """Delete user's health data with audit trail.
-        
+
         Args:
             user_id: User ID to delete data for
             processing_id: Optional specific processing job to delete
-            
+
         Returns:
             Deletion summary
-            
+
         Raises:
             HealthDataServiceError: If deletion operation fails
         """
@@ -283,31 +300,27 @@ class HealthDataService:
                 # Delete specific processing job and related metrics
                 filters = [
                     ("user_id", "==", user_id),
-                    ("processing_id", "==", processing_id)
+                    ("processing_id", "==", processing_id),
                 ]
                 deleted_count = await self.firestore_client.delete_documents(
-                    collection="health_data",
-                    filters=filters
+                    collection="health_data", filters=filters
                 )
 
                 # Delete processing record
                 await self.firestore_client.delete_document(
-                    collection="processing_jobs",
-                    document_id=processing_id
+                    collection="processing_jobs", document_id=processing_id
                 )
 
             else:
                 # Delete all user data
                 filters = [("user_id", "==", user_id)]
                 deleted_count = await self.firestore_client.delete_documents(
-                    collection="health_data",
-                    filters=filters
+                    collection="health_data", filters=filters
                 )
 
                 # Delete all processing jobs
                 await self.firestore_client.delete_documents(
-                    collection="processing_jobs",
-                    filters=filters
+                    collection="processing_jobs", filters=filters
                 )
 
             # Create audit log
@@ -317,12 +330,11 @@ class HealthDataService:
                 "processing_id": processing_id,
                 "deleted_metrics": deleted_count,
                 "timestamp": datetime.now(UTC).isoformat(),
-                "reason": "user_request"
+                "reason": "user_request",
             }
 
             await self.firestore_client.create_document(
-                collection="audit_logs",
-                data=audit_record
+                collection="audit_logs", data=audit_record
             )
 
             self.logger.info(
@@ -330,14 +342,14 @@ class HealthDataService:
                 extra={
                     "user_id": user_id,
                     "processing_id": processing_id,
-                    "deleted_count": deleted_count
-                }
+                    "deleted_count": deleted_count,
+                },
             )
 
             return {
                 "deleted_metrics": deleted_count,
                 "processing_id": processing_id,
-                "timestamp": audit_record["timestamp"]
+                "timestamp": audit_record["timestamp"],
             }
 
         except FirestoreError as e:
@@ -352,7 +364,10 @@ class HealthDataService:
                 return False
 
             # Validate biometric data ranges
-            if metric.metric_type.value in ["HEART_RATE", "BLOOD_PRESSURE"] and metric.biometric_data:
+            if (
+                metric.metric_type.value in ["HEART_RATE", "BLOOD_PRESSURE"]
+                and metric.biometric_data
+            ):
                 return True
 
             # Validate sleep data
@@ -364,7 +379,10 @@ class HealthDataService:
                 return True
 
             # Validate mental health data
-            if metric.metric_type.value == "MENTAL_HEALTH" and metric.mental_health_data:
+            if (
+                metric.metric_type.value == "MENTAL_HEALTH"
+                and metric.mental_health_data
+            ):
                 return True
 
             return False
@@ -373,9 +391,11 @@ class HealthDataService:
             logger.warning(f"Business rule validation failed: {e}")
             return False
 
-    async def _store_metrics(self, user_id: str, metrics: list[HealthMetric], processing_id: str) -> None:
+    async def _store_metrics(
+        self, user_id: str, metrics: list[HealthMetric], processing_id: str
+    ) -> None:
         """Store validated health metrics to Firestore.
-        
+
         Args:
             user_id: User identifier
             metrics: List of validated health metrics
@@ -390,7 +410,7 @@ class HealthDataService:
                 "data": metric.model_dump(),
                 "processing_id": processing_id,
                 "created_at": metric.created_at,
-                "device_id": metric.device_id or "unknown"
+                "device_id": metric.device_id or "unknown",
             }
 
             # Validate metric data before storing
@@ -398,15 +418,17 @@ class HealthDataService:
                 logger.warning(f"Metric missing type, skipping: {metric.metric_id}")
                 continue
 
-            if metric.metric_type.value in {"HEART_RATE", "BLOOD_PRESSURE"} and not metric.biometric_data:
+            if (
+                metric.metric_type.value in {"HEART_RATE", "BLOOD_PRESSURE"}
+                and not metric.biometric_data
+            ):
                 logger.warning(f"Biometric metric missing data: {metric.metric_id}")
                 continue
 
             try:
                 # Create individual documents for each metric
                 doc_id = await self.firestore_client.create_document(
-                    collection="health_metrics",
-                    document_data=metric_data
+                    collection="health_metrics", document_data=metric_data
                 )
             except FirestoreError as e:
                 logger.error(f"Error storing metric: {e}")

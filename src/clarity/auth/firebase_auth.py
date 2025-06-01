@@ -346,7 +346,7 @@ async def get_current_user(request: Request) -> UserContext:
 
 def require_auth(
     permissions: list[Permission] | None = None, roles: list[UserRole] | None = None
-):
+) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
     """Decorator to require authentication and specific permissions/roles.
 
     Args:
@@ -357,9 +357,9 @@ def require_auth(
         Decorated function that enforces authentication
     """
 
-    def decorator(func: Callable) -> Callable:
+    def decorator(func: Callable[..., Any]) -> Callable[..., Any]:
         @wraps(func)
-        async def wrapper(*args, **kwargs):
+        async def wrapper(*args: Any, **kwargs: Any) -> Any:
             # Extract request from args/kwargs
             request = None
             for arg in args:
@@ -368,25 +368,23 @@ def require_auth(
                     break
 
             if not request:
-                raise HTTPException(status_code=500, detail="Request object not found")
+                msg = "Request object not found"
+                raise HTTPException(status_code=500, detail=msg)
 
             # Get user context
             user_context = await get_current_user(request)
 
             # Check role requirements
             if roles and user_context.role not in roles:
-                raise HTTPException(
-                    status_code=403, detail=f"Role '{user_context.role}' not authorized"
-                )
+                msg = f"Role '{user_context.role}' not authorized"
+                raise HTTPException(status_code=403, detail=msg)
 
             # Check permission requirements
             if permissions:
                 missing_permissions = set(permissions) - set(user_context.permissions)
                 if missing_permissions:
-                    raise HTTPException(
-                        status_code=403,
-                        detail=f"Missing required permissions: {list(missing_permissions)}",
-                    )
+                    msg = f"Missing required permissions: {list(missing_permissions)}"
+                    raise HTTPException(status_code=403, detail=msg)
 
             # Check if user is active
             if not user_context.is_active:
@@ -399,11 +397,15 @@ def require_auth(
     return decorator
 
 
-def require_role(*roles: UserRole):
+def require_role(
+    *roles: UserRole,
+) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
     """Convenience decorator to require specific roles."""
     return require_auth(roles=list(roles))
 
 
-def require_permission(*permissions: Permission):
+def require_permission(
+    *permissions: Permission,
+) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
     """Convenience decorator to require specific permissions."""
     return require_auth(permissions=list(permissions))

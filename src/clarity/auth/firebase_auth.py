@@ -9,19 +9,19 @@ Enterprise-grade Firebase authentication middleware with:
 """
 
 import asyncio
-from collections.abc import Awaitable, Callable
-from datetime import UTC, datetime, timezone
+from collections.abc import Callable
+from datetime import UTC, datetime
 from functools import wraps
 import logging
 import time
-from typing import Any, Dict, List, Optional
+from typing import Any
 
-from fastapi import Depends, HTTPException, Request
-from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from fastapi import HTTPException, Request
+from fastapi.security import HTTPBearer
 import firebase_admin
 from firebase_admin import auth, credentials
 from starlette.middleware.base import BaseHTTPMiddleware
-from starlette.responses import JSONResponse
+from starlette.responses import JSONResponse, Response
 
 from .models import AuthError, Permission, TokenInfo, UserContext, UserRole
 

@@ -6,6 +6,7 @@ This directory contains research repositories and reference materials used in th
 
 **Source**: [njacobsonlab/Pretrained-Actigraphy-Transformer](https://github.com/njacobsonlab/Pretrained-Actigraphy-Transformer)  
 **Paper**: "AI Foundation Models for Wearable Movement Data in Mental Health Research" (arxiv:2411.15240)  
+**Paper Location**: `docs/literature/AI Foundation Models for Wearable Movement Data in Mental.pdf`  
 **License**: MIT License  
 **Purpose**: Reference implementation for our ML pipeline documentation and PAT model integration
 
@@ -19,9 +20,9 @@ This directory contains research repositories and reference materials used in th
 
 ### Integration Status
 
-✅ **Documentation Complete**: All implementation details extracted and documented in `docs/development/ml-pipeline.md`  
-✅ **API Specification**: ML endpoints documented in `docs/api/ml-endpoints.md`  
-✅ **Production Ready**: Configurations ready for FastAPI + Google Cloud deployment
+**Documentation Complete**: All implementation details extracted and documented in `docs/development/ml-pipeline.md`  
+**API Specification**: ML endpoints documented in `docs/api/ml-endpoints.md`  
+**Production Ready**: Configurations ready for FastAPI + Google Cloud deployment
 
 ### Citation
 

@@ -442,8 +442,8 @@ class HealthDataService:
                 await self.firestore_client.create_document(
                     collection="health_metrics", data=metric_data
                 )
-            except FirestoreError as e:
-                logger.exception("Error storing metric: %s", e)
+            except FirestoreError:
+                logger.exception("Error storing metric")
 
     def _calculate_progress(self, processing_doc: dict[str, Any]) -> float:
         """Calculate processing progress percentage."""

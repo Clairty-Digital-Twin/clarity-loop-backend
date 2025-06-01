@@ -19,13 +19,13 @@ ensuring HIPAA-compliant health data protection.
 
 ```text
 ┌─────────────────────────────────────────┐
-│ Application Layer (FastAPI + Auth)     │ ← Input validation, rate limiting
+│ Application Layer (FastAPI + Auth)      │ ← Input validation, rate limiting
 ├─────────────────────────────────────────┤
-│ API Gateway (Cloud Run)                │ ← TLS termination, CORS, CSP
+│ API Gateway (Cloud Run)                 │ ← TLS termination, CORS, CSP
 ├─────────────────────────────────────────┤
-│ Service Mesh (VPC)                     │ ← Internal encryption, isolation
+│ Service Mesh (VPC)                      │ ← Internal encryption, isolation
 ├─────────────────────────────────────────┤
-│ Data Layer (Firestore + Encryption)    │ ← Field-level encryption, access control
+│ Data Layer (Firestore + Encryption)     │ ← Field-level encryption, access control
 └─────────────────────────────────────────┘
 ```
 

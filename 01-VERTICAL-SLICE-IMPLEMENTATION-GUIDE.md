@@ -13,13 +13,13 @@
 ┌─────────────────────────────────────────────────────────┐
 │ iOS/watchOS Client (SwiftUI + HealthKit)                │
 ├─────────────────────────────────────────────────────────┤
-│ API Gateway (FastAPI + Firebase Auth)                  │
+│ API Gateway (FastAPI + Firebase Auth)                   │
 ├─────────────────────────────────────────────────────────┤
 │ Business Logic (AsyncIO + Pydantic)                    │
 ├─────────────────────────────────────────────────────────┤
 │ ML Processing (PyTorch + Gemini 2.5)                   │
 ├─────────────────────────────────────────────────────────┤
-│ Storage Layer (Firestore + Cloud Storage)              │
+│ Storage Layer (Firestore + Cloud Storage)               │
 └─────────────────────────────────────────────────────────┘
 ```
 

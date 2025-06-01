@@ -102,7 +102,9 @@ class FirebaseAuthMiddleware(BaseHTTPMiddleware):
 
         logger.info("Firebase authentication middleware initialized")
 
-    def _init_firebase(self, credentials_path: str | None, project_id: str | None):
+    def _init_firebase(
+        self, credentials_path: str | None, project_id: str | None
+    ) -> None:
         """Initialize Firebase Admin SDK."""
         try:
             if not firebase_admin._apps:
@@ -119,7 +121,9 @@ class FirebaseAuthMiddleware(BaseHTTPMiddleware):
             logger.error(f"Failed to initialize Firebase Admin SDK: {e}")
             raise AuthError(f"Firebase initialization failed: {e}", status_code=500)
 
-    async def dispatch(self, request: Request, call_next):
+    async def dispatch(
+        self, request: Request, call_next: Callable[[Request], Any]
+    ) -> Response:
         """Process authentication for incoming requests."""
         # Check if path is exempt from authentication
         if self._is_exempt_path(request.url.path):

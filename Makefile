@@ -87,7 +87,7 @@ lint: ## 🔍 Run all linting checks
 	black --check .
 	mypy clarity/
 	bandit -r clarity/
-	safety check
+	safety scan
 	npm run lint:md
 
 lint-fix: ## 🔧 Auto-fix linting issues
@@ -108,7 +108,7 @@ typecheck: ## 🔍 Run type checking with MyPy
 security: ## 🛡️ Run security checks
 	@echo "$(BLUE)Running security checks...$(RESET)"
 	bandit -r clarity/ -f json -o reports/bandit-report.json
-	safety check --json --output reports/safety-report.json
+	safety scan --output json --save-as reports/safety-report.json
 	@echo "$(GREEN)✅ Security checks complete!$(RESET)"
 
 # ===== DOCUMENTATION =====

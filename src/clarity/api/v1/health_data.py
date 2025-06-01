@@ -67,7 +67,7 @@ async def upload_health_data(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Health data processing failed: {e.message}",
         ) from None
-    except Exception as e:
+    except Exception:
         logger.exception("Unexpected error in health data upload")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -110,7 +110,7 @@ async def get_processing_status(
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)
         ) from None
-    except Exception as e:
+    except Exception:
         logger.exception("Unexpected error getting processing status")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,

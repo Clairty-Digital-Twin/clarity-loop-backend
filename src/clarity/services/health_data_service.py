@@ -219,26 +219,26 @@ class HealthDataService:
             filters = [("user_id", "==", user_id)]
             
             if metric_type:
-                filters.append(("type", "==", metric_type))
+                filters.append(("metric_type", "==", metric_type))
             
             if start_date:
-                filters.append(("timestamp", ">=", start_date.isoformat()))
+                filters.append(("created_at", ">=", start_date.isoformat()))
                 
             if end_date:
-                filters.append(("timestamp", "<=", end_date.isoformat()))
+                filters.append(("created_at", "<=", end_date.isoformat()))
             
             # Query health metrics
             metrics = await self.firestore_client.query_documents(
-                collection="health_metrics",
+                collection="health_data",
                 filters=filters,
                 limit=limit,
                 offset=offset,
-                order_by="timestamp"
+                order_by="created_at"
             )
             
             # Get total count for pagination
             total_count = await self.firestore_client.count_documents(
-                collection="health_metrics",
+                collection="health_data",
                 filters=filters
             )
             
@@ -295,7 +295,7 @@ class HealthDataService:
                     ("processing_id", "==", processing_id)
                 ]
                 deleted_count = await self.firestore_client.delete_documents(
-                    collection="health_metrics",
+                    collection="health_data",
                     filters=filters
                 )
                 
@@ -309,7 +309,7 @@ class HealthDataService:
                 # Delete all user data
                 filters = [("user_id", "==", user_id)]
                 deleted_count = await self.firestore_client.delete_documents(
-                    collection="health_metrics",
+                    collection="health_data",
                     filters=filters
                 )
                 
@@ -354,77 +354,84 @@ class HealthDataService:
             raise HealthDataServiceError(f"Failed to delete health data: {str(e)}")
 
     def _validate_metric_business_rules(self, metric: HealthMetric) -> bool:
-        """
-        Validate individual health metric against business rules.
+        """Validate individual health metric against business rules.
         
         Args:
             metric: Health metric to validate
             
         Returns:
-            True if metric is valid, False otherwise
+            bool: True if metric passes validation
         """
         try:
-            # Basic validation
-            if not metric.timestamp:
-                return False
-                
-            if metric.value is not None and metric.value < 0:
-                return False
-                
-            # Type-specific validation
-            if metric.type.value.startswith("heart_rate") and metric.value:
-                return 20 <= metric.value <= 300  # Reasonable HR range
-                
-            if metric.type.value.startswith("blood_pressure") and metric.value:
-                return 50 <= metric.value <= 250  # Reasonable BP range
-                
-            return True
-            
+            # Check if metric has required data for its type
+            if metric.metric_type == "heart_rate":
+                return metric.biometric_data is not None and metric.biometric_data.heart_rate is not None
+            elif metric.metric_type == "blood_pressure":
+                return (metric.biometric_data is not None and 
+                       metric.biometric_data.systolic_bp is not None and 
+                       metric.biometric_data.diastolic_bp is not None)
+            elif metric.metric_type == "sleep_analysis":
+                return metric.sleep_data is not None
+            elif metric.metric_type == "activity_level":
+                return metric.activity_data is not None
+            elif metric.metric_type in ["mood_assessment", "stress_indicators"]:
+                return metric.mental_health_data is not None
+            else:
+                # For other types, basic validation
+                return True
         except Exception:
             return False
 
     async def _store_metrics(self, user_id: str, metrics: list[HealthMetric], processing_id: str) -> None:
-        """
-        Store validated health metrics to Firestore.
+        """Store validated health metrics to Firestore.
         
         Args:
-            user_id: User ID
-            metrics: List of validated metrics
-            processing_id: Processing job ID
+            user_id: User identifier
+            metrics: List of validated health metrics
+            processing_id: Processing job identifier
         """
         documents = []
         
         for metric in metrics:
             doc_data = {
-                "user_id": user_id,
+                "metric_id": str(metric.metric_id),
+                "user_id": str(user_id),
                 "processing_id": processing_id,
-                "type": metric.type.value,
-                "value": metric.value,
-                "unit": metric.unit,
-                "timestamp": metric.timestamp.isoformat(),
-                "source": metric.source,
-                "metadata": metric.metadata or {},
-                "created_at": datetime.now(timezone.utc).isoformat()
+                "metric_type": metric.metric_type.value,
+                "biometric_data": metric.biometric_data.model_dump() if metric.biometric_data else None,
+                "sleep_data": metric.sleep_data.model_dump() if metric.sleep_data else None,
+                "activity_data": metric.activity_data.model_dump() if metric.activity_data else None,
+                "mental_health_data": metric.mental_health_data.model_dump() if metric.mental_health_data else None,
+                "device_id": metric.device_id,
+                "raw_data": metric.raw_data,
+                "metadata": metric.metadata,
+                "created_at": metric.created_at.isoformat(),
+                "stored_at": datetime.now(timezone.utc).isoformat()
             }
-            documents.append(doc_data)
+            documents.append({
+                "id": str(metric.metric_id),
+                "data": doc_data
+            })
         
-        # Batch write for performance
-        await self.firestore_client.batch_create_documents(
-            collection="health_metrics",
-            documents=documents
-        )
+        # Store documents individually for now (we'll add batch later)
+        for doc in documents:
+            await self.firestore_client.create_document(
+                collection="health_data",
+                document_id=doc["id"],
+                data=doc["data"]
+            )
 
     def _calculate_progress(self, processing_doc: dict[str, Any]) -> float:
         """Calculate processing progress percentage."""
         status = processing_doc.get("status")
         
-        if status == ProcessingStatus.PENDING.value:
-            return 0.0
+        if status == ProcessingStatus.RECEIVED.value:
+            return 10.0
         elif status == ProcessingStatus.PROCESSING.value:
             return 50.0
         elif status == ProcessingStatus.COMPLETED.value:
             return 100.0
         elif status == ProcessingStatus.FAILED.value:
-            return 100.0
+            return 0.0
         else:
             return 0.0

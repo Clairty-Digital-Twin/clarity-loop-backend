@@ -108,7 +108,7 @@ typecheck: ## 🔍 Run type checking with MyPy
 security: ## 🛡️ Run security checks
 	@echo "$(BLUE)Running security checks...$(RESET)"
 	bandit -r clarity/ -f json -o reports/bandit-report.json
-	safety scan --output json > reports/safety-report.json
+	safety scan --save-as json reports/safety-report.json
 	@echo "$(GREEN)✅ Security checks complete!$(RESET)"
 
 # ===== DOCUMENTATION =====

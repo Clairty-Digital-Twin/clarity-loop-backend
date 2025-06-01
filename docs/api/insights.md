@@ -38,6 +38,8 @@ The Insights API leverages the Actigraphy Transformer ML model and Gemini 2.5 Pr
 
 ## Processing Pipeline
 
+**See External References** → [Vertex AI Gemini quotas](../external-links.md#external-references--google-cloud-backend-critical) for canonical rate limits and quota specifications.
+
 ```mermaid
 graph TD
     A[Raw Health Data] --> B[Data Preprocessing]

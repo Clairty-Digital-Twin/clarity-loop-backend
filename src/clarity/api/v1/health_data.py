@@ -1,26 +1,25 @@
-"""
-CLARITY Digital Twin Platform - Health Data API
+"""CLARITY Digital Twin Platform - Health Data API
 
 RESTful endpoints for health data upload, processing, and retrieval.
 Implements the Phase 1 vertical slice for health data upload and storage.
 """
 
 import logging
-from typing import Dict, Any, Optional, List
+from typing import Any, Dict, List, Optional
 from uuid import UUID
 
-from fastapi import APIRouter, HTTPException, status, Depends, Request
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.responses import JSONResponse
 
+from ...auth import Permission, UserContext, get_current_user, require_permission
 from ...models.health_data import (
-    HealthDataUpload,
     HealthDataResponse,
+    HealthDataUpload,
+    HealthMetricType,
     ProcessingStatus,
-    HealthMetricType
 )
 from ...services.health_data_service import HealthDataService, HealthDataServiceError
 from ...storage.firestore_client import FirestoreClient
-from ...auth import get_current_user, require_permission, UserContext, Permission
 
 # Configure logger
 logger = logging.getLogger(__name__)
@@ -36,6 +35,7 @@ router = APIRouter(
     }
 )
 
+
 # Dependency to get health data service
 async def get_health_data_service() -> HealthDataService:
     """Dependency to get configured health data service."""
@@ -44,7 +44,7 @@ async def get_health_data_service() -> HealthDataService:
         project_id="clarity-digital-twin",  # Should come from settings
         enable_caching=True
     )
-    
+
     return HealthDataService(firestore_client=firestore_client)
 
 
@@ -61,8 +61,7 @@ async def upload_health_data(
     current_user: UserContext = Depends(get_current_user),
     service: HealthDataService = Depends(get_health_data_service)
 ) -> HealthDataResponse:
-    """
-    Upload health data for processing and analysis.
+    """Upload health data for processing and analysis.
     
     This endpoint accepts health metrics from various sources (HealthKit, wearables, manual entry)
     and initiates asynchronous processing for AI-powered insights generation.
@@ -75,23 +74,23 @@ async def upload_health_data(
     """
     try:
         logger.info(f"Health data upload requested by user: {current_user.user_id}")
-        
+
         # Validate user owns the data
         if str(health_data.user_id) != current_user.user_id:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Cannot upload data for another user"
             )
-        
+
         # Process the health data upload
         response = await service.upload_health_data(
             health_data=health_data,
             user_id=current_user.user_id
         )
-        
+
         logger.info(f"Health data uploaded successfully: {response.processing_id}")
         return response
-        
+
     except HealthDataServiceError as e:
         logger.error(f"Health data service error: {e}")
         raise HTTPException(
@@ -116,9 +115,8 @@ async def get_processing_status(
     processing_id: UUID,
     current_user: UserContext = Depends(get_current_user),
     service: HealthDataService = Depends(get_health_data_service)
-) -> Dict[str, Any]:
-    """
-    Get the processing status of a health data upload.
+) -> dict[str, Any]:
+    """Get the processing status of a health data upload.
     
     **Security**: Users can only access status for their own uploads.
     **Real-time Updates**: Status is updated in real-time as processing progresses.
@@ -127,20 +125,20 @@ async def get_processing_status(
     """
     try:
         logger.debug(f"Processing status requested: {processing_id} by user: {current_user.user_id}")
-        
+
         status_info = await service.get_processing_status(
             processing_id=str(processing_id),
             user_id=current_user.user_id
         )
-        
+
         if not status_info:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Processing ID not found or access denied"
             )
-        
+
         return status_info
-        
+
     except HealthDataServiceError as e:
         logger.error(f"Health data service error: {e}")
         raise HTTPException(
@@ -164,11 +162,10 @@ async def get_processing_status(
 async def get_user_health_data(
     current_user: UserContext = Depends(get_current_user),
     service: HealthDataService = Depends(get_health_data_service),
-    metric_type: Optional[HealthMetricType] = None,
+    metric_type: HealthMetricType | None = None,
     limit: int = 100
-) -> List[Dict[str, Any]]:
-    """
-    Retrieve health data for the authenticated user.
+) -> list[dict[str, Any]]:
+    """Retrieve health data for the authenticated user.
     
     **Security**: Users can only access their own health data.
     **Filtering**: Optional filtering by metric type and date range.
@@ -178,16 +175,16 @@ async def get_user_health_data(
     """
     try:
         logger.debug(f"Health data retrieval requested by user: {current_user.user_id}")
-        
+
         health_data = await service.get_user_health_data(
             user_id=current_user.user_id,
             metric_type=metric_type,
             limit=min(limit, 1000)  # Cap at 1000 records
         )
-        
+
         logger.info(f"Retrieved {len(health_data)} health data records for user: {current_user.user_id}")
         return health_data
-        
+
     except HealthDataServiceError as e:
         logger.error(f"Health data service error: {e}")
         raise HTTPException(
@@ -212,9 +209,8 @@ async def delete_health_data(
     processing_id: UUID,
     current_user: UserContext = Depends(get_current_user),
     service: HealthDataService = Depends(get_health_data_service)
-) -> Dict[str, str]:
-    """
-    Delete specific health data upload.
+) -> dict[str, str]:
+    """Delete specific health data upload.
     
     **Security**: Users can only delete their own data.
     **GDPR Compliance**: Supports right to erasure requirements.
@@ -224,21 +220,21 @@ async def delete_health_data(
     """
     try:
         logger.info(f"Health data deletion requested: {processing_id} by user: {current_user.user_id}")
-        
+
         success = await service.delete_user_health_data(
             user_id=current_user.user_id,
             processing_id=str(processing_id)
         )
-        
+
         if not success:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Health data not found or access denied"
             )
-        
+
         logger.info(f"Health data deleted successfully: {processing_id}")
         return {"message": "Health data deleted successfully"}
-        
+
     except HealthDataServiceError as e:
         logger.error(f"Health data service error: {e}")
         raise HTTPException(
@@ -260,9 +256,8 @@ async def delete_health_data(
 )
 async def health_check(
     service: HealthDataService = Depends(get_health_data_service)
-) -> Dict[str, Any]:
-    """
-    Health check for the health data service.
+) -> dict[str, Any]:
+    """Health check for the health data service.
     
     **Public Endpoint**: No authentication required.
     **Monitoring**: Used by load balancers and monitoring systems.
@@ -272,7 +267,7 @@ async def health_check(
     try:
         health_status = await service.health_check()
         return health_status
-        
+
     except Exception as e:
         logger.error(f"Health check failed: {e}")
         return {

@@ -1,5 +1,4 @@
-"""
-CLARITY Digital Twin Platform - Logging Configuration.
+"""CLARITY Digital Twin Platform - Logging Configuration.
 
 HIPAA-compliant structured logging with audit trail support and 
 configurable log levels for development and production environments.
@@ -8,7 +7,7 @@ configurable log levels for development and production environments.
 import logging
 import logging.config
 import sys
-from typing import Dict, Any
+from typing import Any, Dict
 
 from .config import get_settings
 
@@ -16,9 +15,9 @@ from .config import get_settings
 def setup_logging() -> None:
     """Configure structured logging for the application."""
     settings = get_settings()
-    
+
     # Base logging configuration
-    config: Dict[str, Any] = {
+    config: dict[str, Any] = {
         "version": 1,
         "disable_existing_loggers": False,
         "formatters": {
@@ -73,15 +72,15 @@ def setup_logging() -> None:
             "handlers": ["console"]
         }
     }
-    
+
     # Apply logging configuration
     logging.config.dictConfig(config)
-    
+
     # Set log level for third-party libraries
     logging.getLogger("google.cloud").setLevel(logging.WARNING)
     logging.getLogger("google.auth").setLevel(logging.WARNING)
     logging.getLogger("firebase_admin").setLevel(logging.WARNING)
-    
+
     # Log startup message
     logger = logging.getLogger(__name__)
     logger.info(

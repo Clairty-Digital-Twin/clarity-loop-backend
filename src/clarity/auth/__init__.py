@@ -1,5 +1,4 @@
-"""
-CLARITY Authentication Module
+"""CLARITY Authentication Module
 
 Firebase-based authentication and authorization system for HIPAA-compliant
 health data access control.
@@ -22,7 +21,7 @@ from .models import (
 
 __all__ = [
     "AuthError",
-    "FirebaseAuthMiddleware", 
+    "FirebaseAuthMiddleware",
     "Permission",
     "TokenInfo",
     "UserContext",

@@ -1,21 +1,20 @@
-"""
-CLARITY Digital Twin Platform - Main Application
+"""CLARITY Digital Twin Platform - Main Application
 
 Production-grade FastAPI application for health data processing and AI-powered insights.
 Implements enterprise authentication, monitoring, and HIPAA-compliant data handling.
 """
 
+from contextlib import asynccontextmanager
 import logging
 import os
-from contextlib import asynccontextmanager
-from typing import Dict, Any
+from typing import Any, Dict
 
-import uvicorn
-from fastapi import FastAPI, Request, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.responses import JSONResponse
 from starlette.middleware.gzip import GZipMiddleware
+import uvicorn
 
 from .api.v1 import health_data
 from .auth import FirebaseAuthMiddleware
@@ -31,7 +30,7 @@ async def lifespan(app: FastAPI):
     """Application lifespan manager for startup and shutdown tasks."""
     # Startup
     logger.info("Starting CLARITY Digital Twin Platform...")
-    
+
     # Initialize Firebase Admin SDK and other services here
     try:
         # Any additional startup initialization can go here
@@ -49,13 +48,12 @@ async def lifespan(app: FastAPI):
 
 def create_app() -> FastAPI:
     """Create and configure the FastAPI application."""
-    
     # Setup logging first
     setup_logging()
-    
+
     # Get application settings
     settings = get_settings()
-    
+
     # Create FastAPI application
     app = FastAPI(
         title="CLARITY Digital Twin Platform",
@@ -69,13 +67,13 @@ def create_app() -> FastAPI:
         openapi_url="/openapi.json" if settings.environment != "production" else None,
         lifespan=lifespan
     )
-    
+
     # Add security middleware
     app.add_middleware(
-        TrustedHostMiddleware, 
+        TrustedHostMiddleware,
         allowed_hosts=settings.allowed_hosts
     )
-    
+
     # Add CORS middleware
     if settings.cors_origins:
         app.add_middleware(
@@ -85,10 +83,10 @@ def create_app() -> FastAPI:
             allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
             allow_headers=["*"],
         )
-    
+
     # Add compression middleware
     app.add_middleware(GZipMiddleware, minimum_size=1000)
-    
+
     # Add Firebase authentication middleware
     app.add_middleware(
         FirebaseAuthMiddleware,
@@ -97,20 +95,20 @@ def create_app() -> FastAPI:
             "/",
             "/health",
             "/docs",
-            "/openapi.json", 
+            "/openapi.json",
             "/redoc",
             "/api/v1/health-data/health"  # Public health check
         ],
         cache_ttl=300,  # 5 minutes
         enable_caching=True
     )
-    
+
     # Global exception handler
     @app.exception_handler(Exception)
     async def global_exception_handler(request: Request, exc: Exception) -> JSONResponse:
         """Global exception handler for unhandled exceptions."""
         logger.error(f"Unhandled exception: {exc}", exc_info=True)
-        
+
         if settings.environment == "production":
             return JSONResponse(
                 status_code=500,
@@ -120,24 +118,23 @@ def create_app() -> FastAPI:
                     "request_id": getattr(request.state, "request_id", "unknown")
                 }
             )
-        else:
-            return JSONResponse(
-                status_code=500,
-                content={
-                    "error": "internal_error", 
-                    "message": str(exc),
-                    "type": type(exc).__name__,
-                    "request_id": getattr(request.state, "request_id", "unknown")
-                }
-            )
-    
+        return JSONResponse(
+            status_code=500,
+            content={
+                "error": "internal_error",
+                "message": str(exc),
+                "type": type(exc).__name__,
+                "request_id": getattr(request.state, "request_id", "unknown")
+            }
+        )
+
     # Health check endpoint
     @app.get(
         "/health",
         summary="Health Check",
         description="System health check endpoint for load balancers and monitoring."
     )
-    async def health_check() -> Dict[str, Any]:
+    async def health_check() -> dict[str, Any]:
         """System health check endpoint."""
         return {
             "status": "healthy",
@@ -146,14 +143,14 @@ def create_app() -> FastAPI:
             "environment": settings.environment,
             "timestamp": "2025-01-01T00:00:00Z"  # Should be dynamic
         }
-    
+
     # Root endpoint
     @app.get(
         "/",
         summary="API Root",
         description="Root endpoint providing API information and status."
     )
-    async def root() -> Dict[str, Any]:
+    async def root() -> dict[str, Any]:
         """Root endpoint with API information."""
         return {
             "name": "CLARITY Digital Twin Platform",
@@ -162,14 +159,14 @@ def create_app() -> FastAPI:
             "docs_url": "/docs" if settings.environment != "production" else None,
             "status": "operational"
         }
-    
+
     # Include API routers
     app.include_router(
         health_data.router,
         prefix="/api/v1",
         tags=["Health Data API v1"]
     )
-    
+
     logger.info(f"FastAPI application created successfully for {settings.environment} environment")
     return app
 
@@ -181,7 +178,7 @@ app = create_app()
 # Development server entry point
 if __name__ == "__main__":
     settings = get_settings()
-    
+
     uvicorn.run(
         "main:app",
         host=settings.host,

@@ -1,5 +1,4 @@
-"""
-Clarity Loop Backend - Psychiatry & Mental Health Digital Twin Platform
+"""Clarity Loop Backend - Psychiatry & Mental Health Digital Twin Platform
 
 A paradigm-shattering psychiatry and wellness AI/ML analytics system that establishes
 entirely new standards for clinical data systems.
@@ -12,7 +11,7 @@ __email__ = "team@clarityloop.com"
 # Core exports for the digital twin platform
 # Core exports will be added as modules are implemented
 __all__ = [
-    "__version__",
     "__author__",
     "__email__",
+    "__version__",
 ]

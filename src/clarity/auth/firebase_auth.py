@@ -23,7 +23,7 @@ from firebase_admin import auth, credentials
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.responses import JSONResponse, Response
 
-from .models import AuthError, Permission, TokenInfo, UserContext, UserRole
+from clarity.auth.models import AuthError, Permission, TokenInfo, UserContext, UserRole
 
 # Configure logger
 logger = logging.getLogger(__name__)

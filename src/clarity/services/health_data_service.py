@@ -64,105 +64,79 @@ class HealthDataService:
         self.firestore_client = firestore_client
         self.logger = logging.getLogger(__name__)
 
-    async def store_health_data(self, health_data: HealthDataUpload) -> HealthDataResponse:
-        """
-        Process and store health data upload.
-        
-        Args:
-            health_data: Validated health data upload request
-            
-        Returns:
-            HealthDataResponse with processing status and metrics
-            
-        Raises:
-            DataValidationError: If health data validation fails
-            HealthDataServiceError: If storage operation fails
-        """
+    async def process_health_data(self, upload_data: HealthDataUpload) -> HealthDataResponse:
+        """Process health data upload with validation and storage."""
         try:
-            # Generate processing ID for tracking
-            processing_id = uuid.uuid4()
+            processing_id = str(uuid.uuid4())
             current_time = datetime.now(timezone.utc)
             
-            # Validate metrics
-            accepted_metrics = []
-            rejected_metrics = []
+            # Validate metrics using existing Pydantic validation
+            valid_metrics = []
             validation_errors = []
             
-            for metric in health_data.metrics:
+            for metric in upload_data.metrics:
                 try:
-                    # Validate metric data integrity
-                    if self._validate_metric(metric):
-                        accepted_metrics.append(metric)
+                    # The metric is already validated by Pydantic, but we can add business rules
+                    if self._validate_metric_business_rules(metric):
+                        valid_metrics.append(metric)
                     else:
-                        rejected_metrics.append(metric)
-                        validation_errors.append(f"Invalid metric: {metric.type}")
-                except ValidationError as e:
-                    rejected_metrics.append(metric)
-                    validation_errors.append(f"Validation error for {metric.type}: {str(e)}")
+                        validation_errors.append(f"Metric {metric.metric_id} failed business validation")
+                except Exception as e:
+                    validation_errors.append(f"Metric {metric.metric_id}: {str(e)}")
             
-            # Create processing record
-            processing_record = {
-                "processing_id": str(processing_id),
-                "user_id": str(health_data.user_id),
-                "status": ProcessingStatus.PROCESSING.value,
-                "upload_source": health_data.upload_source,
-                "client_timestamp": health_data.client_timestamp.isoformat(),
+            # Create processing job document
+            processing_doc = {
+                "processing_id": processing_id,
+                "user_id": str(upload_data.user_id),
+                "status": ProcessingStatus.RECEIVED.value,
+                "upload_source": upload_data.upload_source,
+                "client_timestamp": upload_data.client_timestamp.isoformat(),
                 "server_timestamp": current_time.isoformat(),
-                "total_metrics": len(health_data.metrics),
-                "accepted_metrics": len(accepted_metrics),
-                "rejected_metrics": len(rejected_metrics),
+                "total_metrics": len(upload_data.metrics),
+                "accepted_metrics": len(valid_metrics),
+                "rejected_metrics": len(upload_data.metrics) - len(valid_metrics),
                 "validation_errors": validation_errors,
-                "sync_token": health_data.sync_token,
-                "estimated_completion": (current_time.timestamp() + 300)  # 5 minutes
+                "sync_token": upload_data.sync_token,
+                "created_at": current_time.isoformat(),
+                "updated_at": current_time.isoformat()
             }
             
-            # Store processing record
+            # Store processing job
             await self.firestore_client.create_document(
                 collection="processing_jobs",
-                document_id=str(processing_id),
-                data=processing_record
+                document_id=processing_id,
+                data=processing_doc
             )
             
-            # Store accepted metrics
-            if accepted_metrics:
-                await self._store_metrics(str(health_data.user_id), accepted_metrics, str(processing_id))
+            # Store valid metrics
+            if valid_metrics:
+                await self._store_metrics(upload_data.user_id, valid_metrics, processing_id)
             
-            # Update processing status to completed
+            # Update processing status
             await self.firestore_client.update_document(
                 collection="processing_jobs",
-                document_id=str(processing_id),
+                document_id=processing_id,
                 data={
-                    "status": ProcessingStatus.COMPLETED.value,
-                    "completed_at": datetime.now(timezone.utc).isoformat()
+                    "status": ProcessingStatus.PROCESSING.value,
+                    "updated_at": datetime.now(timezone.utc).isoformat()
                 }
             )
             
-            # Log successful processing
-            self.logger.info(
-                "Health data processed successfully",
-                extra={
-                    "processing_id": str(processing_id),
-                    "user_id": str(health_data.user_id),
-                    "accepted_metrics": len(accepted_metrics),
-                    "rejected_metrics": len(rejected_metrics)
-                }
-            )
+            # Log operation
+            self.logger.info(f"Health data processing initiated: {processing_id}")
             
             return HealthDataResponse(
-                processing_id=processing_id,
-                status=ProcessingStatus.COMPLETED,
-                accepted_metrics=len(accepted_metrics),
-                rejected_metrics=len(rejected_metrics),
-                validation_errors=validation_errors,
-                estimated_processing_time=300,
-                sync_token=health_data.sync_token,
-                message="Health data processed successfully",
+                processing_id=uuid.UUID(processing_id),
+                status=ProcessingStatus.PROCESSING,
+                accepted_metrics=len(valid_metrics),
+                rejected_metrics=len(validation_errors),
+                validation_errors=[],  # Return empty for now, could enhance later
+                estimated_processing_time=len(valid_metrics) * 2,  # 2 seconds per metric
+                sync_token=upload_data.sync_token,
+                message="Health data processing started",
                 timestamp=current_time
             )
             
-        except FirestoreError as e:
-            self.logger.error(f"Firestore error during health data storage: {e}")
-            raise HealthDataServiceError(f"Failed to store health data: {str(e)}")
         except Exception as e:
             self.logger.error(f"Unexpected error during health data processing: {e}")
             raise HealthDataServiceError(f"Health data processing failed: {str(e)}")
@@ -379,9 +353,9 @@ class HealthDataService:
             self.logger.error(f"Firestore error during data deletion: {e}")
             raise HealthDataServiceError(f"Failed to delete health data: {str(e)}")
 
-    def _validate_metric(self, metric: HealthMetric) -> bool:
+    def _validate_metric_business_rules(self, metric: HealthMetric) -> bool:
         """
-        Validate individual health metric.
+        Validate individual health metric against business rules.
         
         Args:
             metric: Health metric to validate

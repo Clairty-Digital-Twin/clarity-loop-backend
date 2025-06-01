@@ -194,7 +194,7 @@ class HealthDataService:
         except DocumentNotFoundError:
             raise DataNotFoundError(f"Processing job {processing_id} not found")
         except FirestoreError as e:
-            self.logger.error(f"Firestore error retrieving processing status: {e}")
+            self.logger.exception("Firestore error retrieving processing status: %s", e)
             raise HealthDataServiceError(f"Failed to retrieve processing status: {e!s}")
 
     async def get_user_health_data(
@@ -281,7 +281,7 @@ class HealthDataService:
             }
 
         except FirestoreError as e:
-            self.logger.error(f"Firestore error retrieving health data: {e}")
+            self.logger.exception("Firestore error retrieving health data: %s", e)
             raise HealthDataServiceError(f"Failed to retrieve health data: {e!s}")
 
     async def delete_health_data(
@@ -359,7 +359,7 @@ class HealthDataService:
             }
 
         except FirestoreError as e:
-            self.logger.error(f"Firestore error during data deletion: {e}")
+            self.logger.exception("Firestore error during data deletion: %s", e)
             raise HealthDataServiceError(f"Failed to delete health data: {e!s}")
 
     def _validate_metric_business_rules(self, metric: HealthMetric) -> bool:

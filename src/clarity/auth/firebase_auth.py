@@ -118,7 +118,7 @@ class FirebaseAuthMiddleware(BaseHTTPMiddleware):
             else:
                 logger.info("Firebase Admin SDK already initialized")
         except Exception as e:
-            logger.error("Failed to initialize Firebase Admin SDK: %s", e)
+            logger.exception("Failed to initialize Firebase Admin SDK: %s", e)
             raise AuthError(f"Firebase initialization failed: {e}", status_code=500)
 
     async def dispatch(
@@ -145,7 +145,9 @@ class FirebaseAuthMiddleware(BaseHTTPMiddleware):
             return response
 
         except AuthError as e:
-            logger.warning(f"Authentication failed for {request.url.path}: {e.message}")
+            logger.warning(
+                "Authentication failed for %s: %s", request.url.path, e.message
+            )
             return JSONResponse(
                 status_code=e.status_code,
                 content={
@@ -155,7 +157,7 @@ class FirebaseAuthMiddleware(BaseHTTPMiddleware):
                 },
             )
         except Exception as e:
-            logger.error(f"Unexpected authentication error: {e}")
+            logger.exception("Unexpected authentication error: %s", e)
             return JSONResponse(
                 status_code=500,
                 content={
@@ -244,7 +246,7 @@ class FirebaseAuthMiddleware(BaseHTTPMiddleware):
         except auth.CertificateFetchError:
             raise AuthError("Unable to verify token", 500, "verification_error")
         except Exception as e:
-            logger.error(f"Token verification error: {e}")
+            logger.exception("Token verification error: %s", e)
             raise AuthError("Token verification failed", 500, "verification_failed")
 
     async def _create_user_context(self, token_info: TokenInfo) -> UserContext:
@@ -259,7 +261,9 @@ class FirebaseAuthMiddleware(BaseHTTPMiddleware):
                 role = UserRole(role_claim)
             except ValueError:
                 logger.warning(
-                    f"Invalid role '{role_claim}' for user {token_info.user_id}, defaulting to patient"
+                    "Invalid role '%s' for user %s, defaulting to patient",
+                    role_claim,
+                    token_info.user_id,
                 )
                 role = UserRole.PATIENT
 
@@ -291,7 +295,7 @@ class FirebaseAuthMiddleware(BaseHTTPMiddleware):
         except auth.UserNotFoundError:
             raise AuthError("User not found", 401, "user_not_found")
         except Exception as e:
-            logger.error(f"Error creating user context: {e}")
+            logger.exception("Error creating user context: %s", e)
             raise AuthError(
                 "Failed to create user context", 500, "context_creation_failed"
             )

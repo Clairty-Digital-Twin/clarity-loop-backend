@@ -305,8 +305,8 @@ class HealthDataService:
             if processing_id:
                 # Delete specific processing job and related metrics
                 filters = [
-                    ("user_id", "==", user_id),
-                    ("processing_id", "==", processing_id),
+                    {"field": "user_id", "op": "==", "value": user_id},
+                    {"field": "processing_id", "op": "==", "value": processing_id},
                 ]
                 deleted_count = await self.firestore_client.delete_documents(
                     collection="health_data", filters=filters
@@ -319,7 +319,7 @@ class HealthDataService:
 
             else:
                 # Delete all user data
-                filters = [("user_id", "==", user_id)]
+                filters = [{"field": "user_id", "op": "==", "value": user_id}]
                 deleted_count = await self.firestore_client.delete_documents(
                     collection="health_data", filters=filters
                 )
@@ -371,30 +371,30 @@ class HealthDataService:
 
             # Validate biometric data ranges
             if (
-                metric.metric_type.value in ["HEART_RATE", "BLOOD_PRESSURE"]
+                metric.metric_type.value in ["heart_rate", "blood_pressure"]
                 and metric.biometric_data
             ):
                 return True
 
             # Validate sleep data
-            if metric.metric_type.value == "SLEEP" and metric.sleep_data:
+            if metric.metric_type.value == "sleep_analysis" and metric.sleep_data:
                 return True
 
             # Validate activity data
-            if metric.metric_type.value == "ACTIVITY" and metric.activity_data:
+            if metric.metric_type.value == "activity_level" and metric.activity_data:
                 return True
 
             # Validate mental health data
             if (
-                metric.metric_type.value == "MENTAL_HEALTH"
-                and metric.mental_health_data
+                metric.metric_type.value == "mood_assessment"
+                and metric.mental_health_data is not None
             ):
                 return True
 
             return False
 
         except Exception as e:
-            logger.warning(f"Business rule validation failed: {e}")
+            logger.warning("Business rule validation failed: %s", e)
             return False
 
     async def _store_metrics(
@@ -421,23 +421,23 @@ class HealthDataService:
 
             # Validate metric data before storing
             if not metric.metric_type:
-                logger.warning(f"Metric missing type, skipping: {metric.metric_id}")
+                logger.warning("Metric missing type, skipping: %s", metric.metric_id)
                 continue
 
             if (
-                metric.metric_type.value in {"HEART_RATE", "BLOOD_PRESSURE"}
+                metric.metric_type.value in {"heart_rate", "blood_pressure"}
                 and not metric.biometric_data
             ):
-                logger.warning(f"Biometric metric missing data: {metric.metric_id}")
+                logger.warning("Biometric metric missing data: %s", metric.metric_id)
                 continue
 
             try:
                 # Create individual documents for each metric
-                doc_id = await self.firestore_client.create_document(
-                    collection="health_metrics", document_data=metric_data
+                await self.firestore_client.create_document(
+                    collection="health_metrics", data=metric_data
                 )
             except FirestoreError as e:
-                logger.error(f"Error storing metric: {e}")
+                logger.exception("Error storing metric: %s", e)
 
     def _calculate_progress(self, processing_doc: dict[str, Any]) -> float:
         """Calculate processing progress percentage."""

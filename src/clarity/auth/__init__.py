@@ -1,17 +1,16 @@
-"""CLARITY Authentication Module
+"""CLARITY Digital Twin Platform - Authentication Package.
 
-Firebase-based authentication and authorization system for HIPAA-compliant
-health data access control.
+Firebase-based authentication and authorization for enterprise healthcare applications.
 """
 
-from .firebase_auth import (
+from clarity.auth.firebase_auth import (
     FirebaseAuthMiddleware,
     get_current_user,
     require_auth,
     require_permission,
     require_role,
 )
-from .models import (
+from clarity.auth.models import (
     AuthError,
     Permission,
     TokenInfo,

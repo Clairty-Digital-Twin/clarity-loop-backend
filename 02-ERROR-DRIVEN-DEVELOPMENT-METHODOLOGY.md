@@ -352,3 +352,97 @@ async def vulnerable_upload(data: str):  # Raw string - will break
     # This will fail with various injection attempts
     eval(data)  # Obviously dangerous - will teach us about input validation
     return {"status": "processed"}
+
+# Test with malicious inputs to discover security needs:
+# - SQL injection attempts
+# - Script injection attempts  
+# - Oversized payloads
+# - Malformed JSON
+```
+
+## EDD Metrics and Success Criteria
+
+### Velocity Metrics
+- **Time to First Error**: Should be < 5 minutes
+- **Error Resolution Rate**: Should fix 1 error every 10-15 minutes
+- **Feature Completion Time**: Should decrease with each error cycle
+
+### Quality Metrics
+- **Error Pattern Recognition**: Reuse previous error solutions
+- **Defensive Code Coverage**: % of code with error handling
+- **Recovery Time**: How fast the system recovers from errors
+
+### Learning Metrics
+- **Error Pattern Library Growth**: New patterns discovered weekly
+- **Error Prediction Accuracy**: Can you predict the next 3 errors?
+- **Knowledge Transfer**: Can team members predict error patterns?
+
+## Common EDD Anti-Patterns
+
+### ❌ Error Avoidance
+```python
+# DON'T: Try to prevent all errors upfront
+def overly_cautious_upload(data):
+    if not data:
+        raise ValueError("No data")
+    if not isinstance(data, dict):
+        raise ValueError("Not dict")
+    if "timestamp" not in data:
+        raise ValueError("No timestamp")
+    # ... 50 more validations before doing anything
+```
+
+### ✅ Error Embrace
+```python
+# DO: Let errors guide you to the real requirements
+def error_driven_upload(data):
+    # Start simple, add validations as errors reveal needs
+    return process_data(data)
+```
+
+### ❌ Error Hiding
+```python
+# DON'T: Catch and hide errors
+try:
+    result = risky_operation()
+except Exception:
+    return {"status": "success"}  # Lying about failure
+```
+
+### ✅ Error Learning
+```python
+# DO: Let errors teach you
+try:
+    result = risky_operation()
+except SpecificError as e:
+    logger.error("learned_something", error=str(e))
+    # Add specific handling for this error type
+    raise HTTPException(status_code=400, detail="Specific guidance")
+```
+
+## Integration with Other Methodologies
+
+### EDD + TDD
+1. **Error-Driven Test Writing**: Write tests for expected errors first
+2. **Red-Green-Refactor**: Red = errors, Green = fixes, Refactor = optimization
+3. **Test-Guided Error Handling**: Let test failures guide error handling
+
+### EDD + Vertical Slice Development
+1. **Slice-Specific Error Patterns**: Each slice has predictable error types
+2. **End-to-End Error Testing**: Test complete user journeys for errors
+3. **Layer-by-Layer Error Handling**: Errors propagate up the stack
+
+### EDD + Continuous Integration
+1. **Error-Driven Pipeline Design**: Let failures guide pipeline improvements
+2. **Failure-Fast Feedback**: Optimize for quick error feedback
+3. **Error Pattern Automation**: Automate handling of known error patterns
+
+## Next Steps
+
+1. **Start Small**: Pick one endpoint and intentionally break it
+2. **Document Errors**: Keep a log of every error encountered  
+3. **Build Error Library**: Create reusable error handling patterns
+4. **Share Learning**: Teach the team about error patterns discovered
+5. **Iterate**: Apply EDD to progressively larger features
+
+Remember: **The goal isn't to avoid errors, it's to learn from them faster than anyone else.**

@@ -744,8 +744,6 @@ class FirestoreClient:
             logger.exception("Failed to batch create documents in %s", collection)
             msg = f"Batch create operation failed: {e}"
             raise FirestoreError(msg) from e
-        else:
-            return deleted_count
 
     # Batch Operations
 

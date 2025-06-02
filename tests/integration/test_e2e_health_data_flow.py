@@ -3,6 +3,7 @@
 Tests the complete flow through all Clean Architecture layers.
 """
 
+import concurrent.futures
 from datetime import UTC, datetime
 import time
 from typing import Any

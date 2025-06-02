@@ -592,7 +592,7 @@ class TestFirebaseAuthMiddleware:
         request = Mock()
         request.url.path = "/health"
 
-        async def call_next(_: Request) -> JSONResponse:
+        async def call_next(_: Request) -> JSONResponse:  # noqa: RUF029
             return JSONResponse({"status": "ok"})
 
         response = await middleware.dispatch(request, call_next)
@@ -617,7 +617,7 @@ class TestFirebaseAuthMiddleware:
         mock_auth_provider.verify_token.return_value = sample_user_info
         middleware.auth_provider = mock_auth_provider
 
-        async def call_next(req: Request) -> JSONResponse:
+        async def call_next(req: Request) -> JSONResponse:  # noqa: RUF029
             # Verify user context was attached
             assert hasattr(req.state, "user")
             assert isinstance(req.state.user, UserContext)

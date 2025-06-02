@@ -73,9 +73,7 @@ def test_config_access() -> None:
     try:
         start = time.perf_counter()
 
-        # Test config access here
-        # from clarity.core.config import get_settings
-        # settings = get_settings()
+        # TODO: Implement actual config access test
 
         elapsed = time.perf_counter() - start
         if elapsed > CONFIG_ACCESS_THRESHOLD:
@@ -92,14 +90,11 @@ def test_container_creation() -> None:
     print("🔍 Testing container creation...")
 
     try:
-        # Test container creation here
-        # from clarity.core.container import get_container
-        # container = get_container()
+        # TODO: Implement actual container creation test
 
         auth_start = time.perf_counter()
 
-        # Test auth provider creation here
-        # auth_provider = container.get_auth_provider()
+        # TODO: Implement auth provider creation test
 
         auth_elapsed = time.perf_counter() - auth_start
 
@@ -119,9 +114,7 @@ def test_app_creation() -> None:
     try:
         start = time.perf_counter()
 
-        # Test app creation here
-        # from clarity.core.container import create_application
-        # app = create_application()
+        # TODO: Implement actual app creation test
 
         elapsed = time.perf_counter() - start
         if elapsed > APP_CREATION_THRESHOLD:
@@ -158,7 +151,7 @@ def check_file_access() -> None:
             print(f"❌ Credential file not found: {path}")
 
 
-async def main() -> None:
+def main() -> None:
     """Main debug function."""
     print("🔍 CLARITY Startup Performance Debug")
     print("=" * 50)
@@ -169,12 +162,12 @@ async def main() -> None:
     if slowest:
         print(f"🐌 Slowest import: {slowest}")
 
-    # Test config
-    print("\n⚙️ Testing configuration...")
+    # Test configuration access
+    print("\n📁 Testing configuration access...")
     test_config_access()
 
-    # Test container
-    print("\n🏭 Testing dependency container...")
+    # Test container setup
+    print("\n📦 Testing container setup...")
     test_container_creation()
 
     # Test credentials

@@ -358,20 +358,42 @@ class DependencyContainer:
             }
 
         try:
-            from clarity.api.v1 import health_data  # noqa: PLC0415
+            from clarity.api.v1 import auth, health_data  # noqa: PLC0415
+
+            # Get shared dependencies
+            auth_provider = self.get_auth_provider()
+            repository = self.get_health_data_repository()
+            config_provider = self.get_config_provider()
 
             # Inject dependencies into route modules
             health_data.set_dependencies(
-                auth_provider=self.get_auth_provider(),
-                repository=self.get_health_data_repository(),
-                config_provider=self.get_config_provider(),
+                auth_provider=auth_provider,
+                repository=repository,
+                config_provider=config_provider,
+            )
+
+            # Set up authentication endpoints with Firestore client if available
+            firestore_client = None
+            if hasattr(repository, "client"):
+                # Extract FirestoreClient from FirestoreHealthDataRepository
+                firestore_client = repository.client
+
+            auth.set_dependencies(
+                auth_provider=auth_provider,
+                repository=repository,
+                firestore_client=firestore_client,
             )
 
             # Include routers
             app.include_router(
+                auth.router, prefix="/api/v1/auth", tags=["authentication"]
+            )
+            app.include_router(
                 health_data.router, prefix="/api/v1", tags=["health-data"]
             )
             logger.info("✅ API routes configured")
+            logger.info("   • Authentication endpoints: /api/v1/auth")
+            logger.info("   • Health data endpoints: /api/v1")
 
         except Exception:
             logger.exception("💥 Failed to configure routes")

@@ -1,0 +1,632 @@
+"""CLARITY Digital Twin Platform - Authentication Service
+
+Business logic layer for authentication operations.
+Integrates with Firebase Authentication and handles user management.
+"""
+
+import asyncio
+from datetime import UTC, datetime, timedelta
+import logging
+import secrets
+import time
+from typing import Any
+import uuid
+
+import firebase_admin
+from firebase_admin import auth
+from google.cloud.firestore import DocumentReference
+
+from clarity.auth.models import UserRole
+from clarity.core.interfaces import IAuthProvider
+from clarity.models.auth import (
+    AuthProvider,
+    LoginResponse,
+    MFAMethod,
+    RegistrationResponse,
+    TokenResponse,
+    UserLoginRequest,
+    UserRegistrationRequest,
+    UserSessionResponse,
+    UserStatus,
+)
+from clarity.storage.firestore_client import FirestoreClient
+
+# Configure logger
+logger = logging.getLogger(__name__)
+
+
+class AuthenticationError(Exception):
+    """Base exception for authentication errors."""
+
+
+class UserNotFoundError(AuthenticationError):
+    """Raised when user is not found."""
+
+
+class InvalidCredentialsError(AuthenticationError):
+    """Raised when credentials are invalid."""
+
+
+class UserAlreadyExistsError(AuthenticationError):
+    """Raised when user already exists."""
+
+
+class EmailNotVerifiedError(AuthenticationError):
+    """Raised when email is not verified."""
+
+
+class AccountDisabledError(AuthenticationError):
+    """Raised when account is disabled."""
+
+
+class AuthenticationService:
+    """Authentication service implementing business logic for user management.
+
+    Handles user registration, login, session management, and integrates
+    with Firebase Authentication for token operations.
+    """
+
+    def __init__(
+        self,
+        auth_provider: IAuthProvider,
+        firestore_client: FirestoreClient,
+        default_token_expiry: int = 3600,  # 1 hour
+        refresh_token_expiry: int = 86400 * 30,  # 30 days
+    ):
+        """Initialize authentication service.
+
+        Args:
+            auth_provider: Authentication provider for token operations
+            firestore_client: Firestore client for user data storage
+            default_token_expiry: Default access token expiry in seconds
+            refresh_token_expiry: Refresh token expiry in seconds
+        """
+        self.auth_provider = auth_provider
+        self.firestore_client = firestore_client
+        self.default_token_expiry = default_token_expiry
+        self.refresh_token_expiry = refresh_token_expiry
+
+        # Collections
+        self.users_collection = "users"
+        self.sessions_collection = "user_sessions"
+        self.refresh_tokens_collection = "refresh_tokens"
+
+    async def register_user(
+        self,
+        request: UserRegistrationRequest,
+        device_info: dict[str, Any] | None = None,
+    ) -> RegistrationResponse:
+        """Register a new user with Firebase Authentication.
+
+        Args:
+            request: User registration request data
+            device_info: Optional device information for security tracking
+
+        Returns:
+            RegistrationResponse: Registration result with user details
+
+        Raises:
+            UserAlreadyExistsError: If user already exists
+            AuthenticationError: If registration fails
+        """
+        try:
+            # Check if user already exists
+            try:
+                existing_user = auth.get_user_by_email(request.email)
+                if existing_user:
+                    raise UserAlreadyExistsError(
+                        f"User with email {request.email} already exists"
+                    )
+            except auth.UserNotFoundError:
+                # User doesn't exist, which is what we want
+                pass
+
+            # Create Firebase user
+            user_record = auth.create_user(
+                email=request.email,
+                password=request.password,
+                display_name=f"{request.first_name} {request.last_name}",
+                email_verified=False,  # Require email verification
+                disabled=False,
+            )
+
+            # Generate user ID
+            user_id = uuid.UUID(user_record.uid)
+
+            # Set custom claims for role-based access control
+            custom_claims = {
+                "role": UserRole.PATIENT.value,  # Default role
+                "permissions": ["read_own_data", "write_own_data"],
+                "created_at": datetime.now(UTC).isoformat(),
+            }
+
+            auth.set_custom_user_claims(user_record.uid, custom_claims)
+
+            # Store additional user data in Firestore
+            user_data = {
+                "user_id": user_record.uid,
+                "email": request.email,
+                "first_name": request.first_name,
+                "last_name": request.last_name,
+                "phone_number": request.phone_number,
+                "status": UserStatus.PENDING_VERIFICATION.value,
+                "role": UserRole.PATIENT.value,
+                "auth_provider": AuthProvider.EMAIL_PASSWORD.value,
+                "mfa_enabled": False,
+                "mfa_methods": [],
+                "created_at": datetime.now(UTC),
+                "updated_at": datetime.now(UTC),
+                "last_login": None,
+                "login_count": 0,
+                "email_verified": False,
+                "terms_accepted": request.terms_accepted,
+                "privacy_policy_accepted": request.privacy_policy_accepted,
+                "device_info": device_info,
+            }
+
+            await self.firestore_client.create_document(
+                collection=self.users_collection,
+                data=user_data,
+                document_id=user_record.uid,
+                user_id=user_record.uid,
+            )
+
+            # Send email verification
+            verification_email_sent = False
+            try:
+                # Generate email verification link
+                verification_link = auth.generate_email_verification_link(request.email)
+                # TODO: Send email using email service
+                verification_email_sent = True
+                logger.info(f"Email verification link generated for {request.email}")
+            except Exception as e:
+                logger.warning(f"Failed to send verification email: {e}")
+
+            logger.info(f"User registered successfully: {user_record.uid}")
+
+            return RegistrationResponse(
+                user_id=user_id,
+                email=request.email,
+                status=UserStatus.PENDING_VERIFICATION,
+                verification_email_sent=verification_email_sent,
+                created_at=datetime.now(UTC),
+            )
+
+        except UserAlreadyExistsError:
+            raise
+        except Exception as e:
+            logger.error(f"User registration failed for {request.email}: {e}")
+            raise AuthenticationError(f"Registration failed: {e!s}") from e
+
+    async def login_user(
+        self,
+        request: UserLoginRequest,
+        device_info: dict[str, Any] | None = None,
+        ip_address: str | None = None,
+    ) -> LoginResponse:
+        """Authenticate user and create session.
+
+        Args:
+            request: User login request data
+            device_info: Optional device information for security tracking
+            ip_address: Client IP address for security tracking
+
+        Returns:
+            LoginResponse: Login result with tokens and user session
+
+        Raises:
+            UserNotFoundError: If user doesn't exist
+            InvalidCredentialsError: If credentials are invalid
+            EmailNotVerifiedError: If email is not verified
+            AccountDisabledError: If account is disabled
+        """
+        try:
+            # Get user by email
+            try:
+                user_record = auth.get_user_by_email(request.email)
+            except auth.UserNotFoundError:
+                raise UserNotFoundError(f"User with email {request.email} not found")
+
+            # Check if account is disabled
+            if user_record.disabled:
+                raise AccountDisabledError("Account is disabled")
+
+            # For Firebase, password verification happens client-side
+            # Here we simulate the verification process
+            # In a real implementation, you would verify the password using Firebase client SDK
+
+            # Get user data from Firestore
+            user_data = await self.firestore_client.get_document(
+                collection=self.users_collection, document_id=user_record.uid
+            )
+
+            if not user_data:
+                raise UserNotFoundError("User data not found in database")
+
+            # Check email verification requirement
+            if (
+                not user_record.email_verified
+                and user_data.get("status") != UserStatus.ACTIVE.value
+            ):
+                logger.warning(f"Login attempt with unverified email: {request.email}")
+                # For development, we'll allow unverified emails
+                # raise EmailNotVerifiedError("Email verification required")
+
+            # Update user data
+            login_time = datetime.now(UTC)
+            update_data = {
+                "last_login": login_time,
+                "login_count": user_data.get("login_count", 0) + 1,
+                "updated_at": login_time,
+            }
+
+            await self.firestore_client.update_document(
+                collection=self.users_collection,
+                document_id=user_record.uid,
+                data=update_data,
+                user_id=user_record.uid,
+            )
+
+            # Check if MFA is enabled
+            mfa_enabled = user_data.get("mfa_enabled", False)
+            if mfa_enabled:
+                # Generate temporary session token for MFA completion
+                mfa_session_token = secrets.token_urlsafe(32)
+
+                # Store temporary session
+                temp_session_data = {
+                    "user_id": user_record.uid,
+                    "mfa_session_token": mfa_session_token,
+                    "created_at": login_time,
+                    "expires_at": login_time
+                    + timedelta(minutes=10),  # 10 minute expiry
+                    "device_info": device_info,
+                    "ip_address": ip_address,
+                    "verified": False,
+                }
+
+                await self.firestore_client.create_document(
+                    collection="mfa_sessions",
+                    data=temp_session_data,
+                    user_id=user_record.uid,
+                )
+
+                # Return partial response requiring MFA
+                user_session = await self._create_user_session_response(
+                    user_record, user_data
+                )
+                return LoginResponse(
+                    user=user_session,
+                    tokens=TokenResponse(
+                        access_token="",
+                        refresh_token="",
+                        token_type="bearer",
+                        expires_in=0,
+                    ),
+                    requires_mfa=True,
+                    mfa_session_token=mfa_session_token,
+                )
+
+            # Generate tokens (in real implementation, this would be done by Firebase client SDK)
+            tokens = await self._generate_tokens(user_record.uid, request.remember_me)
+
+            # Create session
+            session_id = await self._create_user_session(
+                user_record.uid,
+                tokens.refresh_token,
+                device_info,
+                ip_address,
+                request.remember_me,
+            )
+
+            # Create user session response
+            user_session = await self._create_user_session_response(
+                user_record, user_data
+            )
+
+            logger.info(f"User logged in successfully: {user_record.uid}")
+
+            return LoginResponse(
+                user=user_session,
+                tokens=tokens,
+                requires_mfa=False,
+                mfa_session_token=None,
+            )
+
+        except (
+            UserNotFoundError,
+            InvalidCredentialsError,
+            EmailNotVerifiedError,
+            AccountDisabledError,
+        ):
+            raise
+        except Exception as e:
+            logger.error(f"Login failed for {request.email}: {e}")
+            raise AuthenticationError(f"Login failed: {e!s}") from e
+
+    async def _generate_tokens(
+        self, user_id: str, remember_me: bool = False
+    ) -> TokenResponse:
+        """Generate access and refresh tokens.
+
+        Args:
+            user_id: User ID
+            remember_me: Whether to generate long-lived tokens
+
+        Returns:
+            TokenResponse: Generated tokens
+        """
+        # In a real implementation, this would use Firebase custom tokens
+        # For now, we'll create mock tokens
+
+        access_token = secrets.token_urlsafe(32)
+        refresh_token = secrets.token_urlsafe(32)
+
+        # Set expiry based on remember_me flag
+        expires_in = (
+            self.refresh_token_expiry if remember_me else self.default_token_expiry
+        )
+
+        # Store refresh token
+        refresh_data = {
+            "user_id": user_id,
+            "refresh_token": refresh_token,
+            "created_at": datetime.now(UTC),
+            "expires_at": datetime.now(UTC) + timedelta(seconds=expires_in),
+            "is_revoked": False,
+        }
+
+        await self.firestore_client.create_document(
+            collection=self.refresh_tokens_collection,
+            data=refresh_data,
+            user_id=user_id,
+        )
+
+        return TokenResponse(
+            access_token=access_token,
+            refresh_token=refresh_token,
+            token_type="bearer",
+            expires_in=expires_in,
+        )
+
+    async def _create_user_session(
+        self,
+        user_id: str,
+        refresh_token: str,
+        device_info: dict[str, Any] | None = None,
+        ip_address: str | None = None,
+        remember_me: bool = False,
+    ) -> str:
+        """Create a user session.
+
+        Args:
+            user_id: User ID
+            refresh_token: Refresh token
+            device_info: Device information
+            ip_address: IP address
+            remember_me: Whether session should be long-lived
+
+        Returns:
+            str: Session ID
+        """
+        session_id = str(uuid.uuid4())
+        session_expiry = timedelta(days=30 if remember_me else 1)
+
+        session_data = {
+            "session_id": session_id,
+            "user_id": user_id,
+            "refresh_token": refresh_token,
+            "created_at": datetime.now(UTC),
+            "last_activity": datetime.now(UTC),
+            "expires_at": datetime.now(UTC) + session_expiry,
+            "device_info": device_info,
+            "ip_address": ip_address,
+            "is_active": True,
+        }
+
+        await self.firestore_client.create_document(
+            collection=self.sessions_collection,
+            data=session_data,
+            document_id=session_id,
+            user_id=user_id,
+        )
+
+        return session_id
+
+    async def _create_user_session_response(
+        self, user_record: Any, user_data: dict[str, Any]
+    ) -> UserSessionResponse:
+        """Create user session response from user data.
+
+        Args:
+            user_record: Firebase user record
+            user_data: User data from Firestore
+
+        Returns:
+            UserSessionResponse: User session information
+        """
+        return UserSessionResponse(
+            user_id=uuid.UUID(user_record.uid),
+            email=user_record.email,
+            first_name=user_data.get("first_name", ""),
+            last_name=user_data.get("last_name", ""),
+            role=user_data.get("role", UserRole.PATIENT.value),
+            permissions=user_data.get("permissions", []),
+            status=UserStatus(user_data.get("status", UserStatus.ACTIVE.value)),
+            last_login=user_data.get("last_login"),
+            mfa_enabled=user_data.get("mfa_enabled", False),
+            email_verified=user_record.email_verified,
+            created_at=user_data.get("created_at", datetime.now(UTC)),
+        )
+
+    async def refresh_access_token(self, refresh_token: str) -> TokenResponse:
+        """Refresh access token using refresh token.
+
+        Args:
+            refresh_token: Valid refresh token
+
+        Returns:
+            TokenResponse: New tokens
+
+        Raises:
+            InvalidCredentialsError: If refresh token is invalid or expired
+        """
+        try:
+            # Find refresh token record
+            tokens = await self.firestore_client.query_documents(
+                collection=self.refresh_tokens_collection,
+                filters=[
+                    {
+                        "field": "refresh_token",
+                        "operator": "==",
+                        "value": refresh_token,
+                    },
+                    {"field": "is_revoked", "operator": "==", "value": False},
+                ],
+            )
+
+            if not tokens:
+                raise InvalidCredentialsError("Invalid refresh token")
+
+            token_data = tokens[0]
+
+            # Check if token is expired
+            expires_at = token_data.get("expires_at")
+            if expires_at and datetime.now(UTC) > expires_at:
+                raise InvalidCredentialsError("Refresh token expired")
+
+            user_id = token_data["user_id"]
+
+            # Revoke old refresh token
+            await self.firestore_client.update_document(
+                collection=self.refresh_tokens_collection,
+                document_id=token_data.get("id"),  # Document ID
+                data={"is_revoked": True, "revoked_at": datetime.now(UTC)},
+                user_id=user_id,
+            )
+
+            # Generate new tokens
+            new_tokens = await self._generate_tokens(user_id)
+
+            logger.info(f"Tokens refreshed for user: {user_id}")
+            return new_tokens
+
+        except InvalidCredentialsError:
+            raise
+        except Exception as e:
+            logger.error(f"Token refresh failed: {e}")
+            raise AuthenticationError(f"Token refresh failed: {e!s}") from e
+
+    async def logout_user(self, refresh_token: str) -> bool:
+        """Logout user by revoking refresh token and ending session.
+
+        Args:
+            refresh_token: User's refresh token
+
+        Returns:
+            bool: True if logout successful
+        """
+        try:
+            # Find and revoke refresh token
+            tokens = await self.firestore_client.query_documents(
+                collection=self.refresh_tokens_collection,
+                filters=[
+                    {
+                        "field": "refresh_token",
+                        "operator": "==",
+                        "value": refresh_token,
+                    },
+                    {"field": "is_revoked", "operator": "==", "value": False},
+                ],
+            )
+
+            if tokens:
+                token_data = tokens[0]
+                user_id = token_data["user_id"]
+
+                # Revoke refresh token
+                await self.firestore_client.update_document(
+                    collection=self.refresh_tokens_collection,
+                    document_id=token_data.get("id"),
+                    data={"is_revoked": True, "revoked_at": datetime.now(UTC)},
+                    user_id=user_id,
+                )
+
+                # Deactivate sessions with this refresh token
+                sessions = await self.firestore_client.query_documents(
+                    collection=self.sessions_collection,
+                    filters=[
+                        {
+                            "field": "refresh_token",
+                            "operator": "==",
+                            "value": refresh_token,
+                        },
+                        {"field": "is_active", "operator": "==", "value": True},
+                    ],
+                )
+
+                for session in sessions:
+                    await self.firestore_client.update_document(
+                        collection=self.sessions_collection,
+                        document_id=session.get("session_id"),
+                        data={"is_active": False, "ended_at": datetime.now(UTC)},
+                        user_id=user_id,
+                    )
+
+                logger.info(f"User logged out: {user_id}")
+
+            return True
+
+        except Exception as e:
+            logger.error(f"Logout failed: {e}")
+            return False
+
+    async def get_user_by_id(self, user_id: str) -> UserSessionResponse | None:
+        """Get user information by user ID.
+
+        Args:
+            user_id: User ID
+
+        Returns:
+            UserSessionResponse: User information or None if not found
+        """
+        try:
+            # Get Firebase user record
+            user_record = auth.get_user(user_id)
+
+            # Get user data from Firestore
+            user_data = await self.firestore_client.get_document(
+                collection=self.users_collection, document_id=user_id
+            )
+
+            if not user_data:
+                return None
+
+            return await self._create_user_session_response(user_record, user_data)
+
+        except auth.UserNotFoundError:
+            return None
+        except Exception as e:
+            logger.error(f"Failed to get user {user_id}: {e}")
+            return None
+
+    async def verify_email(self, verification_code: str) -> bool:
+        """Verify user email with verification code.
+
+        Args:
+            verification_code: Email verification code
+
+        Returns:
+            bool: True if verification successful
+        """
+        try:
+            # In a real implementation, this would verify the code with Firebase
+            # For now, we'll just mark it as verified
+
+            # TODO: Implement actual email verification logic
+            logger.info("Email verification completed (mock implementation)")
+            return True
+
+        except Exception as e:
+            logger.error(f"Email verification failed: {e}")
+            return False

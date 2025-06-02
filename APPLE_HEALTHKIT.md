@@ -301,6 +301,7 @@ Apple HealthKit “Stub-First” Plan
 0 . Why stub?
 
 A stub adapter lets the rest of the pipeline behave as if real HealthKit data already exists. You:
+
  1. Unblock feature work (PAT, Gemini, chat UI) without waiting for Apple-side auth/export plumbing.
  2. Lock interfaces early so nothing breaks later when you swap in the real adapter.
  3. Automate CI—every push runs an end-to-end test that uploads “fake” HealthKit, triggers Pub/Sub, runs PAT, calls Gemini, and verifies Firestore gets an insight document.
@@ -479,6 +480,7 @@ Because every downstream stage—Pub/Sub, analysis, PAT, Gemini—already consum
 7 . Generating richer stub data (optional)
 
 If you need day-level sequences for PAT:
+
  1. Add a helper generate_activity_sequence(days:int=7) -> list[int] that returns 10 080 step counts (minute-resolution).
  2. Store it in payload["activity_sequence"] so the PAT service can test patch embeddings, etc.
  3. Keep sequence lengths realistic (0 – 300 steps/min).

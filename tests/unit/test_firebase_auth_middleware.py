@@ -10,16 +10,19 @@ Tests cover all aspects of Firebase authentication middleware functionality:
 """
 
 import asyncio
+from collections.abc import Awaitable, Callable
 from datetime import UTC, datetime
 import json
+import logging
 import time
-from typing import TYPE_CHECKING, Any
+from typing import Any
 from unittest.mock import AsyncMock, Mock, patch
 
 from fastapi import FastAPI, Request
 from httpx import ASGITransport, AsyncClient
 import pytest
-from starlette.responses import JSONResponse
+from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.responses import JSONResponse, Response
 
 from clarity.auth.firebase_auth import (
     FirebaseAuthMiddleware,
@@ -27,10 +30,14 @@ from clarity.auth.firebase_auth import (
 )
 from clarity.auth.models import AuthError, Permission, UserContext, UserRole
 from clarity.core.config import MiddlewareConfig
+from clarity.core.interfaces import IAuthProvider
 
-# Import Firebase types only for type checking to avoid stub warnings
-if TYPE_CHECKING:
-    from firebase_admin import auth as firebase_auth_module
+# Import Firebase auth for exception handling
+try:
+    from firebase_admin import auth as firebase_auth
+except ImportError:
+    # Handle case where firebase_admin is not available
+    firebase_auth = None
 
 
 class TestFirebaseAuthProvider:
@@ -241,8 +248,8 @@ class TestFirebaseAuthProvider:
         mock_decoded_token: dict[str, Any],
     ) -> None:
         """Test automatic cleanup of expired cache entries."""
-        # Set short TTL for testing - disable SLF001 for legitimate test access
-        auth_provider._cache_ttl = 0.1  # type: ignore  # noqa: SLF001
+        # Set short TTL for testing - using type ignore for test access
+        auth_provider._cache_ttl = 0.1  # type: ignore[attr-defined]  # noqa: SLF001
 
         with (
             patch("clarity.auth.firebase_auth.auth.verify_id_token") as mock_verify,
@@ -273,8 +280,8 @@ class TestFirebaseAuthProvider:
         mock_decoded_token: dict[str, Any],
     ) -> None:
         """Test cache size limit enforcement."""
-        # Set small cache size - disable SLF001 for legitimate test access
-        auth_provider._cache_max_size = 2  # noqa: SLF001
+        # Set small cache size - using type ignore for test access
+        auth_provider._cache_max_size = 2  # type: ignore[attr-defined]  # noqa: SLF001
 
         with (
             patch("clarity.auth.firebase_auth.auth.verify_id_token") as mock_verify,
@@ -315,14 +322,17 @@ class TestFirebaseAuthProvider:
     @staticmethod
     async def test_get_user_info_not_found(auth_provider: FirebaseAuthProvider) -> None:
         """Test user info retrieval for non-existent user."""
-        # Import here to avoid module-level import issues
-        from firebase_admin import auth
-
         with (
             patch("clarity.auth.firebase_auth.auth.get_user") as mock_get_user,
             patch.object(auth_provider, "_ensure_initialized", new_callable=AsyncMock),
         ):
-            mock_get_user.side_effect = auth.UserNotFoundError("User not found")
+            if firebase_auth:
+                mock_get_user.side_effect = firebase_auth.UserNotFoundError(
+                    "User not found"
+                )
+            else:
+                # Fallback for when firebase_admin is not available
+                mock_get_user.side_effect = Exception("User not found")
 
             result = await auth_provider.get_user_info("nonexistent_user")
 
@@ -332,8 +342,8 @@ class TestFirebaseAuthProvider:
     @staticmethod
     async def test_cleanup_resources(auth_provider: FirebaseAuthProvider) -> None:
         """Test proper cleanup of resources."""
-        # Add some items to cache - disable SLF001 for legitimate test access
-        auth_provider._token_cache = {"token1": {"data": "test"}}  # noqa: SLF001
+        # Add some items to cache - using type ignore for test access
+        auth_provider._token_cache = {"token1": {"data": "test"}}  # type: ignore[attr-defined]  # noqa: SLF001
 
         await auth_provider.cleanup()
 
@@ -545,7 +555,10 @@ class TestFirebaseAuthMiddleware:
         mock_auth_provider.verify_token.return_value = sample_user_info
         middleware.auth_provider = mock_auth_provider
 
-        user_context = await middleware._authenticate_request(mock_request)
+        # Using noqa for legitimate test access to private method
+        user_context = await middleware._authenticate_request(  # noqa: SLF001
+            mock_request
+        )
 
         assert isinstance(user_context, UserContext)
         assert user_context.user_id == "test_user_123"
@@ -579,7 +592,7 @@ class TestFirebaseAuthMiddleware:
         request = Mock()
         request.url.path = "/health"
 
-        async def call_next(_: Request) -> JSONResponse:
+        def call_next(_: Request) -> JSONResponse:
             return JSONResponse({"status": "ok"})
 
         response = await middleware.dispatch(request, call_next)
@@ -604,7 +617,7 @@ class TestFirebaseAuthMiddleware:
         mock_auth_provider.verify_token.return_value = sample_user_info
         middleware.auth_provider = mock_auth_provider
 
-        async def call_next(req: Request) -> JSONResponse:
+        def call_next(req: Request) -> JSONResponse:
             # Verify user context was attached
             assert hasattr(req.state, "user")
             assert isinstance(req.state.user, UserContext)
@@ -625,7 +638,7 @@ class TestFirebaseAuthMiddleware:
         request.url.path = "/api/protected"
         request.headers = {}  # Missing Authorization header
 
-        async def call_next(_: Request) -> JSONResponse:
+        def call_next(_: Request) -> JSONResponse:
             return JSONResponse({"status": "should_not_reach"})
 
         response = await middleware.dispatch(request, call_next)
@@ -633,11 +646,16 @@ class TestFirebaseAuthMiddleware:
         assert response.status_code == 401
 
         # Parse response content properly
-        content = json.loads(
-            response.body.decode()
-            if isinstance(response.body, bytes)
-            else response.body
-        )
+        if hasattr(response, "body"):
+            content_bytes = response.body
+            if isinstance(content_bytes, bytes):
+                content = json.loads(content_bytes.decode())
+            else:
+                content = json.loads(str(content_bytes))
+        else:
+            # Fallback for different response types
+            content = response.json() if hasattr(response, "json") else {}
+
         assert content["error"] == "missing_token"
         assert "timestamp" in content
 
@@ -655,9 +673,6 @@ class TestIntegrationFirebaseAuth:
         mock_provider = AsyncMock()
         mock_provider.verify_token = AsyncMock()
 
-        # Store reference to mock provider for test access
-        app.state.mock_auth_provider = mock_provider
-
         # Create proper middleware config (enabled)
         middleware_config = MiddlewareConfig(
             enabled=True,
@@ -670,15 +685,45 @@ class TestIntegrationFirebaseAuth:
             exempt_paths=["/health", "/public"],
         )
 
-        # Register middleware BEFORE defining routes (crucial for middleware to work)
-        middleware = FirebaseAuthMiddleware(
-            app=app,
+        # Create a debug wrapper for the middleware
+        class DebugFirebaseAuthMiddleware(FirebaseAuthMiddleware):
+            def __init__(
+                self,
+                auth_provider: IAuthProvider,
+                exempt_paths: list[str] | None = None,
+            ) -> None:
+                # Don't call super().__init__ with app - we'll register this differently
+                self.auth_provider = auth_provider
+                self.exempt_paths = exempt_paths or [
+                    "/",
+                    "/health",
+                    "/docs",
+                    "/openapi.json",
+                    "/redoc",
+                ]
+
+            async def dispatch(
+                self,
+                request: Request,
+                call_next: Callable[[Request], Awaitable[Response]],
+            ) -> Response:
+                """Dispatch method with proper type annotations."""
+                return await super().dispatch(request, call_next)
+
+        # ✅ CORRECT - Use app.add_middleware() to register the middleware
+        middleware_instance = DebugFirebaseAuthMiddleware(
             auth_provider=mock_provider,
             exempt_paths=middleware_config.exempt_paths,
         )
 
-        # Store middleware reference for debugging
-        app.state.middleware = middleware
+        # Use BaseHTTPMiddleware registration pattern
+        app.add_middleware(
+            BaseHTTPMiddleware,
+            dispatch=middleware_instance.dispatch,
+        )
+
+        # Store provider reference for debugging
+        app.state.mock_auth_provider = mock_provider
 
         # Define routes AFTER middleware registration
         @app.get("/health")
@@ -870,36 +915,19 @@ class TestPerformanceFirebaseAuth:
             assert mock_verify.call_count == 10
 
 
-# Performance benchmark helper
-async def benchmark_auth_performance() -> dict[str, float]:
+def benchmark_auth_performance() -> dict[str, float]:
     """Benchmark authentication performance for different scenarios."""
-    results = {}
-
-    # Test with caching enabled
-    cached_config = MiddlewareConfig(cache_enabled=True)
-    cached_provider = FirebaseAuthProvider(
-        project_id="benchmark",
-        middleware_config=cached_config,
-    )
-
-    # Test without caching
-    no_cache_config = MiddlewareConfig(cache_enabled=False)
-    no_cache_provider = FirebaseAuthProvider(
-        project_id="benchmark",
-        middleware_config=no_cache_config,
-    )
-
-    return results
+    return {}
 
 
 if __name__ == "__main__":
     # Run performance benchmark
-    import asyncio
 
-    async def run_benchmark() -> None:
-        results = await benchmark_auth_performance()
-        print("Firebase Auth Performance Benchmark Results:")
+    def run_benchmark() -> None:
+        """Run benchmark and display results."""
+        results = benchmark_auth_performance()
+        # Using logging instead of print for production code
+        logger = logging.getLogger(__name__)
+        logger.info("Firebase Auth Performance Benchmark Results:")
         for test_name, duration in results.items():
-            print(f"  {test_name}: {duration:.4f}s")
-
-    # asyncio.run(run_benchmark())
+            logger.info("  %s: %.4fs", test_name, duration)

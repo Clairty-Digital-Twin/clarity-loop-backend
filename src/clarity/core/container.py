@@ -131,7 +131,7 @@ class DependencyContainer:
             ]()
         return cast("IHealthDataRepository", self._instances[IHealthDataRepository])
 
-    async def _initialize_auth_provider(self, config_provider: IConfigProvider) -> None:
+    async def _initialize_auth_provider(self) -> None:
         """Initialize authentication provider with timeout and fallback."""
         logger.info("🔐 Initializing authentication provider...")
         try:
@@ -154,7 +154,7 @@ class DependencyContainer:
             self._instances[IAuthProvider] = MockAuthProvider()
             logger.info("✅ Mock auth provider activated")
 
-    async def _initialize_repository(self, config_provider: IConfigProvider) -> None:
+    async def _initialize_repository(self) -> None:
         """Initialize health data repository with timeout and fallback."""
         logger.info("🗄️ Initializing health data repository...")
         try:
@@ -235,8 +235,8 @@ class DependencyContainer:
                 return
 
             # Step 3: Initialize services
-            await self._initialize_auth_provider(config_provider)
-            await self._initialize_repository(config_provider)
+            await self._initialize_auth_provider()
+            await self._initialize_repository()
 
             # Step 4: Startup completion
             elapsed = time.perf_counter() - startup_start

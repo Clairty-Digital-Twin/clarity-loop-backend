@@ -160,7 +160,7 @@ class DependencyContainer:
             logger.info("✅ Configuration validated")
             logger.info(
                 "   • Environment: %s",
-                config_provider.get_setting("environment", "unknown"),
+                config_provider.get_setting("environment", default="unknown"),
             )
             logger.info("   • Development mode: %s", config_provider.is_development())
             logger.info("   • Auth enabled: %s", config_provider.is_auth_enabled())

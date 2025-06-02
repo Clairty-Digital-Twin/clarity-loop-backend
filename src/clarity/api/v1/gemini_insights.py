@@ -287,7 +287,7 @@ async def generate_insights(
 )
 async def get_insight(
     insight_id: str,
-    current_user: Dict[str, Any] = Depends(get_current_user)
+    current_user: UserContext = Depends(get_current_user)
 ) -> InsightGenerationResponse:
     """Retrieve cached insights by ID.
     
@@ -306,7 +306,7 @@ async def get_insight(
     logger.info(
         "📄 Retrieving insight %s for user %s (request: %s)",
         insight_id,
-        current_user.get("uid", "unknown"),
+        current_user.user_id,
         request_id
     )
     
@@ -331,7 +331,7 @@ async def get_insight_history(
     user_id: str,
     limit: int = 10,
     offset: int = 0,
-    current_user: Dict[str, Any] = Depends(get_current_user)
+    current_user: UserContext = Depends(get_current_user)
 ) -> InsightHistoryResponse:
     """Get insight history for a user.
     
@@ -350,9 +350,8 @@ async def get_insight_history(
     request_id = generate_request_id()
     
     # Check if user is requesting their own data or has admin permissions
-    user_permissions = current_user.get("custom_claims", {}).get("permissions", [])
-    if (current_user["uid"] != user_id and 
-        "admin:users" not in user_permissions):
+    # For now, only allow users to access their own data
+    if current_user.user_id != user_id:
         raise create_error_response(
             error_code="ACCESS_DENIED",
             message="Cannot access another user's insight history",

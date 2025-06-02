@@ -1196,7 +1196,7 @@ class FirestoreHealthDataRepository(IHealthDataRepository):
             await self._firestore_client.close()
             logger.info("FirestoreHealthDataRepository cleaned up successfully")
 
-        except Exception as e:
+        except Exception:
             logger.exception("Failed to cleanup FirestoreHealthDataRepository")
 
     async def get_user_health_summary(self, user_id: str) -> dict[str, Any]:

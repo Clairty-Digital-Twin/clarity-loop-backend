@@ -1,6 +1,6 @@
 # Task ID: 30
 # Title: Update Health Data API Endpoints with Service Layer Integration
-# Status: pending
+# Status: done
 # Dependencies: 27, 28, 29
 # Priority: high
 # Description: Update the health_data.py API endpoints to integrate with the service layer, implement proper error handling, and ensure secure authentication for all health data operations.

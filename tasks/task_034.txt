@@ -1,46 +1,58 @@
 # Task ID: 34
 # Title: Implement Vertex AI Gemini 2.5 Pro Integration Service
-# Status: pending
+# Status: in-progress
 # Dependencies: 2, 3, 4, 5, 12, 13, 15, 17
 # Priority: high
-# Description: Create a service that connects to Google's Vertex AI Gemini 2.5 Pro model for generating human-like health insights and narratives, including prompt engineering and integration with the analysis pipeline.
+# Description: Complete the implementation of the existing service that connects to Google's Vertex AI Gemini 2.5 Pro model for generating human-like health insights and narratives, including prompt engineering and integration with the analysis pipeline. Current service has basic structure with models and interfaces defined but requires actual Vertex AI integration and has 0% test coverage in the ML module.
 # Details:
-1. Set up Google Cloud project and enable Vertex AI API
-2. Install and configure Google Cloud SDK and Vertex AI client library
-3. Implement a VertexAIService class with methods for:
-   - Initializing the Vertex AI client
-   - Sending prompts to the Gemini 2.5 Pro model
+1. Review existing service structure, models, and interfaces to understand current implementation
+   - HealthInsightRequest/Response models are already defined with proper types
+   - GeminiService class has a clear interface structure
+   - Core methods have TODOs for actual implementation
+2. Complete the Google Cloud project setup and enable Vertex AI API
+3. Install and configure Google Cloud SDK and Vertex AI client library
+4. Enhance the existing GeminiService class with functional methods for:
+   - Implementing the initialize() method with vertexai.init() and proper client setup
+   - Replacing placeholder logic in generate_health_insights() with real Gemini API calls
    - Processing and formatting responses
-4. Develop prompt engineering templates for health data interpretation:
+5. Develop prompt engineering templates for health data interpretation:
    - Create a base prompt template for general health insights
    - Develop specialized templates for different types of health data (e.g., vitals, lab results, medications)
-5. Implement response parsing and formatting:
+   - Test and refine prompts for optimal results
+6. Implement response parsing and formatting:
    - Extract key insights from the model's response
    - Structure the insights into a consistent format for the frontend
-6. Integrate with the existing analysis pipeline:
-   - Create an interface to receive processed health data
+7. Complete integration with the existing analysis pipeline:
+   - Utilize the existing interface to receive processed health data
    - Implement logic to select appropriate prompt templates based on data type
    - Send prompts to Vertex AI and receive responses
-7. Implement error handling and retry mechanisms for API calls
-8. Set up caching for frequently requested insights to improve performance
-9. Implement logging for all API interactions and generated insights
-10. Create a configuration system for managing API keys, model parameters, and prompt templates
-11. Develop a rate limiting system to manage API usage and costs
-12. Implement HIPAA-compliant data handling practices:
+8. Implement error handling and retry mechanisms for API calls
+9. Set up caching for frequently requested insights to improve performance
+10. Implement comprehensive logging for all API interactions and generated insights
+11. Complete the configuration system for managing API keys, model parameters, and prompt templates
+12. Develop a rate limiting system to manage API usage and costs
+13. Ensure HIPAA-compliant data handling practices:
     - Ensure all data sent to and received from Vertex AI is properly encrypted
     - Implement data anonymization before sending to the model
     - Set up secure storage for generated insights
-13. Create unit tests for each component of the service
-14. Develop integration tests to verify end-to-end functionality
-15. Implement a fallback mechanism for when the Vertex AI service is unavailable
-16. Create documentation for the service, including API usage, configuration, and best practices
+14. Create unit tests to achieve comprehensive test coverage:
+    - Test all GeminiService class methods
+    - Test prompt template generation
+    - Test response parsing and formatting
+    - Test error handling and retry mechanisms
+    - Aim for >90% test coverage (currently at 0% for ML module)
+15. Develop integration tests to verify end-to-end functionality
+16. Implement a fallback mechanism for when the Vertex AI service is unavailable
+17. Create documentation for the service, including API usage, configuration, and best practices
+18. Perform a final code review to ensure all requirements for the Gemini vertical slice are met
 
 # Test Strategy:
-1. Unit Testing:
-   - Test VertexAIService class methods in isolation
+1. Unit Testing (Priority - High):
+   - Test GeminiService class methods in isolation
    - Verify prompt template generation for different health data types
    - Test response parsing and formatting functions
    - Validate error handling and retry mechanisms
+   - Aim for >90% test coverage of all service components (currently at 0%)
 
 2. Integration Testing:
    - Set up a test environment with mock health data
@@ -61,6 +73,7 @@
 5. API Testing:
    - Verify correct API calls to Vertex AI
    - Test API key management and rotation
+   - Create mock responses to test various scenarios
 
 6. Error Handling:
    - Simulate various error conditions (network issues, API limits, etc.)
@@ -81,3 +94,63 @@
 10. Continuous Monitoring:
     - Set up alerts for abnormal API usage or error rates
     - Regularly review logs and performance metrics
+
+11. Vertical Slice Testing:
+    - Verify that the Gemini service works correctly as part of the complete vertical slice
+    - Test the service in the context of the full application flow with the existing API infrastructure
+
+# Subtasks:
+## 34.1. Review existing service structure and placeholder implementation [pending]
+### Dependencies: None
+### Description: Analyze the current service code to understand the existing models, interfaces, and placeholder implementations. Identify gaps that need to be filled for actual Vertex AI integration.
+### Details:
+
+
+## 34.2. Implement actual Vertex AI client integration [pending]
+### Dependencies: None
+### Description: Replace placeholder code with actual Vertex AI client implementation, including proper authentication and API calls to Gemini 2.5 Pro model.
+### Details:
+
+
+## 34.3. Develop and test prompt engineering templates [pending]
+### Dependencies: None
+### Description: Create effective prompt templates for health data interpretation, test with various data types, and refine for optimal results.
+### Details:
+
+
+## 34.4. Implement comprehensive test suite [pending]
+### Dependencies: None
+### Description: Develop unit and integration tests to achieve high test coverage of the Gemini service, including mocks for Vertex AI responses.
+### Details:
+
+
+## 34.5. Complete vertical slice integration [pending]
+### Dependencies: None
+### Description: Ensure the Gemini service works correctly as part of the complete vertical slice, integrating with upstream and downstream components.
+### Details:
+
+
+## 35.5. Review existing service structure and implement Vertex AI integration [in-progress]
+### Dependencies: None
+### Description: Analyze current Gemini service implementation and replace placeholder code with actual Vertex AI client integration
+### Details:
+
+
+## 34.6. Implement initialize() method with vertexai.init() [pending]
+### Dependencies: None
+### Description: Replace TODO comment in initialize() method with proper vertexai.init() call and client setup for Gemini 2.5 Pro model.
+### Details:
+
+
+## 34.7. Implement generate_health_insights() with real API calls [pending]
+### Dependencies: None
+### Description: Replace placeholder logic in generate_health_insights() method with actual Vertex AI Gemini API calls, including proper request formatting and response handling.
+### Details:
+
+
+## 34.8. Implement error handling and retry logic [pending]
+### Dependencies: None
+### Description: Add comprehensive error handling and retry mechanisms for API failures, network issues, and other potential problems when interacting with Vertex AI.
+### Details:
+
+

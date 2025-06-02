@@ -131,17 +131,33 @@ Develop a `preprocessing.py` module that: 1) Implements normalization functions 
 - Extensible for future preprocessing needs
 </info added on 2025-06-02T18:52:12.325Z>
 
-## 3. Develop asynchronous inference engine [pending]
+## 3. Develop asynchronous inference engine [in-progress]
 ### Dependencies: 33.1, 33.2
 ### Description: Create an optimized inference service that efficiently processes actigraphy data through the PAT model.
 ### Details:
 Build an `inference.py` module that: 1) Implements async functions for model inference, 2) Adds batching capabilities to process multiple requests efficiently, 3) Optimizes inference using ONNX runtime, 4) Implements result caching with Redis for frequent requests, 5) Adds performance monitoring for inference times and resource usage.
 
-## 4. Create FastAPI endpoints for PAT service [pending]
+Based on code audit, this component is incomplete and needs immediate attention. Focus on:
+- Completing the async inference functions that integrate with the existing model architecture
+- Implementing efficient batching for multiple concurrent requests
+- Adding Redis caching with appropriate TTL settings
+- Ensuring proper error handling and fallback mechanisms
+- Adding comprehensive logging for debugging and performance monitoring
+- Implementing proper type annotations and docstrings
+
+## 4. Create FastAPI endpoints for PAT service [in-progress]
 ### Dependencies: 33.3
 ### Description: Develop the REST API interface for the PAT model service with proper request validation and error handling.
 ### Details:
 Implement `pat_service.py` with FastAPI that: 1) Creates endpoints for real-time actigraphy analysis, 2) Implements request validation using Pydantic models, 3) Handles authentication using Firebase, 4) Adds rate limiting for API protection, 5) Implements comprehensive error handling with appropriate HTTP status codes, 6) Creates health check endpoints for service monitoring.
+
+Based on code audit, this component is incomplete and needs immediate attention. Focus on:
+- Creating the core API endpoints that leverage the existing model and preprocessing components
+- Implementing proper request validation with Pydantic models
+- Adding authentication integration with Firebase
+- Ensuring comprehensive error handling with appropriate status codes
+- Creating health check and monitoring endpoints
+- Documenting the API with OpenAPI/Swagger
 
 ## 5. Implement result post-processing and FHIR integration [pending]
 ### Dependencies: 33.3
@@ -166,4 +182,16 @@ Implement performance optimizations including: 1) Containerization with Docker f
 ### Description: Develop complete documentation for the PAT service including API references, integration guides, and deployment instructions.
 ### Details:
 Create documentation including: 1) API reference with Swagger/OpenAPI, 2) Integration examples for common use cases, 3) Deployment guides for different environments, 4) Troubleshooting section for common issues, 5) Performance tuning recommendations, 6) Security best practices, 7) Sample code for client applications, 8) Explanation of clinical metrics and their interpretation.
+
+## 9. Implement comprehensive test suite for PAT service [pending]
+### Dependencies: 33.1, 33.2, 33.3, 33.4
+### Description: Develop a complete test suite to ensure the PAT service is production-ready with high test coverage.
+### Details:
+Create a comprehensive test suite that includes: 1) Unit tests for all components (model loading, preprocessing, inference, API endpoints), 2) Integration tests for end-to-end functionality, 3) Performance tests to measure inference speed and throughput, 4) Mock objects and fixtures for testing without requiring full model weights, 5) Test coverage reporting to ensure high code coverage, 6) CI/CD integration for automated testing, 7) Regression tests to prevent breaking changes.
+
+## 10. Complete vertical slice implementation [pending]
+### Dependencies: 33.1, 33.2, 33.3, 33.4, 33.9
+### Description: Finalize a complete vertical slice of the PAT service from API endpoint to model inference with proper testing.
+### Details:
+Complete a full vertical slice implementation that includes: 1) At least one fully functional API endpoint, 2) Complete preprocessing pipeline for that endpoint, 3) Working inference with the PAT model, 4) Proper error handling and validation, 5) Authentication integration, 6) Comprehensive tests for the entire slice, 7) Documentation for the implemented endpoint, 8) Performance optimization for the critical path.
 

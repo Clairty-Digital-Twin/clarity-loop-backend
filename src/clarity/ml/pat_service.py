@@ -13,6 +13,7 @@ from pathlib import Path
 from typing import cast
 
 import numpy as np
+from numpy.typing import NDArray
 from pydantic import BaseModel, Field
 import torch
 from torch import nn
@@ -228,15 +229,15 @@ class PATModelService(IMLModelService):
         sleep_stages_logits = outputs["sleep_stages"].cpu().numpy()[0]
 
         # Convert sleep stages to labels
-        sleep_stage_predictions = np.argmax(sleep_stages_logits, axis=-1)
-        sleep_stages = [self.sleep_stages[idx] for idx in sleep_stage_predictions]
+        sleep_stage_predictions: NDArray[np.intp] = np.argmax(sleep_stages_logits, axis=-1)
+        sleep_stages: list[str] = [self.sleep_stages[idx] for idx in sleep_stage_predictions]
 
-        # Calculate sleep metrics
-        sleep_efficiency = float(sleep_metrics[0] * 100)  # Convert to percentage
-        sleep_onset_latency = float(sleep_metrics[1] * 60)  # Convert to minutes
-        wake_after_sleep_onset = float(sleep_metrics[2] * 60)
-        total_sleep_time = float(sleep_metrics[3] * 12)  # Convert to hours
-        activity_fragmentation = float(sleep_metrics[4])
+        # Calculate sleep metrics with explicit type annotations
+        sleep_efficiency: float = float(sleep_metrics[0] * 100)  # Convert to percentage
+        sleep_onset_latency: float = float(sleep_metrics[1] * 60)  # Convert to minutes
+        wake_after_sleep_onset: float = float(sleep_metrics[2] * 60)
+        total_sleep_time: float = float(sleep_metrics[3] * 12)  # Convert to hours
+        activity_fragmentation: float = float(sleep_metrics[4])
 
         # Generate clinical insights
         insights = self._generate_clinical_insights(
@@ -244,7 +245,7 @@ class PATModelService(IMLModelService):
         )
 
         # Calculate confidence score
-        confidence_score = float(np.mean(sleep_metrics[5:8]))
+        confidence_score: float = float(np.mean(sleep_metrics[5:8]))
 
         return ActigraphyAnalysis(
             user_id=user_id,

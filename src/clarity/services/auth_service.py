@@ -479,9 +479,15 @@ class AuthenticationService:
         Returns:
             UserSessionResponse: User session information
         """
+        # Validate email from Firebase user record
+        email_value = user_record.email  # type: ignore[misc]
+        if not email_value or not isinstance(email_value, str):
+            error_msg = "Invalid email from Firebase user record"
+            raise ValueError(error_msg)
+        
         return UserSessionResponse(
-            user_id=uuid.UUID(user_record.uid),
-            email=user_record.email,
+            user_id=uuid.UUID(user_record.uid),  # type: ignore[misc]
+            email=email_value,
             first_name=user_data.get("first_name", ""),
             last_name=user_data.get("last_name", ""),
             role=user_data.get("role", UserRole.PATIENT.value),

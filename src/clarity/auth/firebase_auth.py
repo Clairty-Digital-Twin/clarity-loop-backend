@@ -117,19 +117,19 @@ class FirebaseAuthProvider(IAuthProvider):
             # Create user info dict
             user_info: dict[str, Any] = {
                 "user_id": decoded_token["uid"],
-                "email": user_record.email,
-                "name": user_record.display_name,
-                "verified": user_record.email_verified,
-                "roles": self._extract_roles(decoded_token),
-                "custom_claims": decoded_token.get("custom_claims", {}),
+                "email": user_record.email,  # type: ignore[misc]
+                "name": user_record.display_name,  # type: ignore[misc]
+                "verified": user_record.email_verified,  # type: ignore[misc]
+                "roles": self._extract_roles(decoded_token),  # type: ignore[arg-type]
+                "custom_claims": decoded_token.get("custom_claims", {}),  # type: ignore[misc]
                 "created_at": datetime.fromtimestamp(
-                    user_record.user_metadata.creation_timestamp / 1000, tz=UTC
+                    user_record.user_metadata.creation_timestamp / 1000, tz=UTC  # type: ignore[misc,arg-type]
                 ).isoformat(),
                 "last_login": (
                     datetime.fromtimestamp(
-                        user_record.user_metadata.last_sign_in_timestamp / 1000, tz=UTC
+                        user_record.user_metadata.last_sign_in_timestamp / 1000, tz=UTC  # type: ignore[misc,arg-type]
                     ).isoformat()
-                    if user_record.user_metadata.last_sign_in_timestamp
+                    if user_record.user_metadata.last_sign_in_timestamp  # type: ignore[misc]
                     else None
                 ),
             }

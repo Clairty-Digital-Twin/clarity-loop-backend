@@ -170,19 +170,19 @@ class FirebaseAuthProvider(IAuthProvider):
             user_record = auth.get_user(user_id)  # type: ignore[misc]
 
             return {
-                "user_id": user_record.uid,
-                "email": user_record.email,
-                "name": user_record.display_name,
-                "verified": user_record.email_verified,
-                "disabled": user_record.disabled,
+                "user_id": user_record.uid,  # type: ignore[misc]
+                "email": user_record.email,  # type: ignore[misc]
+                "name": user_record.display_name,  # type: ignore[misc]
+                "verified": user_record.email_verified,  # type: ignore[misc]
+                "disabled": user_record.disabled,  # type: ignore[misc]
                 "created_at": datetime.fromtimestamp(
-                    user_record.user_metadata.creation_timestamp / 1000, tz=UTC
+                    user_record.user_metadata.creation_timestamp / 1000, tz=UTC  # type: ignore[misc,arg-type]
                 ).isoformat(),
                 "last_login": (
                     datetime.fromtimestamp(
-                        user_record.user_metadata.last_sign_in_timestamp / 1000, tz=UTC
+                        user_record.user_metadata.last_sign_in_timestamp / 1000, tz=UTC  # type: ignore[misc,arg-type]
                     ).isoformat()
-                    if user_record.user_metadata.last_sign_in_timestamp
+                    if user_record.user_metadata.last_sign_in_timestamp  # type: ignore[misc]
                     else None
                 ),
             }

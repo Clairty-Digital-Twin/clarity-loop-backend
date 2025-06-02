@@ -85,7 +85,7 @@ class ProxyActigraphyResult(BaseModel):
 def _get_nhanes_stats_for_year(year: int) -> tuple[float, float]:
     """Get NHANES normalization statistics for a given year."""
     year_str = str(year)
-    
+
     if year_str in DEFAULT_NHANES_STATS:
         stats = DEFAULT_NHANES_STATS[year_str]
         logger.info("Using %s for normalization", stats['source'])

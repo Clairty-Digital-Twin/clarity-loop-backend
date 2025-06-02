@@ -358,11 +358,11 @@ async def get_model_info(
     try:
         # Get PAT service info
         pat_service = inference_engine.pat_service
-        
+
         # Get inference engine stats
         engine_stats = inference_engine.get_stats()
 
-        model_info = {
+        return {
             "model_type": "PAT",
             "version": "1.0.0",
             "initialized": pat_service.is_initialized,
@@ -379,8 +379,6 @@ async def get_model_info(
             },
             "performance": engine_stats
         }
-
-        return model_info
 
     except Exception as e:
         logger.exception("Model info request failed")

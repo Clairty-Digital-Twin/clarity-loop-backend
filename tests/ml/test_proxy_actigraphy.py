@@ -28,7 +28,7 @@ class TestStepCountData:
     """Test StepCountData model."""
 
     @staticmethod
-    def test_step_count_data_creation():
+    def test_step_count_data_creation() -> None:
         """Test creating a valid StepCountData."""
         timestamps = [datetime.now(UTC) for _ in range(3)]
         step_data = StepCountData(
@@ -46,7 +46,7 @@ class TestStepCountData:
         assert step_data.user_metadata["age"] == 25
 
     @staticmethod
-    def test_step_count_data_validation():
+    def test_step_count_data_validation() -> None:
         """Test StepCountData validation."""
         timestamps = [datetime.now(UTC)]
 
@@ -60,7 +60,7 @@ class TestStepCountData:
         assert len(step_data.step_counts) == 1
 
     @staticmethod
-    def test_step_count_data_empty_list():
+    def test_step_count_data_empty_list() -> None:
         """Test StepCountData with empty step counts."""
         with pytest.raises(ValidationError, match="List should have at least 1 item"):
             StepCountData(
@@ -75,7 +75,7 @@ class TestProxyActigraphyResult:
     """Test ProxyActigraphyResult model."""
 
     @staticmethod
-    def test_result_creation():
+    def test_result_creation() -> None:
         """Test creating a valid ProxyActigraphyResult."""
         result = ProxyActigraphyResult(
             user_id="user123",
@@ -102,7 +102,7 @@ class TestProxyActigraphyResult:
         assert result.nhanes_reference["year"] == 2025
 
     @staticmethod
-    def test_result_quality_score_validation():
+    def test_result_quality_score_validation() -> None:
         """Test ProxyActigraphyResult quality score validation."""
         # Valid quality score
         result = ProxyActigraphyResult(
@@ -445,7 +445,7 @@ class TestConstants:
     """Test module constants."""
 
     @staticmethod
-    def test_constants_exist():
+    def test_constants_exist() -> None:
         """Test that required constants are defined."""
         assert isinstance(MINUTES_PER_WEEK, int)
         assert isinstance(MAX_REALISTIC_STEPS_PER_MINUTE, int)
@@ -453,7 +453,7 @@ class TestConstants:
         assert isinstance(DEFAULT_NHANES_STATS, dict)
 
     @staticmethod
-    def test_constants_values():
+    def test_constants_values() -> None:
         """Test that constants have reasonable values."""
         assert MINUTES_PER_WEEK == 7 * 24 * 60
         assert MINUTES_PER_DAY == 24 * 60
@@ -470,7 +470,7 @@ class TestConstants:
             assert stats["std"] > 0
 
     @staticmethod
-    def test_performance_characteristics():
+    def test_performance_characteristics() -> None:
         """Test performance characteristics of the transformer."""
         with patch('clarity.ml.proxy_actigraphy.lookup_norm_stats') as mock_lookup:
             mock_lookup.return_value = (1.2, 0.8)

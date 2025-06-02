@@ -43,7 +43,7 @@ class TestNHANESStatsLookup:
         assert std > 0
 
     @staticmethod
-    def test_lookup_norm_stats_invalid_year():
+    def test_lookup_norm_stats_invalid_year() -> None:
         """Test lookup with invalid year falls back to default."""
         mean, std = lookup_norm_stats(year=2030)  # Future year not in data
         assert isinstance(mean, float)
@@ -51,7 +51,7 @@ class TestNHANESStatsLookup:
         assert std > 0
 
     @staticmethod
-    def test_lookup_norm_stats_with_age_group():
+    def test_lookup_norm_stats_with_age_group() -> None:
         """Test lookup with age group stratification."""
         mean, std = lookup_norm_stats(year=2025, age_group="18-29")
         assert isinstance(mean, float)
@@ -59,7 +59,7 @@ class TestNHANESStatsLookup:
         assert std > 0
 
     @staticmethod
-    def test_lookup_norm_stats_with_sex():
+    def test_lookup_norm_stats_with_sex() -> None:
         """Test lookup with sex stratification."""
         mean_male, std_male = lookup_norm_stats(year=2025, sex="male")
         mean_female, std_female = lookup_norm_stats(year=2025, sex="female")
@@ -73,7 +73,7 @@ class TestNHANESStatsLookup:
         assert mean_male != mean_female or std_male != std_female
 
     @staticmethod
-    def test_lookup_norm_stats_with_all_params():
+    def test_lookup_norm_stats_with_all_params() -> None:
         """Test lookup with all parameters."""
         mean, std = lookup_norm_stats(year=2025, age_group="30-39", sex="female")
         assert isinstance(mean, float)
@@ -81,7 +81,7 @@ class TestNHANESStatsLookup:
         assert std > 0
 
     @staticmethod
-    def test_lookup_norm_stats_invalid_age_group():
+    def test_lookup_norm_stats_invalid_age_group() -> None:
         """Test lookup with invalid age group."""
         mean, std = lookup_norm_stats(year=2025, age_group="invalid")
         assert isinstance(mean, float)
@@ -89,7 +89,7 @@ class TestNHANESStatsLookup:
         assert std > 0
 
     @staticmethod
-    def test_lookup_norm_stats_invalid_sex():
+    def test_lookup_norm_stats_invalid_sex() -> None:
         """Test lookup with invalid sex."""
         mean, std = lookup_norm_stats(year=2025, sex="invalid")
         assert isinstance(mean, float)
@@ -97,7 +97,7 @@ class TestNHANESStatsLookup:
         assert std > 0
 
     @staticmethod
-    def test_lookup_norm_stats_case_insensitive_sex():
+    def test_lookup_norm_stats_case_insensitive_sex() -> None:
         """Test that sex parameter is case insensitive."""
         mean_lower, std_lower = lookup_norm_stats(sex="male")
         mean_upper, std_upper = lookup_norm_stats(sex="MALE")
@@ -111,7 +111,7 @@ class TestAvailableData:
     """Test functions that return available data."""
 
     @staticmethod
-    def test_get_available_years():
+    def test_get_available_years() -> None:
         """Test getting available years."""
         years = get_available_years()
         assert isinstance(years, list)
@@ -120,7 +120,7 @@ class TestAvailableData:
         assert 2025 in years  # Should include our test year
 
     @staticmethod
-    def test_get_available_age_groups():
+    def test_get_available_age_groups() -> None:
         """Test getting available age groups."""
         age_groups = get_available_age_groups()
         assert isinstance(age_groups, list)
@@ -129,7 +129,7 @@ class TestAvailableData:
         assert "18-29" in age_groups  # Should include young adults
 
     @staticmethod
-    def test_available_data_consistency():
+    def test_available_data_consistency() -> None:
         """Test that available data is consistent with constants."""
         years = get_available_years()
         age_groups = get_available_age_groups()
@@ -146,7 +146,7 @@ class TestReferenceInfo:
     """Test reference information functionality."""
 
     @staticmethod
-    def test_get_reference_info_valid_year():
+    def test_get_reference_info_valid_year() -> None:
         """Test getting reference info for valid year."""
         info = get_reference_info(2025)
         assert isinstance(info, dict)
@@ -156,7 +156,7 @@ class TestReferenceInfo:
         assert "source" in info
 
     @staticmethod
-    def test_get_reference_info_invalid_year():
+    def test_get_reference_info_invalid_year() -> None:
         """Test getting reference info for invalid year."""
         info = get_reference_info(2030)  # Future year
         assert isinstance(info, dict)
@@ -165,7 +165,7 @@ class TestReferenceInfo:
         # Should return default year info
 
     @staticmethod
-    def test_get_reference_info_default():
+    def test_get_reference_info_default() -> None:
         """Test getting reference info with default year."""
         info = get_reference_info()
         assert isinstance(info, dict)
@@ -177,7 +177,7 @@ class TestProxyValueValidation:
     """Test proxy value validation functionality."""
 
     @staticmethod
-    def test_validate_proxy_values_normal():
+    def test_validate_proxy_values_normal() -> None:
         """Test validation with normal values."""
         # Generate some normal values around the expected mean
         proxy_values = [4.0, 4.2, 4.5, 4.1, 4.3, 4.4, 4.0, 4.6]
@@ -196,7 +196,7 @@ class TestProxyValueValidation:
         assert isinstance(bool(result["validation_passed"]), bool)
 
     @staticmethod
-    def test_validate_proxy_values_with_outliers():
+    def test_validate_proxy_values_with_outliers() -> None:
         """Test validation with outlier values."""
         # Include some extreme values
         proxy_values = [4.0, 4.2, 15.0, 4.1, -5.0, 4.4, 4.0, 4.6]  # 15.0 and -5.0 are outliers
@@ -206,7 +206,7 @@ class TestProxyValueValidation:
         assert result["outlier_percentage"] > 0
 
     @staticmethod
-    def test_validate_proxy_values_empty_list():
+    def test_validate_proxy_values_empty_list() -> None:
         """Test validation with empty list."""
         # Empty list should return a result with NaN values but not crash
         result = validate_proxy_values([])
@@ -214,14 +214,14 @@ class TestProxyValueValidation:
         # NaN values are expected for empty lists
 
     @staticmethod
-    def test_validate_proxy_values_single_value():
+    def test_validate_proxy_values_single_value() -> None:
         """Test validation with single value."""
         result = validate_proxy_values([4.0])
         assert result["total_values"] == 1
         assert isinstance(result["mean_z_score"], float)
 
     @staticmethod
-    def test_validate_proxy_values_different_year():
+    def test_validate_proxy_values_different_year() -> None:
         """Test validation with different reference year."""
         proxy_values = [4.0, 4.2, 4.5, 4.1]
 
@@ -237,7 +237,7 @@ class TestNHANESConstants:
     """Test NHANES constants and data structures."""
 
     @staticmethod
-    def test_nhanes_reference_stats_structure():
+    def test_nhanes_reference_stats_structure() -> None:
         """Test that NHANES reference stats have correct structure."""
         assert isinstance(NHANES_REFERENCE_STATS, dict)
 
@@ -253,7 +253,7 @@ class TestNHANESConstants:
             assert stats["std"] > 0
 
     @staticmethod
-    def test_age_stratified_stats_structure():
+    def test_age_stratified_stats_structure() -> None:
         """Test that age stratified stats have correct structure."""
         assert isinstance(AGE_STRATIFIED_STATS, dict)
 
@@ -267,7 +267,7 @@ class TestNHANESConstants:
             assert stats["std"] > 0
 
     @staticmethod
-    def test_sex_stratified_stats_structure():
+    def test_sex_stratified_stats_structure() -> None:
         """Test that sex stratified stats have correct structure."""
         assert isinstance(SEX_STRATIFIED_STATS, dict)
 
@@ -282,7 +282,7 @@ class TestNHANESConstants:
             assert stats["std"] > 0
 
     @staticmethod
-    def test_extreme_outlier_threshold():
+    def test_extreme_outlier_threshold() -> None:
         """Test that outlier threshold is reasonable."""
         assert isinstance(EXTREME_OUTLIER_THRESHOLD, (int, float))
         assert EXTREME_OUTLIER_THRESHOLD > 0
@@ -293,7 +293,7 @@ class TestNHANESStatsError:
     """Test NHANES stats error handling."""
 
     @staticmethod
-    def test_nhanes_stats_error_creation():
+    def test_nhanes_stats_error_creation() -> None:
         """Test creating NHANESStatsError."""
         error = NHANESStatsError("Test error")
         assert isinstance(error, Exception)
@@ -301,7 +301,7 @@ class TestNHANESStatsError:
 
     @patch('clarity.ml.nhanes_stats.NHANES_REFERENCE_STATS', {})
     @staticmethod
-    def test_lookup_with_empty_stats():
+    def test_lookup_with_empty_stats() -> None:
         """Test lookup behavior with empty reference stats."""
         with pytest.raises(NHANESStatsError):
             lookup_norm_stats(year=2025)
@@ -311,7 +311,7 @@ class TestIntegrationNHANESStats:
     """Integration tests for NHANES stats functionality."""
 
     @staticmethod
-    def test_full_workflow_normal_case():
+    def test_full_workflow_normal_case() -> None:
         """Test complete workflow with normal inputs."""
         # Get available years and pick one
         years = get_available_years()
@@ -336,7 +336,7 @@ class TestIntegrationNHANESStats:
         assert validation["validation_passed"]  # Should pass with normal values
 
     @staticmethod
-    def test_error_handling_chain():
+    def test_error_handling_chain() -> None:
         """Test error handling throughout the workflow."""
         # Test with invalid inputs
         mean, std = lookup_norm_stats(year=9999, age_group="invalid", sex="invalid")
@@ -364,7 +364,7 @@ class TestPerformanceNHANESStats:
     """Performance tests for NHANES stats functionality."""
 
     @staticmethod
-    def test_lookup_performance():
+    def test_lookup_performance() -> None:
         """Test that lookups are reasonably fast."""
         start_time = time.time()
         for _ in range(1000):
@@ -375,7 +375,7 @@ class TestPerformanceNHANESStats:
         assert (end_time - start_time) < 1.0
 
     @staticmethod
-    def test_validation_performance():
+    def test_validation_performance() -> None:
         """Test that validation is reasonably fast."""
         # Generate test data
         proxy_values = [4.0 + i * 0.1 for i in range(100)]
@@ -389,7 +389,7 @@ class TestPerformanceNHANESStats:
         assert (end_time - start_time) < 1.0
 
     @staticmethod
-    def test_caching_effectiveness():
+    def test_caching_effectiveness() -> None:
         """Test that LRU caching is working."""
         # First call
         start_time = time.time()

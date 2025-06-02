@@ -17,7 +17,8 @@ from clarity.core.container import create_application
 class TestMiddlewareConfiguration:
     """Test suite for middleware configuration functionality."""
 
-    def test_middleware_config_development_defaults(self) -> None:
+    @staticmethod
+    def test_middleware_config_development_defaults() -> None:
         """Test middleware configuration defaults for development environment."""
         settings = Settings()
         settings.environment = "development"
@@ -34,7 +35,8 @@ class TestMiddlewareConfiguration:
         assert middleware_config.cache_enabled is False  # Disabled for easier debugging
         assert middleware_config.initialization_timeout_seconds == 10  # Longer timeout
 
-    def test_middleware_config_testing_defaults(self) -> None:
+    @staticmethod
+    def test_middleware_config_testing_defaults() -> None:
         """Test middleware configuration defaults for testing environment."""
         settings = Settings()
         settings.environment = "testing"
@@ -51,11 +53,13 @@ class TestMiddlewareConfiguration:
         assert middleware_config.cache_enabled is False  # Consistent tests
         assert middleware_config.audit_logging is False  # Reduce noise
 
-    def test_middleware_config_production_defaults(self) -> None:
+    @staticmethod
+    def test_middleware_config_production_defaults() -> None:
         """Test middleware configuration defaults for production environment."""
         settings = Settings()
         settings.environment = "production"
         settings.enable_auth = True
+        settings.testing = False  # Explicitly disable testing flag
         # Mock required production settings to avoid validation errors
         settings.firebase_project_id = "test-project"
         settings.gcp_project_id = "test-gcp-project"
@@ -74,7 +78,8 @@ class TestMiddlewareConfiguration:
         assert middleware_config.cache_ttl_seconds == 600  # Longer cache
         assert middleware_config.initialization_timeout_seconds == 5  # Shorter timeout
 
-    def test_middleware_config_exempt_paths_default(self) -> None:
+    @staticmethod
+    def test_middleware_config_exempt_paths_default() -> None:
         """Test that default exempt paths are properly configured."""
         config = MiddlewareConfig()
 
@@ -90,16 +95,19 @@ class TestMiddlewareConfiguration:
 
         assert config.exempt_paths == expected_paths
 
-    def test_middleware_config_custom_exempt_paths(self) -> None:
+    @staticmethod
+    def test_middleware_config_custom_exempt_paths() -> None:
         """Test custom exempt paths configuration."""
         custom_paths = ["/custom", "/api/public"]
         config = MiddlewareConfig(exempt_paths=custom_paths)
 
         assert config.exempt_paths == custom_paths
 
-    def test_config_provider_middleware_methods(self) -> None:
+    @staticmethod
+    def test_config_provider_middleware_methods() -> None:
         """Test config provider middleware-specific methods."""
-        settings = Settings(environment="development")
+        settings = Settings()
+        settings.environment = "development"
         config_provider = ConfigProvider(settings)
 
         # Test timeout getter
@@ -116,7 +124,8 @@ class TestMiddlewareConfiguration:
         assert isinstance(cache_ttl, int)
         assert cache_ttl > 0
 
-    def test_container_uses_middleware_config(self) -> None:
+    @staticmethod
+    def test_container_uses_middleware_config() -> None:
         """Test that the container properly uses middleware configuration."""
         with patch("clarity.core.container.get_settings") as mock_get_settings:
             # Mock settings to disable auth for simpler testing
@@ -136,21 +145,24 @@ class TestMiddlewareConfiguration:
             response = client.get("/health")
             assert response.status_code == 200
 
-    def test_middleware_config_with_auth_disabled(self) -> None:
+    @staticmethod
+    def test_middleware_config_with_auth_disabled() -> None:
         """Test middleware configuration when auth is disabled."""
-        settings = Settings(environment="production", enable_auth=False)
+        settings = Settings()
+        settings.environment = "production"
+        settings.enable_auth = False
+        settings.testing = False  # Explicitly disable testing flag for production
         config_provider = ConfigProvider(settings)
 
         middleware_config = config_provider.get_middleware_config()
 
-        # When auth is disabled, middleware should reflect production settings
-        # but the global enable_auth flag controls overall auth state
-        assert (
-            middleware_config.enabled is True
-        )  # This is just the middleware capability
+        # When in production, middleware capability should always be True
+        # The global enable_auth flag is separate from middleware capability
+        assert middleware_config.enabled is True  # Middleware capability in production
         assert not settings.enable_auth  # But global auth is disabled
 
-    def test_cache_configuration_parameters(self) -> None:
+    @staticmethod
+    def test_cache_configuration_parameters() -> None:
         """Test cache configuration parameters."""
         config = MiddlewareConfig(
             cache_enabled=True,

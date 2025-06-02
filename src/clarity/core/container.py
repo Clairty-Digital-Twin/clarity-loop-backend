@@ -160,7 +160,9 @@ class DependencyContainer:
                 self._instances[IAuthProvider] = MockAuthProvider()
                 logger.info("✅ Mock auth provider activated")
             else:
-                logger.error("❌ Auth fallback disabled - authentication unavailable")
+                logger.exception(
+                    "❌ Auth fallback disabled - authentication unavailable"
+                )
 
         except Exception:
             logger.exception("💥 Auth provider initialization failed")
@@ -169,7 +171,7 @@ class DependencyContainer:
                 self._instances[IAuthProvider] = MockAuthProvider()
                 logger.info("✅ Mock auth provider activated")
             else:
-                logger.error(
+                logger.exception(
                     "❌ Graceful degradation disabled - authentication unavailable"
                 )
 

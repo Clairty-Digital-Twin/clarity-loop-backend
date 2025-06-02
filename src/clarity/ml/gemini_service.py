@@ -7,7 +7,7 @@ to generate human-like health insights and narratives from ML analysis results.
 from datetime import UTC, datetime
 import json
 import logging
-from typing import Any
+from typing import Any, NoReturn
 
 from pydantic import BaseModel, Field
 import vertexai  # type: ignore[import-untyped]
@@ -67,7 +67,7 @@ class GeminiService:
         self.is_initialized = False
 
     @staticmethod
-    def _raise_model_not_initialized() -> None:
+    def _raise_model_not_initialized() -> NoReturn:
         """Raise RuntimeError when model is not initialized."""
         msg = GEMINI_NOT_INITIALIZED_MSG
         raise RuntimeError(msg)
@@ -103,11 +103,8 @@ class GeminiService:
             if self.model is None:
                 self._raise_model_not_initialized()
 
-            # Type guard for mypy - model is guaranteed to be not None here
-            assert self.model is not None  # noqa: S101
-
             # Create health-focused prompt for Gemini
-            prompt = self._create_health_insight_prompt(request)  # type: ignore[unreachable]
+            prompt = self._create_health_insight_prompt(request)
 
             # Configure generation parameters for health insights
             generation_config = GenerationConfig(

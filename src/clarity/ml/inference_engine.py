@@ -114,7 +114,7 @@ class InferenceCache:
         self._cleanup_expired()
         if key in self.cache:
             value, _ = self.cache[key]
-            return value  # type: ignore[no-any-return]
+            return value  # type: ignore[no-any-return]  # Cache preserves original function's return type
         return None
 
     async def set(self, key: str, value: object) -> None:

@@ -11,19 +11,24 @@ Enterprise-grade Firebase authentication middleware with:
 from __future__ import annotations
 
 import asyncio
-from collections.abc import Awaitable, Callable
 from datetime import UTC, datetime
 from functools import wraps
 import logging
 import time
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-from fastapi import FastAPI, HTTPException, Request
+if TYPE_CHECKING:
+    from collections.abc import Awaitable, Callable
+
+    from fastapi import FastAPI
+    from starlette.responses import Response
+
+from fastapi import HTTPException, Request
 from fastapi.security import HTTPBearer
 import firebase_admin  # type: ignore[import-untyped]
 from firebase_admin import auth, credentials  # type: ignore[import-untyped]
 from starlette.middleware.base import BaseHTTPMiddleware
-from starlette.responses import JSONResponse, Response
+from starlette.responses import JSONResponse
 
 from clarity.auth.models import AuthError, Permission, UserContext, UserRole
 from clarity.core.interfaces import IAuthProvider
@@ -179,6 +184,11 @@ class FirebaseAuthProvider(IAuthProvider):
         if self._initialized:
             return
 
+        def _raise_missing_config() -> None:
+            """Abstract raise to inner function."""
+            msg = "Either credentials_path or project_id must be provided"
+            raise ValueError(msg)
+
         try:
             # Check if Firebase is already initialized
             try:
@@ -200,8 +210,7 @@ class FirebaseAuthProvider(IAuthProvider):
                 firebase_admin.initialize_app(cred, {"projectId": self.project_id})
                 logger.info("Firebase Admin SDK initialized with default credentials")
             else:
-                msg = "Either credentials_path or project_id must be provided"
-                raise ValueError(msg)
+                _raise_missing_config()
 
             self._initialized = True
             logger.info("✅ Firebase Admin SDK initialized successfully")
@@ -468,7 +477,26 @@ def require_auth(
 
     def decorator(func: Callable[..., Awaitable[Any]]) -> Callable[..., Awaitable[Any]]:
         @wraps(func)
-        async def wrapper(*args, **kwargs) -> Any:  # type: ignore[misc]
+        async def wrapper(*args: Any, **kwargs: Any) -> Any:  # type: ignore[misc]
+            def _raise_missing_request() -> None:
+                """Abstract raise to inner function."""
+                msg = "Request object not found"
+                raise HTTPException(status_code=500, detail=msg)
+
+            def _raise_role_unauthorized(role: str) -> None:
+                """Abstract raise to inner function."""
+                msg = f"Role '{role}' not authorized"
+                raise HTTPException(status_code=403, detail=msg)
+
+            def _raise_missing_permissions(missing: list[Permission]) -> None:
+                """Abstract raise to inner function."""
+                msg = f"Missing required permissions: {list(missing)}"
+                raise HTTPException(status_code=403, detail=msg)
+
+            def _raise_disabled_account() -> None:
+                """Abstract raise to inner function."""
+                raise HTTPException(status_code=403, detail="User account is disabled")
+
             # Extract request from args/kwargs
             request = None
             for arg in args:
@@ -477,27 +505,24 @@ def require_auth(
                     break
 
             if not request:
-                msg = "Request object not found"
-                raise HTTPException(status_code=500, detail=msg)
+                _raise_missing_request()
 
             # Get user context (not await since get_current_user is not async)
             user_context = get_current_user(request)
 
             # Check role requirements
             if roles and user_context.role not in roles:
-                msg = f"Role '{user_context.role}' not authorized"
-                raise HTTPException(status_code=403, detail=msg)
+                _raise_role_unauthorized(str(user_context.role))
 
             # Check permission requirements
             if permissions:
                 missing_permissions = set(permissions) - set(user_context.permissions)
                 if missing_permissions:
-                    msg = f"Missing required permissions: {list(missing_permissions)}"
-                    raise HTTPException(status_code=403, detail=msg)
+                    _raise_missing_permissions(list(missing_permissions))
 
             # Check if user is active
             if not user_context.is_active:
-                raise HTTPException(status_code=403, detail="User account is disabled")
+                _raise_disabled_account()
 
             return await func(*args, **kwargs)
 
@@ -518,67 +543,3 @@ def require_permission(
 ) -> Callable[[Callable[..., Awaitable[Any]]], Callable[..., Awaitable[Any]]]:
     """Convenience decorator to require specific permissions."""
     return require_auth(permissions=list(permissions))
-
-
-def firebase_auth_required(
-    required_role: str | None = None,
-) -> Callable[[Callable[..., Awaitable[Any]]], Callable[..., Awaitable[Any]]]:
-    """Decorator to require Firebase authentication and optionally a specific role."""
-
-    def decorator(func: Callable[..., Awaitable[Any]]) -> Callable[..., Awaitable[Any]]:
-        @wraps(func)
-        async def wrapper(*args: Any, **kwargs: Any) -> Any:  # type: ignore[misc]
-            # Extract request from args/kwargs
-            request = None
-            for arg in args:
-                if hasattr(arg, "headers"):
-                    request = arg
-                    break
-            if not request and "request" in kwargs:
-                request = kwargs["request"]
-
-            if not request:
-                msg = "Request object not found in function arguments"
-                raise HTTPException(status_code=500, detail=msg)
-
-            # Get Firebase auth provider
-            container = get_container()
-            auth_provider = container.get_auth_provider()
-
-            if not isinstance(auth_provider, FirebaseAuthProvider):
-                msg = "Firebase authentication is not configured"
-                raise HTTPException(status_code=500, detail=msg)
-
-            # Verify the token
-            token = request.headers.get("Authorization")
-            if not token or not token.startswith("Bearer "):
-                raise HTTPException(
-                    status_code=401, detail="Missing or invalid authorization header"
-                )
-
-            try:
-                user_info = await auth_provider.verify_token(token.split(" ")[1])
-                if not user_info:
-                    raise HTTPException(status_code=401, detail="Invalid token")
-
-                # Check role if required
-                if required_role:
-                    user_roles = user_info.get("roles", [])
-                    if required_role not in user_roles:
-                        raise HTTPException(
-                            status_code=403, detail="Insufficient permissions"
-                        )
-
-                # Add user info to kwargs
-                kwargs["current_user"] = user_info
-                return await func(*args, **kwargs)
-
-            except Exception as e:
-                logger.warning(f"Authentication failed: {e}")
-                raise HTTPException(
-                    status_code=401, detail="Authentication failed"
-                ) from e
-
-        return wrapper
-
-    return decorator

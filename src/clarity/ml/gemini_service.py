@@ -104,7 +104,9 @@ class GeminiService:
                 self._raise_model_not_initialized()
 
             # Type guard for mypy - model is guaranteed to be not None here
-            assert self.model is not None  # noqa: S101
+            if self.model is None:
+                self._raise_model_not_initialized()
+                return  # This will never be reached, but satisfies mypy
 
             # Create health-focused prompt for Gemini
             prompt = self._create_health_insight_prompt(request)
@@ -214,7 +216,7 @@ Respond only with valid JSON."""
         """Parse and validate Gemini response."""
         try:
             # Extract text from response
-            response_text = response.text.strip()
+            response_text = response.text.strip()  # type: ignore[attr-defined]
 
             # Parse JSON response
             parsed_response = json.loads(response_text)
@@ -239,7 +241,7 @@ Respond only with valid JSON."""
         except json.JSONDecodeError:
             logger.warning("Failed to parse Gemini JSON response, using fallback")
             # Fallback to extracting insights from text response
-            return GeminiService._create_fallback_response(response.text, user_id)
+            return GeminiService._create_fallback_response(response.text, user_id)  # type: ignore[attr-defined]
         except Exception:
             logger.exception("Error parsing Gemini response")
             raise

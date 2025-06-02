@@ -17,17 +17,13 @@ import hashlib
 import json
 import logging
 import time
-from datetime import timedelta
-from typing import Any, Dict, List, Optional, Tuple
-from dataclasses import dataclass, asdict
+from typing import Any, Dict, List, Optional, Tuple, Callable, Awaitable
+from dataclasses import dataclass
 from functools import wraps
 
-import numpy as np
-import torch
 from pydantic import BaseModel, Field
 
 from clarity.ml.pat_service import ActigraphyInput, ActigraphyAnalysis, PATModelService
-from clarity.ml.preprocessing import ActigraphyDataPoint
 
 logger = logging.getLogger(__name__)
 
@@ -129,10 +125,10 @@ class InferenceCache:
         }
 
 
-def performance_monitor(func):
+def performance_monitor(func: Callable[..., Awaitable[Any]]) -> Callable[..., Awaitable[Any]]:
     """Decorator to monitor function performance."""
     @wraps(func)
-    async def wrapper(*args, **kwargs):
+    async def wrapper(*args: Any, **kwargs: Any) -> Any:
         start_time = time.perf_counter()
         try:
             result = await func(*args, **kwargs)
@@ -171,8 +167,8 @@ class AsyncInferenceEngine:
         self.cache = InferenceCache(ttl_seconds=cache_ttl)
         
         # Request queue and batch processing
-        self.request_queue: asyncio.Queue = asyncio.Queue()
-        self.batch_processor_task: Optional[asyncio.Task] = None
+        self.request_queue: asyncio.Queue[Tuple[InferenceRequest, asyncio.Future[InferenceResponse]]] = asyncio.Queue()
+        self.batch_processor_task: Optional[asyncio.Task[None]] = None
         self.is_running = False
         
         # Performance tracking

@@ -219,7 +219,7 @@ class HealthDataService:
 
             self.logger.info(
                 "Retrieved %s health records for user: %s",
-                len(health_data.get("metrics", [])),
+                len(health_data.get("metrics", [])),  # type: ignore[arg-type]
                 user_id,
             )
 

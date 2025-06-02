@@ -405,7 +405,7 @@ class TestFirebaseAuthMiddleware:
         request = Mock()
         request.headers = {"Authorization": "Bearer valid_token_here"}
 
-        token = middleware._extract_token(request)  # noqa: SLF001
+        token = middleware._extract_token(request)  # type: ignore[reportPrivateUsage]
 
         assert token == "valid_token_here"  # noqa: S105
 
@@ -416,7 +416,7 @@ class TestFirebaseAuthMiddleware:
         request.headers = {}
 
         with pytest.raises(AuthError) as exc_info:
-            middleware._extract_token(request)  # noqa: SLF001
+            middleware._extract_token(request)  # type: ignore[reportPrivateUsage]
 
         assert exc_info.value.status_code == 401
         assert exc_info.value.error_code == "missing_token"

@@ -203,9 +203,9 @@ class AuthenticationService:
                 verification_email_sent = True
                 logger.info("Email verification link generated for %s", request.email)
             except (auth.AuthError, ConnectionError, TimeoutError, OSError) as e:  # type: ignore[misc]
-                logger.warning("Failed to send verification email: %s", e)
+                logger.warning("Failed to send verification email: %s", e)  # type: ignore[misc]
 
-            logger.info("User registered successfully: %s", user_record.uid)
+            logger.info("User registered successfully: %s", user_record.uid)  # type: ignore[misc]
 
             return RegistrationResponse(
                 user_id=user_id,
@@ -301,7 +301,7 @@ class AuthenticationService:
                 mfa_session_token = secrets.token_urlsafe(32)
 
                 # Store temporary session
-                temp_session_data = {
+                temp_session_data: dict[str, Any] = {
                     "user_id": user_record.uid,  # type: ignore[misc]
                     "mfa_session_token": mfa_session_token,
                     "created_at": login_time,
@@ -320,7 +320,7 @@ class AuthenticationService:
 
                 # Return partial response requiring MFA
                 user_session = await self._create_user_session_response(
-                    user_record, user_data
+                    user_record, user_data  # type: ignore[arg-type]
                 )
                 return LoginResponse(
                     user=user_session,

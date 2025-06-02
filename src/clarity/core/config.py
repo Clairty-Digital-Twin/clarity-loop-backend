@@ -16,29 +16,36 @@ logger = logging.getLogger(__name__)
 
 
 class Settings(BaseSettings):
-    """Application configuration with environment variable support."""
+    """Application settings with secure defaults and validation."""
 
-    # Application settings
-    app_name: str = "CLARITY Digital Twin Platform"
-    app_version: str = "1.0.0"
+    # Environment settings
     environment: str = Field(default="development", alias="ENVIRONMENT")
     debug: bool = Field(default=False, alias="DEBUG")
-
-    # Server settings
-    host: str = Field(default="0.0.0.0", alias="HOST")
-    port: int = Field(default=8080, alias="PORT")
-    log_level: str = Field(default="INFO", alias="LOG_LEVEL")
+    testing: bool = Field(default=False, alias="TESTING")
 
     # Security settings
-    allowed_hosts: list[str] = Field(
-        default=["localhost", "127.0.0.1", "*.run.app"], alias="ALLOWED_HOSTS"
-    )
+    secret_key: str = Field(default="dev-secret-key", alias="SECRET_KEY")
+    enable_auth: bool = Field(default=True, alias="ENABLE_AUTH")
+
+    # Server settings
+    host: str = Field(
+        default="127.0.0.1", alias="HOST"
+    )  # Changed from 0.0.0.0 to fix S104
+    port: int = Field(default=8080, alias="PORT")
+    log_level: str = Field(default="INFO", alias="LOG_LEVEL")
     cors_origins: list[str] = Field(
         default=["http://localhost:3000", "http://localhost:8080"], alias="CORS_ORIGINS"
     )
 
-    # Authentication settings
-    enable_auth: bool = Field(default=False, alias="ENABLE_AUTH")
+    # External service flags
+    skip_external_services: bool = Field(default=False, alias="SKIP_EXTERNAL_SERVICES")
+
+    # Startup configuration
+    startup_timeout: int = Field(default=30, alias="STARTUP_TIMEOUT")
+
+    # Application settings
+    app_name: str = "CLARITY Digital Twin Platform"
+    app_version: str = "1.0.0"
 
     # Firebase settings
     firebase_project_id: str = Field(default="", alias="FIREBASE_PROJECT_ID")
@@ -63,12 +70,6 @@ class Settings(BaseSettings):
     # Storage settings
     cloud_storage_bucket: str = Field(default="", alias="CLOUD_STORAGE_BUCKET")
 
-    # Development overrides to prevent startup hangs
-    skip_external_services: bool | None = Field(
-        default=None, alias="SKIP_EXTERNAL_SERVICES"
-    )
-    startup_timeout: float = Field(default=15.0, alias="STARTUP_TIMEOUT")
-
     model_config = {
         "env_file": ".env",
         "env_file_encoding": "utf-8",
@@ -78,10 +79,6 @@ class Settings(BaseSettings):
     @model_validator(mode="after")
     def validate_environment_requirements(self) -> Self:
         """Validate environment-specific requirements and set development defaults."""
-        # Set development defaults for skip_external_services
-        if self.skip_external_services is None:
-            self.skip_external_services = self.environment.lower() == "development"
-
         # In development, warn about missing credentials but don't fail
         if self.environment.lower() == "development":
             missing_creds: list[str] = []
@@ -99,9 +96,12 @@ class Settings(BaseSettings):
                 missing_creds.append("GCP_PROJECT_ID")
 
             if missing_creds:
+                # Fixed G004: Using % formatting instead of f-strings in logging
                 logger.warning(
-                    f"⚠️ Development mode: Missing credentials {missing_creds}. "
-                    f"Using mock services (skip_external_services={self.skip_external_services})"
+                    "⚠️ Development mode: Missing credentials %s. "
+                    "Using mock services (skip_external_services=%s)",
+                    missing_creds,
+                    self.skip_external_services,
                 )
 
         # In production, require critical credentials
@@ -129,9 +129,7 @@ class Settings(BaseSettings):
                     f"Production environment requires: {missing_vars}. "
                     f"Set SKIP_EXTERNAL_SERVICES=true to use mock services."
                 )
-                raise ValueError(
-                    msg
-                )
+                raise ValueError(msg)
 
         return self
 
@@ -139,24 +137,33 @@ class Settings(BaseSettings):
         """Check if running in development mode."""
         return self.environment.lower() == "development"
 
+    def is_production(self) -> bool:
+        """Check if running in production mode."""
+        return self.environment.lower() == "production"
+
+    def is_testing(self) -> bool:
+        """Check if running in testing mode."""
+        return self.environment.lower() == "testing" or self.testing
+
     def should_use_mock_services(self) -> bool:
         """Check if mock services should be used instead of external services."""
         return self.skip_external_services or self.is_development()
 
     def get_startup_timeout(self) -> float:
         """Get the startup timeout in seconds."""
-        return self.startup_timeout
+        return float(self.startup_timeout)
 
     def log_configuration_summary(self) -> None:
         """Log configuration summary for debugging."""
         logger.info("🔧 CLARITY Configuration Summary:")
-        logger.info(f"   • Environment: {self.environment}")
-        logger.info(f"   • Debug mode: {self.debug}")
-        logger.info(f"   • Auth enabled: {self.enable_auth}")
-        logger.info(f"   • Skip external services: {self.skip_external_services}")
-        logger.info(f"   • Startup timeout: {self.startup_timeout}s")
-        logger.info(f"   • Firebase project: {self.firebase_project_id or 'Not set'}")
-        logger.info(f"   • GCP project: {self.gcp_project_id or 'Not set'}")
+        # Fixed G004: Using % formatting instead of f-strings in logging
+        logger.info("   • Environment: %s", self.environment)
+        logger.info("   • Debug mode: %s", self.debug)
+        logger.info("   • Auth enabled: %s", self.enable_auth)
+        logger.info("   • Skip external services: %s", self.skip_external_services)
+        logger.info("   • Startup timeout: %ss", self.startup_timeout)
+        logger.info("   • Firebase project: %s", self.firebase_project_id or "Not set")
+        logger.info("   • GCP project: %s", self.gcp_project_id or "Not set")
 
 
 @lru_cache

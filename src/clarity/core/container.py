@@ -166,10 +166,11 @@ class DependencyContainer:
             config_provider = self.get_config_provider()
             logger.info("✅ Configuration validated")
             logger.info(
-                f"   • Environment: {config_provider.get_setting('environment', 'unknown')}"
+                "   • Environment: %s",
+                config_provider.get_setting("environment", "unknown"),
             )
-            logger.info(f"   • Development mode: {config_provider.is_development()}")
-            logger.info(f"   • Auth enabled: {config_provider.is_auth_enabled()}")
+            logger.info("   • Development mode: %s", config_provider.is_development())
+            logger.info("   • Auth enabled: %s", config_provider.is_auth_enabled())
 
             # Skip external services in development or when explicitly configured
             if config_provider.should_skip_external_services():
@@ -183,7 +184,7 @@ class DependencyContainer:
             logger.info("🔐 Initializing authentication provider...")
             try:
                 auth_provider = self.get_auth_provider()
-                logger.info(f"   • Provider type: {type(auth_provider).__name__}")
+                logger.info("   • Provider type: %s", type(auth_provider).__name__)
 
                 if hasattr(auth_provider, "initialize"):
                     await asyncio.wait_for(auth_provider.initialize(), timeout=8.0)
@@ -198,8 +199,8 @@ class DependencyContainer:
                 self._instances[IAuthProvider] = MockAuthProvider()
                 logger.info("✅ Mock auth provider activated")
 
-            except Exception as e:
-                logger.exception(f"💥 Auth provider initialization failed: {e}")
+            except Exception:
+                logger.exception("💥 Auth provider initialization failed")
                 logger.warning("🔄 Falling back to mock auth provider...")
                 from clarity.auth.mock_auth import MockAuthProvider  # noqa: PLC0415
 
@@ -210,7 +211,7 @@ class DependencyContainer:
             logger.info("🗄️ Initializing health data repository...")
             try:
                 repository = self.get_health_data_repository()
-                logger.info(f"   • Repository type: {type(repository).__name__}")
+                logger.info("   • Repository type: %s", type(repository).__name__)
 
                 if hasattr(repository, "initialize"):
                     await asyncio.wait_for(repository.initialize(), timeout=8.0)
@@ -227,8 +228,8 @@ class DependencyContainer:
                 self._instances[IHealthDataRepository] = MockHealthDataRepository()
                 logger.info("✅ Mock repository activated")
 
-            except Exception as e:
-                logger.exception(f"💥 Repository initialization failed: {e}")
+            except Exception:
+                logger.exception("💥 Repository initialization failed")
                 logger.warning("🔄 Falling back to mock repository...")
                 from clarity.storage.mock_repository import (
                     MockHealthDataRepository,
@@ -239,18 +240,18 @@ class DependencyContainer:
 
             # Step 5: Startup completion
             elapsed = time.perf_counter() - startup_start
-            logger.info(f"🎉 Startup complete in {elapsed:.2f}s")
+            logger.info("🎉 Startup complete in %.2fs", elapsed)
 
             # Startup health check
             if elapsed > startup_timeout * 0.8:  # Warn if approaching timeout
-                logger.warning(f"⚠️ Slow startup detected ({elapsed:.2f}s)")
+                logger.warning("⚠️ Slow startup detected (%.2fs)", elapsed)
 
             # Application is ready
             yield
 
-        except Exception as e:
+        except Exception:
             elapsed = time.perf_counter() - startup_start
-            logger.exception(f"💥 STARTUP FAILED after {elapsed:.2f}s")
+            logger.exception("💥 STARTUP FAILED after %.2fs", elapsed)
             # Don't raise - allow app to start with minimal functionality
             logger.warning("🔄 Starting with minimal functionality...")
 
@@ -267,7 +268,7 @@ class DependencyContainer:
 
             except Exception as fallback_error:
                 logger.critical(
-                    f"💥 CRITICAL: Fallback initialization failed: {fallback_error}"
+                    "💥 CRITICAL: Fallback initialization failed: %s", fallback_error
                 )
                 msg = "Complete startup failure"
                 raise RuntimeError(msg) from fallback_error
@@ -283,16 +284,20 @@ class DependencyContainer:
                 if hasattr(instance, "cleanup"):
                     try:
                         await asyncio.wait_for(instance.cleanup(), timeout=3.0)
-                        logger.debug(f"✅ Cleaned up {service_type.__name__}")
+                        logger.debug("✅ Cleaned up %s", service_type.__name__)
                     except TimeoutError:
-                        logger.warning(f"⚠️ Cleanup timeout for {service_type.__name__}")
-                    except Exception as e:
                         logger.warning(
-                            f"⚠️ Cleanup error for {service_type.__name__}: {e}"
+                            "⚠️ Cleanup timeout for %s", service_type.__name__
+                        )
+                    except Exception as cleanup_error:
+                        logger.warning(
+                            "⚠️ Cleanup error for %s: %s",
+                            service_type.__name__,
+                            cleanup_error,
                         )
 
             cleanup_elapsed = time.perf_counter() - cleanup_start
-            logger.info(f"🏁 Shutdown complete in {cleanup_elapsed:.2f}s")
+            logger.info("🏁 Shutdown complete in %.2fs", cleanup_elapsed)
 
     def create_fastapi_app(self) -> FastAPI:
         """Factory method creates FastAPI app with all dependencies wired.
@@ -331,8 +336,10 @@ class DependencyContainer:
                 app.add_middleware(FirebaseAuthMiddleware, auth_provider=auth_provider)
                 logger.info("✅ Firebase authentication middleware enabled")
 
-            except Exception as e:
-                logger.warning(f"⚠️ Failed to enable auth middleware: {e}")
+            except Exception as middleware_error:
+                logger.warning(
+                    "⚠️ Failed to enable auth middleware: %s", middleware_error
+                )
                 logger.info("🔄 Continuing without auth middleware")
 
     def _configure_routes(self, app: FastAPI) -> None:
@@ -367,8 +374,8 @@ class DependencyContainer:
             )
             logger.info("✅ API routes configured")
 
-        except Exception as e:
-            logger.exception(f"💥 Failed to configure routes: {e}")
+        except Exception:
+            logger.exception("💥 Failed to configure routes")
             logger.info("🔄 API routes failed but root health endpoint still available")
 
 

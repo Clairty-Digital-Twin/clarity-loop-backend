@@ -93,7 +93,8 @@ class TestHealthMetricEntity:
         invalid_rates = [25, -10, 300, 500]  # Outside valid range 30-220
         for rate in invalid_rates:
             with pytest.raises(
-                ValueError, match="Input should be greater than or equal to"
+                ValueError,
+                match=r"Input should be (greater than or equal to|less than or equal to)",
             ):
                 BiometricData(
                     heart_rate=rate,

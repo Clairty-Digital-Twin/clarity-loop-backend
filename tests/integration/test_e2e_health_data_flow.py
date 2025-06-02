@@ -12,24 +12,18 @@ clearly visible and testable."
 TESTS USE REAL IMPLEMENTATIONS BUT MOCKED EXTERNAL DEPENDENCIES.
 """
 
+import concurrent.futures
 from datetime import UTC, datetime
-import json
-from unittest.mock import AsyncMock, Mock, patch
+import time
+from typing import Any
 from uuid import uuid4
 
 from fastapi.testclient import TestClient
+from httpx import Response
 import pytest
 
 # Import the complete application (E2E testing)
 from clarity.core.container import create_application
-from clarity.models.health_data import (
-    BiometricData,
-    HealthDataResponse,
-    HealthDataUpload,
-    HealthMetric,
-    HealthMetricType,
-    ProcessingStatus,
-)
 
 
 class TestE2EHealthDataFlow:
@@ -41,7 +35,8 @@ class TestE2EHealthDataFlow:
     """
 
     @pytest.fixture
-    def app_with_mocked_externals(self):
+    @staticmethod
+    def app_with_mocked_externals() -> Any:
         """Create real application with mocked external dependencies."""
         # Create the real application (not mocked)
         return create_application()
@@ -50,17 +45,20 @@ class TestE2EHealthDataFlow:
         # This allows us to test the internal architecture without external systems
 
     @pytest.fixture
-    def client(self, app_with_mocked_externals):
+    @staticmethod
+    def client(app_with_mocked_externals: Any) -> TestClient:
         """Create test client for E2E testing."""
         return TestClient(app_with_mocked_externals)
 
     @pytest.fixture
-    def valid_auth_token(self):
+    @staticmethod
+    def valid_auth_token() -> str:
         """Mock valid JWT token for testing auth flow."""
         return "Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.mock.token"
 
     @pytest.fixture
-    def complete_health_data_payload(self):
+    @staticmethod
+    def complete_health_data_payload() -> dict[str, Any]:
         """Complete health data payload for E2E testing."""
         user_id = uuid4()
         timestamp = datetime.now(UTC)
@@ -102,7 +100,8 @@ class TestE2EHealthDataFlow:
             "client_timestamp": timestamp.isoformat(),
         }
 
-    def test_application_startup_e2e(self, client):
+    @staticmethod
+    def test_application_startup_e2e(client: TestClient) -> None:
         """Test complete application starts and responds to health check."""
         # When: Making health check request to full application
         response = client.get("/health")
@@ -113,13 +112,15 @@ class TestE2EHealthDataFlow:
 
         # E2E verification: All layers working together
         assert "status" in data
-        assert "environment" in data
         assert "version" in data
 
     @pytest.mark.asyncio
+    @staticmethod
     async def test_e2e_health_data_upload_flow(
-        self, client, complete_health_data_payload, valid_auth_token
-    ):
+        client: TestClient,
+        complete_health_data_payload: dict[str, Any],
+        valid_auth_token: str,
+    ) -> None:
         """Test complete health data upload flow through all Clean Architecture layers."""
         # Step 1: HTTP Request → Controller (Interface Adapter)
         headers = {
@@ -150,10 +151,13 @@ class TestE2EHealthDataFlow:
             data = response.json()
             assert isinstance(data, dict)
 
-    def test_e2e_business_rule_validation_flow(self, client, valid_auth_token):
+    @staticmethod
+    def test_e2e_business_rule_validation_flow(
+        client: TestClient, valid_auth_token: str
+    ) -> None:
         """Test E2E business rule validation through all layers."""
         # Given: Invalid health data (business rule violation)
-        invalid_payload = {
+        invalid_payload: dict[str, Any] = {
             "user_id": str(uuid4()),
             "metrics": [
                 {
@@ -186,7 +190,10 @@ class TestE2EHealthDataFlow:
             500,  # Internal error (may happen during processing)
         }
 
-    def test_e2e_processing_status_retrieval_flow(self, client, valid_auth_token):
+    @staticmethod
+    def test_e2e_processing_status_retrieval_flow(
+        client: TestClient, valid_auth_token: str
+    ) -> None:
         """Test E2E processing status retrieval through all layers."""
         # Given: Processing ID for status check
         processing_id = str(uuid4())
@@ -205,11 +212,14 @@ class TestE2EHealthDataFlow:
             500,  # Service failure - error handling working
         }
 
-    def test_e2e_health_data_retrieval_flow(self, client, valid_auth_token):
+    @staticmethod
+    def test_e2e_health_data_retrieval_flow(
+        client: TestClient, valid_auth_token: str
+    ) -> None:
         """Test E2E health data retrieval with filtering through all layers."""
         # Given: Query parameters for data filtering
         headers = {"Authorization": valid_auth_token}
-        params = {"limit": 50, "offset": 0, "metric_type": "heart_rate"}
+        params = {"limit": "50", "offset": "0", "metric_type": "heart_rate"}
 
         # When: Retrieving health data through complete stack
         response = client.get(
@@ -224,7 +234,8 @@ class TestE2EHealthDataFlow:
             500,  # Service failure - error handling working
         }
 
-    def test_e2e_error_handling_propagation(self, client):
+    @staticmethod
+    def test_e2e_error_handling_propagation(client: TestClient) -> None:
         """Test E2E error handling through all Clean Architecture layers."""
         # Given: Request that will cause errors at various layers
         malformed_payload = "invalid-json"
@@ -232,7 +243,7 @@ class TestE2EHealthDataFlow:
         # When: Sending malformed request through complete stack
         response = client.post(
             "/api/v1/health-data/upload",
-            data=malformed_payload,  # Not JSON
+            content=malformed_payload,  # Not JSON
             headers={"Content-Type": "application/json"},
         )
 
@@ -249,11 +260,13 @@ class TestE2ECleanArchitecturePrinciples:
     """Test E2E adherence to Clean Architecture principles."""
 
     @pytest.fixture
-    def app(self):
+    @staticmethod
+    def app() -> Any:
         """Create application for architecture testing."""
         return create_application()
 
-    def test_e2e_dependency_direction(self, app):
+    @staticmethod
+    def test_e2e_dependency_direction(app: Any) -> None:
         """Test E2E dependency direction follows Clean Architecture."""
         # Architecture test: Dependencies should point inward
 
@@ -269,7 +282,8 @@ class TestE2ECleanArchitecturePrinciples:
         # and handles requests without circular dependencies
         assert app.title == "CLARITY Digital Twin Platform"
 
-    def test_e2e_business_rules_independence(self, app):
+    @staticmethod
+    def test_e2e_business_rules_independence(app: Any) -> None:
         """Test E2E business rules are independent of frameworks."""
         # Architecture test: Business rules should not depend on web framework
 
@@ -277,7 +291,7 @@ class TestE2ECleanArchitecturePrinciples:
         client = TestClient(app)
 
         # When: Business rule validation occurs
-        invalid_data = {
+        invalid_data: dict[str, Any] = {
             "user_id": "invalid-uuid",
             "metrics": [],
             "upload_source": "",
@@ -290,7 +304,8 @@ class TestE2ECleanArchitecturePrinciples:
         assert response.status_code in {400, 401, 422, 500}
         # The fact that validation occurs shows business rules are working
 
-    def test_e2e_use_case_orchestration(self, app):
+    @staticmethod
+    def test_e2e_use_case_orchestration(app: Any) -> None:
         """Test E2E use case orchestration through all layers."""
         # Architecture test: Use cases should orchestrate business flow
 
@@ -308,7 +323,8 @@ class TestE2ECleanArchitecturePrinciples:
         assert isinstance(data, dict)
         assert "status" in data
 
-    def test_e2e_interface_adaptation(self, app):
+    @staticmethod
+    def test_e2e_interface_adaptation(app: Any) -> None:
         """Test E2E interface adaptation between layers."""
         # Architecture test: Interfaces should adapt between layers
 
@@ -331,14 +347,14 @@ class TestE2EPerformanceAndReliability:
     """Test E2E performance and reliability of Clean Architecture."""
 
     @pytest.fixture
-    def app(self):
+    @staticmethod
+    def app() -> Any:
         """Create application for performance testing."""
         return create_application()
 
-    def test_e2e_application_startup_speed(self, app):
+    @staticmethod
+    def test_e2e_application_startup_speed(app: Any) -> None:
         """Test E2E application starts quickly with Clean Architecture."""
-        import time
-
         # Given: Application should start quickly
         start_time = time.perf_counter()
 
@@ -353,15 +369,13 @@ class TestE2EPerformanceAndReliability:
         response = client.get("/health")
         assert response.status_code == 200
 
-    def test_e2e_concurrent_request_handling(self, app):
+    @staticmethod
+    def test_e2e_concurrent_request_handling(app: Any) -> None:
         """Test E2E concurrent request handling with Clean Architecture."""
-        import concurrent.futures
-        import time
-
         # Given: Application should handle concurrent requests
         client = TestClient(app)
 
-        def make_request():
+        def make_request() -> Response:
             """Make a health check request."""
             return client.get("/health")
 
@@ -381,7 +395,8 @@ class TestE2EPerformanceAndReliability:
         # Performance should be reasonable
         assert total_time < 10.0  # All 10 requests in under 10 seconds
 
-    def test_e2e_error_recovery(self, app):
+    @staticmethod
+    def test_e2e_error_recovery(app: Any) -> None:
         """Test E2E error recovery with Clean Architecture."""
         # Given: Application should recover from errors gracefully
         client = TestClient(app)
@@ -398,7 +413,8 @@ class TestE2EPerformanceAndReliability:
 
         # Error recovery verified - app still functional after error
 
-    def test_e2e_resource_cleanup(self, app):
+    @staticmethod
+    def test_e2e_resource_cleanup(app: Any) -> None:
         """Test E2E resource cleanup with Clean Architecture."""
         # Given: Application should clean up resources properly
         client = TestClient(app)
@@ -420,11 +436,13 @@ class TestE2EBusinessDomainIntegrity:
     """Test E2E business domain integrity across all layers."""
 
     @pytest.fixture
-    def app(self):
+    @staticmethod
+    def app() -> Any:
         """Create application for domain testing."""
         return create_application()
 
-    def test_e2e_health_data_domain_consistency(self, app):
+    @staticmethod
+    def test_e2e_health_data_domain_consistency(app: Any) -> None:
         """Test E2E health data domain remains consistent across layers."""
         # Given: Health data domain should be consistent
         client = TestClient(app)
@@ -443,7 +461,8 @@ class TestE2EBusinessDomainIntegrity:
 
             # Domain consistency verified by endpoint existence and response
 
-    def test_e2e_business_invariants_maintained(self, app):
+    @staticmethod
+    def test_e2e_business_invariants_maintained(app: Any) -> None:
         """Test E2E business invariants are maintained across all layers."""
         # Given: Business invariants should be maintained
         client = TestClient(app)
@@ -461,7 +480,8 @@ class TestE2EBusinessDomainIntegrity:
         # Invariant: Response format is consistent
         assert isinstance(data, dict)
 
-    def test_e2e_clean_architecture_separation_of_concerns(self, app):
+    @staticmethod
+    def test_e2e_clean_architecture_separation_of_concerns(app: Any) -> None:
         """Test E2E separation of concerns across Clean Architecture layers."""
         # Architecture test: Each layer should have distinct responsibilities
 

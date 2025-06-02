@@ -62,9 +62,7 @@ def get_health_data_service() -> HealthDataService:
     """
     if _repository is None:
         msg = "Health data repository not injected. Container not initialized?"
-        raise RuntimeError(
-            msg
-        )
+        raise RuntimeError(msg)
 
     return HealthDataService(_repository)
 
@@ -258,12 +256,11 @@ async def delete_health_data(
 
 
 @router.get("/health")
-async def health_check(
-    service: HealthDataService = Depends(get_health_data_service),
-) -> dict[str, Any]:
+async def health_check() -> dict[str, Any]:
     """Health check endpoint for the health data service."""
     try:
-        # Basic health check
+        # Basic health check - don't depend on service dependencies
+        # This should work even if dependencies aren't injected
         return {
             "status": "healthy",
             "service": "health-data-api",

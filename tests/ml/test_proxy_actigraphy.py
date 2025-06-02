@@ -71,8 +71,7 @@ class TestStepCountData:
 class TestProxyActigraphyResult:
     """Test ProxyActigraphyResult model."""
 
-    
-    def test_result_creation() -> None:
+    def test_result_creation(self) -> None:
         """Test creating a valid ProxyActigraphyResult."""
         result = ProxyActigraphyResult(
             user_id="user123",
@@ -94,8 +93,7 @@ class TestProxyActigraphyResult:
         assert result.transformation_stats["input_length"] == 3
         assert result.nhanes_reference["year"] == 2025
 
-    
-    def test_result_quality_score_validation() -> None:
+    def test_result_quality_score_validation(self) -> None:
         """Test ProxyActigraphyResult quality score validation."""
         # Valid quality score
         result = ProxyActigraphyResult(

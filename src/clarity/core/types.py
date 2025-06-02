@@ -10,7 +10,7 @@ and maintainability.
 
 from collections.abc import Awaitable, Callable, Mapping, Sequence
 from datetime import datetime
-from typing import Any, Protocol, TypeAlias, TypeVar, Union
+from typing import Any, Protocol, TypeAlias, TypeVar
 
 import numpy as np
 from numpy.typing import NDArray

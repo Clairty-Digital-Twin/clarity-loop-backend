@@ -13,7 +13,7 @@ The exception hierarchy is designed to be:
 from typing import Any
 
 
-class ClarityBaseException(Exception):
+class ClarityBaseError(Exception):
     """Base exception for all Clarity Digital Twin specific errors.
 
     This base class provides common functionality for all custom exceptions

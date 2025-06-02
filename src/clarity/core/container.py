@@ -290,16 +290,28 @@ class DependencyContainer:
 
         return app
 
-    def _configure_middleware(self, _app: FastAPI) -> None:
+    def _configure_middleware(self, app: FastAPI) -> None:
         """Configure middleware with dependency injection."""
         config_provider = self.get_config_provider()
 
         # Add authentication middleware if enabled
         if config_provider.is_auth_enabled():
-            # TODO: Fix middleware registration type issue
-            # Temporarily disabled due to type checker incompatibility
-            logger.warning("⚠️ Auth middleware disabled due to type compatibility issue")
-            logger.info("🔄 Continuing without auth middleware")
+            from clarity.auth.firebase_auth import (  # noqa: PLC0415
+                FirebaseAuthMiddleware,
+            )
+
+            auth_provider = self.get_auth_provider()
+
+            # Instantiate the middleware with the app - this is the correct pattern for BaseHTTPMiddleware
+            FirebaseAuthMiddleware(
+                app=app,
+                auth_provider=auth_provider,
+                exempt_paths=["/", "/health", "/docs", "/openapi.json", "/redoc"],
+            )
+
+            logger.info("✅ Firebase authentication middleware enabled")
+        else:
+            logger.info("⚠️ Authentication disabled in configuration")
 
     def _configure_routes(self, app: FastAPI) -> None:
         """Configure API routes with dependency injection."""

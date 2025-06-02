@@ -49,22 +49,41 @@ class FirebaseAuthProvider(IAuthProvider):
     """
 
     def __init__(
-        self, credentials_path: str | None = None, project_id: str | None = None
+        self,
+        credentials_path: str | None = None,
+        project_id: str | None = None,
+        middleware_config: Any | None = None,
     ) -> None:
         """Initialize Firebase authentication provider.
 
         Args:
             credentials_path: Path to Firebase service account credentials
             project_id: Firebase project ID
+            middleware_config: Middleware configuration object
         """
         self.project_id = project_id
         self.credentials_path = credentials_path
         self._initialized = False
+        self._middleware_config = middleware_config
 
         # Token cache for performance optimization
         self._token_cache: dict[str, dict[str, Any]] = {}
         self._cache_lock = asyncio.Lock()
-        self._cache_ttl = 300  # 5 minutes
+
+        # Configure cache settings from middleware config
+        if middleware_config:
+            self._cache_enabled = middleware_config.cache_enabled
+            self._cache_ttl = middleware_config.cache_ttl_seconds
+            self._cache_max_size = middleware_config.cache_max_size
+            self._initialization_timeout = (
+                middleware_config.initialization_timeout_seconds
+            )
+        else:
+            # Default settings
+            self._cache_enabled = True
+            self._cache_ttl = 300  # 5 minutes
+            self._cache_max_size = 1000
+            self._initialization_timeout = 8
 
     async def verify_token(self, token: str) -> dict[str, Any] | None:
         """Verify Firebase authentication token.
@@ -79,10 +98,11 @@ class FirebaseAuthProvider(IAuthProvider):
             # Initialize Firebase if not already done
             await self._ensure_initialized()
 
-            # Check cache first
-            cached_user = await self._get_cached_user(token)
-            if cached_user:
-                return cached_user
+            # Check cache first (only if caching is enabled)
+            if self._cache_enabled:
+                cached_user = await self._get_cached_user(token)
+                if cached_user:
+                    return cached_user
 
             # Verify token with Firebase
             decoded_token = auth.verify_id_token(token)
@@ -110,8 +130,9 @@ class FirebaseAuthProvider(IAuthProvider):
                 ),
             }
 
-            # Cache the result
-            await self._cache_user(token, user_info)
+            # Cache the result (only if caching is enabled)
+            if self._cache_enabled:
+                await self._cache_user(token, user_info)
 
         except auth.ExpiredIdTokenError:
             logger.warning("Firebase token expired")
@@ -247,23 +268,47 @@ class FirebaseAuthProvider(IAuthProvider):
             return user_info
 
     async def _cache_user(self, token: str, user_info: dict[str, Any]) -> None:
-        """Cache user info for token."""
+        """Cache user info for token with size limits and TTL management."""
+        if not self._cache_enabled:
+            return
+
         async with self._cache_lock:
+            # Clean up expired entries first
+            await self._cleanup_expired_cache_entries()
+
+            # If cache is at max size, remove oldest entries
+            if len(self._token_cache) >= self._cache_max_size:
+                # Remove oldest entries (FIFO)
+                oldest_tokens = sorted(
+                    self._token_cache.items(), key=lambda x: x[1]["timestamp"]
+                )[: len(self._token_cache) - self._cache_max_size + 1]
+
+                for token_to_remove, _ in oldest_tokens:
+                    del self._token_cache[token_to_remove]
+
+            # Add new entry
             self._token_cache[token] = {
                 "user_info": user_info,
                 "timestamp": time.time(),
             }
 
-            # Clean up expired cache entries
-            current_time = time.time()
-            expired_tokens = [
-                t
-                for t, entry in self._token_cache.items()
-                if current_time - entry["timestamp"] > self._cache_ttl
-            ]
+    async def _cleanup_expired_cache_entries(self) -> None:
+        """Remove expired cache entries based on TTL."""
+        if not self._cache_enabled:
+            return
 
-            for expired_token in expired_tokens:
-                del self._token_cache[expired_token]
+        current_time = time.time()
+        expired_tokens = [
+            token
+            for token, entry in self._token_cache.items()
+            if current_time - entry["timestamp"] > self._cache_ttl
+        ]
+
+        for expired_token in expired_tokens:
+            del self._token_cache[expired_token]
+
+        if expired_tokens:
+            logger.debug("Cleaned up %d expired cache entries", len(expired_tokens))
 
 
 class FirebaseAuthMiddleware(BaseHTTPMiddleware):

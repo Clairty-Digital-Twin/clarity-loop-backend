@@ -28,7 +28,7 @@ class MiddlewareConfig:
     enabled: bool = True
 
     # Exempt paths (no authentication required)
-    exempt_paths: list[str] = None
+    exempt_paths: list[str] | None = None
 
     # Token cache settings
     cache_enabled: bool = True
@@ -211,6 +211,46 @@ class Settings(BaseSettings):
         logger.info("   • Startup timeout: %ss", self.startup_timeout)
         logger.info("   • Firebase project: %s", self.firebase_project_id or "Not set")
         logger.info("   • GCP project: %s", self.gcp_project_id or "Not set")
+
+    def get_middleware_config(self) -> MiddlewareConfig:
+        """Get middleware configuration based on current environment.
+
+        Returns environment-specific middleware configuration with appropriate
+        settings for development, testing, or production.
+        """
+        # Base configuration
+        config = MiddlewareConfig()
+
+        # Environment-specific adjustments
+        if self.is_development():
+            # Development mode: More permissive, detailed logging
+            config.enabled = self.enable_auth
+            config.graceful_degradation = True
+            config.fallback_to_mock = True
+            config.log_successful_auth = True  # More verbose in dev
+            config.cache_enabled = False  # Disable cache for easier debugging
+            config.initialization_timeout_seconds = 10  # Longer timeout for dev
+
+        elif self.is_testing():
+            # Testing mode: Mock auth, minimal logging
+            config.enabled = False  # Usually use mock auth in tests
+            config.graceful_degradation = True
+            config.fallback_to_mock = True
+            config.log_successful_auth = False
+            config.cache_enabled = False  # Disable cache for consistent tests
+            config.audit_logging = False  # Reduce noise in tests
+
+        elif self.is_production():
+            # Production mode: Strict settings, minimal logging
+            config.enabled = self.enable_auth
+            config.graceful_degradation = False  # Fail fast in production
+            config.fallback_to_mock = False  # No mock fallback in prod
+            config.log_successful_auth = False  # Only log failures
+            config.cache_enabled = True  # Enable caching for performance
+            config.cache_ttl_seconds = 600  # Longer cache in production
+            config.initialization_timeout_seconds = 5  # Shorter timeout
+
+        return config
 
 
 @lru_cache

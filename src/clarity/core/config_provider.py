@@ -10,7 +10,7 @@ from clarity.core.config import Settings
 from clarity.core.interfaces import IConfigProvider
 
 if TYPE_CHECKING:
-    from clarity.core.config import Settings
+    from clarity.core.config import MiddlewareConfig, Settings
 
 
 class ConfigProvider(IConfigProvider):
@@ -162,3 +162,38 @@ class ConfigProvider(IConfigProvider):
             "requests_per_minute": getattr(self._settings, "rate_limit_rpm", 100),
             "burst_size": getattr(self._settings, "rate_limit_burst", 10),
         }
+
+    def get_middleware_config(self) -> "MiddlewareConfig":
+        """Get environment-specific middleware configuration.
+
+        Returns:
+            MiddlewareConfig: Configuration object with environment-specific settings
+        """
+        return self._settings.get_middleware_config()
+
+    def get_auth_timeout_seconds(self) -> int:
+        """Get authentication timeout in seconds.
+
+        Returns:
+            int: Timeout for auth operations
+        """
+        middleware_config = self.get_middleware_config()
+        return middleware_config.initialization_timeout_seconds
+
+    def should_enable_auth_cache(self) -> bool:
+        """Check if authentication token caching should be enabled.
+
+        Returns:
+            bool: True if caching should be enabled
+        """
+        middleware_config = self.get_middleware_config()
+        return middleware_config.cache_enabled
+
+    def get_auth_cache_ttl(self) -> int:
+        """Get authentication cache TTL in seconds.
+
+        Returns:
+            int: Cache TTL in seconds
+        """
+        middleware_config = self.get_middleware_config()
+        return middleware_config.cache_ttl_seconds

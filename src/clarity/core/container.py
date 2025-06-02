@@ -70,14 +70,18 @@ class DependencyContainer:
     def _create_auth_provider(self) -> IAuthProvider:
         """Factory method for creating authentication provider."""
         config_provider = self.get_config_provider()
+        middleware_config = config_provider.get_middleware_config()
 
-        if config_provider.get_setting("enable_auth", default=False):
+        if middleware_config.enabled and config_provider.get_setting(
+            "enable_auth", default=False
+        ):
             from clarity.auth.firebase_auth import FirebaseAuthProvider  # noqa: PLC0415
 
             firebase_config = config_provider.get_firebase_config()
             return FirebaseAuthProvider(
                 credentials_path=firebase_config.get("credentials_path"),
                 project_id=firebase_config.get("project_id"),
+                middleware_config=middleware_config,
             )
 
         return MockAuthProvider()
@@ -134,25 +138,40 @@ class DependencyContainer:
     async def _initialize_auth_provider(self) -> None:
         """Initialize authentication provider with timeout and fallback."""
         logger.info("🔐 Initializing authentication provider...")
+
+        # Get middleware config for timeout settings
+        config_provider = self.get_config_provider()
+        middleware_config = config_provider.get_middleware_config()
+        timeout = middleware_config.initialization_timeout_seconds
+
         try:
             auth_provider = self.get_auth_provider()
             logger.info("   • Provider type: %s", type(auth_provider).__name__)
+            logger.info("   • Initialization timeout: %ss", timeout)
 
             if hasattr(auth_provider, "initialize"):
-                await asyncio.wait_for(auth_provider.initialize(), timeout=8.0)
+                await asyncio.wait_for(auth_provider.initialize(), timeout=timeout)
             logger.info("✅ Authentication provider ready")
 
         except TimeoutError:
-            logger.exception("💥 Auth provider initialization TIMEOUT (8s)")
-            logger.warning("🔄 Falling back to mock auth provider...")
-            self._instances[IAuthProvider] = MockAuthProvider()
-            logger.info("✅ Mock auth provider activated")
+            logger.exception("💥 Auth provider initialization TIMEOUT (%ss)", timeout)
+            if middleware_config.fallback_to_mock:
+                logger.warning("🔄 Falling back to mock auth provider...")
+                self._instances[IAuthProvider] = MockAuthProvider()
+                logger.info("✅ Mock auth provider activated")
+            else:
+                logger.error("❌ Auth fallback disabled - authentication unavailable")
 
         except Exception:
             logger.exception("💥 Auth provider initialization failed")
-            logger.warning("🔄 Falling back to mock auth provider...")
-            self._instances[IAuthProvider] = MockAuthProvider()
-            logger.info("✅ Mock auth provider activated")
+            if middleware_config.graceful_degradation:
+                logger.warning("🔄 Falling back to mock auth provider...")
+                self._instances[IAuthProvider] = MockAuthProvider()
+                logger.info("✅ Mock auth provider activated")
+            else:
+                logger.error(
+                    "❌ Graceful degradation disabled - authentication unavailable"
+                )
 
     async def _initialize_repository(self) -> None:
         """Initialize health data repository with timeout and fallback."""
@@ -293,9 +312,10 @@ class DependencyContainer:
     def _configure_middleware(self, app: FastAPI) -> None:
         """Configure middleware with dependency injection."""
         config_provider = self.get_config_provider()
+        middleware_config = config_provider.get_middleware_config()
 
         # Add authentication middleware if enabled
-        if config_provider.is_auth_enabled():
+        if middleware_config.enabled:
             from clarity.auth.firebase_auth import (  # noqa: PLC0415
                 FirebaseAuthMiddleware,
             )
@@ -306,12 +326,17 @@ class DependencyContainer:
             FirebaseAuthMiddleware(
                 app=app,
                 auth_provider=auth_provider,
-                exempt_paths=["/", "/health", "/docs", "/openapi.json", "/redoc"],
+                exempt_paths=middleware_config.exempt_paths,
             )
 
             logger.info("✅ Firebase authentication middleware enabled")
+            logger.info("   • Exempt paths: %s", middleware_config.exempt_paths)
+            logger.info("   • Cache enabled: %s", middleware_config.cache_enabled)
+            logger.info(
+                "   • Graceful degradation: %s", middleware_config.graceful_degradation
+            )
         else:
-            logger.info("⚠️ Authentication disabled in configuration")
+            logger.info("⚠️ Authentication middleware disabled in configuration")
 
     def _configure_routes(self, app: FastAPI) -> None:
         """Configure API routes with dependency injection."""

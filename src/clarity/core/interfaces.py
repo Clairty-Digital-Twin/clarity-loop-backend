@@ -14,6 +14,8 @@ if TYPE_CHECKING:
 
     from fastapi import Request, Response
 
+    from clarity.core.config import MiddlewareConfig
+
 from clarity.models.health_data import HealthMetric
 
 
@@ -189,3 +191,7 @@ class IConfigProvider(ABC):
     @abstractmethod
     def get_log_level(self) -> str:
         """Get logging level."""
+
+    @abstractmethod
+    def get_middleware_config(self) -> "MiddlewareConfig":
+        """Get environment-specific middleware configuration."""

@@ -120,8 +120,7 @@ class TestProxyActigraphyTransformer:
     """Test ProxyActigraphyTransformer functionality."""
 
     @patch('clarity.ml.proxy_actigraphy.lookup_norm_stats')
-    @staticmethod
-    def test_transformer_initialization(mock_lookup_stats: MagicMock) -> None:
+    def test_transformer_initialization(self, mock_lookup_stats: MagicMock) -> None:
         """Test transformer initialization."""
         mock_lookup_stats.return_value = (1.2, 0.8)
 
@@ -133,8 +132,7 @@ class TestProxyActigraphyTransformer:
         assert transformer.nhanes_std == 0.8
 
     @patch('clarity.ml.proxy_actigraphy.lookup_norm_stats')
-    @staticmethod
-    def test_transformer_initialization_with_params(mock_lookup_stats: MagicMock) -> None:
+    def test_transformer_initialization_with_params(self, mock_lookup_stats: MagicMock) -> None:
         """Test transformer initialization with custom parameters."""
         mock_lookup_stats.return_value = (1.15, 0.75)
 
@@ -148,8 +146,7 @@ class TestProxyActigraphyTransformer:
         assert transformer.nhanes_std == 0.75
 
     @patch('clarity.ml.proxy_actigraphy.lookup_norm_stats')
-    @staticmethod
-    def test_steps_to_movement_proxy(mock_lookup_stats: MagicMock) -> None:
+    def test_steps_to_movement_proxy(self, mock_lookup_stats: MagicMock) -> None:
         """Test step count to movement proxy conversion."""
         mock_lookup_stats.return_value = (1.2, 0.8)
 
@@ -167,8 +164,7 @@ class TestProxyActigraphyTransformer:
         assert all(-5.0 <= val <= 5.0 for val in proxy_values)
 
     @patch('clarity.ml.proxy_actigraphy.lookup_norm_stats')
-    @staticmethod
-    def test_transform_step_data_basic(mock_lookup_stats: MagicMock) -> None:
+    def test_transform_step_data_basic(self, mock_lookup_stats: MagicMock) -> None:
         """Test basic step data transformation."""
         mock_lookup_stats.return_value = (3.2, 1.8)  # Updated to match new NHANES stats
 
@@ -214,8 +210,7 @@ class TestProxyActigraphyTransformer:
         assert len(unique_values) >= 2  # Should have some variation from different step counts
 
     @patch('clarity.ml.proxy_actigraphy.lookup_norm_stats')
-    @staticmethod
-    def test_transform_with_caching(mock_lookup_stats: MagicMock) -> None:
+    def test_transform_with_caching(self, mock_lookup_stats: MagicMock) -> None:
         """Test transformation with caching enabled."""
         mock_lookup_stats.return_value = (1.2, 0.8)
 
@@ -240,8 +235,7 @@ class TestProxyActigraphyTransformer:
         assert result1.quality_score == result2.quality_score
 
     @patch('clarity.ml.proxy_actigraphy.lookup_norm_stats')
-    @staticmethod
-    def test_transform_without_caching(mock_lookup_stats: MagicMock) -> None:
+    def test_transform_without_caching(self, mock_lookup_stats: MagicMock) -> None:
         """Test transformation with caching disabled."""
         mock_lookup_stats.return_value = (1.2, 0.8)
 
@@ -259,8 +253,7 @@ class TestProxyActigraphyTransformer:
         assert isinstance(result, ProxyActigraphyResult)
 
     @patch('clarity.ml.proxy_actigraphy.lookup_norm_stats')
-    @staticmethod
-    def test_transform_large_dataset(mock_lookup_stats: MagicMock) -> None:
+    def test_transform_large_dataset(self, mock_lookup_stats: MagicMock) -> None:
         """Test transformation with large dataset."""
         mock_lookup_stats.return_value = (3.2, 1.8)  # Updated to match new NHANES stats
 
@@ -297,8 +290,7 @@ class TestProxyActigraphyTransformer:
         assert all(-5.0 <= val <= 5.0 for val in result.vector)
 
     @patch('clarity.ml.proxy_actigraphy.lookup_norm_stats')
-    @staticmethod
-    def test_transform_with_padding(mock_lookup_stats: MagicMock) -> None:
+    def test_transform_with_padding(self, mock_lookup_stats: MagicMock) -> None:
         """Test transformation with small dataset that requires padding."""
         mock_lookup_stats.return_value = (3.2, 1.8)  # Updated to match new NHANES stats
 
@@ -351,8 +343,7 @@ class TestProxyActigraphyTransformer:
         assert stats["padding_percentage"] > 99.0  # Almost all padding
 
     @patch('clarity.ml.proxy_actigraphy.lookup_norm_stats')
-    @staticmethod
-    def test_quality_score_calculation(mock_lookup_stats: MagicMock) -> None:
+    def test_quality_score_calculation(self, mock_lookup_stats: MagicMock) -> None:
         """Test quality score calculation."""
         mock_lookup_stats.return_value = (1.2, 0.8)
 
@@ -380,8 +371,7 @@ class TestProxyActigraphyTransformer:
         assert "total_steps" in stats
 
     @patch('clarity.ml.proxy_actigraphy.lookup_norm_stats')
-    @staticmethod
-    def test_transform_with_zeros(mock_lookup_stats: MagicMock) -> None:
+    def test_transform_with_zeros(self, mock_lookup_stats: MagicMock) -> None:
         """Test transformation with zero step counts."""
         mock_lookup_stats.return_value = (1.2, 0.8)
 
@@ -404,8 +394,7 @@ class TestProxyActigraphyTransformer:
         assert result.transformation_stats["total_steps"] > 0.0  # Padding adds non-zero values
 
     @patch('clarity.ml.proxy_actigraphy.lookup_norm_stats')
-    @staticmethod
-    def test_transform_with_extreme_values(mock_lookup_stats: MagicMock) -> None:
+    def test_transform_with_extreme_values(self, mock_lookup_stats: MagicMock) -> None:
         """Test transformation with extreme step values."""
         mock_lookup_stats.return_value = (1.2, 0.8)
 
@@ -430,8 +419,7 @@ class TestHelperFunctions:
     """Test helper functions and utilities."""
 
     @patch('clarity.ml.proxy_actigraphy.lookup_norm_stats')
-    @staticmethod
-    def test_create_proxy_actigraphy_transformer(mock_lookup_stats: MagicMock) -> None:
+    def test_create_proxy_actigraphy_transformer(self, mock_lookup_stats: MagicMock) -> None:
         """Test transformer factory function."""
         mock_lookup_stats.return_value = (1.2, 0.8)
 
@@ -441,8 +429,7 @@ class TestHelperFunctions:
         assert transformer.cache_enabled is True
 
     @patch('clarity.ml.proxy_actigraphy.lookup_norm_stats')
-    @staticmethod
-    def test_create_transformer_with_params(mock_lookup_stats: MagicMock) -> None:
+    def test_create_transformer_with_params(self, mock_lookup_stats: MagicMock) -> None:
         """Test transformer factory with custom parameters."""
         mock_lookup_stats.return_value = (1.15, 0.75)
 
@@ -535,8 +522,7 @@ class TestIntegrationProxyActigraphy:
     """Integration tests for proxy actigraphy functionality."""
 
     @patch('clarity.ml.proxy_actigraphy.lookup_norm_stats')
-    @staticmethod
-    def test_end_to_end_transformation(mock_lookup_stats: MagicMock) -> None:
+    def test_end_to_end_transformation(self, mock_lookup_stats: MagicMock) -> None:
         """Test complete end-to-end transformation workflow."""
         mock_lookup_stats.return_value = (1.2, 0.8)
 
@@ -615,8 +601,7 @@ class TestEdgeCasesProxyActigraphy:
     """Test edge cases and boundary conditions."""
 
     @patch('clarity.ml.proxy_actigraphy.lookup_norm_stats')
-    @staticmethod
-    def test_single_data_point(mock_lookup_stats: MagicMock) -> None:
+    def test_single_data_point(self, mock_lookup_stats: MagicMock) -> None:
         """Test transformation with single data point."""
         mock_lookup_stats.return_value = (1.2, 0.8)
 
@@ -639,8 +624,7 @@ class TestEdgeCasesProxyActigraphy:
         assert result.transformation_stats["output_length"] == 10080
 
     @patch('clarity.ml.proxy_actigraphy.lookup_norm_stats')
-    @staticmethod
-    def test_negative_step_counts(mock_lookup_stats: MagicMock) -> None:
+    def test_negative_step_counts(self, mock_lookup_stats: MagicMock) -> None:
         """Test transformation handles negative step counts."""
         mock_lookup_stats.return_value = (1.2, 0.8)
 

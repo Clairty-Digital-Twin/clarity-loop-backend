@@ -154,6 +154,10 @@ class IConfigProvider(ABC):
         """Check if running in development mode."""
 
     @abstractmethod
+    def should_skip_external_services(self) -> bool:
+        """Check if external services should be skipped during startup."""
+
+    @abstractmethod
     def is_auth_enabled(self) -> bool:
         """Check if authentication is enabled."""
 

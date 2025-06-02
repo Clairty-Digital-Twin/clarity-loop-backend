@@ -354,13 +354,12 @@ class DependencyContainer:
 
         except Exception as e:
             logger.error(f"💥 Failed to configure routes: {e}")
+            logger.info("🔄 Creating minimal health route...")
 
-            # Create minimal health check route
-
-            @app.get("/health")
-            async def health_check():
-                return {"status": "ok", "message": "Minimal functionality active"}
-
+            # Simple health check without complex types
+            app.get("/health")(
+                lambda: {"status": "ok", "message": "Minimal functionality"}
+            )
             logger.info("✅ Minimal health route created")
 
 

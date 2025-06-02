@@ -45,6 +45,22 @@ class ConfigProvider(IConfigProvider):
         """
         return self._settings.environment.lower() == "development"
 
+    def should_skip_external_services(self) -> bool:
+        """Check if external services should be skipped.
+
+        Skip external services in development mode or when explicitly configured.
+        This prevents startup hangs when Firebase/Firestore credentials are missing.
+
+        Returns:
+            True if external services should be skipped, False otherwise
+        """
+        # Skip in development mode by default
+        if self.is_development():
+            return bool(self.get_setting("skip_external_services", True))
+
+        # In production, only skip if explicitly requested
+        return bool(self.get_setting("skip_external_services", False))
+
     def get_database_url(self) -> str:
         """Get database connection URL.
 

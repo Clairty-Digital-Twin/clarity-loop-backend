@@ -303,7 +303,7 @@ class PATModelService(IMLModelService):
         depression_risk: float,
     ) -> list[str]:
         """Generate clinical insights based on analysis results."""
-        insights = []
+        insights: list[str] = []
 
         # Sleep efficiency insights
         if sleep_efficiency >= 85:

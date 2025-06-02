@@ -283,8 +283,6 @@ class FirestoreClient:
             msg = f"Document creation failed: {e}"
             raise FirestoreError(msg) from e
         else:
-            return deleted_count
-        else:
             logger.info("Document created: %s/%s", collection, created_id)
             return created_id
 
@@ -334,8 +332,6 @@ class FirestoreClient:
             logger.exception("Failed to get document %s/%s", collection, document_id)
             msg = f"Document retrieval failed: {e}"
             raise FirestoreError(msg) from e
-        else:
-            return deleted_count
         else:
             logger.debug("Document retrieved: %s/%s", collection, document_id)
             return result_data
@@ -394,8 +390,6 @@ class FirestoreClient:
             msg = f"Document update failed: {e}"
             raise FirestoreError(msg) from e
         else:
-            return deleted_count
-        else:
             logger.info("Document updated: %s/%s", collection, document_id)
             return True
 
@@ -428,8 +422,6 @@ class FirestoreClient:
             logger.exception("Failed to delete document %s/%s", collection, document_id)
             msg = f"Document deletion failed: {e}"
             raise FirestoreError(msg) from e
-        else:
-            return deleted_count
         else:
             logger.info("Document deleted: %s/%s", collection, document_id)
             return True
@@ -489,8 +481,6 @@ class FirestoreClient:
             logger.exception("Failed to store health data")
             msg = f"Health data storage failed: {e}"
             raise FirestoreError(msg) from e
-        else:
-            return deleted_count
         else:
             logger.info("Health data stored with processing ID: %s", processing_id)
             return processing_id
@@ -611,13 +601,10 @@ class FirestoreClient:
                 },
             )
 
-
         except Exception as e:
             logger.exception("Failed to query documents in %s", collection)
             msg = f"Query operation failed: {e}"
             raise FirestoreError(msg) from e
-        else:
-            return deleted_count
         else:
             return results
 

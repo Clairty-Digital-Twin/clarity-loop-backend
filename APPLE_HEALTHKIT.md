@@ -488,90 +488,128 @@ async def ingest_stub(service: IngestionService = Depends(get_service)):
 
 ⸻
 
-### 5. End-to-End CI test (tests/e2e_healthkit_stub_test.py)
+## 5. End-to-End CI test (tests/e2e_healthkit_stub_test.py)
 
-import httpx, asyncio, pytest
+    import httpx, asyncio, pytest
+    
+    pytestmark = pytest.mark.asyncio
+    BASE = "http://localhost:8000"   # or live staging URL
+    
+    async def test_stub_flow():
+        async with httpx.AsyncClient(base_url=BASE) as client:
+            r = await client.post("/health-data/stub")        # new route
+            assert r.status_code == 200
+            pid = r.json()["processing_id"]
+    
+            # poll status up to 60 s
+            for _ in range(30):
+                s = await client.get(f"/processing/{pid}")
+                if s.json()["status"] == "COMPLETED":
+                    break
+                await asyncio.sleep(2)
+            else:
+                raise AssertionError("Processing never completed")
+    
+            # fetch final insight
+            insight = await client.get(f"/insights/{pid}")
+            assert insight.status_code == 200
+            assert "summary" in insight.json()
 
-pytestmark = pytest.mark.asyncio
-BASE = "<http://localhost:8000>"   # or live staging URL
+* Add this test to your GitHub Actions workflow so every push validates the pipeline.
 
-async def test_stub_flow():
+## 6. How to swap in real HealthKit adapter later
+
+| Step | Action | Surface touched? |
+|------|--------|----------------|
+| 1 | Build RealHealthKitAdapter that parses Apple's export.xml or watchOS background deliveries and returns HealthDataUpload | Only new file in clarity/adapters/ |
+| 2 | Register adapter in IngestionService.adapters as "apple_health" | 1-line change |
+| 3 | Update mobile app to POST /health-data with source=apple_health and raw payload | Front-end only |
+| 4 | Update CI to use real sample export (keep stub test as a smoke test) | tests/ folder |
 
 Because every downstream stage—Pub/Sub, analysis, PAT, Gemini—already consumes the canonical HealthDataUpload, nothing else changes.
 
 ⸻
 
-### 7. Generating richer stub data (optional)
+## 7. Generating richer stub data (optional)
 
 If you need day-level sequences for PAT:
 
-1. Add a helper generate_activity_sequence(days:int=7) -> list[int] that returns 10 080 step counts (minute-resolution).
-2. Store it in payload["activity_sequence"] so the PAT service can test patch embeddings, etc.
-3. Keep sequence lengths realistic (0 – 300 steps/min).
+* Add a helper generate_activity_sequence(days:int=7) -> list[int] that returns 10 080 step counts (minute-resolution).
+* Store it in payload["activity_sequence"] so the PAT service can test patch embeddings, etc.
+* Keep sequence lengths realistic (0 – 300 steps/min).
 
 ⸻
 
-### 8. Documentation snippet (paste into /docs/apple_health_stub.md)
+## 8. Documentation snippet (paste into /docs/apple_health_stub.md)
 
-#### Apple HealthKit Stub Adapter (v1)
+### Apple HealthKit Stub Adapter (v1)
 
-*Purpose* – enable end-to-end pipeline validation without real HealthKit exports.
+#### Purpose
 
-*How it works*
+Enable end-to-end pipeline validation without real HealthKit exports.
 
-1. FastAPI route __POST /health-data/stub__ triggers `AppleHealthStubAdapter`.
-2. Adapter synthesizes realistic metrics (HR, steps, sleep) and returns a `HealthDataUpload`.
-3. Upload is persisted (GCS) and `analysis-tasks` Pub/Sub message is published.
-4. Analysis service runs PAT + statistic rules → Fusion JSON → Gemini narrative.
-5. Narrative stored in Firestore; mobile app listener displays “stub” insight.
+#### How it works
 
-*Key files*
+* FastAPI route __POST /health-data/stub__ triggers `AppleHealthStubAdapter`.
+* Adapter synthesizes realistic metrics (HR, steps, sleep) and returns a `HealthDataUpload`.
+* Upload is persisted (GCS) and `analysis-tasks` Pub/Sub message is published.
+* Analysis service runs PAT + statistic rules → Fusion JSON → Gemini narrative.
+* Narrative stored in Firestore; mobile app listener displays “stub” insight.
 
-- `clarity/adapters/apple_health_stub.py` – data generator
-- `samples/healthkit_stub_batch.json`     – example output
-- `tests/e2e_healthkit_stub_test.py`      – CI smoke test
+#### Key files
 
-*Replacing with real adapter*
-Swap `"apple_health_stub"` with `"apple_health"` once `RealHealthKitAdapter`
-implements parsing of:
+* `clarity/adapters/apple_health_stub.py` – data generator
+* `samples/healthkit_stub_batch.json`     – example output
+* `tests/e2e_healthkit_stub_test.py`      – CI smoke test
 
-- `export.xml` (manual user export) __or__
-- HK background deliveries via App Extension (future).
+#### Replacing with real adapter
 
-*No other backend service requires modification.*
+Swap `"apple_health_stub"` with `"apple_health"` once `RealHealthKitAdapter` implements parsing of:
+
+* `export.xml` (manual user export) __or__
+* HK background deliveries via App Extension (future).
+
+__No other backend service requires modification.__
 
 ⸻
 
-9 . Run it locally (developer cheat-sheet)
+## 9. Run it locally (developer cheat-sheet)
 
-# 1. Boot local Firestore emulator, Pub/Sub emulator (optional)
-
+```bash
+# Boot local Firestore emulator, Pub/Sub emulator (optional)
 gcloud emulators pubsub start --project test-proj &
 gcloud emulators firestore start --host-port=localhost:8080 &
 export PUBSUB_EMULATOR_HOST=localhost:8085
 export FIRESTORE_EMULATOR_HOST=localhost:8080
 
-# 2. Start FastAPI server
+```
 
+```bash
+# Start FastAPI server
 uvicorn clarity.web.main:app --reload
+```
 
-# 3. Trigger stub upload
+```bash
+# Trigger stub upload
+curl -X POST http://localhost:8000/health-data/stub
+```
 
-curl -X POST <http://localhost:8000/health-data/stub>
-
-# 4. Watch logs of analysis worker (if running)
-
+```bash
+# Watch logs of analysis worker (if running)
 docker compose logs -f analysis
+```
 
-# 5. View Firestore document
-
+```bash
+# View Firestore document
 python scripts/print_firestore_insights.py | jq
+```
 
-✅  Deliverable checklist for you
- • Copy folder layout & code snippets into repo.
- • Commit apple_health_stub.md in /docs/.
- • Add the new FastAPI route and register the adapter.
- • Ensure Cloud Run analysis worker detects stub uploads (same Pub/Sub).
- • Push; verify GitHub Action passes (e2e_healthkit_stub_test.py).
+### Deliverable checklist
+
+* Copy folder layout & code snippets into repo.
+* Commit apple_health_stub.md in /docs/.
+* Add the new FastAPI route and register the adapter.
+* Ensure Cloud Run analysis worker detects stub uploads (same Pub/Sub).
+* Push; verify GitHub Action passes (e2e_healthkit_stub_test.py).
 
 Once those green-checks light up, you can develop PAT analytics and Gemini prompts with confidence—knowing real HealthKit data can drop in later by swapping adapters, no pipeline surgery required.

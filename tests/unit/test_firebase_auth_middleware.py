@@ -638,7 +638,7 @@ class TestFirebaseAuthMiddleware:
         request.url.path = "/api/protected"
         request.headers = {}  # Missing Authorization header
 
-        async def call_next(_: Request) -> JSONResponse:
+        async def call_next(_: Request) -> JSONResponse:  # noqa: RUF029
             return JSONResponse({"status": "should_not_reach"})
 
         response = await middleware.dispatch(request, call_next)

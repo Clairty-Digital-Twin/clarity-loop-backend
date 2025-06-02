@@ -266,6 +266,9 @@ class AuthenticationService:
             if user_data is None:
                 _raise_user_not_found_in_db()
 
+            # Type narrowing: user_data is guaranteed to be non-None after exception check
+            user_data = cast("dict[str, Any]", user_data)  # Safe after None check above
+
             # Check email verification requirement
             if (
                 not user_record.email_verified

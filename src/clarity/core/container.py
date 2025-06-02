@@ -111,15 +111,23 @@ class DependencyContainer:
 
     def get_config_provider(self) -> IConfigProvider:
         """Get configuration provider (Singleton pattern)."""
-        return cast("IConfigProvider", self.get_instance(IConfigProvider))
+        if IConfigProvider not in self._instances:
+            self._instances[IConfigProvider] = self._factories[IConfigProvider]()
+        return cast("IConfigProvider", self._instances[IConfigProvider])
 
     def get_auth_provider(self) -> IAuthProvider:
         """Get authentication provider (Singleton pattern)."""
-        return cast("IAuthProvider", self.get_instance(IAuthProvider))
+        if IAuthProvider not in self._instances:
+            self._instances[IAuthProvider] = self._factories[IAuthProvider]()
+        return cast("IAuthProvider", self._instances[IAuthProvider])
 
     def get_health_data_repository(self) -> IHealthDataRepository:
         """Get health data repository (Singleton pattern)."""
-        return cast("IHealthDataRepository", self.get_instance(IHealthDataRepository))
+        if IHealthDataRepository not in self._instances:
+            self._instances[IHealthDataRepository] = self._factories[
+                IHealthDataRepository
+            ]()
+        return cast("IHealthDataRepository", self._instances[IHealthDataRepository])
 
     @asynccontextmanager
     async def app_lifespan(self, _app: FastAPI) -> AsyncGenerator[None, None]:
@@ -151,13 +159,18 @@ class DependencyContainer:
         This is the main Factory Pattern implementation that creates
         the complete application with proper dependency injection.
         """
-        # Create FastAPI application with lifespan
+        # Create FastAPI application WITHOUT lifespan for now to avoid hanging
         app = FastAPI(
             title="CLARITY Digital Twin Platform",
             description="Healthcare AI platform built with Clean Architecture",
             version="1.0.0",
-            lifespan=self.app_lifespan,
+            # lifespan=self.app_lifespan,  # Commented out to avoid async hanging
         )
+
+        # Setup logging synchronously
+        from clarity.core.logging_config import setup_logging  # noqa: PLC0415
+
+        setup_logging()
 
         # Wire middleware (Decorator Pattern)
         self._configure_middleware(app)

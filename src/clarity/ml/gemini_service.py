@@ -88,11 +88,13 @@ class GeminiService:
     def _generate_placeholder_narrative(analysis_results: dict[str, Any]) -> str:
         """Generate a placeholder narrative (to be replaced with Gemini API)."""
         sleep_efficiency = analysis_results.get("sleep_efficiency", 0)
-        circadian_score = analysis_results.get("circadian_rhythm_score", 0)
+                circadian_score = analysis_results.get("circadian_rhythm_score", 0)
 
-        return f"""Based on your recent health data analysis, your sleep efficiency is {sleep_efficiency:.1f}% 
-        and your circadian rhythm regularity score is {circadian_score:.2f}. This suggests a generally 
-        healthy sleep pattern with room for optimization in your daily routine consistency."""
+        return (
+            f"Based on your recent health data analysis, your sleep efficiency is {sleep_efficiency:.1f}% "
+            f"and your circadian rhythm regularity score is {circadian_score:.2f}. This suggests a generally "
+            f"healthy sleep pattern with room for optimization in your daily routine consistency."
+        )
 
     def _extract_key_insights(self, analysis_results: dict[str, Any]) -> list[str]:
         """Extract key insights from analysis results."""

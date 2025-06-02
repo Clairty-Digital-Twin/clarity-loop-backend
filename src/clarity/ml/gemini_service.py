@@ -37,7 +37,9 @@ class HealthInsightResponse(BaseModel):
 class GeminiService:
     """Service for generating health insights using Vertex AI Gemini."""
 
-    def __init__(self, project_id: str | None = None, location: str = "us-central1"):
+    def __init__(
+        self, project_id: str | None = None, location: str = "us-central1"
+    ) -> None:
         self.project_id = project_id
         self.location = location
         self.client = None

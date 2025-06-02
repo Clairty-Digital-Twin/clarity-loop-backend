@@ -62,8 +62,8 @@ class GeminiService:
     ) -> None:
         self.project_id = project_id
         self.location = location
-        self.client = None
-        self.model = None
+        self.client: Any = None
+        self.model: GenerativeModel | None = None
         self.is_initialized = False
 
     @staticmethod
@@ -98,11 +98,11 @@ class GeminiService:
         if not self.is_initialized:
             await self.initialize()
 
-        try:
-            # Ensure model is initialized
-            if self.model is None:
-                self._raise_model_not_initialized()
+        # Ensure model is available after initialization
+        if self.model is None:
+            raise RuntimeError(GEMINI_NOT_INITIALIZED_MSG)
 
+        try:
             # Create health-focused prompt for Gemini
             prompt = self._create_health_insight_prompt(request)
 

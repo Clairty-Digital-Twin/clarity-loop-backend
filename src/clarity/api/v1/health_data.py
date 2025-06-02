@@ -108,9 +108,6 @@ async def upload_health_data(
         # Process health data
         response = await service.process_health_data(health_data)
 
-        logger.info("Health data uploaded successfully: %s", response.processing_id)
-        return response
-
     except HealthDataServiceError as e:
         logger.exception("Health data service error")
         raise HTTPException(
@@ -123,6 +120,9 @@ async def upload_health_data(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Internal server error",
         ) from None
+    else:
+        logger.info("Health data uploaded successfully: %s", response.processing_id)
+        return response
 
 
 @router.get(
@@ -153,8 +153,6 @@ async def get_processing_status(
                 status_code=status.HTTP_404_NOT_FOUND, detail="Processing job not found"
             )
 
-        return status_info
-
     except HealthDataServiceError as e:
         logger.exception("Health data service error")
         raise HTTPException(
@@ -166,6 +164,8 @@ async def get_processing_status(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Internal server error",
         ) from None
+    else:
+        return status_info
 
 
 @router.get("/health-data")
@@ -194,13 +194,6 @@ async def get_health_data(
             end_date=end_date,
         )
 
-        logger.info(
-            "Retrieved %s health data records for user: %s",
-            len(health_data.get("metrics", [])),
-            current_user.user_id,
-        )
-        return health_data
-
     except HealthDataServiceError as e:
         logger.exception("Health data service error")
         raise HTTPException(
@@ -212,6 +205,13 @@ async def get_health_data(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Internal server error",
         ) from None
+    else:
+        logger.info(
+            "Retrieved %s health data records for user: %s",
+            len(health_data.get("metrics", [])),
+            current_user.user_id,
+        )
+        return health_data
 
 
 @router.delete("/health-data/{processing_id}")

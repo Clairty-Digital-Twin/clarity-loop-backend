@@ -162,12 +162,12 @@ class HealthDataService:
                 msg = f"Processing job {processing_id} not found"
                 raise DataNotFoundError(msg)
 
-            return status_info
-
         except Exception as e:
             self.logger.exception("Error retrieving processing status")
             msg = f"Failed to retrieve processing status: {e!s}"
             raise HealthDataServiceError(msg) from e
+        else:
+            return status_info
 
     async def get_user_health_data(
         self,
@@ -216,12 +216,12 @@ class HealthDataService:
                 },
             )
 
-            return health_data
-
         except Exception as e:
             self.logger.exception("Error retrieving health data")
             msg = f"Failed to retrieve health data: {e!s}"
             raise HealthDataServiceError(msg) from e
+        else:
+            return health_data
 
     async def delete_health_data(
         self, user_id: str, processing_id: str | None = None
@@ -253,12 +253,12 @@ class HealthDataService:
                     },
                 )
 
-            return success
-
         except Exception as e:
             self.logger.exception("Error during data deletion")
             msg = f"Failed to delete health data: {e!s}"
             raise HealthDataServiceError(msg) from e
+        else:
+            return success
 
     def _validate_metric_business_rules(self, metric: HealthMetric) -> bool:
         """Validate health metric against business rules."""

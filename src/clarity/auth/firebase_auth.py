@@ -23,7 +23,7 @@ from firebase_admin import auth, credentials
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.responses import JSONResponse, Response
 
-from clarity.auth.models import AuthError, Permission, TokenInfo, UserContext, UserRole
+from clarity.auth.models import AuthError, Permission, UserContext, UserRole
 from clarity.core.interfaces import IAuthProvider
 
 # Configure logger
@@ -106,8 +106,6 @@ class FirebaseAuthProvider(IAuthProvider):
             # Cache the result
             await self._cache_user(token, user_info)
 
-            return user_info
-
         except auth.ExpiredIdTokenError:
             logger.warning("Firebase token expired")
             return None
@@ -120,6 +118,8 @@ class FirebaseAuthProvider(IAuthProvider):
         except Exception as e:
             logger.exception("Firebase token verification failed: %s", e)
             return None
+        else:
+            return user_info
 
     async def get_user_info(self, user_id: str) -> dict[str, Any] | None:
         """Get user information by ID from Firebase.

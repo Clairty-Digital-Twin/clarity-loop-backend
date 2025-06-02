@@ -12,7 +12,7 @@ TESTS USE MOCKED USE CASES BUT REAL FASTAPI FRAMEWORK.
 """
 
 from datetime import UTC, datetime
-from typing import Any, Dict
+from typing import Any
 from unittest.mock import Mock
 from uuid import uuid4
 

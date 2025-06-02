@@ -48,15 +48,12 @@ class GeminiService:
     async def initialize(self) -> None:
         """Initialize the Vertex AI Gemini client."""
         try:
-            # TODO: Initialize Vertex AI client
-            # from google.cloud import aiplatform
-            # aiplatform.init(project=self.project_id, location=self.location)
-
+            # TODO: Initialize Vertex AI client when ready for production
             self.is_initialized = True
             logger.info("Gemini service initialized successfully")
 
         except Exception as e:
-            logger.error(f"Failed to initialize Gemini service: {e}")
+            logger.exception("Failed to initialize Gemini service: %s", e)
             raise
 
     async def generate_health_insights(

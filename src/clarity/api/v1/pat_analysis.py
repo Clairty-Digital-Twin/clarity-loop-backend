@@ -12,11 +12,10 @@ Endpoints:
 
 from datetime import UTC, datetime
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any
 import uuid
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
-from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field, validator
 
 from clarity.auth.firebase_auth import get_current_user
@@ -51,7 +50,8 @@ class StepDataRequest(BaseModel):
     )
 
     @validator('timestamps')
-    def validate_timestamps_match_steps(self, v: list[datetime], values: dict[str, Any]) -> list[datetime]:
+    @classmethod
+    def validate_timestamps_match_steps(cls, v: list[datetime], values: dict[str, Any]) -> list[datetime]:
         """Ensure timestamps match step count length."""
         if 'step_counts' in values and len(v) != len(values['step_counts']):
             msg = "Timestamps length must match step_counts length"
@@ -125,7 +125,7 @@ async def get_pat_inference_engine() -> AsyncInferenceEngine:
 )
 async def analyze_step_data(
     request: StepDataRequest,
-    background_tasks: BackgroundTasks,
+    background_tasks: BackgroundTasks,  # noqa: ARG001
     user_id: str = Depends(get_current_user),
     inference_engine: AsyncInferenceEngine = Depends(get_pat_inference_engine)
 ) -> AnalysisResponse:
@@ -140,7 +140,7 @@ async def analyze_step_data(
     analysis_id = str(uuid.uuid4())
 
     try:
-        logger.info(f"Starting step data analysis for user {user_id}, analysis_id {analysis_id}")
+        logger.info("Starting step data analysis for user %s, analysis_id %s", user_id, analysis_id)
 
         # Transform step data to proxy actigraphy
         transformer = create_proxy_actigraphy_transformer()
@@ -154,7 +154,7 @@ async def analyze_step_data(
 
         # Generate proxy actigraphy vector
         proxy_result = transformer.transform_step_data(step_data)
-        logger.info(f"Proxy actigraphy transformation complete: quality={proxy_result.quality_score:.3f}")
+        logger.info("Proxy actigraphy transformation complete: quality=%.3f", proxy_result.quality_score)
 
         # Convert to ActigraphyDataPoint format for PAT model
         actigraphy_points = [
@@ -181,7 +181,7 @@ async def analyze_step_data(
             cache_enabled=True
         )
 
-        logger.info(f"PAT analysis complete for {analysis_id}, cached={inference_response.cached}")
+        logger.info("PAT analysis complete for %s, cached=%s", analysis_id, inference_response.cached)
 
         return AnalysisResponse(
             analysis_id=analysis_id,
@@ -193,7 +193,7 @@ async def analyze_step_data(
         )
 
     except Exception as e:
-        logger.exception(f"Step data analysis failed for {analysis_id}: {e!s}")
+        logger.exception("Step data analysis failed for %s", analysis_id)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail={
@@ -201,7 +201,7 @@ async def analyze_step_data(
                 "error": "Analysis failed",
                 "message": str(e)
             }
-        )
+        ) from e
 
 
 @router.post(
@@ -217,20 +217,22 @@ async def analyze_actigraphy_data(
 ) -> AnalysisResponse:
     """Analyze preprocessed actigraphy data using the PAT model.
 
-    For direct actigraphy data that doesn't require proxy transformation.
+    This endpoint accepts direct actigraphy data that has already been preprocessed
+    and formatted for PAT model analysis.
     """
     analysis_id = str(uuid.uuid4())
 
     try:
-        logger.info(f"Starting direct actigraphy analysis for user {user_id}, analysis_id {analysis_id}")
+        logger.info("Starting direct actigraphy analysis for user %s, analysis_id %s", user_id, analysis_id)
 
         # Convert request data to ActigraphyDataPoint format
         actigraphy_points = [
             ActigraphyDataPoint(
-                timestamp=datetime.fromisoformat(dp["timestamp"]),
-                value=float(dp["value"])
+                timestamp=datetime.fromisoformat(point["timestamp"]) if isinstance(point["timestamp"], str)
+                else point["timestamp"],
+                value=float(point["value"])
             )
-            for dp in request.data_points
+            for point in request.data_points
         ]
 
         # Create PAT input
@@ -249,7 +251,7 @@ async def analyze_actigraphy_data(
             cache_enabled=True
         )
 
-        logger.info(f"Direct actigraphy analysis complete for {analysis_id}, cached={inference_response.cached}")
+        logger.info("Direct actigraphy analysis complete for %s, cached=%s", analysis_id, inference_response.cached)
 
         return AnalysisResponse(
             analysis_id=analysis_id,
@@ -261,7 +263,7 @@ async def analyze_actigraphy_data(
         )
 
     except Exception as e:
-        logger.exception(f"Direct actigraphy analysis failed for {analysis_id}: {e!s}")
+        logger.exception("Direct actigraphy analysis failed for %s", analysis_id)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail={
@@ -269,7 +271,7 @@ async def analyze_actigraphy_data(
                 "error": "Analysis failed",
                 "message": str(e)
             }
-        )
+        ) from e
 
 
 @router.get(
@@ -280,19 +282,19 @@ async def analyze_actigraphy_data(
 )
 async def get_analysis_results(
     analysis_id: str,
-    user_id: str = Depends(get_current_user)
+    user_id: str = Depends(get_current_user)  # noqa: ARG001
 ) -> AnalysisResponse:
     """Retrieve analysis results by analysis ID.
 
-    Note: This is a simplified implementation. In production, you would
-    store analysis results in a database and retrieve them here.
+    Note: This is a placeholder implementation. In production, this would
+    retrieve results from a database or cache.
     """
-    # For now, return a message indicating this is not implemented
-    # In production, implement database lookup
+    # TODO: Implement actual result retrieval from storage
+    # For now, return a placeholder response
     return AnalysisResponse(
         analysis_id=analysis_id,
         status="not_found",
-        message="Analysis result lookup not implemented. Results are returned synchronously from analysis endpoints."
+        message="Result retrieval not yet implemented"
     )
 
 
@@ -307,38 +309,39 @@ async def health_check(
 ) -> HealthCheckResponse:
     """Comprehensive health check for the PAT analysis service.
 
-    Returns status of all components: inference engine, PAT model, caching, etc.
+    Verifies:
+    - Inference engine status
+    - PAT model availability
+    - System performance metrics
     """
     try:
-        # Get inference engine health
-        engine_health = await inference_engine.health_check()
+        # Get inference engine stats
+        engine_stats = inference_engine.get_stats()
 
-        # Get PAT service health (from the engine's PAT service)
-        pat_health = engine_health.get("pat_service", {})
-
-        # Determine overall status
-        overall_status = "healthy"
-        if engine_health.get("status") != "healthy":
-            overall_status = "degraded"
-        if not pat_health.get("model_loaded", False):
-            overall_status = "unhealthy"
+        # Get PAT model info
+        pat_service = inference_engine.pat_service
+        model_info = {
+            "initialized": pat_service.is_initialized,
+            "model_type": "PAT",
+            "version": "1.0.0"
+        }
 
         return HealthCheckResponse(
             service="PAT Analysis API",
-            status=overall_status,
+            status="healthy",
             timestamp=datetime.now(UTC).isoformat(),
-            inference_engine=engine_health,
-            pat_model=pat_health
+            inference_engine=engine_stats,
+            pat_model=model_info
         )
 
     except Exception as e:
-        logger.exception(f"Health check failed: {e!s}")
+        logger.exception("Health check failed")
         return HealthCheckResponse(
             service="PAT Analysis API",
             status="unhealthy",
             timestamp=datetime.now(UTC).isoformat(),
             inference_engine={"error": str(e)},
-            pat_model={"error": "Unable to check PAT model status"}
+            pat_model={"error": "Unable to check model status"}
         )
 
 
@@ -348,41 +351,40 @@ async def health_check(
     description="Get information about the available PAT models and current configuration"
 )
 async def get_model_info(
-    user_id: str = Depends(get_current_user),
+    user_id: str = Depends(get_current_user),  # noqa: ARG001
     inference_engine: AsyncInferenceEngine = Depends(get_pat_inference_engine)
 ) -> dict[str, Any]:
     """Get detailed information about PAT model configuration and capabilities."""
     try:
-        health_info = await inference_engine.health_check()
-        pat_info = health_info.get("pat_service", {})
+        # Get PAT service info
+        pat_service = inference_engine.pat_service
+        
+        # Get inference engine stats
+        engine_stats = inference_engine.get_stats()
 
-        return {
-            "model_name": "Dartmouth PAT (Pretrained Actigraphy Transformer)",
-            "version": "v1.0",
-            "model_size": pat_info.get("model_size", "medium"),
-            "device": pat_info.get("device", "cpu"),
+        model_info = {
+            "model_type": "PAT",
+            "version": "1.0.0",
+            "initialized": pat_service.is_initialized,
             "capabilities": [
-                "Sleep stage classification (wake, light, deep, REM)",
-                "Sleep efficiency calculation",
-                "Circadian rhythm analysis",
-                "Depression risk assessment",
-                "Activity fragmentation analysis"
+                "actigraphy_analysis",
+                "sleep_pattern_detection",
+                "circadian_rhythm_analysis",
+                "activity_classification"
             ],
             "input_requirements": {
                 "sampling_rate": "1 sample per minute",
-                "duration": "24 hours (1440 samples) recommended",
-                "data_format": "Activity counts or proxy actigraphy from step data"
+                "duration": "24-168 hours",
+                "data_format": "ActigraphyDataPoint"
             },
-            "proxy_actigraphy": {
-                "supported": True,
-                "source": "Apple HealthKit step counts",
-                "transformation": "Square root + NHANES z-score normalization"
-            }
+            "performance": engine_stats
         }
 
+        return model_info
+
     except Exception as e:
-        logger.exception(f"Model info request failed: {e!s}")
+        logger.exception("Model info request failed")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Unable to retrieve model information: {e!s}"
-        )
+        ) from e

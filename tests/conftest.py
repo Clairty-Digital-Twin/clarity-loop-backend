@@ -17,7 +17,7 @@ import pytest
 import redis
 import torch
 
-from clarity.main import create_app
+from clarity.main import create_app  # type: ignore[import-untyped]
 
 # Set testing environment
 os.environ["TESTING"] = "1"
@@ -116,7 +116,7 @@ def sample_actigraphy_data() -> dict[str, Any]:
         for _ in range(60):  # Use underscore for unused variable
             # Use ternary operator as suggested by SIM108
             activity = rng.poisson(5) if h >= 22 or h <= 6 else rng.poisson(50)
-            activity_counts.append(int(activity))  # type: ignore
+            activity_counts.append(int(activity))
 
     return {
         "user_id": "test-user-123",
@@ -148,7 +148,7 @@ def sample_health_labels():
 @pytest.fixture
 def app() -> FastAPI:
     """Create FastAPI test application."""
-    return create_app()
+    return create_app()  # type: ignore[no-any-return]
 
 
 @pytest.fixture

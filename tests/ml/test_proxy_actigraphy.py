@@ -582,7 +582,8 @@ class TestIntegrationProxyActigraphy:
         assert nhanes_ref["mean"] == 1.2
         assert nhanes_ref["std"] == 0.8
 
-    def test_performance_characteristics(self):
+    @staticmethod
+    def test_performance_characteristics() -> None:
         """Test performance characteristics of the transformer."""
         with patch('clarity.ml.proxy_actigraphy.lookup_norm_stats') as mock_lookup:
             mock_lookup.return_value = (1.2, 0.8)

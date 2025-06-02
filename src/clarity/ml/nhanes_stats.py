@@ -108,8 +108,8 @@ def lookup_norm_stats(
             year_str = "2025"
 
         base_stats = NHANES_REFERENCE_STATS[year_str]
-        mean = float(base_stats["mean"])
-        std = float(base_stats["std"])
+        mean = float(base_stats["mean"])  # type: ignore[arg-type]
+        std = float(base_stats["std"])  # type: ignore[arg-type]
 
         # Apply age group adjustments if specified
         if age_group:

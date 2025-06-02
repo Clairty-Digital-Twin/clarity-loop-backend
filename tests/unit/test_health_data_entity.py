@@ -212,6 +212,7 @@ class TestBiometricDataEntity:
         # Given: Valid biometric data
         biometric = BiometricData(
             heart_rate=75,
+            heart_rate_variability=None,
             systolic_bp=120,
             diastolic_bp=80,
             respiratory_rate=16,
@@ -239,8 +240,12 @@ class TestBiometricDataEntity:
 
         for systolic, diastolic in valid_combinations:
             biometric = BiometricData(
+                heart_rate=None,
+                heart_rate_variability=None,
                 systolic_bp=systolic,
                 diastolic_bp=diastolic,
+                respiratory_rate=None,
+                skin_temperature=None,
             )
             assert biometric.systolic_bp == systolic
             assert biometric.diastolic_bp == diastolic
@@ -254,8 +259,12 @@ class TestBiometricDataEntity:
         for systolic, diastolic in invalid_combinations:
             with pytest.raises(ValueError, match="ensure this value is"):
                 BiometricData(
+                    heart_rate=None,
+                    heart_rate_variability=None,
                     systolic_bp=systolic,
                     diastolic_bp=diastolic,
+                    respiratory_rate=None,
+                    skin_temperature=None,
                 )
 
     @staticmethod
@@ -263,13 +272,29 @@ class TestBiometricDataEntity:
         """Test business rule: Timestamps cannot be in the future."""
         # Valid timestamp (now)
         now = datetime.now(UTC)
-        biometric = BiometricData(heart_rate=70, timestamp=now)
+        biometric = BiometricData(
+            heart_rate=70,
+            heart_rate_variability=None,
+            systolic_bp=None,
+            diastolic_bp=None,
+            respiratory_rate=None,
+            skin_temperature=None,
+            timestamp=now,
+        )
         assert biometric.timestamp == now
 
         # Invalid timestamp (future)
         future = now + timedelta(hours=1)
         with pytest.raises(ValueError, match="cannot be in the future"):
-            BiometricData(heart_rate=70, timestamp=future)
+            BiometricData(
+                heart_rate=70,
+                heart_rate_variability=None,
+                systolic_bp=None,
+                diastolic_bp=None,
+                respiratory_rate=None,
+                skin_temperature=None,
+                timestamp=future,
+            )
 
 
 class TestSleepDataEntity:
@@ -287,6 +312,9 @@ class TestSleepDataEntity:
             sleep_data = SleepData(
                 total_sleep_minutes=480,
                 sleep_efficiency=efficiency,
+                time_to_sleep_minutes=None,
+                wake_count=None,
+                sleep_stages=None,
                 sleep_start=start_time,
                 sleep_end=end_time,
             )
@@ -299,6 +327,9 @@ class TestSleepDataEntity:
                 SleepData(
                     total_sleep_minutes=480,
                     sleep_efficiency=efficiency,
+                    time_to_sleep_minutes=None,
+                    wake_count=None,
+                    sleep_stages=None,
                     sleep_start=start_time,
                     sleep_end=end_time,
                 )
@@ -313,6 +344,9 @@ class TestSleepDataEntity:
         sleep_data = SleepData(
             total_sleep_minutes=480,
             sleep_efficiency=0.85,
+            time_to_sleep_minutes=None,
+            wake_count=None,
+            sleep_stages=None,
             sleep_start=start_time,
             sleep_end=valid_end,
         )
@@ -324,6 +358,9 @@ class TestSleepDataEntity:
             SleepData(
                 total_sleep_minutes=480,
                 sleep_efficiency=0.85,
+                time_to_sleep_minutes=None,
+                wake_count=None,
+                sleep_stages=None,
                 sleep_start=start_time,
                 sleep_end=invalid_end,
             )
@@ -345,7 +382,16 @@ class TestMentalHealthBusinessRules:
         ]
 
         for mood in valid_moods:
-            mental_health = MentalHealthIndicator(mood_score=mood)
+            mental_health = MentalHealthIndicator(
+                mood_score=mood,
+                stress_level=None,
+                anxiety_level=None,
+                energy_level=None,
+                focus_rating=None,
+                social_interaction_minutes=None,
+                meditation_minutes=None,
+                notes=None,
+            )
             assert mental_health.mood_score == mood
 
     @staticmethod
@@ -354,14 +400,32 @@ class TestMentalHealthBusinessRules:
         # Valid stress levels
         valid_levels = [1.0, 5.5, 10.0]
         for level in valid_levels:
-            mental_health = MentalHealthIndicator(stress_level=level)
+            mental_health = MentalHealthIndicator(
+                mood_score=None,
+                stress_level=level,
+                anxiety_level=None,
+                energy_level=None,
+                focus_rating=None,
+                social_interaction_minutes=None,
+                meditation_minutes=None,
+                notes=None,
+            )
             assert mental_health.stress_level == level
 
         # Invalid stress levels
         invalid_levels = [0.5, 11.0, -1.0]
         for level in invalid_levels:
             with pytest.raises(ValueError, match="ensure this value is"):
-                MentalHealthIndicator(stress_level=level)
+                MentalHealthIndicator(
+                    mood_score=None,
+                    stress_level=level,
+                    anxiety_level=None,
+                    energy_level=None,
+                    focus_rating=None,
+                    social_interaction_minutes=None,
+                    meditation_minutes=None,
+                    notes=None,
+                )
 
 
 class TestHealthDataUploadBusinessRules:
@@ -373,9 +437,20 @@ class TestHealthDataUploadBusinessRules:
         user_id = uuid4()
 
         # Create valid metric
-        biometric_data = BiometricData(heart_rate=72)
+        biometric_data = BiometricData(
+            heart_rate=72,
+            heart_rate_variability=None,
+            systolic_bp=None,
+            diastolic_bp=None,
+            respiratory_rate=None,
+            skin_temperature=None,
+        )
         metric = HealthMetric(
-            metric_type=HealthMetricType.HEART_RATE, biometric_data=biometric_data
+            metric_type=HealthMetricType.HEART_RATE,
+            biometric_data=biometric_data,
+            device_id=None,
+            raw_data=None,
+            metadata=None,
         )
 
         # Valid upload (within limit)
@@ -384,6 +459,7 @@ class TestHealthDataUploadBusinessRules:
             metrics=[metric],
             upload_source="apple_health",
             client_timestamp=datetime.now(UTC),
+            sync_token=None,
         )
         assert len(valid_upload.metrics) == 1
 
@@ -398,10 +474,21 @@ class TestHealthDataUploadBusinessRules:
         user_id = uuid4()
 
         # Create metrics with same ID (business rule violation)
-        biometric_data = BiometricData(heart_rate=72)
+        biometric_data = BiometricData(
+            heart_rate=72,
+            heart_rate_variability=None,
+            systolic_bp=None,
+            diastolic_bp=None,
+            respiratory_rate=None,
+            skin_temperature=None,
+        )
 
         metric1 = HealthMetric(
-            metric_type=HealthMetricType.HEART_RATE, biometric_data=biometric_data
+            metric_type=HealthMetricType.HEART_RATE,
+            biometric_data=biometric_data,
+            device_id=None,
+            raw_data=None,
+            metadata=None,
         )
 
         # Force same ID to test business rule
@@ -409,6 +496,9 @@ class TestHealthDataUploadBusinessRules:
             metric_id=metric1.metric_id,  # Same ID - violation
             metric_type=HealthMetricType.HEART_RATE,
             biometric_data=biometric_data,
+            device_id=None,
+            raw_data=None,
+            metadata=None,
         )
 
         # Should reject duplicate IDs
@@ -418,6 +508,7 @@ class TestHealthDataUploadBusinessRules:
                 metrics=[metric1, metric2],
                 upload_source="apple_health",
                 client_timestamp=datetime.now(UTC),
+                sync_token=None,
             )
 
 

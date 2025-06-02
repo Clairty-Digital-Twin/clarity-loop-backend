@@ -4,7 +4,9 @@ This module tests the NHANES population statistics functionality
 used for normalizing health data against population norms.
 """
 
-from unittest.mock import patch
+import time
+from typing import Any
+from unittest.mock import MagicMock, patch
 
 import pytest
 

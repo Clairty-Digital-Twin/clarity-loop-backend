@@ -17,8 +17,8 @@ Based on specifications from APPLE_ACTIGRAPHY_PROXY.md
 """
 
 import logging
-from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Tuple
+from datetime import datetime
+from typing import Any, Dict, List, Tuple
 
 import numpy as np
 from pydantic import BaseModel, Field
@@ -293,8 +293,9 @@ class ProxyActigraphyTransformer:
         scores.append(completeness_score)
         
         # 2. Variability score (healthy people have variable activity)
-        if np.std(step_counts) > 0:
-            cv = np.std(step_counts) / np.mean(step_counts)  # Coefficient of variation
+        mean_steps = float(np.mean(step_counts))
+        if np.std(step_counts) > 0 and mean_steps > 0:
+            cv = float(np.std(step_counts)) / mean_steps  # Coefficient of variation
             variability_score = min(1.0, cv / 2.0)  # Normalize to 0-1
         else:
             variability_score = 0.0
@@ -310,13 +311,13 @@ class ProxyActigraphyTransformer:
                 for i in range(len(days) - 1):
                     corr = np.corrcoef(days[i], days[i+1])[0, 1]
                     if not np.isnan(corr):
-                        daily_correlations.append(corr)
+                        daily_correlations.append(float(corr))
                 
                 if daily_correlations:
-                    circadian_score = max(0.0, np.mean(daily_correlations))
+                    circadian_score = max(0.0, float(np.mean(daily_correlations)))
                 else:
                     circadian_score = 0.5  # Neutral if can't calculate
-            except:
+            except Exception:
                 circadian_score = 0.5
         else:
             circadian_score = 0.5
@@ -347,7 +348,7 @@ class ProxyActigraphyTransformer:
             "cache_enabled": self.cache_enabled
         }
 
-    async def health_check(self) -> Dict[str, any]:
+    async def health_check(self) -> Dict[str, Any]:
         """Health check for the proxy actigraphy service."""
         return {
             "service": "ProxyActigraphyTransformer",

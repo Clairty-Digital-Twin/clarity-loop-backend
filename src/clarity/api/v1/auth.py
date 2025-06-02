@@ -1,4 +1,4 @@
-"""CLARITY Digital Twin Platform - Authentication API Endpoints
+"""CLARITY Digital Twin Platform - Authentication API Endpoints.
 
 RESTful API endpoints for user authentication including:
 - User registration and login
@@ -18,7 +18,6 @@ from clarity.auth.firebase_auth import get_current_user
 from clarity.auth.models import UserContext
 from clarity.core.interfaces import IAuthProvider, IHealthDataRepository
 from clarity.models.auth import (
-    AuthError,
     AuthErrorDetail,
     LoginResponse,
     RefreshTokenRequest,
@@ -48,7 +47,7 @@ router = APIRouter()
 # Security scheme
 security = HTTPBearer()
 
-# Dependencies (will be injected by container)
+# Module-level singletons for dependencies (avoiding B008)
 _auth_provider: IAuthProvider | None = None
 _repository: IHealthDataRepository | None = None
 _auth_service: AuthenticationService | None = None
@@ -66,7 +65,7 @@ def set_dependencies(
         repository: Health data repository
         firestore_client: Firestore client for user data
     """
-    global _auth_provider, _repository, _auth_service
+    global _auth_provider, _repository, _auth_service  # noqa: PLW0603
     _auth_provider = auth_provider
     _repository = repository
 
@@ -78,7 +77,9 @@ def set_dependencies(
         )
     else:
         # Fallback: create FirestoreClient from repository if available
-        from clarity.storage.firestore_client import FirestoreHealthDataRepository
+        from clarity.storage.firestore_client import (  # noqa: PLC0415
+            FirestoreHealthDataRepository,
+        )
 
         if isinstance(repository, FirestoreHealthDataRepository):
             # Extract FirestoreClient from repository
@@ -132,13 +133,14 @@ def get_device_info(request: Request) -> dict[str, Any]:
 async def register_user(
     request_data: UserRegistrationRequest,
     request: Request,
-    auth_service: AuthenticationService = Depends(get_auth_service),
 ) -> RegistrationResponse:
     """Register a new user account.
 
     Creates a new user with Firebase Authentication and stores additional
     user metadata in Firestore. Sends email verification if configured.
     """
+    auth_service = get_auth_service()
+
     try:
         device_info = get_device_info(request)
 
@@ -147,11 +149,11 @@ async def register_user(
             device_info=device_info,
         )
 
-        logger.info(f"User registered: {result.email}")
+        logger.info("User registered: %s", result.email)
         return result
 
     except UserAlreadyExistsError as e:
-        logger.warning(f"Registration attempt for existing user: {request_data.email}")
+        logger.warning("Registration attempt for existing user: %s", request_data.email)
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail={
@@ -168,16 +170,16 @@ async def register_user(
         ) from e
 
     except ValidationError as e:
-        logger.warning(f"Registration validation error: {e}")
-        error_details = []
-        for error in e.errors():
-            error_details.append(
-                AuthErrorDetail(
-                    code="validation_error",
-                    message=error["msg"],
-                    field=".".join(str(loc) for loc in error["loc"]),
-                ).model_dump()
-            )
+        logger.warning("Registration validation error: %s", e)
+
+        error_details = [
+            AuthErrorDetail(
+                code="validation_error",
+                message=error["msg"],
+                field=".".join(str(loc) for loc in error["loc"]),
+            ).model_dump()
+            for error in e.errors()
+        ]
 
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -189,7 +191,7 @@ async def register_user(
         ) from e
 
     except AuthenticationError as e:
-        logger.error(f"Registration failed for {request_data.email}: {e}")
+        logger.exception("Registration failed for %s", request_data.email)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail={
@@ -215,13 +217,14 @@ async def register_user(
 async def login_user(
     request_data: UserLoginRequest,
     request: Request,
-    auth_service: AuthenticationService = Depends(get_auth_service),
 ) -> LoginResponse:
     """Authenticate user and create session.
 
     Validates credentials with Firebase Authentication and returns
     access tokens and user session information.
     """
+    auth_service = get_auth_service()
+
     try:
         device_info = get_device_info(request)
         ip_address = request.client.host if request.client else None
@@ -232,11 +235,11 @@ async def login_user(
             ip_address=ip_address,
         )
 
-        logger.info(f"User logged in: {request_data.email}")
+        logger.info("User logged in: %s", request_data.email)
         return result
 
     except UserNotFoundError as e:
-        logger.warning(f"Login attempt for non-existent user: {request_data.email}")
+        logger.warning("Login attempt for non-existent user: %s", request_data.email)
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail={
@@ -246,7 +249,7 @@ async def login_user(
         ) from e
 
     except InvalidCredentialsError as e:
-        logger.warning(f"Invalid credentials for user: {request_data.email}")
+        logger.warning("Invalid credentials for user: %s", request_data.email)
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail={
@@ -256,7 +259,7 @@ async def login_user(
         ) from e
 
     except EmailNotVerifiedError as e:
-        logger.warning(f"Login attempt with unverified email: {request_data.email}")
+        logger.warning("Login attempt with unverified email: %s", request_data.email)
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail={
@@ -266,7 +269,7 @@ async def login_user(
         ) from e
 
     except AccountDisabledError as e:
-        logger.warning(f"Login attempt for disabled account: {request_data.email}")
+        logger.warning("Login attempt for disabled account: %s", request_data.email)
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail={
@@ -276,7 +279,7 @@ async def login_user(
         ) from e
 
     except AuthenticationError as e:
-        logger.error(f"Login failed for {request_data.email}: {e}")
+        logger.exception("Login failed for %s", request_data.email)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail={
@@ -299,13 +302,14 @@ async def login_user(
 )
 async def refresh_token(
     request_data: RefreshTokenRequest,
-    auth_service: AuthenticationService = Depends(get_auth_service),
 ) -> TokenResponse:
     """Refresh access token using refresh token.
 
     Validates the refresh token and returns a new access token.
     Implements token rotation for enhanced security.
     """
+    auth_service = get_auth_service()
+
     try:
         result = await auth_service.refresh_access_token(request_data.refresh_token)
 
@@ -313,7 +317,7 @@ async def refresh_token(
         return result
 
     except InvalidCredentialsError as e:
-        logger.warning(f"Invalid refresh token: {e}")
+        logger.warning("Invalid refresh token: %s", e)
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail={
@@ -323,7 +327,7 @@ async def refresh_token(
         ) from e
 
     except AuthenticationError as e:
-        logger.error(f"Token refresh failed: {e}")
+        logger.exception("Token refresh failed")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail={
@@ -345,19 +349,21 @@ async def refresh_token(
 )
 async def logout_user(
     request_data: RefreshTokenRequest,
-    auth_service: AuthenticationService = Depends(get_auth_service),
 ) -> dict[str, str]:
     """Logout user and revoke session.
 
     Revokes the refresh token and ends the user session.
     All associated access tokens become invalid.
     """
+    auth_service = get_auth_service()
+
     try:
         success = await auth_service.logout_user(request_data.refresh_token)
 
         if success:
             logger.info("User logged out successfully")
             return {"message": "Logout successful"}
+
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail={
@@ -367,7 +373,7 @@ async def logout_user(
         )
 
     except AuthenticationError as e:
-        logger.error(f"Logout failed: {e}")
+        logger.exception("Logout failed")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail={
@@ -391,13 +397,14 @@ async def logout_user(
 )
 async def get_current_user_info(
     current_user: UserContext = Depends(get_current_user),
-    auth_service: AuthenticationService = Depends(get_auth_service),
 ) -> UserSessionResponse:
     """Get current user information.
 
     Returns detailed information about the currently authenticated user
     based on the JWT token in the Authorization header.
     """
+    auth_service = get_auth_service()
+
     try:
         user_info = await auth_service.get_user_by_id(current_user.user_id)
 
@@ -413,7 +420,7 @@ async def get_current_user_info(
         return user_info
 
     except AuthenticationError as e:
-        logger.error(f"Failed to get user info for {current_user.user_id}: {e}")
+        logger.exception("Failed to get user info for %s", current_user.user_id)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail={
@@ -435,19 +442,21 @@ async def get_current_user_info(
 )
 async def verify_email(
     verification_code: str,
-    auth_service: AuthenticationService = Depends(get_auth_service),
 ) -> dict[str, str]:
     """Verify user email address.
 
     Validates the email verification code sent to the user's email.
     Updates the user's email verification status upon success.
     """
+    auth_service = get_auth_service()
+
     try:
         success = await auth_service.verify_email(verification_code)
 
         if success:
             logger.info("Email verification successful")
             return {"message": "Email verified successfully"}
+
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail={
@@ -457,7 +466,7 @@ async def verify_email(
         )
 
     except AuthenticationError as e:
-        logger.error(f"Email verification failed: {e}")
+        logger.exception("Email verification failed")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail={
@@ -491,7 +500,7 @@ async def auth_health_check() -> dict[str, Any]:
         }
 
     except Exception as e:
-        logger.error(f"Authentication health check failed: {e}")
+        logger.exception("Authentication health check failed")
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail={

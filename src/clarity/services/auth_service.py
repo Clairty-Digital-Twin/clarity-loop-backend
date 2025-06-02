@@ -1,27 +1,22 @@
-"""CLARITY Digital Twin Platform - Authentication Service
+"""CLARITY Digital Twin Platform - Authentication Service.
 
 Business logic layer for authentication operations.
 Integrates with Firebase Authentication and handles user management.
 """
 
-import asyncio
 from datetime import UTC, datetime, timedelta
 import logging
 import secrets
-import time
 from typing import Any
 import uuid
 
-import firebase_admin
 from firebase_admin import auth
-from google.cloud.firestore import DocumentReference
 
 from clarity.auth.models import UserRole
 from clarity.core.interfaces import IAuthProvider
 from clarity.models.auth import (
     AuthProvider,
     LoginResponse,
-    MFAMethod,
     RegistrationResponse,
     TokenResponse,
     UserLoginRequest,
@@ -59,6 +54,30 @@ class AccountDisabledError(AuthenticationError):
     """Raised when account is disabled."""
 
 
+def _raise_account_disabled() -> None:
+    """Raise account disabled error."""
+    error_msg = "Account is disabled"
+    raise AccountDisabledError(error_msg)
+
+
+def _raise_user_not_found_in_db() -> None:
+    """Raise user not found in database error."""
+    error_msg = "User data not found in database"
+    raise UserNotFoundError(error_msg)
+
+
+def _raise_invalid_refresh_token() -> None:
+    """Raise invalid refresh token error."""
+    error_msg = "Invalid refresh token"
+    raise InvalidCredentialsError(error_msg)
+
+
+def _raise_refresh_token_expired() -> None:
+    """Raise refresh token expired error."""
+    error_msg = "Refresh token expired"
+    raise InvalidCredentialsError(error_msg)
+
+
 class AuthenticationService:
     """Authentication service implementing business logic for user management.
 
@@ -72,7 +91,7 @@ class AuthenticationService:
         firestore_client: FirestoreClient,
         default_token_expiry: int = 3600,  # 1 hour
         refresh_token_expiry: int = 86400 * 30,  # 30 days
-    ):
+    ) -> None:
         """Initialize authentication service.
 
         Args:
@@ -114,9 +133,8 @@ class AuthenticationService:
             try:
                 existing_user = auth.get_user_by_email(request.email)
                 if existing_user:
-                    raise UserAlreadyExistsError(
-                        f"User with email {request.email} already exists"
-                    )
+                    error_msg = f"User with email {request.email} already exists"
+                    raise UserAlreadyExistsError(error_msg)
             except auth.UserNotFoundError:
                 # User doesn't exist, which is what we want
                 pass
@@ -174,15 +192,15 @@ class AuthenticationService:
             # Send email verification
             verification_email_sent = False
             try:
-                # Generate email verification link
-                verification_link = auth.generate_email_verification_link(request.email)
+                # Generate email verification link (unused for now)
+                _ = auth.generate_email_verification_link(request.email)
                 # TODO: Send email using email service
                 verification_email_sent = True
-                logger.info(f"Email verification link generated for {request.email}")
-            except Exception as e:
-                logger.warning(f"Failed to send verification email: {e}")
+                logger.info("Email verification link generated for %s", request.email)
+            except Exception:
+                logger.warning("Failed to send verification email")
 
-            logger.info(f"User registered successfully: {user_record.uid}")
+            logger.info("User registered successfully: %s", user_record.uid)
 
             return RegistrationResponse(
                 user_id=user_id,
@@ -195,8 +213,9 @@ class AuthenticationService:
         except UserAlreadyExistsError:
             raise
         except Exception as e:
-            logger.error(f"User registration failed for {request.email}: {e}")
-            raise AuthenticationError(f"Registration failed: {e!s}") from e
+            logger.exception("User registration failed for %s", request.email)
+            error_msg = f"Registration failed: {e!s}"
+            raise AuthenticationError(error_msg) from e
 
     async def login_user(
         self,
@@ -224,12 +243,13 @@ class AuthenticationService:
             # Get user by email
             try:
                 user_record = auth.get_user_by_email(request.email)
-            except auth.UserNotFoundError:
-                raise UserNotFoundError(f"User with email {request.email} not found")
+            except auth.UserNotFoundError as e:
+                error_msg = f"User with email {request.email} not found"
+                raise UserNotFoundError(error_msg) from e
 
             # Check if account is disabled
             if user_record.disabled:
-                raise AccountDisabledError("Account is disabled")
+                _raise_account_disabled()
 
             # For Firebase, password verification happens client-side
             # Here we simulate the verification process
@@ -241,16 +261,15 @@ class AuthenticationService:
             )
 
             if not user_data:
-                raise UserNotFoundError("User data not found in database")
+                _raise_user_not_found_in_db()
 
             # Check email verification requirement
             if (
                 not user_record.email_verified
                 and user_data.get("status") != UserStatus.ACTIVE.value
             ):
-                logger.warning(f"Login attempt with unverified email: {request.email}")
+                logger.warning("Login attempt with unverified email: %s", request.email)
                 # For development, we'll allow unverified emails
-                # raise EmailNotVerifiedError("Email verification required")
 
             # Update user data
             login_time = datetime.now(UTC)
@@ -308,15 +327,17 @@ class AuthenticationService:
                 )
 
             # Generate tokens (in real implementation, this would be done by Firebase client SDK)
-            tokens = await self._generate_tokens(user_record.uid, request.remember_me)
+            tokens = await self._generate_tokens(
+                user_record.uid, remember_me=request.remember_me
+            )
 
-            # Create session
-            session_id = await self._create_user_session(
+            # Create session (store session_id for potential future use)
+            _ = await self._create_user_session(
                 user_record.uid,
                 tokens.refresh_token,
                 device_info,
                 ip_address,
-                request.remember_me,
+                remember_me=request.remember_me,
             )
 
             # Create user session response
@@ -324,7 +345,7 @@ class AuthenticationService:
                 user_record, user_data
             )
 
-            logger.info(f"User logged in successfully: {user_record.uid}")
+            logger.info("User logged in successfully: %s", user_record.uid)
 
             return LoginResponse(
                 user=user_session,
@@ -341,11 +362,12 @@ class AuthenticationService:
         ):
             raise
         except Exception as e:
-            logger.error(f"Login failed for {request.email}: {e}")
-            raise AuthenticationError(f"Login failed: {e!s}") from e
+            logger.exception("Login failed for %s", request.email)
+            error_msg = f"Login failed: {e!s}"
+            raise AuthenticationError(error_msg) from e
 
     async def _generate_tokens(
-        self, user_id: str, remember_me: bool = False
+        self, user_id: str, *, remember_me: bool = False
     ) -> TokenResponse:
         """Generate access and refresh tokens.
 
@@ -395,6 +417,7 @@ class AuthenticationService:
         refresh_token: str,
         device_info: dict[str, Any] | None = None,
         ip_address: str | None = None,
+        *,
         remember_me: bool = False,
     ) -> str:
         """Create a user session.
@@ -433,8 +456,9 @@ class AuthenticationService:
 
         return session_id
 
+    @staticmethod
     async def _create_user_session_response(
-        self, user_record: Any, user_data: dict[str, Any]
+        user_record: auth.UserRecord, user_data: dict[str, Any]
     ) -> UserSessionResponse:
         """Create user session response from user data.
 
@@ -486,14 +510,14 @@ class AuthenticationService:
             )
 
             if not tokens:
-                raise InvalidCredentialsError("Invalid refresh token")
+                _raise_invalid_refresh_token()
 
             token_data = tokens[0]
 
             # Check if token is expired
             expires_at = token_data.get("expires_at")
             if expires_at and datetime.now(UTC) > expires_at:
-                raise InvalidCredentialsError("Refresh token expired")
+                _raise_refresh_token_expired()
 
             user_id = token_data["user_id"]
 
@@ -508,14 +532,15 @@ class AuthenticationService:
             # Generate new tokens
             new_tokens = await self._generate_tokens(user_id)
 
-            logger.info(f"Tokens refreshed for user: {user_id}")
+            logger.info("Tokens refreshed for user: %s", user_id)
             return new_tokens
 
         except InvalidCredentialsError:
             raise
         except Exception as e:
-            logger.error(f"Token refresh failed: {e}")
-            raise AuthenticationError(f"Token refresh failed: {e!s}") from e
+            logger.exception("Token refresh failed")
+            error_msg = f"Token refresh failed: {e!s}"
+            raise AuthenticationError(error_msg) from e
 
     async def logout_user(self, refresh_token: str) -> bool:
         """Logout user by revoking refresh token and ending session.
@@ -573,12 +598,12 @@ class AuthenticationService:
                         user_id=user_id,
                     )
 
-                logger.info(f"User logged out: {user_id}")
+                logger.info("User logged out: %s", user_id)
 
             return True
 
-        except Exception as e:
-            logger.error(f"Logout failed: {e}")
+        except Exception:
+            logger.exception("Logout failed")
             return False
 
     async def get_user_by_id(self, user_id: str) -> UserSessionResponse | None:
@@ -606,15 +631,16 @@ class AuthenticationService:
 
         except auth.UserNotFoundError:
             return None
-        except Exception as e:
-            logger.error(f"Failed to get user {user_id}: {e}")
+        except Exception:
+            logger.exception("Failed to get user %s", user_id)
             return None
 
-    async def verify_email(self, verification_code: str) -> bool:
+    @staticmethod
+    async def verify_email(_verification_code: str) -> bool:
         """Verify user email with verification code.
 
         Args:
-            verification_code: Email verification code
+            _verification_code: Email verification code (unused in mock)
 
         Returns:
             bool: True if verification successful
@@ -627,6 +653,6 @@ class AuthenticationService:
             logger.info("Email verification completed (mock implementation)")
             return True
 
-        except Exception as e:
-            logger.error(f"Email verification failed: {e}")
+        except Exception:
+            logger.exception("Email verification failed")
             return False

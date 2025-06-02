@@ -1,6 +1,6 @@
 # Task ID: 10
 # Title: Implement Clinical Decision Support System Core
-# Status: pending
+# Status: deferred
 # Dependencies: 5, 6, 7
 # Priority: high
 # Description: Develop the core functionality of the Clinical Decision Support System with evidence-based recommendations.

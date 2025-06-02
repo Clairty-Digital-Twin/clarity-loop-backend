@@ -1,6 +1,6 @@
 # Task ID: 21
 # Title: Implement Advanced Security Testing and Penetration Testing Framework
-# Status: pending
+# Status: deferred
 # Dependencies: 13
 # Priority: high
 # Description: Develop and integrate an advanced security testing framework including automated and manual penetration testing.

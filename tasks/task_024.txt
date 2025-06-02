@@ -1,6 +1,6 @@
 # Task ID: 24
 # Title: Develop Research and Analytics Platform
-# Status: pending
+# Status: deferred
 # Dependencies: 7, 14, 22
 # Priority: medium
 # Description: Implement a platform for advanced research and analytics capabilities.

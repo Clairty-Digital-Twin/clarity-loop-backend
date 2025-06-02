@@ -1,6 +1,6 @@
 # Task ID: 19
 # Title: Implement Regulatory Compliance Features
-# Status: pending
+# Status: deferred
 # Dependencies: 12, 13
 # Priority: high
 # Description: Develop features to ensure compliance with various healthcare regulations and standards.

@@ -1,6 +1,6 @@
 # Task ID: 14
 # Title: Develop Advanced AI/ML Models
-# Status: pending
+# Status: deferred
 # Dependencies: 7
 # Priority: medium
 # Description: Implement advanced machine learning models for predictive analytics and natural language processing.

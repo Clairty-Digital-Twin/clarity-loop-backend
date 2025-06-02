@@ -192,7 +192,7 @@ The inference engine is now ready for API endpoint integration. Need to create F
 **CRITICAL MILESTONE:** Core async inference pipeline now complete for production-ready PAT analysis!
 </info added on 2025-06-02T20:24:12.719Z>
 
-## 4. Create FastAPI endpoints for PAT service [in-progress]
+## 4. Create FastAPI endpoints for PAT service [done]
 ### Dependencies: 33.3
 ### Description: Develop the REST API interface for the PAT model service with proper request validation and error handling.
 ### Details:
@@ -205,6 +205,35 @@ Based on code audit, this component is incomplete and needs immediate attention.
 - Ensuring comprehensive error handling with appropriate status codes
 - Creating health check and monitoring endpoints
 - Documenting the API with OpenAPI/Swagger
+<info added on 2025-06-02T20:28:03.570Z>
+# Implementation Status: COMPLETE
+
+## FastAPI PAT Analysis Endpoints (5 Total)
+- **POST /api/v1/pat/analyze-step-data**: Core "chat with your actigraphy" endpoint that processes Apple HealthKit step data, performs proxy actigraphy transformation, and returns sleep/activity analysis with clinical insights
+- **POST /api/v1/pat/analyze**: Direct actigraphy data analysis endpoint for preprocessed data
+- **GET /api/v1/pat/analysis/{analysis_id}**: Analysis result retrieval endpoint
+- **GET /api/v1/pat/health**: Comprehensive service health check reporting status of inference engine, model, caching, and performance metrics
+- **GET /api/v1/pat/models/info**: PAT model information and capabilities endpoint
+
+## Technical Implementation Details
+- Implemented in `src/clarity/api/v1/pat_analysis.py`
+- Firebase authentication integration with dependency injection
+- Comprehensive Pydantic models for request validation
+- Proper error handling with appropriate HTTP status codes
+- Async processing with AsyncInferenceEngine for batching/caching
+- Complete type annotations throughout all endpoints
+- OpenAPI/Swagger documentation generation
+
+## Integration Status
+- All endpoints accessible via /api/v1/pat/* routes
+- Clean Architecture integration with container dependency injection
+- Successfully integrated with main FastAPI application
+- Authentication secured with Firebase
+- Verified production validation with successful app startup
+
+## Vertical Slice Complete
+End-to-end functionality from Apple HealthKit Steps → Proxy Transform → PAT Analysis → Clinical Insights → API Response is now fully functional, enabling the core "chat with your actigraphy" feature.
+</info added on 2025-06-02T20:28:03.570Z>
 
 ## 5. Implement result post-processing and FHIR integration [pending]
 ### Dependencies: 33.3

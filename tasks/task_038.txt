@@ -1,0 +1,110 @@
+# Task ID: 38
+# Title: Create FastAPI Endpoints for Gemini Health Insights Service
+# Status: pending
+# Dependencies: 34, 2
+# Priority: high
+# Description: Build REST API routes that expose the existing GeminiService functionality to enable "chat with your health data" from frontend applications, including endpoints for generating health insights, retrieving cached results, and health status monitoring.
+# Details:
+1. Create a new router module for Gemini health insights endpoints:
+   - Create `app/routers/gemini_insights.py` with appropriate FastAPI router setup
+   - Include proper authentication and authorization middleware
+   - Implement HIPAA-compliant request/response logging
+
+2. Implement the following endpoints:
+   - `POST /api/v1/insights/generate`: Generate new health insights
+     - Accept patient data or references as input
+     - Validate request against HealthInsightRequest model
+     - Call GeminiService.generate_insights() method
+     - Return HealthInsightResponse with generated insights
+     - Implement proper error handling for API limits and timeouts
+   
+   - `GET /api/v1/insights/{insight_id}`: Retrieve cached insights
+     - Fetch previously generated insights by ID
+     - Include proper caching headers
+     - Implement conditional responses (304 Not Modified)
+   
+   - `GET /api/v1/insights/history/{patient_id}`: Get insight history
+     - Retrieve all insights generated for a specific patient
+     - Implement pagination for large result sets
+     - Add filtering options (date range, insight types)
+   
+   - `GET /api/v1/insights/status`: Health status monitoring
+     - Check Gemini service availability
+     - Report API usage metrics and quotas
+     - Monitor response times and error rates
+
+3. Implement request validation and sanitization:
+   - Validate all input against Pydantic models
+   - Sanitize PHI data in logs and error messages
+   - Implement rate limiting to prevent API abuse
+
+4. Add caching layer for insights:
+   - Implement Redis caching for frequently accessed insights
+   - Set appropriate TTL based on data freshness requirements
+   - Include cache invalidation mechanisms
+
+5. Document API endpoints:
+   - Add OpenAPI documentation with detailed examples
+   - Include authentication requirements
+   - Document rate limits and quotas
+   - Provide sample request/response payloads
+
+6. Implement proper error handling:
+   - Create custom exception handlers for Gemini service errors
+   - Map internal errors to appropriate HTTP status codes
+   - Ensure PHI is never exposed in error responses
+   - Log detailed error information for debugging
+
+7. Ensure HIPAA compliance:
+   - Implement audit logging for all API access
+   - Ensure all PHI is properly encrypted in transit
+   - Apply role-based access controls to all endpoints
+   - Validate compliance with existing HIPAA framework
+
+# Test Strategy:
+1. Unit Testing:
+   - Create unit tests for each endpoint using pytest
+   - Mock GeminiService to test API behavior independently
+   - Test input validation with valid and invalid payloads
+   - Verify error handling for various failure scenarios
+   - Test authentication and authorization mechanisms
+   - Ensure proper sanitization of PHI in responses
+
+2. Integration Testing:
+   - Test integration with actual GeminiService implementation
+   - Verify correct data flow between API and service layer
+   - Test caching behavior with Redis integration
+   - Validate proper logging and monitoring integration
+   - Test rate limiting functionality
+
+3. Performance Testing:
+   - Measure response times under various load conditions
+   - Test concurrent request handling
+   - Verify memory usage patterns during high load
+   - Test cache hit/miss ratios and performance impact
+
+4. Security Testing:
+   - Perform penetration testing on all endpoints
+   - Verify proper handling of authentication tokens
+   - Test for common API vulnerabilities (injection, XSS)
+   - Ensure PHI is properly protected in all scenarios
+   - Validate HIPAA compliance with automated security scans
+
+5. End-to-End Testing:
+   - Create test scenarios that simulate real user workflows
+   - Test integration with frontend applications
+   - Verify correct behavior across the entire request/response cycle
+   - Test error recovery and graceful degradation
+
+6. Documentation Testing:
+   - Verify OpenAPI documentation accuracy
+   - Test example requests and responses
+   - Ensure all endpoints are properly documented
+
+7. Acceptance Criteria:
+   - All endpoints return expected responses with correct status codes
+   - Authentication and authorization work correctly for all user roles
+   - Performance meets requirements (response time < 500ms for 95% of requests)
+   - No PHI is exposed in logs or error messages
+   - All tests pass with >90% code coverage
+   - API documentation is complete and accurate

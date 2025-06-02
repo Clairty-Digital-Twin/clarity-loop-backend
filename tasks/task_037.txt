@@ -1,6 +1,6 @@
 # Task ID: 37
 # Title: Implement Google Cloud Pub/Sub Background Processing Pipeline
-# Status: pending
+# Status: deferred
 # Dependencies: 7, 13, 17
 # Priority: high
 # Description: Create an asynchronous processing pipeline using Google Cloud Pub/Sub for handling health data analysis in the background, ensuring scalability for thousands of users uploading data simultaneously.

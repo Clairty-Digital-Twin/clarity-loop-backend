@@ -1,6 +1,6 @@
 # Task ID: 20
 # Title: Develop Advanced Clinical Decision Support Features
-# Status: pending
+# Status: deferred
 # Dependencies: 10, 14
 # Priority: medium
 # Description: Implement advanced features for the Clinical Decision Support System.

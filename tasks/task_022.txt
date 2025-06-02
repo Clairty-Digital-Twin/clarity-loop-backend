@@ -1,6 +1,6 @@
 # Task ID: 22
 # Title: Develop Data Governance and Lifecycle Management System
-# Status: pending
+# Status: deferred
 # Dependencies: 6, 12
 # Priority: medium
 # Description: Implement a comprehensive data governance system including data classification, retention policies, and lifecycle management.

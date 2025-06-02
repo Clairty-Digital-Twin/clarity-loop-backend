@@ -1,6 +1,6 @@
 # Task ID: 11
 # Title: Develop Real-time Monitoring and Alert System
-# Status: pending
+# Status: deferred
 # Dependencies: 5, 7, 10
 # Priority: medium
 # Description: Implement the real-time monitoring and alert system for patient vital signs and behavioral analytics.

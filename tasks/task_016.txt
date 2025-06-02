@@ -1,6 +1,6 @@
 # Task ID: 16
 # Title: Develop Performance Optimization and Scalability Features
-# Status: pending
+# Status: deferred
 # Dependencies: 2, 3, 7
 # Priority: medium
 # Description: Implement features to ensure high performance and scalability of the system.

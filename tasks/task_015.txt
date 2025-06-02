@@ -1,6 +1,6 @@
 # Task ID: 15
 # Title: Implement HL7 FHIR Integration
-# Status: pending
+# Status: deferred
 # Dependencies: 6
 # Priority: medium
 # Description: Develop comprehensive HL7 FHIR support for interoperability with healthcare systems.

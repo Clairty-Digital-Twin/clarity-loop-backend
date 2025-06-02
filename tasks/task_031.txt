@@ -1,6 +1,6 @@
 # Task ID: 31
 # Title: Create End-to-End Integration Test for Health Data Upload Flow
-# Status: pending
+# Status: deferred
 # Dependencies: 30
 # Priority: medium
 # Description: Develop comprehensive end-to-end integration tests for the health data upload flow, including authentication, data processing, and database verification to ensure the entire pipeline functions correctly.

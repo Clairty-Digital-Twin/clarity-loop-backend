@@ -1,6 +1,6 @@
 # Task ID: 18
 # Title: Develop Integration Framework for External Systems
-# Status: pending
+# Status: deferred
 # Dependencies: 15
 # Priority: medium
 # Description: Create a flexible integration framework for connecting with various external healthcare systems and services.

@@ -328,12 +328,16 @@ class DependencyContainer:
         # Add authentication middleware if enabled
         if config_provider.is_auth_enabled():
             try:
-                from clarity.auth.firebase_auth import (
+                from clarity.auth.firebase_auth import (  # noqa: PLC0415
                     FirebaseAuthMiddleware,
                 )
 
                 auth_provider = self.get_auth_provider()
-                app.add_middleware(FirebaseAuthMiddleware, auth_provider=auth_provider)
+                # Fix: Use the proper middleware arguments
+                app.add_middleware(
+                    FirebaseAuthMiddleware,
+                    auth_provider=auth_provider,
+                )
                 logger.info("✅ Firebase authentication middleware enabled")
 
             except (ImportError, AttributeError, RuntimeError) as middleware_error:

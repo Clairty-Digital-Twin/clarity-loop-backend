@@ -18,8 +18,8 @@ from typing import Any
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.security import HTTPBearer
-import firebase_admin
-from firebase_admin import auth, credentials
+import firebase_admin  # type: ignore[import-untyped]
+from firebase_admin import auth, credentials  # type: ignore[import-untyped]
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.responses import JSONResponse, Response
 
@@ -78,27 +78,27 @@ class FirebaseAuthProvider(IAuthProvider):
                 return cached_user
 
             # Verify token with Firebase
-            decoded_token = auth.verify_id_token(token)
+            decoded_token = auth.verify_id_token(token)  # type: ignore[misc]
 
             # Get user record for additional info
-            user_record = auth.get_user(decoded_token["uid"])
+            user_record = auth.get_user(decoded_token["uid"])  # type: ignore[misc]
 
             # Create user info dict
             user_info = {
                 "user_id": decoded_token["uid"],
-                "email": user_record.email,
-                "name": user_record.display_name,
-                "verified": user_record.email_verified,
+                "email": user_record.email,  # type: ignore[misc]
+                "name": user_record.display_name,  # type: ignore[misc]
+                "verified": user_record.email_verified,  # type: ignore[misc]
                 "roles": self._extract_roles(decoded_token),
-                "custom_claims": decoded_token.get("custom_claims", {}),
+                "custom_claims": decoded_token.get("custom_claims", {}),  # type: ignore[misc]
                 "created_at": datetime.fromtimestamp(
-                    user_record.user_metadata.creation_timestamp / 1000, tz=UTC
+                    user_record.user_metadata.creation_timestamp / 1000, tz=UTC  # type: ignore[misc]
                 ).isoformat(),
                 "last_login": (
                     datetime.fromtimestamp(
-                        user_record.user_metadata.last_sign_in_timestamp / 1000, tz=UTC
+                        user_record.user_metadata.last_sign_in_timestamp / 1000, tz=UTC  # type: ignore[misc]
                     ).isoformat()
-                    if user_record.user_metadata.last_sign_in_timestamp
+                    if user_record.user_metadata.last_sign_in_timestamp  # type: ignore[misc]
                     else None
                 ),
             }

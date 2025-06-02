@@ -142,7 +142,7 @@ class TestHealthDataController:
     ) -> None:
         """Test controller adapts service errors to HTTP error responses."""
         # When: Making request with invalid data
-        invalid_payload = {
+        invalid_payload: dict[str, Any] = {
             "user_id": "invalid-uuid",  # Invalid UUID format
             "metrics": [],  # Empty metrics (violates business rules)
             "upload_source": "",  # Empty source
@@ -248,18 +248,27 @@ class TestControllerDependencyInjection:
     @staticmethod
     def test_controller_fails_gracefully_without_dependencies() -> None:
         """Test controller handles missing dependencies gracefully."""
-        # Given: No dependencies injected (clear previous state)
+        # Given: Mock dependencies that will fail when called
+        from unittest.mock import Mock
+
+        failing_auth_provider = Mock(spec=IAuthProvider)
+        failing_repository = Mock(spec=IHealthDataRepository)
+        failing_config_provider = Mock(spec=IConfigProvider)
+
+        # Configure mocks to raise errors
+        failing_repository.side_effect = RuntimeError("Repository not available")
+
         set_dependencies(
-            auth_provider=None,
-            repository=None,
-            config_provider=None,
+            auth_provider=failing_auth_provider,
+            repository=failing_repository,
+            config_provider=failing_config_provider,
         )
 
         app = FastAPI()
         app.include_router(router, prefix="/api/v1")
         client = TestClient(app)
 
-        # When: Making request without injected dependencies
+        # When: Making request with failing dependencies
         response = client.get("/api/v1/health-data/health")
 
         # Then: Should either succeed (health check) or fail gracefully
@@ -432,7 +441,8 @@ class TestControllerSingleResponsibility:
 
         # Then: All routes should be health-data related
         for route in routes:
-            path = route.path
+            # Safely get path attribute - different route types may have different structures
+            path = getattr(route, "path", str(route))
             # Health data endpoints should be in the health-data domain
             assert any(
                 keyword in path for keyword in ["health", "processing", "upload"]

@@ -239,9 +239,6 @@ async def delete_health_data(
                 detail="Processing job not found or access denied",
             )
 
-        logger.info("Health data deleted successfully: %s", processing_id)
-        return {"message": "Health data deleted successfully"}
-
     except HealthDataServiceError as e:
         logger.exception("Health data service error")
         raise HTTPException(
@@ -253,6 +250,9 @@ async def delete_health_data(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Internal server error",
         ) from None
+    else:
+        logger.info("Health data deleted successfully: %s", processing_id)
+        return {"message": "Health data deleted successfully"}
 
 
 @router.get("/health")

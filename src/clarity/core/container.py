@@ -336,8 +336,9 @@ class DependencyContainer:
         """Configure API routes with dependency injection."""
 
         # Add root-level health endpoint first (no auth required)
-        @app.get("/health")
-        async def _root_health_check() -> dict[str, Any]:
+        # NOTE: Function appears unused but is registered by FastAPI @app.get decorator
+        @app.get("/health")  # type: ignore[misc]
+        async def health_endpoint_handler() -> dict[str, Any]:
             """Root health check endpoint for application monitoring."""
             from datetime import UTC, datetime  # noqa: PLC0415
 

@@ -3,10 +3,17 @@
 This helps diagnose slow startup issues by timing each component.
 """
 
+# ruff: noqa: T201
+# Allow print statements in debug script
+
 import asyncio
 import os
 from pathlib import Path
 import time
+
+# Constants for performance thresholds
+SLOW_IMPORT_THRESHOLD = 1.0  # seconds
+TOTAL_TIME_THRESHOLD = 2.0  # seconds
 
 
 def measure_import_time(module_name: str) -> float:
@@ -45,12 +52,12 @@ def find_slowest_import() -> str | None:
             slowest_time = elapsed
             culprit = name
 
-        if elapsed > 1.0:  # Anything over 1 second is concerning
+        if elapsed > SLOW_IMPORT_THRESHOLD:  # Anything over 1 second is concerning
             print(f"⚠️ Slow import detected: {name} took {elapsed:.2f}s")
             break
 
     total_elapsed = time.perf_counter() - overall_start
-    if total_elapsed > 2.0:
+    if total_elapsed > TOTAL_TIME_THRESHOLD:
         print(f"⚠️ Total import time concerning: {total_elapsed:.2f}s")
 
     return culprit

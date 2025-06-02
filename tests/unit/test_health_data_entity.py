@@ -40,15 +40,27 @@ class TestHealthMetricEntity:
     def test_valid_heart_rate_metric_creation():
         """Test pure business logic - no mocks needed."""
         # Given: Valid biometric data
-        biometric_data = BiometricData(heart_rate=72, timestamp=datetime.now(UTC))
+        biometric_data = BiometricData(
+            heart_rate=72,
+            heart_rate_variability=None,
+            systolic_bp=None,
+            diastolic_bp=None,
+            respiratory_rate=None,
+            skin_temperature=None,
+        )
 
         # When: Creating health metric entity
         health_metric = HealthMetric(
-            metric_type=HealthMetricType.HEART_RATE, biometric_data=biometric_data
+            metric_type=HealthMetricType.HEART_RATE,
+            biometric_data=biometric_data,
+            device_id=None,
+            raw_data=None,
+            metadata=None,
         )
 
         # Then: Entity should be valid and contain correct business rules
         assert health_metric.metric_type == HealthMetricType.HEART_RATE
+        assert health_metric.biometric_data is not None
         assert health_metric.biometric_data.heart_rate == 72
         assert isinstance(health_metric.metric_id, UUID)
         assert isinstance(health_metric.created_at, datetime)
@@ -59,10 +71,22 @@ class TestHealthMetricEntity:
         # Valid heart rates should pass
         valid_rates = [40, 60, 80, 100, 200]
         for rate in valid_rates:
-            biometric_data = BiometricData(heart_rate=rate, timestamp=datetime.now(UTC))
-            health_metric = HealthMetric(
-                metric_type=HealthMetricType.HEART_RATE, biometric_data=biometric_data
+            biometric_data = BiometricData(
+                heart_rate=rate,
+                heart_rate_variability=None,
+                systolic_bp=None,
+                diastolic_bp=None,
+                respiratory_rate=None,
+                skin_temperature=None,
             )
+            health_metric = HealthMetric(
+                metric_type=HealthMetricType.HEART_RATE,
+                biometric_data=biometric_data,
+                device_id=None,
+                raw_data=None,
+                metadata=None,
+            )
+            assert health_metric.biometric_data is not None
             assert health_metric.biometric_data.heart_rate == rate
 
         # Invalid heart rates should raise business rule violations
@@ -71,7 +95,14 @@ class TestHealthMetricEntity:
             with pytest.raises(
                 ValueError, match="ensure this value is greater than or equal to"
             ):
-                BiometricData(heart_rate=rate, timestamp=datetime.now(UTC))
+                BiometricData(
+                    heart_rate=rate,
+                    heart_rate_variability=None,
+                    systolic_bp=None,
+                    diastolic_bp=None,
+                    respiratory_rate=None,
+                    skin_temperature=None,
+                )
 
     @staticmethod
     def test_activity_business_rule_validation():
@@ -79,10 +110,23 @@ class TestHealthMetricEntity:
         # Valid step counts
         valid_steps = [0, 1000, 10000, 50000]
         for steps in valid_steps:
-            activity_data = ActivityData(steps=steps, date=datetime.now(UTC))
-            health_metric = HealthMetric(
-                metric_type=HealthMetricType.ACTIVITY_LEVEL, activity_data=activity_data
+            activity_data = ActivityData(
+                steps=steps,
+                distance_meters=None,
+                calories_burned=None,
+                active_minutes=None,
+                exercise_type=None,
+                intensity_level=None,
+                date=datetime.now(UTC),
             )
+            health_metric = HealthMetric(
+                metric_type=HealthMetricType.ACTIVITY_LEVEL,
+                activity_data=activity_data,
+                device_id=None,
+                raw_data=None,
+                metadata=None,
+            )
+            assert health_metric.activity_data is not None
             assert health_metric.activity_data.steps == steps
 
         # Invalid step counts
@@ -91,15 +135,34 @@ class TestHealthMetricEntity:
             with pytest.raises(
                 ValueError, match="ensure this value is greater than or equal to"
             ):
-                ActivityData(steps=steps, date=datetime.now(UTC))
+                ActivityData(
+                    steps=steps,
+                    distance_meters=None,
+                    calories_burned=None,
+                    active_minutes=None,
+                    exercise_type=None,
+                    intensity_level=None,
+                    date=datetime.now(UTC),
+                )
 
     @staticmethod
     def test_entity_immutability_rule():
         """Test business rule: Health metric entities have immutable IDs after creation."""
-        biometric_data = BiometricData(heart_rate=72, timestamp=datetime.now(UTC))
+        biometric_data = BiometricData(
+            heart_rate=72,
+            heart_rate_variability=None,
+            systolic_bp=None,
+            diastolic_bp=None,
+            respiratory_rate=None,
+            skin_temperature=None,
+        )
 
         health_metric = HealthMetric(
-            metric_type=HealthMetricType.HEART_RATE, biometric_data=biometric_data
+            metric_type=HealthMetricType.HEART_RATE,
+            biometric_data=biometric_data,
+            device_id=None,
+            raw_data=None,
+            metadata=None,
         )
 
         original_id = health_metric.metric_id
@@ -110,11 +173,22 @@ class TestHealthMetricEntity:
     @staticmethod
     def test_metric_type_consistency_rule():
         """Test business rule: Metric type must be consistent with provided data."""
-        biometric_data = BiometricData(heart_rate=72, timestamp=datetime.now(UTC))
+        biometric_data = BiometricData(
+            heart_rate=72,
+            heart_rate_variability=None,
+            systolic_bp=None,
+            diastolic_bp=None,
+            respiratory_rate=None,
+            skin_temperature=None,
+        )
 
         # Heart rate metric must have biometric data
         health_metric = HealthMetric(
-            metric_type=HealthMetricType.HEART_RATE, biometric_data=biometric_data
+            metric_type=HealthMetricType.HEART_RATE,
+            biometric_data=biometric_data,
+            device_id=None,
+            raw_data=None,
+            metadata=None,
         )
         assert health_metric.biometric_data is not None
 
@@ -123,6 +197,9 @@ class TestHealthMetricEntity:
             HealthMetric(
                 metric_type=HealthMetricType.SLEEP_ANALYSIS,
                 biometric_data=biometric_data,  # Wrong data type
+                device_id=None,
+                raw_data=None,
+                metadata=None,
             )
 
 
@@ -139,7 +216,6 @@ class TestBiometricDataEntity:
             diastolic_bp=80,
             respiratory_rate=16,
             skin_temperature=36.5,
-            timestamp=datetime.now(UTC),
         )
 
         # Then: Biometric should have correct properties
@@ -165,7 +241,6 @@ class TestBiometricDataEntity:
             biometric = BiometricData(
                 systolic_bp=systolic,
                 diastolic_bp=diastolic,
-                timestamp=datetime.now(UTC),
             )
             assert biometric.systolic_bp == systolic
             assert biometric.diastolic_bp == diastolic
@@ -181,7 +256,6 @@ class TestBiometricDataEntity:
                 BiometricData(
                     systolic_bp=systolic,
                     diastolic_bp=diastolic,
-                    timestamp=datetime.now(UTC),
                 )
 
     @staticmethod
@@ -271,9 +345,7 @@ class TestMentalHealthBusinessRules:
         ]
 
         for mood in valid_moods:
-            mental_health = MentalHealthIndicator(
-                mood_score=mood, timestamp=datetime.now(UTC)
-            )
+            mental_health = MentalHealthIndicator(mood_score=mood)
             assert mental_health.mood_score == mood
 
     @staticmethod
@@ -282,16 +354,14 @@ class TestMentalHealthBusinessRules:
         # Valid stress levels
         valid_levels = [1.0, 5.5, 10.0]
         for level in valid_levels:
-            mental_health = MentalHealthIndicator(
-                stress_level=level, timestamp=datetime.now(UTC)
-            )
+            mental_health = MentalHealthIndicator(stress_level=level)
             assert mental_health.stress_level == level
 
         # Invalid stress levels
         invalid_levels = [0.5, 11.0, -1.0]
         for level in invalid_levels:
             with pytest.raises(ValueError, match="ensure this value is"):
-                MentalHealthIndicator(stress_level=level, timestamp=datetime.now(UTC))
+                MentalHealthIndicator(stress_level=level)
 
 
 class TestHealthDataUploadBusinessRules:
@@ -303,7 +373,7 @@ class TestHealthDataUploadBusinessRules:
         user_id = uuid4()
 
         # Create valid metric
-        biometric_data = BiometricData(heart_rate=72, timestamp=datetime.now(UTC))
+        biometric_data = BiometricData(heart_rate=72)
         metric = HealthMetric(
             metric_type=HealthMetricType.HEART_RATE, biometric_data=biometric_data
         )
@@ -328,7 +398,7 @@ class TestHealthDataUploadBusinessRules:
         user_id = uuid4()
 
         # Create metrics with same ID (business rule violation)
-        biometric_data = BiometricData(heart_rate=72, timestamp=datetime.now(UTC))
+        biometric_data = BiometricData(heart_rate=72)
 
         metric1 = HealthMetric(
             metric_type=HealthMetricType.HEART_RATE, biometric_data=biometric_data

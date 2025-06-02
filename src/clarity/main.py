@@ -6,6 +6,8 @@ This module serves as the composition root for the entire application.
 
 import logging
 
+import uvicorn
+
 from clarity.core.config import get_settings
 from clarity.core.container import create_application
 from clarity.core.logging_config import setup_logging

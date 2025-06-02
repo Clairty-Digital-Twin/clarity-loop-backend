@@ -766,7 +766,7 @@ class FirestoreClient:
                 await self._db.close()  # type: ignore[no-untyped-call]
                 self._db = None
                 logger.info("Firestore client closed")
-        except Exception as e:
+        except Exception:
             logger.exception("Error closing Firestore client")
 
     async def health_check(self) -> dict[str, Any]:
@@ -958,7 +958,7 @@ class FirestoreHealthDataRepository(IHealthDataRepository):
                 filters=filters,
             )
 
-            return {
+            result = {
                 "metrics": metrics,
                 "pagination": {
                     "total": total_count,
@@ -972,13 +972,12 @@ class FirestoreHealthDataRepository(IHealthDataRepository):
                     "end_date": end_date.isoformat() if end_date else None,
                 },
             }
+            return result
 
         except Exception as e:
             logger.exception("Failed to get health data for user %s", user_id)
             msg = f"Health data retrieval failed: {e}"
             raise FirestoreError(msg) from e
-        else:
-            return deleted_count
 
     async def get_processing_status(
         self, processing_id: str, user_id: str
@@ -1173,8 +1172,6 @@ class FirestoreHealthDataRepository(IHealthDataRepository):
             msg = f"Health data retrieval failed: {e}"
             raise FirestoreError(msg) from e
         else:
-            return deleted_count
-        else:
             return result
 
     async def initialize(self) -> None:
@@ -1234,20 +1231,19 @@ class FirestoreHealthDataRepository(IHealthDataRepository):
                 order_direction="desc",
             )
 
-            return {
+            result = {
                 "user_id": user_id,
                 "total_records": total_count,
                 "recent_records": len(recent_data),
                 "latest_record": recent_data[0] if recent_data else None,
                 "summary_generated_at": datetime.now(UTC).isoformat(),
             }
+            return result
 
         except Exception as e:
             logger.exception("Failed to get health summary for user %s", user_id)
             msg = f"Health summary retrieval failed: {e}"
             raise FirestoreError(msg) from e
-        else:
-            return deleted_count
 
     async def delete_user_data(self, user_id: str) -> int:
         """Delete all health data for a user (GDPR compliance).

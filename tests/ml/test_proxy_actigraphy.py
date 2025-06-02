@@ -367,7 +367,7 @@ class TestProxyActigraphyTransformer:
         """Test transformation with zero step counts."""
         mock_lookup_stats.return_value = (1.2, 0.8)
         
-        transformer = ProxyActigraphyTransformer()
+        transformer = ProxyActigraphyTransformer(auto_pad_to_week=False)
         
         timestamps = [datetime.now(timezone.utc) for _ in range(3)]
         step_data = StepCountData(
@@ -487,7 +487,7 @@ class TestIntegrationProxyActigraphy:
             user_metadata={"age": 30, "sex": "female"}
         )
         
-        transformer = ProxyActigraphyTransformer(reference_year=2025)
+        transformer = ProxyActigraphyTransformer(reference_year=2025, auto_pad_to_week=False)
         result = transformer.transform_step_data(step_data)
         
         # Verify result structure
@@ -518,7 +518,7 @@ class TestIntegrationProxyActigraphy:
         with patch('clarity.ml.proxy_actigraphy.lookup_norm_stats') as mock_lookup:
             mock_lookup.return_value = (1.2, 0.8)
             
-            transformer = ProxyActigraphyTransformer()
+            transformer = ProxyActigraphyTransformer(auto_pad_to_week=False)
             
             # Create moderately large dataset
             timestamps = [datetime.now(timezone.utc) for _ in range(500)]
@@ -549,7 +549,7 @@ class TestEdgeCasesProxyActigraphy:
         """Test transformation with single data point."""
         mock_lookup_stats.return_value = (1.2, 0.8)
         
-        transformer = ProxyActigraphyTransformer()
+        transformer = ProxyActigraphyTransformer(auto_pad_to_week=False)
         
         step_data = StepCountData(
             user_id="single_test",
@@ -569,7 +569,7 @@ class TestEdgeCasesProxyActigraphy:
         """Test transformation handles negative step counts."""
         mock_lookup_stats.return_value = (1.2, 0.8)
         
-        transformer = ProxyActigraphyTransformer()
+        transformer = ProxyActigraphyTransformer(auto_pad_to_week=False)
         
         timestamps = [datetime.now(timezone.utc) for _ in range(3)]
         step_data = StepCountData(

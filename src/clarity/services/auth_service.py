@@ -154,7 +154,7 @@ class AuthenticationService:
             )
 
             # Generate user ID
-            user_id = uuid.UUID(user_record.uid)
+            user_id = uuid.UUID(user_record.uid)  # type: ignore[misc,arg-type]
 
             # Set custom claims for role-based access control
             custom_claims = {
@@ -163,11 +163,11 @@ class AuthenticationService:
                 "created_at": datetime.now(UTC).isoformat(),
             }
 
-            auth.set_custom_user_claims(user_record.uid, custom_claims)  # type: ignore[misc]
+            auth.set_custom_user_claims(user_record.uid, custom_claims)  # type: ignore[misc,arg-type]
 
             # Store additional user data in Firestore
             user_data = {
-                "user_id": user_record.uid,
+                "user_id": user_record.uid,  # type: ignore[misc]
                 "email": request.email,
                 "first_name": request.first_name,
                 "last_name": request.last_name,
@@ -189,9 +189,9 @@ class AuthenticationService:
 
             await self.firestore_client.create_document(
                 collection=self.users_collection,
-                data=user_data,
-                document_id=user_record.uid,
-                user_id=user_record.uid,
+                data=user_data,  # type: ignore[arg-type]
+                document_id=user_record.uid,  # type: ignore[misc,arg-type]
+                user_id=user_record.uid,  # type: ignore[misc,arg-type]
             )
 
             # Send email verification
@@ -253,7 +253,7 @@ class AuthenticationService:
                 raise UserNotFoundError(error_msg) from e
 
             # Check if account is disabled
-            if user_record.disabled:
+            if user_record.disabled:  # type: ignore[misc]
                 _raise_account_disabled()
 
             # For Firebase, password verification happens client-side
@@ -262,7 +262,7 @@ class AuthenticationService:
 
             # Get user data from Firestore
             user_data = await self.firestore_client.get_document(
-                collection=self.users_collection, document_id=user_record.uid
+                collection=self.users_collection, document_id=user_record.uid  # type: ignore[misc,arg-type]
             )
 
             if user_data is None:
@@ -273,7 +273,7 @@ class AuthenticationService:
 
             # Check email verification requirement
             if (
-                not user_record.email_verified
+                not user_record.email_verified  # type: ignore[misc]
                 and user_data.get("status") != UserStatus.ACTIVE.value
             ):
                 logger.warning("Login attempt with unverified email: %s", request.email)
@@ -289,9 +289,9 @@ class AuthenticationService:
 
             await self.firestore_client.update_document(
                 collection=self.users_collection,
-                document_id=user_record.uid,
+                document_id=user_record.uid,  # type: ignore[misc,arg-type]
                 data=update_data,
-                user_id=user_record.uid,
+                user_id=user_record.uid,  # type: ignore[misc,arg-type]
             )
 
             # Check if MFA is enabled
@@ -302,7 +302,7 @@ class AuthenticationService:
 
                 # Store temporary session
                 temp_session_data = {
-                    "user_id": user_record.uid,
+                    "user_id": user_record.uid,  # type: ignore[misc]
                     "mfa_session_token": mfa_session_token,
                     "created_at": login_time,
                     "expires_at": login_time
@@ -314,8 +314,8 @@ class AuthenticationService:
 
                 await self.firestore_client.create_document(
                     collection="mfa_sessions",
-                    data=temp_session_data,
-                    user_id=user_record.uid,
+                    data=temp_session_data,  # type: ignore[arg-type]
+                    user_id=user_record.uid,  # type: ignore[misc,arg-type]
                 )
 
                 # Return partial response requiring MFA
@@ -337,12 +337,12 @@ class AuthenticationService:
 
             # Generate tokens (in real implementation, this would be done by Firebase client SDK)
             tokens = await self._generate_tokens(
-                user_record.uid, remember_me=request.remember_me
+                user_record.uid, remember_me=request.remember_me  # type: ignore[misc,arg-type]
             )
 
             # Create session (store session_id for potential future use)
             _ = await self._create_user_session(
-                user_record.uid,
+                user_record.uid,  # type: ignore[misc,arg-type]
                 tokens.refresh_token,
                 device_info,
                 ip_address,
@@ -351,10 +351,10 @@ class AuthenticationService:
 
             # Create user session response
             user_session = await self._create_user_session_response(
-                user_record, user_data
+                user_record, user_data  # type: ignore[arg-type]
             )
 
-            logger.info("User logged in successfully: %s", user_record.uid)
+            logger.info("User logged in successfully: %s", user_record.uid)  # type: ignore[misc,arg-type]
 
             return LoginResponse(
                 user=user_session,

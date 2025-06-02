@@ -84,7 +84,8 @@ class GeminiService:
             logger.exception("Failed to generate health insights: %s", e)
             raise
 
-    def _generate_placeholder_narrative(self, analysis_results: dict[str, Any]) -> str:
+    @staticmethod
+    def _generate_placeholder_narrative(analysis_results: dict[str, Any]) -> str:
         """Generate a placeholder narrative (to be replaced with Gemini API)."""
         sleep_efficiency = analysis_results.get("sleep_efficiency", 0)
         circadian_score = analysis_results.get("circadian_rhythm_score", 0)

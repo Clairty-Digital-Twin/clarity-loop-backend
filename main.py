@@ -12,22 +12,21 @@ Usage:
 
 from pathlib import Path
 import sys
-from typing import TYPE_CHECKING
+
+# Add src directory to Python path (must be done before clarity imports)
+src_path = Path(__file__).parent / "src"
+sys.path.insert(0, str(src_path))
+
+from typing import TYPE_CHECKING  # noqa: E402
+
+from clarity.main import get_application  # type: ignore[import-untyped]  # noqa: E402
 
 if TYPE_CHECKING:
     from fastapi import FastAPI
 
-# Add src directory to Python path
-src_path = Path(__file__).parent / "src"
-sys.path.insert(0, str(src_path))
-
 
 def get_app() -> "FastAPI":
-    """Lazy import and return the FastAPI app to avoid circular imports."""
-    from clarity.main import (
-        get_application,  # type: ignore[import-untyped]
-    )
-
+    """Get the FastAPI app instance (clarity.main handles lazy initialization)."""
     return get_application()  # type: ignore[no-any-return]
 
 

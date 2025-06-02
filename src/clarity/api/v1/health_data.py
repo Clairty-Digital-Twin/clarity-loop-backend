@@ -8,7 +8,7 @@ Following Robert C. Martin's Clean Architecture with proper dependency injection
 
 from datetime import UTC, datetime
 import logging
-from typing import Any
+from typing import Any, NoReturn
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
@@ -31,10 +31,31 @@ logger = logging.getLogger(__name__)
 # Initialize router
 router = APIRouter(prefix="/health-data", tags=["Health Data"])
 
-# Dependency injection - these will be set by the container
-_auth_provider: IAuthProvider | None = None
-_repository: IHealthDataRepository | None = None
-_config_provider: IConfigProvider | None = None
+
+# Dependency injection container - using class-based approach instead of globals
+class DependencyContainer:
+    """Container for dependency injection to avoid global variables."""
+
+    def __init__(self) -> None:
+        self.auth_provider: IAuthProvider | None = None
+        self.repository: IHealthDataRepository | None = None
+        self.config_provider: IConfigProvider | None = None
+
+    def set_dependencies(
+        self,
+        auth_provider: IAuthProvider,
+        repository: IHealthDataRepository,
+        config_provider: IConfigProvider,
+    ) -> None:
+        """Set dependencies from the DI container."""
+        self.auth_provider = auth_provider
+        self.repository = repository
+        self.config_provider = config_provider
+        logger.info("Health data API dependencies injected successfully")
+
+
+# Container instance
+_container = DependencyContainer()
 
 
 def set_dependencies(
@@ -47,11 +68,7 @@ def set_dependencies(
     Called by the container during application initialization.
     Follows Dependency Inversion Principle - depends on abstractions, not concretions.
     """
-    global _auth_provider, _repository, _config_provider
-    _auth_provider = auth_provider
-    _repository = repository
-    _config_provider = config_provider
-    logger.info("Health data API dependencies injected successfully")
+    _container.set_dependencies(auth_provider, repository, config_provider)
 
 
 def get_health_data_service() -> HealthDataService:
@@ -60,27 +77,60 @@ def get_health_data_service() -> HealthDataService:
     Uses dependency injection container instead of hardcoded dependencies.
     Follows Clean Architecture principles.
     """
-    if _repository is None:
+    if _container.repository is None:
         msg = "Health data repository not injected. Container not initialized?"
         raise RuntimeError(msg)
 
-    return HealthDataService(_repository)
+    return HealthDataService(_container.repository)
 
 
 def get_auth_provider() -> IAuthProvider:
     """Get authentication provider from dependency injection."""
-    if _auth_provider is None:
+    if _container.auth_provider is None:
         msg = "Auth provider not injected. Container not initialized?"
         raise RuntimeError(msg)
-    return _auth_provider
+    return _container.auth_provider
 
 
 def get_config_provider() -> IConfigProvider:
     """Get configuration provider from dependency injection."""
-    if _config_provider is None:
+    if _container.config_provider is None:
         msg = "Config provider not injected. Container not initialized?"
         raise RuntimeError(msg)
-    return _config_provider
+    return _container.config_provider
+
+
+# Exception helper functions to satisfy TRY301 linting rule
+def _raise_forbidden_access() -> NoReturn:
+    """Raise forbidden access exception."""
+    raise HTTPException(
+        status_code=status.HTTP_403_FORBIDDEN,
+        detail="Access denied: Cannot upload data for another user",
+    )
+
+
+def _raise_service_error(message: str) -> NoReturn:
+    """Raise service error exception."""
+    raise HTTPException(
+        status_code=status.HTTP_400_BAD_REQUEST,
+        detail=message,
+    )
+
+
+def _raise_not_found(detail: str = "Resource not found") -> NoReturn:
+    """Raise not found exception."""
+    raise HTTPException(
+        status_code=status.HTTP_404_NOT_FOUND,
+        detail=detail,
+    )
+
+
+def _raise_internal_server_error() -> NoReturn:
+    """Raise internal server error exception."""
+    raise HTTPException(
+        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        detail="Internal server error",
+    )
 
 
 @router.post(
@@ -91,8 +141,8 @@ def get_config_provider() -> IConfigProvider:
 @require_auth(permissions=[Permission.WRITE_OWN_DATA])
 async def upload_health_data(
     health_data: HealthDataUpload,
-    current_user: UserContext = Depends(get_current_user),
-    service: HealthDataService = Depends(get_health_data_service),
+    current_user: UserContext = Depends(get_current_user),  # noqa: B008
+    service: HealthDataService = Depends(get_health_data_service),  # noqa: B008
 ) -> HealthDataResponse:
     """Upload health data for processing."""
     try:
@@ -100,26 +150,17 @@ async def upload_health_data(
 
         # Validate user owns the data
         if str(health_data.user_id) != current_user.user_id:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Access denied: Cannot upload data for another user",
-            )
+            _raise_forbidden_access()
 
         # Process health data
         response = await service.process_health_data(health_data)
 
     except HealthDataServiceError as e:
         logger.exception("Health data service error")
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Health data processing failed: {e.message}",
-        ) from None
+        _raise_service_error(f"Health data processing failed: {e.message}")
     except Exception:
         logger.exception("Unexpected error in health data upload")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Internal server error",
-        ) from None
+        _raise_internal_server_error()
     else:
         logger.info("Health data uploaded successfully: %s", response.processing_id)
         return response
@@ -133,8 +174,8 @@ async def upload_health_data(
 @require_auth(permissions=[Permission.READ_OWN_DATA])
 async def get_processing_status(
     processing_id: UUID,
-    current_user: UserContext = Depends(get_current_user),
-    service: HealthDataService = Depends(get_health_data_service),
+    current_user: UserContext = Depends(get_current_user),  # noqa: B008
+    service: HealthDataService = Depends(get_health_data_service),  # noqa: B008
 ) -> dict[str, Any]:
     """Get processing status for a health data upload."""
     try:
@@ -149,21 +190,14 @@ async def get_processing_status(
         )
 
         if not status_info:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND, detail="Processing job not found"
-            )
+            _raise_not_found("Processing job not found")
 
     except HealthDataServiceError as e:
         logger.exception("Health data service error")
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)
-        ) from None
+        _raise_service_error(str(e))
     except Exception:
         logger.exception("Unexpected error getting processing status")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Internal server error",
-        ) from None
+        _raise_internal_server_error()
     else:
         return status_info
 
@@ -171,13 +205,13 @@ async def get_processing_status(
 @router.get("/health-data")
 @require_auth(permissions=[Permission.READ_OWN_DATA])
 async def get_health_data(
-    current_user: UserContext = Depends(get_current_user),
+    current_user: UserContext = Depends(get_current_user),  # noqa: B008
     limit: int = Query(100, ge=1, le=1000, description="Maximum number of records"),
     offset: int = Query(0, ge=0, description="Number of records to skip"),
     metric_type: str | None = Query(None, description="Filter by metric type"),
     start_date: datetime | None = Query(None, description="Filter from date"),
-    end_date: datetime | None = Query(None, description="Filter to date"),
-    service: HealthDataService = Depends(get_health_data_service),
+    end_date: datetime | None = Query(None, description="Filter to date"),  # noqa: B008
+    service: HealthDataService = Depends(get_health_data_service),  # noqa: B008
 ) -> dict[str, Any]:
     """Retrieve user's health data with filtering and pagination."""
     try:
@@ -196,15 +230,10 @@ async def get_health_data(
 
     except HealthDataServiceError as e:
         logger.exception("Health data service error")
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)
-        ) from None
+        _raise_service_error(str(e))
     except Exception:
         logger.exception("Unexpected error retrieving health data")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Internal server error",
-        ) from None
+        _raise_internal_server_error()
     else:
         logger.info(
             "Retrieved %s health data records for user: %s",
@@ -218,8 +247,8 @@ async def get_health_data(
 @require_auth(permissions=[Permission.WRITE_OWN_DATA])
 async def delete_health_data(
     processing_id: UUID,
-    current_user: UserContext = Depends(get_current_user),
-    service: HealthDataService = Depends(get_health_data_service),
+    current_user: UserContext = Depends(get_current_user),  # noqa: B008
+    service: HealthDataService = Depends(get_health_data_service),  # noqa: B008
 ) -> dict[str, str]:
     """Delete user's health data by processing ID."""
     try:
@@ -234,22 +263,14 @@ async def delete_health_data(
         )
 
         if not success:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Processing job not found or access denied",
-            )
+            _raise_not_found("Processing job not found or access denied")
 
     except HealthDataServiceError as e:
         logger.exception("Health data service error")
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)
-        ) from None
+        _raise_service_error(str(e))
     except Exception:
         logger.exception("Unexpected error deleting health data")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Internal server error",
-        ) from None
+        _raise_internal_server_error()
     else:
         logger.info("Health data deleted successfully: %s", processing_id)
         return {"message": "Health data deleted successfully"}

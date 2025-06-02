@@ -194,8 +194,8 @@ def create_error_response(
 )
 async def generate_insights(
     insight_request: InsightGenerationRequest,
-    current_user: UserContext = Depends(get_current_user),
-    gemini_service: GeminiService = Depends(get_gemini_service),
+    current_user: UserContext = Depends(get_current_user),  # noqa: B008
+    gemini_service: GeminiService = Depends(get_gemini_service),  # noqa: B008
 ) -> InsightGenerationResponse:
     """Generate new health insights from analysis data.
 
@@ -281,7 +281,7 @@ async def generate_insights(
     description="Retrieve a previously generated insight by ID",
 )
 async def get_insight(
-    insight_id: str, current_user: UserContext = Depends(get_current_user)
+    insight_id: str, current_user: UserContext = Depends(get_current_user)  # noqa: B008
 ) -> InsightGenerationResponse:
     """Retrieve cached insights by ID.
 
@@ -353,7 +353,7 @@ async def get_insight_history(
     user_id: str,
     limit: int = 10,  # noqa: ARG001
     offset: int = 0,  # noqa: ARG001
-    current_user: UserContext = Depends(get_current_user),
+    current_user: UserContext = Depends(get_current_user),  # noqa: B008
 ) -> InsightHistoryResponse:
     """Get insight history for a user.
 
@@ -426,7 +426,7 @@ async def get_insight_history(
     description="Check the health status of the Gemini insights service",
 )
 async def get_service_status(
-    gemini_service: GeminiService = Depends(get_gemini_service),
+    gemini_service: GeminiService = Depends(get_gemini_service),  # noqa: B008
 ) -> ServiceStatusResponse:
     """Check Gemini service health status.
 

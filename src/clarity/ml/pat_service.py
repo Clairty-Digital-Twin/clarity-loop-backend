@@ -10,6 +10,7 @@ arXiv:2411.15240 (Dartmouth College, 29,307 participants, NHANES 2003-2014)
 from datetime import UTC, datetime
 import logging
 from pathlib import Path
+from typing import cast
 
 import numpy as np
 from pydantic import BaseModel, Field
@@ -335,9 +336,7 @@ class PATModelService(IMLModelService):
 
             with torch.no_grad():
                 # Model is guaranteed to be not None due to check above
-                model = self.model
-                if model is None:  # This should never happen due to check above
-                    PATModelService._raise_model_not_loaded_error()
+                model = cast("PATTransformer", self.model)
                 outputs = model(processed_data)
 
             # Postprocess results

@@ -114,7 +114,7 @@ class InferenceCache:
         self._cleanup_expired()
         if key in self.cache:
             value, _ = self.cache[key]
-            return value
+            return value  # type: ignore[no-any-return]
         return None
 
     async def set(self, key: str, value: object) -> None:
@@ -158,7 +158,7 @@ def performance_monitor(func: Callable[..., Any]) -> Callable[..., Any]:
             )
             raise
         else:
-            return result
+            return result  # type: ignore[no-any-return]  # Wrapper preserves original function's return type
 
     return wrapper
 
@@ -282,7 +282,7 @@ class AsyncInferenceEngine:
             if cached_result:
                 self.cache_hits += 1
                 logger.debug("Cache hit for key %s", cache_key)
-                return ActigraphyAnalysis(**cached_result)
+                return ActigraphyAnalysis(**cached_result)  # type: ignore[arg-type]
         except (KeyError, ValueError, TypeError) as e:
             logger.warning("Cache check failed: %s", str(e))
         return None

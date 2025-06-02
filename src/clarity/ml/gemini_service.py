@@ -104,12 +104,10 @@ class GeminiService:
                 self._raise_model_not_initialized()
 
             # Type guard for mypy - model is guaranteed to be not None here
-            if self.model is None:
-                self._raise_model_not_initialized()
-                return  # This will never be reached, but satisfies mypy
+            assert self.model is not None  # noqa: S101
 
             # Create health-focused prompt for Gemini
-            prompt = self._create_health_insight_prompt(request)
+            prompt = self._create_health_insight_prompt(request)  # type: ignore[unreachable]
 
             # Configure generation parameters for health insights
             generation_config = GenerationConfig(

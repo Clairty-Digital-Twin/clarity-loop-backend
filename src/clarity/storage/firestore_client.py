@@ -275,7 +275,7 @@ class FirestoreClient:
             logger.info("Document created: %s/%s", collection, created_id)
             return created_id
 
-        except Exception:
+        except Exception as e:
             logger.exception("Failed to create document in %s", collection)
             if isinstance(e, (FirestoreValidationError, FirestoreConnectionError)):
                 raise
@@ -327,7 +327,7 @@ class FirestoreClient:
             logger.debug("Document retrieved: %s/%s", collection, document_id)
             return result_data
 
-        except Exception:
+        except Exception as e:
             logger.exception("Failed to get document %s/%s", collection, document_id)
             msg = f"Document retrieval failed: {e}"
             raise FirestoreError(msg) from e

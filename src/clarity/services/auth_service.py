@@ -329,6 +329,7 @@ class AuthenticationService:
                         refresh_token="",  # nosec B106 - Empty placeholder token for MFA flow
                         token_type=BEARER_TOKEN_TYPE,
                         expires_in=0,
+                        scope="mfa_pending",  # Add scope for MFA flow
                     ),
                     requires_mfa=True,
                     mfa_session_token=mfa_session_token,
@@ -417,6 +418,7 @@ class AuthenticationService:
             refresh_token=refresh_token,
             token_type=BEARER_TOKEN_TYPE,
             expires_in=expires_in,
+            scope="full_access",  # Add scope for regular tokens
         )
 
     async def _create_user_session(

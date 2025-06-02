@@ -93,13 +93,21 @@ def _get_nhanes_stats_for_year(year: int) -> tuple[float, float]:
     if year_str in DEFAULT_NHANES_STATS:
         stats = DEFAULT_NHANES_STATS[year_str]
         logger.info("Using %s for normalization", stats['source'])
-        return float(stats["mean"]), float(stats["std"])
+        mean_val = stats["mean"]
+        std_val = stats["std"]
+        assert isinstance(mean_val, (int, float)), f"Expected numeric mean, got {type(mean_val)}"
+        assert isinstance(std_val, (int, float)), f"Expected numeric std, got {type(std_val)}"
+        return float(mean_val), float(std_val)
 
     # Fallback to latest available year
     latest_year = max(DEFAULT_NHANES_STATS.keys())
     stats = DEFAULT_NHANES_STATS[latest_year]
     logger.warning("Year %d not found, using %s", year, stats['source'])
-    return float(stats["mean"]), float(stats["std"])
+    mean_val = stats["mean"]
+    std_val = stats["std"]
+    assert isinstance(mean_val, (int, float)), f"Expected numeric mean, got {type(mean_val)}"
+    assert isinstance(std_val, (int, float)), f"Expected numeric std, got {type(std_val)}"
+    return float(mean_val), float(std_val)
 
 
 def _generate_circadian_padding(length: int, base_activity: float = 0.5) -> NDArray[np.floating[Any]]:

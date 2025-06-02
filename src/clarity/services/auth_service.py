@@ -655,7 +655,7 @@ class AuthenticationService:
             if not user_data:
                 return None
 
-            return await self._create_user_session_response(user_record, user_data)
+            return await self._create_user_session_response(user_record, user_data)  # type: ignore[arg-type]
 
         except auth.UserNotFoundError:  # type: ignore[misc]
             return None

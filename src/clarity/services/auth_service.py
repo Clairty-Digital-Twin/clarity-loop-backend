@@ -30,7 +30,9 @@ from clarity.storage.firestore_client import FirestoreClient
 logger = logging.getLogger(__name__)
 
 # Constants
-BEARER_TOKEN_TYPE = "bearer"  # noqa: S105 - Standard OAuth token type, not a password
+BEARER_TOKEN_TYPE = (
+    "bearer"  # noqa: S105  # nosec B105 - Standard OAuth token type, not a password
+)
 
 
 class AuthenticationError(Exception):
@@ -323,8 +325,8 @@ class AuthenticationService:
                 return LoginResponse(
                     user=user_session,
                     tokens=TokenResponse(
-                        access_token="",
-                        refresh_token="",
+                        access_token="",  # nosec B106 - Empty placeholder token for MFA flow
+                        refresh_token="",  # nosec B106 - Empty placeholder token for MFA flow
                         token_type=BEARER_TOKEN_TYPE,
                         expires_in=0,
                     ),

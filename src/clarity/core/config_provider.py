@@ -93,8 +93,8 @@ class ConfigProvider(IConfigProvider):
         project_id = self.get_setting("gcp_project_id")
 
         return {
-            "credentials_path": credentials_path or "",
-            "project_id": project_id or "",
+            "credentials_path": str(credentials_path) if credentials_path else "",
+            "project_id": str(project_id) if project_id else "",
         }
 
     def is_auth_enabled(self) -> bool:

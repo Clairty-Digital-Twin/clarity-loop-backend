@@ -30,7 +30,7 @@ class ConfigProvider(IConfigProvider):
         self._settings = settings
 
     def get_setting(
-        self, key: str, default: str | int | bool | None = None
+        self, key: str, *, default: str | int | bool | None = None
     ) -> str | int | bool | None:
         """Get configuration setting by key.
 

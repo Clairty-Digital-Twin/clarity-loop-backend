@@ -209,7 +209,9 @@ async def get_health_data(
     limit: int = Query(100, ge=1, le=1000, description="Maximum number of records"),
     offset: int = Query(0, ge=0, description="Number of records to skip"),
     metric_type: str | None = Query(None, description="Filter by metric type"),
-    start_date: datetime | None = Query(None, description="Filter from date"),
+    start_date: datetime | None = Query(  # noqa: B008
+        None, description="Filter from date"
+    ),
     end_date: datetime | None = Query(None, description="Filter to date"),  # noqa: B008
     service: HealthDataService = Depends(get_health_data_service),  # noqa: B008
 ) -> dict[str, Any]:

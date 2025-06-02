@@ -72,9 +72,7 @@ class MockHealthDataRepository(IHealthDataRepository):
                         metric.mental_health_data.model_dump()
                     )
 
-                metrics_data.append(
-                    metric_dict
-                )  # type: ignore[misc,unknown-member]
+                metrics_data.append(metric_dict)  # type: ignore[misc,unknown-member]
 
             # Store the health data entry
             entry: dict[str, Any] = {  # type: ignore[misc]

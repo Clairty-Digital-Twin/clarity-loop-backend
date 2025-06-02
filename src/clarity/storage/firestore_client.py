@@ -383,7 +383,9 @@ class FirestoreClient:
             )
 
         except NotFound:
-            logger.warning("Document not found for update: %s/%s", collection, document_id)
+            logger.warning(
+                "Document not found for update: %s/%s", collection, document_id
+            )
             return False
         except Exception as e:
             logger.exception("Failed to update document %s/%s", collection, document_id)
@@ -958,7 +960,12 @@ class FirestoreHealthDataRepository(IHealthDataRepository):
                 filters=filters,
             )
 
-            result = {
+        except Exception as e:
+            logger.exception("Failed to get health data for user %s", user_id)
+            msg = f"Health data retrieval failed: {e}"
+            raise FirestoreError(msg) from e
+        else:
+            return {
                 "metrics": metrics,
                 "pagination": {
                     "total": total_count,
@@ -972,12 +979,6 @@ class FirestoreHealthDataRepository(IHealthDataRepository):
                     "end_date": end_date.isoformat() if end_date else None,
                 },
             }
-            return result
-
-        except Exception as e:
-            logger.exception("Failed to get health data for user %s", user_id)
-            msg = f"Health data retrieval failed: {e}"
-            raise FirestoreError(msg) from e
 
     async def get_processing_status(
         self, processing_id: str, user_id: str
@@ -1165,7 +1166,9 @@ class FirestoreHealthDataRepository(IHealthDataRepository):
                 "retrieved_at": datetime.now(UTC).isoformat(),
             }
 
-            logger.info("Retrieved %s health records for user %s", len(documents), user_id)
+            logger.info(
+                "Retrieved %s health records for user %s", len(documents), user_id
+            )
 
         except Exception as e:
             logger.exception("Failed to get health data for user %s", user_id)
@@ -1174,14 +1177,18 @@ class FirestoreHealthDataRepository(IHealthDataRepository):
         else:
             return result
 
+    @staticmethod
+    def _raise_connection_error(message: str) -> None:
+        """Helper method to raise connection errors."""
+        raise ConnectionError(message)
+
     async def initialize(self) -> None:
         """Initialize the repository."""
         try:
             # Test connection
             health_status = await self._firestore_client.health_check()
             if health_status["status"] != "healthy":
-                msg = "Firestore connection unhealthy"
-                raise ConnectionError(msg)
+                self._raise_connection_error("Firestore connection unhealthy")
 
             logger.info("FirestoreHealthDataRepository initialized successfully")
 
@@ -1231,19 +1238,18 @@ class FirestoreHealthDataRepository(IHealthDataRepository):
                 order_direction="desc",
             )
 
-            result = {
+        except Exception as e:
+            logger.exception("Failed to get health summary for user %s", user_id)
+            msg = f"Health summary retrieval failed: {e}"
+            raise FirestoreError(msg) from e
+        else:
+            return {
                 "user_id": user_id,
                 "total_records": total_count,
                 "recent_records": len(recent_data),
                 "latest_record": recent_data[0] if recent_data else None,
                 "summary_generated_at": datetime.now(UTC).isoformat(),
             }
-            return result
-
-        except Exception as e:
-            logger.exception("Failed to get health summary for user %s", user_id)
-            msg = f"Health summary retrieval failed: {e}"
-            raise FirestoreError(msg) from e
 
     async def delete_user_data(self, user_id: str) -> int:
         """Delete all health data for a user (GDPR compliance).

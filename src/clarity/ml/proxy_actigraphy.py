@@ -245,7 +245,7 @@ class ProxyActigraphyTransformer:
 
             # Generate transformation statistics
             original_length = len(step_data.step_counts)
-            padding_length = np.sum(padding_mask) if padding_mask is not None else 0
+            padding_length = np.sum(padding_mask)
             
             transformation_stats = {
                 "input_length": original_length,
@@ -298,7 +298,7 @@ class ProxyActigraphyTransformer:
     def _prepare_step_data(
         step_counts: list[float],
         timestamps: list[datetime]
-    ) -> tuple[np.ndarray, np.ndarray]:
+    ) -> tuple[NDArray[np.floating[Any]], NDArray[np.bool_]]:
         """Prepare and validate step count data for transformation.
 
         Args:
@@ -359,9 +359,9 @@ class ProxyActigraphyTransformer:
 
     @staticmethod
     def _calculate_quality_score(
-        step_counts: np.ndarray,
-        proxy_vector: np.ndarray,
-        padding_mask: np.ndarray = None
+        step_counts: NDArray[np.floating[Any]],
+        proxy_vector: NDArray[np.floating[Any]],
+        padding_mask: NDArray[np.bool_] | None = None
     ) -> float:
         """Calculate data quality score for the transformation.
 
@@ -394,7 +394,7 @@ class ProxyActigraphyTransformer:
         if np.std(real_steps) > 0:
             # Coefficient of variation (normalized standard deviation)
             cv = np.std(real_steps) / (np.mean(real_steps) + 1e-6)
-            variability_score = min(1.0, cv / 2.0)  # Cap at 1.0
+            variability_score = min(1.0, float(cv / 2.0))  # Cap at 1.0
         else:
             variability_score = 0.0
 

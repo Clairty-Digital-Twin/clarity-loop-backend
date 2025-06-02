@@ -4,19 +4,19 @@ This service integrates with Google's Vertex AI Gemini 2.5 Pro model
 to generate human-like health insights and narratives from ML analysis results.
 """
 
-from datetime import UTC, datetime
 import json
 import logging
+from datetime import UTC, datetime
 from typing import Any
 
-from pydantic import BaseModel, Field
 import vertexai  # type: ignore[import-untyped]
+from pydantic import BaseModel, Field
 from vertexai.generative_models import (  # type: ignore[import-untyped]
-    GenerationConfig,
     GenerativeModel,
-    HarmBlockThreshold,
-    HarmCategory,
+    GenerationConfig,
     SafetySetting,
+    HarmCategory,
+    HarmBlockThreshold,
 )
 
 logger = logging.getLogger(__name__)
@@ -26,6 +26,10 @@ EXCELLENT_SLEEP_EFFICIENCY = 85
 GOOD_SLEEP_EFFICIENCY = 75
 POOR_SLEEP_EFFICIENCY = 80
 CIRCADIAN_THRESHOLD = 0.7
+MAX_NARRATIVE_PREVIEW_LENGTH = 300
+
+# Error messages
+GEMINI_NOT_INITIALIZED_MSG = "Gemini model not initialized"
 
 
 class HealthInsightRequest(BaseModel):
@@ -62,6 +66,11 @@ class GeminiService:
         self.model = None
         self.is_initialized = False
 
+    def _raise_model_not_initialized(self) -> None:
+        """Raise RuntimeError when model is not initialized."""
+        msg = GEMINI_NOT_INITIALIZED_MSG
+        raise RuntimeError(msg)
+
     async def initialize(self) -> None:
         """Initialize the Vertex AI Gemini client."""
         try:
@@ -91,7 +100,7 @@ class GeminiService:
         try:
             # Ensure model is initialized
             if self.model is None:
-                raise RuntimeError("Gemini model not initialized")
+                self._raise_model_not_initialized()
 
             # Create health-focused prompt for Gemini
             prompt = self._create_health_insight_prompt(request)
@@ -139,7 +148,8 @@ class GeminiService:
             logger.exception("Failed to generate health insights")
             raise
 
-    def _create_health_insight_prompt(self, request: HealthInsightRequest) -> str:
+    @staticmethod
+    def _create_health_insight_prompt(request: HealthInsightRequest) -> str:
         """Create a comprehensive prompt for health insight generation."""
         analysis_data = request.analysis_results
         context = request.context or ""
@@ -152,8 +162,8 @@ class GeminiService:
         wake_after_sleep_onset = analysis_data.get("wake_after_sleep_onset", 0)
         sleep_onset_latency = analysis_data.get("sleep_onset_latency", 0)
 
-        prompt = f"""You are a clinical AI assistant specializing in sleep health and wellness analysis. 
-        
+        return f"""You are a clinical AI assistant specializing in sleep health and wellness analysis.
+
 Analyze the following health data and provide insights in JSON format:
 
 PATIENT DATA:
@@ -195,9 +205,8 @@ Generate insights that are:
 
 Respond only with valid JSON."""
 
-        return prompt
-
-    def _parse_gemini_response(self, response: Any, user_id: str) -> HealthInsightResponse:
+    @staticmethod
+    def _parse_gemini_response(response: Any, user_id: str) -> HealthInsightResponse:  # noqa: ANN401
         """Parse and validate Gemini response."""
         try:
             # Extract text from response
@@ -224,16 +233,20 @@ Respond only with valid JSON."""
         except json.JSONDecodeError:
             logger.warning("Failed to parse Gemini JSON response, using fallback")
             # Fallback to extracting insights from text response
-            return self._create_fallback_response(response.text, user_id)
+            return GeminiService._create_fallback_response(response.text, user_id)
         except Exception:
             logger.exception("Error parsing Gemini response")
             raise
 
-    def _create_fallback_response(self, response_text: str, user_id: str) -> HealthInsightResponse:
+    @staticmethod
+    def _create_fallback_response(response_text: str, user_id: str) -> HealthInsightResponse:
         """Create fallback response when JSON parsing fails."""
         # Simple text parsing fallback
-        lines = response_text.split('\n')
-        narrative = response_text[:300] + "..." if len(response_text) > 300 else response_text
+        narrative = (
+            response_text[:MAX_NARRATIVE_PREVIEW_LENGTH] + "..."
+            if len(response_text) > MAX_NARRATIVE_PREVIEW_LENGTH
+            else response_text
+        )
 
         return HealthInsightResponse(
             user_id=user_id,

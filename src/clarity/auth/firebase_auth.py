@@ -1,11 +1,8 @@
-"""CLARITY Digital Twin Platform - Firebase Authentication.
+"""Firebase Authentication Provider and Middleware.
 
-Enterprise-grade Firebase authentication middleware with:
-- JWT token validation and verification
-- Role-based access control (RBAC)
-- Token caching for performance optimization
-- Comprehensive audit logging for HIPAA compliance
-- User context management
+This module provides Firebase-based authentication for the Clarity platform,
+including JWT token validation, user context management, and middleware
+for request authentication.
 """
 
 from __future__ import annotations
@@ -31,8 +28,7 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.responses import JSONResponse
 
 from clarity.core.interfaces import IAuthProvider
-from clarity.models.auth import AuthError
-from clarity.models.auth import Permission, UserContext, UserRole
+from clarity.models.auth import AuthError, Permission, UserContext, UserRole
 
 if TYPE_CHECKING:
     from clarity.core.config import MiddlewareConfig

@@ -262,7 +262,7 @@ class TestFirebaseAuthProvider:
 
             # Cache a token
             await auth_provider.verify_token("expire_test_token")
-            assert len(auth_provider._token_cache) == 1
+            assert len(auth_provider._token_cache) == 1  # type: ignore[misc]
 
             # Wait for expiration
             await asyncio.sleep(1.1)  # Wait slightly longer than TTL
@@ -298,7 +298,7 @@ class TestFirebaseAuthProvider:
             await auth_provider.verify_token("token3")  # Should evict oldest
 
             # Cache should not exceed max size
-            assert len(auth_provider._token_cache) <= 2
+            assert len(auth_provider._token_cache) <= 2  # type: ignore[misc]
 
     @pytest.mark.asyncio
     @staticmethod
@@ -348,7 +348,7 @@ class TestFirebaseAuthProvider:
 
         await auth_provider.cleanup()
 
-        assert len(auth_provider._token_cache) == 0
+        assert len(auth_provider._token_cache) == 0  # type: ignore[misc]
 
 
 class TestFirebaseAuthMiddleware:
@@ -405,7 +405,7 @@ class TestFirebaseAuthMiddleware:
         request = Mock()
         request.headers = {"Authorization": "Bearer valid_token_here"}
 
-        token = middleware._extract_token(request)
+        token = middleware._extract_token(request)  # type: ignore[misc]
 
         assert token == "valid_token_here"  # noqa: S105
 
@@ -416,7 +416,7 @@ class TestFirebaseAuthMiddleware:
         request.headers = {}
 
         with pytest.raises(AuthError) as exc_info:
-            middleware._extract_token(request)
+            middleware._extract_token(request)  # type: ignore[misc]
 
         assert exc_info.value.status_code == 401
         assert exc_info.value.error_code == "missing_token"

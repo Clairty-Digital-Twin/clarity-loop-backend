@@ -4,20 +4,21 @@ This module tests the NHANES population statistics functionality
 used for normalizing health data against population norms.
 """
 
-import pytest
 from unittest.mock import patch
 
+import pytest
+
 from clarity.ml.nhanes_stats import (  # type: ignore[import-untyped]
-    lookup_norm_stats,
-    get_available_years,
-    get_available_age_groups,
-    get_reference_info,
-    validate_proxy_values,
-    NHANESStatsError,
-    NHANES_REFERENCE_STATS,
     AGE_STRATIFIED_STATS,
-    SEX_STRATIFIED_STATS,
     EXTREME_OUTLIER_THRESHOLD,
+    NHANES_REFERENCE_STATS,
+    SEX_STRATIFIED_STATS,
+    NHANESStatsError,
+    get_available_age_groups,
+    get_available_years,
+    get_reference_info,
+    lookup_norm_stats,
+    validate_proxy_values,
 )
 
 
@@ -56,12 +57,12 @@ class TestNHANESStatsLookup:
         """Test lookup with sex stratification."""
         mean_male, std_male = lookup_norm_stats(year=2025, sex="male")
         mean_female, std_female = lookup_norm_stats(year=2025, sex="female")
-        
+
         assert isinstance(mean_male, float)
         assert isinstance(std_male, float)
         assert isinstance(mean_female, float)
         assert isinstance(std_female, float)
-        
+
         # Should be different values for different sexes
         assert mean_male != mean_female or std_male != std_female
 
@@ -91,7 +92,7 @@ class TestNHANESStatsLookup:
         mean_lower, std_lower = lookup_norm_stats(sex="male")
         mean_upper, std_upper = lookup_norm_stats(sex="MALE")
         mean_mixed, std_mixed = lookup_norm_stats(sex="Male")
-        
+
         assert mean_lower == mean_upper == mean_mixed
         assert std_lower == std_upper == std_mixed
 
@@ -119,11 +120,11 @@ class TestAvailableData:
         """Test that available data is consistent with constants."""
         years = get_available_years()
         age_groups = get_available_age_groups()
-        
+
         # Years should match NHANES_REFERENCE_STATS keys
-        expected_years = [int(year) for year in NHANES_REFERENCE_STATS.keys()]
+        expected_years = [int(year) for year in NHANES_REFERENCE_STATS]
         assert set(years) == set(expected_years)
-        
+
         # Age groups should match AGE_STRATIFIED_STATS keys
         assert set(age_groups) == set(AGE_STRATIFIED_STATS.keys())
 
@@ -163,7 +164,7 @@ class TestProxyValueValidation:
         """Test validation with normal values."""
         # Generate some normal values around the expected mean
         proxy_values = [4.0, 4.2, 4.5, 4.1, 4.3, 4.4, 4.0, 4.6]
-        
+
         result = validate_proxy_values(proxy_values)
         assert isinstance(result, dict)
         assert "total_values" in result
@@ -173,7 +174,7 @@ class TestProxyValueValidation:
         assert "extreme_high_count" in result
         assert "outlier_percentage" in result
         assert "validation_passed" in result
-        
+
         assert result["total_values"] == len(proxy_values)
         assert isinstance(bool(result["validation_passed"]), bool)
 
@@ -181,7 +182,7 @@ class TestProxyValueValidation:
         """Test validation with outlier values."""
         # Include some extreme values
         proxy_values = [4.0, 4.2, 15.0, 4.1, -5.0, 4.4, 4.0, 4.6]  # 15.0 and -5.0 are outliers
-        
+
         result = validate_proxy_values(proxy_values)
         assert result["extreme_low_count"] > 0 or result["extreme_high_count"] > 0
         assert result["outlier_percentage"] > 0
@@ -202,10 +203,10 @@ class TestProxyValueValidation:
     def test_validate_proxy_values_different_year(self):
         """Test validation with different reference year."""
         proxy_values = [4.0, 4.2, 4.5, 4.1]
-        
+
         result_2023 = validate_proxy_values(proxy_values, year=2023)
         result_2025 = validate_proxy_values(proxy_values, year=2025)
-        
+
         assert result_2023["reference_year"] == 2023
         assert result_2025["reference_year"] == 2025
         # Results might be different due to different reference stats
@@ -217,7 +218,7 @@ class TestNHANESConstants:
     def test_nhanes_reference_stats_structure(self):
         """Test that NHANES reference stats have correct structure."""
         assert isinstance(NHANES_REFERENCE_STATS, dict)
-        
+
         for year, stats in NHANES_REFERENCE_STATS.items():
             assert isinstance(year, str)
             assert isinstance(stats, dict)
@@ -232,7 +233,7 @@ class TestNHANESConstants:
     def test_age_stratified_stats_structure(self):
         """Test that age stratified stats have correct structure."""
         assert isinstance(AGE_STRATIFIED_STATS, dict)
-        
+
         for age_group, stats in AGE_STRATIFIED_STATS.items():
             assert isinstance(age_group, str)
             assert isinstance(stats, dict)
@@ -245,7 +246,7 @@ class TestNHANESConstants:
     def test_sex_stratified_stats_structure(self):
         """Test that sex stratified stats have correct structure."""
         assert isinstance(SEX_STRATIFIED_STATS, dict)
-        
+
         expected_sexes = ["male", "female", "other"]
         for sex in expected_sexes:
             assert sex in SEX_STRATIFIED_STATS
@@ -287,20 +288,20 @@ class TestIntegrationNHANESStats:
         # Get available years and pick one
         years = get_available_years()
         year = years[0] if years else 2025
-        
+
         # Get available age groups and pick one
         age_groups = get_available_age_groups()
         age_group = age_groups[0] if age_groups else None
-        
+
         # Get stats
         mean, std = lookup_norm_stats(year=year, age_group=age_group, sex="male")
         assert isinstance(mean, float)
         assert isinstance(std, float)
-        
+
         # Get reference info
         info = get_reference_info(year)
         assert isinstance(info, dict)
-        
+
         # Validate some proxy values
         proxy_values = [mean - std, mean, mean + std]  # Values around the mean
         validation = validate_proxy_values(proxy_values, year=year)
@@ -312,7 +313,7 @@ class TestIntegrationNHANESStats:
         mean, std = lookup_norm_stats(year=9999, age_group="invalid", sex="invalid")
         assert isinstance(mean, float)
         assert isinstance(std, float)
-        
+
         # Should still work due to fallback mechanisms
         info = get_reference_info(9999)
         assert isinstance(info, dict)
@@ -324,7 +325,7 @@ class TestIntegrationNHANESStats:
         lookup_norm_stats(year=9999)  # Invalid year
         lookup_norm_stats(age_group="invalid")  # Invalid age group
         lookup_norm_stats(sex="invalid")  # Invalid sex
-        
+
         # Verify logging infrastructure is in place
         assert hasattr(mock_logger, 'warning')
 
@@ -335,46 +336,46 @@ class TestPerformanceNHANESStats:
     def test_lookup_performance(self):
         """Test that lookups are reasonably fast."""
         import time
-        
+
         start_time = time.time()
         for _ in range(1000):
             lookup_norm_stats(year=2025, age_group="30-39", sex="male")
         end_time = time.time()
-        
+
         # Should complete 1000 lookups in under 1 second
         assert (end_time - start_time) < 1.0
 
     def test_validation_performance(self):
         """Test that validation is reasonably fast."""
         import time
-        
+
         # Generate test data
         proxy_values = [4.0 + i * 0.1 for i in range(100)]
-        
+
         start_time = time.time()
         for _ in range(100):
             validate_proxy_values(proxy_values)
         end_time = time.time()
-        
+
         # Should complete 100 validations in under 1 second
         assert (end_time - start_time) < 1.0
 
     def test_caching_effectiveness(self):
         """Test that LRU caching is working."""
         import time
-        
+
         # First call (should be slower due to computation)
         start_time = time.time()
         years1 = get_available_years()
         first_call_time = time.time() - start_time
-        
+
         # Second call (should be faster due to caching)
         start_time = time.time()
         years2 = get_available_years()
         second_call_time = time.time() - start_time
-        
+
         # Results should be identical
         assert years1 == years2
-        
+
         # Second call should be faster (though this might be flaky on fast systems)
-        # Just ensure it doesn't crash and returns same results 
+        # Just ensure it doesn't crash and returns same results

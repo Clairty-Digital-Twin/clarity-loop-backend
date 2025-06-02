@@ -9,8 +9,8 @@ import time
 from unittest.mock import patch
 
 import numpy as np
-import pytest
 from pydantic_core import ValidationError
+import pytest
 
 from clarity.ml.proxy_actigraphy import (  # type: ignore[import-untyped]
     DEFAULT_NHANES_STATS,

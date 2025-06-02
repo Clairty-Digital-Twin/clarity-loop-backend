@@ -261,7 +261,7 @@ class AuthenticationService:
             # In a real implementation, you would verify the password using Firebase client SDK
 
             # Get user data from Firestore
-            user_data = await self.firestore_client.get_document(
+            user_data: dict[str, Any] | None = await self.firestore_client.get_document(
                 collection=self.users_collection, document_id=user_record.uid  # type: ignore[misc,arg-type]
             )
 

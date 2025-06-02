@@ -1,4 +1,4 @@
-"""Vntertex AI Gemini Service for Health Insights Generation.
+"""Vertex AI Gemini Service for Health Insights Generation.
 
 This service integrates with Google's Vertex AI Gemini 2.5 Pro model
 to generate human-like health insights and narratives from ML analysis results.
@@ -10,6 +10,12 @@ from typing import Any
 from pydantic import BaseModel, Field
 
 logger = logging.getLogger(__name__)
+
+# Clinical thresholds as constants
+EXCELLENT_SLEEP_EFFICIENCY = 85
+GOOD_SLEEP_EFFICIENCY = 75
+POOR_SLEEP_EFFICIENCY = 80
+CIRCADIAN_THRESHOLD = 0.7
 
 
 class HealthInsightRequest(BaseModel):
@@ -52,8 +58,8 @@ class GeminiService:
             self.is_initialized = True
             logger.info("Gemini service initialized successfully")
 
-        except Exception as e:
-            logger.exception("Failed to initialize Gemini service: %s", e)
+        except Exception:
+            logger.exception("Failed to initialize Gemini service")
             raise
 
     async def generate_health_insights(
@@ -80,11 +86,12 @@ class GeminiService:
                 generated_at="2024-01-15T10:30:00Z",
             )
 
-        except Exception as e:
-            logger.exception("Failed to generate health insights: %s", e)
+        except Exception:
+            logger.exception("Failed to generate health insights")
             raise
 
-    def _generate_placeholder_narrative(self, analysis_results: dict[str, Any]) -> str:
+    @staticmethod
+    def _generate_placeholder_narrative(analysis_results: dict[str, Any]) -> str:
         """Generate a placeholder narrative (to be replaced with Gemini API)."""
         sleep_efficiency = analysis_results.get("sleep_efficiency", 0)
         circadian_score = analysis_results.get("circadian_rhythm_score", 0)
@@ -95,33 +102,43 @@ class GeminiService:
             f"healthy sleep pattern with room for optimization in your daily routine consistency."
         )
 
-    def _extract_key_insights(self, analysis_results: dict[str, Any]) -> list[str]:
+    @staticmethod
+    def _extract_key_insights(analysis_results: dict[str, Any]) -> list[str]:
         """Extract key insights from analysis results."""
         insights: list[str] = []
 
         sleep_efficiency = analysis_results.get("sleep_efficiency", 0)
-        if sleep_efficiency > 85:
+        if sleep_efficiency > EXCELLENT_SLEEP_EFFICIENCY:
             insights.append("Excellent sleep quality maintained")
-        elif sleep_efficiency > 75:
+        elif sleep_efficiency > GOOD_SLEEP_EFFICIENCY:
             insights.append("Good sleep quality with minor optimization opportunities")
         else:
             insights.append("Sleep quality needs attention")
 
         return insights
 
-    def _generate_recommendations(self, analysis_results: dict[str, Any]) -> list[str]:
+    @staticmethod
+    def _generate_recommendations(analysis_results: dict[str, Any]) -> list[str]:
         """Generate actionable recommendations."""
         recommendations: list[str] = []
 
         sleep_efficiency = analysis_results.get("sleep_efficiency", 0)
-        if sleep_efficiency < 80:
-            recommendations.append("Consider establishing a consistent bedtime routine")
-            recommendations.append("Limit screen time 1 hour before bed")
+        if sleep_efficiency < POOR_SLEEP_EFFICIENCY:
+            recommendations.extend(
+                [
+                    "Consider establishing a consistent bedtime routine",
+                    "Limit screen time 1 hour before bed",
+                ]
+            )
 
         circadian_score = analysis_results.get("circadian_rhythm_score", 0)
-        if circadian_score < 0.7:
-            recommendations.append("Try to maintain consistent sleep and wake times")
-            recommendations.append("Get natural sunlight exposure in the morning")
+        if circadian_score < CIRCADIAN_THRESHOLD:
+            recommendations.extend(
+                [
+                    "Try to maintain consistent sleep and wake times",
+                    "Get natural sunlight exposure in the morning",
+                ]
+            )
 
         return recommendations
 

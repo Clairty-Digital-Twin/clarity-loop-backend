@@ -37,8 +37,9 @@ class PreprocessingStrategy(Protocol):
 class StandardActigraphyPreprocessor:
     """Standard actigraphy preprocessing implementation."""
 
+    @staticmethod
     def preprocess(
-        self, data_points: list[ActigraphyDataPoint], target_length: int = 1440
+        data_points: list[ActigraphyDataPoint], target_length: int = 1440
     ) -> torch.Tensor:
         """Preprocess actigraphy data for PAT model input.
 
@@ -78,23 +79,22 @@ class StandardActigraphyPreprocessor:
                 activity_data = padded
 
         # Convert to tensor and add batch and feature dimensions
-        tensor = torch.FloatTensor(activity_data).unsqueeze(0).unsqueeze(-1)
-
-        return tensor
+        return torch.FloatTensor(activity_data).unsqueeze(0).unsqueeze(-1)
 
 
 class HealthDataPreprocessor:
     """Main preprocessing service using Strategy pattern."""
 
-    def __init__(self, strategy: PreprocessingStrategy | None = None):
+    def __init__(self, strategy: PreprocessingStrategy | None = None) -> None:
         self.strategy = strategy or StandardActigraphyPreprocessor()
 
     def set_strategy(self, strategy: PreprocessingStrategy) -> None:
         """Set the preprocessing strategy."""
         self.strategy = strategy
 
+    @staticmethod
     def convert_health_metrics_to_actigraphy(
-        self, metrics: list[HealthMetric]
+        metrics: list[HealthMetric],
     ) -> list[ActigraphyDataPoint]:
         """Convert HealthMetric objects to ActigraphyDataPoint objects."""
         actigraphy_points: list[ActigraphyDataPoint] = []

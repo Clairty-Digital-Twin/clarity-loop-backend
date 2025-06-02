@@ -21,6 +21,14 @@ from clarity.ml.preprocessing import ActigraphyDataPoint, HealthDataPreprocessor
 
 logger = logging.getLogger(__name__)
 
+# Clinical thresholds as constants
+EXCELLENT_SLEEP_EFFICIENCY = 85
+GOOD_SLEEP_EFFICIENCY = 75
+HIGH_CIRCADIAN_SCORE = 0.8
+MODERATE_CIRCADIAN_SCORE = 0.6
+HIGH_DEPRESSION_RISK = 0.7
+MODERATE_DEPRESSION_RISK = 0.4
+
 
 class ActigraphyInput(BaseModel):
     """Input model for actigraphy data."""
@@ -63,7 +71,7 @@ class PATTransformer(nn.Module):
         num_heads: int = 8,
         sequence_length: int = 1440,  # 24 hours at 1-minute resolution
         num_classes: int = 4,  # wake, light sleep, deep sleep, REM
-    ):
+    ) -> None:
         super().__init__()
 
         self.input_dim = input_dim
@@ -100,7 +108,7 @@ class PATTransformer(nn.Module):
 
         # Input projection and positional encoding
         x = self.input_projection(x)
-        x = x + self.positional_encoding[:seq_len].unsqueeze(0)
+        x += self.positional_encoding[:seq_len].unsqueeze(0)
         x = self.dropout(x)
 
         # Transformer encoding
@@ -110,14 +118,12 @@ class PATTransformer(nn.Module):
         pooled = encoded.mean(dim=1)
 
         # Multiple prediction heads
-        outputs = {
+        return {
             "sleep_stages": self.sleep_stage_head(encoded),  # Per-timestep
             "sleep_metrics": torch.sigmoid(self.sleep_metrics_head(pooled)),
             "circadian_score": torch.sigmoid(self.circadian_head(pooled)),
             "depression_risk": torch.sigmoid(self.depression_head(pooled)),
         }
-
-        return outputs
 
 
 class PATModelService(IMLModelService):
@@ -133,7 +139,7 @@ class PATModelService(IMLModelService):
         model_size: str = "medium",
         device: str | None = None,
         preprocessor: HealthDataPreprocessor | None = None,
-    ):
+    ) -> None:
         self.model_size = model_size
         self.device = device or ("cuda" if torch.cuda.is_available() else "cpu")
         self.model: PATTransformer | None = None
@@ -153,13 +159,15 @@ class PATModelService(IMLModelService):
         self.sleep_stages = ["wake", "light_sleep", "deep_sleep", "rem_sleep"]
 
         logger.info(
-            f"Initializing PAT model service (size: {model_size}, device: {self.device})"
+            "Initializing PAT model service (size: %s, device: %s)",
+            model_size,
+            self.device,
         )
 
     async def load_model(self) -> None:
         """Load the PAT model weights asynchronously."""
         try:
-            logger.info(f"Loading PAT model from {self.model_path}")
+            logger.info("Loading PAT model from %s", self.model_path)
 
             # Initialize model architecture
             self.model = PATTransformer()
@@ -170,13 +178,12 @@ class PATModelService(IMLModelService):
                 # For now, we'll use a placeholder that initializes the model
                 logger.info("Loading pre-trained PAT weights...")
 
-                # Placeholder: In production, load actual weights
-                # checkpoint = torch.load(self.model_path, map_location=self.device)
-                # self.model.load_state_dict(checkpoint['model_state_dict'])
+                # TODO: Load actual weights in production
 
             else:
                 logger.warning(
-                    f"Model weights not found at {self.model_path}, using random initialization"
+                    "Model weights not found at %s, using random initialization",
+                    self.model_path,
                 )
 
             # Move model to device and set to eval mode
@@ -186,8 +193,8 @@ class PATModelService(IMLModelService):
             self.is_loaded = True
             logger.info("PAT model loaded successfully")
 
-        except Exception as e:
-            logger.error(f"Failed to load PAT model: {e}")
+        except Exception:
+            logger.exception("Failed to load PAT model")
             raise
 
     def _preprocess_actigraphy_data(
@@ -253,8 +260,8 @@ class PATModelService(IMLModelService):
             clinical_insights=insights,
         )
 
+    @staticmethod
     def _generate_clinical_insights(
-        self,
         sleep_efficiency: float,
         circadian_score: float,
         depression_risk: float,
@@ -263,11 +270,11 @@ class PATModelService(IMLModelService):
         insights: list[str] = []
 
         # Sleep efficiency insights
-        if sleep_efficiency >= 85:
+        if sleep_efficiency >= EXCELLENT_SLEEP_EFFICIENCY:
             insights.append(
                 "Excellent sleep efficiency - maintaining healthy sleep patterns"
             )
-        elif sleep_efficiency >= 75:
+        elif sleep_efficiency >= GOOD_SLEEP_EFFICIENCY:
             insights.append("Good sleep efficiency - minor room for improvement")
         else:
             insights.append(
@@ -275,9 +282,9 @@ class PATModelService(IMLModelService):
             )
 
         # Circadian rhythm insights
-        if circadian_score >= 0.8:
+        if circadian_score >= HIGH_CIRCADIAN_SCORE:
             insights.append("Strong circadian rhythm regularity")
-        elif circadian_score >= 0.6:
+        elif circadian_score >= MODERATE_CIRCADIAN_SCORE:
             insights.append("Moderate circadian rhythm stability")
         else:
             insights.append(
@@ -285,11 +292,11 @@ class PATModelService(IMLModelService):
             )
 
         # Depression risk insights
-        if depression_risk >= 0.7:
+        if depression_risk >= HIGH_DEPRESSION_RISK:
             insights.append(
                 "Elevated depression risk indicators - consider professional consultation"
             )
-        elif depression_risk >= 0.4:
+        elif depression_risk >= MODERATE_DEPRESSION_RISK:
             insights.append(
                 "Moderate depression risk indicators - monitor mood patterns"
             )
@@ -297,6 +304,12 @@ class PATModelService(IMLModelService):
             insights.append("Low depression risk indicators based on activity patterns")
 
         return insights
+
+    @staticmethod
+    def _raise_model_not_loaded_error() -> None:
+        """Raise a RuntimeError for model not loaded."""
+        msg = "Model not loaded"
+        raise RuntimeError(msg)
 
     async def analyze_actigraphy(
         self, input_data: ActigraphyInput
@@ -318,7 +331,7 @@ class PATModelService(IMLModelService):
 
             # Run inference
             if self.model is None:
-                raise RuntimeError("Model not loaded")
+                PATModelService._raise_model_not_loaded_error()
 
             with torch.no_grad():
                 outputs = self.model(processed_data)
@@ -326,12 +339,12 @@ class PATModelService(IMLModelService):
             # Postprocess results
             analysis = self._postprocess_predictions(outputs, input_data.user_id)
 
-            logger.info(f"Completed actigraphy analysis for user {input_data.user_id}")
-            return analysis
-
-        except Exception as e:
-            logger.error(f"Actigraphy analysis failed: {e}")
+        except Exception:
+            logger.exception("Actigraphy analysis failed")
             raise
+        else:
+            logger.info("Completed actigraphy analysis for user %s", input_data.user_id)
+            return analysis
 
     async def health_check(self) -> dict[str, str | bool]:
         """Check the health status of the PAT model service."""
@@ -349,8 +362,11 @@ _pat_service: PATModelService | None = None
 
 
 async def get_pat_service() -> PATModelService:
-    """Get or create the global PAT service instance."""
-    global _pat_service
+    """Get or create the global PAT service instance.
+
+    Note: Using global state is discouraged but acceptable for singleton services.
+    """
+    global _pat_service  # noqa: PLW0603
 
     if _pat_service is None:
         _pat_service = PATModelService()

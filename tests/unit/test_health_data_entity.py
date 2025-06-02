@@ -37,7 +37,7 @@ class TestHealthMetricEntity:
     """
 
     @staticmethod
-    def test_valid_heart_rate_metric_creation():
+    def test_valid_heart_rate_metric_creation() -> None:
         """Test pure business logic - no mocks needed."""
         # Given: Valid biometric data
         biometric_data = BiometricData(
@@ -66,7 +66,7 @@ class TestHealthMetricEntity:
         assert isinstance(health_metric.created_at, datetime)
 
     @staticmethod
-    def test_heart_rate_business_rule_validation():
+    def test_heart_rate_business_rule_validation() -> None:
         """Test enterprise business rule: Heart rate must be within human limits."""
         # Valid heart rates should pass
         valid_rates = [40, 60, 80, 100, 200]
@@ -105,7 +105,7 @@ class TestHealthMetricEntity:
                 )
 
     @staticmethod
-    def test_activity_business_rule_validation():
+    def test_activity_business_rule_validation() -> None:
         """Test enterprise business rule: Activity data must be non-negative."""
         # Valid step counts
         valid_steps = [0, 1000, 10000, 50000]
@@ -146,7 +146,7 @@ class TestHealthMetricEntity:
                 )
 
     @staticmethod
-    def test_entity_immutability_rule():
+    def test_entity_immutability_rule() -> None:
         """Test business rule: Health metric entities have immutable IDs after creation."""
         biometric_data = BiometricData(
             heart_rate=72,
@@ -171,7 +171,7 @@ class TestHealthMetricEntity:
         assert health_metric.metric_id == original_id
 
     @staticmethod
-    def test_metric_type_consistency_rule():
+    def test_metric_type_consistency_rule() -> None:
         """Test business rule: Metric type must be consistent with provided data."""
         biometric_data = BiometricData(
             heart_rate=72,
@@ -207,7 +207,7 @@ class TestBiometricDataEntity:
     """Test biometric data business entity - pure business logic."""
 
     @staticmethod
-    def test_valid_biometric_creation():
+    def test_valid_biometric_creation() -> None:
         """Test biometric data creation follows business rules."""
         # Given: Valid biometric data
         biometric = BiometricData(
@@ -228,7 +228,7 @@ class TestBiometricDataEntity:
         assert isinstance(biometric.timestamp, datetime)
 
     @staticmethod
-    def test_blood_pressure_business_rules():
+    def test_blood_pressure_business_rules() -> None:
         """Test business rules for blood pressure validation."""
         # Valid blood pressure ranges
         valid_combinations = [
@@ -268,7 +268,7 @@ class TestBiometricDataEntity:
                 )
 
     @staticmethod
-    def test_timestamp_business_rule():
+    def test_timestamp_business_rule() -> None:
         """Test business rule: Timestamps cannot be in the future."""
         # Valid timestamp (now)
         now = datetime.now(UTC)
@@ -301,7 +301,7 @@ class TestSleepDataEntity:
     """Test sleep data business entity - enterprise rules."""
 
     @staticmethod
-    def test_sleep_efficiency_business_rule():
+    def test_sleep_efficiency_business_rule() -> None:
         """Test business rule: Sleep efficiency must be between 0 and 1."""
         start_time = datetime.now(UTC)
         end_time = start_time + timedelta(hours=8)  # 8 hours later
@@ -335,7 +335,7 @@ class TestSleepDataEntity:
                 )
 
     @staticmethod
-    def test_sleep_timing_consistency_rule():
+    def test_sleep_timing_consistency_rule() -> None:
         """Test business rule: Sleep end must be after sleep start."""
         start_time = datetime.now(UTC)
 
@@ -370,7 +370,7 @@ class TestMentalHealthBusinessRules:
     """Test mental health indicator business logic - enterprise rules."""
 
     @staticmethod
-    def test_mood_scale_business_rule():
+    def test_mood_scale_business_rule() -> None:
         """Test business rule: Mood must use standardized scale."""
         # Valid mood values
         valid_moods = [
@@ -395,7 +395,7 @@ class TestMentalHealthBusinessRules:
             assert mental_health.mood_score == mood
 
     @staticmethod
-    def test_stress_level_range_business_rule():
+    def test_stress_level_range_business_rule() -> None:
         """Test business rule: Stress levels must be on 1-10 scale."""
         # Valid stress levels
         valid_levels = [1.0, 5.5, 10.0]
@@ -432,7 +432,7 @@ class TestHealthDataUploadBusinessRules:
     """Test health data upload business logic - enterprise rules."""
 
     @staticmethod
-    def test_upload_metrics_limit_business_rule():
+    def test_upload_metrics_limit_business_rule() -> None:
         """Test business rule: Maximum 100 metrics per upload."""
         user_id = uuid4()
 
@@ -469,7 +469,7 @@ class TestHealthDataUploadBusinessRules:
         assert hasattr(HealthDataUpload, "validate_metrics_consistency")
 
     @staticmethod
-    def test_duplicate_metric_id_business_rule():
+    def test_duplicate_metric_id_business_rule() -> None:
         """Test business rule: No duplicate metric IDs allowed."""
         user_id = uuid4()
 
@@ -516,7 +516,7 @@ class TestProcessingStatusBusinessRules:
     """Test processing status business logic - enterprise rules."""
 
     @staticmethod
-    def test_status_enum_business_rule():
+    def test_status_enum_business_rule() -> None:
         """Test business rule: Only valid processing statuses allowed."""
         valid_statuses = [
             ProcessingStatus.RECEIVED,
@@ -532,7 +532,7 @@ class TestProcessingStatusBusinessRules:
             assert isinstance(status.value, str)
 
     @staticmethod
-    def test_status_progression_business_logic():
+    def test_status_progression_business_logic() -> None:
         """Test business logic for status progression."""
         # Business rule: Certain progressions are logical
         logical_progressions = [

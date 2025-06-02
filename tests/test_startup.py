@@ -1,4 +1,4 @@
-"""CLARITY Digital Twin Platform - Startup Health Tests
+"""CLARITY Digital Twin Platform - Startup Health Tests.
 
 Tests to ensure the application starts quickly and properly without hanging.
 These tests verify that the lifespan function works correctly with timeouts.
@@ -20,7 +20,8 @@ class TestApplicationStartup:
     """Test suite for application startup performance and reliability."""
 
     @pytest.mark.asyncio
-    async def test_application_starts_quickly(self):
+    @staticmethod
+    async def test_application_starts_quickly() -> None:
         """Ensure app starts in under 10 seconds with proper timeout handling."""
         from clarity.core.container import create_application
 
@@ -39,18 +40,17 @@ class TestApplicationStartup:
         assert app.title == "CLARITY Digital Twin Platform"
         assert elapsed < 10.0, f"Startup took {elapsed:.2f}s - too slow!"
 
-        print(f"✅ App started successfully in {elapsed:.2f}s")
-
     @pytest.mark.asyncio
-    async def test_lifespan_context_manager(self):
+    @staticmethod
+    async def test_lifespan_context_manager() -> None:
         """Test that the lifespan context manager works without hanging."""
+        from fastapi import FastAPI
+
         from clarity.core.container import get_container
 
         container = get_container()
 
         # Create a minimal FastAPI app for testing
-        from fastapi import FastAPI
-
         test_app = FastAPI()
 
         start_time = time.perf_counter()
@@ -59,7 +59,6 @@ class TestApplicationStartup:
         async with asyncio.timeout(15.0):  # Generous timeout for CI
             async with container.app_lifespan(test_app):
                 elapsed_startup = time.perf_counter() - start_time
-                print(f"✅ Lifespan startup completed in {elapsed_startup:.2f}s")
 
                 # App should be ready for use
                 assert (
@@ -70,9 +69,12 @@ class TestApplicationStartup:
                 await asyncio.sleep(0.1)
 
         total_elapsed = time.perf_counter() - start_time
-        print(f"✅ Complete lifespan cycle in {total_elapsed:.2f}s")
+        assert (
+            total_elapsed < 15.0
+        ), f"Total lifespan cycle too slow: {total_elapsed:.2f}s"
 
-    def test_config_provider_performance(self):
+    @staticmethod
+    def test_config_provider_performance() -> None:
         """Test that config provider initialization is fast."""
         from clarity.core.container import get_container
 
@@ -93,13 +95,9 @@ class TestApplicationStartup:
         assert isinstance(should_skip, bool)
         assert isinstance(auth_enabled, bool)
 
-        print(f"✅ Config provider ready in {elapsed:.4f}s")
-        print(f"   • Development: {is_dev}")
-        print(f"   • Skip external: {should_skip}")
-        print(f"   • Auth enabled: {auth_enabled}")
-
     @pytest.mark.asyncio
-    async def test_dependency_injection_speed(self):
+    @staticmethod
+    async def test_dependency_injection_speed() -> None:
         """Test that dependency injection doesn't cause delays."""
         from clarity.core.container import get_container
 
@@ -119,13 +117,9 @@ class TestApplicationStartup:
         assert auth is not None
         assert repo is not None
 
-        print(f"✅ All dependencies ready in {elapsed:.4f}s")
-        print(f"   • Config: {type(config).__name__}")
-        print(f"   • Auth: {type(auth).__name__}")
-        print(f"   • Repository: {type(repo).__name__}")
-
     @pytest.mark.asyncio
-    async def test_mock_services_in_development(self):
+    @staticmethod
+    async def test_mock_services_in_development() -> None:
         """Test that mock services are used in development to prevent hangs."""
         from clarity.core.container import get_container
 
@@ -141,16 +135,13 @@ class TestApplicationStartup:
             auth_type = type(auth).__name__
             repo_type = type(repo).__name__
 
-            print("✅ Using mock services for fast startup:")
-            print(f"   • Auth: {auth_type}")
-            print(f"   • Repository: {repo_type}")
-
             # Mock services should be available
             assert "Mock" in auth_type or "mock" in auth_type.lower()
             assert "Mock" in repo_type or "mock" in repo_type.lower()
 
     @pytest.mark.asyncio
-    async def test_timeout_protection(self):
+    @staticmethod
+    async def test_timeout_protection() -> None:
         """Test that startup has timeout protection."""
         from clarity.core.config import get_settings
 
@@ -161,9 +152,8 @@ class TestApplicationStartup:
         assert settings.startup_timeout > 0
         assert settings.startup_timeout <= 30  # Reasonable max
 
-        print(f"✅ Startup timeout configured: {settings.startup_timeout}s")
-
-    def test_environment_validation(self):
+    @staticmethod
+    def test_environment_validation() -> None:
         """Test that environment validation works correctly."""
         from clarity.core.config import get_settings
 
@@ -173,12 +163,9 @@ class TestApplicationStartup:
         assert settings.environment is not None
         assert isinstance(settings.skip_external_services, bool)
 
-        print("✅ Environment validation passed:")
-        print(f"   • Environment: {settings.environment}")
-        print(f"   • Skip external: {settings.skip_external_services}")
-
     @pytest.mark.asyncio
-    async def test_graceful_failure_fallback(self):
+    @staticmethod
+    async def test_graceful_failure_fallback() -> None:
         """Test that startup gracefully falls back to mock services on failure."""
         from clarity.core.container import get_container
 
@@ -198,10 +185,8 @@ class TestApplicationStartup:
             assert auth is not None
             assert repo is not None
 
-            print(f"✅ Fallback services ready in {elapsed:.4f}s")
-
-        except Exception as e:
-            pytest.fail(f"Startup should not fail completely: {e}")
+        except Exception as exc:
+            pytest.fail(f"Startup should not fail completely: {exc}")
 
 
 # Integration test for full startup cycle
@@ -209,7 +194,8 @@ class TestFullStartupCycle:
     """Integration tests for complete application startup."""
 
     @pytest.mark.asyncio
-    async def test_complete_app_lifecycle(self):
+    @staticmethod
+    async def test_complete_app_lifecycle() -> None:
         """Test complete application creation, startup, and shutdown."""
         from clarity.core.container import create_application
 
@@ -225,11 +211,6 @@ class TestFullStartupCycle:
         # App should have basic properties
         assert app.title == "CLARITY Digital Twin Platform"
         assert hasattr(app, "router")
-
-        print("✅ Complete application lifecycle test passed:")
-        print(f"   • Creation time: {creation_time:.2f}s")
-        print(f"   • App title: {app.title}")
-        print(f"   • Lifespan configured: {hasattr(app.router, 'lifespan_context')}")
 
 
 if __name__ == "__main__":

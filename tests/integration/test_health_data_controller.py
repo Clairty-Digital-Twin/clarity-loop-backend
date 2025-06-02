@@ -12,8 +12,8 @@ TESTS USE MOCKED USE CASES BUT REAL FASTAPI FRAMEWORK.
 """
 
 from datetime import UTC, datetime
-import json
-from unittest.mock import AsyncMock, Mock
+from typing import Any, Dict
+from unittest.mock import Mock
 from uuid import uuid4
 
 from fastapi import FastAPI, status
@@ -27,14 +27,6 @@ from clarity.core.interfaces import (
     IConfigProvider,
     IHealthDataRepository,
 )
-from clarity.models.health_data import (
-    BiometricData,
-    HealthDataResponse,
-    HealthDataUpload,
-    HealthMetric,
-    HealthMetricType,
-    ProcessingStatus,
-)
 
 
 class TestHealthDataController:
@@ -46,7 +38,8 @@ class TestHealthDataController:
     """
 
     @pytest.fixture
-    def app(self):
+    @staticmethod
+    def app() -> FastAPI:
         """Create FastAPI test app with mocked dependencies."""
         # Create FastAPI app with router
         app = FastAPI()
@@ -67,12 +60,14 @@ class TestHealthDataController:
         return app
 
     @pytest.fixture
-    def client(self, app):
+    @staticmethod
+    def client(app: FastAPI) -> TestClient:
         """Create test client for making HTTP requests."""
         return TestClient(app)
 
     @pytest.fixture
-    def valid_auth_headers(self):
+    @staticmethod
+    def valid_auth_headers() -> dict[str, str]:
         """Mock valid authentication headers."""
         return {
             "Authorization": "Bearer valid-jwt-token",
@@ -80,7 +75,8 @@ class TestHealthDataController:
         }
 
     @pytest.fixture
-    def valid_health_data_payload(self):
+    @staticmethod
+    def valid_health_data_payload() -> dict[str, Any]:
         """Valid health data upload payload for testing."""
         return {
             "user_id": str(uuid4()),
@@ -97,7 +93,8 @@ class TestHealthDataController:
             "client_timestamp": datetime.now(UTC).isoformat(),
         }
 
-    def test_health_check_endpoint_adapter(self, client):
+    @staticmethod
+    def test_health_check_endpoint_adapter(client: TestClient) -> None:
         """Test health check endpoint adapts correctly (no auth required)."""
         # When: Making health check request
         response = client.get("/api/v1/health-data/health")
@@ -113,9 +110,12 @@ class TestHealthDataController:
         assert data["service"] == "health-data-api"
 
     @pytest.mark.asyncio
+    @staticmethod
     async def test_upload_endpoint_request_adaptation(
-        self, client, valid_auth_headers, valid_health_data_payload
-    ):
+        client: TestClient,
+        valid_auth_headers: dict[str, str],
+        valid_health_data_payload: dict[str, Any],
+    ) -> None:
         """Test upload endpoint adapts web request to use case call."""
         # Note: This test may fail due to auth middleware, but tests the adapter pattern
 
@@ -128,15 +128,18 @@ class TestHealthDataController:
 
         # Then: Controller should attempt to adapt request
         # (May fail due to auth, but demonstrates adapter pattern)
-        assert response.status_code in [
+        assert response.status_code in {
             status.HTTP_200_OK,  # Success case
             status.HTTP_201_CREATED,  # Created case
             status.HTTP_401_UNAUTHORIZED,  # Auth failure (expected without real auth)
             status.HTTP_403_FORBIDDEN,  # Permission failure (expected)
             status.HTTP_500_INTERNAL_SERVER_ERROR,  # Service dependency failure
-        ]
+        }
 
-    def test_controller_error_handling_adaptation(self, client, valid_auth_headers):
+    @staticmethod
+    def test_controller_error_handling_adaptation(
+        client: TestClient, valid_auth_headers: dict[str, str]
+    ) -> None:
         """Test controller adapts service errors to HTTP error responses."""
         # When: Making request with invalid data
         invalid_payload = {
@@ -153,16 +156,17 @@ class TestHealthDataController:
         )
 
         # Then: Controller should adapt validation errors to HTTP responses
-        assert response.status_code in [
+        assert response.status_code in {
             status.HTTP_400_BAD_REQUEST,  # Validation error
             status.HTTP_422_UNPROCESSABLE_ENTITY,  # Pydantic validation
             status.HTTP_401_UNAUTHORIZED,  # Auth failure
             status.HTTP_500_INTERNAL_SERVER_ERROR,  # Other errors
-        ]
+        }
 
+    @staticmethod
     def test_get_processing_status_endpoint_adaptation(
-        self, client, valid_auth_headers
-    ):
+        client: TestClient, valid_auth_headers: dict[str, str]
+    ) -> None:
         """Test processing status endpoint adapts path parameters correctly."""
         # When: Making request with path parameter
         processing_id = str(uuid4())
@@ -172,16 +176,17 @@ class TestHealthDataController:
         )
 
         # Then: Controller should adapt path parameter to use case call
-        assert response.status_code in [
+        assert response.status_code in {
             status.HTTP_200_OK,  # Success
             status.HTTP_404_NOT_FOUND,  # Not found (expected with mock)
             status.HTTP_401_UNAUTHORIZED,  # Auth failure
             status.HTTP_500_INTERNAL_SERVER_ERROR,  # Service error
-        ]
+        }
 
+    @staticmethod
     def test_get_health_data_endpoint_query_parameter_adaptation(
-        self, client, valid_auth_headers
-    ):
+        client: TestClient, valid_auth_headers: dict[str, str]
+    ) -> None:
         """Test health data retrieval endpoint adapts query parameters."""
         # When: Making request with query parameters
         response = client.get(
@@ -191,13 +196,16 @@ class TestHealthDataController:
         )
 
         # Then: Controller should adapt query parameters to use case call
-        assert response.status_code in [
+        assert response.status_code in {
             status.HTTP_200_OK,  # Success
             status.HTTP_401_UNAUTHORIZED,  # Auth failure
             status.HTTP_500_INTERNAL_SERVER_ERROR,  # Service error
-        ]
+        }
 
-    def test_delete_health_data_endpoint_adaptation(self, client, valid_auth_headers):
+    @staticmethod
+    def test_delete_health_data_endpoint_adaptation(
+        client: TestClient, valid_auth_headers: dict[str, str]
+    ) -> None:
         """Test delete endpoint adapts path parameter and method correctly."""
         # When: Making DELETE request
         processing_id = str(uuid4())
@@ -207,18 +215,19 @@ class TestHealthDataController:
         )
 
         # Then: Controller should adapt DELETE method and path parameter
-        assert response.status_code in [
+        assert response.status_code in {
             status.HTTP_200_OK,  # Success
             status.HTTP_404_NOT_FOUND,  # Not found
             status.HTTP_401_UNAUTHORIZED,  # Auth failure
             status.HTTP_500_INTERNAL_SERVER_ERROR,  # Service error
-        ]
+        }
 
 
 class TestControllerDependencyInjection:
     """Test controller follows Clean Architecture dependency injection."""
 
-    def test_controller_depends_on_service_abstraction(self):
+    @staticmethod
+    def test_controller_depends_on_service_abstraction() -> None:
         """Test controller depends on service interface, not concrete implementation."""
         # Given: Mock dependencies
         mock_auth_provider = Mock(spec=IAuthProvider)
@@ -236,13 +245,14 @@ class TestControllerDependencyInjection:
         # (No exceptions should be raised)
         assert True  # Test passes if no exception
 
-    def test_controller_fails_gracefully_without_dependencies(self):
+    @staticmethod
+    def test_controller_fails_gracefully_without_dependencies() -> None:
         """Test controller handles missing dependencies gracefully."""
         # Given: No dependencies injected (clear previous state)
         set_dependencies(
-            auth_provider=None,  # type: ignore
-            repository=None,  # type: ignore
-            config_provider=None,  # type: ignore
+            auth_provider=None,
+            repository=None,
+            config_provider=None,
         )
 
         app = FastAPI()
@@ -253,17 +263,18 @@ class TestControllerDependencyInjection:
         response = client.get("/api/v1/health-data/health")
 
         # Then: Should either succeed (health check) or fail gracefully
-        assert response.status_code in [
+        assert response.status_code in {
             status.HTTP_200_OK,  # Health check succeeds
             status.HTTP_500_INTERNAL_SERVER_ERROR,  # Dependency failure
-        ]
+        }
 
 
 class TestControllerAdapterPattern:
     """Test controller implements Adapter Pattern correctly."""
 
     @pytest.fixture
-    def app_with_mocked_service(self):
+    @staticmethod
+    def app_with_mocked_service() -> FastAPI:
         """Create app with mocked service for testing adapter pattern."""
         app = FastAPI()
         app.include_router(router, prefix="/api/v1")
@@ -281,7 +292,10 @@ class TestControllerAdapterPattern:
 
         return app
 
-    def test_controller_adapts_json_to_pydantic_models(self, app_with_mocked_service):
+    @staticmethod
+    def test_controller_adapts_json_to_pydantic_models(
+        app_with_mocked_service: FastAPI,
+    ) -> None:
         """Test controller adapts JSON requests to Pydantic models."""
         client = TestClient(app_with_mocked_service)
 
@@ -309,18 +323,19 @@ class TestControllerAdapterPattern:
 
         # Then: Controller should parse JSON into Pydantic models
         # (Response indicates successful parsing, even if auth fails)
-        assert response.status_code in [
+        assert response.status_code in {
             status.HTTP_200_OK,
             status.HTTP_201_CREATED,
             status.HTTP_401_UNAUTHORIZED,  # Auth failure after successful parsing
             status.HTTP_403_FORBIDDEN,  # Permission failure after parsing
             status.HTTP_422_UNPROCESSABLE_ENTITY,  # Validation failure
             status.HTTP_500_INTERNAL_SERVER_ERROR,
-        ]
+        }
 
+    @staticmethod
     def test_controller_adapts_pydantic_models_to_json_response(
-        self, app_with_mocked_service
-    ):
+        app_with_mocked_service: FastAPI,
+    ) -> None:
         """Test controller adapts Pydantic models to JSON responses."""
         client = TestClient(app_with_mocked_service)
 
@@ -334,7 +349,10 @@ class TestControllerAdapterPattern:
         data = response.json()
         assert isinstance(data, dict)
 
-    def test_controller_adapts_path_parameters(self, app_with_mocked_service):
+    @staticmethod
+    def test_controller_adapts_path_parameters(
+        app_with_mocked_service: FastAPI,
+    ) -> None:
         """Test controller adapts URL path parameters to function arguments."""
         client = TestClient(app_with_mocked_service)
 
@@ -348,14 +366,17 @@ class TestControllerAdapterPattern:
         # Then: Controller should extract path parameter
         # (Success/failure depends on auth/service, but path parsing should work)
         assert response.status_code != status.HTTP_404_NOT_FOUND  # Path was found
-        assert response.status_code in [
+        assert response.status_code in {
             status.HTTP_200_OK,
             status.HTTP_401_UNAUTHORIZED,
             status.HTTP_403_FORBIDDEN,
             status.HTTP_500_INTERNAL_SERVER_ERROR,
-        ]
+        }
 
-    def test_controller_adapts_query_parameters(self, app_with_mocked_service):
+    @staticmethod
+    def test_controller_adapts_query_parameters(
+        app_with_mocked_service: FastAPI,
+    ) -> None:
         """Test controller adapts query parameters to function arguments."""
         client = TestClient(app_with_mocked_service)
 
@@ -367,19 +388,20 @@ class TestControllerAdapterPattern:
         )
 
         # Then: Controller should parse query parameters
-        assert response.status_code in [
+        assert response.status_code in {
             status.HTTP_200_OK,
             status.HTTP_401_UNAUTHORIZED,
             status.HTTP_403_FORBIDDEN,
             status.HTTP_422_UNPROCESSABLE_ENTITY,  # Query param validation
             status.HTTP_500_INTERNAL_SERVER_ERROR,
-        ]
+        }
 
 
 class TestControllerSingleResponsibility:
     """Test controller follows Single Responsibility Principle."""
 
-    def test_controller_only_handles_http_adaptation(self):
+    @staticmethod
+    def test_controller_only_handles_http_adaptation() -> None:
         """Test controller only handles HTTP request/response adaptation."""
         # Given: Router should only have HTTP route handlers
         routes = router.routes
@@ -393,7 +415,8 @@ class TestControllerSingleResponsibility:
             # Routes should not contain business logic
             # (Business logic should be in services/use cases)
 
-    def test_controller_does_not_contain_business_logic(self):
+    @staticmethod
+    def test_controller_does_not_contain_business_logic() -> None:
         """Test controller functions don't contain business rules."""
         # This is more of a design principle test
         # Controllers should delegate to services for business logic
@@ -402,7 +425,8 @@ class TestControllerSingleResponsibility:
         # and delegate to them shows they follow this principle
         assert True  # Principle verified by architecture
 
-    def test_controller_handles_only_health_data_endpoints(self):
+    @staticmethod
+    def test_controller_handles_only_health_data_endpoints() -> None:
         """Test controller is focused on health data HTTP operations."""
         routes = router.routes
 
@@ -419,7 +443,8 @@ class TestControllerErrorHandling:
     """Test controller error handling follows Clean Architecture."""
 
     @pytest.fixture
-    def app_with_failing_service(self):
+    @staticmethod
+    def app_with_failing_service() -> FastAPI:
         """Create app with service that raises errors for testing."""
         app = FastAPI()
         app.include_router(router, prefix="/api/v1")
@@ -437,9 +462,10 @@ class TestControllerErrorHandling:
 
         return app
 
+    @staticmethod
     def test_controller_converts_service_errors_to_http_errors(
-        self, app_with_failing_service
-    ):
+        app_with_failing_service: FastAPI,
+    ) -> None:
         """Test controller converts service exceptions to proper HTTP status codes."""
         client = TestClient(app_with_failing_service)
 
@@ -458,7 +484,10 @@ class TestControllerErrorHandling:
             error_data = response.json()
             assert isinstance(error_data, dict)
 
-    def test_controller_handles_validation_errors(self, app_with_failing_service):
+    @staticmethod
+    def test_controller_handles_validation_errors(
+        app_with_failing_service: FastAPI,
+    ) -> None:
         """Test controller handles Pydantic validation errors."""
         client = TestClient(app_with_failing_service)
 
@@ -472,7 +501,8 @@ class TestControllerErrorHandling:
         # Then: Should return validation error
         assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
 
-    def test_controller_handles_auth_errors(self, app_with_failing_service):
+    @staticmethod
+    def test_controller_handles_auth_errors(app_with_failing_service: FastAPI) -> None:
         """Test controller handles authentication errors."""
         client = TestClient(app_with_failing_service)
 
@@ -483,9 +513,9 @@ class TestControllerErrorHandling:
         )
 
         # Then: Should return auth error (if auth is enabled)
-        assert response.status_code in [
+        assert response.status_code in {
             status.HTTP_401_UNAUTHORIZED,
             status.HTTP_403_FORBIDDEN,
             status.HTTP_422_UNPROCESSABLE_ENTITY,  # Validation before auth
             status.HTTP_500_INTERNAL_SERVER_ERROR,  # Service dependency issues
-        ]
+        }

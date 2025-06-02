@@ -267,7 +267,7 @@ class AuthenticationService:
                 _raise_user_not_found_in_db()
                 # This line should never be reached due to the exception above
                 msg = "User data not found"
-                raise RuntimeError(msg)  # For type narrowing
+                raise RuntimeError(msg)
 
             # Check email verification requirement
             if (

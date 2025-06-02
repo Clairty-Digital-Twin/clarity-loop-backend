@@ -179,7 +179,7 @@ class ProxyActigraphyTransformer:
         logger.info("  • Reference std: %.3f", self.nhanes_std)
         logger.info("  • Cache enabled: %s", cache_enabled)
 
-    def steps_to_movement_proxy(self, steps_per_min: np.ndarray, padding_mask: np.ndarray = None) -> np.ndarray:
+    def steps_to_movement_proxy(self, steps_per_min: NDArray[np.floating[Any]], padding_mask: NDArray[np.bool_] | None = None) -> NDArray[np.floating[Any]]:
         """Convert step counts to movement proxy values.
 
         Applies square root transformation followed by z-score normalization

@@ -321,7 +321,7 @@ async def health_check(
         # Get PAT model info
         pat_service = inference_engine.pat_service
         model_info = {
-            "initialized": pat_service.is_initialized,
+            "initialized": pat_service.is_loaded,
             "model_type": "PAT",
             "version": "1.0.0"
         }
@@ -365,7 +365,7 @@ async def get_model_info(
         model_info = {
             "model_type": "PAT",
             "version": "1.0.0",
-            "initialized": pat_service.is_initialized,
+            "initialized": pat_service.is_loaded,
             "capabilities": [
                 "actigraphy_analysis",
                 "sleep_pattern_detection",

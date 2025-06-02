@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Fix exception handling in firestore_client.py."""
 
-import re
 from pathlib import Path
+import re
 
 
 def fix_firestore_exceptions() -> None:
@@ -18,7 +18,7 @@ def fix_firestore_exceptions() -> None:
         content,
         flags=re.MULTILINE
     )
-    
+
     # More specific pattern for the health check exception
     content = content.replace(
         'except Exception:\n            logger.exception("Firestore health check failed: %s")\n            return {\n                "status": "unhealthy",\n                "error": str(e),',
@@ -27,14 +27,14 @@ def fix_firestore_exceptions() -> None:
 
     # Fix specific exception blocks that reference 'e'
     patterns = [
-        (r'except Exception:\n(\s+)logger\.exception\([^)]+\)\n(\s+)if isinstance\(e,', 
+        (r'except Exception:\n(\s+)logger\.exception\([^)]+\)\n(\s+)if isinstance\(e,',
          r'except Exception as e:\n\1logger.exception(\1)\n\2if isinstance(e,'),
-        (r'except Exception:\n(\s+)logger\.exception\([^)]+\)\n(\s+)msg = f"[^"]*\{e\}[^"]*"', 
+        (r'except Exception:\n(\s+)logger\.exception\([^)]+\)\n(\s+)msg = f"[^"]*\{e\}[^"]*"',
          r'except Exception as e:\n\1logger.exception(\1)\n\2msg = f"\2{e}"'),
-        (r'except Exception:\n(\s+)logger\.exception\([^)]+\)\n(\s+)raise [^(]+\([^)]+\) from e', 
+        (r'except Exception:\n(\s+)logger\.exception\([^)]+\)\n(\s+)raise [^(]+\([^)]+\) from e',
          r'except Exception as e:\n\1logger.exception(\1)\n\2raise \2(\2) from e'),
     ]
-    
+
     for pattern, replacement in patterns:
         content = re.sub(pattern, replacement, content, flags=re.MULTILINE)
 
@@ -43,4 +43,4 @@ def fix_firestore_exceptions() -> None:
 
 
 if __name__ == "__main__":
-    fix_firestore_exceptions() 
+    fix_firestore_exceptions()

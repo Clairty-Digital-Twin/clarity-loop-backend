@@ -91,4 +91,4 @@ def fix_firestore_client() -> None:
 
 
 if __name__ == "__main__":
-    fix_firestore_client() 
+    fix_firestore_client()

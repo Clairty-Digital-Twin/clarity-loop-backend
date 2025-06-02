@@ -241,9 +241,8 @@ class FirestoreClient:
             FirestoreConnectionError: If Firestore connection fails
         """
         try:
-            # Add metadata
+            # Add creation timestamp
             data["created_at"] = datetime.now(UTC)
-            data["updated_at"] = datetime.now(UTC)
 
             # Validate health data if applicable
             if collection == self.collections["health_data"]:
@@ -256,12 +255,17 @@ class FirestoreClient:
                 await doc_ref.set(data)  # type: ignore[misc]
                 created_id = document_id
             else:
-                _, doc_ref = await db.collection(collection).add(data)  # type: ignore[misc]
-                created_id = doc_ref.id  # type: ignore[misc]
+                doc_ref = db.collection(collection).document()
+                await doc_ref.set(data)  # type: ignore[misc]
+                created_id = doc_ref.id
 
-            # Clear cache for this document
-            cache_key = self._cache_key(collection, created_id)
-            self._cache.pop(cache_key, None)
+            # Cache the document
+            if self.enable_caching:
+                cache_key = self._cache_key(collection, created_id)
+                self._cache[cache_key] = {
+                    "data": data,
+                    "timestamp": datetime.now(UTC),
+                }
 
             # Audit log
             await self._audit_log(
@@ -272,15 +276,15 @@ class FirestoreClient:
                 {"document_size": len(str(data))},
             )
 
-            logger.info("Document created: %s/%s", collection, created_id)
-            return created_id
-
         except Exception as e:
             logger.exception("Failed to create document in %s", collection)
             if isinstance(e, (FirestoreValidationError, FirestoreConnectionError)):
                 raise
             msg = f"Document creation failed: {e}"
             raise FirestoreError(msg) from e
+        else:
+            logger.info("Document created: %s/%s", collection, created_id)
+            return created_id
 
     async def get_document(
         self, collection: str, document_id: str, *, use_cache: bool = True
@@ -324,13 +328,13 @@ class FirestoreClient:
             if self.enable_caching:
                 self._cache[cache_key] = {"data": result_data, "timestamp": time.time()}
 
-            logger.debug("Document retrieved: %s/%s", collection, document_id)
-            return result_data
-
         except Exception as e:
             logger.exception("Failed to get document %s/%s", collection, document_id)
             msg = f"Document retrieval failed: {e}"
             raise FirestoreError(msg) from e
+        else:
+            logger.debug("Document retrieved: %s/%s", collection, document_id)
+            return result_data
 
     async def update_document(
         self,
@@ -473,13 +477,13 @@ class FirestoreClient:
                 user_id=str(upload_data.user_id),
             )
 
-            logger.info("Health data stored with processing ID: %s", processing_id)
-            return processing_id
-
         except Exception as e:
             logger.exception("Failed to store health data")
             msg = f"Health data storage failed: {e}"
             raise FirestoreError(msg) from e
+        else:
+            logger.info("Health data stored with processing ID: %s", processing_id)
+            return processing_id
 
     async def get_processing_status(self, processing_id: str) -> dict[str, Any] | None:
         """Get processing status for a health data upload.

@@ -488,14 +488,14 @@ class TestIntegrationProxyActigraphy:
             user_metadata={"age": 30, "sex": "female"}
         )
         
-        transformer = ProxyActigraphyTransformer(reference_year=2025, auto_pad_to_week=False)
+        transformer = ProxyActigraphyTransformer(reference_year=2025)
         result = transformer.transform_step_data(step_data)
         
         # Verify result structure
         assert isinstance(result, ProxyActigraphyResult)
         assert result.user_id == "test_user"
         assert result.upload_id == "test_upload"
-        assert len(result.vector) == 24
+        assert len(result.vector) == 10080  # Always padded to full week
         
         # Verify quality metrics
         assert 0 <= result.quality_score <= 1
@@ -503,7 +503,7 @@ class TestIntegrationProxyActigraphy:
         # Verify transformation stats
         stats = result.transformation_stats
         assert stats["input_length"] == 24
-        assert stats["output_length"] == 24
+        assert stats["output_length"] == 10080  # Always padded to full week
         assert stats["total_steps"] > 0
         
         # Verify NHANES reference

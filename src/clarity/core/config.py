@@ -4,6 +4,7 @@ Environment-based configuration using Pydantic settings for secure,
 production-ready deployment across development, staging, and production.
 """
 
+from dataclasses import dataclass
 from functools import lru_cache
 import logging
 from typing import Self
@@ -13,6 +14,49 @@ from pydantic_settings import BaseSettings
 
 # Configure logger
 logger = logging.getLogger(__name__)
+
+
+@dataclass
+class MiddlewareConfig:
+    """Configuration for Firebase authentication middleware.
+
+    Contains all middleware-specific settings for authentication,
+    token caching, and error handling.
+    """
+
+    # Authentication settings
+    enabled: bool = True
+
+    # Exempt paths (no authentication required)
+    exempt_paths: list[str] = None
+
+    # Token cache settings
+    cache_enabled: bool = True
+    cache_ttl_seconds: int = 300  # 5 minutes
+    cache_max_size: int = 1000
+
+    # Error handling settings
+    graceful_degradation: bool = True
+    fallback_to_mock: bool = True
+    initialization_timeout_seconds: int = 8
+
+    # Logging settings
+    audit_logging: bool = True
+    log_successful_auth: bool = False  # Only log failures by default
+    log_level: str = "INFO"
+
+    def __post_init__(self) -> None:
+        """Initialize default exempt paths if not provided."""
+        if self.exempt_paths is None:
+            self.exempt_paths = [
+                "/",
+                "/health",
+                "/docs",
+                "/openapi.json",
+                "/redoc",
+                "/api/docs",
+                "/api/health",
+            ]
 
 
 class Settings(BaseSettings):
@@ -69,6 +113,9 @@ class Settings(BaseSettings):
 
     # Storage settings
     cloud_storage_bucket: str = Field(default="", alias="CLOUD_STORAGE_BUCKET")
+
+    # Middleware configuration
+    middleware_config: MiddlewareConfig = Field(default_factory=MiddlewareConfig)
 
     model_config = {
         "env_file": ".env",

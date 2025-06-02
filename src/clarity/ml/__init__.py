@@ -9,9 +9,10 @@ This module contains AI/ML services including:
 
 from .gemini_service import GeminiService
 from .pat_service import PATModelService
-from .preprocessing import HealthDataPreprocessor
+from .preprocessing import ActigraphyDataPoint, HealthDataPreprocessor
 
 __all__ = [
+    "ActigraphyDataPoint",
     "GeminiService",
     "HealthDataPreprocessor",
     "PATModelService",

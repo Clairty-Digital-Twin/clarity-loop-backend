@@ -382,7 +382,8 @@ class TestProxyActigraphyTransformer:
         assert isinstance(result, ProxyActigraphyResult)
         # With padding to full week, zero percentage will be much lower
         assert result.transformation_stats["zero_step_percentage"] < 1.0  # Much lower due to padding
-        assert result.transformation_stats["total_steps"] == 0.0
+        # With circadian-aware padding, total_steps will be > 0 due to padding values
+        assert result.transformation_stats["total_steps"] > 0.0  # Padding adds non-zero values
 
     @patch('clarity.ml.proxy_actigraphy.lookup_norm_stats')
     def test_transform_with_extreme_values(self, mock_lookup_stats):
@@ -519,7 +520,7 @@ class TestIntegrationProxyActigraphy:
         with patch('clarity.ml.proxy_actigraphy.lookup_norm_stats') as mock_lookup:
             mock_lookup.return_value = (1.2, 0.8)
             
-            transformer = ProxyActigraphyTransformer(auto_pad_to_week=False)
+            transformer = ProxyActigraphyTransformer()
             
             # Create moderately large dataset
             timestamps = [datetime.now(timezone.utc) for _ in range(500)]
@@ -539,7 +540,7 @@ class TestIntegrationProxyActigraphy:
             # Should complete in reasonable time
             assert (end_time - start_time) < 1.0
             assert isinstance(result, ProxyActigraphyResult)
-            assert len(result.vector) == 500
+            assert len(result.vector) == 10080  # Always padded to full week
 
 
 class TestEdgeCasesProxyActigraphy:
@@ -550,7 +551,7 @@ class TestEdgeCasesProxyActigraphy:
         """Test transformation with single data point."""
         mock_lookup_stats.return_value = (1.2, 0.8)
         
-        transformer = ProxyActigraphyTransformer(auto_pad_to_week=False)
+        transformer = ProxyActigraphyTransformer()
         
         step_data = StepCountData(
             user_id="single_test",
@@ -561,16 +562,16 @@ class TestEdgeCasesProxyActigraphy:
         
         result = transformer.transform_step_data(step_data)
         
-        assert len(result.vector) == 1
+        assert len(result.vector) == 10080  # Always padded to full week
         assert result.transformation_stats["input_length"] == 1
-        assert result.transformation_stats["output_length"] == 1
+        assert result.transformation_stats["output_length"] == 10080
 
     @patch('clarity.ml.proxy_actigraphy.lookup_norm_stats')
     def test_negative_step_counts(self, mock_lookup_stats):
         """Test transformation handles negative step counts."""
         mock_lookup_stats.return_value = (1.2, 0.8)
         
-        transformer = ProxyActigraphyTransformer(auto_pad_to_week=False)
+        transformer = ProxyActigraphyTransformer()
         
         timestamps = [datetime.now(timezone.utc) for _ in range(3)]
         step_data = StepCountData(
@@ -584,4 +585,4 @@ class TestEdgeCasesProxyActigraphy:
         
         # Should handle negative values gracefully (likely convert to 0)
         assert isinstance(result, ProxyActigraphyResult)
-        assert len(result.vector) == 3 
+        assert len(result.vector) == 10080  # Always padded to full week 

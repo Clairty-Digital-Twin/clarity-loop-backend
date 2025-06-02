@@ -231,7 +231,7 @@ class PATModelService(IMLModelService):
         sleep_stages_logits = outputs["sleep_stages"].cpu().numpy()[0]
 
         # Convert sleep stages to labels
-        sleep_stage_predictions: "NDArray[np.int_]" = np.argmax(sleep_stages_logits, axis=-1)
+        sleep_stage_predictions: NDArray[np.int_] = np.argmax(sleep_stages_logits, axis=-1)
         sleep_stages: list[str] = [self.sleep_stages[idx] for idx in sleep_stage_predictions]
 
         # Calculate sleep metrics with explicit type annotations

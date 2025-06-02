@@ -67,7 +67,7 @@ class StandardActigraphyPreprocessor:
         if len(activity_data) != target_length:
             # Simple interpolation/padding
             if len(activity_data) > target_length:
-                # Downsample
+                # Down-sample
                 indices = np.linspace(
                     0, len(activity_data) - 1, target_length, dtype=int
                 )

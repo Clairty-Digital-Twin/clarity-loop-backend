@@ -168,17 +168,15 @@ def _smooth_proxy_values(proxy_values: NDArray[np.floating[Any]], window_size: i
 class ProxyActigraphyTransformer:
     """Main transformation engine for converting step counts to proxy actigraphy."""
 
-    def __init__(self, reference_year: int = 2025, *, cache_enabled: bool = True, auto_pad_to_week: bool = True) -> None:
+    def __init__(self, reference_year: int = 2025, *, cache_enabled: bool = True) -> None:
         """Initialize the proxy actigraphy transformer.
 
         Args:
             reference_year: NHANES reference year for normalization
             cache_enabled: Whether to enable result caching
-            auto_pad_to_week: Whether to automatically pad/truncate data to full week (10,080 minutes)
         """
         self.reference_year = reference_year
         self.cache_enabled = cache_enabled
-        self.auto_pad_to_week = auto_pad_to_week
         self._cache: dict[str, ProxyActigraphyResult] = {}
 
         # Load NHANES normalization parameters
@@ -188,7 +186,6 @@ class ProxyActigraphyTransformer:
         logger.info("  • Reference mean: %.3f", self.nhanes_mean)
         logger.info("  • Reference std: %.3f", self.nhanes_std)
         logger.info("  • Cache enabled: %s", cache_enabled)
-        logger.info("  • Auto-pad to week: %s", auto_pad_to_week)
 
     def steps_to_movement_proxy(self, steps_per_min: NDArray[np.floating[Any]], padding_mask: NDArray[np.bool_] | None = None) -> NDArray[np.floating[Any]]:
         """Convert step counts to movement proxy values.
@@ -245,8 +242,7 @@ class ProxyActigraphyTransformer:
             # Prepare and validate step data
             steps_array, padding_mask = self._prepare_step_data(
                 step_data.step_counts,
-                step_data.timestamps,
-                auto_pad_to_week=self.auto_pad_to_week
+                step_data.timestamps
             )
 
             # Transform to proxy actigraphy
@@ -309,15 +305,13 @@ class ProxyActigraphyTransformer:
     def _prepare_step_data(
         self,
         step_counts: list[float],
-        timestamps: list[datetime],
-        auto_pad_to_week: bool = True
+        timestamps: list[datetime]
     ) -> tuple[NDArray[np.floating[Any]], NDArray[np.bool_]]:
         """Prepare and validate step count data for transformation.
 
         Args:
             step_counts: Raw step counts
             timestamps: Corresponding timestamps
-            auto_pad_to_week: Whether to automatically pad/truncate to full week
 
         Returns:
             Tuple of (cleaned step count array, padding mask)
@@ -338,35 +332,33 @@ class ProxyActigraphyTransformer:
         original_length = len(steps_array)
         padding_mask = np.zeros(original_length, dtype=bool)
 
-        # Conditionally pad/truncate to full week based on auto_pad_to_week setting
-        if auto_pad_to_week:
-            # Ensure we have exactly one week of data (pad or truncate as needed)
-            if len(steps_array) < MINUTES_PER_WEEK:
-                # Pad with circadian-aware values instead of zeros
-                padding_needed = MINUTES_PER_WEEK - len(steps_array)
-                
-                # Generate realistic padding values
-                padding_values = _generate_circadian_padding(padding_needed)
-                
-                # Pad at the beginning (older data)
-                steps_array = np.pad(steps_array, (padding_needed, 0), mode='constant', constant_values=0)
-                steps_array[:padding_needed] = padding_values
-                
-                # Create padding mask
-                padding_mask = np.zeros(MINUTES_PER_WEEK, dtype=bool)
-                padding_mask[:padding_needed] = True
-                
-                logger.info("Padded %d minutes with circadian-aware values", padding_needed)
+        # Always pad/truncate to full week (transformer requirement)
+        # Ensure we have exactly one week of data (pad or truncate as needed)
+        if len(steps_array) < MINUTES_PER_WEEK:
+            # Pad with circadian-aware values instead of zeros
+            padding_needed = MINUTES_PER_WEEK - len(steps_array)
+            
+            # Generate realistic padding values
+            padding_values = _generate_circadian_padding(padding_needed)
+            
+            # Pad at the beginning (older data)
+            steps_array = np.pad(steps_array, (padding_needed, 0), mode='constant', constant_values=0)
+            steps_array[:padding_needed] = padding_values
+            
+            # Create padding mask
+            padding_mask = np.zeros(MINUTES_PER_WEEK, dtype=bool)
+            padding_mask[:padding_needed] = True
+            
+            logger.info("Padded %d minutes with circadian-aware values", padding_needed)
 
-            elif len(steps_array) > MINUTES_PER_WEEK:
-                # Take the most recent week of data
-                steps_array = steps_array[-MINUTES_PER_WEEK:]
-                padding_mask = np.zeros(MINUTES_PER_WEEK, dtype=bool)
-                logger.info("Truncated to most recent %d minutes", MINUTES_PER_WEEK)
+        elif len(steps_array) > MINUTES_PER_WEEK:
+            # Take the most recent week of data
+            steps_array = steps_array[-MINUTES_PER_WEEK:]
+            padding_mask = np.zeros(MINUTES_PER_WEEK, dtype=bool)
+            logger.info("Truncated to most recent %d minutes", MINUTES_PER_WEEK)
         else:
-            # No auto-padding - use original length with no padding mask
-            padding_mask = np.zeros(len(steps_array), dtype=bool)
-            logger.info("No auto-padding - using original length of %d minutes", len(steps_array))
+            # Exactly one week - no padding needed
+            padding_mask = np.zeros(MINUTES_PER_WEEK, dtype=bool)
 
         # Handle missing data (represented as NaN or very large values)
         nan_mask = np.isnan(steps_array) | (steps_array > MAX_REALISTIC_STEPS_PER_MINUTE)
@@ -449,21 +441,18 @@ class ProxyActigraphyTransformer:
 def create_proxy_actigraphy_transformer(
     reference_year: int = 2025,
     *,
-    cache_enabled: bool = True,
-    auto_pad_to_week: bool = True
+    cache_enabled: bool = True
 ) -> ProxyActigraphyTransformer:
     """Factory function to create a ProxyActigraphyTransformer instance.
 
     Args:
         reference_year: NHANES reference year for normalization
         cache_enabled: Whether to enable result caching
-        auto_pad_to_week: Whether to automatically pad/truncate data to full week
 
     Returns:
         Configured ProxyActigraphyTransformer instance
     """
     return ProxyActigraphyTransformer(
         reference_year=reference_year,
-        cache_enabled=cache_enabled,
-        auto_pad_to_week=auto_pad_to_week
+        cache_enabled=cache_enabled
     )

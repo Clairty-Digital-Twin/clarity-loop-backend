@@ -1,8 +1,7 @@
 """Configuration Provider Implementation.
-"""Configuration provider for CLARITY application settings.
 
-Provides a clean interface for accessing configuration values
-with proper type safety and fallback handling.
+Following Clean Architecture and SOLID principles, this module provides
+concrete implementation of IConfigProvider interface for dependency injection.
 """
 
 from typing import Any
@@ -12,13 +11,18 @@ from clarity.core.interfaces import IConfigProvider
 
 
 class ConfigProvider(IConfigProvider):
-    """Configuration provider implementing IConfigProvider interface.
+    """Concrete implementation of configuration provider.
 
-    Provides type-safe access to application settings with proper defaults.
+    Follows Single Responsibility Principle - only handles configuration access.
+    Implements Dependency Inversion Principle by depending on Settings abstraction.
     """
 
     def __init__(self, settings: Settings) -> None:
-        """Initialize with settings instance."""
+        """Initialize configuration provider with settings.
+
+        Args:
+            settings: Configuration settings object
+        """
         self._settings = settings
 
     def get_setting(self, key: str, default: Any = None) -> Any:
@@ -34,25 +38,21 @@ class ConfigProvider(IConfigProvider):
         return getattr(self._settings, key, default)
 
     def is_development(self) -> bool:
-        """Check if running in development mode."""
-        return self._settings.environment == "development"
+        """Check if running in development mode.
 
-    def is_production(self) -> bool:
-        """Check if running in production mode."""
-        return self._settings.environment == "production"
-
-    def get_database_url(self) -> str:
-        """Get database connection URL."""
-        return self._settings.database_url
-
-    def get_redis_url(self) -> str:
-        """Get Redis connection URL."""
-        return self._settings.redis_url
+        Returns:
+            True if in development environment, False otherwise
+        """
+        return self._settings.environment.lower() == "development"
 
     def should_skip_external_services(self) -> bool:
-        """Determine if external services should be skipped.
+        """Check if external services should be skipped.
 
-        Returns True in development by default, False in production unless explicitly set.
+        Skip external services in development mode or when explicitly configured.
+        This prevents startup hangs when Firebase/Firestore credentials are missing.
+
+        Returns:
+            True if external services should be skipped, False otherwise
         """
         # Skip in development mode by default
         if self.is_development():
@@ -62,20 +62,52 @@ class ConfigProvider(IConfigProvider):
         return bool(self.get_setting("skip_external_services", default=False))
 
     def get_database_url(self) -> str:
-        """Get database connection URL with environment-specific defaults."""
-        return self._settings.database_url
+        """Get database connection URL.
+
+        Returns:
+            Database connection URL
+        """
+        return getattr(self._settings, "database_url", "")
+
+    def get_firebase_config(self) -> dict[str, Any]:
+        """Get Firebase configuration.
+
+        Returns:
+            Firebase configuration dictionary
+        """
+        return {
+            "project_id": getattr(self._settings, "firebase_project_id", ""),
+            "credentials_path": getattr(self._settings, "firebase_credentials", ""),
+            "web_api_key": getattr(self._settings, "firebase_web_api_key", ""),
+        }
+
+    def is_auth_enabled(self) -> bool:
+        """Check if authentication is enabled.
+
+        Returns:
+            True if authentication should be enabled, False otherwise
+        """
+        return getattr(self._settings, "enable_auth", True)
+
+    def get_gcp_project_id(self) -> str:
+        """Get Google Cloud Platform project ID.
+
+        Returns:
+            GCP project ID
+        """
+        return getattr(self._settings, "gcp_project_id", "")
 
     def get_log_level(self) -> str:
-        """Get logging level configuration."""
-        return self._settings.log_level
+        """Get logging level.
 
-    def get_firebase_project_id(self) -> str:
-        """Get Firebase project ID."""
-        return self._settings.firebase_project_id
+        Returns:
+            Log level string
+        """
+        return getattr(self._settings, "log_level", "INFO")
 
-    def get_firebase_credentials_path(self) -> str:
-        """Get Firebase credentials file path."""
-        return self._settings.firebase_credentials_path
+    def get_redis_url(self) -> str:
+        """Get Redis connection URL."""
+        return self._settings.redis_url
 
     def get_cors_origins(self) -> list[str]:
         """Get CORS allowed origins list."""

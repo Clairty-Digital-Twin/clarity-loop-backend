@@ -5,7 +5,6 @@ used for normalizing health data against population norms.
 """
 
 import time
-from typing import Any
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -337,8 +336,6 @@ class TestPerformanceNHANESStats:
 
     def test_lookup_performance(self):
         """Test that lookups are reasonably fast."""
-        import time
-
         start_time = time.time()
         for _ in range(1000):
             lookup_norm_stats(year=2025, age_group="30-39", sex="male")
@@ -349,8 +346,6 @@ class TestPerformanceNHANESStats:
 
     def test_validation_performance(self):
         """Test that validation is reasonably fast."""
-        import time
-
         # Generate test data
         proxy_values = [4.0 + i * 0.1 for i in range(100)]
 
@@ -364,17 +359,15 @@ class TestPerformanceNHANESStats:
 
     def test_caching_effectiveness(self):
         """Test that LRU caching is working."""
-        import time
-
-        # First call (should be slower due to computation)
+        # First call
         start_time = time.time()
         years1 = get_available_years()
-        first_call_time = time.time() - start_time
+        time.time() - start_time  # We don't actually use the timing
 
         # Second call (should be faster due to caching)
         start_time = time.time()
         years2 = get_available_years()
-        second_call_time = time.time() - start_time
+        time.time() - start_time  # We don't actually use the timing
 
         # Results should be identical
         assert years1 == years2

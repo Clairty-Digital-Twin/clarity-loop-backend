@@ -729,15 +729,19 @@ class TestIntegrationFirebaseAuth:
 
         # Define routes AFTER middleware registration
         @app.get("/health")
-        def health() -> dict[str, str]:
+        def health() -> dict[str, str]:  # pyright: ignore[reportUnusedFunction]
             return {"status": "healthy"}
 
         @app.get("/public")
-        def public_endpoint() -> dict[str, str]:
+        def public_endpoint() -> (
+            dict[str, str]
+        ):  # pyright: ignore[reportUnusedFunction]
             return {"message": "public access"}
 
         @app.get("/protected")
-        def protected_endpoint(request: Request) -> dict[str, str]:
+        def protected_endpoint(
+            request: Request,
+        ) -> dict[str, str]:  # pyright: ignore[reportUnusedFunction]
             user = request.state.user
             return {"message": f"Hello {user.email}"}
 

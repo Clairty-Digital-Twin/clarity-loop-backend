@@ -68,16 +68,15 @@ select = [
 
 # Ignore specific rules that are too strict for our use case
 ignore = [
-    "D100",   # Missing docstring in public module
-    "D101",   # Missing docstring in public class
-    "D102",   # Missing docstring in public method
-    "D103",   # Missing docstring in public function
-    "D104",   # Missing docstring in public package
-    "D105",   # Missing docstring in magic method
-    "D106",   # Missing docstring in public nested class
-    "D107",   # Missing docstring in __init__
-    "ANN101", # Missing type annotation for self
-    "ANN102", # Missing type annotation for cls
+    "D100", # Missing docstring in public module
+    "D101", # Missing docstring in public class
+    "D102", # Missing docstring in public method
+    "D103", # Missing docstring in public function
+    "D104", # Missing docstring in public package
+    "D105", # Missing docstring in magic method
+    "D106", # Missing docstring in public nested class
+    "D107", # Missing docstring in __init__
+
     "COM812", # Trailing comma missing (conflicts with formatter)
     "COM819", # Trailing comma prohibited (conflicts with formatter)
     "E501",   # Line too long (handled by formatter)

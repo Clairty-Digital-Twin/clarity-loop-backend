@@ -428,7 +428,7 @@ class TestFirebaseAuthMiddleware:
         request.headers = {"Authorization": "Basic invalid_format"}
 
         with pytest.raises(AuthError) as exc_info:
-            middleware._extract_token(request)  # noqa: SLF001
+            middleware._extract_token(request)  # type: ignore[reportPrivateUsage]
 
         assert exc_info.value.status_code == 401
         assert exc_info.value.error_code == "invalid_token_format"
@@ -448,12 +448,12 @@ class TestFirebaseAuthMiddleware:
     @staticmethod
     def test_is_exempt_path(middleware: FirebaseAuthMiddleware) -> None:
         """Test exempt path checking."""
-        assert middleware._is_exempt_path("/health") is True  # noqa: SLF001
-        assert middleware._is_exempt_path("/docs") is True  # noqa: SLF001
-        assert middleware._is_exempt_path("/openapi.json") is True  # noqa: SLF001
-        assert middleware._is_exempt_path("/api/protected") is False  # noqa: SLF001
+        assert middleware._is_exempt_path("/health") is True  # type: ignore[reportPrivateUsage]
+        assert middleware._is_exempt_path("/docs") is True  # type: ignore[reportPrivateUsage]
+        assert middleware._is_exempt_path("/openapi.json") is True  # type: ignore[reportPrivateUsage]
+        assert middleware._is_exempt_path("/api/protected") is False  # type: ignore[reportPrivateUsage]
         assert (
-            middleware._is_exempt_path("/health/detailed") is True  # noqa: SLF001
+            middleware._is_exempt_path("/health/detailed") is True  # type: ignore[reportPrivateUsage]
         )  # Starts with /health
 
     @staticmethod
@@ -470,7 +470,7 @@ class TestFirebaseAuthMiddleware:
             "last_login": None,
         }
 
-        context = middleware._create_user_context(user_info)  # noqa: SLF001
+        context = middleware._create_user_context(user_info)  # type: ignore[reportPrivateUsage]
 
         assert context.user_id == "patient_123"
         assert context.email == "patient@example.com"
@@ -493,7 +493,7 @@ class TestFirebaseAuthMiddleware:
             "last_login": None,
         }
 
-        context = middleware._create_user_context(user_info)  # noqa: SLF001
+        context = middleware._create_user_context(user_info)  # type: ignore[reportPrivateUsage]
 
         assert context.role == UserRole.CLINICIAN
         assert Permission.READ_OWN_DATA in context.permissions
@@ -516,7 +516,7 @@ class TestFirebaseAuthMiddleware:
             "last_login": None,
         }
 
-        context = middleware._create_user_context(user_info)  # noqa: SLF001
+        context = middleware._create_user_context(user_info)  # type: ignore[reportPrivateUsage]
 
         assert context.role == UserRole.ADMIN
         assert Permission.SYSTEM_ADMIN in context.permissions
@@ -729,15 +729,15 @@ class TestIntegrationFirebaseAuth:
 
         # Define routes AFTER middleware registration
         @app.get("/health")
-        def health() -> dict[str, str]:
+        def health() -> dict[str, str]:  # noqa: F841
             return {"status": "healthy"}
 
         @app.get("/public")
-        def public_endpoint() -> dict[str, str]:
+        def public_endpoint() -> dict[str, str]:  # noqa: F841
             return {"message": "public access"}
 
         @app.get("/protected")
-        def protected_endpoint(request: Request) -> dict[str, str]:
+        def protected_endpoint(request: Request) -> dict[str, str]:  # noqa: F841
             user = request.state.user
             return {"message": f"Hello {user.email}"}
 

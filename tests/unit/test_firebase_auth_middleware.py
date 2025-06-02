@@ -428,7 +428,7 @@ class TestFirebaseAuthMiddleware:
         request.headers = {"Authorization": "Basic invalid_format"}
 
         with pytest.raises(AuthError) as exc_info:
-            middleware._extract_token(request)
+            middleware._extract_token(request)  # type: ignore[misc]
 
         assert exc_info.value.status_code == 401
         assert exc_info.value.error_code == "invalid_token_format"
@@ -440,7 +440,7 @@ class TestFirebaseAuthMiddleware:
         request.headers = {"Authorization": "Bearer "}
 
         with pytest.raises(AuthError) as exc_info:
-            middleware._extract_token(request)
+            middleware._extract_token(request)  # type: ignore[misc]
 
         assert exc_info.value.status_code == 401
         assert exc_info.value.error_code == "empty_token"
@@ -448,12 +448,12 @@ class TestFirebaseAuthMiddleware:
     @staticmethod
     def test_is_exempt_path(middleware: FirebaseAuthMiddleware) -> None:
         """Test exempt path checking."""
-        assert middleware._is_exempt_path("/health") is True
-        assert middleware._is_exempt_path("/docs") is True
-        assert middleware._is_exempt_path("/openapi.json") is True
-        assert middleware._is_exempt_path("/api/protected") is False
+        assert middleware._is_exempt_path("/health") is True  # type: ignore[misc]
+        assert middleware._is_exempt_path("/docs") is True  # type: ignore[misc]
+        assert middleware._is_exempt_path("/openapi.json") is True  # type: ignore[misc]
+        assert middleware._is_exempt_path("/api/protected") is False  # type: ignore[misc]
         assert (
-            middleware._is_exempt_path("/health/detailed") is True
+            middleware._is_exempt_path("/health/detailed") is True  # type: ignore[misc]
         )  # Starts with /health
 
     @staticmethod

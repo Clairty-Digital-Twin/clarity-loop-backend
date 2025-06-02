@@ -221,9 +221,7 @@ class AsyncInferenceEngine:
             "data_points": [
                 {
                     "timestamp": dp.timestamp.isoformat(),
-                    "activity_counts": dp.activity_counts,
-                    "steps": dp.steps,
-                    "heart_rate": dp.heart_rate
+                    "value": dp.value,
                 }
                 for dp in input_data.data_points
             ],

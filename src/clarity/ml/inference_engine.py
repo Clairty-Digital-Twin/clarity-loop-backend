@@ -524,9 +524,11 @@ class AsyncInferenceEngine:
             "cache_hit_rate_percent": cache_hit_rate,
             "error_count": self.error_count,
             "is_running": self.is_running,
-            "queue_size": self.request_queue.qsize()
-            if hasattr(self.request_queue, "qsize")
-            else 0,
+            "queue_size": (
+                self.request_queue.qsize()
+                if hasattr(self.request_queue, "qsize")
+                else 0
+            ),
         }
 
 

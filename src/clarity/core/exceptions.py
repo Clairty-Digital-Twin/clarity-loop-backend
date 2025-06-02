@@ -265,7 +265,9 @@ class MissingConfigurationError(ConfigurationError):
 class InvalidConfigurationError(ConfigurationError):
     """Raised when configuration value is invalid."""
 
-    def __init__(self, config_key: str, value: object, reason: str | None = None) -> None:
+    def __init__(
+        self, config_key: str, value: object, reason: str | None = None
+    ) -> None:
         message = f"Invalid configuration value for {config_key}: {value}"
         if reason:
             message += f" ({reason})"

@@ -164,7 +164,9 @@ def _raise_account_disabled_error(request_id: str, user_id: str) -> None:
     )
 
 
-def _raise_access_denied_error(user_id: str, current_user_id: str, request_id: str) -> None:
+def _raise_access_denied_error(
+    user_id: str, current_user_id: str, request_id: str
+) -> None:
     """Raise access denied error for insight history."""
     raise create_error_response(
         error_code="ACCESS_DENIED",

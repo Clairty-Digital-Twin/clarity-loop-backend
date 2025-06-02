@@ -210,7 +210,9 @@ Generate insights that are:
 Respond only with valid JSON."""
 
     @staticmethod
-    def _parse_gemini_response(response: Any, user_id: str) -> HealthInsightResponse:  # noqa: ANN401
+    def _parse_gemini_response(
+        response: Any, user_id: str
+    ) -> HealthInsightResponse:
         """Parse and validate Gemini response."""
         try:
             # Extract text from response
@@ -305,17 +307,21 @@ Respond only with valid JSON."""
 
         sleep_efficiency = analysis_results.get("sleep_efficiency", 0)
         if sleep_efficiency < POOR_SLEEP_EFFICIENCY:
-            recommendations.extend([
-                "Consider establishing a consistent bedtime routine",
-                "Limit screen time 1 hour before bed",
-            ])
+            recommendations.extend(
+                [
+                    "Consider establishing a consistent bedtime routine",
+                    "Limit screen time 1 hour before bed",
+                ]
+            )
 
         circadian_score = analysis_results.get("circadian_rhythm_score", 0)
         if circadian_score < CIRCADIAN_THRESHOLD:
-            recommendations.extend([
-                "Try to maintain consistent sleep and wake times",
-                "Get natural sunlight exposure in the morning",
-            ])
+            recommendations.extend(
+                [
+                    "Try to maintain consistent sleep and wake times",
+                    "Get natural sunlight exposure in the morning",
+                ]
+            )
 
         return recommendations
 

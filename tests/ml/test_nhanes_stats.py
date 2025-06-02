@@ -321,7 +321,7 @@ class TestIntegrationNHANESStats:
         assert isinstance(info, dict)
 
     @patch('clarity.ml.nhanes_stats.logger')
-    def test_logging_integration(self, mock_logger):
+    def test_logging_integration(self, mock_logger: MagicMock) -> None:
         """Test that logging works correctly."""
         # Test with invalid inputs that should trigger logging
         lookup_norm_stats(year=9999)  # Invalid year

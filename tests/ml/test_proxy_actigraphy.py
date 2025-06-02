@@ -4,7 +4,7 @@ This module tests the conversion of Apple HealthKit step count data
 into proxy actigraphy signals for PAT model analysis.
 """
 
-from datetime import UTC, datetime, timezone
+from datetime import UTC, datetime
 from unittest.mock import patch
 
 import numpy as np

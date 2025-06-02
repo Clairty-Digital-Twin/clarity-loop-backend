@@ -7,7 +7,7 @@ Based on: "AI Foundation Models for Wearable Movement Data in Mental Health Rese
 arXiv:2411.15240 (Dartmouth College, 29,307 participants, NHANES 2003-2014)
 """
 
-from datetime import datetime
+from datetime import UTC, datetime
 import logging
 from pathlib import Path
 
@@ -240,7 +240,7 @@ class PATModelService(IMLModelService):
 
         return ActigraphyAnalysis(
             user_id=user_id,
-            analysis_timestamp=datetime.now().isoformat(),
+            analysis_timestamp=datetime.now(UTC).isoformat(),
             sleep_efficiency=sleep_efficiency,
             sleep_onset_latency=sleep_onset_latency,
             wake_after_sleep_onset=wake_after_sleep_onset,

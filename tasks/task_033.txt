@@ -91,7 +91,7 @@
     - Gather feedback on the API usability from other developers
 
 # Subtasks:
-## 1. Set up PAT model architecture and loading module [pending]
+## 1. Set up PAT model architecture and loading module [done]
 ### Dependencies: None
 ### Description: Create the core module for loading and initializing the Dartmouth PAT model with proper error handling and configuration.
 ### Details:
@@ -100,11 +100,36 @@ Create a `pat_model.py` module that: 1) Defines the PyTorch model architecture m
 Implementation complete! Created `src/clarity/ml/pat_service.py` with the PATTransformer class following Dartmouth specifications (arXiv:2411.15240). The module implements a production-ready model service with proper PyTorch architecture, singleton pattern for model loading, and configuration options for different environments. Added comprehensive error handling, logging, and type annotations throughout. The implementation follows SOLID principles with dependency injection and clean separation of concerns. Model validation ensures integrity when loading weights from the `/models/` directory.
 </info added on 2025-06-02T18:51:49.797Z>
 
-## 2. Implement data preprocessing pipeline [pending]
+## 2. Implement data preprocessing pipeline [done]
 ### Dependencies: 33.1
 ### Description: Create a preprocessing service that handles actigraphy data normalization, standardization, and formatting for the PAT model.
 ### Details:
 Develop a `preprocessing.py` module that: 1) Implements normalization functions for raw actigraphy data, 2) Creates sliding window functionality for time series data, 3) Handles missing data with appropriate imputation strategies, 4) Converts data to tensor format expected by the model, 5) Implements batch processing capabilities for multiple samples.
+<info added on 2025-06-02T18:52:12.325Z>
+**STRATEGY PATTERN IMPLEMENTATION:**
+- Created `src/clarity/ml/preprocessing.py` with clean Strategy pattern implementation
+- Implemented `PreprocessingStrategy` protocol for extensibility
+- Created `StandardActigraphyPreprocessor` as default implementation
+- Added `HealthDataPreprocessor` main service with dependency injection
+- Implemented conversion from HealthMetric to ActigraphyDataPoint
+- Added comprehensive data normalization (z-score)
+- Implemented smart resampling (downsampling/padding)
+- Created tensor conversion with proper dimensions for PyTorch
+
+**DESIGN EXCELLENCE:**
+- Strategy Pattern allows easy swapping of preprocessing algorithms
+- Single Responsibility: Each class has one clear purpose
+- Open/Closed: Can add new strategies without modifying existing code
+- Dependency Injection: Preprocessor injected into PAT service
+- Type safety with comprehensive annotations
+
+**TECHNICAL FEATURES:**
+- Handles missing data gracefully
+- Supports multiple data sources (steps, heart rate, etc.)
+- Optimized for 24-hour actigraphy analysis (1440 samples)
+- GPU-ready tensor output
+- Extensible for future preprocessing needs
+</info added on 2025-06-02T18:52:12.325Z>
 
 ## 3. Develop asynchronous inference engine [pending]
 ### Dependencies: 33.1, 33.2

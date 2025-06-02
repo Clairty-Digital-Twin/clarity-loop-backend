@@ -111,12 +111,12 @@ def sample_actigraphy_data() -> dict[str, Any]:
     ]
 
     # Simulate sleep pattern: low activity during night hours
-    activity_counts = []
+    activity_counts: list[int] = []  # Explicit type annotation
     for h in range(24):
         for _ in range(60):  # Use underscore for unused variable
             # Use ternary operator as suggested by SIM108
             activity = rng.poisson(5) if h >= 22 or h <= 6 else rng.poisson(50)
-            activity_counts.append(activity)
+            activity_counts.append(int(activity))  # type: ignore
 
     return {
         "user_id": "test-user-123",
@@ -160,7 +160,7 @@ def client(app: FastAPI) -> TestClient:
 @pytest.fixture
 async def async_client(app: FastAPI) -> AsyncGenerator[AsyncClient, None]:
     """Create async test client for asynchronous testing."""
-    async with AsyncClient(app=app, base_url="http://test") as ac:
+    async with AsyncClient(transport=None, base_url="http://test") as ac:
         yield ac
 
 

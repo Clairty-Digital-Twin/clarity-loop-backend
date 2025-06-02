@@ -4,6 +4,7 @@ Tests the FastAPI authentication endpoints including registration, login,
 token refresh, and user info retrieval.
 """
 
+from typing import Any
 from unittest.mock import AsyncMock, Mock, patch
 import uuid
 
@@ -43,7 +44,7 @@ class TestAuthenticationEndpoints:
 
     @pytest.fixture
     @staticmethod
-    def sample_registration_data() -> dict:
+    def sample_registration_data() -> dict[str, Any]:
         """Sample user registration data."""
         return {
             "email": "test@example.com",
@@ -57,7 +58,7 @@ class TestAuthenticationEndpoints:
 
     @pytest.fixture
     @staticmethod
-    def sample_login_data() -> dict:
+    def sample_login_data() -> dict[str, Any]:
         """Sample user login data."""
         return {
             "email": "test@example.com",
@@ -83,7 +84,7 @@ class TestAuthenticationEndpoints:
         mock_get_auth_service: Mock,
         client: TestClient,
         mock_auth_service: AsyncMock,
-        sample_registration_data: dict,
+        sample_registration_data: dict[str, Any],
     ) -> None:
         """Test user registration endpoint."""
         # Mock the get_auth_service function to return our mock service
@@ -137,7 +138,7 @@ class TestAuthenticationEndpoints:
         mock_get_auth_service: Mock,
         client: TestClient,
         mock_auth_service: AsyncMock,
-        sample_registration_data: dict,
+        sample_registration_data: dict[str, Any],
     ) -> None:
         """Test user registration when user already exists."""
         # Mock the get_auth_service function to return our mock service
@@ -159,7 +160,7 @@ class TestAuthenticationEndpoints:
         mock_get_auth_service: Mock,
         client: TestClient,
         mock_auth_service: AsyncMock,
-        sample_login_data: dict,
+        sample_login_data: dict[str, Any],
     ) -> None:
         """Test user login endpoint."""
         # Mock the get_auth_service function to return our mock service
@@ -207,7 +208,7 @@ class TestAuthenticationEndpoints:
         mock_get_auth_service: Mock,
         client: TestClient,
         mock_auth_service: AsyncMock,
-        sample_login_data: dict,
+        sample_login_data: dict[str, Any],
     ) -> None:
         """Test user login when user not found."""
         # Mock the get_auth_service function to return our mock service

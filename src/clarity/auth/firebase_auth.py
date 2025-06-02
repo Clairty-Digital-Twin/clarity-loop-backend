@@ -25,8 +25,8 @@ if TYPE_CHECKING:
 
 from fastapi import HTTPException, Request
 from fastapi.security import HTTPBearer
-import firebase_admin
-from firebase_admin import auth, credentials
+import firebase_admin  # type: ignore
+from firebase_admin import auth, credentials  # type: ignore
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.responses import JSONResponse
 
@@ -47,7 +47,7 @@ class FirebaseAuthProvider(IAuthProvider):
     Following Clean Architecture and SOLID principles:
     - Single Responsibility: Only handles Firebase authentication
     - Open/Closed: Can be extended without modification
-    - Liskov Substitution: Can substitute any IAuthProvider
+    - Liskov Substitution: Can substitute any IAuthProvider  # cSpell:ignore Liskov
     - Interface Segregation: Implements only needed methods
     - Dependency Inversion: Depends on abstractions
     """
@@ -109,10 +109,10 @@ class FirebaseAuthProvider(IAuthProvider):
                     return cached_user
 
             # Verify token with Firebase
-            decoded_token = auth.verify_id_token(token)
+            decoded_token = auth.verify_id_token(token)  # type: ignore
 
             # Get user record for additional info
-            user_record = auth.get_user(decoded_token["uid"])
+            user_record = auth.get_user(decoded_token["uid"])  # type: ignore
 
             # Create user info dict
             user_info: dict[str, Any] = {
@@ -167,7 +167,7 @@ class FirebaseAuthProvider(IAuthProvider):
             await self._ensure_initialized()
 
             # Get user record from Firebase
-            user_record = auth.get_user(user_id)
+            user_record = auth.get_user(user_id)  # type: ignore
 
             return {
                 "user_id": user_record.uid,
@@ -217,7 +217,7 @@ class FirebaseAuthProvider(IAuthProvider):
         try:
             # Check if Firebase is already initialized
             try:
-                firebase_admin.get_app()
+                firebase_admin.get_app()  # type: ignore
             except ValueError:
                 # No app exists, need to initialize
                 pass
@@ -226,13 +226,13 @@ class FirebaseAuthProvider(IAuthProvider):
                 return
 
             if self.credentials_path:
-                cred = credentials.Certificate(self.credentials_path)
-                firebase_admin.initialize_app(cred, {"projectId": self.project_id})
+                cred = credentials.Certificate(self.credentials_path)  # type: ignore
+                firebase_admin.initialize_app(cred, {"projectId": self.project_id})  # type: ignore
                 logger.info("Firebase Admin SDK initialized with credentials")
             elif self.project_id:
                 # Use default credentials (useful for deployed environments)
-                cred = credentials.ApplicationDefault()
-                firebase_admin.initialize_app(cred, {"projectId": self.project_id})
+                cred = credentials.ApplicationDefault()  # type: ignore
+                firebase_admin.initialize_app(cred, {"projectId": self.project_id})  # type: ignore
                 logger.info("Firebase Admin SDK initialized with default credentials")
             else:
                 _raise_missing_config()

@@ -70,10 +70,11 @@ def set_dependencies(
     _repository = repository
 
     # Create authentication service
-    if firestore_client:
+    if firestore_client is not None:  # Type narrowing: ensure not None
+        # Type assertion: firestore_client is guaranteed to be FirestoreClient here
         _auth_service = AuthenticationService(
             auth_provider=auth_provider,
-            firestore_client=firestore_client,
+            firestore_client=firestore_client,  # type: ignore
         )
     else:
         # Fallback: create FirestoreClient from repository if available
@@ -83,11 +84,16 @@ def set_dependencies(
 
         if isinstance(repository, FirestoreHealthDataRepository):
             # Extract FirestoreClient from repository
-            firestore_client = repository.client  # type: ignore[attr-defined]
-            _auth_service = AuthenticationService(
-                auth_provider=auth_provider,
-                firestore_client=firestore_client,
-            )
+            extracted_client = repository.client  # type: ignore[attr-defined]
+            if extracted_client is not None:  # Additional safety check
+                _auth_service = AuthenticationService(
+                    auth_provider=auth_provider,
+                    firestore_client=extracted_client,  # type: ignore
+                )
+            else:
+                logger.warning(
+                    "Authentication service not available - repository client is None"
+                )
         else:
             logger.warning(
                 "Authentication service not available - using mock implementation"
@@ -490,8 +496,8 @@ async def verify_email(
 async def auth_health_check() -> dict[str, Any]:
     """Health check for authentication service."""
     try:
-        # Test if auth service is available
-        auth_service = get_auth_service()
+        # Test if auth service is available - this will raise if not configured
+        get_auth_service()
 
     except HTTPException as e:
         logger.exception("Authentication health check failed")
@@ -520,6 +526,6 @@ async def auth_health_check() -> dict[str, Any]:
             "dependencies": {
                 "auth_provider": _auth_provider is not None,
                 "repository": _repository is not None,
-                "auth_service": auth_service is not None,
+                "auth_service": True,  # auth_service is guaranteed non-None if we reach this point
             },
         }

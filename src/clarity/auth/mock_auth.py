@@ -96,14 +96,15 @@ class MockAuthProvider(IAuthProvider):
         For mock provider, no cleanup is needed.
         """
 
-    def create_mock_token(self, user_id: str) -> str:
+    @staticmethod
+    def create_mock_token(user_id: str) -> str:
         """Create a mock token for testing purposes.
 
         Args:
-            user_id: User ID to create token for
+            user_id: User ID to include in token
 
         Returns:
-            Mock authentication token
+            Mock JWT token string
         """
         # Simple mock token creation for development
         if user_id == "admin_user":

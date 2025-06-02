@@ -1,22 +1,21 @@
-"""🧪 Pytest Configuration and Shared Fixtures.
+"""Shared test fixtures and configuration for CLARITY test suite.
 
-Provides shared test fixtures, configuration, and utilities for all test modules.
+Provides common test utilities following pytest best practices.
 """
 
-import asyncio
-from collections.abc import AsyncGenerator, Generator
 import os
 from typing import Any
 from unittest.mock import AsyncMock, MagicMock
 
 from fastapi import FastAPI
-from fastapi.testclient import TestClient
 from httpx import AsyncClient
 import numpy as np
 import pytest
 from pytest import Config, MonkeyPatch
 import redis
 import torch
+
+from clarity.main import create_app
 
 # Set testing environment
 os.environ["TESTING"] = "1"
@@ -151,8 +150,6 @@ def sample_health_labels():
 @pytest.fixture
 def app() -> FastAPI:
     """Create FastAPI test application."""
-    from clarity.main import create_app
-
     return create_app()
 
 

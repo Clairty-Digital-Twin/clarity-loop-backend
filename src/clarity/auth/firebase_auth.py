@@ -428,11 +428,11 @@ class FirebaseAuthMiddleware(BaseHTTPMiddleware):
 security = HTTPBearer()
 
 
-async def get_current_user(request: Request) -> UserContext:
+def get_current_user(request: Request) -> UserContext:
     """FastAPI dependency to get current authenticated user."""
     if not hasattr(request.state, "user"):
-        raise HTTPException(status_code=401, detail="Authentication required")
-
+        msg = "User not authenticated. Authentication middleware not applied?"
+        raise HTTPException(status_code=401, detail=msg)
     return request.state.user
 
 

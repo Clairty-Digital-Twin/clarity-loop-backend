@@ -170,14 +170,14 @@ class HealthDataService:
             if not status_info:
                 _raise_data_not_found_error(processing_id)
 
-            return status_info
-
         except Exception as e:
             if isinstance(e, (DataNotFoundError, HealthDataServiceError)):
                 raise
             self.logger.exception("Error getting processing status")
             msg = f"Failed to get processing status: {e!s}"
             raise HealthDataServiceError(msg) from e
+        else:
+            return status_info
 
     async def get_user_health_data(
         self,

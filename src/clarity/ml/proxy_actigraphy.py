@@ -168,15 +168,17 @@ def _smooth_proxy_values(proxy_values: NDArray[np.floating[Any]], window_size: i
 class ProxyActigraphyTransformer:
     """Main transformation engine for converting step counts to proxy actigraphy."""
 
-    def __init__(self, reference_year: int = 2025, *, cache_enabled: bool = True) -> None:
+    def __init__(self, reference_year: int = 2025, *, cache_enabled: bool = True, auto_pad_to_week: bool = True) -> None:
         """Initialize the proxy actigraphy transformer.
 
         Args:
             reference_year: NHANES reference year for normalization
             cache_enabled: Whether to enable result caching
+            auto_pad_to_week: Whether to automatically pad/truncate data to full week (10,080 minutes)
         """
         self.reference_year = reference_year
         self.cache_enabled = cache_enabled
+        self.auto_pad_to_week = auto_pad_to_week
         self._cache: dict[str, ProxyActigraphyResult] = {}
 
         # Load NHANES normalization parameters

@@ -12,7 +12,7 @@ import logging
 from typing import Any
 import uuid
 
-from fastapi import APIRouter, Depends, HTTPException, Request, status
+from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field
 
 from clarity.auth import UserContext
@@ -238,11 +238,9 @@ async def generate_insights(
         # Create Gemini service request
         gemini_request = HealthInsightRequest(
             user_id=current_user.user_id,
-            analysis_data=insight_request.analysis_results,
+            analysis_results=insight_request.analysis_results,
             context=insight_request.context,
-            insight_type=insight_request.insight_type,
-            include_recommendations=insight_request.include_recommendations,
-            language=insight_request.language
+            insight_type=insight_request.insight_type
         )
 
         # Generate insights
@@ -318,13 +316,12 @@ async def get_insight(
         # TODO: Implement insight retrieval from cache/database
         # For now, return a placeholder response
         placeholder_response = HealthInsightResponse(
-            insight_id=insight_id,
             user_id=current_user.user_id,
-            insights="Cached insight retrieval not yet implemented",
-            recommendations=[],
+            narrative="Cached insight retrieval not yet implemented",
+            key_insights=["Placeholder insight 1", "Placeholder insight 2"],
+            recommendations=["Placeholder recommendation 1", "Placeholder recommendation 2"],
             confidence_score=0.0,
-            generated_at=datetime.now(UTC).isoformat(),
-            metadata={}
+            generated_at=datetime.now(UTC).isoformat()
         )
 
         return InsightGenerationResponse(

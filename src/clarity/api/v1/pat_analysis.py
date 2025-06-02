@@ -362,7 +362,7 @@ async def get_model_info(
         # Get inference engine stats
         engine_stats = inference_engine.get_stats()
 
-        return {
+        model_info = {
             "model_type": "PAT",
             "version": "1.0.0",
             "initialized": pat_service.is_initialized,
@@ -379,10 +379,11 @@ async def get_model_info(
             },
             "performance": engine_stats
         }
-
     except Exception as e:
         logger.exception("Model info request failed")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Unable to retrieve model information: {e!s}"
         ) from e
+    else:
+        return model_info

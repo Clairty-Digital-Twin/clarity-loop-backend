@@ -229,7 +229,7 @@ class TestFullStartupCycle:
         print("✅ Complete application lifecycle test passed:")
         print(f"   • Creation time: {creation_time:.2f}s")
         print(f"   • App title: {app.title}")
-        print(f"   • Lifespan enabled: {app.router.lifespan_context is not None}")
+        print(f"   • Lifespan configured: {hasattr(app.router, 'lifespan_context')}")
 
 
 if __name__ == "__main__":

@@ -289,7 +289,7 @@ class DependencyContainer:
                         logger.warning(
                             "⚠️ Cleanup timeout for %s", service_type.__name__
                         )
-                    except Exception as cleanup_error:
+                    except (OSError, AttributeError, RuntimeError) as cleanup_error:
                         logger.warning(
                             "⚠️ Cleanup error for %s: %s",
                             service_type.__name__,
@@ -336,7 +336,7 @@ class DependencyContainer:
                 app.add_middleware(FirebaseAuthMiddleware, auth_provider=auth_provider)
                 logger.info("✅ Firebase authentication middleware enabled")
 
-            except Exception as middleware_error:
+            except (ImportError, AttributeError, RuntimeError) as middleware_error:
                 logger.warning(
                     "⚠️ Failed to enable auth middleware: %s", middleware_error
                 )

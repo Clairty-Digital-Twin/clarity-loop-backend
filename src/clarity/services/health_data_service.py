@@ -288,6 +288,6 @@ class HealthDataService:
                 and metric.mental_health_data is not None
             )
 
-        except Exception as e:
+        except (ValueError, AttributeError, TypeError) as e:
             logger.warning("Business rule validation failed: %s", e)
             return False

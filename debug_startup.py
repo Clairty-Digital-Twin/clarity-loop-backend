@@ -1,184 +1,192 @@
-"""CLARITY Digital Twin Platform - Startup Diagnostic Tool.
+"""Debug script to identify startup performance bottlenecks.
 
-🔍 STARTUP HANG DIAGNOSTICS
-This script tests each startup component individually with timeouts to identify
-which component is causing the application to hang during lifespan initialization.
-
-Usage:
-    python debug_startup.py
-
-The script will test each component and report which one hangs.
+This helps diagnose slow startup issues by timing each component.
 """
 
 import asyncio
+import os
 from pathlib import Path
-import sys
 import time
 
-# Add src directory to Python path
-src_path = Path(__file__).parent / "src"
-sys.path.insert(0, str(src_path))
+
+def measure_import_time(module_name: str) -> float:
+    """Measure time to import a module."""
+    start = time.perf_counter()
+    try:
+        __import__(module_name)
+        return time.perf_counter() - start
+    except ImportError:
+        return -1.0  # Indicate import failed
 
 
-async def debug_startup() -> str | None:
-    """Main diagnostic function to identify startup hang points."""
-    # Test each startup component with timeouts
-    components = [
-        ("Logging setup", setup_logging_test),
-        ("Config provider", test_config_provider),
-        ("Auth provider init", test_auth_provider_init),
-        ("Repository init", test_repository_init),
-        ("Full lifespan simulation", test_full_lifespan),
+def find_slowest_import() -> str | None:
+    """Find the slowest import to identify bottlenecks."""
+    modules_to_test = [
+        "clarity.core.config",
+        "clarity.core.container",
+        "clarity.api.v1.health_data",
+        "clarity.auth.firebase_auth",
+        "clarity.services.health_data_service",
+        "firebase_admin",
+        "google.cloud.firestore",
+        "fastapi",
+        "pydantic",
+        "uvicorn",
     ]
 
     overall_start = time.perf_counter()
+    slowest_time = 0.0
     culprit = None
 
-    for name, test_func in components:
-        start = time.perf_counter()
+    for name in modules_to_test:
+        elapsed = measure_import_time(name)
 
-        try:
-            await asyncio.wait_for(test_func(), timeout=10.0)
-            elapsed = time.perf_counter() - start
-
-        except TimeoutError:
-            elapsed = time.perf_counter() - start
+        if elapsed > slowest_time and elapsed > 0:
+            slowest_time = elapsed
             culprit = name
-            break
 
-        except Exception as e:
-            elapsed = time.perf_counter() - start
-            culprit = name
+        if elapsed > 1.0:  # Anything over 1 second is concerning
+            print(f"⚠️ Slow import detected: {name} took {elapsed:.2f}s")
             break
 
     total_elapsed = time.perf_counter() - overall_start
+    if total_elapsed > 2.0:
+        print(f"⚠️ Total import time concerning: {total_elapsed:.2f}s")
 
     return culprit
 
 
-async def setup_logging_test() -> None:
-    """Test logging setup component."""
-    from clarity.core.logging_config import setup_logging
+def test_config_access() -> None:
+    """Test configuration access performance."""
+    start = time.perf_counter()
 
-    setup_logging()
+    try:
+        from clarity.core.config import get_settings  # noqa: PLC0415
 
+        config = get_settings()
 
-async def test_config_provider() -> None:
-    """Test config provider initialization."""
-    from clarity.core.container import get_container
+        # Test some config access - use available methods
+        _ = config.debug
+        _ = config.environment
+        _ = config.firebase_project_id
 
-    container = get_container()
-    config = container.get_config_provider()
+        elapsed = time.perf_counter() - start
+        if elapsed > 0.5:
+            print(f"⚠️ Config access slow: {elapsed:.2f}s")
 
-    # Test some config access
-    is_dev = config.is_development()
-    auth_enabled = config.is_auth_enabled()
-    firebase_config = config.get_firebase_config()
-
-
-async def test_auth_provider_init() -> None:
-    """Test auth provider initialization."""
-    from clarity.core.container import get_container
-
-    container = get_container()
-
-    auth = container.get_auth_provider()
-
-    if hasattr(auth, "initialize"):
-        await auth.initialize()
+    except Exception as config_error:
+        print(f"⚠️ Config access failed: {config_error}")
 
 
-async def test_repository_init() -> None:
-    """Test repository initialization."""
-    from clarity.core.container import get_container
+def test_container_creation() -> None:
+    """Test dependency container creation performance."""
+    start = time.perf_counter()
 
-    container = get_container()
+    try:
+        from clarity.core.container import get_container  # noqa: PLC0415
 
-    repo = container.get_health_data_repository()
+        container = get_container()
 
-    if hasattr(repo, "initialize"):
-        await repo.initialize()
+        # Test getting some basic dependencies
+        _ = container.get_config_provider()
 
+        elapsed = time.perf_counter() - start
+        if elapsed > 1.0:
+            print(f"⚠️ Container creation slow: {elapsed:.2f}s")
 
-async def test_full_lifespan() -> None:
-    """Test the full lifespan context manager."""
-    from clarity.core.container import get_container
+        # Test auth provider creation
+        auth_start = time.perf_counter()
+        container.get_auth_provider()
+        auth_elapsed = time.perf_counter() - auth_start
 
-    container = get_container()
+        if auth_elapsed > 2.0:
+            print(f"⚠️ Auth provider creation slow: {auth_elapsed:.2f}s")
 
-    # Simulate what the lifespan does
-    from clarity.core.logging_config import setup_logging
-
-    setup_logging()
-
-    # Initialize auth provider
-    auth_provider = container.get_auth_provider()
-    if hasattr(auth_provider, "initialize"):
-        await auth_provider.initialize()
-
-    # Initialize repository
-    repository = container.get_health_data_repository()
-    if hasattr(repository, "initialize"):
-        await repository.initialize()
+    except Exception as container_error:
+        print(f"⚠️ Container creation failed: {container_error}")
 
 
-async def test_environment_variables() -> None:
-    """Test environment variable availability."""
-    import os
+async def test_app_creation() -> None:
+    """Test FastAPI app creation performance."""
+    start = time.perf_counter()
 
-    env_vars_to_check = [
-        "FIREBASE_PROJECT_ID",
-        "FIREBASE_CREDENTIALS_PATH",
-        "GCP_PROJECT_ID",
-        "GOOGLE_APPLICATION_CREDENTIALS",
-        "ENVIRONMENT",
-        "DEBUG",
-        "ENABLE_AUTH",
-    ]
+    try:
+        from clarity.core.container import create_application  # noqa: PLC0415
 
-    for var in env_vars_to_check:
-        value = os.getenv(var)
-        if value:
-            pass
+        _ = create_application()  # Create app but don't need to use it
+
+        elapsed = time.perf_counter() - start
+        if elapsed > 3.0:
+            print(f"⚠️ App creation slow: {elapsed:.2f}s")
+        else:
+            print(f"✅ App created successfully in {elapsed:.2f}s")
+
+    except Exception as app_error:
+        print(f"⚠️ App creation failed: {app_error}")
 
 
-async def test_file_permissions() -> None:
-    """Test file access permissions."""
-    import os
-    from pathlib import Path
-
-    # Check common credential file locations
-    credential_paths = [
-        "credentials/firebase-credentials.json",
-        "credentials/service-account.json",
+def check_file_access() -> None:
+    """Check if credential files are accessible."""
+    potential_paths = [
         ".env",
-        "src/clarity",
+        "credentials/firebase-credentials.json",
+        "credentials/gcp-credentials.json",
+        os.getenv("GOOGLE_APPLICATION_CREDENTIALS", ""),
+        os.getenv("FIREBASE_CREDENTIALS_PATH", ""),
     ]
 
-    for path_str in credential_paths:
+    for path_str in potential_paths:
+        if not path_str:
+            continue
+
         path = Path(path_str)
         if path.exists() and path.is_file():
-            readable = os.access(path, os.R_OK)
+            # Check if file is accessible
+            if os.access(path, os.R_OK):
+                print(f"✅ Credential file accessible: {path}")
+            else:
+                print(f"⚠️ Credential file not readable: {path}")
+        else:
+            print(f"❌ Credential file not found: {path}")
+
+
+async def main() -> None:
+    """Main debug function."""
+    print("🔍 CLARITY Startup Performance Debug")
+    print("=" * 50)
+
+    # Test imports
+    print("\n📦 Testing imports...")
+    slowest = find_slowest_import()
+    if slowest:
+        print(f"🐌 Slowest import: {slowest}")
+
+    # Test config
+    print("\n⚙️ Testing configuration...")
+    test_config_access()
+
+    # Test container
+    print("\n🏭 Testing dependency container...")
+    test_container_creation()
+
+    # Test credentials
+    print("\n🔐 Checking credential files...")
+    check_file_access()
+
+    # Test app creation
+    print("\n🚀 Testing app creation...")
+    await test_app_creation()
+
+    print("\n✅ Debug complete!")
 
 
 if __name__ == "__main__":
-
     try:
-        # First check environment and files
-        asyncio.run(test_environment_variables())
-        asyncio.run(test_file_permissions())
-
-        # Main diagnostic
-        culprit = asyncio.run(debug_startup())
-
-        if culprit:
-
-            if "Auth provider" in culprit or "Repository" in culprit or "Config provider" in culprit or "Logging" in culprit:
-                pass
-
+        asyncio.run(main())
     except KeyboardInterrupt:
         pass
-    except Exception as e:
+    except Exception:
         import traceback
 
         traceback.print_exc()
+        print("\n💥 Debug failed - see traceback above")

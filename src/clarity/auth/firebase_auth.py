@@ -9,14 +9,14 @@ Enterprise-grade Firebase authentication middleware with:
 """
 
 import asyncio
-from collections.abc import Callable
+from collections.abc import Awaitable, Callable
 from datetime import UTC, datetime
 from functools import wraps
 import logging
 import time
 from typing import Any
 
-from fastapi import HTTPException, Request
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.security import HTTPBearer
 import firebase_admin
 from firebase_admin import auth, credentials
@@ -254,7 +254,7 @@ class FirebaseAuthMiddleware(BaseHTTPMiddleware):
 
     def __init__(
         self,
-        app: Any,
+        app: FastAPI,
         auth_provider: IAuthProvider,
         exempt_paths: list[str] | None = None,
     ) -> None:
@@ -279,7 +279,7 @@ class FirebaseAuthMiddleware(BaseHTTPMiddleware):
         logger.info("Firebase authentication middleware initialized")
 
     async def dispatch(
-        self, request: Request, call_next: Callable[[Request], Any]
+        self, request: Request, call_next: Callable[[Request], Awaitable[Response]]
     ) -> Response:
         """Process authentication for incoming requests."""
         # Check if path is exempt from authentication
@@ -438,7 +438,7 @@ async def get_current_user(request: Request) -> UserContext:
 
 def require_auth(
     permissions: list[Permission] | None = None, roles: list[UserRole] | None = None
-) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
+) -> Callable[[Callable[..., Awaitable[Any]]], Callable[..., Awaitable[Any]]]:
     """Decorator to require authentication and specific permissions/roles.
 
     Args:
@@ -449,7 +449,7 @@ def require_auth(
         Decorated function that enforces authentication
     """
 
-    def decorator(func: Callable[..., Any]) -> Callable[..., Any]:
+    def decorator(func: Callable[..., Awaitable[Any]]) -> Callable[..., Awaitable[Any]]:
         @wraps(func)
         async def wrapper(*args: Any, **kwargs: Any) -> Any:
             # Extract request from args/kwargs
@@ -491,13 +491,13 @@ def require_auth(
 
 def require_role(
     *roles: UserRole,
-) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
+) -> Callable[[Callable[..., Awaitable[Any]]], Callable[..., Awaitable[Any]]]:
     """Convenience decorator to require specific roles."""
     return require_auth(roles=list(roles))
 
 
 def require_permission(
     *permissions: Permission,
-) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
+) -> Callable[[Callable[..., Awaitable[Any]]], Callable[..., Awaitable[Any]]]:
     """Convenience decorator to require specific permissions."""
     return require_auth(permissions=list(permissions))

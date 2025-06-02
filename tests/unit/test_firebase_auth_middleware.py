@@ -700,7 +700,9 @@ class TestIntegrationFirebaseAuth:
     @staticmethod
     async def test_public_endpoint_access(app_with_auth: FastAPI) -> None:
         """Test access to public endpoints without authentication."""
-        async with AsyncClient(app=app_with_auth, base_url="http://test") as client:
+        async with AsyncClient(
+            transport=ASGITransport(app=app_with_auth), base_url="http://test"
+        ) as client:
             response = await client.get("/health")
             assert response.status_code == 200
             assert response.json() == {"status": "healthy"}
@@ -713,7 +715,9 @@ class TestIntegrationFirebaseAuth:
     @staticmethod
     async def test_protected_endpoint_without_auth(app_with_auth: FastAPI) -> None:
         """Test access to protected endpoint without authentication."""
-        async with AsyncClient(app=app_with_auth, base_url="http://test") as client:
+        async with AsyncClient(
+            transport=ASGITransport(app=app_with_auth), base_url="http://test"
+        ) as client:
             response = await client.get("/protected")
             assert response.status_code == 401
 
@@ -737,7 +741,9 @@ class TestIntegrationFirebaseAuth:
             mock_user_info
         )
 
-        async with AsyncClient(app=app_with_auth, base_url="http://test") as client:
+        async with AsyncClient(
+            transport=ASGITransport(app=app_with_auth), base_url="http://test"
+        ) as client:
             response = await client.get(
                 "/protected", headers={"Authorization": "Bearer valid_token"}
             )
@@ -752,7 +758,9 @@ class TestIntegrationFirebaseAuth:
         # Mock failed authentication
         app_with_auth.state.mock_auth_provider.verify_token.return_value = None
 
-        async with AsyncClient(app=app_with_auth, base_url="http://test") as client:
+        async with AsyncClient(
+            transport=ASGITransport(app=app_with_auth), base_url="http://test"
+        ) as client:
             response = await client.get(
                 "/protected", headers={"Authorization": "Bearer invalid_token"}
             )
@@ -763,7 +771,9 @@ class TestIntegrationFirebaseAuth:
     @staticmethod
     async def test_middleware_is_invoked_debug(app_with_auth: FastAPI) -> None:
         """Debug test to verify middleware is being invoked at all."""
-        async with AsyncClient(app=app_with_auth, base_url="http://test") as client:
+        async with AsyncClient(
+            transport=ASGITransport(app=app_with_auth), base_url="http://test"
+        ) as client:
             # Try to hit a protected endpoint without auth - should trigger middleware
             response = await client.get("/protected")
 

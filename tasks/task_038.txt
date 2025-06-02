@@ -1,6 +1,6 @@
 # Task ID: 38
 # Title: Create FastAPI Endpoints for Gemini Health Insights Service
-# Status: in-progress
+# Status: done
 # Dependencies: 34, 2
 # Priority: high
 # Description: Build REST API routes that expose the existing GeminiService functionality to enable "chat with your health data" from frontend applications, including endpoints for generating health insights, retrieving cached results, and health status monitoring.

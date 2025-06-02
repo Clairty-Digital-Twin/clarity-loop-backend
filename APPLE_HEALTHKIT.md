@@ -291,3 +291,261 @@ References:
  • Apple’s planned AI health coach uses multi-modal data for personalized advice ￼ ￼
  • Research on multi-sensor fusion (heart rate + movement) improving health monitoring accuracy ￼ ￼
  • Google Vertex AI (Gemini) chosen for compliant, high-quality LLM text generation ￼ (ensuring data stays in our GCP project).
+
+Apple HealthKit “Stub-First” Plan
+
+(Turning today’s architecture into code you can paste & run)
+
+⸻
+
+0 . Why stub?
+
+A stub adapter lets the rest of the pipeline behave as if real HealthKit data already exists. You:
+ 1. Unblock feature work (PAT, Gemini, chat UI) without waiting for Apple-side auth/export plumbing.
+ 2. Lock interfaces early so nothing breaks later when you swap in the real adapter.
+ 3. Automate CI—every push runs an end-to-end test that uploads “fake” HealthKit, triggers Pub/Sub, runs PAT, calls Gemini, and verifies Firestore gets an insight document.
+
+⸻
+
+1 . Folder & file layout (add to clarity-loop-backend)
+
+clarity_loop_backend/
+├─ clarity/                    # domain & use-cases (already exists)
+│  ├─ adapters/
+│  │   ├─ __init__.py
+│  │   ├─ base.py              # IMetricIngestAdapter  (⇩ §2)
+│  │   └─ apple_health_stub.py # AppleHealthStubAdapter (⇩ §3)
+│  └─ services/
+│      └─ ingestion_service.py # orchestrates adapters
+├─ tests/
+│  └─ e2e_healthkit_stub_test.py
+└─ samples/
+    └─ healthkit_stub_batch.json
+
+⸻
+
+2 . Define the adapter interface (clarity/adapters/base.py)
+
+from typing import List, Protocol
+from clarity.domain.models import MetricPayload, HealthDataUpload
+
+class IMetricIngestAdapter(Protocol):
+    """Converts raw source files/objects into standardized MetricPayloads."""
+    async def parse(self, raw_source: dict | str | bytes) -> HealthDataUpload: ...
+
+Why: any future adapter (real HealthKit SDK, Garmin, Oura, CSV, etc.) just implements parse() and the ingestion service doesn’t care where data came from.
+
+⸻
+
+3 . Implement the stub adapter (clarity/adapters/apple_health_stub.py)
+
+import json, uuid, random, datetime as dt
+from typing import List
+from clarity.domain.models import MetricPayload, HealthDataUpload
+from clarity.adapters.base import IMetricIngestAdapter
+
+METRIC_TYPES = ["heart_rate", "activity_level", "sleep_analysis"]
+
+class AppleHealthStubAdapter(IMetricIngestAdapter):
+    """Fake adapter that returns deterministic-but-realistic HealthKit data."""
+    def __init__(self, seed:int=42):
+        random.seed(seed)
+
+    async def parse(self, raw_source:dict|str|bytes) -> HealthDataUpload:
+        # 1. Ignore raw_source; generate synthetic data instead
+        user_id = f"stub-{uuid.uuid4()}"
+        timestamp = dt.datetime.utcnow().isoformat()
+
+        metrics: List[MetricPayload] = []
+        # ---- Heart Rate / HRV ----
+        metrics.append(MetricPayload(
+            metric_type="heart_rate",
+            biometric_data={
+                "heart_rate": random.randint(55, 75),
+                "heart_rate_variability": random.randint(40, 80)
+            }
+        ))
+        # ---- Activity ----
+        steps = random.randint(4000, 12000)
+        metrics.append(MetricPayload(
+            metric_type="activity_level",
+            activity_data={
+                "steps": steps,
+                "distance_meters": round(steps * 0.8, 1),
+                "calories_burned": round(steps * 0.04, 1),
+                "active_minutes": random.randint(30, 120),
+                "exercise_type": "walking",
+                "intensity_level": "moderate",
+                "date": dt.date.today().isoformat()
+            }
+        ))
+        # ---- Sleep ----
+        metrics.append(MetricPayload(
+            metric_type="sleep_analysis",
+            sleep_data={
+                "total_sleep_minutes": random.randint(360, 510),
+                "sleep_efficiency": round(random.uniform(0.75, 0.9), 2),
+                "sleep_start": (dt.datetime.utcnow()-dt.timedelta(hours=8)).isoformat(),
+                "sleep_end": dt.datetime.utcnow().isoformat()
+            }
+        ))
+
+        return HealthDataUpload(
+            user_id = user_id,
+            upload_source = "apple_health_stub",
+            client_timestamp = timestamp,
+            metrics = metrics
+        )
+
+Notes
+ • Deterministic with a fixed seed for repeatable CI.
+ • Uses domain Pydantic models so validation still runs.
+ • Returns one HealthDataUpload; real adapter may split large exports into multiple.
+
+⸻
+
+4 . Wire the adapter into the ingestion service
+
+# clarity/services/ingestion_service.py  (simplified)
+
+class IngestionService:
+    def __init__(self, repo:IHealthDataRepository, publisher:PubSubPublisher):
+        self.repo, self.publisher = repo, publisher
+        # register adapters
+        self.adapters = {
+            "apple_health_stub": AppleHealthStubAdapter(),
+            # future: "apple_health": RealHealthKitAdapter(),
+        }
+
+    async def ingest(self, source:str="apple_health_stub", raw:dict|str|bytes=None):
+        adapter = self.adapters[source]
+        health_upload = await adapter.parse(raw)
+        processing_id = await self.repo.save_health_upload(health_upload)
+        await self.publisher.enqueue(processing_id, health_upload.user_id)
+        return processing_id
+
+FastAPI endpoint can simply forward raw=None for the stub route:
+
+@router.post("/health-data/stub")
+async def ingest_stub(service: IngestionService = Depends(get_service)):
+    pid = await service.ingest(source="apple_health_stub")
+    return {"processing_id": pid, "status": "PROCESSING"}
+
+⸻
+
+5 . End-to-End CI test (tests/e2e_healthkit_stub_test.py)
+
+import httpx, asyncio, pytest
+
+pytestmark = pytest.mark.asyncio
+BASE = "<http://localhost:8000>"   # or live staging URL
+
+async def test_stub_flow():
+    async with httpx.AsyncClient(base_url=BASE) as client:
+        r = await client.post("/health-data/stub")        # ⇧ new route
+        assert r.status_code == 200
+        pid = r.json()["processing_id"]
+
+        # poll status up to 60 s
+        for _ in range(30):
+            s = await client.get(f"/processing/{pid}")
+            if s.json()["status"] == "COMPLETED":
+                break
+            await asyncio.sleep(2)
+        else:
+            raise AssertionError("Processing never completed")
+
+        # fetch final insight
+        insight = await client.get(f"/insights/{pid}")
+        assert insight.status_code == 200
+        assert "summary" in insight.json()
+
+Add this test to your GitHub Actions workflow so every push validates the pipeline.
+
+⸻
+
+6 . How to swap in real HealthKit adapter later
+
+Step Action Surface touched?
+1 Build RealHealthKitAdapter that parses Apple’s export.xml or watchOS background deliveries and returns HealthDataUpload Only new file in clarity/adapters/
+2 Register adapter in IngestionService.adapters as "apple_health" 1-line change
+3 Update mobile app to POST /health-data with source=apple_health and raw payload Front-end only
+4 Update CI to use real sample export (keep stub test as a smoke test) tests/ folder
+
+Because every downstream stage—Pub/Sub, analysis, PAT, Gemini—already consumes the canonical HealthDataUpload, nothing else changes.
+
+⸻
+
+7 . Generating richer stub data (optional)
+
+If you need day-level sequences for PAT:
+ 1. Add a helper generate_activity_sequence(days:int=7) -> list[int] that returns 10 080 step counts (minute-resolution).
+ 2. Store it in payload["activity_sequence"] so the PAT service can test patch embeddings, etc.
+ 3. Keep sequence lengths realistic (0 – 300 steps/min).
+
+⸻
+
+8 . Documentation snippet (paste into /docs/apple_health_stub.md)
+
+### Apple HealthKit Stub Adapter (v1)
+
+*Purpose* – enable end-to-end pipeline validation without real HealthKit exports.
+
+*How it works*
+
+1. FastAPI route __POST /health-data/stub__ triggers `AppleHealthStubAdapter`.
+2. Adapter synthesizes realistic metrics (HR, steps, sleep) and returns a `HealthDataUpload`.
+3. Upload is persisted (GCS) and `analysis-tasks` Pub/Sub message is published.
+4. Analysis service runs PAT + statistic rules → Fusion JSON → Gemini narrative.
+5. Narrative stored in Firestore; mobile app listener displays “stub” insight.
+
+*Key files*
+
+- `clarity/adapters/apple_health_stub.py` – data generator
+- `samples/healthkit_stub_batch.json`     – example output
+- `tests/e2e_healthkit_stub_test.py`      – CI smoke test
+
+*Replacing with real adapter*
+Swap `"apple_health_stub"` with `"apple_health"` once `RealHealthKitAdapter`
+implements parsing of:
+
+- `export.xml` (manual user export) __or__
+- HK background deliveries via App Extension (future).
+
+*No other backend service requires modification.*
+
+⸻
+
+9 . Run it locally (developer cheat-sheet)
+
+# 1. Boot local Firestore emulator, Pub/Sub emulator (optional)
+
+gcloud emulators pubsub start --project test-proj &
+gcloud emulators firestore start --host-port=localhost:8080 &
+export PUBSUB_EMULATOR_HOST=localhost:8085
+export FIRESTORE_EMULATOR_HOST=localhost:8080
+
+# 2. Start FastAPI server
+
+uvicorn clarity.web.main:app --reload
+
+# 3. Trigger stub upload
+
+curl -X POST <http://localhost:8000/health-data/stub>
+
+# 4. Watch logs of analysis worker (if running)
+
+docker compose logs -f analysis
+
+# 5. View Firestore document
+
+python scripts/print_firestore_insights.py | jq
+
+✅  Deliverable checklist for you
+ • Copy folder layout & code snippets into repo.
+ • Commit apple_health_stub.md in /docs/.
+ • Add the new FastAPI route and register the adapter.
+ • Ensure Cloud Run analysis worker detects stub uploads (same Pub/Sub).
+ • Push; verify GitHub Action passes (e2e_healthkit_stub_test.py).
+
+Once those green-checks light up, you can develop PAT analytics and Gemini prompts with confidence—knowing real HealthKit data can drop in later by swapping adapters, no pipeline surgery required.

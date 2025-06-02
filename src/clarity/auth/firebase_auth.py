@@ -33,6 +33,9 @@ from starlette.responses import JSONResponse
 from clarity.auth.models import AuthError, Permission, UserContext, UserRole
 from clarity.core.interfaces import IAuthProvider
 
+if TYPE_CHECKING:
+    from clarity.core.config import MiddlewareConfig
+
 # Configure logger
 logger = logging.getLogger(__name__)
 
@@ -52,7 +55,7 @@ class FirebaseAuthProvider(IAuthProvider):
         self,
         credentials_path: str | None = None,
         project_id: str | None = None,
-        middleware_config: Any | None = None,
+        middleware_config: MiddlewareConfig | None = None,
     ) -> None:
         """Initialize Firebase authentication provider.
 

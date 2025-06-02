@@ -7,29 +7,33 @@ Based on: "AI Foundation Models for Wearable Movement Data in Mental Health Rese
 arXiv:2411.15240 (Dartmouth College, 29,307 participants, NHANES 2003-2014)
 """
 
-import asyncio
+from datetime import datetime
 import logging
-import os
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple, Union
 
 import numpy as np
 from pydantic import BaseModel, Field
 import torch
 from torch import nn
-from transformers import AutoConfig, AutoModel
 
 from clarity.core.interfaces import IMLModelService
-from clarity.models.health_data import HealthDataPoint
+from clarity.models.health_data import HealthMetric
 
 logger = logging.getLogger(__name__)
+
+
+class ActigraphyDataPoint(BaseModel):
+    """Individual actigraphy data point."""
+
+    timestamp: datetime
+    value: float = Field(description="Activity count or acceleration value")
 
 
 class ActigraphyInput(BaseModel):
     """Input model for actigraphy data."""
 
     user_id: str
-    data_points: list[HealthDataPoint]
+    data_points: list[ActigraphyDataPoint]
     sampling_rate: float = Field(default=1.0, description="Samples per minute")
     duration_hours: int = Field(default=24, description="Duration in hours")
 
@@ -193,7 +197,7 @@ class PATModelService(IMLModelService):
 
     def _preprocess_actigraphy_data(
         self,
-        data_points: list[HealthDataPoint],
+        data_points: list[ActigraphyDataPoint],
         target_length: int = 1440,  # 24 hours at 1-minute resolution
     ) -> torch.Tensor:
         """Preprocess actigraphy data for PAT model input.

@@ -40,6 +40,18 @@ class DataNotFoundError(HealthDataServiceError):
         super().__init__(message, status_code=404)
 
 
+def _raise_validation_error(error_summary: str) -> None:
+    """Raise validation error exception."""
+    msg = f"Health data validation failed: {error_summary}"
+    raise HealthDataServiceError(msg, status_code=400)
+
+
+def _raise_data_not_found_error(processing_id: str) -> None:
+    """Raise data not found error exception."""
+    msg = f"Processing job {processing_id} not found"
+    raise DataNotFoundError(msg)
+
+
 class HealthDataService:
     """Service layer for health data processing and management.
 
@@ -77,6 +89,8 @@ class HealthDataService:
             HealthDataServiceError: If processing fails
         """
         try:
+            self.logger.info("Processing health data for user: %s", health_data.user_id)
+
             # Generate unique processing ID
             processing_id = str(uuid.uuid4())
 
@@ -100,8 +114,7 @@ class HealthDataService:
             if validation_errors:
                 error_summary = f"Validation failed: {len(validation_errors)} errors"
                 self.logger.warning("%s", error_summary)
-                msg = f"Health data validation failed: {error_summary}"
-                raise HealthDataServiceError(msg, status_code=400)
+                _raise_validation_error(error_summary)
 
             # Store health data using repository
             await self.repository.save_health_data(
@@ -138,36 +151,33 @@ class HealthDataService:
 
     async def get_processing_status(
         self, processing_id: str, user_id: str
-    ) -> dict[str, Any]:
-        """Get processing status for a health data upload job.
+    ) -> dict[str, Any] | None:
+        """Get processing status for a health data upload.
 
-        Args:
-            processing_id: Unique identifier for the processing job
-            user_id: User ID to verify ownership
-
-        Returns:
-            Processing status information
-
-        Raises:
-            DataNotFoundError: If processing job not found
-            HealthDataServiceError: If retrieval operation fails
+        Returns status information or None if not found.
+        Implements user-scoped data access control.
         """
         try:
-            # Get processing status from repository
+            self.logger.debug(
+                "Getting processing status: %s for user: %s", processing_id, user_id
+            )
+
+            # Get status from repository with user validation
             status_info = await self.repository.get_processing_status(
                 processing_id=processing_id, user_id=user_id
             )
 
             if not status_info:
-                msg = f"Processing job {processing_id} not found"
-                raise DataNotFoundError(msg)
+                _raise_data_not_found_error(processing_id)
+
+            return status_info
 
         except Exception as e:
-            self.logger.exception("Error retrieving processing status")
-            msg = f"Failed to retrieve processing status: {e!s}"
+            if isinstance(e, (DataNotFoundError, HealthDataServiceError)):
+                raise
+            self.logger.exception("Error getting processing status")
+            msg = f"Failed to get processing status: {e!s}"
             raise HealthDataServiceError(msg) from e
-        else:
-            return status_info
 
     async def get_user_health_data(
         self,
@@ -195,6 +205,8 @@ class HealthDataService:
             HealthDataServiceError: If retrieval operation fails
         """
         try:
+            self.logger.debug("Retrieving health data for user: %s", user_id)
+
             # Get user health data from repository
             health_data = await self.repository.get_user_health_data(
                 user_id=user_id,
@@ -206,14 +218,9 @@ class HealthDataService:
             )
 
             self.logger.info(
-                "Retrieved user health data",
-                extra={
-                    "user_id": user_id,
-                    "count": len(health_data.get("metrics", [])),
-                    "filters": len(
-                        [f for f in [metric_type, start_date, end_date] if f]
-                    ),
-                },
+                "Retrieved %s health records for user: %s",
+                len(health_data.get("metrics", [])),
+                user_id,
             )
 
         except Exception as e:
@@ -239,6 +246,10 @@ class HealthDataService:
             HealthDataServiceError: If deletion operation fails
         """
         try:
+            self.logger.info(
+                "Deleting health data: %s for user: %s", processing_id, user_id
+            )
+
             # Delete health data using repository
             success = await self.repository.delete_health_data(
                 user_id=user_id, processing_id=processing_id
@@ -260,7 +271,8 @@ class HealthDataService:
         else:
             return success
 
-    def _validate_metric_business_rules(self, metric: HealthMetric) -> bool:
+    @staticmethod
+    def _validate_metric_business_rules(metric: HealthMetric) -> bool:
         """Validate health metric against business rules."""
         try:
             # Check for required metric type

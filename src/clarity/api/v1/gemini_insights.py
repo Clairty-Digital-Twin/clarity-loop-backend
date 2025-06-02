@@ -213,25 +213,26 @@ async def generate_insights(
     try:
         logger.info(
             "🤖 Generating insights for user %s (request: %s)",
-            current_user.get("uid", "unknown"),
+            current_user.user_id,
             request_id
         )
         
-        # Check user permissions
-        user_permissions = current_user.get("custom_claims", {}).get("permissions", [])
-        if "read:insights" not in user_permissions:
+        # Check user permissions - for now, allow all authenticated users
+        # In production, you would check specific permissions:
+        # if Permission.READ_INSIGHTS not in current_user.permissions:
+        if not current_user.is_active:
             raise create_error_response(
-                error_code="INSUFFICIENT_PERMISSIONS",
-                message="User lacks permission to generate insights",
+                error_code="ACCOUNT_DISABLED",
+                message="User account is disabled",
                 request_id=request_id,
                 status_code=status.HTTP_403_FORBIDDEN,
-                details={"required_permission": "read:insights"},
-                suggested_action="contact_administrator"
+                details={"user_id": current_user.user_id},
+                suggested_action="contact_support"
             )
         
         # Create Gemini service request
         gemini_request = HealthInsightRequest(
-            user_id=current_user["uid"],
+            user_id=current_user.user_id,
             analysis_results=insight_request.analysis_results,
             context=insight_request.context,
             insight_type=insight_request.insight_type

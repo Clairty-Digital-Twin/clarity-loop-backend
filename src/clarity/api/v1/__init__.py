@@ -4,6 +4,7 @@ Version 1 of the CLARITY platform API endpoints.
 This module contains all the route definitions for the first version of the API.
 
 Routes:
+- auth: Authentication and user management endpoints
 - health_data: Health data upload and management endpoints
 - pat_analysis: PAT (Pretrained Actigraphy Transformer) analysis endpoints
 - gemini_insights: Gemini AI health insights generation endpoints
@@ -11,12 +12,16 @@ Routes:
 
 from fastapi import APIRouter
 
+from clarity.api.v1.auth import router as auth_router
 from clarity.api.v1.gemini_insights import router as gemini_insights_router
 from clarity.api.v1.health_data import router as health_data_router
 from clarity.api.v1.pat_analysis import router as pat_analysis_router
 
 # Create the main v1 router and include all sub-routers
 router = APIRouter(prefix="/api/v1", tags=["v1"])
+
+# Include authentication routes
+router.include_router(auth_router, prefix="/auth", tags=["authentication"])
 
 # Include health data routes
 router.include_router(health_data_router)

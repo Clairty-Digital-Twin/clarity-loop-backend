@@ -34,7 +34,7 @@ from clarity.core.security import create_secure_cache_key
 from clarity.core.types import CacheStorage, CachedValue, LoggerProtocol
 from clarity.ml.pat_service import ActigraphyAnalysis, ActigraphyInput, PATModelService
 
-logger = logging.getLogger(__name__)
+logger: LoggerProtocol = logging.getLogger(__name__)
 
 # Global inference engine instance
 _inference_engine: "AsyncInferenceEngine | None" = None
@@ -45,7 +45,7 @@ class InferenceRequest(BaseModel):
 
     request_id: str = Field(description="Unique request identifier")
     input_data: ActigraphyInput = Field(description="Actigraphy input data")
-    timeout_seconds: float = Field(default=30.0, description="Request timeout")
+    timeout_seconds: float = Field(default=DEFAULT_INFERENCE_TIMEOUT_SECONDS, description="Request timeout")
     cache_enabled: bool = Field(default=True, description="Enable result caching")
 
 

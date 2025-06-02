@@ -42,7 +42,7 @@ class ClarityBaseError(Exception):
 # ==============================================================================
 
 
-class DataValidationError(ClarityBaseException):
+class DataValidationError(ClarityBaseError):
     """Raised when data validation fails."""
 
     def __init__(
@@ -87,7 +87,7 @@ class EmptyDataError(DataValidationError):
 # ==============================================================================
 
 
-class ModelError(ClarityBaseException):
+class ModelError(ClarityBaseError):
     """Base class for ML model related errors."""
 
 
@@ -124,7 +124,7 @@ class InferenceTimeoutError(InferenceError):
 # ==============================================================================
 
 
-class NHANESStatsError(ClarityBaseException):
+class NHANESStatsError(ClarityBaseError):
     """Raised when NHANES statistics operations fail."""
 
     def __init__(self, message: str, **kwargs: Any) -> None:
@@ -174,7 +174,7 @@ class InvalidNHANESStatsDataError(NHANESStatsError):
 # ==============================================================================
 
 
-class ServiceError(ClarityBaseException):
+class ServiceError(ClarityBaseError):
     """Base class for service-level errors."""
 
 
@@ -204,14 +204,14 @@ class ServiceUnavailableError(ServiceError):
 # ==============================================================================
 
 
-class AuthenticationError(ClarityBaseException):
+class AuthenticationError(ClarityBaseError):
     """Base class for authentication errors."""
 
     def __init__(self, message: str, **kwargs: Any) -> None:
         super().__init__(message, error_code="AUTHENTICATION_ERROR", **kwargs)
 
 
-class AuthorizationError(ClarityBaseException):
+class AuthorizationError(ClarityBaseError):
     """Base class for authorization errors."""
 
     def __init__(self, message: str, **kwargs: Any) -> None:
@@ -244,7 +244,7 @@ class AccessDeniedError(AuthorizationError):
 # ==============================================================================
 
 
-class ConfigurationError(ClarityBaseException):
+class ConfigurationError(ClarityBaseError):
     """Raised when configuration is invalid or missing."""
 
     def __init__(
@@ -279,7 +279,7 @@ class InvalidConfigurationError(ConfigurationError):
 # ==============================================================================
 
 
-class CacheError(ClarityBaseException):
+class CacheError(ClarityBaseError):
     """Base class for cache-related errors."""
 
     def __init__(self, message: str, **kwargs: Any) -> None:

@@ -477,7 +477,7 @@ def require_auth(
 
     def decorator(func: Callable[..., Awaitable[Any]]) -> Callable[..., Awaitable[Any]]:
         @wraps(func)
-        async def wrapper(*args: Any, **kwargs: Any) -> Any:  # type: ignore[misc]
+        async def wrapper(*args: object, **kwargs: object) -> object:
             def _raise_missing_request() -> None:
                 """Abstract raise to inner function."""
                 msg = "Request object not found"

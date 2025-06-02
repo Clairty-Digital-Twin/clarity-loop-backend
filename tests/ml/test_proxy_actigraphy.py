@@ -227,7 +227,7 @@ class TestProxyActigraphyTransformer:
     @patch('clarity.ml.proxy_actigraphy.lookup_norm_stats')
     def test_transform_large_dataset(self, mock_lookup_stats):
         """Test transformation with large dataset."""
-        mock_lookup_stats.return_value = (1.2, 0.8)
+        mock_lookup_stats.return_value = (3.2, 1.8)  # Updated to match new NHANES stats
         
         transformer = ProxyActigraphyTransformer()
         
@@ -236,7 +236,7 @@ class TestProxyActigraphyTransformer:
         week_size = 10080
         timestamps = [datetime.now(timezone.utc) for _ in range(week_size)]
         # Create realistic step counts that will produce varied transformation results
-        # Use lower values that work well with NHANES normalization (mean=1.2, std=0.8)
+        # Use values that work well with the updated NHANES normalization (mean=3.2, std=1.8)
         step_counts = [max(0.0, 1.0 + (i % 10) * 0.2) for i in range(week_size)]
         
         step_data = StepCountData(
@@ -263,7 +263,7 @@ class TestProxyActigraphyTransformer:
     @patch('clarity.ml.proxy_actigraphy.lookup_norm_stats')
     def test_transform_with_padding(self, mock_lookup_stats):
         """Test transformation with small dataset that requires padding."""
-        mock_lookup_stats.return_value = (1.2, 0.8)
+        mock_lookup_stats.return_value = (3.2, 1.8)  # Updated to match new NHANES stats
         
         transformer = ProxyActigraphyTransformer()
         
@@ -288,18 +288,30 @@ class TestProxyActigraphyTransformer:
         assert result.transformation_stats["input_length"] == small_size
         assert result.transformation_stats["output_length"] == week_size
         
-        # Most values should be from padding (zeros transformed to -1.5)
-        # The last 100 values should be from actual data
+        # Check padding behavior
         padded_values = result.vector[:-small_size]  # First 9980 values
         actual_values = result.vector[-small_size:]   # Last 100 values
         
-        # Padded values should all be the same (transformed zeros)
-        expected_padded_value = (0 - 1.2) / 0.8  # -1.5
-        assert all(abs(val - expected_padded_value) < 1e-10 for val in padded_values)
+        # With circadian-aware padding, values should be varied but in realistic range
+        # They should be generally negative (rest period values) but not identical
+        assert all(-4.0 <= val <= 4.0 for val in padded_values)  # Within clipping range
         
-        # Actual values should be varied
+        # Padded values should have some variation (not all identical)
+        unique_padded_values = set(padded_values)
+        assert len(unique_padded_values) > 10  # Should have some variation due to circadian padding
+        
+        # Most padded values should be in the rest range (negative, around rest_value)
+        rest_range_count = sum(1 for val in padded_values if -3.0 <= val <= -1.0)
+        assert rest_range_count > len(padded_values) * 0.7  # At least 70% in rest range
+        
+        # Actual values should be varied and generally higher than padding
         unique_actual_values = set(actual_values)
         assert len(unique_actual_values) > 5  # Should have varied values
+        
+        # Verify padding statistics are tracked
+        stats = result.transformation_stats
+        assert stats["padding_length"] == week_size - small_size
+        assert stats["padding_percentage"] > 99.0  # Almost all padding
 
     @patch('clarity.ml.proxy_actigraphy.lookup_norm_stats')
     def test_quality_score_calculation(self, mock_lookup_stats):

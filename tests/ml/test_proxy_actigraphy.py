@@ -27,7 +27,8 @@ from clarity.ml.proxy_actigraphy import (  # type: ignore[import-untyped]
 class TestStepCountData:
     """Test StepCountData model."""
 
-    def test_step_count_data_creation(self):
+    @staticmethod
+    def test_step_count_data_creation():
         """Test creating a valid StepCountData."""
         timestamps = [datetime.now(UTC) for _ in range(3)]
         step_data = StepCountData(
@@ -44,7 +45,8 @@ class TestStepCountData:
         assert len(step_data.timestamps) == 3
         assert step_data.user_metadata["age"] == 25
 
-    def test_step_count_data_validation(self):
+    @staticmethod
+    def test_step_count_data_validation():
         """Test StepCountData validation."""
         timestamps = [datetime.now(UTC)]
 
@@ -57,7 +59,8 @@ class TestStepCountData:
         )
         assert len(step_data.step_counts) == 1
 
-    def test_step_count_data_empty_list(self):
+    @staticmethod
+    def test_step_count_data_empty_list():
         """Test StepCountData with empty step counts."""
         with pytest.raises(ValidationError, match="List should have at least 1 item"):
             StepCountData(
@@ -71,7 +74,8 @@ class TestStepCountData:
 class TestProxyActigraphyResult:
     """Test ProxyActigraphyResult model."""
 
-    def test_result_creation(self):
+    @staticmethod
+    def test_result_creation():
         """Test creating a valid ProxyActigraphyResult."""
         result = ProxyActigraphyResult(
             user_id="user123",
@@ -97,7 +101,8 @@ class TestProxyActigraphyResult:
         assert result.transformation_stats["input_length"] == 3
         assert result.nhanes_reference["year"] == 2025
 
-    def test_result_quality_score_validation(self):
+    @staticmethod
+    def test_result_quality_score_validation():
         """Test ProxyActigraphyResult quality score validation."""
         # Valid quality score
         result = ProxyActigraphyResult(
@@ -127,7 +132,7 @@ class TestProxyActigraphyTransformer:
         assert transformer.nhanes_std == 0.8
 
     @patch('clarity.ml.proxy_actigraphy.lookup_norm_stats')
-    def test_transformer_initialization_with_params(self, mock_lookup_stats):
+    def test_transformer_initialization_with_params(self, mock_lookup_stats: MagicMock):
         """Test transformer initialization with custom parameters."""
         mock_lookup_stats.return_value = (1.15, 0.75)
 
@@ -141,7 +146,7 @@ class TestProxyActigraphyTransformer:
         assert transformer.nhanes_std == 0.75
 
     @patch('clarity.ml.proxy_actigraphy.lookup_norm_stats')
-    def test_steps_to_movement_proxy(self, mock_lookup_stats):
+    def test_steps_to_movement_proxy(self, mock_lookup_stats: MagicMock):
         """Test step count to movement proxy conversion."""
         mock_lookup_stats.return_value = (1.2, 0.8)
 
@@ -159,7 +164,7 @@ class TestProxyActigraphyTransformer:
         assert all(-5.0 <= val <= 5.0 for val in proxy_values)
 
     @patch('clarity.ml.proxy_actigraphy.lookup_norm_stats')
-    def test_transform_step_data_basic(self, mock_lookup_stats):
+    def test_transform_step_data_basic(self, mock_lookup_stats: MagicMock):
         """Test basic step data transformation."""
         mock_lookup_stats.return_value = (3.2, 1.8)  # Updated to match new NHANES stats
 
@@ -205,7 +210,7 @@ class TestProxyActigraphyTransformer:
         assert len(unique_values) >= 2  # Should have some variation from different step counts
 
     @patch('clarity.ml.proxy_actigraphy.lookup_norm_stats')
-    def test_transform_with_caching(self, mock_lookup_stats):
+    def test_transform_with_caching(self, mock_lookup_stats: MagicMock):
         """Test transformation with caching enabled."""
         mock_lookup_stats.return_value = (1.2, 0.8)
 
@@ -230,7 +235,7 @@ class TestProxyActigraphyTransformer:
         assert result1.quality_score == result2.quality_score
 
     @patch('clarity.ml.proxy_actigraphy.lookup_norm_stats')
-    def test_transform_without_caching(self, mock_lookup_stats):
+    def test_transform_without_caching(self, mock_lookup_stats: MagicMock):
         """Test transformation with caching disabled."""
         mock_lookup_stats.return_value = (1.2, 0.8)
 
@@ -248,7 +253,7 @@ class TestProxyActigraphyTransformer:
         assert isinstance(result, ProxyActigraphyResult)
 
     @patch('clarity.ml.proxy_actigraphy.lookup_norm_stats')
-    def test_transform_large_dataset(self, mock_lookup_stats):
+    def test_transform_large_dataset(self, mock_lookup_stats: MagicMock):
         """Test transformation with large dataset."""
         mock_lookup_stats.return_value = (3.2, 1.8)  # Updated to match new NHANES stats
 
@@ -285,7 +290,7 @@ class TestProxyActigraphyTransformer:
         assert all(-5.0 <= val <= 5.0 for val in result.vector)
 
     @patch('clarity.ml.proxy_actigraphy.lookup_norm_stats')
-    def test_transform_with_padding(self, mock_lookup_stats):
+    def test_transform_with_padding(self, mock_lookup_stats: MagicMock):
         """Test transformation with small dataset that requires padding."""
         mock_lookup_stats.return_value = (3.2, 1.8)  # Updated to match new NHANES stats
 
@@ -338,7 +343,7 @@ class TestProxyActigraphyTransformer:
         assert stats["padding_percentage"] > 99.0  # Almost all padding
 
     @patch('clarity.ml.proxy_actigraphy.lookup_norm_stats')
-    def test_quality_score_calculation(self, mock_lookup_stats):
+    def test_quality_score_calculation(self, mock_lookup_stats: MagicMock):
         """Test quality score calculation."""
         mock_lookup_stats.return_value = (1.2, 0.8)
 
@@ -366,7 +371,7 @@ class TestProxyActigraphyTransformer:
         assert "total_steps" in stats
 
     @patch('clarity.ml.proxy_actigraphy.lookup_norm_stats')
-    def test_transform_with_zeros(self, mock_lookup_stats):
+    def test_transform_with_zeros(self, mock_lookup_stats: MagicMock):
         """Test transformation with zero step counts."""
         mock_lookup_stats.return_value = (1.2, 0.8)
 
@@ -389,7 +394,7 @@ class TestProxyActigraphyTransformer:
         assert result.transformation_stats["total_steps"] > 0.0  # Padding adds non-zero values
 
     @patch('clarity.ml.proxy_actigraphy.lookup_norm_stats')
-    def test_transform_with_extreme_values(self, mock_lookup_stats):
+    def test_transform_with_extreme_values(self, mock_lookup_stats: MagicMock):
         """Test transformation with extreme step values."""
         mock_lookup_stats.return_value = (1.2, 0.8)
 
@@ -414,7 +419,7 @@ class TestHelperFunctions:
     """Test helper functions and utilities."""
 
     @patch('clarity.ml.proxy_actigraphy.lookup_norm_stats')
-    def test_create_proxy_actigraphy_transformer(self, mock_lookup_stats):
+    def test_create_proxy_actigraphy_transformer(self, mock_lookup_stats: MagicMock):
         """Test transformer factory function."""
         mock_lookup_stats.return_value = (1.2, 0.8)
 
@@ -424,7 +429,7 @@ class TestHelperFunctions:
         assert transformer.cache_enabled is True
 
     @patch('clarity.ml.proxy_actigraphy.lookup_norm_stats')
-    def test_create_transformer_with_params(self, mock_lookup_stats):
+    def test_create_transformer_with_params(self, mock_lookup_stats: MagicMock):
         """Test transformer factory with custom parameters."""
         mock_lookup_stats.return_value = (1.15, 0.75)
 
@@ -439,14 +444,16 @@ class TestHelperFunctions:
 class TestConstants:
     """Test module constants."""
 
-    def test_constants_exist(self):
+    @staticmethod
+    def test_constants_exist():
         """Test that required constants are defined."""
         assert isinstance(MINUTES_PER_WEEK, int)
         assert isinstance(MAX_REALISTIC_STEPS_PER_MINUTE, int)
         assert isinstance(MINUTES_PER_DAY, int)
         assert isinstance(DEFAULT_NHANES_STATS, dict)
 
-    def test_constants_values(self):
+    @staticmethod
+    def test_constants_values():
         """Test that constants have reasonable values."""
         assert MINUTES_PER_WEEK == 7 * 24 * 60
         assert MINUTES_PER_DAY == 24 * 60
@@ -462,12 +469,60 @@ class TestConstants:
             assert isinstance(stats["std"], (int, float))
             assert stats["std"] > 0
 
+    @staticmethod
+    def test_performance_characteristics():
+        """Test performance characteristics of the transformer."""
+        with patch('clarity.ml.proxy_actigraphy.lookup_norm_stats') as mock_lookup:
+            mock_lookup.return_value = (1.2, 0.8)
+
+            transformer = ProxyActigraphyTransformer()
+
+            # Test with different sizes
+            small_size = 100
+            large_size = 10080  # Full week
+
+            # Small dataset test
+            timestamps_small = [datetime.now(UTC) for _ in range(small_size)]
+            step_data_small = StepCountData(
+                user_id="user123",
+                upload_id="upload456",
+                step_counts=[float(i % 10) for i in range(small_size)],
+                timestamps=timestamps_small
+            )
+
+            start_time = time.time()
+            result_small = transformer.transform_step_data(step_data_small)
+            small_time = time.time() - start_time
+
+            # Large dataset test
+            timestamps_large = [datetime.now(UTC) for _ in range(large_size)]
+            step_data_large = StepCountData(
+                user_id="user123",
+                upload_id="upload456",
+                step_counts=[float(i % 100) for i in range(large_size)],
+                timestamps=timestamps_large
+            )
+
+            start_time = time.time()
+            result_large = transformer.transform_step_data(step_data_large)
+            large_time = time.time() - start_time
+
+            # Basic performance checks
+            assert small_time < 5.0  # Should complete in under 5 seconds
+            assert large_time < 10.0  # Should complete in under 10 seconds
+
+            # Verify results are valid
+            assert isinstance(result_small, ProxyActigraphyResult)
+            assert isinstance(result_large, ProxyActigraphyResult)
+            assert len(result_small.vector) == large_size  # Padded to full week
+            assert len(result_large.vector) == large_size
+
 
 class TestIntegrationProxyActigraphy:
     """Integration tests for proxy actigraphy functionality."""
 
     @patch('clarity.ml.proxy_actigraphy.lookup_norm_stats')
-    def test_end_to_end_transformation(self, mock_lookup_stats):
+    def test_end_to_end_transformation(self, mock_lookup_stats: MagicMock):
         """Test complete end-to-end transformation workflow."""
         mock_lookup_stats.return_value = (1.2, 0.8)
 
@@ -545,7 +600,7 @@ class TestEdgeCasesProxyActigraphy:
     """Test edge cases and boundary conditions."""
 
     @patch('clarity.ml.proxy_actigraphy.lookup_norm_stats')
-    def test_single_data_point(self, mock_lookup_stats):
+    def test_single_data_point(self, mock_lookup_stats: MagicMock):
         """Test transformation with single data point."""
         mock_lookup_stats.return_value = (1.2, 0.8)
 
@@ -565,7 +620,7 @@ class TestEdgeCasesProxyActigraphy:
         assert result.transformation_stats["output_length"] == 10080
 
     @patch('clarity.ml.proxy_actigraphy.lookup_norm_stats')
-    def test_negative_step_counts(self, mock_lookup_stats):
+    def test_negative_step_counts(self, mock_lookup_stats: MagicMock):
         """Test transformation handles negative step counts."""
         mock_lookup_stats.return_value = (1.2, 0.8)
 

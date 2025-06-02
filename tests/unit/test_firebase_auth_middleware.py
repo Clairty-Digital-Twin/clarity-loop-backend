@@ -405,7 +405,7 @@ class TestFirebaseAuthMiddleware:
         request = Mock()
         request.headers = {"Authorization": "Bearer valid_token_here"}
 
-        token = middleware._extract_token(request)  # type: ignore[reportPrivateUsage]
+        token = middleware._extract_token(request)  # noqa: SLF001
 
         assert token == "valid_token_here"  # noqa: S105
 
@@ -416,7 +416,7 @@ class TestFirebaseAuthMiddleware:
         request.headers = {}
 
         with pytest.raises(AuthError) as exc_info:
-            middleware._extract_token(request)  # type: ignore[reportPrivateUsage]
+            middleware._extract_token(request)  # noqa: SLF001
 
         assert exc_info.value.status_code == 401
         assert exc_info.value.error_code == "missing_token"
@@ -428,7 +428,7 @@ class TestFirebaseAuthMiddleware:
         request.headers = {"Authorization": "Basic invalid_format"}
 
         with pytest.raises(AuthError) as exc_info:
-            middleware._extract_token(request)  # type: ignore[reportPrivateUsage]
+            middleware._extract_token(request)  # noqa: SLF001
 
         assert exc_info.value.status_code == 401
         assert exc_info.value.error_code == "invalid_token_format"
@@ -448,12 +448,12 @@ class TestFirebaseAuthMiddleware:
     @staticmethod
     def test_is_exempt_path(middleware: FirebaseAuthMiddleware) -> None:
         """Test exempt path checking."""
-        assert middleware._is_exempt_path("/health") is True  # type: ignore[reportPrivateUsage]
-        assert middleware._is_exempt_path("/docs") is True  # type: ignore[reportPrivateUsage]
-        assert middleware._is_exempt_path("/openapi.json") is True  # type: ignore[reportPrivateUsage]
-        assert middleware._is_exempt_path("/api/protected") is False  # type: ignore[reportPrivateUsage]
+        assert middleware._is_exempt_path("/health") is True  # noqa: SLF001
+        assert middleware._is_exempt_path("/docs") is True  # noqa: SLF001
+        assert middleware._is_exempt_path("/openapi.json") is True  # noqa: SLF001
+        assert middleware._is_exempt_path("/api/protected") is False  # noqa: SLF001
         assert (
-            middleware._is_exempt_path("/health/detailed") is True  # type: ignore[reportPrivateUsage]
+            middleware._is_exempt_path("/health/detailed") is True  # noqa: SLF001
         )  # Starts with /health
 
     @staticmethod
@@ -470,7 +470,7 @@ class TestFirebaseAuthMiddleware:
             "last_login": None,
         }
 
-        context = middleware._create_user_context(user_info)  # type: ignore[reportPrivateUsage]
+        context = middleware._create_user_context(user_info)  # noqa: SLF001
 
         assert context.user_id == "patient_123"
         assert context.email == "patient@example.com"
@@ -493,7 +493,7 @@ class TestFirebaseAuthMiddleware:
             "last_login": None,
         }
 
-        context = middleware._create_user_context(user_info)  # type: ignore[reportPrivateUsage]
+        context = middleware._create_user_context(user_info)  # noqa: SLF001
 
         assert context.role == UserRole.CLINICIAN
         assert Permission.READ_OWN_DATA in context.permissions
@@ -516,7 +516,7 @@ class TestFirebaseAuthMiddleware:
             "last_login": None,
         }
 
-        context = middleware._create_user_context(user_info)  # type: ignore[reportPrivateUsage]
+        context = middleware._create_user_context(user_info)  # noqa: SLF001
 
         assert context.role == UserRole.ADMIN
         assert Permission.SYSTEM_ADMIN in context.permissions

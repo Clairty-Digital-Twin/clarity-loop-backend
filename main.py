@@ -12,14 +12,14 @@ Usage:
 
 from pathlib import Path
 import sys
+from typing import TYPE_CHECKING
 
 # Add src directory to Python path (must be done before clarity imports)
 src_path = Path(__file__).parent / "src"
 sys.path.insert(0, str(src_path))
 
-from typing import TYPE_CHECKING  # noqa: E402
-
-from clarity.main import (
+# Import clarity after path setup
+from clarity.main import (  # noqa: E402
     get_app as clarity_get_app,  # type: ignore[import-untyped]
 )
 

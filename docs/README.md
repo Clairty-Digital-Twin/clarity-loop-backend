@@ -13,22 +13,26 @@ This directory contains comprehensive documentation for the Clarity Loop Backend
 ## Key Documents
 
 ### Implementation Guides
+
 - [Implementation Blueprint](./blueprint.md) - Comprehensive end-to-end implementation plan
 - [Quick Start Guide](./quickstart.md) - Getting started with the project
 
 ### Core Technical Documentation
+
 - [ML API Endpoints](./api/ml-endpoints.md) - Machine learning API specifications with PAT integration
 - [PAT Model Deployment](./development/model-deployment.md) - **Pretrained Actigraphy Transformer deployment guide**
 - [ML Pipeline Development](./development/ml-pipeline.md) - ML service implementation details
 - [HealthKit Integration](./integrations/healthkit.md) - Apple HealthKit data processing
 
 ### API Documentation
+
 - [Authentication](./api/authentication.md) - Firebase Auth integration
 - [Health Data APIs](./api/health-data.md) - Health data endpoints
 - [Insights APIs](./api/insights.md) - AI-powered insights endpoints
 - [User Management](./api/user-management.md) - User account management
 
 ### Architecture & Design
+
 - [Data Models](./architecture/data-models.md) - Database schemas and data structures
 - [System Architecture](./architecture/) - Overall system design
 

@@ -516,3 +516,67 @@ def require_permission(
 ) -> Callable[[Callable[..., Awaitable[Any]]], Callable[..., Awaitable[Any]]]:
     """Convenience decorator to require specific permissions."""
     return require_auth(permissions=list(permissions))
+
+
+def firebase_auth_required(
+    required_role: str | None = None,
+) -> Callable[[Callable[..., Awaitable[Any]]], Callable[..., Awaitable[Any]]]:
+    """Decorator to require Firebase authentication and optionally a specific role."""
+
+    def decorator(func: Callable[..., Awaitable[Any]]) -> Callable[..., Awaitable[Any]]:
+        @wraps(func)
+        async def wrapper(*args: Any, **kwargs: Any) -> Any:  # type: ignore[misc]
+            # Extract request from args/kwargs
+            request = None
+            for arg in args:
+                if hasattr(arg, "headers"):
+                    request = arg
+                    break
+            if not request and "request" in kwargs:
+                request = kwargs["request"]
+
+            if not request:
+                msg = "Request object not found in function arguments"
+                raise HTTPException(status_code=500, detail=msg)
+
+            # Get Firebase auth provider
+            container = get_container()
+            auth_provider = container.get_auth_provider()
+
+            if not isinstance(auth_provider, FirebaseAuthProvider):
+                msg = "Firebase authentication is not configured"
+                raise HTTPException(status_code=500, detail=msg)
+
+            # Verify the token
+            token = request.headers.get("Authorization")
+            if not token or not token.startswith("Bearer "):
+                raise HTTPException(
+                    status_code=401, detail="Missing or invalid authorization header"
+                )
+
+            try:
+                user_info = await auth_provider.verify_token(token.split(" ")[1])
+                if not user_info:
+                    raise HTTPException(status_code=401, detail="Invalid token")
+
+                # Check role if required
+                if required_role:
+                    user_roles = user_info.get("roles", [])
+                    if required_role not in user_roles:
+                        raise HTTPException(
+                            status_code=403, detail="Insufficient permissions"
+                        )
+
+                # Add user info to kwargs
+                kwargs["current_user"] = user_info
+                return await func(*args, **kwargs)
+
+            except Exception as e:
+                logger.warning(f"Authentication failed: {e}")
+                raise HTTPException(
+                    status_code=401, detail="Authentication failed"
+                ) from e
+
+        return wrapper
+
+    return decorator

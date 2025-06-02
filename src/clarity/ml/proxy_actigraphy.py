@@ -35,7 +35,7 @@ MINUTES_PER_DAY = 1440  # 24 hours * 60 minutes
 
 # Updated NHANES statistics based on sqrt-transformed step counts
 # These values are more appropriate for proxy actigraphy transformation
-DEFAULT_NHANES_STATS = {
+DEFAULT_NHANES_STATS: dict[str, dict[str, float | str]] = {
     "2025": {
         "mean": 3.2,  # sqrt-transformed step count mean
         "std": 1.8,   # sqrt-transformed step count std

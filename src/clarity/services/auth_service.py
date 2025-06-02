@@ -10,7 +10,7 @@ import secrets
 from typing import Any, cast
 import uuid
 
-from firebase_admin import auth  # type: ignore
+from firebase_admin import auth  # type: ignore[import-untyped]
 
 from clarity.core.interfaces import IAuthProvider
 from clarity.models.auth import (
@@ -136,16 +136,16 @@ class AuthenticationService:
         try:
             # Check if user already exists
             try:
-                existing_user = auth.get_user_by_email(request.email)  # type: ignore
+                existing_user = auth.get_user_by_email(request.email)  # type: ignore[misc]
                 if existing_user:
                     error_msg = f"User with email {request.email} already exists"
                     raise UserAlreadyExistsError(error_msg)
-            except auth.UserNotFoundError:  # type: ignore  # type: ignore
+            except auth.UserNotFoundError:  # type: ignore[misc]
                 # User doesn't exist, which is what we want
                 pass
 
             # Create Firebase user
-            user_record = auth.create_user(  # type: ignore
+            user_record = auth.create_user(  # type: ignore[misc]
                 email=request.email,
                 password=request.password,
                 display_name=f"{request.first_name} {request.last_name}",
@@ -651,7 +651,7 @@ class AuthenticationService:
 
             return await self._create_user_session_response(user_record, user_data)
 
-        except auth.UserNotFoundError:  # type: ignore
+        except auth.UserNotFoundError:  # type: ignore[misc]
             return None
         except Exception:
             logger.exception("Failed to get user %s", user_id)

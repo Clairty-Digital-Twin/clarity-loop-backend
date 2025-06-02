@@ -453,16 +453,14 @@ class TestHelperFunctions:
 class TestConstants:
     """Test module constants."""
 
-    
-    def test_constants_exist() -> None:
+    def test_constants_exist(self) -> None:
         """Test that required constants are defined."""
         assert isinstance(MINUTES_PER_WEEK, int)
         assert isinstance(MAX_REALISTIC_STEPS_PER_MINUTE, int)
         assert isinstance(MINUTES_PER_DAY, int)
         assert isinstance(DEFAULT_NHANES_STATS, dict)
 
-    
-    def test_constants_values() -> None:
+    def test_constants_values(self) -> None:
         """Test that constants have reasonable values."""
         assert MINUTES_PER_WEEK == 7 * 24 * 60
         assert MINUTES_PER_DAY == 24 * 60

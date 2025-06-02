@@ -17,7 +17,7 @@ import torch
 from torch import nn
 
 from clarity.core.interfaces import IMLModelService
-from clarity.models.health_data import HealthMetric
+from clarity.ml.preprocessing import ActigraphyDataPoint, HealthDataPreprocessor
 
 logger = logging.getLogger(__name__)
 

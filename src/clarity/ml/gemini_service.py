@@ -4,19 +4,19 @@ This service integrates with Google's Vertex AI Gemini 2.5 Pro model
 to generate human-like health insights and narratives from ML analysis results.
 """
 
+from datetime import UTC, datetime
 import json
 import logging
-from datetime import UTC, datetime
 from typing import Any
 
-import vertexai  # type: ignore[import-untyped]
 from pydantic import BaseModel, Field
+import vertexai  # type: ignore[import-untyped]
 from vertexai.generative_models import (  # type: ignore[import-untyped]
-    GenerativeModel,
     GenerationConfig,
-    SafetySetting,
-    HarmCategory,
+    GenerativeModel,
     HarmBlockThreshold,
+    HarmCategory,
+    SafetySetting,
 )
 
 logger = logging.getLogger(__name__)
@@ -104,7 +104,7 @@ class GeminiService:
 
             # Type guard for mypy - model is guaranteed to be not None here
             assert self.model is not None  # noqa: S101
-            
+
             # Create health-focused prompt for Gemini
             prompt = self._create_health_insight_prompt(request)
 

@@ -14,7 +14,7 @@ import sys
 class ImportAnalyzer(ast.NodeVisitor):
     """AST visitor to extract import information from Python files."""
 
-    def __init__(self, module_path: str):
+    def __init__(self, module_path: str) -> None:
         self.module_path = module_path
         self.imports: list[str] = []
         self.from_imports: list[tuple[str, list[str]]] = []
@@ -42,7 +42,7 @@ def get_module_name(file_path: Path, src_dir: Path) -> str:
     if relative_path.name == "__init__.py":
         module_parts = relative_path.parts[:-1]
     else:
-        module_parts = relative_path.parts[:-1] + (relative_path.stem,)
+        module_parts = (*relative_path.parts[:-1], relative_path.stem)
 
     return ".".join(module_parts) if module_parts else ""
 
@@ -98,7 +98,7 @@ def detect_circular_imports(dependency_graph: dict[str, set[str]]) -> list[list[
         if node in rec_stack:
             # Found a cycle
             cycle_start = path.index(node)
-            cycle = path[cycle_start:] + [node]
+            cycle = [*path[cycle_start:], node]
             cycles.append(cycle)
             return True
 

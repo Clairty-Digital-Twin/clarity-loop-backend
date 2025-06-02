@@ -44,11 +44,10 @@ class TestE2EHealthDataFlow:
     def app_with_mocked_externals(self):
         """Create real application with mocked external dependencies."""
         # Create the real application (not mocked)
-        app = create_application()
+        return create_application()
 
         # But mock external dependencies (database, auth services, etc.)
         # This allows us to test the internal architecture without external systems
-        return app
 
     @pytest.fixture
     def client(self, app_with_mocked_externals):
@@ -137,14 +136,14 @@ class TestE2EHealthDataFlow:
 
         # Then: Complete flow should work or fail gracefully
         # Note: May fail due to auth/dependencies, but tests complete architecture
-        assert response.status_code in [
+        assert response.status_code in {
             200,  # Success - complete flow works
             201,  # Created - complete flow works
             401,  # Auth failure - auth layer working
             403,  # Permission failure - auth layer working
             422,  # Validation failure - entity validation working
             500,  # Service failure - error handling working
-        ]
+        }
 
         # Step 2: Verify response format (Controller → HTTP Response)
         if response.headers.get("content-type") == "application/json":
@@ -180,12 +179,12 @@ class TestE2EHealthDataFlow:
         )
 
         # Then: Business rules should be enforced somewhere in the stack
-        assert response.status_code in [
+        assert response.status_code in {
             400,  # Bad request - validation caught
             422,  # Unprocessable entity - Pydantic validation caught
             401,  # Auth failure (may happen before validation)
             500,  # Internal error (may happen during processing)
-        ]
+        }
 
     def test_e2e_processing_status_retrieval_flow(self, client, valid_auth_token):
         """Test E2E processing status retrieval through all layers."""
@@ -199,12 +198,12 @@ class TestE2EHealthDataFlow:
         )
 
         # Then: Complete status check flow should work
-        assert response.status_code in [
+        assert response.status_code in {
             200,  # Found - complete flow works
             404,  # Not found - repository layer working
             401,  # Auth failure - auth layer working
             500,  # Service failure - error handling working
-        ]
+        }
 
     def test_e2e_health_data_retrieval_flow(self, client, valid_auth_token):
         """Test E2E health data retrieval with filtering through all layers."""
@@ -218,12 +217,12 @@ class TestE2EHealthDataFlow:
         )
 
         # Then: Complete retrieval flow should work
-        assert response.status_code in [
+        assert response.status_code in {
             200,  # Success - complete flow works
             401,  # Auth failure - auth layer working
             422,  # Query validation failure - validation working
             500,  # Service failure - error handling working
-        ]
+        }
 
     def test_e2e_error_handling_propagation(self, client):
         """Test E2E error handling through all Clean Architecture layers."""
@@ -288,7 +287,7 @@ class TestE2ECleanArchitecturePrinciples:
         response = client.post("/api/v1/health-data/upload", json=invalid_data)
 
         # Then: Business rules should be enforced regardless of web framework
-        assert response.status_code in [400, 401, 422, 500]
+        assert response.status_code in {400, 401, 422, 500}
         # The fact that validation occurs shows business rules are working
 
     def test_e2e_use_case_orchestration(self, app):
@@ -440,7 +439,7 @@ class TestE2EBusinessDomainIntegrity:
             response = client.get(endpoint)
 
             # Then: All endpoints should be related to health domain
-            assert response.status_code in [200, 404, 401, 500]
+            assert response.status_code in {200, 404, 401, 500}
 
             # Domain consistency verified by endpoint existence and response
 

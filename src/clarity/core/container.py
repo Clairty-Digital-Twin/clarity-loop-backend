@@ -190,7 +190,7 @@ class DependencyContainer:
                 logger.info("✅ Authentication provider ready")
 
             except TimeoutError:
-                logger.error("💥 Auth provider initialization TIMEOUT (8s)")
+                logger.exception("💥 Auth provider initialization TIMEOUT (8s)")
                 logger.warning("🔄 Falling back to mock auth provider...")
                 # Fallback to mock auth
                 from clarity.auth.mock_auth import MockAuthProvider  # noqa: PLC0415
@@ -199,7 +199,7 @@ class DependencyContainer:
                 logger.info("✅ Mock auth provider activated")
 
             except Exception as e:
-                logger.error(f"💥 Auth provider initialization failed: {e}")
+                logger.exception(f"💥 Auth provider initialization failed: {e}")
                 logger.warning("🔄 Falling back to mock auth provider...")
                 from clarity.auth.mock_auth import MockAuthProvider  # noqa: PLC0415
 
@@ -217,7 +217,7 @@ class DependencyContainer:
                 logger.info("✅ Health data repository ready")
 
             except TimeoutError:
-                logger.error("💥 Repository initialization TIMEOUT (8s)")
+                logger.exception("💥 Repository initialization TIMEOUT (8s)")
                 logger.warning("🔄 Falling back to mock repository...")
                 # Fallback to mock repository
                 from clarity.storage.mock_repository import (
@@ -228,7 +228,7 @@ class DependencyContainer:
                 logger.info("✅ Mock repository activated")
 
             except Exception as e:
-                logger.error(f"💥 Repository initialization failed: {e}")
+                logger.exception(f"💥 Repository initialization failed: {e}")
                 logger.warning("🔄 Falling back to mock repository...")
                 from clarity.storage.mock_repository import (
                     MockHealthDataRepository,
@@ -269,7 +269,8 @@ class DependencyContainer:
                 logger.critical(
                     f"💥 CRITICAL: Fallback initialization failed: {fallback_error}"
                 )
-                raise RuntimeError("Complete startup failure") from fallback_error
+                msg = "Complete startup failure"
+                raise RuntimeError(msg) from fallback_error
 
             yield
 
@@ -336,6 +337,20 @@ class DependencyContainer:
 
     def _configure_routes(self, app: FastAPI) -> None:
         """Configure API routes with dependency injection."""
+
+        # Add root-level health endpoint first (no auth required)
+        @app.get("/health")
+        async def root_health_check() -> dict[str, Any]:
+            """Root health check endpoint for application monitoring."""
+            from datetime import UTC, datetime  # noqa: PLC0415
+
+            return {
+                "status": "healthy",
+                "service": "clarity-digital-twin",
+                "timestamp": datetime.now(UTC).isoformat(),
+                "version": "1.0.0",
+            }
+
         try:
             from clarity.api.v1 import health_data  # noqa: PLC0415
 
@@ -353,14 +368,8 @@ class DependencyContainer:
             logger.info("✅ API routes configured")
 
         except Exception as e:
-            logger.error(f"💥 Failed to configure routes: {e}")
-            logger.info("🔄 Creating minimal health route...")
-
-            # Simple health check without complex types
-            app.get("/health")(
-                lambda: {"status": "ok", "message": "Minimal functionality"}
-            )
-            logger.info("✅ Minimal health route created")
+            logger.exception(f"💥 Failed to configure routes: {e}")
+            logger.info("🔄 API routes failed but root health endpoint still available")
 
 
 # Global container instance (Singleton)

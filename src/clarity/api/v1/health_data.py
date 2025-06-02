@@ -61,8 +61,9 @@ def get_health_data_service() -> HealthDataService:
     Follows Clean Architecture principles.
     """
     if _repository is None:
+        msg = "Health data repository not injected. Container not initialized?"
         raise RuntimeError(
-            "Health data repository not injected. Container not initialized?"
+            msg
         )
 
     return HealthDataService(_repository)
@@ -71,14 +72,16 @@ def get_health_data_service() -> HealthDataService:
 def get_auth_provider() -> IAuthProvider:
     """Get authentication provider from dependency injection."""
     if _auth_provider is None:
-        raise RuntimeError("Auth provider not injected. Container not initialized?")
+        msg = "Auth provider not injected. Container not initialized?"
+        raise RuntimeError(msg)
     return _auth_provider
 
 
 def get_config_provider() -> IConfigProvider:
     """Get configuration provider from dependency injection."""
     if _config_provider is None:
-        raise RuntimeError("Config provider not injected. Container not initialized?")
+        msg = "Config provider not injected. Container not initialized?"
+        raise RuntimeError(msg)
     return _config_provider
 
 

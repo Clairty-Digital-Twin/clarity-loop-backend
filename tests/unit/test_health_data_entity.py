@@ -93,7 +93,7 @@ class TestHealthMetricEntity:
         invalid_rates = [25, -10, 300, 500]  # Outside valid range 30-220
         for rate in invalid_rates:
             with pytest.raises(
-                ValueError, match="ensure this value is greater than or equal to"
+                ValueError, match="Input should be greater than or equal to"
             ):
                 BiometricData(
                     heart_rate=rate,
@@ -133,7 +133,7 @@ class TestHealthMetricEntity:
         invalid_steps = [-1, -100]  # Negative values not allowed
         for steps in invalid_steps:
             with pytest.raises(
-                ValueError, match="ensure this value is greater than or equal to"
+                ValueError, match="Input should be greater than or equal to"
             ):
                 ActivityData(
                     steps=steps,
@@ -257,7 +257,7 @@ class TestBiometricDataEntity:
         ]
 
         for systolic, diastolic in invalid_combinations:
-            with pytest.raises(ValueError, match="ensure this value is"):
+            with pytest.raises(ValueError, match="Input should be"):
                 BiometricData(
                     heart_rate=None,
                     heart_rate_variability=None,
@@ -323,7 +323,7 @@ class TestSleepDataEntity:
         # Invalid sleep efficiency values
         invalid_efficiencies = [-0.1, 1.1, 2.0]
         for efficiency in invalid_efficiencies:
-            with pytest.raises(ValueError, match="ensure this value is"):
+            with pytest.raises(ValueError, match="Input should be"):
                 SleepData(
                     total_sleep_minutes=480,
                     sleep_efficiency=efficiency,
@@ -415,7 +415,7 @@ class TestMentalHealthBusinessRules:
         # Invalid stress levels
         invalid_levels = [0.5, 11.0, -1.0]
         for level in invalid_levels:
-            with pytest.raises(ValueError, match="ensure this value is"):
+            with pytest.raises(ValueError, match="Input should be"):
                 MentalHealthIndicator(
                     mood_score=None,
                     stress_level=level,

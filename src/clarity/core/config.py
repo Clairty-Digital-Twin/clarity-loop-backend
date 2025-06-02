@@ -125,9 +125,12 @@ class Settings(BaseSettings):
 
             if required_for_production:
                 missing_vars = ", ".join(required_for_production)
-                raise ValueError(
+                msg = (
                     f"Production environment requires: {missing_vars}. "
                     f"Set SKIP_EXTERNAL_SERVICES=true to use mock services."
+                )
+                raise ValueError(
+                    msg
                 )
 
         return self

@@ -118,7 +118,7 @@ class FirebaseAuthProvider(IAuthProvider):
             logger.warning("Invalid Firebase token")
             return None
         except Exception as e:
-            logger.error("Firebase token verification failed: %s", e)
+            logger.exception("Firebase token verification failed: %s", e)
             return None
 
     async def get_user_info(self, user_id: str) -> dict[str, Any] | None:
@@ -159,7 +159,7 @@ class FirebaseAuthProvider(IAuthProvider):
             logger.warning("Firebase user not found: %s", user_id)
             return None
         except Exception as e:
-            logger.error("Failed to get Firebase user info: %s", e)
+            logger.exception("Failed to get Firebase user info: %s", e)
             return None
 
     async def initialize(self) -> None:
@@ -194,7 +194,7 @@ class FirebaseAuthProvider(IAuthProvider):
             self._initialized = True
 
         except Exception as e:
-            logger.error("Firebase initialization failed: %s", e)
+            logger.exception("Firebase initialization failed: %s", e)
             # Don't raise exception to allow app to start in development
 
     def _extract_roles(self, decoded_token: dict[str, Any]) -> list[str]:
@@ -334,9 +334,7 @@ class FirebaseAuthMiddleware(BaseHTTPMiddleware):
             raise AuthError(msg, 401, "invalid_token")
 
         # Create user context from verified user info
-        user_context = self._create_user_context(user_info)
-
-        return user_context
+        return self._create_user_context(user_info)
 
     def _extract_token(self, request: Request) -> str:
         """Extract Bearer token from Authorization header."""

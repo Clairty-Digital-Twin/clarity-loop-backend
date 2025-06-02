@@ -188,7 +188,7 @@ def create_error_response(
 async def generate_insights(
     request: Request,
     insight_request: InsightGenerationRequest,
-    current_user: Dict[str, Any] = Depends(get_current_user),
+    current_user: UserContext = Depends(get_current_user),
     gemini_service: GeminiService = Depends(get_gemini_service)
 ) -> InsightGenerationResponse:
     """Generate new health insights from analysis data.

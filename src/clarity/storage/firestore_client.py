@@ -275,7 +275,7 @@ class FirestoreClient:
             logger.info("Document created: %s/%s", collection, created_id)
             return created_id
 
-        except Exception as e:
+        except Exception:
             logger.exception("Failed to create document in %s", collection)
             if isinstance(e, (FirestoreValidationError, FirestoreConnectionError)):
                 raise
@@ -327,7 +327,7 @@ class FirestoreClient:
             logger.debug("Document retrieved: %s/%s", collection, document_id)
             return result_data
 
-        except Exception as e:
+        except Exception:
             logger.exception("Failed to get document %s/%s", collection, document_id)
             msg = f"Document retrieval failed: {e}"
             raise FirestoreError(msg) from e
@@ -384,8 +384,8 @@ class FirestoreClient:
         except NotFound:
             logger.warning("Document not found for update: {collection}/%s", document_id)
             return False
-        except Exception as e:
-            logger.exception("Failed to update document {collection}/{document_id}: %s", e)
+        except Exception:
+            logger.exception("Failed to update document {collection}/{document_id}: %s")
             msg = f"Document update failed: {e}"
             raise FirestoreError(msg) from e
 
@@ -417,8 +417,8 @@ class FirestoreClient:
             logger.info("Document deleted: {collection}/%s", document_id)
             return True
 
-        except Exception as e:
-            logger.exception("Failed to delete document {collection}/{document_id}: %s", e)
+        except Exception:
+            logger.exception("Failed to delete document {collection}/{document_id}: %s")
             msg = f"Document deletion failed: {e}"
             raise FirestoreError(msg) from e
 
@@ -476,8 +476,8 @@ class FirestoreClient:
             logger.info("Health data stored with processing ID: %s", processing_id)
             return processing_id
 
-        except Exception as e:
-            logger.exception("Failed to store health data: %s", e)
+        except Exception:
+            logger.exception("Failed to store health data: %s")
             msg = f"Health data storage failed: {e}"
             raise FirestoreError(msg) from e
 
@@ -599,8 +599,8 @@ class FirestoreClient:
 
             return results
 
-        except Exception as e:
-            logger.exception("Failed to query documents in {collection}: %s", e)
+        except Exception:
+            logger.exception("Failed to query documents in {collection}: %s")
             msg = f"Query operation failed: {e}"
             raise FirestoreError(msg) from e
 
@@ -639,8 +639,8 @@ class FirestoreClient:
 
             return count
 
-        except Exception as e:
-            logger.exception("Failed to count documents in {collection}: %s", e)
+        except Exception:
+            logger.exception("Failed to count documents in {collection}: %s")
             msg = f"Count operation failed: {e}"
             raise FirestoreError(msg) from e
 
@@ -695,8 +695,8 @@ class FirestoreClient:
 
             return deleted_count
 
-        except Exception as e:
-            logger.exception("Failed to delete documents in {collection}: %s", e)
+        except Exception:
+            logger.exception("Failed to delete documents in {collection}: %s")
             msg = f"Delete operation failed: {e}"
             raise FirestoreError(msg) from e
 
@@ -736,8 +736,8 @@ class FirestoreClient:
                 metadata={"document_count": len(documents)},
             )
 
-        except Exception as e:
-            logger.exception("Failed to batch create documents in {collection}: %s", e)
+        except Exception:
+            logger.exception("Failed to batch create documents in {collection}: %s")
             msg = f"Batch create operation failed: {e}"
             raise FirestoreError(msg) from e
 
@@ -762,8 +762,8 @@ class FirestoreClient:
                 await self._db.close()  # type: ignore[no-untyped-call]
                 self._db = None
                 logger.info("Firestore client closed")
-        except Exception as e:
-            logger.exception("Error closing Firestore client: %s", e)
+        except Exception:
+            logger.exception("Error closing Firestore client: %s")
 
     async def health_check(self) -> dict[str, Any]:
         """Perform health check on Firestore connection.
@@ -787,8 +787,8 @@ class FirestoreClient:
                 "timestamp": datetime.now(UTC),
             }
 
-        except Exception as e:
-            logger.exception("Firestore health check failed: %s", e)
+        except Exception:
+            logger.exception("Firestore health check failed: %s")
             return {
                 "status": "unhealthy",
                 "error": str(e),
@@ -886,7 +886,7 @@ class FirestoreHealthDataRepository(IHealthDataRepository):
             )
             return True
 
-        except Exception as e:
+        except Exception:
             logger.exception(
                 "Failed to save health data for processing %s", processing_id
             )
@@ -968,8 +968,8 @@ class FirestoreHealthDataRepository(IHealthDataRepository):
                 },
             }
 
-        except Exception as e:
-            logger.exception("Failed to get health data for user {user_id}: %s", e)
+        except Exception:
+            logger.exception("Failed to get health data for user {user_id}: %s")
             msg = f"Health data retrieval failed: {e}"
             raise FirestoreError(msg) from e
 
@@ -1015,8 +1015,8 @@ class FirestoreHealthDataRepository(IHealthDataRepository):
                 "upload_source": doc.get("upload_source"),
             }
 
-        except Exception as e:
-            logger.exception("Failed to get processing status for {processing_id}: %s", e)
+        except Exception:
+            logger.exception("Failed to get processing status for {processing_id}: %s")
             return None
 
     async def delete_health_data(
@@ -1082,8 +1082,8 @@ class FirestoreHealthDataRepository(IHealthDataRepository):
             )
             return True
 
-        except Exception as e:
-            logger.exception("Failed to delete health data for user {user_id}: %s", e)
+        except Exception:
+            logger.exception("Failed to delete health data for user {user_id}: %s")
             return False
 
     async def save_data(self, user_id: str, data: dict[str, Any]) -> str:
@@ -1115,8 +1115,8 @@ class FirestoreHealthDataRepository(IHealthDataRepository):
             logger.info("Health data saved for user {user_id}: %s", document_id)
             return document_id
 
-        except Exception as e:
-            logger.exception("Failed to save health data for user {user_id}: %s", e)
+        except Exception:
+            logger.exception("Failed to save health data for user {user_id}: %s")
             msg = f"Health data save failed: {e}"
             raise FirestoreError(msg) from e
 
@@ -1160,8 +1160,8 @@ class FirestoreHealthDataRepository(IHealthDataRepository):
             logger.info("Retrieved {len(documents)} health records for user %s", user_id)
             return result
 
-        except Exception as e:
-            logger.exception("Failed to get health data for user {user_id}: %s", e)
+        except Exception:
+            logger.exception("Failed to get health data for user {user_id}: %s")
             msg = f"Health data retrieval failed: {e}"
             raise FirestoreError(msg) from e
 
@@ -1176,8 +1176,8 @@ class FirestoreHealthDataRepository(IHealthDataRepository):
 
             logger.info("FirestoreHealthDataRepository initialized successfully")
 
-        except Exception as e:
-            logger.exception("Failed to initialize FirestoreHealthDataRepository: %s", e)
+        except Exception:
+            logger.exception("Failed to initialize FirestoreHealthDataRepository: %s")
             msg = f"Repository initialization failed: {e}"
             raise ConnectionError(msg) from e
 
@@ -1187,8 +1187,8 @@ class FirestoreHealthDataRepository(IHealthDataRepository):
             await self._firestore_client.close()
             logger.info("FirestoreHealthDataRepository cleaned up successfully")
 
-        except Exception as e:
-            logger.exception("Failed to cleanup FirestoreHealthDataRepository: %s", e)
+        except Exception:
+            logger.exception("Failed to cleanup FirestoreHealthDataRepository: %s")
 
     async def get_user_health_summary(self, user_id: str) -> dict[str, Any]:
         """Get health data summary for a user.
@@ -1230,8 +1230,8 @@ class FirestoreHealthDataRepository(IHealthDataRepository):
                 "summary_generated_at": datetime.now(UTC).isoformat(),
             }
 
-        except Exception as e:
-            logger.exception("Failed to get health summary for user {user_id}: %s", e)
+        except Exception:
+            logger.exception("Failed to get health summary for user {user_id}: %s")
             msg = f"Health summary retrieval failed: {e}"
             raise FirestoreError(msg) from e
 
@@ -1253,7 +1253,7 @@ class FirestoreHealthDataRepository(IHealthDataRepository):
             logger.info("Deleted {deleted_count} health records for user %s", user_id)
             return deleted_count
 
-        except Exception as e:
-            logger.exception("Failed to delete health data for user {user_id}: %s", e)
+        except Exception:
+            logger.exception("Failed to delete health data for user {user_id}: %s")
             msg = f"Health data deletion failed: {e}"
             raise FirestoreError(msg) from e

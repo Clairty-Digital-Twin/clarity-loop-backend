@@ -317,6 +317,9 @@ class PATModelService(IMLModelService):
             processed_data = self._preprocess_actigraphy_data(input_data.data_points)
 
             # Run inference
+            if self.model is None:
+                raise RuntimeError("Model not loaded")
+
             with torch.no_grad():
                 outputs = self.model(processed_data)
 

@@ -10,13 +10,15 @@ arXiv:2411.15240 (Dartmouth College, 29,307 participants, NHANES 2003-2014)
 from datetime import UTC, datetime
 import logging
 from pathlib import Path
-from typing import cast
+from typing import TYPE_CHECKING, cast
 
 import numpy as np
-from numpy.typing import NDArray
 from pydantic import BaseModel, Field
 import torch
 from torch import nn
+
+if TYPE_CHECKING:
+    from numpy.typing import NDArray
 
 from clarity.core.interfaces import IMLModelService
 from clarity.ml.preprocessing import ActigraphyDataPoint, HealthDataPreprocessor
@@ -229,7 +231,7 @@ class PATModelService(IMLModelService):
         sleep_stages_logits = outputs["sleep_stages"].cpu().numpy()[0]
 
         # Convert sleep stages to labels
-        sleep_stage_predictions: NDArray[np.intp] = np.argmax(sleep_stages_logits, axis=-1)
+        sleep_stage_predictions: "NDArray[np.int_]" = np.argmax(sleep_stages_logits, axis=-1)
         sleep_stages: list[str] = [self.sleep_stages[idx] for idx in sleep_stage_predictions]
 
         # Calculate sleep metrics with explicit type annotations

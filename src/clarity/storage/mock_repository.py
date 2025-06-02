@@ -221,8 +221,6 @@ class MockHealthDataRepository(IHealthDataRepository):
         else:
             return True
 
-
-
     async def save_data(self, user_id: str, data: dict[str, Any]) -> str:
         """Save health data for a user (legacy method)."""
         processing_id = str(uuid.uuid4())
@@ -242,7 +240,7 @@ class MockHealthDataRepository(IHealthDataRepository):
         return processing_id
 
     async def get_data(
-        self, user_id: str, filters: dict[str, Any] | None = None
+        self, user_id: str, filters: dict[str, Any] | None = None  # noqa: ARG002
     ) -> dict[str, Any]:
         """Retrieve health data for a user (legacy method)."""
         if user_id not in self._health_data:

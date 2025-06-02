@@ -383,9 +383,8 @@ async def logout_user(
         ) from e
 
 
-def _get_current_user() -> UserContext:
-    """Helper function to avoid B008 lint error in dependency injection."""
-    return get_current_user()
+# Create dependency instance to avoid B008 lint error
+current_user_dependency = Depends(get_current_user)
 
 
 @router.get(
@@ -401,7 +400,7 @@ def _get_current_user() -> UserContext:
     },
 )
 async def get_current_user_info(
-    current_user: UserContext = Depends(_get_current_user),
+    current_user: UserContext = current_user_dependency,
 ) -> UserSessionResponse:
     """Get current user information.
 

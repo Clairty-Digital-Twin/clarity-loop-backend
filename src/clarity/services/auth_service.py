@@ -29,6 +29,9 @@ from clarity.storage.firestore_client import FirestoreClient
 # Configure logger
 logger = logging.getLogger(__name__)
 
+# Constants
+BEARER_TOKEN_TYPE = "bearer"  # noqa: S105 - Standard OAuth token type, not a password
+
 
 class AuthenticationError(Exception):
     """Base exception for authentication errors."""
@@ -197,8 +200,8 @@ class AuthenticationService:
                 # TODO: Send email using email service
                 verification_email_sent = True
                 logger.info("Email verification link generated for %s", request.email)
-            except Exception:
-                logger.warning("Failed to send verification email")
+            except (auth.AuthError, ConnectionError, TimeoutError, OSError) as e:
+                logger.warning("Failed to send verification email: %s", e)
 
             logger.info("User registered successfully: %s", user_record.uid)
 
@@ -319,7 +322,7 @@ class AuthenticationService:
                     tokens=TokenResponse(
                         access_token="",
                         refresh_token="",
-                        token_type="bearer",
+                        token_type=BEARER_TOKEN_TYPE,
                         expires_in=0,
                     ),
                     requires_mfa=True,
@@ -407,7 +410,7 @@ class AuthenticationService:
         return TokenResponse(
             access_token=access_token,
             refresh_token=refresh_token,
-            token_type="bearer",
+            token_type=BEARER_TOKEN_TYPE,
             expires_in=expires_in,
         )
 
@@ -532,15 +535,15 @@ class AuthenticationService:
             # Generate new tokens
             new_tokens = await self._generate_tokens(user_id)
 
-            logger.info("Tokens refreshed for user: %s", user_id)
-            return new_tokens
-
         except InvalidCredentialsError:
             raise
         except Exception as e:
             logger.exception("Token refresh failed")
             error_msg = f"Token refresh failed: {e!s}"
             raise AuthenticationError(error_msg) from e
+        else:
+            logger.info("Tokens refreshed for user: %s", user_id)
+            return new_tokens
 
     async def logout_user(self, refresh_token: str) -> bool:
         """Logout user by revoking refresh token and ending session.
@@ -600,11 +603,11 @@ class AuthenticationService:
 
                 logger.info("User logged out: %s", user_id)
 
-            return True
-
         except Exception:
             logger.exception("Logout failed")
             return False
+        else:
+            return True
 
     async def get_user_by_id(self, user_id: str) -> UserSessionResponse | None:
         """Get user information by user ID.
@@ -651,8 +654,9 @@ class AuthenticationService:
 
             # TODO: Implement actual email verification logic
             logger.info("Email verification completed (mock implementation)")
-            return True
 
         except Exception:
             logger.exception("Email verification failed")
             return False
+        else:
+            return True

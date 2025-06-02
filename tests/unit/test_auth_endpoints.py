@@ -17,12 +17,12 @@ from clarity.services.auth_service import (
     UserNotFoundError,
 )
 
-# Test constants (not actual security tokens)
-TEST_ACCESS_TOKEN = "test_access_token"
-TEST_REFRESH_TOKEN = "test_refresh_token"
-TEST_NEW_ACCESS_TOKEN = "test_new_access_token"
-TEST_NEW_REFRESH_TOKEN = "test_new_refresh_token"
-TEST_TOKEN_TYPE = "bearer"
+# Test constants (not actual security tokens - used for testing only)
+TEST_ACCESS_TOKEN = "test_access_token_for_testing"  # noqa: S105 - Test token
+TEST_REFRESH_TOKEN = "test_refresh_token_for_testing"  # noqa: S105 - Test token
+TEST_NEW_ACCESS_TOKEN = "test_new_access_token_for_testing"  # noqa: S105 - Test token
+TEST_NEW_REFRESH_TOKEN = "test_new_refresh_token_for_testing"  # noqa: S105 - Test token
+TEST_TOKEN_TYPE = "bearer"  # noqa: S105 - Standard OAuth token type
 
 
 class TestAuthenticationEndpoints:
@@ -34,6 +34,12 @@ class TestAuthenticationEndpoints:
         """Create test client with authentication endpoints."""
         app = get_app()
         return TestClient(app)
+
+    @pytest.fixture
+    @staticmethod
+    def mock_auth_service() -> AsyncMock:
+        """Create mock authentication service."""
+        return AsyncMock()
 
     @pytest.fixture
     @staticmethod
@@ -68,19 +74,19 @@ class TestAuthenticationEndpoints:
 
         # Auth health check should be available (though may fail without proper setup)
         response = client.get("/api/v1/auth/health")
-        # Should return either 200 (healthy) or 500 (service not configured)
+        # Should return either 200 (healthy) or 503 (service not configured)
         assert response.status_code in {200, 500, 503}
 
     @patch("clarity.api.v1.auth.get_auth_service")
-    @staticmethod
     def test_user_registration_endpoint(
+        self,
         mock_get_auth_service: Mock,
         client: TestClient,
+        mock_auth_service: AsyncMock,
         sample_registration_data: dict,
     ) -> None:
         """Test user registration endpoint."""
-        # Mock authentication service
-        mock_auth_service = AsyncMock()
+        # Mock the get_auth_service function to return our mock service
         mock_get_auth_service.return_value = mock_auth_service
 
         # Mock successful registration
@@ -97,18 +103,21 @@ class TestAuthenticationEndpoints:
         # Should call the service
         mock_auth_service.register_user.assert_called_once()
 
-        # Verify response structure (might be 201 or 500 depending on service availability)
-        assert response.status_code in {201, 500}
+        # Should return success
+        assert response.status_code == 201
+        data = response.json()
+        assert data["email"] == "test@example.com"
+        assert data["status"] == "pending_verification"
 
     @patch("clarity.api.v1.auth.get_auth_service")
-    @staticmethod
     def test_user_registration_validation_error(
+        self,
         mock_get_auth_service: Mock,
         client: TestClient,
+        mock_auth_service: AsyncMock,
     ) -> None:
         """Test user registration with validation errors."""
-        # Mock authentication service
-        mock_auth_service = AsyncMock()
+        # Mock the get_auth_service function to return our mock service
         mock_get_auth_service.return_value = mock_auth_service
 
         # Invalid registration data (missing required fields)
@@ -123,15 +132,15 @@ class TestAuthenticationEndpoints:
         assert response.status_code == 422  # FastAPI validation error
 
     @patch("clarity.api.v1.auth.get_auth_service")
-    @staticmethod
     def test_user_registration_already_exists_error(
+        self,
         mock_get_auth_service: Mock,
         client: TestClient,
+        mock_auth_service: AsyncMock,
         sample_registration_data: dict,
     ) -> None:
         """Test user registration when user already exists."""
-        # Mock authentication service
-        mock_auth_service = AsyncMock()
+        # Mock the get_auth_service function to return our mock service
         mock_get_auth_service.return_value = mock_auth_service
 
         # Mock user already exists error
@@ -141,19 +150,19 @@ class TestAuthenticationEndpoints:
 
         response = client.post("/api/v1/auth/register", json=sample_registration_data)
 
-        # Should return conflict error or 500 if service not configured
-        assert response.status_code in {409, 500}
+        # Should return conflict error
+        assert response.status_code == 409
 
     @patch("clarity.api.v1.auth.get_auth_service")
-    @staticmethod
     def test_user_login_endpoint(
+        self,
         mock_get_auth_service: Mock,
         client: TestClient,
+        mock_auth_service: AsyncMock,
         sample_login_data: dict,
     ) -> None:
         """Test user login endpoint."""
-        # Mock authentication service
-        mock_auth_service = AsyncMock()
+        # Mock the get_auth_service function to return our mock service
         mock_get_auth_service.return_value = mock_auth_service
 
         # Mock successful login
@@ -168,13 +177,16 @@ class TestAuthenticationEndpoints:
             status=UserStatus.ACTIVE,
             mfa_enabled=False,
             email_verified=True,
+            created_at="2024-01-01T00:00:00Z",
+            last_login="2024-01-01T12:00:00Z",
         )
-        # Create mock tokens (not actual security tokens)
+        # Create mock tokens (not actual security tokens - for testing only)
         mock_tokens = Mock()
         mock_tokens.access_token = TEST_ACCESS_TOKEN
         mock_tokens.refresh_token = TEST_REFRESH_TOKEN
         mock_tokens.token_type = TEST_TOKEN_TYPE
         mock_tokens.expires_in = 3600
+        mock_tokens.scope = "read:profile write:profile"
         mock_login_response.tokens = mock_tokens
         mock_login_response.requires_mfa = False
         mock_login_response.mfa_session_token = None
@@ -186,19 +198,19 @@ class TestAuthenticationEndpoints:
         # Should call the service
         mock_auth_service.login_user.assert_called_once()
 
-        # Verify response (might be 200 or 500 depending on service availability)
-        assert response.status_code in {200, 500}
+        # Should return success
+        assert response.status_code == 200
 
     @patch("clarity.api.v1.auth.get_auth_service")
-    @staticmethod
     def test_user_login_not_found_error(
+        self,
         mock_get_auth_service: Mock,
         client: TestClient,
+        mock_auth_service: AsyncMock,
         sample_login_data: dict,
     ) -> None:
         """Test user login when user not found."""
-        # Mock authentication service
-        mock_auth_service = AsyncMock()
+        # Mock the get_auth_service function to return our mock service
         mock_get_auth_service.return_value = mock_auth_service
 
         # Mock user not found error
@@ -206,43 +218,44 @@ class TestAuthenticationEndpoints:
 
         response = client.post("/api/v1/auth/login", json=sample_login_data)
 
-        # Should return not found error or 500 if service not configured
-        assert response.status_code in {404, 500}
+        # Should return not found error
+        assert response.status_code == 404
 
     @patch("clarity.api.v1.auth.get_auth_service")
-    @staticmethod
     def test_token_refresh_endpoint(
+        self,
         mock_get_auth_service: Mock,
         client: TestClient,
+        mock_auth_service: AsyncMock,
     ) -> None:
         """Test token refresh endpoint."""
-        # Mock authentication service
-        mock_auth_service = AsyncMock()
+        # Mock the get_auth_service function to return our mock service
         mock_get_auth_service.return_value = mock_auth_service
 
-        # Mock successful token refresh (not actual security tokens)
+        # Mock successful token refresh (not actual security tokens - for testing only)
         mock_token_response = Mock()
         mock_token_response.access_token = TEST_NEW_ACCESS_TOKEN
         mock_token_response.refresh_token = TEST_NEW_REFRESH_TOKEN
         mock_token_response.token_type = TEST_TOKEN_TYPE
         mock_token_response.expires_in = 3600
+        mock_token_response.scope = "read:profile write:profile"
         mock_auth_service.refresh_access_token.return_value = mock_token_response
 
         refresh_data = {"refresh_token": TEST_REFRESH_TOKEN}
         response = client.post("/api/v1/auth/refresh", json=refresh_data)
 
-        # Should call the service or return 500 if not configured
-        assert response.status_code in {200, 500}
+        # Should return success
+        assert response.status_code == 200
 
     @patch("clarity.api.v1.auth.get_auth_service")
-    @staticmethod
     def test_logout_endpoint(
+        self,
         mock_get_auth_service: Mock,
         client: TestClient,
+        mock_auth_service: AsyncMock,
     ) -> None:
         """Test user logout endpoint."""
-        # Mock authentication service
-        mock_auth_service = AsyncMock()
+        # Mock the get_auth_service function to return our mock service
         mock_get_auth_service.return_value = mock_auth_service
 
         # Mock successful logout
@@ -251,8 +264,8 @@ class TestAuthenticationEndpoints:
         logout_data = {"refresh_token": TEST_REFRESH_TOKEN}
         response = client.post("/api/v1/auth/logout", json=logout_data)
 
-        # Should call the service or return 500 if not configured
-        assert response.status_code in {200, 500}
+        # Should return success
+        assert response.status_code == 200
 
     @staticmethod
     def test_authentication_service_not_configured(client: TestClient) -> None:

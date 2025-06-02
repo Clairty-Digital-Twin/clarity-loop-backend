@@ -557,7 +557,7 @@ class TestFirebaseAuthMiddleware:
         middleware.auth_provider = mock_auth_provider
 
         # Using noqa for legitimate test access to private method
-        user_context = await middleware._authenticate_request(
+        user_context = await middleware._authenticate_request(  # type: ignore[misc]
             mock_request
         )
 
@@ -578,7 +578,7 @@ class TestFirebaseAuthMiddleware:
         middleware.auth_provider = mock_auth_provider
 
         with pytest.raises(AuthError) as exc_info:
-            await middleware._authenticate_request(mock_request)
+            await middleware._authenticate_request(mock_request)  # type: ignore[misc]
 
         assert exc_info.value.status_code == 401
         assert exc_info.value.error_code == "invalid_token"

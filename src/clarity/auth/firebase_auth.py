@@ -181,29 +181,33 @@ class FirebaseAuthProvider(IAuthProvider):
             # Check if Firebase is already initialized
             try:
                 firebase_admin.get_app()
-                self._initialized = True
-                return
             except ValueError:
                 # No app exists, need to initialize
                 pass
+            else:
+                self._initialized = True
+                return
 
             if self.credentials_path:
                 cred = credentials.Certificate(self.credentials_path)
                 firebase_admin.initialize_app(cred, {"projectId": self.project_id})
                 logger.info("Firebase Admin SDK initialized with credentials")
             elif self.project_id:
-                # Use default credentials (ADC) if project_id is provided
-                firebase_admin.initialize_app()
-                logger.info("Firebase Admin SDK initialized with ADC")
+                # Use default credentials (useful for deployed environments)
+                cred = credentials.ApplicationDefault()
+                firebase_admin.initialize_app(cred, {"projectId": self.project_id})
+                logger.info("Firebase Admin SDK initialized with default credentials")
             else:
-                logger.warning("Firebase not initialized - missing configuration")
-                return
+                msg = "Either credentials_path or project_id must be provided"
+                raise ValueError(msg)
 
             self._initialized = True
+            logger.info("✅ Firebase Admin SDK initialized successfully")
 
         except Exception:
-            logger.exception("Firebase initialization failed")
-            # Don't raise exception to allow app to start in development
+            logger.exception("💥 Failed to initialize Firebase Admin SDK")
+            # Continue without Firebase - graceful degradation
+            # In production, you might want to raise the exception
 
     @staticmethod
     def _extract_roles(decoded_token: dict[str, Any]) -> list[str]:

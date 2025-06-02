@@ -697,13 +697,10 @@ class FirestoreClient:
                 metadata={"deleted_count": deleted_count},
             )
 
-
         except Exception as e:
             logger.exception("Failed to delete documents in %s", collection)
             msg = f"Delete operation failed: {e}"
             raise FirestoreError(msg) from e
-        else:
-            return deleted_count
         else:
             return deleted_count
 

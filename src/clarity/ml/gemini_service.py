@@ -81,7 +81,7 @@ class GeminiService:
             )
 
         except Exception as e:
-            logger.error(f"Failed to generate health insights: {e}")
+            logger.exception("Failed to generate health insights: %s", e)
             raise
 
     def _generate_placeholder_narrative(self, analysis_results: dict[str, Any]) -> str:

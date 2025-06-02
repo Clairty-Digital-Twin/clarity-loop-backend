@@ -158,7 +158,7 @@ class TestProxyActigraphyTransformer:
     @patch('clarity.ml.proxy_actigraphy.lookup_norm_stats')
     def test_transform_step_data_basic(self, mock_lookup_stats):
         """Test basic step data transformation."""
-        mock_lookup_stats.return_value = (1.2, 0.8)
+        mock_lookup_stats.return_value = (3.2, 1.8)  # Updated to match new NHANES stats
         
         transformer = ProxyActigraphyTransformer()
         
@@ -176,10 +176,30 @@ class TestProxyActigraphyTransformer:
         assert isinstance(result, ProxyActigraphyResult)
         assert result.user_id == "user123"
         assert result.upload_id == "upload456"
-        assert len(result.vector) == 3
+        
+        # With automatic padding to full week, expect 10,080 values
+        week_size = 10080  # MINUTES_PER_WEEK
+        assert len(result.vector) == week_size
         assert 0 <= result.quality_score <= 1
         assert "input_length" in result.transformation_stats
         assert "output_length" in result.transformation_stats
+        
+        # Verify transformation stats show padding
+        stats = result.transformation_stats
+        assert stats["input_length"] == 3  # Original input size
+        assert stats["output_length"] == week_size  # Padded output size
+        assert stats["padding_length"] == week_size - 3  # Amount of padding
+        assert stats["padding_percentage"] > 99.0  # Almost all padding
+        
+        # The last 3 values should correspond to our original input
+        # (since padding is added at the beginning)
+        actual_values = result.vector[-3:]  # Last 3 values
+        assert len(actual_values) == 3
+        
+        # Values should be varied (not all identical) and within clipping range
+        assert all(-4.0 <= val <= 4.0 for val in actual_values)
+        unique_values = set(actual_values)
+        assert len(unique_values) >= 2  # Should have some variation from different step counts
 
     @patch('clarity.ml.proxy_actigraphy.lookup_norm_stats')
     def test_transform_with_caching(self, mock_lookup_stats):

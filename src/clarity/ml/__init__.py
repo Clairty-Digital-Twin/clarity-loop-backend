@@ -7,9 +7,9 @@ This module contains AI/ML services including:
 - Real-time inference capabilities
 """
 
-from .gemini_service import GeminiService
-from .pat_service import PATModelService
-from .preprocessing import ActigraphyDataPoint, HealthDataPreprocessor
+from clarity.ml.gemini_service import GeminiService
+from clarity.ml.pat_service import PATModelService
+from clarity.ml.preprocessing import ActigraphyDataPoint, HealthDataPreprocessor
 
 __all__ = [
     "ActigraphyDataPoint",

@@ -258,11 +258,42 @@ def steps_to_movement_proxy(steps_per_min):
 ### Details:
 Update the FastAPI endpoints to: 1) Accept minute-by-minute step count data from Apple HealthKit, 2) Validate the input data format and completeness, 3) Process the step data through the proxy actigraphy transformation, 4) Feed the transformed data into the PAT model, 5) Return analysis results in the expected format, 6) Implement proper error handling for invalid or incomplete step data, 7) Add documentation for the updated endpoints.
 
-## 13. Create NHANES reference statistics module [in-progress]
+## 13. Create NHANES reference statistics module [done]
 ### Dependencies: 33.11
 ### Description: Develop a module to manage and provide NHANES reference statistics for z-score normalization of proxy actigraphy data.
 ### Details:
 Implement a `nhanes_stats.py` module that: 1) Provides lookup_norm_stats function to retrieve mean and standard deviation values, 2) Includes reference statistics from NHANES datasets for different years, 3) Implements versioning for statistics updates, 4) Adds caching for frequently used statistics, 5) Creates a fallback mechanism for missing statistics, 6) Implements proper error handling and logging.
+<info added on 2025-06-02T20:21:17.766Z>
+## ✅ NHANES REFERENCE STATISTICS MODULE COMPLETE
+
+### **IMPLEMENTATION COMPLETE**
+Created production-ready `src/clarity/ml/nhanes_stats.py` with comprehensive normalization statistics:
+
+#### **Key Features Implemented:**
+1. **Multi-year Reference Data** (2023-2025) with NHANES-based statistics
+2. **Age-stratified Stats** (18-29, 30-39, 40-49, 50-59, 60-69, 70-85)  
+3. **Sex-stratified Stats** (male, female, other)
+4. **Smart Blending Algorithm** (weighted combination of population + demographic stats)
+5. **Validation Functions** for data quality assessment
+6. **Caching** with @lru_cache for performance
+7. **Comprehensive Error Handling** with custom exceptions
+
+#### **Core API Functions:**
+- `lookup_norm_stats(year, age_group, sex)` - Main lookup function
+- `validate_proxy_actigraphy_data()` - Quality assessment
+- `get_available_years/age_groups/sex_categories()` - Metadata functions
+- `get_reference_info()` - Detailed reference information
+
+#### **Validation Test Results:**
+✅ Successfully tested with `lookup_norm_stats(2025)` → Mean: 2.380, Std: 1.890
+✅ Multi-year support working (2023, 2024, 2025)
+✅ Data quality validation working ('good' for normal distributions)
+
+#### **Integration Ready:**
+The module is now ready for integration with the proxy actigraphy transformer. The `lookup_norm_stats()` function provides the exact interface expected by the existing proxy_actigraphy.py implementation.
+
+**CRITICAL MILESTONE:** Core normalization statistics now available for complete proxy actigraphy pipeline!
+</info added on 2025-06-02T20:21:17.766Z>
 
 ## 14. Update documentation for proxy actigraphy approach [pending]
 ### Dependencies: 33.11, 33.12, 33.13

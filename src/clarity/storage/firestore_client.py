@@ -641,13 +641,10 @@ class FirestoreClient:
             async for _ in query.stream():
                 count += 1
 
-
         except Exception as e:
             logger.exception("Failed to count documents in %s", collection)
             msg = f"Count operation failed: {e}"
             raise FirestoreError(msg) from e
-        else:
-            return deleted_count
         else:
             return count
 

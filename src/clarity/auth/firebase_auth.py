@@ -8,6 +8,8 @@ Enterprise-grade Firebase authentication middleware with:
 - User context management
 """
 
+from __future__ import annotations
+
 import asyncio
 from collections.abc import Awaitable, Callable
 from datetime import UTC, datetime

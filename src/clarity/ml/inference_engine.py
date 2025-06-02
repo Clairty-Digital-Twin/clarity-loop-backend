@@ -15,13 +15,21 @@ import asyncio
 from collections.abc import Callable
 import contextlib
 from functools import wraps
-import hashlib
 import logging
 import time
-from typing import Any
 
 from pydantic import BaseModel, Field
 
+from clarity.core.constants import (
+    BATCH_PROCESSOR_ERROR_SLEEP_SECONDS,
+    CACHE_TTL_DEFAULT_SECONDS,
+    DEFAULT_BATCH_SIZE,
+    DEFAULT_BATCH_TIMEOUT_MS,
+    DEFAULT_INFERENCE_TIMEOUT_SECONDS,
+)
+from clarity.core.exceptions import InferenceError, InferenceTimeoutError
+from clarity.core.security import create_secure_cache_key
+from clarity.core.types import CacheStorage, CachedValue, LoggerProtocol
 from clarity.ml.pat_service import ActigraphyAnalysis, ActigraphyInput, PATModelService
 
 logger = logging.getLogger(__name__)

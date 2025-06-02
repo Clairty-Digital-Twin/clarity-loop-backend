@@ -306,8 +306,8 @@ class ProxyActigraphyTransformer:
             logger.exception("Failed to transform step data for %s", step_data.user_id)
             raise
 
-    @staticmethod
     def _prepare_step_data(
+        self,
         step_counts: list[float],
         timestamps: list[datetime],
         auto_pad_to_week: bool = True
@@ -317,6 +317,7 @@ class ProxyActigraphyTransformer:
         Args:
             step_counts: Raw step counts
             timestamps: Corresponding timestamps
+            auto_pad_to_week: Whether to automatically pad/truncate to full week
 
         Returns:
             Tuple of (cleaned step count array, padding mask)
@@ -337,29 +338,35 @@ class ProxyActigraphyTransformer:
         original_length = len(steps_array)
         padding_mask = np.zeros(original_length, dtype=bool)
 
-        # Ensure we have exactly one week of data (pad or truncate as needed)
-        if len(steps_array) < MINUTES_PER_WEEK:
-            # Pad with circadian-aware values instead of zeros
-            padding_needed = MINUTES_PER_WEEK - len(steps_array)
-            
-            # Generate realistic padding values
-            padding_values = _generate_circadian_padding(padding_needed)
-            
-            # Pad at the beginning (older data)
-            steps_array = np.pad(steps_array, (padding_needed, 0), mode='constant', constant_values=0)
-            steps_array[:padding_needed] = padding_values
-            
-            # Create padding mask
-            padding_mask = np.zeros(MINUTES_PER_WEEK, dtype=bool)
-            padding_mask[:padding_needed] = True
-            
-            logger.info("Padded %d minutes with circadian-aware values", padding_needed)
+        # Conditionally pad/truncate to full week based on auto_pad_to_week setting
+        if auto_pad_to_week:
+            # Ensure we have exactly one week of data (pad or truncate as needed)
+            if len(steps_array) < MINUTES_PER_WEEK:
+                # Pad with circadian-aware values instead of zeros
+                padding_needed = MINUTES_PER_WEEK - len(steps_array)
+                
+                # Generate realistic padding values
+                padding_values = _generate_circadian_padding(padding_needed)
+                
+                # Pad at the beginning (older data)
+                steps_array = np.pad(steps_array, (padding_needed, 0), mode='constant', constant_values=0)
+                steps_array[:padding_needed] = padding_values
+                
+                # Create padding mask
+                padding_mask = np.zeros(MINUTES_PER_WEEK, dtype=bool)
+                padding_mask[:padding_needed] = True
+                
+                logger.info("Padded %d minutes with circadian-aware values", padding_needed)
 
-        elif len(steps_array) > MINUTES_PER_WEEK:
-            # Take the most recent week of data
-            steps_array = steps_array[-MINUTES_PER_WEEK:]
-            padding_mask = np.zeros(MINUTES_PER_WEEK, dtype=bool)
-            logger.info("Truncated to most recent %d minutes", MINUTES_PER_WEEK)
+            elif len(steps_array) > MINUTES_PER_WEEK:
+                # Take the most recent week of data
+                steps_array = steps_array[-MINUTES_PER_WEEK:]
+                padding_mask = np.zeros(MINUTES_PER_WEEK, dtype=bool)
+                logger.info("Truncated to most recent %d minutes", MINUTES_PER_WEEK)
+        else:
+            # No auto-padding - use original length with no padding mask
+            padding_mask = np.zeros(len(steps_array), dtype=bool)
+            logger.info("No auto-padding - using original length of %d minutes", len(steps_array))
 
         # Handle missing data (represented as NaN or very large values)
         nan_mask = np.isnan(steps_array) | (steps_array > MAX_REALISTIC_STEPS_PER_MINUTE)

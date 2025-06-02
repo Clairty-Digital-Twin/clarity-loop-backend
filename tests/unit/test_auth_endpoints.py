@@ -78,7 +78,7 @@ class TestAuthenticationEndpoints:
         assert response.status_code in {200, 500, 503}
 
     @patch("clarity.api.v1.auth.get_auth_service")
-    def test_user_registration_endpoint(
+    def test_user_registration_endpoint(  # noqa: PLR6301 - @patch requires instance method for parameter injection
         self,
         mock_get_auth_service: Mock,
         client: TestClient,
@@ -110,7 +110,7 @@ class TestAuthenticationEndpoints:
         assert data["status"] == "pending_verification"
 
     @patch("clarity.api.v1.auth.get_auth_service")
-    def test_user_registration_validation_error(
+    def test_user_registration_validation_error(  # noqa: PLR6301 - @patch requires instance method for parameter injection
         self,
         mock_get_auth_service: Mock,
         client: TestClient,
@@ -132,7 +132,7 @@ class TestAuthenticationEndpoints:
         assert response.status_code == 422  # FastAPI validation error
 
     @patch("clarity.api.v1.auth.get_auth_service")
-    def test_user_registration_already_exists_error(
+    def test_user_registration_already_exists_error(  # noqa: PLR6301 - @patch requires instance method for parameter injection
         self,
         mock_get_auth_service: Mock,
         client: TestClient,
@@ -154,7 +154,7 @@ class TestAuthenticationEndpoints:
         assert response.status_code == 409
 
     @patch("clarity.api.v1.auth.get_auth_service")
-    def test_user_login_endpoint(
+    def test_user_login_endpoint(  # noqa: PLR6301 - @patch requires instance method for parameter injection
         self,
         mock_get_auth_service: Mock,
         client: TestClient,
@@ -202,7 +202,7 @@ class TestAuthenticationEndpoints:
         assert response.status_code == 200
 
     @patch("clarity.api.v1.auth.get_auth_service")
-    def test_user_login_not_found_error(
+    def test_user_login_not_found_error(  # noqa: PLR6301 - @patch requires instance method for parameter injection
         self,
         mock_get_auth_service: Mock,
         client: TestClient,
@@ -222,7 +222,7 @@ class TestAuthenticationEndpoints:
         assert response.status_code == 404
 
     @patch("clarity.api.v1.auth.get_auth_service")
-    def test_token_refresh_endpoint(
+    def test_token_refresh_endpoint(  # noqa: PLR6301 - @patch requires instance method for parameter injection
         self,
         mock_get_auth_service: Mock,
         client: TestClient,
@@ -248,7 +248,7 @@ class TestAuthenticationEndpoints:
         assert response.status_code == 200
 
     @patch("clarity.api.v1.auth.get_auth_service")
-    def test_logout_endpoint(
+    def test_logout_endpoint(  # noqa: PLR6301 - @patch requires instance method for parameter injection
         self,
         mock_get_auth_service: Mock,
         client: TestClient,

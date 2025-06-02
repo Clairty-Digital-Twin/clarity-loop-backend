@@ -74,7 +74,7 @@ class StandardActigraphyPreprocessor:
                 activity_data = activity_data[indices]
             else:
                 # Pad with zeros
-                padded = np.zeros(target_length)
+                padded = np.zeros(target_length, dtype=np.float32)
                 padded[: len(activity_data)] = activity_data
                 activity_data = padded
 

@@ -334,7 +334,11 @@ class PATModelService(IMLModelService):
                 PATModelService._raise_model_not_loaded_error()
 
             with torch.no_grad():
-                outputs = self.model(processed_data)
+                # Model is guaranteed to be not None due to check above
+                model = self.model
+                if model is None:  # This should never happen due to check above
+                    PATModelService._raise_model_not_loaded_error()
+                outputs = model(processed_data)
 
             # Postprocess results
             analysis = self._postprocess_predictions(outputs, input_data.user_id)

@@ -84,6 +84,7 @@ interact:
 1. Health Data Ingestion Layer – FastAPI Service
 
 Role: This service (the existing FastAPI app) handles incoming data from clients. It runs in Cloud Run (or similar) and exposes REST endpoints under /api/v1/health-data for uploading metrics. Key responsibilities and improvements:
+
 * Authentication & Security: Continue using Firebase Auth (Identity Platform) to verify JWTs on requests.
   Each request is tied to a user UID for multi-tenant data isolation. Ensure HIPAA-level security
   (encryption, no PHI in logs, etc.). The existing @require_auth and get_current_user dependency
@@ -639,7 +640,6 @@ __No other backend service requires modification.__
 ### Deliverable checklist
 
 * Copy folder layout & code snippets into repo.
-* Commit apple_health_stub.md in /docs/.
 * Add the new FastAPI route and register the adapter.
 * Ensure Cloud Run analysis worker detects stub uploads (same Pub/Sub).
 * Push; verify GitHub Action passes (e2e_healthkit_stub_test.py).

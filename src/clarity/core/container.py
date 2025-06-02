@@ -131,23 +131,84 @@ class DependencyContainer:
             ]()
         return cast("IHealthDataRepository", self._instances[IHealthDataRepository])
 
+    async def _initialize_auth_provider(self, config_provider: IConfigProvider) -> None:
+        """Initialize authentication provider with timeout and fallback."""
+        logger.info("🔐 Initializing authentication provider...")
+        try:
+            auth_provider = self.get_auth_provider()
+            logger.info("   • Provider type: %s", type(auth_provider).__name__)
+
+            if hasattr(auth_provider, "initialize"):
+                await asyncio.wait_for(auth_provider.initialize(), timeout=8.0)
+            logger.info("✅ Authentication provider ready")
+
+        except TimeoutError:
+            logger.exception("💥 Auth provider initialization TIMEOUT (8s)")
+            logger.warning("🔄 Falling back to mock auth provider...")
+            self._instances[IAuthProvider] = MockAuthProvider()
+            logger.info("✅ Mock auth provider activated")
+
+        except Exception:
+            logger.exception("💥 Auth provider initialization failed")
+            logger.warning("🔄 Falling back to mock auth provider...")
+            self._instances[IAuthProvider] = MockAuthProvider()
+            logger.info("✅ Mock auth provider activated")
+
+    async def _initialize_repository(self, config_provider: IConfigProvider) -> None:
+        """Initialize health data repository with timeout and fallback."""
+        logger.info("🗄️ Initializing health data repository...")
+        try:
+            repository = self.get_health_data_repository()
+            logger.info("   • Repository type: %s", type(repository).__name__)
+
+            if hasattr(repository, "initialize"):
+                await asyncio.wait_for(repository.initialize(), timeout=8.0)
+            logger.info("✅ Health data repository ready")
+
+        except TimeoutError:
+            logger.exception("💥 Repository initialization TIMEOUT (8s)")
+            logger.warning("🔄 Falling back to mock repository...")
+            self._instances[IHealthDataRepository] = MockHealthDataRepository()
+            logger.info("✅ Mock repository activated")
+
+        except Exception:
+            logger.exception("💥 Repository initialization failed")
+            logger.warning("🔄 Falling back to mock repository...")
+            self._instances[IHealthDataRepository] = MockHealthDataRepository()
+            logger.info("✅ Mock repository activated")
+
+    async def _cleanup_services(self) -> None:
+        """Clean up all services with timeout protection."""
+        logger.info("🛑 Shutting down application...")
+        cleanup_start = time.perf_counter()
+
+        for service_type, instance in self._instances.items():
+            if hasattr(instance, "cleanup"):
+                try:
+                    await asyncio.wait_for(instance.cleanup(), timeout=3.0)
+                    logger.debug("✅ Cleaned up %s", service_type.__name__)
+                except TimeoutError:
+                    logger.warning("⚠️ Cleanup timeout for %s", service_type.__name__)
+                except (OSError, AttributeError, RuntimeError) as cleanup_error:
+                    logger.warning(
+                        "⚠️ Cleanup error for %s: %s",
+                        service_type.__name__,
+                        cleanup_error,
+                    )
+
+        cleanup_elapsed = time.perf_counter() - cleanup_start
+        logger.info("🏁 Shutdown complete in %.2fs", cleanup_elapsed)
+
     @asynccontextmanager
     async def app_lifespan(self, _app: FastAPI) -> AsyncGenerator[None, None]:
-        """Fixed application lifespan with timeouts and proper error handling.
-
-        Features:
-        - Timeout protection to prevent infinite hangs
-        - Development mode overrides for faster startup
-        - Detailed error reporting and graceful degradation
-        - Comprehensive cleanup on shutdown
-        """
-        startup_timeout = 15.0  # Total startup budget
+        """Application lifespan with timeout protection and graceful degradation."""
+        startup_timeout = 15.0
         startup_start = time.perf_counter()
 
         try:
             logger.info("🚀 Starting CLARITY Digital Twin Platform lifespan...")
 
-            # Step 1: Logging setup (should be instant)
+            # Step 1: Logging setup
             logger.info("📝 Setting up logging configuration...")
             from clarity.core.logging_config import setup_logging  # noqa: PLC0415
 
@@ -173,76 +234,28 @@ class DependencyContainer:
                 yield
                 return
 
-            # Step 3: Auth provider initialization with timeout
-            logger.info("🔐 Initializing authentication provider...")
-            try:
-                auth_provider = self.get_auth_provider()
-                logger.info("   • Provider type: %s", type(auth_provider).__name__)
+            # Step 3: Initialize services
+            await self._initialize_auth_provider(config_provider)
+            await self._initialize_repository(config_provider)
 
-                if hasattr(auth_provider, "initialize"):
-                    await asyncio.wait_for(auth_provider.initialize(), timeout=8.0)
-                logger.info("✅ Authentication provider ready")
-
-            except TimeoutError:
-                logger.exception("💥 Auth provider initialization TIMEOUT (8s)")
-                logger.warning("🔄 Falling back to mock auth provider...")
-                # Fallback to mock auth
-                self._instances[IAuthProvider] = MockAuthProvider()
-                logger.info("✅ Mock auth provider activated")
-
-            except Exception:
-                logger.exception("💥 Auth provider initialization failed")
-                logger.warning("🔄 Falling back to mock auth provider...")
-                # Fallback to mock auth
-                self._instances[IAuthProvider] = MockAuthProvider()
-                logger.info("✅ Mock auth provider activated")
-
-            # Step 4: Repository initialization with timeout
-            logger.info("🗄️ Initializing health data repository...")
-            try:
-                repository = self.get_health_data_repository()
-                logger.info("   • Repository type: %s", type(repository).__name__)
-
-                if hasattr(repository, "initialize"):
-                    await asyncio.wait_for(repository.initialize(), timeout=8.0)
-                logger.info("✅ Health data repository ready")
-
-            except TimeoutError:
-                logger.exception("💥 Repository initialization TIMEOUT (8s)")
-                logger.warning("🔄 Falling back to mock repository...")
-                # Fallback to mock repository
-                self._instances[IHealthDataRepository] = MockHealthDataRepository()
-                logger.info("✅ Mock repository activated")
-
-            except Exception:
-                logger.exception("💥 Repository initialization failed")
-                logger.warning("🔄 Falling back to mock repository...")
-                self._instances[IHealthDataRepository] = MockHealthDataRepository()
-                logger.info("✅ Mock repository activated")
-
-            # Step 5: Startup completion
+            # Step 4: Startup completion
             elapsed = time.perf_counter() - startup_start
             logger.info("🎉 Startup complete in %.2fs", elapsed)
 
-            # Startup health check
-            if elapsed > startup_timeout * 0.8:  # Warn if approaching timeout
+            if elapsed > startup_timeout * 0.8:
                 logger.warning("⚠️ Slow startup detected (%.2fs)", elapsed)
 
-            # Application is ready
             yield
 
         except Exception:
             elapsed = time.perf_counter() - startup_start
             logger.exception("💥 STARTUP FAILED after %.2fs", elapsed)
-            # Don't raise - allow app to start with minimal functionality
             logger.warning("🔄 Starting with minimal functionality...")
 
-            # Ensure we have basic providers
             try:
                 self._instances[IAuthProvider] = MockAuthProvider()
                 self._instances[IHealthDataRepository] = MockHealthDataRepository()
                 logger.info("✅ Minimal providers activated")
-
             except Exception as fallback_error:
                 logger.critical(
                     "💥 CRITICAL: Fallback initialization failed: %s", fallback_error
@@ -253,28 +266,7 @@ class DependencyContainer:
             yield
 
         finally:
-            # Cleanup phase
-            logger.info("🛑 Shutting down application...")
-            cleanup_start = time.perf_counter()
-
-            for service_type, instance in self._instances.items():
-                if hasattr(instance, "cleanup"):
-                    try:
-                        await asyncio.wait_for(instance.cleanup(), timeout=3.0)
-                        logger.debug("✅ Cleaned up %s", service_type.__name__)
-                    except TimeoutError:
-                        logger.warning(
-                            "⚠️ Cleanup timeout for %s", service_type.__name__
-                        )
-                    except (OSError, AttributeError, RuntimeError) as cleanup_error:
-                        logger.warning(
-                            "⚠️ Cleanup error for %s: %s",
-                            service_type.__name__,
-                            cleanup_error,
-                        )
-
-            cleanup_elapsed = time.perf_counter() - cleanup_start
-            logger.info("🏁 Shutdown complete in %.2fs", cleanup_elapsed)
+            await self._cleanup_services()
 
     def create_fastapi_app(self) -> FastAPI:
         """Factory method creates FastAPI app with all dependencies wired.

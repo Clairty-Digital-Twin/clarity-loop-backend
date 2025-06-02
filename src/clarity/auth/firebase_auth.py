@@ -197,7 +197,8 @@ class FirebaseAuthProvider(IAuthProvider):
             logger.exception("Firebase initialization failed")
             # Don't raise exception to allow app to start in development
 
-    def _extract_roles(self, decoded_token: dict[str, Any]) -> list[str]:
+    @staticmethod
+    def _extract_roles(decoded_token: dict[str, Any]) -> list[str]:
         """Extract user roles from Firebase token."""
         # Extract role from custom claims
         custom_claims = decoded_token.get("custom_claims", {})

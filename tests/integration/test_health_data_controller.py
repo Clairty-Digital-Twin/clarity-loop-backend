@@ -1,19 +1,12 @@
-"""CLARITY Digital Twin Platform - Interface Adapters Tests.
+"""Integration tests for health data controller.
 
-🎮 INTERFACE ADAPTERS LAYER TESTS (Clean Architecture Controllers & Gateways)
-
-These tests verify the interface adapters that convert web requests to use case calls
-and adapt use case responses back to web responses. Following Robert C. Martin's
-Clean Architecture principle: "Interface adapters convert data from the format most
-convenient for use cases and entities, to the format most convenient for some
-external agency such as the database or the web."
-
-TESTS USE MOCKED USE CASES BUT REAL FASTAPI FRAMEWORK.
+Tests the controller layer's adaptation patterns and Clean Architecture compliance.
 """
 
 from datetime import UTC, datetime
+import json
 from typing import Any
-from unittest.mock import Mock
+from unittest.mock import AsyncMock, Mock
 from uuid import uuid4
 
 from fastapi import FastAPI, status
@@ -27,6 +20,7 @@ from clarity.core.interfaces import (
     IConfigProvider,
     IHealthDataRepository,
 )
+from clarity.main import create_app
 
 
 class TestHealthDataController:

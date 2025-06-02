@@ -14,7 +14,6 @@ from fastapi.testclient import TestClient
 from httpx import AsyncClient
 import numpy as np
 import pytest
-from pytest import Config, MonkeyPatch
 import redis
 import torch
 
@@ -115,12 +114,8 @@ def sample_actigraphy_data() -> dict[str, Any]:
     activity_counts = []
     for h in range(24):
         for _ in range(60):  # Use underscore for unused variable
-            if h >= 22 or h <= 6:  # Night hours
-                # Low activity during sleep
-                activity = rng.poisson(5)
-            else:  # Day hours
-                # Higher activity during wake hours
-                activity = rng.poisson(50)
+            # Use ternary operator as suggested by SIM108
+            activity = rng.poisson(5) if h >= 22 or h <= 6 else rng.poisson(50)
             activity_counts.append(activity)
 
     return {
@@ -190,7 +185,7 @@ def mock_redis():
 
 
 @pytest.fixture(autouse=True)
-def mock_environment_variables(monkeypatch: MonkeyPatch):
+def mock_environment_variables(monkeypatch: pytest.MonkeyPatch):
     """Mock environment variables for testing."""
     test_env = {
         "TESTING": "1",
@@ -213,7 +208,7 @@ def mock_environment_variables(monkeypatch: MonkeyPatch):
 pytest_plugins = ["pytest_asyncio"]
 
 
-def pytest_configure(config: Config) -> None:
+def pytest_configure(config: pytest.Config) -> None:
     """Configure pytest with custom markers."""
     config.addinivalue_line("markers", "unit: Unit tests")
     config.addinivalue_line("markers", "integration: Integration tests")

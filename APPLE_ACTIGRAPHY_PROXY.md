@@ -12,12 +12,11 @@ Therefore, for PAT we must create a proxy actigraphy vector from step-count data
 
 2 | On-device collection (iOS / watchOS)
 
-Step	API / Code Sketch	Notes
-2.1 Authorize	healthStore.requestAuthorization(toShare: [], read: [.quantityType(forIdentifier: .stepCount)!])	Include HR/HRV/etc. if you plan to ingest more signals.
-2.2 Subscribe to updates	HKObserverQuery → HKStatisticsCollectionQuery (minute granularity, .cumulativeSum option, interval.day = 0, interval.minute = 1)	Returns time-ordered buckets of HKQuantitySamples.
-2.3 Gather 1 week of data	Keep a ring buffer [10 080] of Double step counts.	Align Monday-Sunday (ISO 8601); pad leading zeros if first week shorter.
-2.4 Serialize payload	json\n{\n "uid":"USER_ID",\n "uploadId":"W20250602T0900Z",\n "vector":[/* 10 080 doubles */],\n "unit":"count/min"\n}\n	Upload via HTTPS to /v1/ingest/steps.
-
+Step API / Code Sketch Notes
+2.1 Authorize healthStore.requestAuthorization(toShare: [], read: [.quantityType(forIdentifier: .stepCount)!]) Include HR/HRV/etc. if you plan to ingest more signals.
+2.2 Subscribe to updates HKObserverQuery → HKStatisticsCollectionQuery (minute granularity, .cumulativeSum option, interval.day = 0, interval.minute = 1) Returns time-ordered buckets of HKQuantitySamples.
+2.3 Gather 1 week of data Keep a ring buffer [10 080] of Double step counts. Align Monday-Sunday (ISO 8601); pad leading zeros if first week shorter.
+2.4 Serialize payload json\n{\n "uid":"USER_ID",\n "uploadId":"W20250602T0900Z",\n "vector":[/* 10 080 doubles */],\n "unit":"count/min"\n}\n Upload via HTTPS to /v1/ingest/steps.
 
 ⸻
 
@@ -37,42 +36,41 @@ Rationale: √steps/min preserves dynamic range without letting large step burst
 
 4 | PAT micro-service contract (unchanged)
 
-Endpoint	Request	Response
-POST /v1/pat/predict	{ "vector":[float32×10 080], "uid":"...", "uploadId":"..." }	{ "cls_embedding":[128 floats], "token_embeddings_gs_path":"gs://..." }
+Endpoint Request Response
+POST /v1/pat/predict { "vector":[float32×10 080], "uid":"...", "uploadId":"..." } { "cls_embedding":[128 floats], "token_embeddings_gs_path":"gs://..." }
 
 (Full schema in earlier doc.)
 
 ⸻
 
 5 | Storing & querying “proxy” data
-	•	Raw HealthKit JSON → GCS cold-storage (PHI-protected bucket, CMEK enabled).
-	•	Proxy z-scored vector → Firestore proxy_vectors/{uid}/{uploadId} doc.
-	•	PAT CLS embedding → Firestore embeddings/{uid}/{uploadId} doc.
+ • Raw HealthKit JSON → GCS cold-storage (PHI-protected bucket, CMEK enabled).
+ • Proxy z-scored vector → Firestore proxy_vectors/{uid}/{uploadId} doc.
+ • PAT CLS embedding → Firestore embeddings/{uid}/{uploadId} doc.
 
 ⸻
 
 6 | Extending to heart-rate / HRV soon
-	1.	Collect:
-	•	HKQuantityTypeIdentifierHeartRate (BPM, 5-sec granularity).
-	•	HKQuantityTypeIdentifierHeartRateVariabilitySDNN (ms).
-	2.	Align: resample to 1-min bins (mean for HR, median for HRV).
-	3.	Fuse: store alongside movement vector; later feed to PatchTST or a simple MLP and concatenate with PAT embedding before sending to Gemini.
+ 1. Collect:
+ • HKQuantityTypeIdentifierHeartRate (BPM, 5-sec granularity).
+ • HKQuantityTypeIdentifierHeartRateVariabilitySDNN (ms).
+ 2. Align: resample to 1-min bins (mean for HR, median for HRV).
+ 3. Fuse: store alongside movement vector; later feed to PatchTST or a simple MLP and concatenate with PAT embedding before sending to Gemini.
 
 ⸻
 
 7 | Edge-case handling
 
-Scenario	Action
-Week vector has <10 080 samples	Pad left with zeros.
-Gaps >30 min (watch off)	Impute zeros (PAT treats as “no movement”).
-Step count identical zeros all week	Flag quality: "insufficient" to downstream; skip PAT inference.
-
+Scenario Action
+Week vector has <10 080 samples Pad left with zeros.
+Gaps >30 min (watch off) Impute zeros (PAT treats as “no movement”).
+Step count identical zeros all week Flag quality: "insufficient" to downstream; skip PAT inference.
 
 ⸻
 
 8 | References for the agent
 
-Topic	Canonical doc
-Step-count quantity type	developer.apple.com/documentation/healthkit/hkquantitytypeidentifier/stepcount  ￼
-Minute-level Stats query	WWDC ‘19 “Exploring New Data Representations in HealthKit” (see HKStatisticsCollectionQuery pattern)  ￼
-PAT repo (I/O details)	github.com/njacobsonlab/Pretrained-Actigraphy-Transformer  ￼
+Topic Canonical doc
+Step-count quantity type developer.apple.com/documentation/healthkit/hkquantitytypeidentifier/stepcount  ￼
+Minute-level Stats query WWDC ‘19 “Exploring New Data Representations in HealthKit” (see HKStatisticsCollectionQuery pattern)  ￼
+PAT repo (I/O details) github.com/njacobsonlab/Pretrained-Actigraphy-Transformer  ￼

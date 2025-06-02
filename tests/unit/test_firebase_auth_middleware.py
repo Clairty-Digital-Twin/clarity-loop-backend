@@ -5,17 +5,17 @@ and middleware behavior under various conditions.
 """
 
 import asyncio
+from collections.abc import Awaitable, Callable
+from datetime import UTC, datetime
 import json
 import logging
 import time
-from collections.abc import Awaitable, Callable
-from datetime import UTC, datetime
 from typing import Any
 from unittest.mock import AsyncMock, Mock, patch
 
-import pytest
 from fastapi import FastAPI, Request
 from httpx import ASGITransport, AsyncClient
+import pytest
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.responses import JSONResponse, Response
 

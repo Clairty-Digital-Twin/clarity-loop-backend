@@ -14,7 +14,7 @@ def fix_firestore_client() -> None:
         'logger.exception("Error closing Firestore client: %s", e)',
         'logger.exception("Error closing Firestore client")'
     )
-    
+
     content = content.replace(
         'logger.exception("Failed to cleanup FirestoreHealthDataRepository: %s", e)',
         'logger.exception("Failed to cleanup FirestoreHealthDataRepository")'
@@ -25,7 +25,7 @@ def fix_firestore_client() -> None:
         'except Exception as e:\n            logger.exception("Failed to get processing status for %s", processing_id)\n            return None',
         'except Exception:\n            logger.exception("Failed to get processing status for %s", processing_id)\n            return None'
     )
-    
+
     content = content.replace(
         'except Exception as e:\n            logger.exception("Failed to delete health data for user %s", user_id)\n            return False',
         'except Exception:\n            logger.exception("Failed to delete health data for user %s", user_id)\n            return False'
@@ -118,4 +118,4 @@ def fix_firestore_client() -> None:
 
 
 if __name__ == "__main__":
-    fix_firestore_client() 
+    fix_firestore_client()

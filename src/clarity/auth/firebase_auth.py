@@ -336,7 +336,8 @@ class FirebaseAuthMiddleware(BaseHTTPMiddleware):
         # Create user context from verified user info
         return self._create_user_context(user_info)
 
-    def _extract_token(self, request: Request) -> str:
+    @staticmethod
+    def _extract_token(request: Request) -> str:
         """Extract Bearer token from Authorization header."""
         auth_header = request.headers.get("Authorization")
 
@@ -356,7 +357,8 @@ class FirebaseAuthMiddleware(BaseHTTPMiddleware):
 
         return token
 
-    def _create_user_context(self, user_info: dict[str, Any]) -> UserContext:
+    @staticmethod
+    def _create_user_context(user_info: dict[str, Any]) -> UserContext:
         """Create user context from verified user info."""
         try:
             # Extract role from user info

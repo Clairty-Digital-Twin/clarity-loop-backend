@@ -3,11 +3,14 @@
 Provides common test utilities following pytest best practices.
 """
 
+import asyncio
+from collections.abc import AsyncGenerator, Generator
 import os
 from typing import Any
 from unittest.mock import AsyncMock, MagicMock
 
 from fastapi import FastAPI
+from fastapi.testclient import TestClient
 from httpx import AsyncClient
 import numpy as np
 import pytest
@@ -111,7 +114,7 @@ def sample_actigraphy_data() -> dict[str, Any]:
     # Simulate sleep pattern: low activity during night hours
     activity_counts = []
     for h in range(24):
-        for m in range(60):
+        for _ in range(60):  # Use underscore for unused variable
             if h >= 22 or h <= 6:  # Night hours
                 # Low activity during sleep
                 activity = rng.poisson(5)
@@ -198,7 +201,7 @@ def mock_environment_variables(monkeypatch: MonkeyPatch):
         "FIREBASE_CREDENTIALS": "test-credentials.json",
         "JWT_SECRET_KEY": "test-secret-key-for-testing-only",
         "LOG_LEVEL": "DEBUG",
-        "CORS_ORIGINS": "http://localhost:3000,http://localhost:8000",
+        "CORS_ORIGINS": '["http://localhost:3000", "http://localhost:8000"]',  # Fixed: JSON format
         "SKIP_EXTERNAL_SERVICES": "true",  # Skip Firebase/Firestore in tests
     }
 
@@ -221,7 +224,7 @@ def pytest_configure(config: Config) -> None:
 
 
 @pytest.fixture
-def sample_health_metrics() -> list[dict]:
+def sample_health_metrics() -> list[dict[str, Any]]:
     """Provide sample health metrics for testing."""
     return [
         {
@@ -249,7 +252,7 @@ def sample_health_metrics() -> list[dict]:
 
 
 @pytest.fixture
-def sample_user_context() -> dict:
+def sample_user_context() -> dict[str, Any]:
     """Provide sample user context for testing."""
     return {
         "user_id": "test-user-123",
@@ -261,7 +264,7 @@ def sample_user_context() -> dict:
 
 
 @pytest.fixture
-def sample_biometric_data() -> dict:
+def sample_biometric_data() -> dict[str, Any]:
     """Provide sample biometric data for testing."""
     return {
         "user_id": "test-user-123",

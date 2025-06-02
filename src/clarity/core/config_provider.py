@@ -4,7 +4,6 @@ Following Clean Architecture and SOLID principles, this module provides
 concrete implementation of IConfigProvider interface for dependency injection.
 """
 
-import os
 from typing import TYPE_CHECKING
 
 from clarity.core.config import Settings

@@ -6,6 +6,7 @@ This module serves as the composition root for the entire application.
 
 import logging
 
+from fastapi import FastAPI
 import uvicorn
 
 from clarity.core.config import get_settings
@@ -17,7 +18,7 @@ logger = logging.getLogger(__name__)
 
 
 # Application factory function
-def create_app():
+def create_app() -> FastAPI:
     """Create and configure FastAPI application.
 
     Factory function for creating the application instance.
@@ -27,7 +28,7 @@ def create_app():
 
 
 # For development and testing
-def get_app():
+def get_app() -> FastAPI:
     """Get application instance for development/testing.
 
     Creates a new instance each time to avoid global state issues.

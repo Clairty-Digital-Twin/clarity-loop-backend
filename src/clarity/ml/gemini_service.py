@@ -102,8 +102,8 @@ class GeminiService:
             if self.model is None:
                 self._raise_model_not_initialized()
 
-            # At this point model is guaranteed to not be None
-            model = self.model  # Type assertion for mypy
+            # Type guard for mypy - model is guaranteed to be not None here
+            assert self.model is not None  # noqa: S101
             
             # Create health-focused prompt for Gemini
             prompt = self._create_health_insight_prompt(request)
@@ -138,7 +138,7 @@ class GeminiService:
             ]
 
             # Generate response using Gemini
-            response = model.generate_content(
+            response = self.model.generate_content(
                 prompt,
                 generation_config=generation_config,
                 safety_settings=safety_settings

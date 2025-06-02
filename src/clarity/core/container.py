@@ -346,7 +346,7 @@ class DependencyContainer:
         # Add root-level health endpoint first (no auth required)
         # NOTE: Function appears unused but is registered by FastAPI @app.get decorator
         @app.get("/health")
-        async def health_endpoint_handler() -> dict[str, Any]:
+        async def health_endpoint_handler() -> dict[str, Any]:  # noqa: F841
             """Root health check endpoint for application monitoring."""
             from datetime import UTC, datetime  # noqa: PLC0415
 
@@ -374,14 +374,14 @@ class DependencyContainer:
 
             # Set up authentication endpoints with Firestore client if available
             firestore_client = None
-            if hasattr(repository, "client"):
+            if hasattr(repository, "client"):  # type: ignore[misc]
                 # Extract FirestoreClient from FirestoreHealthDataRepository
                 firestore_client = repository.client  # type: ignore[attr-defined]
 
             auth.set_dependencies(
                 auth_provider=auth_provider,
                 repository=repository,
-                firestore_client=firestore_client,
+                firestore_client=firestore_client,  # type: ignore[arg-type]
             )
 
             # Include routers

@@ -7,7 +7,7 @@ Integrates with Firebase Authentication and handles user management.
 from datetime import UTC, datetime, timedelta
 import logging
 import secrets
-from typing import Any
+from typing import Any, cast
 import uuid
 
 from firebase_admin import auth
@@ -263,8 +263,11 @@ class AuthenticationService:
                 collection=self.users_collection, document_id=user_record.uid
             )
 
-            if not user_data:
+            if user_data is None:
                 _raise_user_not_found_in_db()
+                # This line should never be reached due to the exception above
+                msg = "User data not found"
+                raise RuntimeError(msg)  # For type narrowing
 
             # Check email verification requirement
             if (
@@ -525,9 +528,13 @@ class AuthenticationService:
             user_id = token_data["user_id"]
 
             # Revoke old refresh token
+            token_doc_id = token_data.get("id")
+            if not isinstance(token_doc_id, str):
+                logger.error("Token document missing or invalid ID field")
+                _raise_invalid_refresh_token()
             await self.firestore_client.update_document(
                 collection=self.refresh_tokens_collection,
-                document_id=token_data.get("id"),  # Document ID
+                document_id=cast("str", token_doc_id),  # Safe after isinstance check
                 data={"is_revoked": True, "revoked_at": datetime.now(UTC)},
                 user_id=user_id,
             )
@@ -573,12 +580,16 @@ class AuthenticationService:
                 user_id = token_data["user_id"]
 
                 # Revoke refresh token
-                await self.firestore_client.update_document(
-                    collection=self.refresh_tokens_collection,
-                    document_id=token_data.get("id"),
-                    data={"is_revoked": True, "revoked_at": datetime.now(UTC)},
-                    user_id=user_id,
-                )
+                token_doc_id = token_data.get("id")
+                if isinstance(token_doc_id, str):
+                    await self.firestore_client.update_document(
+                        collection=self.refresh_tokens_collection,
+                        document_id=token_doc_id,
+                        data={"is_revoked": True, "revoked_at": datetime.now(UTC)},
+                        user_id=user_id,
+                    )
+                else:
+                    logger.error("Token document missing or invalid ID field")
 
                 # Deactivate sessions with this refresh token
                 sessions = await self.firestore_client.query_documents(
@@ -594,12 +605,16 @@ class AuthenticationService:
                 )
 
                 for session in sessions:
-                    await self.firestore_client.update_document(
-                        collection=self.sessions_collection,
-                        document_id=session.get("session_id"),
-                        data={"is_active": False, "ended_at": datetime.now(UTC)},
-                        user_id=user_id,
-                    )
+                    session_id = session.get("session_id")
+                    if isinstance(session_id, str):
+                        await self.firestore_client.update_document(
+                            collection=self.sessions_collection,
+                            document_id=session_id,
+                            data={"is_active": False, "ended_at": datetime.now(UTC)},
+                            user_id=user_id,
+                        )
+                    else:
+                        logger.error("Session document missing or invalid session_id")
 
                 logger.info("User logged out: %s", user_id)
 

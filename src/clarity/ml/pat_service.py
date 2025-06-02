@@ -22,13 +22,6 @@ from clarity.ml.preprocessing import ActigraphyDataPoint, HealthDataPreprocessor
 logger = logging.getLogger(__name__)
 
 
-class ActigraphyDataPoint(BaseModel):
-    """Individual actigraphy data point."""
-
-    timestamp: datetime
-    value: float = Field(description="Activity count or acceleration value")
-
-
 class ActigraphyInput(BaseModel):
     """Input model for actigraphy data."""
 

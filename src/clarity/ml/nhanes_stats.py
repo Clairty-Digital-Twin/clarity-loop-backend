@@ -1,12 +1,12 @@
 """NHANES Reference Statistics Module.
 
-This module provides population-based reference statistics for normalizing 
+This module provides population-based reference statistics for normalizing
 proxy actigraphy data derived from Apple HealthKit step counts.
 
 The statistics are based on NHANES (National Health and Nutrition Examination Survey)
 accelerometer data, adapted for step-count based proxy actigraphy transformation.
 
-Reference: 
+Reference:
 - NHANES 2003-2006 accelerometer data
 - Population-based normalization for sleep/activity analysis
 - Age and demographic stratified reference values
@@ -75,18 +75,18 @@ def lookup_norm_stats(
     sex: str | None = None
 ) -> tuple[float, float]:
     """Look up NHANES reference statistics for proxy actigraphy normalization.
-    
+
     Args:
         year: Reference year for statistics (2023-2025 supported)
         age_group: Optional age stratification ("18-29", "30-39", etc.)
         sex: Optional sex stratification ("male", "female", "other")
-        
+
     Returns:
         Tuple of (mean, std) for z-score normalization
-        
+
     Raises:
         NHANESStatsError: If requested year or stratification is not available
-        
+
     Example:
         >>> mean, std = lookup_norm_stats(year=2025)
         >>> z_score = (value - mean) / std
@@ -129,8 +129,9 @@ def lookup_norm_stats(
         return mean, std
 
     except Exception as e:
-        logger.error(f"Error looking up NHANES stats: {e}")
-        raise NHANESStatsError(f"Failed to lookup reference statistics: {e}")
+        logger.exception(f"Error looking up NHANES stats: {e}")
+        msg = f"Failed to lookup reference statistics: {e}"
+        raise NHANESStatsError(msg)
 
 
 def get_available_years() -> list[int]:
@@ -150,12 +151,12 @@ def get_available_sex_categories() -> list[str]:
 
 def get_reference_info(year: int = 2025) -> dict[str, Any]:
     """Get detailed information about a reference year's statistics.
-    
+
     Args:
         year: Reference year to get information for
-        
+
     Returns:
-        Dictionary with reference information including sample size, 
+        Dictionary with reference information including sample size,
         age range, and data source
     """
     if year not in NHANES_REFERENCE_STATS:
@@ -169,11 +170,11 @@ def validate_proxy_actigraphy_data(
     year: int = 2025
 ) -> dict[str, Any]:
     """Validate proxy actigraphy data against NHANES reference ranges.
-    
+
     Args:
         proxy_values: List of square-root transformed step count values
         year: Reference year for validation
-        
+
     Returns:
         Dictionary with validation results and statistics
     """
@@ -192,7 +193,7 @@ def validate_proxy_actigraphy_data(
     extreme_low = np.sum(z_scores < -3)
     extreme_high = np.sum(z_scores > 3)
 
-    validation_result = {
+    return {
         "data_mean": float(data_mean),
         "data_std": float(data_std),
         "reference_mean": mean,
@@ -205,8 +206,6 @@ def validate_proxy_actigraphy_data(
         "data_quality": "good" if (extreme_low + extreme_high) < len(proxy_values) * 0.05 else "review",
         "reference_year": year
     }
-
-    return validation_result
 
 
 # Module initialization

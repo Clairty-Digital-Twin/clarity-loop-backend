@@ -192,18 +192,18 @@ async def generate_insights(
     gemini_service: GeminiService = Depends(get_gemini_service)
 ) -> InsightGenerationResponse:
     """Generate new health insights from analysis data.
-    
+
     This endpoint uses the Gemini 2.5 Pro LLM to generate human-readable
     health insights and recommendations from structured analysis results.
-    
+
     Args:
         insight_request: The insight generation request data
         current_user: Authenticated user information
         gemini_service: Gemini service instance
-        
+
     Returns:
         Generated health insights with narrative and recommendations
-        
+
     Raises:
         HTTPException: If insight generation fails or user lacks permissions
     """
@@ -290,14 +290,14 @@ async def get_insight(
     current_user: UserContext = Depends(get_current_user)
 ) -> InsightGenerationResponse:
     """Retrieve cached insights by ID.
-    
+
     Args:
         insight_id: The ID of the insight to retrieve
         current_user: Authenticated user information
-        
+
     Returns:
         The cached insight data
-        
+
     Raises:
         HTTPException: If insight not found or access denied
     """
@@ -334,16 +334,16 @@ async def get_insight_history(
     current_user: UserContext = Depends(get_current_user)
 ) -> InsightHistoryResponse:
     """Get insight history for a user.
-    
+
     Args:
         user_id: The user ID to get history for
         limit: Maximum number of insights to return
         offset: Number of insights to skip
         current_user: Authenticated user information
-        
+
     Returns:
         List of historical insights
-        
+
     Raises:
         HTTPException: If access denied or user not found
     """
@@ -387,10 +387,10 @@ async def get_service_status(
     gemini_service: GeminiService = Depends(get_gemini_service)
 ) -> ServiceStatusResponse:
     """Check Gemini service health status.
-    
+
     Args:
         gemini_service: Gemini service instance
-        
+
     Returns:
         Service health status and metrics
     """

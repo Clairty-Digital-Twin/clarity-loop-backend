@@ -10,7 +10,7 @@ Apple HealthKit Limitation:
 
 Transformation Process:
 1. Convert step counts to activity proxy using square root transformation
-2. Apply z-score normalization using NHANES reference statistics  
+2. Apply z-score normalization using NHANES reference statistics
 3. Output 10,080 float32 values (1 week of minute-by-minute data)
 
 Based on specifications from APPLE_ACTIGRAPHY_PROXY.md
@@ -79,10 +79,10 @@ class NHANESStats:
     @staticmethod
     def lookup_norm_stats(year: int = 2025) -> tuple[float, float]:
         """Lookup normalization statistics for a given year.
-        
+
         Args:
             year: Reference year for statistics
-            
+
         Returns:
             Tuple of (mean, standard_deviation)
         """
@@ -102,9 +102,9 @@ class NHANESStats:
 class ProxyActigraphyTransformer:
     """Main transformation engine for converting step counts to proxy actigraphy."""
 
-    def __init__(self, reference_year: int = 2025, cache_enabled: bool = True):
+    def __init__(self, reference_year: int = 2025, cache_enabled: bool = True) -> None:
         """Initialize the proxy actigraphy transformer.
-        
+
         Args:
             reference_year: Year for NHANES reference statistics
             cache_enabled: Whether to enable transformation caching
@@ -123,13 +123,13 @@ class ProxyActigraphyTransformer:
 
     def steps_to_movement_proxy(self, steps_per_min: np.ndarray) -> np.ndarray:
         """Convert step counts to movement proxy using empirically validated transformation.
-        
+
         The square root transformation correlates with RMS acceleration from accelerometer data.
         This is the core transformation that enables using step data as actigraphy proxy.
-        
+
         Args:
             steps_per_min: Array of step counts per minute
-            
+
         Returns:
             Array of proxy activity counts
         """
@@ -145,10 +145,10 @@ class ProxyActigraphyTransformer:
 
     def transform_step_data(self, step_data: StepCountData) -> ProxyActigraphyVector:
         """Transform complete step count data to proxy actigraphy vector.
-        
+
         Args:
             step_data: Step count data from Apple HealthKit
-            
+
         Returns:
             Proxy actigraphy vector ready for PAT model
         """
@@ -207,7 +207,7 @@ class ProxyActigraphyTransformer:
             return result
 
         except Exception as e:
-            logger.error(f"Failed to transform step data for {step_data.user_id}: {e}")
+            logger.exception(f"Failed to transform step data for {step_data.user_id}: {e}")
             raise
 
     def _prepare_step_data(
@@ -216,22 +216,23 @@ class ProxyActigraphyTransformer:
         timestamps: list[datetime]
     ) -> np.ndarray:
         """Prepare step count data for transformation.
-        
+
         Handles:
         - Resampling to minute-by-minute intervals
         - Padding/truncating to exactly 1 week (10,080 points)
         - Missing data imputation
         - Data validation
-        
+
         Args:
             step_counts: Raw step count values
             timestamps: Corresponding timestamps
-            
+
         Returns:
             Prepared numpy array of exactly 10,080 values
         """
         if len(step_counts) != len(timestamps):
-            raise ValueError("Step counts and timestamps must have same length")
+            msg = "Step counts and timestamps must have same length"
+            raise ValueError(msg)
 
         # Convert to numpy arrays for processing
         steps_array = np.array(step_counts, dtype=np.float32)
@@ -266,16 +267,16 @@ class ProxyActigraphyTransformer:
         proxy_vector: np.ndarray
     ) -> float:
         """Calculate data quality score for the transformation.
-        
+
         Quality factors:
         - Data completeness (non-zero values)
         - Variability (evidence of actual activity patterns)
         - Realistic patterns (circadian rhythm indicators)
-        
+
         Args:
             step_counts: Original step count data
             proxy_vector: Transformed proxy actigraphy
-            
+
         Returns:
             Quality score between 0.0 (poor) and 1.0 (excellent)
         """
@@ -362,11 +363,11 @@ def create_proxy_actigraphy_transformer(
     cache_enabled: bool = True
 ) -> ProxyActigraphyTransformer:
     """Factory function to create a ProxyActigraphyTransformer instance.
-    
+
     Args:
         reference_year: Year for NHANES reference statistics
         cache_enabled: Whether to enable transformation caching
-        
+
     Returns:
         Configured ProxyActigraphyTransformer instance
     """

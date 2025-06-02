@@ -359,8 +359,12 @@ class DependencyContainer:
 
         try:
             # Import the unified v1 router and individual modules for dependency injection
+            from clarity.api.v1 import (  # noqa: PLC0415
+                auth,
+                gemini_insights,
+                health_data,
+            )
             from clarity.api.v1 import router as v1_router  # noqa: PLC0415
-            from clarity.api.v1 import auth, health_data, gemini_insights  # noqa: PLC0415
 
             # Get shared dependencies
             auth_provider = self.get_auth_provider()
@@ -394,7 +398,7 @@ class DependencyContainer:
 
             # Include the unified v1 router (includes all endpoints: auth, health_data, pat_analysis, gemini_insights)
             app.include_router(v1_router)
-            
+
             logger.info("✅ API routes configured")
             logger.info("   • V1 API endpoints: /api/v1")
             logger.info("   • Authentication: /api/v1/auth")

@@ -6,7 +6,7 @@ enabling the core "chat with your actigraphy" vertical slice functionality.
 Endpoints:
 - POST /analyze - Submit actigraphy data for PAT analysis
 - GET /analysis/{analysis_id} - Retrieve analysis results
-- POST /analyze-step-data - Submit Apple HealthKit step data for analysis  
+- POST /analyze-step-data - Submit Apple HealthKit step data for analysis
 - GET /health - Service health check
 """
 
@@ -51,10 +51,11 @@ class StepDataRequest(BaseModel):
     )
 
     @validator('timestamps')
-    def validate_timestamps_match_steps(cls, v: list[datetime], values: dict[str, Any]) -> list[datetime]:
+    def validate_timestamps_match_steps(self, v: list[datetime], values: dict[str, Any]) -> list[datetime]:
         """Ensure timestamps match step count length."""
         if 'step_counts' in values and len(v) != len(values['step_counts']):
-            raise ValueError("Timestamps length must match step_counts length")
+            msg = "Timestamps length must match step_counts length"
+            raise ValueError(msg)
         return v
 
 
@@ -129,11 +130,11 @@ async def analyze_step_data(
     inference_engine: AsyncInferenceEngine = Depends(get_pat_inference_engine)
 ) -> AnalysisResponse:
     """Analyze Apple HealthKit step data using PAT model with proxy actigraphy transformation.
-    
+
     This endpoint is the core of the "chat with your actigraphy" vertical slice,
     enabling analysis of Apple HealthKit step data through:
     1. Proxy actigraphy transformation
-    2. PAT model inference 
+    2. PAT model inference
     3. Clinical insight generation
     """
     analysis_id = str(uuid.uuid4())
@@ -192,7 +193,7 @@ async def analyze_step_data(
         )
 
     except Exception as e:
-        logger.error(f"Step data analysis failed for {analysis_id}: {e!s}")
+        logger.exception(f"Step data analysis failed for {analysis_id}: {e!s}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail={
@@ -215,7 +216,7 @@ async def analyze_actigraphy_data(
     inference_engine: AsyncInferenceEngine = Depends(get_pat_inference_engine)
 ) -> AnalysisResponse:
     """Analyze preprocessed actigraphy data using the PAT model.
-    
+
     For direct actigraphy data that doesn't require proxy transformation.
     """
     analysis_id = str(uuid.uuid4())
@@ -260,7 +261,7 @@ async def analyze_actigraphy_data(
         )
 
     except Exception as e:
-        logger.error(f"Direct actigraphy analysis failed for {analysis_id}: {e!s}")
+        logger.exception(f"Direct actigraphy analysis failed for {analysis_id}: {e!s}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail={
@@ -282,7 +283,7 @@ async def get_analysis_results(
     user_id: str = Depends(get_current_user)
 ) -> AnalysisResponse:
     """Retrieve analysis results by analysis ID.
-    
+
     Note: This is a simplified implementation. In production, you would
     store analysis results in a database and retrieve them here.
     """
@@ -305,7 +306,7 @@ async def health_check(
     inference_engine: AsyncInferenceEngine = Depends(get_pat_inference_engine)
 ) -> HealthCheckResponse:
     """Comprehensive health check for the PAT analysis service.
-    
+
     Returns status of all components: inference engine, PAT model, caching, etc.
     """
     try:
@@ -331,7 +332,7 @@ async def health_check(
         )
 
     except Exception as e:
-        logger.error(f"Health check failed: {e!s}")
+        logger.exception(f"Health check failed: {e!s}")
         return HealthCheckResponse(
             service="PAT Analysis API",
             status="unhealthy",
@@ -380,7 +381,7 @@ async def get_model_info(
         }
 
     except Exception as e:
-        logger.error(f"Model info request failed: {e!s}")
+        logger.exception(f"Model info request failed: {e!s}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Unable to retrieve model information: {e!s}"

@@ -1,10 +1,10 @@
 """Asynchronous Inference Engine for PAT Model Service.
 
-This module provides optimized, production-ready inference capabilities for the 
+This module provides optimized, production-ready inference capabilities for the
 Pretrained Actigraphy Transformer (PAT) model, including:
 
 - Asynchronous request processing with batching
-- Redis caching for frequent requests  
+- Redis caching for frequent requests
 - Performance monitoring and metrics
 - Comprehensive error handling and fallback mechanisms
 - Resource optimization for concurrent requests
@@ -14,6 +14,7 @@ Design Pattern: Producer-Consumer with async queues for efficient batching.
 
 import asyncio
 from collections.abc import Awaitable, Callable
+import contextlib
 from dataclasses import dataclass
 from functools import wraps
 import hashlib
@@ -73,12 +74,12 @@ class BatchProcessingError(Exception):
 
 class InferenceCache:
     """Redis-like cache interface for inference results.
-    
+
     Note: This is a simplified in-memory implementation.
     In production, replace with actual Redis client.
     """
 
-    def __init__(self, ttl_seconds: int = DEFAULT_CACHE_TTL):
+    def __init__(self, ttl_seconds: int = DEFAULT_CACHE_TTL) -> None:
         self.cache: dict[str, tuple[Any, float]] = {}
         self.ttl_seconds = ttl_seconds
 
@@ -130,8 +131,7 @@ def performance_monitor(func: Callable[..., Awaitable[Any]]) -> Callable[..., Aw
     async def wrapper(*args: Any, **kwargs: Any) -> Any:
         start_time = time.perf_counter()
         try:
-            result = await func(*args, **kwargs)
-            return result
+            return await func(*args, **kwargs)
         finally:
             elapsed = (time.perf_counter() - start_time) * 1000
             logger.debug(f"{func.__name__} took {elapsed:.2f}ms")
@@ -140,7 +140,7 @@ def performance_monitor(func: Callable[..., Awaitable[Any]]) -> Callable[..., Aw
 
 class AsyncInferenceEngine:
     """Production-ready asynchronous inference engine for PAT model.
-    
+
     Features:
     - Efficient request batching with configurable timeouts
     - Redis-compatible caching with TTL support
@@ -156,7 +156,7 @@ class AsyncInferenceEngine:
         batch_timeout_ms: int = BATCH_TIMEOUT_MS,
         cache_ttl: int = DEFAULT_CACHE_TTL,
         max_concurrent: int = MAX_CONCURRENT_REQUESTS,
-    ):
+    ) -> None:
         self.pat_service = pat_service
         self.batch_size = min(batch_size, MAX_BATCH_SIZE)
         self.batch_timeout = batch_timeout_ms / 1000.0  # Convert to seconds
@@ -201,10 +201,8 @@ class AsyncInferenceEngine:
         self.is_running = False
         if self.batch_processor_task:
             self.batch_processor_task.cancel()
-            try:
+            with contextlib.suppress(asyncio.CancelledError):
                 await self.batch_processor_task
-            except asyncio.CancelledError:
-                pass
 
         logger.info("AsyncInferenceEngine stopped")
 
@@ -273,12 +271,12 @@ class AsyncInferenceEngine:
 
                 except Exception as e:
                     self.error_count += 1
-                    logger.error(f"Request {request.request_id} failed: {e}")
+                    logger.exception(f"Request {request.request_id} failed: {e}")
                     future.set_exception(e)
 
         except Exception as e:
             # Batch-level error - fail all requests
-            logger.error(f"Batch processing failed: {e}")
+            logger.exception(f"Batch processing failed: {e}")
             for _, future in requests:
                 if not future.cancelled() and not future.done():
                     future.set_exception(BatchProcessingError(f"Batch processing failed: {e}"))
@@ -334,7 +332,7 @@ class AsyncInferenceEngine:
             )
 
         except Exception as e:
-            logger.error(f"Inference failed for request {request.request_id}: {e}")
+            logger.exception(f"Inference failed for request {request.request_id}: {e}")
             raise
 
     async def _batch_processor(self) -> None:
@@ -383,20 +381,20 @@ class AsyncInferenceEngine:
                 logger.info("Batch processor cancelled")
                 break
             except Exception as e:
-                logger.error(f"Batch processor error: {e}")
+                logger.exception(f"Batch processor error: {e}")
                 await asyncio.sleep(0.1)  # Brief pause on error
 
         logger.info("Batch processor stopped")
 
     async def predict_async(self, request: InferenceRequest) -> InferenceResponse:
         """Submit inference request for async processing.
-        
+
         Args:
             request: Inference request with input data and options
-            
+
         Returns:
             Inference response with analysis and metrics
-            
+
         Raises:
             asyncio.TimeoutError: If request times out
             BatchProcessingError: If batch processing fails
@@ -417,11 +415,10 @@ class AsyncInferenceEngine:
 
             try:
                 # Wait for result with timeout
-                result = await asyncio.wait_for(
+                return await asyncio.wait_for(
                     result_future,
                     timeout=request.timeout_seconds
                 )
-                return result
 
             except TimeoutError:
                 logger.warning(f"Request {request.request_id} timed out")
@@ -437,14 +434,14 @@ class AsyncInferenceEngine:
         cache_enabled: bool = True
     ) -> InferenceResponse:
         """Convenient method for single prediction requests.
-        
+
         Args:
             input_data: Actigraphy input data
             request_id: Optional request identifier (auto-generated if None)
             priority: Request priority (higher = more important)
             timeout_seconds: Request timeout
             cache_enabled: Enable result caching
-            
+
         Returns:
             Inference response with analysis and metrics
         """

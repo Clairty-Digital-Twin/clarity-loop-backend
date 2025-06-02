@@ -27,7 +27,7 @@ class TestNHANESStatsLookup:
     """Test NHANES statistics lookup functionality."""
 
     @staticmethod
-    def test_lookup_norm_stats_default():
+    def test_lookup_norm_stats_default() -> None:
         """Test lookup with default parameters."""
         mean, std = lookup_norm_stats()
         assert isinstance(mean, float)
@@ -35,7 +35,7 @@ class TestNHANESStatsLookup:
         assert std > 0
 
     @staticmethod
-    def test_lookup_norm_stats_valid_year():
+    def test_lookup_norm_stats_valid_year() -> None:
         """Test lookup with valid year."""
         mean, std = lookup_norm_stats(year=2025)
         assert isinstance(mean, float)

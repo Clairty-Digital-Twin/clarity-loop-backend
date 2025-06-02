@@ -13,9 +13,8 @@ Reference:
 """
 
 import logging
-from typing import Dict, Tuple, Optional
+from typing import Dict, Tuple, Optional, Any
 from functools import lru_cache
-from datetime import datetime
 
 logger = logging.getLogger(__name__)
 
@@ -23,7 +22,7 @@ logger = logging.getLogger(__name__)
 # These values are derived from NHANES accelerometer data analysis
 # and adapted for square-root transformed step counts per minute
 
-NHANES_REFERENCE_STATS: Dict[int, Dict[str, float]] = {
+NHANES_REFERENCE_STATS: Dict[int, Dict[str, Any]] = {
     2023: {
         "mean": 2.34,     # Mean of sqrt(steps_per_minute) across US population
         "std": 1.87,      # Standard deviation for normalization
@@ -151,7 +150,7 @@ def get_available_sex_categories() -> list[str]:
     return list(SEX_STRATIFIED_STATS.keys())
 
 
-def get_reference_info(year: int = 2025) -> Dict[str, any]:
+def get_reference_info(year: int = 2025) -> Dict[str, Any]:
     """
     Get detailed information about a reference year's statistics.
     
@@ -171,7 +170,7 @@ def get_reference_info(year: int = 2025) -> Dict[str, any]:
 def validate_proxy_actigraphy_data(
     proxy_values: list[float], 
     year: int = 2025
-) -> Dict[str, any]:
+) -> Dict[str, Any]:
     """
     Validate proxy actigraphy data against NHANES reference ranges.
     

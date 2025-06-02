@@ -1,0 +1,99 @@
+# Task ID: 36
+# Title: Implement Complete Vertical Slice: Apple Watch to AI Insights
+# Status: pending
+# Dependencies: 33, 34, 35, 4, 13, 12, 15, 17
+# Priority: high
+# Description: Create an end-to-end flow that processes Apple Watch/HealthKit data through the PAT model for actigraphy analysis, generates personalized insights with Gemini AI, and delivers results via real-time WebSocket chat.
+# Details:
+1. Integrate Apple HealthKit API:
+   - Implement OAuth 2.0 for Apple HealthKit authorization
+   - Create data fetching service for relevant health metrics (activity, sleep, heart rate)
+   - Implement data normalization and preprocessing
+
+2. Connect to PAT (Pretrained Actigraphy Transformer) Model Service:
+   - Implement API client for the PAT model service (Task 33)
+   - Create data transformation layer to convert HealthKit data to PAT input format
+   - Implement error handling and retry mechanisms
+
+3. Integrate Vertex AI Gemini 2.5 Pro Service:
+   - Create service client for Gemini AI (Task 34)
+   - Develop prompt engineering pipeline to convert PAT analysis and health data into Gemini-ready format
+   - Implement response parsing and post-processing
+
+4. Implement Real-time WebSocket Chat Integration:
+   - Connect to WebSocket chat interface (Task 35)
+   - Develop message routing system to handle user queries
+   - Create context management system to maintain conversation state
+
+5. Develop End-to-end Pipeline:
+   - Create orchestration service to manage data flow between components
+   - Implement caching mechanism for frequent data requests
+   - Develop error handling and logging throughout the pipeline
+
+6. Optimize Performance:
+   - Implement asynchronous processing where possible
+   - Use background tasks for long-running operations
+   - Optimize database queries and implement connection pooling
+
+7. Ensure Security and Compliance:
+   - Implement end-to-end encryption for data in transit and at rest
+   - Ensure HIPAA compliance for data handling and storage
+   - Implement audit logging for all data access and transformations
+
+8. Create User Interface for Demo:
+   - Develop a simple web interface to showcase the end-to-end flow
+   - Implement real-time updates using WebSocket connection
+   - Create visualizations for health data and AI insights
+
+9. Implement Comprehensive Logging and Monitoring:
+   - Set up distributed tracing across all services
+   - Implement performance monitoring and alerting
+   - Create dashboards for key metrics and system health
+
+# Test Strategy:
+1. Unit Testing:
+   - Write unit tests for each component (HealthKit integration, PAT service client, Gemini AI client, WebSocket chat)
+   - Use mock objects to simulate dependencies and test edge cases
+
+2. Integration Testing:
+   - Develop integration tests for each pair of connected components
+   - Create test fixtures with sample health data
+   - Verify correct data flow and transformations between services
+
+3. End-to-end Testing:
+   - Implement automated end-to-end tests simulating complete user flow
+   - Use real Apple Watch data (with user consent) for testing
+   - Verify accuracy of PAT analysis and relevance of Gemini AI insights
+
+4. Performance Testing:
+   - Conduct load testing to ensure system can handle multiple concurrent users
+   - Measure and optimize response times for each step in the pipeline
+   - Identify and resolve any bottlenecks
+
+5. Security Testing:
+   - Perform penetration testing on the entire system
+   - Verify proper encryption of sensitive data
+   - Ensure compliance with HIPAA requirements
+
+6. User Acceptance Testing:
+   - Conduct beta testing with a small group of users
+   - Gather feedback on the accuracy of insights and user experience
+   - Iterate based on user feedback
+
+7. Compliance Verification:
+   - Review all data handling processes for HIPAA compliance
+   - Conduct an internal audit of security measures
+   - Prepare documentation for potential regulatory review
+
+8. Monitoring and Logging Verification:
+   - Verify that all critical events are properly logged
+   - Test alerting mechanisms for various failure scenarios
+   - Ensure traceability of requests through the entire system
+
+9. Cross-platform Testing:
+   - Test compatibility with different Apple Watch models and iOS versions
+   - Verify functionality across various web browsers for the demo interface
+
+10. Regression Testing:
+    - Develop a comprehensive regression test suite
+    - Automate regression tests to run after each significant change or update

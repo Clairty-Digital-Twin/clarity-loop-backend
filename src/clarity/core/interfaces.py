@@ -195,3 +195,19 @@ class IConfigProvider(ABC):
     @abstractmethod
     def get_middleware_config(self) -> "MiddlewareConfig":
         """Get environment-specific middleware configuration."""
+
+
+class IMLModelService(ABC):
+    """Abstract interface for machine learning model services.
+
+    Defines the contract for ML model operations following Clean Architecture.
+    Business logic layer depends on this abstraction, not concrete implementations.
+    """
+
+    @abstractmethod
+    async def load_model(self) -> None:
+        """Load the ML model asynchronously."""
+
+    @abstractmethod
+    async def health_check(self) -> dict[str, str | bool]:
+        """Check the health status of the ML model service."""

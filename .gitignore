@@ -156,7 +156,7 @@ docker-compose.override.yml
 # ===== CLOUD STORAGE =====
 uploads/
 downloads/
-storage/
+/storage/
 
 # ===== PROFILING & PERFORMANCE =====
 *.prof

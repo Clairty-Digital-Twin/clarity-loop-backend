@@ -34,10 +34,10 @@ from clarity.core.interfaces import IAuthProvider
 
 # Import Firebase auth for exception handling
 try:
-    from firebase_admin import auth as firebase_auth
+    import firebase_admin.auth  # type: ignore[import-untyped]
 except ImportError:
     # Handle case where firebase_admin is not available
-    firebase_auth = None
+    firebase_admin = None
 
 
 class TestFirebaseAuthProvider:
@@ -326,8 +326,8 @@ class TestFirebaseAuthProvider:
             patch("clarity.auth.firebase_auth.auth.get_user") as mock_get_user,
             patch.object(auth_provider, "_ensure_initialized", new_callable=AsyncMock),
         ):
-            if firebase_auth:
-                mock_get_user.side_effect = firebase_auth.UserNotFoundError(
+            if firebase_admin:
+                mock_get_user.side_effect = firebase_admin.auth.UserNotFoundError(
                     "User not found"
                 )
             else:
@@ -592,7 +592,7 @@ class TestFirebaseAuthMiddleware:
         request = Mock()
         request.url.path = "/health"
 
-        def call_next(_: Request) -> JSONResponse:
+        async def call_next(_: Request) -> JSONResponse:
             return JSONResponse({"status": "ok"})
 
         response = await middleware.dispatch(request, call_next)
@@ -617,7 +617,7 @@ class TestFirebaseAuthMiddleware:
         mock_auth_provider.verify_token.return_value = sample_user_info
         middleware.auth_provider = mock_auth_provider
 
-        def call_next(req: Request) -> JSONResponse:
+        async def call_next(req: Request) -> JSONResponse:
             # Verify user context was attached
             assert hasattr(req.state, "user")
             assert isinstance(req.state.user, UserContext)
@@ -638,7 +638,7 @@ class TestFirebaseAuthMiddleware:
         request.url.path = "/api/protected"
         request.headers = {}  # Missing Authorization header
 
-        def call_next(_: Request) -> JSONResponse:
+        async def call_next(_: Request) -> JSONResponse:
             return JSONResponse({"status": "should_not_reach"})
 
         response = await middleware.dispatch(request, call_next)
@@ -654,7 +654,8 @@ class TestFirebaseAuthMiddleware:
                 content = json.loads(str(content_bytes))
         else:
             # Fallback for different response types
-            content = response.json() if hasattr(response, "json") else {}
+            response_dict = response.__dict__
+            content = response_dict.get("content", {})
 
         assert content["error"] == "missing_token"
         assert "timestamp" in content

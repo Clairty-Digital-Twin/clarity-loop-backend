@@ -117,7 +117,7 @@ CacheStorage: TypeAlias = dict[CacheKey, CachedValue]
 class AsyncCallable(Protocol):
     """Protocol for async callable objects."""
 
-    async def __call__(self, *args: Any, **kwargs: Any) -> Any:
+    async def __call__(self, *args: object, **kwargs: object) -> object:
         """Async call method."""
         ...
 
@@ -125,11 +125,11 @@ class AsyncCallable(Protocol):
 class CacheProvider(Protocol):
     """Protocol for cache implementations."""
 
-    async def get(self, key: str) -> Any | None:
+    async def get(self, key: str) -> object | None:
         """Get value from cache."""
         ...
 
-    async def set(self, key: str, value: Any) -> None:
+    async def set(self, key: str, value: object) -> None:
         """Set value in cache."""
         ...
 
@@ -153,11 +153,11 @@ class ConfigProvider(Protocol):
 class LoggerProtocol(Protocol):
     """Protocol for logger objects."""
 
-    def debug(self, msg: str, *args: Any) -> None: ...
-    def info(self, msg: str, *args: Any) -> None: ...
-    def warning(self, msg: str, *args: Any) -> None: ...
-    def error(self, msg: str, *args: Any) -> None: ...
-    def exception(self, msg: str, *args: Any) -> None: ...
+    def debug(self, msg: str, *args: object) -> None: ...
+    def info(self, msg: str, *args: object) -> None: ...
+    def warning(self, msg: str, *args: object) -> None: ...
+    def error(self, msg: str, *args: object) -> None: ...
+    def exception(self, msg: str, *args: object) -> None: ...
 
 
 # ==============================================================================
@@ -246,12 +246,12 @@ AnalysisResult: TypeAlias = dict[
 # ==============================================================================
 
 
-def is_numeric_value(value: Any) -> bool:
+def is_numeric_value(value: object) -> bool:
     """Type guard for numeric values."""
     return isinstance(value, (int, float, np.integer, np.floating))
 
 
-def is_step_count_list(value: Any) -> bool:
+def is_step_count_list(value: object) -> bool:
     """Type guard for step count lists."""
     return (
         isinstance(value, list)
@@ -260,12 +260,12 @@ def is_step_count_list(value: Any) -> bool:
     )
 
 
-def is_quality_score(value: Any) -> bool:
+def is_quality_score(value: object) -> bool:
     """Type guard for quality scores (0.0 to 1.0)."""
     return isinstance(value, (int, float)) and 0.0 <= value <= 1.0
 
 
-def is_timestamp_list(value: Any) -> bool:
+def is_timestamp_list(value: object) -> bool:
     """Type guard for timestamp lists."""
     return (
         isinstance(value, list)

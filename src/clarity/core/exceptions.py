@@ -46,7 +46,7 @@ class DataValidationError(ClarityBaseError):
     """Raised when data validation fails."""
 
     def __init__(
-        self, message: str, *, field_name: str | None = None, **kwargs: Any
+        self, message: str, *, field_name: str | None = None, **kwargs: dict[str, Any]
     ) -> None:
         super().__init__(message, error_code="DATA_VALIDATION_ERROR", **kwargs)
         self.field_name = field_name
@@ -104,7 +104,7 @@ class InferenceError(ModelError):
     """Raised when model inference fails."""
 
     def __init__(
-        self, message: str, *, request_id: str | None = None, **kwargs: Any
+        self, message: str, *, request_id: str | None = None, **kwargs: dict[str, Any]
     ) -> None:
         super().__init__(message, error_code="INFERENCE_ERROR", **kwargs)
         self.request_id = request_id
@@ -127,7 +127,7 @@ class InferenceTimeoutError(InferenceError):
 class NHANESStatsError(ClarityBaseError):
     """Raised when NHANES statistics operations fail."""
 
-    def __init__(self, message: str, **kwargs: Any) -> None:
+    def __init__(self, message: str, **kwargs: dict[str, Any]) -> None:
         super().__init__(message, error_code="NHANES_STATS_ERROR", **kwargs)
 
 
@@ -207,14 +207,14 @@ class ServiceUnavailableError(ServiceError):
 class AuthenticationError(ClarityBaseError):
     """Base class for authentication errors."""
 
-    def __init__(self, message: str, **kwargs: Any) -> None:
+    def __init__(self, message: str, **kwargs: dict[str, Any]) -> None:
         super().__init__(message, error_code="AUTHENTICATION_ERROR", **kwargs)
 
 
 class AuthorizationError(ClarityBaseError):
     """Base class for authorization errors."""
 
-    def __init__(self, message: str, **kwargs: Any) -> None:
+    def __init__(self, message: str, **kwargs: dict[str, Any]) -> None:
         super().__init__(message, error_code="AUTHORIZATION_ERROR", **kwargs)
 
 
@@ -248,7 +248,7 @@ class ConfigurationError(ClarityBaseError):
     """Raised when configuration is invalid or missing."""
 
     def __init__(
-        self, message: str, *, config_key: str | None = None, **kwargs: Any
+        self, message: str, *, config_key: str | None = None, **kwargs: dict[str, Any]
     ) -> None:
         super().__init__(message, error_code="CONFIGURATION_ERROR", **kwargs)
         self.config_key = config_key
@@ -265,7 +265,7 @@ class MissingConfigurationError(ConfigurationError):
 class InvalidConfigurationError(ConfigurationError):
     """Raised when configuration value is invalid."""
 
-    def __init__(self, config_key: str, value: Any, reason: str | None = None) -> None:
+    def __init__(self, config_key: str, value: object, reason: str | None = None) -> None:
         message = f"Invalid configuration value for {config_key}: {value}"
         if reason:
             message += f" ({reason})"
@@ -282,7 +282,7 @@ class InvalidConfigurationError(ConfigurationError):
 class CacheError(ClarityBaseError):
     """Base class for cache-related errors."""
 
-    def __init__(self, message: str, **kwargs: Any) -> None:
+    def __init__(self, message: str, **kwargs: dict[str, Any]) -> None:
         super().__init__(message, error_code="CACHE_ERROR", **kwargs)
 
 
@@ -302,7 +302,7 @@ class CacheKeyError(CacheError):
 
 
 def create_validation_error(
-    field_name: str, expected_type: str, actual_value: Any
+    field_name: str, expected_type: str, actual_value: object
 ) -> DataValidationError:
     """Create a standardized validation error for type mismatches."""
     actual_type = type(actual_value).__name__
@@ -311,7 +311,7 @@ def create_validation_error(
 
 
 def create_numeric_validation_error(
-    field_name: str, value: Any
+    field_name: str, value: object
 ) -> InvalidNHANESStatsDataError:
     """Create a validation error for non-numeric values where numbers are expected."""
     actual_type = type(value).__name__

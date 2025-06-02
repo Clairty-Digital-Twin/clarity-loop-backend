@@ -164,6 +164,21 @@ def _raise_account_disabled_error(request_id: str, user_id: str) -> None:
     )
 
 
+def _raise_access_denied_error(user_id: str, current_user_id: str, request_id: str) -> None:
+    """Raise access denied error for insight history."""
+    raise create_error_response(
+        error_code="ACCESS_DENIED",
+        message="Cannot access another user's insight history",
+        request_id=request_id,
+        status_code=status.HTTP_403_FORBIDDEN,
+        details={
+            "requested_user_id": user_id,
+            "current_user_id": current_user_id,
+        },
+        suggested_action="check_permissions",
+    )
+
+
 def create_error_response(
     error_code: str,
     message: str,
@@ -380,17 +395,7 @@ async def get_insight_history(
 
         # Validate user can access this history
         if current_user.user_id != user_id:
-            raise create_error_response(
-                error_code="ACCESS_DENIED",
-                message="Cannot access another user's insight history",
-                request_id=request_id,
-                status_code=status.HTTP_403_FORBIDDEN,
-                details={
-                    "requested_user_id": user_id,
-                    "current_user_id": current_user.user_id,
-                },
-                suggested_action="check_permissions",
-            )
+            _raise_access_denied_error(user_id, current_user.user_id, request_id)
 
         # TODO: Implement history retrieval from database
         # For now, return a placeholder response

@@ -575,34 +575,23 @@ __No other backend service requires modification.__
 
 ## 9. Run it locally (developer cheat-sheet)
 
-```bash
-# Boot local Firestore emulator, Pub/Sub emulator (optional)
-gcloud emulators pubsub start --project test-proj &
-gcloud emulators firestore start --host-port=localhost:8080 &
-export PUBSUB_EMULATOR_HOST=localhost:8085
-export FIRESTORE_EMULATOR_HOST=localhost:8080
+    # Boot local Firestore emulator, Pub/Sub emulator (optional)
+    gcloud emulators pubsub start --project test-proj &
+    gcloud emulators firestore start --host-port=localhost:8080 &
+    export PUBSUB_EMULATOR_HOST=localhost:8085
+    export FIRESTORE_EMULATOR_HOST=localhost:8080
 
-```
+    # Start FastAPI server
+    uvicorn clarity.web.main:app --reload
 
-```bash
-# Start FastAPI server
-uvicorn clarity.web.main:app --reload
-```
+    # Trigger stub upload
+    curl -X POST http://localhost:8000/health-data/stub
 
-```bash
-# Trigger stub upload
-curl -X POST http://localhost:8000/health-data/stub
-```
+    # Watch logs of analysis worker (if running)
+    docker compose logs -f analysis
 
-```bash
-# Watch logs of analysis worker (if running)
-docker compose logs -f analysis
-```
-
-```bash
-# View Firestore document
-python scripts/print_firestore_insights.py | jq
-```
+    # View Firestore document
+    python scripts/print_firestore_insights.py | jq
 
 ### Deliverable checklist
 

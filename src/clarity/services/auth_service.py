@@ -12,7 +12,6 @@ import uuid
 
 from firebase_admin import auth
 
-from clarity.auth.models import UserRole
 from clarity.core.interfaces import IAuthProvider
 from clarity.models.auth import (
     AuthProvider,
@@ -21,6 +20,7 @@ from clarity.models.auth import (
     TokenResponse,
     UserLoginRequest,
     UserRegistrationRequest,
+    UserRole,
     UserSessionResponse,
     UserStatus,
 )

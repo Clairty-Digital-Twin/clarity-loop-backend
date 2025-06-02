@@ -10,8 +10,10 @@ from clarity.auth.firebase_auth import (
     require_permission,
     require_role,
 )
-from clarity.auth.models import (
-    AuthError,
+from clarity.models.auth import (
+    AuthErrorException as AuthError,
+)
+from clarity.models.auth import (
     Permission,
     TokenInfo,
     UserContext,

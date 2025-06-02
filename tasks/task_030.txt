@@ -1,0 +1,92 @@
+# Task ID: 30
+# Title: Update Health Data API Endpoints with Service Layer Integration
+# Status: pending
+# Dependencies: 27, 28, 29
+# Priority: high
+# Description: Update the health_data.py API endpoints to integrate with the service layer, implement proper error handling, and ensure secure authentication for all health data operations.
+# Details:
+1. Refactor the health_data.py router module to use the new service layer:
+   - Import the health_data_service module and its functions
+   - Replace direct database calls with service layer function calls
+   - Implement proper dependency injection for the service layer
+
+2. Update all API endpoint handlers to use async/await pattern:
+   - GET /health-data/{user_id} - Retrieve all health data for a user
+   - GET /health-data/{user_id}/{data_id} - Retrieve specific health data entry
+   - POST /health-data/{user_id} - Create new health data entry
+   - PUT /health-data/{user_id}/{data_id} - Update existing health data
+   - DELETE /health-data/{user_id}/{data_id} - Delete health data entry
+
+3. Implement comprehensive error handling:
+   - Add try/except blocks around service calls
+   - Use the system-wide error handling mechanisms
+   - Map service exceptions to appropriate HTTP status codes
+   - Return standardized error response formats
+   - Handle validation errors, not found errors, and permission errors
+
+4. Integrate Firebase authentication middleware:
+   - Apply the authentication middleware to all endpoints
+   - Extract user information from the authenticated request
+   - Implement user-based access control for health data
+   - Ensure user can only access their own data
+
+5. Add request validation:
+   - Use Pydantic models for request body validation
+   - Implement path parameter validation
+   - Add query parameter validation where needed
+
+6. Implement response formatting:
+   - Use consistent response structure
+   - Include appropriate HTTP status codes
+   - Add pagination for list endpoints
+   - Include metadata in responses (timestamps, version info)
+
+7. Add logging for all API operations:
+   - Log request information (sanitized)
+   - Log response status
+   - Include performance metrics
+   - Log any errors or exceptions
+
+8. Update API documentation:
+   - Add detailed docstrings for all endpoint functions
+   - Update OpenAPI schema with examples
+   - Document error responses and status codes
+
+# Test Strategy:
+1. Unit Testing:
+   - Write unit tests for each API endpoint using pytest
+   - Mock the service layer to isolate API functionality
+   - Test successful responses for each endpoint
+   - Test error handling for various error conditions
+   - Verify correct status codes are returned
+   - Test validation of request bodies and parameters
+
+2. Integration Testing:
+   - Test API endpoints with actual service layer integration
+   - Verify data flows correctly from API to service to database
+   - Test authentication and authorization scenarios
+   - Verify error propagation from service to API response
+
+3. Authentication Testing:
+   - Test endpoints with valid authentication tokens
+   - Test endpoints with invalid or expired tokens
+   - Test endpoints with missing authentication
+   - Verify proper user-based access control
+
+4. Performance Testing:
+   - Measure response times for each endpoint
+   - Test endpoints under load conditions
+   - Verify proper handling of concurrent requests
+
+5. Manual Testing:
+   - Use Swagger UI to manually test each endpoint
+   - Verify responses match expected format
+   - Test with various input combinations
+
+6. Regression Testing:
+   - Ensure existing functionality continues to work
+   - Verify no regressions in error handling or validation
+
+7. Documentation Verification:
+   - Verify API documentation is accurate and complete
+   - Check that examples work as documented

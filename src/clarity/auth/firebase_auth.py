@@ -30,8 +30,9 @@ from firebase_admin import auth, credentials
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.responses import JSONResponse
 
-from clarity.auth.models import AuthError, Permission, UserContext, UserRole
 from clarity.core.interfaces import IAuthProvider
+from clarity.models.auth import AuthErrorException as AuthError
+from clarity.models.auth import Permission, UserContext, UserRole
 
 if TYPE_CHECKING:
     from clarity.core.config import MiddlewareConfig

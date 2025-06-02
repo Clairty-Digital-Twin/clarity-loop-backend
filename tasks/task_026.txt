@@ -1,0 +1,63 @@
+# Task ID: 26
+# Title: Create FastAPI Application Entry Point
+# Status: done
+# Dependencies: 2, 25
+# Priority: high
+# Description: Develop the main.py file that serves as the entry point for the FastAPI application with proper initialization, CORS configuration, middleware setup, health check endpoint, and router inclusion.
+# Details:
+1. Create main.py file in the root directory of the application
+2. Import necessary FastAPI modules and dependencies
+3. Initialize the FastAPI application with appropriate configuration parameters
+4. Configure CORS middleware with proper origins, methods, and headers
+   - Allow specific origins or use wildcard for development
+   - Configure allowed methods (GET, POST, PUT, DELETE, etc.)
+   - Set appropriate headers and credentials policy
+5. Implement custom middleware for:
+   - Request/response logging
+   - Authentication verification
+   - Performance monitoring
+   - Error handling
+6. Create a health check endpoint (/health) that returns:
+   - Application status
+   - Version information
+   - Basic system metrics
+   - Database connection status
+7. Set up router inclusion for all application modules:
+   - Patient management routes
+   - Authentication routes
+   - Analytics routes
+   - Integration routes
+   - Admin routes
+8. Implement proper application startup and shutdown event handlers
+9. Configure application-wide exception handlers
+10. Set up dependency injection system
+11. Implement environment-specific configuration loading
+12. Add documentation configuration (Swagger UI, ReDoc)
+13. Configure rate limiting and security headers
+
+# Test Strategy:
+1. Unit tests:
+   - Test FastAPI application initialization with different configurations
+   - Verify CORS middleware configuration works as expected
+   - Test custom middleware functionality
+   - Validate health check endpoint returns correct information
+   - Ensure all routers are properly included
+
+2. Integration tests:
+   - Test application startup and shutdown events
+   - Verify middleware chain processes requests correctly
+   - Test health check endpoint with database connection
+   - Validate router inclusion by making sample requests to different endpoints
+   - Test exception handling for various error scenarios
+
+3. Manual testing:
+   - Start the application using uvicorn and verify it runs without errors
+   - Access the health check endpoint and confirm proper response
+   - Check Swagger UI documentation at /docs endpoint
+   - Verify CORS behavior with cross-origin requests
+   - Test rate limiting by making rapid successive requests
+
+4. Performance testing:
+   - Measure application startup time
+   - Test middleware overhead on request processing
+   - Benchmark health check endpoint response time

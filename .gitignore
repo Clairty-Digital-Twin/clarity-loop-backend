@@ -249,7 +249,6 @@ celerybeat.pid
 
 # Added by Claude Task Master
 # Logs
-logs
 dev-debug.log
 # Dependency directories
 # Environment variables
@@ -261,7 +260,4 @@ dev-debug.log
 *.njsproj
 *.sln
 *.sw?
-# OS specific
-# Task files
-tasks.json
-tasks/ 
+# OS specific 

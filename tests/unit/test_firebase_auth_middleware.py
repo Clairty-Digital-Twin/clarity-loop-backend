@@ -250,7 +250,7 @@ class TestFirebaseAuthProvider:
     ) -> None:
         """Test automatic cleanup of expired cache entries."""
         # Set short TTL for testing - using type ignore for test access
-        auth_provider._cache_ttl = 0.1  # type: ignore[attr-defined]  # noqa: SLF001
+        auth_provider._cache_ttl = 1  # type: ignore[attr-defined]  # noqa: SLF001
 
         with (
             patch("clarity.auth.firebase_auth.auth.verify_id_token") as mock_verify,
@@ -265,7 +265,7 @@ class TestFirebaseAuthProvider:
             assert len(auth_provider._token_cache) == 1  # noqa: SLF001
 
             # Wait for expiration
-            await asyncio.sleep(0.2)
+            await asyncio.sleep(1.1)  # Wait slightly longer than TTL
 
             # Next verification should clean up expired entries
             await auth_provider.verify_token("new_token")
@@ -729,15 +729,15 @@ class TestIntegrationFirebaseAuth:
 
         # Define routes AFTER middleware registration
         @app.get("/health")
-        def health() -> dict[str, str]:  # noqa: F841
+        def health() -> dict[str, str]:
             return {"status": "healthy"}
 
         @app.get("/public")
-        def public_endpoint() -> dict[str, str]:  # noqa: F841
+        def public_endpoint() -> dict[str, str]:
             return {"message": "public access"}
 
         @app.get("/protected")
-        def protected_endpoint(request: Request) -> dict[str, str]:  # noqa: F841
+        def protected_endpoint(request: Request) -> dict[str, str]:
             user = request.state.user
             return {"message": f"Hello {user.email}"}
 

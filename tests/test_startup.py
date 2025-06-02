@@ -13,8 +13,7 @@ from fastapi import FastAPI
 import pytest
 
 from clarity.core.config import get_settings
-from clarity.core.container import get_container
-from clarity.main import create_application
+from clarity.core.container import create_application, get_container
 
 if TYPE_CHECKING:
     from clarity.core.interfaces import IHealthDataRepository

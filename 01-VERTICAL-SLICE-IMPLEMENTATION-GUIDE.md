@@ -191,20 +191,32 @@ async def chat_websocket(websocket: WebSocket, user_id: str):
 
 **Goal**: Advanced sleep/activity analysis using PAT models
 
+#### Pre-trained Model Weights
+
+The official Dartmouth PAT weights are stored in `/models/`:
+
+- `PAT-L_29k_weights.h5` (Large) - Best accuracy, research use
+- `PAT-M_29k_weights.h5` (Medium) - Production default  
+- `PAT-S_29k_weights.h5` (Small) - Real-time inference
+
 #### Checklist
 
-- [ ] Create `src/ml/actigraphy_transformer.py` - PAT integration
-- [ ] Create `src/ml/preprocessing.py` - Data normalization
+- [ ] Create `src/ml/actigraphy_transformer.py` - PAT integration with model loading
+- [ ] Create `src/ml/preprocessing.py` - Data normalization (NHANES-compatible)
 - [ ] Create `src/services/actigraphy_service.py` - ML orchestration
-- [ ] Implement z-score normalization pipeline
+- [ ] Implement z-score normalization pipeline (per-year standardization)
 - [ ] Verify: Sleep stage classification and circadian analysis
+- [ ] Load weights from `/models/PAT-M_29k_weights.h5` for production
 
 #### Implementation Pattern
 
 ```python
 class ActigraphyProcessor:
-    def __init__(self):
-        self.pat_model = ActigraphyTransformer.load_pretrained()
+    def __init__(self, model_size: str = "medium"):
+        # Load PAT weights from /models directory
+        self.model_size = model_size
+        self.model_path = f"models/PAT-{model_size[0].upper()}_29k_weights.h5"
+        self.pat_model = ActigraphyTransformer.load_from_weights(self.model_path)
         self.preprocessor = HealthDataPreprocessor()
     
     async def process_sleep_analysis(self, user_id: str, days: int = 7):

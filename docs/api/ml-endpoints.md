@@ -2,6 +2,35 @@
 
 Comprehensive API documentation for machine learning endpoints in the Clarity Loop Backend, featuring Pretrained Actigraphy Transformer (PAT) integration and AI-powered health insights.
 
+## Model Weights & Deployment
+
+### PAT Model Weights Location
+
+The Pretrained Actigraphy Transformer models are stored in the project's `/models` directory:
+
+```
+models/
+├── PAT-L_29k_weights.h5    # Large model (7.6MB) - Best accuracy
+├── PAT-M_29k_weights.h5    # Medium model (3.8MB) - Balanced performance
+└── PAT-S_29k_weights.h5    # Small model (1.1MB) - Fastest inference
+```
+
+### Model Selection Criteria
+
+| Model Size | Parameters | Inference Time | Best Use Case |
+|------------|------------|----------------|---------------|
+| **PAT-L**  | 1.99M      | ~800ms        | Research, batch processing |
+| **PAT-M**  | 1.00M      | ~450ms        | Production default |
+| **PAT-S**  | 285K       | ~200ms        | Real-time, mobile |
+
+### Deployment Pipeline
+
+1. **Development**: Models loaded from `/models/*.h5` files
+2. **Production**: Models deployed to Google Cloud AI Platform
+3. **Fallback**: Local model serving via TensorFlow Serving
+
+**Note**: The models in `/models/` are the official Dartmouth College weights (29,307 participants) as referenced in the PAT research paper (arXiv:2411.15240).
+
 ## Overview
 
 The ML API provides endpoints for health data analysis, actigraphy feature extraction, and AI-powered insight generation. All endpoints follow RESTful principles and support both synchronous and asynchronous processing patterns.

@@ -19,7 +19,9 @@ sys.path.insert(0, str(src_path))
 
 from typing import TYPE_CHECKING  # noqa: E402
 
-from clarity.main import get_application  # type: ignore[import-untyped]  # noqa: E402
+from clarity.main import (
+    get_app as clarity_get_app,  # type: ignore[import-untyped]
+)
 
 if TYPE_CHECKING:
     from fastapi import FastAPI
@@ -27,7 +29,7 @@ if TYPE_CHECKING:
 
 def get_app() -> "FastAPI":
     """Get the FastAPI app instance (clarity.main handles lazy initialization)."""
-    return get_application()  # type: ignore[no-any-return]
+    return clarity_get_app()  # type: ignore[no-any-return]
 
 
 # Expose app for uvicorn

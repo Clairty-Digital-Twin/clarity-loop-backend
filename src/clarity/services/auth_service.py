@@ -268,13 +268,11 @@ class AuthenticationService:
             if user_data is None:
                 _raise_user_not_found_in_db()
 
-            # Type narrowing: user_data is guaranteed to be non-None after exception check
-            user_data: dict[str, Any] = cast("dict[str, Any]", user_data)  # Safe after None check above
-
+            # user_data is guaranteed to be non-None after exception check above
             # Check email verification requirement
             if (
                 not user_record.email_verified  # type: ignore[misc]
-                and user_data.get("status") != UserStatus.ACTIVE.value
+                and user_data.get("status") != UserStatus.ACTIVE.value  # type: ignore[union-attr]
             ):
                 logger.warning("Login attempt with unverified email: %s", request.email)
                 # For development, we'll allow unverified emails
@@ -283,7 +281,7 @@ class AuthenticationService:
             login_time = datetime.now(UTC)
             update_data = {
                 "last_login": login_time,
-                "login_count": user_data.get("login_count", 0) + 1,
+                "login_count": user_data.get("login_count", 0) + 1,  # type: ignore[union-attr]
                 "updated_at": login_time,
             }
 
@@ -295,7 +293,7 @@ class AuthenticationService:
             )
 
             # Check if MFA is enabled
-            mfa_enabled = user_data.get("mfa_enabled", False)
+            mfa_enabled = user_data.get("mfa_enabled", False)  # type: ignore[union-attr]
             if mfa_enabled:
                 # Generate temporary session token for MFA completion
                 mfa_session_token = secrets.token_urlsafe(32)
@@ -484,7 +482,7 @@ class AuthenticationService:
         if not email_value or not isinstance(email_value, str):
             error_msg = "Invalid email from Firebase user record"
             raise ValueError(error_msg)
-        
+
         return UserSessionResponse(
             user_id=uuid.UUID(user_record.uid),  # type: ignore[misc]
             email=email_value,

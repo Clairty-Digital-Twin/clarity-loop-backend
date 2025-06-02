@@ -85,8 +85,8 @@ lint: ## 🔍 Run all linting checks
 	@echo "$(BLUE)Running linting checks...$(RESET)"
 	ruff check .
 	black --check .
-	mypy clarity/
-	bandit -r clarity/
+	mypy src/clarity/
+	bandit -r src/clarity/
 	safety scan
 	npm run lint:md
 
@@ -103,11 +103,11 @@ format: ## 🎨 Format code with Black and Ruff
 	@echo "$(GREEN)✅ Code formatted!$(RESET)"
 
 typecheck: ## 🔍 Run type checking with MyPy
-	mypy clarity/ --strict
+	mypy src/clarity/ --strict
 
 security: ## 🛡️ Run security checks
 	@echo "$(BLUE)Running security checks...$(RESET)"
-	bandit -r clarity/ -f json -o reports/bandit-report.json
+	bandit -r src/clarity/ -f json -o reports/bandit-report.json
 	safety scan --save-as json reports/safety-report.json
 	@echo "$(GREEN)✅ Security checks complete!$(RESET)"
 
@@ -233,7 +233,7 @@ ci-test: ## 🤖 Run tests for CI
 ci-lint: ## 🤖 Run linting for CI
 	ruff check . --output-format=github
 	black --check .
-	mypy clarity/
+	mypy src/clarity/
 
 # ===== PERFORMANCE =====
 

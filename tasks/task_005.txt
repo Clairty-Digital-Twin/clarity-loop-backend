@@ -1,6 +1,6 @@
 # Task ID: 5
 # Title: Develop Patient Digital Twin System Core
-# Status: pending
+# Status: done
 # Dependencies: 3, 4
 # Priority: high
 # Description: Create the core structure for the Patient Digital Twin System, including data models and basic operations.

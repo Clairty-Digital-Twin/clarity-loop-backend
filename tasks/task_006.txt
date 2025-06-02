@@ -1,6 +1,6 @@
 # Task ID: 6
 # Title: Implement Clinical Data Management System
-# Status: pending
+# Status: done
 # Dependencies: 3, 4, 5
 # Priority: high
 # Description: Develop the Clinical Data Management System with support for structured and unstructured data ingestion.

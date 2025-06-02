@@ -198,7 +198,7 @@ Create a comprehensive test suite that includes: 1) Unit tests for all component
 ### Details:
 Complete a full vertical slice implementation that includes: 1) At least one fully functional API endpoint, 2) Complete preprocessing pipeline for that endpoint, 3) Working inference with the PAT model, 4) Proper error handling and validation, 5) Authentication integration, 6) Comprehensive tests for the entire slice, 7) Documentation for the implemented endpoint, 8) Performance optimization for the critical path.
 
-## 11. Implement proxy actigraphy transformation engine [in-progress]
+## 11. Implement proxy actigraphy transformation engine [done]
 ### Dependencies: 33.2
 ### Description: Create a specialized module to transform Apple HealthKit step count data into proxy actigraphy signals compatible with the PAT model.
 ### Details:
@@ -258,7 +258,7 @@ def steps_to_movement_proxy(steps_per_min):
 ### Details:
 Update the FastAPI endpoints to: 1) Accept minute-by-minute step count data from Apple HealthKit, 2) Validate the input data format and completeness, 3) Process the step data through the proxy actigraphy transformation, 4) Feed the transformed data into the PAT model, 5) Return analysis results in the expected format, 6) Implement proper error handling for invalid or incomplete step data, 7) Add documentation for the updated endpoints.
 
-## 13. Create NHANES reference statistics module [pending]
+## 13. Create NHANES reference statistics module [in-progress]
 ### Dependencies: 33.11
 ### Description: Develop a module to manage and provide NHANES reference statistics for z-score normalization of proxy actigraphy data.
 ### Details:

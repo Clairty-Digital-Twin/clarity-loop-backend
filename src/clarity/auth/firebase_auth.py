@@ -239,11 +239,12 @@ class FirebaseAuthProvider(IAuthProvider):
                 return None
 
             # Check if cache entry is still valid
-            if time.time() - cache_entry["timestamp"] > self._cache_ttl:  # type: ignore[misc]
+            if time.time() - cache_entry["timestamp"] > self._cache_ttl:
                 del self._token_cache[token]
                 return None
 
-            return cache_entry["user_info"]  # type: ignore[misc]
+            user_info: dict[str, Any] = cache_entry["user_info"]
+            return user_info
 
     async def _cache_user(self, token: str, user_info: dict[str, Any]) -> None:
         """Cache user info for token."""
@@ -459,7 +460,8 @@ def get_current_user(request: Request) -> UserContext:
     if not hasattr(request.state, "user"):
         msg = "User not authenticated. Authentication middleware not applied?"
         raise HTTPException(status_code=401, detail=msg)
-    return request.state.user
+    user: UserContext = request.state.user
+    return user
 
 
 def require_auth(

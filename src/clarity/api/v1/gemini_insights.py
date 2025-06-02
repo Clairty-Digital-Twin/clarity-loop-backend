@@ -264,7 +264,7 @@ async def generate_insights(
     except Exception as e:
         logger.exception(
             "💥 Failed to generate insights for user %s (request: %s): %s",
-            current_user.get("uid", "unknown"),
+            current_user.user_id,
             request_id,
             str(e)
         )

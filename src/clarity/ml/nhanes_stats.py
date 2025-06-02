@@ -12,9 +12,9 @@ Reference:
 - Age and demographic stratified reference values
 """
 
-import logging
-from typing import Dict, Tuple, Optional, Any
 from functools import lru_cache
+import logging
+from typing import Any, Dict, Optional, Tuple
 
 logger = logging.getLogger(__name__)
 
@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 # These values are derived from NHANES accelerometer data analysis
 # and adapted for square-root transformed step counts per minute
 
-NHANES_REFERENCE_STATS: Dict[int, Dict[str, Any]] = {
+NHANES_REFERENCE_STATS: dict[int, dict[str, Any]] = {
     2023: {
         "mean": 2.34,     # Mean of sqrt(steps_per_minute) across US population
         "std": 1.87,      # Standard deviation for normalization
@@ -34,7 +34,7 @@ NHANES_REFERENCE_STATS: Dict[int, Dict[str, Any]] = {
         "mean": 2.41,     # Updated values with more recent population data
         "std": 1.91,
         "sample_size": 13421,
-        "age_range": "18-85", 
+        "age_range": "18-85",
         "data_source": "NHANES 2003-2006 + CDC step count adjustments"
     },
     2025: {
@@ -47,9 +47,9 @@ NHANES_REFERENCE_STATS: Dict[int, Dict[str, Any]] = {
 }
 
 # Age-stratified reference statistics for more precise normalization
-AGE_STRATIFIED_STATS: Dict[str, Dict[str, float]] = {
+AGE_STRATIFIED_STATS: dict[str, dict[str, float]] = {
     "18-29": {"mean": 2.87, "std": 2.15},
-    "30-39": {"mean": 2.54, "std": 1.98}, 
+    "30-39": {"mean": 2.54, "std": 1.98},
     "40-49": {"mean": 2.31, "std": 1.82},
     "50-59": {"mean": 2.18, "std": 1.71},
     "60-69": {"mean": 1.94, "std": 1.58},
@@ -57,7 +57,7 @@ AGE_STRATIFIED_STATS: Dict[str, Dict[str, float]] = {
 }
 
 # Sex-stratified reference statistics
-SEX_STRATIFIED_STATS: Dict[str, Dict[str, float]] = {
+SEX_STRATIFIED_STATS: dict[str, dict[str, float]] = {
     "male": {"mean": 2.52, "std": 2.01},
     "female": {"mean": 2.26, "std": 1.78},
     "other": {"mean": 2.38, "std": 1.89}  # Default to overall population
@@ -66,17 +66,15 @@ SEX_STRATIFIED_STATS: Dict[str, Dict[str, float]] = {
 
 class NHANESStatsError(Exception):
     """Exception raised for NHANES statistics lookup errors."""
-    pass
 
 
 @lru_cache(maxsize=128)
 def lookup_norm_stats(
-    year: int = 2025, 
-    age_group: Optional[str] = None,
-    sex: Optional[str] = None
-) -> Tuple[float, float]:
-    """
-    Look up NHANES reference statistics for proxy actigraphy normalization.
+    year: int = 2025,
+    age_group: str | None = None,
+    sex: str | None = None
+) -> tuple[float, float]:
+    """Look up NHANES reference statistics for proxy actigraphy normalization.
     
     Args:
         year: Reference year for statistics (2023-2025 supported)
@@ -98,10 +96,10 @@ def lookup_norm_stats(
         if year not in NHANES_REFERENCE_STATS:
             logger.warning(f"Year {year} not in reference data, using 2025 default")
             year = 2025
-            
+
         base_stats = NHANES_REFERENCE_STATS[year]
         mean, std = base_stats["mean"], base_stats["std"]
-        
+
         # Apply age stratification if requested
         if age_group:
             if age_group not in AGE_STRATIFIED_STATS:
@@ -111,8 +109,8 @@ def lookup_norm_stats(
                 # Blend with base stats (80% age-specific, 20% population)
                 mean = 0.8 * age_stats["mean"] + 0.2 * mean
                 std = 0.8 * age_stats["std"] + 0.2 * std
-                
-        # Apply sex stratification if requested  
+
+        # Apply sex stratification if requested
         if sex:
             sex_lower = sex.lower()
             if sex_lower not in SEX_STRATIFIED_STATS:
@@ -122,14 +120,14 @@ def lookup_norm_stats(
                 # Blend with existing stats (70% sex-specific, 30% existing)
                 mean = 0.7 * sex_stats["mean"] + 0.3 * mean
                 std = 0.7 * sex_stats["std"] + 0.3 * std
-                
+
         logger.debug(
             f"NHANES stats lookup: year={year}, age={age_group}, sex={sex} "
             f"-> mean={mean:.3f}, std={std:.3f}"
         )
-        
+
         return mean, std
-        
+
     except Exception as e:
         logger.error(f"Error looking up NHANES stats: {e}")
         raise NHANESStatsError(f"Failed to lookup reference statistics: {e}")
@@ -150,9 +148,8 @@ def get_available_sex_categories() -> list[str]:
     return list(SEX_STRATIFIED_STATS.keys())
 
 
-def get_reference_info(year: int = 2025) -> Dict[str, Any]:
-    """
-    Get detailed information about a reference year's statistics.
+def get_reference_info(year: int = 2025) -> dict[str, Any]:
+    """Get detailed information about a reference year's statistics.
     
     Args:
         year: Reference year to get information for
@@ -163,16 +160,15 @@ def get_reference_info(year: int = 2025) -> Dict[str, Any]:
     """
     if year not in NHANES_REFERENCE_STATS:
         year = 2025  # Default fallback
-        
+
     return NHANES_REFERENCE_STATS[year].copy()
 
 
 def validate_proxy_actigraphy_data(
-    proxy_values: list[float], 
+    proxy_values: list[float],
     year: int = 2025
-) -> Dict[str, Any]:
-    """
-    Validate proxy actigraphy data against NHANES reference ranges.
+) -> dict[str, Any]:
+    """Validate proxy actigraphy data against NHANES reference ranges.
     
     Args:
         proxy_values: List of square-root transformed step count values
@@ -182,20 +178,20 @@ def validate_proxy_actigraphy_data(
         Dictionary with validation results and statistics
     """
     import numpy as np
-    
+
     mean, std = lookup_norm_stats(year=year)
-    
+
     proxy_array = np.array(proxy_values)
     data_mean = np.mean(proxy_array)
     data_std = np.std(proxy_array)
-    
+
     # Calculate z-scores for validation
     z_scores = (proxy_array - mean) / std
-    
+
     # Flag extreme values (>3 standard deviations)
     extreme_low = np.sum(z_scores < -3)
     extreme_high = np.sum(z_scores > 3)
-    
+
     validation_result = {
         "data_mean": float(data_mean),
         "data_std": float(data_std),
@@ -209,7 +205,7 @@ def validate_proxy_actigraphy_data(
         "data_quality": "good" if (extreme_low + extreme_high) < len(proxy_values) * 0.05 else "review",
         "reference_year": year
     }
-    
+
     return validation_result
 
 
@@ -219,4 +215,4 @@ logger.info(
     f"Available years: {get_available_years()}, "
     f"Age groups: {len(get_available_age_groups())}, "
     f"Default year: 2025"
-) 
+)

@@ -16,8 +16,8 @@ Transformation Process:
 Based on specifications from APPLE_ACTIGRAPHY_PROXY.md
 """
 
-import logging
 from datetime import datetime
+import logging
 from typing import Any, Dict, List, Tuple
 
 import numpy as np
@@ -53,33 +53,32 @@ DEFAULT_NHANES_STATS = {
 
 class StepCountData(BaseModel):
     """Step count data from Apple HealthKit."""
-    
+
     user_id: str
     upload_id: str
-    step_counts: List[float] = Field(description="Minute-by-minute step counts")
-    timestamps: List[datetime] = Field(description="Corresponding timestamps")
+    step_counts: list[float] = Field(description="Minute-by-minute step counts")
+    timestamps: list[datetime] = Field(description="Corresponding timestamps")
     unit: str = Field(default="count/min", description="Data unit")
     source: str = Field(default="apple_health", description="Data source")
 
 
 class ProxyActigraphyVector(BaseModel):
     """Transformed proxy actigraphy data compatible with PAT."""
-    
+
     user_id: str
     upload_id: str
-    vector: List[float] = Field(description="10,080 proxy actigraphy values")
-    transformation_stats: Dict[str, float] = Field(description="Transformation metadata")
+    vector: list[float] = Field(description="10,080 proxy actigraphy values")
+    transformation_stats: dict[str, float] = Field(description="Transformation metadata")
     quality_score: float = Field(description="Data quality score (0-1)")
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
 
 class NHANESStats:
     """NHANES reference statistics for z-score normalization."""
-    
+
     @staticmethod
-    def lookup_norm_stats(year: int = 2025) -> Tuple[float, float]:
-        """
-        Lookup normalization statistics for a given year.
+    def lookup_norm_stats(year: int = 2025) -> tuple[float, float]:
+        """Lookup normalization statistics for a given year.
         
         Args:
             year: Reference year for statistics
@@ -92,7 +91,7 @@ class NHANESStats:
             stats = DEFAULT_NHANES_STATS[year_str]
             logger.info(f"Using {stats['source']} for normalization")
             return stats["mean"], stats["std"]
-        
+
         # Fallback to most recent year
         latest_year = max(DEFAULT_NHANES_STATS.keys())
         stats = DEFAULT_NHANES_STATS[latest_year]
@@ -102,10 +101,9 @@ class NHANESStats:
 
 class ProxyActigraphyTransformer:
     """Main transformation engine for converting step counts to proxy actigraphy."""
-    
+
     def __init__(self, reference_year: int = 2025, cache_enabled: bool = True):
-        """
-        Initialize the proxy actigraphy transformer.
+        """Initialize the proxy actigraphy transformer.
         
         Args:
             reference_year: Year for NHANES reference statistics
@@ -113,19 +111,18 @@ class ProxyActigraphyTransformer:
         """
         self.reference_year = reference_year
         self.cache_enabled = cache_enabled
-        self._cache: Dict[str, ProxyActigraphyVector] = {}
-        
+        self._cache: dict[str, ProxyActigraphyVector] = {}
+
         # Load NHANES statistics
         self.nhanes_mean, self.nhanes_std = NHANESStats.lookup_norm_stats(reference_year)
-        
+
         logger.info(f"ProxyActigraphyTransformer initialized with NHANES {reference_year}")
         logger.info(f"  • Reference mean: {self.nhanes_mean:.3f}")
         logger.info(f"  • Reference std: {self.nhanes_std:.3f}")
         logger.info(f"  • Cache enabled: {cache_enabled}")
 
     def steps_to_movement_proxy(self, steps_per_min: np.ndarray) -> np.ndarray:
-        """
-        Convert step counts to movement proxy using empirically validated transformation.
+        """Convert step counts to movement proxy using empirically validated transformation.
         
         The square root transformation correlates with RMS acceleration from accelerometer data.
         This is the core transformation that enables using step data as actigraphy proxy.
@@ -139,16 +136,15 @@ class ProxyActigraphyTransformer:
         # 1. Convert to "activity counts" proxy using square root
         # This empirically correlates with RMS acceleration
         accel_proxy = np.sqrt(steps_per_min)
-        
+
         # 2. Apply z-score normalization using NHANES reference statistics
         z_scored = (accel_proxy - self.nhanes_mean) / self.nhanes_std
-        
+
         # 3. Convert to float32 for model compatibility
         return z_scored.astype(np.float32)
 
     def transform_step_data(self, step_data: StepCountData) -> ProxyActigraphyVector:
-        """
-        Transform complete step count data to proxy actigraphy vector.
+        """Transform complete step count data to proxy actigraphy vector.
         
         Args:
             step_data: Step count data from Apple HealthKit
@@ -157,25 +153,25 @@ class ProxyActigraphyTransformer:
             Proxy actigraphy vector ready for PAT model
         """
         cache_key = f"{step_data.user_id}_{step_data.upload_id}"
-        
+
         # Check cache if enabled
         if self.cache_enabled and cache_key in self._cache:
             logger.info(f"Returning cached transformation for {cache_key}")
             return self._cache[cache_key]
-        
+
         try:
             # Prepare and validate step count data
             processed_steps = self._prepare_step_data(
-                step_data.step_counts, 
+                step_data.step_counts,
                 step_data.timestamps
             )
-            
+
             # Apply proxy transformation
             proxy_vector = self.steps_to_movement_proxy(processed_steps)
-            
+
             # Calculate quality metrics
             quality_score = self._calculate_quality_score(processed_steps, proxy_vector)
-            
+
             # Create transformation metadata
             transformation_stats = {
                 "original_length": len(step_data.step_counts),
@@ -188,7 +184,7 @@ class ProxyActigraphyTransformer:
                 "nhanes_mean_used": self.nhanes_mean,
                 "nhanes_std_used": self.nhanes_std
             }
-            
+
             # Create result
             result = ProxyActigraphyVector(
                 user_id=step_data.user_id,
@@ -197,30 +193,29 @@ class ProxyActigraphyTransformer:
                 transformation_stats=transformation_stats,
                 quality_score=quality_score
             )
-            
+
             # Cache result if enabled
             if self.cache_enabled:
                 self._cache[cache_key] = result
                 logger.debug(f"Cached transformation for {cache_key}")
-            
+
             logger.info(f"Successfully transformed step data for {step_data.user_id}")
             logger.info(f"  • Quality score: {quality_score:.3f}")
             logger.info(f"  • Vector length: {len(proxy_vector)}")
             logger.info(f"  • Zero steps: {transformation_stats['zero_step_percentage']:.1f}%")
-            
+
             return result
-            
+
         except Exception as e:
             logger.error(f"Failed to transform step data for {step_data.user_id}: {e}")
             raise
 
     def _prepare_step_data(
-        self, 
-        step_counts: List[float], 
-        timestamps: List[datetime]
+        self,
+        step_counts: list[float],
+        timestamps: list[datetime]
     ) -> np.ndarray:
-        """
-        Prepare step count data for transformation.
+        """Prepare step count data for transformation.
         
         Handles:
         - Resampling to minute-by-minute intervals
@@ -237,41 +232,40 @@ class ProxyActigraphyTransformer:
         """
         if len(step_counts) != len(timestamps):
             raise ValueError("Step counts and timestamps must have same length")
-        
+
         # Convert to numpy arrays for processing
         steps_array = np.array(step_counts, dtype=np.float32)
-        
+
         # Handle negative values (shouldn't happen but be safe)
         steps_array = np.maximum(steps_array, 0.0)
-        
+
         # Resample/align to exactly 1 week of minute-by-minute data
         if len(steps_array) < MINUTES_PER_WEEK:
             # Pad with zeros if insufficient data
             padding_needed = MINUTES_PER_WEEK - len(steps_array)
             steps_array = np.pad(steps_array, (padding_needed, 0), mode='constant', constant_values=0)
             logger.warning(f"Padded {padding_needed} minutes with zeros")
-            
+
         elif len(steps_array) > MINUTES_PER_WEEK:
             # Take the most recent week of data
             steps_array = steps_array[-MINUTES_PER_WEEK:]
             logger.info(f"Truncated to most recent {MINUTES_PER_WEEK} minutes")
-        
+
         # Handle missing data (represented as NaN or very large values)
         nan_mask = np.isnan(steps_array) | (steps_array > 1000)  # >1000 steps/min is unrealistic
         if np.any(nan_mask):
             # Simple imputation: replace with median of surrounding values
             steps_array[nan_mask] = 0  # Conservative approach for missing data
             logger.warning(f"Imputed {np.sum(nan_mask)} missing/invalid step values")
-        
+
         return steps_array
 
     def _calculate_quality_score(
-        self, 
-        step_counts: np.ndarray, 
+        self,
+        step_counts: np.ndarray,
         proxy_vector: np.ndarray
     ) -> float:
-        """
-        Calculate data quality score for the transformation.
+        """Calculate data quality score for the transformation.
         
         Quality factors:
         - Data completeness (non-zero values)
@@ -286,12 +280,12 @@ class ProxyActigraphyTransformer:
             Quality score between 0.0 (poor) and 1.0 (excellent)
         """
         scores = []
-        
+
         # 1. Data completeness score (penalize too many zeros)
         zero_percentage = np.sum(step_counts == 0) / len(step_counts)
         completeness_score = max(0.0, 1.0 - (zero_percentage * 2))  # Penalty for >50% zeros
         scores.append(completeness_score)
-        
+
         # 2. Variability score (healthy people have variable activity)
         mean_steps = float(np.mean(step_counts))
         if np.std(step_counts) > 0 and mean_steps > 0:
@@ -300,19 +294,19 @@ class ProxyActigraphyTransformer:
         else:
             variability_score = 0.0
         scores.append(variability_score)
-        
+
         # 3. Circadian pattern score (look for daily rhythms)
         if len(step_counts) >= MINUTES_PER_DAY:
             # Reshape into days and check for daily patterns
             try:
                 days = step_counts[:-(len(step_counts) % MINUTES_PER_DAY)].reshape(-1, MINUTES_PER_DAY)
                 daily_correlations = []
-                
+
                 for i in range(len(days) - 1):
-                    corr = np.corrcoef(days[i], days[i+1])[0, 1]
+                    corr = np.corrcoef(days[i], days[i + 1])[0, 1]
                     if not np.isnan(corr):
                         daily_correlations.append(float(corr))
-                
+
                 if daily_correlations:
                     circadian_score = max(0.0, float(np.mean(daily_correlations)))
                 else:
@@ -321,19 +315,19 @@ class ProxyActigraphyTransformer:
                 circadian_score = 0.5
         else:
             circadian_score = 0.5
-        
+
         scores.append(circadian_score)
-        
+
         # 4. Realistic range score (steps should be in realistic range)
         max_reasonable_steps = 200  # steps per minute is very high but possible
         range_violations = np.sum(step_counts > max_reasonable_steps) / len(step_counts)
         range_score = max(0.0, 1.0 - (range_violations * 10))  # Heavy penalty for unrealistic values
         scores.append(range_score)
-        
+
         # Overall quality is weighted average
         weights = [0.3, 0.3, 0.3, 0.1]  # Emphasize completeness, variability, and circadian
         quality_score = np.average(scores, weights=weights)
-        
+
         return float(np.clip(quality_score, 0.0, 1.0))
 
     def clear_cache(self) -> None:
@@ -341,14 +335,14 @@ class ProxyActigraphyTransformer:
         self._cache.clear()
         logger.info("Transformation cache cleared")
 
-    def get_cache_stats(self) -> Dict[str, int]:
+    def get_cache_stats(self) -> dict[str, int]:
         """Get cache statistics."""
         return {
             "cache_size": len(self._cache),
             "cache_enabled": self.cache_enabled
         }
 
-    async def health_check(self) -> Dict[str, Any]:
+    async def health_check(self) -> dict[str, Any]:
         """Health check for the proxy actigraphy service."""
         return {
             "service": "ProxyActigraphyTransformer",
@@ -367,8 +361,7 @@ def create_proxy_actigraphy_transformer(
     reference_year: int = 2025,
     cache_enabled: bool = True
 ) -> ProxyActigraphyTransformer:
-    """
-    Factory function to create a ProxyActigraphyTransformer instance.
+    """Factory function to create a ProxyActigraphyTransformer instance.
     
     Args:
         reference_year: Year for NHANES reference statistics
@@ -380,4 +373,4 @@ def create_proxy_actigraphy_transformer(
     return ProxyActigraphyTransformer(
         reference_year=reference_year,
         cache_enabled=cache_enabled
-    ) 
+    )

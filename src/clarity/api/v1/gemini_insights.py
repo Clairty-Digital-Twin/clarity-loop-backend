@@ -27,9 +27,9 @@ from clarity.ml.gemini_service import (
 logger = logging.getLogger(__name__)
 
 # Global dependencies - will be injected by container
-_auth_provider: Optional[IAuthProvider] = None
-_config_provider: Optional[IConfigProvider] = None
-_gemini_service: Optional[GeminiService] = None
+_auth_provider: IAuthProvider | None = None
+_config_provider: IConfigProvider | None = None
+_gemini_service: GeminiService | None = None
 
 
 def set_dependencies(
@@ -40,7 +40,7 @@ def set_dependencies(
     global _auth_provider, _config_provider, _gemini_service
     _auth_provider = auth_provider
     _config_provider = config_provider
-    
+
     # Initialize Gemini service
     if config_provider.is_development():
         logger.info("🧪 Gemini insights running in development mode")
@@ -66,12 +66,12 @@ def get_gemini_service() -> GeminiService:
 # Request/Response Models
 class InsightGenerationRequest(BaseModel):
     """Request for generating health insights."""
-    
-    analysis_results: Dict[str, Any] = Field(
+
+    analysis_results: dict[str, Any] = Field(
         description="PAT analysis results or health data metrics"
     )
-    context: Optional[str] = Field(
-        None, 
+    context: str | None = Field(
+        None,
         description="Additional context for insights generation"
     )
     insight_type: str = Field(
@@ -90,43 +90,43 @@ class InsightGenerationRequest(BaseModel):
 
 class InsightGenerationResponse(BaseModel):
     """Response for insight generation."""
-    
+
     success: bool
     data: HealthInsightResponse
-    metadata: Dict[str, Any]
+    metadata: dict[str, Any]
 
 
 class InsightHistoryResponse(BaseModel):
     """Response for insight history."""
-    
+
     success: bool
-    data: Dict[str, Any]
-    metadata: Dict[str, Any]
+    data: dict[str, Any]
+    metadata: dict[str, Any]
 
 
 class ServiceStatusResponse(BaseModel):
     """Response for service status."""
-    
+
     success: bool
-    data: Dict[str, Any]
-    metadata: Dict[str, Any]
+    data: dict[str, Any]
+    metadata: dict[str, Any]
 
 
 # Error response models
 class ErrorDetail(BaseModel):
     """Error detail structure."""
-    
+
     code: str
     message: str
-    details: Optional[Dict[str, Any]] = None
+    details: dict[str, Any] | None = None
     request_id: str
     timestamp: str
-    suggested_action: Optional[str] = None
+    suggested_action: str | None = None
 
 
 class ErrorResponse(BaseModel):
     """Standard error response."""
-    
+
     error: ErrorDetail
 
 
@@ -139,18 +139,18 @@ def generate_request_id() -> str:
     return f"req_insights_{uuid.uuid4().hex[:8]}"
 
 
-def create_metadata(request_id: str, processing_time_ms: Optional[float] = None) -> Dict[str, Any]:
+def create_metadata(request_id: str, processing_time_ms: float | None = None) -> dict[str, Any]:
     """Create standard metadata for responses."""
-    metadata: Dict[str, Any] = {
+    metadata: dict[str, Any] = {
         "request_id": request_id,
         "timestamp": datetime.now(UTC).isoformat(),
         "service": "gemini-insights",
         "version": "1.0.0"
     }
-    
+
     if processing_time_ms is not None:
         metadata["processing_time_ms"] = processing_time_ms
-    
+
     return metadata
 
 
@@ -159,8 +159,8 @@ def create_error_response(
     message: str,
     request_id: str,
     status_code: int = status.HTTP_500_INTERNAL_SERVER_ERROR,
-    details: Optional[Dict[str, Any]] = None,
-    suggested_action: Optional[str] = None
+    details: dict[str, Any] | None = None,
+    suggested_action: str | None = None
 ) -> HTTPException:
     """Create standardized error response."""
     error_detail = ErrorDetail(
@@ -171,7 +171,7 @@ def create_error_response(
         timestamp=datetime.now(UTC).isoformat(),
         suggested_action=suggested_action
     )
-    
+
     return HTTPException(
         status_code=status_code,
         detail=error_detail.model_dump()
@@ -209,14 +209,14 @@ async def generate_insights(
     """
     request_id = generate_request_id()
     start_time = datetime.now(UTC)
-    
+
     try:
         logger.info(
             "🤖 Generating insights for user %s (request: %s)",
             current_user.user_id,
             request_id
         )
-        
+
         # Check user permissions - for now, allow all authenticated users
         # In production, you would check specific permissions:
         # if Permission.READ_INSIGHTS not in current_user.permissions:
@@ -229,7 +229,7 @@ async def generate_insights(
                 details={"user_id": current_user.user_id},
                 suggested_action="contact_support"
             )
-        
+
         # Create Gemini service request
         gemini_request = HealthInsightRequest(
             user_id=current_user.user_id,
@@ -237,27 +237,27 @@ async def generate_insights(
             context=insight_request.context,
             insight_type=insight_request.insight_type
         )
-        
+
         # Generate insights
         logger.info("   • Calling Gemini service for insight generation...")
         insights = await gemini_service.generate_health_insights(gemini_request)
-        
+
         # Calculate processing time
         processing_time = (datetime.now(UTC) - start_time).total_seconds() * 1000
-        
+
         logger.info(
             "✅ Insights generated successfully (%.1fms, confidence: %.2f)",
             processing_time,
             insights.confidence_score
         )
-        
+
         # Create response
         return InsightGenerationResponse(
             success=True,
             data=insights,
             metadata=create_metadata(request_id, processing_time)
         )
-        
+
     except HTTPException:
         # Re-raise HTTP exceptions as-is
         raise
@@ -268,7 +268,7 @@ async def generate_insights(
             request_id,
             str(e)
         )
-        
+
         raise create_error_response(
             error_code="INSIGHT_GENERATION_FAILED",
             message="Failed to generate health insights",
@@ -302,14 +302,14 @@ async def get_insight(
         HTTPException: If insight not found or access denied
     """
     request_id = generate_request_id()
-    
+
     logger.info(
         "📄 Retrieving insight %s for user %s (request: %s)",
         insight_id,
         current_user.user_id,
         request_id
     )
-    
+
     # For now, return a not implemented response
     # In a full implementation, this would query Firestore or cache
     raise create_error_response(
@@ -348,7 +348,7 @@ async def get_insight_history(
         HTTPException: If access denied or user not found
     """
     request_id = generate_request_id()
-    
+
     # Check if user is requesting their own data or has admin permissions
     # For now, only allow users to access their own data
     if current_user.user_id != user_id:
@@ -359,17 +359,17 @@ async def get_insight_history(
             status_code=status.HTTP_403_FORBIDDEN,
             suggested_action="request_own_data"
         )
-    
+
     logger.info(
         "📚 Retrieving insight history for user %s (request: %s)",
         user_id,
         request_id
     )
-    
+
     # For now, return a not implemented response
     # In a full implementation, this would query Firestore
     raise create_error_response(
-        error_code="NOT_IMPLEMENTED", 
+        error_code="NOT_IMPLEMENTED",
         message="Insight history not yet implemented",
         request_id=request_id,
         status_code=status.HTTP_501_NOT_IMPLEMENTED,
@@ -396,16 +396,16 @@ async def get_service_status(
     """
     request_id = generate_request_id()
     start_time = datetime.now(UTC)
-    
+
     try:
         logger.info("🏥 Checking Gemini service health (request: %s)", request_id)
-        
+
         # Get service health
         health_status = await gemini_service.health_check()
-        
+
         # Calculate response time
         processing_time = (datetime.now(UTC) - start_time).total_seconds() * 1000
-        
+
         # Create comprehensive status response
         status_data = {
             "service_name": "gemini-insights",
@@ -428,26 +428,26 @@ async def get_service_status(
                 "service_version": "1.0.0"
             }
         }
-        
+
         logger.info(
             "✅ Service status check completed (%.1fms) - Status: %s",
             processing_time,
             status_data["status"]
         )
-        
+
         return ServiceStatusResponse(
             success=True,
             data=status_data,
             metadata=create_metadata(request_id, processing_time)
         )
-        
+
     except Exception as e:
         logger.exception(
             "💥 Service status check failed (request: %s): %s",
             request_id,
             str(e)
         )
-        
+
         # Return degraded status instead of error
         status_data = {
             "service_name": "gemini-insights",
@@ -455,7 +455,7 @@ async def get_service_status(
             "error": str(e),
             "last_error_time": datetime.now(UTC).isoformat()
         }
-        
+
         return ServiceStatusResponse(
             success=False,
             data=status_data,
@@ -464,4 +464,4 @@ async def get_service_status(
 
 
 # Export router
-__all__ = ["router", "set_dependencies"] 
+__all__ = ["router", "set_dependencies"]

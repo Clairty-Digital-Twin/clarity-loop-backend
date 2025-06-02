@@ -191,7 +191,9 @@ class Settings(BaseSettings):
 
     def is_testing(self) -> bool:
         """Check if running in testing mode."""
-        return self.environment.lower() == "testing" or self.testing
+        return self.environment.lower() == "testing" or (
+            self.testing and self.environment.lower() != "production"
+        )
 
     def should_use_mock_services(self) -> bool:
         """Check if mock services should be used instead of external services."""
@@ -256,7 +258,9 @@ class Settings(BaseSettings):
         elif self.is_production():
             # Production mode: Strict settings, minimal logging
             logger.info("🔧 Applying PRODUCTION middleware config")
-            config.enabled = self.enable_auth
+            config.enabled = (
+                True  # Middleware capability is always available in production
+            )
             config.graceful_degradation = False  # Fail fast in production
             config.fallback_to_mock = False  # No mock fallback in prod
             config.log_successful_auth = False  # Only log failures

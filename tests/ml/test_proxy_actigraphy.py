@@ -27,8 +27,7 @@ from clarity.ml.proxy_actigraphy import (  # type: ignore[import-untyped]
 class TestStepCountData:
     """Test StepCountData model."""
 
-    
-    def test_step_count_data_creation() -> None:
+    def test_step_count_data_creation(self) -> None:
         """Test creating a valid StepCountData."""
         timestamps = [datetime.now(UTC) for _ in range(3)]
         step_data = StepCountData(
@@ -45,8 +44,7 @@ class TestStepCountData:
         assert len(step_data.timestamps) == 3
         assert step_data.user_metadata["age"] == 25
 
-    
-    def test_step_count_data_validation() -> None:
+    def test_step_count_data_validation(self) -> None:
         """Test StepCountData validation."""
         timestamps = [datetime.now(UTC)]
 
@@ -59,8 +57,7 @@ class TestStepCountData:
         )
         assert len(step_data.step_counts) == 1
 
-    
-    def test_step_count_data_empty_list() -> None:
+    def test_step_count_data_empty_list(self) -> None:
         """Test StepCountData with empty step counts."""
         with pytest.raises(ValidationError, match="List should have at least 1 item"):
             StepCountData(

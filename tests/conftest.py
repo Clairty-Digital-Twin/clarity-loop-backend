@@ -6,12 +6,17 @@ Provides shared test fixtures, configuration, and utilities for all test modules
 import asyncio
 from collections.abc import AsyncGenerator, Generator
 import os
+from typing import Any
 from unittest.mock import AsyncMock, MagicMock
 
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from httpx import AsyncClient
+import numpy as np
 import pytest
+from pytest import Config, MonkeyPatch
+import redis
+import torch
 
 # Set testing environment
 os.environ["TESTING"] = "1"
@@ -29,16 +34,19 @@ def event_loop() -> Generator[asyncio.AbstractEventLoop, None, None]:
 @pytest.fixture
 def mock_firestore():
     """Mock Firestore client for testing."""
-    mock_client = MagicMock()
+    mock_db = MagicMock()
+
+    # Mock collection and document structure
     mock_collection = MagicMock()
     mock_document = MagicMock()
-
-    mock_client.collection.return_value = mock_collection
-    mock_collection.document.return_value = mock_document
+    mock_document.set.return_value = None
     mock_document.get.return_value.exists = True
-    mock_document.get.return_value.to_dict.return_value = {"test": "data"}
+    mock_document.get.return_value.to_dict.return_value = {}
 
-    return mock_client
+    mock_collection.document.return_value = mock_document
+    mock_db.collection.return_value = mock_collection
+
+    return mock_db
 
 
 @pytest.fixture
@@ -46,9 +54,10 @@ def mock_firebase_auth():
     """Mock Firebase Auth for testing."""
     mock_auth = MagicMock()
     mock_auth.verify_id_token.return_value = {
-        "uid": "test-user-id",
+        "uid": "test-user-123",
         "email": "test@example.com",
-        "email_verified": True
+        "email_verified": True,
+        "custom_claims": {"role": "patient"},
     }
     return mock_auth
 
@@ -80,44 +89,49 @@ def mock_gemini_client():
 @pytest.fixture
 def mock_pat_model():
     """Mock PAT (Pretrained Actigraphy Transformer) model."""
-    import torch
-
     mock_model = MagicMock()
-    mock_model.eval.return_value = None
-    mock_model.return_value = torch.tensor([[0.1, 0.2, 0.7]])  # Mock predictions
-
-    # Mock attention weights for explainability
-    mock_attention = torch.rand(1, 8, 560, 560)  # [batch, heads, seq, seq]
-    mock_model.get_attention_weights.return_value = mock_attention
-
+    mock_model.predict.return_value = {
+        "sleep_stages": ["awake", "light", "deep", "rem"],
+        "confidence": 0.85,
+        "features": torch.randn(10),
+    }
     return mock_model
 
 
 @pytest.fixture
 def sample_actigraphy_data() -> dict:
     """Provide sample actigraphy data for testing."""
-    import numpy as np
-
     # Create a random number generator for reproducible tests
-    rng = np.random.default_rng(42)
+    rng = np.random.RandomState(42)
+
+    # Generate 24 hours of synthetic actigraphy data (1 sample per minute)
+    timestamps = [
+        f"2024-01-01T{h:02d}:{m:02d}:00Z" for h in range(24) for m in range(60)
+    ]
+
+    # Simulate sleep pattern: low activity during night hours
+    activity_counts = []
+    for h in range(24):
+        for m in range(60):
+            if h >= 22 or h <= 6:  # Night hours
+                # Low activity during sleep
+                activity = rng.poisson(5)
+            else:  # Day hours
+                # Higher activity during wake hours
+                activity = rng.poisson(50)
+            activity_counts.append(activity)
 
     return {
         "user_id": "test-user-123",
-        "device_id": "test-device-456",
-        "start_date": "2024-01-01T00:00:00Z",
-        "end_date": "2024-01-07T23:59:00Z",
-        "activity_counts": rng.poisson(10, 10080).tolist(),
-        "timestamps": [
-            f"2024-01-{day:02d}T{hour:02d}:{minute:02d}:00Z"
-            for day in range(1, 8)
-            for hour in range(24)
-            for minute in range(0, 60, 1)
-        ][:10080],  # One week of minute-by-minute data
+        "device_id": "actigraph-001",
+        "timestamps": timestamps[:100],  # First 100 samples for testing
+        "activity_counts": activity_counts[:100],
+        "sampling_rate": "1_min",
         "metadata": {
-            "sample_rate": "1_minute",
-            "timezone": "UTC",
-            "device_model": "ActiGraph wGT3X-BT"
-        }
+            "device_model": "ActiGraph GT3X+",
+            "firmware_version": "1.2.3",
+            "recording_duration": "24h",
+        },
     }
 
 
@@ -130,12 +144,12 @@ def sample_health_labels():
         "sleep_disorder": 0,  # No sleep disorder
         "phq9_score": 5,
         "avg_sleep_hours": 6.2,
-        "sleep_efficiency": 0.85
+        "sleep_efficiency": 0.85,
     }
 
 
 @pytest.fixture
-async def app() -> FastAPI:
+def app() -> FastAPI:
     """Create FastAPI test application."""
     from clarity.main import create_app
 
@@ -160,41 +174,35 @@ def auth_headers():
     """Mock authentication headers."""
     return {
         "Authorization": "Bearer test-jwt-token",
-        "Content-Type": "application/json"
+        "Content-Type": "application/json",
     }
 
 
 @pytest.fixture
 def mock_redis():
     """Mock Redis client for testing."""
-    from unittest.mock import MagicMock
-
-    import redis
-
     mock_client = MagicMock(spec=redis.Redis)
     mock_client.get.return_value = None
     mock_client.set.return_value = True
     mock_client.delete.return_value = 1
     mock_client.exists.return_value = False
-
     return mock_client
 
 
 @pytest.fixture(autouse=True)
-def mock_environment_variables(monkeypatch):
+def mock_environment_variables(monkeypatch: MonkeyPatch):
     """Mock environment variables for testing."""
     test_env = {
         "TESTING": "1",
-        "ENVIRONMENT": "testing",
+        "ENVIRONMENT": "test",
         "DEBUG": "true",
-        "SECRET_KEY": "test-secret-key",
-        "JWT_SECRET_KEY": "test-jwt-secret",
-        "FIRESTORE_EMULATOR_HOST": "localhost:8080",
-        "FIREBASE_AUTH_EMULATOR_HOST": "localhost:9099",
-        "REDIS_URL": "redis://localhost:6379/1",
-        "GCP_PROJECT_ID": "test-project",
-        "GEMINI_API_KEY": "test-gemini-key",
-        "PAT_MODEL_PATH": "./tests/fixtures/mock-pat-model"
+        "DATABASE_URL": "sqlite:///test.db",
+        "FIREBASE_PROJECT_ID": "test-project",
+        "FIREBASE_CREDENTIALS": "test-credentials.json",
+        "JWT_SECRET_KEY": "test-secret-key-for-testing-only",
+        "LOG_LEVEL": "DEBUG",
+        "CORS_ORIGINS": "http://localhost:3000,http://localhost:8000",
+        "SKIP_EXTERNAL_SERVICES": "true",  # Skip Firebase/Firestore in tests
     }
 
     for key, value in test_env.items():
@@ -205,14 +213,75 @@ def mock_environment_variables(monkeypatch):
 pytest_plugins = ["pytest_asyncio"]
 
 
-def pytest_configure(config):
+def pytest_configure(config: Config) -> None:
     """Configure pytest with custom markers."""
     config.addinivalue_line("markers", "unit: Unit tests")
     config.addinivalue_line("markers", "integration: Integration tests")
-    config.addinivalue_line("markers", "ml: Machine learning tests")
-    config.addinivalue_line("markers", "pat: PAT model tests")
-    config.addinivalue_line("markers", "gemini: Gemini AI tests")
-    config.addinivalue_line("markers", "slow: Slow tests")
-    config.addinivalue_line("markers", "auth: Authentication tests")
-    config.addinivalue_line("markers", "api: API endpoint tests")
-    config.addinivalue_line("markers", "data: Data processing tests")
+    config.addinivalue_line("markers", "e2e: End-to-end tests")
+    config.addinivalue_line("markers", "slow: Slow running tests")
+    config.addinivalue_line("markers", "auth: Authentication related tests")
+    config.addinivalue_line("markers", "database: Database related tests")
+
+
+@pytest.fixture
+def sample_health_metrics() -> list[dict]:
+    """Provide sample health metrics for testing."""
+    return [
+        {
+            "metric_type": "heart_rate",
+            "value": 72.0,
+            "unit": "bpm",
+            "timestamp": "2024-01-01T12:00:00Z",
+            "metadata": {"device": "fitness_tracker"},
+        },
+        {
+            "metric_type": "steps",
+            "value": 8500.0,
+            "unit": "count",
+            "timestamp": "2024-01-01T12:00:00Z",
+            "metadata": {"device": "smartphone"},
+        },
+        {
+            "metric_type": "sleep_duration",
+            "value": 7.5,
+            "unit": "hours",
+            "timestamp": "2024-01-01T08:00:00Z",
+            "metadata": {"sleep_quality": "good"},
+        },
+    ]
+
+
+@pytest.fixture
+def sample_user_context() -> dict:
+    """Provide sample user context for testing."""
+    return {
+        "user_id": "test-user-123",
+        "email": "test@example.com",
+        "roles": ["patient"],
+        "permissions": ["read_own_data", "write_own_data"],
+        "verified": True,
+    }
+
+
+@pytest.fixture
+def sample_biometric_data() -> dict:
+    """Provide sample biometric data for testing."""
+    return {
+        "user_id": "test-user-123",
+        "measurements": [
+            {
+                "type": "blood_pressure",
+                "systolic": 120,
+                "diastolic": 80,
+                "timestamp": "2024-01-01T09:00:00Z",
+                "device": "omron_bp_monitor",
+            },
+            {
+                "type": "weight",
+                "value": 70.5,
+                "unit": "kg",
+                "timestamp": "2024-01-01T08:00:00Z",
+                "device": "smart_scale",
+            },
+        ],
+    }

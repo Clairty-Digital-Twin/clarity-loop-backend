@@ -210,9 +210,7 @@ Generate insights that are:
 Respond only with valid JSON."""
 
     @staticmethod
-    def _parse_gemini_response(
-        response: object, user_id: str
-    ) -> HealthInsightResponse:
+    def _parse_gemini_response(response: object, user_id: str) -> HealthInsightResponse:
         """Parse and validate Gemini response."""
         try:
             # Extract text from response

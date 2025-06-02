@@ -6,6 +6,7 @@ production-ready deployment across development, staging, and production.
 
 from functools import lru_cache
 import logging
+from typing import Self
 
 from pydantic import Field, model_validator
 from pydantic_settings import BaseSettings
@@ -75,7 +76,7 @@ class Settings(BaseSettings):
     }
 
     @model_validator(mode="after")
-    def validate_environment_requirements(self) -> "Settings":
+    def validate_environment_requirements(self) -> Self:
         """Validate environment-specific requirements and set development defaults."""
         # Set development defaults for skip_external_services
         if self.skip_external_services is None:

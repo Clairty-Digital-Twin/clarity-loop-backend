@@ -105,6 +105,7 @@ unfixable = [
     "PLR2004", # Magic value used in comparison
     "ANN201",  # Missing return type annotation for public function
     "D103",    # Missing docstring in public function (OK in tests)
+    "SLF001",  # Private member accessed (OK in tests)
 ]
 "docs/**/*.py" = [
     "D100",   # Missing docstring in public module

@@ -166,7 +166,7 @@ class AuthenticationService:
             auth.set_custom_user_claims(user_record.uid, custom_claims)  # type: ignore[misc,arg-type]
 
             # Store additional user data in Firestore
-            user_data: dict[str, Any] = {  # pyright: ignore[reportUnknownVariableType]
+            user_data: dict[str, Any] = {  # type: ignore[misc]
                 "user_id": user_record.uid,  # type: ignore[misc]
                 "email": request.email,
                 "first_name": request.first_name,

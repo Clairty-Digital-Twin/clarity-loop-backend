@@ -250,7 +250,7 @@ class TestFirebaseAuthProvider:
     ) -> None:
         """Test automatic cleanup of expired cache entries."""
         # Set short TTL for testing - using type ignore for test access
-        auth_provider._cache_ttl = 1  # type: ignore[attr-defined]  # noqa: SLF001
+        auth_provider._cache_ttl = 1  # type: ignore[attr-defined]
 
         with (
             patch("clarity.auth.firebase_auth.auth.verify_id_token") as mock_verify,
@@ -262,7 +262,7 @@ class TestFirebaseAuthProvider:
 
             # Cache a token
             await auth_provider.verify_token("expire_test_token")
-            assert len(auth_provider._token_cache) == 1  # noqa: SLF001
+            assert len(auth_provider._token_cache) == 1
 
             # Wait for expiration
             await asyncio.sleep(1.1)  # Wait slightly longer than TTL
@@ -282,7 +282,7 @@ class TestFirebaseAuthProvider:
     ) -> None:
         """Test cache size limit enforcement."""
         # Set small cache size - using type ignore for test access
-        auth_provider._cache_max_size = 2  # type: ignore[attr-defined]  # noqa: SLF001
+        auth_provider._cache_max_size = 2  # type: ignore[attr-defined]
 
         with (
             patch("clarity.auth.firebase_auth.auth.verify_id_token") as mock_verify,
@@ -298,7 +298,7 @@ class TestFirebaseAuthProvider:
             await auth_provider.verify_token("token3")  # Should evict oldest
 
             # Cache should not exceed max size
-            assert len(auth_provider._token_cache) <= 2  # noqa: SLF001
+            assert len(auth_provider._token_cache) <= 2
 
     @pytest.mark.asyncio
     @staticmethod
@@ -344,11 +344,11 @@ class TestFirebaseAuthProvider:
     async def test_cleanup_resources(auth_provider: FirebaseAuthProvider) -> None:
         """Test proper cleanup of resources."""
         # Add some items to cache - using type ignore for test access
-        auth_provider._token_cache = {"token1": {"data": "test"}}  # type: ignore[attr-defined]  # noqa: SLF001
+        auth_provider._token_cache = {"token1": {"data": "test"}}  # type: ignore[attr-defined]
 
         await auth_provider.cleanup()
 
-        assert len(auth_provider._token_cache) == 0  # noqa: SLF001
+        assert len(auth_provider._token_cache) == 0
 
 
 class TestFirebaseAuthMiddleware:
@@ -405,7 +405,7 @@ class TestFirebaseAuthMiddleware:
         request = Mock()
         request.headers = {"Authorization": "Bearer valid_token_here"}
 
-        token = middleware._extract_token(request)  # noqa: SLF001
+        token = middleware._extract_token(request)
 
         assert token == "valid_token_here"  # noqa: S105
 
@@ -416,7 +416,7 @@ class TestFirebaseAuthMiddleware:
         request.headers = {}
 
         with pytest.raises(AuthError) as exc_info:
-            middleware._extract_token(request)  # noqa: SLF001
+            middleware._extract_token(request)
 
         assert exc_info.value.status_code == 401
         assert exc_info.value.error_code == "missing_token"
@@ -428,7 +428,7 @@ class TestFirebaseAuthMiddleware:
         request.headers = {"Authorization": "Basic invalid_format"}
 
         with pytest.raises(AuthError) as exc_info:
-            middleware._extract_token(request)  # noqa: SLF001
+            middleware._extract_token(request)
 
         assert exc_info.value.status_code == 401
         assert exc_info.value.error_code == "invalid_token_format"
@@ -440,7 +440,7 @@ class TestFirebaseAuthMiddleware:
         request.headers = {"Authorization": "Bearer "}
 
         with pytest.raises(AuthError) as exc_info:
-            middleware._extract_token(request)  # noqa: SLF001
+            middleware._extract_token(request)
 
         assert exc_info.value.status_code == 401
         assert exc_info.value.error_code == "empty_token"
@@ -448,12 +448,12 @@ class TestFirebaseAuthMiddleware:
     @staticmethod
     def test_is_exempt_path(middleware: FirebaseAuthMiddleware) -> None:
         """Test exempt path checking."""
-        assert middleware._is_exempt_path("/health") is True  # noqa: SLF001
-        assert middleware._is_exempt_path("/docs") is True  # noqa: SLF001
-        assert middleware._is_exempt_path("/openapi.json") is True  # noqa: SLF001
-        assert middleware._is_exempt_path("/api/protected") is False  # noqa: SLF001
+        assert middleware._is_exempt_path("/health") is True
+        assert middleware._is_exempt_path("/docs") is True
+        assert middleware._is_exempt_path("/openapi.json") is True
+        assert middleware._is_exempt_path("/api/protected") is False
         assert (
-            middleware._is_exempt_path("/health/detailed") is True  # noqa: SLF001
+            middleware._is_exempt_path("/health/detailed") is True
         )  # Starts with /health
 
     @staticmethod
@@ -470,7 +470,7 @@ class TestFirebaseAuthMiddleware:
             "last_login": None,
         }
 
-        context = middleware._create_user_context(user_info)  # noqa: SLF001
+        context = middleware._create_user_context(user_info)
 
         assert context.user_id == "patient_123"
         assert context.email == "patient@example.com"
@@ -493,7 +493,7 @@ class TestFirebaseAuthMiddleware:
             "last_login": None,
         }
 
-        context = middleware._create_user_context(user_info)  # noqa: SLF001
+        context = middleware._create_user_context(user_info)
 
         assert context.role == UserRole.CLINICIAN
         assert Permission.READ_OWN_DATA in context.permissions
@@ -516,7 +516,7 @@ class TestFirebaseAuthMiddleware:
             "last_login": None,
         }
 
-        context = middleware._create_user_context(user_info)  # noqa: SLF001
+        context = middleware._create_user_context(user_info)
 
         assert context.role == UserRole.ADMIN
         assert Permission.SYSTEM_ADMIN in context.permissions
@@ -539,7 +539,7 @@ class TestFirebaseAuthMiddleware:
             "last_login": None,
         }
 
-        context = middleware._create_user_context(user_info)  # noqa: SLF001
+        context = middleware._create_user_context(user_info)
 
         assert context.role == UserRole.PATIENT  # Should default to patient
 
@@ -557,7 +557,7 @@ class TestFirebaseAuthMiddleware:
         middleware.auth_provider = mock_auth_provider
 
         # Using noqa for legitimate test access to private method
-        user_context = await middleware._authenticate_request(  # noqa: SLF001
+        user_context = await middleware._authenticate_request(
             mock_request
         )
 
@@ -578,7 +578,7 @@ class TestFirebaseAuthMiddleware:
         middleware.auth_provider = mock_auth_provider
 
         with pytest.raises(AuthError) as exc_info:
-            await middleware._authenticate_request(mock_request)  # noqa: SLF001
+            await middleware._authenticate_request(mock_request)
 
         assert exc_info.value.status_code == 401
         assert exc_info.value.error_code == "invalid_token"
@@ -729,19 +729,15 @@ class TestIntegrationFirebaseAuth:
 
         # Define routes AFTER middleware registration
         @app.get("/health")
-        def health() -> dict[str, str]:  # pyright: ignore[reportUnusedFunction]
+        def health() -> dict[str, str]:  # type: ignore[misc]
             return {"status": "healthy"}
 
         @app.get("/public")
-        def public_endpoint() -> (
-            dict[str, str]
-        ):  # pyright: ignore[reportUnusedFunction]
+        def public_endpoint() -> dict[str, str]:  # type: ignore[misc]
             return {"message": "public access"}
 
         @app.get("/protected")
-        def protected_endpoint(
-            request: Request,
-        ) -> dict[str, str]:  # pyright: ignore[reportUnusedFunction]
+        def protected_endpoint(request: Request) -> dict[str, str]:  # type: ignore[misc]
             user = request.state.user
             return {"message": f"Hello {user.email}"}
 

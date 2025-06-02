@@ -1,23 +1,14 @@
-"""CLARITY Digital Twin Platform - End-to-End Clean Architecture Tests.
+"""End-to-end integration tests for health data flow.
 
-🌐 FULL E2E CLEAN ARCHITECTURE TESTS (Complete Flow Validation)
-
-These tests verify the complete flow through all Clean Architecture layers:
-HTTP Request → Controller → Use Case → Entity → Repository → Response
-
-Following Robert C. Martin's Clean Architecture principle: "The architecture
-should scream the intent of the system and allow the business rules to be
-clearly visible and testable."
-
-TESTS USE REAL IMPLEMENTATIONS BUT MOCKED EXTERNAL DEPENDENCIES.
+Tests the complete flow through all Clean Architecture layers.
 """
 
-import concurrent.futures
 from datetime import UTC, datetime
 import time
 from typing import Any
 from uuid import uuid4
 
+from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from httpx import Response
 import pytest
@@ -36,7 +27,7 @@ class TestE2EHealthDataFlow:
 
     @pytest.fixture
     @staticmethod
-    def app_with_mocked_externals() -> Any:
+    def app_with_mocked_externals() -> FastAPI:
         """Create real application with mocked external dependencies."""
         # Create the real application (not mocked)
         return create_application()
@@ -46,7 +37,7 @@ class TestE2EHealthDataFlow:
 
     @pytest.fixture
     @staticmethod
-    def client(app_with_mocked_externals: Any) -> TestClient:
+    def client(app_with_mocked_externals: FastAPI) -> TestClient:
         """Create test client for E2E testing."""
         return TestClient(app_with_mocked_externals)
 
@@ -261,12 +252,12 @@ class TestE2ECleanArchitecturePrinciples:
 
     @pytest.fixture
     @staticmethod
-    def app() -> Any:
+    def app() -> FastAPI:
         """Create application for architecture testing."""
         return create_application()
 
     @staticmethod
-    def test_e2e_dependency_direction(app: Any) -> None:
+    def test_e2e_dependency_direction(app: FastAPI) -> None:
         """Test E2E dependency direction follows Clean Architecture."""
         # Architecture test: Dependencies should point inward
 
@@ -283,7 +274,7 @@ class TestE2ECleanArchitecturePrinciples:
         assert app.title == "CLARITY Digital Twin Platform"
 
     @staticmethod
-    def test_e2e_business_rules_independence(app: Any) -> None:
+    def test_e2e_business_rules_independence(app: FastAPI) -> None:
         """Test E2E business rules are independent of frameworks."""
         # Architecture test: Business rules should not depend on web framework
 
@@ -305,7 +296,7 @@ class TestE2ECleanArchitecturePrinciples:
         # The fact that validation occurs shows business rules are working
 
     @staticmethod
-    def test_e2e_use_case_orchestration(app: Any) -> None:
+    def test_e2e_use_case_orchestration(app: FastAPI) -> None:
         """Test E2E use case orchestration through all layers."""
         # Architecture test: Use cases should orchestrate business flow
 
@@ -324,7 +315,7 @@ class TestE2ECleanArchitecturePrinciples:
         assert "status" in data
 
     @staticmethod
-    def test_e2e_interface_adaptation(app: Any) -> None:
+    def test_e2e_interface_adaptation(app: FastAPI) -> None:
         """Test E2E interface adaptation between layers."""
         # Architecture test: Interfaces should adapt between layers
 
@@ -348,12 +339,12 @@ class TestE2EPerformanceAndReliability:
 
     @pytest.fixture
     @staticmethod
-    def app() -> Any:
+    def app() -> FastAPI:
         """Create application for performance testing."""
         return create_application()
 
     @staticmethod
-    def test_e2e_application_startup_speed(app: Any) -> None:
+    def test_e2e_application_startup_speed(app: FastAPI) -> None:
         """Test E2E application starts quickly with Clean Architecture."""
         # Given: Application should start quickly
         start_time = time.perf_counter()
@@ -370,7 +361,7 @@ class TestE2EPerformanceAndReliability:
         assert response.status_code == 200
 
     @staticmethod
-    def test_e2e_concurrent_request_handling(app: Any) -> None:
+    def test_e2e_concurrent_request_handling(app: FastAPI) -> None:
         """Test E2E concurrent request handling with Clean Architecture."""
         # Given: Application should handle concurrent requests
         client = TestClient(app)
@@ -396,7 +387,7 @@ class TestE2EPerformanceAndReliability:
         assert total_time < 10.0  # All 10 requests in under 10 seconds
 
     @staticmethod
-    def test_e2e_error_recovery(app: Any) -> None:
+    def test_e2e_error_recovery(app: FastAPI) -> None:
         """Test E2E error recovery with Clean Architecture."""
         # Given: Application should recover from errors gracefully
         client = TestClient(app)
@@ -414,7 +405,7 @@ class TestE2EPerformanceAndReliability:
         # Error recovery verified - app still functional after error
 
     @staticmethod
-    def test_e2e_resource_cleanup(app: Any) -> None:
+    def test_e2e_resource_cleanup(app: FastAPI) -> None:
         """Test E2E resource cleanup with Clean Architecture."""
         # Given: Application should clean up resources properly
         client = TestClient(app)
@@ -437,12 +428,12 @@ class TestE2EBusinessDomainIntegrity:
 
     @pytest.fixture
     @staticmethod
-    def app() -> Any:
+    def app() -> FastAPI:
         """Create application for domain testing."""
         return create_application()
 
     @staticmethod
-    def test_e2e_health_data_domain_consistency(app: Any) -> None:
+    def test_e2e_health_data_domain_consistency(app: FastAPI) -> None:
         """Test E2E health data domain remains consistent across layers."""
         # Given: Health data domain should be consistent
         client = TestClient(app)
@@ -462,7 +453,7 @@ class TestE2EBusinessDomainIntegrity:
             # Domain consistency verified by endpoint existence and response
 
     @staticmethod
-    def test_e2e_business_invariants_maintained(app: Any) -> None:
+    def test_e2e_business_invariants_maintained(app: FastAPI) -> None:
         """Test E2E business invariants are maintained across all layers."""
         # Given: Business invariants should be maintained
         client = TestClient(app)
@@ -481,7 +472,7 @@ class TestE2EBusinessDomainIntegrity:
         assert isinstance(data, dict)
 
     @staticmethod
-    def test_e2e_clean_architecture_separation_of_concerns(app: Any) -> None:
+    def test_e2e_clean_architecture_separation_of_concerns(app: FastAPI) -> None:
         """Test E2E separation of concerns across Clean Architecture layers."""
         # Architecture test: Each layer should have distinct responsibilities
 

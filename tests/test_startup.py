@@ -27,6 +27,7 @@ sys.path.insert(0, str(src_path))
 class TestApplicationStartup:
     """Test application startup performance and reliability."""
 
+    @pytest.mark.asyncio
     @staticmethod
     async def test_application_starts_quickly() -> None:
         """Ensure app starts in under 10 seconds with proper timeout handling."""
@@ -45,6 +46,7 @@ class TestApplicationStartup:
         # Should start quickly (under 2 seconds)
         assert startup_duration < 2.0, f"Startup too slow: {startup_duration:.2f}s"
 
+    @pytest.mark.asyncio
     @staticmethod
     async def test_lifespan_context_manager() -> None:
         """Test that the lifespan context manager works without hanging."""
@@ -117,6 +119,7 @@ class TestApplicationStartup:
         except (RuntimeError, ImportError, ConnectionError) as e:
             pytest.fail(f"Mock service creation should not fail: {e}")
 
+    @pytest.mark.asyncio
     @staticmethod
     async def test_timeout_protection() -> None:
         """Test that startup has timeout protection."""
@@ -145,13 +148,14 @@ class TestApplicationStartup:
             assert repository is not None
             # In development/testing, this should be a mock
         except (RuntimeError, ImportError, ConnectionError) as e:
-            # Even if this fails, it should fail gracefully
+            # This is a legitimate skip - external services may not be available in CI/CD
             pytest.skip(f"External services not available: {e}")
 
 
 class TestFullStartupCycle:
     """Test complete application startup and shutdown cycle."""
 
+    @pytest.mark.asyncio
     @staticmethod
     async def test_complete_app_lifecycle() -> None:
         """Test complete application creation, startup, and shutdown."""

@@ -10,7 +10,7 @@ import secrets
 from typing import Any, cast
 import uuid
 
-from firebase_admin import auth
+from firebase_admin import auth  # type: ignore
 
 from clarity.core.interfaces import IAuthProvider
 from clarity.models.auth import (
@@ -136,16 +136,16 @@ class AuthenticationService:
         try:
             # Check if user already exists
             try:
-                existing_user = auth.get_user_by_email(request.email)
+                existing_user = auth.get_user_by_email(request.email)  # type: ignore
                 if existing_user:
                     error_msg = f"User with email {request.email} already exists"
                     raise UserAlreadyExistsError(error_msg)
-            except auth.UserNotFoundError:
+            except auth.UserNotFoundError:  # type: ignore  # type: ignore
                 # User doesn't exist, which is what we want
                 pass
 
             # Create Firebase user
-            user_record = auth.create_user(
+            user_record = auth.create_user(  # type: ignore
                 email=request.email,
                 password=request.password,
                 display_name=f"{request.first_name} {request.last_name}",
@@ -163,7 +163,7 @@ class AuthenticationService:
                 "created_at": datetime.now(UTC).isoformat(),
             }
 
-            auth.set_custom_user_claims(user_record.uid, custom_claims)
+            auth.set_custom_user_claims(user_record.uid, custom_claims)  # type: ignore
 
             # Store additional user data in Firestore
             user_data = {
@@ -198,11 +198,11 @@ class AuthenticationService:
             verification_email_sent = False
             try:
                 # Generate email verification link (unused for now)
-                _ = auth.generate_email_verification_link(request.email)
+                _ = auth.generate_email_verification_link(request.email)  # type: ignore
                 # TODO: Send email using email service
                 verification_email_sent = True
                 logger.info("Email verification link generated for %s", request.email)
-            except (auth.AuthError, ConnectionError, TimeoutError, OSError) as e:
+            except (auth.AuthError, ConnectionError, TimeoutError, OSError) as e:  # type: ignore
                 logger.warning("Failed to send verification email: %s", e)
 
             logger.info("User registered successfully: %s", user_record.uid)
@@ -247,8 +247,8 @@ class AuthenticationService:
         try:
             # Get user by email
             try:
-                user_record = auth.get_user_by_email(request.email)
-            except auth.UserNotFoundError as e:
+                user_record = auth.get_user_by_email(request.email)  # type: ignore
+            except auth.UserNotFoundError as e:  # type: ignore
                 error_msg = f"User with email {request.email} not found"
                 raise UserNotFoundError(error_msg) from e
 
@@ -468,7 +468,7 @@ class AuthenticationService:
 
     @staticmethod
     async def _create_user_session_response(
-        user_record: auth.UserRecord, user_data: dict[str, Any]
+        user_record: auth.UserRecord, user_data: dict[str, Any]  # type: ignore
     ) -> UserSessionResponse:
         """Create user session response from user data.
 
@@ -639,7 +639,7 @@ class AuthenticationService:
         """
         try:
             # Get Firebase user record
-            user_record = auth.get_user(user_id)
+            user_record = auth.get_user(user_id)  # type: ignore
 
             # Get user data from Firestore
             user_data = await self.firestore_client.get_document(
@@ -651,7 +651,7 @@ class AuthenticationService:
 
             return await self._create_user_session_response(user_record, user_data)
 
-        except auth.UserNotFoundError:
+        except auth.UserNotFoundError:  # type: ignore
             return None
         except Exception:
             logger.exception("Failed to get user %s", user_id)

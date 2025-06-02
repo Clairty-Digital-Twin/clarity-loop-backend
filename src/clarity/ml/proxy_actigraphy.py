@@ -132,7 +132,7 @@ def _generate_circadian_padding(length: int, base_activity: float = 0.5) -> NDAr
     return padding_values
 
 
-def _smooth_proxy_values(proxy_values: np.ndarray, window_size: int = 5) -> np.ndarray:
+def _smooth_proxy_values(proxy_values: NDArray[np.floating[Any]], window_size: int = 5) -> NDArray[np.floating[Any]]:
     """Apply temporal smoothing to reduce unrealistic step changes.
     
     Args:

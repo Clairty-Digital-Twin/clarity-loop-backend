@@ -6,7 +6,7 @@ into proxy actigraphy signals for PAT model analysis.
 
 from datetime import UTC, datetime
 import time
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 import numpy as np
 from pydantic_core import ValidationError
@@ -115,7 +115,7 @@ class TestProxyActigraphyTransformer:
     """Test ProxyActigraphyTransformer functionality."""
 
     @patch('clarity.ml.proxy_actigraphy.lookup_norm_stats')
-    def test_transformer_initialization(self, mock_lookup_stats):
+    def test_transformer_initialization(self, mock_lookup_stats: MagicMock):
         """Test transformer initialization."""
         mock_lookup_stats.return_value = (1.2, 0.8)
 
@@ -478,10 +478,7 @@ class TestIntegrationProxyActigraphy:
         # Simulate realistic step patterns
         step_counts = []
         for hour in range(24):
-            if 6 <= hour <= 22:  # Daytime
-                base_steps = 50 + (hour - 6) * 5
-            else:  # Nighttime
-                base_steps = 5
+            base_steps = 50 + (hour - 6) * 5 if 6 <= hour <= 22 else 5
             step_counts.append(float(base_steps))
 
         step_data = StepCountData(

@@ -257,7 +257,8 @@ class TestProxyActigraphyTransformer:
         timestamps = [datetime.now(timezone.utc) for _ in range(week_size)]
         # Create realistic step counts that will produce varied transformation results
         # Use values that work well with the updated NHANES normalization (mean=3.2, std=1.8)
-        step_counts = [max(0.0, 1.0 + (i % 10) * 0.2) for i in range(week_size)]
+        # Create more variety by using modulo 100 instead of 10 to get more unique values
+        step_counts = [max(0.0, 1.0 + (i % 100) * 0.02) for i in range(week_size)]
         
         step_data = StepCountData(
             user_id="user123",

@@ -1,26 +1,21 @@
-"""Comprehensive test suite for Firebase Authentication Middleware.
+"""Unit tests for Firebase Authentication Middleware.
 
-Tests cover all aspects of Firebase authentication middleware functionality:
-- Token extraction and validation
-- User context creation and role-based access control
-- Error handling scenarios
-- Performance with caching
-- Resource cleanup
-- Integration with FastAPI
+Tests cover authentication flows, token validation, error handling,
+and middleware behavior under various conditions.
 """
 
 import asyncio
-from collections.abc import Awaitable, Callable
-from datetime import UTC, datetime
 import json
 import logging
 import time
+from collections.abc import Awaitable, Callable
+from datetime import UTC, datetime
 from typing import Any
 from unittest.mock import AsyncMock, Mock, patch
 
+import pytest
 from fastapi import FastAPI, Request
 from httpx import ASGITransport, AsyncClient
-import pytest
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.responses import JSONResponse, Response
 
@@ -30,8 +25,7 @@ from clarity.auth.firebase_auth import (
 )
 from clarity.core.config import MiddlewareConfig
 from clarity.core.interfaces import IAuthProvider
-from clarity.models.auth import AuthError
-from clarity.models.auth import Permission, UserContext, UserRole
+from clarity.models.auth import AuthError, Permission, UserContext, UserRole
 
 # Import Firebase auth for exception handling
 try:

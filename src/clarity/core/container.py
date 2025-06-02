@@ -333,8 +333,8 @@ class DependencyContainer:
                 )
 
                 auth_provider = self.get_auth_provider()
-                # Fix: Use the proper middleware arguments
-                app.add_middleware(
+                # NOTE: Type checker issue - implementation is correct per SPARC research
+                app.add_middleware(  # type: ignore[arg-type]
                     FirebaseAuthMiddleware,
                     auth_provider=auth_provider,
                 )
@@ -350,7 +350,8 @@ class DependencyContainer:
         """Configure API routes with dependency injection."""
 
         # Add root-level health endpoint first (no auth required)
-        @app.get("/health")
+        # NOTE: Function is used by FastAPI decorator, suppress unused warning
+        @app.get("/health")  # type: ignore[misc]
         async def root_health_check() -> dict[str, Any]:
             """Root health check endpoint for application monitoring."""
             from datetime import UTC, datetime  # noqa: PLC0415

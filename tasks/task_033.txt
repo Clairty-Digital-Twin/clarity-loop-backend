@@ -89,3 +89,56 @@
 10. User acceptance testing:
     - Engage with clinicians to validate the clinical relevance of the analysis
     - Gather feedback on the API usability from other developers
+
+# Subtasks:
+## 1. Set up PAT model architecture and loading module [pending]
+### Dependencies: None
+### Description: Create the core module for loading and initializing the Dartmouth PAT model with proper error handling and configuration.
+### Details:
+Create a `pat_model.py` module that: 1) Defines the PyTorch model architecture matching the Dartmouth PAT specifications, 2) Implements a ModelLoader class with functions to load weights from the `/models/` directory, 3) Adds validation to ensure model integrity, 4) Implements singleton pattern to prevent multiple model loads, 5) Creates configuration options for different deployment environments.
+<info added on 2025-06-02T18:51:49.797Z>
+Implementation complete! Created `src/clarity/ml/pat_service.py` with the PATTransformer class following Dartmouth specifications (arXiv:2411.15240). The module implements a production-ready model service with proper PyTorch architecture, singleton pattern for model loading, and configuration options for different environments. Added comprehensive error handling, logging, and type annotations throughout. The implementation follows SOLID principles with dependency injection and clean separation of concerns. Model validation ensures integrity when loading weights from the `/models/` directory.
+</info added on 2025-06-02T18:51:49.797Z>
+
+## 2. Implement data preprocessing pipeline [pending]
+### Dependencies: 33.1
+### Description: Create a preprocessing service that handles actigraphy data normalization, standardization, and formatting for the PAT model.
+### Details:
+Develop a `preprocessing.py` module that: 1) Implements normalization functions for raw actigraphy data, 2) Creates sliding window functionality for time series data, 3) Handles missing data with appropriate imputation strategies, 4) Converts data to tensor format expected by the model, 5) Implements batch processing capabilities for multiple samples.
+
+## 3. Develop asynchronous inference engine [pending]
+### Dependencies: 33.1, 33.2
+### Description: Create an optimized inference service that efficiently processes actigraphy data through the PAT model.
+### Details:
+Build an `inference.py` module that: 1) Implements async functions for model inference, 2) Adds batching capabilities to process multiple requests efficiently, 3) Optimizes inference using ONNX runtime, 4) Implements result caching with Redis for frequent requests, 5) Adds performance monitoring for inference times and resource usage.
+
+## 4. Create FastAPI endpoints for PAT service [pending]
+### Dependencies: 33.3
+### Description: Develop the REST API interface for the PAT model service with proper request validation and error handling.
+### Details:
+Implement `pat_service.py` with FastAPI that: 1) Creates endpoints for real-time actigraphy analysis, 2) Implements request validation using Pydantic models, 3) Handles authentication using Firebase, 4) Adds rate limiting for API protection, 5) Implements comprehensive error handling with appropriate HTTP status codes, 6) Creates health check endpoints for service monitoring.
+
+## 5. Implement result post-processing and FHIR integration [pending]
+### Dependencies: 33.3
+### Description: Create a module to transform model outputs into clinically relevant metrics and FHIR-compliant formats.
+### Details:
+Develop a `postprocessing.py` module that: 1) Converts raw model outputs to clinical metrics (e.g., sleep quality scores, activity levels), 2) Formats results according to HL7 FHIR standards, 3) Generates human-readable reports, 4) Implements versioning for output formats, 5) Creates adapters for integration with the health data service.
+
+## 6. Implement security and HIPAA compliance measures [pending]
+### Dependencies: 33.4, 33.5
+### Description: Ensure the PAT service meets all security requirements and HIPAA regulations for handling patient data.
+### Details:
+Create a `security.py` module that: 1) Implements data encryption at rest and in transit, 2) Adds audit logging for all data access, 3) Implements secure data deletion policies, 4) Creates access control mechanisms based on user roles, 5) Adds data anonymization for non-clinical use cases, 6) Implements secure error handling that doesn't leak sensitive information.
+
+## 7. Optimize service for scalability and performance [pending]
+### Dependencies: 33.3, 33.4, 33.6
+### Description: Enhance the PAT service for production-level performance, reliability, and scalability.
+### Details:
+Implement performance optimizations including: 1) Containerization with Docker for deployment, 2) Load balancing configuration for multiple model instances, 3) Memory optimization techniques for the deep learning model, 4) Caching strategies with appropriate TTL values, 5) Database connection pooling, 6) Graceful degradation strategies for high load scenarios, 7) Horizontal scaling configuration.
+
+## 8. Create comprehensive documentation and developer guides [pending]
+### Dependencies: 33.1, 33.2, 33.3, 33.4, 33.5, 33.6, 33.7
+### Description: Develop complete documentation for the PAT service including API references, integration guides, and deployment instructions.
+### Details:
+Create documentation including: 1) API reference with Swagger/OpenAPI, 2) Integration examples for common use cases, 3) Deployment guides for different environments, 4) Troubleshooting section for common issues, 5) Performance tuning recommendations, 6) Security best practices, 7) Sample code for client applications, 8) Explanation of clinical metrics and their interpretation.
+

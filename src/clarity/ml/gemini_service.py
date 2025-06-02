@@ -211,7 +211,7 @@ Respond only with valid JSON."""
 
     @staticmethod
     def _parse_gemini_response(
-        response: Any, user_id: str
+        response: object, user_id: str
     ) -> HealthInsightResponse:
         """Parse and validate Gemini response."""
         try:

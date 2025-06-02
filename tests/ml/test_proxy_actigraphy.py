@@ -111,7 +111,7 @@ class TestProxyActigraphyTransformer:
     """Test ProxyActigraphyTransformer functionality."""
 
     @patch("clarity.ml.proxy_actigraphy.lookup_norm_stats")
-    def test_transformer_initialization(
+    def test_transformer_initialization(  # noqa: PLR6301
         self, mock_lookup_stats: MagicMock
     ) -> None:
         """Test transformer initialization."""
@@ -140,7 +140,7 @@ class TestProxyActigraphyTransformer:
         assert transformer.nhanes_std == 0.75
 
     @patch("clarity.ml.proxy_actigraphy.lookup_norm_stats")
-    def test_steps_to_movement_proxy(
+    def test_steps_to_movement_proxy(  # noqa: PLR6301
         self, mock_lookup_stats: MagicMock
     ) -> None:
         """Test step count to movement proxy conversion."""
@@ -160,7 +160,7 @@ class TestProxyActigraphyTransformer:
         assert all(-5.0 <= val <= 5.0 for val in proxy_values)
 
     @patch("clarity.ml.proxy_actigraphy.lookup_norm_stats")
-    def test_transform_step_data_basic(
+    def test_transform_step_data_basic(  # noqa: PLR6301
         self, mock_lookup_stats: MagicMock
     ) -> None:
         """Test basic step data transformation."""
@@ -210,7 +210,7 @@ class TestProxyActigraphyTransformer:
         )  # Should have some variation from different step counts
 
     @patch("clarity.ml.proxy_actigraphy.lookup_norm_stats")
-    def test_transform_with_caching(
+    def test_transform_with_caching(  # noqa: PLR6301
         self, mock_lookup_stats: MagicMock
     ) -> None:
         """Test transformation with caching enabled."""
@@ -237,7 +237,7 @@ class TestProxyActigraphyTransformer:
         assert result1.quality_score == result2.quality_score
 
     @patch("clarity.ml.proxy_actigraphy.lookup_norm_stats")
-    def test_transform_without_caching(
+    def test_transform_without_caching(  # noqa: PLR6301
         self, mock_lookup_stats: MagicMock
     ) -> None:
         """Test transformation with caching disabled."""
@@ -257,7 +257,7 @@ class TestProxyActigraphyTransformer:
         assert isinstance(result, ProxyActigraphyResult)
 
     @patch("clarity.ml.proxy_actigraphy.lookup_norm_stats")
-    def test_transform_large_dataset(
+    def test_transform_large_dataset(  # noqa: PLR6301
         self, mock_lookup_stats: MagicMock
     ) -> None:
         """Test transformation with large dataset."""
@@ -296,7 +296,7 @@ class TestProxyActigraphyTransformer:
         assert all(-5.0 <= val <= 5.0 for val in result.vector)
 
     @patch("clarity.ml.proxy_actigraphy.lookup_norm_stats")
-    def test_transform_with_padding(
+    def test_transform_with_padding(  # noqa: PLR6301
         self, mock_lookup_stats: MagicMock
     ) -> None:
         """Test transformation with small dataset that requires padding."""
@@ -353,7 +353,7 @@ class TestProxyActigraphyTransformer:
         assert stats["padding_percentage"] > 99.0  # Almost all padding
 
     @patch("clarity.ml.proxy_actigraphy.lookup_norm_stats")
-    def test_quality_score_calculation(
+    def test_quality_score_calculation(  # noqa: PLR6301
         self, mock_lookup_stats: MagicMock
     ) -> None:
         """Test quality score calculation."""
@@ -383,7 +383,7 @@ class TestProxyActigraphyTransformer:
         assert "total_steps" in stats
 
     @patch("clarity.ml.proxy_actigraphy.lookup_norm_stats")
-    def test_transform_with_zeros(
+    def test_transform_with_zeros(  # noqa: PLR6301
         self, mock_lookup_stats: MagicMock
     ) -> None:
         """Test transformation with zero step counts."""
@@ -412,7 +412,7 @@ class TestProxyActigraphyTransformer:
         )  # Padding adds non-zero values
 
     @patch("clarity.ml.proxy_actigraphy.lookup_norm_stats")
-    def test_transform_with_extreme_values(
+    def test_transform_with_extreme_values(  # noqa: PLR6301
         self, mock_lookup_stats: MagicMock
     ) -> None:
         """Test transformation with extreme step values."""
@@ -451,7 +451,7 @@ class TestHelperFunctions:
         assert transformer.cache_enabled is True
 
     @patch("clarity.ml.proxy_actigraphy.lookup_norm_stats")
-    def test_create_transformer_with_params(
+    def test_create_transformer_with_params(  # noqa: PLR6301
         self, mock_lookup_stats: MagicMock
     ) -> None:
         """Test transformer factory with custom parameters."""
@@ -542,7 +542,7 @@ class TestIntegrationProxyActigraphy:
     """Integration tests for proxy actigraphy functionality."""
 
     @patch("clarity.ml.proxy_actigraphy.lookup_norm_stats")
-    def test_end_to_end_transformation(
+    def test_end_to_end_transformation(  # noqa: PLR6301
         self, mock_lookup_stats: MagicMock
     ) -> None:
         """Test complete end-to-end transformation workflow."""
@@ -622,7 +622,7 @@ class TestEdgeCasesProxyActigraphy:
     """Test edge cases and boundary conditions."""
 
     @patch("clarity.ml.proxy_actigraphy.lookup_norm_stats")
-    def test_single_data_point(
+    def test_single_data_point(  # noqa: PLR6301
         self, mock_lookup_stats: MagicMock
     ) -> None:
         """Test transformation with single data point."""
@@ -647,7 +647,7 @@ class TestEdgeCasesProxyActigraphy:
         assert result.transformation_stats["output_length"] == 10080
 
     @patch("clarity.ml.proxy_actigraphy.lookup_norm_stats")
-    def test_negative_step_counts(
+    def test_negative_step_counts(  # noqa: PLR6301
         self, mock_lookup_stats: MagicMock
     ) -> None:
         """Test transformation handles negative step counts."""

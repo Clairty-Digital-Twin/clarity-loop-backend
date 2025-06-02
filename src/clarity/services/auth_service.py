@@ -163,7 +163,7 @@ class AuthenticationService:
                 "created_at": datetime.now(UTC).isoformat(),
             }
 
-            auth.set_custom_user_claims(user_record.uid, custom_claims)  # type: ignore
+            auth.set_custom_user_claims(user_record.uid, custom_claims)  # type: ignore[misc]
 
             # Store additional user data in Firestore
             user_data = {
@@ -198,11 +198,11 @@ class AuthenticationService:
             verification_email_sent = False
             try:
                 # Generate email verification link (unused for now)
-                _ = auth.generate_email_verification_link(request.email)  # type: ignore
+                _ = auth.generate_email_verification_link(request.email)  # type: ignore[misc]
                 # TODO: Send email using email service
                 verification_email_sent = True
                 logger.info("Email verification link generated for %s", request.email)
-            except (auth.AuthError, ConnectionError, TimeoutError, OSError) as e:  # type: ignore
+            except (auth.AuthError, ConnectionError, TimeoutError, OSError) as e:  # type: ignore[misc]
                 logger.warning("Failed to send verification email: %s", e)
 
             logger.info("User registered successfully: %s", user_record.uid)
@@ -247,8 +247,8 @@ class AuthenticationService:
         try:
             # Get user by email
             try:
-                user_record = auth.get_user_by_email(request.email)  # type: ignore
-            except auth.UserNotFoundError as e:  # type: ignore
+                user_record = auth.get_user_by_email(request.email)  # type: ignore[misc]
+            except auth.UserNotFoundError as e:  # type: ignore[misc]
                 error_msg = f"User with email {request.email} not found"
                 raise UserNotFoundError(error_msg) from e
 
@@ -468,7 +468,7 @@ class AuthenticationService:
 
     @staticmethod
     async def _create_user_session_response(
-        user_record: auth.UserRecord, user_data: dict[str, Any]  # type: ignore
+        user_record: auth.UserRecord, user_data: dict[str, Any]  # type: ignore[name-defined]
     ) -> UserSessionResponse:
         """Create user session response from user data.
 
@@ -639,7 +639,7 @@ class AuthenticationService:
         """
         try:
             # Get Firebase user record
-            user_record = auth.get_user(user_id)  # type: ignore
+            user_record = auth.get_user(user_id)  # type: ignore[misc]
 
             # Get user data from Firestore
             user_data = await self.firestore_client.get_document(

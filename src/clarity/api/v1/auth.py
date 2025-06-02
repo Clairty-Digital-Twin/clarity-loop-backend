@@ -74,7 +74,7 @@ def set_dependencies(
         # Type assertion: firestore_client is guaranteed to be FirestoreClient here
         _auth_service = AuthenticationService(
             auth_provider=auth_provider,
-            firestore_client=firestore_client,  # type: ignore
+            firestore_client=firestore_client,  # type: ignore[arg-type]
         )
     else:
         # Fallback: create FirestoreClient from repository if available
@@ -88,7 +88,7 @@ def set_dependencies(
             if extracted_client is not None:  # Additional safety check
                 _auth_service = AuthenticationService(
                     auth_provider=auth_provider,
-                    firestore_client=extracted_client,  # type: ignore
+                    firestore_client=extracted_client,  # type: ignore[arg-type]
                 )
             else:
                 logger.warning(

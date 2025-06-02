@@ -15,6 +15,8 @@ from functools import lru_cache
 import logging
 from typing import Any
 
+import numpy as np
+
 logger = logging.getLogger(__name__)
 
 # Standard deviation thresholds for outlier detection
@@ -100,12 +102,14 @@ def lookup_norm_stats(
     """
     try:
         # Start with base statistics for the year
-        if year not in NHANES_REFERENCE_STATS:
+        year_str = str(year)
+        if year_str not in NHANES_REFERENCE_STATS:
             logger.warning("Year %d not in reference data, using 2025 default", year)
-            year = 2025
+            year_str = "2025"
 
-        base_stats = NHANES_REFERENCE_STATS[str(year)]
-        mean, std = base_stats["mean"], base_stats["std"]
+        base_stats = NHANES_REFERENCE_STATS[year_str]
+        mean = float(base_stats["mean"])
+        std = float(base_stats["std"])
 
         # Apply age group adjustments if specified
         if age_group:
@@ -114,8 +118,8 @@ def lookup_norm_stats(
             else:
                 age_stats = AGE_STRATIFIED_STATS[age_group]
                 # Weighted combination of base and age-specific stats
-                mean = (mean + age_stats["mean"]) / 2
-                std = (std + age_stats["std"]) / 2
+                mean = (mean + float(age_stats["mean"])) / 2
+                std = (std + float(age_stats["std"])) / 2
 
         # Apply sex adjustments if specified
         if sex:
@@ -136,13 +140,12 @@ def lookup_norm_stats(
             mean,
             std,
         )
-
-        return mean, std
-
     except Exception as e:
         logger.exception("Error looking up NHANES stats")
         msg = f"Failed to lookup reference statistics: {e}"
         raise NHANESStatsError(msg) from e
+    else:
+        return mean, std
 
 
 def get_reference_info(year: int = 2025) -> dict[str, Any]:
@@ -174,8 +177,6 @@ def validate_proxy_values(
     Returns:
         Dictionary with validation results and statistics
     """
-    import numpy as np
-
     mean, std = lookup_norm_stats(year=year)
 
     # Calculate z-scores

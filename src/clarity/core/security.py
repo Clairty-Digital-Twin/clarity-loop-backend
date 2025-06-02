@@ -9,7 +9,6 @@ resistant to common attacks while maintaining good performance.
 
 import hashlib
 import secrets
-from typing import Any
 
 from clarity.core.constants import CACHE_KEY_TRUNCATION_LENGTH, HASH_ALGORITHM
 
@@ -64,7 +63,7 @@ class SecureHashGenerator:
         hash_obj.update(data)
         return hash_obj.hexdigest()
 
-    def generate_cache_key(self, *components: Any, truncate: bool = True) -> str:
+    def generate_cache_key(self, *components: object, truncate: bool = True) -> str:
         """Generate a secure cache key from multiple components.
 
         Args:
@@ -104,7 +103,7 @@ def create_secure_hash(data: str, *, encoding: str = "utf-8") -> str:
     return _default_hasher.hash_string(data, encoding=encoding)
 
 
-def create_secure_cache_key(*components: Any, truncate: bool = True) -> str:
+def create_secure_cache_key(*components: object, truncate: bool = True) -> str:
     """Create a secure cache key from multiple components.
 
     This is a convenience function that uses the default hasher instance

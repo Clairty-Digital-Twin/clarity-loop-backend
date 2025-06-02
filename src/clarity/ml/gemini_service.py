@@ -66,7 +66,8 @@ class GeminiService:
         self.model = None
         self.is_initialized = False
 
-    def _raise_model_not_initialized(self) -> None:
+    @staticmethod
+    def _raise_model_not_initialized() -> None:
         """Raise RuntimeError when model is not initialized."""
         msg = GEMINI_NOT_INITIALIZED_MSG
         raise RuntimeError(msg)

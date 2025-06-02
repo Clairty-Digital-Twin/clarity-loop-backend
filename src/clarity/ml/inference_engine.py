@@ -102,7 +102,7 @@ class InferenceCache:
         for key in expired_keys:
             del self.cache[key]
 
-    async def get(self, key: str) -> Any | None:
+    async def get(self, key: str) -> object | None:
         """Get value from cache if not expired.
 
         Args:
@@ -117,7 +117,7 @@ class InferenceCache:
             return value
         return None
 
-    async def set(self, key: str, value: Any) -> None:
+    async def set(self, key: str, value: object) -> None:
         """Set value in cache with current timestamp.
 
         Args:

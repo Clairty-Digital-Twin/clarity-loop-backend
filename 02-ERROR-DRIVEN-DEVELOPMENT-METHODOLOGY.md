@@ -11,6 +11,7 @@
 ## The EDD Cycle
 
 ### 1. Intentional Collision
+
 **Goal**: Hit errors as fast as possible to understand real requirements
 
 ```python
@@ -22,6 +23,7 @@ async def upload_health_data(data: dict):
 ```
 
 **Expected Errors** (and what they teach us):
+
 - `422 Unprocessable Entity` → Need data validation
 - `500 Internal Server Error` → Need error handling
 - `401 Unauthorized` → Need authentication
@@ -29,9 +31,11 @@ async def upload_health_data(data: dict):
 - `Schema validation error` → Need proper data models
 
 ### 2. Error-Guided Implementation
+
 **Goal**: Let each error tell us exactly what to build next
 
-#### Error-Response Pattern:
+#### Error-Response Pattern
+
 ```python
 # Error: ValidationError - no data validation
 # Response: Add Pydantic model
@@ -71,9 +75,11 @@ async def process_health_data_async(data: HealthDataUpload, user_id: str):
 ```
 
 ### 3. Progressive Hardening
+
 **Goal**: Build resilience incrementally based on real failure modes
 
-#### Hardening Sequence:
+#### Hardening Sequence
+
 1. **Basic functionality** - Make it work once
 2. **Input validation** - Handle bad data
 3. **Error boundaries** - Graceful failure
@@ -83,12 +89,14 @@ async def process_health_data_async(data: HealthDataUpload, user_id: str):
 ## EDD Implementation Checklist
 
 ### Phase 1: Collision Course
+
 - [ ] Write the minimal API endpoint that compiles
 - [ ] Make a real request and collect ALL errors
 - [ ] Document every failure mode encountered
 - [ ] Prioritize errors by user impact severity
 
 ### Phase 2: Targeted Fixes
+
 - [ ] Fix the highest-impact error first
 - [ ] Add only the minimal code to resolve that specific error
 - [ ] Test that the fix works
@@ -96,6 +104,7 @@ async def process_health_data_async(data: HealthDataUpload, user_id: str):
 - [ ] Repeat until basic functionality works
 
 ### Phase 3: Edge Case Discovery
+
 - [ ] Send malformed data intentionally
 - [ ] Test with missing authentication
 - [ ] Try invalid user inputs
@@ -103,6 +112,7 @@ async def process_health_data_async(data: HealthDataUpload, user_id: str):
 - [ ] Document all new error modes
 
 ### Phase 4: Resilience Building
+
 - [ ] Add comprehensive error handling
 - [ ] Implement retry logic where appropriate
 - [ ] Add logging for debugging
@@ -111,6 +121,7 @@ async def process_health_data_async(data: HealthDataUpload, user_id: str):
 ## Error-Driven Patterns
 
 ### 1. The Collision Template
+
 Start every new feature with intentional failure:
 
 ```python
@@ -139,6 +150,7 @@ async def new_feature(
 ```
 
 ### 2. Error-First Testing
+
 Write tests that expect failures:
 
 ```python
@@ -164,6 +176,7 @@ async def test_health_data_upload_errors():
 ```
 
 ### 3. Error Logging and Learning
+
 Capture error information for continuous learning:
 
 ```python
@@ -208,6 +221,7 @@ class ErrorDrivenMiddleware:
 ## EDD for Different Layers
 
 ### API Layer EDD
+
 ```python
 # Start broken, fix systematically
 @router.post("/insights/generate")
@@ -224,6 +238,7 @@ async def generate_insights(request: dict):
 ```
 
 ### Database Layer EDD
+
 ```python
 # Start with direct database calls
 async def store_health_data(data: dict):
@@ -240,6 +255,7 @@ async def store_health_data(data: dict):
 ```
 
 ### ML Model Integration EDD
+
 ```python
 # Start with direct model calls
 async def run_actigraphy_analysis(data: list):
@@ -260,17 +276,20 @@ async def run_actigraphy_analysis(data: list):
 ### Daily EDD Routine
 
 #### Morning Setup (5 minutes)
+
 1. **Collision Planning**: Choose one new feature to break
 2. **Error Budget**: Decide how many errors you want to encounter
 3. **Learning Goals**: What do you want the errors to teach you?
 
 #### Implementation Session (25 minutes)
+
 1. **Write broken code** (5 minutes)
 2. **Run and collect errors** (5 minutes)
 3. **Fix highest priority error** (10 minutes)
 4. **Test fix and find next error** (5 minutes)
 
 #### Review Session (10 minutes)
+
 1. **Document what errors taught you**
 2. **Update error patterns library**
 3. **Plan next collision for tomorrow**
@@ -298,6 +317,7 @@ Maintain a living document of error patterns:
 ## Advanced EDD Techniques
 
 ### 1. Chaos-Driven Development
+
 Intentionally inject failures to discover edge cases:
 
 ```python
@@ -320,6 +340,7 @@ class ChaosMiddleware:
 ```
 
 ### 2. Error-Driven Load Testing
+
 Use errors to guide performance optimization:
 
 ```python
@@ -343,6 +364,7 @@ async def load_test_health_upload():
 ```
 
 ### 3. Error-Driven Security Testing
+
 Let security failures guide hardening:
 
 ```python
@@ -363,16 +385,19 @@ async def vulnerable_upload(data: str):  # Raw string - will break
 ## EDD Metrics and Success Criteria
 
 ### Velocity Metrics
+
 - **Time to First Error**: Should be < 5 minutes
 - **Error Resolution Rate**: Should fix 1 error every 10-15 minutes
 - **Feature Completion Time**: Should decrease with each error cycle
 
 ### Quality Metrics
+
 - **Error Pattern Recognition**: Reuse previous error solutions
 - **Defensive Code Coverage**: % of code with error handling
 - **Recovery Time**: How fast the system recovers from errors
 
 ### Learning Metrics
+
 - **Error Pattern Library Growth**: New patterns discovered weekly
 - **Error Prediction Accuracy**: Can you predict the next 3 errors?
 - **Knowledge Transfer**: Can team members predict error patterns?
@@ -380,6 +405,7 @@ async def vulnerable_upload(data: str):  # Raw string - will break
 ## Common EDD Anti-Patterns
 
 ### ❌ Error Avoidance
+
 ```python
 # DON'T: Try to prevent all errors upfront
 def overly_cautious_upload(data):
@@ -393,6 +419,7 @@ def overly_cautious_upload(data):
 ```
 
 ### ✅ Error Embrace
+
 ```python
 # DO: Let errors guide you to the real requirements
 def error_driven_upload(data):
@@ -401,6 +428,7 @@ def error_driven_upload(data):
 ```
 
 ### ❌ Error Hiding
+
 ```python
 # DON'T: Catch and hide errors
 try:
@@ -410,6 +438,7 @@ except Exception:
 ```
 
 ### ✅ Error Learning
+
 ```python
 # DO: Let errors teach you
 try:
@@ -423,16 +452,19 @@ except SpecificError as e:
 ## Integration with Other Methodologies
 
 ### EDD + TDD
+
 1. **Error-Driven Test Writing**: Write tests for expected errors first
 2. **Red-Green-Refactor**: Red = errors, Green = fixes, Refactor = optimization
 3. **Test-Guided Error Handling**: Let test failures guide error handling
 
 ### EDD + Vertical Slice Development
+
 1. **Slice-Specific Error Patterns**: Each slice has predictable error types
 2. **End-to-End Error Testing**: Test complete user journeys for errors
 3. **Layer-by-Layer Error Handling**: Errors propagate up the stack
 
 ### EDD + Continuous Integration
+
 1. **Error-Driven Pipeline Design**: Let failures guide pipeline improvements
 2. **Failure-Fast Feedback**: Optimize for quick error feedback
 3. **Error Pattern Automation**: Automate handling of known error patterns

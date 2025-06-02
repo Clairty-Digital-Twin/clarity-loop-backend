@@ -41,8 +41,8 @@ This guide covers the complete deployment process for the Clarity Loop Backend a
 
 ### Required Access and Permissions
 
-**See External References** → [Cloud Run Gen 2 execution-env](../external-links.md#external-references--google-cloud-backend-critical) 
-and [Workload Identity Federation](../external-links.md#external-references--google-cloud-backend-critical) 
+**See External References** → [Cloud Run Gen 2 execution-env](../external-links.md#external-references--google-cloud-backend-critical)
+and [Workload Identity Federation](../external-links.md#external-references--google-cloud-backend-critical)
 for canonical deployment configurations.
 
 ```bash

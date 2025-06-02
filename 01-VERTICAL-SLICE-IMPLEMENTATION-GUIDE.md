@@ -9,6 +9,7 @@
 ## Vertical Slice Structure
 
 ### Slice Anatomy
+
 ```
 ┌─────────────────────────────────────────────────────────┐
 │ iOS/watchOS Client (SwiftUI + HealthKit)                │
@@ -26,9 +27,11 @@
 ## Implementation Order
 
 ### Phase 1: Health Data Upload & Storage
+
 **Goal**: User can sync Apple Watch data and see it stored
 
-#### Checklist:
+#### Checklist
+
 - [ ] Create `src/api/v1/health_data.py` - Upload endpoint
 - [ ] Create `src/models/health_data.py` - Pydantic models
 - [ ] Create `src/services/health_data_service.py` - Business logic
@@ -36,7 +39,8 @@
 - [ ] Create `tests/integration/test_health_data_flow.py` - E2E test
 - [ ] Verify: POST /api/v1/health-data/upload returns 202 with processing_id
 
-#### Files Created:
+#### Files Created
+
 ```
 src/
 ├── api/v1/health_data.py          # FastAPI endpoints
@@ -46,7 +50,8 @@ src/
 └── tests/integration/test_health_data_flow.py
 ```
 
-#### Implementation Pattern:
+#### Implementation Pattern
+
 ```python
 # 1. Define the API contract first (what users can do)
 @router.post("/health-data/upload", response_model=UploadResponse)
@@ -100,9 +105,11 @@ async def test_health_data_upload_flow():
 ```
 
 ### Phase 2: AI Insights Generation
+
 **Goal**: Uploaded data triggers AI analysis and generates insights
 
-#### Checklist:
+#### Checklist
+
 - [ ] Create `src/ml/gemini_client.py` - AI integration (Gemini 2.5 Pro) [See Vertex AI documentation](https://cloud.google.com/vertex-ai/docs)
 - [ ] Create `src/services/insights_service.py` - Insight generation
 - [ ] Create `src/api/v1/insights.py` - Insights endpoints
@@ -110,7 +117,8 @@ async def test_health_data_upload_flow():
 - [ ] Create background processing with Pub/Sub
 - [ ] Verify: GET /api/v1/insights/daily returns AI-generated analysis
 
-#### Implementation Pattern:
+#### Implementation Pattern
+
 ```python
 # Background processor triggered by Pub/Sub
 async def process_health_data_insights(message: dict):
@@ -135,16 +143,19 @@ async def process_health_data_insights(message: dict):
 ```
 
 ### Phase 3: Real-time Chat Interface
+
 **Goal**: User can chat with AI about their health data
 
-#### Checklist:
+#### Checklist
+
 - [ ] Create `src/api/v1/chat.py` - WebSocket endpoints
 - [ ] Create `src/services/chat_service.py` - Conversation logic
 - [ ] Create `src/ml/conversation_context.py` - Context management
 - [ ] Implement real-time streaming responses
 - [ ] Verify: WebSocket connection enables health data Q&A
 
-#### Implementation Pattern:
+#### Implementation Pattern
+
 ```python
 @router.websocket("/chat/{user_id}")
 async def chat_websocket(websocket: WebSocket, user_id: str):
@@ -177,16 +188,19 @@ async def chat_websocket(websocket: WebSocket, user_id: str):
 ```
 
 ### Phase 4: Actigraphy ML Pipeline
+
 **Goal**: Advanced sleep/activity analysis using PAT models
 
-#### Checklist:
+#### Checklist
+
 - [ ] Create `src/ml/actigraphy_transformer.py` - PAT integration
 - [ ] Create `src/ml/preprocessing.py` - Data normalization
 - [ ] Create `src/services/actigraphy_service.py` - ML orchestration
 - [ ] Implement z-score normalization pipeline
 - [ ] Verify: Sleep stage classification and circadian analysis
 
-#### Implementation Pattern:
+#### Implementation Pattern
+
 ```python
 class ActigraphyProcessor:
     def __init__(self):
@@ -224,7 +238,9 @@ class ActigraphyProcessor:
 ## Vertical Slice Development Rules
 
 ### 1. Always Start with API Contract
+
 Define the user interaction first, then build backward:
+
 ```python
 # This is what users can do - define this FIRST
 @router.post("/health-data/upload", response_model=UploadResponse)
@@ -237,17 +253,21 @@ async def upload_health_data(
 ```
 
 ### 2. Build Backwards from User Value
+
 - Start with the endpoint that delivers user value
 - Work backward through business logic → data models → storage
 - Always maintain the connection to user experience
 
 ### 3. Make It Work, Then Make It Right
+
 - Get the simplest possible implementation working first
 - Add error handling, validation, and optimization incrementally
 - Each commit should maintain a working vertical slice
 
 ### 4. Test the Complete Flow
+
 Every vertical slice must have an integration test that verifies the complete user journey:
+
 ```python
 async def test_complete_health_data_journey():
     # 1. User uploads data
@@ -272,7 +292,8 @@ async def test_complete_health_data_journey():
 
 ## File Organization per Slice
 
-### Standard Structure:
+### Standard Structure
+
 ```
 src/
 ├── api/v1/              # FastAPI routers
@@ -310,8 +331,10 @@ src/
     └── dependencies.py
 ```
 
-### Slice-Specific Files:
+### Slice-Specific Files
+
 Each vertical slice creates files in ALL layers:
+
 - `api/v1/{feature}.py` - User interface
 - `models/{feature}.py` - Data validation
 - `services/{feature}_service.py` - Business logic
@@ -321,24 +344,28 @@ Each vertical slice creates files in ALL layers:
 ## Quality Gates per Slice
 
 ### 1. Functionality Gate
+
 - [ ] API endpoint responds correctly
 - [ ] Data is validated and stored
 - [ ] Business logic executes without errors
 - [ ] Integration test passes
 
 ### 2. Performance Gate
+
 - [ ] Response time < 2 seconds for sync operations
 - [ ] Async operations complete < 30 seconds
 - [ ] Memory usage stays within bounds
 - [ ] Database queries are optimized
 
 ### 3. Security Gate
+
 - [ ] Authentication required for protected endpoints
 - [ ] Input validation prevents injection attacks
 - [ ] HIPAA-compliant data handling
 - [ ] Audit logging implemented
 
 ### 4. Observability Gate
+
 - [ ] Comprehensive logging at all levels
 - [ ] Metrics collection for monitoring
 - [ ] Error tracking and alerting
@@ -356,17 +383,21 @@ Each vertical slice creates files in ALL layers:
 ## Common Pitfalls to Avoid
 
 ### 1. Horizontal Layer Development
+
 ❌ **Don't do this**: Build all APIs, then all services, then all storage
 ✅ **Do this**: Build one complete user journey at a time
 
 ### 2. Over-Engineering Early
+
 ❌ **Don't do this**: Design perfect abstractions before understanding requirements
 ✅ **Do this**: Get basic functionality working, then refactor
 
 ### 3. Skipping Integration Tests
+
 ❌ **Don't do this**: Only test individual components
 ✅ **Do this**: Test complete user journeys end-to-end
 
 ### 4. Ignoring Real Data
+
 ❌ **Don't do this**: Only test with perfect mock data
 ✅ **Do this**: Test with realistic, messy health data from the start

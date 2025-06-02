@@ -9,6 +9,7 @@
 ## 🏗️ **ARCHITECTURAL FOUNDATION (NON-NEGOTIABLE)**
 
 ### **🎯 Robert C. Martin's Clean Architecture Layers**
+
 Every line of code MUST respect the dependency rule: **Dependencies point INWARD only**
 
 ```
@@ -36,6 +37,7 @@ Every line of code MUST respect the dependency rule: **Dependencies point INWARD
 ```
 
 ### **🎯 SOLID Principles Implementation Matrix**
+
 | Principle | Implementation | Verification |
 |-----------|----------------|--------------|
 | **S** - Single Responsibility | Each class has ONE reason to change | `make check-srp` |
@@ -45,6 +47,7 @@ Every line of code MUST respect the dependency rule: **Dependencies point INWARD
 | **D** - Dependency Inversion | Depend on abstractions, not concretions | `make check-dip` |
 
 ### **🎯 Gang of Four Patterns (Mandatory Usage)**
+
 - **Factory Pattern**: Application and dependency creation
 - **Repository Pattern**: Data access abstraction  
 - **Strategy Pattern**: Algorithm encapsulation
@@ -64,6 +67,7 @@ Every line of code MUST respect the dependency rule: **Dependencies point INWARD
 **Clean Architecture Layer**: 🏛️ **ENTERPRISE BUSINESS RULES**
 
 **Deliverables (SOLID Compliant)**:
+
 ```python
 # 1. Health Data Entity (Single Responsibility)
 class HealthData:
@@ -92,6 +96,7 @@ class StepsProcessingRule(ProcessingRule): ...
 ```
 
 **SOLID Verification**:
+
 ```bash
 # Verify Single Responsibility
 make verify-entities-srp
@@ -112,6 +117,7 @@ pytest tests/unit/entities/ --cov=100
 **Clean Architecture Layer**: 💼 **APPLICATION BUSINESS RULES**
 
 **Deliverables (Gang of Four Patterns)**:
+
 ```python
 # 1. Use Case (Single Responsibility + Command Pattern)
 class UploadHealthDataUseCase:
@@ -156,6 +162,7 @@ class HealthDataProcessor(ABC):
 ```
 
 **Gang of Four Verification**:
+
 ```bash
 # Verify Command Pattern implementation
 make verify-command-pattern
@@ -176,6 +183,7 @@ make verify-strategy-pattern
 **Clean Architecture Layer**: 🎮 **INTERFACE ADAPTERS**
 
 **Deliverables (Adapter Pattern)**:
+
 ```python
 # 1. Controller (Adapter Pattern - Web to Use Cases)
 class HealthDataController:
@@ -218,6 +226,7 @@ class UploadResponseDTO(BaseModel):
 ```
 
 **Adapter Pattern Verification**:
+
 ```bash
 # Verify adapter pattern implementation
 make verify-adapter-pattern
@@ -238,6 +247,7 @@ pytest tests/unit/controllers/
 **Clean Architecture Layer**: 🌐 **FRAMEWORKS & DRIVERS**
 
 **Deliverables (Implementation Details)**:
+
 ```python
 # 1. Firestore Repository Implementation (Liskov Substitution)
 class FirestoreHealthDataRepository(HealthDataRepository):
@@ -286,6 +296,7 @@ class DependencyContainer:
 ```
 
 **Framework Independence Verification**:
+
 ```bash
 # Verify framework independence
 make verify-framework-independence
@@ -304,6 +315,7 @@ make verify-dependency-injection
 ## 🎯 **CLEAN ARCHITECTURE QUALITY GATES**
 
 ### **🏛️ Enterprise Business Rules Gate**
+
 ```bash
 # 100% framework independence required
 make verify-enterprise-purity
@@ -316,6 +328,7 @@ make verify-no-external-deps-in-entities
 ```
 
 ### **💼 Application Business Rules Gate**
+
 ```bash
 # Use cases must be testable with mocks
 pytest tests/unit/use_cases/ --cov=95
@@ -328,6 +341,7 @@ make verify-design-patterns
 ```
 
 ### **🎮 Interface Adapters Gate**
+
 ```bash
 # Controllers only adapt, never contain business logic
 make verify-controller-purity
@@ -340,6 +354,7 @@ make verify-adapter-implementations
 ```
 
 ### **🌐 Frameworks & Drivers Gate**
+
 ```bash
 # Framework details are easily swappable
 make verify-framework-swappability
@@ -356,6 +371,7 @@ make verify-repository-implementations
 ## 🧪 **CLEAN ARCHITECTURE TESTING STRATEGY**
 
 ### **Test Pyramid (Uncle Bob Approved)**
+
 ```python
 # 1. Enterprise Business Rules Tests (Unit - Pure)
 class TestHealthDataEntity:
@@ -416,6 +432,7 @@ class TestCompleteHealthDataFlow:
 ## 📏 **CLEAN CODE METRICS (Uncle Bob Standards)**
 
 ### **Mandatory Quality Metrics**
+
 ```bash
 # Cyclomatic Complexity (Uncle Bob: < 10)
 make check-complexity
@@ -439,6 +456,7 @@ make verify-design-patterns
 ```
 
 ### **Clean Code Verification Commands**
+
 ```bash
 # Robert C. Martin standards enforced
 make uncle-bob-standards    # Runs all Clean Architecture checks
@@ -452,6 +470,7 @@ make clean-code-metrics    # Uncle Bob's code quality standards
 ## 📚 **DOCUMENTATION (Clean Architecture Obsessed)**
 
 ### **Required Documentation Files**
+
 - **[Clean Architecture Implementation](docs/architecture/clean-architecture-implementation.md)** - Layer-by-layer implementation guide
 - **[SOLID Principles Examples](docs/architecture/solid-examples.md)** - Real code examples
 - **[Gang of Four Patterns Usage](docs/architecture/design-patterns-usage.md)** - Pattern implementation details

@@ -15,6 +15,7 @@
 ### Primary Tools Configuration
 
 #### 1. MyPy (Type Checking)
+
 ```toml
 # pyproject.toml
 [tool.mypy]
@@ -46,6 +47,7 @@ warn_return_any = true
 ```
 
 #### 2. Ruff (Linting & Formatting)
+
 ```toml
 # pyproject.toml
 [tool.ruff]
@@ -87,6 +89,7 @@ hardcoded-sql-expressions = true
 ```
 
 #### 3. Bandit (Security Analysis)
+
 ```toml
 # pyproject.toml
 [tool.bandit]
@@ -103,6 +106,7 @@ word_list = ["password", "pass", "passwd", "pwd", "secret", "key", "token"]
 ```
 
 #### 4. PyTest (Testing Framework)
+
 ```toml
 # pyproject.toml
 [tool.pytest.ini_options]
@@ -145,6 +149,7 @@ log_cli_format = "%(asctime)s [%(levelname)8s] %(name)s: %(message)s"
 ```
 
 #### 5. Coverage.py (Code Coverage)
+
 ```toml
 # pyproject.toml
 [tool.coverage.run]
@@ -228,6 +233,7 @@ repos:
 ### Development Quality Gates
 
 #### Gate 1: Immediate Feedback (< 5 seconds)
+
 ```bash
 #!/bin/bash
 # scripts/quick-check.sh
@@ -250,6 +256,7 @@ echo "✅ Quick checks complete!"
 ```
 
 #### Gate 2: Pre-Commit Validation (< 30 seconds)
+
 ```bash
 #!/bin/bash
 # scripts/pre-commit-check.sh
@@ -276,6 +283,7 @@ echo "✅ Pre-commit validation complete!"
 ```
 
 #### Gate 3: Full Quality Assurance (< 5 minutes)
+
 ```bash
 #!/bin/bash
 # scripts/full-qa.sh
@@ -305,6 +313,7 @@ echo "✅ Full QA complete!"
 ## Testing Strategy by Layer
 
 ### 1. API Layer Testing
+
 ```python
 # tests/test_api/test_health_data.py
 import pytest
@@ -388,6 +397,7 @@ class TestHealthDataAPI:
 ```
 
 ### 2. Business Logic Testing
+
 ```python
 # tests/test_services/test_health_analyzer.py
 import pytest
@@ -448,6 +458,7 @@ class TestHealthAnalyzer:
 ```
 
 ### 3. Data Layer Testing
+
 ```python
 # tests/test_repositories/test_health_data_repository.py
 import pytest
@@ -517,6 +528,7 @@ class TestHealthDataRepository:
 ```
 
 ### 4. ML Model Testing
+
 ```python
 # tests/test_ml/test_pat_model.py
 import pytest

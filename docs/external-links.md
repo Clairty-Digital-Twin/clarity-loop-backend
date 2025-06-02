@@ -29,6 +29,7 @@ All links are sourced from canonical Google Cloud documentation as of June 2025.
 ## Integration Status
 
 With these deep-links you now have:
+
 - ✅ **Complete in-repo how-to** (what your markdown already covers)
 - ✅ **Canonical vendor knobs & quotas** (the table above)
 

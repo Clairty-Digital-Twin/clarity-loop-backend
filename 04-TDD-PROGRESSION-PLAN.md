@@ -13,9 +13,11 @@
 ## TDD Maturity Levels
 
 ### Level 0: Test-After Development (Current State)
+
 **Characteristics**: Write code first, add tests later, reactive testing approach
 
 **Typical Workflow**:
+
 ```python
 # 1. Write implementation first
 @router.post("/health-data/upload")
@@ -30,11 +32,13 @@ def test_upload_health_data():
 ```
 
 ### Level 1: Test-First for New Features
+
 **Goal**: Write tests before implementation for all new features
 **Timeline**: 2-4 weeks to establish habit
 **Success Criteria**: 80% of new functions have tests written first
 
 **Implementation Strategy**:
+
 ```python
 # 1. Write failing test first
 def test_heart_rate_validation():
@@ -70,11 +74,13 @@ class HeartRateData(BaseModel):
 ```
 
 ### Level 2: Red-Green-Refactor Discipline
+
 **Goal**: Consistent TDD cycle for all development
 **Timeline**: 4-6 weeks to internalize rhythm
 **Success Criteria**: Can demonstrate complete TDD cycles in code reviews
 
 **The Healthcare TDD Cycle**:
+
 ```python
 # RED: Write failing test that captures healthcare requirement
 async def test_patient_data_encryption_at_rest():
@@ -136,11 +142,13 @@ class HealthDataRepository:
 ```
 
 ### Level 3: Outside-In TDD
+
 **Goal**: Start with acceptance tests, drive implementation from user needs
 **Timeline**: 6-8 weeks to master technique
 **Success Criteria**: Can build complete features starting from user stories
 
 **Outside-In Healthcare Example**:
+
 ```python
 # 1. Start with acceptance test (outside)
 @pytest.mark.integration
@@ -206,6 +214,7 @@ class TestHealthDataProcessor:
 ```
 
 ### Level 4: Advanced TDD Patterns
+
 **Goal**: Master complex TDD scenarios for healthcare AI
 **Timeline**: 8-12 weeks for full proficiency
 **Success Criteria**: Can TDD complex ML pipelines and real-time systems
@@ -215,6 +224,7 @@ class TestHealthDataProcessor:
 ### 1. API Endpoints (High Risk - Full TDD)
 
 #### Authentication & Authorization
+
 ```python
 # Test-first approach for security-critical features
 class TestAuthenticationTDD:
@@ -261,6 +271,7 @@ def validate_jwt_token(token: str) -> TokenPayload:
 ```
 
 #### Data Validation
+
 ```python
 class TestHealthDataValidationTDD:
     
@@ -324,6 +335,7 @@ class HeartRateReading(BaseModel):
 ### 2. ML Model Integration (Medium Risk - Structured TDD)
 
 #### PAT Model Testing
+
 ```python
 class TestPATModelTDD:
     
@@ -501,66 +513,81 @@ class HealthDataRepository:
 ## TDD Adoption Timeline
 
 ### Weeks 1-2: Foundation Building
+
 **Focus**: Establish basic TDD habits for new features
 
 **Daily Practice**:
+
 - Write one test before implementation each day
 - Practice Red-Green-Refactor on utility functions
 - Set up testing infrastructure and CI integration
 
 **Deliverables**:
+
 - [ ] All new utility functions are test-driven
 - [ ] Team members comfortable with pytest and basic TDD
 - [ ] CI pipeline runs tests on every commit
 
 ### Weeks 3-4: API Endpoint TDD
+
 **Focus**: Apply TDD to all new API endpoints
 
 **Practice Areas**:
+
 - Request/response validation
 - Authentication and authorization
 - Error handling and edge cases
 
 **Deliverables**:
+
 - [ ] All new API endpoints written test-first
 - [ ] Comprehensive test coverage for authentication
 - [ ] Error scenarios thoroughly tested
 
 ### Weeks 5-6: Business Logic TDD
+
 **Focus**: Test-drive domain logic and services
 
 **Practice Areas**:
+
 - Health data processing logic
 - Clinical decision rules
 - Business rule validation
 
 **Deliverables**:
+
 - [ ] Health data validation rules are test-driven
 - [ ] Clinical algorithms have comprehensive test coverage
 - [ ] Business logic is decoupled and testable
 
 ### Weeks 7-8: Integration and ML TDD
+
 **Focus**: Test-drive complex integrations and ML components
 
 **Practice Areas**:
+
 - Database operations and repositories
 - External service integrations
 - ML model wrapping and validation
 
 **Deliverables**:
+
 - [ ] Database operations are contract-tested
 - [ ] ML model integration is test-driven
 - [ ] External service calls are properly mocked/stubbed
 
 ### Weeks 9-12: Advanced TDD Mastery
+
 **Focus**: Master outside-in TDD and complex scenarios
 
 **Practice Areas**:
+
 - Full user story implementation from acceptance tests
 - Performance and load testing integration
 - HIPAA compliance verification through tests
 
 **Deliverables**:
+
 - [ ] Complete features built outside-in from user stories
 - [ ] Performance requirements verified through tests
 - [ ] HIPAA compliance requirements tested automatically
@@ -568,6 +595,7 @@ class HealthDataRepository:
 ## TDD Tools and Infrastructure
 
 ### Testing Framework Configuration
+
 ```toml
 # pyproject.toml - TDD-optimized pytest configuration
 [tool.pytest.ini_options]
@@ -605,6 +633,7 @@ asyncio_mode = "auto"
 ```
 
 ### TDD Development Scripts
+
 ```bash
 #!/bin/bash
 # scripts/tdd-cycle.sh - Automated TDD workflow
@@ -659,6 +688,7 @@ fi
 ```
 
 ### IDE Integration for TDD
+
 ```json
 // .vscode/settings.json - TDD-optimized VS Code setup
 {
@@ -691,6 +721,7 @@ fi
 ```
 
 ### Test Factories for Healthcare Data
+
 ```python
 # tests/factories.py - Test data factories for TDD
 import factory
@@ -743,6 +774,7 @@ def test_detect_bradycardia():
 ## TDD Success Metrics
 
 ### Code Quality Metrics
+
 ```python
 # scripts/tdd_metrics.py - Track TDD adoption success
 def calculate_tdd_metrics():
@@ -776,6 +808,7 @@ def count_proper_tdd_cycles():
 ```
 
 ### Healthcare-Specific TDD Metrics
+
 ```python
 class HealthcareTDDMetrics:
     """TDD metrics specific to healthcare system requirements"""
@@ -826,9 +859,11 @@ class HealthcareTDDMetrics:
 ## Common TDD Challenges and Solutions
 
 ### Challenge 1: Testing Complex ML Pipelines
+
 **Problem**: ML models are hard to test deterministically
 
 **TDD Solution**:
+
 ```python
 # Instead of testing the ML model directly, test the interface
 class TestMLModelInterface:
@@ -862,9 +897,11 @@ class TestMLModelInterface:
 ```
 
 ### Challenge 2: Testing Async Healthcare APIs
+
 **Problem**: Complex async workflows are hard to test
 
 **TDD Solution**:
+
 ```python
 class TestAsyncHealthDataWorkflow:
     
@@ -908,9 +945,11 @@ class TestAsyncHealthDataWorkflow:
 ```
 
 ### Challenge 3: Testing HIPAA Compliance
+
 **Problem**: Security requirements are abstract and hard to verify
 
 **TDD Solution**:
+
 ```python
 class TestHIPAAComplianceTDD:
     
@@ -951,6 +990,7 @@ class TestHIPAAComplianceTDD:
 ### Week-by-Week Progression Checklist
 
 #### Weeks 1-2: Foundation
+
 - [ ] Set up pytest with healthcare-specific configuration
 - [ ] Create test factories for health data models
 - [ ] Establish Red-Green-Refactor discipline for utility functions
@@ -958,6 +998,7 @@ class TestHIPAAComplianceTDD:
 - [ ] Team completes basic TDD training
 
 #### Weeks 3-4: API Layer TDD
+
 - [ ] All new API endpoints written test-first
 - [ ] Authentication and authorization fully test-driven
 - [ ] Input validation comprehensive and test-driven
@@ -965,6 +1006,7 @@ class TestHIPAAComplianceTDD:
 - [ ] API integration tests cover happy and error paths
 
 #### Weeks 5-6: Business Logic TDD
+
 - [ ] Health data processing logic is test-driven
 - [ ] Clinical decision rules have comprehensive tests
 - [ ] Business rule validation is test-driven
@@ -972,6 +1014,7 @@ class TestHIPAAComplianceTDD:
 - [ ] Service layer contracts are test-defined
 
 #### Weeks 7-8: Integration TDD
+
 - [ ] Database operations are contract-tested
 - [ ] External service integrations use test doubles
 - [ ] ML model integration is test-driven
@@ -979,6 +1022,7 @@ class TestHIPAAComplianceTDD:
 - [ ] File processing workflows are test-driven
 
 #### Weeks 9-12: Advanced TDD
+
 - [ ] Complete user stories built outside-in from acceptance tests
 - [ ] Performance requirements verified through tests
 - [ ] HIPAA compliance requirements tested automatically
@@ -988,6 +1032,7 @@ class TestHIPAAComplianceTDD:
 ### Success Criteria by Risk Level
 
 #### High-Risk Components (Security, Authentication, PII)
+
 - [ ] 100% test coverage
 - [ ] All edge cases covered
 - [ ] Security scenarios tested
@@ -995,6 +1040,7 @@ class TestHIPAAComplianceTDD:
 - [ ] Code review requires TDD evidence
 
 #### Medium-Risk Components (Business Logic, ML Integration)
+
 - [ ] 90%+ test coverage
 - [ ] Critical paths fully tested
 - [ ] Error scenarios covered
@@ -1002,6 +1048,7 @@ class TestHIPAAComplianceTDD:
 - [ ] Regular TDD practice reviews
 
 #### Low-Risk Components (Utilities, Formatting)
+
 - [ ] 80%+ test coverage
 - [ ] Happy path tested
 - [ ] Basic error handling tested

@@ -99,7 +99,7 @@ def mock_pat_model():
 
 
 @pytest.fixture
-def sample_actigraphy_data() -> dict:
+def sample_actigraphy_data() -> dict[str, Any]:
     """Provide sample actigraphy data for testing."""
     # Create a random number generator for reproducible tests
     rng = np.random.RandomState(42)

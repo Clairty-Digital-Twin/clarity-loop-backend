@@ -96,7 +96,7 @@ class PATTransformer(nn.Module):
 
     def forward(self, x: torch.Tensor) -> dict[str, torch.Tensor]:
         """Forward pass through the PAT model."""
-        batch_size, seq_len, _ = x.shape
+        _, seq_len, _ = x.shape
 
         # Input projection and positional encoding
         x = self.input_projection(x)
@@ -132,11 +132,13 @@ class PATModelService(IMLModelService):
         model_path: str | None = None,
         model_size: str = "medium",
         device: str | None = None,
+        preprocessor: HealthDataPreprocessor | None = None,
     ):
         self.model_size = model_size
         self.device = device or ("cuda" if torch.cuda.is_available() else "cpu")
         self.model: PATTransformer | None = None
         self.is_loaded = False
+        self.preprocessor = preprocessor or HealthDataPreprocessor()
 
         # Model paths
         self.model_paths = {
@@ -193,46 +195,8 @@ class PATModelService(IMLModelService):
         data_points: list[ActigraphyDataPoint],
         target_length: int = 1440,  # 24 hours at 1-minute resolution
     ) -> torch.Tensor:
-        """Preprocess actigraphy data for PAT model input.
-
-        Args:
-            data_points: Raw health data points
-            target_length: Target sequence length
-
-        Returns:
-            Preprocessed tensor ready for model input
-        """
-        # Extract activity values
-        values = [point.value for point in data_points]
-
-        # Convert to numpy array
-        activity_data = np.array(values, dtype=np.float32)
-
-        # Normalize data (z-score normalization)
-        if len(activity_data) > 1:
-            mean_val = np.mean(activity_data)
-            std_val = np.std(activity_data)
-            if std_val > 0:
-                activity_data = (activity_data - mean_val) / std_val
-
-        # Resize to target length
-        if len(activity_data) != target_length:
-            # Simple interpolation/padding
-            if len(activity_data) > target_length:
-                # Downsample
-                indices = np.linspace(
-                    0, len(activity_data) - 1, target_length, dtype=int
-                )
-                activity_data = activity_data[indices]
-            else:
-                # Pad with zeros
-                padded = np.zeros(target_length)
-                padded[: len(activity_data)] = activity_data
-                activity_data = padded
-
-        # Convert to tensor and add batch and feature dimensions
-        tensor = torch.FloatTensor(activity_data).unsqueeze(0).unsqueeze(-1)
-
+        """Preprocess actigraphy data for PAT model input using injected preprocessor."""
+        tensor = self.preprocessor.preprocess_for_pat_model(data_points, target_length)
         return tensor.to(self.device)
 
     def _postprocess_predictions(

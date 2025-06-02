@@ -21,6 +21,7 @@ import logging
 from typing import Any
 
 import numpy as np
+from numpy.typing import NDArray
 from pydantic import BaseModel, Field
 
 from clarity.ml.nhanes_stats import lookup_norm_stats
@@ -92,13 +93,13 @@ def _get_nhanes_stats_for_year(year: int) -> tuple[float, float]:
     if year_str in DEFAULT_NHANES_STATS:
         stats = DEFAULT_NHANES_STATS[year_str]
         logger.info("Using %s for normalization", stats['source'])
-        return stats["mean"], stats["std"]
+        return float(stats["mean"]), float(stats["std"])
 
     # Fallback to latest available year
     latest_year = max(DEFAULT_NHANES_STATS.keys())
     stats = DEFAULT_NHANES_STATS[latest_year]
     logger.warning("Year %d not found, using %s", year, stats['source'])
-    return stats["mean"], stats["std"]
+    return float(stats["mean"]), float(stats["std"])
 
 
 def _generate_circadian_padding(length: int, base_activity: float = 0.5) -> np.ndarray:

@@ -358,6 +358,8 @@ class DependencyContainer:
             }
 
         try:
+            # Import the unified v1 router and individual modules for dependency injection
+            from clarity.api.v1 import router as v1_router  # noqa: PLC0415
             from clarity.api.v1 import auth, health_data  # noqa: PLC0415
 
             # Get shared dependencies
@@ -384,16 +386,14 @@ class DependencyContainer:
                 firestore_client=firestore_client,  # type: ignore[arg-type]
             )
 
-            # Include routers
-            app.include_router(
-                auth.router, prefix="/api/v1/auth", tags=["authentication"]
-            )
-            app.include_router(
-                health_data.router, prefix="/api/v1", tags=["health-data"]
-            )
+            # Include the unified v1 router (includes all endpoints: auth, health_data, pat_analysis)
+            app.include_router(v1_router)
+            
             logger.info("✅ API routes configured")
-            logger.info("   • Authentication endpoints: /api/v1/auth")
-            logger.info("   • Health data endpoints: /api/v1")
+            logger.info("   • V1 API endpoints: /api/v1")
+            logger.info("   • Authentication: /api/v1/auth")
+            logger.info("   • Health data: /api/v1/health-data")
+            logger.info("   • PAT analysis: /api/v1/pat")
 
         except Exception:
             logger.exception("💥 Failed to configure routes")

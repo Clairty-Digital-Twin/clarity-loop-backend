@@ -1127,8 +1127,6 @@ class FirestoreHealthDataRepository(IHealthDataRepository):
             msg = f"Health data save failed: {e}"
             raise FirestoreError(msg) from e
         else:
-            return deleted_count
-        else:
             return document_id
 
     async def get_data(

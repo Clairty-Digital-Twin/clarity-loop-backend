@@ -511,7 +511,7 @@ def require_auth(
 
             # Get user context (not await since get_current_user is not async)
             # We know request is not None here due to check above
-            user_context = get_current_user(request)
+            user_context = get_current_user(request)  # type: ignore[arg-type]
 
             # Check role requirements
             if roles and user_context.role not in roles:

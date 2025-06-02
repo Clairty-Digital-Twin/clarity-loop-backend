@@ -449,18 +449,21 @@ class ProxyActigraphyTransformer:
 def create_proxy_actigraphy_transformer(
     reference_year: int = 2025,
     *,
-    cache_enabled: bool = True
+    cache_enabled: bool = True,
+    auto_pad_to_week: bool = True
 ) -> ProxyActigraphyTransformer:
     """Factory function to create a ProxyActigraphyTransformer instance.
 
     Args:
         reference_year: NHANES reference year for normalization
         cache_enabled: Whether to enable result caching
+        auto_pad_to_week: Whether to automatically pad/truncate data to full week
 
     Returns:
         Configured ProxyActigraphyTransformer instance
     """
     return ProxyActigraphyTransformer(
         reference_year=reference_year,
-        cache_enabled=cache_enabled
+        cache_enabled=cache_enabled,
+        auto_pad_to_week=auto_pad_to_week
     )

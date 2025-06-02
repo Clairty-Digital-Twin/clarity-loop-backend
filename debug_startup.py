@@ -1,19 +1,16 @@
-"""Debug script to identify startup performance bottlenecks.
+"""Debug script for analyzing CLARITY startup performance.
 
-This helps diagnose slow startup issues by timing each component.
+This script helps identify and resolve application startup issues.
 """
 
 # ruff: noqa: T201
 # Allow print statements in debug script
 
-import asyncio
 import os
 from pathlib import Path
 import time
 
-# Constants for performance thresholds
-SLOW_IMPORT_THRESHOLD = 1.0  # seconds
-TOTAL_TIME_THRESHOLD = 2.0  # seconds
+# Constants for timing thresholds
 CONFIG_ACCESS_THRESHOLD = 0.5  # seconds
 AUTH_CREATION_THRESHOLD = 2.0  # seconds
 APP_CREATION_THRESHOLD = 3.0  # seconds
@@ -55,12 +52,12 @@ def find_slowest_import() -> str | None:
             slowest_time = elapsed
             culprit = name
 
-        if elapsed > SLOW_IMPORT_THRESHOLD:  # Anything over 1 second is concerning
+        if elapsed > 1.0:  # Anything over 1 second is concerning
             print(f"⚠️ Slow import detected: {name} took {elapsed:.2f}s")
             break
 
     total_elapsed = time.perf_counter() - overall_start
-    if total_elapsed > TOTAL_TIME_THRESHOLD:
+    if total_elapsed > 2.0:
         print(f"⚠️ Total import time concerning: {total_elapsed:.2f}s")
 
     return culprit
@@ -183,11 +180,11 @@ def main() -> None:
 
 if __name__ == "__main__":
     try:
-        asyncio.run(main())
+        main()
     except KeyboardInterrupt:
         pass
     except Exception:
         import traceback
 
         traceback.print_exc()
-        print("\n💥 Debug failed - see traceback above")
+        print("❌ Debug script failed")

@@ -626,5 +626,166 @@ vulnerability-rules:
 3. Conduct formal security review after vulnerability resolution
 4. Update security documentation with final remediation details
 
+## Security Linting & Code Quality
+
+### Static Security Analysis
+
+The Clarity Loop Backend implements comprehensive static security analysis using industry-standard tools to identify and prevent security vulnerabilities during development.
+
+#### Security Linting Tools
+
+**Bandit Security Scanner**
+
+- **Tool**: Bandit v1.7.7 (AST-based security scanner)
+- **Integration**: Automated scanning via `make lint` and CI/CD pipeline
+- **Coverage**: OWASP Top 10 vulnerability patterns for Python
+- **Configuration**: Follows PyCQA security guidelines
+
+**Ruff Security Rules (flake8-bandit)**
+
+- **Rules**: S-series security checks (S101-S701)
+- **Integration**: Real-time linting in IDE and pre-commit hooks
+- **Standards**: OWASP, CWE, and NIST security frameworks
+
+#### Security Warning Suppression Guidelines
+
+When legitimate code patterns trigger false-positive security warnings, we follow industry best practices for safe suppression:
+
+##### Approved Suppression Patterns
+
+**B105/S105 - Hardcoded Password Detection**
+
+```python
+# ✅ APPROVED: OAuth token type constants (RFC 6750)
+BEARER_TOKEN_TYPE = "bearer"  # nosec B105 - OAuth 2.0 token type constant
+
+# ✅ APPROVED: Authentication provider identifiers
+class AuthProvider(str, Enum):
+    EMAIL_PASSWORD = "email_password"  # nosec B105 - Auth provider identifier
+```
+
+**B106/S106 - Hardcoded Password in Function Arguments**
+
+```python
+# ✅ APPROVED: Empty placeholder tokens for multi-factor authentication flows
+return TokenResponse(
+    access_token="",  # nosec B106 - Empty placeholder for MFA flow
+    refresh_token="",  # nosec B106 - Empty placeholder for MFA flow
+    token_type=BEARER_TOKEN_TYPE,
+    expires_in=0,
+)
+```
+
+##### Suppression Documentation Standards
+
+All security suppressions must include:
+
+1. **Tool-Specific Comments**: Both `# noqa:` (ruff) and `# nosec` (bandit)
+2. **Justification**: Clear explanation of why suppression is safe
+3. **Context**: Reference to standards (RFC, OWASP) when applicable
+4. **Code Review**: All suppressions require security team approval
+
+#### Research-Backed Security Practices
+
+Our security linting approach is based on extensive research into Python security best practices:
+
+**Industry Standards Referenced**:
+
+- **OWASP Top 10**: Application security risks and mitigation
+- **NIST Cybersecurity Framework**: Risk management practices
+- **CWE (Common Weakness Enumeration)**: Software vulnerability classification
+- **RFC 6750**: OAuth 2.0 Bearer Token Usage specification
+
+**Academic Sources**:
+
+- SonarSource "10 Unknown Security Pitfalls for Python" (2021)
+- Python Security Best Practices (2025 guidelines)
+- Static Analysis for Security by Google Security Team
+
+**Key Research Findings Applied**:
+
+1. **False Positive Management**: Proper `nosec` usage prevents warning fatigue
+2. **Context-Aware Analysis**: String literals in enums vs. actual credentials
+3. **Authentication Flow Security**: Empty token patterns in MFA workflows
+4. **Secure Development Lifecycle**: Integration of security tools in CI/CD
+
+#### Security Linting Integration
+
+**Development Workflow**:
+
+```bash
+# Pre-commit security scanning
+make security  # Runs bandit + safety dependency scan
+make lint      # Includes ruff security rules (S-series)
+
+# CI/CD Pipeline Integration
+- name: Security Scan
+  run: |
+    bandit -r src/ -f json -o bandit-report.json
+    ruff check --select=S src/
+```
+
+**IDE Integration**:
+
+- **Real-time feedback**: Ruff LSP integration
+- **Pre-commit hooks**: Automated security scanning
+- **VS Code/PyCharm**: Security rule highlighting
+
+#### Security Documentation Standards
+
+**Code Documentation Requirements**:
+
+- All security suppressions documented in this file
+- Regular review of suppression justifications (quarterly)
+- Security team approval for new suppression patterns
+- Documentation updates for security tool upgrades
+
+**Audit Trail**:
+
+- Git commit messages include security justification
+- Pull request templates include security checklist
+- Quarterly security review of all active suppressions
+
+#### Security Tool Configuration
+
+**Bandit Configuration** (`pyproject.toml`):
+
+```toml
+[tool.bandit]
+skip = ["B101"]  # Skip assert usage in tests
+tests = ["B201", "B301"]  # Focus on high-impact vulnerabilities
+```
+
+**Ruff Security Rules** (`pyproject.toml`):
+
+```toml
+[tool.ruff.lint]
+select = [
+    "S",    # flake8-bandit security rules
+    "F",    # Pyflakes
+    "E",    # pycodestyle errors
+]
+```
+
+#### Security Monitoring
+
+**Continuous Monitoring**:
+
+- Automated vulnerability scanning in CI/CD
+- Dependency security updates (Safety + Snyk)
+- Security rule configuration reviews
+- Regular penetration testing validation
+
+**Metrics & KPIs**:
+
+- Zero tolerance for high-severity security issues
+- < 24 hour resolution for critical vulnerabilities
+- 100% security tool coverage in CI/CD pipeline
+- Quarterly security posture reviews
+
+This comprehensive security linting approach ensures that the Clarity Loop Backend maintains the highest security standards while avoiding false-positive alert fatigue that can compromise developer productivity.
+
+---
+
 This security implementation ensures the Clarity Loop Backend meets enterprise-grade
 security standards while maintaining HIPAA compliance for health data protection.

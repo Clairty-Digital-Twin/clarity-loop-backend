@@ -48,7 +48,7 @@ class StepDataRequest(BaseModel):
     )
     
     @validator('timestamps')
-    def validate_timestamps_match_steps(cls, v, values):
+    def validate_timestamps_match_steps(cls, v: List[datetime], values: Dict[str, Any]) -> List[datetime]:
         """Ensure timestamps match step count length."""
         if 'step_counts' in values and len(v) != len(values['step_counts']):
             raise ValueError("Timestamps length must match step_counts length")

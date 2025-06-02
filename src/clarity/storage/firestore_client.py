@@ -322,13 +322,13 @@ class FirestoreClient:
             if self.enable_caching:
                 self._cache[cache_key] = {"data": result_data, "timestamp": time.time()}
 
-            logger.debug(f"Document retrieved: {collection}/{document_id}")
+            logger.debug("Document retrieved: %s/%s", collection, document_id)
             return result_data
 
         except Exception as e:
-            logger.exception(f"Failed to get document {collection}/{document_id}: {e}")
+            logger.exception("Failed to get document %s/%s", collection, document_id)
             msg = f"Document retrieval failed: {e}"
-            raise FirestoreError(msg)
+            raise FirestoreError(msg) from e
 
     async def update_document(
         self,
@@ -336,6 +336,7 @@ class FirestoreClient:
         document_id: str,
         data: dict[str, Any],
         user_id: str | None = None,
+        *,
         merge: bool = True,
     ) -> bool:
         """Update an existing document.

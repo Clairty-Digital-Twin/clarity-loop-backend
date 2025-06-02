@@ -3,7 +3,7 @@
 # Status: in-progress
 # Dependencies: 2, 3, 4, 15, 17, 29, 30
 # Priority: high
-# Description: Create a production-ready service that loads the Dartmouth PAT model weights and provides real-time actigraphy analysis endpoints, integrating with the health data service.
+# Description: Create a production-ready service that loads the Dartmouth PAT model weights and provides real-time actigraphy analysis endpoints, integrating with the health data service. The service will implement proxy actigraphy transformation from Apple HealthKit step data.
 # Details:
 1. Set up a dedicated module for the PAT model service (e.g., `pat_service.py`)
 2. Implement model loading functionality:
@@ -11,7 +11,9 @@
    - Use appropriate deep learning framework (e.g., PyTorch, TensorFlow) for model instantiation
    - Implement error handling for missing or corrupt model files
 3. Create a preprocessing pipeline:
-   - Implement data normalization and standardization
+   - Implement proxy actigraphy transformation from Apple HealthKit step data
+   - Convert step counts to movement proxy using square root transformation
+   - Apply z-score normalization using NHANES reference statistics
    - Handle time series data formatting (e.g., sliding window approach)
    - Ensure compatibility with the model's expected input format
 4. Develop inference capabilities:
@@ -19,7 +21,7 @@
    - Implement batching for efficient processing of multiple requests
    - Optimize inference speed using techniques like ONNX runtime or TensorRT if applicable
 5. Integrate with the health data service:
-   - Implement an API endpoint for real-time actigraphy analysis
+   - Implement an API endpoint for real-time actigraphy analysis based on step data
    - Ensure secure data transfer between services
    - Handle authentication and authorization using the existing Firebase Authentication system
 6. Implement result post-processing:
@@ -45,12 +47,13 @@
 # Test Strategy:
 1. Unit tests:
    - Test model loading function with various scenarios (valid weights, missing files, corrupt files)
-   - Verify preprocessing pipeline with sample inputs
+   - Verify preprocessing pipeline with sample step count data
+   - Test proxy actigraphy transformation with known input/output pairs
    - Test inference function with mock model and inputs
    - Ensure proper error handling for edge cases
 
 2. Integration tests:
-   - Test end-to-end flow from API request to response
+   - Test end-to-end flow from API request with step data to response
    - Verify correct integration with health data service
    - Test authentication and authorization with Firebase
    - Ensure FHIR compliance of output data
@@ -66,8 +69,8 @@
    - Ensure compliance with HIPAA requirements
 
 5. Functional tests:
-   - Validate accuracy of actigraphy analysis against known datasets
-   - Test with various types of actigraphy data (e.g., different devices, sampling rates)
+   - Validate accuracy of proxy actigraphy transformation against reference datasets
+   - Test with various types of step count data (e.g., different activity patterns)
    - Verify correct handling of time zones and daylight saving time
 
 6. Regression tests:
@@ -194,4 +197,28 @@ Create a comprehensive test suite that includes: 1) Unit tests for all component
 ### Description: Finalize a complete vertical slice of the PAT service from API endpoint to model inference with proper testing.
 ### Details:
 Complete a full vertical slice implementation that includes: 1) At least one fully functional API endpoint, 2) Complete preprocessing pipeline for that endpoint, 3) Working inference with the PAT model, 4) Proper error handling and validation, 5) Authentication integration, 6) Comprehensive tests for the entire slice, 7) Documentation for the implemented endpoint, 8) Performance optimization for the critical path.
+
+## 11. Implement proxy actigraphy transformation engine [in-progress]
+### Dependencies: 33.2
+### Description: Create a specialized module to transform Apple HealthKit step count data into proxy actigraphy signals compatible with the PAT model.
+### Details:
+Develop a `proxy_actigraphy.py` module that: 1) Implements the steps_to_movement_proxy function to convert step counts to activity counts, 2) Applies square root transformation to correlate with RMS acceleration, 3) Performs z-score normalization using NHANES reference statistics, 4) Handles a full week of minute-by-minute data (10,080 points), 5) Implements proper error handling for missing or invalid data, 6) Creates a caching mechanism for frequently used transformations, 7) Adds comprehensive logging for debugging and monitoring.
+
+## 12. Update API endpoints for step data ingestion [pending]
+### Dependencies: 33.4, 33.11
+### Description: Modify existing API endpoints to accept Apple HealthKit step data and process it through the proxy actigraphy transformation pipeline.
+### Details:
+Update the FastAPI endpoints to: 1) Accept minute-by-minute step count data from Apple HealthKit, 2) Validate the input data format and completeness, 3) Process the step data through the proxy actigraphy transformation, 4) Feed the transformed data into the PAT model, 5) Return analysis results in the expected format, 6) Implement proper error handling for invalid or incomplete step data, 7) Add documentation for the updated endpoints.
+
+## 13. Create NHANES reference statistics module [pending]
+### Dependencies: 33.11
+### Description: Develop a module to manage and provide NHANES reference statistics for z-score normalization of proxy actigraphy data.
+### Details:
+Implement a `nhanes_stats.py` module that: 1) Provides lookup_norm_stats function to retrieve mean and standard deviation values, 2) Includes reference statistics from NHANES datasets for different years, 3) Implements versioning for statistics updates, 4) Adds caching for frequently used statistics, 5) Creates a fallback mechanism for missing statistics, 6) Implements proper error handling and logging.
+
+## 14. Update documentation for proxy actigraphy approach [pending]
+### Dependencies: 33.11, 33.12, 33.13
+### Description: Update service documentation to clearly explain the proxy actigraphy approach and its implications for analysis.
+### Details:
+Update documentation to include: 1) Explanation of the proxy actigraphy approach and its scientific basis, 2) Data requirements for step count input (10,080 minute-by-minute values), 3) Limitations and considerations when using proxy actigraphy, 4) Examples of API usage with step count data, 5) Interpretation guidelines for results based on proxy actigraphy, 6) Comparison with raw accelerometer-based actigraphy, 7) Troubleshooting guide for common issues.
 

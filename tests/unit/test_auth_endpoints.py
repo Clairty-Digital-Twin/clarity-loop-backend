@@ -17,6 +17,13 @@ from clarity.services.auth_service import (
     UserNotFoundError,
 )
 
+# Test constants (not actual security tokens)
+TEST_ACCESS_TOKEN = "test_access_token"
+TEST_REFRESH_TOKEN = "test_refresh_token"
+TEST_NEW_ACCESS_TOKEN = "test_new_access_token"
+TEST_NEW_REFRESH_TOKEN = "test_new_refresh_token"
+TEST_TOKEN_TYPE = "bearer"
+
 
 class TestAuthenticationEndpoints:
     """Test suite for authentication API endpoints."""
@@ -163,12 +170,12 @@ class TestAuthenticationEndpoints:
             email_verified=True,
         )
         # Create mock tokens (not actual security tokens)
-        mock_login_response.tokens = Mock(
-            access_token="test_access_token",
-            refresh_token="test_refresh_token",
-            token_type="bearer",
-            expires_in=3600,
-        )
+        mock_tokens = Mock()
+        mock_tokens.access_token = TEST_ACCESS_TOKEN
+        mock_tokens.refresh_token = TEST_REFRESH_TOKEN
+        mock_tokens.token_type = TEST_TOKEN_TYPE
+        mock_tokens.expires_in = 3600
+        mock_login_response.tokens = mock_tokens
         mock_login_response.requires_mfa = False
         mock_login_response.mfa_session_token = None
 
@@ -214,14 +221,14 @@ class TestAuthenticationEndpoints:
         mock_get_auth_service.return_value = mock_auth_service
 
         # Mock successful token refresh (not actual security tokens)
-        mock_auth_service.refresh_access_token.return_value = Mock(
-            access_token="test_new_access_token",
-            refresh_token="test_new_refresh_token",
-            token_type="bearer",
-            expires_in=3600,
-        )
+        mock_token_response = Mock()
+        mock_token_response.access_token = TEST_NEW_ACCESS_TOKEN
+        mock_token_response.refresh_token = TEST_NEW_REFRESH_TOKEN
+        mock_token_response.token_type = TEST_TOKEN_TYPE
+        mock_token_response.expires_in = 3600
+        mock_auth_service.refresh_access_token.return_value = mock_token_response
 
-        refresh_data = {"refresh_token": "test_refresh_token"}
+        refresh_data = {"refresh_token": TEST_REFRESH_TOKEN}
         response = client.post("/api/v1/auth/refresh", json=refresh_data)
 
         # Should call the service or return 500 if not configured
@@ -241,7 +248,7 @@ class TestAuthenticationEndpoints:
         # Mock successful logout
         mock_auth_service.logout_user.return_value = True
 
-        logout_data = {"refresh_token": "test_refresh_token"}
+        logout_data = {"refresh_token": TEST_REFRESH_TOKEN}
         response = client.post("/api/v1/auth/logout", json=logout_data)
 
         # Should call the service or return 500 if not configured

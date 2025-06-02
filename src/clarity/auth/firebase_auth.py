@@ -25,8 +25,8 @@ if TYPE_CHECKING:
 
 from fastapi import HTTPException, Request
 from fastapi.security import HTTPBearer
-import firebase_admin  # type: ignore[import-untyped]
-from firebase_admin import auth, credentials  # type: ignore[import-untyped]
+import firebase_admin
+from firebase_admin import auth, credentials
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.responses import JSONResponse
 
@@ -85,33 +85,33 @@ class FirebaseAuthProvider(IAuthProvider):
                 return cached_user
 
             # Verify token with Firebase
-            decoded_token = auth.verify_id_token(token)  # type: ignore[misc]
+            decoded_token = auth.verify_id_token(token)
 
             # Get user record for additional info
-            user_record = auth.get_user(decoded_token["uid"])  # type: ignore[misc]
+            user_record = auth.get_user(decoded_token["uid"])
 
             # Create user info dict
-            user_info: dict[str, Any] = {  # type: ignore[misc]
-                "user_id": decoded_token["uid"],  # type: ignore[misc]
-                "email": user_record.email,  # type: ignore[misc]
-                "name": user_record.display_name,  # type: ignore[misc]
-                "verified": user_record.email_verified,  # type: ignore[misc]
-                "roles": self._extract_roles(decoded_token),  # type: ignore[misc]
-                "custom_claims": decoded_token.get("custom_claims", {}),  # type: ignore[misc]
+            user_info: dict[str, Any] = {
+                "user_id": decoded_token["uid"],
+                "email": user_record.email,
+                "name": user_record.display_name,
+                "verified": user_record.email_verified,
+                "roles": self._extract_roles(decoded_token),
+                "custom_claims": decoded_token.get("custom_claims", {}),
                 "created_at": datetime.fromtimestamp(
-                    user_record.user_metadata.creation_timestamp / 1000, tz=UTC  # type: ignore[misc]
+                    user_record.user_metadata.creation_timestamp / 1000, tz=UTC
                 ).isoformat(),
                 "last_login": (
                     datetime.fromtimestamp(
-                        user_record.user_metadata.last_sign_in_timestamp / 1000, tz=UTC  # type: ignore[misc]
+                        user_record.user_metadata.last_sign_in_timestamp / 1000, tz=UTC
                     ).isoformat()
-                    if user_record.user_metadata.last_sign_in_timestamp  # type: ignore[misc]
+                    if user_record.user_metadata.last_sign_in_timestamp
                     else None
                 ),
             }
 
             # Cache the result
-            await self._cache_user(token, user_info)  # type: ignore[misc]
+            await self._cache_user(token, user_info)
 
         except auth.ExpiredIdTokenError:
             logger.warning("Firebase token expired")
@@ -126,7 +126,7 @@ class FirebaseAuthProvider(IAuthProvider):
             logger.exception("Firebase token verification failed")
             return None
         else:
-            return user_info  # type: ignore[misc]
+            return user_info
 
     async def get_user_info(self, user_id: str) -> dict[str, Any] | None:
         """Get user information by ID from Firebase.
@@ -142,22 +142,22 @@ class FirebaseAuthProvider(IAuthProvider):
             await self._ensure_initialized()
 
             # Get user record from Firebase
-            user_record = auth.get_user(user_id)  # type: ignore[misc]
+            user_record = auth.get_user(user_id)
 
             return {
-                "user_id": user_record.uid,  # type: ignore[misc]
-                "email": user_record.email,  # type: ignore[misc]
-                "name": user_record.display_name,  # type: ignore[misc]
-                "verified": user_record.email_verified,  # type: ignore[misc]
-                "disabled": user_record.disabled,  # type: ignore[misc]
+                "user_id": user_record.uid,
+                "email": user_record.email,
+                "name": user_record.display_name,
+                "verified": user_record.email_verified,
+                "disabled": user_record.disabled,
                 "created_at": datetime.fromtimestamp(
-                    user_record.user_metadata.creation_timestamp / 1000, tz=UTC  # type: ignore[misc]
+                    user_record.user_metadata.creation_timestamp / 1000, tz=UTC
                 ).isoformat(),
                 "last_login": (
                     datetime.fromtimestamp(
-                        user_record.user_metadata.last_sign_in_timestamp / 1000, tz=UTC  # type: ignore[misc]
+                        user_record.user_metadata.last_sign_in_timestamp / 1000, tz=UTC
                     ).isoformat()
-                    if user_record.user_metadata.last_sign_in_timestamp  # type: ignore[misc]
+                    if user_record.user_metadata.last_sign_in_timestamp
                     else None
                 ),
             }
@@ -202,12 +202,12 @@ class FirebaseAuthProvider(IAuthProvider):
 
             if self.credentials_path:
                 cred = credentials.Certificate(self.credentials_path)
-                firebase_admin.initialize_app(cred, {"projectId": self.project_id})  # type: ignore[misc]
+                firebase_admin.initialize_app(cred, {"projectId": self.project_id})
                 logger.info("Firebase Admin SDK initialized with credentials")
             elif self.project_id:
                 # Use default credentials (useful for deployed environments)
                 cred = credentials.ApplicationDefault()
-                firebase_admin.initialize_app(cred, {"projectId": self.project_id})  # type: ignore[misc]
+                firebase_admin.initialize_app(cred, {"projectId": self.project_id})
                 logger.info("Firebase Admin SDK initialized with default credentials")
             else:
                 _raise_missing_config()

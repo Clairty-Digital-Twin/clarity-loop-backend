@@ -25,17 +25,17 @@ ModelT = TypeVar("ModelT", bound=BaseModel)
 ExceptionT = TypeVar("ExceptionT", bound=Exception)
 
 # ==============================================================================
-# Numeric and Array Types  
+# Numeric and Array Types
 # ==============================================================================
 
 # Numpy array types
 FloatArray: TypeAlias = NDArray[np.floating[Any]]
 BoolArray: TypeAlias = NDArray[np.bool_]
 IntArray: TypeAlias = NDArray[np.integer[Any]]
-NumericArray: TypeAlias = Union[FloatArray, IntArray]
+NumericArray: TypeAlias = FloatArray | IntArray
 
 # Scalar numeric types
-NumericValue: TypeAlias = Union[int, float, np.integer[Any], np.floating[Any]]
+NumericValue: TypeAlias = int | float | np.integer[Any] | np.floating[Any]
 StepCount: TypeAlias = float
 QualityScore: TypeAlias = float  # Always between 0.0 and 1.0
 ZScore: TypeAlias = float
@@ -47,12 +47,12 @@ ProxyValue: TypeAlias = float
 
 # Configuration dictionaries
 ConfigDict: TypeAlias = dict[str, Any]
-NestedConfigDict: TypeAlias = dict[str, Union[str, int, float, bool, dict[str, Any]]]
+NestedConfigDict: TypeAlias = dict[str, str | int | float | bool | dict[str, Any]]
 EnvironmentVariables: TypeAlias = dict[str, str]
 
 # Service configuration
-ServiceConfig: TypeAlias = Mapping[str, Union[str, int, float, bool]]
-ModelConfig: TypeAlias = dict[str, Union[str, int, float]]
+ServiceConfig: TypeAlias = Mapping[str, str | int | float | bool]
+ModelConfig: TypeAlias = dict[str, str | int | float]
 
 # ==============================================================================
 # API and Request/Response Types
@@ -60,14 +60,14 @@ ModelConfig: TypeAlias = dict[str, Union[str, int, float]]
 
 # HTTP related types
 HTTPHeaders: TypeAlias = dict[str, str]
-QueryParams: TypeAlias = dict[str, Union[str, int, float, bool]]
+QueryParams: TypeAlias = dict[str, str | int | float | bool]
 RouteParams: TypeAlias = dict[str, str]
 
 # Request/Response data
 RequestData: TypeAlias = dict[str, Any]
 ResponseData: TypeAlias = dict[str, Any]
-ErrorDetails: TypeAlias = dict[str, Union[str, int, float, bool]]
-MetadataDict: TypeAlias = dict[str, Union[str, int, float, datetime]]
+ErrorDetails: TypeAlias = dict[str, str | int | float | bool]
+MetadataDict: TypeAlias = dict[str, str | int | float | datetime]
 
 # Pagination
 PaginationParams: TypeAlias = dict[str, int]  # limit, offset, etc.
@@ -79,14 +79,14 @@ PaginationParams: TypeAlias = dict[str, int]  # limit, offset, etc.
 # Step count and activity data
 StepCountList: TypeAlias = list[StepCount]
 TimestampList: TypeAlias = list[datetime]
-ActivityData: TypeAlias = dict[str, Union[StepCountList, TimestampList]]
+ActivityData: TypeAlias = dict[str, StepCountList | TimestampList]
 
 # User demographics and metadata
-UserMetadata: TypeAlias = dict[str, Union[str, int, float, bool]]
-Demographics: TypeAlias = dict[str, Union[str, int]]  # age, sex, etc.
+UserMetadata: TypeAlias = dict[str, str | int | float | bool]
+Demographics: TypeAlias = dict[str, str | int]  # age, sex, etc.
 
 # NHANES statistics
-NHANESStats: TypeAlias = dict[str, Union[float, str, int]]
+NHANESStats: TypeAlias = dict[str, float | str | int]
 NHANESYearData: TypeAlias = dict[str, NHANESStats]
 StratifiedStats: TypeAlias = dict[str, NHANESStats]
 
@@ -95,13 +95,13 @@ StratifiedStats: TypeAlias = dict[str, NHANESStats]
 # ==============================================================================
 
 # Model input/output
-ModelInput: TypeAlias = dict[str, Union[FloatArray, str, float]]
-ModelOutput: TypeAlias = dict[str, Union[float, str, list[float]]]
-PredictionResult: TypeAlias = dict[str, Union[float, str, int]]
+ModelInput: TypeAlias = dict[str, FloatArray | str | float]
+ModelOutput: TypeAlias = dict[str, float | str | list[float]]
+PredictionResult: TypeAlias = dict[str, float | str | int]
 
 # Analysis results
 AnalysisMetrics: TypeAlias = dict[str, NumericValue]
-TransformationStats: TypeAlias = dict[str, Union[int, float, dict[str, float]]]
+TransformationStats: TypeAlias = dict[str, int | float | dict[str, float]]
 QualityMetrics: TypeAlias = dict[str, QualityScore]
 
 # Caching
@@ -113,9 +113,10 @@ CacheStorage: TypeAlias = dict[CacheKey, CachedValue]
 # Protocol Definitions for Dependency Injection
 # ==============================================================================
 
+
 class AsyncCallable(Protocol):
     """Protocol for async callable objects."""
-    
+
     async def __call__(self, *args: Any, **kwargs: Any) -> Any:
         """Async call method."""
         ...
@@ -123,15 +124,15 @@ class AsyncCallable(Protocol):
 
 class CacheProvider(Protocol):
     """Protocol for cache implementations."""
-    
+
     async def get(self, key: str) -> Any | None:
         """Get value from cache."""
         ...
-    
+
     async def set(self, key: str, value: Any) -> None:
         """Set value in cache."""
         ...
-    
+
     def clear(self) -> None:
         """Clear cache."""
         ...
@@ -139,11 +140,11 @@ class CacheProvider(Protocol):
 
 class ConfigProvider(Protocol):
     """Protocol for configuration providers."""
-    
+
     def get(self, key: str, default: T | None = None) -> T | None:
         """Get configuration value."""
         ...
-    
+
     def is_development(self) -> bool:
         """Check if in development mode."""
         ...
@@ -151,7 +152,7 @@ class ConfigProvider(Protocol):
 
 class LoggerProtocol(Protocol):
     """Protocol for logger objects."""
-    
+
     def debug(self, msg: str, *args: Any) -> None: ...
     def info(self, msg: str, *args: Any) -> None: ...
     def warning(self, msg: str, *args: Any) -> None: ...
@@ -193,8 +194,8 @@ StatisticalSummary: TypeAlias = dict[str, NumericValue]  # mean, std, etc.
 DistributionParams: TypeAlias = dict[str, NumericValue]  # parameters for distributions
 
 # Validation results
-ValidationResult: TypeAlias = dict[str, Union[bool, str, int, float]]
-QualityAssessment: TypeAlias = dict[str, Union[QualityScore, bool, str]]
+ValidationResult: TypeAlias = dict[str, bool | str | int | float]
+QualityAssessment: TypeAlias = dict[str, QualityScore | bool | str]
 
 # ==============================================================================
 # Specialized Domain Types
@@ -226,27 +227,24 @@ IntegrityToken: TypeAlias = str
 # ==============================================================================
 
 # Complete user context
-UserContext: TypeAlias = dict[str, Union[UserID, bool, UserPermissions, UserMetadata]]
+UserContext: TypeAlias = dict[str, UserID | bool | UserPermissions | UserMetadata]
 
 # Complete request context
-RequestContext: TypeAlias = dict[str, Union[RequestID, UserID, datetime, HTTPHeaders]]
+RequestContext: TypeAlias = dict[str, RequestID | UserID | datetime | HTTPHeaders]
 
 # Service health status
-ServiceHealth: TypeAlias = dict[str, Union[bool, str, datetime, dict[str, Any]]]
+ServiceHealth: TypeAlias = dict[str, bool | str | datetime | dict[str, Any]]
 
 # Complete analysis result
-AnalysisResult: TypeAlias = dict[str, Union[
-    str,  # user_id, analysis_id
-    float,  # scores, metrics
-    datetime,  # timestamps
-    AnalysisMetrics,  # detailed metrics
-    QualityAssessment,  # quality data
-    TransformationStats  # transformation details
-]]
+AnalysisResult: TypeAlias = dict[
+    str,
+    str | float | datetime | AnalysisMetrics | QualityAssessment | TransformationStats,
+]
 
 # ==============================================================================
 # Type Guards and Validation Helpers
 # ==============================================================================
+
 
 def is_numeric_value(value: Any) -> bool:
     """Type guard for numeric values."""
@@ -256,9 +254,9 @@ def is_numeric_value(value: Any) -> bool:
 def is_step_count_list(value: Any) -> bool:
     """Type guard for step count lists."""
     return (
-        isinstance(value, list) and
-        len(value) > 0 and
-        all(isinstance(item, (int, float)) and item >= 0 for item in value)
+        isinstance(value, list)
+        and len(value) > 0
+        and all(isinstance(item, (int, float)) and item >= 0 for item in value)
     )
 
 
@@ -270,7 +268,7 @@ def is_quality_score(value: Any) -> bool:
 def is_timestamp_list(value: Any) -> bool:
     """Type guard for timestamp lists."""
     return (
-        isinstance(value, list) and
-        len(value) > 0 and
-        all(isinstance(item, datetime) for item in value)
-    ) 
+        isinstance(value, list)
+        and len(value) > 0
+        and all(isinstance(item, datetime) for item in value)
+    )

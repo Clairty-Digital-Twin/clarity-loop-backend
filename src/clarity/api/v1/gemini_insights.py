@@ -59,8 +59,7 @@ def get_gemini_service() -> GeminiService:
     if _gemini_service is None:
         msg = "Gemini service not initialized"
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=msg
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=msg
         )
     return _gemini_service
 
@@ -73,21 +72,16 @@ class InsightGenerationRequest(BaseModel):
         description="PAT analysis results or health data metrics"
     )
     context: str | None = Field(
-        None,
-        description="Additional context for insights generation"
+        None, description="Additional context for insights generation"
     )
     insight_type: str = Field(
         default="comprehensive",
-        description="Type of insight to generate (comprehensive, brief, detailed)"
+        description="Type of insight to generate (comprehensive, brief, detailed)",
     )
     include_recommendations: bool = Field(
-        default=True,
-        description="Include actionable recommendations"
+        default=True, description="Include actionable recommendations"
     )
-    language: str = Field(
-        default="en",
-        description="Language code for insights"
-    )
+    language: str = Field(default="en", description="Language code for insights")
 
 
 class InsightGenerationResponse(BaseModel):
@@ -141,13 +135,15 @@ def generate_request_id() -> str:
     return f"req_insights_{uuid.uuid4().hex[:8]}"
 
 
-def create_metadata(request_id: str, processing_time_ms: float | None = None) -> dict[str, Any]:
+def create_metadata(
+    request_id: str, processing_time_ms: float | None = None
+) -> dict[str, Any]:
     """Create standard metadata for responses."""
     metadata: dict[str, Any] = {
         "request_id": request_id,
         "timestamp": datetime.now(UTC).isoformat(),
         "service": "gemini-insights",
-        "version": "1.0.0"
+        "version": "1.0.0",
     }
 
     if processing_time_ms is not None:
@@ -164,7 +160,7 @@ def _raise_account_disabled_error(request_id: str, user_id: str) -> None:
         request_id=request_id,
         status_code=status.HTTP_403_FORBIDDEN,
         details={"user_id": user_id},
-        suggested_action="contact_support"
+        suggested_action="contact_support",
     )
 
 
@@ -174,7 +170,7 @@ def create_error_response(
     request_id: str,
     status_code: int = status.HTTP_500_INTERNAL_SERVER_ERROR,
     details: dict[str, Any] | None = None,
-    suggested_action: str | None = None
+    suggested_action: str | None = None,
 ) -> HTTPException:
     """Create standardized error response."""
     error_detail = ErrorDetail(
@@ -183,13 +179,10 @@ def create_error_response(
         details=details,
         request_id=request_id,
         timestamp=datetime.now(UTC).isoformat(),
-        suggested_action=suggested_action
+        suggested_action=suggested_action,
     )
 
-    return HTTPException(
-        status_code=status_code,
-        detail=error_detail.model_dump()
-    )
+    return HTTPException(status_code=status_code, detail=error_detail.model_dump())
 
 
 @router.post(
@@ -197,12 +190,12 @@ def create_error_response(
     response_model=InsightGenerationResponse,
     status_code=status.HTTP_200_OK,
     summary="Generate Health Insights",
-    description="Generate AI-powered health insights from analysis results using Gemini 2.5 Pro"
+    description="Generate AI-powered health insights from analysis results using Gemini 2.5 Pro",
 )
 async def generate_insights(
     insight_request: InsightGenerationRequest,
     current_user: UserContext = Depends(get_current_user),
-    gemini_service: GeminiService = Depends(get_gemini_service)
+    gemini_service: GeminiService = Depends(get_gemini_service),
 ) -> InsightGenerationResponse:
     """Generate new health insights from analysis data.
 
@@ -227,7 +220,7 @@ async def generate_insights(
         logger.info(
             "🔮 Generating insights for user %s (request: %s)",
             current_user.user_id,
-            request_id
+            request_id,
         )
 
         # Validate user permissions
@@ -240,7 +233,7 @@ async def generate_insights(
             user_id=current_user.user_id,
             analysis_results=insight_request.analysis_results,
             context=insight_request.context,
-            insight_type=insight_request.insight_type
+            insight_type=insight_request.insight_type,
         )
 
         # Generate insights
@@ -253,13 +246,13 @@ async def generate_insights(
             "✅ Insights generated successfully for user %s (request: %s, time: %.2fms)",
             current_user.user_id,
             request_id,
-            processing_time
+            processing_time,
         )
 
         return InsightGenerationResponse(
             success=True,
             data=insight_response,
-            metadata=create_metadata(request_id, processing_time)
+            metadata=create_metadata(request_id, processing_time),
         )
 
     except Exception as e:
@@ -268,7 +261,7 @@ async def generate_insights(
             "💥 Insight generation failed for user %s (request: %s, time: %.2fms)",
             current_user.user_id,
             request_id,
-            processing_time
+            processing_time,
         )
 
         raise create_error_response(
@@ -277,7 +270,7 @@ async def generate_insights(
             request_id=request_id,
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             details={"error_type": type(e).__name__, "error_message": str(e)},
-            suggested_action="retry_later"
+            suggested_action="retry_later",
         ) from e
 
 
@@ -285,11 +278,10 @@ async def generate_insights(
     "/{insight_id}",
     response_model=InsightGenerationResponse,
     summary="Get Cached Insight",
-    description="Retrieve a previously generated insight by ID"
+    description="Retrieve a previously generated insight by ID",
 )
 async def get_insight(
-    insight_id: str,
-    current_user: UserContext = Depends(get_current_user)
+    insight_id: str, current_user: UserContext = Depends(get_current_user)
 ) -> InsightGenerationResponse:
     """Retrieve cached insights by ID.
 
@@ -310,7 +302,7 @@ async def get_insight(
             "📖 Retrieving insight %s for user %s (request: %s)",
             insight_id,
             current_user.user_id,
-            request_id
+            request_id,
         )
 
         # TODO: Implement insight retrieval from cache/database
@@ -319,15 +311,18 @@ async def get_insight(
             user_id=current_user.user_id,
             narrative="Cached insight retrieval not yet implemented",
             key_insights=["Placeholder insight 1", "Placeholder insight 2"],
-            recommendations=["Placeholder recommendation 1", "Placeholder recommendation 2"],
+            recommendations=[
+                "Placeholder recommendation 1",
+                "Placeholder recommendation 2",
+            ],
             confidence_score=0.0,
-            generated_at=datetime.now(UTC).isoformat()
+            generated_at=datetime.now(UTC).isoformat(),
         )
 
         return InsightGenerationResponse(
             success=True,
             data=placeholder_response,
-            metadata=create_metadata(request_id)
+            metadata=create_metadata(request_id),
         )
 
     except Exception as e:
@@ -335,7 +330,7 @@ async def get_insight(
             "💥 Failed to retrieve insight %s for user %s (request: %s)",
             insight_id,
             current_user.user_id,
-            request_id
+            request_id,
         )
 
         raise create_error_response(
@@ -344,7 +339,7 @@ async def get_insight(
             request_id=request_id,
             status_code=status.HTTP_404_NOT_FOUND,
             details={"insight_id": insight_id, "error_message": str(e)},
-            suggested_action="check_insight_id"
+            suggested_action="check_insight_id",
         ) from e
 
 
@@ -352,13 +347,13 @@ async def get_insight(
     "/history/{user_id}",
     response_model=InsightHistoryResponse,
     summary="Get Insight History",
-    description="Retrieve insight generation history for a user"
+    description="Retrieve insight generation history for a user",
 )
 async def get_insight_history(
     user_id: str,
     limit: int = 10,  # noqa: ARG001
     offset: int = 0,  # noqa: ARG001
-    current_user: UserContext = Depends(get_current_user)
+    current_user: UserContext = Depends(get_current_user),
 ) -> InsightHistoryResponse:
     """Get insight history for a user.
 
@@ -380,7 +375,7 @@ async def get_insight_history(
         logger.info(
             "📚 Retrieving insight history for user %s (request: %s)",
             user_id,
-            request_id
+            request_id,
         )
 
         # Validate user can access this history
@@ -390,22 +385,19 @@ async def get_insight_history(
                 message="Cannot access another user's insight history",
                 request_id=request_id,
                 status_code=status.HTTP_403_FORBIDDEN,
-                details={"requested_user_id": user_id, "current_user_id": current_user.user_id},
-                suggested_action="check_permissions"
+                details={
+                    "requested_user_id": user_id,
+                    "current_user_id": current_user.user_id,
+                },
+                suggested_action="check_permissions",
             )
 
         # TODO: Implement history retrieval from database
         # For now, return a placeholder response
-        placeholder_history = {
-            "insights": [],
-            "total_count": 0,
-            "has_more": False
-        }
+        placeholder_history = {"insights": [], "total_count": 0, "has_more": False}
 
         return InsightHistoryResponse(
-            success=True,
-            data=placeholder_history,
-            metadata=create_metadata(request_id)
+            success=True, data=placeholder_history, metadata=create_metadata(request_id)
         )
 
     except HTTPException:
@@ -414,7 +406,7 @@ async def get_insight_history(
         logger.exception(
             "💥 Failed to retrieve insight history for user %s (request: %s)",
             user_id,
-            request_id
+            request_id,
         )
 
         raise create_error_response(
@@ -423,7 +415,7 @@ async def get_insight_history(
             request_id=request_id,
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             details={"user_id": user_id, "error_message": str(e)},
-            suggested_action="retry_later"
+            suggested_action="retry_later",
         ) from e
 
 
@@ -431,10 +423,10 @@ async def get_insight_history(
     "/status",
     response_model=ServiceStatusResponse,
     summary="Service Health Status",
-    description="Check the health status of the Gemini insights service"
+    description="Check the health status of the Gemini insights service",
 )
 async def get_service_status(
-    gemini_service: GeminiService = Depends(get_gemini_service)
+    gemini_service: GeminiService = Depends(get_gemini_service),
 ) -> ServiceStatusResponse:
     """Check Gemini service health status.
 
@@ -461,34 +453,29 @@ async def get_service_status(
             "capabilities": [
                 "health_insights_generation",
                 "contextual_analysis",
-                "recommendation_generation"
-            ]
+                "recommendation_generation",
+            ],
         }
 
         status_data = {
             "service": "gemini-insights",
             "status": "healthy" if is_healthy else "unhealthy",
             "model": model_info,
-            "timestamp": datetime.now(UTC).isoformat()
+            "timestamp": datetime.now(UTC).isoformat(),
         }
 
         logger.info(
             "✅ Service status check completed (request: %s, status: %s)",
             request_id,
-            status_data["status"]
+            status_data["status"],
         )
 
         return ServiceStatusResponse(
-            success=True,
-            data=status_data,
-            metadata=create_metadata(request_id)
+            success=True, data=status_data, metadata=create_metadata(request_id)
         )
 
     except Exception as e:
-        logger.exception(
-            "💥 Service status check failed (request: %s)",
-            request_id
-        )
+        logger.exception("💥 Service status check failed (request: %s)", request_id)
 
         raise create_error_response(
             error_code="STATUS_CHECK_FAILED",
@@ -496,7 +483,7 @@ async def get_service_status(
             request_id=request_id,
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             details={"error_type": type(e).__name__, "error_message": str(e)},
-            suggested_action="check_service_health"
+            suggested_action="check_service_health",
         ) from e
 
 

@@ -17,7 +17,7 @@ MINUTES_PER_HOUR: Final[int] = 60
 MINUTES_PER_DAY: Final[int] = 1440  # 24 * 60
 MINUTES_PER_WEEK: Final[int] = 10080  # 7 * 24 * 60
 
-# Time periods in seconds  
+# Time periods in seconds
 SECONDS_PER_MINUTE: Final[int] = 60
 SECONDS_PER_HOUR: Final[int] = 3600  # 60 * 60
 CACHE_TTL_DEFAULT_SECONDS: Final[int] = 300  # 5 minutes
@@ -152,4 +152,4 @@ MAX_QUALITY_SCORE: Final[float] = 1.0
 # Input validation
 MAX_USERNAME_LENGTH: Final[int] = 255
 MAX_REQUEST_ID_LENGTH: Final[int] = 64
-MAX_ERROR_MESSAGE_LENGTH: Final[int] = 1000 
+MAX_ERROR_MESSAGE_LENGTH: Final[int] = 1000

@@ -30,9 +30,7 @@ from clarity.storage.firestore_client import FirestoreClient
 logger = logging.getLogger(__name__)
 
 # Constants
-BEARER_TOKEN_TYPE = (
-    "bearer"  # noqa: S105  # nosec B105 - Standard OAuth token type, not a password
-)
+BEARER_TOKEN_TYPE = "bearer"  # noqa: S105  # nosec B105 - Standard OAuth token type, not a password
 
 
 class AuthenticationError(Exception):
@@ -262,7 +260,8 @@ class AuthenticationService:
 
             # Get user data from Firestore
             user_data: dict[str, Any] | None = await self.firestore_client.get_document(
-                collection=self.users_collection, document_id=user_record.uid  # type: ignore[misc,arg-type]
+                collection=self.users_collection,
+                document_id=user_record.uid,  # type: ignore[misc,arg-type]
             )
 
             if user_data is None:
@@ -318,7 +317,8 @@ class AuthenticationService:
 
                 # Return partial response requiring MFA
                 user_session = await self._create_user_session_response(
-                    user_record, user_data  # type: ignore[arg-type]
+                    user_record,
+                    user_data,  # type: ignore[arg-type]
                 )
                 return LoginResponse(
                     user=user_session,
@@ -335,7 +335,8 @@ class AuthenticationService:
 
             # Generate tokens (in real implementation, this would be done by Firebase client SDK)
             tokens = await self._generate_tokens(
-                user_record.uid, remember_me=request.remember_me  # type: ignore[misc,arg-type]
+                user_record.uid,
+                remember_me=request.remember_me,  # type: ignore[misc,arg-type]
             )
 
             # Create session (store session_id for potential future use)
@@ -349,7 +350,8 @@ class AuthenticationService:
 
             # Create user session response
             user_session = await self._create_user_session_response(
-                user_record, user_data  # type: ignore[arg-type]
+                user_record,
+                user_data,  # type: ignore[arg-type]
             )
 
             logger.info("User logged in successfully: %s", user_record.uid)  # type: ignore[misc,arg-type]
@@ -466,7 +468,8 @@ class AuthenticationService:
 
     @staticmethod
     async def _create_user_session_response(
-        user_record: auth.UserRecord, user_data: dict[str, Any]  # type: ignore[name-defined]
+        user_record: auth.UserRecord,
+        user_data: dict[str, Any],  # type: ignore[name-defined]
     ) -> UserSessionResponse:
         """Create user session response from user data.
 

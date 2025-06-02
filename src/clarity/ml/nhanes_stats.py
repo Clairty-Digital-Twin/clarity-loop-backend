@@ -32,20 +32,20 @@ NHANES_REFERENCE_STATS = {
         "mean": 4.2,
         "std": 2.1,
         "sample_size": 8945,
-        "source": "NHANES 2003-2006 (projected 2023)"
+        "source": "NHANES 2003-2006 (projected 2023)",
     },
     "2024": {
         "mean": 4.3,
         "std": 2.0,
         "sample_size": 9234,
-        "source": "NHANES 2003-2006 (projected 2024)"
+        "source": "NHANES 2003-2006 (projected 2024)",
     },
     "2025": {
         "mean": 4.4,
         "std": 1.9,
         "sample_size": 9567,
-        "source": "NHANES 2003-2006 (projected 2025)"
-    }
+        "source": "NHANES 2003-2006 (projected 2025)",
+    },
 }
 
 # Age-stratified statistics
@@ -55,14 +55,14 @@ AGE_STRATIFIED_STATS = {
     "40-49": {"mean": 4.5, "std": 2.0},
     "50-59": {"mean": 4.2, "std": 2.1},
     "60-69": {"mean": 3.8, "std": 2.2},
-    "70+": {"mean": 3.2, "std": 2.3}
+    "70+": {"mean": 3.2, "std": 2.3},
 }
 
 # Sex-stratified statistics
 SEX_STRATIFIED_STATS = {
     "male": {"mean": 4.1, "std": 2.0},
     "female": {"mean": 4.6, "std": 1.8},
-    "other": {"mean": 4.4, "std": 1.9}
+    "other": {"mean": 4.4, "std": 1.9},
 }
 
 
@@ -79,9 +79,7 @@ def get_available_age_groups() -> list[str]:
 
 
 def lookup_norm_stats(
-    year: int = 2025,
-    age_group: str | None = None,
-    sex: str | None = None
+    year: int = 2025, age_group: str | None = None, sex: str | None = None
 ) -> tuple[float, float]:
     """Look up NHANES reference statistics for proxy actigraphy normalization.
 
@@ -131,9 +129,12 @@ def lookup_norm_stats(
                 std = (std + sex_stats["std"]) / 2
 
         logger.debug(
-            "NHANES stats lookup: year=%d, age=%s, sex=%s "
-            "-> mean=%.3f, std=%.3f",
-            year, age_group, sex, mean, std
+            "NHANES stats lookup: year=%d, age=%s, sex=%s -> mean=%.3f, std=%.3f",
+            year,
+            age_group,
+            sex,
+            mean,
+            std,
         )
 
         return mean, std
@@ -162,8 +163,7 @@ def get_reference_info(year: int = 2025) -> dict[str, Any]:
 
 
 def validate_proxy_values(
-    proxy_values: list[float],
-    year: int = 2025
+    proxy_values: list[float], year: int = 2025
 ) -> dict[str, Any]:
     """Validate proxy actigraphy data against NHANES reference ranges.
 
@@ -192,11 +192,14 @@ def validate_proxy_values(
         "std_z_score": float(np.std(z_scores)),
         "extreme_low_count": int(extreme_low),
         "extreme_high_count": int(extreme_high),
-        "outlier_percentage": float((extreme_low + extreme_high) / len(proxy_values) * 100),
+        "outlier_percentage": float(
+            (extreme_low + extreme_high) / len(proxy_values) * 100
+        ),
         "reference_year": year,
         "reference_mean": mean,
         "reference_std": std,
-        "validation_passed": (extreme_low + extreme_high) < len(proxy_values) * 0.05  # <5% outliers
+        "validation_passed": (extreme_low + extreme_high)
+        < len(proxy_values) * 0.05,  # <5% outliers
     }
 
 
@@ -206,5 +209,6 @@ logger.info(
     "Available years: %s, "
     "Age groups: %d, "
     "Default year: 2025",
-    get_available_years(), len(get_available_age_groups())
+    get_available_years(),
+    len(get_available_age_groups()),
 )

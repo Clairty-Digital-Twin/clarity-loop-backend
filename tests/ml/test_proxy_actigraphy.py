@@ -36,7 +36,7 @@ class TestStepCountData:
             upload_id="upload456",
             step_counts=[100.0, 150.0, 80.0],
             timestamps=timestamps,
-            user_metadata={"age": 25, "sex": "male"}
+            user_metadata={"age": 25, "sex": "male"},
         )
 
         assert step_data.user_id == "user123"
@@ -55,7 +55,7 @@ class TestStepCountData:
             user_id="user123",
             upload_id="upload456",
             step_counts=[100.0],
-            timestamps=timestamps
+            timestamps=timestamps,
         )
         assert len(step_data.step_counts) == 1
 
@@ -67,7 +67,7 @@ class TestStepCountData:
                 user_id="user123",
                 upload_id="upload456",
                 step_counts=[],  # Empty list should fail validation
-                timestamps=[]
+                timestamps=[],
             )
 
 
@@ -85,13 +85,9 @@ class TestProxyActigraphyResult:
             transformation_stats={
                 "input_length": 3,
                 "output_length": 3,
-                "mean_steps_per_min": 100.0
+                "mean_steps_per_min": 100.0,
             },
-            nhanes_reference={
-                "year": 2025,
-                "mean": 1.2,
-                "std": 0.8
-            }
+            nhanes_reference={"year": 2025, "mean": 1.2, "std": 0.8},
         )
 
         assert result.user_id == "user123"
@@ -111,7 +107,7 @@ class TestProxyActigraphyResult:
             vector=[1.0],
             quality_score=0.5,
             transformation_stats={},
-            nhanes_reference={}
+            nhanes_reference={},
         )
         assert result.quality_score == 0.5
 
@@ -119,7 +115,7 @@ class TestProxyActigraphyResult:
 class TestProxyActigraphyTransformer:
     """Test ProxyActigraphyTransformer functionality."""
 
-    @patch('clarity.ml.proxy_actigraphy.lookup_norm_stats')
+    @patch("clarity.ml.proxy_actigraphy.lookup_norm_stats")
     def test_transformer_initialization(self, mock_lookup_stats: MagicMock) -> None:
         """Test transformer initialization."""
         mock_lookup_stats.return_value = (1.2, 0.8)
@@ -131,21 +127,22 @@ class TestProxyActigraphyTransformer:
         assert transformer.nhanes_mean == 1.2
         assert transformer.nhanes_std == 0.8
 
-    @patch('clarity.ml.proxy_actigraphy.lookup_norm_stats')
-    def test_transformer_initialization_with_params(self, mock_lookup_stats: MagicMock) -> None:
+    @patch("clarity.ml.proxy_actigraphy.lookup_norm_stats")
+    def test_transformer_initialization_with_params(
+        self, mock_lookup_stats: MagicMock
+    ) -> None:
         """Test transformer initialization with custom parameters."""
         mock_lookup_stats.return_value = (1.15, 0.75)
 
         transformer = ProxyActigraphyTransformer(
-            reference_year=2024,
-            cache_enabled=False
+            reference_year=2024, cache_enabled=False
         )
         assert transformer.reference_year == 2024
         assert transformer.cache_enabled is False
         assert transformer.nhanes_mean == 1.15
         assert transformer.nhanes_std == 0.75
 
-    @patch('clarity.ml.proxy_actigraphy.lookup_norm_stats')
+    @patch("clarity.ml.proxy_actigraphy.lookup_norm_stats")
     def test_steps_to_movement_proxy(self, mock_lookup_stats: MagicMock) -> None:
         """Test step count to movement proxy conversion."""
         mock_lookup_stats.return_value = (1.2, 0.8)
@@ -163,7 +160,7 @@ class TestProxyActigraphyTransformer:
         # Values should be clipped to reasonable range
         assert all(-5.0 <= val <= 5.0 for val in proxy_values)
 
-    @patch('clarity.ml.proxy_actigraphy.lookup_norm_stats')
+    @patch("clarity.ml.proxy_actigraphy.lookup_norm_stats")
     def test_transform_step_data_basic(self, mock_lookup_stats: MagicMock) -> None:
         """Test basic step data transformation."""
         mock_lookup_stats.return_value = (3.2, 1.8)  # Updated to match new NHANES stats
@@ -176,7 +173,7 @@ class TestProxyActigraphyTransformer:
             user_id="user123",
             upload_id="upload456",
             step_counts=[100.0, 150.0, 80.0],
-            timestamps=timestamps
+            timestamps=timestamps,
         )
 
         result = transformer.transform_step_data(step_data)
@@ -207,9 +204,11 @@ class TestProxyActigraphyTransformer:
         # Values should be varied (not all identical) and within clipping range
         assert all(-4.0 <= val <= 4.0 for val in actual_values)
         unique_values = set(actual_values)
-        assert len(unique_values) >= 2  # Should have some variation from different step counts
+        assert (
+            len(unique_values) >= 2
+        )  # Should have some variation from different step counts
 
-    @patch('clarity.ml.proxy_actigraphy.lookup_norm_stats')
+    @patch("clarity.ml.proxy_actigraphy.lookup_norm_stats")
     def test_transform_with_caching(self, mock_lookup_stats: MagicMock) -> None:
         """Test transformation with caching enabled."""
         mock_lookup_stats.return_value = (1.2, 0.8)
@@ -221,7 +220,7 @@ class TestProxyActigraphyTransformer:
             user_id="user123",
             upload_id="upload456",
             step_counts=[100.0, 150.0, 80.0],
-            timestamps=timestamps
+            timestamps=timestamps,
         )
 
         # First transformation
@@ -234,7 +233,7 @@ class TestProxyActigraphyTransformer:
         assert result1.vector == result2.vector
         assert result1.quality_score == result2.quality_score
 
-    @patch('clarity.ml.proxy_actigraphy.lookup_norm_stats')
+    @patch("clarity.ml.proxy_actigraphy.lookup_norm_stats")
     def test_transform_without_caching(self, mock_lookup_stats: MagicMock) -> None:
         """Test transformation with caching disabled."""
         mock_lookup_stats.return_value = (1.2, 0.8)
@@ -246,13 +245,13 @@ class TestProxyActigraphyTransformer:
             user_id="user123",
             upload_id="upload456",
             step_counts=[100.0],
-            timestamps=timestamps
+            timestamps=timestamps,
         )
 
         result = transformer.transform_step_data(step_data)
         assert isinstance(result, ProxyActigraphyResult)
 
-    @patch('clarity.ml.proxy_actigraphy.lookup_norm_stats')
+    @patch("clarity.ml.proxy_actigraphy.lookup_norm_stats")
     def test_transform_large_dataset(self, mock_lookup_stats: MagicMock) -> None:
         """Test transformation with large dataset."""
         mock_lookup_stats.return_value = (3.2, 1.8)  # Updated to match new NHANES stats
@@ -272,7 +271,7 @@ class TestProxyActigraphyTransformer:
             user_id="user123",
             upload_id="upload456",
             step_counts=step_counts,
-            timestamps=timestamps
+            timestamps=timestamps,
         )
 
         result = transformer.transform_step_data(step_data)
@@ -289,7 +288,7 @@ class TestProxyActigraphyTransformer:
         # Verify values are within expected range
         assert all(-5.0 <= val <= 5.0 for val in result.vector)
 
-    @patch('clarity.ml.proxy_actigraphy.lookup_norm_stats')
+    @patch("clarity.ml.proxy_actigraphy.lookup_norm_stats")
     def test_transform_with_padding(self, mock_lookup_stats: MagicMock) -> None:
         """Test transformation with small dataset that requires padding."""
         mock_lookup_stats.return_value = (3.2, 1.8)  # Updated to match new NHANES stats
@@ -305,7 +304,7 @@ class TestProxyActigraphyTransformer:
             user_id="user123",
             upload_id="upload456",
             step_counts=step_counts,
-            timestamps=timestamps
+            timestamps=timestamps,
         )
 
         result = transformer.transform_step_data(step_data)
@@ -319,7 +318,7 @@ class TestProxyActigraphyTransformer:
 
         # Check padding behavior
         padded_values = result.vector[:-small_size]  # First 9980 values
-        actual_values = result.vector[-small_size:]   # Last 100 values
+        actual_values = result.vector[-small_size:]  # Last 100 values
 
         # With circadian-aware padding, values should be varied but in realistic range
         # They should be generally negative (rest period values) but not identical
@@ -327,7 +326,9 @@ class TestProxyActigraphyTransformer:
 
         # Padded values should have some variation (not all identical)
         unique_padded_values = set(padded_values)
-        assert len(unique_padded_values) > 10  # Should have some variation due to circadian padding
+        assert (
+            len(unique_padded_values) > 10
+        )  # Should have some variation due to circadian padding
 
         # Most padded values should be in the rest range (negative, around rest_value)
         rest_range_count = sum(1 for val in padded_values if -3.0 <= val <= -1.0)
@@ -342,7 +343,7 @@ class TestProxyActigraphyTransformer:
         assert stats["padding_length"] == week_size - small_size
         assert stats["padding_percentage"] > 99.0  # Almost all padding
 
-    @patch('clarity.ml.proxy_actigraphy.lookup_norm_stats')
+    @patch("clarity.ml.proxy_actigraphy.lookup_norm_stats")
     def test_quality_score_calculation(self, mock_lookup_stats: MagicMock) -> None:
         """Test quality score calculation."""
         mock_lookup_stats.return_value = (1.2, 0.8)
@@ -355,7 +356,7 @@ class TestProxyActigraphyTransformer:
             user_id="user123",
             upload_id="upload456",
             step_counts=[100.0, 110.0, 90.0, 105.0],  # Consistent data
-            timestamps=timestamps
+            timestamps=timestamps,
         )
 
         result = transformer.transform_step_data(step_data)
@@ -370,7 +371,7 @@ class TestProxyActigraphyTransformer:
         assert "max_steps_per_min" in stats
         assert "total_steps" in stats
 
-    @patch('clarity.ml.proxy_actigraphy.lookup_norm_stats')
+    @patch("clarity.ml.proxy_actigraphy.lookup_norm_stats")
     def test_transform_with_zeros(self, mock_lookup_stats: MagicMock) -> None:
         """Test transformation with zero step counts."""
         mock_lookup_stats.return_value = (1.2, 0.8)
@@ -382,18 +383,22 @@ class TestProxyActigraphyTransformer:
             user_id="user123",
             upload_id="upload456",
             step_counts=[0.0, 0.0, 0.0],
-            timestamps=timestamps
+            timestamps=timestamps,
         )
 
         result = transformer.transform_step_data(step_data)
 
         assert isinstance(result, ProxyActigraphyResult)
         # With padding to full week, zero percentage will be much lower
-        assert result.transformation_stats["zero_step_percentage"] < 1.0  # Much lower due to padding
+        assert (
+            result.transformation_stats["zero_step_percentage"] < 1.0
+        )  # Much lower due to padding
         # With circadian-aware padding, total_steps will be > 0 due to padding values
-        assert result.transformation_stats["total_steps"] > 0.0  # Padding adds non-zero values
+        assert (
+            result.transformation_stats["total_steps"] > 0.0
+        )  # Padding adds non-zero values
 
-    @patch('clarity.ml.proxy_actigraphy.lookup_norm_stats')
+    @patch("clarity.ml.proxy_actigraphy.lookup_norm_stats")
     def test_transform_with_extreme_values(self, mock_lookup_stats: MagicMock) -> None:
         """Test transformation with extreme step values."""
         mock_lookup_stats.return_value = (1.2, 0.8)
@@ -405,7 +410,7 @@ class TestProxyActigraphyTransformer:
             user_id="user123",
             upload_id="upload456",
             step_counts=[0.0, 10000.0, 100.0],  # Include extreme value
-            timestamps=timestamps
+            timestamps=timestamps,
         )
 
         result = transformer.transform_step_data(step_data)
@@ -418,8 +423,10 @@ class TestProxyActigraphyTransformer:
 class TestHelperFunctions:
     """Test helper functions and utilities."""
 
-    @patch('clarity.ml.proxy_actigraphy.lookup_norm_stats')
-    def test_create_proxy_actigraphy_transformer(self, mock_lookup_stats: MagicMock) -> None:
+    @patch("clarity.ml.proxy_actigraphy.lookup_norm_stats")
+    def test_create_proxy_actigraphy_transformer(
+        self, mock_lookup_stats: MagicMock
+    ) -> None:
         """Test transformer factory function."""
         mock_lookup_stats.return_value = (1.2, 0.8)
 
@@ -428,14 +435,13 @@ class TestHelperFunctions:
         assert transformer.reference_year == 2025
         assert transformer.cache_enabled is True
 
-    @patch('clarity.ml.proxy_actigraphy.lookup_norm_stats')
+    @patch("clarity.ml.proxy_actigraphy.lookup_norm_stats")
     def test_create_transformer_with_params(self, mock_lookup_stats: MagicMock) -> None:
         """Test transformer factory with custom parameters."""
         mock_lookup_stats.return_value = (1.15, 0.75)
 
         transformer = create_proxy_actigraphy_transformer(
-            reference_year=2024,
-            cache_enabled=False
+            reference_year=2024, cache_enabled=False
         )
         assert transformer.reference_year == 2024
         assert transformer.cache_enabled is False
@@ -472,7 +478,7 @@ class TestConstants:
     @staticmethod
     def test_performance_characteristics() -> None:
         """Test performance characteristics of the transformer."""
-        with patch('clarity.ml.proxy_actigraphy.lookup_norm_stats') as mock_lookup:
+        with patch("clarity.ml.proxy_actigraphy.lookup_norm_stats") as mock_lookup:
             mock_lookup.return_value = (1.2, 0.8)
 
             transformer = ProxyActigraphyTransformer()
@@ -487,7 +493,7 @@ class TestConstants:
                 user_id="user123",
                 upload_id="upload456",
                 step_counts=[float(i % 10) for i in range(small_size)],
-                timestamps=timestamps_small
+                timestamps=timestamps_small,
             )
 
             start_time = time.time()
@@ -500,7 +506,7 @@ class TestConstants:
                 user_id="user123",
                 upload_id="upload456",
                 step_counts=[float(i % 100) for i in range(large_size)],
-                timestamps=timestamps_large
+                timestamps=timestamps_large,
             )
 
             start_time = time.time()
@@ -521,7 +527,7 @@ class TestConstants:
 class TestIntegrationProxyActigraphy:
     """Integration tests for proxy actigraphy functionality."""
 
-    @patch('clarity.ml.proxy_actigraphy.lookup_norm_stats')
+    @patch("clarity.ml.proxy_actigraphy.lookup_norm_stats")
     def test_end_to_end_transformation(self, mock_lookup_stats: MagicMock) -> None:
         """Test complete end-to-end transformation workflow."""
         mock_lookup_stats.return_value = (1.2, 0.8)
@@ -541,7 +547,7 @@ class TestIntegrationProxyActigraphy:
             upload_id="test_upload",
             step_counts=step_counts,
             timestamps=timestamps,
-            user_metadata={"age": 30, "sex": "female"}
+            user_metadata={"age": 30, "sex": "female"},
         )
 
         transformer = ProxyActigraphyTransformer(reference_year=2025)
@@ -571,7 +577,7 @@ class TestIntegrationProxyActigraphy:
     @staticmethod
     def test_performance_characteristics() -> None:
         """Test performance characteristics of the transformer."""
-        with patch('clarity.ml.proxy_actigraphy.lookup_norm_stats') as mock_lookup:
+        with patch("clarity.ml.proxy_actigraphy.lookup_norm_stats") as mock_lookup:
             mock_lookup.return_value = (1.2, 0.8)
 
             transformer = ProxyActigraphyTransformer()
@@ -584,7 +590,7 @@ class TestIntegrationProxyActigraphy:
                 user_id="perf_test",
                 upload_id="perf_upload",
                 step_counts=step_counts,
-                timestamps=timestamps
+                timestamps=timestamps,
             )
 
             start_time = time.time()
@@ -600,7 +606,7 @@ class TestIntegrationProxyActigraphy:
 class TestEdgeCasesProxyActigraphy:
     """Test edge cases and boundary conditions."""
 
-    @patch('clarity.ml.proxy_actigraphy.lookup_norm_stats')
+    @patch("clarity.ml.proxy_actigraphy.lookup_norm_stats")
     def test_single_data_point(self, mock_lookup_stats: MagicMock) -> None:
         """Test transformation with single data point."""
         mock_lookup_stats.return_value = (1.2, 0.8)
@@ -612,7 +618,7 @@ class TestEdgeCasesProxyActigraphy:
             user_id="user123",
             upload_id="upload456",
             step_counts=[100.0],
-            timestamps=timestamps
+            timestamps=timestamps,
         )
 
         result = transformer.transform_step_data(step_data)
@@ -623,7 +629,7 @@ class TestEdgeCasesProxyActigraphy:
         assert result.transformation_stats["input_length"] == 1
         assert result.transformation_stats["output_length"] == 10080
 
-    @patch('clarity.ml.proxy_actigraphy.lookup_norm_stats')
+    @patch("clarity.ml.proxy_actigraphy.lookup_norm_stats")
     def test_negative_step_counts(self, mock_lookup_stats: MagicMock) -> None:
         """Test transformation handles negative step counts."""
         mock_lookup_stats.return_value = (1.2, 0.8)
@@ -635,7 +641,7 @@ class TestEdgeCasesProxyActigraphy:
             user_id="user123",
             upload_id="upload456",
             step_counts=[-10.0, 50.0, -5.0],  # Include negative values
-            timestamps=timestamps
+            timestamps=timestamps,
         )
 
         result = transformer.transform_step_data(step_data)
@@ -643,4 +649,6 @@ class TestEdgeCasesProxyActigraphy:
         assert isinstance(result, ProxyActigraphyResult)
         # Should handle negative values gracefully
         assert len(result.vector) == 10080  # Padded to full week
-        assert all(-5.0 <= val <= 5.0 for val in result.vector)  # Values should be clipped
+        assert all(
+            -5.0 <= val <= 5.0 for val in result.vector
+        )  # Values should be clipped

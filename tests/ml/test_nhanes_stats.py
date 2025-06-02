@@ -199,7 +199,16 @@ class TestProxyValueValidation:
     def test_validate_proxy_values_with_outliers() -> None:
         """Test validation with outlier values."""
         # Include some extreme values
-        proxy_values = [4.0, 4.2, 15.0, 4.1, -5.0, 4.4, 4.0, 4.6]  # 15.0 and -5.0 are outliers
+        proxy_values = [
+            4.0,
+            4.2,
+            15.0,
+            4.1,
+            -5.0,
+            4.4,
+            4.0,
+            4.6,
+        ]  # 15.0 and -5.0 are outliers
 
         result = validate_proxy_values(proxy_values)
         assert result["extreme_low_count"] > 0 or result["extreme_high_count"] > 0
@@ -299,7 +308,7 @@ class TestNHANESStatsError:
         assert isinstance(error, Exception)
         assert str(error) == "Test error"
 
-    @patch('clarity.ml.nhanes_stats.NHANES_REFERENCE_STATS', {})
+    @patch("clarity.ml.nhanes_stats.NHANES_REFERENCE_STATS", {})
     def test_lookup_with_empty_stats(self) -> None:
         """Test lookup behavior with empty reference stats."""
         with pytest.raises(NHANESStatsError):
@@ -346,7 +355,7 @@ class TestIntegrationNHANESStats:
         info = get_reference_info(9999)
         assert isinstance(info, dict)
 
-    @patch('clarity.ml.nhanes_stats.logger')
+    @patch("clarity.ml.nhanes_stats.logger")
     def test_logging_integration(self, mock_logger: MagicMock) -> None:
         """Test that logging works correctly."""
         # Test with invalid inputs that should trigger logging
@@ -355,7 +364,7 @@ class TestIntegrationNHANESStats:
         lookup_norm_stats(sex="invalid")  # Invalid sex
 
         # Verify logging infrastructure is in place
-        assert hasattr(mock_logger, 'warning')
+        assert hasattr(mock_logger, "warning")
 
 
 class TestPerformanceNHANESStats:

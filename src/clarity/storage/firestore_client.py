@@ -205,9 +205,7 @@ class FirestoreClient:
                 "source": "firestore_client",
             }
 
-            await db.collection(self.collections["audit_logs"]).add(
-                audit_entry
-            )  # type: ignore[misc,unknown-member]
+            await db.collection(self.collections["audit_logs"]).add(audit_entry)  # type: ignore[misc,unknown-member]
             logger.debug(
                 "Audit log created: %s on %s/%s", operation, collection, document_id
             )
@@ -926,23 +924,25 @@ class FirestoreHealthDataRepository(IHealthDataRepository):
             filters = [{"field": "user_id", "op": "==", "value": user_id}]
 
             if metric_type:
-                filters.append(
-                    {
-                        "field": "metric_data.metric_type",
-                        "op": "==",
-                        "value": metric_type,
-                    }
-                )
+                filters.append({
+                    "field": "metric_data.metric_type",
+                    "op": "==",
+                    "value": metric_type,
+                })
 
             if start_date:
-                filters.append(
-                    {"field": "created_at", "op": ">=", "value": start_date.isoformat()}
-                )
+                filters.append({
+                    "field": "created_at",
+                    "op": ">=",
+                    "value": start_date.isoformat(),
+                })
 
             if end_date:
-                filters.append(
-                    {"field": "created_at", "op": "<=", "value": end_date.isoformat()}
-                )
+                filters.append({
+                    "field": "created_at",
+                    "op": "<=",
+                    "value": end_date.isoformat(),
+                })
 
             # Query health metrics
             metrics = await self._firestore_client.query_documents(

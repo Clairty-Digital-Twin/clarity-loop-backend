@@ -119,11 +119,13 @@ class FirebaseAuthProvider(IAuthProvider):
                 "roles": self._extract_roles(decoded_token),  # type: ignore[arg-type]
                 "custom_claims": decoded_token.get("custom_claims", {}),  # type: ignore[misc]
                 "created_at": datetime.fromtimestamp(
-                    user_record.user_metadata.creation_timestamp / 1000, tz=UTC  # type: ignore[misc,arg-type]
+                    user_record.user_metadata.creation_timestamp / 1000,
+                    tz=UTC,  # type: ignore[misc,arg-type]
                 ).isoformat(),
                 "last_login": (
                     datetime.fromtimestamp(
-                        user_record.user_metadata.last_sign_in_timestamp / 1000, tz=UTC  # type: ignore[misc,arg-type]
+                        user_record.user_metadata.last_sign_in_timestamp / 1000,
+                        tz=UTC,  # type: ignore[misc,arg-type]
                     ).isoformat()
                     if user_record.user_metadata.last_sign_in_timestamp  # type: ignore[misc]
                     else None
@@ -172,11 +174,13 @@ class FirebaseAuthProvider(IAuthProvider):
                 "verified": user_record.email_verified,  # type: ignore[misc]
                 "disabled": user_record.disabled,  # type: ignore[misc]
                 "created_at": datetime.fromtimestamp(
-                    user_record.user_metadata.creation_timestamp / 1000, tz=UTC  # type: ignore[misc,arg-type]
+                    user_record.user_metadata.creation_timestamp / 1000,
+                    tz=UTC,  # type: ignore[misc,arg-type]
                 ).isoformat(),
                 "last_login": (
                     datetime.fromtimestamp(
-                        user_record.user_metadata.last_sign_in_timestamp / 1000, tz=UTC  # type: ignore[misc,arg-type]
+                        user_record.user_metadata.last_sign_in_timestamp / 1000,
+                        tz=UTC,  # type: ignore[misc,arg-type]
                     ).isoformat()
                     if user_record.user_metadata.last_sign_in_timestamp  # type: ignore[misc]
                     else None

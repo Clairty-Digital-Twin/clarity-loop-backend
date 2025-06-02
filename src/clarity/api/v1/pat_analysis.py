@@ -39,21 +39,23 @@ class StepDataRequest(BaseModel):
     step_counts: list[int] = Field(
         description="Minute-by-minute step counts (10,080 values for 1 week)",
         min_length=1,
-        max_length=20160  # 2 weeks max
+        max_length=20160,  # 2 weeks max
     )
     timestamps: list[datetime] = Field(
         description="Corresponding timestamps for each step count"
     )
     user_metadata: dict[str, Any] | None = Field(
         default_factory=dict,
-        description="Optional user demographics (age_group, sex, etc.)"
+        description="Optional user demographics (age_group, sex, etc.)",
     )
 
-    @validator('timestamps')
+    @validator("timestamps")
     @classmethod
-    def validate_timestamps_match_steps(cls, v: list[datetime], values: dict[str, Any]) -> list[datetime]:
+    def validate_timestamps_match_steps(
+        cls, v: list[datetime], values: dict[str, Any]
+    ) -> list[datetime]:
         """Ensure timestamps match step count length."""
-        if 'step_counts' in values and len(v) != len(values['step_counts']):
+        if "step_counts" in values and len(v) != len(values["step_counts"]):
             msg = "Timestamps length must match step_counts length"
             raise ValueError(msg)
         return v
@@ -65,16 +67,12 @@ class DirectActigraphyRequest(BaseModel):
     data_points: list[dict[str, Any]] = Field(
         description="Actigraphy data points with timestamp and value"
     )
-    sampling_rate: float = Field(
-        default=1.0,
-        description="Samples per minute",
-        gt=0
-    )
+    sampling_rate: float = Field(default=1.0, description="Samples per minute", gt=0)
     duration_hours: int = Field(
         default=24,
         description="Duration in hours",
         ge=1,
-        le=168  # 1 week max
+        le=168,  # 1 week max
     )
 
 
@@ -84,20 +82,16 @@ class AnalysisResponse(BaseModel):
     analysis_id: str = Field(description="Unique analysis identifier")
     status: str = Field(description="Analysis status: processing, completed, failed")
     analysis: ActigraphyAnalysis | None = Field(
-        default=None,
-        description="Analysis results (available when status=completed)"
+        default=None, description="Analysis results (available when status=completed)"
     )
     processing_time_ms: float | None = Field(
-        default=None,
-        description="Processing time in milliseconds"
+        default=None, description="Processing time in milliseconds"
     )
     message: str | None = Field(
-        default=None,
-        description="Status message or error description"
+        default=None, description="Status message or error description"
     )
     cached: bool = Field(
-        default=False,
-        description="Whether result was retrieved from cache"
+        default=False, description="Whether result was retrieved from cache"
     )
 
 
@@ -121,13 +115,13 @@ async def get_pat_inference_engine() -> AsyncInferenceEngine:
     "/analyze-step-data",
     response_model=AnalysisResponse,
     summary="Analyze Apple HealthKit Step Data",
-    description="Submit Apple HealthKit step count data for PAT analysis using proxy actigraphy transformation"
+    description="Submit Apple HealthKit step count data for PAT analysis using proxy actigraphy transformation",
 )
 async def analyze_step_data(
     request: StepDataRequest,
     background_tasks: BackgroundTasks,  # noqa: ARG001
     user_id: str = Depends(get_current_user),
-    inference_engine: AsyncInferenceEngine = Depends(get_pat_inference_engine)
+    inference_engine: AsyncInferenceEngine = Depends(get_pat_inference_engine),
 ) -> AnalysisResponse:
     """Analyze Apple HealthKit step data using PAT model with proxy actigraphy transformation.
 
@@ -140,7 +134,11 @@ async def analyze_step_data(
     analysis_id = str(uuid.uuid4())
 
     try:
-        logger.info("Starting step data analysis for user %s, analysis_id %s", user_id, analysis_id)
+        logger.info(
+            "Starting step data analysis for user %s, analysis_id %s",
+            user_id,
+            analysis_id,
+        )
 
         # Transform step data to proxy actigraphy
         transformer = create_proxy_actigraphy_transformer()
@@ -148,19 +146,23 @@ async def analyze_step_data(
         step_data = StepCountData(
             user_id=user_id,
             upload_id=analysis_id,
-            step_counts=[float(count) for count in request.step_counts],  # Convert to float
-            timestamps=request.timestamps
+            step_counts=[
+                float(count) for count in request.step_counts
+            ],  # Convert to float
+            timestamps=request.timestamps,
         )
 
         # Generate proxy actigraphy vector
         proxy_result = transformer.transform_step_data(step_data)
-        logger.info("Proxy actigraphy transformation complete: quality=%.3f", proxy_result.quality_score)
+        logger.info(
+            "Proxy actigraphy transformation complete: quality=%.3f",
+            proxy_result.quality_score,
+        )
 
         # Convert to ActigraphyDataPoint format for PAT model
         actigraphy_points = [
             ActigraphyDataPoint(
-                timestamp=request.timestamps[i],
-                value=float(proxy_result.vector[i])
+                timestamp=request.timestamps[i], value=float(proxy_result.vector[i])
             )
             for i in range(len(proxy_result.vector))
         ]
@@ -170,7 +172,7 @@ async def analyze_step_data(
             user_id=user_id,
             data_points=actigraphy_points,
             sampling_rate=1.0,  # 1 sample per minute
-            duration_hours=len(proxy_result.vector) // 60
+            duration_hours=len(proxy_result.vector) // 60,
         )
 
         # Submit for async inference
@@ -178,10 +180,14 @@ async def analyze_step_data(
             input_data=pat_input,
             request_id=analysis_id,
             timeout_seconds=60.0,
-            cache_enabled=True
+            cache_enabled=True,
         )
 
-        logger.info("PAT analysis complete for %s, cached=%s", analysis_id, inference_response.cached)
+        logger.info(
+            "PAT analysis complete for %s, cached=%s",
+            analysis_id,
+            inference_response.cached,
+        )
 
         return AnalysisResponse(
             analysis_id=analysis_id,
@@ -189,7 +195,7 @@ async def analyze_step_data(
             analysis=inference_response.analysis,
             processing_time_ms=inference_response.processing_time_ms,
             message="Analysis completed successfully",
-            cached=inference_response.cached
+            cached=inference_response.cached,
         )
 
     except Exception as e:
@@ -199,8 +205,8 @@ async def analyze_step_data(
             detail={
                 "analysis_id": analysis_id,
                 "error": "Analysis failed",
-                "message": str(e)
-            }
+                "message": str(e),
+            },
         ) from e
 
 
@@ -208,12 +214,12 @@ async def analyze_step_data(
     "/analyze",
     response_model=AnalysisResponse,
     summary="Analyze Direct Actigraphy Data",
-    description="Submit preprocessed actigraphy data for PAT analysis"
+    description="Submit preprocessed actigraphy data for PAT analysis",
 )
 async def analyze_actigraphy_data(
     request: DirectActigraphyRequest,
     user_id: str = Depends(get_current_user),
-    inference_engine: AsyncInferenceEngine = Depends(get_pat_inference_engine)
+    inference_engine: AsyncInferenceEngine = Depends(get_pat_inference_engine),
 ) -> AnalysisResponse:
     """Analyze preprocessed actigraphy data using the PAT model.
 
@@ -223,14 +229,19 @@ async def analyze_actigraphy_data(
     analysis_id = str(uuid.uuid4())
 
     try:
-        logger.info("Starting direct actigraphy analysis for user %s, analysis_id %s", user_id, analysis_id)
+        logger.info(
+            "Starting direct actigraphy analysis for user %s, analysis_id %s",
+            user_id,
+            analysis_id,
+        )
 
         # Convert request data to ActigraphyDataPoint format
         actigraphy_points = [
             ActigraphyDataPoint(
-                timestamp=datetime.fromisoformat(point["timestamp"]) if isinstance(point["timestamp"], str)
+                timestamp=datetime.fromisoformat(point["timestamp"])
+                if isinstance(point["timestamp"], str)
                 else point["timestamp"],
-                value=float(point["value"])
+                value=float(point["value"]),
             )
             for point in request.data_points
         ]
@@ -240,7 +251,7 @@ async def analyze_actigraphy_data(
             user_id=user_id,
             data_points=actigraphy_points,
             sampling_rate=request.sampling_rate,
-            duration_hours=request.duration_hours
+            duration_hours=request.duration_hours,
         )
 
         # Submit for async inference
@@ -248,10 +259,14 @@ async def analyze_actigraphy_data(
             input_data=pat_input,
             request_id=analysis_id,
             timeout_seconds=60.0,
-            cache_enabled=True
+            cache_enabled=True,
         )
 
-        logger.info("Direct actigraphy analysis complete for %s, cached=%s", analysis_id, inference_response.cached)
+        logger.info(
+            "Direct actigraphy analysis complete for %s, cached=%s",
+            analysis_id,
+            inference_response.cached,
+        )
 
         return AnalysisResponse(
             analysis_id=analysis_id,
@@ -259,7 +274,7 @@ async def analyze_actigraphy_data(
             analysis=inference_response.analysis,
             processing_time_ms=inference_response.processing_time_ms,
             message="Analysis completed successfully",
-            cached=inference_response.cached
+            cached=inference_response.cached,
         )
 
     except Exception as e:
@@ -269,8 +284,8 @@ async def analyze_actigraphy_data(
             detail={
                 "analysis_id": analysis_id,
                 "error": "Analysis failed",
-                "message": str(e)
-            }
+                "message": str(e),
+            },
         ) from e
 
 
@@ -278,11 +293,11 @@ async def analyze_actigraphy_data(
     "/analysis/{analysis_id}",
     response_model=AnalysisResponse,
     summary="Get Analysis Results",
-    description="Retrieve analysis results by analysis ID"
+    description="Retrieve analysis results by analysis ID",
 )
 async def get_analysis_results(
     analysis_id: str,
-    user_id: str = Depends(get_current_user)  # noqa: ARG001
+    user_id: str = Depends(get_current_user),  # noqa: ARG001
 ) -> AnalysisResponse:
     """Retrieve analysis results by analysis ID.
 
@@ -294,7 +309,7 @@ async def get_analysis_results(
     return AnalysisResponse(
         analysis_id=analysis_id,
         status="not_found",
-        message="Result retrieval not yet implemented"
+        message="Result retrieval not yet implemented",
     )
 
 
@@ -302,10 +317,10 @@ async def get_analysis_results(
     "/health",
     response_model=HealthCheckResponse,
     summary="PAT Service Health Check",
-    description="Check the health status of the PAT analysis service"
+    description="Check the health status of the PAT analysis service",
 )
 async def health_check(
-    inference_engine: AsyncInferenceEngine = Depends(get_pat_inference_engine)
+    inference_engine: AsyncInferenceEngine = Depends(get_pat_inference_engine),
 ) -> HealthCheckResponse:
     """Comprehensive health check for the PAT analysis service.
 
@@ -323,7 +338,7 @@ async def health_check(
         model_info = {
             "initialized": pat_service.is_loaded,
             "model_type": "PAT",
-            "version": "1.0.0"
+            "version": "1.0.0",
         }
 
         return HealthCheckResponse(
@@ -331,7 +346,7 @@ async def health_check(
             status="healthy",
             timestamp=datetime.now(UTC).isoformat(),
             inference_engine=engine_stats,
-            pat_model=model_info
+            pat_model=model_info,
         )
 
     except Exception as e:
@@ -341,18 +356,18 @@ async def health_check(
             status="unhealthy",
             timestamp=datetime.now(UTC).isoformat(),
             inference_engine={"error": str(e)},
-            pat_model={"error": "Unable to check model status"}
+            pat_model={"error": "Unable to check model status"},
         )
 
 
 @router.get(
     "/models/info",
     summary="Get PAT Model Information",
-    description="Get information about the available PAT models and current configuration"
+    description="Get information about the available PAT models and current configuration",
 )
 async def get_model_info(
     user_id: str = Depends(get_current_user),  # noqa: ARG001
-    inference_engine: AsyncInferenceEngine = Depends(get_pat_inference_engine)
+    inference_engine: AsyncInferenceEngine = Depends(get_pat_inference_engine),
 ) -> dict[str, Any]:
     """Get detailed information about PAT model configuration and capabilities."""
     try:
@@ -370,20 +385,20 @@ async def get_model_info(
                 "actigraphy_analysis",
                 "sleep_pattern_detection",
                 "circadian_rhythm_analysis",
-                "activity_classification"
+                "activity_classification",
             ],
             "input_requirements": {
                 "sampling_rate": "1 sample per minute",
                 "duration": "24-168 hours",
-                "data_format": "ActigraphyDataPoint"
+                "data_format": "ActigraphyDataPoint",
             },
-            "performance": engine_stats
+            "performance": engine_stats,
         }
     except Exception as e:
         logger.exception("Model info request failed")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Unable to retrieve model information: {e!s}"
+            detail=f"Unable to retrieve model information: {e!s}",
         ) from e
     else:
         return model_info

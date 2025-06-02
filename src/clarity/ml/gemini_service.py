@@ -114,34 +114,34 @@ class GeminiService:
                 top_p=0.8,
                 top_k=40,
                 max_output_tokens=2048,
-                response_mime_type="application/json"
+                response_mime_type="application/json",
             )
 
             # Configure safety settings for medical content
             safety_settings = [
                 SafetySetting(
                     category=HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
-                    threshold=HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE
+                    threshold=HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
                 ),
                 SafetySetting(
                     category=HarmCategory.HARM_CATEGORY_HARASSMENT,
-                    threshold=HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE
+                    threshold=HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
                 ),
                 SafetySetting(
                     category=HarmCategory.HARM_CATEGORY_HATE_SPEECH,
-                    threshold=HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE
+                    threshold=HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
                 ),
                 SafetySetting(
                     category=HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
-                    threshold=HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE
-                )
+                    threshold=HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+                ),
             ]
 
             # Generate response using Gemini
             response = self.model.generate_content(
                 prompt,
                 generation_config=generation_config,
-                safety_settings=safety_settings
+                safety_settings=safety_settings,
             )
 
             # Parse the structured response
@@ -219,7 +219,9 @@ Respond only with valid JSON."""
             parsed_response = json.loads(response_text)
 
             # Validate required fields and provide defaults
-            narrative = parsed_response.get("narrative", "Analysis completed successfully.")
+            narrative = parsed_response.get(
+                "narrative", "Analysis completed successfully."
+            )
             key_insights = parsed_response.get("key_insights", [])
             recommendations = parsed_response.get("recommendations", [])
             confidence_score = parsed_response.get("confidence_score", 0.8)
@@ -242,7 +244,9 @@ Respond only with valid JSON."""
             raise
 
     @staticmethod
-    def _create_fallback_response(response_text: str, user_id: str) -> HealthInsightResponse:
+    def _create_fallback_response(
+        response_text: str, user_id: str
+    ) -> HealthInsightResponse:
         """Create fallback response when JSON parsing fails."""
         # Simple text parsing fallback
         narrative = (
@@ -254,8 +258,14 @@ Respond only with valid JSON."""
         return HealthInsightResponse(
             user_id=user_id,
             narrative=narrative,
-            key_insights=["Health analysis completed", "Please review detailed results"],
-            recommendations=["Consult with healthcare provider", "Monitor trends over time"],
+            key_insights=[
+                "Health analysis completed",
+                "Please review detailed results",
+            ],
+            recommendations=[
+                "Consult with healthcare provider",
+                "Monitor trends over time",
+            ],
             confidence_score=0.7,
             generated_at=datetime.now(UTC).isoformat(),
         )
@@ -294,21 +304,17 @@ Respond only with valid JSON."""
 
         sleep_efficiency = analysis_results.get("sleep_efficiency", 0)
         if sleep_efficiency < POOR_SLEEP_EFFICIENCY:
-            recommendations.extend(
-                [
-                    "Consider establishing a consistent bedtime routine",
-                    "Limit screen time 1 hour before bed",
-                ]
-            )
+            recommendations.extend([
+                "Consider establishing a consistent bedtime routine",
+                "Limit screen time 1 hour before bed",
+            ])
 
         circadian_score = analysis_results.get("circadian_rhythm_score", 0)
         if circadian_score < CIRCADIAN_THRESHOLD:
-            recommendations.extend(
-                [
-                    "Try to maintain consistent sleep and wake times",
-                    "Get natural sunlight exposure in the morning",
-                ]
-            )
+            recommendations.extend([
+                "Try to maintain consistent sleep and wake times",
+                "Get natural sunlight exposure in the morning",
+            ])
 
         return recommendations
 

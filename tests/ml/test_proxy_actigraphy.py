@@ -5,10 +5,12 @@ into proxy actigraphy signals for PAT model analysis.
 """
 
 from datetime import UTC, datetime
+import time
 from unittest.mock import patch
 
 import numpy as np
 import pytest
+from pydantic_core import ValidationError
 
 from clarity.ml.proxy_actigraphy import (  # type: ignore[import-untyped]
     DEFAULT_NHANES_STATS,
@@ -57,7 +59,7 @@ class TestStepCountData:
 
     def test_step_count_data_empty_list(self):
         """Test StepCountData with empty step counts."""
-        with pytest.raises(ValueError):
+        with pytest.raises(ValidationError, match="List should have at least 1 item"):
             StepCountData(
                 user_id="user123",
                 upload_id="upload456",
@@ -516,8 +518,6 @@ class TestIntegrationProxyActigraphy:
 
     def test_performance_characteristics(self):
         """Test performance characteristics of the transformer."""
-        import time
-
         with patch('clarity.ml.proxy_actigraphy.lookup_norm_stats') as mock_lookup:
             mock_lookup.return_value = (1.2, 0.8)
 

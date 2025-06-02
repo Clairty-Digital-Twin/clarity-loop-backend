@@ -22,13 +22,14 @@ from typing import Any
 import numpy as np
 from pydantic import BaseModel, Field
 
-from clarity.ml.nhanes_stats import NHANESStats
+from clarity.ml.nhanes_stats import lookup_norm_stats
 
 logger = logging.getLogger(__name__)
 
 # Constants for data processing
 MINUTES_PER_WEEK = 10080  # 7 days * 24 hours * 60 minutes
 MAX_REALISTIC_STEPS_PER_MINUTE = 1000  # Threshold for outlier detection
+MINUTES_PER_DAY = 1440  # 24 hours * 60 minutes
 
 # Default NHANES statistics for fallback
 DEFAULT_NHANES_STATS = {
@@ -113,7 +114,7 @@ class ProxyActigraphyTransformer:
         self._cache: dict[str, ProxyActigraphyResult] = {}
 
         # Load NHANES normalization parameters
-        self.nhanes_mean, self.nhanes_std = NHANESStats.lookup_norm_stats(reference_year)
+        self.nhanes_mean, self.nhanes_std = lookup_norm_stats(reference_year)
 
         logger.info("ProxyActigraphyTransformer initialized with NHANES %d", reference_year)
         logger.info("  • Reference mean: %.3f", self.nhanes_mean)
@@ -210,7 +211,7 @@ class ProxyActigraphyTransformer:
 
             return result
 
-        except Exception as e:
+        except Exception:
             logger.exception("Failed to transform step data for %s", step_data.user_id)
             raise
 
@@ -294,11 +295,11 @@ class ProxyActigraphyTransformer:
         realistic_score = np.sum(realistic_mask) / len(step_counts)
 
         # Circadian pattern score (reward day/night activity differences)
-        if len(step_counts) >= 1440:  # At least 24 hours
+        if len(step_counts) >= MINUTES_PER_DAY:  # At least 24 hours
             try:
                 # Reshape to days x minutes_per_day for analysis
-                days = len(step_counts) // 1440
-                daily_data = step_counts[:days * 1440].reshape(days, 1440)
+                days = len(step_counts) // MINUTES_PER_DAY
+                daily_data = step_counts[:days * MINUTES_PER_DAY].reshape(days, MINUTES_PER_DAY)
 
                 # Calculate day vs night activity
                 day_hours = daily_data[:, 360:1200]  # 6 AM to 8 PM

@@ -1,4 +1,4 @@
-"""Vertex AI Gemini Service for Health Insights Generation.
+"""Vntertex AI Gemini Service for Health Insights Generation.
 
 This service integrates with Google's Vertex AI Gemini 2.5 Pro model
 to generate human-like health insights and narratives from ML analysis results.
@@ -84,8 +84,7 @@ class GeminiService:
             logger.exception("Failed to generate health insights: %s", e)
             raise
 
-        @staticmethod
-    def _generate_placeholder_narrative(analysis_results: dict[str, Any]) -> str:
+    def _generate_placeholder_narrative(self, analysis_results: dict[str, Any]) -> str:
         """Generate a placeholder narrative (to be replaced with Gemini API)."""
         sleep_efficiency = analysis_results.get("sleep_efficiency", 0)
         circadian_score = analysis_results.get("circadian_rhythm_score", 0)

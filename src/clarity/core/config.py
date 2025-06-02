@@ -222,9 +222,20 @@ class Settings(BaseSettings):
         # Base configuration
         config = MiddlewareConfig()
 
+        # Debug logging to understand environment detection
+        logger.info("🔧 get_middleware_config: environment=%s", self.environment)
+        logger.info(
+            "🔧 get_middleware_config: is_development()=%s", self.is_development()
+        )
+        logger.info("🔧 get_middleware_config: is_testing()=%s", self.is_testing())
+        logger.info(
+            "🔧 get_middleware_config: is_production()=%s", self.is_production()
+        )
+
         # Environment-specific adjustments
         if self.is_development():
             # Development mode: More permissive, detailed logging
+            logger.info("🔧 Applying DEVELOPMENT middleware config")
             config.enabled = self.enable_auth
             config.graceful_degradation = True
             config.fallback_to_mock = True
@@ -234,6 +245,7 @@ class Settings(BaseSettings):
 
         elif self.is_testing():
             # Testing mode: Mock auth, minimal logging
+            logger.info("🔧 Applying TESTING middleware config")
             config.enabled = False  # Usually use mock auth in tests
             config.graceful_degradation = True
             config.fallback_to_mock = True
@@ -243,6 +255,7 @@ class Settings(BaseSettings):
 
         elif self.is_production():
             # Production mode: Strict settings, minimal logging
+            logger.info("🔧 Applying PRODUCTION middleware config")
             config.enabled = self.enable_auth
             config.graceful_degradation = False  # Fail fast in production
             config.fallback_to_mock = False  # No mock fallback in prod
@@ -251,6 +264,16 @@ class Settings(BaseSettings):
             config.cache_ttl_seconds = 600  # Longer cache in production
             config.initialization_timeout_seconds = 5  # Shorter timeout
 
+        else:
+            logger.warning(
+                "🔧 Unknown environment '%s', using default config", self.environment
+            )
+
+        logger.info(
+            "🔧 Final middleware config: enabled=%s, cache_enabled=%s",
+            config.enabled,
+            config.cache_enabled,
+        )
         return config
 
 

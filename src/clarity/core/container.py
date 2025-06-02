@@ -132,7 +132,7 @@ class DependencyContainer:
         return cast("IHealthDataRepository", self._instances[IHealthDataRepository])
 
     @asynccontextmanager
-    async def app_lifespan(self, app: FastAPI) -> AsyncGenerator[None, None]:
+    async def app_lifespan(self, _app: FastAPI) -> AsyncGenerator[None, None]:
         """Fixed application lifespan with timeouts and proper error handling.
 
         Features:
@@ -298,7 +298,7 @@ class DependencyContainer:
 
         return app
 
-    def _configure_middleware(self, app: FastAPI) -> None:
+    def _configure_middleware(self, _app: FastAPI) -> None:
         """Configure middleware with dependency injection."""
         config_provider = self.get_config_provider()
 

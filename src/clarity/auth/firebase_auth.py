@@ -465,8 +465,8 @@ def require_auth(
                 msg = "Request object not found"
                 raise HTTPException(status_code=500, detail=msg)
 
-            # Get user context
-            user_context = await get_current_user(request)
+            # Get user context (not await since get_current_user is not async)
+            user_context = get_current_user(request)
 
             # Check role requirements
             if roles and user_context.role not in roles:

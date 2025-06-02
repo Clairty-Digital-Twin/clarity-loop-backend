@@ -14,6 +14,7 @@ import time
 CONFIG_ACCESS_THRESHOLD = 0.5  # seconds
 AUTH_CREATION_THRESHOLD = 2.0  # seconds
 APP_CREATION_THRESHOLD = 3.0  # seconds
+TOTAL_IMPORT_THRESHOLD = 2.0  # seconds
 
 
 def measure_import_time(module_name: str) -> float:
@@ -57,7 +58,7 @@ def find_slowest_import() -> str | None:
             break
 
     total_elapsed = time.perf_counter() - overall_start
-    if total_elapsed > 2.0:
+    if total_elapsed > TOTAL_IMPORT_THRESHOLD:
         print(f"⚠️ Total import time concerning: {total_elapsed:.2f}s")
 
     return culprit
@@ -183,8 +184,8 @@ if __name__ == "__main__":
         main()
     except KeyboardInterrupt:
         pass
-    except Exception:
+    except (ImportError, RuntimeError, OSError) as e:
         import traceback
 
         traceback.print_exc()
-        print("❌ Debug script failed")
+        print(f"❌ Debug script failed: {e}")

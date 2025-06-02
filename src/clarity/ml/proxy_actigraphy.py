@@ -188,6 +188,7 @@ class ProxyActigraphyTransformer:
         logger.info("  • Reference mean: %.3f", self.nhanes_mean)
         logger.info("  • Reference std: %.3f", self.nhanes_std)
         logger.info("  • Cache enabled: %s", cache_enabled)
+        logger.info("  • Auto-pad to week: %s", auto_pad_to_week)
 
     def steps_to_movement_proxy(self, steps_per_min: NDArray[np.floating[Any]], padding_mask: NDArray[np.bool_] | None = None) -> NDArray[np.floating[Any]]:
         """Convert step counts to movement proxy values.
@@ -244,7 +245,8 @@ class ProxyActigraphyTransformer:
             # Prepare and validate step data
             steps_array, padding_mask = self._prepare_step_data(
                 step_data.step_counts,
-                step_data.timestamps
+                step_data.timestamps,
+                auto_pad_to_week=self.auto_pad_to_week
             )
 
             # Transform to proxy actigraphy
@@ -307,7 +309,8 @@ class ProxyActigraphyTransformer:
     @staticmethod
     def _prepare_step_data(
         step_counts: list[float],
-        timestamps: list[datetime]
+        timestamps: list[datetime],
+        auto_pad_to_week: bool = True
     ) -> tuple[NDArray[np.floating[Any]], NDArray[np.bool_]]:
         """Prepare and validate step count data for transformation.
 

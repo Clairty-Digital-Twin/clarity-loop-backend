@@ -243,8 +243,6 @@ class TestControllerDependencyInjection:
     def test_controller_fails_gracefully_without_dependencies() -> None:
         """Test controller handles missing dependencies gracefully."""
         # Given: Mock dependencies that will fail when called
-        from unittest.mock import Mock
-
         failing_auth_provider = Mock(spec=IAuthProvider)
         failing_repository = Mock(spec=IHealthDataRepository)
         failing_config_provider = Mock(spec=IConfigProvider)

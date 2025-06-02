@@ -141,7 +141,7 @@ def generate_request_id() -> str:
 
 def create_metadata(request_id: str, processing_time_ms: Optional[float] = None) -> Dict[str, Any]:
     """Create standard metadata for responses."""
-    metadata = {
+    metadata: Dict[str, Any] = {
         "request_id": request_id,
         "timestamp": datetime.now(UTC).isoformat(),
         "service": "gemini-insights",
@@ -149,7 +149,7 @@ def create_metadata(request_id: str, processing_time_ms: Optional[float] = None)
     }
     
     if processing_time_ms is not None:
-        metadata["processing_time_ms"] = round(processing_time_ms, 2)
+        metadata["processing_time_ms"] = processing_time_ms
     
     return metadata
 

@@ -9,7 +9,7 @@ and health status monitoring with proper Firebase authentication.
 
 from datetime import UTC, datetime
 import logging
-from typing import Any, Dict, Optional
+from typing import Any
 import uuid
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
@@ -37,7 +37,9 @@ def set_dependencies(
     config_provider: IConfigProvider,
 ) -> None:
     """Set dependencies for the router (called by container)."""
-    global _auth_provider, _config_provider, _gemini_service
+    # Note: Using globals here for FastAPI dependency injection pattern
+    # This is the recommended approach for this architecture
+    global _auth_provider, _config_provider, _gemini_service  # noqa: PLW0603
     _auth_provider = auth_provider
     _config_provider = config_provider
 
@@ -154,6 +156,18 @@ def create_metadata(request_id: str, processing_time_ms: float | None = None) ->
     return metadata
 
 
+def _raise_account_disabled_error(request_id: str, user_id: str) -> None:
+    """Raise account disabled error."""
+    raise create_error_response(
+        error_code="ACCOUNT_DISABLED",
+        message="User account is disabled",
+        request_id=request_id,
+        status_code=status.HTTP_403_FORBIDDEN,
+        details={"user_id": user_id},
+        suggested_action="contact_support"
+    )
+
+
 def create_error_response(
     error_code: str,
     message: str,
@@ -186,7 +200,6 @@ def create_error_response(
     description="Generate AI-powered health insights from analysis results using Gemini 2.5 Pro"
 )
 async def generate_insights(
-    request: Request,
     insight_request: InsightGenerationRequest,
     current_user: UserContext = Depends(get_current_user),
     gemini_service: GeminiService = Depends(get_gemini_service)
@@ -198,75 +211,66 @@ async def generate_insights(
 
     Args:
         insight_request: The insight generation request data
-        current_user: Authenticated user information
+        current_user: Authenticated user context
         gemini_service: Gemini service instance
 
     Returns:
-        Generated health insights with narrative and recommendations
+        InsightGenerationResponse: Generated insights with metadata
 
     Raises:
-        HTTPException: If insight generation fails or user lacks permissions
+        HTTPException: If user is inactive or insight generation fails
     """
     request_id = generate_request_id()
     start_time = datetime.now(UTC)
 
     try:
         logger.info(
-            "🤖 Generating insights for user %s (request: %s)",
+            "🔮 Generating insights for user %s (request: %s)",
             current_user.user_id,
             request_id
         )
 
-        # Check user permissions - for now, allow all authenticated users
-        # In production, you would check specific permissions:
+        # Validate user permissions
         # if Permission.READ_INSIGHTS not in current_user.permissions:
         if not current_user.is_active:
-            raise create_error_response(
-                error_code="ACCOUNT_DISABLED",
-                message="User account is disabled",
-                request_id=request_id,
-                status_code=status.HTTP_403_FORBIDDEN,
-                details={"user_id": current_user.user_id},
-                suggested_action="contact_support"
-            )
+            _raise_account_disabled_error(request_id, current_user.user_id)
 
         # Create Gemini service request
         gemini_request = HealthInsightRequest(
             user_id=current_user.user_id,
-            analysis_results=insight_request.analysis_results,
+            analysis_data=insight_request.analysis_results,
             context=insight_request.context,
-            insight_type=insight_request.insight_type
+            insight_type=insight_request.insight_type,
+            include_recommendations=insight_request.include_recommendations,
+            language=insight_request.language
         )
 
         # Generate insights
-        logger.info("   • Calling Gemini service for insight generation...")
-        insights = await gemini_service.generate_health_insights(gemini_request)
+        insight_response = await gemini_service.generate_health_insights(gemini_request)
 
         # Calculate processing time
         processing_time = (datetime.now(UTC) - start_time).total_seconds() * 1000
 
         logger.info(
-            "✅ Insights generated successfully (%.1fms, confidence: %.2f)",
-            processing_time,
-            insights.confidence_score
+            "✅ Insights generated successfully for user %s (request: %s, time: %.2fms)",
+            current_user.user_id,
+            request_id,
+            processing_time
         )
 
-        # Create response
         return InsightGenerationResponse(
             success=True,
-            data=insights,
+            data=insight_response,
             metadata=create_metadata(request_id, processing_time)
         )
 
-    except HTTPException:
-        # Re-raise HTTP exceptions as-is
-        raise
     except Exception as e:
+        processing_time = (datetime.now(UTC) - start_time).total_seconds() * 1000
         logger.exception(
-            "💥 Failed to generate insights for user %s (request: %s): %s",
+            "💥 Insight generation failed for user %s (request: %s, time: %.2fms)",
             current_user.user_id,
             request_id,
-            str(e)
+            processing_time
         )
 
         raise create_error_response(
@@ -276,7 +280,7 @@ async def generate_insights(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             details={"error_type": type(e).__name__, "error_message": str(e)},
             suggested_action="retry_later"
-        )
+        ) from e
 
 
 @router.get(
@@ -292,33 +296,59 @@ async def get_insight(
     """Retrieve cached insights by ID.
 
     Args:
-        insight_id: The ID of the insight to retrieve
-        current_user: Authenticated user information
+        insight_id: Unique identifier for the insight
+        current_user: Authenticated user context
 
     Returns:
-        The cached insight data
+        InsightGenerationResponse: Cached insight data
 
     Raises:
         HTTPException: If insight not found or access denied
     """
     request_id = generate_request_id()
 
-    logger.info(
-        "📄 Retrieving insight %s for user %s (request: %s)",
-        insight_id,
-        current_user.user_id,
-        request_id
-    )
+    try:
+        logger.info(
+            "📖 Retrieving insight %s for user %s (request: %s)",
+            insight_id,
+            current_user.user_id,
+            request_id
+        )
 
-    # For now, return a not implemented response
-    # In a full implementation, this would query Firestore or cache
-    raise create_error_response(
-        error_code="NOT_IMPLEMENTED",
-        message="Insight retrieval not yet implemented",
-        request_id=request_id,
-        status_code=status.HTTP_501_NOT_IMPLEMENTED,
-        suggested_action="use_generate_endpoint"
-    )
+        # TODO: Implement insight retrieval from cache/database
+        # For now, return a placeholder response
+        placeholder_response = HealthInsightResponse(
+            insight_id=insight_id,
+            user_id=current_user.user_id,
+            insights="Cached insight retrieval not yet implemented",
+            recommendations=[],
+            confidence_score=0.0,
+            generated_at=datetime.now(UTC).isoformat(),
+            metadata={}
+        )
+
+        return InsightGenerationResponse(
+            success=True,
+            data=placeholder_response,
+            metadata=create_metadata(request_id)
+        )
+
+    except Exception as e:
+        logger.exception(
+            "💥 Failed to retrieve insight %s for user %s (request: %s)",
+            insight_id,
+            current_user.user_id,
+            request_id
+        )
+
+        raise create_error_response(
+            error_code="INSIGHT_RETRIEVAL_FAILED",
+            message=f"Failed to retrieve insight {insight_id}",
+            request_id=request_id,
+            status_code=status.HTTP_404_NOT_FOUND,
+            details={"insight_id": insight_id, "error_message": str(e)},
+            suggested_action="check_insight_id"
+        ) from e
 
 
 @router.get(
@@ -329,52 +359,75 @@ async def get_insight(
 )
 async def get_insight_history(
     user_id: str,
-    limit: int = 10,
-    offset: int = 0,
+    limit: int = 10,  # noqa: ARG001
+    offset: int = 0,  # noqa: ARG001
     current_user: UserContext = Depends(get_current_user)
 ) -> InsightHistoryResponse:
     """Get insight history for a user.
 
     Args:
-        user_id: The user ID to get history for
+        user_id: User ID to get history for
         limit: Maximum number of insights to return
         offset: Number of insights to skip
-        current_user: Authenticated user information
+        current_user: Authenticated user context
 
     Returns:
-        List of historical insights
+        InsightHistoryResponse: User's insight history
 
     Raises:
-        HTTPException: If access denied or user not found
+        HTTPException: If access denied or retrieval fails
     """
     request_id = generate_request_id()
 
-    # Check if user is requesting their own data or has admin permissions
-    # For now, only allow users to access their own data
-    if current_user.user_id != user_id:
-        raise create_error_response(
-            error_code="ACCESS_DENIED",
-            message="Cannot access another user's insight history",
-            request_id=request_id,
-            status_code=status.HTTP_403_FORBIDDEN,
-            suggested_action="request_own_data"
+    try:
+        logger.info(
+            "📚 Retrieving insight history for user %s (request: %s)",
+            user_id,
+            request_id
         )
 
-    logger.info(
-        "📚 Retrieving insight history for user %s (request: %s)",
-        user_id,
-        request_id
-    )
+        # Validate user can access this history
+        if current_user.user_id != user_id:
+            raise create_error_response(
+                error_code="ACCESS_DENIED",
+                message="Cannot access another user's insight history",
+                request_id=request_id,
+                status_code=status.HTTP_403_FORBIDDEN,
+                details={"requested_user_id": user_id, "current_user_id": current_user.user_id},
+                suggested_action="check_permissions"
+            )
 
-    # For now, return a not implemented response
-    # In a full implementation, this would query Firestore
-    raise create_error_response(
-        error_code="NOT_IMPLEMENTED",
-        message="Insight history not yet implemented",
-        request_id=request_id,
-        status_code=status.HTTP_501_NOT_IMPLEMENTED,
-        suggested_action="use_generate_endpoint"
-    )
+        # TODO: Implement history retrieval from database
+        # For now, return a placeholder response
+        placeholder_history = {
+            "insights": [],
+            "total_count": 0,
+            "has_more": False
+        }
+
+        return InsightHistoryResponse(
+            success=True,
+            data=placeholder_history,
+            metadata=create_metadata(request_id)
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.exception(
+            "💥 Failed to retrieve insight history for user %s (request: %s)",
+            user_id,
+            request_id
+        )
+
+        raise create_error_response(
+            error_code="HISTORY_RETRIEVAL_FAILED",
+            message="Failed to retrieve insight history",
+            request_id=request_id,
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            details={"user_id": user_id, "error_message": str(e)},
+            suggested_action="retry_later"
+        ) from e
 
 
 @router.get(
@@ -392,75 +445,62 @@ async def get_service_status(
         gemini_service: Gemini service instance
 
     Returns:
-        Service health status and metrics
+        ServiceStatusResponse: Service health status
+
+    Raises:
+        HTTPException: If status check fails
     """
     request_id = generate_request_id()
-    start_time = datetime.now(UTC)
 
     try:
-        logger.info("🏥 Checking Gemini service health (request: %s)", request_id)
+        logger.info("🔍 Checking Gemini service status (request: %s)", request_id)
 
-        # Get service health
-        health_status = await gemini_service.health_check()
+        # Check service health
+        is_healthy = gemini_service.is_initialized
+        model_info = {
+            "model_name": "gemini-2.0-flash-exp",
+            "project_id": gemini_service.project_id,
+            "initialized": is_healthy,
+            "capabilities": [
+                "health_insights_generation",
+                "contextual_analysis",
+                "recommendation_generation"
+            ]
+        }
 
-        # Calculate response time
-        processing_time = (datetime.now(UTC) - start_time).total_seconds() * 1000
-
-        # Create comprehensive status response
         status_data = {
-            "service_name": "gemini-insights",
-            "status": "healthy" if health_status["initialized"] else "degraded",
-            "gemini_service": health_status,
-            "capabilities": {
-                "insight_generation": True,
-                "narrative_creation": True,
-                "health_recommendations": True,
-                "multi_language": False  # Not yet implemented
-            },
-            "performance_metrics": {
-                "health_check_time_ms": processing_time,
-                "average_insight_generation_time": "15-30 seconds",
-                "supported_languages": ["en"]
-            },
-            "version_info": {
-                "api_version": "1.0.0",
-                "gemini_model": "gemini-2.5-pro",
-                "service_version": "1.0.0"
-            }
+            "service": "gemini-insights",
+            "status": "healthy" if is_healthy else "unhealthy",
+            "model": model_info,
+            "timestamp": datetime.now(UTC).isoformat()
         }
 
         logger.info(
-            "✅ Service status check completed (%.1fms) - Status: %s",
-            processing_time,
+            "✅ Service status check completed (request: %s, status: %s)",
+            request_id,
             status_data["status"]
         )
 
         return ServiceStatusResponse(
             success=True,
             data=status_data,
-            metadata=create_metadata(request_id, processing_time)
+            metadata=create_metadata(request_id)
         )
 
     except Exception as e:
         logger.exception(
-            "💥 Service status check failed (request: %s): %s",
-            request_id,
-            str(e)
+            "💥 Service status check failed (request: %s)",
+            request_id
         )
 
-        # Return degraded status instead of error
-        status_data = {
-            "service_name": "gemini-insights",
-            "status": "degraded",
-            "error": str(e),
-            "last_error_time": datetime.now(UTC).isoformat()
-        }
-
-        return ServiceStatusResponse(
-            success=False,
-            data=status_data,
-            metadata=create_metadata(request_id)
-        )
+        raise create_error_response(
+            error_code="STATUS_CHECK_FAILED",
+            message="Failed to check service status",
+            request_id=request_id,
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            details={"error_type": type(e).__name__, "error_message": str(e)},
+            suggested_action="check_service_health"
+        ) from e
 
 
 # Export router

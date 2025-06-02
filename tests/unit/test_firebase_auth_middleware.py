@@ -470,7 +470,7 @@ class TestFirebaseAuthMiddleware:
             "last_login": None,
         }
 
-        context = middleware._create_user_context(user_info)
+        context = middleware._create_user_context(user_info)  # type: ignore[misc]
 
         assert context.user_id == "patient_123"
         assert context.email == "patient@example.com"
@@ -493,7 +493,7 @@ class TestFirebaseAuthMiddleware:
             "last_login": None,
         }
 
-        context = middleware._create_user_context(user_info)
+        context = middleware._create_user_context(user_info)  # type: ignore[misc]
 
         assert context.role == UserRole.CLINICIAN
         assert Permission.READ_OWN_DATA in context.permissions
@@ -516,7 +516,7 @@ class TestFirebaseAuthMiddleware:
             "last_login": None,
         }
 
-        context = middleware._create_user_context(user_info)
+        context = middleware._create_user_context(user_info)  # type: ignore[misc]
 
         assert context.role == UserRole.ADMIN
         assert Permission.SYSTEM_ADMIN in context.permissions
@@ -539,7 +539,7 @@ class TestFirebaseAuthMiddleware:
             "last_login": None,
         }
 
-        context = middleware._create_user_context(user_info)
+        context = middleware._create_user_context(user_info)  # type: ignore[misc]
 
         assert context.role == UserRole.PATIENT  # Should default to patient
 

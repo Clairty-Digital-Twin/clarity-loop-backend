@@ -114,7 +114,7 @@ class FirestoreClient:
     def _init_firebase(self, credentials_path: str | None = None) -> None:
         """Initialize Firebase Admin SDK with error handling."""
         try:
-            if not firebase_admin._apps:  # type: ignore[misc]
+            if not firebase_admin._apps:  # type: ignore[misc]  # noqa: SLF001
                 if credentials_path:
                     cred = credentials.Certificate(credentials_path)  # type: ignore[misc]
                     firebase_admin.initialize_app(cred, {"projectId": self.project_id})  # type: ignore[misc]
@@ -136,7 +136,7 @@ class FirestoreClient:
             async with self._connection_lock:
                 if self._db is None:
                     try:
-                        self._db = firestore.AsyncClient(  # type: ignore
+                        self._db = firestore.AsyncClient(  # type: ignore[misc]
                             project=self.project_id, database=self.database_name
                         )
                         logger.info("Async Firestore client created")
@@ -148,7 +148,8 @@ class FirestoreClient:
 
         return self._db
 
-    def _cache_key(self, collection: str, doc_id: str) -> str:
+    @staticmethod
+    def _cache_key(collection: str, doc_id: str) -> str:
         """Generate cache key for document."""
         return f"{collection}:{doc_id}"
 
@@ -160,14 +161,15 @@ class FirestoreClient:
         timestamp: float = cache_entry.get("timestamp", 0.0)
         return time.time() - timestamp < self.cache_ttl
 
-    async def _validate_health_data(self, data: dict[str, Any]) -> None:
+    @staticmethod
+    async def _validate_health_data(data: dict[str, Any]) -> None:
         """Validate health data before storage."""
         required_fields = ["user_id", "metrics", "upload_source"]
 
         for field in required_fields:
             if field not in data:
                 msg = f"Missing required field: {field}"
-                raise FirestoreValidationError(msg)
+                raise FirestoreValidationError(msg) from None
 
         # Validate user_id format
         try:
@@ -175,12 +177,12 @@ class FirestoreClient:
                 UUID(data["user_id"])
         except ValueError:
             msg = "Invalid user_id format"
-            raise FirestoreValidationError(msg)
+            raise FirestoreValidationError(msg) from None
 
         # Validate metrics
         if not isinstance(data["metrics"], list) or not data["metrics"]:
             msg = "Metrics must be a non-empty list"
-            raise FirestoreValidationError(msg)
+            raise FirestoreValidationError(msg) from None
 
     async def _audit_log(
         self,
@@ -210,7 +212,7 @@ class FirestoreClient:
                 "Audit log created: %s on %s/%s", operation, collection, document_id
             )
 
-        except Exception as e:
+        except Exception:
             logger.exception("Failed to create audit log")
             # Don't raise exception for audit failures to avoid breaking main operations
 
@@ -376,16 +378,16 @@ class FirestoreClient:
                 {"merge": merge, "fields_updated": list(data.keys())},
             )
 
-            logger.info(f"Document updated: {collection}/{document_id}")
+            logger.info("Document updated: %s/%s", collection, document_id)
             return True
 
         except NotFound:
-            logger.warning(f"Document not found for update: {collection}/{document_id}")
+            logger.warning("Document not found for update: {collection}/%s", document_id)
             return False
         except Exception as e:
-            logger.exception(f"Failed to update document {collection}/{document_id}: {e}")
+            logger.exception("Failed to update document {collection}/{document_id}: %s", e)
             msg = f"Document update failed: {e}"
-            raise FirestoreError(msg)
+            raise FirestoreError(msg) from e
 
     async def delete_document(
         self, collection: str, document_id: str, user_id: str | None = None
@@ -412,13 +414,13 @@ class FirestoreClient:
             # Audit log
             await self._audit_log("DELETE", collection, document_id, user_id)
 
-            logger.info(f"Document deleted: {collection}/{document_id}")
+            logger.info("Document deleted: {collection}/%s", document_id)
             return True
 
         except Exception as e:
-            logger.exception(f"Failed to delete document {collection}/{document_id}: {e}")
+            logger.exception("Failed to delete document {collection}/{document_id}: %s", e)
             msg = f"Document deletion failed: {e}"
-            raise FirestoreError(msg)
+            raise FirestoreError(msg) from e
 
     # Health Data Specific Operations
 
@@ -471,13 +473,13 @@ class FirestoreClient:
                 user_id=str(upload_data.user_id),
             )
 
-            logger.info(f"Health data stored with processing ID: {processing_id}")
+            logger.info("Health data stored with processing ID: %s", processing_id)
             return processing_id
 
         except Exception as e:
-            logger.exception(f"Failed to store health data: {e}")
+            logger.exception("Failed to store health data: %s", e)
             msg = f"Health data storage failed: {e}"
-            raise FirestoreError(msg)
+            raise FirestoreError(msg) from e
 
     async def get_processing_status(self, processing_id: str) -> dict[str, Any] | None:
         """Get processing status for a health data upload.
@@ -598,9 +600,9 @@ class FirestoreClient:
             return results
 
         except Exception as e:
-            logger.exception(f"Failed to query documents in {collection}: {e}")
+            logger.exception("Failed to query documents in {collection}: %s", e)
             msg = f"Query operation failed: {e}"
-            raise FirestoreError(msg)
+            raise FirestoreError(msg) from e
 
     async def count_documents(
         self, collection: str, filters: list[dict[str, Any]] | None = None
@@ -638,9 +640,9 @@ class FirestoreClient:
             return count
 
         except Exception as e:
-            logger.exception(f"Failed to count documents in {collection}: {e}")
+            logger.exception("Failed to count documents in {collection}: %s", e)
             msg = f"Count operation failed: {e}"
-            raise FirestoreError(msg)
+            raise FirestoreError(msg) from e
 
     async def delete_documents(
         self, collection: str, filters: list[dict[str, Any]]
@@ -694,9 +696,9 @@ class FirestoreClient:
             return deleted_count
 
         except Exception as e:
-            logger.exception(f"Failed to delete documents in {collection}: {e}")
+            logger.exception("Failed to delete documents in {collection}: %s", e)
             msg = f"Delete operation failed: {e}"
-            raise FirestoreError(msg)
+            raise FirestoreError(msg) from e
 
     async def batch_create_documents(
         self, collection: str, documents: list[dict[str, Any]]
@@ -735,9 +737,9 @@ class FirestoreClient:
             )
 
         except Exception as e:
-            logger.exception(f"Failed to batch create documents in {collection}: {e}")
+            logger.exception("Failed to batch create documents in {collection}: %s", e)
             msg = f"Batch create operation failed: {e}"
-            raise FirestoreError(msg)
+            raise FirestoreError(msg) from e
 
     # Batch Operations
 
@@ -761,7 +763,7 @@ class FirestoreClient:
                 self._db = None
                 logger.info("Firestore client closed")
         except Exception as e:
-            logger.exception(f"Error closing Firestore client: {e}")
+            logger.exception("Error closing Firestore client: %s", e)
 
     async def health_check(self) -> dict[str, Any]:
         """Perform health check on Firestore connection.
@@ -786,7 +788,7 @@ class FirestoreClient:
             }
 
         except Exception as e:
-            logger.exception(f"Firestore health check failed: {e}")
+            logger.exception("Firestore health check failed: %s", e)
             return {
                 "status": "unhealthy",
                 "error": str(e),
@@ -880,13 +882,13 @@ class FirestoreHealthDataRepository(IHealthDataRepository):
                 )
 
             logger.info(
-                f"Health data saved: {processing_id} with {len(metrics)} metrics"
+                "Health data saved: %s with %s metrics", processing_id, len(metrics)
             )
             return True
 
         except Exception as e:
             logger.exception(
-                f"Failed to save health data for processing {processing_id}: {e}"
+                "Failed to save health data for processing %s", processing_id
             )
             return False
 
@@ -967,9 +969,9 @@ class FirestoreHealthDataRepository(IHealthDataRepository):
             }
 
         except Exception as e:
-            logger.exception(f"Failed to get health data for user {user_id}: {e}")
+            logger.exception("Failed to get health data for user {user_id}: %s", e)
             msg = f"Health data retrieval failed: {e}"
-            raise FirestoreError(msg)
+            raise FirestoreError(msg) from e
 
     async def get_processing_status(
         self, processing_id: str, user_id: str
@@ -1014,7 +1016,7 @@ class FirestoreHealthDataRepository(IHealthDataRepository):
             }
 
         except Exception as e:
-            logger.exception(f"Failed to get processing status for {processing_id}: {e}")
+            logger.exception("Failed to get processing status for {processing_id}: %s", e)
             return None
 
     async def delete_health_data(
@@ -1076,12 +1078,12 @@ class FirestoreHealthDataRepository(IHealthDataRepository):
             )
 
             logger.info(
-                f"Deleted health data for user {user_id}, processing {processing_id}"
+                "Deleted health data for user %s, processing %s", user_id, processing_id
             )
             return True
 
         except Exception as e:
-            logger.exception(f"Failed to delete health data for user {user_id}: {e}")
+            logger.exception("Failed to delete health data for user {user_id}: %s", e)
             return False
 
     async def save_data(self, user_id: str, data: dict[str, Any]) -> str:
@@ -1110,13 +1112,13 @@ class FirestoreHealthDataRepository(IHealthDataRepository):
                 user_id=user_id,
             )
 
-            logger.info(f"Health data saved for user {user_id}: {document_id}")
+            logger.info("Health data saved for user {user_id}: %s", document_id)
             return document_id
 
         except Exception as e:
-            logger.exception(f"Failed to save health data for user {user_id}: {e}")
+            logger.exception("Failed to save health data for user {user_id}: %s", e)
             msg = f"Health data save failed: {e}"
-            raise FirestoreError(msg)
+            raise FirestoreError(msg) from e
 
     async def get_data(
         self, user_id: str, filters: dict[str, Any] | None = None
@@ -1155,13 +1157,13 @@ class FirestoreHealthDataRepository(IHealthDataRepository):
                 "retrieved_at": datetime.now(UTC).isoformat(),
             }
 
-            logger.info(f"Retrieved {len(documents)} health records for user {user_id}")
+            logger.info("Retrieved {len(documents)} health records for user %s", user_id)
             return result
 
         except Exception as e:
-            logger.exception(f"Failed to get health data for user {user_id}: {e}")
+            logger.exception("Failed to get health data for user {user_id}: %s", e)
             msg = f"Health data retrieval failed: {e}"
-            raise FirestoreError(msg)
+            raise FirestoreError(msg) from e
 
     async def initialize(self) -> None:
         """Initialize the repository."""
@@ -1175,9 +1177,9 @@ class FirestoreHealthDataRepository(IHealthDataRepository):
             logger.info("FirestoreHealthDataRepository initialized successfully")
 
         except Exception as e:
-            logger.exception(f"Failed to initialize FirestoreHealthDataRepository: {e}")
+            logger.exception("Failed to initialize FirestoreHealthDataRepository: %s", e)
             msg = f"Repository initialization failed: {e}"
-            raise ConnectionError(msg)
+            raise ConnectionError(msg) from e
 
     async def cleanup(self) -> None:
         """Clean up repository resources."""
@@ -1186,7 +1188,7 @@ class FirestoreHealthDataRepository(IHealthDataRepository):
             logger.info("FirestoreHealthDataRepository cleaned up successfully")
 
         except Exception as e:
-            logger.exception(f"Failed to cleanup FirestoreHealthDataRepository: {e}")
+            logger.exception("Failed to cleanup FirestoreHealthDataRepository: %s", e)
 
     async def get_user_health_summary(self, user_id: str) -> dict[str, Any]:
         """Get health data summary for a user.
@@ -1229,9 +1231,9 @@ class FirestoreHealthDataRepository(IHealthDataRepository):
             }
 
         except Exception as e:
-            logger.exception(f"Failed to get health summary for user {user_id}: {e}")
+            logger.exception("Failed to get health summary for user {user_id}: %s", e)
             msg = f"Health summary retrieval failed: {e}"
-            raise FirestoreError(msg)
+            raise FirestoreError(msg) from e
 
     async def delete_user_data(self, user_id: str) -> int:
         """Delete all health data for a user (GDPR compliance).
@@ -1248,11 +1250,10 @@ class FirestoreHealthDataRepository(IHealthDataRepository):
                 filters=[{"field": "user_id", "op": "==", "value": user_id}],
             )
 
-            logger.info(f"Deleted {deleted_count} health records for user {user_id}")
+            logger.info("Deleted {deleted_count} health records for user %s", user_id)
             return deleted_count
 
         except Exception as e:
-            logger.exception(f"Failed to delete health data for user {user_id}: {e}")
+            logger.exception("Failed to delete health data for user {user_id}: %s", e)
             msg = f"Health data deletion failed: {e}"
-            raise FirestoreError(msg)
-# Test comment
+            raise FirestoreError(msg) from e

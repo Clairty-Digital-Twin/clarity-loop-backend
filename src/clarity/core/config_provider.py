@@ -87,17 +87,14 @@ class ConfigProvider(IConfigProvider):
         # For Firestore, return project-based URL
         return f"https://{self.get_gcp_project_id()}.firebaseio.com"
 
-    def get_firebase_config(self) -> dict[str, str | None]:
-        """Get Firebase configuration.
+    def get_firebase_config(self) -> dict[str, str]:
+        """Get Firebase configuration with proper types."""
+        credentials_path = self.get_setting("firebase_credentials_path")
+        project_id = self.get_setting("gcp_project_id")
 
-        Returns:
-            Firebase configuration dictionary
-        """
         return {
-            "project_id": self.get_gcp_project_id(),
-            "credentials_path": getattr(
-                self._settings, "firebase_credentials_path", None
-            ),
+            "credentials_path": credentials_path or "",
+            "project_id": project_id or "",
         }
 
     def is_auth_enabled(self) -> bool:
@@ -109,17 +106,13 @@ class ConfigProvider(IConfigProvider):
         return getattr(self._settings, "enable_auth", False)
 
     def get_gcp_project_id(self) -> str:
-        """Get Google Cloud Platform project ID.
-
-        Returns:
-            GCP project ID
-        """
-        project_id = getattr(self._settings, "gcp_project_id", None)
+        """Get GCP project ID from settings."""
+        project_id = self.get_setting("gcp_project_id")
         if project_id:
-            return project_id
+            return str(project_id)  # Ensure it's a string
 
-        # Fallback to environment variable
-        return os.getenv("GCP_PROJECT_ID", "clarity-digital-twin")
+        # Fallback to default if not configured
+        return "clarity-digital-twin"
 
     def get_log_level(self) -> str:
         """Get logging level.

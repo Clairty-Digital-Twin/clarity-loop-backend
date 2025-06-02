@@ -4,9 +4,8 @@ Tests the controller layer's adaptation patterns and Clean Architecture complian
 """
 
 from datetime import UTC, datetime
-import json
 from typing import Any
-from unittest.mock import AsyncMock, Mock
+from unittest.mock import Mock
 from uuid import uuid4
 
 from fastapi import FastAPI, status
@@ -20,7 +19,6 @@ from clarity.core.interfaces import (
     IConfigProvider,
     IHealthDataRepository,
 )
-from clarity.main import create_app
 
 
 class TestHealthDataController:

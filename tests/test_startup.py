@@ -17,7 +17,7 @@ from clarity.core.container import get_container
 from clarity.main import create_application
 
 if TYPE_CHECKING:
-    from clarity.core.interfaces import IConfigProvider, IHealthDataRepository
+    from clarity.core.interfaces import IHealthDataRepository
 
 # Add src directory to Python path for testing
 src_path = Path(__file__).parent.parent / "src"

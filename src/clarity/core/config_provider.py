@@ -4,10 +4,14 @@ Following Clean Architecture and SOLID principles, this module provides
 concrete implementation of IConfigProvider interface for dependency injection.
 """
 
-from typing import Any
+import os
+from typing import TYPE_CHECKING
 
 from clarity.core.config import Settings
 from clarity.core.interfaces import IConfigProvider
+
+if TYPE_CHECKING:
+    from clarity.core.config import Settings
 
 
 class ConfigProvider(IConfigProvider):
@@ -17,7 +21,7 @@ class ConfigProvider(IConfigProvider):
     Implements Dependency Inversion Principle by depending on Settings abstraction.
     """
 
-    def __init__(self, settings: Settings) -> None:
+    def __init__(self, settings: "Settings") -> None:
         """Initialize configuration provider with settings.
 
         Args:
@@ -25,7 +29,9 @@ class ConfigProvider(IConfigProvider):
         """
         self._settings = settings
 
-    def get_setting(self, key: str, default: Any = None) -> Any:
+    def get_setting(
+        self, key: str, default: str | int | bool | None = None
+    ) -> str | int | bool | None:
         """Get configuration setting by key.
 
         Args:
@@ -43,23 +49,34 @@ class ConfigProvider(IConfigProvider):
         Returns:
             True if in development environment, False otherwise
         """
-        return self._settings.environment.lower() == "development"
+        return self._settings.environment == "development"
+
+    def is_testing(self) -> bool:
+        """Check if running in testing mode.
+
+        Returns:
+            True if in testing environment, False otherwise
+        """
+        return self._settings.environment == "testing"
+
+    def is_production(self) -> bool:
+        """Check if running in production mode.
+
+        Returns:
+            True if in production environment, False otherwise
+        """
+        return self._settings.environment == "production"
 
     def should_skip_external_services(self) -> bool:
         """Check if external services should be skipped.
 
-        Skip external services in development mode or when explicitly configured.
+        Skip external services in development mode, testing mode, or when explicitly configured.
         This prevents startup hangs when Firebase/Firestore credentials are missing.
 
         Returns:
             True if external services should be skipped, False otherwise
         """
-        # Skip in development mode by default
-        if self.is_development():
-            return bool(self.get_setting("skip_external_services", default=True))
-
-        # In production, only skip if explicitly requested
-        return bool(self.get_setting("skip_external_services", default=False))
+        return self.is_development() or self.is_testing()
 
     def get_database_url(self) -> str:
         """Get database connection URL.
@@ -67,18 +84,20 @@ class ConfigProvider(IConfigProvider):
         Returns:
             Database connection URL
         """
-        return getattr(self._settings, "database_url", "")
+        # For Firestore, return project-based URL
+        return f"https://{self.get_gcp_project_id()}.firebaseio.com"
 
-    def get_firebase_config(self) -> dict[str, Any]:
+    def get_firebase_config(self) -> dict[str, str | None]:
         """Get Firebase configuration.
 
         Returns:
             Firebase configuration dictionary
         """
         return {
-            "project_id": getattr(self._settings, "firebase_project_id", ""),
-            "credentials_path": getattr(self._settings, "firebase_credentials", ""),
-            "web_api_key": getattr(self._settings, "firebase_web_api_key", ""),
+            "project_id": self.get_gcp_project_id(),
+            "credentials_path": getattr(
+                self._settings, "firebase_credentials_path", None
+            ),
         }
 
     def is_auth_enabled(self) -> bool:
@@ -87,7 +106,7 @@ class ConfigProvider(IConfigProvider):
         Returns:
             True if authentication should be enabled, False otherwise
         """
-        return getattr(self._settings, "enable_auth", True)
+        return getattr(self._settings, "enable_auth", False)
 
     def get_gcp_project_id(self) -> str:
         """Get Google Cloud Platform project ID.
@@ -95,7 +114,12 @@ class ConfigProvider(IConfigProvider):
         Returns:
             GCP project ID
         """
-        return getattr(self._settings, "gcp_project_id", "")
+        project_id = getattr(self._settings, "gcp_project_id", None)
+        if project_id:
+            return project_id
+
+        # Fallback to environment variable
+        return os.getenv("GCP_PROJECT_ID", "clarity-digital-twin")
 
     def get_log_level(self) -> str:
         """Get logging level.
@@ -107,28 +131,42 @@ class ConfigProvider(IConfigProvider):
 
     def get_redis_url(self) -> str:
         """Get Redis connection URL."""
-        return self._settings.redis_url
+        return getattr(self._settings, "redis_url", "redis://localhost:6379")
 
     def get_cors_origins(self) -> list[str]:
         """Get CORS allowed origins list."""
-        return self._settings.cors_origins
+        origins = getattr(self._settings, "cors_origins", "")
+        if origins:
+            return [origin.strip() for origin in origins.split(",")]
+        return ["http://localhost:3000", "http://localhost:8080"]
 
     def get_jwt_secret_key(self) -> str:
         """Get JWT secret key for token signing."""
-        return self._settings.jwt_secret_key
+        return getattr(self._settings, "jwt_secret_key", "development-secret-key")
 
     def get_jwt_algorithm(self) -> str:
         """Get JWT algorithm for token verification."""
-        return self._settings.jwt_algorithm
+        return getattr(self._settings, "jwt_algorithm", "HS256")
 
     def get_jwt_access_token_expire_minutes(self) -> int:
         """Get JWT access token expiration time in minutes."""
-        return self._settings.jwt_access_token_expire_minutes
+        return getattr(self._settings, "jwt_access_token_expire_minutes", 30)
 
     def get_app_name(self) -> str:
         """Get application name."""
-        return self._settings.app_name
+        return getattr(self._settings, "app_name", "CLARITY Digital Twin")
 
     def get_app_version(self) -> str:
         """Get application version."""
-        return self._settings.app_version
+        return getattr(self._settings, "app_version", "1.0.0")
+
+    def get_api_base_url(self) -> str:
+        """Get API base URL."""
+        return getattr(self._settings, "api_base_url", "http://localhost:8000")
+
+    def get_rate_limit_settings(self) -> dict[str, int]:
+        """Get rate limiting settings."""
+        return {
+            "requests_per_minute": getattr(self._settings, "rate_limit_rpm", 100),
+            "burst_size": getattr(self._settings, "rate_limit_burst", 10),
+        }

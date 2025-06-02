@@ -19,12 +19,15 @@ if not TYPE_CHECKING:
 
 from fastapi import FastAPI
 
+from clarity.auth.mock_auth import MockAuthProvider
 from clarity.core.config import get_settings
 from clarity.core.interfaces import (
     IAuthProvider,
     IConfigProvider,
     IHealthDataRepository,
 )
+from clarity.storage.firestore_client import FirestoreHealthDataRepository
+from clarity.storage.mock_repository import MockHealthDataRepository
 
 if TYPE_CHECKING:
     from collections.abc import AsyncGenerator
@@ -77,8 +80,6 @@ class DependencyContainer:
                 project_id=firebase_config.get("project_id"),
             )
 
-        from clarity.auth.mock_auth import MockAuthProvider  # noqa: PLC0415
-
         return MockAuthProvider()
 
     def _create_health_data_repository(self) -> IHealthDataRepository:
@@ -90,15 +91,7 @@ class DependencyContainer:
             config_provider.is_development()
             or config_provider.should_skip_external_services()
         ):
-            from clarity.storage.mock_repository import (
-                MockHealthDataRepository,
-            )
-
             return MockHealthDataRepository()
-
-        from clarity.storage.firestore_client import (
-            FirestoreHealthDataRepository,
-        )
 
         return FirestoreHealthDataRepository(
             project_id=config_provider.get_gcp_project_id(),
@@ -194,16 +187,13 @@ class DependencyContainer:
                 logger.exception("💥 Auth provider initialization TIMEOUT (8s)")
                 logger.warning("🔄 Falling back to mock auth provider...")
                 # Fallback to mock auth
-                from clarity.auth.mock_auth import MockAuthProvider  # noqa: PLC0415
-
                 self._instances[IAuthProvider] = MockAuthProvider()
                 logger.info("✅ Mock auth provider activated")
 
             except Exception:
                 logger.exception("💥 Auth provider initialization failed")
                 logger.warning("🔄 Falling back to mock auth provider...")
-                from clarity.auth.mock_auth import MockAuthProvider  # noqa: PLC0415
-
+                # Fallback to mock auth
                 self._instances[IAuthProvider] = MockAuthProvider()
                 logger.info("✅ Mock auth provider activated")
 
@@ -221,20 +211,12 @@ class DependencyContainer:
                 logger.exception("💥 Repository initialization TIMEOUT (8s)")
                 logger.warning("🔄 Falling back to mock repository...")
                 # Fallback to mock repository
-                from clarity.storage.mock_repository import (
-                    MockHealthDataRepository,
-                )
-
                 self._instances[IHealthDataRepository] = MockHealthDataRepository()
                 logger.info("✅ Mock repository activated")
 
             except Exception:
                 logger.exception("💥 Repository initialization failed")
                 logger.warning("🔄 Falling back to mock repository...")
-                from clarity.storage.mock_repository import (
-                    MockHealthDataRepository,
-                )
-
                 self._instances[IHealthDataRepository] = MockHealthDataRepository()
                 logger.info("✅ Mock repository activated")
 
@@ -257,11 +239,6 @@ class DependencyContainer:
 
             # Ensure we have basic providers
             try:
-                from clarity.auth.mock_auth import MockAuthProvider  # noqa: PLC0415
-                from clarity.storage.mock_repository import (
-                    MockHealthDataRepository,
-                )
-
                 self._instances[IAuthProvider] = MockAuthProvider()
                 self._instances[IHealthDataRepository] = MockHealthDataRepository()
                 logger.info("✅ Minimal providers activated")

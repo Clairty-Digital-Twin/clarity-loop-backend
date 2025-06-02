@@ -7,9 +7,12 @@ lower-level modules, but both depend on abstractions.
 
 from abc import ABC, abstractmethod
 from datetime import datetime
-from typing import Any
+from typing import TYPE_CHECKING
 
-from fastapi import Request
+if TYPE_CHECKING:
+    from collections.abc import Awaitable
+
+    from fastapi import Request, Response
 
 from clarity.models.health_data import HealthMetric
 
@@ -18,11 +21,11 @@ class IAuthProvider(ABC):
     """Abstract authentication provider interface."""
 
     @abstractmethod
-    async def verify_token(self, token: str) -> dict[str, Any] | None:
+    async def verify_token(self, token: str) -> dict[str, str] | None:
         """Verify an authentication token."""
 
     @abstractmethod
-    async def get_user_info(self, user_id: str) -> dict[str, Any] | None:
+    async def get_user_info(self, user_id: str) -> dict[str, str] | None:
         """Get user information by ID."""
 
     @abstractmethod
@@ -35,10 +38,18 @@ class IAuthProvider(ABC):
 
 
 class IMiddleware(ABC):
-    """Abstract middleware interface."""
+    """Interface for HTTP middleware components.
+
+    Following Clean Architecture:
+    - Middleware operates at the interface adapter layer
+    - Handles cross-cutting concerns (auth, logging, etc.)
+    - Should not contain business logic
+    """
 
     @abstractmethod
-    async def __call__(self, request: Request, call_next: Any) -> Any:
+    async def __call__(
+        self, request: "Request", call_next: "Awaitable[Response]"
+    ) -> "Response":
         """Process request through middleware."""
 
 
@@ -80,7 +91,7 @@ class IHealthDataRepository(ABC):
         metric_type: str | None = None,
         start_date: datetime | None = None,
         end_date: datetime | None = None,
-    ) -> dict[str, Any]:
+    ) -> dict[str, str]:
         """Retrieve user health data with filtering and pagination.
 
         Args:
@@ -98,7 +109,7 @@ class IHealthDataRepository(ABC):
     @abstractmethod
     async def get_processing_status(
         self, processing_id: str, user_id: str
-    ) -> dict[str, Any] | None:
+    ) -> dict[str, str] | None:
         """Get processing status for a health data upload.
 
         Args:
@@ -124,13 +135,13 @@ class IHealthDataRepository(ABC):
         """
 
     @abstractmethod
-    async def save_data(self, user_id: str, data: dict[str, Any]) -> str:
+    async def save_data(self, user_id: str, data: dict[str, str]) -> str:
         """Save health data for a user (legacy method)."""
 
     @abstractmethod
     async def get_data(
-        self, user_id: str, filters: dict[str, Any] | None = None
-    ) -> dict[str, Any]:
+        self, user_id: str, filters: dict[str, str] | None = None
+    ) -> dict[str, str]:
         """Retrieve health data for a user (legacy method)."""
 
     @abstractmethod
@@ -143,10 +154,16 @@ class IHealthDataRepository(ABC):
 
 
 class IConfigProvider(ABC):
-    """Abstract configuration provider interface."""
+    """Interface for configuration management.
+
+    Provides access to application configuration following
+    Dependency Inversion Principle.
+    """
 
     @abstractmethod
-    def get_setting(self, key: str, default: Any = None) -> Any:
+    def get_setting(
+        self, key: str, default: str | int | bool | None = None
+    ) -> str | int | bool | None:
         """Get configuration setting."""
 
     @abstractmethod
@@ -162,7 +179,7 @@ class IConfigProvider(ABC):
         """Check if authentication is enabled."""
 
     @abstractmethod
-    def get_firebase_config(self) -> dict[str, Any]:
+    def get_firebase_config(self) -> dict[str, str]:
         """Get Firebase configuration."""
 
     @abstractmethod

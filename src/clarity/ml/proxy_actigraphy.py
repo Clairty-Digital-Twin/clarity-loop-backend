@@ -102,7 +102,7 @@ def _get_nhanes_stats_for_year(year: int) -> tuple[float, float]:
     return float(stats["mean"]), float(stats["std"])
 
 
-def _generate_circadian_padding(length: int, base_activity: float = 0.5) -> np.ndarray:
+def _generate_circadian_padding(length: int, base_activity: float = 0.5) -> NDArray[np.floating[Any]]:
     """Generate circadian-aware padding values for realistic rest periods.
     
     Args:

@@ -341,9 +341,7 @@ class EnhancedHealthDataService:
         return validation_errors
 
     @log_execution(level=logging.DEBUG)
-    async def _can_delete_data(
-        self, _user_id: str, _processing_id: str | None
-    ) -> bool:
+    async def _can_delete_data(self, _user_id: str, _processing_id: str | None) -> bool:
         """Check if data can be deleted according to business rules."""
         # Example business rule: Check if data is within retention period
         try:

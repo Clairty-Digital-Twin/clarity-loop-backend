@@ -11,11 +11,12 @@ from typing import Any
 import uuid
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from fastapi.security import HTTPBearer
+
 from google.cloud import storage
 from pydantic import BaseModel, Field
 
-from clarity.auth.firebase_auth import verify_firebase_token
+from clarity.auth.firebase_auth import get_current_user
+from clarity.auth import UserContext
 from clarity.services.pubsub.publisher import get_publisher
 
 # Configure logger
@@ -23,14 +24,6 @@ logger = logging.getLogger(__name__)
 
 # Configure router
 router = APIRouter(prefix="/api/v1/healthkit", tags=["HealthKit"])
-
-# Create auth scheme instance
-_auth_scheme = HTTPBearer()
-
-
-def get_auth_scheme() -> HTTPBearer:
-    """Get authentication scheme."""
-    return _auth_scheme
 
 
 class HealthKitSample(BaseModel):
@@ -75,7 +68,8 @@ class HealthKitUploadResponse(BaseModel):
     status_code=status.HTTP_202_ACCEPTED,
 )
 async def upload_healthkit_data(
-    request: HealthKitUploadRequest, token: HTTPBearer = Depends(get_auth_scheme)
+    request: HealthKitUploadRequest, 
+    current_user: UserContext = Depends(get_current_user)
 ) -> HealthKitUploadResponse:
     """Upload HealthKit data for asynchronous processing.
 
@@ -97,10 +91,8 @@ async def upload_healthkit_data(
         HTTPException: For authentication/authorization failures
     """
     try:
-        # 1. Authenticate and authorize
-        user_claims = await verify_firebase_token(token.credentials)
-
-        if user_claims.get("uid") != request.user_id:
+        # 1. Authorize user access
+        if current_user.user_id != request.user_id:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Cannot upload data for a different user",
@@ -173,7 +165,8 @@ async def upload_healthkit_data(
 
 @router.get("/status/{upload_id}")
 async def get_upload_status(
-    upload_id: str, token: HTTPBearer = Depends(get_auth_scheme)
+    upload_id: str, 
+    current_user: UserContext = Depends(get_current_user)
 ) -> dict[str, Any]:
     """Get status of a HealthKit upload.
 
@@ -193,8 +186,7 @@ async def get_upload_status(
         ) from None
 
     # Verify user access
-    user_claims = await verify_firebase_token(token.credentials)
-    if user_claims.get("uid") != user_id:
+    if current_user.user_id != user_id:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN, detail="Access denied to this upload"
         )

@@ -377,8 +377,9 @@ class TestGeminiServiceResponseParsing:
 class TestGeminiServiceHealthCheck:
     """Test Gemini service health check functionality."""
 
+    @staticmethod
     @pytest.mark.asyncio
-    async def test_health_check_initialized(self):
+    async def test_health_check_initialized():
         """Test health check when service is initialized."""
         service = GeminiService(project_id="test-project", location="us-west1")
         service.is_initialized = True
@@ -393,8 +394,9 @@ class TestGeminiServiceHealthCheck:
         assert health["initialized"] is True
         assert health["model"] == "gemini-2.5-pro"
 
+    @staticmethod
     @pytest.mark.asyncio
-    async def test_health_check_not_initialized(self):
+    async def test_health_check_not_initialized():
         """Test health check when service is not initialized."""
         service = GeminiService()
 
@@ -405,8 +407,9 @@ class TestGeminiServiceHealthCheck:
         assert health["initialized"] is False
         assert health["model"] == "not_loaded"
 
+    @staticmethod
     @pytest.mark.asyncio
-    async def test_health_check_custom_config(self):
+    async def test_health_check_custom_config():
         """Test health check with custom configuration."""
         service = GeminiService(project_id="custom-project", location="europe-west1")
         service.is_initialized = True
@@ -421,12 +424,14 @@ class TestGeminiServiceHealthCheck:
 class TestGeminiServiceEdgeCases:
     """Test edge cases and error conditions."""
 
-    def test_raise_model_not_initialized_error(self):
+    @staticmethod
+    def test_raise_model_not_initialized_error():
         """Test the model not initialized error helper."""
         with pytest.raises(RuntimeError, match="Gemini model not initialized"):
             GeminiService._raise_model_not_initialized()
 
-    def test_generate_placeholder_narrative(self):
+    @staticmethod
+    def test_generate_placeholder_narrative():
         """Test placeholder narrative generation."""
         analysis_results = {
             "sleep_efficiency": 80.0,
@@ -439,7 +444,8 @@ class TestGeminiServiceEdgeCases:
         assert "0.70" in narrative
         assert len(narrative) > 50
 
-    def test_extract_key_insights(self):
+    @staticmethod
+    def test_extract_key_insights():
         """Test key insights extraction."""
         # Test excellent sleep
         excellent_results = {"sleep_efficiency": 90.0}
@@ -456,7 +462,8 @@ class TestGeminiServiceEdgeCases:
         insights = GeminiService._extract_key_insights(poor_results)
         assert any("needs attention" in insight for insight in insights)
 
-    def test_generate_recommendations(self):
+    @staticmethod
+    def test_generate_recommendations():
         """Test recommendations generation."""
         # Test poor sleep efficiency
         poor_sleep_results = {"sleep_efficiency": 70.0}

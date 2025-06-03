@@ -29,7 +29,8 @@ from clarity.ml.preprocessing import ActigraphyDataPoint
 class TestAsyncInferenceEngineInitialization:
     """Test async inference engine initialization and configuration."""
 
-    def test_engine_initialization_default_config(self):
+    @staticmethod
+    def test_engine_initialization_default_config():
         """Test engine initialization with default configuration."""
         mock_pat_service = MagicMock(spec=PATModelService)
         engine = AsyncInferenceEngine(pat_service=mock_pat_service)
@@ -42,7 +43,8 @@ class TestAsyncInferenceEngineInitialization:
         assert engine.error_count == 0
         assert not engine.is_running
 
-    def test_engine_initialization_custom_config(self):
+    @staticmethod
+    def test_engine_initialization_custom_config():
         """Test engine initialization with custom configuration."""
         mock_pat_service = MagicMock(spec=PATModelService)
         batch_size = 50
@@ -60,8 +62,9 @@ class TestAsyncInferenceEngineInitialization:
         assert engine.batch_timeout == 1.0  # 1000ms = 1.0s
         assert engine.cache.ttl == cache_ttl
 
+    @staticmethod
     @pytest.mark.asyncio
-    async def test_engine_start_and_stop(self):
+    async def test_engine_start_and_stop():
         """Test engine start and stop functionality."""
         mock_pat_service = MagicMock(spec=PATModelService)
         engine = AsyncInferenceEngine(pat_service=mock_pat_service)
@@ -79,8 +82,9 @@ class TestAsyncInferenceEngineInitialization:
 class TestAsyncInferenceEngineInference:
     """Test async inference engine inference functionality."""
 
+    @staticmethod
     @pytest.fixture
-    def sample_actigraphy_input(self) -> ActigraphyInput:
+    def sample_actigraphy_input() -> ActigraphyInput:
         """Create sample actigraphy input."""
         data_points = [
             ActigraphyDataPoint(
@@ -97,8 +101,9 @@ class TestAsyncInferenceEngineInference:
             duration_hours=24
         )
 
+    @staticmethod
     @pytest.fixture
-    def sample_inference_request(self, sample_actigraphy_input) -> InferenceRequest:
+    def sample_inference_request(sample_actigraphy_input: ActigraphyInput) -> InferenceRequest:
         """Create sample inference request."""
         return InferenceRequest(
             request_id=str(uuid4()),

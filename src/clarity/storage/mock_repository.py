@@ -12,7 +12,7 @@ from operator import itemgetter
 from typing import Any
 import uuid
 
-from clarity.core.interfaces import IHealthDataRepository
+from clarity.ports.data_ports import IHealthDataRepository
 from clarity.models.health_data import HealthMetric
 
 logger = logging.getLogger(__name__)

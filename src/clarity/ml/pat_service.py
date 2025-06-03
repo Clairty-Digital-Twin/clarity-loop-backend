@@ -195,7 +195,7 @@ class PATModelService(IMLModelService):
                         # Load weights from H5 file (TensorFlow/Keras format)
                         with h5py.File(self.model_path, 'r') as h5_file:  # type: ignore[union-attr]
                             logger.info("Available weight groups: %s", list(h5_file.keys()))
-                            state_dict = self._load_weights_from_h5(h5_file)
+                            state_dict = PATModelService._load_weights_from_h5(h5_file)
                             self._load_compatible_weights(state_dict)
                     except (OSError, KeyError, ValueError) as e:
                         logger.warning(
@@ -220,7 +220,7 @@ class PATModelService(IMLModelService):
             raise
 
     @staticmethod
-    def _load_weights_from_h5(h5_file: "h5py.File[Any]") -> dict[str, torch.Tensor]:
+    def _load_weights_from_h5(h5_file: Any) -> dict[str, torch.Tensor]:
         """Extract and map weights from H5 file to PyTorch format."""
         state_dict = {}
 

@@ -10,9 +10,10 @@ Fakes are preferred over mocks because they:
 4. Don't require complex mock setup
 """
 
-import uuid
 from typing import Any, Dict, List, Optional
-from clarity.ports.storage import StoragePort, CollectionPort
+import uuid
+
+from clarity.ports.storage import CollectionPort, StoragePort
 
 
 class FakeCollection(CollectionPort):
@@ -21,16 +22,16 @@ class FakeCollection(CollectionPort):
     Provides a simple in-memory collection that mimics
     the behavior of a real document collection.
     """
-    
-    def __init__(self, data: Dict[str, Dict[str, Any]]) -> None:
+
+    def __init__(self, data: dict[str, dict[str, Any]]) -> None:
         """Initialize with shared data storage.
         
         Args:
             data: Shared dictionary to store documents
         """
         self.data = data
-    
-    def add(self, data: Dict[str, Any]) -> str:
+
+    def add(self, data: dict[str, Any]) -> str:
         """Add a document to the collection.
         
         Args:
@@ -42,7 +43,7 @@ class FakeCollection(CollectionPort):
         doc_id = str(uuid.uuid4())
         self.data[doc_id] = data.copy()
         return doc_id
-    
+
     def document(self, doc_id: str) -> "FakeDocument":
         """Get a document reference.
         
@@ -53,7 +54,7 @@ class FakeCollection(CollectionPort):
             Fake document reference
         """
         return FakeDocument(self.data, doc_id)
-    
+
     def where(self, field: str, operator: str, value: Any) -> "FakeQuery":
         """Create a query with a filter condition.
         
@@ -70,8 +71,8 @@ class FakeCollection(CollectionPort):
 
 class FakeDocument:
     """Fake document reference for testing."""
-    
-    def __init__(self, data: Dict[str, Dict[str, Any]], doc_id: str) -> None:
+
+    def __init__(self, data: dict[str, dict[str, Any]], doc_id: str) -> None:
         """Initialize document reference.
         
         Args:
@@ -80,7 +81,7 @@ class FakeDocument:
         """
         self.data = data
         self.doc_id = doc_id
-    
+
     def get(self) -> "FakeDocumentSnapshot":
         """Get document snapshot.
         
@@ -88,20 +89,20 @@ class FakeDocument:
             Fake document snapshot
         """
         return FakeDocumentSnapshot(
-            self.data.get(self.doc_id), 
+            self.data.get(self.doc_id),
             self.doc_id,
             exists=self.doc_id in self.data
         )
-    
-    def set(self, data: Dict[str, Any]) -> None:
+
+    def set(self, data: dict[str, Any]) -> None:
         """Set document data.
         
         Args:
             data: Document data to set
         """
         self.data[self.doc_id] = data.copy()
-    
-    def update(self, data: Dict[str, Any]) -> None:
+
+    def update(self, data: dict[str, Any]) -> None:
         """Update document data.
         
         Args:
@@ -109,7 +110,7 @@ class FakeDocument:
         """
         if self.doc_id in self.data:
             self.data[self.doc_id].update(data)
-    
+
     def delete(self) -> None:
         """Delete the document."""
         if self.doc_id in self.data:
@@ -118,8 +119,8 @@ class FakeDocument:
 
 class FakeDocumentSnapshot:
     """Fake document snapshot for testing."""
-    
-    def __init__(self, data: Optional[Dict[str, Any]], doc_id: str, exists: bool) -> None:
+
+    def __init__(self, data: dict[str, Any] | None, doc_id: str, exists: bool) -> None:
         """Initialize document snapshot.
         
         Args:
@@ -130,8 +131,8 @@ class FakeDocumentSnapshot:
         self._data = data or {}
         self.id = doc_id
         self.exists = exists
-    
-    def to_dict(self) -> Dict[str, Any]:
+
+    def to_dict(self) -> dict[str, Any]:
         """Get document data as dictionary.
         
         Returns:
@@ -142,8 +143,8 @@ class FakeDocumentSnapshot:
 
 class FakeQuery:
     """Fake query for testing."""
-    
-    def __init__(self, data: Dict[str, Dict[str, Any]], filters: List[tuple]) -> None:
+
+    def __init__(self, data: dict[str, dict[str, Any]], filters: list[tuple]) -> None:
         """Initialize query.
         
         Args:
@@ -153,7 +154,7 @@ class FakeQuery:
         self.data = data
         self.filters = filters
         self._limit = None
-    
+
     def limit(self, count: int) -> "FakeQuery":
         """Add limit to query.
         
@@ -165,25 +166,25 @@ class FakeQuery:
         """
         self._limit = count
         return self
-    
-    def get(self) -> List[FakeDocumentSnapshot]:
+
+    def get(self) -> list[FakeDocumentSnapshot]:
         """Execute query and get results.
         
         Returns:
             List of document snapshots matching the query
         """
         results = []
-        
+
         for doc_id, doc_data in self.data.items():
             if self._matches_filters(doc_data):
                 results.append(FakeDocumentSnapshot(doc_data, doc_id, True))
-        
+
         if self._limit:
             results = results[:self._limit]
-        
+
         return results
-    
-    def _matches_filters(self, doc_data: Dict[str, Any]) -> bool:
+
+    def _matches_filters(self, doc_data: dict[str, Any]) -> bool:
         """Check if document matches all filters.
         
         Args:
@@ -195,9 +196,9 @@ class FakeQuery:
         for field, operator, value in self.filters:
             if field not in doc_data:
                 return False
-            
+
             doc_value = doc_data[field]
-            
+
             if operator == "==":
                 if doc_value != value:
                     return False
@@ -217,7 +218,7 @@ class FakeQuery:
                 if not (doc_value != value):
                     return False
             # Add more operators as needed
-        
+
         return True
 
 
@@ -233,11 +234,11 @@ class FakeStorage(StoragePort):
         collection = storage.get_collection("users")
         doc_id = collection.add({"name": "John", "age": 30})
     """
-    
+
     def __init__(self) -> None:
         """Initialize with empty storage."""
-        self.collections: Dict[str, Dict[str, Dict[str, Any]]] = {}
-    
+        self.collections: dict[str, dict[str, dict[str, Any]]] = {}
+
     def get_collection(self, name: str) -> FakeCollection:
         """Get a collection reference by name.
         
@@ -250,8 +251,8 @@ class FakeStorage(StoragePort):
         if name not in self.collections:
             self.collections[name] = {}
         return FakeCollection(self.collections[name])
-    
-    def create_document(self, collection: str, data: Dict[str, Any]) -> str:
+
+    def create_document(self, collection: str, data: dict[str, Any]) -> str:
         """Create a new document in the specified collection.
         
         Args:
@@ -263,8 +264,8 @@ class FakeStorage(StoragePort):
         """
         coll = self.get_collection(collection)
         return coll.add(data)
-    
-    def get_document(self, collection: str, doc_id: str) -> Optional[Dict[str, Any]]:
+
+    def get_document(self, collection: str, doc_id: str) -> dict[str, Any] | None:
         """Retrieve a document by ID.
         
         Args:
@@ -276,13 +277,13 @@ class FakeStorage(StoragePort):
         """
         if collection not in self.collections:
             return None
-        
+
         if doc_id not in self.collections[collection]:
             return None
-        
+
         return self.collections[collection][doc_id].copy()
-    
-    def update_document(self, collection: str, doc_id: str, data: Dict[str, Any]) -> None:
+
+    def update_document(self, collection: str, doc_id: str, data: dict[str, Any]) -> None:
         """Update an existing document.
         
         Args:
@@ -292,10 +293,10 @@ class FakeStorage(StoragePort):
         """
         if collection not in self.collections:
             self.collections[collection] = {}
-        
+
         if doc_id in self.collections[collection]:
             self.collections[collection][doc_id].update(data)
-    
+
     def delete_document(self, collection: str, doc_id: str) -> None:
         """Delete a document by ID.
         
@@ -305,13 +306,13 @@ class FakeStorage(StoragePort):
         """
         if collection in self.collections and doc_id in self.collections[collection]:
             del self.collections[collection][doc_id]
-    
+
     def query_documents(
-        self, 
-        collection: str, 
-        filters: Optional[List[Dict[str, Any]]] = None,
-        limit: Optional[int] = None
-    ) -> List[Dict[str, Any]]:
+        self,
+        collection: str,
+        filters: list[dict[str, Any]] | None = None,
+        limit: int | None = None
+    ) -> list[dict[str, Any]]:
         """Query documents with optional filters.
         
         Args:
@@ -324,10 +325,10 @@ class FakeStorage(StoragePort):
         """
         if collection not in self.collections:
             return []
-        
+
         results = []
         collection_data = self.collections[collection]
-        
+
         for doc_id, doc_data in collection_data.items():
             if not filters:
                 results.append(doc_data.copy())
@@ -338,18 +339,18 @@ class FakeStorage(StoragePort):
                     field = filter_dict.get("field")
                     operator = filter_dict.get("operator", "==")
                     value = filter_dict.get("value")
-                    
+
                     if field and field in doc_data:
                         doc_value = doc_data[field]
                         if operator == "==" and doc_value != value:
                             matches = False
                             break
                         # Add more operators as needed
-                
+
                 if matches:
                     results.append(doc_data.copy())
-        
+
         if limit:
             results = results[:limit]
-        
+
         return results

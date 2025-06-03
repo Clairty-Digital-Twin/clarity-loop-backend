@@ -5,12 +5,12 @@ and other testing best practices, making individual test files cleaner
 and more focused on testing business logic rather than setup.
 """
 
-import unittest
 from typing import Any, Dict, Optional
+import unittest
 from unittest.mock import Mock
 
-from tests.fakes.storage import FakeStorage
 from clarity.ports.storage import StoragePort
+from tests.fakes.storage import FakeStorage
 
 
 class BaseTestCase(unittest.TestCase):
@@ -25,7 +25,7 @@ class BaseTestCase(unittest.TestCase):
     Follows the "Arrange-Act-Assert" pattern and provides
     clear separation between test setup and test logic.
     """
-    
+
     def setUp(self) -> None:
         """Set up test dependencies using dependency injection.
         
@@ -34,16 +34,16 @@ class BaseTestCase(unittest.TestCase):
         """
         # Create clean test dependencies
         self.storage = FakeStorage()
-        
+
         # Add any other common test setup here
-        self.test_data: Dict[str, Any] = {}
-        
+        self.test_data: dict[str, Any] = {}
+
     def tearDown(self) -> None:
         """Clean up after each test."""
         # Clear any test data
         self.test_data.clear()
-        
-    def create_test_document(self, collection: str, data: Dict[str, Any]) -> str:
+
+    def create_test_document(self, collection: str, data: dict[str, Any]) -> str:
         """Helper method to create test documents.
         
         Args:
@@ -54,7 +54,7 @@ class BaseTestCase(unittest.TestCase):
             Document ID
         """
         return self.storage.create_document(collection, data)
-    
+
     def assert_document_exists(self, collection: str, doc_id: str) -> None:
         """Assert that a document exists in storage.
         
@@ -64,7 +64,7 @@ class BaseTestCase(unittest.TestCase):
         """
         doc = self.storage.get_document(collection, doc_id)
         self.assertIsNotNone(doc, f"Document {doc_id} should exist in {collection}")
-    
+
     def assert_document_not_exists(self, collection: str, doc_id: str) -> None:
         """Assert that a document does not exist in storage.
         
@@ -74,8 +74,8 @@ class BaseTestCase(unittest.TestCase):
         """
         doc = self.storage.get_document(collection, doc_id)
         self.assertIsNone(doc, f"Document {doc_id} should not exist in {collection}")
-        
-    def assert_document_contains(self, collection: str, doc_id: str, expected_data: Dict[str, Any]) -> None:
+
+    def assert_document_contains(self, collection: str, doc_id: str, expected_data: dict[str, Any]) -> None:
         """Assert that a document contains expected data.
         
         Args:
@@ -85,7 +85,7 @@ class BaseTestCase(unittest.TestCase):
         """
         doc = self.storage.get_document(collection, doc_id)
         self.assertIsNotNone(doc, f"Document {doc_id} should exist")
-        
+
         for key, value in expected_data.items():
             self.assertIn(key, doc, f"Document should contain key '{key}'")
             self.assertEqual(doc[key], value, f"Document['{key}'] should equal {value}")
@@ -97,14 +97,14 @@ class BaseServiceTestCase(BaseTestCase):
     Extends BaseTestCase with service-specific testing utilities
     and dependency injection patterns for service objects.
     """
-    
+
     def setUp(self) -> None:
         """Set up service test dependencies."""
         super().setUp()
-        
+
         # Services will be injected in subclasses
-        self.service: Optional[Any] = None
-        
+        self.service: Any | None = None
+
     def create_service_with_dependencies(self, service_class: type, **kwargs: Any) -> Any:
         """Factory method to create services with injected dependencies.
         
@@ -124,9 +124,9 @@ class BaseServiceTestCase(BaseTestCase):
             'storage': self.storage,
             **kwargs  # Allow override of dependencies
         }
-        
+
         return service_class(**dependencies)
-    
+
     def assert_service_call_successful(self, result: Any) -> None:
         """Assert that a service call was successful.
         
@@ -134,7 +134,7 @@ class BaseServiceTestCase(BaseTestCase):
             result: Service method result
         """
         self.assertIsNotNone(result, "Service call should return a result")
-        
+
     def assert_service_call_failed(self, result: Any) -> None:
         """Assert that a service call failed appropriately.
         
@@ -142,7 +142,6 @@ class BaseServiceTestCase(BaseTestCase):
             result: Service method result
         """
         # This can be customized based on your error handling patterns
-        pass
 
 
 class BaseIntegrationTestCase(BaseTestCase):
@@ -152,14 +151,14 @@ class BaseIntegrationTestCase(BaseTestCase):
     correctly. This base class provides utilities for setting up
     more complex test scenarios with multiple services.
     """
-    
+
     def setUp(self) -> None:
         """Set up integration test dependencies."""
         super().setUp()
-        
+
         # Integration tests might need multiple services
-        self.services: Dict[str, Any] = {}
-        
+        self.services: dict[str, Any] = {}
+
     def register_service(self, name: str, service: Any) -> None:
         """Register a service for use in integration tests.
         
@@ -168,7 +167,7 @@ class BaseIntegrationTestCase(BaseTestCase):
             service: Service instance
         """
         self.services[name] = service
-        
+
     def get_service(self, name: str) -> Any:
         """Get a registered service.
         

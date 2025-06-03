@@ -12,7 +12,7 @@ Following Clean Architecture and SOLID principles:
 """
 
 from datetime import UTC, datetime
-from typing import Any, Optional
+from typing import Any
 from uuid import UUID, uuid4
 
 import pytest
@@ -30,6 +30,10 @@ from clarity.services.health_data_service import (
     HealthDataServiceError,
 )
 from tests.base import BaseServiceTestCase
+
+
+class MockRepositoryError(Exception):
+    """Custom exception for mock repository failures."""
 
 
 class MockHealthDataRepository:
@@ -57,7 +61,7 @@ class MockHealthDataRepository:
         """Mock save operation."""
         if self.should_fail:
             error_msg = "Database connection failed"
-            raise Exception(error_msg)
+            raise MockRepositoryError(error_msg)
 
         self.saved_data[processing_id] = {
             "user_id": user_id,
@@ -73,7 +77,7 @@ class MockHealthDataRepository:
         """Mock get processing status operation."""
         if self.should_fail:
             error_msg = "Database connection failed"
-            raise Exception(error_msg)
+            raise MockRepositoryError(error_msg)
 
         key = f"{user_id}:{processing_id}"
         return self.processing_statuses.get(key)
@@ -88,9 +92,11 @@ class MockHealthDataRepository:
         end_date: datetime | None = None,
     ) -> dict[str, Any]:
         """Mock get user health data operation."""
+        # Mark unused parameters to avoid lint warnings
+        _ = metric_type, start_date, end_date
         if self.should_fail:
             error_msg = "Database connection failed"
-            raise Exception(error_msg)
+            raise MockRepositoryError(error_msg)
 
         return self.user_health_data.get(
             user_id,
@@ -107,7 +113,7 @@ class MockHealthDataRepository:
         """Mock delete operation."""
         if self.should_fail:
             error_msg = "Database connection failed"
-            raise Exception(error_msg)
+            raise MockRepositoryError(error_msg)
 
         if processing_id:
             self.saved_data.pop(processing_id, None)

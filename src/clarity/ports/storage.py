@@ -18,7 +18,7 @@ class StoragePort(ABC):
     Follows the Interface Segregation Principle by providing only
     the methods that clients actually need.
     """
-    
+
     @abstractmethod
     def get_collection(self, name: str) -> Any:
         """Get a collection reference by name.
@@ -29,10 +29,9 @@ class StoragePort(ABC):
         Returns:
             A collection reference object
         """
-        pass
-    
+
     @abstractmethod
-    def create_document(self, collection: str, data: Dict[str, Any]) -> str:
+    def create_document(self, collection: str, data: dict[str, Any]) -> str:
         """Create a new document in the specified collection.
         
         Args:
@@ -42,10 +41,9 @@ class StoragePort(ABC):
         Returns:
             The ID of the created document
         """
-        pass
-    
+
     @abstractmethod
-    def get_document(self, collection: str, doc_id: str) -> Optional[Dict[str, Any]]:
+    def get_document(self, collection: str, doc_id: str) -> dict[str, Any] | None:
         """Retrieve a document by ID.
         
         Args:
@@ -55,10 +53,9 @@ class StoragePort(ABC):
         Returns:
             Document data if found, None otherwise
         """
-        pass
-    
+
     @abstractmethod
-    def update_document(self, collection: str, doc_id: str, data: Dict[str, Any]) -> None:
+    def update_document(self, collection: str, doc_id: str, data: dict[str, Any]) -> None:
         """Update an existing document.
         
         Args:
@@ -66,8 +63,7 @@ class StoragePort(ABC):
             doc_id: Document ID
             data: Updated document data
         """
-        pass
-    
+
     @abstractmethod
     def delete_document(self, collection: str, doc_id: str) -> None:
         """Delete a document by ID.
@@ -76,15 +72,14 @@ class StoragePort(ABC):
             collection: Name of the collection
             doc_id: Document ID
         """
-        pass
-    
+
     @abstractmethod
     def query_documents(
-        self, 
-        collection: str, 
-        filters: Optional[List[Dict[str, Any]]] = None,
-        limit: Optional[int] = None
-    ) -> List[Dict[str, Any]]:
+        self,
+        collection: str,
+        filters: list[dict[str, Any]] | None = None,
+        limit: int | None = None
+    ) -> list[dict[str, Any]]:
         """Query documents with optional filters.
         
         Args:
@@ -95,7 +90,6 @@ class StoragePort(ABC):
         Returns:
             List of matching documents
         """
-        pass
 
 
 class CollectionPort(ABC):
@@ -104,9 +98,9 @@ class CollectionPort(ABC):
     Represents a collection reference that can perform operations
     on documents within that collection.
     """
-    
+
     @abstractmethod
-    def add(self, data: Dict[str, Any]) -> str:
+    def add(self, data: dict[str, Any]) -> str:
         """Add a document to the collection.
         
         Args:
@@ -115,8 +109,7 @@ class CollectionPort(ABC):
         Returns:
             Document ID
         """
-        pass
-    
+
     @abstractmethod
     def document(self, doc_id: str) -> Any:
         """Get a document reference.
@@ -127,8 +120,7 @@ class CollectionPort(ABC):
         Returns:
             Document reference
         """
-        pass
-    
+
     @abstractmethod
     def where(self, field: str, operator: str, value: Any) -> Any:
         """Create a query with a filter condition.
@@ -141,4 +133,3 @@ class CollectionPort(ABC):
         Returns:
             Query object
         """
-        pass 

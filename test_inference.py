@@ -115,7 +115,7 @@ async def test_pat_inference() -> None:
         logger.info("🎯 PAT MODEL IS WORKING WITH REAL WEIGHTS!")
 
     except (RuntimeError, ValueError, ConnectionError) as e:
-        logger.exception("❌ Inference failed: %s", e)
+        logger.exception("❌ Inference failed")
 
     # Test model internals
     logger.info("=== Model Architecture Verification ===")

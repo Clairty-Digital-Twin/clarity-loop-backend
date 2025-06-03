@@ -262,12 +262,24 @@ class TestPATModelServiceLoading:
         with patch('pathlib.Path.exists', return_value=True):
             mock_h5py = MagicMock()
             mock_file = MagicMock()
+            
+            # Set up context manager behavior
             mock_h5py.File.return_value.__enter__.return_value = mock_file
-            mock_file.keys.return_value = ['input_layer']
-            mock_file.__getitem__.return_value = {
-                'weight': mock_input_weight,
-                'bias': mock_input_bias
-            }
+            mock_h5py.File.return_value.__exit__.return_value = None
+            
+            # Mock keys() to return a simple list
+            mock_file.keys.return_value = ['inputs']
+            
+            # Mock nested access for inputs group
+            mock_inputs = MagicMock()
+            mock_inputs.__contains__ = lambda x: x in ['kernel:0', 'bias:0']
+            mock_inputs.__getitem__ = lambda x: {
+                'kernel:0': mock_input_weight,
+                'bias:0': mock_input_bias
+            }[x]
+            
+            mock_file.__getitem__ = lambda x: {'inputs': mock_inputs}[x]
+            mock_file.__contains__ = lambda x: x in ['inputs']
 
             with patch.dict('sys.modules', {'h5py': mock_h5py}):
                 await service.load_model()

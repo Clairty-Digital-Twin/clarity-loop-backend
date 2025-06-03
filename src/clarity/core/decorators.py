@@ -6,7 +6,7 @@ error handling, and monitoring following Gang of Four design patterns.
 
 import asyncio
 from collections.abc import Callable
-from datetime import datetime
+from datetime import UTC, datetime
 import functools
 import logging
 import time
@@ -19,6 +19,7 @@ logger = logging.getLogger(__name__)
 
 def log_execution(
     level: int = logging.INFO,
+    *,
     include_args: bool = False,
     include_result: bool = False,
 ) -> Callable[[F], F]:
@@ -35,51 +36,59 @@ def log_execution(
 
     def decorator(func: F) -> F:
         @functools.wraps(func)
-        def sync_wrapper(*args: Any, **kwargs: Any) -> Any:
+        def sync_wrapper(*args, **kwargs):  # type: ignore[no-untyped-def]
             func_name = f"{func.__module__}.{func.__qualname__}"
 
             # Log function entry
-            log_msg = f"Executing {func_name}"
+            log_msg = "Executing %s"
+            log_args = [func_name]
             if include_args:
-                log_msg += f" with args={args}, kwargs={kwargs}"
-            logger.log(level, log_msg)
+                log_msg += " with args=%s, kwargs=%s"
+                log_args.extend([args, kwargs])
+            logger.log(level, log_msg, *log_args)
 
             try:
                 result = func(*args, **kwargs)
 
                 # Log successful completion
-                completion_msg = f"Completed {func_name}"
+                completion_msg = "Completed %s"
+                completion_args = [func_name]
                 if include_result:
-                    completion_msg += f" -> {result}"
-                logger.log(level, completion_msg)
+                    completion_msg += " -> %s"
+                    completion_args.append(result)
+                logger.log(level, completion_msg, *completion_args)
 
                 return result
             except Exception as e:
-                logger.error(f"Error in {func_name}: {e}", exc_info=True)
+                logger.exception("Error in %s: %s", func_name, e)
                 raise
 
         @functools.wraps(func)
-        async def async_wrapper(*args: Any, **kwargs: Any) -> Any:
+        async def async_wrapper(*args, **kwargs):  # type: ignore[no-untyped-def]
             func_name = f"{func.__module__}.{func.__qualname__}"
 
             # Log function entry
-            log_msg = f"Executing {func_name}"
+            log_msg = "Executing %s"
+            log_args = [func_name]
             if include_args:
-                log_msg += f" with args={args}, kwargs={kwargs}"
-            logger.log(level, log_msg)
+                log_msg += " with args=%s, kwargs=%s"
+                log_args.extend([args, kwargs])
+            logger.log(level, log_msg, *log_args)
 
             try:
                 result = await func(*args, **kwargs)
 
                 # Log successful completion
-                completion_msg = f"Completed {func_name}"
+                completion_msg = "Completed %s"
+                completion_args = [func_name]
                 if include_result:
-                    completion_msg += f" -> {result}"
-                logger.log(level, completion_msg)
+                    completion_msg += " -> %s"
+                    completion_args.append(result)
+                logger.log(level, completion_msg, *completion_args)
 
                 return result
             except Exception as e:
-                logger.error(f"Error in {func_name}: {e}", exc_info=True)
+                logger.exception("Error in %s: %s", func_name, e)
                 raise
 
         # Return appropriate wrapper based on function type
@@ -106,7 +115,7 @@ def measure_execution_time(
 
     def decorator(func: F) -> F:
         @functools.wraps(func)
-        def sync_wrapper(*args: Any, **kwargs: Any) -> Any:
+        def sync_wrapper(*args, **kwargs):  # type: ignore[no-untyped-def]
             func_name = f"{func.__module__}.{func.__qualname__}"
             start_time = time.perf_counter()
 
@@ -116,19 +125,19 @@ def measure_execution_time(
 
                 if threshold_ms is None or execution_time_ms > threshold_ms:
                     logger.log(
-                        log_level, f"{func_name} executed in {execution_time_ms:.2f}ms"
+                        log_level, "%s executed in %.2fms", func_name, execution_time_ms
                     )
 
                 return result
             except Exception:
                 execution_time_ms = (time.perf_counter() - start_time) * 1000
                 logger.log(
-                    log_level, f"{func_name} failed after {execution_time_ms:.2f}ms"
+                    log_level, "%s failed after %.2fms", func_name, execution_time_ms
                 )
                 raise
 
         @functools.wraps(func)
-        async def async_wrapper(*args: Any, **kwargs: Any) -> Any:
+        async def async_wrapper(*args, **kwargs):  # type: ignore[no-untyped-def]
             func_name = f"{func.__module__}.{func.__qualname__}"
             start_time = time.perf_counter()
 
@@ -138,14 +147,14 @@ def measure_execution_time(
 
                 if threshold_ms is None or execution_time_ms > threshold_ms:
                     logger.log(
-                        log_level, f"{func_name} executed in {execution_time_ms:.2f}ms"
+                        log_level, "%s executed in %.2fms", func_name, execution_time_ms
                     )
 
                 return result
             except Exception:
                 execution_time_ms = (time.perf_counter() - start_time) * 1000
                 logger.log(
-                    log_level, f"{func_name} failed after {execution_time_ms:.2f}ms"
+                    log_level, "%s failed after %.2fms", func_name, execution_time_ms
                 )
                 raise
 
@@ -160,6 +169,7 @@ def measure_execution_time(
 def retry_on_failure(
     max_retries: int = 3,
     delay_seconds: float = 1.0,
+    *,
     exponential_backoff: bool = True,
     exceptions: tuple[type[Exception], ...] = (Exception,),
 ) -> Callable[[F], F]:
@@ -177,7 +187,7 @@ def retry_on_failure(
 
     def decorator(func: F) -> F:
         @functools.wraps(func)
-        def sync_wrapper(*args: Any, **kwargs: Any) -> Any:
+        def sync_wrapper(*args, **kwargs):  # type: ignore[no-untyped-def]
             func_name = f"{func.__module__}.{func.__qualname__}"
             last_exception = None
 
@@ -189,24 +199,24 @@ def retry_on_failure(
 
                     if attempt == max_retries:
                         logger.exception(
-                            f"{func_name} failed after {max_retries} retries: {e}"
+                            "%s failed after %d retries", func_name, max_retries
                         )
                         raise
 
                     delay = delay_seconds * (2**attempt if exponential_backoff else 1)
                     logger.warning(
-                        f"{func_name} attempt {attempt + 1} failed: {e}. "
-                        f"Retrying in {delay}s..."
+                        "%s attempt %d failed: %s. Retrying in %ss...",
+                        func_name, attempt + 1, e, delay
                     )
                     time.sleep(delay)
 
             # This should never be reached, but just in case
             if last_exception:
                 raise last_exception
-            return None
+            return None  # Explicit return for type checker
 
         @functools.wraps(func)
-        async def async_wrapper(*args: Any, **kwargs: Any) -> Any:
+        async def async_wrapper(*args, **kwargs):  # type: ignore[no-untyped-def]
             func_name = f"{func.__module__}.{func.__qualname__}"
             last_exception = None
 
@@ -218,21 +228,21 @@ def retry_on_failure(
 
                     if attempt == max_retries:
                         logger.exception(
-                            f"{func_name} failed after {max_retries} retries: {e}"
+                            "%s failed after %d retries", func_name, max_retries
                         )
                         raise
 
                     delay = delay_seconds * (2**attempt if exponential_backoff else 1)
                     logger.warning(
-                        f"{func_name} attempt {attempt + 1} failed: {e}. "
-                        f"Retrying in {delay}s..."
+                        "%s attempt %d failed: %s. Retrying in %ss...",
+                        func_name, attempt + 1, e, delay
                     )
                     await asyncio.sleep(delay)
 
             # This should never be reached, but just in case
             if last_exception:
                 raise last_exception
-            return None
+            return None  # Explicit return for type checker
 
         # Return appropriate wrapper based on function type
         if asyncio.iscoroutinefunction(func):
@@ -248,8 +258,8 @@ def validate_input(
     """Decorator to validate function input.
 
     Args:
-        validator: Function to validate input arguments
-        error_message: Error message to raise if validation fails
+        validator: Function to validate input (args, kwargs)
+        error_message: Error message to raise on validation failure
 
     Returns:
         Decorated function with input validation
@@ -257,7 +267,7 @@ def validate_input(
 
     def decorator(func: F) -> F:
         @functools.wraps(func)
-        def wrapper(*args: Any, **kwargs: Any) -> Any:
+        def wrapper(*args, **kwargs):  # type: ignore[no-untyped-def]
             if not validator((args, kwargs)):
                 raise ValueError(error_message)
             return func(*args, **kwargs)
@@ -272,10 +282,10 @@ def audit_trail(
     user_id_param: str | None = None,
     resource_id_param: str | None = None,
 ) -> Callable[[F], F]:
-    """Decorator to create audit trail for sensitive operations.
+    """Decorator to create audit trail for function execution.
 
     Args:
-        operation: Name of the operation being audited
+        operation: Description of the operation being performed
         user_id_param: Parameter name containing user ID
         resource_id_param: Parameter name containing resource ID
 
@@ -285,60 +295,64 @@ def audit_trail(
 
     def decorator(func: F) -> F:
         @functools.wraps(func)
-        def sync_wrapper(*args: Any, **kwargs: Any) -> Any:
+        def sync_wrapper(*args, **kwargs):  # type: ignore[no-untyped-def]
             # Extract audit information
             audit_info = {
                 "operation": operation,
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(UTC).isoformat(),
                 "function": f"{func.__module__}.{func.__qualname__}",
             }
 
+            # Extract user and resource IDs if specified
             if user_id_param and user_id_param in kwargs:
                 audit_info["user_id"] = kwargs[user_id_param]
 
             if resource_id_param and resource_id_param in kwargs:
                 audit_info["resource_id"] = kwargs[resource_id_param]
 
-            logger.info(f"AUDIT: {audit_info}")
+            logger.info("AUDIT: %s", audit_info)
 
             try:
                 result = func(*args, **kwargs)
                 audit_info["status"] = "success"
-                logger.info(f"AUDIT_COMPLETE: {audit_info}")
-                return result
+                logger.info("AUDIT_COMPLETE: %s", audit_info)
             except Exception as e:
                 audit_info["status"] = "failed"
                 audit_info["error"] = str(e)
-                logger.exception(f"AUDIT_FAILED: {audit_info}")
+                logger.exception("AUDIT_FAILED: %s", audit_info)
                 raise
+            else:
+                return result
 
         @functools.wraps(func)
-        async def async_wrapper(*args: Any, **kwargs: Any) -> Any:
+        async def async_wrapper(*args, **kwargs):  # type: ignore[no-untyped-def]
             # Extract audit information
             audit_info = {
                 "operation": operation,
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(UTC).isoformat(),
                 "function": f"{func.__module__}.{func.__qualname__}",
             }
 
+            # Extract user and resource IDs if specified
             if user_id_param and user_id_param in kwargs:
                 audit_info["user_id"] = kwargs[user_id_param]
 
             if resource_id_param and resource_id_param in kwargs:
                 audit_info["resource_id"] = kwargs[resource_id_param]
 
-            logger.info(f"AUDIT: {audit_info}")
+            logger.info("AUDIT: %s", audit_info)
 
             try:
                 result = await func(*args, **kwargs)
                 audit_info["status"] = "success"
-                logger.info(f"AUDIT_COMPLETE: {audit_info}")
-                return result
+                logger.info("AUDIT_COMPLETE: %s", audit_info)
             except Exception as e:
                 audit_info["status"] = "failed"
                 audit_info["error"] = str(e)
-                logger.exception(f"AUDIT_FAILED: {audit_info}")
+                logger.exception("AUDIT_FAILED: %s", audit_info)
                 raise
+            else:
+                return result
 
         # Return appropriate wrapper based on function type
         if asyncio.iscoroutinefunction(func):
@@ -348,7 +362,6 @@ def audit_trail(
     return decorator
 
 
-# Convenience combinators for common patterns
 def service_method(
     log_level: int = logging.INFO,
     timing_threshold_ms: float | None = 100.0,
@@ -360,23 +373,21 @@ def service_method(
 
     Args:
         log_level: Logging level for execution logs
-        timing_threshold_ms: Threshold for logging slow operations
-        max_retries: Number of retries for transient failures
+        timing_threshold_ms: Threshold for timing logs
+        max_retries: Number of retry attempts (0 = no retries)
 
     Returns:
-        Decorated function with service layer concerns
+        Decorated function with service method capabilities
     """
 
     def decorator(func: F) -> F:
-        decorated = func
-
-        # Apply decorators in reverse order (innermost first)
-        if max_retries > 0:
-            decorated = retry_on_failure(max_retries=max_retries)(decorated)
-
+        decorated = log_execution(level=log_level)(func)
         decorated = measure_execution_time(
             log_level=log_level, threshold_ms=timing_threshold_ms
         )(decorated)
+
+        if max_retries > 0:
+            decorated = retry_on_failure(max_retries=max_retries)(decorated)
 
         return log_execution(level=log_level)(decorated)
 
@@ -394,24 +405,21 @@ def repository_method(
 
     Args:
         log_level: Logging level for execution logs
-        timing_threshold_ms: Threshold for logging slow operations
-        max_retries: Number of retries for transient failures
+        timing_threshold_ms: Threshold for timing logs
+        max_retries: Number of retry attempts
 
     Returns:
-        Decorated function with repository layer concerns
+        Decorated function with repository method capabilities
     """
 
     def decorator(func: F) -> F:
-        decorated = func
-
-        # Apply decorators in reverse order (innermost first)
-        decorated = retry_on_failure(
-            max_retries=max_retries, delay_seconds=0.5, exponential_backoff=True
-        )(decorated)
-
+        decorated = log_execution(level=log_level)(func)
         decorated = measure_execution_time(
             log_level=log_level, threshold_ms=timing_threshold_ms
         )(decorated)
+
+        if max_retries > 0:
+            decorated = retry_on_failure(max_retries=max_retries)(decorated)
 
         return log_execution(level=log_level)(decorated)
 

@@ -8,6 +8,7 @@ import asyncio
 from dataclasses import asdict, dataclass
 from datetime import UTC, datetime, timedelta
 from enum import StrEnum
+import logging
 import types
 from typing import Any
 
@@ -20,7 +21,6 @@ from clarity.core.exceptions import (
     DataValidationError,
     IntegrationError,
 )
-import logging
 
 # Configure logger
 logger = logging.getLogger(__name__)

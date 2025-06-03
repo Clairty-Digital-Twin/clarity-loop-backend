@@ -399,17 +399,20 @@ class EnhancedHealthDataService:
         msg = "Invalid limit parameter"
         raise HealthDataServiceError(msg, status_code=400)
 
-    def _raise_invalid_offset_error(self) -> None:
+    @staticmethod
+    def _raise_invalid_offset_error() -> None:
         """Raise invalid offset parameter error."""
         msg = "Invalid offset parameter"
         raise HealthDataServiceError(msg, status_code=400)
 
-    def _raise_retention_policy_error(self) -> None:
+    @staticmethod
+    def _raise_retention_policy_error() -> None:
         """Raise retention policy error."""
         msg = "Data deletion not allowed due to retention policy"
         raise HealthDataServiceError(msg, status_code=403)
 
-    def _raise_deletion_failed_error(self) -> None:
+    @staticmethod
+    def _raise_deletion_failed_error() -> None:
         """Raise deletion failed error."""
         msg = "Data deletion failed at repository level"
         raise HealthDataServiceError(msg, status_code=500)

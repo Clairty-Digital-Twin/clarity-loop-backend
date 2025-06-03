@@ -6,13 +6,7 @@ depend on abstractions, not concrete implementations.
 """
 
 from abc import ABC, abstractmethod
-from typing import Any, TypeVar
-
-# Type variables for generic storage types
-CollectionType = TypeVar("CollectionType")
-DocumentType = TypeVar("DocumentType")
-QueryType = TypeVar("QueryType")
-BucketType = TypeVar("BucketType")
+from typing import Any
 
 
 class StoragePort(ABC):
@@ -26,7 +20,7 @@ class StoragePort(ABC):
     """
 
     @abstractmethod
-    def get_collection(self, name: str) -> CollectionType:
+    def get_collection(self, name: str) -> object:
         """Get a collection reference by name.
 
         Args:
@@ -119,7 +113,7 @@ class CollectionPort(ABC):
         """
 
     @abstractmethod
-    def document(self, doc_id: str) -> Any:
+    def document(self, doc_id: str) -> object:
         """Get a document reference.
 
         Args:
@@ -130,7 +124,7 @@ class CollectionPort(ABC):
         """
 
     @abstractmethod
-    def where(self, field: str, operator: str, value: Any) -> Any:
+    def where(self, field: str, operator: str, value: Any) -> object:
         """Create a query with a filter condition.
 
         Args:

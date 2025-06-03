@@ -599,8 +599,9 @@ class PATModelService(IMLModelService):
                 pytorch_name = f'encoder.transformer_layers.{layer_idx}.attention.output_projection.bias'
                 state_dict[pytorch_name] = torch.from_numpy(tf_bias)
 
+    @staticmethod
     def _convert_ff_weights(
-        self, layer_group: Any, state_dict: dict[str, torch.Tensor], layer_idx: int
+        layer_group: Any, state_dict: dict[str, torch.Tensor], layer_idx: int
     ) -> None:
         """Convert feed-forward network weights."""
         # FF1 layer

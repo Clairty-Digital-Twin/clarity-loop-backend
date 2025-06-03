@@ -21,10 +21,11 @@ RUN apt-get update && apt-get install -y \
 RUN python -m venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
 
-# Copy dependency files
+# Copy source code and dependency files
 COPY pyproject.toml ./
 COPY README.md ./
 COPY LICENSE ./
+COPY src/ ./src/
 
 # Install Python dependencies
 RUN pip install --upgrade pip setuptools wheel

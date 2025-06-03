@@ -6,12 +6,16 @@ Designed to scale from thousands to millions of records.
 
 import base64
 import json
-from typing import Any, Generic, TypeVar
+from typing import Any, ClassVar, Generic, TypeVar
 from urllib.parse import urlencode
 
 from pydantic import BaseModel, Field, validator
 
 T = TypeVar("T")
+
+# Constants
+DEFAULT_PAGE_SIZE = 50
+MAX_PAGE_SIZE = 1000
 
 
 class PaginationInfo(BaseModel):

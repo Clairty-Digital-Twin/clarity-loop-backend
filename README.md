@@ -14,7 +14,7 @@ CLARITY is a **production-ready digital twin platform** for psychiatry and menta
 ### **Key Capabilities**
 
 🔬 **Advanced AI/ML Pipeline**
-- **PAT (Pretrained Actigraphy Transformer)** - Sleep pattern analysis and circadian rhythm detection
+- **PAT (Pretrained Actigraphy Transformer)** - Sleep pattern analysis and circadian rhythm detection using the open-source foundation model from [Jacobson Lab](https://github.com/njacobsonlab/Pretrained-Actigraphy-Transformer)
 - **Google Gemini 2.5** - Natural language health insights generation
 - **Proxy Actigraphy** - Convert Apple Watch step data to clinical-grade actigraphy
 
@@ -299,9 +299,25 @@ This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENS
 
 ## 🙏 **Acknowledgments**
 
-- **PAT Model** - Pretrained Actigraphy Transformer research
+### **AI Foundation Models for Wearable Movement Data**
+
+This platform integrates the **Pretrained Actigraphy Transformer (PAT)**, an open-source foundation model for time-series wearable movement data developed by the Jacobson Lab at Dartmouth College.
+
+**Citation:**
+```
+Ruan, Franklin Y., Zhang, Aiwei, Oh, Jenny, Jin, SouYoung, and Jacobson, Nicholas C. 
+"AI Foundation Models for Wearable Movement Data in Mental Health Research." 
+arXiv:2411.15240 (2024). https://doi.org/10.48550/arXiv.2411.15240
+```
+
+**Repository:** [njacobsonlab/Pretrained-Actigraphy-Transformer](https://github.com/njacobsonlab/Pretrained-Actigraphy-Transformer)  
+**License:** CC-BY-4.0  
+**Corresponding Author:** Franklin Ruan (franklin.y.ruan.24@dartmouth.edu)
+
+### **Additional Acknowledgments**
+
 - **Google Gemini** - Advanced language model for health insights
-- **Apple HealthKit** - Comprehensive health data platform
+- **Apple HealthKit** - Comprehensive health data platform  
 - **Clean Architecture** - Robert C. Martin's architectural principles
 
 ---

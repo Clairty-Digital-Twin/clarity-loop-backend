@@ -84,7 +84,7 @@ curl -X POST http://localhost:8080/api/v1/pat/analyze-step-data \
 ## Key Features
 
 **AI Models:**
-- **PAT**: Dartmouth's Pretrained Actigraphy Transformer for sleep analysis
+- **PAT**: [Pretrained Actigraphy Transformer](https://github.com/njacobsonlab/Pretrained-Actigraphy-Transformer) from Jacobson Lab (Dartmouth) for sleep analysis
 - **Gemini**: Google's LLM for generating health insights from data
 
 **Real Health Data:**
@@ -121,6 +121,16 @@ python scripts/api_test_suite.py
 ```
 
 Runs comprehensive tests against all endpoints to verify everything works.
+
+---
+
+## 🙏 **Research Attribution**
+
+This platform leverages the **Pretrained Actigraphy Transformer (PAT)** open-source foundation model:
+
+**Paper:** Ruan, F.Y., Zhang, A., Oh, J., Jin, S., & Jacobson, N.C. (2024). "AI Foundation Models for Wearable Movement Data in Mental Health Research." *arXiv:2411.15240*. https://doi.org/10.48550/arXiv.2411.15240
+
+**Repository:** https://github.com/njacobsonlab/Pretrained-Actigraphy-Transformer (CC-BY-4.0 License)
 
 ---
 

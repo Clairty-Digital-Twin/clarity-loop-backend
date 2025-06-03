@@ -644,11 +644,14 @@ def _convert_raw_data_to_metrics(health_data: dict[str, Any]) -> list[HealthMetr
     if "workouts" in health_data:
         for workout in health_data["workouts"]:
             activity_data = ActivityData(
-                step_count=workout.get("steps", 0),
-                distance_km=workout.get("distance", 0) / 1000,  # Convert m to km
-                calories_burned=workout.get("active_energy", 0),
+                steps=workout.get("steps", 0),
+                distance=workout.get("distance", 0) / 1000,  # Convert m to km
+                active_energy=workout.get("active_energy", 0),
                 exercise_minutes=workout.get("duration", 0) / 60,  # Convert to minutes
-                activity_type=workout.get("type", "unknown"),
+                vo2_max=workout.get("vo2_max"),
+                active_minutes=workout.get("active_minutes"),
+                flights_climbed=workout.get("flights_climbed"),
+                resting_heart_rate=workout.get("resting_heart_rate"),
             )
 
             metric = HealthMetric(

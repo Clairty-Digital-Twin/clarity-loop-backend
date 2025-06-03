@@ -179,9 +179,9 @@ class AppleWatchDataProcessor:
             return result
 
         except Exception as e:
-            self.logger.exception(f"Error processing health batch: {e!s}")
+            self.logger.exception("Error processing health batch")
             msg = f"Failed to process health data: {e!s}"
-            raise ProcessingError(msg)
+            raise ProcessingError(msg) from e
 
     async def _process_heart_rate(
         self,
@@ -246,8 +246,9 @@ class AppleWatchDataProcessor:
 
         result.heart_rate_series = minute_values
 
+    @staticmethod
     async def _process_hrv(
-        self,
+        self,  # noqa: ARG004
         samples: list[HealthDataPoint],
         result: ProcessedHealthData,
         start_time: datetime,
@@ -460,8 +461,9 @@ class AppleWatchDataProcessor:
                 # Change from second-to-last to last
                 result.vo2_max_trend = float(values[-1][1] - values[-2][1])
 
+    @staticmethod
     async def _process_workouts(
-        self,
+        self,  # noqa: ARG004
         samples: list[Any],
         result: ProcessedHealthData
     ) -> None:
@@ -483,8 +485,9 @@ class AppleWatchDataProcessor:
         if result.workout_count > 0:
             result.avg_workout_intensity = total_intensity / result.workout_count
 
+    @staticmethod
     async def _process_ecg(
-        self,
+        self,  # noqa: ARG004
         samples: list[Any],
         result: ProcessedHealthData
     ) -> None:
@@ -496,7 +499,8 @@ class AppleWatchDataProcessor:
                     result.afib_detected = True
                     break
 
-    def _calculate_completeness(self, result: ProcessedHealthData) -> float:
+    @staticmethod
+    def _calculate_completeness(self, result: ProcessedHealthData) -> float:  # noqa: ARG004
         """Calculate percentage of data completeness."""
         expected_fields = [
             result.heart_rate_series,

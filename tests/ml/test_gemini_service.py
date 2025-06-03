@@ -25,7 +25,7 @@ class TestGeminiServiceInitialization:
     """Test Gemini service initialization and configuration."""
 
     @staticmethod
-    def test_service_initialization_default_config():
+    def test_service_initialization_default_config() -> None:
         """Test service initialization with default configuration."""
         service = GeminiService()
 
@@ -36,7 +36,7 @@ class TestGeminiServiceInitialization:
         assert not service.is_initialized
 
     @staticmethod
-    def test_service_initialization_custom_config():
+    def test_service_initialization_custom_config() -> None:
         """Test service initialization with custom configuration."""
         project_id = "test-project"
         location = "us-west1"
@@ -51,7 +51,7 @@ class TestGeminiServiceInitialization:
 
     @staticmethod
     @pytest.mark.asyncio
-    async def test_service_initialization_success():
+    async def test_service_initialization_success() -> None:
         """Test successful service initialization."""
         service = GeminiService(project_id="test-project")
 
@@ -72,7 +72,7 @@ class TestGeminiServiceInitialization:
 
     @staticmethod
     @pytest.mark.asyncio
-    async def test_service_initialization_failure():
+    async def test_service_initialization_failure() -> None:
         """Test service initialization failure."""
         service = GeminiService(project_id="test-project")
 
@@ -107,7 +107,7 @@ class TestGeminiServiceHealthInsights:
 
     @staticmethod
     @pytest.mark.asyncio
-    async def test_generate_health_insights_success(sample_insight_request: HealthInsightRequest):
+    async def test_generate_health_insights_success(sample_insight_request: HealthInsightRequest) -> None:
         """Test successful health insight generation."""
         service = GeminiService(project_id="test-project")
 
@@ -146,7 +146,7 @@ class TestGeminiServiceHealthInsights:
 
     @staticmethod
     @pytest.mark.asyncio
-    async def test_generate_health_insights_initialization_required(sample_insight_request: HealthInsightRequest):
+    async def test_generate_health_insights_initialization_required(sample_insight_request: HealthInsightRequest) -> None:
         """Test health insight generation when initialization is required."""
         service = GeminiService(project_id="test-project")
 
@@ -178,7 +178,7 @@ class TestGeminiServiceHealthInsights:
 
     @staticmethod
     @pytest.mark.asyncio
-    async def test_generate_health_insights_model_not_initialized(sample_insight_request: HealthInsightRequest):
+    async def test_generate_health_insights_model_not_initialized(sample_insight_request: HealthInsightRequest) -> None:
         """Test health insight generation when model is not initialized after init."""
         service = GeminiService(project_id="test-project")
 
@@ -191,7 +191,7 @@ class TestGeminiServiceHealthInsights:
 
     @staticmethod
     @pytest.mark.asyncio
-    async def test_generate_health_insights_generation_error(sample_insight_request: HealthInsightRequest):
+    async def test_generate_health_insights_generation_error(sample_insight_request: HealthInsightRequest) -> None:
         """Test health insight generation with generation error."""
         service = GeminiService(project_id="test-project")
 
@@ -206,7 +206,7 @@ class TestGeminiServiceHealthInsights:
 
     @staticmethod
     @pytest.mark.asyncio
-    async def test_generate_health_insights_invalid_json_fallback(sample_insight_request: HealthInsightRequest):
+    async def test_generate_health_insights_invalid_json_fallback(sample_insight_request: HealthInsightRequest) -> None:
         """Test health insight generation with invalid JSON fallback."""
         service = GeminiService(project_id="test-project")
 

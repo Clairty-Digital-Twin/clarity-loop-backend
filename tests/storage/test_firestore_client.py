@@ -11,6 +11,7 @@ Tests cover:
 """
 
 import asyncio
+from collections.abc import Generator
 from datetime import UTC, datetime
 import time
 from typing import Any
@@ -23,6 +24,7 @@ from clarity.models.health_data import (
     BiometricData,
     HealthDataUpload,
     HealthMetric,
+    HealthMetricType,
 )
 from clarity.storage.firestore_client import (
     FirestoreClient,
@@ -34,7 +36,7 @@ from clarity.storage.firestore_client import (
 
 
 @pytest.fixture
-def mock_firebase_admin() -> Mock:
+def mock_firebase_admin() -> Generator[Mock, None, None]:
     """Mock Firebase Admin SDK."""
     with patch("clarity.storage.firestore_client.firebase_admin") as mock_admin:
         mock_admin._apps = {}  # Empty apps list
@@ -43,7 +45,7 @@ def mock_firebase_admin() -> Mock:
 
 
 @pytest.fixture
-def mock_firestore_client() -> AsyncMock:
+def mock_firestore_client() -> Generator[AsyncMock, None, None]:
     """Mock Firestore AsyncClient."""
     with patch("clarity.storage.firestore_client.firestore.AsyncClient") as mock_client:
         mock_instance = AsyncMock()
@@ -52,7 +54,7 @@ def mock_firestore_client() -> AsyncMock:
 
 
 @pytest.fixture
-def mock_credentials() -> Mock:
+def mock_credentials() -> Generator[Mock, None, None]:
     """Mock Firebase credentials."""
     with patch("clarity.storage.firestore_client.credentials.Certificate") as mock_creds:
         yield mock_creds
@@ -96,19 +98,16 @@ def sample_health_upload() -> HealthDataUpload:
         metrics=[
             HealthMetric(
                 metric_id=uuid4(),
-                metric_type="heart_rate",
-                value=72.0,
-                unit="bpm",
+                metric_type=HealthMetricType.HEART_RATE,
                 device_id="test_device",
-                recorded_at=datetime.now(UTC),
                 raw_data={"source": "test"},
                 metadata={"test": True},
                 biometric_data=BiometricData(
-                    heart_rate=72.0,
+                    heart_rate=72,
                     heart_rate_variability=25.0,
-                    systolic_bp=120.0,
-                    diastolic_bp=80.0,
-                    respiratory_rate=16.0,
+                    systolic_bp=120,
+                    diastolic_bp=80,
+                    respiratory_rate=16,
                     skin_temperature=37.0,  # 37°C (normal body temperature)
                 ),
             )

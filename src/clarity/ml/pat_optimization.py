@@ -129,8 +129,7 @@ class PATPerformanceOptimizer:
             # Optimize for inference
             if hasattr(torch.jit, 'optimize_for_inference'):
                 return torch.jit.optimize_for_inference(traced_model)  # type: ignore[misc,return-value]
-            else:
-                return traced_model  # type: ignore[return-value]
+            return traced_model  # type: ignore[return-value]
 
         except Exception:
             logger.exception("TorchScript compilation failed")

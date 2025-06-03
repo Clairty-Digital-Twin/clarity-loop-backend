@@ -9,9 +9,10 @@ Tests cover:
 """
 
 import asyncio
+from collections.abc import Callable
 import functools
 import time
-from typing import Any, Callable, TypeVar
+from typing import Any, TypeVar
 
 F = TypeVar('F', bound=Callable[..., Any])
 
@@ -54,6 +55,7 @@ class TestDecoratorsBasic:
 
         @async_decorator
         async def async_function() -> str:
+            await asyncio.sleep(0)  # Make it actually async
             return "async"
 
         # Test sync function
@@ -322,6 +324,7 @@ class TestDecoratorsBasic:
 
         @async_error_handler
         async def failing_async_function() -> str:
+            await asyncio.sleep(0)  # Make it actually async
             async_error_msg = "Async error"
             raise ValueError(async_error_msg)
 

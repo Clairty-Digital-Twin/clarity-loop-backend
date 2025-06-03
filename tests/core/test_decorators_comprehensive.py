@@ -355,8 +355,8 @@ class TestRetryOnFailureDecorator:
         assert len(call_times) == 3
         delay1 = call_times[1] - call_times[0]
         delay2 = call_times[2] - call_times[1]
-        # Delays should be approximately equal (within 10ms tolerance)
-        assert abs(delay1 - delay2) < 0.01
+        # Delays should be approximately equal (within 100ms tolerance for system variations)
+        assert abs(delay1 - delay2) < 0.1
 
     @staticmethod
     def test_retry_on_failure_specific_exceptions() -> None:

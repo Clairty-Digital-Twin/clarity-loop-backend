@@ -106,7 +106,6 @@ class PaginatedResponse(BaseModel, Generic[T]):
 
     class Config:
         """Pydantic configuration."""
-        from typing import ClassVar
 
         json_encoders: ClassVar[dict[str, object]] = {
             # Custom encoders if needed

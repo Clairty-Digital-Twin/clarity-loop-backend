@@ -10,6 +10,7 @@ Tests cover:
 import asyncio
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
+import time
 from unittest.mock import AsyncMock, Mock, patch
 from uuid import uuid4
 
@@ -74,7 +75,6 @@ def sample_actigraphy_input(sample_actigraphy_data: list[ActigraphyDataPoint]) -
 @pytest.fixture
 def sample_analysis_result() -> ActigraphyAnalysis:
     """Sample analysis result for testing."""
-    from datetime import UTC, datetime
     return ActigraphyAnalysis(
         user_id=str(uuid4()),
         analysis_timestamp=datetime.now(UTC).isoformat(),
@@ -94,7 +94,7 @@ def sample_analysis_result() -> ActigraphyAnalysis:
     )
 
 
-class TestPATPerformanceOptimizer:
+class TestPATPerformanceOptimizer:  # noqa: PLR0904
     """Test PAT performance optimizer."""
 
     @staticmethod
@@ -248,8 +248,6 @@ class TestPATPerformanceOptimizer:
     @staticmethod
     def test_is_cache_valid() -> None:
         """Test cache validity check."""
-        import time
-
         # Valid cache (recent)
         recent_timestamp = time.time() - 1800  # 30 minutes ago
         assert PATPerformanceOptimizer._is_cache_valid(recent_timestamp) is True
@@ -261,8 +259,6 @@ class TestPATPerformanceOptimizer:
     @staticmethod
     async def test_optimized_analyze_cache_hit(optimizer: PATPerformanceOptimizer, sample_actigraphy_input: ActigraphyInput, sample_analysis_result: ActigraphyAnalysis) -> None:
         """Test optimized analysis with cache hit."""
-        import time
-
         # Set up cache
         cache_key = optimizer._generate_cache_key(sample_actigraphy_input)
         optimizer._cache[cache_key] = (sample_analysis_result, time.time())
@@ -338,8 +334,6 @@ class TestPATPerformanceOptimizer:
     @staticmethod
     def test_get_cache_stats(optimizer: PATPerformanceOptimizer) -> None:
         """Test cache statistics."""
-        import time
-
         mock_analysis = Mock(spec=ActigraphyAnalysis)
         optimizer._cache["test1"] = (mock_analysis, time.time())
         optimizer._cache["test2"] = (mock_analysis, time.time() - 100)
@@ -368,7 +362,7 @@ class TestBatchAnalysisProcessor:
     """Test batch analysis processor."""
 
     @pytest.fixture
-    def batch_processor(self, optimizer: PATPerformanceOptimizer) -> BatchAnalysisProcessor:
+    def batch_processor(self, optimizer: PATPerformanceOptimizer) -> BatchAnalysisProcessor:  # noqa: PLR6301
         """Create batch analysis processor."""
         return BatchAnalysisProcessor(optimizer, max_batch_size=3)
 
@@ -422,7 +416,7 @@ class TestModuleFunctions:
     @staticmethod
     def test_get_pat_optimizer_not_implemented() -> None:
         """Test get_pat_optimizer raises NotImplementedError."""
-        from clarity.ml.pat_optimization import get_pat_optimizer
+        from clarity.ml.pat_optimization import get_pat_optimizer  # noqa: PLC0415
 
         with pytest.raises(NotImplementedError, match="Call initialize_pat_optimizer"):
             get_pat_optimizer()
@@ -435,14 +429,15 @@ class TestModuleFunctions:
         mock_service.load_model = AsyncMock()
 
         # Patch the get_pat_service import inside the initialize function
-        with patch("clarity.ml.pat_service.get_pat_service", return_value=mock_service):
-            with patch.object(PATPerformanceOptimizer, "optimize_model", return_value=True) as mock_optimize:
+        with (
+            patch("clarity.ml.pat_service.get_pat_service", return_value=mock_service),
+            patch.object(PATPerformanceOptimizer, "optimize_model", return_value=True) as mock_optimize,
+        ):
+            optimizer = await initialize_pat_optimizer()
 
-                optimizer = await initialize_pat_optimizer()
-
-                assert isinstance(optimizer, PATPerformanceOptimizer)
-                mock_service.load_model.assert_called_once()
-                mock_optimize.assert_called_once()
+            assert isinstance(optimizer, PATPerformanceOptimizer)
+            mock_service.load_model.assert_called_once()
+            mock_optimize.assert_called_once()
 
 
 class TestErrorHandling:
@@ -464,7 +459,7 @@ class TestErrorHandling:
         # Create a corrupted cache entry with wrong format
         cache_key = optimizer._generate_cache_key(sample_actigraphy_input)
         optimizer._cache[cache_key] = "corrupted_data_not_tuple"  # Wrong type, not a tuple
-        
+
         # Should handle gracefully and not use corrupted cache
         mock_result = Mock(spec=ActigraphyAnalysis)
         async_mock = AsyncMock(return_value=mock_result)
@@ -481,5 +476,5 @@ class TestErrorHandling:
         assert result is mock_result
         # After analysis, the cache should contain a new valid entry (not the corrupted one)
         assert cache_key in optimizer._cache  # New valid entry was cached
-        cached_result, timestamp = optimizer._cache[cache_key]
+        cached_result, _timestamp = optimizer._cache[cache_key]
         assert cached_result is mock_result  # Cached the correct result

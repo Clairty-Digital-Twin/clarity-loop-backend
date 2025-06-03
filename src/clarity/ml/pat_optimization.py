@@ -191,7 +191,7 @@ class PATPerformanceOptimizer:
                 except (ValueError, TypeError, AttributeError) as e:
                     # Handle corrupted cache entries gracefully
                     logger.warning(
-                        "Cache corruption detected for key %s: %s", 
+                        "Cache corruption detected for key %s: %s",
                         cache_key[:HASH_TRUNCATE_LENGTH], e
                     )
                     # Remove corrupted entry

@@ -4,15 +4,18 @@ Provides checksum verification and integrity checking for ML model weights
 following security best practices for healthcare AI systems.
 """
 
-from datetime import UTC, datetime, timezone
 import hashlib
 import json
 import logging
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
 logger = logging.getLogger(__name__)
 
+# Constants
+MAX_CHUNK_SIZE = 8192
+DEFAULT_ENCODING = "utf-8"
 
 class ModelIntegrityError(Exception):
     """Raised when model integrity verification fails."""
@@ -20,242 +23,249 @@ class ModelIntegrityError(Exception):
 
 class ModelChecksumManager:
     """Manages checksum generation and verification for ML model files.
-
+    
     Provides SHA-256 checksums for model weights and metadata to ensure
     model integrity in healthcare AI applications.
     """
 
     def __init__(self, models_dir: Path | str = "models"):
         """Initialize the checksum manager.
-
+        
         Args:
             models_dir: Directory containing model files
         """
         self.models_dir = Path(models_dir)
-        self.checksums_file = self.models_dir / "model_checksums.json"
-
+        self.checksums_file = self.models_dir / "checksums.json"
+        
         # Ensure models directory exists
-        self.models_dir.mkdir(parents=True, exist_ok=True)
+        self.models_dir.mkdir(exist_ok=True)
 
-    def calculate_file_checksum(self, file_path: Path) -> str:
+    def _calculate_file_checksum(self, file_path: Path) -> str:
         """Calculate SHA-256 checksum for a file.
-
+        
         Args:
             file_path: Path to the file
-
+            
         Returns:
             Hexadecimal SHA-256 checksum
+            
+        Raises:
+            ModelIntegrityError: If file cannot be read
         """
-        sha256_hash = hashlib.sha256()
-
         try:
-            with open(file_path, "rb") as f:
-                # Read file in chunks to handle large model files
-                for byte_block in iter(lambda: f.read(4096), b""):
-                    sha256_hash.update(byte_block)
-
+            sha256_hash = hashlib.sha256()
+            with file_path.open("rb") as f:
+                # Read file in chunks to handle large files
+                for chunk in iter(lambda: f.read(MAX_CHUNK_SIZE), b""):
+                    sha256_hash.update(chunk)
             return sha256_hash.hexdigest()
-        except FileNotFoundError:
-            raise ModelIntegrityError(f"Model file not found: {file_path}")
-        except Exception as e:
-            raise ModelIntegrityError(
-                f"Error calculating checksum for {file_path}: {e}"
-            )
+        except (OSError, IOError) as e:
+            error_msg = f"Failed to calculate checksum for {file_path}: {e}"
+            logger.exception("Error calculating file checksum")
+            raise ModelIntegrityError(error_msg) from e
 
-    def generate_model_manifest(
-        self, model_name: str, model_files: list[str]
-    ) -> dict[str, Any]:
-        """Generate a complete manifest with checksums for a model.
-
+    def generate_model_manifest(self, model_files: list[str]) -> dict[str, Any]:
+        """Generate a manifest with checksums for model files.
+        
         Args:
-            model_name: Name/identifier of the model
-            model_files: List of model files to include in manifest
-
+            model_files: List of model file names in the models directory
+            
         Returns:
-            Model manifest with checksums and metadata
+            Manifest dictionary with file checksums and metadata
+            
+        Raises:
+            ModelIntegrityError: If any file cannot be processed
         """
         manifest = {
-            "model_name": model_name,
-            "created_at": datetime.now(UTC).isoformat(),
-            "files": {},
-            "total_files": 0,
+            "created_at": datetime.now(timezone.utc).isoformat(),
             "total_size_bytes": 0,
+            "files": {},
         }
 
         for file_name in model_files:
             file_path = self.models_dir / file_name
-
+            
             if not file_path.exists():
-                logger.warning(f"Model file not found: {file_path}")
-                continue
+                error_msg = f"Model file not found: {file_path}"
+                logger.error("Model file missing: %s", file_path)
+                raise ModelIntegrityError(error_msg)
 
             try:
-                checksum = self.calculate_file_checksum(file_path)
+                checksum = self._calculate_file_checksum(file_path)
                 file_size = file_path.stat().st_size
-
+                
                 manifest["files"][file_name] = {
                     "checksum": checksum,
                     "size_bytes": file_size,
-                    "last_modified": datetime.fromtimestamp(
-                        file_path.stat().st_mtime, tz=UTC
-                    ).isoformat(),
+                    "algorithm": "sha256",
                 }
-
-                manifest["total_files"] += 1
+                
                 manifest["total_size_bytes"] += file_size
-
-                logger.info(f"Generated checksum for {file_name}: {checksum}")
+                
+                logger.info("Generated checksum for %s: %s", file_name, checksum)
 
             except Exception as e:
-                logger.error(f"Error processing {file_name}: {e}")
-                raise ModelIntegrityError(f"Failed to process {file_name}: {e}")
+                logger.exception("Error processing file: %s", file_name)
+                error_msg = f"Failed to process {file_name}: {e}"
+                raise ModelIntegrityError(error_msg) from e
 
         return manifest
 
     def save_checksums(self, manifests: dict[str, dict[str, Any]]) -> None:
-        """Save model checksums to the checksums file.
-
+        """Save model manifests to the checksums file.
+        
         Args:
-            manifests: Dictionary of model manifests keyed by model name
+            manifests: Dictionary mapping model names to their manifests
+            
+        Raises:
+            ModelIntegrityError: If checksums cannot be saved
         """
         try:
-            with open(self.checksums_file, "w") as f:
+            with self.checksums_file.open("w", encoding=DEFAULT_ENCODING) as f:
                 json.dump(manifests, f, indent=2, sort_keys=True)
-
+            
             logger.info(
-                f"Saved checksums for {len(manifests)} models to {self.checksums_file}"
+                "Saved checksums for %d models to %s",
+                len(manifests),
+                self.checksums_file
             )
 
-        except Exception as e:
-            raise ModelIntegrityError(f"Failed to save checksums: {e}")
+        except (OSError, IOError) as e:
+            error_msg = f"Failed to save checksums: {e}"
+            raise ModelIntegrityError(error_msg) from e
 
     def load_checksums(self) -> dict[str, dict[str, Any]]:
-        """Load model checksums from the checksums file.
-
+        """Load model manifests from the checksums file.
+        
         Returns:
-            Dictionary of model manifests keyed by model name
+            Dictionary mapping model names to their manifests
+            
+        Raises:
+            ModelIntegrityError: If checksums cannot be loaded
         """
         if not self.checksums_file.exists():
-            logger.warning(f"Checksums file not found: {self.checksums_file}")
+            logger.warning("Checksums file not found: %s", self.checksums_file)
             return {}
 
         try:
-            with open(self.checksums_file) as f:
+            with self.checksums_file.open(encoding=DEFAULT_ENCODING) as f:
                 return json.load(f)
-        except Exception as e:
-            raise ModelIntegrityError(f"Failed to load checksums: {e}")
+        except (OSError, IOError, json.JSONDecodeError) as e:
+            error_msg = f"Failed to load checksums: {e}"
+            raise ModelIntegrityError(error_msg) from e
 
     def verify_model_integrity(self, model_name: str) -> bool:
-        """Verify the integrity of a model using stored checksums.
-
+        """Verify the integrity of a specific model.
+        
         Args:
             model_name: Name of the model to verify
-
+            
         Returns:
-            True if all checksums match, False otherwise
-
+            True if all model files pass verification, False otherwise
+            
         Raises:
-            ModelIntegrityError: If verification fails due to errors
+            ModelIntegrityError: If model is not registered or verification fails
         """
         checksums = self.load_checksums()
-
+        
         if model_name not in checksums:
-            raise ModelIntegrityError(f"No checksums found for model: {model_name}")
+            error_msg = f"No checksums found for model: {model_name}"
+            raise ModelIntegrityError(error_msg)
 
         manifest = checksums[model_name]
         verification_results = []
 
-        logger.info(f"Verifying integrity of model: {model_name}")
+        logger.info("Verifying integrity of model: %s", model_name)
 
         for file_name, file_info in manifest["files"].items():
             file_path = self.models_dir / file_name
             expected_checksum = file_info["checksum"]
-
+            
             if not file_path.exists():
-                logger.error(f"Model file missing: {file_path}")
+                logger.error("Model file missing: %s", file_path)
                 verification_results.append(False)
                 continue
 
             try:
-                actual_checksum = self.calculate_file_checksum(file_path)
-
+                actual_checksum = self._calculate_file_checksum(file_path)
+                
                 if actual_checksum == expected_checksum:
-                    logger.debug(f"✓ {file_name}: checksum verified")
+                    logger.debug("✓ %s: checksum verified", file_name)
                     verification_results.append(True)
                 else:
                     logger.error(
-                        f"✗ {file_name}: checksum mismatch! "
-                        f"Expected: {expected_checksum}, Got: {actual_checksum}"
+                        "✗ %s: checksum mismatch! Expected: %s, Got: %s",
+                        file_name, expected_checksum, actual_checksum
                     )
                     verification_results.append(False)
 
             except Exception as e:
-                logger.error(f"Error verifying {file_name}: {e}")
+                logger.exception("Error verifying file: %s", file_name)
                 verification_results.append(False)
 
         all_verified = all(verification_results)
-
+        
         if all_verified:
-            logger.info(f"✓ Model {model_name} integrity verification PASSED")
+            logger.info("✓ Model %s integrity verification PASSED", model_name)
         else:
-            logger.error(f"✗ Model {model_name} integrity verification FAILED")
+            logger.error("✗ Model %s integrity verification FAILED", model_name)
 
         return all_verified
 
     def verify_all_models(self) -> dict[str, bool]:
-        """Verify integrity of all models with stored checksums.
-
+        """Verify the integrity of all registered models.
+        
         Returns:
             Dictionary mapping model names to verification results
         """
         checksums = self.load_checksums()
         results = {}
-
+        
         for model_name in checksums:
             try:
                 results[model_name] = self.verify_model_integrity(model_name)
             except Exception as e:
-                logger.error(f"Error verifying model {model_name}: {e}")
+                logger.exception("Error verifying model: %s", model_name)
                 results[model_name] = False
 
         return results
 
     def register_model(self, model_name: str, model_files: list[str]) -> None:
-        """Register a new model and generate its checksums.
-
+        """Register a new model with checksum generation.
+        
         Args:
-            model_name: Name/identifier of the model
+            model_name: Unique name for the model
             model_files: List of model files to register
         """
-        logger.info(f"Registering model: {model_name}")
+        logger.info("Registering model: %s", model_name)
 
         # Generate manifest for the new model
-        manifest = self.generate_model_manifest(model_name, model_files)
-
+        manifest = self.generate_model_manifest(model_files)
+        
         # Load existing checksums and add the new model
         checksums = self.load_checksums()
         checksums[model_name] = manifest
-
+        
         # Save updated checksums
         self.save_checksums(checksums)
 
-        logger.info(f"Successfully registered model: {model_name}")
+        logger.info("Successfully registered model: %s", model_name)
 
     def get_model_info(self, model_name: str) -> dict[str, Any] | None:
         """Get information about a registered model.
-
+        
         Args:
             model_name: Name of the model
-
+            
         Returns:
-            Model information dictionary or None if not found
+            Model manifest dictionary or None if not found
         """
         checksums = self.load_checksums()
         return checksums.get(model_name)
 
     def list_registered_models(self) -> list[str]:
-        """Get list of all registered model names.
-
+        """Get a list of all registered model names.
+        
         Returns:
             List of registered model names
         """
@@ -264,66 +274,60 @@ class ModelChecksumManager:
 
     def remove_model(self, model_name: str) -> None:
         """Remove a model from the registry.
-
+        
         Args:
             model_name: Name of the model to remove
         """
         checksums = self.load_checksums()
-
+        
         if model_name in checksums:
             del checksums[model_name]
             self.save_checksums(checksums)
-            logger.info(f"Removed model from registry: {model_name}")
+            logger.info("Removed model from registry: %s", model_name)
         else:
-            logger.warning(f"Model not found in registry: {model_name}")
+            logger.warning("Model not found in registry: %s", model_name)
 
 
-# Pre-configured instances for common use cases
+# Global model managers for different model types
 pat_model_manager = ModelChecksumManager("models/pat")
 gemini_model_manager = ModelChecksumManager("models/gemini")
 
 
 def verify_startup_models() -> bool:
     """Verify integrity of all critical models during application startup.
-
+    
     Returns:
-        True if all models pass verification, False otherwise
+        True if all critical models pass verification, False otherwise
     """
-    logger.info("Starting model integrity verification...")
-
-    managers = [
-        ("PAT Models", pat_model_manager),
-        ("Gemini Models", gemini_model_manager),
+    model_managers = [
+        ("PAT models", pat_model_manager),
+        ("Gemini models", gemini_model_manager),
     ]
-
+    
     all_passed = True
-
-    for name, manager in managers:
+    
+    for name, manager in model_managers:
         try:
             results = manager.verify_all_models()
-
+            
             if not results:
-                logger.info(f"No {name} found to verify")
+                logger.info("No %s found to verify", name)
                 continue
-
+            
             passed_count = sum(results.values())
             total_count = len(results)
-
+            
             if passed_count == total_count:
-                logger.info(f"✓ All {name} ({total_count}) passed verification")
+                logger.info("✓ All %s (%d) passed verification", name, total_count)
             else:
                 logger.error(
-                    f"✗ {name}: {passed_count}/{total_count} models passed verification"
+                    "✗ %s: %d/%d models passed verification",
+                    name, passed_count, total_count
                 )
                 all_passed = False
 
         except Exception as e:
-            logger.error(f"Error verifying {name}: {e}")
+            logger.exception("Error verifying %s", name)
             all_passed = False
-
-    if all_passed:
-        logger.info("✓ All model integrity checks PASSED")
-    else:
-        logger.error("✗ Model integrity verification FAILED")
 
     return all_passed

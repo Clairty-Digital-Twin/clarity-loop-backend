@@ -184,21 +184,25 @@ class AnalysisSubscriber:
         else:
             return health_data
 
-    def _raise_invalid_token_error(self) -> None:
+    @staticmethod
+    def _raise_invalid_token_error() -> None:
         """Raise HTTPException for invalid token format."""
         raise HTTPException(status_code=401, detail="Invalid token format")
 
-    def _raise_missing_field_error(self, field: str) -> None:
+    @staticmethod
+    def _raise_missing_field_error(field: str) -> None:
         """Raise ValueError for missing required field."""
         msg = f"Missing required field: {field}"
         raise ValueError(msg)
 
-    def _raise_invalid_gcs_path_error(self, gcs_path: str) -> None:
+    @staticmethod
+    def _raise_invalid_gcs_path_error(gcs_path: str) -> None:
         """Raise ValueError for invalid GCS path format."""
         msg = f"Invalid GCS path format: {gcs_path}"
         raise ValueError(msg)
 
-    def _raise_health_data_not_found_error(self, gcs_path: str) -> None:
+    @staticmethod
+    def _raise_health_data_not_found_error(gcs_path: str) -> None:
         """Raise FileNotFoundError for missing health data."""
         msg = f"Health data not found at: {gcs_path}"
         raise FileNotFoundError(msg)

@@ -187,6 +187,30 @@ def _raise_access_denied_error(
     )
 
 
+def _raise_insight_not_found_error(insight_id: str, request_id: str) -> None:
+    """Raise HTTPException for insight not found."""
+    raise create_error_response(
+        error_code="INSIGHT_NOT_FOUND",
+        message=f"Insight {insight_id} not found",
+        request_id=request_id,
+        status_code=status.HTTP_404_NOT_FOUND,
+        details={"insight_id": insight_id},
+        suggested_action="check_insight_id",
+    )
+
+
+def _raise_insight_access_denied_error(insight_id: str, request_id: str) -> None:
+    """Raise HTTPException for insight access denied."""
+    raise create_error_response(
+        error_code="ACCESS_DENIED",
+        message="Cannot access another user's insights",
+        request_id=request_id,
+        status_code=status.HTTP_403_FORBIDDEN,
+        details={"insight_id": insight_id},
+        suggested_action="check_permissions",
+    )
+
+
 def create_error_response(
     error_code: str,
     message: str,
@@ -337,25 +361,11 @@ async def get_insight(
         )
 
         if not insight_doc:
-            raise create_error_response(
-                error_code="INSIGHT_NOT_FOUND",
-                message=f"Insight {insight_id} not found",
-                request_id=request_id,
-                status_code=status.HTTP_404_NOT_FOUND,
-                details={"insight_id": insight_id},
-                suggested_action="check_insight_id",
-            )
+            _raise_insight_not_found_error(insight_id, request_id)
 
         # Verify user owns the insight
         if insight_doc.get("user_id") != current_user.user_id:
-            raise create_error_response(
-                error_code="ACCESS_DENIED",
-                message="Cannot access another user's insights",
-                request_id=request_id,
-                status_code=status.HTTP_403_FORBIDDEN,
-                details={"insight_id": insight_id},
-                suggested_action="check_permissions",
-            )
+            _raise_insight_access_denied_error(insight_id, request_id)
 
         # Convert Firestore document to HealthInsightResponse
         insight_response = HealthInsightResponse(

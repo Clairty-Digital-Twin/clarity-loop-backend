@@ -381,7 +381,8 @@ class InsightSubscriber:
         else:
             return message_data
 
-    def _raise_missing_field_error(self, field: str) -> None:
+    @staticmethod
+    def _raise_missing_field_error(field: str) -> None:
         """Raise ValueError for missing required field."""
         msg = f"Missing required field: {field}"
         raise ValueError(msg)

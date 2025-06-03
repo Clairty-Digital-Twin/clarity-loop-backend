@@ -659,7 +659,7 @@ class PATModelService(IMLModelService):
 
     @staticmethod
     def _convert_layernorm_weights(
-        layer_group: Any,
+        layer_group: Any,  # noqa: ANN401
         state_dict: dict[str, torch.Tensor],
         layer_idx: int,
     ) -> None:

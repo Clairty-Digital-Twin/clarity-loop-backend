@@ -27,7 +27,7 @@ from firebase_admin import auth, credentials  # type: ignore[import-untyped]
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.responses import JSONResponse
 
-from clarity.core.interfaces import IAuthProvider
+from clarity.ports.auth_ports import IAuthProvider
 from clarity.models.auth import AuthError, Permission, UserContext, UserRole
 
 if TYPE_CHECKING:

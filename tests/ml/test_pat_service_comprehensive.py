@@ -124,7 +124,7 @@ class TestPATModelService:
         assert isinstance(pat_service.model, PATForMentalHealthClassification)
 
         # Test encoder architecture
-        encoder = pat_service.model.encoder
+        encoder = pat_service.model.encoder  # type: ignore[union-attr]
         assert isinstance(encoder, PATEncoder)
         assert encoder.embed_dim == 96
         assert encoder.input_size == 10080
@@ -134,15 +134,15 @@ class TestPATModelService:
     @staticmethod
     async def test_weight_conversion(pat_service: PATModelService) -> None:
         """Test that TensorFlow weights were converted correctly."""
-        encoder = pat_service.model.encoder
+        encoder = pat_service.model.encoder  # type: ignore[union-attr]
 
         # Check if weights are loaded (not random)
         first_layer = encoder.transformer_layers[0]
         attention = first_layer.attention
 
         # Check query projection weights
-        first_query = attention.query_projections[0]
-        weight_std = first_query.weight.std().item()
+        first_query = attention.query_projections[0]  # type: ignore[union-attr,index]
+        weight_std = first_query.weight.std().item()  # type: ignore[union-attr]
 
         # Real weights should have reasonable std (not too small/large)
         assert 0.01 < weight_std < 1.0, f"Weight std {weight_std} suggests random init"

@@ -439,80 +439,146 @@ class HealthAnalysisPipeline:
         | None = None,  # 🔥 ADDED: Activity features parameter
     ) -> dict[str, Any]:
         """Generate summary statistics for the analysis."""
-        summary = {"data_coverage": {}, "feature_summary": {}, "health_indicators": {}}
+        summary = {
+            "data_coverage": self._generate_data_coverage(organized_data),
+            "feature_summary": self._generate_feature_summary(modality_features),
+            "health_indicators": self._generate_health_indicators(
+                modality_features, activity_features
+            ),
+        }
+        return summary
 
-        # Data coverage
+    def _generate_data_coverage(
+        self, organized_data: dict[str, list[HealthMetric]]
+    ) -> dict[str, Any]:
+        """Generate data coverage statistics."""
+        data_coverage = {}
         for modality, metrics in organized_data.items():
             if metrics:
                 time_span = self._calculate_time_span(metrics)
-                summary["data_coverage"][modality] = {
+                data_coverage[modality] = {
                     "metric_count": len(metrics),
                     "time_span_hours": time_span,
                     "data_density": len(metrics) / max(1, time_span),
                 }
+        return data_coverage
 
-        # Feature summary
+    def _generate_feature_summary(
+        self, modality_features: dict[str, list[float]]
+    ) -> dict[str, Any]:
+        """Generate feature summary statistics."""
+        feature_summary = {}
         for modality, features in modality_features.items():
             if features:
-                summary["feature_summary"][modality] = {
+                feature_summary[modality] = {
                     "feature_count": len(features),
                     "mean_value": float(np.mean(features)),
                     "std_value": float(np.std(features)),
                     "min_value": float(np.min(features)),
                     "max_value": float(np.max(features)),
                 }
+        return feature_summary
 
-        # Health indicators (simplified)
+    def _generate_health_indicators(
+        self,
+        modality_features: dict[str, list[float]],
+        activity_features: list[dict[str, Any]] | None = None,
+    ) -> dict[str, Any]:
+        """Generate health indicators from features."""
+        health_indicators = {}
+
+        # Process cardiovascular health indicators
+        cardio_indicators = self._extract_cardio_health_indicators(modality_features)
+        if cardio_indicators:
+            health_indicators["cardiovascular_health"] = cardio_indicators
+
+        # Process respiratory health indicators
+        respiratory_indicators = self._extract_respiratory_health_indicators(modality_features)
+        if respiratory_indicators:
+            health_indicators["respiratory_health"] = respiratory_indicators
+
+        # Process activity health indicators
+        activity_indicators = self._extract_activity_health_indicators(activity_features)
+        if activity_indicators:
+            health_indicators["activity_health"] = activity_indicators
+
+        return health_indicators
+
+    def _extract_cardio_health_indicators(
+        self, modality_features: dict[str, list[float]]
+    ) -> dict[str, Any] | None:
+        """Extract cardiovascular health indicators."""
         if (
-            "cardio" in modality_features
-            and len(modality_features["cardio"]) >= MIN_FEATURE_VECTOR_LENGTH
+            "cardio" not in modality_features
+            or len(modality_features["cardio"]) < MIN_FEATURE_VECTOR_LENGTH
         ):
-            cardio = modality_features["cardio"]
-            summary["health_indicators"]["cardiovascular_health"] = {
-                "avg_heart_rate": cardio[0],
-                "resting_heart_rate": cardio[2],
-                "heart_rate_recovery": cardio[6],
-                "circadian_rhythm": cardio[7],
-            }
+            return None
 
+        cardio = modality_features["cardio"]
+        return {
+            "avg_heart_rate": cardio[0],
+            "resting_heart_rate": cardio[2],
+            "heart_rate_recovery": cardio[6],
+            "circadian_rhythm": cardio[7],
+        }
+
+    def _extract_respiratory_health_indicators(
+        self, modality_features: dict[str, list[float]]
+    ) -> dict[str, Any] | None:
+        """Extract respiratory health indicators."""
         if (
-            "respiratory" in modality_features
-            and len(modality_features["respiratory"]) >= MIN_FEATURE_VECTOR_LENGTH
+            "respiratory" not in modality_features
+            or len(modality_features["respiratory"]) < MIN_FEATURE_VECTOR_LENGTH
         ):
-            resp = modality_features["respiratory"]
-            summary["health_indicators"]["respiratory_health"] = {
-                "avg_respiratory_rate": resp[0],
-                "avg_oxygen_saturation": resp[3],
-                "respiratory_stability": resp[6],
-                "oxygenation_efficiency": resp[7],
-            }
+            return None
 
-        # 🔥 ADDED: Activity health indicators from basic features
-        if activity_features:
-            activity_health = {}
+        resp = modality_features["respiratory"]
+        return {
+            "avg_respiratory_rate": resp[0],
+            "avg_oxygen_saturation": resp[3],
+            "respiratory_stability": resp[6],
+            "oxygenation_efficiency": resp[7],
+        }
 
-            for feature in activity_features:
-                if feature["feature_name"] == "total_steps":
-                    activity_health["total_steps"] = feature["value"]
-                elif feature["feature_name"] == "average_daily_steps":
-                    activity_health["avg_daily_steps"] = round(feature["value"])
-                elif feature["feature_name"] == "total_distance":
-                    activity_health["total_distance_km"] = round(feature["value"], 1)
-                elif feature["feature_name"] == "total_active_energy":
-                    activity_health["total_calories"] = round(feature["value"])
-                elif feature["feature_name"] == "total_exercise_minutes":
-                    activity_health["total_exercise_minutes"] = round(feature["value"])
-                elif feature["feature_name"] == "activity_consistency_score":
-                    activity_health["consistency_score"] = round(feature["value"], 2)
-                elif feature["feature_name"] == "latest_vo2_max":
-                    activity_health["cardio_fitness_vo2_max"] = round(
-                        feature["value"], 1
-                    )
+    def _extract_activity_health_indicators(
+        self, activity_features: list[dict[str, Any]] | None
+    ) -> dict[str, Any] | None:
+        """Extract activity health indicators from basic features."""
+        if not activity_features:
+            return None
 
-            if activity_health:
-                summary["health_indicators"]["activity_health"] = activity_health
+        activity_health = {}
 
-        return summary
+        # Create a mapping of feature names to extraction logic
+        feature_extractors = {
+            "total_steps": lambda value: value,
+            "average_daily_steps": lambda value: round(value),
+            "total_distance": lambda value: round(value, 1),
+            "total_active_energy": lambda value: round(value),
+            "total_exercise_minutes": lambda value: round(value),
+            "activity_consistency_score": lambda value: round(value, 2),
+            "latest_vo2_max": lambda value: round(value, 1),
+        }
+
+        # Map display names for cleaner output
+        display_names = {
+            "total_steps": "total_steps",
+            "average_daily_steps": "avg_daily_steps",
+            "total_distance": "total_distance_km",
+            "total_active_energy": "total_calories",
+            "total_exercise_minutes": "total_exercise_minutes",
+            "activity_consistency_score": "consistency_score",
+            "latest_vo2_max": "cardio_fitness_vo2_max",
+        }
+
+        for feature in activity_features:
+            feature_name = feature["feature_name"]
+            if feature_name in feature_extractors:
+                extractor = feature_extractors[feature_name]
+                display_name = display_names[feature_name]
+                activity_health[display_name] = extractor(feature["value"])
+
+        return activity_health or None
 
     @staticmethod
     def _calculate_time_span(metrics: list[HealthMetric]) -> float:
@@ -593,137 +659,161 @@ def _convert_raw_data_to_metrics(health_data: dict[str, Any]) -> list[HealthMetr
         # Already in metric format
         return health_data["metrics"]
 
-    # Convert HealthKit-style data
-    # Process quantity samples (heart rate, respiratory rate, etc.)
+    # Process different data types
     if "quantity_samples" in health_data:
-        for sample in health_data["quantity_samples"]:
-            metric_type_str = sample.get("type", "").lower()
+        quantity_metrics = _process_quantity_samples(health_data)
+        metrics.extend(quantity_metrics)
 
-            # Map HealthKit types to our HealthMetricType enum
-            type_mapping = {
-                "heartrate": HealthMetricType.HEART_RATE,
-                "heart_rate": HealthMetricType.HEART_RATE,
-                "heartratevariabilitysdnn": HealthMetricType.HEART_RATE_VARIABILITY,
-                "respiratoryrate": HealthMetricType.HEART_RATE,  # Map to existing type
-                "respiratory_rate": HealthMetricType.HEART_RATE,  # Map to existing type
-                "oxygensaturation": HealthMetricType.ENVIRONMENTAL,  # Map to existing type
-                "bloodpressuresystolic": HealthMetricType.BLOOD_PRESSURE,
-                "bloodpressurediastolic": HealthMetricType.BLOOD_PRESSURE,
-            }
-
-            if metric_type_str in type_mapping:
-                biometric_data_kwargs = {}
-
-                if metric_type_str in {"heartrate", "heart_rate"}:
-                    biometric_data_kwargs["heart_rate"] = float(sample.get("value", 0))
-                elif metric_type_str == "heartratevariabilitysdnn":
-                    biometric_data_kwargs["heart_rate_variability"] = float(
-                        sample.get("value", 0)
-                    )
-                elif metric_type_str in {"respiratoryrate", "respiratory_rate"}:
-                    biometric_data_kwargs["respiratory_rate"] = float(
-                        sample.get("value", 0)
-                    )
-                elif metric_type_str == "oxygensaturation":
-                    biometric_data_kwargs["oxygen_saturation"] = float(
-                        sample.get("value", 0)
-                    )
-                elif metric_type_str in {
-                    "bloodpressuresystolic",
-                    "bloodpressurediastolic",
-                }:
-                    biometric_data_kwargs["blood_pressure_systolic"] = sample.get(
-                        "systolic"
-                    )
-                    biometric_data_kwargs["blood_pressure_diastolic"] = sample.get(
-                        "diastolic"
-                    )
-
-                biometric_data = BiometricData(**biometric_data_kwargs)
-
-                metric = HealthMetric(
-                    metric_type=type_mapping[metric_type_str],
-                    created_at=datetime.fromisoformat(
-                        sample.get("timestamp", datetime.now(UTC).isoformat())
-                    ),
-                    biometric_data=biometric_data,
-                    device_id=sample.get("source", "unknown"),
-                    raw_data={"original_sample": sample},
-                    metadata={
-                        "user_id": health_data.get("user_id", "unknown"),
-                        "confidence_score": sample.get("confidence", 1.0),
-                    },
-                )
-                metrics.append(metric)
-
-    # Process category samples (sleep, activity)
     if "category_samples" in health_data:
-        for sample in health_data["category_samples"]:
-            category_type = sample.get("type", "").lower()
+        category_metrics = _process_category_samples(health_data)
+        metrics.extend(category_metrics)
 
-            if "sleep" in category_type:
-                start_time = datetime.fromisoformat(
-                    sample.get("start_timestamp", datetime.now(UTC).isoformat())
-                )
-                end_time = datetime.fromisoformat(
-                    sample.get(
-                        "end_timestamp", (start_time + timedelta(hours=8)).isoformat()
-                    )
-                )
-                sleep_data = SleepData(
-                    total_sleep_minutes=int(
-                        sample.get("duration", 480)
-                    ),  # Duration in minutes
-                    sleep_efficiency=sample.get("efficiency", 0.85),
-                    time_to_sleep_minutes=sample.get("onset_latency", 15),
-                    wake_count=sample.get("wake_count", 2),
-                    sleep_stages=sample.get(
-                        "sleep_stages"
-                    ),  # Optional sleep stages data
-                    sleep_start=start_time,
-                    sleep_end=end_time,
-                )
-
-                metric = HealthMetric(
-                    metric_type=HealthMetricType.SLEEP_ANALYSIS,
-                    created_at=datetime.fromisoformat(
-                        sample.get("timestamp", datetime.now(UTC).isoformat())
-                    ),
-                    sleep_data=sleep_data,
-                    device_id=sample.get("source", "unknown"),
-                    raw_data={"original_sample": sample},
-                    metadata={"user_id": health_data.get("user_id", "unknown")},
-                )
-                metrics.append(metric)
-
-    # Process workouts/activity data
     if "workouts" in health_data:
-        for workout in health_data["workouts"]:
-            activity_data = ActivityData(
-                steps=workout.get("steps", 0),
-                distance=workout.get("distance", 0) / 1000,  # Convert m to km
-                active_energy=workout.get("active_energy", 0),
-                exercise_minutes=workout.get("duration", 0) / 60,  # Convert to minutes
-                vo2_max=workout.get("vo2_max"),
-                active_minutes=workout.get("active_minutes"),
-                flights_climbed=workout.get("flights_climbed"),
-                resting_heart_rate=workout.get("resting_heart_rate"),
-            )
+        workout_metrics = _process_workout_data(health_data)
+        metrics.extend(workout_metrics)
+
+    logger.info("Converted %d raw data points to HealthMetric objects", len(metrics))
+    return metrics
+
+
+def _get_healthkit_type_mapping() -> dict[str, HealthMetricType]:
+    """Get mapping of HealthKit types to HealthMetricType enum."""
+    return {
+        "heartrate": HealthMetricType.HEART_RATE,
+        "heart_rate": HealthMetricType.HEART_RATE,
+        "heartratevariabilitysdnn": HealthMetricType.HEART_RATE_VARIABILITY,
+        "respiratoryrate": HealthMetricType.HEART_RATE,  # Map to existing type
+        "respiratory_rate": HealthMetricType.HEART_RATE,  # Map to existing type
+        "oxygensaturation": HealthMetricType.ENVIRONMENTAL,  # Map to existing type
+        "bloodpressuresystolic": HealthMetricType.BLOOD_PRESSURE,
+        "bloodpressurediastolic": HealthMetricType.BLOOD_PRESSURE,
+    }
+
+
+def _process_quantity_samples(health_data: dict[str, Any]) -> list[HealthMetric]:
+    """Process quantity samples (heart rate, respiratory rate, etc.)."""
+    metrics = []
+    type_mapping = _get_healthkit_type_mapping()
+
+    for sample in health_data["quantity_samples"]:
+        metric_type_str = sample.get("type", "").lower()
+
+        if metric_type_str in type_mapping:
+            biometric_data = _create_biometric_data_from_sample(sample, metric_type_str)
 
             metric = HealthMetric(
-                metric_type=HealthMetricType.ACTIVITY_LEVEL,
+                metric_type=type_mapping[metric_type_str],
                 created_at=datetime.fromisoformat(
-                    workout.get("timestamp", datetime.now(UTC).isoformat())
+                    sample.get("timestamp", datetime.now(UTC).isoformat())
                 ),
-                activity_data=activity_data,
-                device_id=workout.get("source", "unknown"),
-                raw_data={"original_workout": workout},
+                biometric_data=biometric_data,
+                device_id=sample.get("source", "unknown"),
+                raw_data={"original_sample": sample},
                 metadata={
                     "user_id": health_data.get("user_id", "unknown"),
-                    "activity_type": workout.get("type", "unknown"),
+                    "confidence_score": sample.get("confidence", 1.0),
                 },
             )
             metrics.append(metric)
 
-    logger.info("Converted %d raw data points to HealthMetric objects", len(metrics))
+    return metrics
+
+
+def _create_biometric_data_from_sample(sample: dict[str, Any], metric_type_str: str) -> BiometricData:
+    """Create BiometricData object from a quantity sample."""
+    biometric_data_kwargs = {}
+
+    if metric_type_str in {"heartrate", "heart_rate"}:
+        biometric_data_kwargs["heart_rate"] = float(sample.get("value", 0))
+    elif metric_type_str == "heartratevariabilitysdnn":
+        biometric_data_kwargs["heart_rate_variability"] = float(sample.get("value", 0))
+    elif metric_type_str in {"respiratoryrate", "respiratory_rate"}:
+        biometric_data_kwargs["respiratory_rate"] = float(sample.get("value", 0))
+    elif metric_type_str == "oxygensaturation":
+        biometric_data_kwargs["oxygen_saturation"] = float(sample.get("value", 0))
+    elif metric_type_str in {"bloodpressuresystolic", "bloodpressurediastolic"}:
+        biometric_data_kwargs["blood_pressure_systolic"] = sample.get("systolic")
+        biometric_data_kwargs["blood_pressure_diastolic"] = sample.get("diastolic")
+
+    return BiometricData(**biometric_data_kwargs)
+
+
+def _process_category_samples(health_data: dict[str, Any]) -> list[HealthMetric]:
+    """Process category samples (sleep, activity)."""
+    metrics = []
+
+    for sample in health_data["category_samples"]:
+        category_type = sample.get("type", "").lower()
+
+        if "sleep" in category_type:
+            sleep_metric = _create_sleep_metric_from_sample(sample, health_data)
+            metrics.append(sleep_metric)
+
+    return metrics
+
+
+def _create_sleep_metric_from_sample(sample: dict[str, Any], health_data: dict[str, Any]) -> HealthMetric:
+    """Create a sleep HealthMetric from a category sample."""
+    start_time = datetime.fromisoformat(
+        sample.get("start_timestamp", datetime.now(UTC).isoformat())
+    )
+    end_time = datetime.fromisoformat(
+        sample.get(
+            "end_timestamp", (start_time + timedelta(hours=8)).isoformat()
+        )
+    )
+
+    sleep_data = SleepData(
+        total_sleep_minutes=int(sample.get("duration", 480)),  # Duration in minutes
+        sleep_efficiency=sample.get("efficiency", 0.85),
+        time_to_sleep_minutes=sample.get("onset_latency", 15),
+        wake_count=sample.get("wake_count", 2),
+        sleep_stages=sample.get("sleep_stages"),  # Optional sleep stages data
+        sleep_start=start_time,
+        sleep_end=end_time,
+    )
+
+    return HealthMetric(
+        metric_type=HealthMetricType.SLEEP_ANALYSIS,
+        created_at=datetime.fromisoformat(
+            sample.get("timestamp", datetime.now(UTC).isoformat())
+        ),
+        sleep_data=sleep_data,
+        device_id=sample.get("source", "unknown"),
+        raw_data={"original_sample": sample},
+        metadata={"user_id": health_data.get("user_id", "unknown")},
+    )
+
+
+def _process_workout_data(health_data: dict[str, Any]) -> list[HealthMetric]:
+    """Process workouts/activity data."""
+    metrics = []
+
+    for workout in health_data["workouts"]:
+        activity_data = ActivityData(
+            steps=workout.get("steps", 0),
+            distance=workout.get("distance", 0) / 1000,  # Convert m to km
+            active_energy=workout.get("active_energy", 0),
+            exercise_minutes=workout.get("duration", 0) / 60,  # Convert to minutes
+            vo2_max=workout.get("vo2_max"),
+            active_minutes=workout.get("active_minutes"),
+            flights_climbed=workout.get("flights_climbed"),
+            resting_heart_rate=workout.get("resting_heart_rate"),
+        )
+
+        metric = HealthMetric(
+            metric_type=HealthMetricType.ACTIVITY_LEVEL,
+            created_at=datetime.fromisoformat(
+                workout.get("timestamp", datetime.now(UTC).isoformat())
+            ),
+            activity_data=activity_data,
+            device_id=workout.get("source", "unknown"),
+            raw_data={"original_workout": workout},
+            metadata={
+                "user_id": health_data.get("user_id", "unknown"),
+                "activity_type": workout.get("type", "unknown"),
+            },
+        )
+        metrics.append(metric)
+
     return metrics

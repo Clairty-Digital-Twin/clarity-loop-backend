@@ -36,15 +36,8 @@ RUN pip install --upgrade pip setuptools wheel
 COPY src/ ./src/
 COPY main.py ./
 
-# Install dependencies (without installing the package itself)
-RUN pip install -e . --no-deps && pip install -r <(python -c "
-import tomllib
-with open('pyproject.toml', 'rb') as f:
-    data = tomllib.load(f)
-    deps = data['project']['dependencies']
-    for dep in deps:
-        print(dep)
-")
+# Install dependencies - simplified approach
+RUN pip install -e .
 
 # Change ownership to non-root user
 RUN chown -R clarity:clarity /app

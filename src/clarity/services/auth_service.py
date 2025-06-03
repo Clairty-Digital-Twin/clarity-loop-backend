@@ -12,7 +12,7 @@ import uuid
 
 from firebase_admin import auth  # type: ignore[import-untyped]
 
-from clarity.core.interfaces import IAuthProvider
+from clarity.ports.auth_ports import IAuthProvider
 from clarity.models.auth import (
     AuthProvider,
     LoginResponse,

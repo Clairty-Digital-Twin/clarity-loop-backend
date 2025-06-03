@@ -145,7 +145,7 @@ class CloudStoragePort(ABC):
     """
 
     @abstractmethod
-    def bucket(self, bucket_name: str) -> Any:
+    def bucket(self, bucket_name: str) -> object:
         """Get a bucket reference.
 
         Args:

@@ -8,15 +8,15 @@ This module provides optimization features including:
 """
 
 import asyncio
+from datetime import UTC, datetime, timedelta
 import hashlib
 import logging
-import time
-from datetime import UTC, datetime, timedelta
 from pathlib import Path
+import time
 from typing import Any
 
 import torch
-import torch.nn.utils.prune as prune
+from torch.nn.utils import prune
 
 from clarity.ml.pat_service import ActigraphyAnalysis, ActigraphyInput, PATModelService
 from clarity.ml.preprocessing import ActigraphyDataPoint

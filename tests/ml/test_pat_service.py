@@ -164,15 +164,37 @@ class TestPATModelServiceLoading:
         service = PATModelService(model_size="medium")
 
         with patch('pathlib.Path.exists', return_value=True):
-            # Mock h5py without actually importing it
+            # Create a more realistic h5py mock
             mock_h5py = MagicMock()
             mock_file = MagicMock()
+            
+            # Set up context manager behavior
             mock_h5py.File.return_value.__enter__.return_value = mock_file
-            mock_file.keys.return_value = ['input_layer', 'dense_layer']
-            mock_file.__getitem__.side_effect = {
-                'input_layer': {'weight': np.ones((1, 256)), 'bias': np.ones(256)},
-                'dense_layer': {'weight': np.ones((256, 8)), 'bias': np.ones(8)}
-            }.__getitem__
+            mock_h5py.File.return_value.__exit__.return_value = None
+            
+            # Mock keys() to return a simple list (not a KeysView)
+            mock_file.keys.return_value = ['inputs', 'dense']
+            
+            # Mock nested access for weight groups
+            mock_inputs = MagicMock()
+            mock_inputs.__contains__ = lambda x: x in ['kernel:0', 'bias:0']
+            mock_inputs.__getitem__ = lambda x: {
+                'kernel:0': np.ones((1, 256)),
+                'bias:0': np.ones(256)
+            }[x]
+            
+            mock_dense = MagicMock()
+            mock_dense.__contains__ = lambda x: x in ['kernel:0', 'bias:0']
+            mock_dense.__getitem__ = lambda x: {
+                'kernel:0': np.ones((256, 4)),
+                'bias:0': np.ones(4)
+            }[x]
+            
+            mock_file.__getitem__ = lambda x: {
+                'inputs': mock_inputs,
+                'dense': mock_dense
+            }[x]
+            mock_file.__contains__ = lambda x: x in ['inputs', 'dense']
 
             with patch.dict('sys.modules', {'h5py': mock_h5py}):
                 await service.load_model()

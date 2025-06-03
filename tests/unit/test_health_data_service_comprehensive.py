@@ -167,9 +167,7 @@ class MockHealthDataRepository(IHealthDataRepository):
 
         # Filter data for user
         user_data = {
-            k: v
-            for k, v in self.saved_data.items()
-            if v.get("user_id") == user_id
+            k: v for k, v in self.saved_data.items() if v.get("user_id") == user_id
         }
 
         # Apply additional filters if provided

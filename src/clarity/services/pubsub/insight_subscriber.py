@@ -346,7 +346,7 @@ class InsightSubscriber:
             }
 
         except Exception as e:
-            self.logger.exception("Error processing insight request message: %s", e)
+            self.logger.exception("Error processing insight request message")
             raise HTTPException(
                 status_code=500, detail=f"Insight generation failed: {e!s}"
             )
@@ -374,7 +374,7 @@ class InsightSubscriber:
             return message_data
 
         except Exception as e:
-            self.logger.exception("Failed to extract message data: %s", e)
+            self.logger.exception("Failed to extract message data")
             raise HTTPException(
                 status_code=400, detail=f"Invalid message format: {e!s}"
             )

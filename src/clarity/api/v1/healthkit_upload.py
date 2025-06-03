@@ -5,8 +5,9 @@ and asynchronous processing via Pub/Sub.
 """
 
 from datetime import datetime
+import logging
 import os
-from typing import Any
+from typing import Any, NoReturn
 import uuid
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -17,9 +18,19 @@ from pydantic import BaseModel, Field
 from clarity.auth.firebase_service import verify_firebase_token
 from clarity.services.pubsub.publisher import get_publisher
 
+# Configure logger
+logger = logging.getLogger(__name__)
+
 # Configure router
 router = APIRouter(prefix="/api/v1/healthkit", tags=["HealthKit"])
-auth_scheme = HTTPBearer()
+
+# Create auth scheme instance
+_auth_scheme = HTTPBearer()
+
+
+def get_auth_scheme() -> HTTPBearer:
+    """Get authentication scheme."""
+    return _auth_scheme
 
 
 class HealthKitSample(BaseModel):
@@ -64,7 +75,7 @@ class HealthKitUploadResponse(BaseModel):
     status_code=status.HTTP_202_ACCEPTED,
 )
 async def upload_healthkit_data(
-    request: HealthKitUploadRequest, token: HTTPBearer = Depends(auth_scheme)
+    request: HealthKitUploadRequest, token: HTTPBearer = Depends(get_auth_scheme)
 ) -> HealthKitUploadResponse:
     """Upload HealthKit data for asynchronous processing.
 

@@ -56,7 +56,7 @@ class TestLogExecutionDecorator:
         assert result == 50
         assert "Executing" in caplog.text
         assert "args=(5,)" in caplog.text
-        assert "result=50" in caplog.text
+        assert "-> 50" in caplog.text
 
     @staticmethod
     def test_log_execution_sync_function_with_exception(
@@ -74,7 +74,7 @@ class TestLogExecutionDecorator:
                 test_func()
 
         assert "Executing" in caplog.text
-        assert "Failed" in caplog.text
+        assert "Error in" in caplog.text
 
     @staticmethod
     async def test_log_execution_async_function_default_params(
@@ -129,7 +129,7 @@ class TestLogExecutionDecorator:
                 await test_func()
 
         assert "Executing" in caplog.text
-        assert "Failed" in caplog.text
+        assert "Error in" in caplog.text
 
     @staticmethod
     def test_log_execution_custom_log_level(caplog: pytest.LogCaptureFixture) -> None:

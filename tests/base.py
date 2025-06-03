@@ -131,8 +131,9 @@ class BaseServiceTestCase(BaseTestCase):
 
         return service_class(**dependencies)
 
+    @staticmethod
     def assert_service_call_successful(
-        self, result: Any
+        result: object
     ) -> None:
         """Assert that a service call was successful.
 

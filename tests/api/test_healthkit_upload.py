@@ -237,7 +237,7 @@ class TestUploadStatusEndpoint:
         )
 
     @pytest.mark.asyncio
-    async def test_get_upload_status_success(
+    async def test_get_upload_status_success(  # noqa: PLR6301
         self, mock_user: UserContext
     ) -> None:
         """Test successful upload status retrieval."""

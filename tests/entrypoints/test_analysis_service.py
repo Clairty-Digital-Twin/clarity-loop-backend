@@ -34,7 +34,7 @@ class TestAnalysisService:
         assert len(app.routes) > 0, "Analysis app should be mounted"
 
     @patch("clarity.entrypoints.analysis_service.uvicorn.run")
-    def test_main_function_with_defaults(
+    def test_main_function_with_defaults(  # noqa: PLR6301
         self, mock_uvicorn_run: Mock
     ) -> None:
         """Test main function with default environment variables."""
@@ -50,12 +50,12 @@ class TestAnalysisService:
         )
 
     @patch("clarity.entrypoints.analysis_service.uvicorn.run")
-    def test_main_function_with_custom_env(
+    def test_main_function_with_custom_env(  # noqa: PLR6301
         self, mock_uvicorn_run: Mock
     ) -> None:
         """Test main function with custom environment variables."""
         env_vars = {
-            "HOST": "0.0.0.0",
+            "HOST": "0.0.0.0",  # noqa: S104
             "PORT": "9000",
             "ENVIRONMENT": "development",
         }

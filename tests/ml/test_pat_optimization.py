@@ -73,14 +73,13 @@ def sample_analysis_result() -> ActigraphyAnalysis:
     from datetime import UTC, datetime
     return ActigraphyAnalysis(
         user_id=str(uuid4()),
-        analysis_timestamp=datetime.now(UTC),
-        sleep_stages=["1", "2", "3", "2", "1"] * 20,  # 100 stages as strings
-        confidence_scores=[0.8, 0.9, 0.85, 0.7, 0.75] * 20,
+        analysis_timestamp=datetime.now(UTC).isoformat(),
+        sleep_stages=["wake", "light", "deep", "rem", "wake"] * 20,  # 100 stages as strings
         confidence_score=0.85,  # Overall confidence
-        sleep_efficiency=0.92,
+        sleep_efficiency=92.0,
         sleep_onset_latency=15.5,
         wake_after_sleep_onset=45.2,
-        total_sleep_time=420.0,  # minutes
+        total_sleep_time=7.0,  # hours
         circadian_rhythm_score=0.78,
         activity_fragmentation=0.23,
         depression_risk_score=0.15,
@@ -88,12 +87,6 @@ def sample_analysis_result() -> ActigraphyAnalysis:
             "Good sleep efficiency detected",
             "Normal circadian rhythm pattern"
         ],
-        analysis_metadata={
-            "model_version": "test_v1",
-            "processing_time": 1.5,
-            "data_quality": "good",
-        },
-        raw_predictions=torch.randn(100, 5),  # 100 timesteps, 5 classes
     )
 
 

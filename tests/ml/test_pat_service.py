@@ -199,12 +199,12 @@ class TestPATModelServiceLoading:
              patch.dict('sys.modules', {}, clear=False):
             # Remove h5py from sys.modules if it exists
             if 'h5py' in sys.modules:
-                    del sys.modules['h5py']
+                del sys.modules['h5py']
 
-                await service.load_model()
+            await service.load_model()
 
-                assert service.is_loaded
-                assert service.model is not None
+            assert service.is_loaded
+            assert service.model is not None
 
     @pytest.mark.asyncio
     @staticmethod

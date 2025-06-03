@@ -29,7 +29,6 @@ import logging
 from typing import Any
 import uuid
 
-
 # Import from new ports layer instead of core interfaces
 from clarity.core.decorators import (
     audit_trail,

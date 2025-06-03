@@ -845,7 +845,7 @@ class PATModelService(IMLModelService):
 
         # Run inference
         with torch.no_grad():
-            outputs = cast("dict[str, torch.Tensor]", model(input_tensor))  # type: ignore[misc]  # type: ignore[misc]
+            outputs = cast("dict[str, torch.Tensor]", model(input_tensor))  # type: ignore[misc]
 
         # Post-process outputs
         analysis = self._postprocess_predictions(outputs, input_data.user_id)

@@ -141,7 +141,7 @@ class TestHealthKitUploadEndpoint:
         token.credentials = "valid-firebase-token"
         return token
 
-    @patch("clarity.api.v1.healthkit_upload.verify_firebase_token")
+    @patch("clarity.auth.firebase_auth.verify_firebase_token")
     @patch("clarity.api.v1.healthkit_upload.storage.Client")
     @patch("clarity.api.v1.healthkit_upload.get_publisher")
     @patch("clarity.api.v1.healthkit_upload.uuid.uuid4")
@@ -185,7 +185,7 @@ class TestHealthKitUploadEndpoint:
         mock_blob.upload_from_string.assert_called_once()
         mock_publisher.publish_health_data_upload.assert_called_once()
 
-    @patch("clarity.api.v1.healthkit_upload.verify_firebase_token")
+    @patch("clarity.auth.firebase_auth.verify_firebase_token")
     @pytest.mark.asyncio
     async def test_upload_forbidden_different_user(
         self,
@@ -204,7 +204,7 @@ class TestHealthKitUploadEndpoint:
         assert exc_info.value.status_code == status.HTTP_403_FORBIDDEN
         assert "Cannot upload data for a different user" in str(exc_info.value.detail)
 
-    @patch("clarity.api.v1.healthkit_upload.verify_firebase_token")
+    @patch("clarity.auth.firebase_auth.verify_firebase_token")
     @patch("clarity.api.v1.healthkit_upload.storage.Client")
     @pytest.mark.asyncio
     async def test_upload_storage_error(
@@ -226,7 +226,7 @@ class TestHealthKitUploadEndpoint:
         assert exc_info.value.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR
         assert "Failed to process health data upload" in str(exc_info.value.detail)
 
-    @patch("clarity.api.v1.healthkit_upload.verify_firebase_token")
+    @patch("clarity.auth.firebase_auth.verify_firebase_token")
     @pytest.mark.asyncio
     async def test_upload_authentication_error(
         self,
@@ -259,7 +259,7 @@ class TestUploadStatusEndpoint:
         token.credentials = "valid-firebase-token"
         return token
 
-    @patch("clarity.api.v1.healthkit_upload.verify_firebase_token")
+    @patch("clarity.auth.firebase_auth.verify_firebase_token")
     @pytest.mark.asyncio
     async def test_get_upload_status_success(
         self, mock_verify_token: AsyncMock, mock_token: HTTPBearer
@@ -279,7 +279,7 @@ class TestUploadStatusEndpoint:
         assert "message" in result
         assert "last_updated" in result
 
-    @patch("clarity.api.v1.healthkit_upload.verify_firebase_token")
+    @patch("clarity.auth.firebase_auth.verify_firebase_token")
     @pytest.mark.asyncio
     async def test_get_upload_status_forbidden(
         self, mock_verify_token: AsyncMock, mock_token: HTTPBearer
@@ -322,7 +322,7 @@ class TestHealthKitUploadIntegration:
         assert "/upload" in routes
         assert "/status/{upload_id}" in routes
 
-    @patch("clarity.api.v1.healthkit_upload.verify_firebase_token")
+    @patch("clarity.auth.firebase_auth.verify_firebase_token")
     def test_router_with_test_client(self, mock_verify_token: Mock) -> None:
         """Test router with FastAPI test client."""
         from fastapi import FastAPI

@@ -15,7 +15,7 @@ from fastapi.security import HTTPBearer
 from google.cloud import storage
 from pydantic import BaseModel, Field
 
-from clarity.auth.firebase_service import verify_firebase_token
+from clarity.auth.firebase_auth import verify_firebase_token
 from clarity.services.pubsub.publisher import get_publisher
 
 # Configure logger

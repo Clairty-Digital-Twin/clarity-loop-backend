@@ -199,12 +199,10 @@ class TestDecoratorsBasic:
         def retry_decorator(max_attempts: int = 3) -> Callable[[F], F]:
             def decorator(func: F) -> F:
                 def wrapper(*args: Any, **kwargs: Any) -> Any:  # noqa: ANN401
-                    last_exception = None
                     for attempt in range(max_attempts):
                         try:
                             return func(*args, **kwargs)
-                        except Exception as e:  # noqa: BLE001
-                            last_exception = e
+                        except Exception:  # noqa: BLE001
                             if attempt == max_attempts - 1:
                                 break
                     return f"failed_after_{max_attempts}_attempts"

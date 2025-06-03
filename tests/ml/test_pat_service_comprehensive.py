@@ -5,9 +5,8 @@ including model loading, weight conversion, inference, and clinical analysis.
 """
 
 import asyncio
-from datetime import UTC, datetime, timedelta
 import logging
-from typing import List
+from datetime import UTC, datetime, timedelta
 
 import numpy as np
 import pytest
@@ -432,7 +431,7 @@ class TestPATIntegration:
         assert analysis.confidence_score > 0
 
         # Check timestamp format
-        parsed_time = datetime.fromisoformat(analysis.analysis_timestamp.rstrip('Z') + '+00:00')
+        parsed_time = datetime.fromisoformat(analysis.analysis_timestamp.replace('Z', '+00:00'))
         assert isinstance(parsed_time, datetime)
 
     @staticmethod

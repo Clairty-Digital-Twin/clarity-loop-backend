@@ -745,8 +745,8 @@ def _create_biometric_data_from_sample(
     elif metric_type_str == "oxygensaturation":
         biometric_data_kwargs["oxygen_saturation"] = float(sample.get("value", 0))
     elif metric_type_str in {"bloodpressuresystolic", "bloodpressurediastolic"}:
-        biometric_data_kwargs["blood_pressure_systolic"] = sample.get("systolic")
-        biometric_data_kwargs["blood_pressure_diastolic"] = sample.get("diastolic")
+        biometric_data_kwargs["blood_pressure_systolic"] = sample.get("systolic")  # type: ignore[assignment]
+        biometric_data_kwargs["blood_pressure_diastolic"] = sample.get("diastolic")  # type: ignore[assignment]
 
     return BiometricData(**biometric_data_kwargs)
 

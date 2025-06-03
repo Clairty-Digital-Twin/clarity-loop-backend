@@ -47,6 +47,8 @@ class TestHealthMetricEntity:
             blood_pressure_diastolic=None,
             respiratory_rate=None,
             body_temperature=None,
+            oxygen_saturation=None,
+            blood_glucose=None,
         )
 
         # When: Creating health metric entity
@@ -78,6 +80,8 @@ class TestHealthMetricEntity:
                 blood_pressure_diastolic=None,
                 respiratory_rate=None,
                 body_temperature=None,
+                oxygen_saturation=None,
+                blood_glucose=None,
             )
             health_metric = HealthMetric(
                 metric_type=HealthMetricType.HEART_RATE,
@@ -103,6 +107,8 @@ class TestHealthMetricEntity:
                     blood_pressure_diastolic=None,
                     respiratory_rate=None,
                     body_temperature=None,
+                    oxygen_saturation=None,
+                    blood_glucose=None,
                 )
 
     @staticmethod
@@ -118,6 +124,8 @@ class TestHealthMetricEntity:
                 exercise_minutes=None,
                 flights_climbed=None,
                 vo2_max=None,
+                active_minutes=None,
+                resting_heart_rate=None,
             )
             health_metric = HealthMetric(
                 metric_type=HealthMetricType.ACTIVITY_LEVEL,
@@ -142,6 +150,8 @@ class TestHealthMetricEntity:
                     exercise_minutes=None,
                     flights_climbed=None,
                     vo2_max=None,
+                    active_minutes=None,
+                    resting_heart_rate=None,
                 )
 
     @staticmethod
@@ -154,6 +164,8 @@ class TestHealthMetricEntity:
             blood_pressure_diastolic=None,
             respiratory_rate=None,
             body_temperature=None,
+            oxygen_saturation=None,
+            blood_glucose=None,
         )
 
         health_metric = HealthMetric(
@@ -179,6 +191,8 @@ class TestHealthMetricEntity:
             blood_pressure_diastolic=None,
             respiratory_rate=None,
             body_temperature=None,
+            oxygen_saturation=None,
+            blood_glucose=None,
         )
 
         # Heart rate metric must have biometric data
@@ -216,6 +230,8 @@ class TestBiometricDataEntity:
             blood_pressure_diastolic=80,
             respiratory_rate=16,
             body_temperature=36.5,
+            oxygen_saturation=None,
+            blood_glucose=None,
         )
 
         # Then: Biometric should have correct properties
@@ -245,6 +261,8 @@ class TestBiometricDataEntity:
                 blood_pressure_diastolic=diastolic,
                 respiratory_rate=None,
                 body_temperature=None,
+                oxygen_saturation=None,
+                blood_glucose=None,
             )
             assert biometric.blood_pressure_systolic == systolic
             assert biometric.blood_pressure_diastolic == diastolic
@@ -264,6 +282,8 @@ class TestBiometricDataEntity:
                     blood_pressure_diastolic=diastolic,
                     respiratory_rate=None,
                     body_temperature=None,
+                    oxygen_saturation=None,
+                    blood_glucose=None,
                 )
 
     @staticmethod
@@ -278,12 +298,17 @@ class TestBiometricDataEntity:
             blood_pressure_diastolic=None,
             respiratory_rate=None,
             body_temperature=None,
+            oxygen_saturation=None,
+            blood_glucose=None,
         )
 
         health_metric = HealthMetric(
             metric_type=HealthMetricType.HEART_RATE,
             biometric_data=biometric,
             created_at=now,
+            device_id=None,
+            raw_data=None,
+            metadata=None,
         )
         assert health_metric.created_at == now
 
@@ -435,6 +460,8 @@ class TestHealthDataUploadBusinessRules:
             blood_pressure_diastolic=None,
             respiratory_rate=None,
             body_temperature=None,
+            oxygen_saturation=None,
+            blood_glucose=None,
         )
         metric = HealthMetric(
             metric_type=HealthMetricType.HEART_RATE,
@@ -472,6 +499,8 @@ class TestHealthDataUploadBusinessRules:
             blood_pressure_diastolic=None,
             respiratory_rate=None,
             body_temperature=None,
+            oxygen_saturation=None,
+            blood_glucose=None,
         )
 
         metric1 = HealthMetric(

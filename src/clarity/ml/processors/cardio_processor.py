@@ -6,7 +6,6 @@ Implements domain-specific preprocessing and feature extraction for cardiac heal
 
 from datetime import datetime
 import logging
-from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -121,7 +120,7 @@ class CardioProcessor:
         ).mean()
 
         # Fill remaining NaNs with forward fill
-        return hr_smoothed.fillna(method="ffill").fillna(method="bfill")
+        return hr_smoothed.ffill().bfill()
 
     def _preprocess_hrv(
         self, timestamps: list[datetime], values: list[float]
@@ -145,7 +144,7 @@ class CardioProcessor:
         hrv_interpolated = hrv_resampled.interpolate(limit=2)
 
         # Fill remaining NaNs
-        return hrv_interpolated.fillna(method="ffill").fillna(method="bfill")
+        return hrv_interpolated.ffill().bfill()
 
     def _extract_features(
         self, hr_series: pd.Series, hrv_series: pd.Series | None
@@ -203,7 +202,7 @@ class CardioProcessor:
             recovery_ratio = resting_periods / (resting_periods + elevated_periods)
             return float(np.clip(recovery_ratio, 0.0, 1.0))
 
-        except Exception:
+        except (ValueError, ZeroDivisionError, TypeError):
             return 0.5
 
     def _calculate_circadian_score(self, hr_series: pd.Series) -> float:
@@ -236,5 +235,5 @@ class CardioProcessor:
 
             return float(circadian_score)
 
-        except Exception:
+        except (ValueError, ZeroDivisionError, TypeError, KeyError):
             return 0.5

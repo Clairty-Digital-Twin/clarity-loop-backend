@@ -169,13 +169,12 @@ class HealthDataService:
                 gcs_path,
                 len(health_data.metrics),
             )
-
-            return gcs_path
-
         except Exception as e:
-            self.logger.exception("Failed to upload raw data to GCS: %s", e)
+            self.logger.exception("Failed to upload raw data to GCS")
             msg = f"GCS upload failed: {e!s}"
             raise HealthDataServiceError(msg) from e
+        else:
+            return gcs_path
 
     async def process_health_data(
         self, health_data: HealthDataUpload

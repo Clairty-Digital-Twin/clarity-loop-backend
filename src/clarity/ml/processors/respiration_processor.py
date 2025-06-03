@@ -118,20 +118,8 @@ class RespirationProcessor:
                 features.avg_spo2,
             )
 
-            # Return as list for fusion layer
-            return [
-                features.avg_respiratory_rate,
-                features.resting_respiratory_rate,
-                features.respiratory_variability,
-                features.avg_spo2,
-                features.min_spo2,
-                features.spo2_variability,
-                features.respiratory_stability_score,
-                features.oxygenation_efficiency_score,
-            ]
-
         except Exception as e:
-            self.logger.exception("Error processing respiratory data: %s", e)
+            self.logger.exception("Error processing respiratory data")
             # Return default values on error
             return [
                 DEFAULT_RR,
@@ -142,6 +130,18 @@ class RespirationProcessor:
                 DEFAULT_SPO2_VARIABILITY,
                 DEFAULT_STABILITY_SCORE,
                 DEFAULT_EFFICIENCY_SCORE,
+            ]
+        else:
+            # Return as list for fusion layer
+            return [
+                features.avg_respiratory_rate,
+                features.resting_respiratory_rate,
+                features.respiratory_variability,
+                features.avg_spo2,
+                features.min_spo2,
+                features.spo2_variability,
+                features.respiratory_stability_score,
+                features.oxygenation_efficiency_score,
             ]
 
     @staticmethod
@@ -262,7 +262,7 @@ class RespirationProcessor:
 
             return float(stability_score)
 
-        except Exception:
+        except (ValueError, ZeroDivisionError, TypeError):
             return 0.5
 
     @staticmethod
@@ -288,5 +288,5 @@ class RespirationProcessor:
 
             return float(oxygenation_score)
 
-        except Exception:
+        except (ValueError, ZeroDivisionError, TypeError):
             return 0.8

@@ -137,7 +137,7 @@ class AnalysisSubscriber:
             return message_data
 
         except Exception as e:
-            self.logger.exception("Failed to extract message data: %s", e)
+            self.logger.exception("Failed to extract message data")
             raise HTTPException(
                 status_code=400, detail=f"Invalid message format: {e!s}"
             )

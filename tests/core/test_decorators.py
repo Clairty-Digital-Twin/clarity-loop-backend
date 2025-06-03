@@ -2,7 +2,7 @@
 
 Tests cover:
 - Performance timing decorators
-- Error handling decorators  
+- Error handling decorators
 - Caching decorators
 - Authentication decorators
 - Validation decorators
@@ -98,11 +98,13 @@ class TestDecoratorsBasic:
 
         @error_handling_decorator
         def function_with_value_error() -> str:
-            raise ValueError("Test error")
+            msg = "Test error"
+            raise ValueError(msg)
 
         @error_handling_decorator
         def function_with_type_error() -> str:
-            raise TypeError("Type error")
+            msg = "Type error"
+            raise TypeError(msg)
 
         @error_handling_decorator
         def normal_function() -> str:

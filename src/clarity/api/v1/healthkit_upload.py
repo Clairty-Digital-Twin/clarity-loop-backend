@@ -11,7 +11,7 @@ from typing import Any
 import uuid
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from google.cloud import storage
+from google.cloud import storage  # type: ignore[attr-defined]
 from pydantic import BaseModel, Field
 
 from clarity.auth import UserContext

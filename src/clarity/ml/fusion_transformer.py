@@ -247,7 +247,7 @@ class HealthFusionService:
 
             if not tensor_inputs:
                 self.logger.warning("No valid modalities provided for fusion")
-                return [0.0] * self.config.output_dim
+                return [0.0] * self.config.output_dim  # type: ignore[union-attr]
 
             # Run fusion
             with torch.no_grad():
@@ -267,7 +267,7 @@ class HealthFusionService:
                 len(result),
             )
 
-            return result
+            return result  # type: ignore[no-any-return]
 
 
 class FusionServiceSingleton:

@@ -10,6 +10,7 @@ Built in 2 days with 112 days of programming experience - SHOCK THE TECH WORLD! 
 import asyncio
 from datetime import UTC, datetime
 import time
+import types
 from typing import TYPE_CHECKING, Any
 
 # Dynamic imports - packages installed at runtime if needed
@@ -63,7 +64,7 @@ class APITester:
         )
         return self
 
-    async def __aexit__(self, exc_type: type[BaseException] | None, exc_val: BaseException | None, exc_tb: object | None) -> None:
+    async def __aexit__(self, exc_type: type[BaseException] | None, exc_val: BaseException | None, exc_tb: types.TracebackType | None) -> None:
         """Async context manager exit."""
         if self.session:
             await self.session.close()
@@ -88,13 +89,13 @@ class APITester:
 
     def _print_info(self, message: str) -> None:
         """Print an info message."""
-        print(f"{Fore.BLUE}ℹ  {message}{Style.RESET_ALL}")
+        print(f"{Fore.BLUE}i  {message}{Style.RESET_ALL}")
 
     async def _make_request(
         self,
         method: str,
         endpoint: str,
-        **kwargs: Any
+        **kwargs: Any  # noqa: ANN401
     ) -> "tuple[int, dict[str, Any]]":
         """Make an HTTP request and return status code and response."""
         if not self.session:

@@ -15,6 +15,7 @@ from uuid import UUID
 
 from fastapi import HTTPException, Request
 from fastapi.responses import JSONResponse
+import pytest
 
 from clarity.core.exceptions import (
     AccessDeniedError,
@@ -868,18 +869,22 @@ class TestExceptionEdgeCases:
 
     def test_exception_chaining(self) -> None:
         """Test exception chaining preserves context."""
-        try:
+        def raise_value_error() -> None:
             msg = "Original error"
             raise ValueError(msg)
-        except ValueError as original:
-            new_error = InferenceError(
-                "Inference failed due to validation",
-                request_id="req-789"
-            )
 
-            # Test that we can chain exceptions
-            assert original is not None
-            assert isinstance(new_error, InferenceError)
+        with pytest.raises(ValueError) as exc_info:
+            raise_value_error()
+
+        original = exc_info.value
+        new_error = InferenceError(
+            "Inference failed due to validation",
+            request_id="req-789"
+        )
+
+        # Test that we can chain exceptions
+        assert original is not None
+        assert isinstance(new_error, InferenceError)
 
     def test_exception_with_complex_details(self) -> None:
         """Test exceptions with complex detail objects."""

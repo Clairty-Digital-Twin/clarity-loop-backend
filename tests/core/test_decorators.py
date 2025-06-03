@@ -359,7 +359,7 @@ class TestValidateInput:
             return "required_param" in kwargs and kwargs["required_param"] is not None
 
         @validate_input(has_required_kwargs, "Missing required_param")
-        def function_with_required_kwarg(**kwargs: dict[str, Any]) -> str:
+        def function_with_required_kwarg(**kwargs: Any) -> str:  # noqa: ANN401
             return f"processed_{kwargs['required_param']}"
 
         result = function_with_required_kwarg(required_param="test")

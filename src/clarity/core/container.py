@@ -319,13 +319,13 @@ class DependencyContainer:
             generic_exception_handler,
             problem_detail_exception_handler,
         )
-        
+
         # Register custom exception handler for ClarityAPIException
         app.add_exception_handler(ClarityAPIException, problem_detail_exception_handler)
-        
+
         # Register generic exception handler for unhandled exceptions
         app.add_exception_handler(Exception, generic_exception_handler)
-        
+
         logger.info("✅ RFC 7807 Problem Details exception handling configured")
 
     def _configure_middleware(self, app: FastAPI) -> None:

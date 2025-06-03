@@ -124,7 +124,7 @@ class CollectionPort(ABC):
         """
 
     @abstractmethod
-    def where(self, field: str, operator: str, value: Any) -> object:
+    def where(self, field: str, operator: str, value: Any) -> object:  # noqa: ANN401
         """Create a query with a filter condition.
 
         Args:

@@ -501,7 +501,7 @@ class HealthAnalysisPipeline:
 _analysis_pipeline: HealthAnalysisPipeline | None = None
 
 
-async def get_analysis_pipeline() -> HealthAnalysisPipeline:
+def get_analysis_pipeline() -> HealthAnalysisPipeline:
     """Get or create global analysis pipeline instance."""
     global _analysis_pipeline
 

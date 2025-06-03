@@ -275,21 +275,29 @@ class TestFirestoreClientDocumentOperations:
         mock_doc_ref.set.assert_called_once()
 
     @staticmethod
-    async def test_create_document_auto_id(firestore_client: FirestoreClient, mock_firestore_client: AsyncMock) -> None:
+    async def test_create_document_auto_id(firestore_client: FirestoreClient) -> None:
         """Test document creation with auto-generated ID."""
-        mock_doc_ref = Mock()
+        # Mock the database client and document reference chain
+        mock_doc_ref = AsyncMock()
         mock_doc_ref.id = "auto_id_123"
-        mock_firestore_client.collection.return_value.document.return_value = mock_doc_ref
+        mock_doc_ref.set = AsyncMock()
 
-        firestore_client._db = mock_firestore_client
+        mock_collection = Mock()
+        mock_collection.document.return_value = mock_doc_ref
 
-        with patch.object(firestore_client, "_audit_log", new_callable=AsyncMock):
+        mock_db = AsyncMock()
+        mock_db.collection.return_value = mock_collection
+
+        # Patch the _get_db method to return our mock
+        with patch.object(firestore_client, "_get_db", return_value=mock_db), \
+             patch.object(firestore_client, "_audit_log", new_callable=AsyncMock):
             result = await firestore_client.create_document(
                 collection="test_collection",
                 data={"name": "test"},
             )
 
         assert result == "auto_id_123"
+        mock_doc_ref.set.assert_called_once()
 
     @staticmethod
     async def test_create_document_validation_error(firestore_client: FirestoreClient) -> None:
@@ -302,18 +310,28 @@ class TestFirestoreClientDocumentOperations:
             )
 
     @staticmethod
-    async def test_get_document_success(firestore_client: FirestoreClient, mock_firestore_client: AsyncMock) -> None:
+    async def test_get_document_success(firestore_client: FirestoreClient) -> None:
         """Test successful document retrieval."""
-        mock_doc = Mock()
-        mock_doc.exists = True
-        mock_doc.to_dict.return_value = {"name": "test", "value": 123}
-        mock_firestore_client.collection.return_value.document.return_value.get.return_value = mock_doc
+        # Mock the database client and document reference chain
+        mock_doc_snapshot = Mock()
+        mock_doc_snapshot.exists = True
+        mock_doc_snapshot.to_dict.return_value = {"name": "test", "value": 123}
+        
+        mock_doc_ref = AsyncMock()
+        mock_doc_ref.get.return_value = mock_doc_snapshot
 
-        firestore_client._db = mock_firestore_client
+        mock_collection = Mock()
+        mock_collection.document.return_value = mock_doc_ref
 
-        result = await firestore_client.get_document("test_collection", "doc123")
+        mock_db = AsyncMock()
+        mock_db.collection.return_value = mock_collection
+
+        # Patch the _get_db method to return our mock
+        with patch.object(firestore_client, "_get_db", return_value=mock_db):
+            result = await firestore_client.get_document("test_collection", "doc123")
 
         assert result == {"name": "test", "value": 123}
+        mock_doc_ref.get.assert_called_once()
 
     @staticmethod
     async def test_get_document_not_found(firestore_client: FirestoreClient, mock_firestore_client: AsyncMock) -> None:

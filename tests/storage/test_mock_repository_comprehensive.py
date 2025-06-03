@@ -5,6 +5,7 @@ Split into focused test classes to avoid PLR0904 (too many public methods).
 """
 
 from datetime import UTC, datetime, timedelta
+from typing import TYPE_CHECKING
 from uuid import uuid4
 
 from _pytest.monkeypatch import MonkeyPatch
@@ -21,17 +22,22 @@ from clarity.models.health_data import (
 )
 from clarity.storage.mock_repository import MockHealthDataRepository
 
+if TYPE_CHECKING:
+    from clarity.storage.mock_repository import MockHealthDataRepository
+
 
 class TestMockHealthDataRepositoryBasics:
     """Basic functionality tests for MockHealthDataRepository."""
 
     @pytest.fixture
-    async def repository(self) -> MockHealthDataRepository:
+    @staticmethod
+    async def repository() -> MockHealthDataRepository:
         """Create fresh repository instance for each test."""
         return MockHealthDataRepository()
 
     @pytest.fixture
-    def sample_metrics(self) -> list[HealthMetric]:
+    @staticmethod
+    def sample_metrics() -> list[HealthMetric]:
         """Create sample health metrics for testing."""
         now = datetime.now(UTC)
         sleep_start = now.replace(hour=22, minute=0, second=0)
@@ -115,22 +121,26 @@ class TestMockHealthDataRepositoryBasics:
 
         return [biometric_metric, sleep_metric, activity_metric, mental_metric]
 
-    async def test_initialization(self, repository: MockHealthDataRepository) -> None:
+    @staticmethod
+    async def test_initialization(repository: MockHealthDataRepository) -> None:
         """Test repository initialization."""
         assert repository._health_data == {}
         assert repository._processing_status == {}
 
-    async def test_initialize_method(self, repository: MockHealthDataRepository) -> None:
+    @staticmethod
+    async def test_initialize_method(repository: MockHealthDataRepository) -> None:
         """Test initialize method."""
         await repository.initialize()
         # Should complete without error
 
-    async def test_cleanup_method(self, repository: MockHealthDataRepository) -> None:
+    @staticmethod
+    async def test_cleanup_method(repository: MockHealthDataRepository) -> None:
         """Test cleanup method."""
         await repository.cleanup()
         # Should complete without error
 
-    async def test_save_data_generic(self, repository: MockHealthDataRepository) -> None:
+    @staticmethod
+    async def test_save_data_generic(repository: MockHealthDataRepository) -> None:
         """Test generic save_data method."""
         user_id = "user_123"
         data = {"test": "data", "value": 42}
@@ -139,7 +149,8 @@ class TestMockHealthDataRepositoryBasics:
         assert isinstance(doc_id, str)
         assert len(doc_id) > 0
 
-    async def test_get_data_generic(self, repository: MockHealthDataRepository) -> None:
+    @staticmethod
+    async def test_get_data_generic(repository: MockHealthDataRepository) -> None:
         """Test generic get_data method."""
         user_id = "user_123"
 
@@ -155,12 +166,14 @@ class TestMockHealthDataRepositorySaving:
     """Tests for health data saving functionality."""
 
     @pytest.fixture
-    async def repository(self) -> MockHealthDataRepository:
+    @staticmethod
+    async def repository() -> MockHealthDataRepository:
         """Create fresh repository instance for each test."""
         return MockHealthDataRepository()
 
     @pytest.fixture
-    def sample_metrics(self) -> list[HealthMetric]:
+    @staticmethod
+    def sample_metrics() -> list[HealthMetric]:
         """Create sample health metrics for testing."""
         now = datetime.now(UTC)
         sleep_start = now.replace(hour=22, minute=0, second=0)
@@ -239,7 +252,8 @@ class TestMockHealthDataRepositorySaving:
 
         return [biometric_metric, sleep_metric, activity_metric, mental_metric]
 
-    async def test_save_health_data_success(self, repository: MockHealthDataRepository, sample_metrics: list[HealthMetric]) -> None:
+    @staticmethod
+    async def test_save_health_data_success(repository: MockHealthDataRepository, sample_metrics: list[HealthMetric]) -> None:
         """Test successful health data saving."""
         user_id = "user_123"
         processing_id = str(uuid4())
@@ -266,7 +280,8 @@ class TestMockHealthDataRepositorySaving:
         assert status["status"] == "completed"
         assert status["metrics_count"] == 4
 
-    async def test_save_health_data_multiple_uploads(self, repository: MockHealthDataRepository, sample_metrics: list[HealthMetric]) -> None:
+    @staticmethod
+    async def test_save_health_data_multiple_uploads(repository: MockHealthDataRepository, sample_metrics: list[HealthMetric]) -> None:
         """Test multiple uploads for same user."""
         user_id = "user_123"
 
@@ -294,7 +309,8 @@ class TestMockHealthDataRepositorySaving:
         assert processing_id_1 in repository._processing_status
         assert processing_id_2 in repository._processing_status
 
-    async def test_metric_serialization_all_types(self, repository: MockHealthDataRepository) -> None:
+    @staticmethod
+    async def test_metric_serialization_all_types(repository: MockHealthDataRepository) -> None:
         """Test that all metric types are properly serialized."""
         user_id = "user_123"
         processing_id = str(uuid4())
@@ -333,7 +349,8 @@ class TestMockHealthDataRepositorySaving:
         assert "biometric_data" in metric_data
         assert metric_data["biometric_data"]["heart_rate"] == 75.0
 
-    async def test_error_handling_in_save(self, repository: MockHealthDataRepository, monkeypatch: MonkeyPatch) -> None:
+    @staticmethod
+    async def test_error_handling_in_save(repository: MockHealthDataRepository, monkeypatch: MonkeyPatch) -> None:
         """Test error handling during save operation."""
         # Mock an exception during metric processing
         def mock_model_dump(*_args: object, **_kwargs: object) -> None:
@@ -382,12 +399,14 @@ class TestMockHealthDataRepositoryRetrieval:
     """Tests for health data retrieval functionality."""
 
     @pytest.fixture
-    async def repository(self) -> MockHealthDataRepository:
+    @staticmethod
+    async def repository() -> MockHealthDataRepository:
         """Create fresh repository instance for each test."""
         return MockHealthDataRepository()
 
     @pytest.fixture
-    def sample_metrics(self) -> list[HealthMetric]:
+    @staticmethod
+    def sample_metrics() -> list[HealthMetric]:
         """Create sample health metrics for testing."""
         now = datetime.now(UTC)
         sleep_start = now.replace(hour=22, minute=0, second=0)
@@ -466,7 +485,8 @@ class TestMockHealthDataRepositoryRetrieval:
 
         return [biometric_metric, sleep_metric, activity_metric, mental_metric]
 
-    async def test_get_user_health_data_empty(self, repository: MockHealthDataRepository) -> None:
+    @staticmethod
+    async def test_get_user_health_data_empty(repository: MockHealthDataRepository) -> None:
         """Test getting data for non-existent user."""
         result = await repository.get_user_health_data("non_existent_user")
 
@@ -474,7 +494,8 @@ class TestMockHealthDataRepositoryRetrieval:
         assert result["total_count"] == 0
         assert result["page_info"]["has_more"] is False
 
-    async def test_get_user_health_data_with_data(self, repository: MockHealthDataRepository, sample_metrics: list[HealthMetric]) -> None:
+    @staticmethod
+    async def test_get_user_health_data_with_data(repository: MockHealthDataRepository, sample_metrics: list[HealthMetric]) -> None:
         """Test getting user health data with existing data."""
         user_id = "user_123"
         processing_id = str(uuid4())
@@ -493,7 +514,8 @@ class TestMockHealthDataRepositoryRetrieval:
         assert result["total_count"] == 4
         assert result["page_info"]["has_more"] is False
 
-    async def test_get_user_health_data_pagination(self, repository: MockHealthDataRepository, sample_metrics: list[HealthMetric]) -> None:
+    @staticmethod
+    async def test_get_user_health_data_pagination(repository: MockHealthDataRepository, sample_metrics: list[HealthMetric]) -> None:
         """Test pagination functionality."""
         user_id = "user_123"
         processing_id = str(uuid4())
@@ -517,7 +539,8 @@ class TestMockHealthDataRepositoryRetrieval:
         assert len(result["data"]) == 2
         assert result["page_info"]["has_more"] is False
 
-    async def test_get_user_health_data_metric_type_filter(self, repository: MockHealthDataRepository, sample_metrics: list[HealthMetric]) -> None:
+    @staticmethod
+    async def test_get_user_health_data_metric_type_filter(repository: MockHealthDataRepository, sample_metrics: list[HealthMetric]) -> None:
         """Test filtering by metric type."""
         user_id = "user_123"
         processing_id = str(uuid4())
@@ -534,7 +557,8 @@ class TestMockHealthDataRepositoryRetrieval:
         assert len(result["data"]) == 1
         assert result["data"][0]["metric_type"] == "heart_rate"
 
-    async def test_get_user_health_data_date_filters(self, repository: MockHealthDataRepository, sample_metrics: list[HealthMetric]) -> None:
+    @staticmethod
+    async def test_get_user_health_data_date_filters(repository: MockHealthDataRepository, sample_metrics: list[HealthMetric]) -> None:
         """Test date range filtering."""
         user_id = "user_123"
         processing_id = str(uuid4())
@@ -563,12 +587,14 @@ class TestMockHealthDataRepositoryProcessingAndDeletion:
     """Tests for processing status and deletion functionality."""
 
     @pytest.fixture
-    async def repository(self) -> MockHealthDataRepository:
+    @staticmethod
+    async def repository() -> MockHealthDataRepository:
         """Create fresh repository instance for each test."""
         return MockHealthDataRepository()
 
     @pytest.fixture
-    def sample_metrics(self) -> list[HealthMetric]:
+    @staticmethod
+    def sample_metrics() -> list[HealthMetric]:
         """Create sample health metrics for testing."""
         now = datetime.now(UTC)
         sleep_start = now.replace(hour=22, minute=0, second=0)
@@ -647,7 +673,8 @@ class TestMockHealthDataRepositoryProcessingAndDeletion:
 
         return [biometric_metric, sleep_metric, activity_metric, mental_metric]
 
-    async def test_get_processing_status_exists(self, repository: MockHealthDataRepository, sample_metrics: list[HealthMetric]) -> None:
+    @staticmethod
+    async def test_get_processing_status_exists(repository: MockHealthDataRepository, sample_metrics: list[HealthMetric]) -> None:
         """Test getting processing status that exists."""
         user_id = "user_123"
         processing_id = str(uuid4())
@@ -666,12 +693,14 @@ class TestMockHealthDataRepositoryProcessingAndDeletion:
         assert status["user_id"] == user_id
         assert status["status"] == "completed"
 
-    async def test_get_processing_status_not_found(self, repository: MockHealthDataRepository) -> None:
+    @staticmethod
+    async def test_get_processing_status_not_found(repository: MockHealthDataRepository) -> None:
         """Test getting non-existent processing status."""
         status = await repository.get_processing_status("non_existent", "user_123")
         assert status is None
 
-    async def test_get_processing_status_wrong_user(self, repository: MockHealthDataRepository, sample_metrics: list[HealthMetric]) -> None:
+    @staticmethod
+    async def test_get_processing_status_wrong_user(repository: MockHealthDataRepository, sample_metrics: list[HealthMetric]) -> None:
         """Test getting processing status with wrong user."""
         user_id = "user_123"
         processing_id = str(uuid4())
@@ -687,7 +716,8 @@ class TestMockHealthDataRepositoryProcessingAndDeletion:
         status = await repository.get_processing_status(processing_id, "wrong_user")
         assert status is None
 
-    async def test_delete_health_data_specific_processing(self, repository: MockHealthDataRepository, sample_metrics: list[HealthMetric]) -> None:
+    @staticmethod
+    async def test_delete_health_data_specific_processing(repository: MockHealthDataRepository, sample_metrics: list[HealthMetric]) -> None:
         """Test deleting specific processing job."""
         user_id = "user_123"
         processing_id_1 = str(uuid4())
@@ -720,7 +750,8 @@ class TestMockHealthDataRepositoryProcessingAndDeletion:
         assert processing_id_1 not in repository._processing_status
         assert processing_id_2 in repository._processing_status
 
-    async def test_delete_health_data_all_user_data(self, repository: MockHealthDataRepository, sample_metrics: list[HealthMetric]) -> None:
+    @staticmethod
+    async def test_delete_health_data_all_user_data(repository: MockHealthDataRepository, sample_metrics: list[HealthMetric]) -> None:
         """Test deleting all user data."""
         user_id = "user_123"
         processing_id = str(uuid4())
@@ -737,7 +768,8 @@ class TestMockHealthDataRepositoryProcessingAndDeletion:
         assert result is True
         assert user_id not in repository._health_data
 
-    async def test_delete_health_data_non_existent_user(self, repository: MockHealthDataRepository) -> None:
+    @staticmethod
+    async def test_delete_health_data_non_existent_user(repository: MockHealthDataRepository) -> None:
         """Test deleting data for non-existent user."""
         result = await repository.delete_health_data("non_existent_user")
         assert result is True  # Should succeed even if no data

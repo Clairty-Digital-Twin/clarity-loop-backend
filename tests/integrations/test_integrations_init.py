@@ -1,7 +1,5 @@
 """Tests for integrations module initialization."""
 
-import pytest
-
 
 class TestIntegrationsInit:
     """Test the integrations module initialization."""

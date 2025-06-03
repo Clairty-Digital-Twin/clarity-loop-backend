@@ -4,7 +4,6 @@ import os
 from unittest.mock import Mock, patch
 
 from fastapi.testclient import TestClient
-import pytest
 
 
 class TestInsightService:

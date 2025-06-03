@@ -164,7 +164,7 @@ async def upload_healthkit_data(
     except HTTPException:
         raise
     except Exception as e:
-        logger.exception(f"Failed to process HealthKit upload: {e}")
+        logger.exception("Failed to process HealthKit upload")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to process health data upload",

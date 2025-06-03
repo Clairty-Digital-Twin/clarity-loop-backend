@@ -99,12 +99,16 @@ class ActivityProcessor:
         """
         logger = __import__("logging").getLogger(__name__)
 
-        activity_data = [metric.activity_data for metric in metrics if metric.activity_data]
+        activity_data = [
+            metric.activity_data for metric in metrics if metric.activity_data
+        ]
 
         logger.debug("Extracted %d activity data points", len(activity_data))
         return activity_data
 
-    def _calculate_activity_features(self, activity_data: list[ActivityData]) -> list[dict[str, Any]]:
+    def _calculate_activity_features(
+        self, activity_data: list[ActivityData]
+    ) -> list[dict[str, Any]]:
         """Calculate comprehensive activity features.
 
         Args:
@@ -118,13 +122,37 @@ class ActivityProcessor:
 
         # Aggregate metrics
         steps = [data.steps for data in activity_data if data.steps is not None]
-        distances = [data.distance for data in activity_data if data.distance is not None]
-        active_energy = [data.active_energy for data in activity_data if data.active_energy is not None]
-        exercise_minutes = [data.exercise_minutes for data in activity_data if data.exercise_minutes is not None]
-        flights_climbed = [data.flights_climbed for data in activity_data if data.flights_climbed is not None]
-        active_minutes = [data.active_minutes for data in activity_data if data.active_minutes is not None]
-        vo2_max_values = [data.vo2_max for data in activity_data if data.vo2_max is not None]
-        resting_hr_values = [data.resting_heart_rate for data in activity_data if data.resting_heart_rate is not None]
+        distances = [
+            data.distance for data in activity_data if data.distance is not None
+        ]
+        active_energy = [
+            data.active_energy
+            for data in activity_data
+            if data.active_energy is not None
+        ]
+        exercise_minutes = [
+            data.exercise_minutes
+            for data in activity_data
+            if data.exercise_minutes is not None
+        ]
+        flights_climbed = [
+            data.flights_climbed
+            for data in activity_data
+            if data.flights_climbed is not None
+        ]
+        active_minutes = [
+            data.active_minutes
+            for data in activity_data
+            if data.active_minutes is not None
+        ]
+        vo2_max_values = [
+            data.vo2_max for data in activity_data if data.vo2_max is not None
+        ]
+        resting_hr_values = [
+            data.resting_heart_rate
+            for data in activity_data
+            if data.resting_heart_rate is not None
+        ]
 
         # Calculate features
         features = []
@@ -155,11 +183,24 @@ class ActivityProcessor:
                 "feature_name": "total_flights_climbed",
                 "value": sum(flights_climbed),
                 "unit": "flights",
-                "description": "Total flights of stairs climbed"
+                "description": "Total flights of stairs climbed",
             })
 
         if active_minutes:
-            features.extend(({"feature_name": "total_active_minutes", "value": sum(active_minutes), "unit": "minutes", "description": "Total minutes of active movement"}, {"feature_name": "average_daily_active_minutes", "value": np.mean(active_minutes), "unit": "minutes/day", "description": "Average active minutes per day"}))
+            features.extend((
+                {
+                    "feature_name": "total_active_minutes",
+                    "value": sum(active_minutes),
+                    "unit": "minutes",
+                    "description": "Total minutes of active movement",
+                },
+                {
+                    "feature_name": "average_daily_active_minutes",
+                    "value": np.mean(active_minutes),
+                    "unit": "minutes/day",
+                    "description": "Average active minutes per day",
+                },
+            ))
 
         # 6. Fitness Level Features
         if vo2_max_values:
@@ -168,7 +209,7 @@ class ActivityProcessor:
                 "feature_name": "latest_vo2_max",
                 "value": latest_vo2_max,
                 "unit": "mL/kg/min",
-                "description": "Most recent VO₂ max measurement (cardio fitness)"
+                "description": "Most recent VO₂ max measurement (cardio fitness)",
             })
 
         if resting_hr_values:
@@ -176,7 +217,7 @@ class ActivityProcessor:
                 "feature_name": "average_resting_heart_rate",
                 "value": np.mean(resting_hr_values),
                 "unit": "bpm",
-                "description": "Average resting heart rate"
+                "description": "Average resting heart rate",
             })
 
         # 7. Activity Consistency Score
@@ -186,7 +227,7 @@ class ActivityProcessor:
                 "feature_name": "activity_consistency_score",
                 "value": consistency_score,
                 "unit": "score",
-                "description": "Activity consistency (0=inconsistent, 1=very consistent)"
+                "description": "Activity consistency (0=inconsistent, 1=very consistent)",
             })
 
         return features
@@ -210,20 +251,20 @@ class ActivityProcessor:
                 "feature_name": "total_steps",
                 "value": total_steps,
                 "unit": "steps",
-                "description": f"Total steps over {len(steps)} days"
+                "description": f"Total steps over {len(steps)} days",
             },
             {
                 "feature_name": "average_daily_steps",
                 "value": avg_daily_steps,
                 "unit": "steps/day",
-                "description": "Average steps per day"
+                "description": "Average steps per day",
             },
             {
                 "feature_name": "peak_daily_steps",
                 "value": peak_daily_steps,
                 "unit": "steps",
-                "description": "Highest single-day step count"
-            }
+                "description": "Highest single-day step count",
+            },
         ]
 
     @staticmethod
@@ -244,14 +285,14 @@ class ActivityProcessor:
                 "feature_name": "total_distance",
                 "value": total_distance,
                 "unit": "km",
-                "description": f"Total distance over {len(distances)} days"
+                "description": f"Total distance over {len(distances)} days",
             },
             {
                 "feature_name": "average_daily_distance",
                 "value": avg_daily_distance,
                 "unit": "km/day",
-                "description": "Average distance per day"
-            }
+                "description": "Average distance per day",
+            },
         ]
 
     @staticmethod
@@ -272,18 +313,20 @@ class ActivityProcessor:
                 "feature_name": "total_active_energy",
                 "value": total_energy,
                 "unit": "kcal",
-                "description": f"Total active calories over {len(active_energy)} days"
+                "description": f"Total active calories over {len(active_energy)} days",
             },
             {
                 "feature_name": "average_daily_active_energy",
                 "value": avg_daily_energy,
                 "unit": "kcal/day",
-                "description": "Average active calories per day"
-            }
+                "description": "Average active calories per day",
+            },
         ]
 
     @staticmethod
-    def _calculate_exercise_features(exercise_minutes: list[int]) -> list[dict[str, Any]]:
+    def _calculate_exercise_features(
+        exercise_minutes: list[int],
+    ) -> list[dict[str, Any]]:
         """Calculate exercise-related features.
 
         Args:
@@ -300,14 +343,14 @@ class ActivityProcessor:
                 "feature_name": "total_exercise_minutes",
                 "value": total_exercise,
                 "unit": "minutes",
-                "description": f"Total exercise time over {len(exercise_minutes)} days"
+                "description": f"Total exercise time over {len(exercise_minutes)} days",
             },
             {
                 "feature_name": "average_daily_exercise",
                 "value": avg_daily_exercise,
                 "unit": "minutes/day",
-                "description": "Average exercise time per day"
-            }
+                "description": "Average exercise time per day",
+            },
         ]
 
     @staticmethod
@@ -354,7 +397,7 @@ class ActivityProcessor:
             "feature_categories": self._categorize_features(features),
             "processed_at": datetime.now(UTC).isoformat(),
             "processor": self.processor_name,
-            "version": self.version
+            "version": self.version,
         }
 
         # Add key values if available
@@ -380,13 +423,7 @@ class ActivityProcessor:
         Returns:
             Dictionary with category counts
         """
-        categories = {
-            "steps": 0,
-            "distance": 0,
-            "energy": 0,
-            "exercise": 0,
-            "other": 0
-        }
+        categories = {"steps": 0, "distance": 0, "energy": 0, "exercise": 0, "other": 0}
 
         for feature in features:
             name = feature["feature_name"]

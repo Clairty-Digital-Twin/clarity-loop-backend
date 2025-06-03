@@ -160,11 +160,15 @@ class RespirationProcessor:
 
         # Remove outliers (RR outside physiological range)
         rr_resampled = rr_resampled.mask(
-            (rr_resampled <= MIN_RESPIRATORY_RATE) | (rr_resampled > MAX_RESPIRATORY_RATE), np.nan
+            (rr_resampled <= MIN_RESPIRATORY_RATE)
+            | (rr_resampled > MAX_RESPIRATORY_RATE),
+            np.nan,
         )
 
         # Fill short gaps by interpolation (up to 3 periods = 15 minutes)
-        rr_interpolated = rr_resampled.interpolate(limit=RR_INTERPOLATION_LIMIT, limit_direction="forward")
+        rr_interpolated = rr_resampled.interpolate(
+            limit=RR_INTERPOLATION_LIMIT, limit_direction="forward"
+        )
 
         # Apply light smoothing (3-period moving average)
         rr_smoothed = rr_interpolated.rolling(
@@ -175,9 +179,7 @@ class RespirationProcessor:
         return rr_smoothed.ffill().bfill()
 
     @staticmethod
-    def _preprocess_spo2(
-        timestamps: list[datetime], values: list[float]
-    ) -> pd.Series:
+    def _preprocess_spo2(timestamps: list[datetime], values: list[float]) -> pd.Series:
         """Clean and normalize SpO2 time series."""
         if not timestamps or not values:
             return pd.Series(dtype=float)
@@ -206,9 +208,7 @@ class RespirationProcessor:
         # Respiratory rate statistics
         if rr_series is not None and len(rr_series) > 0:
             avg_respiratory_rate = float(np.nanmean(rr_series))
-            resting_respiratory_rate = float(
-                np.nanpercentile(rr_series, PERCENTILE_25)
-            )
+            resting_respiratory_rate = float(np.nanpercentile(rr_series, PERCENTILE_25))
             respiratory_variability = float(np.nanstd(rr_series))
         else:
             avg_respiratory_rate = DEFAULT_RR

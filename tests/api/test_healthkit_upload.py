@@ -238,12 +238,12 @@ class TestUploadStatusEndpoint:
         )
 
     @pytest.mark.asyncio
-    async def test_get_upload_status_success(
-        self, mock_user: UserContext
-    ) -> None:
+    async def test_get_upload_status_success(self, mock_user: UserContext) -> None:
         """Test successful upload status retrieval."""
         # Call endpoint
-        result = await get_upload_status("test-user-123-abcdef1234567890abcdef1234567890", mock_user)
+        result = await get_upload_status(
+            "test-user-123-abcdef1234567890abcdef1234567890", mock_user
+        )
 
         # Verify result
         assert isinstance(result, dict)
@@ -270,7 +270,9 @@ class TestUploadStatusEndpoint:
 
         # Call should raise forbidden error
         with pytest.raises(HTTPException) as exc_info:
-            await get_upload_status("test-user-123-abcdef1234567890abcdef1234567890", different_user)
+            await get_upload_status(
+                "test-user-123-abcdef1234567890abcdef1234567890", different_user
+            )
 
         assert exc_info.value.status_code == status.HTTP_403_FORBIDDEN
         assert "Access denied to this upload" in str(exc_info.value.detail)
@@ -314,4 +316,8 @@ class TestHealthKitUploadIntegration:
             # Test that endpoints are accessible (will fail auth but endpoint should be reachable)
             response = client.get("/api/v1/healthkit/status/test-upload-id")
             # We expect it to fail auth, but the endpoint should be reachable
-            assert response.status_code in {401, 422, 500}  # Various possible auth/validation errors
+            assert response.status_code in {
+                401,
+                422,
+                500,
+            }  # Various possible auth/validation errors

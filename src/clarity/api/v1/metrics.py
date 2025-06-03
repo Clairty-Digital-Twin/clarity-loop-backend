@@ -40,107 +40,101 @@ router = APIRouter(prefix="", tags=["monitoring"])
 
 # Request metrics
 http_requests_total = Counter(
-    'clarity_http_requests_total',
-    'Total HTTP requests processed',
-    ['method', 'endpoint', 'status_code']
+    "clarity_http_requests_total",
+    "Total HTTP requests processed",
+    ["method", "endpoint", "status_code"],
 )
 
 http_request_duration_seconds = Histogram(
-    'clarity_http_request_duration_seconds',
-    'HTTP request duration in seconds',
-    ['method', 'endpoint']
+    "clarity_http_request_duration_seconds",
+    "HTTP request duration in seconds",
+    ["method", "endpoint"],
 )
 
 # Health data processing metrics
 health_data_uploads_total = Counter(
-    'clarity_health_data_uploads_total',
-    'Total health data uploads processed',
-    ['status', 'source']
+    "clarity_health_data_uploads_total",
+    "Total health data uploads processed",
+    ["status", "source"],
 )
 
 health_data_processing_duration_seconds = Histogram(
-    'clarity_health_data_processing_duration_seconds',
-    'Health data processing time in seconds',
-    ['stage']
+    "clarity_health_data_processing_duration_seconds",
+    "Health data processing time in seconds",
+    ["stage"],
 )
 
 health_metrics_processed_total = Counter(
-    'clarity_health_metrics_processed_total',
-    'Total individual health metrics processed',
-    ['metric_type']
+    "clarity_health_metrics_processed_total",
+    "Total individual health metrics processed",
+    ["metric_type"],
 )
 
 # PAT model metrics
 pat_inference_requests_total = Counter(
-    'clarity_pat_inference_requests_total',
-    'Total PAT model inference requests',
-    ['status']
+    "clarity_pat_inference_requests_total",
+    "Total PAT model inference requests",
+    ["status"],
 )
 
 pat_inference_duration_seconds = Histogram(
-    'clarity_pat_inference_duration_seconds',
-    'PAT model inference duration in seconds'
+    "clarity_pat_inference_duration_seconds", "PAT model inference duration in seconds"
 )
 
 pat_model_loading_time_seconds = Gauge(
-    'clarity_pat_model_loading_time_seconds',
-    'Time taken to load PAT model weights'
+    "clarity_pat_model_loading_time_seconds", "Time taken to load PAT model weights"
 )
 
 # Insight generation metrics
 insight_generation_requests_total = Counter(
-    'clarity_insight_generation_requests_total',
-    'Total insight generation requests',
-    ['status', 'model']
+    "clarity_insight_generation_requests_total",
+    "Total insight generation requests",
+    ["status", "model"],
 )
 
 insight_generation_duration_seconds = Histogram(
-    'clarity_insight_generation_duration_seconds',
-    'Insight generation duration in seconds',
-    ['model']
+    "clarity_insight_generation_duration_seconds",
+    "Insight generation duration in seconds",
+    ["model"],
 )
 
 # System health metrics
 system_memory_usage_bytes = Gauge(
-    'clarity_system_memory_usage_bytes',
-    'Current system memory usage in bytes'
+    "clarity_system_memory_usage_bytes", "Current system memory usage in bytes"
 )
 
 active_processing_jobs = Gauge(
-    'clarity_active_processing_jobs',
-    'Number of currently active processing jobs'
+    "clarity_active_processing_jobs", "Number of currently active processing jobs"
 )
 
 failed_jobs_total = Counter(
-    'clarity_failed_jobs_total',
-    'Total number of failed processing jobs',
-    ['job_type', 'error_type']
+    "clarity_failed_jobs_total",
+    "Total number of failed processing jobs",
+    ["job_type", "error_type"],
 )
 
 # Database metrics
 firestore_operations_total = Counter(
-    'clarity_firestore_operations_total',
-    'Total Firestore operations',
-    ['operation', 'collection', 'status']
+    "clarity_firestore_operations_total",
+    "Total Firestore operations",
+    ["operation", "collection", "status"],
 )
 
 firestore_operation_duration_seconds = Histogram(
-    'clarity_firestore_operation_duration_seconds',
-    'Firestore operation duration in seconds',
-    ['operation', 'collection']
+    "clarity_firestore_operation_duration_seconds",
+    "Firestore operation duration in seconds",
+    ["operation", "collection"],
 )
 
 # Pub/Sub metrics
 pubsub_messages_total = Counter(
-    'clarity_pubsub_messages_total',
-    'Total Pub/Sub messages',
-    ['topic', 'status']
+    "clarity_pubsub_messages_total", "Total Pub/Sub messages", ["topic", "status"]
 )
 
 pubsub_message_processing_duration_seconds = Histogram(
-    'clarity_pubsub_message_processing_duration_seconds',
-    'Pub/Sub message processing duration in seconds',
-    ['topic']
+    "clarity_pubsub_message_processing_duration_seconds",
+    "Pub/Sub message processing duration in seconds",
+    ["topic"],
 )
 
 
@@ -171,8 +165,8 @@ async def get_metrics() -> Response:
             headers={
                 "Cache-Control": "no-cache, no-store, must-revalidate",
                 "Pragma": "no-cache",
-                "Expires": "0"
-            }
+                "Expires": "0",
+            },
         )
 
     except Exception:
@@ -180,7 +174,7 @@ async def get_metrics() -> Response:
         # Return empty metrics rather than failing
         return Response(
             content="# HELP clarity_metrics_error Metrics generation error\n# TYPE clarity_metrics_error gauge\nclarity_metrics_error 1\n",
-            media_type=CONTENT_TYPE_LATEST
+            media_type=CONTENT_TYPE_LATEST,
         )
 
 
@@ -202,7 +196,10 @@ def _update_system_metrics() -> None:
 
 # 🔥 Metric Helper Functions
 
-def record_http_request(method: str, endpoint: str, status_code: int, duration: float) -> None:
+
+def record_http_request(
+    method: str, endpoint: str, status_code: int, duration: float
+) -> None:
     """Record HTTP request metrics.
 
     Args:
@@ -212,15 +209,12 @@ def record_http_request(method: str, endpoint: str, status_code: int, duration: 
         duration: Request duration in seconds
     """
     http_requests_total.labels(
-        method=method,
-        endpoint=endpoint,
-        status_code=str(status_code)
+        method=method, endpoint=endpoint, status_code=str(status_code)
     ).inc()
 
-    http_request_duration_seconds.labels(
-        method=method,
-        endpoint=endpoint
-    ).observe(duration)
+    http_request_duration_seconds.labels(method=method, endpoint=endpoint).observe(
+        duration
+    )
 
 
 def record_health_data_upload(status: str, source: str) -> None:
@@ -230,10 +224,7 @@ def record_health_data_upload(status: str, source: str) -> None:
         status: Upload status (success, failed, etc.)
         source: Data source (apple_health, manual, etc.)
     """
-    health_data_uploads_total.labels(
-        status=status,
-        source=source
-    ).inc()
+    health_data_uploads_total.labels(status=status, source=source).inc()
 
 
 def record_health_data_processing(stage: str, duration: float) -> None:
@@ -277,7 +268,9 @@ def record_pat_model_loading(duration: float) -> None:
     pat_model_loading_time_seconds.set(duration)
 
 
-def record_insight_generation(status: str, model: str, duration: float | None = None) -> None:
+def record_insight_generation(
+    status: str, model: str, duration: float | None = None
+) -> None:
     """Record insight generation metrics.
 
     Args:
@@ -285,10 +278,7 @@ def record_insight_generation(status: str, model: str, duration: float | None = 
         model: Model used (gemini-2.0-flash-exp, etc.)
         duration: Generation duration in seconds (optional)
     """
-    insight_generation_requests_total.labels(
-        status=status,
-        model=model
-    ).inc()
+    insight_generation_requests_total.labels(status=status, model=model).inc()
 
     if duration is not None:
         insight_generation_duration_seconds.labels(model=model).observe(duration)
@@ -310,13 +300,12 @@ def record_failed_job(job_type: str, error_type: str) -> None:
         job_type: Type of job (analysis, insight, etc.)
         error_type: Type of error (timeout, validation, etc.)
     """
-    failed_jobs_total.labels(
-        job_type=job_type,
-        error_type=error_type
-    ).inc()
+    failed_jobs_total.labels(job_type=job_type, error_type=error_type).inc()
 
 
-def record_firestore_operation(operation: str, collection: str, status: str, duration: float | None = None) -> None:
+def record_firestore_operation(
+    operation: str, collection: str, status: str, duration: float | None = None
+) -> None:
     """Record Firestore operation metrics.
 
     Args:
@@ -326,19 +315,18 @@ def record_firestore_operation(operation: str, collection: str, status: str, dur
         duration: Operation duration in seconds (optional)
     """
     firestore_operations_total.labels(
-        operation=operation,
-        collection=collection,
-        status=status
+        operation=operation, collection=collection, status=status
     ).inc()
 
     if duration is not None:
         firestore_operation_duration_seconds.labels(
-            operation=operation,
-            collection=collection
+            operation=operation, collection=collection
         ).observe(duration)
 
 
-def record_pubsub_message(topic: str, status: str, processing_duration: float | None = None) -> None:
+def record_pubsub_message(
+    topic: str, status: str, processing_duration: float | None = None
+) -> None:
     """Record Pub/Sub message metrics.
 
     Args:
@@ -346,21 +334,23 @@ def record_pubsub_message(topic: str, status: str, processing_duration: float | 
         status: Message status (success, failed, etc.)
         processing_duration: Message processing duration in seconds (optional)
     """
-    pubsub_messages_total.labels(
-        topic=topic,
-        status=status
-    ).inc()
+    pubsub_messages_total.labels(topic=topic, status=status).inc()
 
     if processing_duration is not None:
-        pubsub_message_processing_duration_seconds.labels(topic=topic).observe(processing_duration)
+        pubsub_message_processing_duration_seconds.labels(topic=topic).observe(
+            processing_duration
+        )
 
 
 # 🔥 Metrics Middleware Integration Helper
 
+
 class MetricsContext:
     """Context manager for automatic metrics recording."""
 
-    def __init__(self, operation_type: str, labels: dict[str, Any] | None = None) -> None:
+    def __init__(
+        self, operation_type: str, labels: dict[str, Any] | None = None
+    ) -> None:
         self.operation_type = operation_type
         self.labels = labels or {}
         self.start_time = time.time()
@@ -368,7 +358,12 @@ class MetricsContext:
     def __enter__(self) -> "MetricsContext":
         return self
 
-    def __exit__(self, exc_type: type[BaseException] | None, exc_val: BaseException | None, exc_tb: types.TracebackType | None) -> None:
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: types.TracebackType | None,
+    ) -> None:
         duration = time.time() - self.start_time
 
         status = "success" if exc_type is None else "failed"

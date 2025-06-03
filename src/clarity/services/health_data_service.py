@@ -73,7 +73,7 @@ class HealthDataService:
     def __init__(
         self,
         repository: IHealthDataRepository,
-        cloud_storage: CloudStoragePort | None = None
+        cloud_storage: CloudStoragePort | None = None,
     ) -> None:
         """Initialize health data service.
 

@@ -371,7 +371,6 @@ class TestModuleGlobals:
             patch.object(pat_model_manager, "verify_all_models", return_value={}),
             patch.object(gemini_model_manager, "verify_all_models", return_value={}),
         ):
-
             result = verify_startup_models()
 
             assert result is True
@@ -389,7 +388,6 @@ class TestModuleGlobals:
                 gemini_model_manager, "verify_all_models", return_value={"model3": True}
             ),
         ):
-
             result = verify_startup_models()
 
             assert result is True
@@ -407,7 +405,6 @@ class TestModuleGlobals:
                 gemini_model_manager, "verify_all_models", return_value={"model3": True}
             ),
         ):
-
             result = verify_startup_models()
 
             assert result is False
@@ -423,7 +420,6 @@ class TestModuleGlobals:
             ),
             patch.object(gemini_model_manager, "verify_all_models", return_value={}),
         ):
-
             result = verify_startup_models()
 
             assert result is False

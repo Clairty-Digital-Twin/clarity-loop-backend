@@ -209,7 +209,9 @@ class AppleWatchDataProcessor:
 
         # Resample to minute-level (1440 points per day)
         minute_timestamps = np.arange(
-            start_time.timestamp(), end_time.timestamp(), 60  # 60 seconds
+            start_time.timestamp(),
+            end_time.timestamp(),
+            60,  # 60 seconds
         )
 
         # Interpolate to regular grid
@@ -325,7 +327,9 @@ class AppleWatchDataProcessor:
 
         # Resample to 5-minute intervals (respiratory rate changes slowly)
         five_min_timestamps = np.arange(
-            start_time.timestamp(), end_time.timestamp(), 300  # 5 minutes
+            start_time.timestamp(),
+            end_time.timestamp(),
+            300,  # 5 minutes
         )
 
         if len(values) > 1:

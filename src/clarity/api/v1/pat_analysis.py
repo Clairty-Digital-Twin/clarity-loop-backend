@@ -43,8 +43,12 @@ class PATAnalysisResponse(BaseModel):
     status: str = Field(description="Status: completed, processing, failed, not_found")
     message: str | None = Field(None, description="Status message")
     analysis_date: str | None = Field(None, description="When analysis was completed")
-    pat_features: dict[str, float] | None = Field(None, description="PAT model features")
-    activity_embedding: list[float] | None = Field(None, description="Activity embedding vector")
+    pat_features: dict[str, float] | None = Field(
+        None, description="PAT model features"
+    )
+    activity_embedding: list[float] | None = Field(
+        None, description="Activity embedding vector"
+    )
     metadata: dict[str, Any] | None = Field(None, description="Additional metadata")
 
 
@@ -337,20 +341,20 @@ async def analyze_actigraphy_data(
     },
 )
 async def get_pat_analysis(
-    processing_id: str,
-    user_id: str = Depends(get_current_user)
+    processing_id: str, user_id: str = Depends(get_current_user)
 ) -> PATAnalysisResponse:
     """Retrieve actual PAT analysis results from Firestore."""
     try:
-        logger.info("Retrieving PAT analysis results: %s for user %s", processing_id, user_id)
+        logger.info(
+            "Retrieving PAT analysis results: %s for user %s", processing_id, user_id
+        )
 
         # Get Firestore client
         firestore_client = _get_analysis_repository()
 
         # Try to get analysis results from the analysis_results collection
         analysis_result = await firestore_client.get_analysis_result(
-            processing_id=processing_id,
-            user_id=user_id
+            processing_id=processing_id, user_id=user_id
         )
 
         if analysis_result:
@@ -365,24 +369,31 @@ async def get_pat_analysis(
                 activity_embedding=analysis_result.get("activity_embedding", []),
                 metadata={
                     "cardio_features": analysis_result.get("cardio_features", []),
-                    "respiratory_features": analysis_result.get("respiratory_features", []),
+                    "respiratory_features": analysis_result.get(
+                        "respiratory_features", []
+                    ),
                     "activity_features": analysis_result.get("activity_features", []),
                     "fused_vector": analysis_result.get("fused_vector", []),
                     "summary_stats": analysis_result.get("summary_stats", {}),
-                    "processing_metadata": analysis_result.get("processing_metadata", {}),
-                }
+                    "processing_metadata": analysis_result.get(
+                        "processing_metadata", {}
+                    ),
+                },
             )
 
         # If not found in analysis_results, check processing_jobs collection for status
         processing_status = await firestore_client.get_document(
-            collection="processing_jobs",
-            document_id=processing_id
+            collection="processing_jobs", document_id=processing_id
         )
 
         if processing_status:
             # Check if user owns this processing job
             if processing_status.get("user_id") != user_id:
-                logger.warning("User %s attempted to access processing job %s", user_id, processing_id)
+                logger.warning(
+                    "User %s attempted to access processing job %s",
+                    user_id,
+                    processing_id,
+                )
                 return PATAnalysisResponse(
                     processing_id=processing_id,
                     status="not_found",
@@ -390,7 +401,7 @@ async def get_pat_analysis(
                     analysis_date=None,
                     pat_features=None,
                     activity_embedding=None,
-                    metadata={}
+                    metadata={},
                 )
 
             # Return status from processing job
@@ -402,7 +413,7 @@ async def get_pat_analysis(
                 analysis_date=processing_status.get("created_at"),
                 pat_features=None,
                 activity_embedding=None,
-                metadata=processing_status
+                metadata=processing_status,
             )
 
         # Neither analysis results nor processing job found
@@ -414,7 +425,7 @@ async def get_pat_analysis(
             analysis_date=None,
             pat_features=None,
             activity_embedding=None,
-            metadata={}
+            metadata={},
         )
 
     except Exception as e:
@@ -427,7 +438,7 @@ async def get_pat_analysis(
             analysis_date=None,
             pat_features=None,
             activity_embedding=None,
-            metadata={}
+            metadata={},
         )
 
 

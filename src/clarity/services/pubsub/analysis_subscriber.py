@@ -177,9 +177,7 @@ class AnalysisSubscriber:
             )
 
         except Exception:
-            self.logger.exception(
-                "Failed to download health data from %s", gcs_path
-            )
+            self.logger.exception("Failed to download health data from %s", gcs_path)
             raise
         else:
             return health_data

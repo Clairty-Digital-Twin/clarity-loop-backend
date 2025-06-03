@@ -58,11 +58,7 @@ class TestInsightService:
         """Test main function with custom environment variables."""
         from clarity.entrypoints.insight_service import main
 
-        env_vars = {
-            "HOST": "0.0.0.0",
-            "PORT": "9001",
-            "ENVIRONMENT": "development"
-        }
+        env_vars = {"HOST": "0.0.0.0", "PORT": "9001", "ENVIRONMENT": "development"}
 
         with patch.dict(os.environ, env_vars):
             main()

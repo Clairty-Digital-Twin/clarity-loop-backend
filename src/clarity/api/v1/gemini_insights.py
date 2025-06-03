@@ -356,8 +356,7 @@ async def get_insight(
         # Get insight from Firestore
         firestore_client = _get_firestore_client()
         insight_doc = await firestore_client.get_document(
-            collection="insights",
-            document_id=insight_id
+            collection="insights", document_id=insight_id
         )
 
         if not insight_doc:
@@ -450,24 +449,30 @@ async def get_insight_history(
             limit=limit,
             offset=offset,
             order_by="generated_at",
-            order_direction="desc"
+            order_direction="desc",
         )
 
         # Get total count for pagination
         total_count = await firestore_client.count_documents(
             collection="insights",
-            filters=[{"field": "user_id", "op": "==", "value": user_id}]
+            filters=[{"field": "user_id", "op": "==", "value": user_id}],
         )
 
         # Format insights for response
-        formatted_insights = [{
+        formatted_insights = [
+            {
                 "id": insight.get("id"),
-                "narrative": insight.get("narrative", "")[:NARRATIVE_PREVIEW_LENGTH] + "..." if len(insight.get("narrative", "")) > NARRATIVE_PREVIEW_LENGTH else insight.get("narrative", ""),
+                "narrative": insight.get("narrative", "")[:NARRATIVE_PREVIEW_LENGTH]
+                + "..."
+                if len(insight.get("narrative", "")) > NARRATIVE_PREVIEW_LENGTH
+                else insight.get("narrative", ""),
                 "generated_at": insight.get("generated_at"),
                 "confidence_score": insight.get("confidence_score", 0.0),
                 "key_insights_count": len(insight.get("key_insights", [])),
-                "recommendations_count": len(insight.get("recommendations", []))
-            } for insight in insights]
+                "recommendations_count": len(insight.get("recommendations", [])),
+            }
+            for insight in insights
+        ]
 
         history_data = {
             "insights": formatted_insights,
@@ -477,8 +482,8 @@ async def get_insight_history(
                 "limit": limit,
                 "offset": offset,
                 "current_page": (offset // limit) + 1,
-                "total_pages": (total_count + limit - 1) // limit
-            }
+                "total_pages": (total_count + limit - 1) // limit,
+            },
         }
 
         return InsightHistoryResponse(

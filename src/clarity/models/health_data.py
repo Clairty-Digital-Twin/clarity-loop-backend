@@ -77,14 +77,30 @@ class ValidationError(BaseModel):
 class BiometricData(BaseModel):
     """Biometric measurements data."""
 
-    heart_rate: float | None = Field(None, ge=30, le=300, description="Heart rate in BPM")
-    blood_pressure_systolic: int | None = Field(None, ge=70, le=250, description="Systolic BP in mmHg")
-    blood_pressure_diastolic: int | None = Field(None, ge=40, le=150, description="Diastolic BP in mmHg")
-    oxygen_saturation: float | None = Field(None, ge=70.0, le=100.0, description="Blood oxygen saturation in %")
-    heart_rate_variability: float | None = Field(None, ge=0, le=200, description="HRV in milliseconds")
-    respiratory_rate: float | None = Field(None, ge=5, le=60, description="Respiratory rate in breaths per minute")
-    body_temperature: float | None = Field(None, ge=35.0, le=42.0, description="Body temperature in Celsius")
-    blood_glucose: float | None = Field(None, ge=50, le=500, description="Blood glucose in mg/dL")
+    heart_rate: float | None = Field(
+        None, ge=30, le=300, description="Heart rate in BPM"
+    )
+    blood_pressure_systolic: int | None = Field(
+        None, ge=70, le=250, description="Systolic BP in mmHg"
+    )
+    blood_pressure_diastolic: int | None = Field(
+        None, ge=40, le=150, description="Diastolic BP in mmHg"
+    )
+    oxygen_saturation: float | None = Field(
+        None, ge=70.0, le=100.0, description="Blood oxygen saturation in %"
+    )
+    heart_rate_variability: float | None = Field(
+        None, ge=0, le=200, description="HRV in milliseconds"
+    )
+    respiratory_rate: float | None = Field(
+        None, ge=5, le=60, description="Respiratory rate in breaths per minute"
+    )
+    body_temperature: float | None = Field(
+        None, ge=35.0, le=42.0, description="Body temperature in Celsius"
+    )
+    blood_glucose: float | None = Field(
+        None, ge=50, le=500, description="Blood glucose in mg/dL"
+    )
 
 
 class SleepData(BaseModel):
@@ -144,13 +160,27 @@ class ActivityData(BaseModel):
     """Activity and exercise data."""
 
     steps: int | None = Field(None, ge=0, le=100000, description="Step count")
-    distance: float | None = Field(None, ge=0, le=100.0, description="Distance in kilometers")
-    active_energy: float | None = Field(None, ge=0, le=5000.0, description="Active energy burned in kcal")
-    exercise_minutes: int | None = Field(None, ge=0, le=1440, description="Exercise time in minutes")
-    flights_climbed: int | None = Field(None, ge=0, le=500, description="Flights of stairs climbed")
-    vo2_max: float | None = Field(None, ge=10.0, le=80.0, description="VO₂ max in mL/kg/min")
-    active_minutes: int | None = Field(None, ge=0, le=1440, description="Total active minutes")
-    resting_heart_rate: float | None = Field(None, ge=30, le=120, description="Resting heart rate in BPM")
+    distance: float | None = Field(
+        None, ge=0, le=100.0, description="Distance in kilometers"
+    )
+    active_energy: float | None = Field(
+        None, ge=0, le=5000.0, description="Active energy burned in kcal"
+    )
+    exercise_minutes: int | None = Field(
+        None, ge=0, le=1440, description="Exercise time in minutes"
+    )
+    flights_climbed: int | None = Field(
+        None, ge=0, le=500, description="Flights of stairs climbed"
+    )
+    vo2_max: float | None = Field(
+        None, ge=10.0, le=80.0, description="VO₂ max in mL/kg/min"
+    )
+    active_minutes: int | None = Field(
+        None, ge=0, le=1440, description="Total active minutes"
+    )
+    resting_heart_rate: float | None = Field(
+        None, ge=30, le=120, description="Resting heart rate in BPM"
+    )
 
 
 class MentalHealthIndicator(BaseModel):

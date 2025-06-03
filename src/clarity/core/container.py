@@ -417,6 +417,7 @@ class DependencyContainer:
 
             # 🔥 ADDED: Include metrics router for Prometheus monitoring
             from clarity.api.v1.metrics import router as metrics_router  # noqa: PLC0415
+
             app.include_router(metrics_router)
 
             # Include the unified v1 router (includes all endpoints: auth, health_data, pat_analysis, gemini_insights)

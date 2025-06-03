@@ -120,7 +120,6 @@ class TestPATPerformanceOptimizer:  # noqa: PLR0904
                 optimizer, "_compile_torchscript", return_value=Mock()
             ) as mock_compile,
         ):
-
             result = await optimizer.optimize_model(
                 use_torchscript=True,
                 use_pruning=True,
@@ -159,7 +158,6 @@ class TestPATPerformanceOptimizer:  # noqa: PLR0904
         with patch.object(
             optimizer, "_compile_torchscript", side_effect=Exception("Compile failed")
         ):
-
             result = await optimizer.optimize_model(use_torchscript=True)
 
             assert result is False
@@ -192,7 +190,6 @@ class TestPATPerformanceOptimizer:  # noqa: PLR0904
             patch("torch.jit.trace") as mock_trace,
             patch("torch.jit.optimize_for_inference") as mock_optimize,
         ):
-
             traced_model = Mock()
             mock_trace.return_value = traced_model
             mock_optimize.return_value = traced_model
@@ -215,7 +212,6 @@ class TestPATPerformanceOptimizer:  # noqa: PLR0904
             patch("torch.jit.trace") as mock_trace,
             patch("builtins.hasattr", return_value=False),
         ):
-
             traced_model = Mock()
             mock_trace.return_value = traced_model
 
@@ -230,7 +226,6 @@ class TestPATPerformanceOptimizer:  # noqa: PLR0904
         model.eval = Mock()
 
         with patch("torch.jit.trace", side_effect=Exception("Trace failed")):
-
             result = optimizer._compile_torchscript(model)
 
             assert result is None

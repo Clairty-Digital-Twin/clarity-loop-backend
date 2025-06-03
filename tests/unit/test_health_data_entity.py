@@ -71,7 +71,14 @@ class TestHealthMetricEntity:
     def test_heart_rate_business_rule_validation() -> None:
         """Test enterprise business rule: Heart rate must be within human limits."""
         # Valid heart rates should pass
-        valid_rates = [40, 60, 80, 100, 200, 300]  # Updated to match model validation (30-300)
+        valid_rates = [
+            40,
+            60,
+            80,
+            100,
+            200,
+            300,
+        ]  # Updated to match model validation (30-300)
         for rate in valid_rates:
             biometric_data = BiometricData(
                 heart_rate=rate,

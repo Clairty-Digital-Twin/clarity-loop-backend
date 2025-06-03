@@ -118,7 +118,9 @@ class HealthDataBatch(BaseModel):
     @validator("total_count")
     @classmethod
     def validate_count_matches(
-        cls, v: int, values: dict[str, Any]  # noqa: ARG003
+        cls,
+        v: int,
+        values: dict[str, Any],  # noqa: ARG003
     ) -> int:
         """Validate total count (for multi-modal batches, may not match data_points)."""
         return v
@@ -219,7 +221,9 @@ class HealthKitClient:
         raise AuthorizationError(error_msg)
 
     async def exchange_code_for_tokens(
-        self, authorization_code: str, state: str  # noqa: ARG002
+        self,
+        authorization_code: str,
+        state: str,  # noqa: ARG002
     ) -> HealthKitTokens:
         """Exchange authorization code for access tokens.
 

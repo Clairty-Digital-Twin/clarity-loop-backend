@@ -137,10 +137,14 @@ class CardioProcessor:
         hr_per_min = ts.resample(HR_RESAMPLE_INTERVAL).mean()
 
         # Remove outliers (HR outside physiological range)
-        hr_per_min = hr_per_min.mask((hr_per_min <= MIN_HEART_RATE) | (hr_per_min > MAX_HEART_RATE), np.nan)
+        hr_per_min = hr_per_min.mask(
+            (hr_per_min <= MIN_HEART_RATE) | (hr_per_min > MAX_HEART_RATE), np.nan
+        )
 
         # Fill short gaps by interpolation
-        hr_interpolated = hr_per_min.interpolate(limit=HR_INTERPOLATION_LIMIT, limit_direction="forward")
+        hr_interpolated = hr_per_min.interpolate(
+            limit=HR_INTERPOLATION_LIMIT, limit_direction="forward"
+        )
 
         # Apply smoothing
         hr_smoothed = hr_interpolated.rolling(
@@ -151,9 +155,7 @@ class CardioProcessor:
         return hr_smoothed.ffill().bfill()
 
     @staticmethod
-    def _preprocess_hrv(
-        timestamps: list[datetime], values: list[float]
-    ) -> pd.Series:
+    def _preprocess_hrv(timestamps: list[datetime], values: list[float]) -> pd.Series:
         """Clean and normalize HRV time series."""
         if not timestamps or not values:
             return pd.Series(dtype=float)
@@ -259,7 +261,9 @@ class CardioProcessor:
             day_night_diff = day_hr - night_hr
 
             # Normalize to 0-1 scale (expect 5-20 BPM difference)
-            circadian_score = np.clip(day_night_diff / EXPECTED_DAY_NIGHT_DIFF, 0.0, 1.0)
+            circadian_score = np.clip(
+                day_night_diff / EXPECTED_DAY_NIGHT_DIFF, 0.0, 1.0
+            )
 
             return float(circadian_score)
 

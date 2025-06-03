@@ -148,8 +148,7 @@ class TestHealthDataServiceCleanArchitecture(BaseServiceTestCase):
 
         # Inject ALL dependencies cleanly (no more @patch!)
         self.service = HealthDataService(
-            repository=self.mock_repository,
-            cloud_storage=self.cloud_storage
+            repository=self.mock_repository, cloud_storage=self.cloud_storage
         )
 
     @staticmethod

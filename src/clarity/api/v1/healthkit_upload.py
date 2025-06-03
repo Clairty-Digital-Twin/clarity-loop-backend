@@ -92,7 +92,7 @@ class HealthKitUploadResponse(BaseModel):
 )
 async def upload_healthkit_data(
     request: HealthKitUploadRequest,
-    current_user: UserContext = Depends(get_current_user)
+    current_user: UserContext = Depends(get_current_user),
 ) -> HealthKitUploadResponse:
     """Upload HealthKit data for asynchronous processing.
 
@@ -185,8 +185,7 @@ async def upload_healthkit_data(
 
 @router.get("/status/{upload_id}")
 async def get_upload_status(
-    upload_id: str,
-    current_user: UserContext = Depends(get_current_user)
+    upload_id: str, current_user: UserContext = Depends(get_current_user)
 ) -> dict[str, Any]:
     """Get status of a HealthKit upload.
 
@@ -205,7 +204,9 @@ async def get_upload_status(
             _raise_invalid_format_error()
         # The last part should be a 32-character hex UUID
         uuid_part = parts[-1]
-        if len(uuid_part) != UUID_HEX_LENGTH or not all(c in '0123456789abcdef' for c in uuid_part.lower()):
+        if len(uuid_part) != UUID_HEX_LENGTH or not all(
+            c in "0123456789abcdef" for c in uuid_part.lower()
+        ):
             _raise_invalid_uuid_error()
         # Join all parts except the last one to get the user_id
         user_id = "-".join(parts[:-1])
@@ -227,7 +228,7 @@ async def get_upload_status(
         "status": "processing",
         "progress": 0.75,
         "message": "Analyzing cardiovascular patterns",
-                    "last_updated": datetime.now(UTC).isoformat(),
+        "last_updated": datetime.now(UTC).isoformat(),
     }
 
 

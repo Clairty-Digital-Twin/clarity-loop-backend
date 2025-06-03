@@ -108,7 +108,10 @@ class APITester:
         print(f"{Fore.BLUE}i  {message}{Style.RESET_ALL}")
 
     async def _make_request(
-        self, method: str, endpoint: str, **kwargs: Any  # noqa: ANN401
+        self,
+        method: str,
+        endpoint: str,
+        **kwargs: Any,  # noqa: ANN401
     ) -> "tuple[int, dict[str, Any]]":
         """Make an HTTP request and return status code and response."""
         if not self.session:
@@ -126,30 +129,26 @@ class APITester:
                 except aiohttp.ContentTypeError:
                     data = {"text": await response.text()}
 
-                self.results.append(
-                    {
-                        "endpoint": endpoint,
-                        "method": method,
-                        "status": response.status,
-                        "response_time": response_time,
-                        "success": HTTP_OK <= response.status < HTTP_REDIRECT_THRESHOLD,
-                    }
-                )
+                self.results.append({
+                    "endpoint": endpoint,
+                    "method": method,
+                    "status": response.status,
+                    "response_time": response_time,
+                    "success": HTTP_OK <= response.status < HTTP_REDIRECT_THRESHOLD,
+                })
 
                 return response.status, data
 
         except (TimeoutError, aiohttp.ClientError) as e:
             response_time = time.time() - start_time
-            self.results.append(
-                {
-                    "endpoint": endpoint,
-                    "method": method,
-                    "status": 0,
-                    "response_time": response_time,
-                    "success": False,
-                    "error": str(e),
-                }
-            )
+            self.results.append({
+                "endpoint": endpoint,
+                "method": method,
+                "status": 0,
+                "response_time": response_time,
+                "success": False,
+                "error": str(e),
+            })
             return 0, {"error": str(e)}
 
     async def test_health_endpoints(self) -> None:

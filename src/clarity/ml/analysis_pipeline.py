@@ -42,7 +42,9 @@ class AnalysisResults:
     def __init__(self) -> None:
         self.cardio_features: list[float] = []
         self.respiratory_features: list[float] = []
-        self.activity_features: list[dict[str, Any]] = []  # 🔥 ADDED: Basic activity features
+        self.activity_features: list[
+            dict[str, Any]
+        ] = []  # 🔥 ADDED: Basic activity features
         self.activity_embedding: list[float] = []
         self.fused_vector: list[float] = []
         self.summary_stats: dict[str, Any] = {}
@@ -87,7 +89,10 @@ class HealthAnalysisPipeline:
         return self.firestore_client
 
     async def process_health_data(
-        self, user_id: str, health_metrics: list[HealthMetric], processing_id: str | None = None
+        self,
+        user_id: str,
+        health_metrics: list[HealthMetric],
+        processing_id: str | None = None,
     ) -> AnalysisResults:
         """Process health metrics through the analysis pipeline.
 
@@ -130,11 +135,17 @@ class HealthAnalysisPipeline:
                 modality_features["respiratory"] = respiratory_features
 
             if organized_data["activity"]:
-                self.logger.info("Processing activity data with both basic features and PAT model...")
+                self.logger.info(
+                    "Processing activity data with both basic features and PAT model..."
+                )
 
                 # First, extract basic activity features using ActivityProcessor
-                activity_features = self.activity_processor.process(organized_data["activity"])
-                results.activity_features = activity_features  # 🔥 ADDED: Store basic activity features
+                activity_features = self.activity_processor.process(
+                    organized_data["activity"]
+                )
+                results.activity_features = (
+                    activity_features  # 🔥 ADDED: Store basic activity features
+                )
 
                 # Then process with PAT model for advanced analysis
                 activity_embedding = await self._process_activity_data(
@@ -154,7 +165,9 @@ class HealthAnalysisPipeline:
 
             # Step 4: Generate summary statistics
             results.summary_stats = self._generate_summary_stats(
-                organized_data, modality_features, results.activity_features  # 🔥 Pass activity features
+                organized_data,
+                modality_features,
+                results.activity_features,  # 🔥 Pass activity features
             )
 
             # Step 5: Add processing metadata
@@ -163,7 +176,9 @@ class HealthAnalysisPipeline:
                 "processed_at": datetime.now(UTC).isoformat(),
                 "total_metrics": len(health_metrics),
                 "modalities_processed": list(modality_features.keys()),
-                "fused_vector_dim": len(results.fused_vector) if results.fused_vector else 0,
+                "fused_vector_dim": len(results.fused_vector)
+                if results.fused_vector
+                else 0,
                 "processing_id": processing_id,
             }
 
@@ -184,17 +199,19 @@ class HealthAnalysisPipeline:
                     await firestore_client.save_analysis_result(
                         user_id=user_id,
                         processing_id=processing_id,
-                        analysis_result=analysis_dict
+                        analysis_result=analysis_dict,
                     )
-                    self.logger.info("✅ Analysis results saved to Firestore: %s", processing_id)
+                    self.logger.info(
+                        "✅ Analysis results saved to Firestore: %s", processing_id
+                    )
                 except Exception:
-                    self.logger.exception("Failed to save analysis results to Firestore")
+                    self.logger.exception(
+                        "Failed to save analysis results to Firestore"
+                    )
                     # Don't fail the entire pipeline if saving fails
 
         except Exception:
-            self.logger.exception(
-                "❌ Error in analysis pipeline for user %s", user_id
-            )
+            self.logger.exception("❌ Error in analysis pipeline for user %s", user_id)
             raise
         else:
             self.logger.info(
@@ -346,7 +363,9 @@ class HealthAnalysisPipeline:
         return self._create_activity_embedding_from_analysis(analysis_result)
 
     @staticmethod
-    def _create_activity_embedding_from_analysis(analysis_result: "ActigraphyAnalysis") -> list[float]:
+    def _create_activity_embedding_from_analysis(
+        analysis_result: "ActigraphyAnalysis",
+    ) -> list[float]:
         """Create activity embedding from PAT analysis results."""
         # Extract the actual PAT embedding if available
         if hasattr(analysis_result, "embedding") and analysis_result.embedding:
@@ -416,7 +435,8 @@ class HealthAnalysisPipeline:
         self,
         organized_data: dict[str, list[HealthMetric]],
         modality_features: dict[str, list[float]],
-        activity_features: list[dict[str, Any]] | None = None,  # 🔥 ADDED: Activity features parameter
+        activity_features: list[dict[str, Any]]
+        | None = None,  # 🔥 ADDED: Activity features parameter
     ) -> dict[str, Any]:
         """Generate summary statistics for the analysis."""
         summary = {"data_coverage": {}, "feature_summary": {}, "health_indicators": {}}
@@ -443,7 +463,10 @@ class HealthAnalysisPipeline:
                 }
 
         # Health indicators (simplified)
-        if "cardio" in modality_features and len(modality_features["cardio"]) >= MIN_FEATURE_VECTOR_LENGTH:
+        if (
+            "cardio" in modality_features
+            and len(modality_features["cardio"]) >= MIN_FEATURE_VECTOR_LENGTH
+        ):
             cardio = modality_features["cardio"]
             summary["health_indicators"]["cardiovascular_health"] = {
                 "avg_heart_rate": cardio[0],
@@ -482,7 +505,9 @@ class HealthAnalysisPipeline:
                 elif feature["feature_name"] == "activity_consistency_score":
                     activity_health["consistency_score"] = round(feature["value"], 2)
                 elif feature["feature_name"] == "latest_vo2_max":
-                    activity_health["cardio_fitness_vo2_max"] = round(feature["value"], 1)
+                    activity_health["cardio_fitness_vo2_max"] = round(
+                        feature["value"], 1
+                    )
 
             if activity_health:
                 summary["health_indicators"]["activity_health"] = activity_health
@@ -592,17 +617,27 @@ def _convert_raw_data_to_metrics(health_data: dict[str, Any]) -> list[HealthMetr
                 if metric_type_str in {"heartrate", "heart_rate"}:
                     biometric_data_kwargs["heart_rate"] = float(sample.get("value", 0))
                 elif metric_type_str == "heartratevariabilitysdnn":
-                    biometric_data_kwargs["heart_rate_variability"] = float(sample.get("value", 0))
+                    biometric_data_kwargs["heart_rate_variability"] = float(
+                        sample.get("value", 0)
+                    )
                 elif metric_type_str in {"respiratoryrate", "respiratory_rate"}:
-                    biometric_data_kwargs["respiratory_rate"] = float(sample.get("value", 0))
+                    biometric_data_kwargs["respiratory_rate"] = float(
+                        sample.get("value", 0)
+                    )
                 elif metric_type_str == "oxygensaturation":
-                    biometric_data_kwargs["oxygen_saturation"] = float(sample.get("value", 0))
+                    biometric_data_kwargs["oxygen_saturation"] = float(
+                        sample.get("value", 0)
+                    )
                 elif metric_type_str in {
                     "bloodpressuresystolic",
                     "bloodpressurediastolic",
                 }:
-                    biometric_data_kwargs["blood_pressure_systolic"] = sample.get("systolic")
-                    biometric_data_kwargs["blood_pressure_diastolic"] = sample.get("diastolic")
+                    biometric_data_kwargs["blood_pressure_systolic"] = sample.get(
+                        "systolic"
+                    )
+                    biometric_data_kwargs["blood_pressure_diastolic"] = sample.get(
+                        "diastolic"
+                    )
 
                 biometric_data = BiometricData(**biometric_data_kwargs)
 
@@ -614,7 +649,10 @@ def _convert_raw_data_to_metrics(health_data: dict[str, Any]) -> list[HealthMetr
                     biometric_data=biometric_data,
                     device_id=sample.get("source", "unknown"),
                     raw_data={"original_sample": sample},
-                    metadata={"user_id": health_data.get("user_id", "unknown"), "confidence_score": sample.get("confidence", 1.0)},
+                    metadata={
+                        "user_id": health_data.get("user_id", "unknown"),
+                        "confidence_score": sample.get("confidence", 1.0),
+                    },
                 )
                 metrics.append(metric)
 
@@ -624,14 +662,24 @@ def _convert_raw_data_to_metrics(health_data: dict[str, Any]) -> list[HealthMetr
             category_type = sample.get("type", "").lower()
 
             if "sleep" in category_type:
-                start_time = datetime.fromisoformat(sample.get("start_timestamp", datetime.now(UTC).isoformat()))
-                end_time = datetime.fromisoformat(sample.get("end_timestamp", (start_time + timedelta(hours=8)).isoformat()))
+                start_time = datetime.fromisoformat(
+                    sample.get("start_timestamp", datetime.now(UTC).isoformat())
+                )
+                end_time = datetime.fromisoformat(
+                    sample.get(
+                        "end_timestamp", (start_time + timedelta(hours=8)).isoformat()
+                    )
+                )
                 sleep_data = SleepData(
-                    total_sleep_minutes=int(sample.get("duration", 480)),  # Duration in minutes
+                    total_sleep_minutes=int(
+                        sample.get("duration", 480)
+                    ),  # Duration in minutes
                     sleep_efficiency=sample.get("efficiency", 0.85),
                     time_to_sleep_minutes=sample.get("onset_latency", 15),
                     wake_count=sample.get("wake_count", 2),
-                    sleep_stages=sample.get("sleep_stages"),  # Optional sleep stages data
+                    sleep_stages=sample.get(
+                        "sleep_stages"
+                    ),  # Optional sleep stages data
                     sleep_start=start_time,
                     sleep_end=end_time,
                 )
@@ -670,7 +718,10 @@ def _convert_raw_data_to_metrics(health_data: dict[str, Any]) -> list[HealthMetr
                 activity_data=activity_data,
                 device_id=workout.get("source", "unknown"),
                 raw_data={"original_workout": workout},
-                metadata={"user_id": health_data.get("user_id", "unknown"), "activity_type": workout.get("type", "unknown")},
+                metadata={
+                    "user_id": health_data.get("user_id", "unknown"),
+                    "activity_type": workout.get("type", "unknown"),
+                },
             )
             metrics.append(metric)
 

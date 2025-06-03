@@ -532,10 +532,7 @@ class FirestoreClient:
         )
 
     async def save_analysis_result(
-        self,
-        user_id: str,
-        processing_id: str,
-        analysis_result: dict[str, Any]
+        self, user_id: str, processing_id: str, analysis_result: dict[str, Any]
     ) -> str:
         """Save PAT analysis results to Firestore.
 
@@ -596,7 +593,7 @@ class FirestoreClient:
         try:
             result = await self.get_document(
                 collection=self.collections["analysis_results"],
-                document_id=processing_id
+                document_id=processing_id,
             )
 
         except Exception as e:
@@ -608,7 +605,9 @@ class FirestoreClient:
             if result and user_id and result.get("user_id") != user_id:
                 logger.warning(
                     "User %s attempted to access analysis %s owned by %s",
-                    user_id, processing_id, result.get("user_id")
+                    user_id,
+                    processing_id,
+                    result.get("user_id"),
                 )
                 return None
 
@@ -1008,31 +1007,25 @@ class FirestoreHealthDataRepository(IHealthDataRepository):
             filters = [{"field": "user_id", "op": "==", "value": user_id}]
 
             if metric_type:
-                filters.append(
-                    {
-                        "field": "metric_data.metric_type",
-                        "op": "==",
-                        "value": metric_type,
-                    }
-                )
+                filters.append({
+                    "field": "metric_data.metric_type",
+                    "op": "==",
+                    "value": metric_type,
+                })
 
             if start_date:
-                filters.append(
-                    {
-                        "field": "created_at",
-                        "op": ">=",
-                        "value": start_date.isoformat(),
-                    }
-                )
+                filters.append({
+                    "field": "created_at",
+                    "op": ">=",
+                    "value": start_date.isoformat(),
+                })
 
             if end_date:
-                filters.append(
-                    {
-                        "field": "created_at",
-                        "op": "<=",
-                        "value": end_date.isoformat(),
-                    }
-                )
+                filters.append({
+                    "field": "created_at",
+                    "op": "<=",
+                    "value": end_date.isoformat(),
+                })
 
             # Query health metrics
             metrics = await self._firestore_client.query_documents(

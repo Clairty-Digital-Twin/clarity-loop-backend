@@ -75,7 +75,6 @@ def test_configuration() -> bool:
 
 
 if __name__ == "__main__":
-
     success = True
     success &= test_imports()
     success &= test_configuration()

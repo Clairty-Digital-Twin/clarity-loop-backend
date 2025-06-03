@@ -15,7 +15,12 @@ from uuid import uuid4
 
 import pytest
 
-from clarity.ml.inference_engine import AsyncInferenceEngine, InferenceRequest, InferenceResponse, InferenceCache
+from clarity.ml.inference_engine import (
+    AsyncInferenceEngine,
+    InferenceCache,
+    InferenceRequest,
+    InferenceResponse,
+)
 from clarity.ml.pat_service import ActigraphyAnalysis, ActigraphyInput, PATModelService
 from clarity.ml.preprocessing import ActigraphyDataPoint
 
@@ -27,7 +32,7 @@ class TestAsyncInferenceEngineInitialization:
         """Test engine initialization with default configuration."""
         mock_pat_service = MagicMock(spec=PATModelService)
         engine = AsyncInferenceEngine(pat_service=mock_pat_service)
-        
+
         assert engine.pat_service == mock_pat_service
         assert engine.batch_size == 4  # DEFAULT_BATCH_SIZE from constants
         assert engine.batch_timeout == 0.1  # DEFAULT_BATCH_TIMEOUT_MS / 1000 = 100/1000
@@ -42,14 +47,14 @@ class TestAsyncInferenceEngineInitialization:
         batch_size = 50
         batch_timeout_ms = 1000
         cache_ttl = 3600
-        
+
         engine = AsyncInferenceEngine(
             pat_service=mock_pat_service,
             batch_size=batch_size,
             batch_timeout_ms=batch_timeout_ms,
             cache_ttl=cache_ttl
         )
-        
+
         assert engine.batch_size == batch_size
         assert engine.batch_timeout == 1.0  # 1000ms = 1.0s
         assert engine.cache.ttl == cache_ttl
@@ -59,12 +64,12 @@ class TestAsyncInferenceEngineInitialization:
         """Test engine start and stop functionality."""
         mock_pat_service = MagicMock(spec=PATModelService)
         engine = AsyncInferenceEngine(pat_service=mock_pat_service)
-        
+
         # Test start
         await engine.start()
         assert engine.is_running
         assert engine.batch_processor_task is not None
-        
+
         # Test stop
         await engine.stop()
         assert not engine.is_running
@@ -83,7 +88,7 @@ class TestAsyncInferenceEngineInference:
             )
             for i in range(1440)  # 24 hours of data
         ]
-        
+
         return ActigraphyInput(
             user_id=str(uuid4()),
             data_points=data_points,
@@ -119,18 +124,18 @@ class TestAsyncInferenceEngineInference:
             confidence_score=0.85,
             clinical_insights=["Good sleep efficiency"]
         )
-        
+
         mock_pat_service = MagicMock(spec=PATModelService)
         mock_pat_service.analyze_actigraphy = AsyncMock(return_value=mock_analysis)
-        
+
         engine = AsyncInferenceEngine(pat_service=mock_pat_service)
-        
+
         # Perform prediction
         result = await engine.predict(
             input_data=sample_actigraphy_input,
             request_id="test-request"
         )
-        
+
         assert isinstance(result, InferenceResponse)
         assert result.request_id == "test-request"
         assert result.analysis == mock_analysis
@@ -155,14 +160,14 @@ class TestAsyncInferenceEngineInference:
             confidence_score=0.8,
             clinical_insights=["Good sleep quality"]
         )
-        
+
         mock_pat_service = MagicMock(spec=PATModelService)
         mock_pat_service.analyze_actigraphy = AsyncMock(return_value=mock_analysis)
-        
+
         engine = AsyncInferenceEngine(pat_service=mock_pat_service)
-        
+
         result = await engine.predict_async(sample_inference_request)
-        
+
         assert result.request_id == sample_inference_request.request_id
         assert result.analysis == mock_analysis
         assert result.processing_time_ms > 0
@@ -184,12 +189,12 @@ class TestAsyncInferenceEngineInference:
             confidence_score=0.85,
             clinical_insights=["Good sleep efficiency"]
         )
-        
+
         mock_pat_service = MagicMock(spec=PATModelService)
         mock_pat_service.analyze_actigraphy = AsyncMock(return_value=mock_analysis)
-        
+
         engine = AsyncInferenceEngine(pat_service=mock_pat_service)
-        
+
         # First request - should not be cached
         result1 = await engine.predict(
             input_data=sample_actigraphy_input,
@@ -197,7 +202,7 @@ class TestAsyncInferenceEngineInference:
             cache_enabled=True
         )
         assert not result1.cached
-        
+
         # Second request with same data - should be cached
         result2 = await engine.predict(
             input_data=sample_actigraphy_input,
@@ -224,12 +229,12 @@ class TestAsyncInferenceEngineInference:
             confidence_score=0.8,
             clinical_insights=["Good sleep quality"]
         )
-        
+
         mock_pat_service = MagicMock(spec=PATModelService)
         mock_pat_service.analyze_actigraphy = AsyncMock(return_value=mock_analysis)
-        
+
         engine = AsyncInferenceEngine(pat_service=mock_pat_service)
-        
+
         # Both requests should trigger PAT service
         result1 = await engine.predict(
             input_data=sample_actigraphy_input,
@@ -241,7 +246,7 @@ class TestAsyncInferenceEngineInference:
             request_id="test-request-2",
             cache_enabled=False
         )
-        
+
         assert not result1.cached
         assert not result2.cached
         assert engine.cache_hits == 0
@@ -251,9 +256,9 @@ class TestAsyncInferenceEngineInference:
         """Test prediction with PAT service error."""
         mock_pat_service = MagicMock(spec=PATModelService)
         mock_pat_service.analyze_actigraphy = AsyncMock(side_effect=Exception("PAT analysis failed"))
-        
+
         engine = AsyncInferenceEngine(pat_service=mock_pat_service)
-        
+
         with pytest.raises(Exception):  # Should raise InferenceError
             await engine.predict(
                 input_data=sample_actigraphy_input,
@@ -274,13 +279,13 @@ class TestInferenceCache:
     async def test_cache_set_and_get(self):
         """Test basic cache set and get operations."""
         cache = InferenceCache(ttl_seconds=3600)
-        
+
         test_key = "test_key"
         test_value = {"data": "test_value"}
-        
+
         # Set value
         await cache.set(test_key, test_value)
-        
+
         # Get value
         retrieved_value = await cache.get(test_key)
         assert retrieved_value == test_value
@@ -290,19 +295,19 @@ class TestInferenceCache:
         """Test cache expiration functionality."""
         # Short TTL for testing
         cache = InferenceCache(ttl_seconds=1)
-        
+
         test_key = "expiring_key"
         test_value = {"data": "will_expire"}
-        
+
         # Set value
         await cache.set(test_key, test_value)
-        
+
         # Should be available immediately
         assert await cache.get(test_key) == test_value
-        
+
         # Wait for expiration
         await asyncio.sleep(1.1)
-        
+
         # Should be None after expiration
         assert await cache.get(test_key) is None
 
@@ -310,7 +315,7 @@ class TestInferenceCache:
     async def test_cache_miss(self):
         """Test cache miss for non-existent key."""
         cache = InferenceCache()
-        
+
         result = await cache.get("non_existent_key")
         assert result is None
 
@@ -319,9 +324,9 @@ class TestInferenceCache:
         cache = InferenceCache()
         cache.cache["key1"] = ("value1", 12345)
         cache.cache["key2"] = ("value2", 12346)
-        
+
         assert len(cache.cache) == 2
-        
+
         cache.clear()
         assert len(cache.cache) == 0
 
@@ -335,19 +340,19 @@ class TestInferenceEngineUtilities:
             ActigraphyDataPoint(timestamp=datetime.now(UTC), value=50.0),
             ActigraphyDataPoint(timestamp=datetime.now(UTC), value=75.0)
         ]
-        
+
         input_data = ActigraphyInput(
             user_id="test-user",
             data_points=data_points,
             sampling_rate=1.0,
             duration_hours=24
         )
-        
+
         cache_key = AsyncInferenceEngine._generate_cache_key(input_data)
-        
+
         assert isinstance(cache_key, str)
         assert len(cache_key) > 0
-        
+
         # Same input should generate same key
         cache_key2 = AsyncInferenceEngine._generate_cache_key(input_data)
         assert cache_key == cache_key2
@@ -356,24 +361,24 @@ class TestInferenceEngineUtilities:
         """Test that different inputs generate different cache keys."""
         data_points1 = [ActigraphyDataPoint(timestamp=datetime.now(UTC), value=50.0)]
         data_points2 = [ActigraphyDataPoint(timestamp=datetime.now(UTC), value=75.0)]
-        
+
         input1 = ActigraphyInput(
             user_id="user1",
             data_points=data_points1,
             sampling_rate=1.0,
             duration_hours=24
         )
-        
+
         input2 = ActigraphyInput(
             user_id="user2",
             data_points=data_points2,
             sampling_rate=1.0,
             duration_hours=24
         )
-        
+
         key1 = AsyncInferenceEngine._generate_cache_key(input1)
         key2 = AsyncInferenceEngine._generate_cache_key(input2)
-        
+
         assert key1 != key2
 
     def test_generate_cache_key_empty_data(self):
@@ -384,7 +389,7 @@ class TestInferenceEngineUtilities:
             sampling_rate=1.0,
             duration_hours=24
         )
-        
+
         cache_key = AsyncInferenceEngine._generate_cache_key(input_data)
         assert isinstance(cache_key, str)
         assert len(cache_key) > 0
@@ -403,7 +408,7 @@ class TestInferenceEngineStats:
             )
             for i in range(1440)  # 24 hours of data
         ]
-        
+
         return ActigraphyInput(
             user_id=str(uuid4()),
             data_points=data_points,
@@ -415,9 +420,9 @@ class TestInferenceEngineStats:
         """Test getting stats from freshly initialized engine."""
         mock_pat_service = MagicMock(spec=PATModelService)
         engine = AsyncInferenceEngine(pat_service=mock_pat_service)
-        
+
         stats = engine.get_stats()
-        
+
         assert stats["requests_processed"] == 0
         assert stats["cache_hits"] == 0
         assert stats["error_count"] == 0
@@ -441,18 +446,18 @@ class TestInferenceEngineStats:
             confidence_score=0.85,
             clinical_insights=["Good sleep efficiency"]
         )
-        
+
         mock_pat_service = MagicMock(spec=PATModelService)
         mock_pat_service.analyze_actigraphy = AsyncMock(return_value=mock_analysis)
-        
+
         engine = AsyncInferenceEngine(pat_service=mock_pat_service)
-        
+
         # Process some requests
         await engine.predict(input_data=sample_actigraphy_input, request_id="req1")
         await engine.predict(input_data=sample_actigraphy_input, request_id="req2")  # Should be cached
-        
+
         stats = engine.get_stats()
-        
+
         assert stats["requests_processed"] == 2
         assert stats["cache_hits"] == 1
         assert stats["cache_hit_rate_percent"] == 50.0  # 1 hit out of 2 requests = 50%
@@ -471,7 +476,7 @@ class TestInferenceEngineErrorHandling:
             )
             for i in range(1440)  # 24 hours of data
         ]
-        
+
         return ActigraphyInput(
             user_id=str(uuid4()),
             data_points=data_points,
@@ -494,18 +499,18 @@ class TestInferenceEngineErrorHandling:
         """Test timeout handling for slow requests."""
         # Set very short timeout
         sample_inference_request.timeout_seconds = 0.001
-        
+
         mock_pat_service = MagicMock(spec=PATModelService)
-        
+
         # Mock slow analysis
         async def slow_analysis(*args, **kwargs):
             await asyncio.sleep(0.1)  # Longer than timeout
             return MagicMock()
-        
+
         mock_pat_service.analyze_actigraphy = slow_analysis
-        
+
         engine = AsyncInferenceEngine(pat_service=mock_pat_service)
-        
+
         with pytest.raises(Exception):  # Should raise InferenceTimeoutError
             await engine.predict_async(sample_inference_request)
 
@@ -526,22 +531,22 @@ class TestInferenceEngineErrorHandling:
             confidence_score=0.85,
             clinical_insights=["Good sleep efficiency"]
         )
-        
+
         mock_pat_service = MagicMock(spec=PATModelService)
         mock_pat_service.analyze_actigraphy = AsyncMock(return_value=mock_analysis)
-        
+
         engine = AsyncInferenceEngine(pat_service=mock_pat_service)
-        
+
         # Mock cache to raise errors
         with patch.object(engine.cache, 'get', side_effect=Exception("Cache error")), \
              patch.object(engine.cache, 'set', side_effect=Exception("Cache error")):
-            
+
             # Should still work despite cache errors
             result = await engine.predict(
                 input_data=sample_actigraphy_input,
                 request_id="cache-error-test"
             )
-            
+
             assert result.analysis == mock_analysis
             assert not result.cached
 
@@ -558,14 +563,14 @@ class TestInferenceModels:
             sampling_rate=1.0,
             duration_hours=24
         )
-        
+
         request = InferenceRequest(
             request_id="test-request",
             input_data=input_data,
             timeout_seconds=10.0,
             cache_enabled=True
         )
-        
+
         assert request.request_id == "test-request"
         assert request.input_data == input_data
         assert request.timeout_seconds == 10.0
@@ -587,7 +592,7 @@ class TestInferenceModels:
             confidence_score=0.85,
             clinical_insights=["Good sleep"]
         )
-        
+
         response = InferenceResponse(
             request_id="test-request",
             analysis=mock_analysis,
@@ -595,7 +600,7 @@ class TestInferenceModels:
             cached=False,
             timestamp=1234567890.0
         )
-        
+
         assert response.request_id == "test-request"
         assert response.analysis == mock_analysis
         assert response.processing_time_ms == 150.5
@@ -604,4 +609,4 @@ class TestInferenceModels:
 
 
 if __name__ == "__main__":
-    pytest.main([__file__, "-v"]) 
+    pytest.main([__file__, "-v"])

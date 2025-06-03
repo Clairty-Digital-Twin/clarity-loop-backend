@@ -393,6 +393,24 @@ class TestInferenceEngineUtilities:
 class TestInferenceEngineStats:
     """Test inference engine statistics functionality."""
 
+    @pytest.fixture
+    def sample_actigraphy_input(self) -> ActigraphyInput:
+        """Create sample actigraphy input."""
+        data_points = [
+            ActigraphyDataPoint(
+                timestamp=datetime.now(UTC),
+                value=float(i % 100)
+            )
+            for i in range(1440)  # 24 hours of data
+        ]
+        
+        return ActigraphyInput(
+            user_id=str(uuid4()),
+            data_points=data_points,
+            sampling_rate=1.0,
+            duration_hours=24
+        )
+
     def test_get_stats_initial(self):
         """Test getting stats from freshly initialized engine."""
         mock_pat_service = MagicMock(spec=PATModelService)

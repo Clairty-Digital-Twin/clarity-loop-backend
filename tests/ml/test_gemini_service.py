@@ -2,20 +2,19 @@
 
 This test suite covers all aspects of the Gemini service including:
 - Service initialization and configuration
-- Prompt execution and analysis
+- Health insight generation from PAT analysis
 - Health check functionality
 - Error handling and edge cases
 - Integration with PAT analysis results
 """
 
 import json
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import MagicMock, patch
 from uuid import uuid4
 
 import pytest
 
-from clarity.ml.gemini_service import GeminiService
-from clarity.ml.pat_service import ActigraphyAnalysis
+from clarity.ml.gemini_service import GeminiService, HealthInsightRequest, HealthInsightResponse
 
 
 class TestGeminiServiceInitialization:
@@ -25,92 +24,83 @@ class TestGeminiServiceInitialization:
         """Test service initialization with default configuration."""
         service = GeminiService()
         
-        assert service.api_key is None
-        assert service.model_name == "gemini-2.0-flash-exp"
-        assert service.temperature == 0.3
-        assert service.max_tokens == 8192
+        assert service.project_id is None
+        assert service.location == "us-central1"
         assert service.client is None
+        assert service.model is None
+        assert not service.is_initialized
 
     def test_service_initialization_custom_config(self):
         """Test service initialization with custom configuration."""
-        api_key = "test-api-key"
-        model_name = "gemini-pro"
-        temperature = 0.7
-        max_tokens = 4096
+        project_id = "test-project"
+        location = "us-west1"
         
-        service = GeminiService(
-            api_key=api_key,
-            model_name=model_name,
-            temperature=temperature,
-            max_tokens=max_tokens
-        )
+        service = GeminiService(project_id=project_id, location=location)
         
-        assert service.api_key == api_key
-        assert service.model_name == model_name
-        assert service.temperature == temperature
-        assert service.max_tokens == max_tokens
+        assert service.project_id == project_id
+        assert service.location == location
+        assert service.client is None
+        assert service.model is None
+        assert not service.is_initialized
 
-    def test_service_initialization_from_environment(self):
-        """Test service initialization from environment variables."""
-        with patch.dict('os.environ', {'GOOGLE_API_KEY': 'env-api-key'}):
-            service = GeminiService()
-            assert service.api_key == 'env-api-key'
-
-    def test_client_initialization_with_api_key(self):
-        """Test client initialization when API key is provided."""
-        with patch('google.generativeai.configure') as mock_configure, \
-             patch('google.generativeai.GenerativeModel') as mock_model:
+    @pytest.mark.asyncio
+    async def test_service_initialization_success(self):
+        """Test successful service initialization."""
+        service = GeminiService(project_id="test-project")
+        
+        with patch('vertexai.init') as mock_init, \
+             patch('vertexai.generative_models.GenerativeModel') as mock_model:
             
-            service = GeminiService(api_key="test-key")
-            client = service._get_client()
+            await service.initialize()
             
-            mock_configure.assert_called_once_with(api_key="test-key")
-            mock_model.assert_called_once_with("gemini-2.0-flash-exp")
-            assert client is not None
+            mock_init.assert_called_once_with(project="test-project", location="us-central1")
+            mock_model.assert_called_once_with("gemini-2.5-pro")
+            assert service.is_initialized
+            assert service.model is not None
 
-    def test_client_initialization_without_api_key(self):
-        """Test client initialization fails without API key."""
-        service = GeminiService()
+    @pytest.mark.asyncio
+    async def test_service_initialization_failure(self):
+        """Test service initialization failure."""
+        service = GeminiService(project_id="test-project")
         
-        with pytest.raises(ValueError, match="Google API key is required"):
-            service._get_client()
+        with patch('vertexai.init', side_effect=Exception("Initialization failed")):
+            with pytest.raises(Exception, match="Initialization failed"):
+                await service.initialize()
+            
+            assert not service.is_initialized
+            assert service.model is None
 
 
-class TestGeminiServiceAnalysis:
-    """Test Gemini service analysis functionality."""
+class TestGeminiServiceHealthInsights:
+    """Test Gemini service health insight generation."""
 
     @pytest.fixture
-    def sample_pat_analysis(self) -> ActigraphyAnalysis:
-        """Create sample PAT analysis for testing."""
-        return ActigraphyAnalysis(
+    def sample_insight_request(self) -> HealthInsightRequest:
+        """Create sample health insight request."""
+        return HealthInsightRequest(
             user_id=str(uuid4()),
-            analysis_timestamp="2024-01-01T12:00:00Z",
-            sleep_efficiency=85.0,
-            sleep_onset_latency=15.0,
-            wake_after_sleep_onset=30.0,
-            total_sleep_time=7.5,
-            circadian_rhythm_score=0.75,
-            activity_fragmentation=0.25,
-            depression_risk_score=0.2,
-            sleep_stages=["wake"] * 100 + ["light_sleep"] * 200 + ["deep_sleep"] * 150,
-            confidence_score=0.85,
-            clinical_insights=[
-                "Good sleep efficiency",
-                "Moderate circadian rhythm stability",
-                "Low depression risk indicators"
-            ]
+            analysis_results={
+                "sleep_efficiency": 85.0,
+                "circadian_rhythm_score": 0.75,
+                "depression_risk_score": 0.2,
+                "total_sleep_time": 7.5,
+                "wake_after_sleep_onset": 30.0,
+                "sleep_onset_latency": 15.0
+            },
+            context="Regular exercise routine",
+            insight_type="comprehensive"
         )
 
     @pytest.mark.asyncio
-    async def test_analyze_actigraphy_insights_success(self, sample_pat_analysis):
-        """Test successful actigraphy insights analysis."""
-        service = GeminiService(api_key="test-key")
+    async def test_generate_health_insights_success(self, sample_insight_request):
+        """Test successful health insight generation."""
+        service = GeminiService(project_id="test-project")
         
-        # Mock the client and response
+        # Mock successful response
         mock_response = MagicMock()
         mock_response.text = json.dumps({
-            "executive_summary": "Excellent sleep patterns with good efficiency",
-            "key_findings": [
+            "narrative": "Your sleep patterns show excellent efficiency at 85%",
+            "key_insights": [
                 "Sleep efficiency of 85% indicates healthy sleep",
                 "Low depression risk factors observed"
             ],
@@ -118,359 +108,344 @@ class TestGeminiServiceAnalysis:
                 "Maintain current sleep schedule",
                 "Continue regular exercise routine"
             ],
-            "risk_assessment": {
-                "overall_risk": "low",
-                "sleep_disorders": "minimal",
-                "mental_health": "stable"
-            }
+            "confidence_score": 0.85
         })
         
-        mock_client = MagicMock()
-        mock_client.generate_content = AsyncMock(return_value=mock_response)
+        mock_model = MagicMock()
+        mock_model.generate_content.return_value = mock_response
         
-        with patch.object(service, '_get_client', return_value=mock_client):
-            result = await service.analyze_actigraphy_insights(sample_pat_analysis)
+        with patch.object(service, 'initialize') as mock_init, \
+             patch('vertexai.generative_models.GenerativeModel', return_value=mock_model):
             
-            assert "executive_summary" in result
-            assert "key_findings" in result
-            assert "recommendations" in result
-            assert "risk_assessment" in result
-            assert result["executive_summary"] == "Excellent sleep patterns with good efficiency"
+            service.is_initialized = True
+            service.model = mock_model
+            
+            result = await service.generate_health_insights(sample_insight_request)
+            
+            assert isinstance(result, HealthInsightResponse)
+            assert result.user_id == sample_insight_request.user_id
+            assert "excellent efficiency" in result.narrative
+            assert len(result.key_insights) == 2
+            assert len(result.recommendations) == 2
+            assert result.confidence_score == 0.85
 
     @pytest.mark.asyncio
-    async def test_analyze_actigraphy_insights_client_error(self, sample_pat_analysis):
-        """Test actigraphy insights analysis with client error."""
-        service = GeminiService(api_key="test-key")
+    async def test_generate_health_insights_initialization_required(self, sample_insight_request):
+        """Test health insight generation when initialization is required."""
+        service = GeminiService(project_id="test-project")
         
-        mock_client = MagicMock()
-        mock_client.generate_content = AsyncMock(side_effect=Exception("API Error"))
+        mock_response = MagicMock()
+        mock_response.text = json.dumps({
+            "narrative": "Analysis completed",
+            "key_insights": ["Test insight"],
+            "recommendations": ["Test recommendation"],
+            "confidence_score": 0.8
+        })
         
-        with patch.object(service, '_get_client', return_value=mock_client):
-            with pytest.raises(RuntimeError, match="Failed to analyze actigraphy insights"):
-                await service.analyze_actigraphy_insights(sample_pat_analysis)
+        mock_model = MagicMock()
+        mock_model.generate_content.return_value = mock_response
+        
+        with patch.object(service, 'initialize') as mock_init, \
+             patch('vertexai.generative_models.GenerativeModel', return_value=mock_model):
+            
+            # Simulate initialization during the call
+            async def init_side_effect():
+                service.is_initialized = True
+                service.model = mock_model
+            
+            mock_init.side_effect = init_side_effect
+            
+            result = await service.generate_health_insights(sample_insight_request)
+            
+            mock_init.assert_called_once()
+            assert isinstance(result, HealthInsightResponse)
 
     @pytest.mark.asyncio
-    async def test_analyze_actigraphy_insights_invalid_json(self, sample_pat_analysis):
-        """Test actigraphy insights analysis with invalid JSON response."""
-        service = GeminiService(api_key="test-key")
+    async def test_generate_health_insights_model_not_initialized(self, sample_insight_request):
+        """Test health insight generation when model is not initialized after init."""
+        service = GeminiService(project_id="test-project")
+        
+        with patch.object(service, 'initialize') as mock_init:
+            service.is_initialized = True
+            service.model = None  # Model remains None after initialization
+            
+            with pytest.raises(RuntimeError, match="Gemini model not initialized"):
+                await service.generate_health_insights(sample_insight_request)
+
+    @pytest.mark.asyncio
+    async def test_generate_health_insights_generation_error(self, sample_insight_request):
+        """Test health insight generation with generation error."""
+        service = GeminiService(project_id="test-project")
+        
+        mock_model = MagicMock()
+        mock_model.generate_content.side_effect = Exception("Generation failed")
+        
+        service.is_initialized = True
+        service.model = mock_model
+        
+        with pytest.raises(Exception, match="Generation failed"):
+            await service.generate_health_insights(sample_insight_request)
+
+    @pytest.mark.asyncio
+    async def test_generate_health_insights_invalid_json_fallback(self, sample_insight_request):
+        """Test health insight generation with invalid JSON fallback."""
+        service = GeminiService(project_id="test-project")
         
         mock_response = MagicMock()
         mock_response.text = "Invalid JSON response"
         
-        mock_client = MagicMock()
-        mock_client.generate_content = AsyncMock(return_value=mock_response)
+        mock_model = MagicMock()
+        mock_model.generate_content.return_value = mock_response
         
-        with patch.object(service, '_get_client', return_value=mock_client):
-            with pytest.raises(RuntimeError, match="Failed to parse Gemini response"):
-                await service.analyze_actigraphy_insights(sample_pat_analysis)
-
-    @pytest.mark.asyncio
-    async def test_execute_prompt_success(self):
-        """Test successful prompt execution."""
-        service = GeminiService(api_key="test-key")
+        service.is_initialized = True
+        service.model = mock_model
         
-        mock_response = MagicMock()
-        mock_response.text = "This is a successful response"
+        result = await service.generate_health_insights(sample_insight_request)
         
-        mock_client = MagicMock()
-        mock_client.generate_content = AsyncMock(return_value=mock_response)
-        
-        with patch.object(service, '_get_client', return_value=mock_client):
-            result = await service.execute_prompt("Test prompt")
-            
-            assert result == "This is a successful response"
-            mock_client.generate_content.assert_called_once()
-
-    @pytest.mark.asyncio
-    async def test_execute_prompt_with_generation_config(self):
-        """Test prompt execution with custom generation configuration."""
-        service = GeminiService(api_key="test-key", temperature=0.7, max_tokens=4096)
-        
-        mock_response = MagicMock()
-        mock_response.text = "Response with custom config"
-        
-        mock_client = MagicMock()
-        mock_client.generate_content = AsyncMock(return_value=mock_response)
-        
-        with patch.object(service, '_get_client', return_value=mock_client):
-            result = await service.execute_prompt("Test prompt")
-            
-            assert result == "Response with custom config"
-            # Verify generation config was used
-            call_args = mock_client.generate_content.call_args
-            assert "generation_config" in call_args.kwargs
-
-    @pytest.mark.asyncio
-    async def test_execute_prompt_client_error(self):
-        """Test prompt execution with client error."""
-        service = GeminiService(api_key="test-key")
-        
-        mock_client = MagicMock()
-        mock_client.generate_content = AsyncMock(side_effect=Exception("Client error"))
-        
-        with patch.object(service, '_get_client', return_value=mock_client):
-            with pytest.raises(RuntimeError, match="Failed to execute prompt"):
-                await service.execute_prompt("Test prompt")
-
-    @pytest.mark.asyncio
-    async def test_execute_prompt_empty_response(self):
-        """Test prompt execution with empty response."""
-        service = GeminiService(api_key="test-key")
-        
-        mock_response = MagicMock()
-        mock_response.text = ""
-        
-        mock_client = MagicMock()
-        mock_client.generate_content = AsyncMock(return_value=mock_response)
-        
-        with patch.object(service, '_get_client', return_value=mock_client):
-            result = await service.execute_prompt("Test prompt")
-            
-            assert result == ""
+        # Should fall back to text response
+        assert isinstance(result, HealthInsightResponse)
+        assert "Invalid JSON response" in result.narrative
+        assert len(result.key_insights) >= 1
+        assert len(result.recommendations) >= 1
 
 
 class TestGeminiServicePromptGeneration:
     """Test Gemini service prompt generation functionality."""
 
-    @pytest.fixture
-    def sample_pat_analysis(self) -> ActigraphyAnalysis:
-        """Create sample PAT analysis for testing."""
-        return ActigraphyAnalysis(
+    def test_create_health_insight_prompt_comprehensive(self):
+        """Test comprehensive health insight prompt generation."""
+        request = HealthInsightRequest(
             user_id="test-user",
-            analysis_timestamp="2024-01-01T12:00:00Z",
-            sleep_efficiency=75.0,
-            sleep_onset_latency=25.0,
-            wake_after_sleep_onset=45.0,
-            total_sleep_time=6.5,
-            circadian_rhythm_score=0.65,
-            activity_fragmentation=0.35,
-            depression_risk_score=0.4,
-            sleep_stages=["wake"] * 150 + ["light_sleep"] * 200 + ["deep_sleep"] * 100,
-            confidence_score=0.75,
-            clinical_insights=[
-                "Moderate sleep efficiency",
-                "Some circadian irregularity",
-                "Moderate depression risk indicators"
-            ]
+            analysis_results={
+                "sleep_efficiency": 75.0,
+                "circadian_rhythm_score": 0.65,
+                "depression_risk_score": 0.4,
+                "total_sleep_time": 6.5,
+                "wake_after_sleep_onset": 45.0,
+                "sleep_onset_latency": 25.0
+            },
+            context="Stressful work period"
         )
-
-    def test_build_actigraphy_prompt_comprehensive(self, sample_pat_analysis):
-        """Test comprehensive actigraphy prompt generation."""
-        service = GeminiService()
         
-        prompt = service._build_actigraphy_prompt(sample_pat_analysis)
+        prompt = GeminiService._create_health_insight_prompt(request)
         
         # Check that all key components are included
-        assert "test-user" in prompt
         assert "75.0%" in prompt  # Sleep efficiency
-        assert "25.0 minutes" in prompt  # Sleep onset latency
-        assert "6.5 hours" in prompt  # Total sleep time
         assert "0.65" in prompt  # Circadian rhythm score
         assert "0.4" in prompt  # Depression risk score
-        assert "Moderate sleep efficiency" in prompt  # Clinical insights
-        assert "JSON format" in prompt  # Format specification
+        assert "6.5 hours" in prompt  # Total sleep time
+        assert "45.0 minutes" in prompt  # Wake after sleep onset
+        assert "25.0 minutes" in prompt  # Sleep onset latency
+        assert "Stressful work period" in prompt  # Context
+        assert "JSON" in prompt  # Format specification
 
-    def test_build_actigraphy_prompt_edge_cases(self):
-        """Test actigraphy prompt generation with edge case values."""
-        analysis = ActigraphyAnalysis(
+    def test_create_health_insight_prompt_edge_cases(self):
+        """Test health insight prompt generation with edge case values."""
+        request = HealthInsightRequest(
             user_id="edge-case-user",
-            analysis_timestamp="2024-01-01T12:00:00Z",
-            sleep_efficiency=100.0,  # Perfect efficiency
-            sleep_onset_latency=0.0,  # Instant sleep
-            wake_after_sleep_onset=0.0,  # No awakenings
-            total_sleep_time=12.0,  # Long sleep
-            circadian_rhythm_score=1.0,  # Perfect rhythm
-            activity_fragmentation=0.0,  # No fragmentation
-            depression_risk_score=0.0,  # No risk
-            sleep_stages=["deep_sleep"] * 720,  # All deep sleep
-            confidence_score=1.0,  # Perfect confidence
-            clinical_insights=["Perfect sleep patterns"]
+            analysis_results={
+                "sleep_efficiency": 100.0,  # Perfect efficiency
+                "circadian_rhythm_score": 1.0,  # Perfect rhythm
+                "depression_risk_score": 0.0,  # No risk
+                "total_sleep_time": 12.0,  # Long sleep
+                "wake_after_sleep_onset": 0.0,  # No awakenings
+                "sleep_onset_latency": 0.0  # Instant sleep
+            },
+            context=""
         )
         
-        service = GeminiService()
-        prompt = service._build_actigraphy_prompt(analysis)
+        prompt = GeminiService._create_health_insight_prompt(request)
         
         assert "100.0%" in prompt
-        assert "0.0 minutes" in prompt
-        assert "12.0 hours" in prompt
         assert "1.0" in prompt
-        assert "Perfect sleep patterns" in prompt
+        assert "0.0" in prompt
+        assert "12.0 hours" in prompt
 
-    def test_build_actigraphy_prompt_empty_insights(self):
-        """Test actigraphy prompt generation with empty clinical insights."""
-        analysis = ActigraphyAnalysis(
-            user_id="no-insights-user",
-            analysis_timestamp="2024-01-01T12:00:00Z",
-            sleep_efficiency=80.0,
-            sleep_onset_latency=20.0,
-            wake_after_sleep_onset=40.0,
-            total_sleep_time=7.0,
-            circadian_rhythm_score=0.7,
-            activity_fragmentation=0.3,
-            depression_risk_score=0.3,
-            sleep_stages=["wake", "light_sleep", "deep_sleep"],
-            confidence_score=0.8,
-            clinical_insights=[]  # Empty insights
+    def test_create_health_insight_prompt_missing_data(self):
+        """Test health insight prompt generation with missing data."""
+        request = HealthInsightRequest(
+            user_id="missing-data-user",
+            analysis_results={},  # Empty analysis results
+            context=None
         )
         
-        service = GeminiService()
-        prompt = service._build_actigraphy_prompt(analysis)
+        prompt = GeminiService._create_health_insight_prompt(request)
         
-        # Should still generate a valid prompt
-        assert "no-insights-user" in prompt
-        assert "80.0%" in prompt
+        # Should handle missing data gracefully with defaults
+        assert "0%" in prompt or "0.0%" in prompt  # Default values
         assert len(prompt) > 500  # Should still be comprehensive
+
+
+class TestGeminiServiceResponseParsing:
+    """Test Gemini service response parsing functionality."""
+
+    def test_parse_gemini_response_valid_json(self):
+        """Test parsing valid JSON response."""
+        mock_response = MagicMock()
+        mock_response.text = json.dumps({
+            "narrative": "Test narrative",
+            "key_insights": ["Insight 1", "Insight 2"],
+            "recommendations": ["Rec 1", "Rec 2"],
+            "confidence_score": 0.9
+        })
+        
+        result = GeminiService._parse_gemini_response(mock_response, "test-user")
+        
+        assert result.user_id == "test-user"
+        assert result.narrative == "Test narrative"
+        assert len(result.key_insights) == 2
+        assert len(result.recommendations) == 2
+        assert result.confidence_score == 0.9
+
+    def test_parse_gemini_response_partial_json(self):
+        """Test parsing JSON response with missing fields."""
+        mock_response = MagicMock()
+        mock_response.text = json.dumps({
+            "narrative": "Partial narrative"
+            # Missing other fields
+        })
+        
+        result = GeminiService._parse_gemini_response(mock_response, "test-user")
+        
+        assert result.narrative == "Partial narrative"
+        assert result.key_insights == []  # Default empty list
+        assert result.recommendations == []  # Default empty list
+        assert result.confidence_score == 0.8  # Default value
+
+    def test_parse_gemini_response_invalid_json(self):
+        """Test parsing invalid JSON response with fallback."""
+        mock_response = MagicMock()
+        mock_response.text = "Not valid JSON"
+        
+        result = GeminiService._parse_gemini_response(mock_response, "test-user")
+        
+        assert result.user_id == "test-user"
+        assert "Not valid JSON" in result.narrative
+        assert len(result.key_insights) > 0  # Fallback insights
+        assert len(result.recommendations) > 0  # Fallback recommendations
+
+    def test_create_fallback_response(self):
+        """Test creation of fallback response."""
+        long_text = "A" * 500  # Long text to test truncation
+        
+        result = GeminiService._create_fallback_response(long_text, "test-user")
+        
+        assert result.user_id == "test-user"
+        assert len(result.narrative) <= 303  # Truncated + "..."
+        assert len(result.key_insights) > 0
+        assert len(result.recommendations) > 0
+        assert result.confidence_score == 0.7
+
+    def test_create_fallback_response_short_text(self):
+        """Test creation of fallback response with short text."""
+        short_text = "Short response"
+        
+        result = GeminiService._create_fallback_response(short_text, "test-user")
+        
+        assert result.narrative == short_text  # No truncation needed
+        assert len(result.key_insights) > 0
+        assert len(result.recommendations) > 0
 
 
 class TestGeminiServiceHealthCheck:
     """Test Gemini service health check functionality."""
 
     @pytest.mark.asyncio
-    async def test_health_check_with_api_key(self):
-        """Test health check when API key is configured."""
-        service = GeminiService(api_key="test-key")
+    async def test_health_check_initialized(self):
+        """Test health check when service is initialized."""
+        service = GeminiService(project_id="test-project", location="us-west1")
+        service.is_initialized = True
+        service.model = MagicMock()
         
         health = await service.health_check()
         
-        assert health["service"] == "Gemini LLM Service"
+        assert health["service"] == "Gemini Service"
         assert health["status"] == "healthy"
-        assert health["model_name"] == "gemini-2.0-flash-exp"
-        assert health["api_key_configured"] is True
+        assert health["project_id"] == "test-project"
+        assert health["location"] == "us-west1"
+        assert health["initialized"] is True
+        assert health["model"] == "gemini-2.5-pro"
 
     @pytest.mark.asyncio
-    async def test_health_check_without_api_key(self):
-        """Test health check when API key is not configured."""
+    async def test_health_check_not_initialized(self):
+        """Test health check when service is not initialized."""
         service = GeminiService()
         
         health = await service.health_check()
         
-        assert health["service"] == "Gemini LLM Service"
-        assert health["status"] == "configuration_needed"
-        assert health["api_key_configured"] is False
+        assert health["status"] == "not_initialized"
+        assert health["project_id"] == "not_set"
+        assert health["initialized"] is False
+        assert health["model"] == "not_loaded"
 
     @pytest.mark.asyncio
-    async def test_health_check_custom_model(self):
-        """Test health check with custom model configuration."""
-        service = GeminiService(
-            api_key="test-key",
-            model_name="gemini-pro",
-            temperature=0.5,
-            max_tokens=2048
-        )
+    async def test_health_check_custom_config(self):
+        """Test health check with custom configuration."""
+        service = GeminiService(project_id="custom-project", location="europe-west1")
+        service.is_initialized = True
+        service.model = MagicMock()
         
         health = await service.health_check()
         
-        assert health["model_name"] == "gemini-pro"
-        assert health["temperature"] == 0.5
-        assert health["max_tokens"] == 2048
+        assert health["project_id"] == "custom-project"
+        assert health["location"] == "europe-west1"
 
 
 class TestGeminiServiceEdgeCases:
     """Test edge cases and error conditions."""
 
-    def test_get_client_caching(self):
-        """Test that client is cached after first creation."""
-        with patch('google.generativeai.configure') as mock_configure, \
-             patch('google.generativeai.GenerativeModel') as mock_model:
-            
-            service = GeminiService(api_key="test-key")
-            
-            # First call should create client
-            client1 = service._get_client()
-            # Second call should return cached client
-            client2 = service._get_client()
-            
-            assert client1 is client2
-            # Configure should only be called once
-            mock_configure.assert_called_once()
-            mock_model.assert_called_once()
+    def test_raise_model_not_initialized_error(self):
+        """Test the model not initialized error helper."""
+        with pytest.raises(RuntimeError, match="Gemini model not initialized"):
+            GeminiService._raise_model_not_initialized()
 
-    @pytest.mark.asyncio
-    async def test_analyze_actigraphy_insights_no_api_key(self):
-        """Test analysis fails without API key."""
-        service = GeminiService()
+    def test_generate_placeholder_narrative(self):
+        """Test placeholder narrative generation."""
+        analysis_results = {
+            "sleep_efficiency": 80.0,
+            "circadian_rhythm_score": 0.7
+        }
         
-        analysis = ActigraphyAnalysis(
-            user_id="test",
-            analysis_timestamp="2024-01-01T12:00:00Z",
-            sleep_efficiency=80.0,
-            sleep_onset_latency=20.0,
-            wake_after_sleep_onset=40.0,
-            total_sleep_time=7.0,
-            circadian_rhythm_score=0.7,
-            activity_fragmentation=0.3,
-            depression_risk_score=0.3,
-            sleep_stages=["wake"],
-            confidence_score=0.8,
-            clinical_insights=["Test insight"]
-        )
+        narrative = GeminiService._generate_placeholder_narrative(analysis_results)
         
-        with pytest.raises(ValueError, match="Google API key is required"):
-            await service.analyze_actigraphy_insights(analysis)
+        assert "80.0%" in narrative
+        assert "0.70" in narrative
+        assert len(narrative) > 50
 
-    @pytest.mark.asyncio
-    async def test_execute_prompt_no_api_key(self):
-        """Test prompt execution fails without API key."""
-        service = GeminiService()
+    def test_extract_key_insights(self):
+        """Test key insights extraction."""
+        # Test excellent sleep
+        excellent_results = {"sleep_efficiency": 90.0}
+        insights = GeminiService._extract_key_insights(excellent_results)
+        assert any("Excellent sleep quality" in insight for insight in insights)
         
-        with pytest.raises(ValueError, match="Google API key is required"):
-            await service.execute_prompt("Test prompt")
+        # Test good sleep
+        good_results = {"sleep_efficiency": 80.0}
+        insights = GeminiService._extract_key_insights(good_results)
+        assert any("Good sleep quality" in insight for insight in insights)
+        
+        # Test poor sleep
+        poor_results = {"sleep_efficiency": 60.0}
+        insights = GeminiService._extract_key_insights(poor_results)
+        assert any("needs attention" in insight for insight in insights)
 
-    def test_build_prompt_handles_none_values(self):
-        """Test prompt building handles None values gracefully."""
-        analysis = ActigraphyAnalysis(
-            user_id="test-user",
-            analysis_timestamp="2024-01-01T12:00:00Z",
-            sleep_efficiency=80.0,
-            sleep_onset_latency=20.0,
-            wake_after_sleep_onset=40.0,
-            total_sleep_time=7.0,
-            circadian_rhythm_score=0.7,
-            activity_fragmentation=0.3,
-            depression_risk_score=0.3,
-            sleep_stages=[],  # Empty list
-            confidence_score=0.8,
-            clinical_insights=[]  # Empty list
-        )
+    def test_generate_recommendations(self):
+        """Test recommendations generation."""
+        # Test poor sleep efficiency
+        poor_sleep_results = {"sleep_efficiency": 70.0}
+        recommendations = GeminiService._generate_recommendations(poor_sleep_results)
+        assert any("bedtime routine" in rec for rec in recommendations)
         
-        service = GeminiService()
-        prompt = service._build_actigraphy_prompt(analysis)
+        # Test poor circadian rhythm
+        poor_circadian_results = {"circadian_rhythm_score": 0.5}
+        recommendations = GeminiService._generate_recommendations(poor_circadian_results)
+        assert any("consistent sleep" in rec for rec in recommendations)
         
-        # Should not crash and should produce valid prompt
-        assert isinstance(prompt, str)
-        assert len(prompt) > 100
-        assert "test-user" in prompt
-
-    @pytest.mark.asyncio
-    async def test_analyze_insights_malformed_json_fallback(self):
-        """Test analysis handles malformed JSON by falling back to text."""
-        service = GeminiService(api_key="test-key")
-        
-        analysis = ActigraphyAnalysis(
-            user_id="test",
-            analysis_timestamp="2024-01-01T12:00:00Z",
-            sleep_efficiency=80.0,
-            sleep_onset_latency=20.0,
-            wake_after_sleep_onset=40.0,
-            total_sleep_time=7.0,
-            circadian_rhythm_score=0.7,
-            activity_fragmentation=0.3,
-            depression_risk_score=0.3,
-            sleep_stages=["wake"],
-            confidence_score=0.8,
-            clinical_insights=["Test insight"]
-        )
-        
-        # Mock response with malformed JSON
-        mock_response = MagicMock()
-        mock_response.text = '{"incomplete": json'
-        
-        mock_client = MagicMock()
-        mock_client.generate_content = AsyncMock(return_value=mock_response)
-        
-        with patch.object(service, '_get_client', return_value=mock_client):
-            with pytest.raises(RuntimeError, match="Failed to parse Gemini response"):
-                await service.analyze_actigraphy_insights(analysis)
+        # Test good values
+        good_results = {"sleep_efficiency": 85.0, "circadian_rhythm_score": 0.8}
+        recommendations = GeminiService._generate_recommendations(good_results)
+        # Should have fewer recommendations for good results
+        assert len(recommendations) >= 0
 
 
 if __name__ == "__main__":

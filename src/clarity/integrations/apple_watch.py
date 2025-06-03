@@ -1,4 +1,4 @@
-"""Apple Watch Data Processor for Clarity Digital Twin
+"""Apple Watch Data Processor for Clarity Digital Twin.
 
 Specialized processing and transformation of Apple Watch data
 for optimal integration with PAT (Pretrained Actigraphy Transformer) models.
@@ -6,7 +6,8 @@ for optimal integration with PAT (Pretrained Actigraphy Transformer) models.
 
 from dataclasses import dataclass
 from datetime import datetime, timedelta
-from enum import Enum
+from enum import Enum, StrEnum
+import operator
 from typing import Any, List, Optional
 
 import numpy as np
@@ -21,16 +22,16 @@ from clarity.integrations.healthkit import HealthDataBatch, HealthDataPoint
 logger = get_logger(__name__)
 
 
-class ActivityLevel(str, Enum):
-    """Apple Watch activity levels"""
+class ActivityLevel(StrEnum):
+    """Apple Watch activity levels."""
     SEDENTARY = "sedentary"
     LIGHT = "light"
     MODERATE = "moderate"
     VIGOROUS = "vigorous"
 
 
-class SleepStage(str, Enum):
-    """Sleep stages from Apple Watch"""
+class SleepStage(StrEnum):
+    """Sleep stages from Apple Watch."""
     AWAKE = "awake"
     REM = "rem"
     CORE = "core"
@@ -39,7 +40,7 @@ class SleepStage(str, Enum):
 
 @dataclass
 class ProcessedHealthData:
-    """Processed health data ready for ML models"""
+    """Processed health data ready for ML models."""
     # Time series data (minute-level, 10080 points for a week)
     heart_rate_series: np.ndarray | None = None
     hrv_series: np.ndarray | None = None
@@ -83,7 +84,7 @@ class ProcessedHealthData:
 
 class AppleWatchDataProcessor:
     """Processes raw Apple Watch health data into ML-ready formats.
-    
+
     Implements state-of-the-art preprocessing techniques including:
     - Outlier removal using physiological bounds
     - Time series resampling and alignment
@@ -113,7 +114,7 @@ class AppleWatchDataProcessor:
     VO2_MAX_MIN = 10
     VO2_MAX_MAX = 90
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.logger = get_logger(__name__)
 
     async def process_health_batch(
@@ -122,11 +123,11 @@ class AppleWatchDataProcessor:
         target_duration_days: int = 7
     ) -> ProcessedHealthData:
         """Process a batch of health data into ML-ready format.
-        
+
         Args:
             batch: Raw health data batch from HealthKit
             target_duration_days: Target duration for time series (default 7 days)
-            
+
         Returns:
             ProcessedHealthData with all modalities processed and aligned
         """
@@ -178,8 +179,9 @@ class AppleWatchDataProcessor:
             return result
 
         except Exception as e:
-            self.logger.error(f"Error processing health batch: {e!s}")
-            raise ProcessingError(f"Failed to process health data: {e!s}")
+            self.logger.exception(f"Error processing health batch: {e!s}")
+            msg = f"Failed to process health data: {e!s}"
+            raise ProcessingError(msg)
 
     async def _process_heart_rate(
         self,
@@ -187,7 +189,7 @@ class AppleWatchDataProcessor:
         result: ProcessedHealthData,
         start_time: datetime,
         end_time: datetime
-    ):
+    ) -> None:
         """Process heart rate data with advanced filtering."""
         # Extract time series
         times = np.array([s.timestamp.timestamp() for s in samples])
@@ -250,7 +252,7 @@ class AppleWatchDataProcessor:
         result: ProcessedHealthData,
         start_time: datetime,
         end_time: datetime
-    ):
+    ) -> None:
         """Process HRV data with outlier removal and normalization."""
         # Extract time series
         times = np.array([s.timestamp.timestamp() for s in samples])
@@ -300,7 +302,7 @@ class AppleWatchDataProcessor:
         result: ProcessedHealthData,
         start_time: datetime,
         end_time: datetime
-    ):
+    ) -> None:
         """Process respiratory rate with median filtering."""
         # Extract time series
         times = np.array([s.timestamp.timestamp() for s in samples])
@@ -363,7 +365,7 @@ class AppleWatchDataProcessor:
         result: ProcessedHealthData,
         start_time: datetime,
         end_time: datetime
-    ):
+    ) -> None:
         """Process steps into PAT-compatible movement proxy vector."""
         # Create minute-level step array
         minutes_in_week = 7 * 24 * 60
@@ -394,7 +396,7 @@ class AppleWatchDataProcessor:
         self,
         samples: list[HealthDataPoint],
         result: ProcessedHealthData
-    ):
+    ) -> None:
         """Process SpO2 data (sparse samples)."""
         values = [float(s.value) for s in samples if isinstance(s.value, (int, float)) and self.SPO2_MIN <= s.value <= self.SPO2_MAX]
 
@@ -406,7 +408,7 @@ class AppleWatchDataProcessor:
         self,
         samples: list[HealthDataPoint],
         result: ProcessedHealthData
-    ):
+    ) -> None:
         """Process blood pressure (episodic data)."""
         systolic_values = []
         diastolic_values = []
@@ -427,7 +429,7 @@ class AppleWatchDataProcessor:
         self,
         samples: list[HealthDataPoint],
         result: ProcessedHealthData
-    ):
+    ) -> None:
         """Process temperature deviation data."""
         deviations = [float(s.value) for s in samples if isinstance(s.value, (int, float)) and abs(s.value) <= self.TEMP_DEVIATION_MAX]
 
@@ -438,14 +440,14 @@ class AppleWatchDataProcessor:
         self,
         samples: list[HealthDataPoint],
         result: ProcessedHealthData
-    ):
+    ) -> None:
         """Process VO2 max data."""
         values = [(s.timestamp, float(s.value)) for s in samples
                   if isinstance(s.value, (int, float)) and self.VO2_MAX_MIN <= s.value <= self.VO2_MAX_MAX]
 
         if values:
             # Sort by time
-            values.sort(key=lambda x: x[0])
+            values.sort(key=operator.itemgetter(0))
             result.vo2_max = float(values[-1][1])  # Most recent
 
             # Calculate trend if we have history
@@ -457,7 +459,7 @@ class AppleWatchDataProcessor:
         self,
         samples: list[Any],
         result: ProcessedHealthData
-    ):
+    ) -> None:
         """Process workout data."""
         result.workout_count = len(samples)
 
@@ -480,7 +482,7 @@ class AppleWatchDataProcessor:
         self,
         samples: list[Any],
         result: ProcessedHealthData
-    ):
+    ) -> None:
         """Process ECG classifications."""
         for ecg in samples:
             if hasattr(ecg, 'classification'):

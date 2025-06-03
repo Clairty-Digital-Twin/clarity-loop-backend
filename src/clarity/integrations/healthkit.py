@@ -129,7 +129,7 @@ class HealthKitTokens(BaseModel):
 
 class HealthKitClient:
     """Apple HealthKit API client for fetching health data.
-    
+
     Handles OAuth 2.0 authentication flow and data retrieval
     from Apple's HealthKit servers.
     """
@@ -167,11 +167,11 @@ class HealthKitClient:
         scopes: list[HealthKitAuthScope]
     ) -> str:
         """Generate OAuth 2.0 authorization URL for HealthKit.
-        
+
         Args:
             state: CSRF protection state parameter
             scopes: List of HealthKit permissions to request
-            
+
         Returns:
             Authorization URL for user to visit
         """
@@ -207,14 +207,14 @@ class HealthKitClient:
         state: str  # noqa: ARG002
     ) -> HealthKitTokens:
         """Exchange authorization code for access tokens.
-        
+
         Args:
             authorization_code: Code received from OAuth callback
             state: State parameter for CSRF validation
-            
+
         Returns:
             HealthKit access and refresh tokens
-            
+
         Raises:
             AuthorizationError: If token exchange fails
         """
@@ -261,13 +261,13 @@ class HealthKitClient:
 
     async def refresh_access_token(self, refresh_token: str) -> HealthKitTokens:
         """Refresh expired access token.
-        
+
         Args:
             refresh_token: Valid refresh token
-            
+
         Returns:
             New access and refresh tokens
-            
+
         Raises:
             AuthorizationError: If refresh fails
         """
@@ -337,17 +337,17 @@ class HealthKitClient:
         limit: int = DEFAULT_LIMIT
     ) -> HealthDataBatch:
         """Fetch health data from HealthKit API.
-        
+
         Args:
             tokens: Valid HealthKit tokens
             data_type: Type of health data to fetch
             start_date: Start of data range
             end_date: End of data range
             limit: Maximum number of data points
-            
+
         Returns:
             Batch of health data points
-            
+
         Raises:
             IntegrationError: If data fetch fails
             DataValidationError: If data is invalid
@@ -425,14 +425,14 @@ class HealthKitClient:
         data_types: list[HealthDataType]
     ) -> dict[HealthDataType, HealthDataBatch]:
         """Fetch latest 7 days of data for multiple data types.
-        
+
         This is the main method for the demo - gets all the data we need
         to show impressive AI insights.
-        
+
         Args:
             tokens: Valid HealthKit tokens
             data_types: List of data types to fetch
-            
+
         Returns:
             Dictionary mapping data types to batches
         """

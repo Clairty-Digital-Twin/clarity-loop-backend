@@ -10,6 +10,7 @@ Fakes are preferred over mocks because they:
 4. Don't require complex mock setup
 """
 
+import json
 from typing import Any
 import uuid
 
@@ -410,8 +411,6 @@ class FakeBlob:
         self, data: str, content_type: str = "application/json"
     ) -> None:
         """Upload string data to fake storage."""
-        import json
-
         parsed_data = json.loads(data) if content_type == "application/json" else data
 
         self._storage[self.full_path] = {

@@ -2,7 +2,7 @@
 
 from unittest.mock import Mock, patch
 
-from fastapi import HTTPException, status
+from fastapi import FastAPI, HTTPException, status
 from fastapi.testclient import TestClient
 import pytest
 
@@ -20,7 +20,8 @@ from clarity.auth import UserContext
 class TestHealthKitModels:
     """Test the HealthKit data models."""
 
-    def test_healthkit_sample_creation(self) -> None:
+    @staticmethod
+    def test_healthkit_sample_creation() -> None:
         """Test HealthKitSample model creation."""
         sample = HealthKitSample(
             identifier="HKQuantityTypeIdentifierHeartRate",
@@ -304,8 +305,6 @@ class TestHealthKitUploadIntegration:
 
     def test_router_with_test_client(self) -> None:
         """Test router with FastAPI test client."""
-        from fastapi import FastAPI
-
         app = FastAPI()
         app.include_router(router)
 

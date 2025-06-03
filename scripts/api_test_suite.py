@@ -25,11 +25,15 @@ else:
         # Initialize colorama for cross-platform colored output
         colorama.init()
     except ImportError:
-        # Will be installed at runtime
-        aiohttp = None  # type: ignore[misc,assignment]
-        colorama = None  # type: ignore[misc,assignment]
-        Fore = None  # type: ignore[misc,assignment]
-        Style = None  # type: ignore[misc,assignment]
+        # Fallback if imports fail
+        import sys
+        print("Installing required packages...")
+        import subprocess
+        subprocess.check_call([sys.executable, "-m", "pip", "install", "aiohttp", "colorama"])
+        import aiohttp  # type: ignore[import-untyped]
+        import colorama  # type: ignore[import-untyped]
+        from colorama import Fore, Style  # type: ignore[import-untyped]
+        colorama.init()
 
 BASE_URL = "http://localhost:8080"
 

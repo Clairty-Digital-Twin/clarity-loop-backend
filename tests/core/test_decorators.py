@@ -643,9 +643,7 @@ class TestDecoratorsIntegration:
     """Test integration and edge cases for decorators."""
 
     @staticmethod
-    def test_multiple_decorators_combination(
-        caplog: pytest.LogCaptureFixture
-    ) -> None:
+    def test_multiple_decorators_combination(caplog: pytest.LogCaptureFixture) -> None:
         """Test applying multiple decorators together."""
         call_count = 0
 

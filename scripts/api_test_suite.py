@@ -33,7 +33,7 @@ else:
         print("Installing required packages...")
         import subprocess  # noqa: S404
 
-        subprocess.check_call(
+        subprocess.check_call(  # noqa: S603
             [sys.executable, "-m", "pip", "install", "aiohttp", "colorama"]
         )
         import aiohttp  # type: ignore[import-untyped]
@@ -414,7 +414,7 @@ if __name__ == "__main__":
         import subprocess  # noqa: S404
         import sys
 
-        subprocess.check_call(
+        subprocess.check_call(  # noqa: S603
             [sys.executable, "-m", "pip", "install", "aiohttp", "colorama"]
         )
         import aiohttp

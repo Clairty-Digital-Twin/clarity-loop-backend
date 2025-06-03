@@ -37,14 +37,14 @@ from clarity.services.auth_service import (
 )
 from tests.base import BaseServiceTestCase
 
-# Test constants
-TEST_PASSWORD = "SecurePass123!"
-TEST_ACCESS_TOKEN = "test_access_token"
-TEST_REFRESH_TOKEN = "test_refresh_token"
-TEST_BEARER_TOKEN_TYPE = "bearer"
-TEST_VALID_REFRESH_TOKEN = "valid_refresh_token"
-TEST_INVALID_REFRESH_TOKEN = "invalid_refresh_token"
-TEST_EXPIRED_REFRESH_TOKEN = "expired_refresh_token"
+# Test constants - these are safe test values, not real secrets
+TEST_PASSWORD = "SecurePass123!"  # nosec B105
+TEST_ACCESS_TOKEN = "test_access_token"  # nosec B105
+TEST_REFRESH_TOKEN = "test_refresh_token"  # nosec B105
+TEST_BEARER_TOKEN_TYPE = "bearer"  # nosec B105
+TEST_VALID_REFRESH_TOKEN = "valid_refresh_token"  # nosec B105
+TEST_INVALID_REFRESH_TOKEN = "invalid_refresh_token"  # nosec B105
+TEST_EXPIRED_REFRESH_TOKEN = "expired_refresh_token"  # nosec B105
 
 
 class MockFirebaseUserRecord:
@@ -156,7 +156,7 @@ class TestAuthenticationServiceRegistration(BaseServiceTestCase):
 
         request = UserRegistrationRequest(
             email=email,
-            password="SecurePass123!",
+            password=TEST_PASSWORD,
             first_name="John",
             last_name="Doe",
             phone_number="+1234567890",
@@ -189,7 +189,7 @@ class TestAuthenticationServiceRegistration(BaseServiceTestCase):
 
         request = UserRegistrationRequest(
             email=email,
-            password="SecurePass123!",
+            password=TEST_PASSWORD,
             first_name="John",
             last_name="Doe",
             phone_number="+1234567890",
@@ -213,7 +213,7 @@ class TestAuthenticationServiceRegistration(BaseServiceTestCase):
 
         request = UserRegistrationRequest(
             email=email,
-            password="SecurePass123!",
+            password=TEST_PASSWORD,
             first_name="John",
             last_name="Doe",
             phone_number="+1234567890",
@@ -270,7 +270,7 @@ class TestAuthenticationServiceLogin(BaseServiceTestCase):
         )
 
         request = UserLoginRequest(
-            email=email, password="SecurePass123!", remember_me=False
+            email=email, password=TEST_PASSWORD, remember_me=False
         )
 
         # Act
@@ -278,8 +278,8 @@ class TestAuthenticationServiceLogin(BaseServiceTestCase):
 
         # Assert
         assert result.user.email == email
-        assert result.tokens.access_token != ""
-        assert result.tokens.refresh_token != ""
+        assert result.tokens.access_token
+        assert result.tokens.refresh_token
         assert result.requires_mfa is False
         assert result.mfa_session_token is None
 
@@ -291,7 +291,7 @@ class TestAuthenticationServiceLogin(BaseServiceTestCase):
         mock_auth.get_user_by_email.side_effect = auth.UserNotFoundError("Not found")
 
         request = UserLoginRequest(
-            email=email, password="SecurePass123!", remember_me=False
+            email=email, password=TEST_PASSWORD, remember_me=False
         )
 
         # Act & Assert
@@ -313,7 +313,7 @@ class TestAuthenticationServiceLogin(BaseServiceTestCase):
         mock_auth.get_user_by_email.return_value = mock_user_record
 
         request = UserLoginRequest(
-            email=email, password="SecurePass123!", remember_me=False
+            email=email, password=TEST_PASSWORD, remember_me=False
         )
 
         # Act & Assert
@@ -333,7 +333,7 @@ class TestAuthenticationServiceLogin(BaseServiceTestCase):
         mock_auth.get_user_by_email.return_value = mock_user_record
 
         request = UserLoginRequest(
-            email=email, password="SecurePass123!", remember_me=False
+            email=email, password=TEST_PASSWORD, remember_me=False
         )
 
         # Act & Assert
@@ -363,9 +363,9 @@ class TestAuthenticationServiceTokens(BaseServiceTestCase):
         result = await self.service._generate_tokens(user_id, remember_me=False)
 
         # Assert
-        assert result.access_token != ""
-        assert result.refresh_token != ""
-        assert result.token_type == "bearer"
+        assert result.access_token
+        assert result.refresh_token
+        assert result.token_type == TEST_BEARER_TOKEN_TYPE
         assert result.expires_in == self.service.default_token_expiry
         assert result.scope == "full_access"
 
@@ -378,15 +378,15 @@ class TestAuthenticationServiceTokens(BaseServiceTestCase):
         result = await self.service._generate_tokens(user_id, remember_me=True)
 
         # Assert
-        assert result.access_token != ""
-        assert result.refresh_token != ""
+        assert result.access_token
+        assert result.refresh_token
         assert result.expires_in == self.service.refresh_token_expiry
 
     async def test_refresh_access_token_success(self) -> None:
         """Test successful token refresh."""
         # Arrange
         user_id = str(uuid4())
-        refresh_token = "valid_refresh_token"
+        refresh_token = TEST_VALID_REFRESH_TOKEN
 
         # Add refresh token to mock database
         token_data = {
@@ -403,14 +403,14 @@ class TestAuthenticationServiceTokens(BaseServiceTestCase):
         result = await self.service.refresh_access_token(refresh_token)
 
         # Assert
-        assert result.access_token != ""
-        assert result.refresh_token != ""
-        assert result.token_type == "bearer"
+        assert result.access_token
+        assert result.refresh_token
+        assert result.token_type == TEST_BEARER_TOKEN_TYPE
 
     async def test_refresh_access_token_invalid(self) -> None:
         """Test token refresh with invalid token."""
         # Arrange
-        refresh_token = "invalid_refresh_token"
+        refresh_token = TEST_INVALID_REFRESH_TOKEN
         self.mock_firestore.query_results = []  # No matching tokens
 
         # Act & Assert
@@ -423,7 +423,7 @@ class TestAuthenticationServiceTokens(BaseServiceTestCase):
         """Test token refresh with expired token."""
         # Arrange
         user_id = str(uuid4())
-        refresh_token = "expired_refresh_token"
+        refresh_token = TEST_EXPIRED_REFRESH_TOKEN
 
         # Add expired refresh token to mock database
         token_data = {
@@ -460,7 +460,7 @@ class TestAuthenticationServiceLogout(BaseServiceTestCase):
         """Test successful user logout."""
         # Arrange
         user_id = str(uuid4())
-        refresh_token = "valid_refresh_token"
+        refresh_token = TEST_VALID_REFRESH_TOKEN
 
         # Add refresh token to mock database
         token_data = {
@@ -492,7 +492,7 @@ class TestAuthenticationServiceLogout(BaseServiceTestCase):
     async def test_logout_user_invalid_token(self) -> None:
         """Test logout with invalid token."""
         # Arrange
-        refresh_token = "invalid_refresh_token"
+        refresh_token = TEST_INVALID_REFRESH_TOKEN
         self.mock_firestore.query_results = []  # No matching tokens
 
         # Act

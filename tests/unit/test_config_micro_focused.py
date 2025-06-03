@@ -75,7 +75,8 @@ class TestEnvironmentVariables:
     """Test environment variable handling - MICRO CHUNK 3B."""
 
     @patch.dict(os.environ, {"LOG_LEVEL": "ERROR"}, clear=False)
-    def test_log_level_from_env(self) -> None:
+    @staticmethod
+    def test_log_level_from_env() -> None:
         """Test setting log level from environment variable."""
         # Act
         config = Settings()
@@ -84,7 +85,8 @@ class TestEnvironmentVariables:
         assert config.log_level == "ERROR"
 
     @patch.dict(os.environ, {"ENVIRONMENT": "production", "SKIP_EXTERNAL_SERVICES": "true", "ENABLE_AUTH": "false"}, clear=False)
-    def test_environment_from_env(self) -> None:
+    @staticmethod
+    def test_environment_from_env() -> None:
         """Test setting environment from environment variable."""
         # Act
         config = Settings()
@@ -93,7 +95,8 @@ class TestEnvironmentVariables:
         assert config.environment == "production"
 
     @patch.dict(os.environ, {"DEBUG": "true"}, clear=False)
-    def test_debug_flag_from_env(self) -> None:
+    @staticmethod
+    def test_debug_flag_from_env() -> None:
         """Test setting debug flag from environment variable."""
         # Act
         config = Settings()
@@ -102,7 +105,8 @@ class TestEnvironmentVariables:
         assert config.debug is True
 
     @patch.dict(os.environ, {"DEBUG": "false"}, clear=False)
-    def test_debug_flag_false_from_env(self) -> None:
+    @staticmethod
+    def test_debug_flag_false_from_env() -> None:
         """Test setting debug flag to false from environment variable."""
         # Act
         config = Settings()
@@ -114,7 +118,8 @@ class TestEnvironmentVariables:
 class TestConfigValidation:
     """Test configuration validation - MICRO CHUNK 3C."""
 
-    def test_valid_log_levels(self) -> None:
+    @staticmethod
+    def test_valid_log_levels() -> None:
         """Test validation of log level values."""
         # Arrange
         valid_levels = ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
@@ -125,7 +130,8 @@ class TestConfigValidation:
                 config = Settings()
                 assert config.log_level == level
 
-    def test_valid_environments(self) -> None:
+    @staticmethod
+    def test_valid_environments() -> None:
         """Test validation of environment values."""
         # Arrange
         valid_envs = ["development", "production", "test"]
@@ -141,7 +147,8 @@ class TestConfigValidation:
                 config = Settings()
                 assert config.environment == env
 
-    def test_boolean_string_conversion(self) -> None:
+    @staticmethod
+    def test_boolean_string_conversion() -> None:
         """Test conversion of string values to boolean."""
         # Test various string representations of boolean values
         true_values = ["true", "True", "TRUE", "1", "yes", "Yes"]
@@ -157,7 +164,8 @@ class TestConfigValidation:
                 config = Settings()
                 assert config.debug is False
 
-    def test_settings_helper_methods(self) -> None:
+    @staticmethod
+    def test_settings_helper_methods() -> None:
         """Test Settings helper methods."""
         # Act
         config = Settings()
@@ -172,7 +180,8 @@ class TestConfigValidation:
 class TestConfigErrorHandling:
     """Test configuration error handling - MICRO CHUNK 3D."""
 
-    def test_missing_configuration_error_creation(self) -> None:
+    @staticmethod
+    def test_missing_configuration_error_creation() -> None:
         """Test creating MissingConfigurationError."""
         # Arrange
         config_key = "MISSING_KEY"
@@ -184,7 +193,8 @@ class TestConfigErrorHandling:
         assert "Missing required configuration: MISSING_KEY" in str(error)
         assert error.config_key == config_key
 
-    def test_invalid_configuration_error_creation(self) -> None:
+    @staticmethod
+    def test_invalid_configuration_error_creation() -> None:
         """Test creating InvalidConfigurationError."""
         # Arrange
         config_key = "INVALID_KEY"
@@ -202,10 +212,10 @@ class TestConfigErrorHandling:
         assert error.value == value
         assert error.reason == reason
 
-    def test_configuration_error_base_class(self) -> None:
+    @staticmethod
+    def test_configuration_error_base_class() -> None:
         """Test ConfigurationError base class."""
         # Arrange
-        message = "Test configuration error"
         config_key = "TEST_KEY"
 
         # Act
@@ -215,7 +225,8 @@ class TestConfigErrorHandling:
         assert config_key in str(error)
         assert error.config_key == config_key
 
-    def test_configuration_error_inheritance(self) -> None:
+    @staticmethod
+    def test_configuration_error_inheritance() -> None:
         """Test configuration error inheritance chain."""
         # Arrange & Act
         missing_error = MissingConfigurationError("TEST_KEY")
@@ -229,7 +240,8 @@ class TestConfigErrorHandling:
 class TestConfigDefaults:
     """Test configuration default values - MICRO CHUNK 3E."""
 
-    def test_default_port_value(self) -> None:
+    @staticmethod
+    def test_default_port_value() -> None:
         """Test default port configuration."""
         # Act
         config = Settings()
@@ -239,7 +251,8 @@ class TestConfigDefaults:
         assert isinstance(config.port, int)
         assert config.port > 0
 
-    def test_default_host_value(self) -> None:
+    @staticmethod
+    def test_default_host_value() -> None:
         """Test default host configuration."""
         # Act
         config = Settings()
@@ -249,7 +262,8 @@ class TestConfigDefaults:
         assert isinstance(config.host, str)
         assert len(config.host) > 0
 
-    def test_default_cors_origins(self) -> None:
+    @staticmethod
+    def test_default_cors_origins() -> None:
         """Test default CORS origins configuration."""
         # Act
         config = Settings()
@@ -258,7 +272,8 @@ class TestConfigDefaults:
         if hasattr(config, "cors_origins"):
             assert isinstance(config.cors_origins, list)
 
-    def test_config_string_representation(self) -> None:
+    @staticmethod
+    def test_config_string_representation() -> None:
         """Test string representation of config object."""
         # Act
         config = Settings()
@@ -268,7 +283,8 @@ class TestConfigDefaults:
         assert isinstance(config_str, str)
         assert len(config_str) > 0
 
-    def test_get_settings_function(self) -> None:
+    @staticmethod
+    def test_get_settings_function() -> None:
         """Test get_settings cached function."""
         # Act
         settings1 = get_settings()
@@ -278,7 +294,8 @@ class TestConfigDefaults:
         assert settings1 is settings2
         assert isinstance(settings1, Settings)
 
-    def test_middleware_config_creation(self) -> None:
+    @staticmethod
+    def test_middleware_config_creation() -> None:
         """Test MiddlewareConfig creation."""
         # Act
         middleware_config = MiddlewareConfig()

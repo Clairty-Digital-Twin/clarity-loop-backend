@@ -2,6 +2,7 @@
 """Find files with lowest test coverage."""
 
 import json
+from pathlib import Path
 import sys
 
 # Coverage threshold constant
@@ -9,7 +10,7 @@ COVERAGE_THRESHOLD = 80
 MAX_FILES_TO_SHOW = 15
 
 try:
-    with open('coverage.json', encoding='utf-8') as f:
+    with Path('coverage.json').open(encoding='utf-8') as f:
         data = json.load(f)
 
     files = []

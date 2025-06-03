@@ -5,6 +5,7 @@ providing state-of-the-art sleep and activity pattern recognition.
 
 Based on: "AI Foundation Models for Wearable Movement Data in Mental Health Research"
 arXiv:2411.15240 (Dartmouth College, 29,307 participants, NHANES 2003-2014)
+LATEST VERSION: January 14, 2025 (v3) - BLEEDING EDGE IMPLEMENTATION
 
 ARCHITECTURE SPECIFICATIONS (from Dartmouth source):
 - PAT-S: 1 layer, 6 heads, 96 embed_dim, patch_size=18, input_size=10080
@@ -46,7 +47,8 @@ PAT_CONFIGS = {
     "small": {
         "num_layers": 1,
         "num_heads": 6,
-        "embed_dim": 96,
+        "embed_dim": 576,  # CORRECTED: 6 heads × 96 head_dim = 576
+        "head_dim": 96,    # NEW: explicit head dimension
         "ff_dim": 256,
         "patch_size": 18,
         "input_size": 10080,
@@ -55,7 +57,8 @@ PAT_CONFIGS = {
     "medium": {
         "num_layers": 2,
         "num_heads": 12,
-        "embed_dim": 96,
+        "embed_dim": 1152,  # CORRECTED: 12 heads × 96 head_dim = 1152
+        "head_dim": 96,     # NEW: explicit head dimension
         "ff_dim": 256,
         "patch_size": 18,
         "input_size": 10080,
@@ -64,7 +67,8 @@ PAT_CONFIGS = {
     "large": {
         "num_layers": 4,
         "num_heads": 12,
-        "embed_dim": 96,
+        "embed_dim": 1152,  # CORRECTED: 12 heads × 96 head_dim = 1152
+        "head_dim": 96,     # NEW: explicit head dimension
         "ff_dim": 256,
         "patch_size": 9,
         "input_size": 10080,
@@ -128,7 +132,8 @@ class PATPositionalEncoding(nn.Module):
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """Add positional encoding to input embeddings."""
         seq_len = x.size(1)
-        return x + self.pe[:seq_len].unsqueeze(0)
+        pe_buffer = self.pe  # Access the registered buffer
+        return x + pe_buffer[:seq_len].unsqueeze(0)
 
 
 class PATTransformerBlock(nn.Module):
@@ -684,6 +689,9 @@ class PATModelService(IMLModelService):
 
         # Add batch dimension
         input_tensor = input_tensor.unsqueeze(0)
+
+        # Ensure model is not None for type checker
+        assert self.model is not None, "Model should be loaded at this point"
 
         # Run inference
         with torch.no_grad():

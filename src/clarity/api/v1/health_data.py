@@ -206,23 +206,23 @@ async def upload_health_data(
         try:
             # Save raw health data to GCS
             bucket_name = os.getenv("HEALTHKIT_RAW_BUCKET", "healthkit-raw-data")
-        blob_path = f"{current_user.user_id}/{response.processing_id}.json"
-        gcs_path = f"gs://{bucket_name}/{blob_path}"
-        
-        # Save to GCS
-        try:
-        storage_client = storage.Client()
-        bucket = storage_client.bucket(bucket_name)
-        blob = bucket.blob(blob_path)
-        
-        # Convert health data to JSON for storage
-        raw_data = {
-            "user_id": str(health_data.user_id),
-                "processing_id": str(response.processing_id),
-                "upload_source": health_data.upload_source,
+            blob_path = f"{current_user.user_id}/{response.processing_id}.json"
+            gcs_path = f"gs://{bucket_name}/{blob_path}"
+            
+            # Save to GCS
+            try:
+                storage_client = storage.Client()
+                bucket = storage_client.bucket(bucket_name)
+                blob = bucket.blob(blob_path)
+                
+                # Convert health data to JSON for storage
+                raw_data = {
+                    "user_id": str(health_data.user_id),
+                    "processing_id": str(response.processing_id),
+                    "upload_source": health_data.upload_source,
                     "client_timestamp": health_data.client_timestamp.isoformat(),
-                "sync_token": health_data.sync_token,
-                "metrics": [metric.model_dump() for metric in health_data.metrics]
+                    "sync_token": health_data.sync_token,
+                    "metrics": [metric.model_dump() for metric in health_data.metrics]
                 }
                 
                 blob.upload_from_string(

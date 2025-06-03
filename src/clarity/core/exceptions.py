@@ -10,7 +10,7 @@ The exception hierarchy is designed to be:
 - Self-documenting through clear names and messages
 """
 
-from typing import Any, Dict, List, Optional
+from typing import Any
 from uuid import uuid4
 
 from fastapi import HTTPException, Request
@@ -27,41 +27,41 @@ class ProblemDetail(BaseModel):
     type: str = Field(
         ...,
         description="URI reference identifying the problem type",
-        example="https://api.clarity.health/problems/validation-error"
+        examples=["https://api.clarity.health/problems/validation-error"]
     )
     title: str = Field(
         ...,
         description="Short, human-readable summary of the problem",
-        example="Validation Error"
+        examples=["Validation Error"]
     )
     status: int = Field(
         ...,
         description="HTTP status code",
-        example=400
+        examples=[400]
     )
     detail: str = Field(
         ...,
         description="Human-readable explanation specific to this occurrence",
-        example="The submitted health data contains invalid heart rate values"
+        examples=["The submitted health data contains invalid heart rate values"]
     )
     instance: str = Field(
         ...,
         description="URI reference identifying this specific occurrence",
-        example="https://api.clarity.health/requests/550e8400-e29b-41d4-a716-446655440000"
+        examples=["https://api.clarity.health/requests/550e8400-e29b-41d4-a716-446655440000"]
     )
-    trace_id: Optional[str] = Field(
+    trace_id: str | None = Field(
         None,
         description="Distributed tracing identifier for debugging",
-        example="550e8400-e29b-41d4-a716-446655440000"
+        examples=["550e8400-e29b-41d4-a716-446655440000"]
     )
-    errors: Optional[List[Dict[str, Any]]] = Field(
+    errors: list[dict[str, Any]] | None = Field(
         None,
         description="Detailed field-level validation errors"
     )
-    help_url: Optional[str] = Field(
+    help_url: str | None = Field(
         None,
         description="URL to documentation for this error type",
-        example="https://docs.clarity.health/errors/validation-error"
+        examples=["https://docs.clarity.health/errors/validation-error"]
     )
 
 
@@ -77,11 +77,11 @@ class ClarityAPIException(HTTPException):
         problem_type: str,
         title: str,
         detail: str,
-        instance: Optional[str] = None,
-        trace_id: Optional[str] = None,
-        errors: Optional[List[Dict[str, Any]]] = None,
-        help_url: Optional[str] = None,
-        headers: Optional[Dict[str, str]] = None
+        instance: str | None = None,
+        trace_id: str | None = None,
+        errors: list[dict[str, Any]] | None = None,
+        help_url: str | None = None,
+        headers: dict[str, str] | None = None
     ):
         self.problem_type = problem_type
         self.title = title
@@ -115,8 +115,8 @@ class ValidationProblem(ClarityAPIException):
     def __init__(
         self,
         detail: str,
-        errors: Optional[List[Dict[str, Any]]] = None,
-        trace_id: Optional[str] = None
+        errors: list[dict[str, Any]] | None = None,
+        trace_id: str | None = None
     ):
         super().__init__(
             status_code=400,
@@ -135,7 +135,7 @@ class AuthenticationProblem(ClarityAPIException):
     def __init__(
         self,
         detail: str = "Authentication required",
-        trace_id: Optional[str] = None
+        trace_id: str | None = None
     ):
         super().__init__(
             status_code=401,
@@ -153,7 +153,7 @@ class AuthorizationProblem(ClarityAPIException):
     def __init__(
         self,
         detail: str = "Insufficient permissions for this resource",
-        trace_id: Optional[str] = None
+        trace_id: str | None = None
     ):
         super().__init__(
             status_code=403,
@@ -172,7 +172,7 @@ class ResourceNotFoundProblem(ClarityAPIException):
         self,
         resource_type: str,
         resource_id: str,
-        trace_id: Optional[str] = None
+        trace_id: str | None = None
     ):
         super().__init__(
             status_code=404,
@@ -190,7 +190,7 @@ class ConflictProblem(ClarityAPIException):
     def __init__(
         self,
         detail: str,
-        trace_id: Optional[str] = None
+        trace_id: str | None = None
     ):
         super().__init__(
             status_code=409,
@@ -209,7 +209,7 @@ class RateLimitProblem(ClarityAPIException):
         self,
         retry_after: int,
         detail: str = "Rate limit exceeded",
-        trace_id: Optional[str] = None
+        trace_id: str | None = None
     ):
         headers = {"Retry-After": str(retry_after)}
         super().__init__(
@@ -229,7 +229,7 @@ class InternalServerProblem(ClarityAPIException):
     def __init__(
         self,
         detail: str = "An internal server error occurred",
-        trace_id: Optional[str] = None
+        trace_id: str | None = None
     ):
         super().__init__(
             status_code=500,
@@ -247,8 +247,8 @@ class ServiceUnavailableProblem(ClarityAPIException):
     def __init__(
         self,
         service_name: str,
-        retry_after: Optional[int] = None,
-        trace_id: Optional[str] = None
+        retry_after: int | None = None,
+        trace_id: str | None = None
     ):
         detail = f"{service_name} is temporarily unavailable"
         headers = {"Retry-After": str(retry_after)} if retry_after else None

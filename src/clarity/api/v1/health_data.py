@@ -348,20 +348,36 @@ async def list_health_data(
         if data_type:
             filters["data_type"] = data_type
         if start_date:
-            filters["start_date"] = start_date
+            filters["start_date"] = start_date.isoformat()
         if end_date:
-            filters["end_date"] = end_date
+            filters["end_date"] = end_date.isoformat()
         if source:
             filters["source"] = source
 
-        # Get health data from service
-        health_data_result = await service.get_user_health_data_paginated(
+        # Get health data from service (fallback to legacy method for now)
+        # TODO: Implement get_user_health_data_paginated in HealthDataService
+        legacy_data = await service.get_user_health_data(
             user_id=current_user.user_id,
             limit=pagination_params.limit,
-            cursor=pagination_params.cursor,
-            offset=pagination_params.offset,
-            filters=filters
+            offset=pagination_params.offset or 0,
+            metric_type=filters.get("data_type"),
+            start_date=start_date,
+            end_date=end_date
         )
+        
+        # Convert legacy format to paginated format
+        data_items = legacy_data.get("metrics", [])
+        has_next = len(data_items) == pagination_params.limit  # Simple heuristic
+        has_previous = (pagination_params.offset or 0) > 0
+        
+        health_data_result = {
+            "data": data_items,
+            "has_next": has_next,
+            "has_previous": has_previous,
+            "total_count": None,  # Not available in legacy format
+            "next_cursor": None,  # Not implemented yet
+            "previous_cursor": None  # Not implemented yet
+        }
 
         # Extract base URL for pagination links
         base_url = f"{request.url.scheme}://{request.url.netloc}"
@@ -590,7 +606,7 @@ async def health_check() -> Dict[str, Any]:
             health_status["status"] = "degraded"
 
         # Add performance metrics
-        health_status["metrics"] = {
+        health_status["metrics"]: dict[str, int] = {
             "uptime_seconds": 0,  # Would be calculated from startup time
             "requests_per_minute": 0,  # Would be tracked by middleware
             "average_response_time_ms": 0  # Would be tracked by middleware

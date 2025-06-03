@@ -4,7 +4,7 @@ Comprehensive pagination with cursor-based and offset-based support.
 Designed to scale from thousands to millions of records.
 """
 
-from typing import Any, Dict, Generic, List, Optional, TypeVar
+from typing import Any, Generic, TypeVar
 from urllib.parse import urlencode
 
 from pydantic import BaseModel, Field, validator
@@ -15,37 +15,37 @@ T = TypeVar("T")
 class PaginationInfo(BaseModel):
     """Pagination metadata for API responses."""
     
-    total_count: Optional[int] = Field(
+    total_count: int | None = Field(
         None,
         description="Total number of items (if efficiently calculable)",
-        example=15420
+        examples=[15420]
     )
     page_size: int = Field(
         ...,
         description="Number of items per page",
-        example=50,
+        examples=[50],
         ge=1,
         le=1000
     )
     has_next: bool = Field(
         ...,
         description="Whether there are more items available",
-        example=True
+        examples=[True]
     )
     has_previous: bool = Field(
         ...,
         description="Whether there are previous items available",
-        example=False
+        examples=[False]
     )
-    next_cursor: Optional[str] = Field(
+    next_cursor: str | None = Field(
         None,
         description="Cursor for fetching the next page",
-        example="eyJpZCI6MTU0MjAsInRpbWVzdGFtcCI6IjIwMjUtMDEtMTVUMTA6MzA6MDBaIn0="
+        examples=["eyJpZCI6MTU0MjAsInRpbWVzdGFtcCI6IjIwMjUtMDEtMTVUMTA6MzA6MDBaIn0="]
     )
-    previous_cursor: Optional[str] = Field(
+    previous_cursor: str | None = Field(
         None,
         description="Cursor for fetching the previous page",
-        example="eyJpZCI6MTUzNzAsInRpbWVzdGFtcCI6IjIwMjUtMDEtMTVUMDk6MzA6MDBaIn0="
+        examples=["eyJpZCI6MTUzNzAsInRpbWVzdGFtcCI6IjIwMjUtMDEtMTVUMDk6MzA6MDBaIn0="]
     )
 
 
@@ -55,27 +55,27 @@ class PaginationLinks(BaseModel):
     self: str = Field(
         ...,
         description="Link to current page",
-        example="https://api.clarity.health/health-data?limit=50&cursor=abc123"
+        examples=["https://api.clarity.health/health-data?limit=50&cursor=abc123"]
     )
-    first: Optional[str] = Field(
+    first: str | None = Field(
         None,
         description="Link to first page",
-        example="https://api.clarity.health/health-data?limit=50"
+        examples=["https://api.clarity.health/health-data?limit=50"]
     )
-    previous: Optional[str] = Field(
+    previous: str | None = Field(
         None,
         description="Link to previous page",
-        example="https://api.clarity.health/health-data?limit=50&cursor=xyz789"
+        examples=["https://api.clarity.health/health-data?limit=50&cursor=xyz789"]
     )
-    next: Optional[str] = Field(
+    next: str | None = Field(
         None,
         description="Link to next page", 
-        example="https://api.clarity.health/health-data?limit=50&cursor=def456"
+        examples=["https://api.clarity.health/health-data?limit=50&cursor=def456"]
     )
-    last: Optional[str] = Field(
+    last: str | None = Field(
         None,
         description="Link to last page (if total count is known)",
-        example="https://api.clarity.health/health-data?limit=50&cursor=last123"
+        examples=["https://api.clarity.health/health-data?limit=50&cursor=last123"]
     )
 
 
@@ -85,7 +85,7 @@ class PaginatedResponse(BaseModel, Generic[T]):
     Follows REST best practices with HAL-style links and comprehensive metadata.
     """
     
-    data: List[T] = Field(
+    data: list[T] = Field(
         ...,
         description="Array of items for this page"
     )
@@ -100,7 +100,7 @@ class PaginatedResponse(BaseModel, Generic[T]):
     
     class Config:
         """Pydantic configuration."""
-        json_encoders = {
+        json_encoders: dict[str, object] = {
             # Custom encoders if needed
         }
 
@@ -113,20 +113,20 @@ class PaginationParams(BaseModel):
         description="Number of items to return per page",
         ge=1,
         le=1000,
-        example=50
+        examples=[50]
     )
-    cursor: Optional[str] = Field(
+    cursor: str | None = Field(
         None,
         description="Pagination cursor for next/previous page",
-        example="eyJpZCI6MTU0MjAsInRpbWVzdGFtcCI6IjIwMjUtMDEtMTVUMTA6MzA6MDBaIn0="
+        examples=["eyJpZCI6MTU0MjAsInRpbWVzdGFtcCI6IjIwMjUtMDEtMTVUMTA6MzA6MDBaIn0="]
     )
     
     # Offset-based pagination (alternative to cursor)
-    offset: Optional[int] = Field(
+    offset: int | None = Field(
         None,
         description="Number of items to skip (alternative to cursor)",
         ge=0,
-        example=100
+        examples=[100]
     )
     
     @validator("limit")
@@ -142,9 +142,9 @@ class PaginationParams(BaseModel):
 class CursorInfo(BaseModel):
     """Information encoded in pagination cursor."""
     
-    id: Optional[str] = None
-    timestamp: Optional[str] = None
-    sort_key: Optional[str] = None
+    id: str | None = None
+    timestamp: str | None = None
+    sort_key: str | None = None
     direction: str = "next"  # "next" or "previous"
 
 
@@ -163,15 +163,15 @@ class PaginationBuilder:
     
     def build_response(
         self,
-        data: List[T],
+        data: list[T],
         params: PaginationParams,
         has_next: bool,
         has_previous: bool,
-        total_count: Optional[int] = None,
-        next_cursor: Optional[str] = None,
-        previous_cursor: Optional[str] = None,
-        additional_params: Optional[Dict[str, Any]] = None
-    ) -> PaginatedResponse[T]:
+        total_count: int | None = None,
+        next_cursor: str | None = None,
+        previous_cursor: str | None = None,
+        additional_params: dict[str, Any] | None = None
+    ) -> "PaginatedResponse[T]":
         """Build complete paginated response with links and metadata.
         
         Args:
@@ -215,9 +215,9 @@ class PaginationBuilder:
         params: PaginationParams,
         has_next: bool,
         has_previous: bool,
-        next_cursor: Optional[str],
-        previous_cursor: Optional[str],
-        additional_params: Optional[Dict[str, Any]] = None
+        next_cursor: str | None,
+        previous_cursor: str | None,
+        additional_params: dict[str, Any] | None = None
     ) -> PaginationLinks:
         """Build HAL-style navigation links."""
         base_params = additional_params or {}
@@ -315,9 +315,9 @@ DEFAULT_PAGE_SIZE = 50
 MAX_PAGE_SIZE = 1000
 
 def validate_pagination_params(
-    limit: Optional[int] = None,
-    cursor: Optional[str] = None,
-    offset: Optional[int] = None
+    limit: int | None = None,
+    cursor: str | None = None,
+    offset: int | None = None
 ) -> PaginationParams:
     """Validate and normalize pagination parameters.
     

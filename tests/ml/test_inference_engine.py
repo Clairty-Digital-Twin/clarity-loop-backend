@@ -55,7 +55,7 @@ class TestAsyncInferenceEngineInitialization:
             pat_service=mock_pat_service,
             batch_size=batch_size,
             batch_timeout_ms=batch_timeout_ms,
-            cache_ttl=cache_ttl
+            cache_ttl=cache_ttl,
         )
 
         assert engine.batch_size == batch_size
@@ -87,10 +87,7 @@ class TestAsyncInferenceEngineInference:
     def sample_actigraphy_input() -> ActigraphyInput:
         """Create sample actigraphy input."""
         data_points = [
-            ActigraphyDataPoint(
-                timestamp=datetime.now(UTC),
-                value=float(i % 100)
-            )
+            ActigraphyDataPoint(timestamp=datetime.now(UTC), value=float(i % 100))
             for i in range(1440)  # 24 hours of data
         ]
 
@@ -98,22 +95,26 @@ class TestAsyncInferenceEngineInference:
             user_id=str(uuid4()),
             data_points=data_points,
             sampling_rate=1.0,
-            duration_hours=24
+            duration_hours=24,
         )
 
     @staticmethod
     @pytest.fixture
-    def sample_inference_request(sample_actigraphy_input: ActigraphyInput) -> InferenceRequest:
+    def sample_inference_request(
+        sample_actigraphy_input: ActigraphyInput,
+    ) -> InferenceRequest:
         """Create sample inference request."""
         return InferenceRequest(
             request_id=str(uuid4()),
             input_data=sample_actigraphy_input,
-            timeout_seconds=30.0
+            timeout_seconds=30.0,
         )
 
     @staticmethod
     @pytest.mark.asyncio
-    async def test_single_inference_success(sample_inference_request: InferenceRequest) -> None:
+    async def test_single_inference_success(
+        sample_inference_request: InferenceRequest,
+    ) -> None:
         """Test successful single inference."""
         mock_analysis = ActigraphyAnalysis(
             user_id=sample_inference_request.input_data.user_id,
@@ -127,7 +128,7 @@ class TestAsyncInferenceEngineInference:
             depression_risk_score=0.2,
             sleep_stages=["wake"] * 100,
             confidence_score=0.85,
-            clinical_insights=["Good sleep efficiency", "Regular sleep pattern"]
+            clinical_insights=["Good sleep efficiency", "Regular sleep pattern"],
         )
 
         mock_pat_service = MagicMock(spec=PATModelService)
@@ -157,27 +158,29 @@ class TestAsyncInferenceEngineInference:
             depression_risk_score=0.2,
             sleep_stages=["wake"] * 100,
             confidence_score=0.85,
-            clinical_insights=["Good sleep efficiency"]
+            clinical_insights=["Good sleep efficiency"],
         )
 
         mock_pat_service = MagicMock(spec=PATModelService)
         mock_pat_service.analyze_actigraphy = AsyncMock(return_value=mock_analysis)
 
-        async with AsyncInferenceEngine(pat_service=mock_pat_service, batch_size=2) as engine:
+        async with AsyncInferenceEngine(
+            pat_service=mock_pat_service, batch_size=2
+        ) as engine:
             # Create multiple requests
             requests = [
                 InferenceRequest(
                     request_id=str(uuid4()),
                     input_data=sample_actigraphy_input,
-                    timeout_seconds=30.0
+                    timeout_seconds=30.0,
                 )
                 for _ in range(3)
             ]
 
             # Process requests concurrently
-            results = await asyncio.gather(*[
-                engine.predict_async(request) for request in requests
-            ])
+            results = await asyncio.gather(
+                *[engine.predict_async(request) for request in requests]
+            )
 
             assert len(results) == 3
             for i, result in enumerate(results):
@@ -187,7 +190,9 @@ class TestAsyncInferenceEngineInference:
 
     @staticmethod
     @pytest.mark.asyncio
-    async def test_caching_functionality(sample_inference_request: InferenceRequest) -> None:
+    async def test_caching_functionality(
+        sample_inference_request: InferenceRequest,
+    ) -> None:
         """Test that caching works correctly."""
         mock_analysis = ActigraphyAnalysis(
             user_id=sample_inference_request.input_data.user_id,
@@ -201,7 +206,7 @@ class TestAsyncInferenceEngineInference:
             depression_risk_score=0.2,
             sleep_stages=["wake"] * 100,
             confidence_score=0.85,
-            clinical_insights=["Good sleep efficiency"]
+            clinical_insights=["Good sleep efficiency"],
         )
 
         mock_pat_service = MagicMock(spec=PATModelService)
@@ -296,14 +301,14 @@ class TestInferenceEngineUtilities:
         """Test cache key generation."""
         data_points = [
             ActigraphyDataPoint(timestamp=datetime.now(UTC), value=50.0),
-            ActigraphyDataPoint(timestamp=datetime.now(UTC), value=75.0)
+            ActigraphyDataPoint(timestamp=datetime.now(UTC), value=75.0),
         ]
 
         input_data = ActigraphyInput(
             user_id="test-user",
             data_points=data_points,
             sampling_rate=1.0,
-            duration_hours=24
+            duration_hours=24,
         )
 
         cache_key = AsyncInferenceEngine._generate_cache_key(input_data)
@@ -325,14 +330,14 @@ class TestInferenceEngineUtilities:
             user_id="user1",
             data_points=data_points1,
             sampling_rate=1.0,
-            duration_hours=24
+            duration_hours=24,
         )
 
         input2 = ActigraphyInput(
             user_id="user2",
             data_points=data_points2,
             sampling_rate=1.0,
-            duration_hours=24
+            duration_hours=24,
         )
 
         key1 = AsyncInferenceEngine._generate_cache_key(input1)
@@ -344,10 +349,7 @@ class TestInferenceEngineUtilities:
     def test_generate_cache_key_empty_data() -> None:
         """Test cache key generation with empty data points."""
         input_data = ActigraphyInput(
-            user_id="test-user",
-            data_points=[],
-            sampling_rate=1.0,
-            duration_hours=24
+            user_id="test-user", data_points=[], sampling_rate=1.0, duration_hours=24
         )
 
         cache_key = AsyncInferenceEngine._generate_cache_key(input_data)
@@ -378,10 +380,7 @@ class TestInferenceEngineStats:
         """Test getting stats after processing requests."""
         # Create sample data inline
         data_points = [
-            ActigraphyDataPoint(
-                timestamp=datetime.now(UTC),
-                value=float(i % 100)
-            )
+            ActigraphyDataPoint(timestamp=datetime.now(UTC), value=float(i % 100))
             for i in range(1440)  # 24 hours of data
         ]
 
@@ -389,7 +388,7 @@ class TestInferenceEngineStats:
             user_id=str(uuid4()),
             data_points=data_points,
             sampling_rate=1.0,
-            duration_hours=24
+            duration_hours=24,
         )
 
         mock_analysis = ActigraphyAnalysis(
@@ -404,7 +403,7 @@ class TestInferenceEngineStats:
             depression_risk_score=0.2,
             sleep_stages=["wake"] * 100,
             confidence_score=0.85,
-            clinical_insights=["Good sleep efficiency"]
+            clinical_insights=["Good sleep efficiency"],
         )
 
         mock_pat_service = MagicMock(spec=PATModelService)
@@ -414,7 +413,7 @@ class TestInferenceEngineStats:
             request = InferenceRequest(
                 request_id=str(uuid4()),
                 input_data=sample_actigraphy_input,
-                timeout_seconds=30.0
+                timeout_seconds=30.0,
             )
 
             await engine.predict_async(request)
@@ -433,10 +432,7 @@ class TestInferenceEngineErrorHandling:
         """Test handling of PAT service errors."""
         # Create sample data inline
         data_points = [
-            ActigraphyDataPoint(
-                timestamp=datetime.now(UTC),
-                value=float(i % 100)
-            )
+            ActigraphyDataPoint(timestamp=datetime.now(UTC), value=float(i % 100))
             for i in range(1440)  # 24 hours of data
         ]
 
@@ -444,7 +440,7 @@ class TestInferenceEngineErrorHandling:
             user_id=str(uuid4()),
             data_points=data_points,
             sampling_rate=1.0,
-            duration_hours=24
+            duration_hours=24,
         )
 
         mock_pat_service = MagicMock(spec=PATModelService)
@@ -456,7 +452,7 @@ class TestInferenceEngineErrorHandling:
             request = InferenceRequest(
                 request_id=str(uuid4()),
                 input_data=sample_actigraphy_input,
-                timeout_seconds=30.0
+                timeout_seconds=30.0,
             )
 
             # The error should be wrapped in an InferenceError, not timeout
@@ -469,10 +465,7 @@ class TestInferenceEngineErrorHandling:
         """Test timeout handling for slow requests."""
         # Create sample data inline
         data_points = [
-            ActigraphyDataPoint(
-                timestamp=datetime.now(UTC),
-                value=float(i % 100)
-            )
+            ActigraphyDataPoint(timestamp=datetime.now(UTC), value=float(i % 100))
             for i in range(1440)  # 24 hours of data
         ]
 
@@ -480,7 +473,7 @@ class TestInferenceEngineErrorHandling:
             user_id=str(uuid4()),
             data_points=data_points,
             sampling_rate=1.0,
-            duration_hours=24
+            duration_hours=24,
         )
 
         mock_pat_service = MagicMock(spec=PATModelService)
@@ -493,7 +486,7 @@ class TestInferenceEngineErrorHandling:
             request = InferenceRequest(
                 request_id=str(uuid4()),
                 input_data=sample_actigraphy_input,
-                timeout_seconds=0.1  # Very short timeout
+                timeout_seconds=0.1,  # Very short timeout
             )
 
             with pytest.raises(InferenceTimeoutError):
@@ -505,10 +498,7 @@ class TestInferenceEngineErrorHandling:
         """Test graceful handling of cache errors."""
         # Create sample data inline
         data_points = [
-            ActigraphyDataPoint(
-                timestamp=datetime.now(UTC),
-                value=float(i % 100)
-            )
+            ActigraphyDataPoint(timestamp=datetime.now(UTC), value=float(i % 100))
             for i in range(1440)  # 24 hours of data
         ]
 
@@ -516,7 +506,7 @@ class TestInferenceEngineErrorHandling:
             user_id=str(uuid4()),
             data_points=data_points,
             sampling_rate=1.0,
-            duration_hours=24
+            duration_hours=24,
         )
 
         mock_analysis = ActigraphyAnalysis(
@@ -531,7 +521,7 @@ class TestInferenceEngineErrorHandling:
             depression_risk_score=0.2,
             sleep_stages=["wake"] * 100,
             confidence_score=0.85,
-            clinical_insights=["Good sleep efficiency"]
+            clinical_insights=["Good sleep efficiency"],
         )
 
         mock_pat_service = MagicMock(spec=PATModelService)
@@ -542,7 +532,7 @@ class TestInferenceEngineErrorHandling:
                 request_id=str(uuid4()),
                 input_data=sample_actigraphy_input,
                 timeout_seconds=30.0,
-                cache_enabled=False  # Disable cache to avoid cache errors
+                cache_enabled=False,  # Disable cache to avoid cache errors
             )
 
             # Should work when cache is disabled
@@ -561,14 +551,14 @@ class TestInferenceModels:
             user_id="test-user",
             data_points=data_points,
             sampling_rate=1.0,
-            duration_hours=24
+            duration_hours=24,
         )
 
         request = InferenceRequest(
             request_id="test-request",
             input_data=input_data,
             timeout_seconds=10.0,
-            cache_enabled=True
+            cache_enabled=True,
         )
 
         assert request.request_id == "test-request"
@@ -591,7 +581,7 @@ class TestInferenceModels:
             depression_risk_score=0.2,
             sleep_stages=["wake"],
             confidence_score=0.85,
-            clinical_insights=["Good sleep"]
+            clinical_insights=["Good sleep"],
         )
 
         response = InferenceResponse(
@@ -599,7 +589,7 @@ class TestInferenceModels:
             analysis=mock_analysis,
             processing_time_ms=150.5,
             cached=False,
-            timestamp=1234567890.0
+            timestamp=1234567890.0,
         )
 
         assert response.request_id == "test-request"

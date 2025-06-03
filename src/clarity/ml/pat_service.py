@@ -19,6 +19,7 @@ from torch import nn
 
 try:
     import h5py  # type: ignore[import-untyped]
+
     _has_h5py = True
 except ImportError:
     h5py = None  # type: ignore[assignment]
@@ -193,15 +194,18 @@ class PATModelService(IMLModelService):
                 else:
                     try:
                         # Load weights from H5 file (TensorFlow/Keras format)
-                        with h5py.File(self.model_path, 'r') as h5_file:  # type: ignore[union-attr]
+                        with h5py.File(self.model_path, "r") as h5_file:  # type: ignore[union-attr]
                             # Log that we're loading weights (avoid calling list() on h5py keys for testing compatibility)
-                            logger.info("Loading weights from H5 file: %s", self.model_path)
+                            logger.info(
+                                "Loading weights from H5 file: %s", self.model_path
+                            )
                             state_dict = PATModelService._load_weights_from_h5(h5_file)
                             self._load_compatible_weights(state_dict)
                     except (OSError, KeyError, ValueError) as e:
                         logger.warning(
                             "Failed to load weights from %s: %s. Using random initialization.",
-                            self.model_path, e
+                            self.model_path,
+                            e,
                         )
             else:
                 logger.warning(
@@ -226,49 +230,49 @@ class PATModelService(IMLModelService):
         state_dict = {}
 
         # Map input projection layer
-        if 'inputs' in h5_file:
-            inputs_group = h5_file['inputs']
-            if 'kernel:0' in inputs_group:  # type: ignore[operator]
-                tf_weight = inputs_group['kernel:0'][:]  # type: ignore[index]
+        if "inputs" in h5_file:
+            inputs_group = h5_file["inputs"]
+            if "kernel:0" in inputs_group:  # type: ignore[operator]
+                tf_weight = inputs_group["kernel:0"][:]  # type: ignore[index]
                 # Transpose for PyTorch (TF uses different weight ordering)
-                state_dict['input_projection.weight'] = torch.from_numpy(tf_weight.T)  # type: ignore[attr-defined]
+                state_dict["input_projection.weight"] = torch.from_numpy(tf_weight.T)  # type: ignore[attr-defined]
 
-            if 'bias:0' in inputs_group:  # type: ignore[operator]
-                tf_bias = inputs_group['bias:0'][:]  # type: ignore[index]
-                state_dict['input_projection.bias'] = torch.from_numpy(tf_bias)
+            if "bias:0" in inputs_group:  # type: ignore[operator]
+                tf_bias = inputs_group["bias:0"][:]  # type: ignore[index]
+                state_dict["input_projection.bias"] = torch.from_numpy(tf_bias)
 
         # Map transformer layers
         for layer_idx in range(6):  # num_layers = 6
-            layer_name = f'encoder_layer_{layer_idx + 1}_transformer'
+            layer_name = f"encoder_layer_{layer_idx + 1}_transformer"
             if layer_name in h5_file:
                 layer_group = h5_file[layer_name]
 
                 # Map attention weights
-                for param_name in ['query', 'key', 'value', 'dense']:
-                    weight_key = f'{param_name}/kernel:0'
-                    bias_key = f'{param_name}/bias:0'
+                for param_name in ["query", "key", "value", "dense"]:
+                    weight_key = f"{param_name}/kernel:0"
+                    bias_key = f"{param_name}/bias:0"
 
                     if weight_key in layer_group:  # type: ignore[operator]
                         tf_weight = layer_group[weight_key][:]  # type: ignore[index]
-                        torch_name = f'transformer.layers.{layer_idx}.self_attn.{param_name}.weight'
+                        torch_name = f"transformer.layers.{layer_idx}.self_attn.{param_name}.weight"
                         state_dict[torch_name] = torch.from_numpy(tf_weight.T)  # type: ignore[attr-defined]
 
                     if bias_key in layer_group:  # type: ignore[operator]
                         tf_bias = layer_group[bias_key][:]  # type: ignore[index]
-                        torch_name = f'transformer.layers.{layer_idx}.self_attn.{param_name}.bias'
+                        torch_name = f"transformer.layers.{layer_idx}.self_attn.{param_name}.bias"
                         state_dict[torch_name] = torch.from_numpy(tf_bias)
 
         # Map output heads
-        if 'dense' in h5_file:
-            dense_group = h5_file['dense']
+        if "dense" in h5_file:
+            dense_group = h5_file["dense"]
 
             # Sleep stage head
-            if 'kernel:0' in dense_group:  # type: ignore[operator]
-                tf_weight = dense_group['kernel:0'][:]  # type: ignore[index]
-                state_dict['sleep_stage_head.weight'] = torch.from_numpy(tf_weight.T)  # type: ignore[attr-defined]
-            if 'bias:0' in dense_group:  # type: ignore[operator]
-                tf_bias = dense_group['bias:0'][:]  # type: ignore[index]
-                state_dict['sleep_stage_head.bias'] = torch.from_numpy(tf_bias)
+            if "kernel:0" in dense_group:  # type: ignore[operator]
+                tf_weight = dense_group["kernel:0"][:]  # type: ignore[index]
+                state_dict["sleep_stage_head.weight"] = torch.from_numpy(tf_weight.T)  # type: ignore[attr-defined]
+            if "bias:0" in dense_group:  # type: ignore[operator]
+                tf_bias = dense_group["bias:0"][:]  # type: ignore[index]
+                state_dict["sleep_stage_head.bias"] = torch.from_numpy(tf_bias)
 
         return state_dict
 
@@ -288,7 +292,9 @@ class PATModelService(IMLModelService):
                 else:
                     logger.warning(
                         "Shape mismatch for %s: expected %s, got %s",
-                        name, model_state_dict[name].shape, param.shape
+                        name,
+                        model_state_dict[name].shape,
+                        param.shape,
                     )
             else:
                 logger.debug("Skipping unknown parameter: %s", name)
@@ -300,12 +306,12 @@ class PATModelService(IMLModelService):
                 "Loaded %d/%d compatible weight tensors from %s",
                 len(compatible_weights),
                 len(model_state_dict),
-                self.model_path
+                self.model_path,
             )
         else:
             logger.warning(
                 "No compatible weights found in %s, using random initialization",
-                self.model_path
+                self.model_path,
             )
 
     def _preprocess_actigraphy_data(

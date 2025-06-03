@@ -56,8 +56,10 @@ class TestGeminiServiceInitialization:
         service = GeminiService(project_id="test-project")
 
         # Mock both vertexai.init and GenerativeModel constructor
-        with patch('clarity.ml.gemini_service.vertexai.init') as mock_init, \
-             patch('clarity.ml.gemini_service.GenerativeModel') as mock_model_class:
+        with (
+            patch("clarity.ml.gemini_service.vertexai.init") as mock_init,
+            patch("clarity.ml.gemini_service.GenerativeModel") as mock_model_class,
+        ):
 
             # Mock the GenerativeModel instance
             mock_model_instance = MagicMock()
@@ -65,7 +67,9 @@ class TestGeminiServiceInitialization:
 
             await service.initialize()
 
-            mock_init.assert_called_once_with(project="test-project", location="us-central1")
+            mock_init.assert_called_once_with(
+                project="test-project", location="us-central1"
+            )
             mock_model_class.assert_called_once_with("gemini-2.5-pro")
             assert service.is_initialized
             assert service.model is mock_model_instance
@@ -76,7 +80,7 @@ class TestGeminiServiceInitialization:
         """Test service initialization failure."""
         service = GeminiService(project_id="test-project")
 
-        with patch('vertexai.init', side_effect=Exception("Initialization failed")):
+        with patch("vertexai.init", side_effect=Exception("Initialization failed")):
             with pytest.raises(Exception, match="Initialization failed"):
                 await service.initialize()
 
@@ -99,38 +103,46 @@ class TestGeminiServiceHealthInsights:
                 "depression_risk_score": 0.2,
                 "total_sleep_time": 7.5,
                 "wake_after_sleep_onset": 30.0,
-                "sleep_onset_latency": 15.0
+                "sleep_onset_latency": 15.0,
             },
             context="Regular exercise routine",
-            insight_type="comprehensive"
+            insight_type="comprehensive",
         )
 
     @staticmethod
     @pytest.mark.asyncio
-    async def test_generate_health_insights_success(sample_insight_request: HealthInsightRequest) -> None:
+    async def test_generate_health_insights_success(
+        sample_insight_request: HealthInsightRequest,
+    ) -> None:
         """Test successful health insight generation."""
         service = GeminiService(project_id="test-project")
 
         # Mock successful response
         mock_response = MagicMock()
-        mock_response.text = json.dumps({
-            "narrative": "Your sleep patterns show excellent efficiency at 85%",
-            "key_insights": [
-                "Sleep efficiency of 85% indicates healthy sleep",
-                "Low depression risk factors observed"
-            ],
-            "recommendations": [
-                "Maintain current sleep schedule",
-                "Continue regular exercise routine"
-            ],
-            "confidence_score": 0.85
-        })
+        mock_response.text = json.dumps(
+            {
+                "narrative": "Your sleep patterns show excellent efficiency at 85%",
+                "key_insights": [
+                    "Sleep efficiency of 85% indicates healthy sleep",
+                    "Low depression risk factors observed",
+                ],
+                "recommendations": [
+                    "Maintain current sleep schedule",
+                    "Continue regular exercise routine",
+                ],
+                "confidence_score": 0.85,
+            }
+        )
 
         mock_model = MagicMock()
         mock_model.generate_content.return_value = mock_response
 
-        with patch.object(service, 'initialize'), \
-             patch('vertexai.generative_models.GenerativeModel', return_value=mock_model):
+        with (
+            patch.object(service, "initialize"),
+            patch(
+                "vertexai.generative_models.GenerativeModel", return_value=mock_model
+            ),
+        ):
 
             service.is_initialized = True
             service.model = mock_model
@@ -146,23 +158,31 @@ class TestGeminiServiceHealthInsights:
 
     @staticmethod
     @pytest.mark.asyncio
-    async def test_generate_health_insights_initialization_required(sample_insight_request: HealthInsightRequest) -> None:
+    async def test_generate_health_insights_initialization_required(
+        sample_insight_request: HealthInsightRequest,
+    ) -> None:
         """Test health insight generation when initialization is required."""
         service = GeminiService(project_id="test-project")
 
         mock_response = MagicMock()
-        mock_response.text = json.dumps({
-            "narrative": "Analysis completed",
-            "key_insights": ["Test insight"],
-            "recommendations": ["Test recommendation"],
-            "confidence_score": 0.8
-        })
+        mock_response.text = json.dumps(
+            {
+                "narrative": "Analysis completed",
+                "key_insights": ["Test insight"],
+                "recommendations": ["Test recommendation"],
+                "confidence_score": 0.8,
+            }
+        )
 
         mock_model = MagicMock()
         mock_model.generate_content.return_value = mock_response
 
-        with patch.object(service, 'initialize') as mock_init, \
-             patch('vertexai.generative_models.GenerativeModel', return_value=mock_model):
+        with (
+            patch.object(service, "initialize") as mock_init,
+            patch(
+                "vertexai.generative_models.GenerativeModel", return_value=mock_model
+            ),
+        ):
 
             # Simulate initialization during the call
             def init_side_effect() -> None:
@@ -178,11 +198,13 @@ class TestGeminiServiceHealthInsights:
 
     @staticmethod
     @pytest.mark.asyncio
-    async def test_generate_health_insights_model_not_initialized(sample_insight_request: HealthInsightRequest) -> None:
+    async def test_generate_health_insights_model_not_initialized(
+        sample_insight_request: HealthInsightRequest,
+    ) -> None:
         """Test health insight generation when model is not initialized after init."""
         service = GeminiService(project_id="test-project")
 
-        with patch.object(service, 'initialize'):
+        with patch.object(service, "initialize"):
             service.is_initialized = True
             service.model = None  # Model remains None after initialization
 
@@ -191,7 +213,9 @@ class TestGeminiServiceHealthInsights:
 
     @staticmethod
     @pytest.mark.asyncio
-    async def test_generate_health_insights_generation_error(sample_insight_request: HealthInsightRequest) -> None:
+    async def test_generate_health_insights_generation_error(
+        sample_insight_request: HealthInsightRequest,
+    ) -> None:
         """Test health insight generation with generation error."""
         service = GeminiService(project_id="test-project")
 
@@ -206,7 +230,9 @@ class TestGeminiServiceHealthInsights:
 
     @staticmethod
     @pytest.mark.asyncio
-    async def test_generate_health_insights_invalid_json_fallback(sample_insight_request: HealthInsightRequest) -> None:
+    async def test_generate_health_insights_invalid_json_fallback(
+        sample_insight_request: HealthInsightRequest,
+    ) -> None:
         """Test health insight generation with invalid JSON fallback."""
         service = GeminiService(project_id="test-project")
 
@@ -242,9 +268,9 @@ class TestGeminiServicePromptGeneration:
                 "depression_risk_score": 0.4,
                 "total_sleep_time": 6.5,
                 "wake_after_sleep_onset": 45.0,
-                "sleep_onset_latency": 25.0
+                "sleep_onset_latency": 25.0,
             },
-            context="Stressful work period"
+            context="Stressful work period",
         )
 
         prompt = GeminiService._create_health_insight_prompt(request)
@@ -270,9 +296,9 @@ class TestGeminiServicePromptGeneration:
                 "depression_risk_score": 0.0,  # No risk
                 "total_sleep_time": 12.0,  # Long sleep
                 "wake_after_sleep_onset": 0.0,  # No awakenings
-                "sleep_onset_latency": 0.0  # Instant sleep
+                "sleep_onset_latency": 0.0,  # Instant sleep
             },
-            context=""
+            context="",
         )
 
         prompt = GeminiService._create_health_insight_prompt(request)
@@ -288,7 +314,7 @@ class TestGeminiServicePromptGeneration:
         request = HealthInsightRequest(
             user_id="missing-data-user",
             analysis_results={},  # Empty analysis results
-            context=None
+            context=None,
         )
 
         prompt = GeminiService._create_health_insight_prompt(request)
@@ -305,12 +331,14 @@ class TestGeminiServiceResponseParsing:
     def test_parse_gemini_response_valid_json() -> None:
         """Test parsing valid JSON response."""
         mock_response = MagicMock()
-        mock_response.text = json.dumps({
-            "narrative": "Test narrative",
-            "key_insights": ["Insight 1", "Insight 2"],
-            "recommendations": ["Rec 1", "Rec 2"],
-            "confidence_score": 0.9
-        })
+        mock_response.text = json.dumps(
+            {
+                "narrative": "Test narrative",
+                "key_insights": ["Insight 1", "Insight 2"],
+                "recommendations": ["Rec 1", "Rec 2"],
+                "confidence_score": 0.9,
+            }
+        )
 
         result = GeminiService._parse_gemini_response(mock_response, "test-user")
 
@@ -324,10 +352,12 @@ class TestGeminiServiceResponseParsing:
     def test_parse_gemini_response_partial_json() -> None:
         """Test parsing JSON response with missing fields."""
         mock_response = MagicMock()
-        mock_response.text = json.dumps({
-            "narrative": "Partial narrative"
-            # Missing other fields
-        })
+        mock_response.text = json.dumps(
+            {
+                "narrative": "Partial narrative"
+                # Missing other fields
+            }
+        )
 
         result = GeminiService._parse_gemini_response(mock_response, "test-user")
 
@@ -433,10 +463,7 @@ class TestGeminiServiceEdgeCases:
     @staticmethod
     def test_generate_placeholder_narrative() -> None:
         """Test placeholder narrative generation."""
-        analysis_results = {
-            "sleep_efficiency": 80.0,
-            "circadian_rhythm_score": 0.7
-        }
+        analysis_results = {"sleep_efficiency": 80.0, "circadian_rhythm_score": 0.7}
 
         narrative = GeminiService._generate_placeholder_narrative(analysis_results)
 
@@ -472,7 +499,9 @@ class TestGeminiServiceEdgeCases:
 
         # Test poor circadian rhythm
         poor_circadian_results = {"circadian_rhythm_score": 0.5}
-        recommendations = GeminiService._generate_recommendations(poor_circadian_results)
+        recommendations = GeminiService._generate_recommendations(
+            poor_circadian_results
+        )
         assert any("consistent sleep" in rec for rec in recommendations)
 
         # Test good values

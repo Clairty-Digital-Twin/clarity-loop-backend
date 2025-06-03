@@ -52,7 +52,7 @@ class TestPATTransformer:
             num_layers=4,
             num_heads=4,
             sequence_length=720,
-            num_classes=3
+            num_classes=3,
         )
 
         assert model.input_dim == 2
@@ -119,9 +119,7 @@ class TestPATModelServiceInitialization:
         """Test service initialization with custom parameters."""
         custom_path = "custom/path/to/model.h5"
         service = PATModelService(
-            model_size="large",
-            device="cpu",
-            model_path=custom_path
+            model_size="large", device="cpu", model_path=custom_path
         )
 
         assert service.model_size == "large"
@@ -142,14 +140,14 @@ class TestPATModelServiceInitialization:
     @staticmethod
     def test_device_selection_cuda_available() -> None:
         """Test device selection when CUDA is available."""
-        with patch('torch.cuda.is_available', return_value=True):
+        with patch("torch.cuda.is_available", return_value=True):
             service = PATModelService()
             assert service.device == "cuda"
 
     @staticmethod
     def test_device_selection_cuda_unavailable() -> None:
         """Test device selection when CUDA is unavailable."""
-        with patch('torch.cuda.is_available', return_value=False):
+        with patch("torch.cuda.is_available", return_value=False):
             service = PATModelService()
             assert service.device == "cpu"
 
@@ -165,14 +163,18 @@ class TestPATModelServiceLoading:
 
         # Mock the weight loading method directly to avoid h5py complications
         mock_state_dict = {
-            'input_projection.weight': torch.randn(256, 1),
-            'input_projection.bias': torch.randn(256),
-            'sleep_stage_head.weight': torch.randn(4, 256),
-            'sleep_stage_head.bias': torch.randn(4)
+            "input_projection.weight": torch.randn(256, 1),
+            "input_projection.bias": torch.randn(256),
+            "sleep_stage_head.weight": torch.randn(4, 256),
+            "sleep_stage_head.bias": torch.randn(4),
         }
 
-        with patch('pathlib.Path.exists', return_value=True), \
-             patch.object(PATModelService, '_load_weights_from_h5', return_value=mock_state_dict):
+        with (
+            patch("pathlib.Path.exists", return_value=True),
+            patch.object(
+                PATModelService, "_load_weights_from_h5", return_value=mock_state_dict
+            ),
+        ):
             await service.load_model()
 
             assert service.is_loaded
@@ -195,11 +197,13 @@ class TestPATModelServiceLoading:
         """Test model loading when h5py is not available."""
         service = PATModelService(model_size="medium")
 
-        with patch('pathlib.Path.exists', return_value=True), \
-             patch.dict('sys.modules', {}, clear=False):
+        with (
+            patch("pathlib.Path.exists", return_value=True),
+            patch.dict("sys.modules", {}, clear=False),
+        ):
             # Remove h5py from sys.modules if it exists
-            if 'h5py' in sys.modules:
-                del sys.modules['h5py']
+            if "h5py" in sys.modules:
+                del sys.modules["h5py"]
 
             await service.load_model()
 
@@ -213,8 +217,14 @@ class TestPATModelServiceLoading:
         service = PATModelService(model_size="medium")
 
         # Mock the weight loading method to raise an OSError (simulating corrupted file)
-        with patch('pathlib.Path.exists', return_value=True), \
-             patch.object(PATModelService, '_load_weights_from_h5', side_effect=OSError("Corrupted file")):
+        with (
+            patch("pathlib.Path.exists", return_value=True),
+            patch.object(
+                PATModelService,
+                "_load_weights_from_h5",
+                side_effect=OSError("Corrupted file"),
+            ),
+        ):
             await service.load_model()
 
             assert service.is_loaded
@@ -229,14 +239,22 @@ class TestPATModelServiceLoading:
         # Create mock weights with correct shapes for realistic testing
         rng = np.random.default_rng(42)
         mock_state_dict = {
-            'input_projection.weight': torch.from_numpy(rng.standard_normal((256, 1))).float(),
-            'input_projection.bias': torch.from_numpy(rng.standard_normal(256)).float(),
-            'sleep_stage_head.weight': torch.from_numpy(rng.standard_normal((4, 256))).float(),
-            'sleep_stage_head.bias': torch.from_numpy(rng.standard_normal(4)).float()
+            "input_projection.weight": torch.from_numpy(
+                rng.standard_normal((256, 1))
+            ).float(),
+            "input_projection.bias": torch.from_numpy(rng.standard_normal(256)).float(),
+            "sleep_stage_head.weight": torch.from_numpy(
+                rng.standard_normal((4, 256))
+            ).float(),
+            "sleep_stage_head.bias": torch.from_numpy(rng.standard_normal(4)).float(),
         }
 
-        with patch('pathlib.Path.exists', return_value=True), \
-             patch.object(PATModelService, '_load_weights_from_h5', return_value=mock_state_dict):
+        with (
+            patch("pathlib.Path.exists", return_value=True),
+            patch.object(
+                PATModelService, "_load_weights_from_h5", return_value=mock_state_dict
+            ),
+        ):
             await service.load_model()
 
             assert service.is_loaded
@@ -250,10 +268,7 @@ class TestPATModelServiceAnalysis:
     def sample_actigraphy_input() -> ActigraphyInput:
         """Create sample actigraphy input data."""
         data_points = [
-            ActigraphyDataPoint(
-                timestamp=datetime.now(UTC),
-                value=float(i % 100)
-            )
+            ActigraphyDataPoint(timestamp=datetime.now(UTC), value=float(i % 100))
             for i in range(1440)  # 24 hours of minute-by-minute data
         ]
 
@@ -261,19 +276,23 @@ class TestPATModelServiceAnalysis:
             user_id=str(uuid4()),
             data_points=data_points,
             sampling_rate=1.0,
-            duration_hours=24
+            duration_hours=24,
         )
 
     @pytest.mark.asyncio
     @staticmethod
-    async def test_analyze_actigraphy_success(sample_actigraphy_input: ActigraphyInput) -> None:
+    async def test_analyze_actigraphy_success(
+        sample_actigraphy_input: ActigraphyInput,
+    ) -> None:
         """Test successful actigraphy analysis."""
         service = PATModelService(model_size="medium")
         service.is_loaded = True
 
         # Mock the preprocessor and model
-        with patch.object(service, '_preprocess_actigraphy_data') as mock_preprocess, \
-             patch.object(service, '_postprocess_predictions') as mock_postprocess:
+        with (
+            patch.object(service, "_preprocess_actigraphy_data") as mock_preprocess,
+            patch.object(service, "_postprocess_predictions") as mock_postprocess,
+        ):
 
             # Set up the model after load_model is called
             def setup_model() -> None:
@@ -288,7 +307,7 @@ class TestPATModelServiceAnalysis:
             service.model.return_value = {
                 "sleep_stages": torch.randn(1, 1440, 4),
                 "sleep_metrics": torch.randn(1, 8),
-                "depression_risk": torch.randn(1, 1)
+                "depression_risk": torch.randn(1, 1),
             }
 
             # Mock postprocessor output
@@ -304,7 +323,7 @@ class TestPATModelServiceAnalysis:
                 depression_risk_score=0.2,
                 sleep_stages=["wake"] * 1440,
                 confidence_score=0.85,
-                clinical_insights=["Good sleep efficiency"]
+                clinical_insights=["Good sleep efficiency"],
             )
 
             result = await service.analyze_actigraphy(sample_actigraphy_input)
@@ -315,12 +334,14 @@ class TestPATModelServiceAnalysis:
 
     @pytest.mark.asyncio
     @staticmethod
-    async def test_analyze_actigraphy_model_not_loaded(sample_actigraphy_input: ActigraphyInput) -> None:
+    async def test_analyze_actigraphy_model_not_loaded(
+        sample_actigraphy_input: ActigraphyInput,
+    ) -> None:
         """Test analysis when model is not loaded."""
         service = PATModelService(model_size="medium")
         service.is_loaded = False
 
-        with patch.object(service, 'load_model') as mock_load_model:
+        with patch.object(service, "load_model") as mock_load_model:
 
             # Set up the model after load_model is called
             def setup_model() -> None:
@@ -329,14 +350,20 @@ class TestPATModelServiceAnalysis:
 
             mock_load_model.side_effect = setup_model
 
-            with patch.object(service, '_preprocess_actigraphy_data', return_value=torch.randn(1, 1440, 1)), \
-                 patch.object(service, '_postprocess_predictions') as mock_postprocess:
+            with (
+                patch.object(
+                    service,
+                    "_preprocess_actigraphy_data",
+                    return_value=torch.randn(1, 1440, 1),
+                ),
+                patch.object(service, "_postprocess_predictions") as mock_postprocess,
+            ):
 
                 service.model = MagicMock()
                 service.model.return_value = {
                     "sleep_stages": torch.randn(1, 1440, 4),
                     "sleep_metrics": torch.randn(1, 8),
-                    "depression_risk": torch.randn(1, 1)
+                    "depression_risk": torch.randn(1, 1),
                 }
 
                 mock_postprocess.return_value = ActigraphyAnalysis(
@@ -351,7 +378,7 @@ class TestPATModelServiceAnalysis:
                     depression_risk_score=0.3,
                     sleep_stages=["sleep"] * 1440,
                     confidence_score=0.8,
-                    clinical_insights=["Moderate sleep quality"]
+                    clinical_insights=["Moderate sleep quality"],
                 )
 
                 result = await service.analyze_actigraphy(sample_actigraphy_input)
@@ -361,27 +388,43 @@ class TestPATModelServiceAnalysis:
 
     @pytest.mark.asyncio
     @staticmethod
-    async def test_analyze_actigraphy_preprocessing_error(sample_actigraphy_input: ActigraphyInput) -> None:
+    async def test_analyze_actigraphy_preprocessing_error(
+        sample_actigraphy_input: ActigraphyInput,
+    ) -> None:
         """Test analysis with preprocessing error."""
         service = PATModelService(model_size="medium")
         service.is_loaded = True
         service.model = MagicMock()
 
-        with patch.object(service, '_preprocess_actigraphy_data', side_effect=ValueError("Preprocessing failed")), \
-             pytest.raises(ValueError, match="Preprocessing failed"):
+        with (
+            patch.object(
+                service,
+                "_preprocess_actigraphy_data",
+                side_effect=ValueError("Preprocessing failed"),
+            ),
+            pytest.raises(ValueError, match="Preprocessing failed"),
+        ):
             await service.analyze_actigraphy(sample_actigraphy_input)
 
     @pytest.mark.asyncio
     @staticmethod
-    async def test_analyze_actigraphy_model_inference_error(sample_actigraphy_input: ActigraphyInput) -> None:
+    async def test_analyze_actigraphy_model_inference_error(
+        sample_actigraphy_input: ActigraphyInput,
+    ) -> None:
         """Test analysis with model inference error."""
         service = PATModelService(model_size="medium")
         service.is_loaded = True
         service.model = MagicMock()
         service.model.side_effect = RuntimeError("Model inference failed")
 
-        with patch.object(service, '_preprocess_actigraphy_data', return_value=torch.randn(1, 1440, 1)), \
-             pytest.raises(RuntimeError, match="Model inference failed"):
+        with (
+            patch.object(
+                service,
+                "_preprocess_actigraphy_data",
+                return_value=torch.randn(1, 1440, 1),
+            ),
+            pytest.raises(RuntimeError, match="Model inference failed"),
+        ):
             await service.analyze_actigraphy(sample_actigraphy_input)
 
 
@@ -395,9 +438,11 @@ class TestPATModelServicePostprocessing:
 
         mock_predictions = {
             "sleep_stages": torch.randn(1, 1440, 4),
-            "sleep_metrics": torch.tensor([[0.85, 0.75, 0.2, 7.5, 30.0, 15.0, 0.75, 0.25]]),
+            "sleep_metrics": torch.tensor(
+                [[0.85, 0.75, 0.2, 7.5, 30.0, 15.0, 0.75, 0.25]]
+            ),
             "circadian_score": torch.tensor([[0.75]]),  # Added missing key
-            "depression_risk": torch.tensor([[0.2]])
+            "depression_risk": torch.tensor([[0.2]]),
         }
 
         user_id = str(uuid4())
@@ -415,9 +460,7 @@ class TestPATModelServicePostprocessing:
     def test_generate_clinical_insights_excellent_sleep() -> None:
         """Test clinical insights generation for excellent sleep."""
         insights = PATModelService._generate_clinical_insights(
-            sleep_efficiency=90.0,
-            circadian_score=0.9,
-            depression_risk=0.1
+            sleep_efficiency=90.0, circadian_score=0.9, depression_risk=0.1
         )
 
         assert any("Excellent sleep" in insight for insight in insights)
@@ -428,9 +471,7 @@ class TestPATModelServicePostprocessing:
     def test_generate_clinical_insights_poor_sleep() -> None:
         """Test clinical insights generation for poor sleep."""
         insights = PATModelService._generate_clinical_insights(
-            sleep_efficiency=60.0,
-            circadian_score=0.4,
-            depression_risk=0.8
+            sleep_efficiency=60.0, circadian_score=0.4, depression_risk=0.8
         )
 
         assert any("Poor sleep efficiency" in insight for insight in insights)
@@ -441,9 +482,7 @@ class TestPATModelServicePostprocessing:
     def test_generate_clinical_insights_moderate_values() -> None:
         """Test clinical insights generation for moderate values."""
         insights = PATModelService._generate_clinical_insights(
-            sleep_efficiency=75.0,
-            circadian_score=0.65,
-            depression_risk=0.5
+            sleep_efficiency=75.0, circadian_score=0.65, depression_risk=0.5
         )
 
         assert any("Good sleep efficiency" in insight for insight in insights)
@@ -491,7 +530,7 @@ class TestGlobalPATService:
         # Clear any existing global instance
         clarity.ml.pat_service._pat_service = None
 
-        with patch.object(PATModelService, 'load_model') as mock_load:
+        with patch.object(PATModelService, "load_model") as mock_load:
             mock_load.return_value = None
 
             service1 = await get_pat_service()
@@ -507,7 +546,7 @@ class TestGlobalPATService:
         # Clear any existing global instance
         clarity.ml.pat_service._pat_service = None
 
-        with patch.object(PATModelService, 'load_model') as mock_load:
+        with patch.object(PATModelService, "load_model") as mock_load:
             mock_load.return_value = None
 
             service = await get_pat_service()
@@ -545,7 +584,9 @@ class TestPATModelServiceEdgeCases:
         result = service._preprocess_actigraphy_data(data_points, target_length=1440)
 
         assert result.shape == (1, 1440, 1)
-        mock_preprocessor.preprocess_for_pat_model.assert_called_once_with(data_points, 1440)
+        mock_preprocessor.preprocess_for_pat_model.assert_called_once_with(
+            data_points, 1440
+        )
 
     @pytest.mark.asyncio
     @staticmethod
@@ -554,8 +595,13 @@ class TestPATModelServiceEdgeCases:
         service = PATModelService()
 
         # Mock the PATTransformer constructor to raise an exception
-        with patch('clarity.ml.pat_service.PATTransformer', side_effect=Exception("Critical error")), \
-             pytest.raises(Exception, match="Critical error"):
+        with (
+            patch(
+                "clarity.ml.pat_service.PATTransformer",
+                side_effect=Exception("Critical error"),
+            ),
+            pytest.raises(Exception, match="Critical error"),
+        ):
             await service.load_model()
 
 

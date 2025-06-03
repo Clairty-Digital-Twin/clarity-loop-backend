@@ -198,7 +198,9 @@ class AsyncInferenceEngine:
 
         # Async components
         self.cache = InferenceCache(ttl_seconds=cache_ttl)
-        self.request_queue: asyncio.Queue[tuple[InferenceRequest, asyncio.Future[InferenceResponse]]] = asyncio.Queue()
+        self.request_queue: asyncio.Queue[
+            tuple[InferenceRequest, asyncio.Future[InferenceResponse]]
+        ] = asyncio.Queue()
         self.batch_processor_task: asyncio.Task | None = None
         self.is_running = False
         self._shutdown_event = asyncio.Event()
@@ -216,7 +218,12 @@ class AsyncInferenceEngine:
         await self.start()
         return self
 
-    async def __aexit__(self, exc_type: type[BaseException] | None, exc_val: BaseException | None, exc_tb: object) -> None:
+    async def __aexit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: object,
+    ) -> None:
         """Async context manager exit with proper cleanup."""
         await self.stop()
 
@@ -423,8 +430,7 @@ class AsyncInferenceEngine:
                 # Check for shutdown signal with timeout
                 try:
                     await asyncio.wait_for(
-                        self._shutdown_event.wait(),
-                        timeout=self.batch_timeout
+                        self._shutdown_event.wait(), timeout=self.batch_timeout
                     )
                     # Shutdown signal received
                     break
@@ -433,13 +439,14 @@ class AsyncInferenceEngine:
                     pass
 
                 # Collect requests for batching
-                requests: list[tuple[InferenceRequest, asyncio.Future[InferenceResponse]]] = []
+                requests: list[
+                    tuple[InferenceRequest, asyncio.Future[InferenceResponse]]
+                ] = []
 
                 # Try to get first request with timeout
                 try:
                     first_request = await asyncio.wait_for(
-                        self.request_queue.get(),
-                        timeout=self.batch_timeout
+                        self.request_queue.get(), timeout=self.batch_timeout
                     )
                     requests.append(first_request)
                 except TimeoutError:
@@ -449,8 +456,7 @@ class AsyncInferenceEngine:
                 for _ in range(self.batch_size - 1):
                     try:
                         additional_request = await asyncio.wait_for(
-                            self.request_queue.get(),
-                            timeout=self.batch_timeout
+                            self.request_queue.get(), timeout=self.batch_timeout
                         )
                         requests.append(additional_request)
                     except TimeoutError:
@@ -471,7 +477,7 @@ class AsyncInferenceEngine:
                     try:
                         await asyncio.wait_for(
                             asyncio.sleep(BATCH_PROCESSOR_ERROR_SLEEP_SECONDS),
-                            timeout=1.0
+                            timeout=1.0,
                         )
                     except TimeoutError:
                         break  # Shutdown timeout reached

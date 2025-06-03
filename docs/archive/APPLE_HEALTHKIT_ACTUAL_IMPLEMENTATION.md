@@ -7,19 +7,22 @@
 **Test Coverage**: 89% (PAT service), 98% (API endpoints)  
 **Production Ready**: ✅ **YES**
 
-### **What Actually Works**:
+### **What Actually Works**
+
 - ✅ Apple HealthKit data ingestion via FastAPI endpoints
 - ✅ Real PAT model loading with actual weights (`models/pat/PAT-M_29k_weights.h5`)
 - ✅ Health data storage and retrieval
 - ✅ Integration with analysis pipeline
 - ✅ 729 tests passing successfully
 
-### **For Current Implementation Details**:
+### **For Current Implementation Details**
+
 **See**: Main project README.md and `src/clarity/api/v1/health_data.py`
 
 ---
 
 # **ORIGINAL IMPLEMENTATION GUIDE BELOW**
+
 *This was the planning document - the feature is now implemented*
 
 ---
@@ -287,7 +290,7 @@ from analysis_service.models.pat_model_stub import PatModelStub  # if using PAT 
 
 class CardioProcessor:
     """Extract features from heart rate and HRV series."""
-    def __init__(self):
+    def **init**(self):
         # Example: perhaps load a small ML model or just prepare to compute stats.
         # (No heavy model here; just use statistical features for now.)
         self.hrv_required = True  # this processor expects HRV as well if available
@@ -375,13 +378,13 @@ import torch
 import torch.nn as nn
 
 class FusionTransformer(nn.Module):
-    def __init__(self, modality_dims: dict[str, int], embed_dim: int = 64,
+    def **init**(self, modality_dims: dict[str, int], embed_dim: int = 64,
                  num_heads: int = 4, num_layers: int = 2):
         """
         modality_dims: dict mapping modality name -> dimension of its feature vector.
         embed_dim: size to project each modality to (and size of transformer embeddings).
         """
-        super().__init__()
+        super().**init**()
         # Linear projection for each modality to a common embedding dimension
         self.proj = nn.ModuleDict({
             name: nn.Linear(dim, embed_dim) for name, dim in modality_dims.items()
@@ -441,7 +444,7 @@ import os, json
 from vertexai import language_models, init
 
 class GeminiClient:
-    def __init__(self, project_id: str, location: str = "us-central1"):
+    def **init**(self, project_id: str, location: str = "us-central1"):
         self.project_id = project_id
         self.location = location
         self.model = None
@@ -560,7 +563,7 @@ import numpy as np
 
 class PatModelStub:
     """Lightweight stub of the Pretrained Actigraphy Transformer (PAT) model."""
-    def __init__(self, embedding_dim: int = 128):
+    def **init**(self, embedding_dim: int = 128):
         self.embedding_dim = embedding_dim
     def predict(self, actigraphy_vector: list[float]) -> list[float]:
         """

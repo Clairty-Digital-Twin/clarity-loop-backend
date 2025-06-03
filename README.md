@@ -1,396 +1,309 @@
 # CLARITY Digital Twin Platform Backend
 
-**Enterprise-grade health data processing platform built with OBSESSIVE adherence to Robert C. Martin's Clean Architecture, SOLID principles, DRY methodology, and Gang of Four design patterns.**
+> **AI-powered health analytics platform for psychiatric care and wellness monitoring**
 
-## 🏗️ **ARCHITECTURAL PRINCIPLES (NON-NEGOTIABLE)**
+[![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.115+-00a393.svg)](https://fastapi.tiangolo.com/)
+[![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
-### **🎯 Robert C. Martin's Clean Architecture (Foundation)**
+## 🎯 **What is CLARITY?**
 
-- **Dependency Inversion**: All dependencies point inward toward business logic
-- **Separation of Concerns**: Each layer has single, well-defined responsibility  
-- **Testable**: Business logic independent of frameworks, databases, UI
-- **Framework Independence**: FastAPI is a delivery mechanism, not the architecture
-- **Business Rules at Core**: Enterprise logic protected from external changes
+CLARITY is a **production-ready digital twin platform** for psychiatry and mental health that processes real-world health data from Apple HealthKit and generates AI-powered insights using state-of-the-art machine learning models.
 
-### **🎯 SOLID Principles (Uncle Bob's Foundation)**
+### **Key Capabilities**
 
-- **S** - Single Responsibility: Each class/module has ONE reason to change
-- **O** - Open/Closed: Open for extension, closed for modification
-- **L** - Liskov Substitution: Derived classes must be substitutable for base classes
-- **I** - Interface Segregation: Clients shouldn't depend on unused interfaces  
-- **D** - Dependency Inversion: Depend on abstractions, not concretions
+🔬 **Advanced AI/ML Pipeline**
+- **PAT (Pretrained Actigraphy Transformer)** - Sleep pattern analysis and circadian rhythm detection
+- **Google Gemini 2.5** - Natural language health insights generation
+- **Proxy Actigraphy** - Convert Apple Watch step data to clinical-grade actigraphy
 
-### **🎯 DRY (Don't Repeat Yourself)**
+❤️ **Comprehensive Health Data Support**
+- Apple HealthKit integration (Heart Rate, HRV, Steps, Sleep, Respiratory Rate)
+- Real-time data validation and processing
+- HIPAA-compliant secure storage with encryption
 
-- **Single Source of Truth**: Every piece of knowledge has one authoritative representation
-- **Code Reusability**: Common functionality extracted into reusable components
-- **Configuration Management**: Environment-specific settings centralized
+🏗️ **Enterprise Architecture**
+- Clean Architecture with SOLID principles
+- Async-first design with FastAPI
+- Microservices-ready with Google Cloud Platform
+- Production monitoring and observability
 
-### **🎯 Gang of Four Design Patterns (Applied)**
+## 🚀 **Quick Start**
 
-- **Factory Pattern**: Application creation and dependency injection
-- **Repository Pattern**: Data access abstraction
-- **Strategy Pattern**: Algorithm encapsulation (ML models, processing strategies)
-- **Observer Pattern**: Event-driven architecture for health data processing
-- **Adapter Pattern**: External service integration (Firebase, Vertex AI)
-- **Command Pattern**: Request processing and undo operations
-- **Decorator Pattern**: Middleware and cross-cutting concerns
+### **Prerequisites**
+- Python 3.11+
+- Docker & Docker Compose
+- Google Cloud Project (for production)
 
-## 🏛️ **CLEAN ARCHITECTURE LAYERS**
+### **Development Setup**
+
+```bash
+# Clone the repository
+git clone https://github.com/your-org/clarity-loop-backend.git
+cd clarity-loop-backend
+
+# Create virtual environment
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+
+# Install dependencies
+pip install -e ".[dev]"
+
+# Copy environment configuration
+cp .env.example .env
+# Edit .env with your configuration
+
+# Run the development server
+make dev
+```
+
+The API will be available at http://localhost:8000 with interactive docs at http://localhost:8000/docs
+
+### **Docker Development**
+
+```bash
+# Start all services (API + emulators)
+make dev-docker
+
+# Run tests
+make test
+
+# Check code quality
+make lint
+```
+
+## 📊 **API Overview**
+
+### **Core Endpoints**
+
+| Endpoint | Description | Authentication |
+|----------|-------------|----------------|
+| `POST /api/v1/auth/register` | User registration | Public |
+| `POST /api/v1/auth/login` | User authentication | Public |
+| `POST /api/v1/health-data/upload` | Upload health metrics | Firebase JWT |
+| `GET /api/v1/health-data/` | Retrieve health data | Firebase JWT |
+| `POST /api/v1/pat/analyze-step-data` | PAT actigraphy analysis | Firebase JWT |
+| `POST /api/v1/insights/generate` | Generate AI health insights | Firebase JWT |
+
+### **Example Usage**
+
+```python
+import httpx
+
+# Upload Apple HealthKit data
+async with httpx.AsyncClient() as client:
+    response = await client.post(
+        "http://localhost:8000/api/v1/health-data/upload",
+        headers={"Authorization": f"Bearer {firebase_token}"},
+        json={
+            "user_id": "user_123",
+            "data_type": "heart_rate",
+            "measurements": [
+                {
+                    "timestamp": "2025-01-15T10:30:00Z",
+                    "value": 72.5,
+                    "unit": "bpm"
+                }
+            ],
+            "source": "apple_watch"
+        }
+    )
+    print(f"Upload successful: {response.json()}")
+```
+
+## 🧠 **AI/ML Pipeline**
+
+### **PAT Model Integration**
+```python
+# Analyze step data with PAT transformer
+POST /api/v1/pat/analyze-step-data
+{
+    "user_id": "user_123",
+    "step_data": [
+        {"timestamp": "2025-01-15T00:00:00Z", "step_count": 0},
+        {"timestamp": "2025-01-15T00:01:00Z", "step_count": 5},
+        // ... minute-by-minute data
+    ]
+}
+
+# Response includes sleep efficiency, circadian scores, and activity patterns
+```
+
+### **Gemini Insights Generation**
+```python
+# Generate natural language health insights
+POST /api/v1/insights/generate
+{
+    "user_id": "user_123",
+    "analysis_results": {
+        "sleep_efficiency": 0.85,
+        "circadian_score": 0.72,
+        "heart_rate_avg": 68.5
+    },
+    "question": "How is my overall health this week?"
+}
+
+# Response: Natural language insights powered by Gemini 2.5
+```
+
+## 🛠️ **Architecture**
+
+### **Clean Architecture Layers**
 
 ```
 ┌─────────────────────────────────────────────────────────┐
-│ 🌐 FRAMEWORKS & DRIVERS (Outermost)                     │  
-│ • FastAPI (Web framework)                               │
-│ • Firebase SDK (Authentication)                         │
-│ • Google Cloud APIs (Infrastructure)                    │
+│ 🌐 Frameworks & Drivers (FastAPI, GCP, Firebase)       │
 ├─────────────────────────────────────────────────────────┤
-│ 🎮 INTERFACE ADAPTERS                                   │
-│ • Controllers/Routers (api/v1/)                         │
-│ • DTOs/Models (Pydantic validation)                     │  
-│ • Gateways (Repository implementations)                 │
+│ 🎮 Interface Adapters (Controllers, DTOs, Gateways)    │
 ├─────────────────────────────────────────────────────────┤
-│ 💼 APPLICATION BUSINESS RULES                           │
-│ • Use Cases/Services (services/)                        │
-│ • Application-specific business rules                   │
-│ • Input/Output boundaries                               │
-├─────────────────────────────────────────────────────────┤  
-│ 🏛️ ENTERPRISE BUSINESS RULES (Core)                     │
-│ • Entities (core business objects)                      │
-│ • Domain services                                       │
-│ • Pure business logic (no dependencies)                 │
+│ 💼 Application Services (Use Cases, Business Rules)    │
+├─────────────────────────────────────────────────────────┤
+│ 🏛️ Domain Entities (Health Data, User, Analysis)      │
 └─────────────────────────────────────────────────────────┘
 ```
 
-**Dependency Rule**: Source code dependencies ALWAYS point inward. Inner circles know nothing about outer circles.
+### **Technology Stack**
 
-## 🏭 **FACTORY PATTERN IMPLEMENTATION**
+**Backend Core**
+- **FastAPI** - Modern, async Python web framework
+- **Pydantic** - Data validation and serialization
+- **PyTorch** - ML model inference engine
 
-### **Application Factory (Gang of Four)**
+**AI/ML**
+- **PAT (Pretrained Actigraphy Transformer)** - Sleep analysis
+- **Google Gemini 2.5** - Health insights generation
+- **scikit-learn, pandas** - Data processing
 
-```python
-# Clean Architecture application creation
-def create_application() -> FastAPI:
-    """Factory creates fully configured application following SOLID principles."""
-    return create_app()
+**Infrastructure**
+- **Google Cloud Platform** - Cloud hosting and services
+- **Firestore** - NoSQL database with real-time sync
+- **Firebase Auth** - User authentication and authorization
+- **Pub/Sub** - Asynchronous message processing
+- **Cloud Storage** - Secure file storage
 
-# Dependency Injection Container
-def get_application() -> FastAPI:
-    """Singleton factory with lazy initialization."""
-    global app
-    if app is None:
-        app = create_application()  # Factory Pattern
-    return app
-```
+**Development & Monitoring**
+- **pytest** - Testing framework with 80%+ coverage
+- **Black, Ruff** - Code formatting and linting
+- **Prometheus** - Metrics collection
+- **Grafana** - Monitoring dashboards
 
-### **Repository Factory (Data Access Layer)**
+## 🔒 **Security & Compliance**
 
-```python
-# Abstract Repository (Interface Segregation)
-class HealthDataRepository(ABC):
-    @abstractmethod
-    async def store(self, data: HealthData) -> str: ...
-    
-# Concrete Implementation (Liskov Substitution)  
-class FirestoreHealthDataRepository(HealthDataRepository):
-    async def store(self, data: HealthData) -> str:
-        # Firestore-specific implementation
-        return await self._firestore.collection("health_data").add(data.dict())
-```
+### **HIPAA Compliance**
+- End-to-end encryption for health data
+- Audit logging for all data access
+- User data isolation and access controls
+- Secure cloud infrastructure with Google Cloud BAA
 
-## 🎯 **SOLID PRINCIPLES IN ACTION**
+### **Authentication**
+- Firebase Authentication with JWT tokens
+- Role-based access control (RBAC)
+- Rate limiting and request validation
+- Secure API key management
 
-### **Single Responsibility (S)**
-
-```python
-# Each service has ONE responsibility
-class HealthDataValidator:     # Only validates health data
-class HealthDataProcessor:     # Only processes health data  
-class HealthDataPersister:     # Only persists health data
-```
-
-### **Open/Closed (O)**
-
-```python
-# Open for extension, closed for modification
-class MLProcessor(ABC):
-    @abstractmethod
-    async def process(self, data: HealthData) -> Insights: ...
-
-class ActigraphyProcessor(MLProcessor):    # Extends without modifying
-class HeartRateProcessor(MLProcessor):     # Extends without modifying
-```
-
-### **Liskov Substitution (L)**
-
-```python
-# All implementations are substitutable
-def process_health_data(processor: MLProcessor):
-    result = await processor.process(data)  # Works with ANY implementation
-```
-
-### **Interface Segregation (I)**
-
-```python
-# Clients depend only on interfaces they use
-class Readable(Protocol):
-    async def read(self, id: str) -> HealthData: ...
-
-class Writable(Protocol):  
-    async def write(self, data: HealthData) -> str: ...
-
-# Client only needs reading capability
-class HealthDataReader:
-    def __init__(self, repo: Readable): ...  # Not full repository
-```
-
-### **Dependency Inversion (D)**
-
-```python
-# High-level modules don't depend on low-level modules
-class HealthDataService:
-    def __init__(
-        self, 
-        repo: HealthDataRepository,      # Abstraction, not concretion
-        processor: MLProcessor,          # Abstraction, not concretion  
-        notifier: NotificationService    # Abstraction, not concretion
-    ): ...
-```
-
-## 🚀 **Quick Start (Clean Architecture Pattern)**
-
-### **1. Installation (DRY Configuration)**
+## 🧪 **Testing**
 
 ```bash
-# Single command setup (DRY principle)
-make setup-dev          # Handles all environment setup
-make test               # Runs all quality gates
-make run-dev            # Starts application factory
+# Run all tests
+make test
+
+# Run specific test categories
+pytest tests/unit/          # Unit tests
+pytest tests/integration/   # Integration tests
+pytest tests/api/          # API endpoint tests
+
+# Test coverage report
+make coverage
 ```
 
-### **2. Dependency Injection (Inversion of Control)**
+### **Test Categories**
+- **Unit Tests** - Business logic and entities (100% coverage target)
+- **Integration Tests** - Service layer interactions
+- **API Tests** - HTTP endpoint functionality
+- **ML Tests** - Model inference and data processing
 
-```python
-# Dependencies injected, not hardcoded (SOLID D principle)
-@app.post("/api/v1/health-data/upload")
-async def upload_health_data(
-    data: HealthDataUpload,
-    repo: HealthDataRepository = Depends(get_health_repo),
-    processor: MLProcessor = Depends(get_ml_processor),
-    validator: DataValidator = Depends(get_validator)
-):
-    # Business logic independent of infrastructure (Clean Architecture)
-    validated_data = await validator.validate(data)
-    processing_id = await processor.process(validated_data)
-    await repo.store(validated_data, processing_id)
-    return {"processing_id": processing_id}
-```
+## 📈 **Performance & Monitoring**
 
-## 🎯 **GANG OF FOUR PATTERNS**
-
-### **Strategy Pattern (Algorithm Encapsulation)**
-
-```python
-class ProcessingStrategy(ABC):
-    @abstractmethod
-    async def process(self, data: HealthData) -> ProcessingResult: ...
-
-class RealTimeStrategy(ProcessingStrategy): ...
-class BatchStrategy(ProcessingStrategy): ...
-class MLStrategy(ProcessingStrategy): ...
-
-# Context uses strategy
-class HealthDataProcessor:
-    def __init__(self, strategy: ProcessingStrategy):
-        self._strategy = strategy
-    
-    async def process(self, data: HealthData):
-        return await self._strategy.process(data)
-```
-
-### **Observer Pattern (Event-Driven Architecture)**
-
-```python
-class HealthDataObserver(ABC):
-    @abstractmethod
-    async def notify(self, event: HealthDataEvent): ...
-
-class MLProcessor(HealthDataObserver): ...
-class NotificationService(HealthDataObserver): ...
-class AuditLogger(HealthDataObserver): ...
-
-# Subject notifies all observers
-class HealthDataSubject:
-    def __init__(self):
-        self._observers: List[HealthDataObserver] = []
-    
-    async def notify_all(self, event: HealthDataEvent):
-        await asyncio.gather(*[obs.notify(event) for obs in self._observers])
-```
-
-## 📊 **CLEAN ARCHITECTURE API DESIGN**
-
-### **Use Case Driven Endpoints**
-
-```python
-# Each endpoint represents a business use case
-@router.post("/upload", response_model=UploadResponse)
-async def upload_health_data_use_case(
-    request: UploadHealthDataRequest,
-    use_case: UploadHealthDataUseCase = Depends()
-):
-    """Use case: User uploads health data for processing."""
-    return await use_case.execute(request)
-
-@router.get("/insights", response_model=InsightsResponse)  
-async def get_health_insights_use_case(
-    request: GetInsightsRequest,
-    use_case: GetHealthInsightsUseCase = Depends()
-):
-    """Use case: User requests AI-generated health insights."""
-    return await use_case.execute(request)
-```
-
-### **Clean Request/Response Models**
-
-```python
-# Input boundaries (Interface Adapters layer)
-class UploadHealthDataRequest(BaseModel):
-    user_id: UUID
-    data_type: HealthDataType
-    values: List[HealthDataPoint]
-    
-    class Config:
-        # Validation rules (business rules enforcement)
-        validate_assignment = True
-        extra = "forbid"
-
-# Output boundaries (Interface Adapters layer)        
-class UploadResponse(BaseModel):
-    processing_id: UUID
-    status: ProcessingStatus
-    message: str
-    timestamp: datetime
-```
-
-## 🛡️ **SECURITY & HIPAA (Clean Architecture Style)**
-
-### **Security as Cross-Cutting Concern**
-
-```python
-# Decorator Pattern for security
-@security_audit
-@require_permission(Permission.WRITE_HEALTH_DATA)
-@rate_limit(requests_per_minute=100)
-async def upload_health_data(
-    data: HealthDataUpload,
-    current_user: User = Depends(get_authenticated_user)
-):
-    # Business logic remains clean
-    pass
-```
-
-### **Clean Data Validation Pipeline**
-
-```python
-# Chain of Responsibility pattern
-class ValidationChain:
-    def __init__(self):
-        self._validators = [
-            StructuralValidator(),
-            BusinessRuleValidator(), 
-            SecurityValidator(),
-            HIAAAComplianceValidator()
-        ]
-    
-    async def validate(self, data: HealthData) -> ValidationResult:
-        for validator in self._validators:
-            result = await validator.validate(data)
-            if not result.is_valid:
-                return result
-        return ValidationResult.success()
-```
-
-## 🧪 **TESTING (Clean Architecture)**
-
-### **Test Pyramid Following Clean Architecture**
-
-```python
-# Unit Tests (Enterprise Business Rules)
-class TestHealthDataEntity:
-    def test_valid_heart_rate_creation(self):
-        heart_rate = HeartRate(value=72, timestamp=datetime.now())
-        assert heart_rate.is_valid()
-        
-# Integration Tests (Application Business Rules)        
-class TestHealthDataService:
-    async def test_process_health_data_use_case(self):
-        service = HealthDataService(mock_repo, mock_processor)
-        result = await service.process(valid_health_data)
-        assert result.processing_id is not None
-
-# End-to-End Tests (Full Clean Architecture)
-class TestHealthDataAPI:
-    async def test_complete_upload_flow(self):
-        response = await client.post("/api/v1/health-data/upload", 
-                                   json=valid_payload)
-        assert response.status_code == 201
-```
-
-## 📈 **MONITORING (Observability as Cross-Cutting)**
-
-### **Decorator Pattern for Monitoring**
-
-```python
-@metrics.time_execution
-@audit.log_operation
-@trace.distributed_trace
-async def process_health_data(data: HealthData):
-    # Business logic remains clean, monitoring is aspect
-    pass
-```
-
-## 🚀 **DEPLOYMENT (Infrastructure as Code)**
-
-### **Clean Separation of Deployment Concerns**
-
+### **Health Checks**
 ```bash
-# Infrastructure (Terraform)
-make infrastructure-deploy
+# Application health
+curl http://localhost:8000/health
 
-# Application (Docker + Cloud Run)  
-make application-deploy
-
-# Configuration (Kubernetes ConfigMaps)
-make config-deploy
+# Service-specific health
+curl http://localhost:8000/api/v1/health-data/health
+curl http://localhost:8000/api/v1/pat/health
 ```
 
-## 📚 **DOCUMENTATION ARCHITECTURE**
+### **Monitoring Features**
+- Prometheus metrics collection
+- Grafana dashboards for visualization
+- Structured logging with correlation IDs
+- Performance profiling and bottleneck detection
 
-- **[Clean Architecture Guide](docs/architecture/clean-architecture.md)** - Robert C. Martin's principles applied
-- **[SOLID Principles](docs/architecture/solid-principles.md)** - Implementation examples
-- **[Design Patterns](docs/architecture/design-patterns.md)** - Gang of Four patterns used
-- **[DRY Implementation](docs/architecture/dry-principles.md)** - Single source of truth examples
+## 🚀 **Deployment**
 
-## 🎯 **CLEAN CODE STANDARDS**
-
-### **Code Quality Gates**
-
+### **Local Development**
 ```bash
-# Uncle Bob's standards enforced
-make lint          # Ruff (style) + MyPy (types)
-make test          # >95% coverage required
-make security      # Bandit security scanning
-make complexity    # Cyclomatic complexity < 10
+make dev-docker  # Full stack with emulators
 ```
 
-### **Naming Conventions (Clean Code)**
+### **Production (Google Cloud Run)**
+```bash
+# Build and deploy
+make docker-build
+make deploy-production
+```
 
-- **Classes**: PascalCase business entities (`HealthData`, `MLProcessor`)
-- **Functions**: snake_case verbs (`process_health_data`, `validate_input`)
-- **Variables**: snake_case nouns (`processing_id`, `user_data`)
-- **Constants**: UPPER_SNAKE_CASE (`MAX_RETRY_ATTEMPTS`)
+### **Environment Configuration**
+```bash
+# Required environment variables
+GOOGLE_CLOUD_PROJECT=your-project-id
+FIREBASE_PROJECT_ID=your-firebase-project
+FIRESTORE_DATABASE_ID=(default)
+
+# Optional for development
+FIRESTORE_EMULATOR_HOST=localhost:8080
+PUBSUB_EMULATOR_HOST=localhost:8085
+```
+
+## 📚 **Documentation**
+
+- **[API Documentation](http://localhost:8000/docs)** - Interactive OpenAPI docs
+- **[Architecture Guide](docs/architecture/)** - Detailed system design
+- **[Apple HealthKit Integration](docs/integrations/healthkit.md)** - Mobile app integration
+- **[Development Guide](docs/development/)** - Local development setup
+- **[Deployment Guide](docs/operations/)** - Production deployment
+
+## 🤝 **Contributing**
+
+1. Fork the repository
+2. Create a feature branch: `git checkout -b feature/amazing-feature`
+3. Make your changes following our coding standards
+4. Run tests: `make test`
+5. Run linting: `make lint`
+6. Commit your changes: `git commit -m 'Add amazing feature'`
+7. Push to the branch: `git push origin feature/amazing-feature`
+8. Open a Pull Request
+
+### **Code Standards**
+- Follow Clean Architecture principles
+- Maintain 80%+ test coverage
+- Use type hints and docstrings
+- Follow Black code formatting
+- Pass all linting checks
+
+## 📄 **License**
+
+This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENSE) file for details.
+
+## 🙏 **Acknowledgments**
+
+- **PAT Model** - Pretrained Actigraphy Transformer research
+- **Google Gemini** - Advanced language model for health insights
+- **Apple HealthKit** - Comprehensive health data platform
+- **Clean Architecture** - Robert C. Martin's architectural principles
 
 ---
 
-**Built with OBSESSIVE adherence to Robert C. Martin's Clean Architecture, SOLID principles, DRY methodology, and Gang of Four design patterns. 🏗️**
+**Built with ❤️ for advancing psychiatric care through AI-powered health analytics**

@@ -12,7 +12,7 @@ import traceback
 def test_imports() -> bool:
     """Test all critical imports for the application."""
     # Test 1: Basic Python path setup
-    src_path = Path(__file__).parent / "src"
+    src_path = Path(__file__).parent.parent / "src"
     if src_path.exists():
         sys.path.insert(0, str(src_path))
     else:
@@ -47,7 +47,7 @@ def test_imports() -> bool:
     # Test 4: FastAPI app creation
     try:
         # Add project root to path if not already there
-        root_path = Path(__file__).parent
+        root_path = Path(__file__).parent.parent
         if str(root_path) not in sys.path:
             sys.path.insert(0, str(root_path))
 

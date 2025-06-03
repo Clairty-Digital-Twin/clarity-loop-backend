@@ -166,13 +166,13 @@ class TestPATModelServiceLoading:
         with patch('pathlib.Path.exists', return_value=True):
             # Create a proper h5py mock that handles keys() correctly
             mock_h5py = MagicMock()
-            
+
             # Create a custom mock file object that behaves like h5py
             class MockH5File:
                 def keys(self):
                     # Return a simple list, not a MagicMock that h5py tries to convert
                     return ['inputs', 'dense']
-                
+
                 def __getitem__(self, key):
                     # Return mock groups with proper structure
                     if key == 'inputs':
@@ -180,18 +180,18 @@ class TestPATModelServiceLoading:
                             'kernel:0': np.ones((1, 256)),
                             'bias:0': np.ones(256)
                         }
-                    elif key == 'dense':
+                    if key == 'dense':
                         return {
                             'kernel:0': np.ones((256, 4)),
                             'bias:0': np.ones(4)
                         }
                     raise KeyError(f"Key {key} not found")
-                
+
                 def __contains__(self, key):
                     return key in ['inputs', 'dense']
-            
+
             mock_file = MockH5File()
-            
+
             # Set up context manager behavior
             mock_h5py.File.return_value.__enter__.return_value = mock_file
             mock_h5py.File.return_value.__exit__.return_value = None
@@ -240,6 +240,7 @@ class TestPATModelServiceLoading:
         with patch('pathlib.Path.exists', return_value=True):
             # Mock h5py to raise an exception when opening file
             mock_h5py = MagicMock()
+            # Make the File constructor itself raise the exception
             mock_h5py.File.side_effect = OSError("Corrupted file")
 
             with patch.dict('sys.modules', {'h5py': mock_h5py}):
@@ -261,12 +262,12 @@ class TestPATModelServiceLoading:
 
         with patch('pathlib.Path.exists', return_value=True):
             mock_h5py = MagicMock()
-            
+
             # Create a custom mock file object that handles h5py properly
             class MockH5File:
                 def keys(self):
                     return ['inputs']
-                
+
                 def __getitem__(self, key):
                     if key == 'inputs':
                         return {
@@ -274,12 +275,12 @@ class TestPATModelServiceLoading:
                             'bias:0': mock_input_bias
                         }
                     raise KeyError(f"Key {key} not found")
-                
+
                 def __contains__(self, key):
-                    return key in ['inputs']
-            
+                    return key == 'inputs'
+
             mock_file = MockH5File()
-            
+
             # Set up context manager behavior
             mock_h5py.File.return_value.__enter__.return_value = mock_file
             mock_h5py.File.return_value.__exit__.return_value = None

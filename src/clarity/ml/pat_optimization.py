@@ -1,27 +1,33 @@
-"""Performance optimization utilities for PAT service.
+"""Performance optimization utilities for PAT model service.
 
-This module provides performance enhancements for the PAT model service including:
-- Model optimization (TorchScript compilation)
-- Inference batching and caching
-- Memory management
-- Scalability improvements
+This module provides optimization features including:
+- TorchScript compilation for faster inference
+- Model pruning for reduced memory usage
+- Result caching for repeated analyses
+- Batch processing for multiple requests
 """
 
 import asyncio
-from functools import lru_cache
 import hashlib
 import logging
-from pathlib import Path
 import time
-from typing import Any, Optional
+from datetime import UTC, datetime, timedelta
+from pathlib import Path
+from typing import Any
 
 import torch
-import torch.jit
-from torch.nn.utils import prune
+import torch.nn.utils.prune as prune
 
 from clarity.ml.pat_service import ActigraphyAnalysis, ActigraphyInput, PATModelService
+from clarity.ml.preprocessing import ActigraphyDataPoint
 
 logger = logging.getLogger(__name__)
+
+# Constants
+CACHE_EXPIRY_HOURS = 1
+DEFAULT_WARMUP_ITERATIONS = 5
+MAX_BATCH_SIZE = 8
+HASH_TRUNCATE_LENGTH = 8
 
 
 class PATPerformanceOptimizer:
@@ -32,10 +38,10 @@ class PATPerformanceOptimizer:
         self.compiled_model: torch.jit.ScriptModule | None = None
         self.optimization_enabled = False
         self._cache: dict[str, tuple[ActigraphyAnalysis, float]] = {}
-        self._cache_ttl = 3600  # 1 hour cache TTL
 
     async def optimize_model(
         self,
+        *,
         use_torchscript: bool = True,
         use_pruning: bool = False,
         pruning_amount: float = 0.1,
@@ -50,119 +56,112 @@ class PATPerformanceOptimizer:
         Returns:
             True if optimization succeeded
         """
+        if not self.pat_service.is_loaded:
+            logger.error("Cannot optimize: PAT model not loaded")
+            return False
+
         try:
-            if not self.pat_service.is_loaded or not self.pat_service.model:
-                logger.error("PAT model not loaded, cannot optimize")
-                return False
-
-            logger.info("Starting PAT model optimization...")
-
             model = self.pat_service.model
+            if model is None:
+                logger.error("Model is None, cannot optimize")
+                return False
 
             # Apply pruning if requested
             if use_pruning:
-                logger.info(f"Applying structured pruning (amount: {pruning_amount})")
+                logger.info("Applying structured pruning (amount: %s)", pruning_amount)
                 self._apply_model_pruning(model, pruning_amount)
 
             # Compile with TorchScript if requested
             if use_torchscript:
-                logger.info("Compiling model with TorchScript...")
-                self.compiled_model = await self._compile_torchscript(model)
+                logger.info("Compiling model with TorchScript")
+                self.compiled_model = self._compile_torchscript(model)
 
-                if self.compiled_model:
-                    logger.info("TorchScript compilation successful")
-                    # Optionally save compiled model
-                    await self._save_compiled_model()
+                if self.compiled_model is None:
+                    logger.warning("TorchScript compilation failed, using regular model")
                 else:
-                    logger.warning("TorchScript compilation failed, using eager mode")
+                    logger.info("TorchScript compilation successful")
 
             self.optimization_enabled = True
             logger.info("PAT model optimization completed")
             return True
 
-        except Exception as e:
-            logger.exception(f"Model optimization failed: {e}")
+        except Exception:
+            logger.exception("Model optimization failed")
             return False
 
-    def _apply_model_pruning(self, model: torch.nn.Module, amount: float) -> None:
+    @staticmethod
+    def _apply_model_pruning(model: torch.nn.Module, amount: float) -> None:
         """Apply structured pruning to reduce model size."""
         # Prune attention layers
-        for layer in model.encoder.transformer_layers:
-            # Prune query/key/value projections
-            for head_idx in range(layer.attention.num_heads):
-                prune.l1_unstructured(
-                    layer.attention.query_projections[head_idx],
-                    name='weight',
-                    amount=amount
-                )
-                prune.l1_unstructured(
-                    layer.attention.key_projections[head_idx],
-                    name='weight',
-                    amount=amount
-                )
-                prune.l1_unstructured(
-                    layer.attention.value_projections[head_idx],
-                    name='weight',
-                    amount=amount
-                )
+        for name, module in model.named_modules():
+            if isinstance(module, torch.nn.Linear) and 'attention' in name:
+                prune.l1_unstructured(module, name='weight', amount=amount)
 
-            # Prune feed-forward layers
-            prune.l1_unstructured(layer.ff1, name='weight', amount=amount)
-            prune.l1_unstructured(layer.ff2, name='weight', amount=amount)
+        # Prune feed-forward layers
+        for name, module in model.named_modules():
+            if isinstance(module, torch.nn.Linear) and ('ff' in name or 'feed_forward' in name):
+                prune.l1_unstructured(module, name='weight', amount=amount * 0.5)
 
-    async def _compile_torchscript(
-        self, model: torch.nn.Module
-    ) -> torch.jit.ScriptModule | None:
-        """Compile model with TorchScript for optimization."""
+        # Remove pruning masks to make pruning permanent
+        for name, module in model.named_modules():
+            if isinstance(module, torch.nn.Linear):
+                try:
+                    prune.remove(module, 'weight')
+                except ValueError:
+                    # No pruning mask to remove
+                    pass
+
+    def _compile_torchscript(self, model: torch.nn.Module) -> torch.jit.ScriptModule | None:
+        """Compile model to TorchScript for optimized inference."""
         try:
+            model.eval()
+
             # Create sample input for tracing
-            sample_input = torch.randn(1, 10080).to(self.pat_service.device)
+            sample_input = torch.randn(1, 10080, device=self.pat_service.device)
 
-            # Use torch.jit.trace for better performance
-            with torch.no_grad():
-                traced_model = torch.jit.trace(model, sample_input, strict=False)
+            # Trace the model
+            traced_model = torch.jit.trace(model, sample_input)
 
-            # Optimize the traced model
+            # Optimize for inference
             return torch.jit.optimize_for_inference(traced_model)
 
-        except Exception as e:
-            logger.exception(f"TorchScript compilation failed: {e}")
+        except Exception:
+            logger.exception("TorchScript compilation failed")
             return None
 
-    async def _save_compiled_model(self) -> None:
-        """Save the compiled model to disk for reuse."""
-        if not self.compiled_model:
+    def save_compiled_model(self, model_path: str | Path) -> None:
+        """Save the compiled TorchScript model to disk."""
+        if self.compiled_model is None:
+            logger.error("No compiled model to save")
             return
 
         try:
-            model_path = Path("models") / f"pat_{self.pat_service.model_size}_optimized.pt"
-            model_path.parent.mkdir(exist_ok=True)
-
             torch.jit.save(self.compiled_model, str(model_path))
-            logger.info(f"Compiled model saved to {model_path}")
+            logger.info("Compiled model saved to %s", model_path)
 
-        except Exception as e:
-            logger.exception(f"Failed to save compiled model: {e}")
+        except Exception:
+            logger.exception("Failed to save compiled model")
 
-    def _generate_cache_key(self, input_data: ActigraphyInput) -> str:
+    @staticmethod
+    def _generate_cache_key(input_data: ActigraphyInput) -> str:
         """Generate a cache key for actigraphy input."""
         # Create hash from user_id, data points, and parameters
-        data_str = f"{input_data.user_id}_{len(input_data.data_points)}_{input_data.sampling_rate}"
+        data_str = f"{input_data.user_id}_{len(input_data.data_points)}"
 
-        # Add hash of first/last few data points for uniqueness
+        # Add sample of data values for uniqueness
         if input_data.data_points:
-            first_vals = [p.value for p in input_data.data_points[:5]]
-            last_vals = [p.value for p in input_data.data_points[-5:]]
+            first_vals = [dp.value for dp in input_data.data_points[:5]]
+            last_vals = [dp.value for dp in input_data.data_points[-5:]]
             data_str += f"_{hash(tuple(first_vals + last_vals))}"
 
-        return hashlib.md5(data_str.encode()).hexdigest()
+        return hashlib.sha256(data_str.encode()).hexdigest()
 
     def _is_cache_valid(self, timestamp: float) -> bool:
-        """Check if cache entry is still valid."""
-        return time.time() - timestamp < self._cache_ttl
+        """Check if cached result is still valid."""
+        return (time.time() - timestamp) < (CACHE_EXPIRY_HOURS * 3600)
 
     async def optimized_analyze(
-        self, input_data: ActigraphyInput, use_cache: bool = True
+        self, input_data: ActigraphyInput, *, use_cache: bool = True
     ) -> tuple[ActigraphyAnalysis, bool]:
         """Optimized analysis with caching and model optimization.
 
@@ -175,64 +174,59 @@ class PATPerformanceOptimizer:
             if cache_key in self._cache:
                 cached_result, timestamp = self._cache[cache_key]
                 if self._is_cache_valid(timestamp):
-                    logger.info(f"Cache hit for analysis {cache_key[:8]}")
+                    logger.info("Cache hit for analysis %s", cache_key[:HASH_TRUNCATE_LENGTH])
                     return cached_result, True
                 # Remove expired entry
                 del self._cache[cache_key]
 
-        # Run analysis with optimized model if available
+        # Perform analysis
         start_time = time.time()
 
-        if self.optimization_enabled and self.compiled_model:
-            result = await self._run_optimized_inference(input_data)
+        if self.optimization_enabled and self.compiled_model is not None:
+            result = await self._optimized_inference(input_data)
         else:
             result = await self.pat_service.analyze_actigraphy(input_data)
 
         inference_time = time.time() - start_time
-        logger.info(f"Inference completed in {inference_time:.3f}s")
+        logger.info("Inference completed in %.3fs", inference_time)
 
         # Cache the result
         if use_cache:
             cache_key = self._generate_cache_key(input_data)
             self._cache[cache_key] = (result, time.time())
-            logger.info(f"Cached analysis result {cache_key[:8]}")
+            logger.info("Cached analysis result %s", cache_key[:HASH_TRUNCATE_LENGTH])
 
         return result, False
 
-    async def _run_optimized_inference(
-        self, input_data: ActigraphyInput
-    ) -> ActigraphyAnalysis:
+    async def _optimized_inference(self, input_data: ActigraphyInput) -> ActigraphyAnalysis:
         """Run inference using the optimized compiled model."""
-        if not self.compiled_model:
-            # Fallback to regular inference
-            return await self.pat_service.analyze_actigraphy(input_data)
+        if self.compiled_model is None:
+            msg = "No compiled model available"
+            raise RuntimeError(msg)
 
         # Preprocess input data
-        input_tensor = self.pat_service._preprocess_actigraphy_data(input_data.data_points)
+        input_tensor = self.pat_service._preprocess_actigraphy_data(input_data.data_points)  # noqa: SLF001
         input_tensor = input_tensor.unsqueeze(0)  # Add batch dimension
 
         # Run optimized inference
         with torch.no_grad():
             outputs = self.compiled_model(input_tensor)
 
-            # Convert ScriptModule output to dict format
-            if isinstance(outputs, torch.Tensor):
-                # Handle single tensor output (might need adjustment)
-                batch_size = outputs.size(0)
-                logits = outputs
-
-                outputs_dict = {
-                    "raw_logits": logits,
-                    "sleep_metrics": torch.sigmoid(logits[:, :8]),
-                    "circadian_score": torch.sigmoid(logits[:, 8:9]),
-                    "depression_risk": torch.sigmoid(logits[:, 9:10]),
-                    "embeddings": torch.randn(batch_size, 96),  # Placeholder
-                }
-            else:
-                outputs_dict = outputs
+        # Convert outputs to dictionary format expected by postprocessing
+        outputs_dict = {
+            'sleep_stage_predictions': outputs[0] if isinstance(outputs, (list, tuple)) else outputs,
+            'confidence_scores': torch.softmax(outputs[0] if isinstance(outputs, (list, tuple)) else outputs, dim=-1),
+            'attention_weights': None,  # Not available in compiled model
+            'intermediate_features': None,  # Not available in compiled model
+            'model_metadata': {
+                'model_type': 'compiled_pat',
+                'optimization_enabled': True,
+                'torchscript_used': True,
+            }
+        }
 
         # Post-process results
-        return self.pat_service._postprocess_predictions(outputs_dict, input_data.user_id)
+        return self.pat_service._postprocess_predictions(outputs_dict, input_data.user_id)  # noqa: SLF001
 
     def clear_cache(self) -> None:
         """Clear the analysis cache."""
@@ -241,95 +235,89 @@ class PATPerformanceOptimizer:
 
     def get_cache_stats(self) -> dict[str, Any]:
         """Get cache statistics."""
-        valid_entries = sum(
-            1 for _, timestamp in self._cache.values()
-            if self._is_cache_valid(timestamp)
-        )
-
         return {
-            "total_entries": len(self._cache),
-            "valid_entries": valid_entries,
-            "cache_hit_ratio": self._calculate_hit_ratio(),
-            "cache_ttl_seconds": self._cache_ttl,
+            'cache_size': len(self._cache),
+            'hit_ratio': self._calculate_hit_ratio(),
+            'oldest_entry_age': self._get_oldest_entry_age(),
         }
 
-    def _calculate_hit_ratio(self) -> float:
+    @staticmethod
+    def _calculate_hit_ratio() -> float:
         """Calculate cache hit ratio (placeholder implementation)."""
         # In a real implementation, you'd track hits/misses
         return 0.0
 
-    async def warm_up(self, num_iterations: int = 5) -> dict[str, float]:
+    def _get_oldest_entry_age(self) -> float:
+        """Get age of oldest cache entry in seconds."""
+        if not self._cache:
+            return 0.0
+        oldest_timestamp = min(timestamp for _, timestamp in self._cache.values())
+        return time.time() - oldest_timestamp
+
+    async def warm_up(self, num_iterations: int = DEFAULT_WARMUP_ITERATIONS) -> dict[str, float]:
         """Warm up the optimized model with dummy data."""
-        logger.info(f"Warming up PAT model with {num_iterations} iterations...")
+        logger.info("Warming up PAT model with %d iterations...", num_iterations)
 
         times = []
+
         for i in range(num_iterations):
             # Create dummy data
-            from datetime import UTC, datetime, timedelta
-
-            from clarity.ml.preprocessing import ActigraphyDataPoint
-
             dummy_points = [
                 ActigraphyDataPoint(
                     timestamp=datetime.now(UTC) + timedelta(minutes=j),
-                    value=float(j % 100)
+                    activity_level=30.0 + 20.0 * (i % 2),  # Alternating activity
+                    light_level=100.0,
                 )
-                for j in range(1440)
+                for j in range(1440)  # 24 hours of minute-by-minute data
             ]
 
-            dummy_data = ActigraphyInput(
-                user_id=f"warmup_{i}",
+            dummy_input = ActigraphyInput(
+                user_id=f"warmup_user_{i}",
                 data_points=dummy_points,
-                sampling_rate=1.0,
-                duration_hours=24
             )
 
             start_time = time.time()
-            await self.optimized_analyze(dummy_data, use_cache=False)
+            await self.optimized_analyze(dummy_input, use_cache=False)
             iteration_time = time.time() - start_time
+
             times.append(iteration_time)
 
-            logger.info(f"Warmup iteration {i + 1}: {iteration_time:.3f}s")
+            logger.info("Warmup iteration %d: %.3fs", i + 1, iteration_time)
 
         stats = {
-            "mean_time": sum(times) / len(times),
-            "min_time": min(times),
-            "max_time": max(times),
-            "total_time": sum(times)
+            'mean_time': sum(times) / len(times),
+            'min_time': min(times),
+            'max_time': max(times),
         }
 
-        logger.info(f"Warmup completed - Mean: {stats['mean_time']:.3f}s")
+        logger.info("Warmup completed - Mean: %.3fs", stats['mean_time'])
         return stats
 
 
-class PATBatchProcessor:
+class BatchAnalysisProcessor:
     """Batch processor for handling multiple PAT analysis requests efficiently."""
 
-    def __init__(self, optimizer: PATPerformanceOptimizer, max_batch_size: int = 8) -> None:
+    def __init__(self, optimizer: PATPerformanceOptimizer, max_batch_size: int = MAX_BATCH_SIZE) -> None:
         self.optimizer = optimizer
         self.max_batch_size = max_batch_size
-        self.pending_requests: list[tuple[ActigraphyInput, asyncio.Future]] = []
+        self.pending_requests: list[tuple[ActigraphyInput, asyncio.Future[ActigraphyAnalysis]]] = []
         self.processing = False
 
-    async def submit_batch_analysis(
-        self, input_data: ActigraphyInput
-    ) -> ActigraphyAnalysis:
-        """Submit analysis request for batch processing."""
+    async def analyze_batch(self, input_data: ActigraphyInput) -> ActigraphyAnalysis:
+        """Add analysis request to batch and return result when ready."""
         future: asyncio.Future[ActigraphyAnalysis] = asyncio.Future()
-
         self.pending_requests.append((input_data, future))
 
         # Trigger batch processing if not already running
         if not self.processing:
-            asyncio.create_task(self._process_batch())
+            task = asyncio.create_task(self._process_batch())
+            # Store reference to prevent garbage collection
+            self._background_task = task
 
         return await future
 
     async def _process_batch(self) -> None:
         """Process pending requests in batches."""
-        if self.processing:
-            return
-
         self.processing = True
 
         try:
@@ -340,52 +328,46 @@ class PATBatchProcessor:
 
                 # Process batch concurrently
                 tasks = [
-                    self.optimizer.optimized_analyze(input_data)
+                    self.optimizer.optimized_analyze(input_data, use_cache=True)
                     for input_data, _ in batch
                 ]
 
                 results = await asyncio.gather(*tasks, return_exceptions=True)
 
-                # Return results to futures
+                # Set results for futures
                 for (_, future), result in zip(batch, results, strict=False):
                     if isinstance(result, Exception):
                         future.set_exception(result)
                     else:
-                        analysis, _ = result  # Unpack (analysis, was_cached)
+                        analysis, _ = result  # Unpack (analysis, was_cached) tuple
                         future.set_result(analysis)
 
-                logger.info(f"Processed batch of {len(batch)} requests")
+                logger.info("Processed batch of %d requests", len(batch))
 
         finally:
             self.processing = False
 
 
-@lru_cache(maxsize=1)
 def get_pat_optimizer() -> PATPerformanceOptimizer:
     """Get the global PAT performance optimizer instance."""
-    from clarity.ml.pat_service import get_pat_service
-
     # This would need to be called after the service is loaded
     # In practice, you'd initialize this during app startup
     msg = "Call initialize_pat_optimizer() during app startup"
-    raise NotImplementedError(
-        msg
-    )
+    raise NotImplementedError(msg)
 
 
 async def initialize_pat_optimizer() -> PATPerformanceOptimizer:
     """Initialize the PAT performance optimizer during app startup."""
+    from clarity.ml.pat_service import get_pat_service  # noqa: PLC0415
+
     pat_service = await get_pat_service()
     optimizer = PATPerformanceOptimizer(pat_service)
 
+    # Load model if not already loaded
+    if not pat_service.is_loaded:
+        await pat_service.load_model()
+
     # Apply default optimizations
-    await optimizer.optimize_model(
-        use_torchscript=True,
-        use_pruning=False,  # Disable pruning by default to maintain accuracy
-    )
+    await optimizer.optimize_model(use_torchscript=True, use_pruning=False)
 
-    # Warm up the model
-    await optimizer.warm_up(num_iterations=3)
-
-    logger.info("PAT performance optimizer initialized successfully")
     return optimizer

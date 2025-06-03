@@ -29,6 +29,26 @@ MIN_UPLOAD_ID_PARTS = 2
 UUID_HEX_LENGTH = 32
 
 
+def _raise_user_mismatch_error() -> None:
+    """Raise HTTPException for user mismatch."""
+    raise HTTPException(
+        status_code=status.HTTP_403_FORBIDDEN,
+        detail="Cannot upload data for a different user",
+    )
+
+
+def _raise_invalid_format_error() -> None:
+    """Raise ValueError for invalid upload ID format."""
+    msg = "Invalid format"
+    raise ValueError(msg)
+
+
+def _raise_invalid_uuid_error() -> None:
+    """Raise ValueError for invalid UUID format."""
+    msg = "Invalid UUID format"
+    raise ValueError(msg)
+
+
 class HealthKitSample(BaseModel):
     """Individual HealthKit sample."""
 
@@ -96,10 +116,7 @@ async def upload_healthkit_data(
     try:
         # 1. Authorize user access
         if current_user.user_id != request.user_id:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Cannot upload data for a different user",
-            )
+            _raise_user_mismatch_error()
 
         # 2. Generate unique upload ID
         upload_id = f"{request.user_id}-{uuid.uuid4().hex}"
@@ -185,13 +202,11 @@ async def get_upload_status(
     try:
         parts = upload_id.split("-")
         if len(parts) < MIN_UPLOAD_ID_PARTS:
-            msg = "Invalid format"
-            raise ValueError(msg)
+            _raise_invalid_format_error()
         # The last part should be a 32-character hex UUID
         uuid_part = parts[-1]
         if len(uuid_part) != UUID_HEX_LENGTH or not all(c in '0123456789abcdef' for c in uuid_part.lower()):
-            msg = "Invalid UUID format"
-            raise ValueError(msg)
+            _raise_invalid_uuid_error()
         # Join all parts except the last one to get the user_id
         user_id = "-".join(parts[:-1])
     except (IndexError, ValueError):

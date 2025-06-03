@@ -51,6 +51,7 @@ POST /v1/pat/predict { "vector":[float32×10 080], "uid":"...", "uploadId":"..."
 ⸻
 
 6 | Extending to heart-rate / HRV soon
+
  1. Collect:
  • HKQuantityTypeIdentifierHeartRate (BPM, 5-sec granularity).
  • HKQuantityTypeIdentifierHeartRateVariabilitySDNN (ms).

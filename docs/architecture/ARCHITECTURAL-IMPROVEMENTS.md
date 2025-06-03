@@ -15,9 +15,11 @@ The architectural improvements focus on five key areas:
 ## 1. Explicit Ports Layer
 
 ### Problem Statement
+
 Previously, interface definitions were mixed with core business logic in `src/clarity/core/interfaces.py`, which violated the separation of concerns principle and made the architecture less explicit.
 
 ### Solution: Dedicated Ports Layer
+
 Created `src/clarity/ports/` with dedicated interface files:
 
 ```
@@ -31,12 +33,14 @@ src/clarity/ports/
 ```
 
 ### Benefits
+
 - **Clear Interface Contracts**: Each domain has its own interface file
 - **Dependency Inversion**: Business logic depends on ports, not implementations
 - **Better Organization**: Easier to locate and maintain interface definitions
 - **Future-Proof**: Easy to add new ports without cluttering core logic
 
 ### Migration Guide
+
 ```python
 # OLD: Import from core interfaces (DEPRECATED)
 from clarity.core.interfaces import IHealthDataRepository
@@ -51,14 +55,17 @@ from clarity.ports import IHealthDataRepository
 ## 2. Decorator Patterns for Cross-Cutting Concerns
 
 ### Problem Statement
+
 Cross-cutting concerns like logging, timing, retries, and audit trails were scattered throughout the codebase, leading to code duplication and inconsistent implementation.
 
 ### Solution: GoF Decorator Pattern Implementation
+
 Created `src/clarity/core/decorators.py` with comprehensive decorator patterns:
 
 #### Available Decorators
 
 ##### Basic Decorators
+
 - **`@log_execution`** - Automatic function execution logging
 - **`@measure_execution_time`** - Performance timing with thresholds
 - **`@retry_on_failure`** - Configurable retry mechanisms
@@ -66,6 +73,7 @@ Created `src/clarity/core/decorators.py` with comprehensive decorator patterns:
 - **`@audit_trail`** - Comprehensive audit logging for sensitive operations
 
 ##### Composite Decorators
+
 - **`@service_method`** - Combined logging, timing, and retry for service layer
 - **`@repository_method`** - Optimized decorators for data access layer
 
@@ -88,6 +96,7 @@ class HealthDataService:
 ```
 
 ### Benefits
+
 - **Consistent Implementation**: Same cross-cutting behavior across all services
 - **Reduced Code Duplication**: Write once, apply everywhere
 - **Configurable Behavior**: Flexible decorator parameters
@@ -97,18 +106,22 @@ class HealthDataService:
 ## 3. Model Integrity System
 
 ### Problem Statement
+
 ML models are critical healthcare AI components that need integrity verification to ensure they haven't been tampered with or corrupted.
 
 ### Solution: Comprehensive Model Checksum System
+
 Created `src/clarity/ml/model_integrity.py` with:
 
 #### Core Features
+
 - **SHA-256 Checksums**: Cryptographic integrity verification
 - **Model Manifests**: Complete model metadata with file information
 - **Automated Verification**: Startup and runtime integrity checks
 - **CLI Management**: Command-line tools for model management
 
 #### Model Checksum Manager
+
 ```python
 from clarity.ml.model_integrity import ModelChecksumManager, verify_startup_models
 
@@ -124,6 +137,7 @@ all_models_valid = verify_startup_models()
 ```
 
 #### CLI Tool Usage
+
 ```bash
 # Register a model with auto-discovery
 python scripts/model_integrity_cli.py register pat_v1 --models-dir models/pat
@@ -139,6 +153,7 @@ python scripts/model_integrity_cli.py list --models-dir models/pat
 ```
 
 ### Benefits
+
 - **Security Assurance**: Detect model tampering or corruption
 - **Compliance**: Meet healthcare AI security requirements
 - **Automated Verification**: Integration with application startup
@@ -150,19 +165,23 @@ python scripts/model_integrity_cli.py list --models-dir models/pat
 ### Actions Taken
 
 #### Removed Build Artifacts
+
 - `htmlcov/` - HTML coverage reports
 - `node_modules/` - Node.js dependencies  
 - `.mypy_cache/`, `.pytest_cache/`, `.ruff_cache/` - Tool caches
 - `coverage.xml`, `.coverage` - Coverage data files
 
 #### Removed Duplicate Documentation
+
 - Removed `docs/architecture/security.md` (duplicate of `docs/development/security.md`)
 - Kept the more comprehensive implementation-focused version
 
 #### Updated .gitignore
+
 Ensured all build artifacts are properly ignored to prevent future commits.
 
 ### Benefits
+
 - **Cleaner Repository**: Reduced repository size and clutter
 - **Faster Operations**: Faster clones, pulls, and operations
 - **Clear Documentation**: No confusion from duplicate files
@@ -171,9 +190,11 @@ Ensured all build artifacts are properly ignored to prevent future commits.
 ## 5. Enhanced Service Patterns
 
 ### Demonstration: Enhanced Health Data Service
+
 Created `src/clarity/services/health_data_service_enhanced.py` as an example of integrating all architectural improvements:
 
 #### Key Features
+
 ```python
 class EnhancedHealthDataService:
     # Uses ports layer for clean interfaces
@@ -193,6 +214,7 @@ class EnhancedHealthDataService:
 ```
 
 #### Improvements Demonstrated
+
 - **Ports Layer Integration**: Clean dependency injection
 - **Decorator Usage**: Automatic logging, timing, and audit trails
 - **Model Integrity**: Pre-processing model verification
@@ -202,6 +224,7 @@ class EnhancedHealthDataService:
 ## 6. Migration Strategy
 
 ### Gradual Migration Approach
+
 1. **Phase 1**: Update imports to use new ports layer
 2. **Phase 2**: Add decorators to existing service methods
 3. **Phase 3**: Integrate model integrity verification
@@ -210,6 +233,7 @@ class EnhancedHealthDataService:
 ### Example Migration Steps
 
 #### Step 1: Update Imports
+
 ```python
 # Before (DEPRECATED)
 from clarity.core.interfaces import IHealthDataRepository
@@ -219,6 +243,7 @@ from clarity.ports.data_ports import IHealthDataRepository
 ```
 
 #### Step 2: Add Decorators
+
 ```python
 # Before
 async def process_data(self, data):
@@ -234,6 +259,7 @@ async def process_data(self, data):
 ```
 
 #### Step 3: Add Model Verification
+
 ```python
 @service_method()
 async def ml_operation(self, data):
@@ -247,9 +273,11 @@ async def ml_operation(self, data):
 ## 7. Testing Strategy
 
 ### Updated Test Structure
+
 The architectural improvements require corresponding test updates:
 
 #### Port Interface Testing
+
 ```python
 # Test port implementations
 class TestHealthDataRepository:
@@ -259,6 +287,7 @@ class TestHealthDataRepository:
 ```
 
 #### Decorator Testing
+
 ```python
 # Test decorator behavior
 class TestDecorators:
@@ -272,6 +301,7 @@ class TestDecorators:
 ```
 
 #### Model Integrity Testing
+
 ```python
 # Test model verification
 class TestModelIntegrity:
@@ -287,17 +317,20 @@ class TestModelIntegrity:
 ## 8. Performance Impact
 
 ### Decorator Overhead
+
 - **Logging Decorators**: ~0.1ms overhead per call
 - **Timing Decorators**: ~0.05ms overhead per call  
 - **Audit Decorators**: ~0.2ms overhead per call
 - **Composite Decorators**: ~0.3ms total overhead
 
 ### Model Integrity Overhead
+
 - **Startup Verification**: ~100-500ms depending on model count
 - **Runtime Checks**: ~1-5ms per verification call
 - **Checksum Calculation**: ~10-50ms per model file
 
 ### Mitigation Strategies
+
 - **Threshold-based Logging**: Only log slow operations
 - **Async Verification**: Non-blocking integrity checks
 - **Caching**: Cache verification results for period of time
@@ -305,16 +338,19 @@ class TestModelIntegrity:
 ## 9. Security Enhancements
 
 ### Model Security
+
 - **Cryptographic Checksums**: SHA-256 verification
 - **Tampering Detection**: Immediate detection of model changes
 - **Audit Logging**: Complete model access history
 
 ### Audit Trail Enhancements
+
 - **Comprehensive Logging**: All sensitive operations logged
 - **User Attribution**: Track all actions to specific users
 - **Immutable Records**: Audit logs cannot be modified
 
 ### Access Control
+
 - **Interface Contracts**: Clear permission boundaries
 - **Dependency Injection**: Controlled service access
 - **Parameter Validation**: Enhanced input validation
@@ -322,6 +358,7 @@ class TestModelIntegrity:
 ## 10. Future Enhancements
 
 ### Planned Improvements
+
 1. **Metrics Collection**: Prometheus/Grafana integration
 2. **Circuit Breaker Pattern**: Fault tolerance for external services
 3. **Rate Limiting Decorators**: API rate limiting implementation
@@ -329,6 +366,7 @@ class TestModelIntegrity:
 5. **Model Versioning**: Advanced model lifecycle management
 
 ### Extension Points
+
 - **Custom Decorators**: Domain-specific cross-cutting concerns
 - **Additional Ports**: New service interfaces as needed
 - **Enhanced Integrity**: Digital signatures for models
@@ -344,4 +382,4 @@ These architectural improvements significantly enhance the Clarity Loop Backend 
 - **Increasing Observability**: Better logging, timing, and monitoring
 - **Facilitating Growth**: Extensible patterns for future development
 
-The improvements maintain backward compatibility while providing a clear migration path for existing code. The new patterns serve as examples for future development and establish architectural standards for the healthcare platform. 
+The improvements maintain backward compatibility while providing a clear migration path for existing code. The new patterns serve as examples for future development and establish architectural standards for the healthcare platform.

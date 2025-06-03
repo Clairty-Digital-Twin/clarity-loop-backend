@@ -17,7 +17,7 @@ from scipy.interpolate import interp1d  # type: ignore[import-untyped]
 import scipy.signal  # type: ignore[import-untyped]
 
 from clarity.core.exceptions import ProcessingError
-from clarity.core.logging import get_logger
+from clarity.core.logging import get_logger  # type: ignore[import-untyped]
 from clarity.integrations.healthkit import HealthDataBatch, HealthDataPoint
 
 logger = get_logger(__name__)

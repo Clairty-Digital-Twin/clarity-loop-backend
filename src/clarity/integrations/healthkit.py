@@ -493,6 +493,7 @@ class HealthKitClient:
                 # Continue with other data types
                 continue
             # Result is confirmed to be HealthDataBatch here
+            assert isinstance(result, HealthDataBatch)  # Type narrowing for mypy
             results[data_type] = result
 
         logger.info(

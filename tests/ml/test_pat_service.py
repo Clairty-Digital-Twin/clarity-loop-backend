@@ -238,12 +238,8 @@ class TestPATModelServiceLoading:
         service = PATModelService(model_size="medium")
 
         with patch('pathlib.Path.exists', return_value=True):
-            # Mock h5py to raise an exception when opening file
-            mock_h5py = MagicMock()
-            # Make the File constructor itself raise the exception
-            mock_h5py.File.side_effect = OSError("Corrupted file")
-
-            with patch.dict('sys.modules', {'h5py': mock_h5py}):
+            # Patch h5py.File directly in the pat_service module to raise exception
+            with patch('clarity.ml.pat_service.h5py.File', side_effect=OSError("Corrupted file")):
                 await service.load_model()
 
                 assert service.is_loaded

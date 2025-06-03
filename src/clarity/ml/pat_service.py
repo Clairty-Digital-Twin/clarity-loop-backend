@@ -194,7 +194,8 @@ class PATModelService(IMLModelService):
                     try:
                         # Load weights from H5 file (TensorFlow/Keras format)
                         with h5py.File(self.model_path, 'r') as h5_file:  # type: ignore[union-attr]
-                            logger.info("Available weight groups: %s", list(h5_file.keys()))
+                            # Log that we're loading weights (avoid calling list() on h5py keys for testing compatibility)
+                            logger.info("Loading weights from H5 file: %s", self.model_path)
                             state_dict = PATModelService._load_weights_from_h5(h5_file)
                             self._load_compatible_weights(state_dict)
                     except (OSError, KeyError, ValueError) as e:

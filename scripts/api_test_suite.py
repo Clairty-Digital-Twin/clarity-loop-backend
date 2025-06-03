@@ -69,25 +69,30 @@ class APITester:
         if self.session:
             await self.session.close()
 
-    def _print_header(self, title: str) -> None:
+    @staticmethod
+    def _print_header(title: str) -> None:
         """Print a colored section header."""
         print(f"\n{Fore.CYAN}{Style.BRIGHT}{'=' * 60}{Style.RESET_ALL}")
         print(f"{Fore.WHITE}{Style.BRIGHT}🚀 {title} 🚀{Style.RESET_ALL}")
         print(f"{Fore.CYAN}{Style.BRIGHT}{'=' * 60}{Style.RESET_ALL}")
 
-    def _print_success(self, message: str) -> None:
+    @staticmethod
+    def _print_success(message: str) -> None:
         """Print a success message."""
         print(f"{Fore.GREEN}✅ {message}{Style.RESET_ALL}")
 
-    def _print_error(self, message: str) -> None:
+    @staticmethod
+    def _print_error(message: str) -> None:
         """Print an error message."""
         print(f"{Fore.RED}❌ {message}{Style.RESET_ALL}")
 
-    def _print_warning(self, message: str) -> None:
+    @staticmethod
+    def _print_warning(message: str) -> None:
         """Print a warning message."""
         print(f"{Fore.YELLOW}⚠️  {message}{Style.RESET_ALL}")
 
-    def _print_info(self, message: str) -> None:
+    @staticmethod
+    def _print_info(message: str) -> None:
         """Print an info message."""
         print(f"{Fore.BLUE}i  {message}{Style.RESET_ALL}")
 

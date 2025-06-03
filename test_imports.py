@@ -25,7 +25,7 @@ def test_imports() -> bool:
         traceback.print_exc()
         return False
 
-        # Test 3: Main application modules
+    # Test 3: Main application modules
     try:
         from clarity.core.config import (  # noqa: PLC0415
             get_settings,  # type: ignore[import-untyped]

@@ -65,7 +65,8 @@ class TestLogExecution:
         assert "kwargs=" in log_messages
         assert "42_test" in log_messages
 
-    async def test_log_execution_async_function(self, caplog: pytest.LogCaptureFixture) -> None:
+    @staticmethod
+    async def test_log_execution_async_function(caplog: pytest.LogCaptureFixture) -> None:
         """Test logging for async functions."""
         with caplog.at_level(logging.INFO):
             @log_execution()
@@ -312,7 +313,8 @@ class TestRetryOnFailure:
         delay2 = call_times[2] - call_times[1]
         assert delay2 > delay1  # Second delay should be longer
 
-    def test_retry_on_failure_specific_exceptions(self) -> None:
+    @staticmethod
+    def test_retry_on_failure_specific_exceptions() -> None:
         """Test retry decorator with specific exception types."""
         call_count = 0
 
@@ -337,7 +339,8 @@ class TestRetryOnFailure:
 class TestValidateInput:
     """Test validate_input decorator."""
 
-    def test_validate_input_valid_case(self) -> None:
+    @staticmethod
+    def test_validate_input_valid_case() -> None:
         """Test input validation with valid input."""
         def is_positive(args_kwargs: tuple[tuple[Any, ...], dict[str, Any]]) -> bool:
             args, _ = args_kwargs
@@ -350,7 +353,8 @@ class TestValidateInput:
         result = process_positive(5)
         assert result == "processed_5"
 
-    def test_validate_input_invalid_case(self) -> None:
+    @staticmethod
+    def test_validate_input_invalid_case() -> None:
         """Test input validation with invalid input."""
         def is_positive(args_kwargs: tuple[tuple[Any, ...], dict[str, Any]]) -> bool:
             args, _ = args_kwargs
@@ -366,7 +370,8 @@ class TestValidateInput:
         with pytest.raises(ValueError, match="Input must be a positive integer"):
             process_positive(0)
 
-    def test_validate_input_with_kwargs(self) -> None:
+    @staticmethod
+    def test_validate_input_with_kwargs() -> None:
         """Test input validation considering kwargs."""
         def has_required_kwargs(args_kwargs: tuple[tuple[Any, ...], dict[str, Any]]) -> bool:
             _, kwargs = args_kwargs

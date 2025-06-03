@@ -10,12 +10,19 @@ arXiv:2411.15240 (Dartmouth College, 29,307 participants, NHANES 2003-2014)
 from datetime import UTC, datetime
 import logging
 from pathlib import Path
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING, Any, Dict, cast
 
 import numpy as np
 from pydantic import BaseModel, Field
 import torch
 from torch import nn
+
+try:
+    import h5py  # type: ignore[import-untyped]
+    _has_h5py = True
+except ImportError:
+    h5py = None  # type: ignore[assignment]
+    _has_h5py = False
 
 if TYPE_CHECKING:
     from numpy.typing import NDArray

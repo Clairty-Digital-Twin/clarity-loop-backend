@@ -76,7 +76,7 @@ class ModelChecksumManager:
         Raises:
             ModelIntegrityError: If any file cannot be processed
         """
-        manifest = {
+        manifest: dict[str, Any] = {
             "created_at": datetime.now(timezone.utc).isoformat(),
             "total_size_bytes": 0,
             "files": {},

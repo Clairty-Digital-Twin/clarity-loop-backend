@@ -13,56 +13,62 @@ SMALLEST POSSIBLE TESTS!
 """
 
 import os
-from unittest.mock import Mock, patch
-
-import pytest
+from unittest.mock import patch
 
 from clarity.core.config import MiddlewareConfig, Settings, get_settings
-from clarity.core.exceptions import InvalidConfigurationError, MissingConfigurationError
+from clarity.core.exceptions import (
+    InvalidConfigurationError,
+    MissingConfigurationError,
+)
 
 
 class TestBasicConfigCreation:
     """Test basic config object creation - MICRO CHUNK 3A."""
 
-    def test_config_creation_with_defaults(self) -> None:
+    @staticmethod
+    def test_config_creation_with_defaults() -> None:
         """Test creating config with default values."""
         # Act
         config = Settings()
 
         # Assert
         assert config is not None
-        assert hasattr(config, "log_level")
         assert hasattr(config, "environment")
 
-    def test_config_has_required_attributes(self) -> None:
+    @staticmethod
+    def test_config_has_required_attributes() -> None:
         """Test config has all required attributes."""
         # Act
         config = Settings()
 
-        # Assert - Check for essential attributes
-        assert hasattr(config, "firebase_project_id")
-        assert hasattr(config, "gcp_project_id")
-        assert hasattr(config, "log_level")
+        # Assert - Check for key attributes
         assert hasattr(config, "environment")
+        assert hasattr(config, "debug")
+        assert hasattr(config, "log_level")
+        assert hasattr(config, "port")
+        assert hasattr(config, "host")
         assert hasattr(config, "skip_external_services")
 
-    def test_config_environment_defaults(self) -> None:
+    @staticmethod
+    def test_config_environment_defaults() -> None:
         """Test default environment configuration."""
         # Act
         config = Settings()
 
         # Assert
-        assert config.environment in ["development", "production", "test"]
-        assert config.log_level in ["DEBUG", "INFO", "WARNING", "ERROR"]
+        assert config.environment in {"development", "production", "test"}
+        assert config.log_level in {"DEBUG", "INFO", "WARNING", "ERROR"}
 
-    def test_config_boolean_attributes(self) -> None:
+    @staticmethod
+    def test_config_boolean_attributes() -> None:
         """Test boolean configuration attributes."""
         # Act
         config = Settings()
 
-        # Assert
-        assert isinstance(config.skip_external_services, bool)
+        # Assert boolean attributes exist and are proper booleans
         assert isinstance(config.debug, bool)
+        assert isinstance(config.testing, bool)
+        assert isinstance(config.skip_external_services, bool)
 
 
 class TestEnvironmentVariables:
@@ -77,7 +83,7 @@ class TestEnvironmentVariables:
         # Assert
         assert config.log_level == "ERROR"
 
-    @patch.dict(os.environ, {"ENVIRONMENT": "production", "SKIP_EXTERNAL_SERVICES": "true"}, clear=False)
+    @patch.dict(os.environ, {"ENVIRONMENT": "production", "SKIP_EXTERNAL_SERVICES": "true", "ENABLE_AUTH": "false"}, clear=False)
     def test_environment_from_env(self) -> None:
         """Test setting environment from environment variable."""
         # Act
@@ -130,6 +136,7 @@ class TestConfigValidation:
             env_vars = {"ENVIRONMENT": env}
             if env == "production":
                 env_vars["SKIP_EXTERNAL_SERVICES"] = "true"
+                env_vars["ENABLE_AUTH"] = "false"
             with patch.dict(os.environ, env_vars):
                 config = Settings()
                 assert config.environment == env

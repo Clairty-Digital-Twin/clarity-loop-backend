@@ -29,8 +29,8 @@ class TestAsyncInferenceEngineInitialization:
         engine = AsyncInferenceEngine(pat_service=mock_pat_service)
         
         assert engine.pat_service == mock_pat_service
-        assert engine.batch_size == 100  # DEFAULT_BATCH_SIZE
-        assert engine.batch_timeout == 0.5  # DEFAULT_BATCH_TIMEOUT_MS / 1000
+        assert engine.batch_size == 4  # DEFAULT_BATCH_SIZE from constants
+        assert engine.batch_timeout == 0.1  # DEFAULT_BATCH_TIMEOUT_MS / 1000 = 100/1000
         assert engine.request_count == 0
         assert engine.cache_hits == 0
         assert engine.error_count == 0
@@ -400,10 +400,10 @@ class TestInferenceEngineStats:
         
         stats = engine.get_stats()
         
-        assert stats["request_count"] == 0
+        assert stats["requests_processed"] == 0
         assert stats["cache_hits"] == 0
         assert stats["error_count"] == 0
-        assert stats["cache_hit_rate"] == 0.0
+        assert stats["cache_hit_rate_percent"] == 0.0
         assert stats["is_running"] is False
 
     @pytest.mark.asyncio
@@ -435,13 +435,41 @@ class TestInferenceEngineStats:
         
         stats = engine.get_stats()
         
-        assert stats["request_count"] == 2
+        assert stats["requests_processed"] == 2
         assert stats["cache_hits"] == 1
-        assert stats["cache_hit_rate"] == 0.5  # 1 hit out of 2 requests
+        assert stats["cache_hit_rate_percent"] == 50.0  # 1 hit out of 2 requests = 50%
 
 
 class TestInferenceEngineErrorHandling:
     """Test error handling in the inference engine."""
+
+    @pytest.fixture
+    def sample_actigraphy_input(self) -> ActigraphyInput:
+        """Create sample actigraphy input."""
+        data_points = [
+            ActigraphyDataPoint(
+                timestamp=datetime.now(UTC),
+                value=float(i % 100)
+            )
+            for i in range(1440)  # 24 hours of data
+        ]
+        
+        return ActigraphyInput(
+            user_id=str(uuid4()),
+            data_points=data_points,
+            sampling_rate=1.0,
+            duration_hours=24
+        )
+
+    @pytest.fixture
+    def sample_inference_request(self, sample_actigraphy_input) -> InferenceRequest:
+        """Create sample inference request."""
+        return InferenceRequest(
+            request_id=str(uuid4()),
+            input_data=sample_actigraphy_input,
+            timeout_seconds=10.0,
+            cache_enabled=True
+        )
 
     @pytest.mark.asyncio
     async def test_timeout_handling(self, sample_inference_request):

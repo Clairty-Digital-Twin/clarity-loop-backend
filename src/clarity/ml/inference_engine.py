@@ -199,7 +199,7 @@ class AsyncInferenceEngine:
         # Async components
         self.cache = InferenceCache(ttl_seconds=cache_ttl)
         self.request_queue: asyncio.Queue[tuple[InferenceRequest, asyncio.Future[InferenceResponse]]] = asyncio.Queue()
-        self.batch_processor_task: Optional[asyncio.Task] = None
+        self.batch_processor_task: asyncio.Task | None = None
         self.is_running = False
         self._shutdown_event = asyncio.Event()
 
@@ -423,12 +423,12 @@ class AsyncInferenceEngine:
                 # Check for shutdown signal with timeout
                 try:
                     await asyncio.wait_for(
-                        self._shutdown_event.wait(), 
+                        self._shutdown_event.wait(),
                         timeout=self.batch_timeout
                     )
                     # Shutdown signal received
                     break
-                except asyncio.TimeoutError:
+                except TimeoutError:
                     # Continue processing
                     pass
 
@@ -442,7 +442,7 @@ class AsyncInferenceEngine:
                         timeout=self.batch_timeout
                     )
                     requests.append(first_request)
-                except asyncio.TimeoutError:
+                except TimeoutError:
                     continue  # No requests, continue loop
 
                 # Collect additional requests up to batch size
@@ -453,7 +453,7 @@ class AsyncInferenceEngine:
                             timeout=self.batch_timeout
                         )
                         requests.append(additional_request)
-                    except asyncio.TimeoutError:
+                    except TimeoutError:
                         break  # No more requests, process current batch
 
                 # Process the batch
@@ -473,7 +473,7 @@ class AsyncInferenceEngine:
                             asyncio.sleep(BATCH_PROCESSOR_ERROR_SLEEP_SECONDS),
                             timeout=1.0
                         )
-                    except asyncio.TimeoutError:
+                    except TimeoutError:
                         break  # Shutdown timeout reached
 
     async def predict_async(self, request: InferenceRequest) -> InferenceResponse:
@@ -503,7 +503,7 @@ class AsyncInferenceEngine:
             return await asyncio.wait_for(
                 result_future, timeout=request.timeout_seconds
             )
-        except asyncio.TimeoutError as e:
+        except TimeoutError as e:
             result_future.cancel()
             raise InferenceTimeoutError(
                 request.request_id, request.timeout_seconds

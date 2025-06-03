@@ -89,7 +89,7 @@ class TestAsyncInferenceEngineInference:
             )
             for i in range(1440)  # 24 hours of data
         ]
-        
+
         return ActigraphyInput(
             user_id=str(uuid4()),
             data_points=data_points,
@@ -202,7 +202,7 @@ class TestAsyncInferenceEngineInference:
         async with AsyncInferenceEngine(pat_service=mock_pat_service) as engine:
             # First request
             result1 = await engine.predict_async(sample_inference_request)
-            
+
             # Second identical request (should hit cache)
             result2 = await engine.predict_async(sample_inference_request)
 
@@ -346,9 +346,9 @@ class TestInferenceEngineStats:
         """Test getting stats from freshly initialized engine."""
         mock_pat_service = MagicMock(spec=PATModelService)
         engine = AsyncInferenceEngine(pat_service=mock_pat_service)
-        
+
         stats = engine.get_stats()
-        
+
         assert stats["requests_processed"] == 0
         assert stats["cache_hits"] == 0
         assert stats["error_count"] == 0
@@ -366,7 +366,7 @@ class TestInferenceEngineStats:
             )
             for i in range(1440)  # 24 hours of data
         ]
-        
+
         sample_actigraphy_input = ActigraphyInput(
             user_id=str(uuid4()),
             data_points=data_points,
@@ -398,9 +398,9 @@ class TestInferenceEngineStats:
                 input_data=sample_actigraphy_input,
                 timeout_seconds=30.0
             )
-            
+
             await engine.predict_async(request)
-            
+
             stats = engine.get_stats()
             assert stats["requests_processed"] > 0
             assert stats["is_running"] is True
@@ -420,7 +420,7 @@ class TestInferenceEngineErrorHandling:
             )
             for i in range(1440)  # 24 hours of data
         ]
-        
+
         sample_actigraphy_input = ActigraphyInput(
             user_id=str(uuid4()),
             data_points=data_points,
@@ -439,7 +439,7 @@ class TestInferenceEngineErrorHandling:
                 input_data=sample_actigraphy_input,
                 timeout_seconds=30.0
             )
-            
+
             # The error should be wrapped in an InferenceError, not timeout
             with pytest.raises(Exception):  # Catch any exception type
                 await engine.predict_async(request)
@@ -455,7 +455,7 @@ class TestInferenceEngineErrorHandling:
             )
             for i in range(1440)  # 24 hours of data
         ]
-        
+
         sample_actigraphy_input = ActigraphyInput(
             user_id=str(uuid4()),
             data_points=data_points,
@@ -475,7 +475,7 @@ class TestInferenceEngineErrorHandling:
                 input_data=sample_actigraphy_input,
                 timeout_seconds=0.1  # Very short timeout
             )
-            
+
             with pytest.raises(InferenceTimeoutError):
                 await engine.predict_async(request)
 
@@ -490,7 +490,7 @@ class TestInferenceEngineErrorHandling:
             )
             for i in range(1440)  # 24 hours of data
         ]
-        
+
         sample_actigraphy_input = ActigraphyInput(
             user_id=str(uuid4()),
             data_points=data_points,
@@ -523,7 +523,7 @@ class TestInferenceEngineErrorHandling:
                 timeout_seconds=30.0,
                 cache_enabled=False  # Disable cache to avoid cache errors
             )
-            
+
             # Should work when cache is disabled
             result = await engine.predict_async(request)
             assert isinstance(result, InferenceResponse)

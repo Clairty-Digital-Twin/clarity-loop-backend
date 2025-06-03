@@ -37,10 +37,9 @@ CHART="📊"
 SHIELD="🛡️"
 TROPHY="🏆"
 
-echo -e "${WHITE}${ROCKET}${ROCKET}${ROCKET} CLARITY DIGITAL TWIN PLATFORM ${ROCKET}${ROCKET}${ROCKET}${NC}"
-echo -e "${PURPLE}===============================================${NC}"
-echo -e "${CYAN}Built in 2 days with 112 days of programming experience${NC}"
-echo -e "${YELLOW}Preparing to SHOCK the tech world...${NC}"
+echo -e "${WHITE}CLARITY DIGITAL TWIN PLATFORM${NC}"
+echo -e "${PURPLE}─────────────────────────────────────────────${NC}"
+echo -e "${CYAN}Production-grade psychiatric AI platform${NC}"
 echo ""
 
 # Function to print section headers
@@ -271,61 +270,56 @@ echo -e "${CYAN}${SHIELD} Redis:${NC}                  localhost:6379"
 echo -e "${CYAN}${FIRE} Firestore UI:${NC}           http://localhost:4000"
 echo ""
 
-# Performance & Architecture Highlights
-print_section "${TROPHY} ACHIEVEMENTS UNLOCKED"
-echo -e "${GREEN}${DIAMOND} 100% Type Safety${NC}      - Zero MyPy errors across 49 files"
-echo -e "${GREEN}${ROBOT} AI Integration${NC}         - Gemini + PAT transformer models"
-echo -e "${GREEN}${LIGHTNING} Clean Architecture${NC}     - SOLID principles & dependency injection"
-echo -e "${GREEN}${SHIELD} Production Ready${NC}       - Health checks, monitoring, security"
-echo -e "${GREEN}${FIRE} Microservices${NC}          - 8 services with graceful degradation"
-echo -e "${GREEN}${HEART} Apple HealthKit${NC}        - Real-time health data integration"
-echo -e "${GREEN}${BRAIN} Sleep Analysis${NC}         - Pretrained Actigraphy Transformer"
-echo -e "${GREEN}${CHART} Observability${NC}          - Prometheus metrics + Grafana"
+# Technical Stack Overview
+print_section "${CHART} Architecture Summary"
+echo -e "${GREEN}${SHIELD} Type Safety${NC}          - Zero MyPy errors, full static analysis"
+echo -e "${GREEN}${ROBOT} AI/ML Pipeline${NC}        - Gemini + PAT transformer integration"
+echo -e "${GREEN}${LIGHTNING} Clean Architecture${NC}     - SOLID principles, dependency injection"
+echo -e "${GREEN}${FIRE} Microservices${NC}         - 8 services, graceful degradation"
+echo -e "${GREEN}${HEART} HealthKit Integration${NC}  - Real-time biometric data processing"
+echo -e "${GREEN}${BRAIN} Sleep Analytics${NC}       - Pretrained Actigraphy Transformer"
+echo -e "${GREEN}${CHART} Production Monitoring${NC}  - Prometheus + Grafana observability"
 echo ""
 
-# Demo Script for Tech Interview
-print_section "${FIRE} TECH INTERVIEW DEMO SCRIPT"
+# Demo Endpoints
+print_section "${LIGHTNING} Demo Commands"
 cat << 'EOF'
-🎯 DEMO TALKING POINTS (Copy & Paste for Interview):
+# Core API endpoints for demonstration:
 
-1. "In 112 days of programming, I built a production-ready psychiatric AI platform"
+curl http://localhost:8000/health          # System health check
+curl http://localhost:8000/docs            # Interactive API documentation  
+curl http://localhost:9090/metrics         # Prometheus metrics
+curl http://localhost:3000                 # Grafana dashboards (admin/admin)
 
-2. "This uses Clean Architecture with 100% type safety - zero MyPy errors"
+# Technical architecture highlights:
+- Clean Architecture implementation (SOLID principles)
+- 100% type safety with MyPy static analysis
+- Microservices with graceful degradation
+- AI/ML pipeline: Google Gemini + PAT transformer
+- Real-time Apple HealthKit data processing
+- Production monitoring: Prometheus + Grafana
+- Containerized deployment with health checks
 
-3. "Full microservices: FastAPI, Redis, Firestore, Prometheus, Grafana"
-
-4. "AI integration: Google Gemini for insights + PAT for sleep analysis"
-
-5. "Apple HealthKit integration processes real-time biometric data"
-
-6. "Built in 2 days with enterprise patterns: dependency injection, graceful degradation"
-
-7. "Auto-scaling Docker deployment with health checks and monitoring"
-
-8. LIVE DEMO:
-   - Show API docs: curl http://localhost:8080/docs
-   - Show metrics: curl http://localhost:9090/metrics
-   - Show health: curl http://localhost:8080/health
-   - Show services: docker-compose ps
-
-9. "This demonstrates rapid learning, architectural thinking, and production mindset"
-
-10. "Ready for immediate feature development and team collaboration"
+# Service management:
+docker compose ps                          # View all services
+docker compose logs -f clarity-backend     # Backend logs
+docker compose restart <service>           # Restart specific service
 EOF
 
 echo ""
-print_section "${ROCKET} DEPLOYMENT COMPLETE"
-echo -e "${WHITE}${TROPHY} SUCCESS! Platform deployed and ready for demo ${TROPHY}${NC}"
-echo -e "${YELLOW}Useful commands:${NC}"
+print_section "${LIGHTNING} Platform Ready"
+echo -e "${WHITE}CLARITY platform successfully deployed${NC}"
+echo ""
+echo -e "${YELLOW}Service management:${NC}"
 echo -e "${BLUE}  $DOCKER_COMPOSE ps${NC}                    # Show service status"
 echo -e "${BLUE}  $DOCKER_COMPOSE logs -f clarity-backend${NC} # View backend logs"
 echo -e "${BLUE}  $DOCKER_COMPOSE down${NC}                   # Stop all services"
 echo -e "${BLUE}  curl http://localhost:8000/health${NC}      # Test API health"
 echo ""
-echo -e "${YELLOW}If something goes wrong:${NC}"
+echo -e "${YELLOW}Troubleshooting:${NC}"
 echo -e "${CYAN}  1. Check Docker: docker version${NC}"
 echo -e "${CYAN}  2. Check logs: $DOCKER_COMPOSE logs${NC}"
 echo -e "${CYAN}  3. Restart: $DOCKER_COMPOSE restart${NC}"
 echo -e "${CYAN}  4. Full reset: $DOCKER_COMPOSE down && $DOCKER_COMPOSE up -d${NC}"
 echo ""
-echo -e "${PURPLE}🔥 Go SHOCK that technical co-founder! 🔥${NC}" 
+echo -e "${GREEN}Platform operational. Ready for demonstration.${NC}" 

@@ -7,7 +7,7 @@ concrete implementation of IConfigProvider interface for dependency injection.
 from typing import TYPE_CHECKING
 
 from clarity.core.config import Settings
-from clarity.core.interfaces import IConfigProvider
+from clarity.ports.config_ports import IConfigProvider
 
 if TYPE_CHECKING:
     from clarity.core.config import MiddlewareConfig, Settings

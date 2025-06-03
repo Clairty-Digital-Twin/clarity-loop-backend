@@ -336,7 +336,7 @@ def audit_trail(
                 return result
 
         @functools.wraps(func)
-        async def async_wrapper(*args: Any, **kwargs: Any) -> Any:  # type: ignore[no-untyped-def]
+        async def async_wrapper(*args: Any, **kwargs: Any) -> Any:  # type: ignore[no-untyped-def, misc]
             # Extract audit information
             audit_info = {
                 "operation": operation,

@@ -130,6 +130,7 @@ class TestAsyncInferenceEngineInference:
             sleep_stages=["wake"] * 100,
             confidence_score=0.85,
             clinical_insights=["Good sleep efficiency", "Regular sleep pattern"],
+            embedding=[0.0] * 128,
         )
 
         mock_pat_service = MagicMock(spec=PATModelService)
@@ -160,6 +161,7 @@ class TestAsyncInferenceEngineInference:
             sleep_stages=["wake"] * 100,
             confidence_score=0.85,
             clinical_insights=["Good sleep efficiency"],
+            embedding=[0.0] * 128,
         )
 
         mock_pat_service = MagicMock(spec=PATModelService)
@@ -208,6 +210,7 @@ class TestAsyncInferenceEngineInference:
             sleep_stages=["wake"] * 100,
             confidence_score=0.85,
             clinical_insights=["Good sleep efficiency"],
+            embedding=[0.0] * 128,
         )
 
         mock_pat_service = MagicMock(spec=PATModelService)
@@ -405,6 +408,7 @@ class TestInferenceEngineStats:
             sleep_stages=["wake"] * 100,
             confidence_score=0.85,
             clinical_insights=["Good sleep efficiency"],
+            embedding=[0.0] * 128,
         )
 
         mock_pat_service = MagicMock(spec=PATModelService)
@@ -527,6 +531,7 @@ class TestInferenceEngineErrorHandling:
             sleep_stages=["wake"] * 100,
             confidence_score=0.85,
             clinical_insights=["Good sleep efficiency"],
+            embedding=[0.0] * 128,
         )
 
         mock_pat_service = MagicMock(spec=PATModelService)
@@ -587,6 +592,7 @@ class TestInferenceModels:
             sleep_stages=["wake"],
             confidence_score=0.85,
             clinical_insights=["Good sleep"],
+            embedding=[0.0] * 128,
         )
 
         response = InferenceResponse(

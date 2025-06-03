@@ -3,14 +3,17 @@
 Publishes health data processing events to Pub/Sub topics for async processing.
 """
 
-from datetime import datetime
+from datetime import datetime, timezone
 import json
 import logging
 import os
 from typing import Any
 
 from google.cloud import pubsub_v1
+from google.api_core import retry
 from pydantic import BaseModel
+
+from clarity.core.decorators import log_execution
 
 logger = logging.getLogger(__name__)
 
@@ -38,135 +41,125 @@ class InsightRequestEvent(BaseModel):
 
 
 class HealthDataPublisher:
-    """Publisher service for health data events."""
+    """Publisher for health data processing events."""
 
     def __init__(self) -> None:
-        """Initialize publisher."""
-        self.logger = logging.getLogger(__name__)
+        """Initialize the publisher with GCP Pub/Sub client."""
         self.project_id = os.getenv("GOOGLE_CLOUD_PROJECT")
-
-        # Initialize publisher client
         self.publisher = pubsub_v1.PublisherClient()
+        self.logger = logging.getLogger(__name__)
 
         # Topic names
-        self.health_data_topic = os.getenv("PUBSUB_HEALTH_DATA_TOPIC", "health-data-upload")
-        self.insight_request_topic = os.getenv("PUBSUB_INSIGHTS_TOPIC", "insight-request")
+        self.health_data_topic = f"projects/{self.project_id}/topics/health-data-uploads"
+        self.insight_topic = f"projects/{self.project_id}/topics/insight-requests"
 
-        # Topic paths
-        self.health_data_topic_path = self.publisher.topic_path(self.project_id, self.health_data_topic)
-        self.insight_request_topic_path = self.publisher.topic_path(self.project_id, self.insight_request_topic)
+        self.logger.info(
+            "Initialized HealthDataPublisher for project: %s", self.project_id
+        )
 
-        self.logger.info("Initialized health data publisher for project: %s", self.project_id)
-
-    async def publish_health_data_event(
+    @log_execution(level="DEBUG")
+    def publish_health_data_upload(
         self,
         user_id: str,
         upload_id: str,
         gcs_path: str,
-        metadata: dict[str, Any] | None = None
+        metadata: dict[str, Any] | None = None,
     ) -> str:
         """Publish health data upload event.
-        
+
         Args:
             user_id: User identifier
-            upload_id: Unique upload identifier
+            upload_id: Upload identifier
             gcs_path: Path to raw data in GCS
             metadata: Optional metadata
-            
+
         Returns:
             Message ID from Pub/Sub
         """
         try:
-            event = HealthDataEvent(
+            # Create message payload
+            message_data = dict(
                 user_id=user_id,
                 upload_id=upload_id,
                 gcs_path=gcs_path,
-                timestamp=datetime.utcnow().isoformat(),
+                timestamp=datetime.now(timezone.utc).isoformat(),
                 metadata=metadata or {}
             )
 
-            # Serialize event to JSON
-            message_data = event.json().encode("utf-8")
+            # Convert to JSON bytes
+            message_bytes = json.dumps(message_data).encode("utf-8")
 
-            # Add message attributes
-            attributes = {
-                "user_id": user_id,
-                "upload_id": upload_id,
-                "event_type": "health_data_upload"
-            }
-
-            # Publish message
+            # Publish with retry
             future = self.publisher.publish(
-                self.health_data_topic_path,
-                message_data,
-                **attributes
+                self.health_data_topic,
+                message_bytes,
+                user_id=user_id,
+                upload_id=upload_id,
             )
 
-            message_id = future.result()  # Wait for publish to complete
+            # Get message ID
+            message_id = future.result(timeout=30.0)
 
-            self.logger.info("Published health data event: user=%s, upload=%s, message_id=%s",
-                           user_id, upload_id, message_id)
-
+            self.logger.info(
+                "Published health data upload event for user %s, upload %s, message ID: %s",
+                user_id, upload_id, message_id)
+        except Exception as e:
+            self.logger.exception("Failed to publish health data event: %s", e)
+            raise
+        else:
             return message_id
 
-        except Exception as e:
-            self.logger.error("Failed to publish health data event: %s", e)
-            raise
-
-    async def publish_insight_request_event(
+    @log_execution(level="DEBUG")
+    def publish_insight_request(
         self,
         user_id: str,
         upload_id: str,
         analysis_results: dict[str, Any],
-        metadata: dict[str, Any] | None = None
+        metadata: dict[str, Any] | None = None,
     ) -> str:
         """Publish insight generation request event.
-        
+
         Args:
             user_id: User identifier
             upload_id: Upload identifier
             analysis_results: Results from analysis pipeline
             metadata: Optional metadata
-            
+
         Returns:
             Message ID from Pub/Sub
         """
         try:
-            event = InsightRequestEvent(
+            # Create message payload
+            message_data = dict(
                 user_id=user_id,
                 upload_id=upload_id,
                 analysis_results=analysis_results,
-                timestamp=datetime.utcnow().isoformat(),
+                timestamp=datetime.now(timezone.utc).isoformat(),
                 metadata=metadata or {}
             )
 
-            # Serialize event to JSON
-            message_data = event.json().encode("utf-8")
+            # Convert to JSON bytes
+            message_bytes = json.dumps(message_data).encode("utf-8")
 
-            # Add message attributes
-            attributes = {
-                "user_id": user_id,
-                "upload_id": upload_id,
-                "event_type": "insight_request"
-            }
-
-            # Publish message
+            # Publish with retry
             future = self.publisher.publish(
-                self.insight_request_topic_path,
-                message_data,
-                **attributes
+                self.insight_topic,
+                message_bytes,
+                user_id=user_id,
+                upload_id=upload_id,
             )
 
-            message_id = future.result()  # Wait for publish to complete
+            # Get message ID
+            message_id = future.result(timeout=30.0)
 
-            self.logger.info("Published insight request event: user=%s, upload=%s, message_id=%s",
-                           user_id, upload_id, message_id)
-
-            return message_id
-
+            self.logger.info(
+                "Published insight request event for user %s, upload %s, message ID: %s",
+                user_id, upload_id, message_id)
         except Exception as e:
-            self.logger.error("Failed to publish insight request event: %s", e)
+            self.logger.exception("Failed to publish insight request event: %s", e)
             raise
+        else:
+            return message_id
 
     def close(self) -> None:
         """Close publisher client."""
@@ -174,7 +167,7 @@ class HealthDataPublisher:
             self.publisher.close()
 
 
-# Global publisher instance
+# Global singleton instance
 _publisher: HealthDataPublisher | None = None
 
 

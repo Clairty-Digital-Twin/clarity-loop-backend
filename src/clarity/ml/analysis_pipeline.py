@@ -15,6 +15,7 @@ from clarity.ml.pat_service import ActigraphyInput, get_pat_service
 from clarity.ml.preprocessing import HealthDataPreprocessor
 from clarity.ml.processors.cardio_processor import CardioProcessor
 from clarity.ml.processors.respiration_processor import RespirationProcessor
+from clarity.ml.processors.activity_processor import ActivityProcessor
 from clarity.models.health_data import (
     ActivityData,
     BiometricData,
@@ -36,6 +37,7 @@ class AnalysisResults:
     def __init__(self) -> None:
         self.cardio_features: list[float] = []
         self.respiratory_features: list[float] = []
+        self.activity_features: list[dict[str, Any]] = []  # 🔥 ADDED: Basic activity features
         self.activity_embedding: list[float] = []
         self.fused_vector: list[float] = []
         self.summary_stats: dict[str, Any] = {}
@@ -59,6 +61,7 @@ class HealthAnalysisPipeline:
         self.preprocessor = HealthDataPreprocessor()
         self.cardio_processor = CardioProcessor()
         self.respiratory_processor = RespirationProcessor()
+        self.activity_processor = ActivityProcessor()  # 🔥 ADDED: Activity processor for basic metrics
 
         # Initialize services
         self.fusion_service = get_fusion_service()
@@ -109,9 +112,15 @@ class HealthAnalysisPipeline:
                 results.respiratory_features = respiratory_features
                 modality_features["respiratory"] = respiratory_features
 
-            # Process activity data with PAT model
+            # Process activity data with both basic processor and PAT model
             if organized_data.get("activity"):
-                self.logger.info("Processing activity data with PAT model...")
+                self.logger.info("Processing activity data...")
+                
+                # 🔥 ADDED: Extract basic activity features first
+                activity_features = self.activity_processor.process(organized_data["activity"])
+                results.activity_features = activity_features
+                
+                # Then process with PAT model for advanced analysis
                 activity_embedding = await self._process_activity_data(
                     user_id, organized_data["activity"]
                 )
@@ -129,7 +138,7 @@ class HealthAnalysisPipeline:
 
             # Step 4: Generate summary statistics
             results.summary_stats = self._generate_summary_stats(
-                organized_data, modality_features
+                organized_data, modality_features, results.activity_features  # 🔥 Pass activity features
             )
 
             # Step 5: Add processing metadata
@@ -366,6 +375,7 @@ class HealthAnalysisPipeline:
         self,
         organized_data: dict[str, list[HealthMetric]],
         modality_features: dict[str, list[float]],
+        activity_features: list[dict[str, Any]] | None = None,  # 🔥 ADDED: Activity features parameter
     ) -> dict[str, Any]:
         """Generate summary statistics for the analysis."""
         summary = {"data_coverage": {}, "feature_summary": {}, "health_indicators": {}}
@@ -412,6 +422,29 @@ class HealthAnalysisPipeline:
                 "respiratory_stability": resp[6],
                 "oxygenation_efficiency": resp[7],
             }
+
+        # 🔥 ADDED: Activity health indicators from basic features
+        if activity_features:
+            activity_health = {}
+            
+            for feature in activity_features:
+                if feature["feature_name"] == "total_steps":
+                    activity_health["total_steps"] = feature["value"]
+                elif feature["feature_name"] == "average_daily_steps":
+                    activity_health["avg_daily_steps"] = round(feature["value"])
+                elif feature["feature_name"] == "total_distance":
+                    activity_health["total_distance_km"] = round(feature["value"], 1)
+                elif feature["feature_name"] == "total_active_energy":
+                    activity_health["total_calories"] = round(feature["value"])
+                elif feature["feature_name"] == "total_exercise_minutes":
+                    activity_health["total_exercise_minutes"] = round(feature["value"])
+                elif feature["feature_name"] == "activity_consistency_score":
+                    activity_health["consistency_score"] = round(feature["value"], 2)
+                elif feature["feature_name"] == "latest_vo2_max":
+                    activity_health["cardio_fitness_vo2_max"] = round(feature["value"], 1)
+            
+            if activity_health:
+                summary["health_indicators"]["activity_health"] = activity_health
 
         return summary
 
@@ -468,6 +501,7 @@ async def run_analysis_pipeline(
             "user_id": user_id,
             "cardio_features": results.cardio_features,
             "respiratory_features": results.respiratory_features,
+            "activity_features": results.activity_features,  # 🔥 ADDED: Basic activity features
             "activity_embedding": results.activity_embedding,
             "fused_vector": results.fused_vector,
             "summary_stats": results.summary_stats,

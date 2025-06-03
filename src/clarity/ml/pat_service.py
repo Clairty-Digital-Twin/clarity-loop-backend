@@ -178,11 +178,104 @@ class PATModelService(IMLModelService):
 
             # Load pre-trained weights
             if self.model_path and Path(self.model_path).exists():
-                # In a real implementation, you would load the actual PAT weights
-                # For now, we'll use a placeholder that initializes the model
-                logger.info("Loading pre-trained PAT weights...")
-
-                # TODO: Load actual weights in production
+                logger.info("Loading pre-trained PAT weights from %s", self.model_path)
+                
+                try:
+                    # Import h5py for reading TensorFlow/Keras weights
+                    import h5py  # type: ignore[import-untyped]
+                    
+                    # Load weights from H5 file (TensorFlow/Keras format)
+                    with h5py.File(self.model_path, 'r') as h5_file:
+                        logger.info("Available weight groups: %s", list(h5_file.keys()))
+                        
+                        # Map TensorFlow layers to PyTorch parameters
+                        state_dict = {}
+                        
+                        # Map input projection layer
+                        if 'inputs' in h5_file:
+                            inputs_group = h5_file['inputs']
+                            if 'kernel:0' in inputs_group:  # type: ignore[operator]
+                                tf_weight = inputs_group['kernel:0'][:]  # type: ignore[index]
+                                # Transpose for PyTorch (TF uses different weight ordering)
+                                state_dict['input_projection.weight'] = torch.from_numpy(tf_weight.T)  # type: ignore[attr-defined]
+                                
+                            if 'bias:0' in inputs_group:  # type: ignore[operator]
+                                tf_bias = inputs_group['bias:0'][:]  # type: ignore[index]
+                                state_dict['input_projection.bias'] = torch.from_numpy(tf_bias)
+                        
+                        # Map transformer layers
+                        for layer_idx in range(6):  # num_layers = 6
+                            layer_name = f'encoder_layer_{layer_idx + 1}_transformer'
+                            if layer_name in h5_file:
+                                layer_group = h5_file[layer_name]
+                                
+                                # Map attention weights
+                                for param_name in ['query', 'key', 'value', 'dense']:
+                                    weight_key = f'{param_name}/kernel:0'
+                                    bias_key = f'{param_name}/bias:0'
+                                    
+                                    if weight_key in layer_group:  # type: ignore[operator]
+                                        tf_weight = layer_group[weight_key][:]  # type: ignore[index]
+                                        torch_name = f'transformer.layers.{layer_idx}.self_attn.{param_name}.weight'
+                                        state_dict[torch_name] = torch.from_numpy(tf_weight.T)  # type: ignore[attr-defined]
+                                    
+                                    if bias_key in layer_group:  # type: ignore[operator]
+                                        tf_bias = layer_group[bias_key][:]  # type: ignore[index]
+                                        torch_name = f'transformer.layers.{layer_idx}.self_attn.{param_name}.bias'
+                                        state_dict[torch_name] = torch.from_numpy(tf_bias)
+                        
+                        # Map output heads
+                        if 'dense' in h5_file:
+                            dense_group = h5_file['dense']
+                            
+                            # Sleep stage head
+                            if 'kernel:0' in dense_group:  # type: ignore[operator]
+                                tf_weight = dense_group['kernel:0'][:]  # type: ignore[index]
+                                state_dict['sleep_stage_head.weight'] = torch.from_numpy(tf_weight.T)  # type: ignore[attr-defined]
+                            if 'bias:0' in dense_group:  # type: ignore[operator]
+                                tf_bias = dense_group['bias:0'][:]  # type: ignore[index]
+                                state_dict['sleep_stage_head.bias'] = torch.from_numpy(tf_bias)
+                        
+                        # Load compatible weights into model
+                        model_state_dict = self.model.state_dict()
+                        compatible_weights = {}
+                        
+                        for name, param in state_dict.items():
+                            if name in model_state_dict:
+                                if param.shape == model_state_dict[name].shape:
+                                    compatible_weights[name] = param
+                                    logger.debug("Loaded weight: %s %s", name, param.shape)
+                                else:
+                                    logger.warning(
+                                        "Shape mismatch for %s: expected %s, got %s", 
+                                        name, model_state_dict[name].shape, param.shape
+                                    )
+                            else:
+                                logger.debug("Skipping unknown parameter: %s", name)
+                        
+                        if compatible_weights:
+                            # Load compatible weights
+                            self.model.load_state_dict(compatible_weights, strict=False)
+                            logger.info(
+                                "Loaded %d/%d compatible weight tensors from %s",
+                                len(compatible_weights), 
+                                len(model_state_dict),
+                                self.model_path
+                            )
+                        else:
+                            logger.warning(
+                                "No compatible weights found in %s, using random initialization",
+                                self.model_path
+                            )
+                            
+                except ImportError:
+                    logger.error("h5py not available, cannot load .h5 weights")
+                    logger.warning("Using random initialization for PAT model")
+                except Exception as e:
+                    logger.warning(
+                        "Failed to load weights from %s: %s. Using random initialization.",
+                        self.model_path, e
+                    )
 
             else:
                 logger.warning(

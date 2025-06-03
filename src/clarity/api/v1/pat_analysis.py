@@ -14,12 +14,11 @@ from datetime import UTC, datetime
 import logging
 from typing import Any
 import uuid
-from uuid import UUID
-
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
 from pydantic import BaseModel, Field, validator
 
 from clarity.auth.firebase_auth import get_current_user
+from clarity.auth import UserContext, require_auth
 from clarity.ml.inference_engine import AsyncInferenceEngine, get_inference_engine
 from clarity.ml.pat_service import ActigraphyAnalysis, ActigraphyInput
 from clarity.ml.preprocessing import ActigraphyDataPoint
@@ -27,11 +26,6 @@ from clarity.ml.proxy_actigraphy import (
     StepCountData,
     create_proxy_actigraphy_transformer,
 )
-from clarity.api.v1.utils import require_auth
-from clarity.api.v1.models import PATAnalysisResponse
-from clarity.api.v1.exceptions import NotFoundProblem, InternalServerProblem
-from clarity.api.v1.repositories import IHealthDataRepository
-from clarity.api.v1.models import UserContext
 
 logger = logging.getLogger(__name__)
 
@@ -374,11 +368,24 @@ async def get_pat_analysis(processing_id: str) -> PATAnalysisResponse:
         )
 
 
+# 🔥 FIXED: Response model for PAT analysis results
+class PATAnalysisResponse(BaseModel):
+    """Response model for PAT analysis results."""
+    
+    processing_id: str = Field(description="Processing ID for the analysis")
+    status: str = Field(description="Status: completed, processing, failed, not_found")
+    message: str | None = Field(None, description="Status message")
+    analysis_date: str | None = Field(None, description="When analysis was completed")
+    pat_features: dict[str, float] | None = Field(None, description="PAT model features")
+    activity_embedding: list[float] | None = Field(None, description="Activity embedding vector")
+    metadata: dict[str, Any] | None = Field(None, description="Additional metadata")
+
+
 def _get_analysis_repository():
     """Get analysis repository for retrieving stored results."""
     # TODO: Replace with proper dependency injection
-    from clarity.storage.firestore_repository import FirestoreAnalysisRepository
-    return FirestoreAnalysisRepository()
+    from clarity.storage.firestore_client import FirestoreClient
+    return FirestoreClient()
 
 
 @router.get(

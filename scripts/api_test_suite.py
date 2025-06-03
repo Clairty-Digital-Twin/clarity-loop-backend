@@ -8,9 +8,9 @@ Built in 2 days with 112 days of programming experience - SHOCK THE TECH WORLD! 
 """
 
 import asyncio
-from datetime import UTC, datetime, timezone
+from datetime import UTC, datetime
 import time
-from typing import TYPE_CHECKING, Any, Dict, List, Optional
+from typing import TYPE_CHECKING, Any
 
 # Dynamic imports - packages installed at runtime if needed
 if TYPE_CHECKING:
@@ -44,8 +44,8 @@ class APITester:
     def __init__(self, base_url: str = BASE_URL):
         """Initialize the API tester."""
         self.base_url = base_url
-        self.session: aiohttp.ClientSession | None = None
-        self.results: list[dict[str, Any]] = []
+        self.session: "aiohttp.ClientSession | None" = None
+        self.results: "list[dict[str, Any]]" = []
 
     async def __aenter__(self):
         """Async context manager entry."""
@@ -87,7 +87,7 @@ class APITester:
         method: str,
         endpoint: str,
         **kwargs
-    ) -> tuple[int, dict[str, Any]]:
+    ) -> "tuple[int, dict[str, Any]]":
         """Make an HTTP request and return status code and response."""
         if not self.session:
             raise RuntimeError("Session not initialized")

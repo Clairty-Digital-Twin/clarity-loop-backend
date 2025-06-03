@@ -146,7 +146,9 @@ class TestHealthDataUploadEndpoint(BaseServiceTestCase):
         """Test upload with general service error."""
         # Arrange
         self.mock_service.should_fail = True
-        self.mock_service.fail_with = HealthDataServiceError("Database connection failed")
+        self.mock_service.fail_with = HealthDataServiceError(
+            "Database connection failed"
+        )
         mock_get_service.return_value = self.mock_service
 
         request = MockRequest(user_id=str(uuid4()))
@@ -209,9 +211,7 @@ class TestHealthDataMetricsEndpoint(BaseServiceTestCase):
         self.mock_service = MockHealthDataService()
 
     @patch("clarity.api.v1.health_data.get_health_data_service")
-    async def test_get_metrics_missing_user_id(
-        self, mock_get_service: Mock
-    ) -> None:
+    async def test_get_metrics_missing_user_id(self, mock_get_service: Mock) -> None:
         """Test metrics with missing user ID."""
         # Arrange
         mock_get_service.return_value = self.mock_service
@@ -222,9 +222,7 @@ class TestHealthDataMetricsEndpoint(BaseServiceTestCase):
             await health_data_router.get_user_metrics(request)
 
     @patch("clarity.api.v1.health_data.get_health_data_service")
-    async def test_get_metrics_service_error(
-        self, mock_get_service: Mock
-    ) -> None:
+    async def test_get_metrics_service_error(self, mock_get_service: Mock) -> None:
         """Test metrics with service error."""
         # Arrange
         self.mock_service.should_fail = True
@@ -238,9 +236,7 @@ class TestHealthDataMetricsEndpoint(BaseServiceTestCase):
             await health_data_router.get_user_metrics(request)
 
     @patch("clarity.api.v1.health_data.get_health_data_service")
-    async def test_get_metrics_with_date_filters(
-        self, mock_get_service: Mock
-    ) -> None:
+    async def test_get_metrics_with_date_filters(self, mock_get_service: Mock) -> None:
         """Test metrics with date filters."""
         # Arrange
         mock_get_service.return_value = self.mock_service
@@ -259,9 +255,7 @@ class TestHealthDataMetricsEndpoint(BaseServiceTestCase):
         assert result["period"]["end"] == end_date
 
     @patch("clarity.api.v1.health_data.get_health_data_service")
-    async def test_get_metrics_invalid_date_range(
-        self, mock_get_service: Mock
-    ) -> None:
+    async def test_get_metrics_invalid_date_range(self, mock_get_service: Mock) -> None:
         """Test metrics with invalid date range."""
         # Arrange
         mock_get_service.return_value = self.mock_service
@@ -300,9 +294,7 @@ class TestHealthDataQueryEndpoint(BaseServiceTestCase):
             await health_data_router.query_health_data(request)
 
     @patch("clarity.api.v1.health_data.get_health_data_service")
-    async def test_query_health_data_with_filters(
-        self, mock_get_service: Mock
-    ) -> None:
+    async def test_query_health_data_with_filters(self, mock_get_service: Mock) -> None:
         """Test query with various filters."""
         # Arrange
         self.mock_service.query_result = {"data": [], "total": 0}
@@ -334,9 +326,7 @@ class TestHealthDataErrorHandling(BaseServiceTestCase):
         self.mock_service = MockHealthDataService()
 
     @patch("clarity.api.v1.health_data.get_health_data_service")
-    async def test_empty_upload_data(
-        self, mock_get_service: Mock
-    ) -> None:
+    async def test_empty_upload_data(self, mock_get_service: Mock) -> None:
         """Test upload with empty data."""
         # Arrange
         mock_get_service.return_value = self.mock_service
@@ -350,9 +340,7 @@ class TestHealthDataErrorHandling(BaseServiceTestCase):
             await health_data_router.upload_health_data(request, upload_data)
 
     @patch("clarity.api.v1.health_data.get_health_data_service")
-    async def test_invalid_source_format(
-        self, mock_get_service: Mock
-    ) -> None:
+    async def test_invalid_source_format(self, mock_get_service: Mock) -> None:
         """Test upload with invalid source format."""
         # Arrange
         mock_get_service.return_value = self.mock_service

@@ -7,6 +7,7 @@ A digital twin platform for psychiatric care that processes Apple HealthKit data
 CLARITY integrates real health data processing with advanced AI models to provide clinical insights for psychiatric care. The platform uses the Pretrained Actigraphy Transformer (PAT) for sleep analysis and Google Gemini for generating natural language health insights.
 
 **Core Components:**
+
 - FastAPI backend with async processing
 - PyTorch ML inference pipeline
 - Google Cloud infrastructure
@@ -27,10 +28,10 @@ cd clarity-loop-backend
 
 | Service | URL | Purpose |
 |---------|-----|---------|
-| API Backend | http://localhost:8080 | Main FastAPI application |
-| API Documentation | http://localhost:8080/docs | Interactive OpenAPI explorer |
-| Grafana | http://localhost:3000 | Monitoring dashboards (admin/admin) |
-| Prometheus | http://localhost:9090 | Metrics collection |
+| API Backend | <http://localhost:8080> | Main FastAPI application |
+| API Documentation | <http://localhost:8080/docs> | Interactive OpenAPI explorer |
+| Grafana | <http://localhost:3000> | Monitoring dashboards (admin/admin) |
+| Prometheus | <http://localhost:9090> | Metrics collection |
 
 ### Test the API Endpoints
 
@@ -86,15 +87,18 @@ curl -X POST http://localhost:8080/api/v1/pat/analyze-step-data \
 ## Key Features
 
 **AI Models**
+
 - **PAT**: Pretrained Actigraphy Transformer from Jacobson Lab (Dartmouth) for sleep analysis
 - **Gemini**: Google's language model for generating health insights from data
 
 **Health Data Processing**
+
 - Apple HealthKit integration for biometric data (heart rate, HRV, steps, sleep)
 - Proxy actigraphy conversion (converts step data into sleep analysis)
 - HIPAA-compliant storage and processing
 
 **Production Features**
+
 - Async FastAPI with comprehensive error handling
 - Firebase authentication with role-based permissions
 - Monitoring with Prometheus and Grafana
@@ -130,6 +134,6 @@ This validates all endpoints and verifies the platform functionality.
 
 This platform leverages the Pretrained Actigraphy Transformer (PAT) open-source foundation model:
 
-**Paper:** Ruan, F.Y., Zhang, A., Oh, J., Jin, S., & Jacobson, N.C. (2024). "AI Foundation Models for Wearable Movement Data in Mental Health Research." *arXiv:2411.15240*. https://doi.org/10.48550/arXiv.2411.15240
+**Paper:** Ruan, F.Y., Zhang, A., Oh, J., Jin, S., & Jacobson, N.C. (2024). "AI Foundation Models for Wearable Movement Data in Mental Health Research." *arXiv:2411.15240*. <https://doi.org/10.48550/arXiv.2411.15240>
 
-**Repository:** https://github.com/njacobsonlab/Pretrained-Actigraphy-Transformer (CC-BY-4.0 License)
+**Repository:** <https://github.com/njacobsonlab/Pretrained-Actigraphy-Transformer> (CC-BY-4.0 License)

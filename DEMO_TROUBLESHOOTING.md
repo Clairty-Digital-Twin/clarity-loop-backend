@@ -5,9 +5,11 @@
 If the `quick_demo.sh` script fails, here are the most common issues and solutions:
 
 ### 1. Script Exits Immediately with Error
+
 **Problem**: The script uses strict error handling and exits on any failure.
 
-**Solution**: 
+**Solution**:
+
 ```bash
 # Check if Docker is running
 docker version
@@ -25,18 +27,21 @@ bash quick_demo.sh
 ### 2. Missing Prerequisites
 
 **Docker not installed:**
+
 ```bash
 # Install Docker Desktop
 # Visit: https://docs.docker.com/get-docker/
 ```
 
 **Docker not running:**
+
 ```bash
 # Start Docker Desktop or
 sudo service docker start
 ```
 
 **Port conflicts:**
+
 ```bash
 # Find what's using the ports
 lsof -ti:8000 | xargs kill -9  # Kill process on port 8000
@@ -46,6 +51,7 @@ lsof -ti:3000 | xargs kill -9  # Kill process on port 3000
 ### 3. Environment File Issues
 
 **Missing .env file:**
+
 ```bash
 # Copy the example file
 cp .env.example .env
@@ -64,6 +70,7 @@ EOF
 ### 4. Docker Compose Version Issues
 
 **Using older Docker Compose:**
+
 ```bash
 # Check version
 docker-compose version
@@ -87,6 +94,7 @@ sudo usermod -aG docker $USER
 ### 6. Network Issues
 
 **Services not responding:**
+
 ```bash
 # Check Docker networks
 docker network ls
@@ -122,15 +130,16 @@ docker-compose ps
 
 Once running, test these URLs:
 
-- ✅ **Main API**: http://localhost:8000
-- ✅ **API Docs**: http://localhost:8000/docs  
-- ✅ **Health Check**: http://localhost:8000/health
-- ✅ **Grafana**: http://localhost:3000 (admin/admin)
-- ✅ **Prometheus**: http://localhost:9090
+- ✅ **Main API**: <http://localhost:8000>
+- ✅ **API Docs**: <http://localhost:8000/docs>  
+- ✅ **Health Check**: <http://localhost:8000/health>
+- ✅ **Grafana**: <http://localhost:3000> (admin/admin)
+- ✅ **Prometheus**: <http://localhost:9090>
 
 ### 9. Getting Help
 
 **Check logs:**
+
 ```bash
 # All services
 docker-compose logs
@@ -143,6 +152,7 @@ docker-compose logs -f
 ```
 
 **Clean slate restart:**
+
 ```bash
 # Nuclear option - completely reset
 docker-compose down --volumes --remove-orphans
@@ -153,14 +163,17 @@ bash quick_demo.sh
 ### 10. Platform-Specific Issues
 
 **macOS:**
+
 - Ensure Docker Desktop is running
 - Check if ports are blocked by firewall
 
 **Linux:**
+
 - User permissions for Docker
 - Firewall/iptables blocking ports
 
 **Windows:**
+
 - WSL2 backend enabled in Docker Desktop
 - Windows Defender allowing Docker
 - Hyper-V enabled

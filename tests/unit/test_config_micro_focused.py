@@ -85,7 +85,15 @@ class TestEnvironmentVariables:
         assert config.log_level == "ERROR"
 
     @staticmethod
-    @patch.dict(os.environ, {"ENVIRONMENT": "production", "SKIP_EXTERNAL_SERVICES": "true", "ENABLE_AUTH": "false"}, clear=False)
+    @patch.dict(
+        os.environ,
+        {
+            "ENVIRONMENT": "production",
+            "SKIP_EXTERNAL_SERVICES": "true",
+            "ENABLE_AUTH": "false",
+        },
+        clear=False,
+    )
     def test_environment_from_env() -> None:
         """Test setting environment from environment variable."""
         # Act
@@ -94,8 +102,9 @@ class TestEnvironmentVariables:
         # Assert
         assert config.environment == "production"
 
+    @staticmethod
     @patch.dict(os.environ, {"DEBUG": "true"}, clear=False)
-    def test_debug_flag_from_env(self) -> None:
+    def test_debug_flag_from_env() -> None:
         """Test setting debug flag from environment variable."""
         # Act
         config = Settings()
@@ -103,8 +112,9 @@ class TestEnvironmentVariables:
         # Assert
         assert config.debug is True
 
+    @staticmethod
     @patch.dict(os.environ, {"DEBUG": "false"}, clear=False)
-    def test_debug_flag_false_from_env(self) -> None:
+    def test_debug_flag_false_from_env() -> None:
         """Test setting debug flag to false from environment variable."""
         # Act
         config = Settings()

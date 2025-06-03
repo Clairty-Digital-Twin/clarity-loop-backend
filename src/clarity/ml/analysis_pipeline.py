@@ -439,23 +439,23 @@ class HealthAnalysisPipeline:
         | None = None,  # 🔥 ADDED: Activity features parameter
     ) -> dict[str, Any]:
         """Generate summary statistics for the analysis."""
-        summary = {
+        return {
             "data_coverage": self._generate_data_coverage(organized_data),
             "feature_summary": self._generate_feature_summary(modality_features),
             "health_indicators": self._generate_health_indicators(
                 modality_features, activity_features
             ),
         }
-        return summary
 
+    @staticmethod
     def _generate_data_coverage(
-        self, organized_data: dict[str, list[HealthMetric]]
+        organized_data: dict[str, list[HealthMetric]]
     ) -> dict[str, Any]:
         """Generate data coverage statistics."""
         data_coverage = {}
         for modality, metrics in organized_data.items():
             if metrics:
-                time_span = self._calculate_time_span(metrics)
+                time_span = HealthAnalysisPipeline._calculate_time_span(metrics)
                 data_coverage[modality] = {
                     "metric_count": len(metrics),
                     "time_span_hours": time_span,
@@ -463,8 +463,9 @@ class HealthAnalysisPipeline:
                 }
         return data_coverage
 
+    @staticmethod
     def _generate_feature_summary(
-        self, modality_features: dict[str, list[float]]
+        modality_features: dict[str, list[float]]
     ) -> dict[str, Any]:
         """Generate feature summary statistics."""
         feature_summary = {}
@@ -504,8 +505,9 @@ class HealthAnalysisPipeline:
 
         return health_indicators
 
+    @staticmethod
     def _extract_cardio_health_indicators(
-        self, modality_features: dict[str, list[float]]
+        modality_features: dict[str, list[float]]
     ) -> dict[str, Any] | None:
         """Extract cardiovascular health indicators."""
         if (
@@ -522,8 +524,9 @@ class HealthAnalysisPipeline:
             "circadian_rhythm": cardio[7],
         }
 
+    @staticmethod
     def _extract_respiratory_health_indicators(
-        self, modality_features: dict[str, list[float]]
+        modality_features: dict[str, list[float]]
     ) -> dict[str, Any] | None:
         """Extract respiratory health indicators."""
         if (
@@ -540,25 +543,15 @@ class HealthAnalysisPipeline:
             "oxygenation_efficiency": resp[7],
         }
 
+    @staticmethod
     def _extract_activity_health_indicators(
-        self, activity_features: list[dict[str, Any]] | None
+        activity_features: list[dict[str, Any]] | None
     ) -> dict[str, Any] | None:
         """Extract activity health indicators from basic features."""
         if not activity_features:
             return None
 
         activity_health = {}
-
-        # Create a mapping of feature names to extraction logic
-        feature_extractors = {
-            "total_steps": lambda value: value,
-            "average_daily_steps": lambda value: round(value),
-            "total_distance": lambda value: round(value, 1),
-            "total_active_energy": lambda value: round(value),
-            "total_exercise_minutes": lambda value: round(value),
-            "activity_consistency_score": lambda value: round(value, 2),
-            "latest_vo2_max": lambda value: round(value, 1),
-        }
 
         # Map display names for cleaner output
         display_names = {
@@ -573,10 +566,25 @@ class HealthAnalysisPipeline:
 
         for feature in activity_features:
             feature_name = feature["feature_name"]
-            if feature_name in feature_extractors:
-                extractor = feature_extractors[feature_name]
+            if feature_name in display_names:
+                value = feature["value"]
                 display_name = display_names[feature_name]
-                activity_health[display_name] = extractor(feature["value"])
+                
+                # Apply appropriate rounding based on feature type
+                if feature_name == "total_steps":
+                    activity_health[display_name] = value
+                elif feature_name == "average_daily_steps":
+                    activity_health[display_name] = round(value)
+                elif feature_name == "total_distance":
+                    activity_health[display_name] = round(value, 1)
+                elif feature_name == "total_active_energy":
+                    activity_health[display_name] = round(value)
+                elif feature_name == "total_exercise_minutes":
+                    activity_health[display_name] = round(value)
+                elif feature_name == "activity_consistency_score":
+                    activity_health[display_name] = round(value, 2)
+                elif feature_name == "latest_vo2_max":
+                    activity_health[display_name] = round(value, 1)
 
         return activity_health or None
 

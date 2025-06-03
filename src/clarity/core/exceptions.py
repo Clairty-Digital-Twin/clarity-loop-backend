@@ -60,6 +60,17 @@ class InvalidNHANESStatsError(DataValidationError):
     """Raised when NHANES statistics data is invalid or malformed."""
 
 
+class ProcessingError(DataValidationError):
+    """Raised when data processing operations fail."""
+
+
+class IntegrationError(ClarityBaseError):
+    """Raised when external integration operations fail."""
+
+    def __init__(self, message: str, **kwargs: dict[str, Any]) -> None:
+        super().__init__(message, error_code="INTEGRATION_ERROR", **kwargs)
+
+
 class DataLengthMismatchError(DataValidationError):
     """Raised when related data arrays have mismatched lengths."""
 

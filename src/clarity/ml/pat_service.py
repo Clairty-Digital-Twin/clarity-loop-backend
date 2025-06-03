@@ -420,49 +420,7 @@ class PATModelService(IMLModelService):
             )
 
             # Load pre-trained encoder weights if available
-            if self.model_path and Path(self.model_path).exists():
-                logger.info("Loading pre-trained PAT weights from %s", self.model_path)
-
-                if not _has_h5py:
-                    logger.error("h5py not available, cannot load .h5 weights")
-                    logger.warning("Using random initialization for PAT model")
-                else:
-                    try:
-                        # Load and convert TensorFlow weights to PyTorch
-                        state_dict = self._load_tensorflow_weights(self.model_path)
-
-                        if state_dict:
-                            # Load the converted weights (only encoder, classifier head stays random)
-                            missing_keys, unexpected_keys = self.model.load_state_dict(
-                                state_dict, strict=False
-                            )
-
-                            if missing_keys:
-                                logger.info("Missing keys (expected for classifier head): %d", len(missing_keys))
-                            if unexpected_keys:
-                                logger.warning("Unexpected keys: %s", unexpected_keys)
-
-                            logger.info(
-                                "Successfully loaded %d weight tensors from %s",
-                                len(state_dict),
-                                self.model_path,
-                            )
-                        else:
-                            logger.warning(
-                                "No compatible weights found in %s, using random initialization",
-                                self.model_path,
-                            )
-                    except (OSError, KeyError, ValueError) as e:
-                        logger.warning(
-                            "Failed to load weights from %s: %s. Using random initialization.",
-                            self.model_path,
-                            e,
-                        )
-            else:
-                logger.warning(
-                    "Model weights not found at %s, using random initialization",
-                    self.model_path,
-                )
+            self._load_pretrained_weights()
 
             # Move model to device and set to eval mode
             self.model.to(self.device)
@@ -474,6 +432,54 @@ class PATModelService(IMLModelService):
         except Exception:
             logger.exception("Failed to load PAT model")
             raise
+
+    def _load_pretrained_weights(self) -> None:
+        """Load pre-trained weights if available."""
+        if not (self.model_path and Path(self.model_path).exists()):
+            logger.warning(
+                "Model weights not found at %s, using random initialization",
+                self.model_path,
+            )
+            return
+
+        logger.info("Loading pre-trained PAT weights from %s", self.model_path)
+
+        if not _has_h5py:
+            logger.error("h5py not available, cannot load .h5 weights")
+            logger.warning("Using random initialization for PAT model")
+            return
+
+        try:
+            # Load and convert TensorFlow weights to PyTorch
+            state_dict = self._load_tensorflow_weights(self.model_path)
+
+            if state_dict:
+                # Load the converted weights (only encoder, classifier head stays random)
+                missing_keys, unexpected_keys = self.model.load_state_dict(  # type: ignore[union-attr]
+                    state_dict, strict=False
+                )
+
+                if missing_keys:
+                    logger.info("Missing keys (expected for classifier head): %d", len(missing_keys))
+                if unexpected_keys:
+                    logger.warning("Unexpected keys: %s", unexpected_keys)
+
+                logger.info(
+                    "Successfully loaded %d weight tensors from %s",
+                    len(state_dict),
+                    self.model_path,
+                )
+            else:
+                logger.warning(
+                    "No compatible weights found in %s, using random initialization",
+                    self.model_path,
+                )
+        except (OSError, KeyError, ValueError) as e:
+            logger.warning(
+                "Failed to load weights from %s: %s. Using random initialization.",
+                self.model_path,
+                e,
+            )
 
     def _load_tensorflow_weights(self, h5_path: str) -> dict[str, torch.Tensor]:
         """Load and convert TensorFlow H5 weights to PyTorch format."""

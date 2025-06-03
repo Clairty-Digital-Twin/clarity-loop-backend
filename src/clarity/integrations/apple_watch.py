@@ -5,10 +5,10 @@ for optimal integration with PAT (Pretrained Actigraphy Transformer) models.
 """
 
 from dataclasses import dataclass
-from datetime import datetime, timedelta
-from enum import Enum, StrEnum
+from datetime import datetime, timedelta, timezone
+from enum import StrEnum
 import operator
-from typing import Any, List, Optional
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -133,7 +133,7 @@ class AppleWatchDataProcessor:
         """
         try:
             # Determine time range
-            end_time = batch.end_time or datetime.now()
+            end_time = batch.end_time or datetime.now(timezone.utc)
             start_time = end_time - timedelta(days=target_duration_days)
 
             # Initialize result
@@ -204,7 +204,6 @@ class AppleWatchDataProcessor:
             return
 
         # Resample to minute-level (1440 points per day)
-        minutes_in_week = 7 * 24 * 60
         minute_timestamps = np.arange(
             start_time.timestamp(),
             end_time.timestamp(),
@@ -218,14 +217,15 @@ class AppleWatchDataProcessor:
             minute_values = f(minute_timestamps)
 
             # Forward fill for small gaps (< 5 minutes)
-            minute_values = pd.Series(minute_values).ffill(limit=5).values
+            minute_values = pd.Series(minute_values).ffill(limit=5).to_numpy()
 
             # Apply Butterworth low-pass filter to remove motion artifacts
             # Cutoff at 0.5 Hz (30 bpm variation)
             if not np.all(np.isnan(minute_values)):
                 b, a = scipy.signal.butter(4, 0.5 / (0.5 * 60), btype='low')
                 valid_mask = ~np.isnan(minute_values)
-                if np.sum(valid_mask) > 12:  # Need at least 12 points for filter
+                min_filter_points = 12
+                if np.sum(valid_mask) > min_filter_points:  # Need at least 12 points for filter
                     minute_values[valid_mask] = scipy.signal.filtfilt(b, a, minute_values[valid_mask])
         else:
             minute_values = np.full(len(minute_timestamps), values[0])
@@ -259,7 +259,8 @@ class AppleWatchDataProcessor:
         values = np.array([s.value for s in samples])  # SDNN in ms
 
         # Remove outliers (5x median filter)
-        if len(values) > 3:
+        min_outlier_points = 3
+        if len(values) > min_outlier_points:
             median_val = np.median(values)
             mask = values < 5 * median_val
             times = times[mask]
@@ -281,7 +282,7 @@ class AppleWatchDataProcessor:
             minute_values = f(minute_timestamps)
 
             # Fill small gaps only
-            minute_values = pd.Series(minute_values).ffill(limit=10).values
+            minute_values = pd.Series(minute_values).ffill(limit=10).to_numpy()
         else:
             minute_values = np.full(len(minute_timestamps), np.nan)
 
@@ -329,7 +330,8 @@ class AppleWatchDataProcessor:
             five_min_values = f(five_min_timestamps)
 
             # Apply 3-point median filter to remove transient spikes
-            if len(five_min_values) > 3:
+            min_median_points = 3
+            if len(five_min_values) > min_median_points:
                 five_min_values = scipy.signal.medfilt(five_min_values, kernel_size=3)
         else:
             five_min_values = np.full(len(five_min_timestamps), values[0])
@@ -390,7 +392,10 @@ class AppleWatchDataProcessor:
         total_steps = np.sum(minute_steps)
         # Calculate days from time range
         days = (result.end_time - result.start_time).days if result.start_time and result.end_time else 7
-        self.logger.info(f"Processed {total_steps:.0f} total steps over {days} days")
+        self.logger.info("Processed steps over period", extra={
+            "total_steps": int(total_steps),
+            "days": days
+        })
 
     async def _process_spo2(
         self,
@@ -414,9 +419,9 @@ class AppleWatchDataProcessor:
         diastolic_values = []
 
         for sample in samples:
-            if hasattr(sample, 'systolic') and hasattr(sample, 'diastolic'):
-                if (self.BP_SYSTOLIC_MIN <= sample.systolic <= self.BP_SYSTOLIC_MAX and
-                    self.BP_DIASTOLIC_MIN <= sample.diastolic <= self.BP_DIASTOLIC_MAX):
+            if (hasattr(sample, 'systolic') and hasattr(sample, 'diastolic') and
+                self.BP_SYSTOLIC_MIN <= sample.systolic <= self.BP_SYSTOLIC_MAX and
+                self.BP_DIASTOLIC_MIN <= sample.diastolic <= self.BP_DIASTOLIC_MAX):
                     systolic_values.append(sample.systolic)
                     diastolic_values.append(sample.diastolic)
 

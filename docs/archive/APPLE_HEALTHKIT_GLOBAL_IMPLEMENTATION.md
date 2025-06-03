@@ -337,7 +337,7 @@ To deploy this solution, we provision the required GCP resources with Terraform 
             # ...
             env = [
               { name = "PROJECT_ID", value = var.project_id },
-              { name = "PAT_MODEL_PATH", value = "/models/PAT-M_29k_weights.h5" }
+              { name = "PAT_MODEL_PATH", value = "/models/pat/PAT-M_29k_weights.h5" }
             ]
             resources {
               limits = { memory = "4Gi", cpu = "2" }

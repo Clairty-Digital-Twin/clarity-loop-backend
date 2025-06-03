@@ -1,0 +1,355 @@
+"""Fake storage implementations for testing.
+
+These fakes provide simple in-memory implementations of storage interfaces,
+following the "Use Fakes Instead of Mocks" best practice from testing literature.
+
+Fakes are preferred over mocks because they:
+1. Test behavior rather than implementation details
+2. Are more resilient to refactoring
+3. Provide deterministic, fast tests
+4. Don't require complex mock setup
+"""
+
+import uuid
+from typing import Any, Dict, List, Optional
+from clarity.ports.storage import StoragePort, CollectionPort
+
+
+class FakeCollection(CollectionPort):
+    """Fake collection implementation for testing.
+    
+    Provides a simple in-memory collection that mimics
+    the behavior of a real document collection.
+    """
+    
+    def __init__(self, data: Dict[str, Dict[str, Any]]) -> None:
+        """Initialize with shared data storage.
+        
+        Args:
+            data: Shared dictionary to store documents
+        """
+        self.data = data
+    
+    def add(self, data: Dict[str, Any]) -> str:
+        """Add a document to the collection.
+        
+        Args:
+            data: Document data
+            
+        Returns:
+            Generated document ID
+        """
+        doc_id = str(uuid.uuid4())
+        self.data[doc_id] = data.copy()
+        return doc_id
+    
+    def document(self, doc_id: str) -> "FakeDocument":
+        """Get a document reference.
+        
+        Args:
+            doc_id: Document ID
+            
+        Returns:
+            Fake document reference
+        """
+        return FakeDocument(self.data, doc_id)
+    
+    def where(self, field: str, operator: str, value: Any) -> "FakeQuery":
+        """Create a query with a filter condition.
+        
+        Args:
+            field: Field name
+            operator: Comparison operator ('==', '>', '<', etc.)
+            value: Value to compare against
+            
+        Returns:
+            Fake query object
+        """
+        return FakeQuery(self.data, [(field, operator, value)])
+
+
+class FakeDocument:
+    """Fake document reference for testing."""
+    
+    def __init__(self, data: Dict[str, Dict[str, Any]], doc_id: str) -> None:
+        """Initialize document reference.
+        
+        Args:
+            data: Shared data storage
+            doc_id: Document ID
+        """
+        self.data = data
+        self.doc_id = doc_id
+    
+    def get(self) -> "FakeDocumentSnapshot":
+        """Get document snapshot.
+        
+        Returns:
+            Fake document snapshot
+        """
+        return FakeDocumentSnapshot(
+            self.data.get(self.doc_id), 
+            self.doc_id,
+            exists=self.doc_id in self.data
+        )
+    
+    def set(self, data: Dict[str, Any]) -> None:
+        """Set document data.
+        
+        Args:
+            data: Document data to set
+        """
+        self.data[self.doc_id] = data.copy()
+    
+    def update(self, data: Dict[str, Any]) -> None:
+        """Update document data.
+        
+        Args:
+            data: Fields to update
+        """
+        if self.doc_id in self.data:
+            self.data[self.doc_id].update(data)
+    
+    def delete(self) -> None:
+        """Delete the document."""
+        if self.doc_id in self.data:
+            del self.data[self.doc_id]
+
+
+class FakeDocumentSnapshot:
+    """Fake document snapshot for testing."""
+    
+    def __init__(self, data: Optional[Dict[str, Any]], doc_id: str, exists: bool) -> None:
+        """Initialize document snapshot.
+        
+        Args:
+            data: Document data
+            doc_id: Document ID
+            exists: Whether document exists
+        """
+        self._data = data or {}
+        self.id = doc_id
+        self.exists = exists
+    
+    def to_dict(self) -> Dict[str, Any]:
+        """Get document data as dictionary.
+        
+        Returns:
+            Document data
+        """
+        return self._data.copy()
+
+
+class FakeQuery:
+    """Fake query for testing."""
+    
+    def __init__(self, data: Dict[str, Dict[str, Any]], filters: List[tuple]) -> None:
+        """Initialize query.
+        
+        Args:
+            data: Data to query
+            filters: List of filter conditions
+        """
+        self.data = data
+        self.filters = filters
+        self._limit = None
+    
+    def limit(self, count: int) -> "FakeQuery":
+        """Add limit to query.
+        
+        Args:
+            count: Maximum number of results
+            
+        Returns:
+            Self for chaining
+        """
+        self._limit = count
+        return self
+    
+    def get(self) -> List[FakeDocumentSnapshot]:
+        """Execute query and get results.
+        
+        Returns:
+            List of document snapshots matching the query
+        """
+        results = []
+        
+        for doc_id, doc_data in self.data.items():
+            if self._matches_filters(doc_data):
+                results.append(FakeDocumentSnapshot(doc_data, doc_id, True))
+        
+        if self._limit:
+            results = results[:self._limit]
+        
+        return results
+    
+    def _matches_filters(self, doc_data: Dict[str, Any]) -> bool:
+        """Check if document matches all filters.
+        
+        Args:
+            doc_data: Document data to check
+            
+        Returns:
+            True if document matches all filters
+        """
+        for field, operator, value in self.filters:
+            if field not in doc_data:
+                return False
+            
+            doc_value = doc_data[field]
+            
+            if operator == "==":
+                if doc_value != value:
+                    return False
+            elif operator == ">":
+                if not (doc_value > value):
+                    return False
+            elif operator == "<":
+                if not (doc_value < value):
+                    return False
+            elif operator == ">=":
+                if not (doc_value >= value):
+                    return False
+            elif operator == "<=":
+                if not (doc_value <= value):
+                    return False
+            elif operator == "!=":
+                if not (doc_value != value):
+                    return False
+            # Add more operators as needed
+        
+        return True
+
+
+class FakeStorage(StoragePort):
+    """Fake storage implementation for testing.
+    
+    Provides a simple in-memory storage that implements the StoragePort
+    interface. This allows tests to run quickly and deterministically
+    without requiring external storage systems.
+    
+    Example:
+        storage = FakeStorage()
+        collection = storage.get_collection("users")
+        doc_id = collection.add({"name": "John", "age": 30})
+    """
+    
+    def __init__(self) -> None:
+        """Initialize with empty storage."""
+        self.collections: Dict[str, Dict[str, Dict[str, Any]]] = {}
+    
+    def get_collection(self, name: str) -> FakeCollection:
+        """Get a collection reference by name.
+        
+        Args:
+            name: Collection name
+            
+        Returns:
+            Fake collection reference
+        """
+        if name not in self.collections:
+            self.collections[name] = {}
+        return FakeCollection(self.collections[name])
+    
+    def create_document(self, collection: str, data: Dict[str, Any]) -> str:
+        """Create a new document in the specified collection.
+        
+        Args:
+            collection: Collection name
+            data: Document data
+            
+        Returns:
+            Generated document ID
+        """
+        coll = self.get_collection(collection)
+        return coll.add(data)
+    
+    def get_document(self, collection: str, doc_id: str) -> Optional[Dict[str, Any]]:
+        """Retrieve a document by ID.
+        
+        Args:
+            collection: Collection name
+            doc_id: Document ID
+            
+        Returns:
+            Document data if found, None otherwise
+        """
+        if collection not in self.collections:
+            return None
+        
+        if doc_id not in self.collections[collection]:
+            return None
+        
+        return self.collections[collection][doc_id].copy()
+    
+    def update_document(self, collection: str, doc_id: str, data: Dict[str, Any]) -> None:
+        """Update an existing document.
+        
+        Args:
+            collection: Collection name
+            doc_id: Document ID
+            data: Updated document data
+        """
+        if collection not in self.collections:
+            self.collections[collection] = {}
+        
+        if doc_id in self.collections[collection]:
+            self.collections[collection][doc_id].update(data)
+    
+    def delete_document(self, collection: str, doc_id: str) -> None:
+        """Delete a document by ID.
+        
+        Args:
+            collection: Collection name
+            doc_id: Document ID
+        """
+        if collection in self.collections and doc_id in self.collections[collection]:
+            del self.collections[collection][doc_id]
+    
+    def query_documents(
+        self, 
+        collection: str, 
+        filters: Optional[List[Dict[str, Any]]] = None,
+        limit: Optional[int] = None
+    ) -> List[Dict[str, Any]]:
+        """Query documents with optional filters.
+        
+        Args:
+            collection: Collection name
+            filters: Optional list of filter conditions
+            limit: Optional limit on number of results
+            
+        Returns:
+            List of matching documents
+        """
+        if collection not in self.collections:
+            return []
+        
+        results = []
+        collection_data = self.collections[collection]
+        
+        for doc_id, doc_data in collection_data.items():
+            if not filters:
+                results.append(doc_data.copy())
+            else:
+                # Simple filter implementation - can be enhanced as needed
+                matches = True
+                for filter_dict in filters:
+                    field = filter_dict.get("field")
+                    operator = filter_dict.get("operator", "==")
+                    value = filter_dict.get("value")
+                    
+                    if field and field in doc_data:
+                        doc_value = doc_data[field]
+                        if operator == "==" and doc_value != value:
+                            matches = False
+                            break
+                        # Add more operators as needed
+                
+                if matches:
+                    results.append(doc_data.copy())
+        
+        if limit:
+            results = results[:limit]
+        
+        return results

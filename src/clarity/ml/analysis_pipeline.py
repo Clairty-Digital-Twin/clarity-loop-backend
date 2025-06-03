@@ -487,7 +487,8 @@ class HealthAnalysisPipeline:
 
         return summary
 
-    def _calculate_time_span(self, metrics: list[HealthMetric]) -> float:
+    @staticmethod
+    def _calculate_time_span(metrics: list[HealthMetric]) -> float:
         """Calculate time span of metrics in hours."""
         if len(metrics) < MIN_METRICS_FOR_TIME_SPAN:
             return 1.0  # Default to 1 hour

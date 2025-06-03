@@ -29,7 +29,7 @@ from firebase_admin import credentials  # type: ignore[import-untyped]
 from google.cloud import firestore_v1 as firestore  # type: ignore[import-untyped]
 from google.cloud.exceptions import NotFound  # type: ignore[import-untyped]
 
-from clarity.core.interfaces import IHealthDataRepository
+from clarity.ports.data_ports import IHealthDataRepository
 from clarity.models.health_data import HealthDataUpload, ProcessingStatus
 
 # Configure logger

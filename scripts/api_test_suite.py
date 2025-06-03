@@ -8,9 +8,9 @@ Built in 2 days with 112 days of programming experience - SHOCK THE TECH WORLD! 
 """
 
 import asyncio
+from datetime import UTC, datetime, timezone
 import time
-from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
 # Dynamic imports - packages installed at runtime if needed
 if TYPE_CHECKING:
@@ -40,8 +40,8 @@ class APITester:
     def __init__(self, base_url: str = BASE_URL):
         """Initialize the API tester."""
         self.base_url = base_url
-        self.session: Optional[aiohttp.ClientSession] = None
-        self.results: List[Dict[str, Any]] = []
+        self.session: aiohttp.ClientSession | None = None
+        self.results: list[dict[str, Any]] = []
 
     async def __aenter__(self):
         """Async context manager entry."""
@@ -58,9 +58,9 @@ class APITester:
 
     def _print_header(self, title: str) -> None:
         """Print a colored section header."""
-        print(f"\n{Fore.CYAN}{Style.BRIGHT}{'='*60}{Style.RESET_ALL}")
+        print(f"\n{Fore.CYAN}{Style.BRIGHT}{'=' * 60}{Style.RESET_ALL}")
         print(f"{Fore.WHITE}{Style.BRIGHT}🚀 {title} 🚀{Style.RESET_ALL}")
-        print(f"{Fore.CYAN}{Style.BRIGHT}{'='*60}{Style.RESET_ALL}")
+        print(f"{Fore.CYAN}{Style.BRIGHT}{'=' * 60}{Style.RESET_ALL}")
 
     def _print_success(self, message: str) -> None:
         """Print a success message."""
@@ -83,7 +83,7 @@ class APITester:
         method: str,
         endpoint: str,
         **kwargs
-    ) -> tuple[int, Dict[str, Any]]:
+    ) -> tuple[int, dict[str, Any]]:
         """Make an HTTP request and return status code and response."""
         if not self.session:
             raise RuntimeError("Session not initialized")
@@ -206,12 +206,12 @@ class APITester:
             "data_type": "heart_rate",
             "measurements": [
                 {
-                    "timestamp": datetime.now(timezone.utc).isoformat(),
+                    "timestamp": datetime.now(UTC).isoformat(),
                     "value": 72.5,
                     "unit": "bpm"
                 },
                 {
-                    "timestamp": datetime.now(timezone.utc).isoformat(),
+                    "timestamp": datetime.now(UTC).isoformat(),
                     "value": 75.0,
                     "unit": "bpm"
                 }
@@ -382,4 +382,4 @@ if __name__ == "__main__":
         import aiohttp
         import colorama
 
-    asyncio.run(main()) 
+    asyncio.run(main())

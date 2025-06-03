@@ -12,7 +12,8 @@
 # - Real-time monitoring with Prometheus/Grafana
 # - 100% type-safe Python codebase
 
-set -euo pipefail
+# More graceful error handling - continue on non-critical failures
+set -e  # Still exit on errors, but be more selective
 
 # Colors for output
 RED='\033[0;31m'
@@ -97,17 +98,51 @@ test_endpoint() {
     echo ""
 }
 
+# Add better error handling function
+handle_error() {
+    local exit_code=$?
+    local line_number=$1
+    echo -e "${RED}❌ Error occurred on line $line_number (exit code: $exit_code)${NC}"
+    echo -e "${YELLOW}💡 Try the following:${NC}"
+    echo -e "${CYAN}  1. Ensure Docker is running: docker version${NC}"
+    echo -e "${CYAN}  2. Ensure Docker Compose is available: docker-compose version${NC}"
+    echo -e "${CYAN}  3. Check if ports are free: netstat -tuln | grep ':8000\|:3000\|:9090'${NC}"
+    echo -e "${CYAN}  4. Create .env file: touch .env${NC}"
+    echo -e "${CYAN}  5. Try again: bash quick_demo.sh${NC}"
+    exit $exit_code
+}
+
+# Set trap for error handling
+trap 'handle_error $LINENO' ERR
+
 # Check prerequisites
 print_section "${SHIELD} Pre-flight Checks"
 
+# Check Docker
 if ! command_exists docker; then
     echo -e "${RED}❌ Docker not found. Please install Docker first.${NC}"
+    echo -e "${CYAN}💡 Install: https://docs.docker.com/get-docker/${NC}"
     exit 1
 fi
 
-if ! command_exists docker-compose; then
-    echo -e "${RED}❌ Docker Compose not found. Please install Docker Compose first.${NC}"
+# Check if Docker is running
+if ! docker version >/dev/null 2>&1; then
+    echo -e "${RED}❌ Docker is not running. Please start Docker first.${NC}"
     exit 1
+fi
+
+# Check Docker Compose
+if ! command_exists docker-compose && ! docker compose version >/dev/null 2>&1; then
+    echo -e "${RED}❌ Docker Compose not found. Please install Docker Compose first.${NC}"
+    echo -e "${CYAN}💡 Install: https://docs.docker.com/compose/install/${NC}"
+    exit 1
+fi
+
+# Use docker compose or docker-compose based on what's available
+if docker compose version >/dev/null 2>&1; then
+    DOCKER_COMPOSE="docker compose"
+else
+    DOCKER_COMPOSE="docker-compose"
 fi
 
 if ! command_exists curl; then
@@ -119,23 +154,74 @@ if ! command_exists nc; then
     echo -e "${YELLOW}⚠️  netcat not found. Service readiness checks may not work.${NC}"
 fi
 
+# Check if required ports are available
+check_port() {
+    local port=$1
+    local service=$2
+    if nc -z localhost "$port" 2>/dev/null; then
+        echo -e "${YELLOW}⚠️  Port $port ($service) is already in use${NC}"
+        echo -e "${CYAN}💡 Stop existing service: lsof -ti:$port | xargs kill -9${NC}"
+        return 1
+    fi
+    return 0
+}
+
+echo -e "${CYAN}Checking if required ports are available...${NC}"
+ports_busy=false
+for port_service in "8000:Main App" "3000:Grafana" "9090:Prometheus" "8080:Firestore" "6379:Redis"; do
+    IFS=':' read -r port service <<< "$port_service"
+    if ! check_port "$port" "$service"; then
+        ports_busy=true
+    fi
+done
+
+if [ "$ports_busy" = true ]; then
+    echo -e "${YELLOW}⚠️  Some ports are busy. Demo may not work properly.${NC}"
+    echo -e "${CYAN}💡 You can continue anyway or stop conflicting services first.${NC}"
+    read -p "Continue anyway? (y/N): " -n 1 -r
+    echo
+    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+        exit 1
+    fi
+fi
+
+# Check/create .env file
+if [ ! -f ".env" ]; then
+    echo -e "${YELLOW}⚠️  .env file not found. Creating from .env.example...${NC}"
+    if [ -f ".env.example" ]; then
+        cp .env.example .env
+        echo -e "${GREEN}✅ Created .env file from template${NC}"
+    else
+        echo -e "${RED}❌ .env.example not found. Creating minimal .env...${NC}"
+        cat > .env << 'EOF'
+ENVIRONMENT=development
+DEBUG=true
+GOOGLE_CLOUD_PROJECT=clarity-demo
+FIREBASE_PROJECT_ID=clarity-demo
+SKIP_EXTERNAL_SERVICES=true
+DEMO_MODE=true
+EOF
+        echo -e "${GREEN}✅ Created minimal .env file${NC}"
+    fi
+fi
+
 echo -e "${GREEN}✅ All prerequisites satisfied${NC}"
 echo ""
 
 # Clean up any existing containers
 print_section "${FIRE} Environment Cleanup"
 echo -e "${YELLOW}Stopping any existing containers...${NC}"
-docker-compose down --remove-orphans --volumes 2>/dev/null || true
+$DOCKER_COMPOSE down --remove-orphans --volumes 2>/dev/null || true
 echo -e "${GREEN}✅ Environment cleaned${NC}"
 echo ""
 
 # Build and start services
 print_section "${ROCKET} Building & Deploying Services"
 echo -e "${CYAN}Building Docker images...${NC}"
-docker-compose build --parallel
+$DOCKER_COMPOSE build --parallel
 
 echo -e "${CYAN}Starting microservices stack...${NC}"
-docker-compose up -d
+$DOCKER_COMPOSE up -d
 
 echo -e "${GREEN}✅ All services starting...${NC}"
 echo ""
@@ -230,11 +316,16 @@ EOF
 echo ""
 print_section "${ROCKET} DEPLOYMENT COMPLETE"
 echo -e "${WHITE}${TROPHY} SUCCESS! Platform deployed and ready for demo ${TROPHY}${NC}"
-echo -e "${YELLOW}Run the following to show service status:${NC}"
-echo -e "${BLUE}  docker-compose ps${NC}"
-echo -e "${YELLOW}View logs:${NC}"
-echo -e "${BLUE}  docker-compose logs -f clarity-backend${NC}"
-echo -e "${YELLOW}Stop when done:${NC}"
-echo -e "${BLUE}  docker-compose down${NC}"
+echo -e "${YELLOW}Useful commands:${NC}"
+echo -e "${BLUE}  $DOCKER_COMPOSE ps${NC}                    # Show service status"
+echo -e "${BLUE}  $DOCKER_COMPOSE logs -f clarity-backend${NC} # View backend logs"
+echo -e "${BLUE}  $DOCKER_COMPOSE down${NC}                   # Stop all services"
+echo -e "${BLUE}  curl http://localhost:8000/health${NC}      # Test API health"
+echo ""
+echo -e "${YELLOW}If something goes wrong:${NC}"
+echo -e "${CYAN}  1. Check Docker: docker version${NC}"
+echo -e "${CYAN}  2. Check logs: $DOCKER_COMPOSE logs${NC}"
+echo -e "${CYAN}  3. Restart: $DOCKER_COMPOSE restart${NC}"
+echo -e "${CYAN}  4. Full reset: $DOCKER_COMPOSE down && $DOCKER_COMPOSE up -d${NC}"
 echo ""
 echo -e "${PURPLE}🔥 Go SHOCK that technical co-founder! 🔥${NC}" 

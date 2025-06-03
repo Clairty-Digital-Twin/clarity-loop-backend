@@ -4,9 +4,9 @@ Coordinates the entire health data analysis workflow from raw data to insights.
 Integrates preprocessing, modality processors, fusion, and PAT model.
 """
 
-import os
 from datetime import UTC, datetime, timedelta
 import logging
+import os
 from typing import Any
 
 import numpy as np
@@ -184,8 +184,8 @@ class HealthAnalysisPipeline:
                         analysis_result=analysis_dict
                     )
                     self.logger.info("✅ Analysis results saved to Firestore: %s", processing_id)
-                except Exception as e:
-                    self.logger.exception("Failed to save analysis results to Firestore: %s", e)
+                except Exception:
+                    self.logger.exception("Failed to save analysis results to Firestore")
                     # Don't fail the entire pipeline if saving fails
 
             self.logger.info(
@@ -265,11 +265,11 @@ class HealthAnalysisPipeline:
                 metric.metric_type.value.lower() == "heart_rate_variability"
                 and metric.biometric_data
             ) and (
-                hasattr(metric.biometric_data, "hrv_sdnn")
-                and metric.biometric_data.hrv_sdnn
+                hasattr(metric.biometric_data, "heart_rate_variability")
+                and metric.biometric_data.heart_rate_variability
             ):
                 hrv_timestamps.append(metric.created_at)
-                hrv_values.append(float(metric.biometric_data.hrv_sdnn))
+                hrv_values.append(float(metric.biometric_data.heart_rate_variability))
 
         return self.cardio_processor.process(
             hr_timestamps, hr_values, hrv_timestamps, hrv_values
@@ -421,11 +421,11 @@ class HealthAnalysisPipeline:
         # Data coverage
         for modality, metrics in organized_data.items():
             if metrics:
+                time_span = self._calculate_time_span(metrics)
                 summary["data_coverage"][modality] = {
                     "metric_count": len(metrics),
-                    "time_span_hours": self._calculate_time_span(metrics),
-                    "data_density": len(metrics)
-                    / max(1, self._calculate_time_span(metrics)),
+                    "time_span_hours": time_span,
+                    "data_density": len(metrics) / max(1, time_span),
                 }
 
         # Feature summary
@@ -655,13 +655,14 @@ def _convert_raw_data_to_metrics(health_data: dict[str, Any]) -> list[HealthMetr
             )
 
             metric = HealthMetric(
-                user_id=health_data.get("user_id", "unknown"),
                 metric_type=HealthMetricType.ACTIVITY_LEVEL,
                 created_at=datetime.fromisoformat(
                     workout.get("timestamp", datetime.now(UTC).isoformat())
                 ),
                 activity_data=activity_data,
-                source_device=workout.get("source", "unknown"),
+                device_id=workout.get("source", "unknown"),
+                raw_data={"original_workout": workout},
+                metadata={"user_id": health_data.get("user_id", "unknown"), "activity_type": workout.get("type", "unknown")},
             )
             metrics.append(metric)
 

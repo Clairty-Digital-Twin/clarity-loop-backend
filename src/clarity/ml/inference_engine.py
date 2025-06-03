@@ -463,8 +463,8 @@ class AsyncInferenceEngine:
                 # Graceful shutdown
                 logger.info("Batch processor cancelled, shutting down gracefully")
                 break
-            except Exception as e:
-                logger.exception(f"Batch processor error: {e}")
+            except Exception:
+                logger.exception("Batch processor error")
                 self.error_count += 1
                 # Don't sleep on shutdown
                 if self.is_running:

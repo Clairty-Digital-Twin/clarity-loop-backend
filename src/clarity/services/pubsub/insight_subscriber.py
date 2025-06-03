@@ -4,7 +4,7 @@ Handles Pub/Sub messages for AI-powered health insight generation using Gemini 2
 """
 
 import base64
-from datetime import datetime
+from datetime import UTC, datetime
 import json
 import logging
 import os
@@ -68,7 +68,7 @@ class GeminiInsightGenerator:
                 {
                     "user_id": user_id,
                     "upload_id": upload_id,
-                    "generated_at": datetime.utcnow().isoformat(),
+                    "generated_at": datetime.now(UTC).isoformat(),
                     "model": "gemini-1.5-pro" if self.model else "mock",
                     "analysis_summary": self._create_analysis_summary(analysis_results),
                 }

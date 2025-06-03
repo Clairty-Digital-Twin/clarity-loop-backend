@@ -6,8 +6,8 @@ Implements domain-specific preprocessing and feature extraction for respiratory 
 
 from datetime import datetime
 import logging
-# Removed unused Any import
 
+# Removed unused Any import
 import numpy as np
 import pandas as pd
 from pydantic import BaseModel, Field
@@ -144,8 +144,9 @@ class RespirationProcessor:
                 DEFAULT_EFFICIENCY_SCORE,
             ]
 
+    @staticmethod
     def _preprocess_respiratory_rate(
-        self, timestamps: list[datetime], values: list[float]
+        timestamps: list[datetime], values: list[float]
     ) -> pd.Series:
         """Clean and normalize respiratory rate time series."""
         if not timestamps or not values:
@@ -173,8 +174,9 @@ class RespirationProcessor:
         # Fill remaining NaNs
         return rr_smoothed.ffill().bfill()
 
+    @staticmethod
     def _preprocess_spo2(
-        self, timestamps: list[datetime], values: list[float]
+        timestamps: list[datetime], values: list[float]
     ) -> pd.Series:
         """Clean and normalize SpO2 time series."""
         if not timestamps or not values:
@@ -195,7 +197,7 @@ class RespirationProcessor:
         spo2_interpolated = spo2_resampled.interpolate(limit=SPO2_INTERPOLATION_LIMIT)
 
         # Fill remaining NaNs
-        return spo2_interpolated.fillna(method="ffill").fillna(method="bfill")
+        return spo2_interpolated.ffill().bfill()
 
     def _extract_features(
         self, rr_series: pd.Series | None, spo2_series: pd.Series | None
@@ -238,9 +240,10 @@ class RespirationProcessor:
             oxygenation_efficiency_score=oxygenation_efficiency_score,
         )
 
-    def _calculate_stability_score(self, rr_series: pd.Series | None) -> float:
+    @staticmethod
+    def _calculate_stability_score(rr_series: pd.Series | None) -> float:
         """Calculate respiratory stability score (0-1, higher is better)."""
-        if rr_series is None or len(rr_series) < 12:  # Need at least 1 hour of data
+        if rr_series is None or len(rr_series) < STABILITY_DATA_POINTS:
             return 0.5  # Neutral score
 
         try:
@@ -262,9 +265,10 @@ class RespirationProcessor:
         except Exception:
             return 0.5
 
-    def _calculate_oxygenation_score(self, spo2_series: pd.Series | None) -> float:
+    @staticmethod
+    def _calculate_oxygenation_score(spo2_series: pd.Series | None) -> float:
         """Calculate oxygenation efficiency score (0-1, higher is better)."""
-        if spo2_series is None or len(spo2_series) < 6:  # Need at least 1 hour of data
+        if spo2_series is None or len(spo2_series) < OXYGENATION_DATA_POINTS:
             return 0.8  # Default good score
 
         try:

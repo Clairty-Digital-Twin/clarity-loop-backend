@@ -4,7 +4,7 @@ Coordinates the entire health data analysis workflow from raw data to insights.
 Integrates preprocessing, modality processors, fusion, and PAT model.
 """
 
-from datetime import datetime
+from datetime import UTC, datetime
 import logging
 from typing import Any
 
@@ -126,7 +126,7 @@ class HealthAnalysisPipeline:
             # Step 5: Add processing metadata
             results.processing_metadata = {
                 "user_id": user_id,
-                "processed_at": datetime.utcnow().isoformat(),
+                "processed_at": datetime.now(UTC).isoformat(),
                 "total_metrics": len(health_metrics),
                 "modalities_processed": list(modality_features.keys()),
                 "fused_vector_dim": len(results.fused_vector),

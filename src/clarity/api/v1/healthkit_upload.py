@@ -4,7 +4,7 @@ FastAPI router for handling HealthKit data uploads with immediate acknowledgment
 and asynchronous processing via Pub/Sub.
 """
 
-from datetime import datetime
+from datetime import UTC, datetime
 import logging
 import os
 from typing import Any
@@ -115,13 +115,13 @@ async def upload_healthkit_data(
         bucket = storage_client.bucket(bucket_name)
 
         # Create hierarchical path for organization
-        timestamp = datetime.utcnow().strftime("%Y/%m/%d")
+        timestamp = datetime.now(UTC).strftime("%Y/%m/%d")
         blob_path = f"uploads/{timestamp}/{request.user_id}/{upload_id}.json"
         blob = bucket.blob(blob_path)
 
         # Store the entire request as JSON
         upload_data = request.model_dump()
-        upload_data["upload_timestamp"] = datetime.utcnow().isoformat()
+        upload_data["upload_timestamp"] = datetime.now(UTC).isoformat()
         upload_data["upload_id"] = upload_id
 
         blob.upload_from_string(
@@ -151,7 +151,7 @@ async def upload_healthkit_data(
         return HealthKitUploadResponse(
             upload_id=upload_id,
             status="queued",
-            queued_at=datetime.utcnow().isoformat(),
+            queued_at=datetime.now(UTC).isoformat(),
             samples_received={
                 "quantity_samples": len(request.quantity_samples),
                 "category_samples": len(request.category_samples),
@@ -206,7 +206,7 @@ async def get_upload_status(
         "status": "processing",
         "progress": 0.75,
         "message": "Analyzing cardiovascular patterns",
-        "last_updated": datetime.utcnow().isoformat(),
+                    "last_updated": datetime.now(UTC).isoformat(),
     }
 
 

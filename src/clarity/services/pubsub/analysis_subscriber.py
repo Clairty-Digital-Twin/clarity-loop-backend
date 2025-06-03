@@ -9,7 +9,7 @@ import logging
 import os
 from typing import Any
 
-from fastapi import FastAPI, Header, HTTPException, Request
+from fastapi import FastAPI, HTTPException, Request
 from google.cloud import storage
 
 from clarity.ml.analysis_pipeline import run_analysis_pipeline
@@ -66,7 +66,7 @@ class AnalysisSubscriber:
             )
 
             # Publish insight request event
-            await self.publisher.publish_insight_request_event(
+            self.publisher.publish_insight_request(
                 user_id=message_data["user_id"],
                 upload_id=message_data["upload_id"],
                 analysis_results=analysis_results,
@@ -84,10 +84,10 @@ class AnalysisSubscriber:
             }
 
         except Exception as e:
-            self.logger.exception("Error processing health data message: %s", e)
+            self.logger.exception("Error processing health data message")
             raise HTTPException(
                 status_code=500, detail=f"Analysis processing failed: {e!s}"
-            )
+            ) from e
 
     async def _verify_pubsub_token(self, request: Request) -> None:
         """Verify Pub/Sub OIDC token in production."""
@@ -111,8 +111,8 @@ class AnalysisSubscriber:
             # using google.auth.jwt or similar library
 
         except Exception as e:
-            self.logger.exception("Token verification failed: %s", e)
-            raise HTTPException(status_code=401, detail="Invalid Pub/Sub token")
+            self.logger.exception("Token verification failed")
+            raise HTTPException(status_code=401, detail="Invalid Pub/Sub token") from e
 
     def _extract_message_data(self, pubsub_body: dict[str, Any]) -> dict[str, Any]:
         """Extract and decode Pub/Sub message data."""

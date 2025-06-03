@@ -9,7 +9,7 @@ import logging
 import os
 from typing import Any
 
-from google.cloud import pubsub_v1
+from google.cloud.pubsub_v1 import PublisherClient
 from pydantic import BaseModel
 
 from clarity.core.decorators import log_execution
@@ -45,7 +45,7 @@ class HealthDataPublisher:
     def __init__(self) -> None:
         """Initialize the publisher with GCP Pub/Sub client."""
         self.project_id = os.getenv("GOOGLE_CLOUD_PROJECT")
-        self.publisher = pubsub_v1.PublisherClient()
+        self.publisher = PublisherClient()
         self.logger = logging.getLogger(__name__)
 
         # Topic names

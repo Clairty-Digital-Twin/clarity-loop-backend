@@ -235,7 +235,7 @@ async def upload_health_data(
 
             # Publish to Pub/Sub
             publisher = get_publisher()
-            await publisher.publish_health_data_event(
+            publisher.publish_health_data_upload(
                 user_id=current_user.user_id,
                 upload_id=str(response.processing_id),
                 gcs_path=gcs_path,

@@ -168,8 +168,8 @@ class HealthDataPublisher:
 
     def close(self) -> None:
         """Close publisher client."""
-        if hasattr(self.publisher, "close"):
-            self.publisher.close()
+        # PublisherClient doesn't have a close method in current version
+        # Client connections are automatically managed
 
 
 # Global singleton instance

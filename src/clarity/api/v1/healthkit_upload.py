@@ -7,7 +7,7 @@ and asynchronous processing via Pub/Sub.
 from datetime import datetime
 import logging
 import os
-from typing import Any, NoReturn
+from typing import Any
 import uuid
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -131,7 +131,7 @@ async def upload_healthkit_data(
         # 4. Publish to Pub/Sub for processing
         publisher = get_publisher()
 
-        await publisher.publish_health_data_event(
+        publisher.publish_health_data_upload(
             user_id=request.user_id,
             upload_id=upload_id,
             gcs_path=f"gs://{bucket_name}/{blob_path}",
@@ -173,7 +173,7 @@ async def upload_healthkit_data(
 
 @router.get("/status/{upload_id}")
 async def get_upload_status(
-    upload_id: str, token: HTTPBearer = Depends(auth_scheme)
+    upload_id: str, token: HTTPBearer = Depends(get_auth_scheme)
 ) -> dict[str, Any]:
     """Get status of a HealthKit upload.
 
@@ -210,7 +210,4 @@ async def get_upload_status(
     }
 
 
-# Initialize logger
-import logging
-
-logger = logging.getLogger(__name__)
+# Note: logger already configured at top of file

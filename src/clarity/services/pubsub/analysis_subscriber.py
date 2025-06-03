@@ -205,15 +205,19 @@ async def health_check() -> dict[str, str]:
     return {"status": "healthy", "service": "analysis"}
 
 
-# Global subscriber instance
-_analysis_subscriber: AnalysisSubscriber | None = None
+class AnalysisSubscriberSingleton:
+    """Singleton container for analysis subscriber."""
+
+    _instance: AnalysisSubscriber | None = None
+
+    @classmethod
+    def get_instance(cls) -> AnalysisSubscriber:
+        """Get or create analysis subscriber instance."""
+        if cls._instance is None:
+            cls._instance = AnalysisSubscriber()
+        return cls._instance
 
 
 def get_analysis_subscriber() -> AnalysisSubscriber:
     """Get or create global analysis subscriber instance."""
-    global _analysis_subscriber
-
-    if _analysis_subscriber is None:
-        _analysis_subscriber = AnalysisSubscriber()
-
-    return _analysis_subscriber
+    return AnalysisSubscriberSingleton.get_instance()

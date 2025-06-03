@@ -500,18 +500,22 @@ class HealthAnalysisPipeline:
         return max(1.0, time_span)  # At least 1 hour
 
 
-# Global pipeline instance
-_analysis_pipeline: HealthAnalysisPipeline | None = None
+class AnalysisPipelineSingleton:
+    """Singleton container for analysis pipeline."""
+
+    _instance: HealthAnalysisPipeline | None = None
+
+    @classmethod
+    def get_instance(cls) -> HealthAnalysisPipeline:
+        """Get or create analysis pipeline instance."""
+        if cls._instance is None:
+            cls._instance = HealthAnalysisPipeline()
+        return cls._instance
 
 
 def get_analysis_pipeline() -> HealthAnalysisPipeline:
     """Get or create global analysis pipeline instance."""
-    global _analysis_pipeline
-
-    if _analysis_pipeline is None:
-        _analysis_pipeline = HealthAnalysisPipeline()
-
-    return _analysis_pipeline
+    return AnalysisPipelineSingleton.get_instance()
 
 
 async def run_analysis_pipeline(

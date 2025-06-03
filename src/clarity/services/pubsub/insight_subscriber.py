@@ -213,11 +213,11 @@ Generate the health insight now:"""
                     "confidence_level": "medium",
                 }
 
-            return insight
-
         except Exception:
             self.logger.exception("Gemini API call failed")
             raise
+        else:
+            return insight
 
     @staticmethod
     def _create_mock_insight(_analysis_results: dict[str, Any]) -> dict[str, Any]:
@@ -374,13 +374,13 @@ class InsightSubscriber:
                     msg = f"Missing required field: {field}"
                     raise ValueError(msg)
 
-            return message_data
-
         except Exception as e:
             self.logger.exception("Failed to extract message data")
             raise HTTPException(
                 status_code=400, detail=f"Invalid message format: {e!s}"
             ) from None
+        else:
+            return message_data
 
 
 # Create FastAPI app for insight service
@@ -400,15 +400,19 @@ async def health_check() -> dict[str, str]:
     return {"status": "healthy", "service": "insight"}
 
 
-# Global subscriber instance
-_insight_subscriber: InsightSubscriber | None = None
+class InsightSubscriberSingleton:
+    """Singleton container for insight subscriber."""
+
+    _instance: InsightSubscriber | None = None
+
+    @classmethod
+    def get_instance(cls) -> InsightSubscriber:
+        """Get or create insight subscriber instance."""
+        if cls._instance is None:
+            cls._instance = InsightSubscriber()
+        return cls._instance
 
 
 def get_insight_subscriber() -> InsightSubscriber:
     """Get or create global insight subscriber instance."""
-    global _insight_subscriber
-
-    if _insight_subscriber is None:
-        _insight_subscriber = InsightSubscriber()
-
-    return _insight_subscriber
+    return InsightSubscriberSingleton.get_instance()

@@ -269,15 +269,19 @@ class HealthFusionService:
             return result
 
 
-# Global fusion service instance
-_fusion_service: HealthFusionService | None = None
+class FusionServiceSingleton:
+    """Singleton container for fusion service."""
+
+    _instance: HealthFusionService | None = None
+
+    @classmethod
+    def get_instance(cls) -> HealthFusionService:
+        """Get or create fusion service instance."""
+        if cls._instance is None:
+            cls._instance = HealthFusionService()
+        return cls._instance
 
 
 def get_fusion_service() -> HealthFusionService:
     """Get or create global fusion service instance."""
-    global _fusion_service
-
-    if _fusion_service is None:
-        _fusion_service = HealthFusionService()
-
-    return _fusion_service
+    return FusionServiceSingleton.get_instance()

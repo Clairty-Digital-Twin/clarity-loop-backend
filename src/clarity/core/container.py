@@ -301,6 +301,9 @@ class DependencyContainer:
             lifespan=self.app_lifespan,  # ✅ RE-ENABLED with proper timeout handling
         )
 
+        # Configure RFC 7807 Problem Details exception handling
+        self._configure_exception_handlers(app)
+
         # Wire middleware (Decorator Pattern)
         self._configure_middleware(app)
 
@@ -308,6 +311,22 @@ class DependencyContainer:
         self._configure_routes(app)
 
         return app
+
+    def _configure_exception_handlers(self, app: FastAPI) -> None:
+        """Configure RFC 7807 Problem Details exception handling."""
+        from clarity.core.exceptions import (  # noqa: PLC0415
+            ClarityAPIException,
+            generic_exception_handler,
+            problem_detail_exception_handler,
+        )
+        
+        # Register custom exception handler for ClarityAPIException
+        app.add_exception_handler(ClarityAPIException, problem_detail_exception_handler)
+        
+        # Register generic exception handler for unhandled exceptions
+        app.add_exception_handler(Exception, generic_exception_handler)
+        
+        logger.info("✅ RFC 7807 Problem Details exception handling configured")
 
     def _configure_middleware(self, app: FastAPI) -> None:
         """Configure middleware with dependency injection."""

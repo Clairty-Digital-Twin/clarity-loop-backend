@@ -10,7 +10,297 @@ The exception hierarchy is designed to be:
 - Self-documenting through clear names and messages
 """
 
-from typing import Any
+from typing import Any, Dict, List, Optional
+from uuid import uuid4
+
+from fastapi import HTTPException, Request
+from fastapi.responses import JSONResponse
+from pydantic import BaseModel, Field
+
+
+class ProblemDetail(BaseModel):
+    """RFC 7807 Problem Details for HTTP APIs.
+    
+    Professional-grade error responses with structured debugging info.
+    """
+
+    type: str = Field(
+        ...,
+        description="URI reference identifying the problem type",
+        example="https://api.clarity.health/problems/validation-error"
+    )
+    title: str = Field(
+        ...,
+        description="Short, human-readable summary of the problem",
+        example="Validation Error"
+    )
+    status: int = Field(
+        ...,
+        description="HTTP status code",
+        example=400
+    )
+    detail: str = Field(
+        ...,
+        description="Human-readable explanation specific to this occurrence",
+        example="The submitted health data contains invalid heart rate values"
+    )
+    instance: str = Field(
+        ...,
+        description="URI reference identifying this specific occurrence",
+        example="https://api.clarity.health/requests/550e8400-e29b-41d4-a716-446655440000"
+    )
+    trace_id: str | None = Field(
+        None,
+        description="Distributed tracing identifier for debugging",
+        example="550e8400-e29b-41d4-a716-446655440000"
+    )
+    errors: list[dict[str, Any]] | None = Field(
+        None,
+        description="Detailed field-level validation errors"
+    )
+    help_url: str | None = Field(
+        None,
+        description="URL to documentation for this error type",
+        example="https://docs.clarity.health/errors/validation-error"
+    )
+
+
+class ClarityAPIException(HTTPException):
+    """🚀 CLARITY Platform Custom Exception with RFC 7807 Support.
+    
+    Enterprise-grade exception handling that outputs professional Problem Details.
+    """
+
+    def __init__(
+        self,
+        status_code: int,
+        problem_type: str,
+        title: str,
+        detail: str,
+        instance: str | None = None,
+        trace_id: str | None = None,
+        errors: list[dict[str, Any]] | None = None,
+        help_url: str | None = None,
+        headers: dict[str, str] | None = None
+    ):
+        self.problem_type = problem_type
+        self.title = title
+        self.detail = detail
+        self.instance = instance or f"https://api.clarity.health/requests/{uuid4()}"
+        self.trace_id = trace_id or str(uuid4())
+        self.errors = errors
+        self.help_url = help_url
+
+        super().__init__(status_code=status_code, detail=detail, headers=headers)
+
+    def to_problem_detail(self) -> ProblemDetail:
+        """Convert to RFC 7807 Problem Detail format."""
+        return ProblemDetail(
+            type=self.problem_type,
+            title=self.title,
+            status=self.status_code,
+            detail=self.detail,
+            instance=self.instance,
+            trace_id=self.trace_id,
+            errors=self.errors,
+            help_url=self.help_url
+        )
+
+
+# 🔥 Pre-defined Problem Types for Common Scenarios
+
+class ValidationProblem(ClarityAPIException):
+    """Validation error with detailed field information."""
+
+    def __init__(
+        self,
+        detail: str,
+        errors: list[dict[str, Any]] | None = None,
+        trace_id: str | None = None
+    ):
+        super().__init__(
+            status_code=400,
+            problem_type="https://api.clarity.health/problems/validation-error",
+            title="Validation Error",
+            detail=detail,
+            errors=errors,
+            trace_id=trace_id,
+            help_url="https://docs.clarity.health/errors/validation"
+        )
+
+
+class AuthenticationProblem(ClarityAPIException):
+    """Authentication required or failed."""
+
+    def __init__(
+        self,
+        detail: str = "Authentication required",
+        trace_id: str | None = None
+    ):
+        super().__init__(
+            status_code=401,
+            problem_type="https://api.clarity.health/problems/authentication-required",
+            title="Authentication Required",
+            detail=detail,
+            trace_id=trace_id,
+            help_url="https://docs.clarity.health/authentication"
+        )
+
+
+class AuthorizationProblem(ClarityAPIException):
+    """Insufficient permissions for requested resource."""
+
+    def __init__(
+        self,
+        detail: str = "Insufficient permissions for this resource",
+        trace_id: str | None = None
+    ):
+        super().__init__(
+            status_code=403,
+            problem_type="https://api.clarity.health/problems/authorization-denied",
+            title="Authorization Denied",
+            detail=detail,
+            trace_id=trace_id,
+            help_url="https://docs.clarity.health/permissions"
+        )
+
+
+class ResourceNotFoundProblem(ClarityAPIException):
+    """Requested resource does not exist."""
+
+    def __init__(
+        self,
+        resource_type: str,
+        resource_id: str,
+        trace_id: str | None = None
+    ):
+        super().__init__(
+            status_code=404,
+            problem_type="https://api.clarity.health/problems/resource-not-found",
+            title="Resource Not Found",
+            detail=f"{resource_type} with ID '{resource_id}' does not exist",
+            trace_id=trace_id,
+            help_url="https://docs.clarity.health/errors/not-found"
+        )
+
+
+class ConflictProblem(ClarityAPIException):
+    """Resource conflict (duplicate, state conflict, etc.)."""
+
+    def __init__(
+        self,
+        detail: str,
+        trace_id: str | None = None
+    ):
+        super().__init__(
+            status_code=409,
+            problem_type="https://api.clarity.health/problems/resource-conflict",
+            title="Resource Conflict",
+            detail=detail,
+            trace_id=trace_id,
+            help_url="https://docs.clarity.health/errors/conflict"
+        )
+
+
+class RateLimitProblem(ClarityAPIException):
+    """Rate limit exceeded."""
+
+    def __init__(
+        self,
+        retry_after: int,
+        detail: str = "Rate limit exceeded",
+        trace_id: str | None = None
+    ):
+        headers = {"Retry-After": str(retry_after)}
+        super().__init__(
+            status_code=429,
+            problem_type="https://api.clarity.health/problems/rate-limit-exceeded",
+            title="Rate Limit Exceeded",
+            detail=detail,
+            headers=headers,
+            trace_id=trace_id,
+            help_url="https://docs.clarity.health/rate-limits"
+        )
+
+
+class InternalServerProblem(ClarityAPIException):
+    """Internal server error with trace ID for debugging."""
+
+    def __init__(
+        self,
+        detail: str = "An internal server error occurred",
+        trace_id: str | None = None
+    ):
+        super().__init__(
+            status_code=500,
+            problem_type="https://api.clarity.health/problems/internal-server-error",
+            title="Internal Server Error",
+            detail=detail,
+            trace_id=trace_id,
+            help_url="https://docs.clarity.health/errors/server-error"
+        )
+
+
+class ServiceUnavailableProblem(ClarityAPIException):
+    """Service temporarily unavailable."""
+
+    def __init__(
+        self,
+        service_name: str,
+        retry_after: int | None = None,
+        trace_id: str | None = None
+    ):
+        detail = f"{service_name} is temporarily unavailable"
+        headers = {"Retry-After": str(retry_after)} if retry_after else None
+
+        super().__init__(
+            status_code=503,
+            problem_type="https://api.clarity.health/problems/service-unavailable",
+            title="Service Unavailable",
+            detail=detail,
+            headers=headers,
+            trace_id=trace_id,
+            help_url="https://docs.clarity.health/errors/service-unavailable"
+        )
+
+
+# 🎯 Exception Handler for FastAPI
+
+async def problem_detail_exception_handler(
+    request: Request,
+    exc: ClarityAPIException
+) -> JSONResponse:
+    """Convert ClarityAPIException to RFC 7807 Problem Detail response."""
+    problem = exc.to_problem_detail()
+
+    return JSONResponse(
+        status_code=exc.status_code,
+        content=problem.model_dump(exclude_none=True),
+        headers=exc.headers or {}
+    )
+
+
+async def generic_exception_handler(
+    request: Request,
+    exc: Exception
+) -> JSONResponse:
+    """Handle unexpected exceptions with Problem Details format."""
+    trace_id = str(uuid4())
+
+    problem = InternalServerProblem(
+        detail="An unexpected error occurred",
+        trace_id=trace_id
+    ).to_problem_detail()
+
+    # Log the actual exception for debugging
+    import logging
+    logger = logging.getLogger(__name__)
+    logger.error(f"Unhandled exception (trace_id={trace_id}): {exc}", exc_info=True)
+
+    return JSONResponse(
+        status_code=500,
+        content=problem.model_dump(exclude_none=True)
+    )
 
 
 class ClarityBaseError(Exception):

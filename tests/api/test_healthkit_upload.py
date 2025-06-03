@@ -39,7 +39,8 @@ class TestHealthKitModels:
         assert sample.unit == "count/min"
         assert sample.metadata == {}
 
-    def test_healthkit_sample_with_dict_value(self) -> None:
+    @staticmethod
+    def test_healthkit_sample_with_dict_value() -> None:
         """Test HealthKitSample with dictionary value."""
         sample = HealthKitSample(
             identifier="HKCategoryTypeIdentifierSleepAnalysis",

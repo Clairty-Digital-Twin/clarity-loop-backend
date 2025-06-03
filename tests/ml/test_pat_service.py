@@ -158,7 +158,7 @@ class TestPATModelServiceInitialization:
         assert "PAT-S_29k_weights.h5" in small_service.model_path
         assert "PAT-M_29k_weights.h5" in medium_service.model_path
         assert "PAT-L_29k_weights.h5" in large_service.model_path
-        
+
         # Verify the paths use the pat subdirectory
         assert "/pat/" in small_service.model_path
         assert "/pat/" in medium_service.model_path

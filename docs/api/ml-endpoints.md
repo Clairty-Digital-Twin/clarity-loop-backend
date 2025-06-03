@@ -10,9 +10,11 @@ The Pretrained Actigraphy Transformer models are stored in the project's `/model
 
 ```
 models/
-├── PAT-L_29k_weights.h5    # Large model (7.6MB) - Best accuracy
-├── PAT-M_29k_weights.h5    # Medium model (3.8MB) - Balanced performance
-└── PAT-S_29k_weights.h5    # Small model (1.1MB) - Fastest inference
+├── gemini/
+└── pat/
+    ├── PAT-L_29k_weights.h5    # Large model (7.6MB) - Best accuracy
+    ├── PAT-M_29k_weights.h5    # Medium model (3.8MB) - Balanced performance
+    └── PAT-S_29k_weights.h5    # Small model (1.1MB) - Fastest inference
 ```
 
 ### Model Selection Criteria
@@ -25,11 +27,11 @@ models/
 
 ### Deployment Pipeline
 
-1. **Development**: Models loaded from `/models/*.h5` files
+1. **Development**: Models loaded from `/models/pat/*.h5` files
 2. **Production**: Models deployed to Google Cloud AI Platform
 3. **Fallback**: Local model serving via TensorFlow Serving
 
-**Note**: The models in `/models/` are the official Dartmouth College weights (29,307 participants) as referenced in the PAT research paper (arXiv:2411.15240).
+**Note**: The models in `/models/pat/` are the official Dartmouth College weights (29,307 participants) as referenced in the PAT research paper (arXiv:2411.15240).
 
 ## Overview
 

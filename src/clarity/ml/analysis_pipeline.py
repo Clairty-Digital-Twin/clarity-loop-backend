@@ -237,7 +237,7 @@ class HealthAnalysisPipeline:
         if hasattr(analysis_result, 'embedding') and analysis_result.embedding:
             # Use the actual PAT model embedding
             return analysis_result.embedding
-        
+
         # Fallback: Create embedding from analysis metrics (normalized to [-1, 1] range)
         embedding = [0.0] * 128
 
@@ -408,20 +408,20 @@ def _convert_raw_data_to_metrics(health_data: dict[str, Any]) -> list[HealthMetr
         MetricType,
         SleepData,
     )
-    
+
     metrics = []
-    
+
     # Handle different data formats - could be from HealthKit upload or direct metrics
     if "metrics" in health_data:
         # Already in metric format
         return health_data["metrics"]
-    
+
     # Convert HealthKit-style data
     # Process quantity samples (heart rate, respiratory rate, etc.)
     if "quantity_samples" in health_data:
         for sample in health_data["quantity_samples"]:
             metric_type_str = sample.get("type", "").lower()
-            
+
             # Map HealthKit types to our MetricType enum
             type_mapping = {
                 "heartrate": MetricType.HEART_RATE,
@@ -433,10 +433,10 @@ def _convert_raw_data_to_metrics(health_data: dict[str, Any]) -> list[HealthMetr
                 "bloodpressuresystolic": MetricType.BLOOD_PRESSURE,
                 "bloodpressurediastolic": MetricType.BLOOD_PRESSURE,
             }
-            
+
             if metric_type_str in type_mapping:
                 biometric_data = BiometricData()
-                
+
                 if metric_type_str in ["heartrate", "heart_rate"]:
                     biometric_data.heart_rate = float(sample.get("value", 0))
                 elif metric_type_str == "heartratevariabilitysdnn":
@@ -448,7 +448,7 @@ def _convert_raw_data_to_metrics(health_data: dict[str, Any]) -> list[HealthMetr
                 elif metric_type_str in ["bloodpressuresystolic", "bloodpressurediastolic"]:
                     biometric_data.blood_pressure_systolic = sample.get("systolic")
                     biometric_data.blood_pressure_diastolic = sample.get("diastolic")
-                
+
                 metric = HealthMetric(
                     user_id=health_data.get("user_id", "unknown"),
                     metric_type=type_mapping[metric_type_str],
@@ -458,12 +458,12 @@ def _convert_raw_data_to_metrics(health_data: dict[str, Any]) -> list[HealthMetr
                     confidence_score=sample.get("confidence", 1.0)
                 )
                 metrics.append(metric)
-    
+
     # Process category samples (sleep, activity)
     if "category_samples" in health_data:
         for sample in health_data["category_samples"]:
             category_type = sample.get("type", "").lower()
-            
+
             if "sleep" in category_type:
                 sleep_data = SleepData(
                     total_sleep_time=sample.get("duration", 0) / 3600,  # Convert to hours
@@ -471,7 +471,7 @@ def _convert_raw_data_to_metrics(health_data: dict[str, Any]) -> list[HealthMetr
                     sleep_onset_latency=sample.get("onset_latency", 15),
                     wake_after_sleep_onset=sample.get("waso", 30)
                 )
-                
+
                 metric = HealthMetric(
                     user_id=health_data.get("user_id", "unknown"),
                     metric_type=MetricType.SLEEP_ANALYSIS,
@@ -480,7 +480,7 @@ def _convert_raw_data_to_metrics(health_data: dict[str, Any]) -> list[HealthMetr
                     source_device=sample.get("source", "unknown")
                 )
                 metrics.append(metric)
-    
+
     # Process workouts/activity data
     if "workouts" in health_data:
         for workout in health_data["workouts"]:
@@ -491,7 +491,7 @@ def _convert_raw_data_to_metrics(health_data: dict[str, Any]) -> list[HealthMetr
                 exercise_minutes=workout.get("duration", 0) / 60,  # Convert to minutes
                 activity_type=workout.get("type", "unknown")
             )
-            
+
             metric = HealthMetric(
                 user_id=health_data.get("user_id", "unknown"),
                 metric_type=MetricType.ACTIVITY_LEVEL,
@@ -500,6 +500,6 @@ def _convert_raw_data_to_metrics(health_data: dict[str, Any]) -> list[HealthMetr
                 source_device=workout.get("source", "unknown")
             )
             metrics.append(metric)
-    
+
     logger.info("Converted %d raw data points to HealthMetric objects", len(metrics))
     return metrics

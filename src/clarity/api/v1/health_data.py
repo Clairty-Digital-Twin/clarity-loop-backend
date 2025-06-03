@@ -20,6 +20,7 @@ from typing import Any, NoReturn
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, Query, Request, status
+from google.cloud import storage
 
 from clarity.auth import Permission, UserContext, get_current_user, require_auth
 from clarity.core.exceptions import (
@@ -43,7 +44,6 @@ from clarity.services.health_data_service import (
     HealthDataServiceError,
 )
 from clarity.services.pubsub.publisher import get_publisher
-from google.cloud import storage
 
 # Configure logger
 logger = logging.getLogger(__name__)
@@ -208,13 +208,13 @@ async def upload_health_data(
             bucket_name = os.getenv("HEALTHKIT_RAW_BUCKET", "healthkit-raw-data")
             blob_path = f"{current_user.user_id}/{response.processing_id}.json"
             gcs_path = f"gs://{bucket_name}/{blob_path}"
-            
+
             # Save to GCS
             try:
                 storage_client = storage.Client()
                 bucket = storage_client.bucket(bucket_name)
                 blob = bucket.blob(blob_path)
-                
+
                 # Convert health data to JSON for storage
                 raw_data = {
                     "user_id": str(health_data.user_id),
@@ -224,7 +224,7 @@ async def upload_health_data(
                     "sync_token": health_data.sync_token,
                     "metrics": [metric.model_dump() for metric in health_data.metrics]
                 }
-                
+
                 blob.upload_from_string(
                     json.dumps(raw_data),
                     content_type="application/json"
@@ -233,7 +233,7 @@ async def upload_health_data(
             except Exception as gcs_error:
                 logger.error("Failed to save to GCS: %s", gcs_error)
                 # Continue anyway - we can retry later
-            
+
             # Publish to Pub/Sub
             publisher = get_publisher()
             await publisher.publish_health_data_event(

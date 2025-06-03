@@ -8,9 +8,9 @@ import asyncio
 import logging
 import os
 
-import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+import uvicorn
 
 from clarity.services.pubsub.insight_subscriber import insight_app
 
@@ -45,10 +45,10 @@ def main():
     """Run the insight service."""
     host = os.getenv("HOST", "0.0.0.0")
     port = int(os.getenv("PORT", "8082"))
-    
+
     logger.info("Starting CLARITY Insight Service")
     logger.info(f"Listening on {host}:{port}")
-    
+
     # Run the service
     uvicorn.run(
         "clarity.entrypoints.insight_service:app",

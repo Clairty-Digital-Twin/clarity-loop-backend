@@ -426,10 +426,13 @@ class PATModelService(IMLModelService):
             
         attn_group = layer_group[f'encoder_layer_{layer_idx + 1}_attention']
         
-        # Get dimensions
+        # Get dimensions from TF weights
         embed_dim = int(self.config["embed_dim"])
         num_heads = int(self.config["num_heads"])
-        head_dim = embed_dim // num_heads
+        head_dim = int(self.config["head_dim"])
+        
+        # Verify dimensions match
+        assert embed_dim == num_heads * head_dim, f"embed_dim {embed_dim} != num_heads {num_heads} * head_dim {head_dim}"
         
         # Collect Q, K, V weights for combined in_proj
         qkv_weights = []
@@ -440,31 +443,39 @@ class PATModelService(IMLModelService):
                 qkv_group = attn_group[qkv_name]  # type: ignore[index]
                 
                 if 'kernel:0' in qkv_group:  # type: ignore[operator]
-                    # TF shape: [embed_dim, num_heads, head_dim] = (96, 12, 96)
+                    # TF shape: [input_dim, num_heads, head_dim] 
+                    # e.g., PAT-M: (96, 12, 96) = [96, 12, 96]
                     tf_weight = qkv_group['kernel:0'][:]  # type: ignore[index]
                     
-                    # Reshape to [embed_dim, embed_dim] for PyTorch
-                    # TF stores as [input_dim, num_heads, head_dim]
-                    # PyTorch wants [embed_dim, embed_dim] 
-                    pytorch_weight = tf_weight.reshape(embed_dim, embed_dim)
+                    # Verify TF weight shape matches expectations
+                    expected_shape = (96, num_heads, head_dim)  # Input is always from 96-dim patch embedding
+                    if tf_weight.shape != expected_shape:
+                        logger.warning(
+                            f"Unexpected TF weight shape: {tf_weight.shape}, expected {expected_shape}"
+                        )
+                    
+                    # Reshape TF weight to PyTorch format
+                    # TF: [input_dim, num_heads, head_dim] → PyTorch: [embed_dim, input_dim]
+                    # First permute to [input_dim, head_dim, num_heads] then reshape to [embed_dim, input_dim]
+                    tf_reshaped = tf_weight.transpose(0, 2, 1)  # (96, 96, 12)
+                    pytorch_weight = tf_reshaped.reshape(embed_dim, 96)  # (1152, 96) for PAT-M
                     qkv_weights.append(pytorch_weight)
                 
                 if 'bias:0' in qkv_group:  # type: ignore[operator]
                     tf_bias = qkv_group['bias:0'][:]  # type: ignore[index]
-                    # TF shape: [num_heads, head_dim] = (12, 96)
-                    # Reshape to [embed_dim] for PyTorch
-                    pytorch_bias = tf_bias.reshape(embed_dim)
+                    # TF shape: [num_heads, head_dim] → PyTorch: [embed_dim]
+                    pytorch_bias = tf_bias.reshape(-1)  # Flatten to [embed_dim]
                     qkv_biases.append(pytorch_bias)
         
         # Combine Q, K, V into PyTorch's in_proj format
         if len(qkv_weights) == 3:
-            # Stack Q, K, V weights: [3*embed_dim, embed_dim]
-            combined_weight = np.concatenate(qkv_weights, axis=0)
+            # Stack Q, K, V weights: [3*embed_dim, input_dim]
+            combined_weight = np.concatenate(qkv_weights, axis=0)  # (3*1152, 96) for PAT-M
             state_dict[f'transformer_layers.{layer_idx}.attention.in_proj_weight'] = torch.from_numpy(combined_weight)
         
         if len(qkv_biases) == 3:
             # Stack Q, K, V biases: [3*embed_dim]
-            combined_bias = np.concatenate(qkv_biases, axis=0)
+            combined_bias = np.concatenate(qkv_biases, axis=0)  # (3*1152,) for PAT-M
             state_dict[f'transformer_layers.{layer_idx}.attention.in_proj_bias'] = torch.from_numpy(combined_bias)
         
         # Convert attention output projection
@@ -473,9 +484,12 @@ class PATModelService(IMLModelService):
             
             if 'kernel:0' in output_group:  # type: ignore[operator]
                 tf_weight = output_group['kernel:0'][:]  # type: ignore[index]
-                # TF shape: [num_heads, head_dim, embed_dim] = (12, 96, 96)
-                # PyTorch wants: [embed_dim, embed_dim] = (96, 96)
-                pytorch_weight = tf_weight.reshape(embed_dim, embed_dim).T
+                # TF shape: [num_heads, head_dim, output_dim] e.g., (12, 96, 96)
+                # PyTorch wants: [output_dim, embed_dim] e.g., (96, 1152)
+                
+                # Reshape: [num_heads, head_dim, output_dim] → [output_dim, num_heads * head_dim]
+                output_dim = tf_weight.shape[2]  # Should be 96
+                pytorch_weight = tf_weight.transpose(2, 0, 1).reshape(output_dim, embed_dim)  # (96, 1152)
                 
                 pytorch_name = f'transformer_layers.{layer_idx}.attention.out_proj.weight'
                 state_dict[pytorch_name] = torch.from_numpy(pytorch_weight)

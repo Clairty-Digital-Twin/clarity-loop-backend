@@ -17,8 +17,8 @@ need direct answers to questions like "How many steps did I walk this week?"
 """
 
 import logging
-from datetime import datetime, timedelta
-from typing import Any
+from datetime import datetime
+from typing import Any, Sequence
 
 import numpy as np
 
@@ -315,7 +315,7 @@ class ActivityProcessor:
             }
         ]
     
-    def _calculate_consistency_score(self, values: list[float]) -> float:
+    def _calculate_consistency_score(self, values: Sequence[int | float]) -> float:
         """Calculate activity consistency score.
         
         Args:
@@ -338,7 +338,7 @@ class ActivityProcessor:
         
         # Convert CV to consistency score (lower CV = higher consistency)
         # CV of 0 = score of 1, CV of 1 = score of 0
-        consistency_score = max(0.0, min(1.0, 1.0 - cv))
+        consistency_score = max(0.0, min(1.0, 1.0 - float(cv)))
         
         return consistency_score
     

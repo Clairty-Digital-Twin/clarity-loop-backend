@@ -47,6 +47,12 @@ logger = logging.getLogger(__name__)
 # Initialize router
 router = APIRouter(prefix="/health-data", tags=["Health Data"])
 
+# Query parameter constants to fix B008 linting issues
+_START_DATE_QUERY = Query(None, description="Filter from date (ISO 8601)")
+_END_DATE_QUERY = Query(None, description="Filter to date (ISO 8601)")
+_LEGACY_START_DATE_QUERY = Query(None, description="Filter from date")
+_LEGACY_END_DATE_QUERY = Query(None, description="Filter to date")
+
 
 # Helper functions to fix linting issues (TRY300/TRY301)
 def _raise_authorization_error(user_id: str) -> NoReturn:
@@ -334,12 +340,8 @@ async def list_health_data(  # noqa: PLR0913, PLR0917
     data_type: str | None = Query(
         None, description="Filter by data type (heart_rate, sleep, etc.)"
     ),
-    start_date: datetime | None = Query(
-        None, description="Filter from date (ISO 8601)"
-    ),
-    end_date: datetime | None = Query(
-        None, description="Filter to date (ISO 8601)"
-    ),
+    start_date: datetime | None = _START_DATE_QUERY,
+    end_date: datetime | None = _END_DATE_QUERY,
     source: str | None = Query(
         None, description="Filter by data source (apple_watch, fitbit, etc.)"
     ),
@@ -452,10 +454,8 @@ async def query_health_data_legacy(
     limit: int = Query(100, ge=1, le=1000, description="Maximum number of records"),
     offset: int = Query(0, ge=0, description="Number of records to skip"),
     metric_type: str | None = Query(None, description="Filter by metric type"),
-    start_date: datetime | None = Query(
-        None, description="Filter from date"
-    ),
-    end_date: datetime | None = Query(None, description="Filter to date"),  # noqa: B008
+    start_date: datetime | None = _LEGACY_START_DATE_QUERY,
+    end_date: datetime | None = _LEGACY_END_DATE_QUERY,
     service: HealthDataService = Depends(get_health_data_service),  # noqa: B008
 ) -> dict[str, Any]:
     """🔄 Legacy health data query endpoint (deprecated)."""

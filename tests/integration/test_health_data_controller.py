@@ -14,11 +14,9 @@ import pytest
 
 # Import interface adapters (Controllers)
 from clarity.api.v1.health_data import router, set_dependencies
-from clarity.core.interfaces import (
-    IAuthProvider,
-    IConfigProvider,
-    IHealthDataRepository,
-)
+from clarity.ports.auth_ports import IAuthProvider
+from clarity.ports.config_ports import IConfigProvider
+from clarity.ports.data_ports import IHealthDataRepository
 
 
 class TestHealthDataController:

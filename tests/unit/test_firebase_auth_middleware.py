@@ -24,7 +24,7 @@ from clarity.auth.firebase_auth import (
     FirebaseAuthProvider,
 )
 from clarity.core.config import MiddlewareConfig
-from clarity.core.interfaces import IAuthProvider
+from clarity.ports.auth_ports import IAuthProvider
 from clarity.models.auth import AuthError, Permission, UserContext, UserRole
 
 # Import Firebase auth for exception handling

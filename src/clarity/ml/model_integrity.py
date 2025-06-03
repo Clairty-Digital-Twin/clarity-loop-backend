@@ -327,7 +327,7 @@ def verify_startup_models() -> bool:
                 )
                 all_passed = False
 
-        except Exception as e:
+        except Exception:
             logger.exception("Error verifying %s", name)
             all_passed = False
 

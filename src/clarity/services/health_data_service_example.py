@@ -318,8 +318,8 @@ class EnhancedHealthDataService:
         """Verify that ML models are intact before processing."""
         try:
             return verify_startup_models()
-        except Exception as e:
-            self.logger.exception("Model integrity verification failed: %s", e)
+        except Exception:
+            self.logger.exception("Model integrity verification failed")
             return False
 
     @log_execution(level=logging.DEBUG)

@@ -246,9 +246,8 @@ class AppleWatchDataProcessor:
 
         result.heart_rate_series = minute_values
 
-    @staticmethod
-    async def _process_hrv(
-        self,  # noqa: ARG004
+    async def _process_hrv(  # noqa: PLR6301
+        self,
         samples: list[HealthDataPoint],
         result: ProcessedHealthData,
         start_time: datetime,
@@ -461,9 +460,8 @@ class AppleWatchDataProcessor:
                 # Change from second-to-last to last
                 result.vo2_max_trend = float(values[-1][1] - values[-2][1])
 
-    @staticmethod
-    async def _process_workouts(
-        self,  # noqa: ARG004
+    async def _process_workouts(  # noqa: PLR6301
+        self,
         samples: list[Any],
         result: ProcessedHealthData
     ) -> None:
@@ -485,9 +483,8 @@ class AppleWatchDataProcessor:
         if result.workout_count > 0:
             result.avg_workout_intensity = total_intensity / result.workout_count
 
-    @staticmethod
-    async def _process_ecg(
-        self,  # noqa: ARG004
+    async def _process_ecg(  # noqa: PLR6301
+        self,
         samples: list[Any],
         result: ProcessedHealthData
     ) -> None:
@@ -499,8 +496,7 @@ class AppleWatchDataProcessor:
                     result.afib_detected = True
                     break
 
-    @staticmethod
-    def _calculate_completeness(self, result: ProcessedHealthData) -> float:  # noqa: ARG004
+    def _calculate_completeness(self, result: ProcessedHealthData) -> float:  # noqa: PLR6301
         """Calculate percentage of data completeness."""
         expected_fields = [
             result.heart_rate_series,

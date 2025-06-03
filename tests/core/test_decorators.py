@@ -34,7 +34,8 @@ F = TypeVar("F", bound=Callable[..., Any])
 class TestLogExecution:
     """Test log_execution decorator."""
 
-    def test_log_execution_sync_function_basic(self, caplog: pytest.LogCaptureFixture) -> None:
+    @staticmethod
+    def test_log_execution_sync_function_basic(caplog: pytest.LogCaptureFixture) -> None:
         """Test basic logging for sync functions."""
         with caplog.at_level(logging.INFO):
             @log_execution()
@@ -48,7 +49,8 @@ class TestLogExecution:
         assert any("Executing" in msg and "test_function" in msg for msg in log_messages)
         assert any("Completed" in msg and "test_function" in msg for msg in log_messages)
 
-    def test_log_execution_with_args_and_result(self, caplog: pytest.LogCaptureFixture) -> None:
+    @staticmethod
+    def test_log_execution_with_args_and_result(caplog: pytest.LogCaptureFixture) -> None:
         """Test logging with arguments and result included."""
         with caplog.at_level(logging.INFO):
             @log_execution(include_args=True, include_result=True)
@@ -78,7 +80,8 @@ class TestLogExecution:
         assert any("Executing" in msg and "async_test_function" in msg for msg in log_messages)
         assert any("Completed" in msg and "async_test_function" in msg for msg in log_messages)
 
-    def test_log_execution_exception_handling(self, caplog: pytest.LogCaptureFixture) -> None:
+    @staticmethod
+    def test_log_execution_exception_handling(caplog: pytest.LogCaptureFixture) -> None:
         """Test logging when function raises exception."""
         with caplog.at_level(logging.INFO):
             @log_execution()
@@ -95,7 +98,8 @@ class TestLogExecution:
         assert "Error in" in log_messages
         assert "failing_function" in log_messages
 
-    async def test_log_execution_async_exception_handling(self, caplog: pytest.LogCaptureFixture) -> None:
+    @staticmethod
+    async def test_log_execution_async_exception_handling(caplog: pytest.LogCaptureFixture) -> None:
         """Test logging when async function raises exception."""
         with caplog.at_level(logging.INFO):
             @log_execution()
@@ -113,7 +117,8 @@ class TestLogExecution:
         assert "Error in" in log_messages
         assert "failing_async_function" in log_messages
 
-    def test_log_execution_custom_level(self, caplog: pytest.LogCaptureFixture) -> None:
+    @staticmethod
+    def test_log_execution_custom_level(caplog: pytest.LogCaptureFixture) -> None:
         """Test logging with custom log level."""
         with caplog.at_level(logging.DEBUG):
             @log_execution(level=logging.DEBUG)
@@ -131,7 +136,8 @@ class TestLogExecution:
 class TestMeasureExecutionTime:
     """Test measure_execution_time decorator."""
 
-    def test_measure_execution_time_basic(self, caplog: pytest.LogCaptureFixture) -> None:
+    @staticmethod
+    def test_measure_execution_time_basic(caplog: pytest.LogCaptureFixture) -> None:
         """Test basic execution time measurement."""
         with caplog.at_level(logging.INFO):
             @measure_execution_time()
@@ -146,7 +152,8 @@ class TestMeasureExecutionTime:
         assert "executed in" in log_messages
         assert "ms" in log_messages
 
-    def test_measure_execution_time_with_threshold(self, caplog: pytest.LogCaptureFixture) -> None:
+    @staticmethod
+    def test_measure_execution_time_with_threshold(caplog: pytest.LogCaptureFixture) -> None:
         """Test execution time measurement with threshold."""
         with caplog.at_level(logging.INFO):
             @measure_execution_time(threshold_ms=100.0)  # 100ms threshold

@@ -142,7 +142,7 @@ class PATPerformanceOptimizer:
             return
 
         try:
-            torch.jit.save(self.compiled_model, str(model_path))
+            torch.jit.save(self.compiled_model, str(model_path))  # type: ignore[no-untyped-call]
             logger.info("Compiled model saved to %s", model_path)
 
         except Exception:

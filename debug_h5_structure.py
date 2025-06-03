@@ -1,80 +1,86 @@
 #!/usr/bin/env python3
-"""Debug script to explore H5 file structure for PAT weights."""
+"""Debug script to explore H5 file structure for PAT models."""
 
+import logging
 from pathlib import Path
+from typing import Any
 
 import h5py
 
-
-def explore_h5_structure(filepath, max_depth=4):
-    """Recursively explore H5 file structure."""
-    print(f"\n=== Exploring {filepath} ===")
-
-    with h5py.File(filepath, 'r') as f:
-        def print_structure(name, obj, depth=0):
-            indent = "  " * depth
-            if isinstance(obj, h5py.Dataset):
-                print(f"{indent}{name}: Dataset {obj.shape} {obj.dtype}")
-                # Show first few values for small datasets
-                if hasattr(obj, 'size') and obj.size < 20:
-                    print(f"{indent}  Values: {obj[:]}")
-            elif isinstance(obj, h5py.Group):
-                print(f"{indent}{name}: Group")
-                if depth < max_depth:
-                    for key in obj.keys():
-                        print_structure(f"{name}/{key}", obj[key], depth + 1)
-
-        print("Root keys:", list(f.keys()))
-        for key in f.keys():
-            print_structure(key, f[key])
+# Set up logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 
-def analyze_weight_structure(filepath):
-    """Analyze the weight structure to understand mapping."""
-    print(f"\n=== Weight Analysis for {filepath} ===")
+def explore_h5_structure(file_path: str, max_depth: int = 2) -> None:
+    """Explore the structure of an H5 file."""
+    logger.info("=== H5 File Structure: %s ===", file_path)
+    
+    def print_structure(name: str, obj: Any, depth: int = 0) -> None:
+        indent = "  " * depth
+        if isinstance(obj, h5py.Dataset):
+            logger.info("%s%s: Dataset %s %s", indent, name, obj.shape, obj.dtype)
+        elif isinstance(obj, h5py.Group) and depth < max_depth:
+            logger.info("%s%s: Group", indent, name)
+            for key in obj:
+                if key is not None:
+                    print_structure(key, obj[key], depth + 1)
+    
+    with h5py.File(file_path, 'r') as f:
+        logger.info("Root keys: %s", list(f.keys()))
+        for key in f:
+            if key is not None:
+                print_structure(key, f[key])
 
-    with h5py.File(filepath, 'r') as f:
-        # Check for common TensorFlow/Keras patterns
+
+def analyze_weight_structure(file_path: str) -> None:
+    """Analyze the weight structure specifically for PAT models."""
+    logger.info("=== Weight Structure Analysis: %s ===", file_path)
+    
+    with h5py.File(file_path, 'r') as f:
+        # Check for top level model weights
         if 'top_level_model_weights' in f:
-            print("Found top_level_model_weights group")
             tlmw = f['top_level_model_weights']
             if isinstance(tlmw, h5py.Group):
-                print("TLMW keys:", list(tlmw.keys()))
+                logger.info("TLMW keys: %s", list(tlmw.keys()))
 
         # Check input layer
         if 'inputs' in f:
             inputs = f['inputs']
             if isinstance(inputs, h5py.Group):
-                print("Inputs group keys:", list(inputs.keys()))
-                for key in inputs.keys():
-                    if isinstance(inputs[key], h5py.Dataset):
-                        print(f"  {key}: {inputs[key].shape} {inputs[key].dtype}")
+                logger.info("Inputs group keys: %s", list(inputs.keys()))
+                for key in inputs:
+                    if key is not None and isinstance(inputs[key], h5py.Dataset):
+                        dataset = inputs[key]
+                        logger.info("  %s: %s %s", key, dataset.shape, dataset.dtype)
 
         # Check transformer layers
-        transformer_layers = [k for k in f.keys() if 'encoder_layer' in k]
-        print(f"Found {len(transformer_layers)} transformer layers")
+        transformer_layers = [k for k in f if k is not None and 'encoder_layer' in k]
+        logger.info("Found %d transformer layers", len(transformer_layers))
 
         if transformer_layers:
             layer = f[transformer_layers[0]]
             if isinstance(layer, h5py.Group):
-                print(f"First layer ({transformer_layers[0]}) keys:", list(layer.keys()))
+                logger.info("First layer (%s) keys: %s", transformer_layers[0], list(layer.keys()))
 
         # Check output layers
         if 'dense' in f:
             dense = f['dense']
             if isinstance(dense, h5py.Group):
-                print("Dense layer keys:", list(dense.keys()))
-                for key in dense.keys():
-                    if isinstance(dense[key], h5py.Dataset):
-                        print(f"  {key}: {dense[key].shape} {dense[key].dtype}")
+                logger.info("Dense layer keys: %s", list(dense.keys()))
+                for key in dense:
+                    if key is not None and isinstance(dense[key], h5py.Dataset):
+                        dataset = dense[key]
+                        logger.info("  %s: %s %s", key, dataset.shape, dataset.dtype)
 
 
-def main():
+def main() -> None:
     """Main function to analyze all PAT model files."""
     model_files = [
-        "models/PAT-S_29k_weights.h5",
+        "models/PAT-S_sleep_classification.h5",
+        "models/PAT-M_mental_health.h5",
         "models/PAT-M_29k_weights.h5",
-        "models/PAT-L_29k_weights.h5"
+        "models/PAT-L_circadian_rhythm.h5"
     ]
 
     for model_file in model_files:
@@ -82,10 +88,10 @@ def main():
             try:
                 explore_h5_structure(model_file, max_depth=3)
                 analyze_weight_structure(model_file)
-            except Exception as e:
-                print(f"Error analyzing {model_file}: {e}")
+            except (OSError, KeyError, ValueError) as e:
+                logger.error("Error analyzing %s: %s", model_file, e)
         else:
-            print(f"File not found: {model_file}")
+            logger.warning("File not found: %s", model_file)
 
 
 if __name__ == "__main__":

@@ -9,11 +9,10 @@ import logging
 from typing import Any
 
 import numpy as np
-import torch
 
 from clarity.ml.fusion_transformer import get_fusion_service
 from clarity.ml.pat_service import ActigraphyInput, get_pat_service
-from clarity.ml.preprocessing import ActigraphyDataPoint, HealthDataPreprocessor
+from clarity.ml.preprocessing import HealthDataPreprocessor
 from clarity.ml.processors.cardio_processor import CardioProcessor
 from clarity.ml.processors.respiration_processor import RespirationProcessor
 from clarity.models.health_data import HealthMetric
@@ -526,7 +525,7 @@ def _convert_raw_data_to_metrics(health_data: dict[str, Any]) -> list[HealthMetr
                     user_id=health_data.get("user_id", "unknown"),
                     metric_type=type_mapping[metric_type_str],
                     created_at=datetime.fromisoformat(
-                        sample.get("timestamp", datetime.now().isoformat())
+                        sample.get("timestamp", datetime.now(UTC).isoformat())
                     ),
                     biometric_data=biometric_data,
                     source_device=sample.get("source", "unknown"),

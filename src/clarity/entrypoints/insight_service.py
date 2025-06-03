@@ -4,7 +4,6 @@ Standalone FastAPI service for AI-powered health insight generation.
 Handles Pub/Sub push subscriptions for async insight generation using Gemini.
 """
 
-import asyncio
 import logging
 import os
 

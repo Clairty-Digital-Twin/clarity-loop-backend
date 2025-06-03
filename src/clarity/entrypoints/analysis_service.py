@@ -4,7 +4,6 @@ Standalone FastAPI service for health data analysis processing.
 Handles Pub/Sub push subscriptions for async health data processing.
 """
 
-import asyncio
 import logging
 import os
 

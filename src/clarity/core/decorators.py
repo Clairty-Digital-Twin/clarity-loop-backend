@@ -115,7 +115,7 @@ def measure_execution_time(
 
     def decorator(func: F) -> F:
         @functools.wraps(func)
-        def sync_wrapper(*args: Any, **kwargs: Any) -> Any:  # type: ignore[no-untyped-def]
+        def sync_wrapper(*args: Any, **kwargs: Any) -> Any:  # type: ignore[no-untyped-def, misc]
             func_name = f"{func.__module__}.{func.__qualname__}"
             start_time = time.perf_counter()
 

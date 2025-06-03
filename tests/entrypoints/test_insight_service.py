@@ -50,8 +50,6 @@ class TestInsightService:
     @patch("clarity.entrypoints.insight_service.uvicorn.run")
     def test_main_function_with_custom_env(self, mock_uvicorn_run: Mock) -> None:
         """Test main function with custom environment variables."""
-        from clarity.entrypoints.insight_service import main
-
         env_vars = {"HOST": "0.0.0.0", "PORT": "9001", "ENVIRONMENT": "development"}
 
         with patch.dict(os.environ, env_vars):
@@ -67,8 +65,6 @@ class TestInsightService:
 
     def test_health_endpoint_access(self) -> None:
         """Test that we can create a test client and the app responds."""
-        from clarity.entrypoints.insight_service import app
-
         with TestClient(app) as client:
             # The mounted insight_app should handle requests
             # We just test that the app is accessible

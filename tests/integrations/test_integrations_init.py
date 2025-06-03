@@ -1,21 +1,20 @@
 """Tests for integrations module initialization."""
 
+import clarity.integrations
+from clarity.integrations import AppleWatchDataProcessor, HealthKitClient
+
 
 class TestIntegrationsInit:
     """Test the integrations module initialization."""
 
     def test_module_imports(self) -> None:
         """Test that integration classes can be imported from the module."""
-        from clarity.integrations import AppleWatchDataProcessor, HealthKitClient
-
         # Test that classes are available
         assert AppleWatchDataProcessor is not None
         assert HealthKitClient is not None
 
     def test_module_all_exports(self) -> None:
         """Test that __all__ exports are correctly defined."""
-        import clarity.integrations
-
         # Check that __all__ contains expected exports
         assert hasattr(clarity.integrations, "__all__")
         assert "AppleWatchDataProcessor" in clarity.integrations.__all__
@@ -24,8 +23,6 @@ class TestIntegrationsInit:
 
     def test_classes_are_importable(self) -> None:
         """Test that the exported classes can actually be instantiated or inspected."""
-        from clarity.integrations import AppleWatchDataProcessor, HealthKitClient
-
         # Test that these are actually classes/callables
         assert callable(AppleWatchDataProcessor)
         assert callable(HealthKitClient)

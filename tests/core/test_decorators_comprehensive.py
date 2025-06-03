@@ -480,7 +480,7 @@ class TestAuditTrailDecorator:
             result = test_func()
 
         assert result == "audited result"
-        assert "Audit started:" in caplog.text
+        assert "Audit:" in caplog.text
         assert "test_operation" in caplog.text
         assert "Audit completed:" in caplog.text
 

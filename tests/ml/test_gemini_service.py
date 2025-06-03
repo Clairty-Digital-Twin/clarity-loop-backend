@@ -129,7 +129,7 @@ class TestGeminiServiceHealthInsights:
         mock_model = MagicMock()
         mock_model.generate_content.return_value = mock_response
 
-        with patch.object(service, 'initialize') as mock_init, \
+        with patch.object(service, 'initialize'), \
              patch('vertexai.generative_models.GenerativeModel', return_value=mock_model):
 
             service.is_initialized = True
@@ -144,8 +144,9 @@ class TestGeminiServiceHealthInsights:
             assert len(result.recommendations) == 2
             assert result.confidence_score == 0.85
 
+    @staticmethod
     @pytest.mark.asyncio
-    async def test_generate_health_insights_initialization_required(self, sample_insight_request):
+    async def test_generate_health_insights_initialization_required(sample_insight_request: HealthInsightRequest):
         """Test health insight generation when initialization is required."""
         service = GeminiService(project_id="test-project")
 
@@ -164,7 +165,7 @@ class TestGeminiServiceHealthInsights:
              patch('vertexai.generative_models.GenerativeModel', return_value=mock_model):
 
             # Simulate initialization during the call
-            async def init_side_effect() -> None:
+            def init_side_effect() -> None:
                 service.is_initialized = True
                 service.model = mock_model
 
@@ -175,20 +176,22 @@ class TestGeminiServiceHealthInsights:
             mock_init.assert_called_once()
             assert isinstance(result, HealthInsightResponse)
 
+    @staticmethod
     @pytest.mark.asyncio
-    async def test_generate_health_insights_model_not_initialized(self, sample_insight_request):
+    async def test_generate_health_insights_model_not_initialized(sample_insight_request: HealthInsightRequest):
         """Test health insight generation when model is not initialized after init."""
         service = GeminiService(project_id="test-project")
 
-        with patch.object(service, 'initialize') as mock_init:
+        with patch.object(service, 'initialize'):
             service.is_initialized = True
             service.model = None  # Model remains None after initialization
 
             with pytest.raises(RuntimeError, match="Gemini model not initialized"):
                 await service.generate_health_insights(sample_insight_request)
 
+    @staticmethod
     @pytest.mark.asyncio
-    async def test_generate_health_insights_generation_error(self, sample_insight_request):
+    async def test_generate_health_insights_generation_error(sample_insight_request: HealthInsightRequest):
         """Test health insight generation with generation error."""
         service = GeminiService(project_id="test-project")
 
@@ -201,8 +204,9 @@ class TestGeminiServiceHealthInsights:
         with pytest.raises(Exception, match="Generation failed"):
             await service.generate_health_insights(sample_insight_request)
 
+    @staticmethod
     @pytest.mark.asyncio
-    async def test_generate_health_insights_invalid_json_fallback(self, sample_insight_request):
+    async def test_generate_health_insights_invalid_json_fallback(sample_insight_request: HealthInsightRequest):
         """Test health insight generation with invalid JSON fallback."""
         service = GeminiService(project_id="test-project")
 

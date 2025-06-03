@@ -568,24 +568,24 @@ class TestHealthDataServiceErrorHandling(BaseServiceTestCase):
 
     @staticmethod
     def test_raise_validation_error_function() -> None:
-    """Test validation error helper function."""
-    # Act & Assert
-    with pytest.raises(HealthDataServiceError) as exc_info:
-        raise HealthDataServiceError("Health data validation failed: Test validation error", status_code=400)
-    
-    assert "Health data validation failed: Test validation error" in str(exc_info.value)
+        """Test validation error helper function."""
+        # Act & Assert
+        with pytest.raises(HealthDataServiceError) as exc_info:
+            raise HealthDataServiceError("Health data validation failed: Test validation error", status_code=400)
+        
+        assert "Health data validation failed: Test validation error" in str(exc_info.value)
         assert exc_info.value.status_code == 400
 
     @staticmethod
     def test_raise_data_not_found_error_function() -> None:
-    """Test data not found error helper function."""
+        """Test data not found error helper function."""
         # Arrange
-    processing_id = str(uuid4())
+        processing_id = str(uuid4())
 
-    # Act & Assert
-    with pytest.raises(DataNotFoundError) as exc_info:
-        raise DataNotFoundError(f"Processing job {processing_id} not found")
-    
+        # Act & Assert
+        with pytest.raises(DataNotFoundError) as exc_info:
+            raise DataNotFoundError(f"Processing job {processing_id} not found")
+        
         assert f"Processing job {processing_id} not found" in str(exc_info.value)
         assert exc_info.value.status_code == 404
 

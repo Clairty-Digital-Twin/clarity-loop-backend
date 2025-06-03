@@ -12,6 +12,7 @@ This directory contains API documentation for the CLARITY Digital Twin Platform 
 ## 🔐 Authentication
 
 All protected endpoints require Firebase JWT token:
+
 ```
 Authorization: Bearer <firebase-jwt-token>
 ```
@@ -19,24 +20,29 @@ Authorization: Bearer <firebase-jwt-token>
 ## 📋 Available API Endpoints
 
 ### Authentication
+
 - `POST /api/v1/auth/register` - User registration
 - `POST /api/v1/auth/login` - User login
 
 ### Health Data  
+
 - `POST /api/v1/health-data/upload` - Upload health metrics
 - `GET /api/v1/health-data/` - List health data (paginated)
 - `GET /api/v1/health-data/processing/{id}` - Check processing status
 - `DELETE /api/v1/health-data/{id}` - Delete health data
 
 ### AI Insights
+
 - `POST /api/v1/insights/generate` - Generate AI health insights
 - `GET /api/v1/insights/{insight_id}` - Get cached insight
 
 ### PAT Analysis
+
 - `GET /api/v1/pat/analyze` - PAT model analysis
 - `POST /api/v1/pat/batch-analyze` - Batch PAT analysis
 
 ### System
+
 - `GET /health` - Root health check
 - `GET /metrics` - Prometheus metrics
 

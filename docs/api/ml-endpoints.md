@@ -9,6 +9,7 @@ The ML API provides access to the Pretrained Actigraphy Transformer (PAT) model 
 ## Authentication
 
 All endpoints require Firebase JWT token:
+
 ```
 Authorization: Bearer <firebase-jwt-token>
 ```
@@ -23,6 +24,7 @@ Authorization: Bearer <firebase-jwt-token>
 ```
 
 **Response (200 OK):**
+
 ```json
 {
   "status": "success",
@@ -59,6 +61,7 @@ Authorization: Bearer <firebase-jwt-token>
 ```
 
 **Request Body:**
+
 ```json
 {
   "user_id": "firebase-uid-123",
@@ -86,12 +89,14 @@ Authorization: Bearer <firebase-jwt-token>
 ```
 
 **Analysis Types:**
+
 - `sleep_comprehensive` - Complete sleep analysis including stages, quality, efficiency
 - `circadian_rhythm` - Circadian pattern analysis and recommendations
 - `activity_patterns` - Daily activity pattern recognition
 - `sleep_wake_detection` - Basic sleep/wake classification
 
 **Response (202 Accepted):**
+
 ```json
 {
   "batch_id": "batch-uuid-ghi789",
@@ -110,6 +115,7 @@ Authorization: Bearer <firebase-jwt-token>
 ```
 
 **Response (200 OK):**
+
 ```json
 {
   "batch_id": "batch-uuid-ghi789", 
@@ -198,6 +204,7 @@ Authorization: Bearer <firebase-jwt-token>
 ```
 
 **Status Values:**
+
 - `queued` - Analysis requests queued for processing
 - `processing` - PAT model currently analyzing data
 - `completed` - All analyses completed successfully
@@ -207,6 +214,7 @@ Authorization: Bearer <firebase-jwt-token>
 ## Model Information
 
 ### PAT Model Details
+
 - **Model**: Pretrained Actigraphy Transformer (PAT-M)
 - **Weights**: 29k parameters (real Dartmouth weights)
 - **Training**: 29,000+ hours of actigraphy data
@@ -215,6 +223,7 @@ Authorization: Bearer <firebase-jwt-token>
 - **Output**: Sleep stages, circadian metrics, quality scores
 
 ### Research Background
+
 - **Paper**: "Foundation Models for Wearable Movement Data in Mental Health"
 - **Institution**: Dartmouth College
 - **Applications**: Sleep disorders, circadian rhythm analysis, mental health monitoring
@@ -223,6 +232,7 @@ Authorization: Bearer <firebase-jwt-token>
 ## Data Requirements
 
 ### Input Data Format
+
 ```json
 {
   "timestamp": "2025-01-15T10:30:00Z",
@@ -237,6 +247,7 @@ Authorization: Bearer <firebase-jwt-token>
 ```
 
 ### Quality Requirements
+
 - **Minimum Duration**: 24 hours for basic analysis, 7 days for comprehensive
 - **Sampling Rate**: 1Hz minimum, 30Hz preferred
 - **Data Completeness**: >85% for reliable results
@@ -247,6 +258,7 @@ Authorization: Bearer <firebase-jwt-token>
 ### Common Errors
 
 **400 Bad Request - Insufficient Data:**
+
 ```json
 {
   "error": "insufficient_data",
@@ -259,6 +271,7 @@ Authorization: Bearer <firebase-jwt-token>
 ```
 
 **422 Unprocessable Entity - Low Quality Data:**
+
 ```json
 {
   "error": "data_quality_low",

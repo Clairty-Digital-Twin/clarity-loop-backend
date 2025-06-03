@@ -264,7 +264,7 @@ class TestHealthDataServiceGCSIntegration(BaseServiceTestCase):
             metrics=metrics,
             upload_source="apple_health",
             client_timestamp=datetime.now(UTC),
-            sync_token="test_token_12345",
+            sync_token="test_token_12345",  # noqa: S106
         )
 
     @patch.dict(os.environ, {"HEALTHKIT_RAW_BUCKET": "test-bucket"})
@@ -298,7 +298,7 @@ class TestHealthDataServiceGCSIntegration(BaseServiceTestCase):
         assert data["user_id"] == str(health_data.user_id)
         assert data["processing_id"] == processing_id
         assert data["upload_source"] == "apple_health"
-        assert data["sync_token"] == "test_token_12345"
+        assert data["sync_token"] == "test_token_12345"  # noqa: S105
         assert data["metrics_count"] == 4
         assert len(data["metrics"]) == 4
 
@@ -541,7 +541,9 @@ class TestHealthDataServiceErrorHandling(BaseServiceTestCase):
         self.mock_repository.fail_on_method = "get_processing_status"
 
         # Act & Assert
-        with pytest.raises(HealthDataServiceError, match="Failed to get processing status"):
+        with pytest.raises(
+            HealthDataServiceError, match="Failed to get processing status"
+        ):
             await self.service.get_processing_status(processing_id, user_id)
 
     @pytest.mark.asyncio
@@ -552,7 +554,9 @@ class TestHealthDataServiceErrorHandling(BaseServiceTestCase):
         self.mock_repository.fail_on_method = "get_user_health_data"
 
         # Act & Assert
-        with pytest.raises(HealthDataServiceError, match="Failed to retrieve health data"):
+        with pytest.raises(
+            HealthDataServiceError, match="Failed to retrieve health data"
+        ):
             await self.service.get_user_health_data(user_id)
 
     @pytest.mark.asyncio
@@ -563,17 +567,20 @@ class TestHealthDataServiceErrorHandling(BaseServiceTestCase):
         self.mock_repository.fail_on_method = "delete_health_data"
 
         # Act & Assert
-        with pytest.raises(HealthDataServiceError, match="Failed to delete health data"):
+        with pytest.raises(
+            HealthDataServiceError, match="Failed to delete health data"
+        ):
             await self.service.delete_health_data(user_id)
 
     @staticmethod
     def test_raise_validation_error_function() -> None:
         """Test validation error helper function."""
         # Act & Assert
+        msg = "Health data validation failed: Test validation error"
         with pytest.raises(HealthDataServiceError) as exc_info:
-            raise HealthDataServiceError("Health data validation failed: Test validation error", status_code=400)
-        
-        assert "Health data validation failed: Test validation error" in str(exc_info.value)
+            raise HealthDataServiceError(msg, status_code=400)
+
+        assert msg in str(exc_info.value)
         assert exc_info.value.status_code == 400
 
     @staticmethod
@@ -583,10 +590,11 @@ class TestHealthDataServiceErrorHandling(BaseServiceTestCase):
         processing_id = str(uuid4())
 
         # Act & Assert
+        msg = f"Processing job {processing_id} not found"
         with pytest.raises(DataNotFoundError) as exc_info:
-            raise DataNotFoundError(f"Processing job {processing_id} not found")
-        
-        assert f"Processing job {processing_id} not found" in str(exc_info.value)
+            raise DataNotFoundError(msg)
+
+        assert msg in str(exc_info.value)
         assert exc_info.value.status_code == 404
 
 

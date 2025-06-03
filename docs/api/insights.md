@@ -9,6 +9,7 @@ The AI Insights API generates natural language health insights using Google's Ge
 ## Authentication
 
 All endpoints require Firebase JWT token:
+
 ```
 Authorization: Bearer <firebase-jwt-token>
 ```
@@ -24,6 +25,7 @@ Authorization: Bearer <firebase-jwt-token>
 ```
 
 **Request Body:**
+
 ```json
 {
   "user_id": "firebase-uid-123",
@@ -52,6 +54,7 @@ Authorization: Bearer <firebase-jwt-token>
 ```
 
 **Analysis Types:**
+
 - `comprehensive` - Full multi-modal health analysis (default)
 - `sleep_focused` - Sleep patterns and recommendations
 - `activity_focused` - Physical activity and fitness insights
@@ -59,6 +62,7 @@ Authorization: Bearer <firebase-jwt-token>
 - `quick_summary` - Brief daily/weekly summary
 
 **Response (201 Created):**
+
 ```json
 {
   "insight_id": "insight-uuid-def789",
@@ -78,6 +82,7 @@ Authorization: Bearer <firebase-jwt-token>
 ```
 
 **Response (200 OK):**
+
 ```json
 {
   "insight_id": "insight-uuid-def789",
@@ -141,6 +146,7 @@ Authorization: Bearer <firebase-jwt-token>
 ```
 
 **Status Values:**
+
 - `pending` - Insight request queued
 - `generating` - AI model processing data
 - `completed` - Insight generated successfully
@@ -155,12 +161,14 @@ Authorization: Bearer <firebase-jwt-token>
 ```
 
 **Query Parameters:**
+
 - `limit` (optional): Number of insights (1-100, default: 20)
 - `analysis_type` (optional): Filter by analysis type
 - `start_date` (optional): Filter insights generated after date
 - `status` (optional): Filter by status
 
 **Response (200 OK):**
+
 ```json
 {
   "insights": [
@@ -183,12 +191,14 @@ Authorization: Bearer <firebase-jwt-token>
 ## AI Model Integration
 
 ### Gemini 2.5 Pro Features
+
 - **Multi-modal Analysis**: Processes numerical data + contextual information
 - **Personalization**: Adapts insights to user goals and medical history
 - **Natural Language**: Generates human-readable, actionable recommendations
 - **Medical Knowledge**: Incorporates current health and wellness research
 
 ### Data Sources
+
 - **PAT Model Output**: Sleep and circadian rhythm analysis
 - **Health Metrics**: Heart rate, steps, activity levels
 - **Historical Patterns**: Long-term trends and correlations
@@ -199,6 +209,7 @@ Authorization: Bearer <firebase-jwt-token>
 ### Common Error Responses
 
 **400 Bad Request:**
+
 ```json
 {
   "error": "validation_error",
@@ -211,6 +222,7 @@ Authorization: Bearer <firebase-jwt-token>
 ```
 
 **429 Too Many Requests:**
+
 ```json
 {
   "error": "rate_limit_exceeded",
@@ -220,6 +232,7 @@ Authorization: Bearer <firebase-jwt-token>
 ```
 
 **503 Service Unavailable:**
+
 ```json
 {
   "error": "ai_service_unavailable",

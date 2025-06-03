@@ -1,4 +1,5 @@
 # ACTUAL API REFERENCE
+
 *Accurate documentation based on real codebase implementation*
 **Generated:** December 6, 2025
 
@@ -7,12 +8,15 @@
 These endpoints are **actually implemented** and tested in the codebase (unlike the outdated docs/api/ directory).
 
 ### Base URL
+
 ```
 http://localhost:8000  (development)
 ```
 
 ### Authentication
+
 All protected endpoints require:
+
 ```
 Authorization: Bearer <firebase-jwt-token>
 ```
@@ -22,12 +26,14 @@ Authorization: Bearer <firebase-jwt-token>
 ## 🔐 AUTHENTICATION ENDPOINTS
 
 ### Register User
+
 ```http
 POST /api/v1/auth/register
 Content-Type: application/json
 ```
 
 **Request Body:**
+
 ```json
 {
   "email": "user@example.com",
@@ -36,6 +42,7 @@ Content-Type: application/json
 ```
 
 **Response:**
+
 ```json
 {
   "message": "User registered successfully",
@@ -44,12 +51,14 @@ Content-Type: application/json
 ```
 
 ### Login User  
+
 ```http
 POST /api/v1/auth/login
 Content-Type: application/json
 ```
 
 **Request Body:**
+
 ```json
 {
   "email": "user@example.com", 
@@ -58,6 +67,7 @@ Content-Type: application/json
 ```
 
 **Response:**
+
 ```json
 {
   "access_token": "firebase-jwt-token",
@@ -71,6 +81,7 @@ Content-Type: application/json
 ## 📊 HEALTH DATA ENDPOINTS
 
 ### Upload Health Data
+
 ```http  
 POST /api/v1/health-data/upload
 Content-Type: application/json
@@ -78,6 +89,7 @@ Authorization: Bearer <firebase-jwt-token>
 ```
 
 **Request Body:**
+
 ```json
 {
   "user_id": "firebase-uid-12345",
@@ -103,6 +115,7 @@ Authorization: Bearer <firebase-jwt-token>
 ```
 
 **Response:**
+
 ```json
 {
   "processing_id": "proc-uuid-12345",
@@ -112,12 +125,14 @@ Authorization: Bearer <firebase-jwt-token>
 ```
 
 ### Get Processing Status
+
 ```http
 GET /api/v1/health-data/processing/{processing_id}
 Authorization: Bearer <firebase-jwt-token>
 ```
 
 **Response:**
+
 ```json
 {
   "processing_id": "proc-uuid-12345",
@@ -131,12 +146,14 @@ Authorization: Bearer <firebase-jwt-token>
 ```
 
 ### List Health Data
+
 ```http
 GET /api/v1/health-data/?limit=50&cursor=xyz
 Authorization: Bearer <firebase-jwt-token>
 ```
 
 **Query Parameters:**
+
 - `limit`: Number of items (1-1000, default: 50)
 - `cursor`: Pagination cursor (optional)
 - `data_type`: Filter by type (optional)
@@ -144,6 +161,7 @@ Authorization: Bearer <firebase-jwt-token>
 - `end_date`: ISO 8601 date (optional)
 
 **Response:**
+
 ```json
 {
   "data": [
@@ -164,12 +182,14 @@ Authorization: Bearer <firebase-jwt-token>
 ```
 
 ### Delete Health Data
+
 ```http
 DELETE /api/v1/health-data/{processing_id}
 Authorization: Bearer <firebase-jwt-token>
 ```
 
 **Response:**
+
 ```json
 {
   "message": "Health data deleted successfully",
@@ -183,16 +203,19 @@ Authorization: Bearer <firebase-jwt-token>
 ## 🤖 PAT ANALYSIS ENDPOINTS
 
 ### Analyze Data
+
 ```http
 GET /api/v1/pat/analyze?data_type=actigraphy&days=7
 Authorization: Bearer <firebase-jwt-token>
 ```
 
 **Query Parameters:**
+
 - `data_type`: Type of analysis (actigraphy, heart_rate)
 - `days`: Number of days to analyze (1-30)
 
 **Response:**
+
 ```json
 {
   "analysis_id": "analysis-uuid-456",
@@ -207,6 +230,7 @@ Authorization: Bearer <firebase-jwt-token>
 ```
 
 ### Batch Analyze  
+
 ```http
 POST /api/v1/pat/batch-analyze
 Content-Type: application/json
@@ -214,6 +238,7 @@ Authorization: Bearer <firebase-jwt-token>
 ```
 
 **Request Body:**
+
 ```json
 {
   "analysis_requests": [
@@ -233,6 +258,7 @@ Authorization: Bearer <firebase-jwt-token>
 ## 🧠 GEMINI INSIGHTS ENDPOINTS
 
 ### Generate Insights
+
 ```http
 POST /api/v1/insights/generate
 Content-Type: application/json
@@ -240,6 +266,7 @@ Authorization: Bearer <firebase-jwt-token>
 ```
 
 **Request Body:**
+
 ```json
 {
   "analysis_results": {
@@ -253,6 +280,7 @@ Authorization: Bearer <firebase-jwt-token>
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -274,12 +302,14 @@ Authorization: Bearer <firebase-jwt-token>
 ```
 
 ### Get Cached Insight
+
 ```http
 GET /api/v1/insights/{insight_id}
 Authorization: Bearer <firebase-jwt-token>
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -296,6 +326,7 @@ Authorization: Bearer <firebase-jwt-token>
 ## 📈 METRICS ENDPOINTS
 
 ### Prometheus Metrics
+
 ```http
 GET /metrics
 ```
@@ -307,11 +338,13 @@ GET /metrics
 ## 🔍 HEALTH CHECK ENDPOINTS
 
 ### Root Health Check
+
 ```http
 GET /health
 ```
 
 **Response:**
+
 ```json
 {
   "status": "healthy",
@@ -322,11 +355,13 @@ GET /health
 ```
 
 ### Health Data Service Health
+
 ```http
 GET /api/v1/health-data/health
 ```
 
 **Response:**
+
 ```json
 {
   "status": "healthy",
@@ -342,27 +377,32 @@ GET /api/v1/health-data/health
 ## 🔧 IMPLEMENTATION NOTES
 
 ### Authentication
+
 - Uses Firebase Authentication with JWT tokens
 - All protected endpoints require valid bearer token
 - User context extracted from JWT claims
 
 ### Data Models
+
 - All requests/responses use Pydantic models
 - Automatic validation and serialization
 - Type hints throughout codebase
 
 ### Error Handling
+
 - RFC 7807 Problem Details format
 - Structured error responses
 - Proper HTTP status codes
 
 ### Async Processing
+
 - Health data upload → immediate response
 - Background processing via Pub/Sub
 - Results delivered via Firestore real-time updates
 
 ### Testing
-- 729 tests passing (59% coverage) 
+
+- 729 tests passing (59% coverage)
 - Unit and integration tests
 - API endpoint tests included
 
@@ -377,6 +417,7 @@ GET /api/v1/health-data/health
 5. **Gemini integration is FUNCTIONAL** (not just planned)
 
 For the most up-to-date information, refer to:
+
 - FastAPI automatic docs: `http://localhost:8000/docs`
 - Test files: `tests/api/v1/`
 - Route definitions: `src/clarity/api/v1/`

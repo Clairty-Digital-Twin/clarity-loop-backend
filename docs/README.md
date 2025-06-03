@@ -1,15 +1,16 @@
 # Clarity Loop Backend Documentation
 
 > ⚠️ **CRITICAL WARNING: DOCUMENTATION SEVERELY OUTDATED** ⚠️
-> 
+>
 > Most documentation in this directory is **NOT ACCURATE** and does not reflect the actual codebase implementation. The documentation appears to be early planning documents that were never updated.
-> 
+>
 > **For ACCURATE information:**
+>
 > - See `ACTUAL_API_REFERENCE.md` in project root
 > - Use FastAPI docs: `http://localhost:8000/docs`
 > - Review actual code in `src/clarity/`
 > - Check `DOCUMENTATION_AUDIT_FINDINGS.md` for detailed analysis
-> 
+>
 > **Do NOT rely on this documentation** until it's been verified and updated.
 
 This directory contains comprehensive documentation for the Clarity Loop Backend project.

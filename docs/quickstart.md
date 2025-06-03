@@ -15,12 +15,14 @@ Get the CLARITY Digital Twin Platform running locally in under 10 minutes.
 ## ⚡ 5-Minute Setup
 
 ### 1. Clone Repository
+
 ```bash
 git clone <repository-url>
 cd clarity-loop-backend
 ```
 
 ### 2. Environment Setup
+
 ```bash
 # Create virtual environment
 python -m venv venv
@@ -31,6 +33,7 @@ pip install -r requirements.txt
 ```
 
 ### 3. Configure Environment
+
 ```bash
 # Copy environment template
 cp .env.example .env
@@ -42,6 +45,7 @@ cp .env.example .env
 ```
 
 ### 4. Start Application
+
 ```bash
 # Option A: Docker (Recommended)
 docker-compose up -d
@@ -51,6 +55,7 @@ python main.py
 ```
 
 ### 5. Verify Installation
+
 ```bash
 # Health check
 curl http://localhost:8000/health
@@ -62,6 +67,7 @@ open http://localhost:8000/docs
 ## 🎯 First API Calls
 
 ### Register a User
+
 ```bash
 curl -X POST "http://localhost:8000/api/v1/auth/register" \
   -H "Content-Type: application/json" \
@@ -72,6 +78,7 @@ curl -X POST "http://localhost:8000/api/v1/auth/register" \
 ```
 
 ### Login and Get Token
+
 ```bash
 curl -X POST "http://localhost:8000/api/v1/auth/login" \
   -H "Content-Type: application/json" \
@@ -82,6 +89,7 @@ curl -X POST "http://localhost:8000/api/v1/auth/login" \
 ```
 
 ### Upload Health Data
+
 ```bash
 # Use token from login response
 TOKEN="your-jwt-token-here"
@@ -105,6 +113,7 @@ curl -X POST "http://localhost:8000/api/v1/health-data/upload" \
 ```
 
 ### Generate AI Insights
+
 ```bash
 curl -X POST "http://localhost:8000/api/v1/insights/generate" \
   -H "Authorization: Bearer $TOKEN" \
@@ -128,6 +137,7 @@ curl -X POST "http://localhost:8000/api/v1/insights/generate" \
 ## 📊 Verify ML Models
 
 ### Check PAT Model
+
 ```bash
 curl "http://localhost:8000/api/v1/pat/analyze"
 ```
@@ -135,7 +145,9 @@ curl "http://localhost:8000/api/v1/pat/analyze"
 Should return PAT model info and capabilities.
 
 ### Test AI Insights
+
 Use the insights endpoint above - it integrates:
+
 - PAT model for sleep analysis
 - Gemini AI for natural language insights
 - Real health data processing
@@ -158,6 +170,7 @@ pytest tests/ml/test_pat_processor.py
 ## 🔧 Development Setup
 
 ### Code Quality Tools
+
 ```bash
 # Linting
 ruff check .
@@ -170,6 +183,7 @@ ruff check --fix .
 ```
 
 ### Database Setup (Local Development)
+
 ```bash
 # Start Firestore emulator
 gcloud emulators firestore start
@@ -182,6 +196,7 @@ python main.py
 ## 📱 What's Working
 
 ### ✅ Core Features
+
 - **Authentication**: Firebase-based user management
 - **Health Data**: Upload, storage, retrieval with pagination
 - **PAT Analysis**: Real Dartmouth weights, 89% test coverage
@@ -190,6 +205,7 @@ python main.py
 - **Real-time Updates**: Firestore listeners
 
 ### ✅ Production Ready
+
 - **729 tests passing** (59.28% coverage)
 - **Clean architecture** with dependency injection
 - **Type safety** with comprehensive mypy checking
@@ -197,6 +213,7 @@ python main.py
 - **Scalability** designed for Google Cloud deployment
 
 ### ⚠️ Areas for Improvement
+
 - **Test coverage**: 59% → 85% target (main focus area)
 - **Error handling**: Some edge cases need more coverage
 - **Documentation**: Some API docs were outdated (now fixed)
@@ -204,12 +221,14 @@ python main.py
 ## 🚀 Next Steps
 
 ### For Development
+
 1. **Increase test coverage** - focus on API error scenarios
 2. **Add monitoring** - enhance metrics and alerting  
 3. **Performance tuning** - optimize ML inference times
 4. **New features** - sleep processor module
 
 ### For Production
+
 1. **Set up Google Cloud project**
 2. **Configure Firebase project**
 3. **Deploy to Cloud Run**
@@ -220,11 +239,13 @@ python main.py
 ### Common Issues
 
 **Import Errors:**
+
 ```bash
 export PYTHONPATH="${PYTHONPATH}:${PWD}/src"
 ```
 
 **Firebase Authentication Issues:**
+
 ```bash
 # Verify credentials
 gcloud auth application-default login
@@ -234,6 +255,7 @@ ls -la path/to/service-account.json
 ```
 
 **Model Loading Issues:**
+
 ```bash
 # Verify PAT model exists
 ls -la models/pat/PAT-M_29k_weights.h5
@@ -243,6 +265,7 @@ python -c "import tensorflow; print(tensorflow.__version__)"
 ```
 
 **Port Already in Use:**
+
 ```bash
 # Find and kill process
 lsof -ti:8000 | xargs kill -9

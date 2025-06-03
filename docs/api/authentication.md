@@ -16,6 +16,7 @@ Content-Type: application/json
 ```
 
 **Request Body:**
+
 ```json
 {
   "email": "user@example.com",
@@ -24,6 +25,7 @@ Content-Type: application/json
 ```
 
 **Response (201 Created):**
+
 ```json
 {
   "message": "User registered successfully",
@@ -32,6 +34,7 @@ Content-Type: application/json
 ```
 
 **Error Responses:**
+
 - `400` - Invalid email format or weak password
 - `409` - Email already exists
 - `500` - Internal server error
@@ -44,6 +47,7 @@ Content-Type: application/json
 ```
 
 **Request Body:**
+
 ```json
 {
   "email": "user@example.com",
@@ -52,6 +56,7 @@ Content-Type: application/json
 ```
 
 **Response (200 OK):**
+
 ```json
 {
   "access_token": "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9...",
@@ -62,6 +67,7 @@ Content-Type: application/json
 ```
 
 **Error Responses:**
+
 - `401` - Invalid email/password
 - `400` - Missing required fields
 - `500` - Internal server error

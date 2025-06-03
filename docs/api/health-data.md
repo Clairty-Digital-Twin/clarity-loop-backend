@@ -9,6 +9,7 @@ The Health Data API handles upload, storage, and retrieval of health metrics fro
 ## Authentication
 
 All endpoints require Firebase JWT token:
+
 ```
 Authorization: Bearer <firebase-jwt-token>
 ```
@@ -24,6 +25,7 @@ Authorization: Bearer <firebase-jwt-token>
 ```
 
 **Request Body:**
+
 ```json
 {
   "user_id": "firebase-uid-123",
@@ -54,6 +56,7 @@ Authorization: Bearer <firebase-jwt-token>
 ```
 
 **Response (201 Created):**
+
 ```json
 {
   "processing_id": "proc-uuid-abc123",
@@ -65,6 +68,7 @@ Authorization: Bearer <firebase-jwt-token>
 ```
 
 **Supported Metric Types:**
+
 - `heart_rate` (bpm)
 - `step_count` (steps)
 - `sleep_analysis` (hours)
@@ -80,6 +84,7 @@ Authorization: Bearer <firebase-jwt-token>
 ```
 
 **Response (200 OK):**
+
 ```json
 {
   "processing_id": "proc-uuid-abc123",
@@ -96,6 +101,7 @@ Authorization: Bearer <firebase-jwt-token>
 ```
 
 **Status Values:**
+
 - `pending` - Upload received, processing queued
 - `processing` - Data currently being analyzed  
 - `completed` - Processing finished successfully
@@ -110,6 +116,7 @@ Authorization: Bearer <firebase-jwt-token>
 ```
 
 **Query Parameters:**
+
 - `limit` (optional): Number of items (1-1000, default: 50)
 - `cursor` (optional): Pagination cursor
 - `offset` (optional): Alternative to cursor for pagination
@@ -119,6 +126,7 @@ Authorization: Bearer <firebase-jwt-token>
 - `source` (optional): Filter by data source
 
 **Response (200 OK):**
+
 ```json
 {
   "data": [
@@ -153,6 +161,7 @@ Authorization: Bearer <firebase-jwt-token>
 ```
 
 **Response (200 OK):**
+
 ```json
 {
   "message": "Health data deleted successfully",
@@ -168,6 +177,7 @@ GET /api/v1/health-data/health
 ```
 
 **Response (200 OK):**
+
 ```json
 {
   "status": "healthy",

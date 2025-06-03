@@ -26,6 +26,7 @@ POST /api/v1/auth/register
 ```
 
 **Automatic Setup:**
+
 - Firebase user account created
 - Unique user ID (Firebase UID) assigned
 - User profile initialized in Firestore
@@ -37,6 +38,7 @@ POST /api/v1/auth/register
 User profiles are automatically managed by the system:
 
 **Profile Data Stored:**
+
 ```json
 {
   "user_id": "firebase-uid-123",
@@ -68,12 +70,14 @@ User profiles are automatically managed by the system:
 ### Data Access Control
 
 **User Isolation:**
+
 - Each user can only access their own data
 - Firebase UID used for all database queries
 - Strict authorization on all endpoints
 - No cross-user data access possible
 
 **API Authorization Pattern:**
+
 ```python
 # Every protected endpoint validates user identity
 async def get_user_health_data(
@@ -87,12 +91,14 @@ async def get_user_health_data(
 ## System Integration
 
 ### Health Data Management
+
 - **Upload Tracking**: Monitor health data uploads per user
 - **Processing Status**: Track analysis job status
 - **Data Quality**: Maintain data completeness metrics
 - **Storage Management**: Organize user data in Cloud Storage
 
 ### AI Insights Integration
+
 - **Personalization**: Generate insights specific to user
 - **Context Awareness**: Use user goals and preferences
 - **History Tracking**: Maintain insight generation history
@@ -101,12 +107,14 @@ async def get_user_health_data(
 ### Privacy & Security
 
 **Data Protection:**
+
 - All user data encrypted at rest and in transit
 - HIPAA-ready infrastructure design
 - Minimal data collection principle
 - User data deletion capabilities
 
 **Access Controls:**
+
 - Firebase security rules enforce user isolation
 - API rate limiting per user
 - Audit logging for all data access
@@ -115,14 +123,18 @@ async def get_user_health_data(
 ## User Data Export/Deletion
 
 ### Data Export (Future)
+
 *Planned feature for GDPR compliance:*
+
 - Export all user health data
 - Include generated insights and analysis
 - Provide machine-readable format
 - Maintain data integrity
 
 ### Account Deletion (Future)
+
 *Planned feature for user privacy:*
+
 - Delete Firebase user account
 - Remove all health data from storage
 - Delete generated insights and analysis
@@ -131,18 +143,21 @@ async def get_user_health_data(
 ## Implementation Details
 
 ### Current Implementation
+
 - **Authentication**: `src/clarity/api/v1/auth.py`
 - **User Context**: Firebase JWT token validation
 - **Data Isolation**: User ID-based filtering
 - **Profile Storage**: Firestore collections
 
 ### Firebase Configuration
+
 - **Project**: CLARITY Digital Twin Firebase project
 - **Authentication**: Email/password and future OAuth providers
 - **Firestore**: User profiles and settings
 - **Security Rules**: Strict user-based access control
 
 ### Key Dependencies
+
 - `firebase-admin`: Server-side Firebase integration
 - `pydantic`: Data validation and serialization
 - `fastapi-users`: User management utilities (future)
@@ -150,6 +165,7 @@ async def get_user_health_data(
 ## API Examples
 
 ### Get Current User Context
+
 ```python
 # Available in all protected endpoints
 @router.get("/profile")
@@ -162,6 +178,7 @@ async def get_user_profile(
 ```
 
 ### User Data Query Pattern
+
 ```python
 # All user data queries follow this pattern
 user_health_data = await db.collection("health_data")\
@@ -174,6 +191,7 @@ user_health_data = await db.collection("health_data")\
 ## Testing
 
 User management is thoroughly tested:
+
 - **Authentication Tests**: `tests/auth/`
 - **Authorization Tests**: Validate user isolation
 - **Integration Tests**: End-to-end user flows

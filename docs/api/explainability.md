@@ -53,6 +53,7 @@ Every AI-generated insight includes source attribution:
 All ML predictions include confidence scores:
 
 **PAT Model Outputs:**
+
 ```json
 {
   "sleep_analysis": {
@@ -74,6 +75,7 @@ All ML predictions include confidence scores:
 ```
 
 **Gemini AI Insights:**
+
 ```json
 {
   "recommendations": [
@@ -173,11 +175,13 @@ Every analysis includes data quality assessment:
 ## Regulatory Compliance
 
 ### Healthcare AI Transparency
+
 - **FDA Guidelines**: Following emerging FDA guidance on AI/ML in medical devices
 - **Clinical Decision Support**: Designed for regulatory transparency requirements
 - **Audit Trail**: Complete record of AI decision-making process
 
 ### Privacy-Preserving Explainability
+
 - **Data Minimization**: Explanations don't expose raw personal data
 - **Aggregated Insights**: Focus on patterns, not individual data points
 - **User Control**: Users can adjust explanation detail levels
@@ -185,6 +189,7 @@ Every analysis includes data quality assessment:
 ## Implementation Architecture
 
 ### Current Components
+
 ```
 User Request
      ↓
@@ -198,6 +203,7 @@ Explainable Response
 ```
 
 ### Future Architecture (Planned)
+
 ```
 User Request
      ↓
@@ -242,6 +248,7 @@ async with httpx.AsyncClient() as client:
 ### Confidence Score Interpretation
 
 **Confidence Levels:**
+
 - `0.9-1.0`: Very High - Strong evidence, reliable prediction
 - `0.8-0.9`: High - Good evidence, trustworthy prediction
 - `0.7-0.8`: Moderate - Fair evidence, reasonable prediction
@@ -251,12 +258,14 @@ async with httpx.AsyncClient() as client:
 ## User Interface Integration
 
 ### Dashboard Transparency
+
 - **Confidence Indicators**: Visual confidence meters
 - **Source Attribution**: Clear data source labels
 - **Quality Scores**: Data reliability indicators
 - **Processing Info**: When and how insights were generated
 
 ### Interactive Explanations (Future)
+
 - **Drill-down Analysis**: Explore specific recommendation reasoning
 - **What-if Scenarios**: See how different inputs affect recommendations
 - **Historical Explanation**: Track how explanations change over time
@@ -264,12 +273,14 @@ async with httpx.AsyncClient() as client:
 ## Testing & Validation
 
 ### Explanation Quality Tests
+
 - **Consistency**: Same inputs produce consistent explanations
 - **Accuracy**: Explanations accurately reflect model behavior
 - **Completeness**: All major factors included in explanations
 - **Understandability**: Non-technical users can comprehend explanations
 
 ### Implementation Details
+
 - **Location**: Distributed across API endpoints (transparency features)
 - **Future Location**: `src/clarity/api/v1/explainability.py` (planned)
 - **Dependencies**: SHAP, LIME (planned), custom attribution logic

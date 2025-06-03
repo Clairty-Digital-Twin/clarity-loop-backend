@@ -11,6 +11,7 @@ CLARITY is a digital twin platform for personalized health insights, combining w
 ### ✅ **PRODUCTION READY** (729 tests passing)
 
 **Core Infrastructure:**
+
 - ✅ FastAPI-based REST API with clean architecture
 - ✅ Firebase Authentication with JWT token security
 - ✅ Google Cloud integration (Storage, Firestore, Pub/Sub)
@@ -18,6 +19,7 @@ CLARITY is a digital twin platform for personalized health insights, combining w
 - ✅ Comprehensive test suite (729 tests, 59.28% coverage)
 
 **Health Data Pipeline:**
+
 - ✅ Health metric upload API with validation
 - ✅ Apple HealthKit data ingestion capabilities
 - ✅ Cloud Storage for raw health data
@@ -25,6 +27,7 @@ CLARITY is a digital twin platform for personalized health insights, combining w
 - ✅ Real-time data sync with Firestore
 
 **AI/ML Integration:**
+
 - ✅ PAT Model integration (Dartmouth weights, 89% test coverage)
 - ✅ Gemini 2.5 Pro for natural language insights
 - ✅ Background ML processing pipeline
@@ -33,6 +36,7 @@ CLARITY is a digital twin platform for personalized health insights, combining w
 ### 🚧 **IN PROGRESS**
 
 **Quality Improvements:**
+
 - ⚠️ Test coverage improvement (59% → 85% target)
 - ⚠️ API error scenario testing enhancement
 - ⚠️ Async processing test coverage (20-27% currently)
@@ -40,12 +44,14 @@ CLARITY is a digital twin platform for personalized health insights, combining w
 ### 📋 **PLANNED FEATURES**
 
 **Advanced Analytics:**
+
 - 📋 Sleep processor module for advanced sleep analysis
 - 📋 Circadian rhythm optimization recommendations
 - 📋 Longitudinal health trend analysis
 - 📋 Personalized intervention recommendations
 
 **User Experience:**
+
 - 📋 iOS mobile application
 - 📋 Web dashboard for health insights
 - 📋 Real-time notification system
@@ -76,6 +82,7 @@ External Services (Firebase, Google Cloud, Gemini AI)
 ```
 
 **Key Characteristics:**
+
 - **Modular Monolith**: Clean architecture with clear separation of concerns
 - **Async Processing**: Background ML analysis with real-time updates
 - **Scalable**: Designed for Cloud Run auto-scaling
@@ -87,6 +94,7 @@ External Services (Firebase, Google Cloud, Gemini AI)
 ### Current ML Capabilities
 
 **PAT Model (Implemented):**
+
 - **Model**: Pretrained Actigraphy Transformer from Dartmouth
 - **Weights**: Real 29k parameter weights (not dummy/mock)
 - **Capabilities**: Sleep stage detection, circadian analysis
@@ -95,6 +103,7 @@ External Services (Firebase, Google Cloud, Gemini AI)
 - **Output**: Sleep metrics, quality scores, stage classifications
 
 **Gemini AI Integration (Implemented):**
+
 - **Model**: Google Gemini 2.5 Pro
 - **Purpose**: Natural language health insights
 - **Features**: Personalized recommendations, trend analysis
@@ -127,28 +136,34 @@ Health Data Upload
 ### Implemented Endpoints
 
 **Authentication (`/api/v1/auth/`):**
+
 - `POST /register` - User registration with Firebase
 - `POST /login` - JWT token authentication
 
 **Health Data (`/api/v1/health-data/`):**
+
 - `POST /upload` - Health metrics upload with async processing
 - `GET /` - Paginated health data retrieval
 - `GET /processing/{id}` - Processing status tracking
 - `DELETE /{id}` - Data deletion
 
 **AI Insights (`/api/v1/insights/`):**
+
 - `POST /generate` - AI-powered health insight generation
 - `GET /{insight_id}` - Cached insight retrieval
 
 **PAT Analysis (`/api/v1/pat/`):**
+
 - `GET /analyze` - PAT model information and capabilities
 - `POST /batch-analyze` - Batch actigraphy analysis
 
 **System:**
+
 - `GET /health` - Service health check
 - `GET /metrics` - Prometheus metrics
 
 ### API Features
+
 - **Authentication**: Firebase JWT token validation
 - **Validation**: Comprehensive Pydantic model validation
 - **Error Handling**: Structured error responses
@@ -161,18 +176,21 @@ Health Data Upload
 ### Current Security Implementation
 
 **Authentication & Authorization:**
+
 - ✅ Firebase Authentication with industry-standard security
 - ✅ JWT token validation on all protected endpoints
 - ✅ User data isolation (users can only access their own data)
 - ✅ Role-based access control foundation
 
 **Data Protection:**
+
 - ✅ Encryption at rest (Google Cloud default encryption)
 - ✅ Encryption in transit (HTTPS/TLS)
 - ✅ Input validation and sanitization
 - ✅ Audit logging for data access
 
 **Privacy by Design:**
+
 - ✅ Minimal data collection (only necessary health metrics)
 - ✅ User control over data sharing
 - ✅ HIPAA-ready infrastructure design
@@ -183,6 +201,7 @@ Health Data Upload
 ### Current Infrastructure
 
 **Google Cloud Platform:**
+
 - ✅ Cloud Run for auto-scaling containerized deployment
 - ✅ Cloud Storage for health data file storage
 - ✅ Firestore for real-time data and user profiles
@@ -190,12 +209,14 @@ Health Data Upload
 - ✅ Cloud Build for CI/CD pipeline
 
 **Monitoring & Observability:**
+
 - ✅ Health check endpoints
 - ✅ Prometheus metrics integration
 - ✅ Structured logging
 - ⚠️ Enhanced monitoring dashboards (planned)
 
 **Development Operations:**
+
 - ✅ Docker containerization
 - ✅ Local development with Docker Compose
 - ✅ Comprehensive test suite (729 tests)
@@ -207,18 +228,21 @@ Health Data Upload
 ### Current Performance Characteristics
 
 **API Performance:**
+
 - ✅ FastAPI async framework for high concurrency
 - ✅ Background processing for heavy ML operations
 - ✅ Efficient data pagination
 - ✅ Response caching for insights
 
 **ML Performance:**
+
 - ✅ Model loading optimization (cached in memory)
 - ✅ Async batch processing
 - ✅ PAT model inference: ~2-5 seconds per analysis
 - ✅ Gemini AI: ~10-30 seconds for comprehensive insights
 
 **Scalability Design:**
+
 - ✅ Stateless application design
 - ✅ Cloud Run auto-scaling (0-1000+ instances)
 - ✅ Firestore automatic scaling
@@ -227,6 +251,7 @@ Health Data Upload
 ## 🎯 Development Roadmap
 
 ### Phase 1: Foundation (✅ COMPLETE)
+
 - ✅ Core API development
 - ✅ Authentication system
 - ✅ Health data pipeline
@@ -235,18 +260,21 @@ Health Data Upload
 - ✅ Basic deployment
 
 ### Phase 2: Quality & Reliability (🚧 IN PROGRESS)
+
 - ⚠️ Test coverage improvement (59% → 85%)
 - ⚠️ Enhanced error handling
 - ⚠️ Performance optimization
 - ⚠️ Advanced monitoring
 
 ### Phase 3: Advanced Features (📋 PLANNED)
+
 - 📋 Sleep processor module
 - 📋 Advanced analytics dashboard
 - 📋 iOS mobile application
 - 📋 Real-time notifications
 
 ### Phase 4: Scale & Enterprise (📋 FUTURE)
+
 - 📋 Multi-tenant architecture
 - 📋 Enterprise integrations
 - 📋 Advanced ML models
@@ -257,24 +285,28 @@ Health Data Upload
 ### Architecture Choices
 
 **FastAPI over Django/Flask:**
+
 - ✅ Native async support for better performance
 - ✅ Automatic API documentation generation
 - ✅ Type safety with Pydantic models
 - ✅ Modern Python 3.12+ features
 
 **Google Cloud over AWS/Azure:**
+
 - ✅ Firebase integration for authentication
 - ✅ Gemini AI native integration
 - ✅ Firestore for real-time capabilities
 - ✅ Simplified deployment with Cloud Run
 
 **Clean Architecture Pattern:**
+
 - ✅ Separation of concerns for maintainability
 - ✅ Testability with dependency injection
 - ✅ Business logic isolation from infrastructure
 - ✅ Easy to adapt to changing requirements
 
 **PAT Model Integration:**
+
 - ✅ Specialized for actigraphy/sleep analysis
 - ✅ Research-backed from Dartmouth College
 - ✅ Real model weights (not dummy/placeholder)
@@ -285,18 +317,21 @@ Health Data Upload
 ### Scientific Foundation
 
 **PAT Model Research:**
+
 - **Paper**: "Foundation Models for Wearable Movement Data in Mental Health"
 - **Institution**: Dartmouth College
 - **Validation**: 29,000+ hours of actigraphy data training
 - **Accuracy**: ~90% sleep/wake detection, ~85% sleep stage classification
 
 **Clinical Applications:**
+
 - Sleep disorder diagnosis support
 - Circadian rhythm analysis
 - Mental health monitoring
 - Personalized intervention optimization
 
 ### Evidence-Based Development
+
 - ✅ Literature review integration (`docs/literature/`)
 - ✅ Clinical validation methodology
 - ✅ Peer-reviewed model implementations
@@ -314,6 +349,7 @@ Health Data Upload
 6. **Long-term Optimization**: Continuous health improvement
 
 ### User Interface Principles (Planned)
+
 - **Simplicity**: Clean, intuitive design
 - **Personalization**: Tailored to individual health profiles
 - **Actionability**: Clear, specific recommendations

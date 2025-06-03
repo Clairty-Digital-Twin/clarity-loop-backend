@@ -5,6 +5,7 @@
 ## Quick Start
 
 ### Prerequisites
+
 - Python 3.12+
 - Docker & Docker Compose
 - Google Cloud SDK (for deployment)
@@ -13,6 +14,7 @@
 ### Local Development Setup
 
 1. **Clone and Setup Environment**
+
    ```bash
    git clone <repository-url>
    cd clarity-loop-backend
@@ -26,6 +28,7 @@
    ```
 
 2. **Configure Environment**
+
    ```bash
    # Copy environment template
    cp .env.example .env
@@ -37,6 +40,7 @@
    ```
 
 3. **Start Development Services**
+
    ```bash
    # Start with Docker Compose (recommended)
    docker-compose up -d
@@ -46,6 +50,7 @@
    ```
 
 4. **Verify Setup**
+
    ```bash
    # Check health endpoint
    curl http://localhost:8000/health
@@ -101,6 +106,7 @@ git push origin feature/your-feature-name
 ### 2. Testing
 
 **Run Full Test Suite:**
+
 ```bash
 # All tests
 pytest
@@ -113,6 +119,7 @@ pytest tests/api/v1/test_health_data.py
 ```
 
 **Current Test Status:**
+
 - ✅ **729 tests passing**
 - ⚠️ **59.28% code coverage** (target: 85%)
 - 🎯 **Key areas needing coverage**: API error scenarios, async processing
@@ -120,6 +127,7 @@ pytest tests/api/v1/test_health_data.py
 ### 3. Code Quality
 
 **Linting & Formatting:**
+
 ```bash
 # Check code style
 ruff check .
@@ -132,6 +140,7 @@ mypy src/
 ```
 
 **Code Standards:**
+
 - Follow PEP 8 style guidelines
 - Use type hints for all functions
 - Write comprehensive docstrings
@@ -140,6 +149,7 @@ mypy src/
 ### 4. Database & Storage
 
 **Firestore Development:**
+
 ```bash
 # Use Firestore emulator for testing
 gcloud emulators firestore start
@@ -149,6 +159,7 @@ export FIRESTORE_EMULATOR_HOST=localhost:8080
 ```
 
 **Cloud Storage Development:**
+
 ```bash
 # Use local storage emulator
 docker run -p 9199:9199 google/cloud-sdk:alpine gcloud beta emulators storage start --host-port=0.0.0.0:9199
@@ -157,17 +168,20 @@ docker run -p 9199:9199 google/cloud-sdk:alpine gcloud beta emulators storage st
 ## Key Development Files
 
 ### Configuration
+
 - `src/clarity/core/config.py` - Application configuration
 - `.env` - Environment variables (not in repo)
 - `docker-compose.yml` - Local development services
 
 ### Core Components
+
 - `src/clarity/api/v1/` - REST API endpoints
 - `src/clarity/services/` - Business logic services
 - `src/clarity/storage/` - Data access layer
 - `src/clarity/ml/` - Machine learning components
 
 ### Testing
+
 - `tests/api/` - API endpoint tests
 - `tests/services/` - Service layer tests
 - `tests/integration/` - Full integration tests
@@ -178,6 +192,7 @@ docker run -p 9199:9199 google/cloud-sdk:alpine gcloud beta emulators storage st
 ### Adding New Endpoints
 
 1. **Create API Router**
+
    ```python
    # src/clarity/api/v1/new_feature.py
    from fastapi import APIRouter, Depends
@@ -195,6 +210,7 @@ docker run -p 9199:9199 google/cloud-sdk:alpine gcloud beta emulators storage st
    ```
 
 2. **Add to Main Application**
+
    ```python
    # src/clarity/api/v1/__init__.py
    from .new_feature import router as new_feature_router
@@ -203,6 +219,7 @@ docker run -p 9199:9199 google/cloud-sdk:alpine gcloud beta emulators storage st
    ```
 
 3. **Write Tests**
+
    ```python
    # tests/api/v1/test_new_feature.py
    import pytest
@@ -235,6 +252,7 @@ async def protected_endpoint(
 ### Adding New ML Models
 
 1. **Add Model File**
+
    ```
    models/
    └── your_model/
@@ -244,6 +262,7 @@ async def protected_endpoint(
    ```
 
 2. **Create Processor**
+
    ```python
    # src/clarity/ml/processors/your_model.py
    class YourModelProcessor:
@@ -257,6 +276,7 @@ async def protected_endpoint(
    ```
 
 3. **Add Service Integration**
+
    ```python
    # src/clarity/services/ai/your_model_service.py
    from src.clarity.ml.processors.your_model import YourModelProcessor
@@ -301,6 +321,7 @@ API_PORT=8000
 ## Debugging
 
 ### Local Debugging
+
 ```bash
 # Enable debug logging
 export LOG_LEVEL=DEBUG
@@ -310,11 +331,13 @@ python -m debugpy --listen 5678 --wait-for-client main.py
 ```
 
 ### API Debugging
+
 - **FastAPI Docs**: `http://localhost:8000/docs`
 - **Health Check**: `http://localhost:8000/health`
 - **Metrics**: `http://localhost:8000/metrics`
 
 ### Database Debugging
+
 ```python
 # Enable Firestore debug logging
 import logging
@@ -324,12 +347,14 @@ logging.getLogger('google.cloud.firestore').setLevel(logging.DEBUG)
 ## Performance Optimization
 
 ### Current Performance
+
 - ✅ **FastAPI**: High-performance async framework
 - ✅ **Async Processing**: Pub/Sub for heavy operations
 - ✅ **Model Caching**: ML models loaded once
 - ⚠️ **Monitoring**: Basic metrics available
 
 ### Optimization Areas
+
 1. **API Response Times**: Currently adequate, can improve with caching
 2. **ML Inference**: Batch processing for multiple requests
 3. **Database Queries**: Add query optimization
@@ -338,6 +363,7 @@ logging.getLogger('google.cloud.firestore').setLevel(logging.DEBUG)
 ## Deployment
 
 ### Local Testing
+
 ```bash
 # Build and test Docker image
 docker build -t clarity-backend .
@@ -345,6 +371,7 @@ docker run -p 8000:8000 clarity-backend
 ```
 
 ### Production Deployment
+
 ```bash
 # Deploy to Google Cloud Run
 gcloud run deploy clarity-backend \
@@ -357,11 +384,13 @@ gcloud run deploy clarity-backend \
 ## Documentation
 
 ### API Documentation
+
 - **Auto-generated**: Available at `/docs` endpoint
 - **Manual Docs**: `docs/api/` directory
 - **Keep Updated**: Documentation should match implementation
 
 ### Code Documentation
+
 - Use comprehensive docstrings
 - Include type hints
 - Document complex business logic
@@ -372,18 +401,21 @@ gcloud run deploy clarity-backend \
 ### Common Issues
 
 **Import Errors:**
+
 ```bash
 # Ensure PYTHONPATH includes src/
 export PYTHONPATH="${PYTHONPATH}:${PWD}/src"
 ```
 
 **Firebase Auth Issues:**
+
 ```bash
 # Verify service account credentials
 gcloud auth application-default login
 ```
 
 **Model Loading Issues:**
+
 ```bash
 # Check model file exists
 ls -la models/pat/PAT-M_29k_weights.h5

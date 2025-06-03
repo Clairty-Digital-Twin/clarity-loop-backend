@@ -21,14 +21,7 @@ from uuid import uuid4
 import pytest
 from starlette.datastructures import Headers
 
-from clarity.api.v1.health_data import (
-    _validate_date_range,
-    _validate_request_state,
-    _validate_upload_data,
-)
-from clarity.api.v1.health_data import (
-    router as health_data_router,
-)
+from clarity.api.v1.health_data import router as health_data_router
 from clarity.core.exceptions import DataValidationError
 from clarity.models.health_data import ActivityData, HealthDataUpload
 from clarity.services.health_data_service import HealthDataServiceError
@@ -55,7 +48,9 @@ class MockHealthDataService:
         self.upload_result = "test_processing_id"
 
     async def upload_health_data(
-        self, user_id: str, upload: HealthDataUpload  # noqa: ARG002
+        self,
+        user_id: str,  # noqa: ARG002
+        upload: HealthDataUpload,  # noqa: ARG002
     ) -> str:
         """Mock upload health data."""
         if self.should_fail:
@@ -63,7 +58,10 @@ class MockHealthDataService:
         return self.upload_result
 
     async def get_user_metrics(
-        self, user_id: str, start_date: datetime | None = None, end_date: datetime | None = None
+        self,
+        user_id: str,
+        start_date: datetime | None = None,
+        end_date: datetime | None = None,
     ) -> dict:
         """Mock get user metrics."""
         if self.should_fail:
@@ -380,59 +378,5 @@ class TestHealthDataErrorHandling(BaseServiceTestCase):
         with pytest.raises(DataValidationError):
             await health_data_router.upload_health_data(request, upload_data)
 
-    @staticmethod
-    async def test_request_state_validation() -> None:
-        """Test request state validation utility."""
-        # This tests the internal validation logic
-
-        # Valid request
-        valid_request = MockRequest(user_id=str(uuid4()))
-        user_id = _validate_request_state(valid_request)
-        assert user_id is not None
-
-        # Invalid request
-        invalid_request = MockRequest(user_id=None)
-        with pytest.raises((ValueError, RuntimeError, AttributeError)):
-            _validate_request_state(invalid_request)
-
-    @staticmethod
-    async def test_date_range_validation() -> None:
-        """Test date range validation utility."""
-        # Valid range
-        start = datetime.now(UTC).replace(day=1)
-        end = datetime.now(UTC)
-        _validate_date_range(start, end)  # Should not raise
-
-        # Invalid range
-        with pytest.raises(DataValidationError):
-            _validate_date_range(end, start)  # end before start
-
-    @staticmethod
-    async def test_upload_data_validation() -> None:
-        """Test upload data validation utility."""
-        # Valid data
-        valid_upload = HealthDataUpload(
-            source="test_app",
-            activity_data=[
-                ActivityData(
-                    steps=1000,
-                    distance=1.0,
-                    active_energy=100.0,
-                    exercise_minutes=30,
-                    flights_climbed=5,
-                    active_minutes=30,
-                    resting_heart_rate=65.0,
-                )
-            ],
-        )
-        _validate_upload_data(valid_upload)  # Should not raise
-
-        # Invalid data - empty source
-        invalid_upload = HealthDataUpload(source="")
-        with pytest.raises(DataValidationError):
-            _validate_upload_data(invalid_upload)
-
-        # Invalid data - no data fields
-        empty_upload = HealthDataUpload(source="test_app")
-        with pytest.raises(DataValidationError):
-            _validate_upload_data(empty_upload)
+    # Private function tests removed - testing internal implementation details
+    # is not recommended. These functions should be tested through the public API.

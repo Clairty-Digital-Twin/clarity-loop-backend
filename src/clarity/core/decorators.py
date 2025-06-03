@@ -189,7 +189,7 @@ def retry_on_failure(
 
     def decorator(func: F) -> F:
         @functools.wraps(func)
-        def sync_wrapper(*args: Any, **kwargs: Any) -> Any:  # type: ignore[no-untyped-def]
+        def sync_wrapper(*args: Any, **kwargs: Any) -> Any:  # type: ignore[no-untyped-def, misc]
             func_name = f"{func.__module__}.{func.__qualname__}"
             last_exception = None
 
@@ -225,7 +225,7 @@ def retry_on_failure(
             return None
 
         @functools.wraps(func)
-        async def async_wrapper(*args: Any, **kwargs: Any) -> Any:  # type: ignore[no-untyped-def]
+        async def async_wrapper(*args: Any, **kwargs: Any) -> Any:  # type: ignore[no-untyped-def, misc]
             func_name = f"{func.__module__}.{func.__qualname__}"
             last_exception = None
 
@@ -283,7 +283,7 @@ def validate_input(
 
     def decorator(func: F) -> F:
         @functools.wraps(func)
-        def wrapper(*args: Any, **kwargs: Any) -> Any:  # type: ignore[no-untyped-def]
+        def wrapper(*args: Any, **kwargs: Any) -> Any:  # type: ignore[no-untyped-def, misc]
             if not validator((args, kwargs)):
                 raise ValueError(error_message)
             return func(*args, **kwargs)

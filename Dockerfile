@@ -71,6 +71,9 @@ COPY --chown=clarity:clarity src/ ./src/
 COPY --chown=clarity:clarity main.py ./
 COPY --chown=clarity:clarity pyproject.toml README.md LICENSE ./
 
+# Fix logs directory ownership
+RUN chown -R clarity:clarity /app/logs
+
 # Switch to non-root user
 USER clarity
 

@@ -7,6 +7,7 @@ for optimal integration with PAT (Pretrained Actigraphy Transformer) models.
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 from enum import StrEnum
+import logging
 import operator
 from typing import Any
 
@@ -17,10 +18,9 @@ from scipy.interpolate import interp1d  # type: ignore[import-untyped]
 import scipy.signal  # type: ignore[import-untyped]
 
 from clarity.core.exceptions import ProcessingError
-from clarity.core.logging import get_logger  # type: ignore[import-untyped]
 from clarity.integrations.healthkit import HealthDataBatch, HealthDataPoint
 
-logger = get_logger(__name__)
+logger = logging.getLogger(__name__)
 
 
 class ActivityLevel(StrEnum):
@@ -119,7 +119,7 @@ class AppleWatchDataProcessor:
     VO2_MAX_MAX = 90
 
     def __init__(self) -> None:
-        self.logger = get_logger(__name__)
+        self.logger = logging.getLogger(__name__)
 
     async def process_health_batch(
         self, batch: HealthDataBatch, target_duration_days: int = 7

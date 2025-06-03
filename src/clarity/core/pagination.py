@@ -171,7 +171,7 @@ class PaginationBuilder:
         self.base_url = base_url.rstrip("/")
         self.endpoint = endpoint
 
-    def build_response(
+    def build_response(  # noqa: PLR0913
         self,
         data: list[T],
         params: PaginationParams,

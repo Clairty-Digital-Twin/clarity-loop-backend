@@ -14,7 +14,7 @@ Following Robert C. Martin's Clean Architecture with proper dependency injection
 
 from datetime import UTC, datetime
 import logging
-from typing import Any
+from typing import Any, NoReturn
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, Query, Request, status
@@ -49,13 +49,13 @@ router = APIRouter(prefix="/health-data", tags=["Health Data"])
 
 
 # Helper functions to fix linting issues (TRY300/TRY301)
-def _raise_authorization_error(user_id: str) -> None:
+def _raise_authorization_error(user_id: str) -> NoReturn:
     """Raise authorization error for user data access."""
     error_msg = f"Cannot upload health data for user '{user_id}'. Users can only upload their own data."
     raise AuthorizationProblem(detail=error_msg)
 
 
-def _raise_not_found_error(resource_type: str, resource_id: str) -> None:
+def _raise_not_found_error(resource_type: str, resource_id: str) -> NoReturn:
     """Raise not found error for missing resources."""
     raise ResourceNotFoundProblem(
         resource_type=resource_type,
@@ -195,8 +195,6 @@ async def upload_health_data(
         # Process health data
         response = await service.process_health_data(health_data)
         logger.info("Health data uploaded successfully: %s", response.processing_id)
-        return response
-
     except HealthDataServiceError as e:
         logger.exception("Health data service error")
         raise ValidationProblem(
@@ -212,6 +210,8 @@ async def upload_health_data(
         raise InternalServerProblem(
             detail="An unexpected error occurred while processing health data upload"
         ) from e
+    else:
+        return response
 
 
 @router.get(
@@ -262,7 +262,7 @@ async def get_processing_status(
             _raise_not_found_error("Processing Job", str(processing_id))
 
         logger.debug("Retrieved processing status: %s", processing_id)
-        return status_info
+        return status_info  # noqa: TRY300
 
     except HealthDataServiceError as e:
         logger.exception("Health data service error")
@@ -329,15 +329,15 @@ async def get_processing_status(
     }
 )
 @require_auth(permissions=[Permission.READ_OWN_DATA])
-async def list_health_data(
+async def list_health_data(  # noqa: PLR0913, PLR0917
     request: Request,
     current_user: UserContext = Depends(get_current_user),  # noqa: B008
     limit: int = Query(50, ge=1, le=1000, description="Number of items per page"),
     cursor: str | None = Query(None, description="Pagination cursor"),
     offset: int | None = Query(None, ge=0, description="Offset (alternative to cursor)"),
     data_type: str | None = Query(None, description="Filter by data type (heart_rate, sleep, etc.)"),
-    start_date: datetime | None = Query(None, description="Filter from date (ISO 8601)"),
-    end_date: datetime | None = Query(None, description="Filter to date (ISO 8601)"),
+    start_date: datetime | None = Query(None, description="Filter from date (ISO 8601)"),  # noqa: B008
+    end_date: datetime | None = Query(None, description="Filter to date (ISO 8601)"),  # noqa: B008
     source: str | None = Query(None, description="Filter by data source (apple_watch, fitbit, etc.)"),
     service: HealthDataService = Depends(get_health_data_service),  # noqa: B008
 ) -> PaginatedResponse[dict[str, Any]]:
@@ -409,7 +409,7 @@ async def list_health_data(
         )
 
         logger.debug("Retrieved health data for user: %s", current_user.user_id)
-        return paginated_response
+        return paginated_response  # noqa: TRY300
 
     except ValueError as e:
         logger.warning("Invalid pagination parameters: %s", e)
@@ -436,7 +436,7 @@ async def list_health_data(
     summary="Query Health Data (Legacy)",
     description="""
     **DEPRECATED:** Use `GET /health-data/` instead for better pagination and filtering.
-    
+
     Legacy endpoint for backwards compatibility. Will be removed in v2.0.
     """,
     deprecated=True,
@@ -451,8 +451,8 @@ async def query_health_data_legacy(
     limit: int = Query(100, ge=1, le=1000, description="Maximum number of records"),
     offset: int = Query(0, ge=0, description="Number of records to skip"),
     metric_type: str | None = Query(None, description="Filter by metric type"),
-    start_date: datetime | None = Query(None, description="Filter from date"),
-    end_date: datetime | None = Query(None, description="Filter to date"),
+    start_date: datetime | None = Query(None, description="Filter from date"),  # noqa: B008
+    end_date: datetime | None = Query(None, description="Filter to date"),  # noqa: B008
     service: HealthDataService = Depends(get_health_data_service),  # noqa: B008
 ) -> dict[str, Any]:
     """🔄 Legacy health data query endpoint (deprecated)."""
@@ -476,7 +476,7 @@ async def query_health_data_legacy(
         }
 
         logger.debug("Retrieved legacy health data for user: %s", current_user.user_id)
-        return health_data
+        return health_data  # noqa: TRY300
 
     except HealthDataServiceError as e:
         logger.exception("Health data service error")
@@ -493,12 +493,12 @@ async def query_health_data_legacy(
     summary="Delete Health Data",
     description="""
     Delete health data by processing ID with proper authorization checks.
-    
+
     **Security:**
     - Users can only delete their own data
     - Soft delete with audit trail
     - GDPR/CCPA compliance support
-    
+
     **Note:** This action cannot be undone. Consider data export before deletion.
     """,
     responses={
@@ -551,12 +551,12 @@ async def delete_health_data(
     summary="Health Data Service Status",
     description="""
     Health check endpoint for the health data service with detailed status information.
-    
+
     **Status Indicators:**
     - `healthy`: Service fully operational
     - `degraded`: Service operational with reduced functionality
     - `unhealthy`: Service experiencing issues
-    
+
     **Includes:**
     - Database connectivity status
     - Cache status
@@ -575,7 +575,7 @@ async def health_check() -> dict[str, Any]:
         timestamp = datetime.now(UTC).isoformat()
 
         # Basic health indicators
-        health_status = {
+        health_status: dict[str, Any] = {
             "status": "healthy",
             "service": "health-data-api",
             "timestamp": timestamp,
@@ -589,7 +589,7 @@ async def health_check() -> dict[str, Any]:
             else:
                 health_status["database"] = "not_configured"
                 health_status["status"] = "degraded"
-        except Exception as db_error:
+        except Exception as db_error:  # noqa: BLE001
             logger.warning("Database health check failed: %s", db_error)
             health_status["database"] = "error"
             health_status["status"] = "degraded"
@@ -600,13 +600,13 @@ async def health_check() -> dict[str, Any]:
             else:
                 health_status["authentication"] = "not_configured"
                 health_status["status"] = "degraded"
-        except Exception as auth_error:
+        except Exception as auth_error:  # noqa: BLE001
             logger.warning("Auth health check failed: %s", auth_error)
             health_status["authentication"] = "error"
             health_status["status"] = "degraded"
 
         # Add performance metrics
-        metrics: dict[str, int] = {
+        metrics: dict[str, Any] = {
             "uptime_seconds": 0,  # Would be calculated from startup time
             "requests_per_minute": 0,  # Would be tracked by middleware
             "average_response_time_ms": 0  # Would be tracked by middleware
@@ -614,7 +614,7 @@ async def health_check() -> dict[str, Any]:
         health_status["metrics"] = metrics
 
         logger.debug("Health check completed successfully")
-        return health_status
+        return health_status  # noqa: TRY300
 
     except Exception as e:
         logger.exception("Health check failed")

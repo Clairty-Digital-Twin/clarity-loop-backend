@@ -368,46 +368,44 @@ class TestPATModelServiceAnalysis:
         service = PATModelService(model_size="medium")
         service.is_loaded = False
 
-        # Manually set up the model for this test
-        service.model = MagicMock()
-        service.is_loaded = True
+        with (
+            patch.object(
+                service,
+                "_preprocess_actigraphy_data",
+                return_value=torch.randn(1, 1440, 1),
+            ),
+            patch.object(service, "_postprocess_predictions") as mock_postprocess,
+        ):
+            # Manually set up the model for this test
+            service.model = MagicMock()
+            service.is_loaded = True
 
-            with (
-                patch.object(
-                    service,
-                    "_preprocess_actigraphy_data",
-                    return_value=torch.randn(1, 1440, 1),
-                ),
-                patch.object(service, "_postprocess_predictions") as mock_postprocess,
-            ):
+            service.model.return_value = {
+                "raw_logits": torch.randn(1, 18),
+                "sleep_metrics": torch.randn(1, 8),
+                "circadian_score": torch.randn(1, 1),
+                "depression_risk": torch.randn(1, 1),
+                "embeddings": torch.randn(1, 96),
+            }
 
-                service.model = MagicMock()
-                service.model.return_value = {
-                    "raw_logits": torch.randn(1, 18),
-                    "sleep_metrics": torch.randn(1, 8),
-                    "circadian_score": torch.randn(1, 1),
-                    "depression_risk": torch.randn(1, 1),
-                    "embeddings": torch.randn(1, 96),
-                }
+            mock_postprocess.return_value = ActigraphyAnalysis(
+                user_id=sample_actigraphy_input.user_id,
+                analysis_timestamp=datetime.now(UTC).isoformat(),
+                sleep_efficiency=75.0,
+                sleep_onset_latency=20.0,
+                wake_after_sleep_onset=40.0,
+                total_sleep_time=7.0,
+                circadian_rhythm_score=0.7,
+                activity_fragmentation=0.3,
+                depression_risk_score=0.3,
+                sleep_stages=["sleep"] * 1440,
+                confidence_score=0.8,
+                clinical_insights=["Moderate sleep quality"],
+            )
 
-                mock_postprocess.return_value = ActigraphyAnalysis(
-                    user_id=sample_actigraphy_input.user_id,
-                    analysis_timestamp=datetime.now(UTC).isoformat(),
-                    sleep_efficiency=75.0,
-                    sleep_onset_latency=20.0,
-                    wake_after_sleep_onset=40.0,
-                    total_sleep_time=7.0,
-                    circadian_rhythm_score=0.7,
-                    activity_fragmentation=0.3,
-                    depression_risk_score=0.3,
-                    sleep_stages=["sleep"] * 1440,
-                    confidence_score=0.8,
-                    clinical_insights=["Moderate sleep quality"],
-                )
+            result = await service.analyze_actigraphy(sample_actigraphy_input)
 
-                result = await service.analyze_actigraphy(sample_actigraphy_input)
-
-                assert isinstance(result, ActigraphyAnalysis)
+            assert isinstance(result, ActigraphyAnalysis)
 
     @pytest.mark.asyncio
     @staticmethod
@@ -540,7 +538,7 @@ class TestPATModelServiceHealthCheck:
 
         health = await service.health_check()
 
-        assert health["status"] == "healthy"
+        assert health["status"] == "not_loaded"
         assert health["model_loaded"] is False
 
 

@@ -9,7 +9,7 @@ LATEST VERSION: January 14, 2025 (v3) - BLEEDING EDGE IMPLEMENTATION
 
 ARCHITECTURE SPECIFICATIONS (from Dartmouth source):
 - PAT-S: 1 layer, 6 heads, 96 embed_dim, patch_size=18, input_size=10080
-- PAT-M: 2 layers, 12 heads, 96 embed_dim, patch_size=18, input_size=10080  
+- PAT-M: 2 layers, 12 heads, 96 embed_dim, patch_size=18, input_size=10080
 - PAT-L: 4 layers, 12 heads, 96 embed_dim, patch_size=9, input_size=10080
 - All models: ff_dim=256, dropout=0.1, key_dim=embed_dim (non-standard attention)
 """
@@ -24,7 +24,7 @@ import numpy as np
 from pydantic import BaseModel, Field
 import torch
 from torch import nn
-import torch.nn.functional as F
+from torch.nn import functional
 
 try:
     import h5py  # type: ignore[import-untyped]
@@ -135,7 +135,7 @@ class PATPositionalEncoding(nn.Module):
 
 class PATMultiHeadAttention(nn.Module):
     """Custom multi-head attention matching PAT's TensorFlow implementation.
-    
+
     Unlike standard attention where embed_dim = num_heads * head_dim,
     PAT uses head_dim = embed_dim (each head operates on full embedding).
     """
@@ -179,7 +179,7 @@ class PATMultiHeadAttention(nn.Module):
         value: torch.Tensor
     ) -> tuple[torch.Tensor, torch.Tensor]:
         """Forward pass through PAT-style multi-head attention."""
-        batch_size, seq_len, embed_dim = query.shape
+        _batch_size, _seq_len, _embed_dim = query.shape
 
         # Process each head independently
         head_outputs = []
@@ -193,7 +193,7 @@ class PATMultiHeadAttention(nn.Module):
 
             # Compute attention scores
             scores = torch.matmul(q, k.transpose(-2, -1)) * self.scale  # (batch, seq_len, seq_len)
-            attn_weights = F.softmax(scores, dim=-1)
+            attn_weights = functional.softmax(scores, dim=-1)
             attn_weights = self.dropout_layer(attn_weights)
 
             # Apply attention to values
@@ -253,16 +253,14 @@ class PATTransformerBlock(nn.Module):
         x = self.norm1(x + attn_out)
 
         # Feed-forward with residual connection
-        ff_out = self.ff2(F.relu(self.ff1(x)))
+        ff_out = self.ff2(functional.relu(self.ff1(x)))
         ff_out = self.dropout(ff_out)
-        x = self.norm2(x + ff_out)
-
-        return x
+        return self.norm2(x + ff_out)
 
 
 class PATEncoder(nn.Module):
     """PAT Encoder (foundation model) implementation.
-    
+
     This is the core transformer encoder from Dartmouth PAT.
     Add classification heads on top for specific tasks.
     """
@@ -298,7 +296,7 @@ class PATEncoder(nn.Module):
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """Forward pass through the PAT encoder."""
-        batch_size, seq_len = x.shape
+        batch_size, _seq_len = x.shape
 
         # Reshape input to patches [batch, num_patches, patch_size]
         x = x.view(batch_size, self.num_patches, self.patch_size)
@@ -405,7 +403,7 @@ class PATModelService(IMLModelService):
             logger.info("Loading PAT model from %s", self.model_path)
 
             # Initialize encoder with correct parameters
-            config = cast(dict[str, Any], self.config)
+            config = cast("dict[str, Any]", self.config)
             encoder = PATEncoder(
                 input_size=int(config["input_size"]),
                 patch_size=int(config["patch_size"]),
@@ -497,7 +495,7 @@ class PATModelService(IMLModelService):
                         state_dict['encoder.patch_embedding.bias'] = torch.from_numpy(tf_bias)
 
                 # Convert transformer layers
-                config = cast(dict[str, Any], self.config)
+                config = cast("dict[str, Any]", self.config)
                 num_layers = int(config["num_layers"])
                 for layer_idx in range(1, num_layers + 1):
                     tf_layer_name = f'encoder_layer_{layer_idx}_transformer'
@@ -539,7 +537,7 @@ class PATModelService(IMLModelService):
         attn_group = layer_group[f'encoder_layer_{layer_idx + 1}_attention']
 
         # Get dimensions from config
-        config = cast(dict[str, Any], self.config)
+        config = cast("dict[str, Any]", self.config)
         num_heads = int(config["num_heads"])  # 6 or 12
         head_dim = int(config["head_dim"])    # 96
 
@@ -826,9 +824,10 @@ class PATModelService(IMLModelService):
 
     async def health_check(self) -> dict[str, str | bool]:
         """Check the health status of the PAT service."""
+        status = "healthy" if self.is_loaded else "not_loaded"
         return {
             "service": "PAT Model Service",
-            "status": "healthy",
+            "status": status,
             "model_size": self.model_size,
             "device": self.device,
             "model_loaded": self.is_loaded,

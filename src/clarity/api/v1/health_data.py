@@ -13,7 +13,9 @@ Following Robert C. Martin's Clean Architecture with proper dependency injection
 """
 
 from datetime import UTC, datetime
+import json
 import logging
+import os
 from typing import Any, NoReturn
 from uuid import UUID
 
@@ -41,6 +43,7 @@ from clarity.services.health_data_service import (
     HealthDataServiceError,
 )
 from clarity.services.pubsub.publisher import get_publisher
+from google.cloud import storage
 
 # Configure logger
 logger = logging.getLogger(__name__)
@@ -199,13 +202,40 @@ async def upload_health_data(
         response = await service.process_health_data(health_data)
         logger.info("Health data uploaded successfully: %s", response.processing_id)
 
-        # Publish to Pub/Sub for async processing if GCS path is available
-        # Note: In a full implementation, we'd save to GCS first
-        # For now, we'll use a placeholder path
+        # Save to GCS and publish to Pub/Sub for async processing
         try:
+            # Save raw health data to GCS
+            bucket_name = os.getenv("HEALTHKIT_RAW_BUCKET", "healthkit-raw-data")
+        blob_path = f"{current_user.user_id}/{response.processing_id}.json"
+        gcs_path = f"gs://{bucket_name}/{blob_path}"
+        
+        # Save to GCS
+        try:
+        storage_client = storage.Client()
+        bucket = storage_client.bucket(bucket_name)
+        blob = bucket.blob(blob_path)
+        
+        # Convert health data to JSON for storage
+        raw_data = {
+            "user_id": str(health_data.user_id),
+                "processing_id": str(response.processing_id),
+                "upload_source": health_data.upload_source,
+                    "client_timestamp": health_data.client_timestamp.isoformat(),
+                "sync_token": health_data.sync_token,
+                "metrics": [metric.model_dump() for metric in health_data.metrics]
+                }
+                
+                blob.upload_from_string(
+                    json.dumps(raw_data),
+                    content_type="application/json"
+                )
+                logger.info("Saved health data to GCS: %s", gcs_path)
+            except Exception as gcs_error:
+                logger.error("Failed to save to GCS: %s", gcs_error)
+                # Continue anyway - we can retry later
+            
+            # Publish to Pub/Sub
             publisher = get_publisher()
-            gcs_path = f"gs://healthkit-raw-data/{current_user.user_id}/{response.processing_id}.json"
-
             await publisher.publish_health_data_event(
                 user_id=current_user.user_id,
                 upload_id=str(response.processing_id),

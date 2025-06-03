@@ -385,12 +385,104 @@ async def run_analysis_pipeline(user_id: str, health_data: dict[str, Any]) -> di
 
 def _convert_raw_data_to_metrics(health_data: dict[str, Any]) -> list[HealthMetric]:
     """Convert raw health data to HealthMetric objects."""
-    # This is a simplified conversion - in reality, this would be more complex
-    # and would parse the actual HealthKit data format
-
+    from clarity.models.health_data import (
+        ActivityData,
+        BiometricData,
+        MetricType,
+        SleepData,
+    )
+    
     metrics = []
-
-    # For now, return empty list - this would be implemented based on actual data format
-    logger.warning("Raw data conversion not fully implemented - returning empty metrics list")
-
+    
+    # Handle different data formats - could be from HealthKit upload or direct metrics
+    if "metrics" in health_data:
+        # Already in metric format
+        return health_data["metrics"]
+    
+    # Convert HealthKit-style data
+    # Process quantity samples (heart rate, respiratory rate, etc.)
+    if "quantity_samples" in health_data:
+        for sample in health_data["quantity_samples"]:
+            metric_type_str = sample.get("type", "").lower()
+            
+            # Map HealthKit types to our MetricType enum
+            type_mapping = {
+                "heartrate": MetricType.HEART_RATE,
+                "heart_rate": MetricType.HEART_RATE,
+                "heartratevariabilitysdnn": MetricType.HEART_RATE_VARIABILITY,
+                "respiratoryrate": MetricType.RESPIRATORY_RATE,
+                "respiratory_rate": MetricType.RESPIRATORY_RATE,
+                "oxygensaturation": MetricType.OXYGEN_SATURATION,
+                "bloodpressuresystolic": MetricType.BLOOD_PRESSURE,
+                "bloodpressurediastolic": MetricType.BLOOD_PRESSURE,
+            }
+            
+            if metric_type_str in type_mapping:
+                biometric_data = BiometricData()
+                
+                if metric_type_str in ["heartrate", "heart_rate"]:
+                    biometric_data.heart_rate = float(sample.get("value", 0))
+                elif metric_type_str == "heartratevariabilitysdnn":
+                    biometric_data.hrv_sdnn = float(sample.get("value", 0))
+                elif metric_type_str in ["respiratoryrate", "respiratory_rate"]:
+                    biometric_data.respiratory_rate = float(sample.get("value", 0))
+                elif metric_type_str == "oxygensaturation":
+                    biometric_data.oxygen_saturation = float(sample.get("value", 0))
+                elif metric_type_str in ["bloodpressuresystolic", "bloodpressurediastolic"]:
+                    biometric_data.blood_pressure_systolic = sample.get("systolic")
+                    biometric_data.blood_pressure_diastolic = sample.get("diastolic")
+                
+                metric = HealthMetric(
+                    user_id=health_data.get("user_id", "unknown"),
+                    metric_type=type_mapping[metric_type_str],
+                    created_at=datetime.fromisoformat(sample.get("timestamp", datetime.now().isoformat())),
+                    biometric_data=biometric_data,
+                    source_device=sample.get("source", "unknown"),
+                    confidence_score=sample.get("confidence", 1.0)
+                )
+                metrics.append(metric)
+    
+    # Process category samples (sleep, activity)
+    if "category_samples" in health_data:
+        for sample in health_data["category_samples"]:
+            category_type = sample.get("type", "").lower()
+            
+            if "sleep" in category_type:
+                sleep_data = SleepData(
+                    total_sleep_time=sample.get("duration", 0) / 3600,  # Convert to hours
+                    sleep_efficiency=sample.get("efficiency", 0.85),
+                    sleep_onset_latency=sample.get("onset_latency", 15),
+                    wake_after_sleep_onset=sample.get("waso", 30)
+                )
+                
+                metric = HealthMetric(
+                    user_id=health_data.get("user_id", "unknown"),
+                    metric_type=MetricType.SLEEP_ANALYSIS,
+                    created_at=datetime.fromisoformat(sample.get("timestamp", datetime.now().isoformat())),
+                    sleep_data=sleep_data,
+                    source_device=sample.get("source", "unknown")
+                )
+                metrics.append(metric)
+    
+    # Process workouts/activity data
+    if "workouts" in health_data:
+        for workout in health_data["workouts"]:
+            activity_data = ActivityData(
+                step_count=workout.get("steps", 0),
+                distance_km=workout.get("distance", 0) / 1000,  # Convert m to km
+                calories_burned=workout.get("active_energy", 0),
+                exercise_minutes=workout.get("duration", 0) / 60,  # Convert to minutes
+                activity_type=workout.get("type", "unknown")
+            )
+            
+            metric = HealthMetric(
+                user_id=health_data.get("user_id", "unknown"),
+                metric_type=MetricType.ACTIVITY_LEVEL,
+                created_at=datetime.fromisoformat(workout.get("timestamp", datetime.now().isoformat())),
+                activity_data=activity_data,
+                source_device=workout.get("source", "unknown")
+            )
+            metrics.append(metric)
+    
+    logger.info("Converted %d raw data points to HealthMetric objects", len(metrics))
     return metrics

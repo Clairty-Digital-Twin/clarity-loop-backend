@@ -225,7 +225,7 @@ class TestUploadStatusEndpoint:
     """Test the upload status endpoint."""
 
     @pytest.fixture
-    def mock_user(self) -> UserContext:
+    def mock_user(self) -> UserContext:  # noqa: PLR6301
         """Create a mock user context."""
         return UserContext(
             user_id="test-user-123",

@@ -1,11 +1,13 @@
 """Comprehensive tests for MockHealthDataRepository.
 
 Tests all methods and edge cases to improve coverage from 17% to 90%+.
+Split into focused test classes to avoid PLR0904 (too many public methods).
 """
 
 from datetime import UTC, datetime, timedelta
 from uuid import uuid4
 
+from _pytest.monkeypatch import MonkeyPatch
 import pytest
 
 from clarity.models.health_data import (
@@ -20,16 +22,16 @@ from clarity.models.health_data import (
 from clarity.storage.mock_repository import MockHealthDataRepository
 
 
-class TestMockHealthDataRepositoryComprehensive:
-    """Comprehensive test coverage for MockHealthDataRepository."""
+class TestMockHealthDataRepositoryBasics:
+    """Basic functionality tests for MockHealthDataRepository."""
 
     @pytest.fixture
-    async def repository(self):
+    async def repository(self) -> MockHealthDataRepository:
         """Create fresh repository instance for each test."""
         return MockHealthDataRepository()
 
     @pytest.fixture
-    def sample_metrics(self):
+    def sample_metrics(self) -> list[HealthMetric]:
         """Create sample health metrics for testing."""
         now = datetime.now(UTC)
         sleep_start = now.replace(hour=22, minute=0, second=0)
@@ -113,12 +115,131 @@ class TestMockHealthDataRepositoryComprehensive:
 
         return [biometric_metric, sleep_metric, activity_metric, mental_metric]
 
-    async def test_initialization(self, repository):
+    async def test_initialization(self, repository: MockHealthDataRepository) -> None:
         """Test repository initialization."""
         assert repository._health_data == {}
         assert repository._processing_status == {}
 
-    async def test_save_health_data_success(self, repository, sample_metrics):
+    async def test_initialize_method(self, repository: MockHealthDataRepository) -> None:
+        """Test initialize method."""
+        await repository.initialize()
+        # Should complete without error
+
+    async def test_cleanup_method(self, repository: MockHealthDataRepository) -> None:
+        """Test cleanup method."""
+        await repository.cleanup()
+        # Should complete without error
+
+    async def test_save_data_generic(self, repository: MockHealthDataRepository) -> None:
+        """Test generic save_data method."""
+        user_id = "user_123"
+        data = {"test": "data", "value": 42}
+
+        doc_id = await repository.save_data(user_id, data)
+        assert isinstance(doc_id, str)
+        assert len(doc_id) > 0
+
+    async def test_get_data_generic(self, repository: MockHealthDataRepository) -> None:
+        """Test generic get_data method."""
+        user_id = "user_123"
+
+        result = await repository.get_data(user_id)
+        assert result == {}
+
+        # Test with filters (should be ignored)
+        result = await repository.get_data(user_id, filters={"test": "filter"})
+        assert result == {}
+
+
+class TestMockHealthDataRepositorySaving:
+    """Tests for health data saving functionality."""
+
+    @pytest.fixture
+    async def repository(self) -> MockHealthDataRepository:
+        """Create fresh repository instance for each test."""
+        return MockHealthDataRepository()
+
+    @pytest.fixture
+    def sample_metrics(self) -> list[HealthMetric]:
+        """Create sample health metrics for testing."""
+        now = datetime.now(UTC)
+        sleep_start = now.replace(hour=22, minute=0, second=0)
+        sleep_end = now.replace(hour=8, minute=0, second=0) + timedelta(days=1)
+        sleep_duration = 600
+
+        biometric_metric = HealthMetric(
+            metric_id=uuid4(),
+            metric_type=HealthMetricType.HEART_RATE,
+            device_id="apple_watch_001",
+            raw_data={},
+            metadata={},
+            created_at=now,
+            biometric_data=BiometricData(
+                heart_rate=72.5,
+                blood_pressure_systolic=120,
+                blood_pressure_diastolic=80,
+                body_temperature=37.0,
+                oxygen_saturation=99.0,
+                heart_rate_variability=50.0,
+                respiratory_rate=16.0,
+                blood_glucose=100.0
+            )
+        )
+
+        sleep_metric = HealthMetric(
+            metric_id=uuid4(),
+            metric_type=HealthMetricType.SLEEP_ANALYSIS,
+            device_id="apple_watch_001",
+            raw_data={},
+            metadata={},
+            created_at=now,
+            sleep_data=SleepData(
+                total_sleep_minutes=sleep_duration,
+                sleep_efficiency=0.85,
+                time_to_sleep_minutes=15,
+                wake_count=2,
+                sleep_stages={SleepStage.LIGHT: 240, SleepStage.DEEP: 120, SleepStage.REM: 90, SleepStage.AWAKE: 30},
+                sleep_start=sleep_start,
+                sleep_end=sleep_end
+            )
+        )
+
+        activity_metric = HealthMetric(
+            metric_id=uuid4(),
+            metric_type=HealthMetricType.ACTIVITY_LEVEL,
+            device_id="apple_watch_001",
+            raw_data={},
+            metadata={},
+            created_at=now,
+            activity_data=ActivityData(
+                steps=10000,
+                distance=8.0,
+                active_energy=500.0,
+                exercise_minutes=60,
+                flights_climbed=10,
+                vo2_max=45.0,
+                active_minutes=60,
+                resting_heart_rate=60.0
+            )
+        )
+
+        mental_metric = HealthMetric(
+            metric_id=uuid4(),
+            metric_type=HealthMetricType.MOOD_ASSESSMENT,
+            device_id="phone_001",
+            raw_data={},
+            metadata={},
+            created_at=now,
+            mental_health_data=MentalHealthIndicator(
+                stress_level=3.0,
+                anxiety_level=2.0,
+                timestamp=now
+            )
+        )
+
+        return [biometric_metric, sleep_metric, activity_metric, mental_metric]
+
+    async def test_save_health_data_success(self, repository: MockHealthDataRepository, sample_metrics: list[HealthMetric]) -> None:
         """Test successful health data saving."""
         user_id = "user_123"
         processing_id = str(uuid4())
@@ -145,7 +266,7 @@ class TestMockHealthDataRepositoryComprehensive:
         assert status["status"] == "completed"
         assert status["metrics_count"] == 4
 
-    async def test_save_health_data_multiple_uploads(self, repository, sample_metrics):
+    async def test_save_health_data_multiple_uploads(self, repository: MockHealthDataRepository, sample_metrics: list[HealthMetric]) -> None:
         """Test multiple uploads for same user."""
         user_id = "user_123"
 
@@ -173,224 +294,7 @@ class TestMockHealthDataRepositoryComprehensive:
         assert processing_id_1 in repository._processing_status
         assert processing_id_2 in repository._processing_status
 
-    async def test_get_user_health_data_empty(self, repository):
-        """Test getting data for non-existent user."""
-        result = await repository.get_user_health_data("non_existent_user")
-
-        assert result["data"] == []
-        assert result["total_count"] == 0
-        assert result["page_info"]["has_more"] is False
-
-    async def test_get_user_health_data_with_data(self, repository, sample_metrics):
-        """Test getting user health data with existing data."""
-        user_id = "user_123"
-        processing_id = str(uuid4())
-
-        await repository.save_health_data(
-            user_id=user_id,
-            processing_id=processing_id,
-            metrics=sample_metrics,
-            upload_source="apple_health",
-            client_timestamp=datetime.now(UTC)
-        )
-
-        result = await repository.get_user_health_data(user_id)
-
-        assert len(result["data"]) == 4
-        assert result["total_count"] == 4
-        assert result["page_info"]["has_more"] is False
-
-    async def test_get_user_health_data_pagination(self, repository, sample_metrics):
-        """Test pagination functionality."""
-        user_id = "user_123"
-        processing_id = str(uuid4())
-
-        await repository.save_health_data(
-            user_id=user_id,
-            processing_id=processing_id,
-            metrics=sample_metrics,
-            upload_source="apple_health",
-            client_timestamp=datetime.now(UTC)
-        )
-
-        # Test limit
-        result = await repository.get_user_health_data(user_id, limit=2)
-        assert len(result["data"]) == 2
-        assert result["total_count"] == 4
-        assert result["page_info"]["has_more"] is True
-
-        # Test offset
-        result = await repository.get_user_health_data(user_id, limit=2, offset=2)
-        assert len(result["data"]) == 2
-        assert result["page_info"]["has_more"] is False
-
-    async def test_get_user_health_data_metric_type_filter(self, repository, sample_metrics):
-        """Test filtering by metric type."""
-        user_id = "user_123"
-        processing_id = str(uuid4())
-
-        await repository.save_health_data(
-            user_id=user_id,
-            processing_id=processing_id,
-            metrics=sample_metrics,
-            upload_source="apple_health",
-            client_timestamp=datetime.now(UTC)
-        )
-
-        result = await repository.get_user_health_data(user_id, metric_type="heart_rate")
-        assert len(result["data"]) == 1
-        assert result["data"][0]["metric_type"] == "heart_rate"
-
-    async def test_get_user_health_data_date_filters(self, repository, sample_metrics):
-        """Test date range filtering."""
-        user_id = "user_123"
-        processing_id = str(uuid4())
-
-        # Modify timestamps for testing
-        now = datetime.now(UTC)
-        sample_metrics[0].created_at = now
-
-        await repository.save_health_data(
-            user_id=user_id,
-            processing_id=processing_id,
-            metrics=sample_metrics,
-            upload_source="apple_health",
-            client_timestamp=datetime.now(UTC)
-        )
-
-        # Test start_date filter
-        result = await repository.get_user_health_data(
-            user_id,
-            start_date=now
-        )
-        assert len(result["data"]) >= 1
-
-    async def test_get_processing_status_exists(self, repository, sample_metrics):
-        """Test getting processing status that exists."""
-        user_id = "user_123"
-        processing_id = str(uuid4())
-
-        await repository.save_health_data(
-            user_id=user_id,
-            processing_id=processing_id,
-            metrics=sample_metrics,
-            upload_source="apple_health",
-            client_timestamp=datetime.now(UTC)
-        )
-
-        status = await repository.get_processing_status(processing_id, user_id)
-        assert status is not None
-        assert status["processing_id"] == processing_id
-        assert status["user_id"] == user_id
-        assert status["status"] == "completed"
-
-    async def test_get_processing_status_not_found(self, repository):
-        """Test getting non-existent processing status."""
-        status = await repository.get_processing_status("non_existent", "user_123")
-        assert status is None
-
-    async def test_get_processing_status_wrong_user(self, repository, sample_metrics):
-        """Test getting processing status with wrong user."""
-        user_id = "user_123"
-        processing_id = str(uuid4())
-
-        await repository.save_health_data(
-            user_id=user_id,
-            processing_id=processing_id,
-            metrics=sample_metrics,
-            upload_source="apple_health",
-            client_timestamp=datetime.now(UTC)
-        )
-
-        status = await repository.get_processing_status(processing_id, "wrong_user")
-        assert status is None
-
-    async def test_delete_health_data_specific_processing(self, repository, sample_metrics):
-        """Test deleting specific processing job."""
-        user_id = "user_123"
-        processing_id_1 = str(uuid4())
-        processing_id_2 = str(uuid4())
-
-        # Create two processing jobs
-        await repository.save_health_data(
-            user_id=user_id,
-            processing_id=processing_id_1,
-            metrics=sample_metrics[:2],
-            upload_source="apple_health",
-            client_timestamp=datetime.now(UTC)
-        )
-
-        await repository.save_health_data(
-            user_id=user_id,
-            processing_id=processing_id_2,
-            metrics=sample_metrics[2:],
-            upload_source="fitbit",
-            client_timestamp=datetime.now(UTC)
-        )
-
-        # Delete first processing job
-        result = await repository.delete_health_data(user_id, processing_id_1)
-        assert result is True
-
-        # Verify only second job remains
-        assert len(repository._health_data[user_id]) == 1
-        assert repository._health_data[user_id][0]["processing_id"] == processing_id_2
-        assert processing_id_1 not in repository._processing_status
-        assert processing_id_2 in repository._processing_status
-
-    async def test_delete_health_data_all_user_data(self, repository, sample_metrics):
-        """Test deleting all user data."""
-        user_id = "user_123"
-        processing_id = str(uuid4())
-
-        await repository.save_health_data(
-            user_id=user_id,
-            processing_id=processing_id,
-            metrics=sample_metrics,
-            upload_source="apple_health",
-            client_timestamp=datetime.now(UTC)
-        )
-
-        result = await repository.delete_health_data(user_id)
-        assert result is True
-        assert user_id not in repository._health_data
-
-    async def test_delete_health_data_non_existent_user(self, repository):
-        """Test deleting data for non-existent user."""
-        result = await repository.delete_health_data("non_existent_user")
-        assert result is True  # Should succeed even if no data
-
-    async def test_save_data_generic(self, repository):
-        """Test generic save_data method."""
-        user_id = "user_123"
-        data = {"test": "data", "value": 42}
-
-        doc_id = await repository.save_data(user_id, data)
-        assert isinstance(doc_id, str)
-        assert len(doc_id) > 0
-
-    async def test_get_data_generic(self, repository):
-        """Test generic get_data method."""
-        user_id = "user_123"
-
-        result = await repository.get_data(user_id)
-        assert result == {}
-
-        # Test with filters (should be ignored)
-        result = await repository.get_data(user_id, filters={"test": "filter"})
-        assert result == {}
-
-    async def test_initialize_method(self, repository):
-        """Test initialize method."""
-        await repository.initialize()
-        # Should complete without error
-
-    async def test_cleanup_method(self, repository):
-        """Test cleanup method."""
-        await repository.cleanup()
-        # Should complete without error
-
-    async def test_metric_serialization_all_types(self, repository):
+    async def test_metric_serialization_all_types(self, repository: MockHealthDataRepository) -> None:
         """Test that all metric types are properly serialized."""
         user_id = "user_123"
         processing_id = str(uuid4())
@@ -429,11 +333,12 @@ class TestMockHealthDataRepositoryComprehensive:
         assert "biometric_data" in metric_data
         assert metric_data["biometric_data"]["heart_rate"] == 75.0
 
-    async def test_error_handling_in_save(self, repository, monkeypatch):
+    async def test_error_handling_in_save(self, repository: MockHealthDataRepository, monkeypatch: MonkeyPatch) -> None:
         """Test error handling during save operation."""
         # Mock an exception during metric processing
-        def mock_model_dump(*args, **kwargs):
-            raise ValueError("Test error")
+        def mock_model_dump(*_args: object, **_kwargs: object) -> None:
+            error_msg = "Test error"
+            raise ValueError(error_msg)
 
         # This test ensures the except block is covered
         user_id = "user_123"
@@ -471,3 +376,368 @@ class TestMockHealthDataRepositoryComprehensive:
         )
 
         assert result is False  # Should return False on error
+
+
+class TestMockHealthDataRepositoryRetrieval:
+    """Tests for health data retrieval functionality."""
+
+    @pytest.fixture
+    async def repository(self) -> MockHealthDataRepository:
+        """Create fresh repository instance for each test."""
+        return MockHealthDataRepository()
+
+    @pytest.fixture
+    def sample_metrics(self) -> list[HealthMetric]:
+        """Create sample health metrics for testing."""
+        now = datetime.now(UTC)
+        sleep_start = now.replace(hour=22, minute=0, second=0)
+        sleep_end = now.replace(hour=8, minute=0, second=0) + timedelta(days=1)
+        sleep_duration = 600
+
+        biometric_metric = HealthMetric(
+            metric_id=uuid4(),
+            metric_type=HealthMetricType.HEART_RATE,
+            device_id="apple_watch_001",
+            raw_data={},
+            metadata={},
+            created_at=now,
+            biometric_data=BiometricData(
+                heart_rate=72.5,
+                blood_pressure_systolic=120,
+                blood_pressure_diastolic=80,
+                body_temperature=37.0,
+                oxygen_saturation=99.0,
+                heart_rate_variability=50.0,
+                respiratory_rate=16.0,
+                blood_glucose=100.0
+            )
+        )
+
+        sleep_metric = HealthMetric(
+            metric_id=uuid4(),
+            metric_type=HealthMetricType.SLEEP_ANALYSIS,
+            device_id="apple_watch_001",
+            raw_data={},
+            metadata={},
+            created_at=now,
+            sleep_data=SleepData(
+                total_sleep_minutes=sleep_duration,
+                sleep_efficiency=0.85,
+                time_to_sleep_minutes=15,
+                wake_count=2,
+                sleep_stages={SleepStage.LIGHT: 240, SleepStage.DEEP: 120, SleepStage.REM: 90, SleepStage.AWAKE: 30},
+                sleep_start=sleep_start,
+                sleep_end=sleep_end
+            )
+        )
+
+        activity_metric = HealthMetric(
+            metric_id=uuid4(),
+            metric_type=HealthMetricType.ACTIVITY_LEVEL,
+            device_id="apple_watch_001",
+            raw_data={},
+            metadata={},
+            created_at=now,
+            activity_data=ActivityData(
+                steps=10000,
+                distance=8.0,
+                active_energy=500.0,
+                exercise_minutes=60,
+                flights_climbed=10,
+                vo2_max=45.0,
+                active_minutes=60,
+                resting_heart_rate=60.0
+            )
+        )
+
+        mental_metric = HealthMetric(
+            metric_id=uuid4(),
+            metric_type=HealthMetricType.MOOD_ASSESSMENT,
+            device_id="phone_001",
+            raw_data={},
+            metadata={},
+            created_at=now,
+            mental_health_data=MentalHealthIndicator(
+                stress_level=3.0,
+                anxiety_level=2.0,
+                timestamp=now
+            )
+        )
+
+        return [biometric_metric, sleep_metric, activity_metric, mental_metric]
+
+    async def test_get_user_health_data_empty(self, repository: MockHealthDataRepository) -> None:
+        """Test getting data for non-existent user."""
+        result = await repository.get_user_health_data("non_existent_user")
+
+        assert result["data"] == []
+        assert result["total_count"] == 0
+        assert result["page_info"]["has_more"] is False
+
+    async def test_get_user_health_data_with_data(self, repository: MockHealthDataRepository, sample_metrics: list[HealthMetric]) -> None:
+        """Test getting user health data with existing data."""
+        user_id = "user_123"
+        processing_id = str(uuid4())
+
+        await repository.save_health_data(
+            user_id=user_id,
+            processing_id=processing_id,
+            metrics=sample_metrics,
+            upload_source="apple_health",
+            client_timestamp=datetime.now(UTC)
+        )
+
+        result = await repository.get_user_health_data(user_id)
+
+        assert len(result["data"]) == 4
+        assert result["total_count"] == 4
+        assert result["page_info"]["has_more"] is False
+
+    async def test_get_user_health_data_pagination(self, repository: MockHealthDataRepository, sample_metrics: list[HealthMetric]) -> None:
+        """Test pagination functionality."""
+        user_id = "user_123"
+        processing_id = str(uuid4())
+
+        await repository.save_health_data(
+            user_id=user_id,
+            processing_id=processing_id,
+            metrics=sample_metrics,
+            upload_source="apple_health",
+            client_timestamp=datetime.now(UTC)
+        )
+
+        # Test limit
+        result = await repository.get_user_health_data(user_id, limit=2)
+        assert len(result["data"]) == 2
+        assert result["total_count"] == 4
+        assert result["page_info"]["has_more"] is True
+
+        # Test offset
+        result = await repository.get_user_health_data(user_id, limit=2, offset=2)
+        assert len(result["data"]) == 2
+        assert result["page_info"]["has_more"] is False
+
+    async def test_get_user_health_data_metric_type_filter(self, repository: MockHealthDataRepository, sample_metrics: list[HealthMetric]) -> None:
+        """Test filtering by metric type."""
+        user_id = "user_123"
+        processing_id = str(uuid4())
+
+        await repository.save_health_data(
+            user_id=user_id,
+            processing_id=processing_id,
+            metrics=sample_metrics,
+            upload_source="apple_health",
+            client_timestamp=datetime.now(UTC)
+        )
+
+        result = await repository.get_user_health_data(user_id, metric_type="heart_rate")
+        assert len(result["data"]) == 1
+        assert result["data"][0]["metric_type"] == "heart_rate"
+
+    async def test_get_user_health_data_date_filters(self, repository: MockHealthDataRepository, sample_metrics: list[HealthMetric]) -> None:
+        """Test date range filtering."""
+        user_id = "user_123"
+        processing_id = str(uuid4())
+
+        # Modify timestamps for testing
+        now = datetime.now(UTC)
+        sample_metrics[0].created_at = now
+
+        await repository.save_health_data(
+            user_id=user_id,
+            processing_id=processing_id,
+            metrics=sample_metrics,
+            upload_source="apple_health",
+            client_timestamp=datetime.now(UTC)
+        )
+
+        # Test start_date filter
+        result = await repository.get_user_health_data(
+            user_id,
+            start_date=now
+        )
+        assert len(result["data"]) >= 1
+
+
+class TestMockHealthDataRepositoryProcessingAndDeletion:
+    """Tests for processing status and deletion functionality."""
+
+    @pytest.fixture
+    async def repository(self) -> MockHealthDataRepository:
+        """Create fresh repository instance for each test."""
+        return MockHealthDataRepository()
+
+    @pytest.fixture
+    def sample_metrics(self) -> list[HealthMetric]:
+        """Create sample health metrics for testing."""
+        now = datetime.now(UTC)
+        sleep_start = now.replace(hour=22, minute=0, second=0)
+        sleep_end = now.replace(hour=8, minute=0, second=0) + timedelta(days=1)
+        sleep_duration = 600
+
+        biometric_metric = HealthMetric(
+            metric_id=uuid4(),
+            metric_type=HealthMetricType.HEART_RATE,
+            device_id="apple_watch_001",
+            raw_data={},
+            metadata={},
+            created_at=now,
+            biometric_data=BiometricData(
+                heart_rate=72.5,
+                blood_pressure_systolic=120,
+                blood_pressure_diastolic=80,
+                body_temperature=37.0,
+                oxygen_saturation=99.0,
+                heart_rate_variability=50.0,
+                respiratory_rate=16.0,
+                blood_glucose=100.0
+            )
+        )
+
+        sleep_metric = HealthMetric(
+            metric_id=uuid4(),
+            metric_type=HealthMetricType.SLEEP_ANALYSIS,
+            device_id="apple_watch_001",
+            raw_data={},
+            metadata={},
+            created_at=now,
+            sleep_data=SleepData(
+                total_sleep_minutes=sleep_duration,
+                sleep_efficiency=0.85,
+                time_to_sleep_minutes=15,
+                wake_count=2,
+                sleep_stages={SleepStage.LIGHT: 240, SleepStage.DEEP: 120, SleepStage.REM: 90, SleepStage.AWAKE: 30},
+                sleep_start=sleep_start,
+                sleep_end=sleep_end
+            )
+        )
+
+        activity_metric = HealthMetric(
+            metric_id=uuid4(),
+            metric_type=HealthMetricType.ACTIVITY_LEVEL,
+            device_id="apple_watch_001",
+            raw_data={},
+            metadata={},
+            created_at=now,
+            activity_data=ActivityData(
+                steps=10000,
+                distance=8.0,
+                active_energy=500.0,
+                exercise_minutes=60,
+                flights_climbed=10,
+                vo2_max=45.0,
+                active_minutes=60,
+                resting_heart_rate=60.0
+            )
+        )
+
+        mental_metric = HealthMetric(
+            metric_id=uuid4(),
+            metric_type=HealthMetricType.MOOD_ASSESSMENT,
+            device_id="phone_001",
+            raw_data={},
+            metadata={},
+            created_at=now,
+            mental_health_data=MentalHealthIndicator(
+                stress_level=3.0,
+                anxiety_level=2.0,
+                timestamp=now
+            )
+        )
+
+        return [biometric_metric, sleep_metric, activity_metric, mental_metric]
+
+    async def test_get_processing_status_exists(self, repository: MockHealthDataRepository, sample_metrics: list[HealthMetric]) -> None:
+        """Test getting processing status that exists."""
+        user_id = "user_123"
+        processing_id = str(uuid4())
+
+        await repository.save_health_data(
+            user_id=user_id,
+            processing_id=processing_id,
+            metrics=sample_metrics,
+            upload_source="apple_health",
+            client_timestamp=datetime.now(UTC)
+        )
+
+        status = await repository.get_processing_status(processing_id, user_id)
+        assert status is not None
+        assert status["processing_id"] == processing_id
+        assert status["user_id"] == user_id
+        assert status["status"] == "completed"
+
+    async def test_get_processing_status_not_found(self, repository: MockHealthDataRepository) -> None:
+        """Test getting non-existent processing status."""
+        status = await repository.get_processing_status("non_existent", "user_123")
+        assert status is None
+
+    async def test_get_processing_status_wrong_user(self, repository: MockHealthDataRepository, sample_metrics: list[HealthMetric]) -> None:
+        """Test getting processing status with wrong user."""
+        user_id = "user_123"
+        processing_id = str(uuid4())
+
+        await repository.save_health_data(
+            user_id=user_id,
+            processing_id=processing_id,
+            metrics=sample_metrics,
+            upload_source="apple_health",
+            client_timestamp=datetime.now(UTC)
+        )
+
+        status = await repository.get_processing_status(processing_id, "wrong_user")
+        assert status is None
+
+    async def test_delete_health_data_specific_processing(self, repository: MockHealthDataRepository, sample_metrics: list[HealthMetric]) -> None:
+        """Test deleting specific processing job."""
+        user_id = "user_123"
+        processing_id_1 = str(uuid4())
+        processing_id_2 = str(uuid4())
+
+        # Create two processing jobs
+        await repository.save_health_data(
+            user_id=user_id,
+            processing_id=processing_id_1,
+            metrics=sample_metrics[:2],
+            upload_source="apple_health",
+            client_timestamp=datetime.now(UTC)
+        )
+
+        await repository.save_health_data(
+            user_id=user_id,
+            processing_id=processing_id_2,
+            metrics=sample_metrics[2:],
+            upload_source="fitbit",
+            client_timestamp=datetime.now(UTC)
+        )
+
+        # Delete first processing job
+        result = await repository.delete_health_data(user_id, processing_id_1)
+        assert result is True
+
+        # Verify only second job remains
+        assert len(repository._health_data[user_id]) == 1
+        assert repository._health_data[user_id][0]["processing_id"] == processing_id_2
+        assert processing_id_1 not in repository._processing_status
+        assert processing_id_2 in repository._processing_status
+
+    async def test_delete_health_data_all_user_data(self, repository: MockHealthDataRepository, sample_metrics: list[HealthMetric]) -> None:
+        """Test deleting all user data."""
+        user_id = "user_123"
+        processing_id = str(uuid4())
+
+        await repository.save_health_data(
+            user_id=user_id,
+            processing_id=processing_id,
+            metrics=sample_metrics,
+            upload_source="apple_health",
+            client_timestamp=datetime.now(UTC)
+        )
+
+        result = await repository.delete_health_data(user_id)
+        assert result is True
+        assert user_id not in repository._health_data
+
+    async def test_delete_health_data_non_existent_user(self, repository: MockHealthDataRepository) -> None:
+        """Test deleting data for non-existent user."""
+        result = await repository.delete_health_data("non_existent_user")
+        assert result is True  # Should succeed even if no data

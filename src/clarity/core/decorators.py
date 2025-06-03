@@ -201,7 +201,9 @@ def retry_on_failure(
 
                     if attempt == max_retries:
                         logger.exception(
-                            "Function %s failed after %d attempts", func_name, max_retries + 1
+                            "Function %s failed after %d attempts",
+                            func_name,
+                            max_retries + 1,
                         )
                         raise
 
@@ -237,7 +239,9 @@ def retry_on_failure(
 
                     if attempt == max_retries:
                         logger.exception(
-                            "Function %s failed after %d attempts", func_name, max_retries + 1
+                            "Function %s failed after %d attempts",
+                            func_name,
+                            max_retries + 1,
                         )
                         raise
 
@@ -318,7 +322,9 @@ def audit_trail(
                 "function": f"{func.__module__}.{func.__qualname__}",
                 "timestamp": datetime.now(UTC).isoformat(),
                 "user_id": kwargs.get(user_id_param) if user_id_param else None,
-                "resource_id": kwargs.get(resource_id_param) if resource_id_param else None,
+                "resource_id": (
+                    kwargs.get(resource_id_param) if resource_id_param else None
+                ),
             }
 
             logger.info("Audit: %s", audit_info)
@@ -343,7 +349,9 @@ def audit_trail(
                 "function": f"{func.__module__}.{func.__qualname__}",
                 "timestamp": datetime.now(UTC).isoformat(),
                 "user_id": kwargs.get(user_id_param) if user_id_param else None,
-                "resource_id": kwargs.get(resource_id_param) if resource_id_param else None,
+                "resource_id": (
+                    kwargs.get(resource_id_param) if resource_id_param else None
+                ),
             }
 
             logger.info("Audit: %s", audit_info)

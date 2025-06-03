@@ -341,7 +341,9 @@ class EnhancedHealthDataService:
         return validation_errors
 
     @log_execution(level=logging.DEBUG)
-    async def _can_delete_data(self, user_id: str, processing_id: str | None) -> bool:  # noqa: ARG002
+    async def _can_delete_data(
+        self, user_id: str, processing_id: str | None
+    ) -> bool:  # noqa: ARG002
         """Check if data can be deleted according to business rules."""
         # Example business rule: Check if data is within retention period
         try:
@@ -350,7 +352,7 @@ class EnhancedHealthDataService:
             # - User consent status
             # - legal holds, consent status, etc.
             return True
-        except Exception as e:
+        except (ValueError, RuntimeError, OSError) as e:
             self.logger.warning("Error checking deletion policy: %s", e)
             return False
 
@@ -366,16 +368,17 @@ class EnhancedHealthDataService:
             # Type-specific validation
             metric_type_value = metric.metric_type.value.lower()
 
-            if metric_type_value in {"heart_rate", "blood_pressure"}:
-                return bool(metric.biometric_data)
-            if metric_type_value == "sleep_analysis":
-                return bool(metric.sleep_data)
-            if metric_type_value == "activity_level":
-                return bool(metric.activity_data)
-            if metric_type_value == "mental_health":
-                return metric.mental_health_data is not None
-            # Unknown metric type
-            return False
+            # Use a mapping to reduce return statements
+            validation_map = {
+                "heart_rate": lambda m: bool(m.biometric_data),
+                "blood_pressure": lambda m: bool(m.biometric_data),
+                "sleep_analysis": lambda m: bool(m.sleep_data),
+                "activity_level": lambda m: bool(m.activity_data),
+                "mental_health": lambda m: m.mental_health_data is not None,
+            }
+
+            validator = validation_map.get(metric_type_value)
+            return validator(metric) if validator else False
 
         except (ValueError, AttributeError, TypeError) as e:
             logger.warning("Error validating metric business rules: %s", e)

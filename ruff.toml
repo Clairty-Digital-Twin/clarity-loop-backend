@@ -118,6 +118,9 @@ unfixable = [
 "src/clarity/core/decorators.py" = [
     "ANN401", # Any type annotations are necessary in generic decorators
 ]
+"src/clarity/storage/mock_repository.py" = [
+    "PLR6301", # Interface methods cannot be static
+]
 
 # Import sorting configuration
 [lint.isort]

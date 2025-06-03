@@ -129,7 +129,7 @@ class ModelChecksumManager:
             logger.info(
                 "Saved checksums for %d models to %s",
                 len(manifests),
-                self.checksums_file
+                self.checksums_file,
             )
 
         except OSError as e:
@@ -197,7 +197,9 @@ class ModelChecksumManager:
                 else:
                     logger.error(
                         "✗ %s: checksum mismatch! Expected: %s, Got: %s",
-                        file_name, expected_checksum, actual_checksum
+                        file_name,
+                        expected_checksum,
+                        actual_checksum,
                     )
                     verification_results.append(False)
 
@@ -324,7 +326,9 @@ def verify_startup_models() -> bool:
             else:
                 logger.error(
                     "✗ %s: %d/%d models passed verification",
-                    name, passed_count, total_count
+                    name,
+                    passed_count,
+                    total_count,
                 )
                 all_passed = False
 

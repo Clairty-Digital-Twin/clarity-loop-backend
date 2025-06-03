@@ -47,7 +47,9 @@ def register_command(args: argparse.Namespace) -> None:
                 logger.error("No model files found in %s", models_dir)
                 return
 
-        logger.info("Registering model '%s' with files: %s", args.model_name, model_files)
+        logger.info(
+            "Registering model '%s' with files: %s", args.model_name, model_files
+        )
         manager.register_model(args.model_name, model_files)
         logger.info("✓ Model registered successfully")
 
@@ -112,7 +114,11 @@ def list_command(args: argparse.Namespace) -> None:
                 size_mb = size_bytes / (1024 * 1024)
                 created = info.get("created_at", "unknown")
                 logger.info(
-                    "  %s: %d files, %.1fMB, created %s", model_name, file_count, size_mb, created
+                    "  %s: %d files, %.1fMB, created %s",
+                    model_name,
+                    file_count,
+                    size_mb,
+                    created,
                 )
             else:
                 logger.info("  %s: (info unavailable)", model_name)
@@ -132,18 +138,18 @@ def info_command(args: argparse.Namespace) -> None:
             logger.error("Model '%s' not found", args.model_name)
             sys.exit(1)
 
-        logger.info("Model: %s", info['model_name'])
-        logger.info("Created: %s", info['created_at'])
-        logger.info("Total files: %d", info['total_files'])
-        logger.info("Total size: %.1fMB", info['total_size_bytes'] / (1024 * 1024))
+        logger.info("Model: %s", info["model_name"])
+        logger.info("Created: %s", info["created_at"])
+        logger.info("Total files: %d", info["total_files"])
+        logger.info("Total size: %.1fMB", info["total_size_bytes"] / (1024 * 1024))
         logger.info("Files:")
 
         for file_name, file_info in info["files"].items():
             size_mb = file_info["size_bytes"] / (1024 * 1024)
             logger.info("  %s:", file_name)
-            logger.info("    Checksum: %s", file_info['checksum'])
+            logger.info("    Checksum: %s", file_info["checksum"])
             logger.info("    Size: %.1fMB", size_mb)
-            logger.info("    Modified: %s", file_info['last_modified'])
+            logger.info("    Modified: %s", file_info["last_modified"])
 
     except ModelIntegrityError:
         logger.exception("Failed to get model info")

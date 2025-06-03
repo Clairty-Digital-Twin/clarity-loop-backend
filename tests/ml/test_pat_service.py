@@ -602,7 +602,7 @@ class TestPATModelServiceEdgeCases:
 
         # Mock the preprocessor
         mock_preprocessor = MagicMock()
-        mock_tensor = torch.randn(1, 1440, 1)
+        mock_tensor = torch.randn(1440)
         mock_preprocessor.preprocess_for_pat_model.return_value = mock_tensor
         service.preprocessor = mock_preprocessor
 

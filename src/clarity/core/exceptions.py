@@ -18,6 +18,9 @@ from fastapi import HTTPException, Request
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 
+# Module-level logger for exception handling
+logger = logging.getLogger(__name__)
+
 
 class ProblemDetail(BaseModel):
     """RFC 7807 Problem Details for HTTP APIs.
@@ -295,7 +298,6 @@ def generic_exception_handler(
     ).to_problem_detail()
 
     # Log the actual exception for debugging
-    logger = logging.getLogger(__name__)
     error_msg = f"Unhandled exception (trace_id={trace_id}): {exc}"
     logger.error(error_msg, exc_info=exc)
 

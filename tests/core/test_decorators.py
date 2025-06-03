@@ -1,22 +1,627 @@
 """Tests for core decorators functionality.
 
-Tests cover:
-- Performance timing decorators
-- Error handling decorators
-- Caching decorators
-- Authentication decorators
-- Validation decorators
+Comprehensive tests for production decorators including:
+- Log execution decorator
+- Execution time measurement
+- Retry patterns with exponential backoff
+- Input validation
+- Audit trail functionality
+- Composite decorators for service and repository layers
 """
 
 import asyncio
 from collections.abc import Callable
 import functools
+import logging
 import time
 from typing import Any, TypeVar
+from unittest.mock import MagicMock, patch
+
+import pytest
+
+from clarity.core.decorators import (
+    audit_trail,
+    log_execution,
+    measure_execution_time,
+    repository_method,
+    retry_on_failure,
+    service_method,
+    validate_input,
+)
 
 F = TypeVar("F", bound=Callable[..., Any])
 
 
+class TestLogExecution:
+    """Test log_execution decorator."""
+
+    def test_log_execution_sync_function_basic(self, caplog: pytest.LogCaptureFixture) -> None:
+        """Test basic logging for sync functions."""
+        with caplog.at_level(logging.INFO):
+            @log_execution()
+            def test_function() -> str:
+                return "test_result"
+
+            result = test_function()
+
+        assert result == "test_result"
+        log_messages = caplog.messages
+        assert any("Executing" in msg and "test_function" in msg for msg in log_messages)
+        assert any("Completed" in msg and "test_function" in msg for msg in log_messages)
+
+    def test_log_execution_with_args_and_result(self, caplog: pytest.LogCaptureFixture) -> None:
+        """Test logging with arguments and result included."""
+        with caplog.at_level(logging.INFO):
+            @log_execution(include_args=True, include_result=True)
+            def test_function(x: int, y: str = "default") -> str:
+                return f"{x}_{y}"
+
+            result = test_function(42, y="test")
+
+        assert result == "42_test"
+        log_messages = " ".join(caplog.messages)
+        assert "with args=" in log_messages
+        assert "kwargs=" in log_messages
+        assert "42_test" in log_messages
+
+    async def test_log_execution_async_function(self, caplog: pytest.LogCaptureFixture) -> None:
+        """Test logging for async functions."""
+        with caplog.at_level(logging.INFO):
+            @log_execution()
+            async def async_test_function() -> str:
+                await asyncio.sleep(0.01)
+                return "async_result"
+
+            result = await async_test_function()
+
+        assert result == "async_result"
+        log_messages = caplog.messages
+        assert any("Executing" in msg and "async_test_function" in msg for msg in log_messages)
+        assert any("Completed" in msg and "async_test_function" in msg for msg in log_messages)
+
+    def test_log_execution_exception_handling(self, caplog: pytest.LogCaptureFixture) -> None:
+        """Test logging when function raises exception."""
+        with caplog.at_level(logging.INFO):
+            @log_execution()
+            def failing_function() -> str:
+                raise ValueError("Test error")
+
+            with pytest.raises(ValueError, match="Test error"):
+                failing_function()
+
+        log_messages = " ".join(caplog.messages)
+        assert "Executing" in log_messages and "failing_function" in log_messages
+        assert "Error in" in log_messages and "failing_function" in log_messages
+
+    async def test_log_execution_async_exception_handling(self, caplog: pytest.LogCaptureFixture) -> None:
+        """Test logging when async function raises exception."""
+        with caplog.at_level(logging.INFO):
+            @log_execution()
+            async def failing_async_function() -> str:
+                await asyncio.sleep(0.01)
+                raise ValueError("Async test error")
+
+            with pytest.raises(ValueError, match="Async test error"):
+                await failing_async_function()
+
+        log_messages = " ".join(caplog.messages)
+        assert "Executing" in log_messages and "failing_async_function" in log_messages
+        assert "Error in" in log_messages and "failing_async_function" in log_messages
+
+    def test_log_execution_custom_level(self, caplog: pytest.LogCaptureFixture) -> None:
+        """Test logging with custom log level."""
+        with caplog.at_level(logging.DEBUG):
+            @log_execution(level=logging.DEBUG)
+            def debug_function() -> str:
+                return "debug_result"
+
+            result = debug_function()
+
+        assert result == "debug_result"
+        # Check that debug messages are captured
+        debug_messages = [record for record in caplog.records if record.levelno == logging.DEBUG]
+        assert len(debug_messages) >= 2  # At least entry and completion
+
+
+class TestMeasureExecutionTime:
+    """Test measure_execution_time decorator."""
+
+    def test_measure_execution_time_basic(self, caplog: pytest.LogCaptureFixture) -> None:
+        """Test basic execution time measurement."""
+        with caplog.at_level(logging.INFO):
+            @measure_execution_time()
+            def timed_function() -> str:
+                time.sleep(0.05)  # 50ms delay
+                return "timed_result"
+
+            result = timed_function()
+
+        assert result == "timed_result"
+        log_messages = " ".join(caplog.messages)
+        assert "executed in" in log_messages
+        assert "ms" in log_messages
+
+    def test_measure_execution_time_with_threshold(self, caplog: pytest.LogCaptureFixture) -> None:
+        """Test execution time measurement with threshold."""
+        with caplog.at_level(logging.INFO):
+            @measure_execution_time(threshold_ms=100.0)  # 100ms threshold
+            def fast_function() -> str:
+                time.sleep(0.01)  # 10ms delay (below threshold)
+                return "fast_result"
+
+            @measure_execution_time(threshold_ms=10.0)  # 10ms threshold
+            def slow_function() -> str:
+                time.sleep(0.05)  # 50ms delay (above threshold)
+                return "slow_result"
+
+            fast_result = fast_function()
+            slow_result = slow_function()
+
+        assert fast_result == "fast_result"
+        assert slow_result == "slow_result"
+
+        log_messages = " ".join(caplog.messages)
+        # Fast function should not be logged (below threshold)
+        assert "fast_function" not in log_messages
+        # Slow function should be logged (above threshold)
+        assert "slow_function" in log_messages
+
+    async def test_measure_execution_time_async(self, caplog: pytest.LogCaptureFixture) -> None:
+        """Test execution time measurement for async functions."""
+        with caplog.at_level(logging.INFO):
+            @measure_execution_time()
+            async def async_timed_function() -> str:
+                await asyncio.sleep(0.05)  # 50ms delay
+                return "async_timed_result"
+
+            result = await async_timed_function()
+
+        assert result == "async_timed_result"
+        log_messages = " ".join(caplog.messages)
+        assert "async_timed_function executed in" in log_messages
+
+    def test_measure_execution_time_exception_handling(self, caplog: pytest.LogCaptureFixture) -> None:
+        """Test timing measurement when function raises exception."""
+        with caplog.at_level(logging.INFO):
+            @measure_execution_time()
+            def failing_timed_function() -> str:
+                time.sleep(0.02)  # Small delay before failing
+                raise RuntimeError("Timing test error")
+
+            with pytest.raises(RuntimeError, match="Timing test error"):
+                failing_timed_function()
+
+        log_messages = " ".join(caplog.messages)
+        assert "failed after" in log_messages
+        assert "ms" in log_messages
+
+
+class TestRetryOnFailure:
+    """Test retry_on_failure decorator."""
+
+    def test_retry_on_failure_success_on_first_try(self) -> None:
+        """Test retry decorator when function succeeds on first try."""
+        call_count = 0
+
+        @retry_on_failure(max_retries=3)
+        def successful_function() -> str:
+            nonlocal call_count
+            call_count += 1
+            return f"success_{call_count}"
+
+        result = successful_function()
+        assert result == "success_1"
+        assert call_count == 1
+
+    def test_retry_on_failure_success_after_retries(self, caplog: pytest.LogCaptureFixture) -> None:
+        """Test retry decorator when function succeeds after retries."""
+        call_count = 0
+
+        with caplog.at_level(logging.WARNING):
+            @retry_on_failure(max_retries=3, delay_seconds=0.01)
+            def flaky_function() -> str:
+                nonlocal call_count
+                call_count += 1
+                if call_count < 3:
+                    raise ValueError(f"Attempt {call_count} failed")
+                return f"success_{call_count}"
+
+            result = flaky_function()
+
+        assert result == "success_3"
+        assert call_count == 3
+        log_messages = " ".join(caplog.messages)
+        assert "retrying in" in log_messages
+
+    def test_retry_on_failure_final_failure(self, caplog: pytest.LogCaptureFixture) -> None:
+        """Test retry decorator when all retries are exhausted."""
+        call_count = 0
+
+        with caplog.at_level(logging.WARNING):
+            @retry_on_failure(max_retries=2, delay_seconds=0.01)
+            def always_failing_function() -> str:
+                nonlocal call_count
+                call_count += 1
+                raise ValueError(f"Failure {call_count}")
+
+            with pytest.raises(ValueError, match="Failure 3"):
+                always_failing_function()
+
+        assert call_count == 3  # Initial attempt + 2 retries
+        log_messages = " ".join(caplog.messages)
+        assert "failed after 3 attempts" in log_messages
+
+    async def test_retry_on_failure_async(self) -> None:
+        """Test retry decorator with async functions."""
+        call_count = 0
+
+        @retry_on_failure(max_retries=2, delay_seconds=0.01)
+        async def async_flaky_function() -> str:
+            nonlocal call_count
+            call_count += 1
+            await asyncio.sleep(0.001)
+            if call_count < 2:
+                raise ValueError(f"Async attempt {call_count} failed")
+            return f"async_success_{call_count}"
+
+        result = await async_flaky_function()
+        assert result == "async_success_2"
+        assert call_count == 2
+
+    def test_retry_on_failure_exponential_backoff(self) -> None:
+        """Test retry decorator with exponential backoff."""
+        call_times = []
+
+        @retry_on_failure(max_retries=3, delay_seconds=0.01, exponential_backoff=True)
+        def backoff_function() -> str:
+            call_times.append(time.time())
+            if len(call_times) < 3:
+                raise ValueError("Not ready yet")
+            return "backoff_success"
+
+        result = backoff_function()
+        assert result == "backoff_success"
+        assert len(call_times) == 3
+
+        # Check that delays increase exponentially
+        delay1 = call_times[1] - call_times[0]
+        delay2 = call_times[2] - call_times[1]
+        assert delay2 > delay1  # Second delay should be longer
+
+    def test_retry_on_failure_specific_exceptions(self) -> None:
+        """Test retry decorator with specific exception types."""
+        call_count = 0
+
+        @retry_on_failure(max_retries=2, delay_seconds=0.01, exceptions=(ValueError,))
+        def selective_retry_function() -> str:
+            nonlocal call_count
+            call_count += 1
+            if call_count == 1:
+                raise ValueError("Retryable error")
+            if call_count == 2:
+                raise TypeError("Non-retryable error")
+            return "should_not_reach"
+
+        with pytest.raises(TypeError, match="Non-retryable error"):
+            selective_retry_function()
+
+        assert call_count == 2  # ValueError was retried, TypeError was not
+
+
+class TestValidateInput:
+    """Test validate_input decorator."""
+
+    def test_validate_input_valid_case(self) -> None:
+        """Test input validation with valid input."""
+        def is_positive(args_kwargs: tuple[tuple[Any, ...], dict[str, Any]]) -> bool:
+            args, _ = args_kwargs
+            return len(args) > 0 and isinstance(args[0], int) and args[0] > 0
+
+        @validate_input(is_positive, "Input must be a positive integer")
+        def process_positive(x: int) -> str:
+            return f"processed_{x}"
+
+        result = process_positive(5)
+        assert result == "processed_5"
+
+    def test_validate_input_invalid_case(self) -> None:
+        """Test input validation with invalid input."""
+        def is_positive(args_kwargs: tuple[tuple[Any, ...], dict[str, Any]]) -> bool:
+            args, _ = args_kwargs
+            return len(args) > 0 and isinstance(args[0], int) and args[0] > 0
+
+        @validate_input(is_positive, "Input must be a positive integer")
+        def process_positive(x: int) -> str:
+            return f"processed_{x}"
+
+        with pytest.raises(ValueError, match="Input must be a positive integer"):
+            process_positive(-1)
+
+        with pytest.raises(ValueError, match="Input must be a positive integer"):
+            process_positive(0)
+
+    def test_validate_input_with_kwargs(self) -> None:
+        """Test input validation considering kwargs."""
+        def has_required_kwargs(args_kwargs: tuple[tuple[Any, ...], dict[str, Any]]) -> bool:
+            _, kwargs = args_kwargs
+            return "required_param" in kwargs and kwargs["required_param"] is not None
+
+        @validate_input(has_required_kwargs, "Missing required_param")
+        def function_with_required_kwarg(**kwargs: Any) -> str:
+            return f"processed_{kwargs['required_param']}"
+
+        result = function_with_required_kwarg(required_param="test")
+        assert result == "processed_test"
+
+        with pytest.raises(ValueError, match="Missing required_param"):
+            function_with_required_kwarg(other_param="test")
+
+
+class TestAuditTrail:
+    """Test audit_trail decorator."""
+
+    def test_audit_trail_basic(self, caplog: pytest.LogCaptureFixture) -> None:
+        """Test basic audit trail functionality."""
+        with caplog.at_level(logging.INFO):
+            @audit_trail("test_operation")
+            def audited_function() -> str:
+                return "audit_result"
+
+            result = audited_function()
+
+        assert result == "audit_result"
+        log_messages = " ".join(caplog.messages)
+        assert "test_operation" in log_messages
+        assert "status" in log_messages
+        assert "success" in log_messages
+
+    def test_audit_trail_with_user_and_resource(self, caplog: pytest.LogCaptureFixture) -> None:
+        """Test audit trail with user and resource IDs."""
+        with caplog.at_level(logging.INFO):
+            @audit_trail("data_access", user_id_param="user_id", resource_id_param="resource_id")
+            def data_access_function(user_id: str, resource_id: str) -> str:
+                return f"data_for_{user_id}_{resource_id}"
+
+            result = data_access_function(user_id="user123", resource_id="res456")
+
+        assert result == "data_for_user123_res456"
+        log_messages = " ".join(caplog.messages)
+        assert "user123" in log_messages
+        assert "res456" in log_messages
+        assert "data_access" in log_messages
+
+    def test_audit_trail_exception_handling(self, caplog: pytest.LogCaptureFixture) -> None:
+        """Test audit trail when function raises exception."""
+        with caplog.at_level(logging.INFO):
+            @audit_trail("failing_operation")
+            def failing_audited_function() -> str:
+                raise RuntimeError("Audit test error")
+
+            with pytest.raises(RuntimeError, match="Audit test error"):
+                failing_audited_function()
+
+        log_messages = " ".join(caplog.messages)
+        assert "failing_operation" in log_messages
+        assert "failed" in log_messages
+        assert "Audit test error" in log_messages
+
+    async def test_audit_trail_async(self, caplog: pytest.LogCaptureFixture) -> None:
+        """Test audit trail with async functions."""
+        with caplog.at_level(logging.INFO):
+            @audit_trail("async_operation")
+            async def async_audited_function() -> str:
+                await asyncio.sleep(0.01)
+                return "async_audit_result"
+
+            result = await async_audited_function()
+
+        assert result == "async_audit_result"
+        log_messages = " ".join(caplog.messages)
+        assert "async_operation" in log_messages
+        assert "success" in log_messages
+
+
+class TestServiceMethod:
+    """Test service_method composite decorator."""
+
+    def test_service_method_basic(self, caplog: pytest.LogCaptureFixture) -> None:
+        """Test service_method decorator basic functionality."""
+        with caplog.at_level(logging.INFO):
+            @service_method()
+            def service_function() -> str:
+                time.sleep(0.02)  # Small delay for timing
+                return "service_result"
+
+            result = service_function()
+
+        assert result == "service_result"
+        log_messages = " ".join(caplog.messages)
+        # Should have logging from log_execution
+        assert "Executing" in log_messages
+        assert "Completed" in log_messages
+
+    def test_service_method_with_retries(self, caplog: pytest.LogCaptureFixture) -> None:
+        """Test service_method decorator with retry functionality."""
+        call_count = 0
+
+        with caplog.at_level(logging.INFO):
+            @service_method(max_retries=2)
+            def flaky_service_function() -> str:
+                nonlocal call_count
+                call_count += 1
+                if call_count < 2:
+                    raise ValueError("Service temporarily unavailable")
+                return "service_recovered"
+
+            result = flaky_service_function()
+
+        assert result == "service_recovered"
+        assert call_count == 2
+
+    def test_service_method_timing_threshold(self, caplog: pytest.LogCaptureFixture) -> None:
+        """Test service_method decorator with timing threshold."""
+        with caplog.at_level(logging.INFO):
+            @service_method(timing_threshold_ms=10.0)
+            def slow_service_function() -> str:
+                time.sleep(0.05)  # 50ms delay (above 10ms threshold)
+                return "slow_service_result"
+
+            @service_method(timing_threshold_ms=100.0)
+            def fast_service_function() -> str:
+                time.sleep(0.01)  # 10ms delay (below 100ms threshold)
+                return "fast_service_result"
+
+            slow_result = slow_service_function()
+            fast_result = fast_service_function()
+
+        assert slow_result == "slow_service_result"
+        assert fast_result == "fast_service_result"
+
+        log_messages = " ".join(caplog.messages)
+        # Slow function should be logged
+        assert "slow_service_function executed in" in log_messages
+
+
+class TestRepositoryMethod:
+    """Test repository_method composite decorator."""
+
+    def test_repository_method_basic(self, caplog: pytest.LogCaptureFixture) -> None:
+        """Test repository_method decorator basic functionality."""
+        with caplog.at_level(logging.DEBUG):
+            @repository_method()
+            def repository_function() -> str:
+                time.sleep(0.02)  # Small delay
+                return "repository_result"
+
+            result = repository_function()
+
+        assert result == "repository_result"
+        log_messages = " ".join(caplog.messages)
+        # Should have debug-level logging
+        debug_messages = [record for record in caplog.records if record.levelno == logging.DEBUG]
+        assert len(debug_messages) >= 2  # At least entry and completion
+
+    def test_repository_method_with_retries(self, caplog: pytest.LogCaptureFixture) -> None:
+        """Test repository_method decorator with automatic retries."""
+        call_count = 0
+
+        with caplog.at_level(logging.DEBUG):
+            @repository_method()
+            def flaky_repository_function() -> str:
+                nonlocal call_count
+                call_count += 1
+                if call_count < 3:
+                    raise ConnectionError("Database temporarily unavailable")
+                return "repository_recovered"
+
+            result = flaky_repository_function()
+
+        assert result == "repository_recovered"
+        assert call_count == 3  # Initial + 2 retries (default max_retries=2)
+
+    def test_repository_method_timing_threshold(self, caplog: pytest.LogCaptureFixture) -> None:
+        """Test repository_method decorator with timing threshold."""
+        with caplog.at_level(logging.DEBUG):
+            @repository_method()
+            def slow_repository_function() -> str:
+                time.sleep(0.06)  # 60ms delay (above 50ms default threshold)
+                return "slow_repository_result"
+
+            result = slow_repository_function()
+
+        assert result == "slow_repository_result"
+        log_messages = " ".join(caplog.messages)
+        # Should log the timing since it's above threshold
+        assert "executed in" in log_messages
+
+
+class TestDecoratorsIntegration:
+    """Test integration and edge cases for decorators."""
+
+    def test_multiple_decorators_combination(self, caplog: pytest.LogCaptureFixture) -> None:
+        """Test applying multiple decorators together."""
+        call_count = 0
+
+        with caplog.at_level(logging.INFO):
+            @log_execution()
+            @measure_execution_time()
+            @retry_on_failure(max_retries=2, delay_seconds=0.01)
+            def multi_decorated_function() -> str:
+                nonlocal call_count
+                call_count += 1
+                if call_count < 2:
+                    raise ValueError("Need retry")
+                time.sleep(0.02)  # For timing measurement
+                return "multi_decorated_result"
+
+            result = multi_decorated_function()
+
+        assert result == "multi_decorated_result"
+        assert call_count == 2
+
+        log_messages = " ".join(caplog.messages)
+        # Should have logging from multiple decorators
+        assert "Executing" in log_messages
+        assert "Completed" in log_messages
+        assert "executed in" in log_messages
+
+    def test_decorator_function_metadata_preservation(self) -> None:
+        """Test that decorators preserve function metadata."""
+        @service_method()
+        def documented_service_function() -> str:
+            """This function has documentation and metadata."""
+            return "documented_result"
+
+        # Check that function name and docstring are preserved
+        assert documented_service_function.__name__ == "documented_service_function"
+        assert documented_service_function.__doc__ is not None
+        assert "documentation" in documented_service_function.__doc__
+
+    async def test_decorator_async_compatibility(self) -> None:
+        """Test that all decorators work correctly with async functions."""
+        call_count = 0
+
+        @log_execution()
+        @measure_execution_time()
+        @retry_on_failure(max_retries=1, delay_seconds=0.01)
+        async def comprehensive_async_function() -> str:
+            nonlocal call_count
+            call_count += 1
+            await asyncio.sleep(0.01)
+            if call_count < 2:
+                raise ValueError("Async retry needed")
+            return "comprehensive_async_result"
+
+        result = await comprehensive_async_function()
+        assert result == "comprehensive_async_result"
+        assert call_count == 2
+
+    def test_decorator_error_propagation(self) -> None:
+        """Test that decorators properly propagate exceptions."""
+        @log_execution()
+        @measure_execution_time()
+        def error_propagation_function() -> str:
+            raise CustomTestError("Custom test error")
+
+        with pytest.raises(CustomTestError, match="Custom test error"):
+            error_propagation_function()
+
+    def test_decorator_return_type_preservation(self) -> None:
+        """Test that decorators preserve return types."""
+        @service_method()
+        def typed_function(x: int) -> int:
+            return x * 2
+
+        result = typed_function(5)
+        assert isinstance(result, int)
+        assert result == 10
+
+
+class CustomTestError(Exception):
+    """Custom exception for testing error propagation."""
+
+
+# Legacy mock tests (keeping for backward compatibility)
 class TestDecoratorsBasic:
     """Test basic decorator functionality."""
 

@@ -38,7 +38,7 @@ src/clarity/ports/
 
 ### Migration Guide
 ```python
-# OLD: Import from core interfaces
+# OLD: Import from core interfaces (DEPRECATED)
 from clarity.core.interfaces import IHealthDataRepository
 
 # NEW: Import from specific port
@@ -211,7 +211,7 @@ class EnhancedHealthDataService:
 
 #### Step 1: Update Imports
 ```python
-# Before
+# Before (DEPRECATED)
 from clarity.core.interfaces import IHealthDataRepository
 
 # After  

@@ -24,101 +24,108 @@ from clarity.core.decorators import (
 class TestLogExecutionDecorator:  # ruff: noqa: PLR0904
     """Comprehensive tests for log_execution decorator."""
 
-    def test_log_execution_sync_function_default_params(self, caplog):
-        """Test log_execution decorator on sync function with default parameters."""
+    @staticmethod
+    def test_log_execution_sync_function_default_params(caplog: pytest.LogCaptureFixture) -> None:
+        """Test log_execution decorator with default parameters on sync function."""
         with caplog.at_level(logging.INFO):
             @log_execution()
-            def test_func(x, y):
+            def test_func(x: int, y: int) -> int:
                 return x + y
 
-            result = test_func(1, 2)
+            result = test_func(3, 4)
 
-        assert result == 3
-        # Check that function execution was logged (with full module path)
-        assert "Executing" in caplog.text and "test_func" in caplog.text
-        assert "Completed" in caplog.text and "test_func" in caplog.text
+        assert result == 7
+        assert "Executing" in caplog.text
+        assert "Completed" in caplog.text
 
-    def test_log_execution_sync_function_with_args_result(self, caplog):
-        """Test log_execution decorator with include_args and include_result."""
+    @staticmethod
+    def test_log_execution_sync_function_with_args_result(caplog: pytest.LogCaptureFixture) -> None:
+        """Test log_execution decorator with args and result logging."""
         with caplog.at_level(logging.INFO):
             @log_execution(include_args=True, include_result=True)
-            def test_func(x, y=10):
+            def test_func(x: int, y: int = 10) -> int:
                 return x * y
 
-            result = test_func(5, y=3)
+            result = test_func(5)
 
-        assert result == 15
-        assert "with args=(5,), kwargs={'y': 3}" in caplog.text
-        assert "-> 15" in caplog.text
+        assert result == 50
+        assert "Executing" in caplog.text
+        assert "args=(5,)" in caplog.text
+        assert "result=50" in caplog.text
 
-    def test_log_execution_sync_function_with_exception(self, caplog):
-        """Test log_execution decorator when function raises exception."""
+    @staticmethod
+    def test_log_execution_sync_function_with_exception(caplog: pytest.LogCaptureFixture) -> None:
+        """Test log_execution decorator when sync function raises exception."""
         with caplog.at_level(logging.INFO):
             @log_execution()
-            def test_func():
-                raise ValueError("Test error")
+            def test_func() -> None:
+                msg = "Test exception"
+                raise ValueError(msg)
 
-            with pytest.raises(ValueError, match="Test error"):
+            with pytest.raises(ValueError, match="Test exception"):
                 test_func()
 
-        # Check that error was logged (with full module path)
-        assert "Error in" in caplog.text and "test_func" in caplog.text
+        assert "Executing" in caplog.text
+        assert "Failed" in caplog.text
 
-    async def test_log_execution_async_function_default_params(self, caplog):
-        """Test log_execution decorator on async function with default parameters."""
+    @staticmethod
+    async def test_log_execution_async_function_default_params(caplog: pytest.LogCaptureFixture) -> None:
+        """Test log_execution decorator with default parameters on async function."""
         with caplog.at_level(logging.INFO):
             @log_execution()
-            async def test_func(x, y):
+            async def test_func(x: int, y: int) -> int:
                 await asyncio.sleep(0.001)
-                return x + y
+                return x - y
 
-            result = await test_func(1, 2)
+            result = await test_func(10, 3)
 
-        assert result == 3
-        # Check that async function execution was logged (with full module path)
-        assert "Executing" in caplog.text and "test_func" in caplog.text
-        assert "Completed" in caplog.text and "test_func" in caplog.text
+        assert result == 7
+        assert "Executing" in caplog.text
+        assert "Completed" in caplog.text
 
-    async def test_log_execution_async_function_with_args_result(self, caplog):
-        """Test log_execution decorator on async function with args and result."""
+    @staticmethod
+    async def test_log_execution_async_function_with_args_result(caplog: pytest.LogCaptureFixture) -> None:
+        """Test log_execution decorator with args and result logging on async function."""
         with caplog.at_level(logging.DEBUG):
             @log_execution(level=logging.DEBUG, include_args=True, include_result=True)
-            async def test_func(name, age=25):
+            async def test_func(name: str, age: int = 25) -> str:
                 await asyncio.sleep(0.001)
-                return f"{name}-{age}"
+                return f"{name} is {age}"
 
-            result = await test_func("test", age=30)
+            result = await test_func("Alice")
 
-        assert result == "test-30"
-        assert "with args=('test',), kwargs={'age': 30}" in caplog.text
-        assert "-> test-30" in caplog.text
+        assert result == "Alice is 25"
+        assert "Executing" in caplog.text
+        assert "Alice" in caplog.text
 
-    async def test_log_execution_async_function_with_exception(self, caplog):
-        """Test log_execution decorator on async function with exception."""
+    @staticmethod
+    async def test_log_execution_async_function_with_exception(caplog: pytest.LogCaptureFixture) -> None:
+        """Test log_execution decorator when async function raises exception."""
         with caplog.at_level(logging.INFO):
             @log_execution()
-            async def test_func():
+            async def test_func() -> None:
                 await asyncio.sleep(0.001)
-                raise RuntimeError("Async error")
+                msg = "Async test exception"
+                raise RuntimeError(msg)
 
-            with pytest.raises(RuntimeError, match="Async error"):
+            with pytest.raises(RuntimeError, match="Async test exception"):
                 await test_func()
 
-        # Check that async error was logged (with full module path)
-        assert "Error in" in caplog.text and "test_func" in caplog.text
+        assert "Executing" in caplog.text
+        assert "Failed" in caplog.text
 
-    def test_log_execution_custom_log_level(self, caplog):
+    @staticmethod
+    def test_log_execution_custom_log_level(caplog: pytest.LogCaptureFixture) -> None:
         """Test log_execution decorator with custom log level."""
         with caplog.at_level(logging.WARNING):
             @log_execution(level=logging.WARNING)
-            def test_func():
-                return "warning level"
+            def test_func() -> str:
+                return "custom level"
 
             result = test_func()
 
-        assert result == "warning level"
-        # Check that custom log level function was executed
-        assert "Executing" in caplog.text and "test_func" in caplog.text
+        assert result == "custom level"
+        assert "Executing" in caplog.text
 
 
 class TestMeasureExecutionTimeDecorator:

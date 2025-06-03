@@ -516,9 +516,7 @@ class AppleWatchDataProcessor:
                     break
 
     @staticmethod
-    def _calculate_completeness(
-        result: ProcessedHealthData
-    ) -> float:
+    def _calculate_completeness(result: ProcessedHealthData) -> float:
         """Calculate percentage of data completeness."""
         expected_fields = [
             result.heart_rate_series,

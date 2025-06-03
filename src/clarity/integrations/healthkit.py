@@ -110,9 +110,7 @@ class HealthDataBatch(BaseModel):
 
     @validator("data_points")
     @classmethod
-    def validate_data_points(
-        cls, v: list[HealthDataPoint]
-    ) -> list[HealthDataPoint]:
+    def validate_data_points(cls, v: list[HealthDataPoint]) -> list[HealthDataPoint]:
         """Validate data points (allow empty for multi-modal batches)."""
         return v
 
@@ -209,9 +207,7 @@ class HealthKitClient:
         return auth_url
 
     @staticmethod
-    def _handle_token_error(
-        response: httpx.Response, operation: str
-    ) -> None:
+    def _handle_token_error(response: httpx.Response, operation: str) -> None:
         """Handle token-related HTTP errors."""
         error_msg = f"{operation} failed: {response.status_code} {response.text}"
         raise AuthorizationError(error_msg)
@@ -334,9 +330,7 @@ class HealthKitClient:
         raise IntegrationError(error_msg)
 
     @staticmethod
-    def _validate_data_type_support(
-        data_type: HealthDataType
-    ) -> str:
+    def _validate_data_type_support(data_type: HealthDataType) -> str:
         """Validate data type is supported and return endpoint."""
         endpoint_map = {
             HealthDataType.HEART_RATE: "/v1/healthkit/heart_rate",

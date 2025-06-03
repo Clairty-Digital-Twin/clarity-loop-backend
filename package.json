@@ -9,6 +9,6 @@
     "lint:all": "npm run lint:md"
   },
   "devDependencies": {
-    "markdownlint-cli2": "^0.13.0"
+    "markdownlint-cli2": "^0.18.1"
   }
 }

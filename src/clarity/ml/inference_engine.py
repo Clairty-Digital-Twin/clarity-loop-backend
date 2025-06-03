@@ -19,7 +19,7 @@ from collections.abc import Callable
 from functools import wraps
 import logging
 import time
-from typing import TYPE_CHECKING, Any, Optional
+from typing import TYPE_CHECKING, Any
 
 from pydantic import BaseModel, Field
 
@@ -211,12 +211,12 @@ class AsyncInferenceEngine:
             batch_timeout_ms,
         )
 
-    async def __aenter__(self):
+    async def __aenter__(self) -> "AsyncInferenceEngine":
         """Async context manager entry."""
         await self.start()
         return self
 
-    async def __aexit__(self, exc_type, exc_val, exc_tb):
+    async def __aexit__(self, exc_type: type[BaseException] | None, exc_val: BaseException | None, exc_tb: object) -> None:
         """Async context manager exit with proper cleanup."""
         await self.stop()
 

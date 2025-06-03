@@ -1,12 +1,27 @@
-"""Enhanced Health Data Service with Architectural Improvements.
+"""ARCHITECTURAL EXAMPLE: Enhanced Health Data Service
 
-Demonstrates integration of:
-- New decorator patterns for cross-cutting concerns
-- Ports layer interfaces
-- Model integrity verification
-- Audit trail and enhanced logging
+⚠️  This file demonstrates the new architectural patterns and improvements.
+    For production use, see: src/clarity/services/health_data_service.py
 
-This is an example of how to upgrade existing services with the new architectural patterns.
+📚 DEMONSTRATES:
+- ✅ New decorator patterns for cross-cutting concerns
+- ✅ Ports layer interfaces instead of core.interfaces
+- ✅ Model integrity verification
+- ✅ Comprehensive audit trail and enhanced logging
+- ✅ Enhanced error handling and business rule validation
+
+💡 PURPOSE:
+This serves as a reference implementation showing how to upgrade existing 
+services with the new architectural patterns. Copy patterns from here into 
+production services as needed.
+
+🔄 MIGRATION:
+When ready to use these patterns in production:
+1. Copy decorator usage patterns to health_data_service.py
+2. Update imports to use ports layer
+3. Add model integrity checks
+4. Enhance error handling as shown here
+5. Remove this example file
 """
 
 from datetime import UTC, datetime

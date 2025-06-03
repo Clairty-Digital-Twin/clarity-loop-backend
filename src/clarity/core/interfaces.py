@@ -1,14 +1,23 @@
-"""Core interfaces for dependency inversion - DEPRECATED.
+"""🚨 DEPRECATED: Core interfaces - USE PORTS LAYER INSTEAD
 
-This module has been refactored into the ports layer following Clean Architecture.
-Use clarity.ports.* imports instead of this module.
+⚠️  This module is DEPRECATED and will be removed in a future version.
+    All imports have been migrated to the new ports layer following Clean Architecture.
 
-MIGRATION GUIDE:
-- IAuthProvider -> from clarity.ports.auth_ports import IAuthProvider
-- IConfigProvider -> from clarity.ports.config_ports import IConfigProvider
-- IHealthDataRepository -> from clarity.ports.data_ports import IHealthDataRepository
-- IMiddleware -> from clarity.ports.middleware_ports import IMiddleware
-- IMLModelService -> from clarity.ports.ml_ports import IMLModelService
+❌ DO NOT USE:
+    from clarity.core.interfaces import IAuthProvider
+
+✅ USE INSTEAD:
+    from clarity.ports.auth_ports import IAuthProvider
+
+📋 COMPLETE MIGRATION GUIDE:
+- IAuthProvider        → from clarity.ports.auth_ports import IAuthProvider
+- IConfigProvider      → from clarity.ports.config_ports import IConfigProvider  
+- IHealthDataRepository → from clarity.ports.data_ports import IHealthDataRepository
+- IMiddleware          → from clarity.ports.middleware_ports import IMiddleware
+- IMLModelService      → from clarity.ports.ml_ports import IMLModelService
+
+🎯 All existing imports have been updated. This file provides backward 
+   compatibility only and will be removed once all tests are verified.
 """
 
 # Import from ports layer for backward compatibility

@@ -40,20 +40,13 @@ def test_imports() -> bool:
         traceback.print_exc()
         return False
 
-    # Test 4: Root main.py import
+    # Test 4: FastAPI app creation
     try:
         # Add project root to path if not already there
         root_path = Path(__file__).parent
         if str(root_path) not in sys.path:
             sys.path.insert(0, str(root_path))
 
-        import main  # noqa: F401
-    except Exception:
-        traceback.print_exc()
-        return False
-
-    # Test 5: FastAPI app creation
-    try:
         from main import get_app
         _app = get_app()
     except Exception:

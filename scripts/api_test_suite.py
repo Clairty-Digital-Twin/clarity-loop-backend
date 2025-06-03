@@ -28,14 +28,22 @@ else:
         # Fallback if imports fail
         import sys
         print("Installing required packages...")
-        import subprocess
-        subprocess.check_call([sys.executable, "-m", "pip", "install", "aiohttp", "colorama"])
+        import subprocess  # noqa: S404
+        subprocess.check_call([sys.executable, "-m", "pip", "install", "aiohttp", "colorama"])  # noqa: S603
         import aiohttp  # type: ignore[import-untyped]
         import colorama  # type: ignore[import-untyped]
         from colorama import Fore, Style  # type: ignore[import-untyped]
         colorama.init()
 
 BASE_URL = "http://localhost:8000"
+
+# HTTP Status Code Constants
+HTTP_OK = 200
+HTTP_REDIRECT_THRESHOLD = 300
+
+# Performance Threshold Constants
+EXCELLENT_SUCCESS_THRESHOLD = 80
+GOOD_SUCCESS_THRESHOLD = 60
 
 
 class APITester:
@@ -47,7 +55,7 @@ class APITester:
         self.session: aiohttp.ClientSession | None = None
         self.results: list[dict[str, Any]] = []
 
-    async def __aenter__(self):
+    async def __aenter__(self) -> "APITester":
         """Async context manager entry."""
         self.session = aiohttp.ClientSession(
             timeout=aiohttp.ClientTimeout(total=30),
@@ -55,7 +63,7 @@ class APITester:
         )
         return self
 
-    async def __aexit__(self, exc_type, exc_val, exc_tb):
+    async def __aexit__(self, exc_type: type[BaseException] | None, exc_val: BaseException | None, exc_tb: object | None) -> None:
         """Async context manager exit."""
         if self.session:
             await self.session.close()
@@ -80,13 +88,13 @@ class APITester:
 
     def _print_info(self, message: str) -> None:
         """Print an info message."""
-        print(f"{Fore.BLUE}ℹ️  {message}{Style.RESET_ALL}")
+        print(f"{Fore.BLUE}ℹ  {message}{Style.RESET_ALL}")
 
     async def _make_request(
         self,
         method: str,
         endpoint: str,
-        **kwargs
+        **kwargs: Any
     ) -> "tuple[int, dict[str, Any]]":
         """Make an HTTP request and return status code and response."""
         if not self.session:
@@ -109,12 +117,12 @@ class APITester:
                     "method": method,
                     "status": response.status,
                     "response_time": response_time,
-                    "success": 200 <= response.status < 300
+                    "success": HTTP_OK <= response.status < HTTP_REDIRECT_THRESHOLD
                 })
 
                 return response.status, data
 
-        except Exception as e:
+        except (TimeoutError, aiohttp.ClientError) as e:
             response_time = time.time() - start_time
             self.results.append({
                 "endpoint": endpoint,
@@ -140,7 +148,7 @@ class APITester:
 
         for endpoint, description in health_endpoints:
             status, response = await self._make_request("GET", endpoint)
-            if 200 <= status < 300:
+            if HTTP_OK <= status < HTTP_REDIRECT_THRESHOLD:
                 self._print_success(f"{description}: Status {status}")
                 if "status" in response:
                     self._print_info(f"   Service Status: {response['status']}")
@@ -159,7 +167,7 @@ class APITester:
 
         for endpoint, description in docs_endpoints:
             status, _response = await self._make_request("GET", endpoint)
-            if 200 <= status < 300:
+            if HTTP_OK <= status < HTTP_REDIRECT_THRESHOLD:
                 self._print_success(f"{description}: Accessible")
             else:
                 self._print_error(f"{description}: Not accessible (Status {status})")
@@ -182,7 +190,7 @@ class APITester:
         status, _response = await self._make_request(
             "POST", "/api/v1/auth/register", json=register_data
         )
-        if 200 <= status < 300:
+        if HTTP_OK <= status < HTTP_REDIRECT_THRESHOLD:
             self._print_success("User Registration: Working")
         else:
             self._print_info(f"User Registration: Status {status} (Mock/Development mode)")
@@ -196,7 +204,7 @@ class APITester:
         status, _response = await self._make_request(
             "POST", "/api/v1/auth/login", json=login_data
         )
-        if 200 <= status < 300:
+        if HTTP_OK <= status < HTTP_REDIRECT_THRESHOLD:
             self._print_success("User Login: Working")
         else:
             self._print_info(f"User Login: Status {status} (Mock/Development mode)")
@@ -231,7 +239,7 @@ class APITester:
         status, _response = await self._make_request(
             "POST", "/api/v1/health-data/upload", json=sample_data
         )
-        if 200 <= status < 300:
+        if HTTP_OK <= status < HTTP_REDIRECT_THRESHOLD:
             self._print_success("Health Data Upload: Working")
         else:
             self._print_info(f"Health Data Upload: Status {status}")
@@ -247,7 +255,7 @@ class APITester:
         status, _response = await self._make_request(
             "GET", "/api/v1/health-data/query", params=query_params
         )
-        if 200 <= status < 300:
+        if HTTP_OK <= status < HTTP_REDIRECT_THRESHOLD:
             self._print_success("Health Data Query: Working")
         else:
             self._print_info(f"Health Data Query: Status {status}")
@@ -275,7 +283,7 @@ class APITester:
         status, response = await self._make_request(
             "POST", "/api/v1/pat/analyze", json=actigraphy_data
         )
-        if 200 <= status < 300:
+        if HTTP_OK <= status < HTTP_REDIRECT_THRESHOLD:
             self._print_success("PAT Sleep Analysis: AI Model Processing")
             if "analysis" in response:
                 self._print_info("   Analysis completed with AI insights")
@@ -301,7 +309,7 @@ class APITester:
         status, response = await self._make_request(
             "POST", "/api/v1/insights/generate", json=insight_request
         )
-        if 200 <= status < 300:
+        if HTTP_OK <= status < HTTP_REDIRECT_THRESHOLD:
             self._print_success("Gemini AI Insights: Generated Successfully")
             if "insights" in response:
                 self._print_info("   AI-powered health recommendations available")
@@ -326,9 +334,9 @@ class APITester:
         print(f"   Success Rate: {success_rate:.1f}%")
         print(f"   Average Response Time: {avg_response_time:.3f}s")
 
-        if success_rate >= 80:
+        if success_rate >= EXCELLENT_SUCCESS_THRESHOLD:
             self._print_success(f"Platform Health: EXCELLENT ({success_rate:.1f}%)")
-        elif success_rate >= 60:
+        elif success_rate >= GOOD_SUCCESS_THRESHOLD:
             self._print_warning(f"Platform Health: GOOD ({success_rate:.1f}%)")
         else:
             self._print_error(f"Platform Health: NEEDS ATTENTION ({success_rate:.1f}%)")
@@ -370,7 +378,7 @@ async def main() -> None:
             await tester.run_comprehensive_test()
     except KeyboardInterrupt:
         print(f"\n{Fore.YELLOW}Test interrupted by user{Style.RESET_ALL}")
-    except Exception as e:
+    except (aiohttp.ClientError, OSError, RuntimeError) as e:
         print(f"\n{Fore.RED}Test failed with error: {e}{Style.RESET_ALL}")
 
 
@@ -381,9 +389,9 @@ if __name__ == "__main__":
         import colorama
     except ImportError:
         print("Installing required packages...")
-        import subprocess
+        import subprocess  # noqa: S404
         import sys
-        subprocess.check_call([sys.executable, "-m", "pip", "install", "aiohttp", "colorama"])
+        subprocess.check_call([sys.executable, "-m", "pip", "install", "aiohttp", "colorama"])  # noqa: S603
         import aiohttp
         import colorama
 

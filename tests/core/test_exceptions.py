@@ -13,7 +13,7 @@ import json
 from unittest.mock import Mock, patch
 from uuid import UUID
 
-from fastapi import Request
+from fastapi import HTTPException, Request
 from fastapi.responses import JSONResponse
 
 from clarity.core.exceptions import (
@@ -207,8 +207,6 @@ class TestClarityAPIException:
 
     def test_clarity_api_exception_inheritance(self) -> None:
         """Test that ClarityAPIException properly inherits from HTTPException."""
-        from fastapi import HTTPException
-
         exception = ClarityAPIException(
             status_code=404,
             problem_type="https://api.clarity.health/problems/not-found",

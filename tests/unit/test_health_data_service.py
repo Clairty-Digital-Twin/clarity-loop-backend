@@ -187,7 +187,7 @@ class TestHealthDataServiceApplicationBusinessRules:
 
     @pytest.mark.asyncio
     @staticmethod
-    async def test_get_user_health_data_use_case_orchestration() -> None:
+    async def test_get_user_health_data_use_case_orchestration(mock_storage_client) -> None:
         """Test use case orchestrates health data retrieval with filters."""
         # Given: Mock repository with health data
         mock_repository = AsyncMock(spec=IHealthDataRepository)
@@ -228,7 +228,7 @@ class TestHealthDataServiceApplicationBusinessRules:
 
     @pytest.mark.asyncio
     @staticmethod
-    async def test_delete_health_data_use_case() -> None:
+    async def test_delete_health_data_use_case(mock_storage_client) -> None:
         """Test use case for deleting health data."""
         # Given: Mock repository that confirms deletion
         mock_repository = AsyncMock(spec=IHealthDataRepository)

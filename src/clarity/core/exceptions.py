@@ -78,17 +78,22 @@ class ClarityAPIException(HTTPException):
         problem_type: str,
         title: str,
         detail: str,
-        **kwargs: Any
+        *,
+        instance: str | None = None,
+        trace_id: str | None = None,
+        errors: list[dict[str, Any]] | None = None,
+        help_url: str | None = None,
+        headers: dict[str, str] | None = None,
     ) -> None:
         self.problem_type = problem_type
         self.title = title
         self.detail = detail
-        self.instance = kwargs.get("instance") or f"https://api.clarity.health/requests/{uuid4()}"
-        self.trace_id = kwargs.get("trace_id") or str(uuid4())
-        self.errors = kwargs.get("errors")
-        self.help_url = kwargs.get("help_url")
+        self.instance = instance or f"https://api.clarity.health/requests/{uuid4()}"
+        self.trace_id = trace_id or str(uuid4())
+        self.errors = errors
+        self.help_url = help_url
 
-        super().__init__(status_code=status_code, detail=detail, headers=kwargs.get("headers"))
+        super().__init__(status_code=status_code, detail=detail, headers=headers)
 
     def to_problem_detail(self) -> ProblemDetail:
         """Convert to RFC 7807 Problem Detail format."""

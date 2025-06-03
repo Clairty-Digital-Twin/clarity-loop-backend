@@ -17,6 +17,7 @@ If we need multi-task forecasting (e.g., predicting future HR/steps as well as e
 ⸻
 
 Recommended next action
+
  1. Lock in PatchTST for the first production cycle (Activity + Cardio embedding).
  2. Create a TimesNet spike branch so the dev agent can benchmark it on a sample week of blended Apple-Watch streams once the SleepProcessor work stabilises.
  3. Drop Informer/Transformer-XL from the shortlist unless we later face true multi-year horizon forecasting needs (e.g., chronic-condition progression).

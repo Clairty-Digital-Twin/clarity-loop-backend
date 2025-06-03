@@ -72,6 +72,7 @@ The above recommendations prioritize simple, high-impact integrations (especiall
 In conclusion, the clarity-loop-backend’s ML stack is well-architected and nearly production-ready, needing mainly to fill in the planned features and expand metric coverage to fully deliver on the “chat with your Apple Health data” promise. By adding a few targeted processors (or calculations) for missing metrics and adjusting the insight generation to use them, the system can remain modular and maintainable while dramatically improving the richness of insights delivered to users. This balanced approach will ensure the platform is robust (covering all important health metrics) but not overly complex (avoiding unnecessary or low-value data) – striking the right clarity in the loop between raw health data and meaningful conversation.
 
 Sources:
+
  1. Apple HealthKit Data Types (Heart rate, step count, distance, VO₂ max, etc.) ￼ ￼
  2. Clarity Loop Backend – Apple Health integration design and implementation notes ￼ ￼
  3. Clarity ML Processors and Pipeline code (CardioProcessor, RespirationProcessor outputs; analysis pipeline) ￼ ￼

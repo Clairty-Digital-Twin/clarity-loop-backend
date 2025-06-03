@@ -217,7 +217,7 @@ Generate the health insight now:"""
             self.logger.exception("Gemini API call failed")
             raise
         else:
-            return insight
+            return insight  # type: ignore[no-any-return]
 
     @staticmethod
     def _create_mock_insight(_analysis_results: dict[str, Any]) -> dict[str, Any]:

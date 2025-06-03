@@ -2,6 +2,7 @@
 """Test script to check PAT service status."""
 
 import asyncio
+import logging
 from pathlib import Path
 import sys
 
@@ -10,26 +11,28 @@ sys.path.insert(0, str(Path(__file__).parent / "src"))
 
 from clarity.ml.pat_service import get_pat_service
 
+# Set up logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
-async def test_pat_service():
+
+async def test_pat_service() -> None:
     """Test the PAT service loading and health."""
     try:
-        print("Testing PAT service...")
+        logger.info("Testing PAT service...")
         service = await get_pat_service()
-        print(f"Service created: {service}")
+        logger.info("Service created: %s", service)
 
-        print("Loading model...")
+        logger.info("Loading model...")
         await service.load_model()
-        print(f"Model loaded: {service.is_loaded}")
+        logger.info("Model loaded: %s", service.is_loaded)
 
-        print("Checking health...")
+        logger.info("Checking health...")
         health = await service.health_check()
-        print(f"Health: {health}")
+        logger.info("Health: %s", health)
 
-    except Exception as e:
-        print(f"Error: {e}")
-        import traceback
-        traceback.print_exc()
+    except (RuntimeError, ValueError, ConnectionError) as e:
+        logger.exception("Error: %s", e)
 
 
 if __name__ == "__main__":

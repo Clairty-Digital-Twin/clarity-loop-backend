@@ -6,6 +6,8 @@ including model loading, weight conversion, inference, and clinical analysis.
 
 import asyncio
 from datetime import UTC, datetime, timedelta
+import logging
+from typing import List
 
 import numpy as np
 import pytest
@@ -23,19 +25,26 @@ from clarity.ml.pat_service import (
 )
 from clarity.ml.preprocessing import ActigraphyDataPoint
 
+# Set up logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+# Initialize random generator
+rng = np.random.default_rng()
+
 
 class TestPATModelService:
     """Test the core PAT model service functionality."""
 
     @pytest.fixture
-    async def pat_service(self):
+    async def pat_service(self) -> PATModelService:
         """Create a PAT service instance for testing."""
         service = PATModelService(model_size="medium")
         await service.load_model()
         return service
 
     @pytest.fixture
-    def sample_actigraphy_data(self):
+    def sample_actigraphy_data(self) -> list[ActigraphyDataPoint]:
         """Generate sample actigraphy data for testing."""
         data_points = []
         base_time = datetime.now(UTC)
@@ -52,7 +61,7 @@ class TestPATModelService:
                 activity = 5
 
             # Add some noise
-            activity += np.random.normal(0, 5)
+            activity += rng.normal(0, 5)
             activity = max(0, activity)
 
             data_points.append(ActigraphyDataPoint(
@@ -63,7 +72,7 @@ class TestPATModelService:
         return data_points
 
     @pytest.fixture
-    def week_actigraphy_data(self):
+    def week_actigraphy_data(self) -> list[ActigraphyDataPoint]:
         """Generate a full week of actigraphy data (10080 points)."""
         data_points = []
         base_time = datetime.now(UTC)
@@ -84,7 +93,7 @@ class TestPATModelService:
             else:  # Nighttime
                 activity = 3 if not is_weekend else 7
 
-            activity += np.random.normal(0, 8)
+            activity += rng.normal(0, 8)
             activity = max(0, activity)
 
             data_points.append(ActigraphyDataPoint(
@@ -94,7 +103,8 @@ class TestPATModelService:
 
         return data_points
 
-    async def test_service_initialization(self):
+    @staticmethod
+    async def test_service_initialization() -> None:
         """Test PAT service initialization."""
         # Test default initialization
         service = PATModelService()
@@ -107,7 +117,8 @@ class TestPATModelService:
         assert service.model_size == "small"
         assert service.device == "cpu"
 
-    async def test_model_loading(self, pat_service):
+    @staticmethod
+    async def test_model_loading(pat_service: PATModelService) -> None:
         """Test PAT model loading with real weights."""
         assert pat_service.is_loaded
         assert pat_service.model is not None
@@ -121,7 +132,8 @@ class TestPATModelService:
         assert encoder.patch_size == 18
         assert len(encoder.transformer_layers) == 2  # PAT-M
 
-    async def test_weight_conversion(self, pat_service):
+    @staticmethod
+    async def test_weight_conversion(pat_service: PATModelService) -> None:
         """Test that TensorFlow weights were converted correctly."""
         encoder = pat_service.model.encoder
 
@@ -140,7 +152,8 @@ class TestPATModelService:
         patch_weight_std = encoder.patch_embedding.weight.std().item()
         assert 0.01 < patch_weight_std < 1.0
 
-    async def test_attention_mechanism(self, pat_service):
+    @staticmethod
+    async def test_attention_mechanism(pat_service: PATModelService) -> None:
         """Test the custom PAT attention mechanism."""
         encoder = pat_service.model.encoder
         attention = encoder.transformer_layers[0].attention
@@ -159,7 +172,11 @@ class TestPATModelService:
         assert output.shape == (batch_size, seq_len, embed_dim)
         assert attn_weights.shape == (batch_size, seq_len, seq_len)
 
-    async def test_inference_24h(self, pat_service, sample_actigraphy_data):
+    @staticmethod
+    async def test_inference_24h(
+        pat_service: PATModelService,
+        sample_actigraphy_data: list[ActigraphyDataPoint]
+    ) -> None:
         """Test PAT inference with 24-hour data."""
         actigraphy_input = ActigraphyInput(
             user_id="test_user_24h",
@@ -186,7 +203,11 @@ class TestPATModelService:
         assert len(analysis.clinical_insights) > 0
         assert all(isinstance(insight, str) for insight in analysis.clinical_insights)
 
-    async def test_inference_week(self, pat_service, week_actigraphy_data):
+    @staticmethod
+    async def test_inference_week(
+        pat_service: PATModelService,
+        week_actigraphy_data: list[ActigraphyDataPoint]
+    ) -> None:
         """Test PAT inference with full week data."""
         actigraphy_input = ActigraphyInput(
             user_id="test_user_week",
@@ -204,7 +225,8 @@ class TestPATModelService:
         assert 0 <= analysis.sleep_efficiency <= 100
         assert 0 <= analysis.circadian_rhythm_score <= 1
 
-    async def test_clinical_insights_generation(self, pat_service):
+    @staticmethod
+    async def test_clinical_insights_generation(pat_service: PATModelService) -> None:
         """Test clinical insights generation for different scenarios."""
         # Test high sleep efficiency scenario
         insights_high = pat_service._generate_clinical_insights(
@@ -228,7 +250,11 @@ class TestPATModelService:
         assert any("irregular" in insight.lower() for insight in insights_poor)
         assert any("elevated" in insight.lower() for insight in insights_poor)
 
-    async def test_preprocessing_pipeline(self, pat_service, sample_actigraphy_data):
+    @staticmethod
+    async def test_preprocessing_pipeline(
+        pat_service: PATModelService,
+        sample_actigraphy_data: list[ActigraphyDataPoint]
+    ) -> None:
         """Test the actigraphy preprocessing pipeline."""
         # Test normal length data (1440 = 24h)
         tensor = pat_service._preprocess_actigraphy_data(
@@ -245,7 +271,8 @@ class TestPATModelService:
 
         assert tensor_week.shape == (10080,)
 
-    async def test_health_check(self, pat_service):
+    @staticmethod
+    async def test_health_check(pat_service: PATModelService) -> None:
         """Test service health check."""
         health = await pat_service.health_check()
 
@@ -254,7 +281,8 @@ class TestPATModelService:
         assert health["model_loaded"] is True
         assert "device" in health
 
-    async def test_model_not_loaded_error(self):
+    @staticmethod
+    async def test_model_not_loaded_error() -> None:
         """Test error handling when model is not loaded."""
         service = PATModelService()
 
@@ -268,7 +296,8 @@ class TestPATModelService:
         with pytest.raises(RuntimeError, match="PAT model not loaded"):
             await service.analyze_actigraphy(sample_data)
 
-    async def test_singleton_service(self):
+    @staticmethod
+    async def test_singleton_service() -> None:
         """Test the global singleton PAT service."""
         service1 = await get_pat_service()
         service2 = await get_pat_service()
@@ -276,15 +305,16 @@ class TestPATModelService:
         # Should return the same instance
         assert service1 is service2
 
-    async def test_different_model_sizes(self):
+    @staticmethod
+    async def test_different_model_sizes() -> None:
         """Test loading different PAT model sizes."""
         for model_size in ["small", "medium", "large"]:
             service = PATModelService(model_size=model_size)
             config = service.config
 
             assert config["embed_dim"] == 96  # All models use 96
-            assert config["patch_size"] in [9, 18]  # Valid patch sizes
-            assert config["num_heads"] in [6, 12]  # Valid head counts
+            assert config["patch_size"] in {9, 18}  # Valid patch sizes
+            assert config["num_heads"] in {6, 12}  # Valid head counts
 
             if model_size == "small":
                 assert config["num_layers"] == 1
@@ -300,18 +330,20 @@ class TestPATModelService:
 class TestPATArchitecture:
     """Test the PAT model architecture components."""
 
-    def test_pat_configs(self):
+    @staticmethod
+    def test_pat_configs() -> None:
         """Test PAT configuration validity."""
-        for size, config in PAT_CONFIGS.items():
+        for config in PAT_CONFIGS.values():
             assert "num_layers" in config
             assert "num_heads" in config
             assert "embed_dim" in config
             assert config["embed_dim"] == 96  # All models use 96
             assert config["ff_dim"] == 256
-            assert config["patch_size"] in [9, 18]
+            assert config["patch_size"] in {9, 18}
             assert config["input_size"] == 10080
 
-    def test_encoder_forward_pass(self):
+    @staticmethod
+    def test_encoder_forward_pass() -> None:
         """Test PAT encoder forward pass."""
         encoder = PATEncoder(
             input_size=10080,
@@ -331,7 +363,8 @@ class TestPATArchitecture:
         expected_patches = seq_len // 18  # 560 patches
         assert output.shape == (batch_size, expected_patches, 96)
 
-    def test_classification_head(self):
+    @staticmethod
+    def test_classification_head() -> None:
         """Test the classification head."""
         encoder = PATEncoder(embed_dim=96, num_layers=1, num_heads=6)
         model = PATForMentalHealthClassification(encoder, num_classes=18)
@@ -356,7 +389,8 @@ class TestPATArchitecture:
 class TestPATIntegration:
     """Integration tests for PAT service with other components."""
 
-    async def test_end_to_end_pipeline(self):
+    @staticmethod
+    async def test_end_to_end_pipeline() -> None:
         """Test complete end-to-end PAT analysis pipeline."""
         # Create service
         service = PATModelService(model_size="medium")
@@ -372,9 +406,9 @@ class TestPATIntegration:
 
                 # Sleep pattern: low activity 10pm-6am, high activity 6am-10pm
                 if hour >= 22 or hour <= 6:
-                    activity = np.random.exponential(2)  # Sleep
+                    activity = rng.exponential(2)  # Sleep
                 else:
-                    activity = np.random.exponential(20)  # Awake
+                    activity = rng.exponential(20)  # Awake
 
                 data_points.append(ActigraphyDataPoint(
                     timestamp=timestamp,
@@ -398,10 +432,11 @@ class TestPATIntegration:
         assert analysis.confidence_score > 0
 
         # Check timestamp format
-        parsed_time = datetime.fromisoformat(analysis.analysis_timestamp.replace('Z', '+00:00'))
+        parsed_time = datetime.fromisoformat(analysis.analysis_timestamp.rstrip('Z') + '+00:00')
         assert isinstance(parsed_time, datetime)
 
-    async def test_concurrent_analysis(self):
+    @staticmethod
+    async def test_concurrent_analysis() -> None:
         """Test concurrent PAT analysis requests."""
         service = PATModelService(model_size="medium")
         await service.load_model()
@@ -411,7 +446,7 @@ class TestPATIntegration:
             data_points = [
                 ActigraphyDataPoint(
                     timestamp=datetime.now(UTC) + timedelta(minutes=i),
-                    value=float(np.random.exponential(10))
+                    value=float(rng.exponential(10))
                 )
                 for i in range(1440)
             ]
@@ -436,13 +471,12 @@ class TestPATIntegration:
             assert isinstance(result, ActigraphyAnalysis)
 
 
-if __name__ == "__main__":
-    # Run tests directly
-    import asyncio
+def run_quick_test() -> None:
+    """Run a quick test to verify PAT functionality."""
 
-    async def run_quick_test():
-        """Run a quick test to verify PAT functionality."""
-        print("🧪 Running PAT Service Quick Test...")
+    async def _async_quick_test() -> None:
+        """Async wrapper for quick test."""
+        logger.info("🧪 Running PAT Service Quick Test...")
 
         service = PATModelService(model_size="medium")
         await service.load_model()
@@ -465,10 +499,14 @@ if __name__ == "__main__":
 
         analysis = await service.analyze_actigraphy(actigraphy_input)
 
-        print(f"✅ Analysis complete for user: {analysis.user_id}")
-        print(f"   Sleep Efficiency: {analysis.sleep_efficiency:.1f}%")
-        print(f"   Confidence: {analysis.confidence_score:.3f}")
-        print(f"   Insights: {len(analysis.clinical_insights)} generated")
-        print("🎯 PAT Service Test PASSED!")
+        logger.info("✅ Analysis complete for user: %s", analysis.user_id)
+        logger.info("   Sleep Efficiency: %.1f%%", analysis.sleep_efficiency)
+        logger.info("   Confidence: %.3f", analysis.confidence_score)
+        logger.info("   Insights: %d generated", len(analysis.clinical_insights))
+        logger.info("🎯 PAT Service Test PASSED!")
 
-    asyncio.run(run_quick_test())
+    asyncio.run(_async_quick_test())
+
+
+if __name__ == "__main__":
+    run_quick_test()

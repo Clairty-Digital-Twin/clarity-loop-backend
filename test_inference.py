@@ -2,9 +2,10 @@
 """Test PAT model inference with sample data."""
 
 import asyncio
-from datetime import datetime
-from pathlib import Path
+import logging
 import sys
+from datetime import UTC, datetime
+from pathlib import Path
 
 import numpy as np
 
@@ -14,37 +15,57 @@ sys.path.insert(0, str(Path(__file__).parent / "src"))
 from clarity.ml.pat_service import ActigraphyInput, get_pat_service
 from clarity.ml.preprocessing import ActigraphyDataPoint
 
+# Constants
+DAYTIME_START_HOUR = 6
+DAYTIME_END_HOUR = 22
+BASE_DAYTIME_ACTIVITY = 30
+ACTIVITY_AMPLITUDE = 20
+BASE_NIGHTTIME_ACTIVITY = 5
+ACTIVITY_NOISE_STD = 10
+MIN_WEIGHT_STD = 0.01
+MAX_WEIGHT_STD = 1.0
+MINUTES_IN_WEEK = 7 * 24 * 60  # 10080 minutes
+MINUTES_IN_HOUR = 60
 
-async def test_pat_inference():
+# Set up logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+# Initialize random generator
+rng = np.random.default_rng()
+
+
+async def test_pat_inference() -> None:
     """Test PAT inference with synthetic actigraphy data."""
-    print("=== PAT Inference Test ===")
+    logger.info("=== PAT Inference Test ===")
 
     # Create PAT service
     service = await get_pat_service()
     await service.load_model()
 
-    print(f"Model loaded: {service.is_loaded}")
-    print(f"Model device: {service.device}")
+    logger.info("Model loaded: %s", service.is_loaded)
+    logger.info("Model device: %s", service.device)
 
     # Create synthetic actigraphy data (1 week of minute-level data)
-    print("\nGenerating synthetic actigraphy data...")
+    logger.info("Generating synthetic actigraphy data...")
 
-    data_points = []
-    minutes_in_week = 7 * 24 * 60  # 10080 minutes
+    data_points: list[ActigraphyDataPoint] = []
 
-    for minute in range(minutes_in_week):
+    for minute in range(MINUTES_IN_WEEK):
         # Simulate realistic actigraphy pattern
-        hour_of_day = (minute // 60) % 24
-        day_of_week = minute // (24 * 60)
+        hour_of_day = (minute // MINUTES_IN_HOUR) % 24
+        day_of_week = minute // (24 * MINUTES_IN_HOUR)
 
         # Create activity patterns (higher during day, lower at night)
-        if 6 <= hour_of_day <= 22:  # Daytime
-            base_activity = 30 + 20 * np.sin(2 * np.pi * (hour_of_day - 6) / 16)
+        if DAYTIME_START_HOUR <= hour_of_day <= DAYTIME_END_HOUR:  # Daytime
+            base_activity = BASE_DAYTIME_ACTIVITY + ACTIVITY_AMPLITUDE * np.sin(
+                2 * np.pi * (hour_of_day - DAYTIME_START_HOUR) / 16
+            )
         else:  # Nighttime
-            base_activity = 5
+            base_activity = BASE_NIGHTTIME_ACTIVITY
 
         # Add some randomness
-        activity = max(0, base_activity + np.random.normal(0, 10))
+        activity = max(0, base_activity + rng.normal(0, ACTIVITY_NOISE_STD))
 
         # Create timestamp
         timestamp = datetime(
@@ -52,7 +73,8 @@ async def test_pat_inference():
             month=1,
             day=(day_of_week + 1),
             hour=hour_of_day,
-            minute=minute % 60
+            minute=minute % MINUTES_IN_HOUR,
+            tzinfo=UTC
         )
 
         # Use correct ActigraphyDataPoint structure: timestamp and value only
@@ -62,7 +84,7 @@ async def test_pat_inference():
         )
         data_points.append(data_point)
 
-    print(f"Generated {len(data_points)} data points")
+    logger.info("Generated %d data points", len(data_points))
 
     # Create input
     actigraphy_input = ActigraphyInput(
@@ -73,59 +95,57 @@ async def test_pat_inference():
     )
 
     # Run inference
-    print("\n🔥 Running PAT inference...")
+    logger.info("🔥 Running PAT inference...")
     try:
         analysis = await service.analyze_actigraphy(actigraphy_input)
 
-        print("✅ Inference successful!")
-        print(f"\nAnalysis Results for {analysis.user_id}:")
-        print(f"  Sleep Efficiency: {analysis.sleep_efficiency:.1f}%")
-        print(f"  Sleep Onset Latency: {analysis.sleep_onset_latency:.1f} minutes")
-        print(f"  Total Sleep Time: {analysis.total_sleep_time:.1f} hours")
-        print(f"  Circadian Rhythm Score: {analysis.circadian_rhythm_score:.3f}")
-        print(f"  Depression Risk Score: {analysis.depression_risk_score:.3f}")
-        print(f"  Confidence Score: {analysis.confidence_score:.3f}")
+        logger.info("✅ Inference successful!")
+        logger.info("Analysis Results for %s:", analysis.user_id)
+        logger.info("  Sleep Efficiency: %.1f%%", analysis.sleep_efficiency)
+        logger.info("  Sleep Onset Latency: %.1f minutes", analysis.sleep_onset_latency)
+        logger.info("  Total Sleep Time: %.1f hours", analysis.total_sleep_time)
+        logger.info("  Circadian Rhythm Score: %.3f", analysis.circadian_rhythm_score)
+        logger.info("  Depression Risk Score: %.3f", analysis.depression_risk_score)
+        logger.info("  Confidence Score: %.3f", analysis.confidence_score)
 
-        print("\nClinical Insights:")
+        logger.info("Clinical Insights:")
         for insight in analysis.clinical_insights:
-            print(f"  • {insight}")
+            logger.info("  • %s", insight)
 
-        print("\n🎯 PAT MODEL IS WORKING WITH REAL WEIGHTS!")
+        logger.info("🎯 PAT MODEL IS WORKING WITH REAL WEIGHTS!")
 
-    except Exception as e:
-        print(f"❌ Inference failed: {e}")
-        import traceback
-        traceback.print_exc()
+    except (RuntimeError, ValueError, ConnectionError) as e:
+        logger.exception("❌ Inference failed: %s", e)
 
     # Test model internals
-    print("\n=== Model Architecture Verification ===")
+    logger.info("=== Model Architecture Verification ===")
     model = service.model
     if model:
-        print(f"Model type: {type(model).__name__}")
+        logger.info("Model type: %s", type(model).__name__)
         encoder = model.encoder
-        print(f"Encoder input size: {encoder.input_size}")
-        print(f"Encoder patch size: {encoder.patch_size}")
-        print(f"Encoder embed dim: {encoder.embed_dim}")
-        print(f"Encoder num patches: {encoder.num_patches}")
-        print(f"Encoder num transformer layers: {len(encoder.transformer_layers)}")
+        logger.info("Encoder input size: %s", encoder.input_size)
+        logger.info("Encoder patch size: %s", encoder.patch_size)
+        logger.info("Encoder embed dim: %s", encoder.embed_dim)
+        logger.info("Encoder num patches: %s", encoder.num_patches)
+        logger.info("Encoder num transformer layers: %s", len(encoder.transformer_layers))
 
         # Check if attention layers have loaded weights
         if encoder.transformer_layers:
             first_layer = encoder.transformer_layers[0]
             attention = first_layer.attention
-            print(f"Attention type: {type(attention).__name__}")
-            print(f"Num heads: {attention.num_heads}")
-            print(f"Head dim: {attention.head_dim}")
+            logger.info("Attention type: %s", type(attention).__name__)
+            logger.info("Num heads: %s", attention.num_heads)
+            logger.info("Head dim: %s", attention.head_dim)
 
             # Check if query projections have non-random weights
             first_query = attention.query_projections[0]
             weight_std = first_query.weight.std().item()
-            print(f"First query projection weight std: {weight_std:.6f}")
+            logger.info("First query projection weight std: %.6f", weight_std)
 
-            if weight_std > 0.01 and weight_std < 1.0:
-                print("✅ Weights appear to be loaded (not random)")
+            if MIN_WEIGHT_STD < weight_std < MAX_WEIGHT_STD:
+                logger.info("✅ Weights appear to be loaded (not random)")
             else:
-                print("⚠️  Weights may still be random")
+                logger.info("⚠️  Weights may still be random")
 
 
 if __name__ == "__main__":

@@ -229,7 +229,8 @@ class TestRetryOnFailure:
         assert result == "success_1"
         assert call_count == 1
 
-    def test_retry_on_failure_success_after_retries(self, caplog: pytest.LogCaptureFixture) -> None:
+    @staticmethod
+    def test_retry_on_failure_success_after_retries(caplog: pytest.LogCaptureFixture) -> None:
         """Test retry decorator when function succeeds after retries."""
         call_count = 0
 
@@ -250,7 +251,8 @@ class TestRetryOnFailure:
         log_messages = " ".join(caplog.messages)
         assert "retrying in" in log_messages
 
-    def test_retry_on_failure_final_failure(self, caplog: pytest.LogCaptureFixture) -> None:
+    @staticmethod
+    def test_retry_on_failure_final_failure(caplog: pytest.LogCaptureFixture) -> None:
         """Test retry decorator when all retries are exhausted."""
         call_count = 0
 

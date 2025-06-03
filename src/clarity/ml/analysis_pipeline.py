@@ -191,13 +191,12 @@ class HealthAnalysisPipeline:
             self.logger.info(
                 "✅ Analysis pipeline completed successfully for user %s", user_id
             )
+            return results
         except Exception:
             self.logger.exception(
                 "❌ Error in analysis pipeline for user %s", user_id
             )
             raise
-        else:
-            return results
 
     def _organize_metrics_by_modality(
         self, metrics: list[HealthMetric]
@@ -527,7 +526,7 @@ async def run_analysis_pipeline(
 
     try:
         # Get pipeline instance
-        pipeline = await get_analysis_pipeline()
+        pipeline = get_analysis_pipeline()
 
         # Convert raw data to HealthMetric objects (simplified)
         health_metrics = _convert_raw_data_to_metrics(health_data)

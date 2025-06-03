@@ -216,7 +216,8 @@ class TestDecoratorsBasic:
             nonlocal attempt_count
             attempt_count += 1
             if attempt_count < 3:
-                raise ValueError("Not ready")
+                error_msg = "Not ready"
+                raise ValueError(error_msg)
             return "success"
 
         result = flaky_function()

@@ -252,8 +252,7 @@ class MockHealthDataRepository(IHealthDataRepository):
             "count": len(self._health_data[user_id]),
         }
 
-    @staticmethod
-    async def initialize() -> None:
+    async def initialize(self) -> None:
         """Initialize the mock repository."""
         logger.info("Mock health data repository initialized successfully")
 

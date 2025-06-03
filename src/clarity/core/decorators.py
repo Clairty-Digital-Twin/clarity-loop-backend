@@ -36,7 +36,7 @@ def log_execution(
 
     def decorator(func: F) -> F:
         @functools.wraps(func)
-        def sync_wrapper(*args: Any, **kwargs: Any) -> Any:  # type: ignore[no-untyped-def]
+        def sync_wrapper(*args: Any, **kwargs: Any) -> Any:  # type: ignore[no-untyped-def, misc]
             func_name = f"{func.__module__}.{func.__qualname__}"
 
             # Log function entry
@@ -64,7 +64,7 @@ def log_execution(
                 return result
 
         @functools.wraps(func)
-        async def async_wrapper(*args: Any, **kwargs: Any) -> Any:  # type: ignore[no-untyped-def]
+        async def async_wrapper(*args: Any, **kwargs: Any) -> Any:  # type: ignore[no-untyped-def, misc]
             func_name = f"{func.__module__}.{func.__qualname__}"
 
             # Log function entry

@@ -15,7 +15,8 @@ from fastapi.security import HTTPBearer
 from pydantic import ValidationError
 
 from clarity.auth.firebase_auth import get_current_user
-from clarity.core.interfaces import IAuthProvider, IHealthDataRepository
+from clarity.ports.auth_ports import IAuthProvider
+from clarity.ports.data_ports import IHealthDataRepository
 from clarity.models.auth import (
     AuthErrorDetail,
     LoginResponse,

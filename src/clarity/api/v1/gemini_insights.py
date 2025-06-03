@@ -17,7 +17,8 @@ from pydantic import BaseModel, Field
 
 from clarity.auth import UserContext
 from clarity.auth.firebase_auth import get_current_user
-from clarity.core.interfaces import IAuthProvider, IConfigProvider
+from clarity.ports.auth_ports import IAuthProvider
+from clarity.ports.config_ports import IConfigProvider
 from clarity.ml.gemini_service import (
     GeminiService,
     HealthInsightRequest,

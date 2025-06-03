@@ -146,8 +146,11 @@ class TestHealthDataServiceCleanArchitecture(BaseServiceTestCase):
         # Create mock repository instead of using @patch
         self.mock_repository = MockHealthDataRepository()
 
-        # Inject dependency cleanly (no more @patch!)
-        self.service = HealthDataService(self.mock_repository)
+        # Inject ALL dependencies cleanly (no more @patch!)
+        self.service = HealthDataService(
+            repository=self.mock_repository,
+            cloud_storage=self.cloud_storage
+        )
 
     @staticmethod
     def _create_valid_health_upload(user_id: UUID | None = None) -> HealthDataUpload:

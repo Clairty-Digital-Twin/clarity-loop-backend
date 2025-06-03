@@ -10,7 +10,7 @@ import unittest
 from unittest.mock import Mock
 
 from clarity.ports.storage import StoragePort
-from tests.fakes.storage import FakeStorage, FakeCloudStorage
+from tests.fakes.storage import FakeCloudStorage, FakeStorage
 
 
 class BaseTestCase(unittest.TestCase):

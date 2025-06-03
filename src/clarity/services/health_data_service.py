@@ -22,6 +22,7 @@ from clarity.models.health_data import (
     ProcessingStatus,
 )
 from clarity.ports.data_ports import IHealthDataRepository
+from clarity.ports.storage import CloudStoragePort
 
 # Configure logger
 logger = logging.getLogger(__name__)
@@ -69,17 +70,22 @@ class HealthDataService:
     Follows Clean Architecture by depending on IHealthDataRepository interface.
     """
 
-    def __init__(self, repository: IHealthDataRepository) -> None:
+    def __init__(
+        self,
+        repository: IHealthDataRepository,
+        cloud_storage: CloudStoragePort | None = None
+    ) -> None:
         """Initialize health data service.
 
         Args:
             repository: Health data repository implementing IHealthDataRepository
+            cloud_storage: Cloud storage service (injected dependency)
         """
         self.repository = repository
         self.logger = logging.getLogger(__name__)
 
-        # Initialize GCS client for raw data storage
-        self.storage_client = storage.Client()
+        # Use injected cloud storage or fallback to real implementation
+        self.cloud_storage = cloud_storage or storage.Client()
         self.raw_data_bucket = os.getenv(
             "HEALTHKIT_RAW_BUCKET", "clarity-healthkit-raw-data"
         )
@@ -146,7 +152,7 @@ class HealthDataService:
             }
 
             # Upload to GCS
-            bucket = self.storage_client.bucket(self.raw_data_bucket)
+            bucket = self.cloud_storage.bucket(self.raw_data_bucket)
             blob = bucket.blob(blob_path)
 
             # Set content type and metadata

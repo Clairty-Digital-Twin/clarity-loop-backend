@@ -51,7 +51,7 @@ class PATModelLoader:
     def __init__(self, model_size: str = "medium", models_dir: str = "models"):
         self.model_size = model_size
         self.models_dir = Path(models_dir)
-        self.model_path = self.models_dir / f"PAT-{model_size[0].upper()}_29k_weights.h5"
+        self.model_path = self.models_dir / "pat" / f"PAT-{model_size[0].upper()}_29k_weights.h5"
         self.model = None
         
     def load_model(self) -> tf.keras.Model:
@@ -343,9 +343,9 @@ import hashlib
 def verify_model_integrity():
     """Verify model weights haven't been tampered with"""
     expected_hashes = {
-        "PAT-L_29k_weights.h5": "sha256:a1b2c3d4...",
-        "PAT-M_29k_weights.h5": "sha256:e5f6g7h8...", 
-        "PAT-S_29k_weights.h5": "sha256:i9j0k1l2..."
+        "pat/PAT-L_29k_weights.h5": "sha256:a1b2c3d4...",
+        "pat/PAT-M_29k_weights.h5": "sha256:e5f6g7h8...",
+        "pat/PAT-S_29k_weights.h5": "sha256:i9j0k1l2..."
     }
     
     for filename, expected_hash in expected_hashes.items():

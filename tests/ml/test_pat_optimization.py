@@ -185,7 +185,7 @@ class TestPATPerformanceOptimizer:
         model.eval = Mock()
 
         with patch("torch.jit.trace") as mock_trace, \
-             patch("torch.jit.optimize_for_inference", side_effect=AttributeError):
+             patch("hasattr", return_value=False):
 
             traced_model = Mock()
             mock_trace.return_value = traced_model

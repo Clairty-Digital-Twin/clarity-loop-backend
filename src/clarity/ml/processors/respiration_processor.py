@@ -6,7 +6,7 @@ Implements domain-specific preprocessing and feature extraction for respiratory 
 
 from datetime import datetime
 import logging
-from typing import Any
+# Removed unused Any import
 
 import numpy as np
 import pandas as pd
@@ -171,7 +171,7 @@ class RespirationProcessor:
         ).mean()
 
         # Fill remaining NaNs
-        return rr_smoothed.fillna(method="ffill").fillna(method="bfill")
+        return rr_smoothed.ffill().bfill()
 
     def _preprocess_spo2(
         self, timestamps: list[datetime], values: list[float]

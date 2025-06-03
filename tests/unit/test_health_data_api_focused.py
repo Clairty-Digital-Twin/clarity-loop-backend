@@ -31,7 +31,7 @@ from tests.base import BaseServiceTestCase
 class MockRequest:
     """Mock request object."""
 
-    def __init__(self, user_id: str | None = None, headers: dict = None) -> None:
+    def __init__(self, user_id: str | None = None, headers: dict | None = None) -> None:
         """Initialize mock request."""
         self.state = Mock()
         self.state.user_id = user_id
@@ -56,7 +56,7 @@ class MockHealthDataService:
         return self.upload_result
 
     async def get_user_metrics(
-        self, user_id: str, start_date: datetime = None, end_date: datetime = None
+        self, user_id: str, start_date: datetime | None = None, end_date: datetime | None = None
     ) -> dict:
         """Mock get user metrics."""
         if self.should_fail:

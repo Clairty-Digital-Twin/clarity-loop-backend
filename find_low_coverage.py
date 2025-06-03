@@ -9,7 +9,7 @@ COVERAGE_THRESHOLD = 80
 MAX_FILES_TO_SHOW = 15
 
 try:
-    with open('coverage.json') as f:
+    with open('coverage.json', encoding='utf-8') as f:
         data = json.load(f)
 
     files = []

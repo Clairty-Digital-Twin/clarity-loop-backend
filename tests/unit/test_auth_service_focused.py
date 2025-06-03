@@ -5,7 +5,7 @@ Target: 15.7% → 80% coverage
 
 Breaking down into small, testable chunks:
 - User registration flow
-- Login/logout operations  
+- Login/logout operations
 - Token management
 - Error handling paths
 - Session management
@@ -14,7 +14,7 @@ Each test is focused and targeted.
 """
 
 from datetime import UTC, datetime, timedelta
-from unittest.mock import AsyncMock, Mock, patch
+from unittest.mock import Mock, patch
 import uuid
 from uuid import uuid4
 
@@ -22,7 +22,6 @@ from firebase_admin import auth
 import pytest
 
 from clarity.models.auth import (
-    AuthProvider,
     UserLoginRequest,
     UserRegistrationRequest,
     UserRole,
@@ -32,12 +31,20 @@ from clarity.services.auth_service import (
     AccountDisabledError,
     AuthenticationError,
     AuthenticationService,
-    EmailNotVerifiedError,
     InvalidCredentialsError,
     UserAlreadyExistsError,
     UserNotFoundError,
 )
 from tests.base import BaseServiceTestCase
+
+# Test constants
+TEST_PASSWORD = "SecurePass123!"
+TEST_ACCESS_TOKEN = "test_access_token"
+TEST_REFRESH_TOKEN = "test_refresh_token"
+TEST_BEARER_TOKEN_TYPE = "bearer"
+TEST_VALID_REFRESH_TOKEN = "valid_refresh_token"
+TEST_INVALID_REFRESH_TOKEN = "invalid_refresh_token"
+TEST_EXPIRED_REFRESH_TOKEN = "expired_refresh_token"
 
 
 class MockFirebaseUserRecord:
@@ -47,6 +54,7 @@ class MockFirebaseUserRecord:
         self,
         uid: str,
         email: str | None = None,
+        *,
         disabled: bool = False,
         email_verified: bool = True,
     ) -> None:
@@ -70,7 +78,7 @@ class MockFirestoreClient:
         collection: str,
         data: dict[str, any],
         document_id: str | None = None,
-        user_id: str | None = None,
+        user_id: str | None = None,  # noqa: ARG002
     ) -> str:
         """Mock create document."""
         doc_id = document_id or str(uuid4())
@@ -88,7 +96,7 @@ class MockFirestoreClient:
         collection: str,
         document_id: str,
         data: dict[str, any],
-        user_id: str | None = None,
+        user_id: str | None = None,  # noqa: ARG002
     ) -> None:
         """Mock update document."""
         key = f"{collection}/{document_id}"
@@ -96,7 +104,9 @@ class MockFirestoreClient:
             self.documents[key].update(data)
 
     async def query_documents(
-        self, collection: str, filters: list[dict[str, any]]
+        self,
+        collection: str,  # noqa: ARG002
+        filters: list[dict[str, any]],  # noqa: ARG002
     ) -> list[dict[str, any]]:
         """Mock query documents."""
         return self.query_results
@@ -109,7 +119,7 @@ class MockAuthProvider:
         """Initialize mock provider."""
         self.should_fail = False
 
-    async def verify_token(self, token: str) -> dict[str, any]:
+    async def verify_token(self, token: str) -> dict[str, any]:  # noqa: ARG002
         """Mock verify token."""
         if self.should_fail:
             msg = "Invalid token"

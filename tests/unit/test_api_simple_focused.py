@@ -22,7 +22,8 @@ from clarity.core.exceptions import DataValidationError
 class TestBasicExceptions:
     """Test basic exception creation - MICRO CHUNK 2A."""
 
-    def test_data_validation_error_creation(self) -> None:
+    @staticmethod
+    def test_data_validation_error_creation() -> None:
         """Test creating DataValidationError."""
         # Arrange
         message = "Invalid data format"
@@ -36,7 +37,8 @@ class TestBasicExceptions:
         assert error.field_name == field
         assert error.error_code == "DATA_VALIDATION_ERROR"
 
-    def test_data_validation_error_without_field(self) -> None:
+    @staticmethod
+    def test_data_validation_error_without_field() -> None:
         """Test creating DataValidationError without field name."""
         # Arrange
         message = "General validation error"
@@ -48,7 +50,8 @@ class TestBasicExceptions:
         assert str(error) == "[DATA_VALIDATION_ERROR] General validation error"
         assert error.field_name is None
 
-    def test_data_validation_error_with_details(self) -> None:
+    @staticmethod
+    def test_data_validation_error_with_details() -> None:
         """Test creating DataValidationError with additional details."""
         # Arrange
         message = "Invalid format"
@@ -62,7 +65,8 @@ class TestBasicExceptions:
         assert error.details == details
         assert error.field_name == field
 
-    def test_raising_data_validation_error(self) -> None:
+    @staticmethod
+    def test_raising_data_validation_error() -> None:
         """Test raising and catching DataValidationError."""
         # Arrange
         message = "Test error"
@@ -77,7 +81,8 @@ class TestBasicExceptions:
 class TestBasicValidations:
     """Test basic validation functions - MICRO CHUNK 2B."""
 
-    def test_empty_string_validation(self) -> None:
+    @staticmethod
+    def test_empty_string_validation() -> None:
         """Test validation of empty strings."""
         # Arrange
         empty_string = ""
@@ -87,7 +92,8 @@ class TestBasicValidations:
         assert len(empty_string) == 0
         assert len(valid_string) > 0
 
-    def test_none_validation(self) -> None:
+    @staticmethod
+    def test_none_validation() -> None:
         """Test validation of None values."""
         # Arrange
         none_value = None
@@ -97,7 +103,8 @@ class TestBasicValidations:
         assert none_value is None
         assert valid_value is not None
 
-    def test_numeric_validation(self) -> None:
+    @staticmethod
+    def test_numeric_validation() -> None:
         """Test validation of numeric values."""
         # Arrange
         valid_int = 42
@@ -109,7 +116,8 @@ class TestBasicValidations:
         assert isinstance(valid_float, float)
         assert not isinstance(invalid_string, (int, float))
 
-    def test_range_validation(self) -> None:
+    @staticmethod
+    def test_range_validation() -> None:
         """Test validation of numeric ranges."""
         # Arrange
         min_val = 0
@@ -127,7 +135,8 @@ class TestBasicValidations:
 class TestMockBehavior:
     """Test mock object behavior - MICRO CHUNK 2C."""
 
-    def test_mock_creation(self) -> None:
+    @staticmethod
+    def test_mock_creation() -> None:
         """Test creating basic mock objects."""
         # Arrange & Act
         mock_obj = Mock()
@@ -136,7 +145,8 @@ class TestMockBehavior:
         assert mock_obj is not None
         assert hasattr(mock_obj, "some_method")
 
-    def test_mock_return_value(self) -> None:
+    @staticmethod
+    def test_mock_return_value() -> None:
         """Test setting mock return values."""
         # Arrange
         mock_obj = Mock()
@@ -149,7 +159,8 @@ class TestMockBehavior:
         # Assert
         assert result == expected_result
 
-    def test_mock_side_effect(self) -> None:
+    @staticmethod
+    def test_mock_side_effect() -> None:
         """Test mock side effects."""
         # Arrange
         mock_obj = Mock()
@@ -160,7 +171,8 @@ class TestMockBehavior:
         with pytest.raises(DataValidationError):
             mock_obj.failing_method()
 
-    def test_mock_call_counting(self) -> None:
+    @staticmethod
+    def test_mock_call_counting() -> None:
         """Test counting mock method calls."""
         # Arrange
         mock_obj = Mock()
@@ -176,7 +188,8 @@ class TestMockBehavior:
 class TestStringOperations:
     """Test basic string operations for validation - MICRO CHUNK 2D."""
 
-    def test_string_length_check(self) -> None:
+    @staticmethod
+    def test_string_length_check() -> None:
         """Test string length validation."""
         # Arrange
         short_string = "hi"
@@ -188,7 +201,8 @@ class TestStringOperations:
         assert len(long_string) > 10
         assert len(empty_string) == 0
 
-    def test_string_strip_operation(self) -> None:
+    @staticmethod
+    def test_string_strip_operation() -> None:
         """Test string whitespace removal."""
         # Arrange
         padded_string = "  hello world  "
@@ -200,7 +214,8 @@ class TestStringOperations:
         # Assert
         assert result == expected
 
-    def test_string_format_validation(self) -> None:
+    @staticmethod
+    def test_string_format_validation() -> None:
         """Test basic string format checks."""
         # Arrange
         email_like = "user@example.com"
@@ -211,7 +226,8 @@ class TestStringOperations:
         assert "." in email_like
         assert "@" not in not_email_like
 
-    def test_string_case_operations(self) -> None:
+    @staticmethod
+    def test_string_case_operations() -> None:
         """Test string case conversions."""
         # Arrange
         mixed_case = "Hello World"

@@ -5,7 +5,6 @@ using transformer-based attention mechanisms for cross-modal interactions.
 """
 
 import logging
-from typing import Any
 
 from pydantic import BaseModel, Field
 import torch

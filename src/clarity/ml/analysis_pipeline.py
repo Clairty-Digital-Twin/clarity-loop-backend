@@ -15,7 +15,13 @@ from clarity.ml.pat_service import ActigraphyInput, get_pat_service
 from clarity.ml.preprocessing import HealthDataPreprocessor
 from clarity.ml.processors.cardio_processor import CardioProcessor
 from clarity.ml.processors.respiration_processor import RespirationProcessor
-from clarity.models.health_data import HealthMetric
+from clarity.models.health_data import (
+    ActivityData,
+    BiometricData,
+    HealthMetric,
+    HealthMetricType,
+    SleepData,
+)
 
 # Constants
 MIN_FEATURE_VECTOR_LENGTH = 8
@@ -475,13 +481,6 @@ async def run_analysis_pipeline(
 
 def _convert_raw_data_to_metrics(health_data: dict[str, Any]) -> list[HealthMetric]:
     """Convert raw health data to HealthMetric objects."""
-    from clarity.models.health_data import (
-        ActivityData,
-        BiometricData,
-        MetricType,
-        SleepData,
-    )
-
     metrics = []
 
     # Handle different data formats - could be from HealthKit upload or direct metrics
@@ -495,16 +494,16 @@ def _convert_raw_data_to_metrics(health_data: dict[str, Any]) -> list[HealthMetr
         for sample in health_data["quantity_samples"]:
             metric_type_str = sample.get("type", "").lower()
 
-            # Map HealthKit types to our MetricType enum
+            # Map HealthKit types to our HealthMetricType enum
             type_mapping = {
-                "heartrate": MetricType.HEART_RATE,
-                "heart_rate": MetricType.HEART_RATE,
-                "heartratevariabilitysdnn": MetricType.HEART_RATE_VARIABILITY,
-                "respiratoryrate": MetricType.RESPIRATORY_RATE,
-                "respiratory_rate": MetricType.RESPIRATORY_RATE,
-                "oxygensaturation": MetricType.OXYGEN_SATURATION,
-                "bloodpressuresystolic": MetricType.BLOOD_PRESSURE,
-                "bloodpressurediastolic": MetricType.BLOOD_PRESSURE,
+                "heartrate": HealthMetricType.HEART_RATE,
+                "heart_rate": HealthMetricType.HEART_RATE,
+                "heartratevariabilitysdnn": HealthMetricType.HEART_RATE_VARIABILITY,
+                "respiratoryrate": HealthMetricType.HEART_RATE,  # Map to existing type
+                "respiratory_rate": HealthMetricType.HEART_RATE,  # Map to existing type
+                "oxygensaturation": HealthMetricType.ENVIRONMENTAL,  # Map to existing type
+                "bloodpressuresystolic": HealthMetricType.BLOOD_PRESSURE,
+                "bloodpressurediastolic": HealthMetricType.BLOOD_PRESSURE,
             }
 
             if metric_type_str in type_mapping:
@@ -553,7 +552,7 @@ def _convert_raw_data_to_metrics(health_data: dict[str, Any]) -> list[HealthMetr
 
                 metric = HealthMetric(
                     user_id=health_data.get("user_id", "unknown"),
-                    metric_type=MetricType.SLEEP_ANALYSIS,
+                    metric_type=HealthMetricType.SLEEP_ANALYSIS,
                     created_at=datetime.fromisoformat(
                         sample.get("timestamp", datetime.now(UTC).isoformat())
                     ),
@@ -575,7 +574,7 @@ def _convert_raw_data_to_metrics(health_data: dict[str, Any]) -> list[HealthMetr
 
             metric = HealthMetric(
                 user_id=health_data.get("user_id", "unknown"),
-                metric_type=MetricType.ACTIVITY_LEVEL,
+                metric_type=HealthMetricType.ACTIVITY_LEVEL,
                 created_at=datetime.fromisoformat(
                     workout.get("timestamp", datetime.now(UTC).isoformat())
                 ),

@@ -186,7 +186,7 @@ async def get_upload_status(
     """
     # Extract user_id from upload_id (format: user_id-uuid)
     try:
-        user_id = upload_id.split("-")[0]
+        user_id = upload_id.split("-", 1)[0]
     except (IndexError, ValueError):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid upload ID format"

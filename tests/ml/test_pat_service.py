@@ -331,8 +331,6 @@ class TestPATModelServiceAnalysis:
                 service.model = MagicMock()
                 service.is_loaded = True
 
-            mock_load = setup_model
-
             # Mock preprocessor output
             mock_preprocess.return_value = torch.randn(1, 1440, 1)
 

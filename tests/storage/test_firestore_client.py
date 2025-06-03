@@ -248,15 +248,22 @@ class TestFirestoreClientDocumentOperations:
     """Test basic document CRUD operations."""
 
     @staticmethod
-    async def test_create_document_success(firestore_client: FirestoreClient, mock_firestore_client: AsyncMock) -> None:
+    async def test_create_document_success(firestore_client: FirestoreClient) -> None:
         """Test successful document creation."""
-        mock_doc_ref = Mock()
+        # Mock the database client and document reference chain
+        mock_doc_ref = AsyncMock()
         mock_doc_ref.id = "doc123"
-        mock_firestore_client.collection.return_value.document.return_value = mock_doc_ref
-
-        firestore_client._db = mock_firestore_client
-
-        with patch.object(firestore_client, "_audit_log", new_callable=AsyncMock):
+        mock_doc_ref.set = AsyncMock()
+        
+        mock_collection = Mock()
+        mock_collection.document.return_value = mock_doc_ref
+        
+        mock_db = AsyncMock()
+        mock_db.collection.return_value = mock_collection
+        
+        # Patch the _get_db method to return our mock
+        with patch.object(firestore_client, "_get_db", return_value=mock_db), \
+             patch.object(firestore_client, "_audit_log", new_callable=AsyncMock):
             result = await firestore_client.create_document(
                 collection="test_collection",
                 data={"name": "test"},

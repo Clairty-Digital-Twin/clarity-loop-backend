@@ -178,7 +178,8 @@ class TestMeasureExecutionTime:
         # Slow function should be logged (above threshold)
         assert "slow_function" in log_messages
 
-    async def test_measure_execution_time_async(self, caplog: pytest.LogCaptureFixture) -> None:
+    @staticmethod
+    async def test_measure_execution_time_async(caplog: pytest.LogCaptureFixture) -> None:
         """Test execution time measurement for async functions."""
         with caplog.at_level(logging.INFO):
             @measure_execution_time()
@@ -192,7 +193,8 @@ class TestMeasureExecutionTime:
         log_messages = " ".join(caplog.messages)
         assert "async_timed_function executed in" in log_messages
 
-    def test_measure_execution_time_exception_handling(self, caplog: pytest.LogCaptureFixture) -> None:
+    @staticmethod
+    def test_measure_execution_time_exception_handling(caplog: pytest.LogCaptureFixture) -> None:
         """Test timing measurement when function raises exception."""
         with caplog.at_level(logging.INFO):
             @measure_execution_time()

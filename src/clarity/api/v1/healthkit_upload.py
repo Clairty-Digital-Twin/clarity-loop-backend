@@ -178,8 +178,17 @@ async def get_upload_status(
         Upload status information
     """
     # Extract user_id from upload_id (format: user_id-uuid)
+    # The UUID is always the last 32-character hex string after the final dash
     try:
-        user_id = upload_id.split("-", 1)[0]
+        parts = upload_id.split("-")
+        if len(parts) < 2:
+            raise ValueError("Invalid format")
+        # The last part should be a 32-character hex UUID
+        uuid_part = parts[-1]
+        if len(uuid_part) != 32 or not all(c in '0123456789abcdef' for c in uuid_part.lower()):
+            raise ValueError("Invalid UUID format")
+        # Join all parts except the last one to get the user_id
+        user_id = "-".join(parts[:-1])
     except (IndexError, ValueError):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid upload ID format"

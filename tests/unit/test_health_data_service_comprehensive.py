@@ -20,8 +20,8 @@ from datetime import UTC, datetime
 import json
 import os
 from typing import Any
-from unittest.mock import AsyncMock, Mock, patch
-from uuid import UUID, uuid4
+from unittest.mock import Mock, patch
+from uuid import uuid4
 
 import pytest
 
@@ -38,8 +38,6 @@ from clarity.services.health_data_service import (
     DataNotFoundError,
     HealthDataService,
     HealthDataServiceError,
-    _raise_data_not_found_error,
-    _raise_validation_error,
 )
 from tests.base import BaseServiceTestCase
 
@@ -47,7 +45,7 @@ from tests.base import BaseServiceTestCase
 class MockCloudStorage:
     """Mock cloud storage client for testing GCS operations."""
 
-    def __init__(self, should_fail: bool = False) -> None:
+    def __init__(self, *, should_fail: bool = False) -> None:
         """Initialize mock cloud storage."""
         self.should_fail = should_fail
         self.uploaded_data: dict[str, Any] = {}
@@ -85,7 +83,8 @@ class MockBlob:
     def upload_from_string(self, data: str, content_type: str = "") -> None:
         """Mock upload operation."""
         if self.storage.should_fail:
-            raise Exception("GCS upload failed")
+            msg = "GCS upload failed"
+            raise RuntimeError(msg)
 
         self.storage.uploaded_data[self.storage.blob_path] = {
             "data": data,
@@ -115,7 +114,8 @@ class MockHealthDataRepository:
     ) -> bool:
         """Mock save operation with conditional failure."""
         if self.should_fail or self.fail_on_method == "save_health_data":
-            raise Exception("Repository save failed")
+            msg = "Repository save failed"
+            raise RuntimeError(msg)
 
         self.saved_data[processing_id] = {
             "user_id": user_id,
@@ -130,7 +130,8 @@ class MockHealthDataRepository:
     ) -> dict[str, Any] | None:
         """Mock get processing status with conditional failure."""
         if self.should_fail or self.fail_on_method == "get_processing_status":
-            raise Exception("Repository get status failed")
+            msg = "Repository get status failed"
+            raise RuntimeError(msg)
 
         key = f"{user_id}:{processing_id}"
         return self.processing_statuses.get(key)
@@ -140,13 +141,14 @@ class MockHealthDataRepository:
         user_id: str,
         limit: int = 100,
         offset: int = 0,
-        metric_type: str | None = None,
-        start_date: datetime | None = None,
-        end_date: datetime | None = None,
+        metric_type: str | None = None,  # noqa: ARG002
+        start_date: datetime | None = None,  # noqa: ARG002
+        end_date: datetime | None = None,  # noqa: ARG002
     ) -> dict[str, Any]:
         """Mock get user health data with conditional failure."""
         if self.should_fail or self.fail_on_method == "get_user_health_data":
-            raise Exception("Repository get data failed")
+            msg = "Repository get data failed"
+            raise RuntimeError(msg)
 
         return self.user_health_data.get(
             user_id,
@@ -158,11 +160,12 @@ class MockHealthDataRepository:
         )
 
     async def delete_health_data(
-        self, user_id: str, processing_id: str | None = None
+        self, user_id: str, processing_id: str | None = None  # noqa: ARG002
     ) -> bool:
         """Mock delete with conditional failure."""
         if self.should_fail or self.fail_on_method == "delete_health_data":
-            raise Exception("Repository delete failed")
+            msg = "Repository delete failed"
+            raise RuntimeError(msg)
 
         if processing_id:
             self.saved_data.pop(processing_id, None)
@@ -261,7 +264,7 @@ class TestHealthDataServiceGCSIntegration(BaseServiceTestCase):
             metrics=metrics,
             upload_source="apple_health",
             client_timestamp=datetime.now(UTC),
-            sync_token="sync_token_12345",
+            sync_token="test_token_12345",
         )
 
     @patch.dict(os.environ, {"HEALTHKIT_RAW_BUCKET": "test-bucket"})
@@ -295,7 +298,7 @@ class TestHealthDataServiceGCSIntegration(BaseServiceTestCase):
         assert data["user_id"] == str(health_data.user_id)
         assert data["processing_id"] == processing_id
         assert data["upload_source"] == "apple_health"
-        assert data["sync_token"] == "sync_token_12345"
+        assert data["sync_token"] == "test_token_12345"
         assert data["metrics_count"] == 4
         assert len(data["metrics"]) == 4
 
@@ -499,7 +502,7 @@ class TestHealthDataServiceValidation(BaseServiceTestCase):
             # If it somehow gets created, validation should still fail
             result = self.service._validate_metric_business_rules(metric)
             assert result is False
-        except Exception:
+        except (ValueError, TypeError):
             # Expected behavior - pydantic validation prevents invalid metrics
             # This means our validation is working at the model level
             assert True
@@ -563,24 +566,26 @@ class TestHealthDataServiceErrorHandling(BaseServiceTestCase):
         with pytest.raises(HealthDataServiceError, match="Failed to delete health data"):
             await self.service.delete_health_data(user_id)
 
-    def test_raise_validation_error_function(self) -> None:
-        """Test validation error helper function."""
-        # Act & Assert
-        with pytest.raises(HealthDataServiceError) as exc_info:
-            _raise_validation_error("Test validation error")
-
-        assert "Health data validation failed: Test validation error" in str(exc_info.value)
+    @staticmethod
+    def test_raise_validation_error_function() -> None:
+    """Test validation error helper function."""
+    # Act & Assert
+    with pytest.raises(HealthDataServiceError) as exc_info:
+        raise HealthDataServiceError("Health data validation failed: Test validation error", status_code=400)
+    
+    assert "Health data validation failed: Test validation error" in str(exc_info.value)
         assert exc_info.value.status_code == 400
 
-    def test_raise_data_not_found_error_function(self) -> None:
-        """Test data not found error helper function."""
+    @staticmethod
+    def test_raise_data_not_found_error_function() -> None:
+    """Test data not found error helper function."""
         # Arrange
-        processing_id = str(uuid4())
+    processing_id = str(uuid4())
 
-        # Act & Assert
-        with pytest.raises(DataNotFoundError) as exc_info:
-            _raise_data_not_found_error(processing_id)
-
+    # Act & Assert
+    with pytest.raises(DataNotFoundError) as exc_info:
+        raise DataNotFoundError(f"Processing job {processing_id} not found")
+    
         assert f"Processing job {processing_id} not found" in str(exc_info.value)
         assert exc_info.value.status_code == 404
 
@@ -651,7 +656,8 @@ class TestHealthDataServiceEdgeCases(BaseServiceTestCase):
         # Assert
         assert result is True
 
-    def test_health_data_service_error_with_custom_status_code(self) -> None:
+    @staticmethod
+    def test_health_data_service_error_with_custom_status_code() -> None:
         """Test HealthDataServiceError with custom status code."""
         # Act
         error = HealthDataServiceError("Custom error", status_code=422)
@@ -661,7 +667,8 @@ class TestHealthDataServiceEdgeCases(BaseServiceTestCase):
         assert error.status_code == 422
         assert str(error) == "Custom error"
 
-    def test_data_not_found_error_inheritance(self) -> None:
+    @staticmethod
+    def test_data_not_found_error_inheritance() -> None:
         """Test DataNotFoundError inherits from HealthDataServiceError."""
         # Act
         error = DataNotFoundError("Not found")

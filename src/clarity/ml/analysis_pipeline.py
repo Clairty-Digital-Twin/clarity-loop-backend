@@ -139,7 +139,7 @@ class HealthAnalysisPipeline:
 
         except Exception as e:
             self.logger.exception(
-                "Error in analysis pipeline for user %s: %s", user_id, e
+                "Error in analysis pipeline for user %s", user_id
             )
             raise
 

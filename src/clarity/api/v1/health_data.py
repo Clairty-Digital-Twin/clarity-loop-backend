@@ -14,7 +14,7 @@ Following Robert C. Martin's Clean Architecture with proper dependency injection
 
 from datetime import UTC, datetime
 import logging
-from typing import Any, Dict, List, NoReturn, Optional
+from typing import Any
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, Query, Request, status
@@ -30,7 +30,7 @@ from clarity.core.exceptions import (
 from clarity.core.pagination import (
     PaginatedResponse,
     PaginationBuilder,
-    PaginationParams,
+
     validate_pagination_params,
 )
 from clarity.models.health_data import HealthDataResponse, HealthDataUpload
@@ -128,13 +128,13 @@ def get_config_provider() -> IConfigProvider:
     summary="Upload Health Data",
     description="""
     Upload health metrics for processing and analysis by the CLARITY digital twin platform.
-    
+
     **Features:**
     - Supports multiple data types (heart rate, sleep, activity, etc.)
     - Real-time validation and processing
     - HIPAA-compliant secure storage
     - Automatic data quality checks
-    
+
     **Example Request:**
     ```json
     {
@@ -208,14 +208,14 @@ async def upload_health_data(
     summary="Get Processing Status",
     description="""
     Check the processing status of a health data upload using its processing ID.
-    
+
     **Status Values:**
     - `pending`: Upload received, processing queued
     - `processing`: Data currently being analyzed
     - `completed`: Processing finished successfully
     - `failed`: Processing encountered an error
     - `cancelled`: Processing was cancelled
-    
+
     **Response includes:**
     - Current processing stage
     - Progress percentage (if available)
@@ -270,21 +270,21 @@ async def get_processing_status(
     summary="List Health Data",
     description="""
     Retrieve paginated health data with advanced filtering and sorting options.
-    
+
     **Pagination:**
     - Cursor-based pagination for consistent results
     - HAL-style navigation links
     - Configurable page sizes (1-1000 items)
-    
+
     **Filtering:**
     - Filter by data type (heart_rate, sleep, activity, etc.)
     - Date range filtering with timezone support
     - Source device filtering
-    
+
     **Sorting:**
     - Default: Most recent first
     - Customizable sort orders
-    
+
     **Example Response:**
     ```json
     {

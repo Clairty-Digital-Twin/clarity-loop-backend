@@ -21,9 +21,9 @@ import clarity.ml.pat_service
 from clarity.ml.pat_service import (
     ActigraphyAnalysis,
     ActigraphyInput,
-    PATModelService,
     PATEncoder,
     PATForMentalHealthClassification,
+    PATModelService,
     get_pat_service,
 )
 from clarity.ml.preprocessing import ActigraphyDataPoint

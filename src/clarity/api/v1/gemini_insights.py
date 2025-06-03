@@ -9,6 +9,7 @@ and health status monitoring with proper Firebase authentication.
 
 from datetime import UTC, datetime
 import logging
+import os
 from typing import Any
 import uuid
 
@@ -27,6 +28,9 @@ from clarity.ports.config_ports import IConfigProvider
 from clarity.storage.firestore_client import FirestoreClient
 
 logger = logging.getLogger(__name__)
+
+# Constants
+NARRATIVE_PREVIEW_LENGTH = 200
 
 # Global dependencies - will be injected by container
 _auth_provider: IAuthProvider | None = None
@@ -448,7 +452,7 @@ async def get_insight_history(
         # Format insights for response
         formatted_insights = [{
                 "id": insight.get("id"),
-                "narrative": insight.get("narrative", "")[:200] + "..." if len(insight.get("narrative", "")) > 200 else insight.get("narrative", ""),
+                "narrative": insight.get("narrative", "")[:NARRATIVE_PREVIEW_LENGTH] + "..." if len(insight.get("narrative", "")) > NARRATIVE_PREVIEW_LENGTH else insight.get("narrative", ""),
                 "generated_at": insight.get("generated_at"),
                 "confidence_score": insight.get("confidence_score", 0.0),
                 "key_insights_count": len(insight.get("key_insights", [])),
@@ -560,8 +564,6 @@ async def get_service_status(
 
 def _get_firestore_client() -> FirestoreClient:
     """Get Firestore client for storing/retrieving insights."""
-    import os
-
     project_id = os.getenv("GOOGLE_CLOUD_PROJECT", "clarity-digital-twin")
     return FirestoreClient(project_id=project_id)
 

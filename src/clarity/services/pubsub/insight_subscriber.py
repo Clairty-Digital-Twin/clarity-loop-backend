@@ -239,8 +239,9 @@ Generate the health insight now:"""
             "confidence_level": "medium",
         }
 
+    @staticmethod
     def _create_analysis_summary(
-        self, analysis_results: dict[str, Any]
+        analysis_results: dict[str, Any]
     ) -> dict[str, Any]:
         """Create summary of analysis results for storage."""
         summary = {
@@ -277,7 +278,6 @@ Generate the health insight now:"""
     ) -> None:
         """Store insight in Firestore."""
         try:
-            # Store in insights/{user_id}/uploads/{upload_id}
             doc_ref = (
                 self.firestore_client.collection("insights")
                 .document(user_id)

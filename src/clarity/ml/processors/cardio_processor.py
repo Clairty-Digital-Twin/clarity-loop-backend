@@ -118,7 +118,7 @@ class CardioProcessor:
             ]
 
         except Exception as e:
-            self.logger.exception("Error processing cardiovascular data: %s", e)
+            self.logger.exception("Error processing cardiovascular data")
             # Return zero vector on error
             return [0.0] * 8
 

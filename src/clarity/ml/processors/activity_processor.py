@@ -82,7 +82,7 @@ class ActivityProcessor:
 
             logger.info("✅ Extracted %d activity features", len(features))
         except Exception as e:
-            logger.exception("Failed to process activity data: %s", e)
+            logger.exception("Failed to process activity data")
             return [{"error": f"ActivityProcessor failed: {e!s}"}]
         else:
             return features

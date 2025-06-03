@@ -238,9 +238,9 @@ class TestPATModelServiceLoading:
         service = PATModelService(model_size="medium")
 
         with patch('pathlib.Path.exists', return_value=True):
-            # Mock h5py to raise an exception without trying to import the real h5py
+            # Mock h5py to raise an exception when opening file
             mock_h5py = MagicMock()
-            mock_h5py.File.side_effect = Exception("Corrupted file")
+            mock_h5py.File.side_effect = OSError("Corrupted file")
 
             with patch.dict('sys.modules', {'h5py': mock_h5py}):
                 await service.load_model()

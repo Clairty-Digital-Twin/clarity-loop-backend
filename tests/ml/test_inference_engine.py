@@ -444,8 +444,9 @@ class TestInferenceEngineErrorHandling:
         )
 
         # Create a mock that fails immediately
-        async def failing_mock(_):
-            raise RuntimeError("Model not loaded")
+        def failing_mock(_: Any) -> Never:
+            error_msg = "Model not loaded"
+            raise RuntimeError(error_msg)
 
         mock_pat_service = MagicMock(spec=PATModelService)
         mock_pat_service.analyze_actigraphy = failing_mock

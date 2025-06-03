@@ -445,7 +445,7 @@ class TestInferenceEngineErrorHandling:
         )
 
         # Create a mock that fails immediately
-        def failing_mock(_: Any) -> Never:
+        def failing_mock(_: object) -> Never:
             error_msg = "Model not loaded"
             raise RuntimeError(error_msg)
 

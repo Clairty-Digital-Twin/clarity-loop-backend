@@ -1,9 +1,11 @@
-"""🚀 Professional Pagination System - Enterprise-Grade API Responses
+"""🚀 Professional Pagination System - Enterprise-Grade API Responses.
 
 Comprehensive pagination with cursor-based and offset-based support.
 Designed to scale from thousands to millions of records.
 """
 
+import base64
+import json
 from typing import Any, Generic, TypeVar
 from urllib.parse import urlencode
 
@@ -81,7 +83,7 @@ class PaginationLinks(BaseModel):
 
 class PaginatedResponse(BaseModel, Generic[T]):
     """🔥 Enterprise-grade paginated API response.
-    
+
     Follows REST best practices with HAL-style links and comprehensive metadata.
     """
 
@@ -100,7 +102,9 @@ class PaginatedResponse(BaseModel, Generic[T]):
 
     class Config:
         """Pydantic configuration."""
-        json_encoders: dict[str, object] = {
+        from typing import ClassVar
+        
+        json_encoders: ClassVar[dict[str, object]] = {
             # Custom encoders if needed
         }
 
@@ -130,12 +134,15 @@ class PaginationParams(BaseModel):
     )
 
     @validator("limit")
-    def validate_limit(cls, v: int) -> int:
+    def validate_limit(cls, v: int) -> int:  # noqa: N805
         """Ensure reasonable page size limits."""
+        min_limit_msg = "Limit must be at least 1"
+        max_limit_msg = f"Limit cannot exceed {MAX_PAGE_SIZE}"
+        
         if v < 1:
-            raise ValueError("Limit must be at least 1")
-        if v > 1000:
-            raise ValueError("Limit cannot exceed 1000")
+            raise ValueError(min_limit_msg)
+        if v > MAX_PAGE_SIZE:
+            raise ValueError(max_limit_msg)
         return v
 
 
@@ -151,9 +158,9 @@ class CursorInfo(BaseModel):
 class PaginationBuilder:
     """🔧 Builder for creating paginated responses with proper links."""
 
-    def __init__(self, base_url: str, endpoint: str):
+    def __init__(self, base_url: str, endpoint: str) -> None:
         """Initialize pagination builder.
-        
+
         Args:
             base_url: Base API URL (e.g., "https://api.clarity.health")
             endpoint: Endpoint path (e.g., "/api/v1/health-data")
@@ -165,6 +172,7 @@ class PaginationBuilder:
         self,
         data: list[T],
         params: PaginationParams,
+        *,
         has_next: bool,
         has_previous: bool,
         total_count: int | None = None,
@@ -173,7 +181,7 @@ class PaginationBuilder:
         additional_params: dict[str, Any] | None = None
     ) -> "PaginatedResponse[T]":
         """Build complete paginated response with links and metadata.
-        
+
         Args:
             data: Items for current page
             params: Original pagination parameters
@@ -213,6 +221,7 @@ class PaginationBuilder:
     def _build_links(
         self,
         params: PaginationParams,
+        *,
         has_next: bool,
         has_previous: bool,
         next_cursor: str | None,
@@ -269,15 +278,13 @@ class PaginationBuilder:
 
 def create_cursor(cursor_info: CursorInfo) -> str:
     """Create base64-encoded cursor from cursor information.
-    
+
     Args:
         cursor_info: Information to encode in cursor
-        
+
     Returns:
         Base64-encoded cursor string
     """
-    import base64
-    import json
 
     cursor_data = cursor_info.dict(exclude_none=True)
     cursor_json = json.dumps(cursor_data, sort_keys=True)
@@ -287,18 +294,16 @@ def create_cursor(cursor_info: CursorInfo) -> str:
 
 def decode_cursor(cursor: str) -> CursorInfo:
     """Decode base64 cursor back to cursor information.
-    
+
     Args:
         cursor: Base64-encoded cursor string
-        
+
     Returns:
         Decoded cursor information
-        
+
     Raises:
         ValueError: If cursor is invalid
     """
-    import base64
-    import json
 
     try:
         cursor_bytes = base64.b64decode(cursor.encode("utf-8"))
@@ -306,7 +311,8 @@ def decode_cursor(cursor: str) -> CursorInfo:
         cursor_data = json.loads(cursor_json)
         return CursorInfo(**cursor_data)
     except Exception as e:
-        raise ValueError(f"Invalid cursor format: {e}") from e
+        error_msg = f"Invalid cursor format: {e}"
+        raise ValueError(error_msg) from e
 
 
 # 🎯 Common pagination utilities
@@ -321,15 +327,15 @@ def validate_pagination_params(
     offset: int | None = None
 ) -> PaginationParams:
     """Validate and normalize pagination parameters.
-    
+
     Args:
         limit: Page size limit
         cursor: Pagination cursor
         offset: Offset for offset-based pagination
-        
+
     Returns:
         Validated pagination parameters
-        
+
     Raises:
         ValueError: If parameters are invalid
     """
@@ -337,20 +343,24 @@ def validate_pagination_params(
     if limit is None:
         limit = DEFAULT_PAGE_SIZE
     elif limit < 1:
-        raise ValueError("Limit must be at least 1")
+        min_limit_msg = "Limit must be at least 1"
+        raise ValueError(min_limit_msg)
     elif limit > MAX_PAGE_SIZE:
-        raise ValueError(f"Limit cannot exceed {MAX_PAGE_SIZE}")
+        max_limit_msg = f"Limit cannot exceed {MAX_PAGE_SIZE}"
+        raise ValueError(max_limit_msg)
 
     # Validate cursor if provided
     if cursor:
         try:
             decode_cursor(cursor)
         except ValueError as e:
-            raise ValueError(f"Invalid cursor: {e}") from e
+            invalid_cursor_msg = f"Invalid cursor: {e}"
+            raise ValueError(invalid_cursor_msg) from e
 
     # Validate offset if provided
     if offset is not None and offset < 0:
-        raise ValueError("Offset must be non-negative")
+        offset_msg = "Offset must be non-negative"
+        raise ValueError(offset_msg)
 
     return PaginationParams(
         limit=limit,

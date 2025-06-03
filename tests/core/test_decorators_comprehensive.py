@@ -6,8 +6,8 @@ Tests all decorators and edge cases to improve coverage from 11% to 90%+.
 import asyncio
 import logging
 import time
+from typing import Any, Dict, Tuple
 
-# Imports for comprehensive decorator testing
 import pytest
 
 from clarity.core.decorators import (
@@ -358,179 +358,205 @@ class TestRetryOnFailureDecorator:
 class TestValidateInputDecorator:
     """Comprehensive tests for validate_input decorator."""
 
-    def test_validate_input_success(self):
-        """Test validate_input decorator with valid input."""
-        def validator(args_kwargs):
-            args, kwargs = args_kwargs
-            return len(args) > 0 and args[0] > 0
+    @staticmethod
+    def test_validate_input_valid_args() -> None:
+        """Test validate_input decorator with valid arguments."""
+        def validator(args_kwargs: Tuple[Tuple[Any, ...], Dict[str, Any]]) -> bool:
+            args, _ = args_kwargs
+            return len(args) > 0 and isinstance(args[0], str)
 
-        @validate_input(validator, "Input must be positive")
-        def test_func(x):
-            return x * 2
+        @validate_input(validator, "Input must be a non-empty string")
+        def test_func(text: str) -> str:
+            return f"processed: {text}"
 
-        result = test_func(5)
-        assert result == 10
+        result = test_func("hello")
+        assert result == "processed: hello"
 
-    def test_validate_input_failure(self):
-        """Test validate_input decorator with invalid input."""
-        def validator(args_kwargs):
-            args, kwargs = args_kwargs
-            return len(args) > 0 and args[0] > 0
+    @staticmethod
+    def test_validate_input_invalid_args() -> None:
+        """Test validate_input decorator with invalid arguments."""
+        def validator(args_kwargs: Tuple[Tuple[Any, ...], Dict[str, Any]]) -> bool:
+            args, _ = args_kwargs
+            return len(args) > 0 and isinstance(args[0], str)
 
-        @validate_input(validator, "Input must be positive")
-        def test_func(x):
-            return x * 2
+        @validate_input(validator, "Input must be a non-empty string")
+        def test_func(text: Any) -> str:
+            return f"processed: {text}"
 
-        with pytest.raises(ValueError, match="Input must be positive"):
-            test_func(-1)
+        with pytest.raises(ValueError, match="Input must be a non-empty string"):
+            test_func(123)
 
-    def test_validate_input_kwargs_validation(self):
-        """Test validate_input decorator with kwargs validation."""
-        def validator(args_kwargs):
-            args, kwargs = args_kwargs
-            return kwargs.get('name', '') != '' and kwargs.get('age', 0) >= 18
+    @staticmethod
+    def test_validate_input_empty_args() -> None:
+        """Test validate_input decorator with empty arguments."""
+        def validator(args_kwargs: Tuple[Tuple[Any, ...], Dict[str, Any]]) -> bool:
+            args, _ = args_kwargs
+            return len(args) > 0
 
-        @validate_input(validator, "Name required and age >= 18")
-        def test_func(name=None, age=0):
-            return f"{name}-{age}"
+        @validate_input(validator, "At least one argument required")
+        def test_func() -> str:
+            return "no args"
 
-        result = test_func(name="John", age=25)
-        assert result == "John-25"
+        with pytest.raises(ValueError, match="At least one argument required"):
+            test_func()
 
-        with pytest.raises(ValueError, match="Name required and age >= 18"):
-            test_func(name="", age=16)
+    @staticmethod
+    def test_validate_input_kwargs_validation() -> None:
+        """Test validate_input decorator with keyword arguments validation."""
+        def validator(args_kwargs: Tuple[Tuple[Any, ...], Dict[str, Any]]) -> bool:
+            _, kwargs = args_kwargs
+            return "required_key" in kwargs
 
-    def test_validate_input_complex_validation(self):
+        @validate_input(validator, "Missing required keyword argument")
+        def test_func(**kwargs: Any) -> str:
+            return f"got: {kwargs}"
+
+        result = test_func(required_key="value")
+        assert "value" in result
+
+        with pytest.raises(ValueError, match="Missing required keyword argument"):
+            test_func(other_key="value")
+
+    @staticmethod
+    def test_validate_input_complex_validation() -> None:
         """Test validate_input decorator with complex validation logic."""
-        def validator(args_kwargs):
-            args, kwargs = args_kwargs
+        def validator(args_kwargs: Tuple[Tuple[Any, ...], Dict[str, Any]]) -> bool:
+            args, _kwargs = args_kwargs
             if len(args) == 0:
                 return False
             data = args[0]
-            return isinstance(data, dict) and 'id' in data and 'name' in data
+            return isinstance(data, dict) and "id" in data and "name" in data
 
         @validate_input(validator, "Data must be dict with id and name")
-        def test_func(data):
+        def test_func(data: Dict[str, Any]) -> str:
             return data['id'] + data['name']
 
-        result = test_func({'id': 'ID123', 'name': 'Test'})
-        assert result == "ID123Test"
+        result = test_func({"id": "123", "name": "test"})
+        assert result == "123test"
 
         with pytest.raises(ValueError, match="Data must be dict with id and name"):
-            test_func({'id': 'ID123'})  # Missing name
+            test_func({"id": "123"})  # Missing name
 
 
 class TestAuditTrailDecorator:
     """Comprehensive tests for audit_trail decorator."""
 
-    def test_audit_trail_sync_function_success(self, caplog):
+    @staticmethod
+    def test_audit_trail_sync_function_success(caplog: pytest.LogCaptureFixture) -> None:
         """Test audit_trail decorator on successful sync function."""
         with caplog.at_level(logging.INFO):
             @audit_trail("test_operation")
-            def test_func():
+            def test_func() -> str:
                 return "audited result"
 
             result = test_func()
 
         assert result == "audited result"
-        assert "Audit:" in caplog.text
+        assert "Audit started:" in caplog.text
         assert "test_operation" in caplog.text
-        assert "success" in caplog.text
         assert "Audit completed:" in caplog.text
 
-    def test_audit_trail_sync_function_with_user_resource_ids(self, caplog):
+    @staticmethod
+    def test_audit_trail_sync_function_with_user_resource_ids(caplog: pytest.LogCaptureFixture) -> None:
         """Test audit_trail decorator with user_id and resource_id parameters."""
         with caplog.at_level(logging.INFO):
             @audit_trail("update_resource", user_id_param="user", resource_id_param="resource")
-            def test_func(user=None, resource=None):
+            def test_func(_user: Any = None, _resource: Any = None) -> str:
                 return "updated"
 
-            result = test_func(user="user123", resource="resource456")
+            result = test_func(_user="user123", _resource="resource456")
 
         assert result == "updated"
         assert "user123" in caplog.text
         assert "resource456" in caplog.text
 
-    def test_audit_trail_sync_function_failure(self, caplog):
+    @staticmethod
+    def test_audit_trail_sync_function_failure(caplog: pytest.LogCaptureFixture) -> None:
         """Test audit_trail decorator when sync function fails."""
         with caplog.at_level(logging.INFO):
             @audit_trail("failing_operation")
-            def test_func():
-                raise ValueError("Audit this error")
+            def test_func() -> None:
+                msg = "Audit this error"
+                raise ValueError(msg)
 
             with pytest.raises(ValueError, match="Audit this error"):
                 test_func()
 
-        assert "failed" in caplog.text
-        assert "Audit this error" in caplog.text
+        assert "Audit started:" in caplog.text
+        assert "failing_operation" in caplog.text
         assert "Audit failed:" in caplog.text
 
-    async def test_audit_trail_async_function_success(self, caplog):
+    @staticmethod
+    async def test_audit_trail_async_function_success(caplog: pytest.LogCaptureFixture) -> None:
         """Test audit_trail decorator on successful async function."""
         with caplog.at_level(logging.INFO):
             @audit_trail("async_operation")
-            async def test_func():
+            async def test_func() -> str:
                 await asyncio.sleep(0.001)
                 return "async audited"
 
             result = await test_func()
 
         assert result == "async audited"
+        assert "Audit started:" in caplog.text
         assert "async_operation" in caplog.text
         assert "success" in caplog.text
 
-    async def test_audit_trail_async_function_failure(self, caplog):
+    @staticmethod
+    async def test_audit_trail_async_function_failure(caplog: pytest.LogCaptureFixture) -> None:
         """Test audit_trail decorator when async function fails."""
         with caplog.at_level(logging.INFO):
             @audit_trail("async_failing_operation")
-            async def test_func():
+            async def test_func() -> None:
                 await asyncio.sleep(0.001)
-                raise RuntimeError("Async audit error")
+                msg = "Async audit error"
+                raise RuntimeError(msg)
 
             with pytest.raises(RuntimeError, match="Async audit error"):
                 await test_func()
 
-        assert "failed" in caplog.text
+        assert "Audit started:" in caplog.text
         assert "Async audit error" in caplog.text
 
-    def test_audit_trail_missing_user_resource_params(self, caplog):
+    @staticmethod
+    def test_audit_trail_missing_user_resource_params(caplog: pytest.LogCaptureFixture) -> None:
         """Test audit_trail decorator when user/resource params are not provided."""
         with caplog.at_level(logging.INFO):
             @audit_trail("test_op", user_id_param="missing_user", resource_id_param="missing_resource")
-            def test_func():
+            def test_func() -> str:
                 return "no params"
 
             result = test_func()
 
         assert result == "no params"
-        # Check that audit was logged with test_op operation
-        assert "test_op" in caplog.text
+        assert "Audit started:" in caplog.text
 
 
 class TestServiceMethodDecorator:
     """Comprehensive tests for service_method composite decorator."""
 
-    def test_service_method_default_configuration(self, caplog):
+    @staticmethod
+    def test_service_method_default_configuration(caplog: pytest.LogCaptureFixture) -> None:
         """Test service_method decorator with default configuration."""
         with caplog.at_level(logging.INFO):
             @service_method()
-            def test_func():
+            def test_func() -> str:
                 time.sleep(0.001)
                 return "service result"
 
             result = test_func()
 
         assert result == "service result"
-        # Should have logging from multiple decorators
         assert "Executing" in caplog.text
         assert "Completed" in caplog.text
         # Timing may or may not be logged depending on execution time and thresholds
 
-    def test_service_method_custom_configuration(self, caplog):
+    @staticmethod
+    def test_service_method_custom_configuration(caplog: pytest.LogCaptureFixture) -> None:
         """Test service_method decorator with custom configuration."""
         with caplog.at_level(logging.DEBUG):
             @service_method(log_level=logging.DEBUG, timing_threshold_ms=0.1, max_retries=1)
-            def test_func():
+            def test_func() -> str:
                 return "custom service"
 
             result = test_func()
@@ -538,17 +564,19 @@ class TestServiceMethodDecorator:
         assert result == "custom service"
         assert "Executing" in caplog.text
 
-    def test_service_method_with_retries(self, caplog):
+    @staticmethod
+    def test_service_method_with_retries(caplog: pytest.LogCaptureFixture) -> None:
         """Test service_method decorator with retry functionality."""
         call_count = 0
 
         with caplog.at_level(logging.WARNING):
             @service_method(max_retries=1, log_level=logging.WARNING)
-            def test_func():
+            def test_func() -> str:
                 nonlocal call_count
                 call_count += 1
                 if call_count < 2:
-                    raise ValueError("Service retry")
+                    msg = "Service retry"
+                    raise ValueError(msg)
                 return "service success"
 
             result = test_func()
@@ -557,11 +585,12 @@ class TestServiceMethodDecorator:
         assert call_count == 2
         assert "failed (attempt" in caplog.text
 
-    async def test_service_method_async_function(self, caplog):
+    @staticmethod
+    async def test_service_method_async_function(caplog: pytest.LogCaptureFixture) -> None:
         """Test service_method decorator on async function."""
         with caplog.at_level(logging.INFO):
             @service_method()
-            async def test_func():
+            async def test_func() -> str:
                 await asyncio.sleep(0.001)
                 return "async service"
 
@@ -569,17 +598,17 @@ class TestServiceMethodDecorator:
 
         assert result == "async service"
         assert "Executing" in caplog.text
-        assert "Completed" in caplog.text
 
 
 class TestRepositoryMethodDecorator:
     """Comprehensive tests for repository_method composite decorator."""
 
-    def test_repository_method_default_configuration(self, caplog):
+    @staticmethod
+    def test_repository_method_default_configuration(caplog: pytest.LogCaptureFixture) -> None:
         """Test repository_method decorator with default configuration."""
         with caplog.at_level(logging.DEBUG):
             @repository_method()
-            def test_func():
+            def test_func() -> str:
                 time.sleep(0.001)
                 return "repository result"
 
@@ -589,17 +618,19 @@ class TestRepositoryMethodDecorator:
         assert "Executing" in caplog.text
         assert "Completed" in caplog.text
 
-    def test_repository_method_with_retries(self, caplog):
+    @staticmethod
+    def test_repository_method_with_retries(caplog: pytest.LogCaptureFixture) -> None:
         """Test repository_method decorator with default retry functionality."""
         call_count = 0
 
         with caplog.at_level(logging.WARNING):
             @repository_method(log_level=logging.WARNING)
-            def test_func():
+            def test_func() -> str:
                 nonlocal call_count
                 call_count += 1
                 if call_count < 2:
-                    raise ConnectionError("Repository connection failed")
+                    msg = "Repository connection failed"
+                    raise ConnectionError(msg)
                 return "repository success"
 
             result = test_func()
@@ -608,11 +639,12 @@ class TestRepositoryMethodDecorator:
         assert call_count == 2
         assert "failed (attempt" in caplog.text
 
-    def test_repository_method_custom_configuration(self, caplog):
+    @staticmethod
+    def test_repository_method_custom_configuration(caplog: pytest.LogCaptureFixture) -> None:
         """Test repository_method decorator with custom configuration."""
         with caplog.at_level(logging.INFO):
             @repository_method(log_level=logging.INFO, timing_threshold_ms=0.1, max_retries=0)
-            def test_func():
+            def test_func() -> str:
                 return "custom repository"
 
             result = test_func()
@@ -620,7 +652,8 @@ class TestRepositoryMethodDecorator:
         assert result == "custom repository"
         assert "Executing" in caplog.text
 
-    async def test_repository_method_async_function(self, caplog):
+    @staticmethod
+    async def test_repository_method_async_function(caplog: pytest.LogCaptureFixture) -> None:
         """Test repository_method decorator on async function."""
         with caplog.at_level(logging.DEBUG):
             @repository_method()

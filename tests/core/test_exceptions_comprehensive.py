@@ -359,7 +359,10 @@ class TestExceptionHandlers:
         assert "Retry-After" not in response.headers
 
         # Check response content structure
-        content = response.body.decode()
+        if isinstance(response.body, bytes):
+            content = response.body.decode()
+        else:
+            content = bytes(response.body).decode()
         assert "validation-error" in content
         assert "Test validation error" in content
 
@@ -393,7 +396,10 @@ class TestExceptionHandlers:
         assert "Unexpected error" in caplog.text
 
         # Check response content structure
-        content = response.body.decode()
+        if isinstance(response.body, bytes):
+            content = response.body.decode()
+        else:
+            content = bytes(response.body).decode()
         assert "internal-server-error" in content
         assert "unexpected error occurred" in content
 
@@ -976,7 +982,7 @@ class TestExceptionEdgeCases:
         )
 
         problem = exc.to_problem_detail()
-        assert problem.type == ""
-        assert problem.title == ""
-        assert problem.detail == ""
+        assert not problem.type
+        assert not problem.title
+        assert not problem.detail
         assert problem.errors == []

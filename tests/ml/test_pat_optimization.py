@@ -524,10 +524,8 @@ class TestErrorHandling:
         """Test handling of corrupted cache entries."""
         # Create a corrupted cache entry with wrong format
         cache_key = optimizer._generate_cache_key(sample_actigraphy_input)
-        optimizer._cache[cache_key] = (
-            "corrupted_data_not_tuple",
-            0.0,  # type: ignore[assignment]  # This should be a tuple but isn't
-        )
+        # Simulate cache corruption by setting invalid data
+        optimizer._cache[cache_key] = "corrupted_data_not_tuple"  # type: ignore[assignment]
 
         # Should handle gracefully and not use corrupted cache
         mock_result = Mock(spec=ActigraphyAnalysis)

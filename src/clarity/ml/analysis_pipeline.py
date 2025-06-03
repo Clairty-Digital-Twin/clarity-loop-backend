@@ -569,7 +569,7 @@ class HealthAnalysisPipeline:
             if feature_name in display_names:
                 value = feature["value"]
                 display_name = display_names[feature_name]
-                
+
                 # Apply appropriate rounding based on feature type
                 if feature_name == "total_steps":
                     activity_health[display_name] = value
@@ -577,9 +577,7 @@ class HealthAnalysisPipeline:
                     activity_health[display_name] = round(value)
                 elif feature_name == "total_distance":
                     activity_health[display_name] = round(value, 1)
-                elif feature_name == "total_active_energy":
-                    activity_health[display_name] = round(value)
-                elif feature_name == "total_exercise_minutes":
+                elif feature_name in ("total_active_energy", "total_exercise_minutes"):
                     activity_health[display_name] = round(value)
                 elif feature_name == "activity_consistency_score":
                     activity_health[display_name] = round(value, 2)

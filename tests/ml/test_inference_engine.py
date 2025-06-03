@@ -111,8 +111,9 @@ class TestAsyncInferenceEngineInference:
             timeout_seconds=30.0
         )
 
+    @staticmethod
     @pytest.mark.asyncio
-    async def test_single_inference_success(self, sample_inference_request):
+    async def test_single_inference_success(sample_inference_request: InferenceRequest):
         """Test successful single inference."""
         mock_analysis = ActigraphyAnalysis(
             user_id=sample_inference_request.input_data.user_id,
@@ -140,8 +141,9 @@ class TestAsyncInferenceEngineInference:
             assert result.analysis == mock_analysis
             assert result.processing_time_ms > 0
 
+    @staticmethod
     @pytest.mark.asyncio
-    async def test_batch_processing(self, sample_actigraphy_input):
+    async def test_batch_processing(sample_actigraphy_input: ActigraphyInput):
         """Test batch processing of multiple requests."""
         mock_analysis = ActigraphyAnalysis(
             user_id=sample_actigraphy_input.user_id,
@@ -183,8 +185,9 @@ class TestAsyncInferenceEngineInference:
                 assert result.request_id == requests[i].request_id
                 assert result.analysis == mock_analysis
 
+    @staticmethod
     @pytest.mark.asyncio
-    async def test_caching_functionality(self, sample_inference_request):
+    async def test_caching_functionality(sample_inference_request: InferenceRequest):
         """Test that caching works correctly."""
         mock_analysis = ActigraphyAnalysis(
             user_id=sample_inference_request.input_data.user_id,

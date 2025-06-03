@@ -232,7 +232,7 @@ class TestGeminiServicePromptGeneration:
     """Test Gemini service prompt generation functionality."""
 
     @staticmethod
-    def test_create_health_insight_prompt_comprehensive():
+    def test_create_health_insight_prompt_comprehensive() -> None:
         """Test comprehensive health insight prompt generation."""
         request = HealthInsightRequest(
             user_id="test-user",
@@ -260,7 +260,7 @@ class TestGeminiServicePromptGeneration:
         assert "JSON" in prompt  # Format specification
 
     @staticmethod
-    def test_create_health_insight_prompt_edge_cases():
+    def test_create_health_insight_prompt_edge_cases() -> None:
         """Test health insight prompt generation with edge case values."""
         request = HealthInsightRequest(
             user_id="edge-case-user",
@@ -283,7 +283,7 @@ class TestGeminiServicePromptGeneration:
         assert "12.0 hours" in prompt
 
     @staticmethod
-    def test_create_health_insight_prompt_missing_data():
+    def test_create_health_insight_prompt_missing_data() -> None:
         """Test health insight prompt generation with missing data."""
         request = HealthInsightRequest(
             user_id="missing-data-user",
@@ -302,7 +302,7 @@ class TestGeminiServiceResponseParsing:
     """Test Gemini service response parsing functionality."""
 
     @staticmethod
-    def test_parse_gemini_response_valid_json():
+    def test_parse_gemini_response_valid_json() -> None:
         """Test parsing valid JSON response."""
         mock_response = MagicMock()
         mock_response.text = json.dumps({
@@ -321,7 +321,7 @@ class TestGeminiServiceResponseParsing:
         assert result.confidence_score == 0.9
 
     @staticmethod
-    def test_parse_gemini_response_partial_json():
+    def test_parse_gemini_response_partial_json() -> None:
         """Test parsing JSON response with missing fields."""
         mock_response = MagicMock()
         mock_response.text = json.dumps({
@@ -337,7 +337,7 @@ class TestGeminiServiceResponseParsing:
         assert result.confidence_score == 0.8  # Default value
 
     @staticmethod
-    def test_parse_gemini_response_invalid_json():
+    def test_parse_gemini_response_invalid_json() -> None:
         """Test parsing invalid JSON response with fallback."""
         mock_response = MagicMock()
         mock_response.text = "Not valid JSON"
@@ -350,7 +350,7 @@ class TestGeminiServiceResponseParsing:
         assert len(result.recommendations) > 0  # Fallback recommendations
 
     @staticmethod
-    def test_create_fallback_response():
+    def test_create_fallback_response() -> None:
         """Test creation of fallback response."""
         long_text = "A" * 500  # Long text to test truncation
 
@@ -363,7 +363,7 @@ class TestGeminiServiceResponseParsing:
         assert result.confidence_score == 0.7
 
     @staticmethod
-    def test_create_fallback_response_short_text():
+    def test_create_fallback_response_short_text() -> None:
         """Test creation of fallback response with short text."""
         short_text = "Short response"
 

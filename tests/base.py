@@ -10,7 +10,7 @@ import unittest
 from unittest.mock import Mock
 
 from clarity.ports.storage import StoragePort
-from tests.fakes.storage import FakeStorage
+from tests.fakes.storage import FakeStorage, FakeCloudStorage
 
 
 class BaseTestCase(unittest.TestCase):
@@ -34,6 +34,7 @@ class BaseTestCase(unittest.TestCase):
         """
         # Create clean test dependencies
         self.storage = FakeStorage()
+        self.cloud_storage = FakeCloudStorage()
 
         # Add any other common test setup here
         self.test_data: dict[str, Any] = {}
@@ -122,6 +123,7 @@ class BaseServiceTestCase(BaseTestCase):
         # Default dependency injection
         dependencies = {
             'storage': self.storage,
+            'cloud_storage': self.cloud_storage,
             **kwargs  # Allow override of dependencies
         }
 

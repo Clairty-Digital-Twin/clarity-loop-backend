@@ -133,3 +133,47 @@ class CollectionPort(ABC):
         Returns:
             Query object
         """
+
+
+class CloudStoragePort(ABC):
+    """Abstract interface for cloud storage operations.
+    
+    This interface abstracts cloud storage operations (like GCS)
+    to enable dependency injection and easier testing.
+    """
+    
+    @abstractmethod
+    def bucket(self, bucket_name: str) -> Any:
+        """Get a bucket reference.
+        
+        Args:
+            bucket_name: Name of the bucket
+            
+        Returns:
+            Bucket reference object
+        """
+        pass
+    
+    @abstractmethod
+    def upload_json(self, bucket_name: str, blob_path: str, data: dict, metadata: dict | None = None) -> str:
+        """Upload JSON data to cloud storage.
+        
+        Args:
+            bucket_name: Name of the bucket
+            blob_path: Path for the blob
+            data: JSON data to upload
+            metadata: Optional metadata
+            
+        Returns:
+            Full path/URL of uploaded object
+        """
+        pass
+    
+    @abstractmethod
+    def get_raw_data_bucket_name(self) -> str:
+        """Get the name of the raw data bucket.
+        
+        Returns:
+            Bucket name for raw data storage
+        """
+        pass

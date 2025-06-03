@@ -13,7 +13,7 @@ Fakes are preferred over mocks because they:
 from typing import Any, Dict, List, Optional
 import uuid
 
-from clarity.ports.storage import CollectionPort, StoragePort
+from clarity.ports.storage import CollectionPort, StoragePort, CloudStoragePort
 
 
 class FakeCollection(CollectionPort):
@@ -354,3 +354,66 @@ class FakeStorage(StoragePort):
             results = results[:limit]
 
         return results
+
+
+class FakeCloudStorage(CloudStoragePort):
+    """Fake implementation of CloudStoragePort for testing.
+    
+    Provides a fast, in-memory implementation that doesn't require
+    actual cloud credentials or network access.
+    """
+    
+    def __init__(self, bucket_name: str = "test-raw-data-bucket"):
+        self._bucket_name = bucket_name
+        self._stored_data: dict[str, dict] = {}
+        
+    def bucket(self, bucket_name: str) -> "FakeBucket":
+        """Get a fake bucket reference."""
+        return FakeBucket(bucket_name, self._stored_data)
+        
+    def upload_json(self, bucket_name: str, blob_path: str, data: dict, metadata: dict | None = None) -> str:
+        """Upload JSON data to fake storage."""
+        full_path = f"{bucket_name}/{blob_path}"
+        self._stored_data[full_path] = {
+            "data": data,
+            "metadata": metadata or {},
+            "content_type": "application/json"
+        }
+        return f"gs://{full_path}"
+        
+    def get_raw_data_bucket_name(self) -> str:
+        """Get the configured bucket name."""
+        return self._bucket_name
+        
+        
+class FakeBucket:
+    """Fake bucket implementation."""
+    
+    def __init__(self, name: str, storage: dict[str, dict]):
+        self.name = name
+        self._storage = storage
+        
+    def blob(self, blob_path: str) -> "FakeBlob":
+        """Get a fake blob reference."""
+        return FakeBlob(f"{self.name}/{blob_path}", self._storage)
+        
+        
+class FakeBlob:
+    """Fake blob implementation."""
+    
+    def __init__(self, full_path: str, storage: dict[str, dict]):
+        self.full_path = full_path
+        self._storage = storage
+        
+    def upload_from_string(self, data: str, content_type: str = "application/json") -> None:
+        """Upload string data to fake storage."""
+        import json
+        if content_type == "application/json":
+            parsed_data = json.loads(data)
+        else:
+            parsed_data = data
+            
+        self._storage[self.full_path] = {
+            "data": parsed_data,
+            "content_type": content_type
+        }

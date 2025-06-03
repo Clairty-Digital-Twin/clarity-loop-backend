@@ -75,61 +75,16 @@ class ValidationError(BaseModel):
 
 
 class BiometricData(BaseModel):
-    """Clinical-grade biometric data model."""
+    """Biometric measurements data."""
 
-    heart_rate: Annotated[int, Field(ge=30, le=220)] | None = Field(
-        None, description="Heart rate in beats per minute", examples=[72]
-    )
-
-    heart_rate_variability: Annotated[float, Field(ge=0, le=200)] | None = Field(
-        None,
-        description="Heart rate variability in milliseconds (RMSSD)",
-        examples=[45.2],
-    )
-
-    systolic_bp: Annotated[int, Field(ge=70, le=250)] | None = Field(
-        None, description="Systolic blood pressure in mmHg", examples=[120]
-    )
-
-    diastolic_bp: Annotated[int, Field(ge=40, le=150)] | None = Field(
-        None, description="Diastolic blood pressure in mmHg", examples=[80]
-    )
-
-    respiratory_rate: Annotated[int, Field(ge=8, le=40)] | None = Field(
-        None, description="Respiratory rate in breaths per minute", examples=[16]
-    )
-
-    skin_temperature: Annotated[float, Field(ge=30.0, le=45.0)] | None = Field(
-        None, description="Skin temperature in Celsius", examples=[36.5]
-    )
-
-    oxygen_saturation: Annotated[float, Field(ge=70, le=100)] | None = Field(
-        None, description="Blood oxygen saturation percentage (SpO₂)", examples=[95.2]
-    )
-
-    hrv_sdnn: Annotated[float, Field(ge=0, le=300)] | None = Field(
-        None, description="HRV SDNN in milliseconds", examples=[45.2]
-    )
-
-    body_temperature: Annotated[float, Field(ge=95, le=110)] | None = Field(
-        None, description="Body temperature in Fahrenheit", examples=[100.5]
-    )
-
-    timestamp: datetime = Field(
-        default_factory=lambda: datetime.now(UTC),
-        description="UTC timestamp of measurement",
-    )
-
-    @field_validator("timestamp")
-    @classmethod
-    def validate_timestamp(cls, v: datetime) -> datetime:
-        """Ensure timestamp is timezone-aware and not in the future."""
-        if v.tzinfo is None:
-            v = v.replace(tzinfo=UTC)
-        if v > datetime.now(UTC):
-            msg = "Timestamp cannot be in the future"
-            raise ValueError(msg)
-        return v
+    heart_rate: float | None = Field(None, ge=30, le=300, description="Heart rate in BPM")
+    blood_pressure_systolic: int | None = Field(None, ge=70, le=250, description="Systolic BP in mmHg")
+    blood_pressure_diastolic: int | None = Field(None, ge=40, le=150, description="Diastolic BP in mmHg")
+    oxygen_saturation: float | None = Field(None, ge=70.0, le=100.0, description="Blood oxygen saturation in %")
+    heart_rate_variability: float | None = Field(None, ge=0, le=200, description="HRV in milliseconds")
+    respiratory_rate: float | None = Field(None, ge=5, le=60, description="Respiratory rate in breaths per minute")
+    body_temperature: float | None = Field(None, ge=35.0, le=42.0, description="Body temperature in Celsius")
+    blood_glucose: float | None = Field(None, ge=50, le=500, description="Blood glucose in mg/dL")
 
 
 class SleepData(BaseModel):
@@ -186,33 +141,16 @@ class SleepData(BaseModel):
 
 
 class ActivityData(BaseModel):
-    """Physical activity and movement data."""
+    """Activity and exercise data."""
 
-    steps: Annotated[int, Field(ge=0, le=100000)] | None = Field(
-        None, description="Step count", examples=[8500]
-    )
-
-    distance_meters: Annotated[float, Field(ge=0.0, le=100000.0)] | None = Field(
-        None, description="Distance traveled in meters", examples=[6800.0]
-    )
-
-    calories_burned: Annotated[float, Field(ge=0.0, le=10000.0)] | None = Field(
-        None, description="Calories burned", examples=[320.5]
-    )
-
-    active_minutes: Annotated[int, Field(ge=0, le=1440)] | None = Field(
-        None, description="Minutes of active movement", examples=[45]
-    )
-
-    exercise_type: str | None = Field(
-        None, description="Type of exercise performed", examples=["running"]
-    )
-
-    intensity_level: Annotated[float, Field(ge=1.0, le=10.0)] | None = Field(
-        None, description="Exercise intensity on 1-10 scale", examples=[7.5]
-    )
-
-    date: datetime = Field(description="Date of activity (UTC)")
+    steps: int | None = Field(None, ge=0, le=100000, description="Step count")
+    distance: float | None = Field(None, ge=0, le=100.0, description="Distance in kilometers")
+    active_energy: float | None = Field(None, ge=0, le=5000.0, description="Active energy burned in kcal")
+    exercise_minutes: int | None = Field(None, ge=0, le=1440, description="Exercise time in minutes")
+    flights_climbed: int | None = Field(None, ge=0, le=500, description="Flights of stairs climbed")
+    vo2_max: float | None = Field(None, ge=10.0, le=80.0, description="VO₂ max in mL/kg/min")
+    active_minutes: int | None = Field(None, ge=0, le=1440, description="Total active minutes")
+    resting_heart_rate: float | None = Field(None, ge=30, le=120, description="Resting heart rate in BPM")
 
 
 class MentalHealthIndicator(BaseModel):

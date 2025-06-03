@@ -14,6 +14,7 @@ from datetime import UTC, datetime
 import logging
 from typing import Any
 import uuid
+from uuid import UUID
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
 from pydantic import BaseModel, Field, validator
@@ -26,6 +27,11 @@ from clarity.ml.proxy_actigraphy import (
     StepCountData,
     create_proxy_actigraphy_transformer,
 )
+from clarity.api.v1.utils import require_auth
+from clarity.api.v1.models import PATAnalysisResponse
+from clarity.api.v1.exceptions import NotFoundProblem, InternalServerProblem
+from clarity.api.v1.repositories import IHealthDataRepository
+from clarity.api.v1.models import UserContext
 
 logger = logging.getLogger(__name__)
 
@@ -296,27 +302,117 @@ async def analyze_actigraphy_data(
 
 
 @router.get(
-    "/analysis/{analysis_id}",
-    response_model=AnalysisResponse,
-    summary="Get Analysis Results",
-    description="Retrieve analysis results by analysis ID",
+    "/analysis/{processing_id}",
+    summary="Get PAT Analysis Results",
+    description="""
+    Retrieve PAT (Pretrained Actigraphy Transformer) analysis results for a specific processing ID.
+    
+    **Returns:**
+    - PAT model embeddings and predictions
+    - Activity pattern analysis
+    - Sleep quality metrics
+    - Circadian rhythm insights
+    - Processing metadata and status
+    
+    **Status Values:**
+    - `completed`: Analysis finished successfully
+    - `processing`: Analysis still running
+    - `failed`: Analysis encountered an error
+    - `not_found`: No analysis found for this ID
+    """,
+    response_model=PATAnalysisResponse,
+    responses={
+        200: {"description": "Analysis results retrieved successfully"},
+        404: {"description": "Analysis not found"},
+        403: {"description": "Access denied - can only view own analysis"},
+        503: {"description": "Service temporarily unavailable"},
+    },
 )
+@require_auth(permissions=[Permission.READ_OWN_DATA])
 async def get_analysis_results(
-    analysis_id: str,
-    user_id: str = Depends(get_current_user),  # noqa: ARG001
-) -> AnalysisResponse:
-    """Retrieve analysis results by analysis ID.
+    processing_id: UUID,
+    current_user: UserContext = Depends(get_current_user),  # noqa: B008
+    repository: IHealthDataRepository = Depends(get_repository),  # noqa: B008
+) -> PATAnalysisResponse:
+    """🔥 Get real PAT analysis results from storage."""
+    try:
+        logger.debug(
+            "PAT analysis results requested: %s by user: %s",
+            processing_id,
+            current_user.user_id,
+        )
 
-    Note: This is a placeholder implementation. In production, this would
-    retrieve results from a database or cache.
-    """
-    # TODO: Implement actual result retrieval from storage
-    # For now, return a placeholder response
-    return AnalysisResponse(
-        analysis_id=analysis_id,
-        status="not_found",
-        message="Result retrieval not yet implemented",
-    )
+        # Try to get analysis results from repository
+        try:
+            # Check if this processing ID belongs to the user
+            processing_record = await repository.get_processing_status(
+                processing_id=str(processing_id), user_id=current_user.user_id
+            )
+            
+            if not processing_record:
+                logger.warning(
+                    "Analysis not found or access denied: %s for user: %s",
+                    processing_id,
+                    current_user.user_id,
+                )
+                raise NotFoundProblem(
+                    detail=f"No analysis found for processing ID: {processing_id}"
+                )
+
+            # Get the actual analysis results
+            analysis_results = await repository.get_analysis_results(
+                processing_id=str(processing_id), user_id=current_user.user_id
+            )
+            
+            if analysis_results:
+                logger.info("Retrieved PAT analysis results: %s", processing_id)
+                return PATAnalysisResponse(
+                    processing_id=str(processing_id),
+                    status="completed",
+                    analysis_results=analysis_results,
+                    created_at=processing_record.get("created_at"),
+                    completed_at=processing_record.get("completed_at"),
+                )
+            else:
+                # Check if still processing
+                status = processing_record.get("status", "unknown")
+                if status in ["pending", "processing"]:
+                    logger.debug("Analysis still processing: %s", processing_id)
+                    return PATAnalysisResponse(
+                        processing_id=str(processing_id),
+                        status=status,
+                        message=f"Analysis is still {status}. Please check back later.",
+                        created_at=processing_record.get("created_at"),
+                    )
+                else:
+                    # Analysis failed or has unknown status
+                    logger.warning("Analysis failed or unknown status: %s", processing_id)
+                    return PATAnalysisResponse(
+                        processing_id=str(processing_id),
+                        status="failed",
+                        message="Analysis processing failed or was interrupted.",
+                        created_at=processing_record.get("created_at"),
+                    )
+        
+        except NotImplementedError:
+            # Fallback if repository methods don't exist yet
+            logger.warning(
+                "Analysis retrieval not implemented in repository, returning placeholder"
+            )
+            return PATAnalysisResponse(
+                processing_id=str(processing_id),
+                status="not_found",
+                message="Analysis retrieval is not fully implemented yet. Please check back later.",
+            )
+            
+    except NotFoundProblem:
+        # Re-raise not found errors
+        raise
+    except Exception as e:
+        logger.exception("Error retrieving PAT analysis results")
+        raise InternalServerProblem(
+            detail="An unexpected error occurred while retrieving analysis results"
+        ) from e
 
 
 @router.get(

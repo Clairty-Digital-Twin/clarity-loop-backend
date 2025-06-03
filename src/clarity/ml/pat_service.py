@@ -106,6 +106,7 @@ class ActigraphyAnalysis(BaseModel):
     sleep_stages: list[str] = Field(description="Predicted sleep stages")
     confidence_score: float = Field(description="Model confidence (0-1)")
     clinical_insights: list[str] = Field(description="Clinical interpretations")
+    embedding: list[float] = Field(description="PAT model embedding vector (128-dim)")
 
 
 class PATPositionalEncoding(nn.Module):

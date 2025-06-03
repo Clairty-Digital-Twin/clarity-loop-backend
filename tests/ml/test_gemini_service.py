@@ -51,16 +51,17 @@ class TestGeminiServiceInitialization:
     async def test_service_initialization_success(self):
         """Test successful service initialization."""
         service = GeminiService(project_id="test-project")
-
-        with patch('vertexai.init') as mock_init, \
-             patch('vertexai.generative_models.GenerativeModel') as mock_model_class:
-
+        
+        # Mock both vertexai.init and GenerativeModel constructor
+        with patch('clarity.ml.gemini_service.vertexai.init') as mock_init, \
+             patch('clarity.ml.gemini_service.GenerativeModel') as mock_model_class:
+            
             # Mock the GenerativeModel instance
             mock_model_instance = MagicMock()
             mock_model_class.return_value = mock_model_instance
-
+            
             await service.initialize()
-
+            
             mock_init.assert_called_once_with(project="test-project", location="us-central1")
             mock_model_class.assert_called_once_with("gemini-2.5-pro")
             assert service.is_initialized

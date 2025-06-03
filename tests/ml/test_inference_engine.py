@@ -221,14 +221,16 @@ class TestAsyncInferenceEngineInference:
 class TestInferenceCache:
     """Test inference cache functionality."""
 
-    def test_cache_initialization(self):
+    @staticmethod
+    def test_cache_initialization():
         """Test cache initialization with TTL."""
         cache = InferenceCache(ttl_seconds=3600)
         assert cache.ttl == 3600
         assert len(cache.cache) == 0
 
+    @staticmethod
     @pytest.mark.asyncio
-    async def test_cache_set_and_get(self):
+    async def test_cache_set_and_get():
         """Test basic cache set and get operations."""
         cache = InferenceCache(ttl_seconds=3600)
 
@@ -242,8 +244,9 @@ class TestInferenceCache:
         retrieved_value = await cache.get(test_key)
         assert retrieved_value == test_value
 
+    @staticmethod
     @pytest.mark.asyncio
-    async def test_cache_expiration(self):
+    async def test_cache_expiration():
         """Test cache expiration functionality."""
         # Short TTL for testing
         cache = InferenceCache(ttl_seconds=1)
@@ -263,15 +266,17 @@ class TestInferenceCache:
         # Should be None after expiration
         assert await cache.get(test_key) is None
 
+    @staticmethod
     @pytest.mark.asyncio
-    async def test_cache_miss(self):
+    async def test_cache_miss():
         """Test cache miss for non-existent key."""
         cache = InferenceCache()
 
         result = await cache.get("non_existent_key")
         assert result is None
 
-    def test_cache_clear(self):
+    @staticmethod
+    def test_cache_clear():
         """Test cache clear functionality."""
         cache = InferenceCache()
         cache.cache["key1"] = ("value1", 12345)
@@ -286,7 +291,8 @@ class TestInferenceCache:
 class TestInferenceEngineUtilities:
     """Test utility functions of the inference engine."""
 
-    def test_generate_cache_key(self):
+    @staticmethod
+    def test_generate_cache_key():
         """Test cache key generation."""
         data_points = [
             ActigraphyDataPoint(timestamp=datetime.now(UTC), value=50.0),
@@ -309,7 +315,8 @@ class TestInferenceEngineUtilities:
         cache_key2 = AsyncInferenceEngine._generate_cache_key(input_data)
         assert cache_key == cache_key2
 
-    def test_generate_cache_key_different_inputs(self):
+    @staticmethod
+    def test_generate_cache_key_different_inputs():
         """Test that different inputs generate different cache keys."""
         data_points1 = [ActigraphyDataPoint(timestamp=datetime.now(UTC), value=50.0)]
         data_points2 = [ActigraphyDataPoint(timestamp=datetime.now(UTC), value=75.0)]
@@ -333,7 +340,8 @@ class TestInferenceEngineUtilities:
 
         assert key1 != key2
 
-    def test_generate_cache_key_empty_data(self):
+    @staticmethod
+    def test_generate_cache_key_empty_data():
         """Test cache key generation with empty data points."""
         input_data = ActigraphyInput(
             user_id="test-user",
@@ -350,7 +358,8 @@ class TestInferenceEngineUtilities:
 class TestInferenceEngineStats:
     """Test inference engine statistics functionality."""
 
-    def test_get_stats_initial(self):
+    @staticmethod
+    def test_get_stats_initial():
         """Test getting stats from freshly initialized engine."""
         mock_pat_service = MagicMock(spec=PATModelService)
         engine = AsyncInferenceEngine(pat_service=mock_pat_service)
@@ -363,8 +372,9 @@ class TestInferenceEngineStats:
         assert stats["cache_hit_rate_percent"] == 0.0
         assert stats["is_running"] is False
 
+    @staticmethod
     @pytest.mark.asyncio
-    async def test_get_stats_after_requests(self):
+    async def test_get_stats_after_requests():
         """Test getting stats after processing requests."""
         # Create sample data inline
         data_points = [

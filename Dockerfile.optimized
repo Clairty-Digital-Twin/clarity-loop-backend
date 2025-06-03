@@ -28,6 +28,9 @@ RUN groupadd -r clarity && useradd -r -g clarity clarity
 # Set working directory
 WORKDIR /app
 
+# Create logs directory
+RUN mkdir -p logs
+
 # Copy requirements and install Python dependencies
 COPY pyproject.toml README.md LICENSE ./
 RUN pip install --upgrade pip setuptools wheel

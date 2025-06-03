@@ -31,6 +31,6 @@ __all__ = [
     "IAuthProvider",
     "IConfigProvider",
     "IHealthDataRepository",
-    "IMLModelService",
     "IMiddleware",
+    "IMLModelService",
 ]

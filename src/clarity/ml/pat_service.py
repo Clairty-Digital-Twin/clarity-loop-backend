@@ -913,7 +913,7 @@ class PATModelService(IMLModelService):
 
             return is_identical
 
-        except Exception as e:
+        except Exception:
             logger.exception("Error verifying PAT weights")
             return False
 

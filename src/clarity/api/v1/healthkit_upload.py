@@ -168,7 +168,7 @@ async def upload_healthkit_data(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to process health data upload",
-        )
+        ) from None
 
 
 @router.get("/status/{upload_id}")
@@ -190,7 +190,7 @@ async def get_upload_status(
     except (IndexError, ValueError):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid upload ID format"
-        )
+        ) from None
 
     # Verify user access
     user_claims = await verify_firebase_token(token.credentials)

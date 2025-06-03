@@ -41,11 +41,11 @@ app.mount("/", analysis_app)
 
 def main() -> None:
     """Run the analysis service."""
-    host = os.getenv("HOST", "0.0.0.0")
+    host = os.getenv("HOST", "127.0.0.1")
     port = int(os.getenv("PORT", "8081"))
 
     logger.info("Starting CLARITY Analysis Service")
-    logger.info(f"Listening on {host}:{port}")
+    logger.info("Listening on %s:%s", host, port)
 
     # Run the service
     uvicorn.run(

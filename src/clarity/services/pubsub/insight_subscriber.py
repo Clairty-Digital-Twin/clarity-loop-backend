@@ -217,7 +217,7 @@ Generate the health insight now:"""
             raise
 
     @staticmethod
-    def _create_mock_insight(analysis_results: dict[str, Any]) -> dict[str, Any]:
+    def _create_mock_insight(_analysis_results: dict[str, Any]) -> dict[str, Any]:
         """Create mock insight when Gemini is not available."""
         return {
             "narrative": "Your health data shows generally positive trends. Your cardiovascular and respiratory metrics are within healthy ranges, indicating good overall fitness. Continue maintaining your current activity levels and healthy lifestyle habits.",
@@ -349,7 +349,7 @@ class InsightSubscriber:
             self.logger.exception("Error processing insight request message")
             raise HTTPException(
                 status_code=500, detail=f"Insight generation failed: {e!s}"
-            )
+            ) from None
 
     def _extract_message_data(self, pubsub_body: dict[str, Any]) -> dict[str, Any]:
         """Extract and decode Pub/Sub message data."""
@@ -377,7 +377,7 @@ class InsightSubscriber:
             self.logger.exception("Failed to extract message data")
             raise HTTPException(
                 status_code=400, detail=f"Invalid message format: {e!s}"
-            )
+            ) from None
 
 
 # Create FastAPI app for insight service

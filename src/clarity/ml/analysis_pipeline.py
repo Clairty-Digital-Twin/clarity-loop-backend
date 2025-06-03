@@ -286,7 +286,7 @@ class HealthAnalysisPipeline:
         return self._create_activity_embedding_from_analysis(analysis_result)
 
     @staticmethod
-    def _create_activity_embedding_from_analysis(analysis_result: Any) -> list[float]:
+    def _create_activity_embedding_from_analysis(analysis_result: Any) -> list[float]:  # type: ignore[misc]
         """Create activity embedding from PAT analysis results."""
         # Extract the actual PAT embedding if available
         if hasattr(analysis_result, "embedding") and analysis_result.embedding:
@@ -551,7 +551,7 @@ def _convert_raw_data_to_metrics(health_data: dict[str, Any]) -> list[HealthMetr
                     user_id=health_data.get("user_id", "unknown"),
                     metric_type=MetricType.SLEEP_ANALYSIS,
                     created_at=datetime.fromisoformat(
-                        sample.get("timestamp", datetime.now().isoformat())
+                        sample.get("timestamp", datetime.now(UTC).isoformat())
                     ),
                     sleep_data=sleep_data,
                     source_device=sample.get("source", "unknown"),
@@ -573,7 +573,7 @@ def _convert_raw_data_to_metrics(health_data: dict[str, Any]) -> list[HealthMetr
                 user_id=health_data.get("user_id", "unknown"),
                 metric_type=MetricType.ACTIVITY_LEVEL,
                 created_at=datetime.fromisoformat(
-                    workout.get("timestamp", datetime.now().isoformat())
+                    workout.get("timestamp", datetime.now(UTC).isoformat())
                 ),
                 activity_data=activity_data,
                 source_device=workout.get("source", "unknown"),

@@ -265,7 +265,7 @@ class HealthFusionService:
             return result
 
         except Exception as e:
-            self.logger.exception("Error during fusion: %s", e)
+            self.logger.exception("Error during fusion")
             # Return zero vector on error
             return [0.0] * (self.config.output_dim if self.config else 64)
 

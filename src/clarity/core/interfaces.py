@@ -1,4 +1,4 @@
-"""🚨 DEPRECATED: Core interfaces - USE PORTS LAYER INSTEAD
+"""🚨 DEPRECATED: Core interfaces - USE PORTS LAYER INSTEAD.
 
 ⚠️  This module is DEPRECATED and will be removed in a future version.
     All imports have been migrated to the new ports layer following Clean Architecture.
@@ -31,6 +31,6 @@ __all__ = [
     "IAuthProvider",
     "IConfigProvider",
     "IHealthDataRepository",
-    "IMiddleware",
     "IMLModelService",
+    "IMiddleware",
 ]

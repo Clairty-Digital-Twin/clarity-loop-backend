@@ -24,10 +24,10 @@ When ready to use these patterns in production:
 5. Remove this example file
 """
 
-import logging
-import uuid
 from datetime import UTC, datetime
+import logging
 from typing import Any
+import uuid
 from uuid import UUID
 
 # Import from new ports layer instead of core interfaces
@@ -60,7 +60,7 @@ MIN_QUERY_OFFSET = 0
 class HealthDataServiceError(Exception):
     """Service-specific error for health data operations."""
 
-    def __init__(self, message: str, status_code: int = 500):
+    def __init__(self, message: str, status_code: int = 500) -> None:
         super().__init__(message)
         self.status_code = status_code
 
@@ -86,7 +86,7 @@ class EnhancedHealthDataService:
     This serves as a reference implementation for upgrading existing services.
     """
 
-    def __init__(self, repository: IHealthDataRepository):
+    def __init__(self, repository: IHealthDataRepository) -> None:
         """Initialize the enhanced health data service.
 
         Args:

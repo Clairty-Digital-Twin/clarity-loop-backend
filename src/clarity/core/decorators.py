@@ -188,7 +188,7 @@ def retry_on_failure(
                     last_exception = e
 
                     if attempt == max_retries:
-                        logger.error(
+                        logger.exception(
                             f"{func_name} failed after {max_retries} retries: {e}"
                         )
                         raise
@@ -203,6 +203,7 @@ def retry_on_failure(
             # This should never be reached, but just in case
             if last_exception:
                 raise last_exception
+            return None
 
         @functools.wraps(func)
         async def async_wrapper(*args: Any, **kwargs: Any) -> Any:
@@ -216,7 +217,7 @@ def retry_on_failure(
                     last_exception = e
 
                     if attempt == max_retries:
-                        logger.error(
+                        logger.exception(
                             f"{func_name} failed after {max_retries} retries: {e}"
                         )
                         raise
@@ -231,6 +232,7 @@ def retry_on_failure(
             # This should never be reached, but just in case
             if last_exception:
                 raise last_exception
+            return None
 
         # Return appropriate wrapper based on function type
         if asyncio.iscoroutinefunction(func):
@@ -307,7 +309,7 @@ def audit_trail(
             except Exception as e:
                 audit_info["status"] = "failed"
                 audit_info["error"] = str(e)
-                logger.error(f"AUDIT_FAILED: {audit_info}")
+                logger.exception(f"AUDIT_FAILED: {audit_info}")
                 raise
 
         @functools.wraps(func)
@@ -335,7 +337,7 @@ def audit_trail(
             except Exception as e:
                 audit_info["status"] = "failed"
                 audit_info["error"] = str(e)
-                logger.error(f"AUDIT_FAILED: {audit_info}")
+                logger.exception(f"AUDIT_FAILED: {audit_info}")
                 raise
 
         # Return appropriate wrapper based on function type
@@ -376,9 +378,7 @@ def service_method(
             log_level=log_level, threshold_ms=timing_threshold_ms
         )(decorated)
 
-        decorated = log_execution(level=log_level)(decorated)
-
-        return decorated
+        return log_execution(level=log_level)(decorated)
 
     return decorator
 
@@ -413,8 +413,6 @@ def repository_method(
             log_level=log_level, threshold_ms=timing_threshold_ms
         )(decorated)
 
-        decorated = log_execution(level=log_level)(decorated)
-
-        return decorated
+        return log_execution(level=log_level)(decorated)
 
     return decorator

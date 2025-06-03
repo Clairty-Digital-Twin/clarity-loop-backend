@@ -52,7 +52,7 @@ def register_model_command(args: argparse.Namespace) -> None:
         logger.info("✓ Model registered successfully")
 
     except ModelIntegrityError as e:
-        logger.error(f"Failed to register model: {e}")
+        logger.exception(f"Failed to register model: {e}")
         sys.exit(1)
 
 
@@ -93,7 +93,7 @@ def verify_model_command(args: argparse.Namespace) -> None:
                 sys.exit(1)
 
     except ModelIntegrityError as e:
-        logger.error(f"Verification failed: {e}")
+        logger.exception(f"Verification failed: {e}")
         sys.exit(1)
 
 
@@ -122,7 +122,7 @@ def list_models_command(args: argparse.Namespace) -> None:
                 logger.info(f"  {model_name}: (info unavailable)")
 
     except ModelIntegrityError as e:
-        logger.error(f"Failed to list models: {e}")
+        logger.exception(f"Failed to list models: {e}")
         sys.exit(1)
 
 
@@ -151,7 +151,7 @@ def info_model_command(args: argparse.Namespace) -> None:
             logger.info(f"    Modified: {file_info['last_modified']}")
 
     except ModelIntegrityError as e:
-        logger.error(f"Failed to get model info: {e}")
+        logger.exception(f"Failed to get model info: {e}")
         sys.exit(1)
 
 
@@ -164,7 +164,7 @@ def remove_model_command(args: argparse.Namespace) -> None:
         logger.info(f"✓ Model '{args.model_name}' removed from registry")
 
     except ModelIntegrityError as e:
-        logger.error(f"Failed to remove model: {e}")
+        logger.exception(f"Failed to remove model: {e}")
         sys.exit(1)
 
 
@@ -180,7 +180,7 @@ def verify_startup_command(args: argparse.Namespace) -> None:
             sys.exit(1)
 
     except Exception as e:
-        logger.error(f"Startup verification failed: {e}")
+        logger.exception(f"Startup verification failed: {e}")
         sys.exit(1)
 
 
@@ -306,7 +306,7 @@ def main() -> None:
         logger.info("Operation cancelled by user")
         sys.exit(1)
     except Exception as e:
-        logger.error(f"Unexpected error: {e}")
+        logger.exception(f"Unexpected error: {e}")
         if args.verbose:
             logger.exception("Full traceback:")
         sys.exit(1)

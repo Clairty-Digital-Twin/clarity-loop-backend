@@ -343,3 +343,13 @@ arXiv:2411.15240 (2024). https://doi.org/10.48550/arXiv.2411.15240
 ---
 
 **Built with ❤️ for advancing psychiatric care through AI-powered health analytics**
+
+## 🎯 Test Coverage
+
+**Current Status**: `59.28%` coverage (❌ **BELOW** 85% target)
+
+- 729 tests pass successfully (✅ **EXCELLENT**)  
+- Core ML components well-tested (PAT: 89%, Gemini: 98%)
+- Coverage gaps in API endpoints (33%) and async processing (20-27%)
+
+**See**: [ACTUAL_PRODUCTION_AUDIT.md](ACTUAL_PRODUCTION_AUDIT.md) for detailed analysis

@@ -186,14 +186,14 @@ class PATModelService(IMLModelService):
             # Load pre-trained weights if available
             if self.model_path and Path(self.model_path).exists():
                 logger.info("Loading pre-trained PAT weights from %s", self.model_path)
-                
-                if not HAS_H5PY:
+
+                if not _has_h5py:
                     logger.exception("h5py not available, cannot load .h5 weights")
                     logger.warning("Using random initialization for PAT model")
                 else:
                     try:
                         # Load weights from H5 file (TensorFlow/Keras format)
-                        with h5py.File(self.model_path, 'r') as h5_file:
+                        with h5py.File(self.model_path, 'r') as h5_file:  # type: ignore[union-attr]
                             logger.info("Available weight groups: %s", list(h5_file.keys()))
                             state_dict = self._load_weights_from_h5(h5_file)
                             self._load_compatible_weights(state_dict)
@@ -219,10 +219,10 @@ class PATModelService(IMLModelService):
             logger.exception("Failed to load PAT model")
             raise
 
-    def _load_weights_from_h5(self, h5_file: Any) -> Dict[str, torch.Tensor]:
+    def _load_weights_from_h5(self, h5_file: Any) -> dict[str, torch.Tensor]:
         """Extract and map weights from H5 file to PyTorch format."""
         state_dict = {}
-        
+
         # Map input projection layer
         if 'inputs' in h5_file:
             inputs_group = h5_file['inputs']
@@ -270,11 +270,11 @@ class PATModelService(IMLModelService):
 
         return state_dict
 
-    def _load_compatible_weights(self, state_dict: Dict[str, torch.Tensor]) -> None:
+    def _load_compatible_weights(self, state_dict: dict[str, torch.Tensor]) -> None:
         """Load compatible weights into model."""
         if not self.model:
             return
-            
+
         model_state_dict = self.model.state_dict()
         compatible_weights = {}
 

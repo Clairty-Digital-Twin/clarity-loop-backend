@@ -35,12 +35,15 @@ class HealthMetricType(StrEnum):
     HEART_RATE = "heart_rate"
     HEART_RATE_VARIABILITY = "heart_rate_variability"
     BLOOD_PRESSURE = "blood_pressure"
+    BLOOD_OXYGEN = "blood_oxygen"
     SLEEP_ANALYSIS = "sleep_analysis"
     ACTIVITY_LEVEL = "activity_level"
     STRESS_INDICATORS = "stress_indicators"
     MOOD_ASSESSMENT = "mood_assessment"
     COGNITIVE_METRICS = "cognitive_metrics"
     ENVIRONMENTAL = "environmental"
+    BODY_TEMPERATURE = "body_temperature"
+    BLOOD_GLUCOSE = "blood_glucose"
 
 
 class SleepStage(StrEnum):
@@ -98,6 +101,18 @@ class BiometricData(BaseModel):
 
     skin_temperature: Annotated[float, Field(ge=30.0, le=45.0)] | None = Field(
         None, description="Skin temperature in Celsius", examples=[36.5]
+    )
+
+    oxygen_saturation: Annotated[float, Field(ge=70, le=100)] | None = Field(
+        None, description="Blood oxygen saturation percentage (SpO₂)", examples=[95.2]
+    )
+
+    hrv_sdnn: Annotated[float, Field(ge=0, le=300)] | None = Field(
+        None, description="HRV SDNN in milliseconds", examples=[45.2]
+    )
+
+    body_temperature: Annotated[float, Field(ge=95, le=110)] | None = Field(
+        None, description="Body temperature in Fahrenheit", examples=[100.5]
     )
 
     timestamp: datetime = Field(

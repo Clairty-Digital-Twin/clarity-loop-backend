@@ -47,7 +47,7 @@ class TestHealthDataServiceApplicationBusinessRules:
     """
 
     @staticmethod
-    def test_service_initialization_dependency_injection() -> None:
+    def test_service_initialization_dependency_injection(mock_storage_client) -> None:
         """Test use case follows Dependency Inversion Principle."""
         # Given: Mock repository (abstraction, not concrete implementation)
         mock_repository = AsyncMock(spec=IHealthDataRepository)
@@ -281,6 +281,7 @@ class TestHealthDataServiceApplicationBusinessRules:
         assert hasattr(service, "delete_health_data")
 
 
+@patch("google.cloud.storage.Client")
 class TestServiceApplicationBusinessRules:
     """Test application-specific business rules in the service layer."""
 
@@ -379,6 +380,7 @@ class TestServiceApplicationBusinessRules:
             await service.process_health_data(health_upload)
 
 
+@patch("google.cloud.storage.Client")
 class TestServiceFollowsSOLIDPrinciples:
     """Test that service follows Dependency Inversion Principle (SOLID)."""
 
@@ -421,6 +423,7 @@ class TestServiceFollowsSOLIDPrinciples:
         assert callable(service.delete_health_data)
 
 
+@patch("google.cloud.storage.Client")
 class TestServiceFollowsSingleResponsibilityPrinciple:
     """Test service follows Single Responsibility Principle (SOLID)."""
 

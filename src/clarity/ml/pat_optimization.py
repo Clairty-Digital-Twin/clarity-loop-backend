@@ -156,7 +156,8 @@ class PATPerformanceOptimizer:
 
         return hashlib.sha256(data_str.encode()).hexdigest()
 
-    def _is_cache_valid(self, timestamp: float) -> bool:
+    @staticmethod
+    def _is_cache_valid(timestamp: float) -> bool:
         """Check if cached result is still valid."""
         return (time.time() - timestamp) < (CACHE_EXPIRY_HOURS * 3600)
 

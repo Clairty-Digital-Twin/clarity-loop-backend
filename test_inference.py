@@ -35,7 +35,7 @@ logger = logging.getLogger(__name__)
 rng = np.random.default_rng()
 
 
-async def test_pat_inference() -> None:
+async def test_pat_inference() -> None:  # noqa: PLR0914, PLR0915
     """Test PAT inference with synthetic actigraphy data."""
     logger.info("=== PAT Inference Test ===")
 

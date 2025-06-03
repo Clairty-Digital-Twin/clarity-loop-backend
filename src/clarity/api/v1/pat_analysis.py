@@ -326,20 +326,44 @@ async def get_pat_analysis(processing_id: str) -> PATAnalysisResponse:
     try:
         logger.info("Retrieving PAT analysis results: %s", processing_id)
         
-        # Get results from Firestore
-        analysis_repository = _get_analysis_repository()
-        analysis_result = await analysis_repository.get_analysis_result(processing_id)
+        # Get results from Firestore using the actual client
+        firestore_client = _get_analysis_repository()
         
+        # Try to get analysis results from the insights collection first
+        analysis_result = await firestore_client.get_document(
+            collection="analysis_results", 
+            document_id=processing_id
+        )
+        
+        # If not found, check processing_jobs collection for status
         if not analysis_result:
-            logger.warning("PAT analysis not found: %s", processing_id)
+            processing_status = await firestore_client.get_document(
+                collection="processing_jobs",
+                document_id=processing_id
+            )
+            
+            if not processing_status:
+                logger.warning("PAT analysis not found: %s", processing_id)
+                return PATAnalysisResponse(
+                    processing_id=processing_id,
+                    status="not_found",
+                    message="Analysis results not found. Processing may still be in progress.",
+                    analysis_date=None,
+                    pat_features=None,
+                    activity_embedding=None,
+                    metadata={}
+                )
+            
+            # Return status from processing job
+            job_status = processing_status.get("status", "unknown")
             return PATAnalysisResponse(
                 processing_id=processing_id,
-                status="not_found",
-                message="Analysis results not found. Processing may still be in progress.",
-                analysis_date=None,
+                status=job_status,
+                message=f"Analysis is {job_status}. Results will be available when processing completes.",
+                analysis_date=processing_status.get("created_at"),
                 pat_features=None,
                 activity_embedding=None,
-                metadata={}
+                metadata=processing_status
             )
         
         # Return real analysis results
@@ -384,8 +408,11 @@ class PATAnalysisResponse(BaseModel):
 def _get_analysis_repository():
     """Get analysis repository for retrieving stored results."""
     # TODO: Replace with proper dependency injection
+    import os
     from clarity.storage.firestore_client import FirestoreClient
-    return FirestoreClient()
+    
+    project_id = os.getenv("GOOGLE_CLOUD_PROJECT", "clarity-digital-twin")
+    return FirestoreClient(project_id=project_id)
 
 
 @router.get(

@@ -44,8 +44,8 @@ class APITester:
     def __init__(self, base_url: str = BASE_URL):
         """Initialize the API tester."""
         self.base_url = base_url
-        self.session: "aiohttp.ClientSession | None" = None
-        self.results: "list[dict[str, Any]]" = []
+        self.session: aiohttp.ClientSession | None = None
+        self.results: list[dict[str, Any]] = []
 
     async def __aenter__(self):
         """Async context manager entry."""

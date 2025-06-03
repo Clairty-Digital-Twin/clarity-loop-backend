@@ -510,12 +510,12 @@ class PATModelService(IMLModelService):
                         )
 
                         # Convert feed-forward weights
-                        self._convert_ff_weights(
+                        PATModelService._convert_ff_weights(
                             layer_group, state_dict, pytorch_layer_idx
                         )
 
                         # Convert layer norm weights
-                        self._convert_layernorm_weights(
+                        PATModelService._convert_layernorm_weights(
                             layer_group, state_dict, pytorch_layer_idx
                         )
 
@@ -528,7 +528,7 @@ class PATModelService(IMLModelService):
         return state_dict
 
     def _convert_attention_weights(
-        self, layer_group: Any, state_dict: dict[str, torch.Tensor], layer_idx: int
+        self, layer_group: Any, state_dict: dict[str, torch.Tensor], layer_idx: int  # type: ignore[misc]
     ) -> None:
         """Convert multi-head attention weights from TensorFlow to PyTorch."""
         if f'encoder_layer_{layer_idx + 1}_attention' not in layer_group:
@@ -599,8 +599,9 @@ class PATModelService(IMLModelService):
                 pytorch_name = f'encoder.transformer_layers.{layer_idx}.attention.output_projection.bias'
                 state_dict[pytorch_name] = torch.from_numpy(tf_bias)
 
+    @staticmethod
     def _convert_ff_weights(
-        self, layer_group: Any, state_dict: dict[str, torch.Tensor], layer_idx: int
+        layer_group: Any, state_dict: dict[str, torch.Tensor], layer_idx: int  # type: ignore[misc]
     ) -> None:
         """Convert feed-forward network weights."""
         # FF1 layer
@@ -633,8 +634,9 @@ class PATModelService(IMLModelService):
                 pytorch_name = f'encoder.transformer_layers.{layer_idx}.ff2.bias'
                 state_dict[pytorch_name] = torch.from_numpy(tf_bias)
 
+    @staticmethod
     def _convert_layernorm_weights(
-        self, layer_group: Any, state_dict: dict[str, torch.Tensor], layer_idx: int
+        layer_group: Any, state_dict: dict[str, torch.Tensor], layer_idx: int
     ) -> None:
         """Convert layer normalization weights (gamma/beta -> weight/bias)."""
         # Norm1 (after attention)

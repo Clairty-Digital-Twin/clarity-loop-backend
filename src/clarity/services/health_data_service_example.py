@@ -342,8 +342,8 @@ class EnhancedHealthDataService:
 
     @log_execution(level=logging.DEBUG)
     async def _can_delete_data(
-        self, user_id: str, processing_id: str | None
-    ) -> bool:  # noqa: ARG002
+        self, _user_id: str, _processing_id: str | None
+    ) -> bool:
         """Check if data can be deleted according to business rules."""
         # Example business rule: Check if data is within retention period
         try:

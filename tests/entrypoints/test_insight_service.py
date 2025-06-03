@@ -11,13 +11,13 @@ from clarity.entrypoints.insight_service import app, main
 class TestInsightService:
     """Test the insight service entrypoint."""
 
-    def test_app_initialization(self) -> None:
+    def test_app_initialization(self) -> None:  # noqa: PLR6301
         """Test that the FastAPI app is properly initialized."""
         assert app.title == "CLARITY Insight Service"
         assert app.description == "AI-powered health insight generation service"
         assert app.version == "1.0.0"
 
-    def test_app_has_cors_middleware(self) -> None:
+    def test_app_has_cors_middleware(self) -> None:  # noqa: PLR6301
         """Test that CORS middleware is properly configured."""
         # Check if CORS middleware is in the middleware stack
         cors_found = False
@@ -28,13 +28,13 @@ class TestInsightService:
 
         assert cors_found, "CORS middleware should be configured"
 
-    def test_app_mounts_insight_app(self) -> None:
+    def test_app_mounts_insight_app(self) -> None:  # noqa: PLR6301
         """Test that the insight app is mounted."""
         # Check if there are routes mounted
         assert len(app.routes) > 0, "Insight app should be mounted"
 
     @patch("clarity.entrypoints.insight_service.uvicorn.run")
-    def test_main_function_with_defaults(self, mock_uvicorn_run: Mock) -> None:
+    def test_main_function_with_defaults(self, mock_uvicorn_run: Mock) -> None:  # noqa: PLR6301
         """Test main function with default environment variables."""
         with patch.dict(os.environ, {}, clear=True):
             main()
@@ -48,22 +48,22 @@ class TestInsightService:
         )
 
     @patch("clarity.entrypoints.insight_service.uvicorn.run")
-    def test_main_function_with_custom_env(self, mock_uvicorn_run: Mock) -> None:
+    def test_main_function_with_custom_env(self, mock_uvicorn_run: Mock) -> None:  # noqa: PLR6301
         """Test main function with custom environment variables."""
-        env_vars = {"HOST": "0.0.0.0", "PORT": "9001", "ENVIRONMENT": "development"}
+        env_vars = {"HOST": "0.0.0.0", "PORT": "9001", "ENVIRONMENT": "development"}  # noqa: S104
 
         with patch.dict(os.environ, env_vars):
             main()
 
         mock_uvicorn_run.assert_called_once_with(
             "clarity.entrypoints.insight_service:app",
-            host="0.0.0.0",
+            host="0.0.0.0",  # noqa: S104
             port=9001,
             reload=True,
             log_level="info",
         )
 
-    def test_health_endpoint_access(self) -> None:
+    def test_health_endpoint_access(self) -> None:  # noqa: PLR6301
         """Test that we can create a test client and the app responds."""
         with TestClient(app) as client:
             # The mounted insight_app should handle requests

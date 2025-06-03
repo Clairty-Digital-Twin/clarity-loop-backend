@@ -431,7 +431,7 @@ class HealthAnalysisPipeline:
         # Perform fusion
         return self.fusion_service.fuse_modalities(modality_features)
 
-    def _generate_summary_stats(
+    def _generate_summary_stats(  # noqa: PLR0912
         self,
         organized_data: dict[str, list[HealthMetric]],
         modality_features: dict[str, list[float]],
@@ -584,7 +584,7 @@ async def run_analysis_pipeline(
         }
 
 
-def _convert_raw_data_to_metrics(health_data: dict[str, Any]) -> list[HealthMetric]:
+def _convert_raw_data_to_metrics(health_data: dict[str, Any]) -> list[HealthMetric]:  # noqa: PLR0912
     """Convert raw health data to HealthMetric objects."""
     metrics = []
 

@@ -55,7 +55,7 @@ class TestHealthKitModels:
         assert sample.value["stage"] == "deep"
         assert sample.metadata["confidence"] == 0.95
 
-    def test_upload_request_creation(self) -> None:
+    def test_upload_request_creation(self) -> None:  # noqa: PLR6301
         """Test HealthKitUploadRequest model creation."""
         request = HealthKitUploadRequest(
             user_id="test-user-123",
@@ -74,11 +74,11 @@ class TestHealthKitModels:
 
         assert request.user_id == "test-user-123"
         assert len(request.quantity_samples) == 1
-        assert request.sync_token == "token-123"
+        assert request.sync_token == "token-123"  # noqa: S105
         assert request.category_samples == []
         assert request.workouts == []
 
-    def test_upload_response_creation(self) -> None:
+    def test_upload_response_creation(self) -> None:  # noqa: PLR6301
         """Test HealthKitUploadResponse model creation."""
         response = HealthKitUploadResponse(
             upload_id="test-user-123-abc123",
@@ -97,7 +97,7 @@ class TestHealthKitUploadEndpoint:
     """Test the main HealthKit upload endpoint."""
 
     @pytest.fixture
-    def sample_upload_request(self) -> HealthKitUploadRequest:
+    def sample_upload_request(self) -> HealthKitUploadRequest:  # noqa: PLR6301
         """Create a sample upload request for testing."""
         return HealthKitUploadRequest(
             user_id="test-user-123",
@@ -124,7 +124,7 @@ class TestHealthKitUploadEndpoint:
         )
 
     @pytest.fixture
-    def mock_user(self) -> UserContext:
+    def mock_user(self) -> UserContext:  # noqa: PLR6301
         """Create a mock user context."""
         return UserContext(
             user_id="test-user-123",
@@ -139,7 +139,7 @@ class TestHealthKitUploadEndpoint:
     @patch("clarity.api.v1.healthkit_upload.get_publisher")
     @patch("clarity.api.v1.healthkit_upload.uuid.uuid4")
     @pytest.mark.asyncio
-    async def test_successful_upload(
+    async def test_successful_upload(  # noqa: PLR6301
         self,
         mock_uuid: Mock,
         mock_get_publisher: Mock,
@@ -176,7 +176,7 @@ class TestHealthKitUploadEndpoint:
         mock_publisher.publish_health_data_upload.assert_called_once()
 
     @pytest.mark.asyncio
-    async def test_upload_forbidden_different_user(
+    async def test_upload_forbidden_different_user(  # noqa: PLR6301
         self,
         sample_upload_request: HealthKitUploadRequest,
     ) -> None:
@@ -200,7 +200,7 @@ class TestHealthKitUploadEndpoint:
 
     @patch("clarity.api.v1.healthkit_upload.storage.Client")
     @pytest.mark.asyncio
-    async def test_upload_storage_error(
+    async def test_upload_storage_error(  # noqa: PLR6301
         self,
         mock_storage_client: Mock,
         sample_upload_request: HealthKitUploadRequest,
@@ -237,7 +237,7 @@ class TestUploadStatusEndpoint:
         )
 
     @pytest.mark.asyncio
-    async def test_get_upload_status_success(self, mock_user: UserContext) -> None:
+    async def test_get_upload_status_success(self, mock_user: UserContext) -> None:  # noqa: PLR6301
         """Test successful upload status retrieval."""
         # Call endpoint
         result = await get_upload_status(
@@ -253,7 +253,7 @@ class TestUploadStatusEndpoint:
         assert "last_updated" in result
 
     @pytest.mark.asyncio
-    async def test_get_upload_status_forbidden(
+    async def test_get_upload_status_forbidden(  # noqa: PLR6301
         self,
     ) -> None:
         """Test upload status fails for different user."""
@@ -277,7 +277,7 @@ class TestUploadStatusEndpoint:
         assert "Access denied to this upload" in str(exc_info.value.detail)
 
     @pytest.mark.asyncio
-    async def test_get_upload_status_invalid_format(
+    async def test_get_upload_status_invalid_format(  # noqa: PLR6301
         self, mock_user: UserContext
     ) -> None:
         """Test upload status with invalid upload ID format."""
@@ -292,19 +292,19 @@ class TestUploadStatusEndpoint:
 class TestHealthKitUploadIntegration:
     """Integration tests for the HealthKit upload router."""
 
-    def test_router_configuration(self) -> None:
+    def test_router_configuration(self) -> None:  # noqa: PLR6301
         """Test that the router is properly configured."""
         assert router.prefix == "/api/v1/healthkit"
         assert "HealthKit" in router.tags
 
-    def test_router_endpoints(self) -> None:
+    def test_router_endpoints(self) -> None:  # noqa: PLR6301
         """Test that router has expected endpoints."""
         routes = [route.path for route in router.routes]
         # Routes include the full prefix path
         assert any("upload" in route for route in routes)
         assert any("status" in route for route in routes)
 
-    def test_router_with_test_client(self) -> None:
+    def test_router_with_test_client(self) -> None:  # noqa: PLR6301
         """Test router with FastAPI test client."""
         app = FastAPI()
         app.include_router(router)

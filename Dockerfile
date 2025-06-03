@@ -2,7 +2,7 @@
 # Optimized for Google Cloud Run deployment
 
 # Build stage for dependencies
-FROM python:3.11-slim as builder
+FROM python:3.11-slim AS builder
 
 # Set environment variables for build
 ENV PYTHONUNBUFFERED=1 \
@@ -31,7 +31,7 @@ RUN pip install --upgrade pip setuptools wheel
 RUN pip install -e .[dev]
 
 # Production stage
-FROM python:3.11-slim as production
+FROM python:3.11-slim AS production
 
 # Set production environment variables
 ENV PYTHONUNBUFFERED=1 \
@@ -73,13 +73,4 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
 EXPOSE ${PORT}
 
 # Production startup command
-CMD exec uvicorn clarity.main:app \
-    --host 0.0.0.0 \
-    --port ${PORT} \
-    --workers ${WORKERS} \
-    --loop uvloop \
-    --http httptools \
-    --access-log \
-    --log-level info \
-    --timeout-keep-alive ${KEEP_ALIVE} \
-    --timeout-graceful-shutdown ${TIMEOUT}
+CMD ["sh", "-c", "exec uvicorn clarity.main:app --host 0.0.0.0 --port ${PORT} --workers ${WORKERS} --loop uvloop --http httptools --access-log --log-level info --timeout-keep-alive ${KEEP_ALIVE} --timeout-graceful-shutdown ${TIMEOUT}"]

@@ -87,7 +87,8 @@ class GeminiInsightGenerator:
             self.logger.exception("Failed to generate health insight: %s", e)
             raise
 
-    def _create_health_prompt(self, analysis_results: dict[str, Any]) -> str:
+    @staticmethod
+    def _create_health_prompt(analysis_results: dict[str, Any]) -> str:
         """Create structured prompt for Gemini from analysis results."""
         # Extract key metrics
         metrics_lines = []
@@ -215,7 +216,8 @@ Generate the health insight now:"""
             self.logger.exception("Gemini API call failed: %s", e)
             raise
 
-    def _create_mock_insight(self, analysis_results: dict[str, Any]) -> dict[str, Any]:
+    @staticmethod
+    def _create_mock_insight(analysis_results: dict[str, Any]) -> dict[str, Any]:
         """Create mock insight when Gemini is not available."""
         return {
             "narrative": "Your health data shows generally positive trends. Your cardiovascular and respiratory metrics are within healthy ranges, indicating good overall fitness. Continue maintaining your current activity levels and healthy lifestyle habits.",

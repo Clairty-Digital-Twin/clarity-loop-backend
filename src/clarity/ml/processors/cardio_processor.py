@@ -236,22 +236,19 @@ class CardioProcessor:
     @staticmethod
     def _calculate_circadian_score(hr_series: pd.Series) -> float:
         """Calculate circadian rhythm regularity score (0-1, higher is better)."""
-        if len(hr_series) < 24:  # Need at least 24 hours
+        if len(hr_series) < MIN_DATA_HOURS:  # Need at least 24 hours
             return 0.5
 
         try:
             # Group by hour of day and calculate consistency
             hourly_means = hr_series.groupby(hr_series.index.hour).mean()
 
-            if len(hourly_means) < 12:  # Need reasonable coverage
+            if len(hourly_means) < MIN_HOURLY_COVERAGE:  # Need reasonable coverage
                 return 0.5
 
             # Calculate day/night difference (expect lower HR at night)
-            night_hours = [22, 23, 0, 1, 2, 3, 4, 5]
-            day_hours = [8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19]
-
-            night_hr = hourly_means[hourly_means.index.isin(night_hours)].mean()
-            day_hr = hourly_means[hourly_means.index.isin(day_hours)].mean()
+            night_hr = hourly_means[hourly_means.index.isin(NIGHT_HOURS)].mean()
+            day_hr = hourly_means[hourly_means.index.isin(DAY_HOURS)].mean()
 
             if pd.isna(night_hr) or pd.isna(day_hr):
                 return 0.5
@@ -260,7 +257,7 @@ class CardioProcessor:
             day_night_diff = day_hr - night_hr
 
             # Normalize to 0-1 scale (expect 5-20 BPM difference)
-            circadian_score = np.clip(day_night_diff / 20.0, 0.0, 1.0)
+            circadian_score = np.clip(day_night_diff / EXPECTED_DAY_NIGHT_DIFF, 0.0, 1.0)
 
             return float(circadian_score)
 

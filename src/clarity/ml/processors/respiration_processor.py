@@ -14,6 +14,35 @@ from pydantic import BaseModel, Field
 
 logger = logging.getLogger(__name__)
 
+# Constants for respiratory analysis
+MIN_RESPIRATORY_RATE = 5  # breaths/min - minimum physiological RR
+MAX_RESPIRATORY_RATE = 60  # breaths/min - maximum physiological RR
+MIN_SPO2 = 80  # % - minimum SpO2 for analysis
+MAX_SPO2 = 100  # % - maximum physiological SpO2
+
+# Default healthy values
+DEFAULT_RR = 16.0  # breaths/min - normal respiratory rate
+DEFAULT_RESTING_RR = 14.0  # breaths/min - normal resting RR
+DEFAULT_RR_VARIABILITY = 2.0  # breaths/min - normal RR variability
+DEFAULT_SPO2 = 98.0  # % - normal oxygen saturation
+DEFAULT_MIN_SPO2 = 95.0  # % - normal minimum SpO2
+DEFAULT_SPO2_VARIABILITY = 1.0  # % - normal SpO2 variability
+DEFAULT_STABILITY_SCORE = 0.5  # neutral stability score
+DEFAULT_EFFICIENCY_SCORE = 0.8  # good oxygenation score
+
+# Processing parameters
+RR_RESAMPLE_INTERVAL = "5T"  # 5-minute intervals for RR resampling
+SPO2_RESAMPLE_INTERVAL = "10T"  # 10-minute intervals for SpO2 resampling
+RR_INTERPOLATION_LIMIT = 3  # periods - max gap to interpolate for RR
+SPO2_INTERPOLATION_LIMIT = 2  # periods - max gap to interpolate for SpO2
+SMOOTHING_WINDOW = 3  # periods - rolling window for smoothing
+PERCENTILE_25 = 25  # 25th percentile for resting rate calculation
+
+# Stability analysis parameters
+MIN_STABILITY_DATA_HOURS = 1  # minimum hours of data for stability analysis
+STABILITY_DATA_POINTS = 12  # data points needed (1 hour at 5-min intervals)
+OXYGENATION_DATA_POINTS = 6  # data points needed (1 hour at 10-min intervals)
+
 
 class RespirationFeatures(BaseModel):
     """Respiratory features extracted from RR/SpO2 data."""
@@ -105,15 +134,15 @@ class RespirationProcessor:
             self.logger.exception("Error processing respiratory data: %s", e)
             # Return default values on error
             return [
-                16.0,
-                14.0,
-                2.0,
-                98.0,
-                95.0,
-                1.0,
-                0.5,
-                0.8,
-            ]  # Typical healthy values
+                DEFAULT_RR,
+                DEFAULT_RESTING_RR,
+                DEFAULT_RR_VARIABILITY,
+                DEFAULT_SPO2,
+                DEFAULT_MIN_SPO2,
+                DEFAULT_SPO2_VARIABILITY,
+                DEFAULT_STABILITY_SCORE,
+                DEFAULT_EFFICIENCY_SCORE,
+            ]
 
     def _preprocess_respiratory_rate(
         self, timestamps: list[datetime], values: list[float]
@@ -126,19 +155,19 @@ class RespirationProcessor:
         ts = pd.Series(values, index=pd.to_datetime(timestamps))
 
         # Resample to 5-minute frequency (RR is typically less frequent than HR)
-        rr_resampled = ts.resample("5T").mean()
+        rr_resampled = ts.resample(RR_RESAMPLE_INTERVAL).mean()
 
-        # Remove outliers (RR outside 5-60 breaths/min range)
+        # Remove outliers (RR outside physiological range)
         rr_resampled = rr_resampled.mask(
-            (rr_resampled <= 5) | (rr_resampled > 60), np.nan
+            (rr_resampled <= MIN_RESPIRATORY_RATE) | (rr_resampled > MAX_RESPIRATORY_RATE), np.nan
         )
 
         # Fill short gaps by interpolation (up to 3 periods = 15 minutes)
-        rr_interpolated = rr_resampled.interpolate(limit=3, limit_direction="forward")
+        rr_interpolated = rr_resampled.interpolate(limit=RR_INTERPOLATION_LIMIT, limit_direction="forward")
 
         # Apply light smoothing (3-period moving average)
         rr_smoothed = rr_interpolated.rolling(
-            window=3, min_periods=1, center=True
+            window=SMOOTHING_WINDOW, min_periods=1, center=True
         ).mean()
 
         # Fill remaining NaNs
@@ -155,15 +184,15 @@ class RespirationProcessor:
         ts = pd.Series(values, index=pd.to_datetime(timestamps))
 
         # Resample to 10-minute frequency (SpO2 is often periodic)
-        spo2_resampled = ts.resample("10T").mean()
+        spo2_resampled = ts.resample(SPO2_RESAMPLE_INTERVAL).mean()
 
-        # Remove outliers (SpO2 outside 80-100% range)
+        # Remove outliers (SpO2 outside physiological range)
         spo2_resampled = spo2_resampled.mask(
-            (spo2_resampled <= 80) | (spo2_resampled > 100), np.nan
+            (spo2_resampled <= MIN_SPO2) | (spo2_resampled > MAX_SPO2), np.nan
         )
 
         # Interpolate short gaps
-        spo2_interpolated = spo2_resampled.interpolate(limit=2)
+        spo2_interpolated = spo2_resampled.interpolate(limit=SPO2_INTERPOLATION_LIMIT)
 
         # Fill remaining NaNs
         return spo2_interpolated.fillna(method="ffill").fillna(method="bfill")
@@ -176,13 +205,13 @@ class RespirationProcessor:
         if rr_series is not None and len(rr_series) > 0:
             avg_respiratory_rate = float(np.nanmean(rr_series))
             resting_respiratory_rate = float(
-                np.nanpercentile(rr_series, 25)
-            )  # 25th percentile
+                np.nanpercentile(rr_series, PERCENTILE_25)
+            )
             respiratory_variability = float(np.nanstd(rr_series))
         else:
-            avg_respiratory_rate = 16.0  # Default healthy RR
-            resting_respiratory_rate = 14.0
-            respiratory_variability = 2.0
+            avg_respiratory_rate = DEFAULT_RR
+            resting_respiratory_rate = DEFAULT_RESTING_RR
+            respiratory_variability = DEFAULT_RR_VARIABILITY
 
         # SpO2 statistics
         if spo2_series is not None and len(spo2_series) > 0:
@@ -190,9 +219,9 @@ class RespirationProcessor:
             min_spo2 = float(np.nanmin(spo2_series))
             spo2_variability = float(np.nanstd(spo2_series))
         else:
-            avg_spo2 = 98.0  # Default healthy SpO2
-            min_spo2 = 95.0
-            spo2_variability = 1.0
+            avg_spo2 = DEFAULT_SPO2
+            min_spo2 = DEFAULT_MIN_SPO2
+            spo2_variability = DEFAULT_SPO2_VARIABILITY
 
         # Advanced features
         respiratory_stability_score = self._calculate_stability_score(rr_series)

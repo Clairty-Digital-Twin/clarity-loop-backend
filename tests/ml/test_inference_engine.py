@@ -15,6 +15,7 @@ from uuid import uuid4
 
 import pytest
 
+from clarity.core.exceptions import InferenceError
 from clarity.ml.inference_engine import (
     AsyncInferenceEngine,
     InferenceCache,
@@ -452,11 +453,13 @@ class TestInferenceEngineErrorHandling:
             request = InferenceRequest(
                 request_id=str(uuid4()),
                 input_data=sample_actigraphy_input,
-                timeout_seconds=30.0,
+                timeout_seconds=5.0,  # Shorter timeout to avoid hanging
             )
 
-            # The error should be wrapped in an InferenceError, not timeout
-            with pytest.raises(Exception, match="PAT analysis failed"):
+            # The error should be wrapped in an InferenceError with the correct message
+            with pytest.raises(
+                InferenceError, match="Inference failed: Model not loaded"
+            ):
                 await engine.predict_async(request)
 
     @staticmethod

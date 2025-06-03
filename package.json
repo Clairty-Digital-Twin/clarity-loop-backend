@@ -4,6 +4,7 @@
   "description": "Documentation tools for Clarity Loop Backend",
   "scripts": {
     "lint:md": "markdownlint-cli2 \"docs/**/*.md\" \"*.md\"",
+    "lint:md:fix": "markdownlint-cli2 \"docs/**/*.md\" \"*.md\" --fix",
     "check:spelling": "echo 'Spell check skipped'",
     "lint:all": "npm run lint:md"
   },

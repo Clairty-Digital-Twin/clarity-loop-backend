@@ -71,7 +71,7 @@ class TestPATModelService:
         return data_points
 
     @pytest.fixture
-    def week_actigraphy_data(self) -> list[ActigraphyDataPoint]:
+    def week_actigraphy_data(self) -> list[ActigraphyDataPoint]:  # noqa: PLR6301
         """Generate a full week of actigraphy data (10080 points)."""
         data_points = []
         base_time = datetime.now(UTC)

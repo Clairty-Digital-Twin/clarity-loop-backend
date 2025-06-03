@@ -3,7 +3,7 @@
 Provides /metrics endpoint for Prometheus monitoring integration.
 Exposes custom application metrics including:
 - Health data processing metrics
-- PAT model inference metrics  
+- PAT model inference metrics
 - Insight generation metrics
 - API endpoint performance metrics
 - System health metrics
@@ -145,7 +145,7 @@ pubsub_message_processing_duration_seconds = Histogram(
 )
 async def get_metrics() -> Response:
     """🔥 FIXED: Prometheus metrics endpoint for production monitoring.
-    
+
     Returns:
         Response with Prometheus-formatted metrics data
     """
@@ -197,7 +197,7 @@ def _update_system_metrics() -> None:
 
 def record_http_request(method: str, endpoint: str, status_code: int, duration: float) -> None:
     """Record HTTP request metrics.
-    
+
     Args:
         method: HTTP method (GET, POST, etc.)
         endpoint: API endpoint path
@@ -218,7 +218,7 @@ def record_http_request(method: str, endpoint: str, status_code: int, duration: 
 
 def record_health_data_upload(status: str, source: str) -> None:
     """Record health data upload metrics.
-    
+
     Args:
         status: Upload status (success, failed, etc.)
         source: Data source (apple_health, manual, etc.)
@@ -231,7 +231,7 @@ def record_health_data_upload(status: str, source: str) -> None:
 
 def record_health_data_processing(stage: str, duration: float) -> None:
     """Record health data processing metrics.
-    
+
     Args:
         stage: Processing stage (preprocessing, analysis, etc.)
         duration: Processing duration in seconds
@@ -241,7 +241,7 @@ def record_health_data_processing(stage: str, duration: float) -> None:
 
 def record_health_metric_processed(metric_type: str) -> None:
     """Record individual health metric processing.
-    
+
     Args:
         metric_type: Type of health metric (heart_rate, steps, etc.)
     """
@@ -250,7 +250,7 @@ def record_health_metric_processed(metric_type: str) -> None:
 
 def record_pat_inference(status: str, duration: float | None = None) -> None:
     """Record PAT model inference metrics.
-    
+
     Args:
         status: Inference status (success, failed, etc.)
         duration: Inference duration in seconds (optional)
@@ -263,7 +263,7 @@ def record_pat_inference(status: str, duration: float | None = None) -> None:
 
 def record_pat_model_loading(duration: float) -> None:
     """Record PAT model loading time.
-    
+
     Args:
         duration: Model loading duration in seconds
     """
@@ -272,7 +272,7 @@ def record_pat_model_loading(duration: float) -> None:
 
 def record_insight_generation(status: str, model: str, duration: float | None = None) -> None:
     """Record insight generation metrics.
-    
+
     Args:
         status: Generation status (success, failed, etc.)
         model: Model used (gemini-2.0-flash-exp, etc.)
@@ -289,7 +289,7 @@ def record_insight_generation(status: str, model: str, duration: float | None = 
 
 def record_processing_job_status(active_count: int) -> None:
     """Record active processing job count.
-    
+
     Args:
         active_count: Number of currently active jobs
     """
@@ -298,7 +298,7 @@ def record_processing_job_status(active_count: int) -> None:
 
 def record_failed_job(job_type: str, error_type: str) -> None:
     """Record failed job metrics.
-    
+
     Args:
         job_type: Type of job (analysis, insight, etc.)
         error_type: Type of error (timeout, validation, etc.)
@@ -311,7 +311,7 @@ def record_failed_job(job_type: str, error_type: str) -> None:
 
 def record_firestore_operation(operation: str, collection: str, status: str, duration: float | None = None) -> None:
     """Record Firestore operation metrics.
-    
+
     Args:
         operation: Operation type (create, read, update, delete)
         collection: Firestore collection name
@@ -333,7 +333,7 @@ def record_firestore_operation(operation: str, collection: str, status: str, dur
 
 def record_pubsub_message(topic: str, status: str, processing_duration: float | None = None) -> None:
     """Record Pub/Sub message metrics.
-    
+
     Args:
         topic: Pub/Sub topic name
         status: Message status (success, failed, etc.)
@@ -353,7 +353,7 @@ def record_pubsub_message(topic: str, status: str, processing_duration: float | 
 class MetricsContext:
     """Context manager for automatic metrics recording."""
 
-    def __init__(self, operation_type: str, labels: dict[str, Any] | None = None):
+    def __init__(self, operation_type: str, labels: dict[str, Any] | None = None) -> None:
         self.operation_type = operation_type
         self.labels = labels or {}
         self.start_time = time.time()
@@ -364,10 +364,7 @@ class MetricsContext:
     def __exit__(self, exc_type, exc_val, exc_tb):
         duration = time.time() - self.start_time
 
-        if exc_type is None:
-            status = "success"
-        else:
-            status = "failed"
+        status = "success" if exc_type is None else "failed"
 
         # Record based on operation type
         if self.operation_type == "pat_inference":

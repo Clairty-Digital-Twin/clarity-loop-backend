@@ -445,16 +445,14 @@ async def get_insight_history(
         )
 
         # Format insights for response
-        formatted_insights = []
-        for insight in insights:
-            formatted_insights.append({
+        formatted_insights = [{
                 "id": insight.get("id"),
                 "narrative": insight.get("narrative", "")[:200] + "..." if len(insight.get("narrative", "")) > 200 else insight.get("narrative", ""),
                 "generated_at": insight.get("generated_at"),
                 "confidence_score": insight.get("confidence_score", 0.0),
                 "key_insights_count": len(insight.get("key_insights", [])),
                 "recommendations_count": len(insight.get("recommendations", []))
-            })
+            } for insight in insights]
 
         history_data = {
             "insights": formatted_insights,

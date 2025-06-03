@@ -26,7 +26,6 @@ from clarity.models.health_data import (
     MoodScale,
     ProcessingStatus,
     SleepData,
-    ValidationError,
 )
 
 

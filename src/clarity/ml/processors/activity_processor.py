@@ -30,7 +30,7 @@ logger = logging.getLogger(__name__)
 
 class ActivityProcessor:
     """Process activity and fitness metrics for clear, actionable insights.
-    
+
     This processor generates 12 comprehensive activity features:
     1. Total steps in period
     2. Average daily steps
@@ -44,12 +44,12 @@ class ActivityProcessor:
     10. Total flights climbed
     11. Total active minutes
     12. Activity consistency score (0-1)
-    
+
     These metrics are designed to be easily understood and provide direct
     answers to common user questions about their activity levels.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the activity processor."""
         self.processor_name = "ActivityProcessor"
         self.version = "1.0.0"
@@ -57,10 +57,10 @@ class ActivityProcessor:
 
     def process(self, metrics: list[HealthMetric]) -> list[dict[str, Any]]:
         """Process activity metrics and extract key features.
-        
+
         Args:
             metrics: List of health metrics containing activity data
-            
+
         Returns:
             List of activity feature dictionaries
         """
@@ -86,28 +86,24 @@ class ActivityProcessor:
 
     def _extract_activity_data(self, metrics: list[HealthMetric]) -> list[ActivityData]:
         """Extract activity data from health metrics.
-        
+
         Args:
             metrics: List of health metrics
-            
+
         Returns:
             List of ActivityData objects
         """
-        activity_data = []
-
-        for metric in metrics:
-            if metric.activity_data is not None:
-                activity_data.append(metric.activity_data)
+        activity_data = [metric.activity_data for metric in metrics if metric.activity_data is not None]
 
         logger.debug("Extracted %d activity data points", len(activity_data))
         return activity_data
 
     def _calculate_activity_features(self, activity_data: list[ActivityData]) -> list[dict[str, Any]]:
         """Calculate comprehensive activity features.
-        
+
         Args:
             activity_data: List of activity data points
-            
+
         Returns:
             List of feature dictionaries
         """
@@ -157,19 +153,7 @@ class ActivityProcessor:
             })
 
         if active_minutes:
-            features.append({
-                "feature_name": "total_active_minutes",
-                "value": sum(active_minutes),
-                "unit": "minutes",
-                "description": "Total minutes of active movement"
-            })
-
-            features.append({
-                "feature_name": "average_daily_active_minutes",
-                "value": np.mean(active_minutes),
-                "unit": "minutes/day",
-                "description": "Average active minutes per day"
-            })
+            features.extend(({"feature_name": "total_active_minutes", "value": sum(active_minutes), "unit": "minutes", "description": "Total minutes of active movement"}, {"feature_name": "average_daily_active_minutes", "value": np.mean(active_minutes), "unit": "minutes/day", "description": "Average active minutes per day"}))
 
         # 6. Fitness Level Features
         if vo2_max_values:
@@ -203,10 +187,10 @@ class ActivityProcessor:
 
     def _calculate_step_features(self, steps: list[int]) -> list[dict[str, Any]]:
         """Calculate step-related features.
-        
+
         Args:
             steps: List of daily step counts
-            
+
         Returns:
             List of step feature dictionaries
         """
@@ -237,10 +221,10 @@ class ActivityProcessor:
 
     def _calculate_distance_features(self, distances: list[float]) -> list[dict[str, Any]]:
         """Calculate distance-related features.
-        
+
         Args:
             distances: List of daily distances in kilometers
-            
+
         Returns:
             List of distance feature dictionaries
         """
@@ -264,10 +248,10 @@ class ActivityProcessor:
 
     def _calculate_energy_features(self, active_energy: list[float]) -> list[dict[str, Any]]:
         """Calculate active energy features.
-        
+
         Args:
             active_energy: List of daily active energy in kcal
-            
+
         Returns:
             List of energy feature dictionaries
         """
@@ -291,10 +275,10 @@ class ActivityProcessor:
 
     def _calculate_exercise_features(self, exercise_minutes: list[int]) -> list[dict[str, Any]]:
         """Calculate exercise-related features.
-        
+
         Args:
             exercise_minutes: List of daily exercise minutes
-            
+
         Returns:
             List of exercise feature dictionaries
         """
@@ -318,10 +302,10 @@ class ActivityProcessor:
 
     def _calculate_consistency_score(self, values: Sequence[int | float]) -> float:
         """Calculate activity consistency score.
-        
+
         Args:
             values: List of daily values (e.g., steps)
-            
+
         Returns:
             Consistency score between 0 and 1
         """
@@ -339,16 +323,14 @@ class ActivityProcessor:
 
         # Convert CV to consistency score (lower CV = higher consistency)
         # CV of 0 = score of 1, CV of 1 = score of 0
-        consistency_score = max(0.0, min(1.0, 1.0 - float(cv)))
-
-        return consistency_score
+        return max(0.0, min(1.0, 1.0 - float(cv)))
 
     def get_summary_stats(self, features: list[dict[str, Any]]) -> dict[str, Any]:
         """Get summary statistics for activity features.
-        
+
         Args:
             features: List of calculated features
-            
+
         Returns:
             Dictionary with summary statistics
         """
@@ -379,10 +361,10 @@ class ActivityProcessor:
 
     def _categorize_features(self, features: list[dict[str, Any]]) -> dict[str, int]:
         """Categorize features by type.
-        
+
         Args:
             features: List of features
-            
+
         Returns:
             Dictionary with category counts
         """

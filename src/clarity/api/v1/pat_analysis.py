@@ -313,14 +313,14 @@ async def analyze_actigraphy_data(
     summary="Get PAT Analysis Results",
     description="""
     Retrieve PAT (Pretrained Actigraphy Transformer) analysis results for a specific processing ID.
-    
+
     **Returns:**
     - PAT model embeddings and predictions
     - Activity pattern analysis
     - Sleep quality metrics
     - Circadian rhythm insights
     - Processing metadata and status
-    
+
     **Status Values:**
     - `completed`: Analysis finished successfully
     - `processing`: Analysis still running

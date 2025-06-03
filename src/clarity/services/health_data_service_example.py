@@ -133,7 +133,7 @@ class EnhancedHealthDataService:
                 self.logger.warning(
                     "Health data validation failed: %s", validation_errors
                 )
-                raise HealthDataServiceError(error_summary, status_code=400)
+                self._raise_validation_error(error_summary)
 
             # Store health data using repository with enhanced error handling
             success = await self.repository.save_health_data(
@@ -197,10 +197,9 @@ class EnhancedHealthDataService:
             )
 
             if not status_info:
-                error_msg = f"Processing job {processing_id} not found"
-                raise DataNotFoundError(error_msg)
-
-            return status_info
+                self._raise_data_not_found_error(processing_id)
+            else:
+                return status_info
 
         except (DataNotFoundError, HealthDataServiceError):
             # Re-raise our specific exceptions
@@ -416,6 +415,17 @@ class EnhancedHealthDataService:
         """Raise deletion failed error."""
         msg = "Data deletion failed at repository level"
         raise HealthDataServiceError(msg, status_code=500)
+
+    @staticmethod
+    def _raise_validation_error(error_summary: str) -> None:
+        """Raise validation error."""
+        raise HealthDataServiceError(error_summary, status_code=400)
+
+    @staticmethod
+    def _raise_data_not_found_error(processing_id: str) -> None:
+        """Raise data not found error."""
+        error_msg = f"Processing job {processing_id} not found"
+        raise DataNotFoundError(error_msg)
 
 
 def create_enhanced_health_data_service(

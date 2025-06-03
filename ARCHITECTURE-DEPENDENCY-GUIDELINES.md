@@ -54,7 +54,7 @@ src/clarity/
 ```python
 # Example: core/container.py
 from dependency_injector import containers, providers
-from clarity.core.interfaces import IAuthProvider
+from clarity.ports.auth_ports import IAuthProvider
 from clarity.auth.firebase_auth import FirebaseAuthProvider
 
 class Container(containers.DeclarativeContainer):

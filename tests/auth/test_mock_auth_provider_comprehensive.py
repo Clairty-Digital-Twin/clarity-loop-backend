@@ -5,17 +5,12 @@ Tests all methods and edge cases to improve coverage from 37% to 90%+.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 import pytest
 
 from clarity.auth.mock_auth import MockAuthProvider
 
-if TYPE_CHECKING:
-    from collections.abc import Any
 
-
-class TestMockAuthProviderComprehensive:
+class TestMockAuthProviderComprehensive:  # ruff: noqa: PLR0904
     """Comprehensive test coverage for MockAuthProvider."""
 
     @pytest.fixture

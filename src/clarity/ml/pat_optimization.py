@@ -179,14 +179,23 @@ class PATPerformanceOptimizer:
         if use_cache:
             cache_key = self._generate_cache_key(input_data)
             if cache_key in self._cache:
-                cached_result, timestamp = self._cache[cache_key]
-                if self._is_cache_valid(timestamp):
-                    logger.info(
-                        "Cache hit for analysis %s", cache_key[:HASH_TRUNCATE_LENGTH]
+                try:
+                    cached_result, timestamp = self._cache[cache_key]
+                    if self._is_cache_valid(timestamp):
+                        logger.info(
+                            "Cache hit for analysis %s", cache_key[:HASH_TRUNCATE_LENGTH]
+                        )
+                        return cached_result, True
+                    # Remove expired entry
+                    del self._cache[cache_key]
+                except (ValueError, TypeError, AttributeError) as e:
+                    # Handle corrupted cache entries gracefully
+                    logger.warning(
+                        "Cache corruption detected for key %s: %s", 
+                        cache_key[:HASH_TRUNCATE_LENGTH], e
                     )
-                    return cached_result, True
-                # Remove expired entry
-                del self._cache[cache_key]
+                    # Remove corrupted entry
+                    self._cache.pop(cache_key, None)
 
         # Perform analysis
         start_time = time.time()

@@ -16,6 +16,7 @@ dependency injection, and comprehensive error handling.
 
 import asyncio
 from collections.abc import Callable
+from functools import wraps
 import logging
 import time
 from typing import TYPE_CHECKING, Any, Optional

@@ -14,16 +14,19 @@ CLARITY is a **production-ready digital twin platform** for psychiatry and menta
 ### **Key Capabilities**
 
 🔬 **Advanced AI/ML Pipeline**
+
 - **PAT (Pretrained Actigraphy Transformer)** - Sleep pattern analysis and circadian rhythm detection using the open-source foundation model from [Jacobson Lab](https://github.com/njacobsonlab/Pretrained-Actigraphy-Transformer)
 - **Google Gemini 2.5** - Natural language health insights generation
 - **Proxy Actigraphy** - Convert Apple Watch step data to clinical-grade actigraphy
 
 ❤️ **Comprehensive Health Data Support**
+
 - Apple HealthKit integration (Heart Rate, HRV, Steps, Sleep, Respiratory Rate)
 - Real-time data validation and processing
 - HIPAA-compliant secure storage with encryption
 
 🏗️ **Enterprise Architecture**
+
 - Clean Architecture with SOLID principles
 - Async-first design with FastAPI
 - Microservices-ready with Google Cloud Platform
@@ -32,6 +35,7 @@ CLARITY is a **production-ready digital twin platform** for psychiatry and menta
 ## 🚀 **Quick Start**
 
 ### **Prerequisites**
+
 - Python 3.11+
 - Docker & Docker Compose
 - Google Cloud Project (for production)
@@ -58,7 +62,7 @@ cp .env.example .env
 make dev
 ```
 
-The API will be available at http://localhost:8000 with interactive docs at http://localhost:8000/docs
+The API will be available at <http://localhost:8000> with interactive docs at <http://localhost:8000/docs>
 
 ### **Docker Development**
 
@@ -115,6 +119,7 @@ async with httpx.AsyncClient() as client:
 ## 🧠 **AI/ML Pipeline**
 
 ### **PAT Model Integration**
+
 ```python
 # Analyze step data with PAT transformer
 POST /api/v1/pat/analyze-step-data
@@ -131,6 +136,7 @@ POST /api/v1/pat/analyze-step-data
 ```
 
 ### **Gemini Insights Generation**
+
 ```python
 # Generate natural language health insights
 POST /api/v1/insights/generate
@@ -166,16 +172,19 @@ POST /api/v1/insights/generate
 ### **Technology Stack**
 
 **Backend Core**
+
 - **FastAPI** - Modern, async Python web framework
 - **Pydantic** - Data validation and serialization
 - **PyTorch** - ML model inference engine
 
 **AI/ML**
+
 - **PAT (Pretrained Actigraphy Transformer)** - Sleep analysis
 - **Google Gemini 2.5** - Health insights generation
 - **scikit-learn, pandas** - Data processing
 
 **Infrastructure**
+
 - **Google Cloud Platform** - Cloud hosting and services
 - **Firestore** - NoSQL database with real-time sync
 - **Firebase Auth** - User authentication and authorization
@@ -183,6 +192,7 @@ POST /api/v1/insights/generate
 - **Cloud Storage** - Secure file storage
 
 **Development & Monitoring**
+
 - **pytest** - Testing framework with 80%+ coverage
 - **Black, Ruff** - Code formatting and linting
 - **Prometheus** - Metrics collection
@@ -191,12 +201,14 @@ POST /api/v1/insights/generate
 ## 🔒 **Security & Compliance**
 
 ### **HIPAA Compliance**
+
 - End-to-end encryption for health data
 - Audit logging for all data access
 - User data isolation and access controls
 - Secure cloud infrastructure with Google Cloud BAA
 
 ### **Authentication**
+
 - Firebase Authentication with JWT tokens
 - Role-based access control (RBAC)
 - Rate limiting and request validation
@@ -218,6 +230,7 @@ make coverage
 ```
 
 ### **Test Categories**
+
 - **Unit Tests** - Business logic and entities (100% coverage target)
 - **Integration Tests** - Service layer interactions
 - **API Tests** - HTTP endpoint functionality
@@ -226,6 +239,7 @@ make coverage
 ## 📈 **Performance & Monitoring**
 
 ### **Health Checks**
+
 ```bash
 # Application health
 curl http://localhost:8000/health
@@ -236,6 +250,7 @@ curl http://localhost:8000/api/v1/pat/health
 ```
 
 ### **Monitoring Features**
+
 - Prometheus metrics collection
 - Grafana dashboards for visualization
 - Structured logging with correlation IDs
@@ -244,11 +259,13 @@ curl http://localhost:8000/api/v1/pat/health
 ## 🚀 **Deployment**
 
 ### **Local Development**
+
 ```bash
 make dev-docker  # Full stack with emulators
 ```
 
 ### **Production (Google Cloud Run)**
+
 ```bash
 # Build and deploy
 make docker-build
@@ -256,6 +273,7 @@ make deploy-production
 ```
 
 ### **Environment Configuration**
+
 ```bash
 # Required environment variables
 GOOGLE_CLOUD_PROJECT=your-project-id
@@ -287,6 +305,7 @@ PUBSUB_EMULATOR_HOST=localhost:8085
 8. Open a Pull Request
 
 ### **Code Standards**
+
 - Follow Clean Architecture principles
 - Maintain 80%+ test coverage
 - Use type hints and docstrings
@@ -304,6 +323,7 @@ This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENS
 This platform integrates the **Pretrained Actigraphy Transformer (PAT)**, an open-source foundation model for time-series wearable movement data developed by the Jacobson Lab at Dartmouth College.
 
 **Citation:**
+
 ```
 Ruan, Franklin Y., Zhang, Aiwei, Oh, Jenny, Jin, SouYoung, and Jacobson, Nicholas C. 
 "AI Foundation Models for Wearable Movement Data in Mental Health Research." 
@@ -312,7 +332,7 @@ arXiv:2411.15240 (2024). https://doi.org/10.48550/arXiv.2411.15240
 
 **Repository:** [njacobsonlab/Pretrained-Actigraphy-Transformer](https://github.com/njacobsonlab/Pretrained-Actigraphy-Transformer)  
 **License:** CC-BY-4.0  
-**Corresponding Author:** Franklin Ruan (franklin.y.ruan.24@dartmouth.edu)
+**Corresponding Author:** Franklin Ruan (<franklin.y.ruan.24@dartmouth.edu>)
 
 ### **Additional Acknowledgments**
 

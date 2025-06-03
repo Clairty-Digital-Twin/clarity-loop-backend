@@ -7,12 +7,14 @@ A legit health platform that ingests Apple HealthKit data and runs it through so
 ## What This Actually Does
 
 **Real Health AI Pipeline:**
+
 - Pulls biometric data from Apple HealthKit (heart rate, sleep, steps, etc.)
 - Runs it through PAT (Pretrained Actigraphy Transformer) for sleep analysis
 - Generates natural language insights with Google Gemini
 - Stores everything securely with HIPAA compliance
 
 **Tech Stack That Doesn't Suck:**
+
 - FastAPI with async everything
 - PyTorch for ML inference
 - Google Cloud with proper security
@@ -22,6 +24,7 @@ A legit health platform that ingests Apple HealthKit data and runs it through so
 ## Quick Demo
 
 ### Start Everything
+
 ```bash
 git clone <repository>
 cd clarity-loop-backend
@@ -29,12 +32,14 @@ cd clarity-loop-backend
 ```
 
 ### What You Get
-- **API**: http://localhost:8080 - Main backend
-- **Docs**: http://localhost:8080/docs - Interactive API explorer
-- **Monitoring**: http://localhost:9090 - Prometheus metrics
-- **Dashboards**: http://localhost:3000 - Grafana (admin/admin)
+
+- **API**: <http://localhost:8080> - Main backend
+- **Docs**: <http://localhost:8080/docs> - Interactive API explorer
+- **Monitoring**: <http://localhost:9090> - Prometheus metrics
+- **Dashboards**: <http://localhost:3000> - Grafana (admin/admin)
 
 ### Test the AI
+
 ```bash
 # Health insights from Gemini
 curl -X POST http://localhost:8080/api/v1/insights/generate \
@@ -84,15 +89,18 @@ curl -X POST http://localhost:8080/api/v1/pat/analyze-step-data \
 ## Key Features
 
 **AI Models:**
+
 - **PAT**: [Pretrained Actigraphy Transformer](https://github.com/njacobsonlab/Pretrained-Actigraphy-Transformer) from Jacobson Lab (Dartmouth) for sleep analysis
 - **Gemini**: Google's LLM for generating health insights from data
 
 **Real Health Data:**
+
 - Apple HealthKit integration for heart rate, HRV, steps, sleep
 - Proxy actigraphy conversion (turns step data into sleep analysis)
 - HIPAA-compliant storage and processing
 
 **Production Ready:**
+
 - Async FastAPI with proper error handling
 - Firebase auth with role-based permissions
 - Monitoring with Prometheus/Grafana
@@ -116,6 +124,7 @@ curl -X POST http://localhost:8080/api/v1/pat/analyze-step-data \
 - **Observability**: Metrics, health checks, structured logging
 
 ## Test Suite
+
 ```bash
 python scripts/api_test_suite.py
 ```
@@ -128,9 +137,9 @@ Runs comprehensive tests against all endpoints to verify everything works.
 
 This platform leverages the **Pretrained Actigraphy Transformer (PAT)** open-source foundation model:
 
-**Paper:** Ruan, F.Y., Zhang, A., Oh, J., Jin, S., & Jacobson, N.C. (2024). "AI Foundation Models for Wearable Movement Data in Mental Health Research." *arXiv:2411.15240*. https://doi.org/10.48550/arXiv.2411.15240
+**Paper:** Ruan, F.Y., Zhang, A., Oh, J., Jin, S., & Jacobson, N.C. (2024). "AI Foundation Models for Wearable Movement Data in Mental Health Research." *arXiv:2411.15240*. <https://doi.org/10.48550/arXiv.2411.15240>
 
-**Repository:** https://github.com/njacobsonlab/Pretrained-Actigraphy-Transformer (CC-BY-4.0 License)
+**Repository:** <https://github.com/njacobsonlab/Pretrained-Actigraphy-Transformer> (CC-BY-4.0 License)
 
 ---
 

@@ -4,7 +4,6 @@ The plan will include file paths, class signatures, example payloads, feature ex
 
 I’ll update you with the complete implementation-ready guide shortly.
 
-
 # SleepProcessor Implementation Blueprint
 
 ## 1. Module Creation and Placement
@@ -334,8 +333,6 @@ With sleep metrics being analyzed and stored, we want the Large Language Model (
   # Then formats:
   f"- Sleep Efficiency: {sleep_efficiency:.1f}%\n- Circadian Rhythm Score: {circadian_score:.2f}\n... - Total Sleep Time: {total_sleep_time:.1f} hours\n- Wake After Sleep Onset: {wake_after_sleep_onset:.1f} minutes\n- Sleep Onset Latency: {sleep_onset_latency:.1f} minutes\n"
   ```
-
-
 
 This indicates the LLM expects keys named exactly `sleep_efficiency`, `total_sleep_time`, `wake_after_sleep_onset`, etc., in the `analysis_results`. We will map our computed `SleepFeatures` into these keys when preparing the insight request.
 

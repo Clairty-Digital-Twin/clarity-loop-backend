@@ -56,9 +56,7 @@ class FakeCollection(CollectionPort):
         """
         return FakeDocument(self.data, doc_id)
 
-    def where(
-        self, field: str, operator: str, value: object
-    ) -> "FakeQuery":
+    def where(self, field: str, operator: str, value: object) -> "FakeQuery":
         """Create a query with a filter condition.
 
         Args:
@@ -180,9 +178,7 @@ class FakeQuery:
 
         for doc_id, doc_data in self.data.items():
             if self._matches_filters(doc_data):
-                results.append(
-                    FakeDocumentSnapshot(doc_data, doc_id, exists=True)
-                )
+                results.append(FakeDocumentSnapshot(doc_data, doc_id, exists=True))
 
         if self._limit:
             results = results[: self._limit]

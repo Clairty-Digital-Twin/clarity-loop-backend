@@ -3,14 +3,14 @@
 Publishes health data processing events to Pub/Sub topics for async processing.
 """
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 import json
 import logging
 import os
 from typing import Any
 
-from google.cloud import pubsub_v1
 from google.api_core import retry
+from google.cloud import pubsub_v1
 from pydantic import BaseModel
 
 from clarity.core.decorators import log_execution
@@ -82,7 +82,7 @@ class HealthDataPublisher:
                 user_id=user_id,
                 upload_id=upload_id,
                 gcs_path=gcs_path,
-                timestamp=datetime.now(timezone.utc).isoformat(),
+                timestamp=datetime.now(UTC).isoformat(),
                 metadata=metadata or {}
             )
 
@@ -134,7 +134,7 @@ class HealthDataPublisher:
                 user_id=user_id,
                 upload_id=upload_id,
                 analysis_results=analysis_results,
-                timestamp=datetime.now(timezone.utc).isoformat(),
+                timestamp=datetime.now(UTC).isoformat(),
                 metadata=metadata or {}
             )
 

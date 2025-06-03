@@ -357,6 +357,7 @@ class TestPATModelServiceAnalysis:
                 sleep_stages=["wake"] * 1440,
                 confidence_score=0.85,
                 clinical_insights=["Good sleep efficiency"],
+                embedding=[0.0] * 128,
             )
 
             result = await service.analyze_actigraphy(sample_actigraphy_input)
@@ -407,6 +408,7 @@ class TestPATModelServiceAnalysis:
                 sleep_stages=["sleep"] * 1440,
                 confidence_score=0.8,
                 clinical_insights=["Moderate sleep quality"],
+                embedding=[0.0] * 128,
             )
 
             result = await service.analyze_actigraphy(sample_actigraphy_input)

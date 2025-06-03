@@ -11,7 +11,7 @@ TESTS USE MOCKS FOR DEPENDENCIES BUT NO REAL IMPLEMENTATIONS.
 """
 
 from datetime import UTC, datetime
-from unittest.mock import AsyncMock, Mock
+from unittest.mock import AsyncMock, Mock, patch
 from uuid import UUID, uuid4
 
 import pytest
@@ -52,7 +52,8 @@ class TestHealthDataServiceApplicationBusinessRules:
         mock_repository = AsyncMock(spec=IHealthDataRepository)
 
         # When: Creating service with dependency injection
-        service = HealthDataService(mock_repository)
+        with patch("google.cloud.storage.Client"):
+            service = HealthDataService(mock_repository)
 
         # Then: Service should depend on abstraction
         assert service.repository is mock_repository
@@ -66,7 +67,8 @@ class TestHealthDataServiceApplicationBusinessRules:
         mock_repository = AsyncMock(spec=IHealthDataRepository)
         mock_repository.save_health_data.return_value = True
 
-        service = HealthDataService(mock_repository)
+        with patch("google.cloud.storage.Client"):
+            service = HealthDataService(mock_repository)
         user_id = uuid4()
 
         # Create valid health metric entity

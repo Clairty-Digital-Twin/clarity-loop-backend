@@ -10,14 +10,11 @@ Tests cover:
 """
 
 import json
-import logging
-from typing import Any
 from unittest.mock import Mock, patch
 from uuid import UUID
 
 from fastapi import Request
 from fastapi.responses import JSONResponse
-import pytest
 
 from clarity.core.exceptions import (
     AccessDeniedError,

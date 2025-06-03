@@ -15,7 +15,7 @@ import functools
 import logging
 import time
 from typing import Any, TypeVar
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pytest
 
@@ -511,7 +511,6 @@ class TestRepositoryMethod:
             result = repository_function()
 
         assert result == "repository_result"
-        log_messages = " ".join(caplog.messages)
         # Should have debug-level logging
         debug_messages = [record for record in caplog.records if record.levelno == logging.DEBUG]
         assert len(debug_messages) >= 2  # At least entry and completion

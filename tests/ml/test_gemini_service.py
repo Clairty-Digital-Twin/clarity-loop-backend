@@ -158,7 +158,7 @@ class TestGeminiServiceHealthInsights:
              patch('vertexai.generative_models.GenerativeModel', return_value=mock_model):
 
             # Simulate initialization during the call
-            async def init_side_effect():
+            async def init_side_effect() -> None:
                 service.is_initialized = True
                 service.model = mock_model
 

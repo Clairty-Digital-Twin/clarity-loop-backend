@@ -32,7 +32,7 @@ class TestPATTransformer:
     """Test the PyTorch PAT Transformer model architecture."""
 
     @staticmethod
-    def test_pat_transformer_initialization():
+    def test_pat_transformer_initialization() -> None:
         """Test PAT transformer model initialization with default parameters."""
         model = PATTransformer()
 
@@ -44,7 +44,7 @@ class TestPATTransformer:
         assert isinstance(model.sleep_stage_head, torch.nn.Linear)
 
     @staticmethod
-    def test_pat_transformer_custom_parameters():
+    def test_pat_transformer_custom_parameters() -> None:
         """Test PAT transformer with custom architecture parameters."""
         model = PATTransformer(
             input_dim=2,
@@ -60,7 +60,7 @@ class TestPATTransformer:
         assert model.sleep_stage_head.out_features == 3
 
     @staticmethod
-    def test_pat_transformer_forward_pass():
+    def test_pat_transformer_forward_pass() -> None:
         """Test forward pass through PAT transformer."""
         model = PATTransformer()
         model.eval()
@@ -84,7 +84,7 @@ class TestPATTransformer:
         assert outputs["depression_risk"].shape == (batch_size, 1)
 
     @staticmethod
-    def test_pat_transformer_different_sequence_lengths():
+    def test_pat_transformer_different_sequence_lengths() -> None:
         """Test PAT transformer with different input sequence lengths."""
         model = PATTransformer()
         model.eval()
@@ -104,7 +104,7 @@ class TestPATModelServiceInitialization:
     """Test PAT model service initialization and configuration."""
 
     @staticmethod
-    def test_service_initialization_default_parameters():
+    def test_service_initialization_default_parameters() -> None:
         """Test service initialization with default parameters."""
         service = PATModelService()
 
@@ -115,7 +115,7 @@ class TestPATModelServiceInitialization:
         assert service.model_path == "models/PAT-M_29k_weights.h5"
 
     @staticmethod
-    def test_service_initialization_custom_parameters():
+    def test_service_initialization_custom_parameters() -> None:
         """Test service initialization with custom parameters."""
         custom_path = "custom/path/to/model.h5"
         service = PATModelService(
@@ -129,7 +129,7 @@ class TestPATModelServiceInitialization:
         assert service.model_path == custom_path
 
     @staticmethod
-    def test_service_initialization_model_paths():
+    def test_service_initialization_model_paths() -> None:
         """Test model path selection for different sizes."""
         small_service = PATModelService(model_size="small")
         medium_service = PATModelService(model_size="medium")
@@ -140,14 +140,14 @@ class TestPATModelServiceInitialization:
         assert large_service.model_path == "models/PAT-L_29k_weights.h5"
 
     @staticmethod
-    def test_device_selection_cuda_available():
+    def test_device_selection_cuda_available() -> None:
         """Test device selection when CUDA is available."""
         with patch('torch.cuda.is_available', return_value=True):
             service = PATModelService()
             assert service.device == "cuda"
 
     @staticmethod
-    def test_device_selection_cuda_unavailable():
+    def test_device_selection_cuda_unavailable() -> None:
         """Test device selection when CUDA is unavailable."""
         with patch('torch.cuda.is_available', return_value=False):
             service = PATModelService()
@@ -159,7 +159,7 @@ class TestPATModelServiceLoading:
 
     @pytest.mark.asyncio
     @staticmethod
-    async def test_load_model_success_with_weights():
+    async def test_load_model_success_with_weights() -> None:
         """Test successful model loading with existing weight file."""
         service = PATModelService(model_size="medium")
 
@@ -182,7 +182,7 @@ class TestPATModelServiceLoading:
 
     @pytest.mark.asyncio
     @staticmethod
-    async def test_load_model_missing_weights_file():
+    async def test_load_model_missing_weights_file() -> None:
         """Test model loading when weight file doesn't exist."""
         service = PATModelService(model_path="nonexistent/path.h5")
 
@@ -193,7 +193,7 @@ class TestPATModelServiceLoading:
 
     @pytest.mark.asyncio
     @staticmethod
-    async def test_load_model_h5py_import_error():
+    async def test_load_model_h5py_import_error() -> None:
         """Test model loading when h5py is not available."""
         service = PATModelService(model_size="medium")
 
@@ -211,7 +211,7 @@ class TestPATModelServiceLoading:
 
     @pytest.mark.asyncio
     @staticmethod
-    async def test_load_model_h5_file_error():
+    async def test_load_model_h5_file_error() -> None:
         """Test model loading when H5 file is corrupted."""
         service = PATModelService(model_size="medium")
 
@@ -228,7 +228,7 @@ class TestPATModelServiceLoading:
 
     @pytest.mark.asyncio
     @staticmethod
-    async def test_load_model_weight_mapping_success():
+    async def test_load_model_weight_mapping_success() -> None:
         """Test successful weight mapping from H5 to PyTorch."""
         service = PATModelService(model_size="medium")
 
@@ -277,7 +277,7 @@ class TestPATModelServiceAnalysis:
 
     @pytest.mark.asyncio
     @staticmethod
-    async def test_analyze_actigraphy_success(sample_actigraphy_input: ActigraphyInput):
+    async def test_analyze_actigraphy_success(sample_actigraphy_input: ActigraphyInput) -> None:
         """Test successful actigraphy analysis."""
         service = PATModelService(model_size="medium")
         service.is_loaded = True
@@ -287,7 +287,7 @@ class TestPATModelServiceAnalysis:
              patch.object(service, '_postprocess_predictions') as mock_postprocess:
 
             # Set up the model after load_model is called
-            def setup_model():
+            def setup_model() -> None:
                 service.model = MagicMock()
                 service.is_loaded = True
 
@@ -328,7 +328,7 @@ class TestPATModelServiceAnalysis:
 
     @pytest.mark.asyncio
     @staticmethod
-    async def test_analyze_actigraphy_model_not_loaded(sample_actigraphy_input: ActigraphyInput):
+    async def test_analyze_actigraphy_model_not_loaded(sample_actigraphy_input: ActigraphyInput) -> None:
         """Test analysis when model is not loaded."""
         service = PATModelService(model_size="medium")
         service.is_loaded = False
@@ -374,7 +374,7 @@ class TestPATModelServiceAnalysis:
 
     @pytest.mark.asyncio
     @staticmethod
-    async def test_analyze_actigraphy_preprocessing_error(sample_actigraphy_input: ActigraphyInput):
+    async def test_analyze_actigraphy_preprocessing_error(sample_actigraphy_input: ActigraphyInput) -> None:
         """Test analysis with preprocessing error."""
         service = PATModelService(model_size="medium")
         service.is_loaded = True
@@ -386,7 +386,7 @@ class TestPATModelServiceAnalysis:
 
     @pytest.mark.asyncio
     @staticmethod
-    async def test_analyze_actigraphy_model_inference_error(sample_actigraphy_input: ActigraphyInput):
+    async def test_analyze_actigraphy_model_inference_error(sample_actigraphy_input: ActigraphyInput) -> None:
         """Test analysis with model inference error."""
         service = PATModelService(model_size="medium")
         service.is_loaded = True
@@ -402,7 +402,7 @@ class TestPATModelServicePostprocessing:
     """Test PAT model postprocessing functionality."""
 
     @staticmethod
-    def test_postprocess_predictions_typical_values():
+    def test_postprocess_predictions_typical_values() -> None:
         """Test postprocessing with typical prediction values."""
         service = PATModelService()
 
@@ -425,7 +425,7 @@ class TestPATModelServicePostprocessing:
         assert len(result.clinical_insights) > 0
 
     @staticmethod
-    def test_generate_clinical_insights_excellent_sleep():
+    def test_generate_clinical_insights_excellent_sleep() -> None:
         """Test clinical insights generation for excellent sleep."""
         insights = PATModelService._generate_clinical_insights(
             sleep_efficiency=90.0,
@@ -438,7 +438,7 @@ class TestPATModelServicePostprocessing:
         assert any("Low depression risk" in insight for insight in insights)
 
     @staticmethod
-    def test_generate_clinical_insights_poor_sleep():
+    def test_generate_clinical_insights_poor_sleep() -> None:
         """Test clinical insights generation for poor sleep."""
         insights = PATModelService._generate_clinical_insights(
             sleep_efficiency=60.0,
@@ -451,7 +451,7 @@ class TestPATModelServicePostprocessing:
         assert any("Elevated depression risk" in insight for insight in insights)
 
     @staticmethod
-    def test_generate_clinical_insights_moderate_values():
+    def test_generate_clinical_insights_moderate_values() -> None:
         """Test clinical insights generation for moderate values."""
         insights = PATModelService._generate_clinical_insights(
             sleep_efficiency=75.0,
@@ -468,7 +468,7 @@ class TestPATModelServiceHealthCheck:
 
     @pytest.mark.asyncio
     @staticmethod
-    async def test_health_check_loaded_model():
+    async def test_health_check_loaded_model() -> None:
         """Test health check with loaded model."""
         service = PATModelService(model_size="large", device="cpu")
         service.is_loaded = True
@@ -483,7 +483,7 @@ class TestPATModelServiceHealthCheck:
 
     @pytest.mark.asyncio
     @staticmethod
-    async def test_health_check_unloaded_model():
+    async def test_health_check_unloaded_model() -> None:
         """Test health check with unloaded model."""
         service = PATModelService(model_size="small")
         service.is_loaded = False
@@ -499,7 +499,7 @@ class TestGlobalPATService:
 
     @pytest.mark.asyncio
     @staticmethod
-    async def test_get_pat_service_singleton():
+    async def test_get_pat_service_singleton() -> None:
         """Test that get_pat_service returns a singleton instance."""
         # Clear any existing global instance
         clarity.ml.pat_service._pat_service = None
@@ -515,7 +515,7 @@ class TestGlobalPATService:
 
     @pytest.mark.asyncio
     @staticmethod
-    async def test_get_pat_service_loads_model():
+    async def test_get_pat_service_loads_model() -> None:
         """Test that get_pat_service loads the model."""
         # Clear any existing global instance
         clarity.ml.pat_service._pat_service = None
@@ -533,14 +533,14 @@ class TestPATModelServiceEdgeCases:
     """Test edge cases and error conditions."""
 
     @staticmethod
-    def test_raise_model_not_loaded_error():
+    def test_raise_model_not_loaded_error() -> None:
         """Test the model not loaded error helper."""
         with pytest.raises(RuntimeError, match="Model not loaded"):
             PATModelService._raise_model_not_loaded_error()
 
     @pytest.mark.asyncio
     @staticmethod
-    async def test_preprocess_actigraphy_data():
+    async def test_preprocess_actigraphy_data() -> None:
         """Test actigraphy data preprocessing."""
         service = PATModelService()
 
@@ -562,7 +562,7 @@ class TestPATModelServiceEdgeCases:
 
     @pytest.mark.asyncio
     @staticmethod
-    async def test_load_model_exception_handling():
+    async def test_load_model_exception_handling() -> None:
         """Test exception handling during model loading."""
         service = PATModelService()
 

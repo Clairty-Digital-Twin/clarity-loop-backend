@@ -269,7 +269,7 @@ class PATModelService(IMLModelService):
                             )
 
                 except ImportError:
-                    logger.error("h5py not available, cannot load .h5 weights")
+                    logger.exception("h5py not available, cannot load .h5 weights")
                     logger.warning("Using random initialization for PAT model")
                 except Exception as e:
                     logger.warning(

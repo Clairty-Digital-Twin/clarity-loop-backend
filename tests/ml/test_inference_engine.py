@@ -2,7 +2,7 @@
 
 This test suite covers all aspects of the inference engine including:
 - Engine initialization and configuration
-- Single and batch inference processing  
+- Single and batch inference processing
 - Caching functionality
 - Error handling and edge cases
 - Performance monitoring

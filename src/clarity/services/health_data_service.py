@@ -13,7 +13,7 @@ import os
 from typing import Any
 import uuid
 
-from google.cloud import storage
+from google.cloud import storage  # type: ignore[attr-defined]
 
 from clarity.models.health_data import (
     HealthDataResponse,
@@ -152,8 +152,8 @@ class HealthDataService:
             }
 
             # Upload to GCS
-            bucket = self.cloud_storage.bucket(self.raw_data_bucket)
-            blob = bucket.blob(blob_path)
+            bucket = self.cloud_storage.bucket(self.raw_data_bucket)  # type: ignore[union-attr]
+            blob = bucket.blob(blob_path)  # type: ignore[union-attr]
 
             # Set content type and metadata
             blob.content_type = "application/json"

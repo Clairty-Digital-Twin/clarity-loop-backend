@@ -125,7 +125,7 @@ class CardioProcessor:
     @staticmethod
     def _preprocess_heart_rate(
         timestamps: list[datetime], values: list[float]
-    ) -> pd.Series:
+    ) -> pd.Series[float]:
         """Clean and normalize heart rate time series."""
         if not timestamps or not values:
             return pd.Series(dtype=float)
@@ -155,7 +155,7 @@ class CardioProcessor:
         return hr_smoothed.ffill().bfill()
 
     @staticmethod
-    def _preprocess_hrv(timestamps: list[datetime], values: list[float]) -> pd.Series:
+    def _preprocess_hrv(timestamps: list[datetime], values: list[float]) -> pd.Series[float]:
         """Clean and normalize HRV time series."""
         if not timestamps or not values:
             return pd.Series(dtype=float)
@@ -178,7 +178,7 @@ class CardioProcessor:
         return hrv_interpolated.ffill().bfill()
 
     def _extract_features(
-        self, hr_series: pd.Series, hrv_series: pd.Series | None
+        self, hr_series: pd.Series[float], hrv_series: pd.Series[float] | None
     ) -> CardioFeatures:
         """Extract cardiovascular features from cleaned time series."""
         # Basic HR statistics
@@ -215,7 +215,7 @@ class CardioProcessor:
         )
 
     @staticmethod
-    def _calculate_recovery_score(hr_series: pd.Series) -> float:
+    def _calculate_recovery_score(hr_series: pd.Series[float]) -> float:
         """Calculate heart rate recovery score (0-1, higher is better)."""
         if len(hr_series) < MIN_DATA_HOURS:  # Need at least 24 hours of data
             return 0.5  # Neutral score
@@ -238,14 +238,14 @@ class CardioProcessor:
             return 0.5
 
     @staticmethod
-    def _calculate_circadian_score(hr_series: pd.Series) -> float:
+    def _calculate_circadian_score(hr_series: pd.Series[float]) -> float:
         """Calculate circadian rhythm regularity score (0-1, higher is better)."""
         if len(hr_series) < MIN_DATA_HOURS:  # Need at least 24 hours
             return 0.5
 
         try:
             # Group by hour of day and calculate consistency
-            hourly_means = hr_series.groupby(hr_series.index.hour).mean()
+            hourly_means = hr_series.groupby(hr_series.index.hour).mean()  # type: ignore[attr-defined]
 
             if len(hourly_means) < MIN_HOURLY_COVERAGE:  # Need reasonable coverage
                 return 0.5
@@ -255,7 +255,7 @@ class CardioProcessor:
             day_hr = hourly_means[hourly_means.index.isin(DAY_HOURS)].mean()
 
             if pd.isna(night_hr) or pd.isna(day_hr):
-                return 0.5
+                return 0.5  # type: ignore[unreachable]
 
             # Healthy circadian pattern: day HR > night HR
             day_night_diff = day_hr - night_hr

@@ -11,7 +11,7 @@ import os
 from typing import Any
 
 from fastapi import FastAPI, HTTPException, Request
-from google.cloud import firestore
+from google.cloud import firestore  # type: ignore[attr-defined]
 import google.generativeai as genai
 
 # Constants
@@ -30,8 +30,8 @@ class GeminiInsightGenerator:
         # Initialize Gemini
         api_key = os.getenv("GEMINI_API_KEY")
         if api_key:
-            genai.configure(api_key=api_key)
-            self.model = genai.GenerativeModel("gemini-1.5-pro")
+            genai.configure(api_key=api_key)  # type: ignore[attr-defined]
+            self.model = genai.GenerativeModel("gemini-1.5-pro")  # type: ignore[attr-defined]
         else:
             self.logger.warning("GEMINI_API_KEY not found - using mock responses")
             self.model = None
@@ -187,7 +187,7 @@ Generate the health insight now:"""
         try:
             response = self.model.generate_content(
                 prompt,
-                generation_config=genai.types.GenerationConfig(
+                generation_config=genai.types.GenerationConfig(  # type: ignore[attr-defined]
                     temperature=0.3, max_output_tokens=1024, top_p=0.8
                 ),
             )

@@ -11,10 +11,9 @@ Tests cover:
 import asyncio
 import functools
 import time
-from typing import Any
-from unittest.mock import Mock, patch
+from typing import Any, Callable, TypeVar
 
-import pytest
+F = TypeVar('F', bound=Callable[..., Any])
 
 
 class TestDecoratorsBasic:
@@ -24,11 +23,11 @@ class TestDecoratorsBasic:
     def test_mock_decorator_behavior() -> None:
         """Test mock decorator behavior for coverage."""
         # Mock a simple decorator pattern
-        def simple_decorator(func: Any) -> Any:  # noqa: ANN401
+        def simple_decorator(func: F) -> F:
             def wrapper(*args: Any, **kwargs: Any) -> Any:  # noqa: ANN401
                 result = func(*args, **kwargs)
                 return f"decorated_{result}"
-            return wrapper
+            return wrapper  # type: ignore[return-value]
 
         @simple_decorator
         def test_function() -> str:
@@ -40,14 +39,14 @@ class TestDecoratorsBasic:
     @staticmethod
     def test_async_decorator_pattern() -> None:
         """Test async decorator pattern."""
-        def async_decorator(func: Any) -> Any:
-            async def wrapper(*args: Any, **kwargs: Any) -> Any:
+        def async_decorator(func: F) -> F:
+            async def wrapper(*args: Any, **kwargs: Any) -> Any:  # noqa: ANN401
                 if asyncio.iscoroutinefunction(func):
                     result = await func(*args, **kwargs)
                 else:
                     result = func(*args, **kwargs)
                 return f"async_decorated_{result}"
-            return wrapper
+            return wrapper  # type: ignore[return-value]
 
         @async_decorator
         def sync_function() -> str:
@@ -68,12 +67,12 @@ class TestDecoratorsBasic:
     @staticmethod
     def test_decorator_with_parameters() -> None:
         """Test decorator with parameters."""
-        def parameterized_decorator(prefix: str) -> Any:
-            def decorator(func: Any) -> Any:
-                def wrapper(*args: Any, **kwargs: Any) -> Any:
+        def parameterized_decorator(prefix: str) -> Callable[[F], F]:
+            def decorator(func: F) -> F:
+                def wrapper(*args: Any, **kwargs: Any) -> Any:  # noqa: ANN401
                     result = func(*args, **kwargs)
                     return f"{prefix}_{result}"
-                return wrapper
+                return wrapper  # type: ignore[return-value]
             return decorator
 
         @parameterized_decorator("TEST")
@@ -86,15 +85,15 @@ class TestDecoratorsBasic:
     @staticmethod
     def test_decorator_error_handling() -> None:
         """Test decorator error handling patterns."""
-        def error_handling_decorator(func: Any) -> Any:
-            def wrapper(*args: Any, **kwargs: Any) -> Any:
+        def error_handling_decorator(func: F) -> F:
+            def wrapper(*args: Any, **kwargs: Any) -> Any:  # noqa: ANN401
                 try:
                     return func(*args, **kwargs)
                 except ValueError:
                     return "handled_error"
-                except Exception as e:
+                except Exception as e:  # noqa: BLE001
                     return f"unexpected_error_{type(e).__name__}"
-            return wrapper
+            return wrapper  # type: ignore[return-value]
 
         @error_handling_decorator
         def function_with_value_error() -> str:
@@ -119,8 +118,8 @@ class TestDecoratorsBasic:
         """Test caching decorator pattern."""
         cache: dict[str, Any] = {}
 
-        def simple_cache_decorator(func: Any) -> Any:
-            def wrapper(*args: Any, **kwargs: Any) -> Any:
+        def simple_cache_decorator(func: F) -> F:
+            def wrapper(*args: Any, **kwargs: Any) -> Any:  # noqa: ANN401
                 # Simple cache key from args
                 cache_key = f"{func.__name__}_{args!s}_{kwargs!s}"
 
@@ -130,7 +129,7 @@ class TestDecoratorsBasic:
                 result = func(*args, **kwargs)
                 cache[cache_key] = result
                 return result
-            return wrapper
+            return wrapper  # type: ignore[return-value]
 
         call_count = 0
 
@@ -155,14 +154,14 @@ class TestDecoratorsBasic:
         """Test timing decorator pattern."""
         times: list[float] = []
 
-        def timing_decorator(func: Any) -> Any:
-            def wrapper(*args: Any, **kwargs: Any) -> Any:
+        def timing_decorator(func: F) -> F:
+            def wrapper(*args: Any, **kwargs: Any) -> Any:  # noqa: ANN401
                 start_time = time.time()
                 result = func(*args, **kwargs)
                 end_time = time.time()
                 times.append(end_time - start_time)
                 return result
-            return wrapper
+            return wrapper  # type: ignore[return-value]
 
         @timing_decorator
         def timed_function() -> str:
@@ -177,8 +176,8 @@ class TestDecoratorsBasic:
     @staticmethod
     def test_validation_decorator_pattern() -> None:
         """Test validation decorator pattern."""
-        def validate_positive(func: Any) -> Any:
-            def wrapper(x: int) -> Any:
+        def validate_positive(func: Callable[[int], str]) -> Callable[[int], str]:
+            def wrapper(x: int) -> str:
                 if x <= 0:
                     return "invalid_input"
                 return func(x)
@@ -195,20 +194,19 @@ class TestDecoratorsBasic:
     @staticmethod
     def test_retry_decorator_pattern() -> None:
         """Test retry decorator pattern."""
-        def retry_decorator(max_attempts: int = 3) -> Any:
-            def decorator(func: Any) -> Any:
-                def wrapper(*args: Any, **kwargs: Any) -> Any:
+        def retry_decorator(max_attempts: int = 3) -> Callable[[F], F]:
+            def decorator(func: F) -> F:
+                def wrapper(*args: Any, **kwargs: Any) -> Any:  # noqa: ANN401
                     last_exception = None
                     for attempt in range(max_attempts):
                         try:
                             return func(*args, **kwargs)
-                        except Exception as e:
+                        except Exception as e:  # noqa: BLE001
                             last_exception = e
                             if attempt == max_attempts - 1:
-                                raise
-                            continue
-                    raise last_exception or Exception("Retry failed")
-                return wrapper
+                                break
+                    return f"failed_after_{max_attempts}_attempts"
+                return wrapper  # type: ignore[return-value]
             return decorator
 
         attempt_count = 0
@@ -218,8 +216,8 @@ class TestDecoratorsBasic:
             nonlocal attempt_count
             attempt_count += 1
             if attempt_count < 3:
-                error_msg = "Not ready"
-                raise ValueError(error_msg)
+                msg = f"Attempt {attempt_count}"
+                raise ValueError(msg)
             return "success"
 
         result = flaky_function()
@@ -229,11 +227,11 @@ class TestDecoratorsBasic:
     @staticmethod
     def test_decorator_metadata_preservation() -> None:
         """Test that decorators preserve function metadata."""
-        def metadata_preserving_decorator(func: Any) -> Any:
+        def metadata_preserving_decorator(func: F) -> F:
             @functools.wraps(func)
-            def wrapper(*args: Any, **kwargs: Any) -> Any:
+            def wrapper(*args: Any, **kwargs: Any) -> Any:  # noqa: ANN401
                 return func(*args, **kwargs)
-            return wrapper
+            return wrapper  # type: ignore[return-value]
 
         @metadata_preserving_decorator
         def documented_function() -> str:
@@ -246,39 +244,41 @@ class TestDecoratorsBasic:
     @staticmethod
     def test_multiple_decorators() -> None:
         """Test applying multiple decorators."""
-        def add_prefix(func: Any) -> Any:
-            def wrapper(*args: Any, **kwargs: Any) -> Any:
+        def add_prefix(func: F) -> F:
+            def wrapper(*args: Any, **kwargs: Any) -> Any:  # noqa: ANN401
                 result = func(*args, **kwargs)
                 return f"prefix_{result}"
-            return wrapper
+            return wrapper  # type: ignore[return-value]
 
-        def add_suffix(func: Any) -> Any:
-            def wrapper(*args: Any, **kwargs: Any) -> Any:
+        def add_suffix(func: F) -> F:
+            def wrapper(*args: Any, **kwargs: Any) -> Any:  # noqa: ANN401
                 result = func(*args, **kwargs)
                 return f"{result}_suffix"
-            return wrapper
+            return wrapper  # type: ignore[return-value]
 
         @add_prefix
         @add_suffix
         def base_function() -> str:
             return "base"
 
-        # Decorators apply from bottom to top
         result = base_function()
         assert result == "prefix_base_suffix"
 
     @staticmethod
     def test_class_method_decorator() -> None:
         """Test decorator on class methods."""
-        def log_method_calls(func: Any) -> Any:
-            def wrapper(self: Any, *args: Any, **kwargs: Any) -> Any:
+        def log_method_calls(func: F) -> F:
+            def wrapper(self: Any, *args: Any, **kwargs: Any) -> Any:  # noqa: ANN401
                 result = func(self, *args, **kwargs)
                 return f"logged_{result}"
-            return wrapper
+            return wrapper  # type: ignore[return-value]
 
         class TestClass:
+            """Test class for method decoration."""
+
             @log_method_calls
             def test_method(self) -> str:  # noqa: PLR6301
+                """Test method."""
                 return "method_result"
 
         instance = TestClass()
@@ -288,17 +288,16 @@ class TestDecoratorsBasic:
     @staticmethod
     def test_decorator_with_state() -> None:
         """Test decorator that maintains state."""
-        def counting_decorator(func: Any) -> Any:
+        def counting_decorator(func: F) -> F:
             call_count = 0
 
-            def wrapper(*args: Any, **kwargs: Any) -> Any:
+            def wrapper(*args: Any, **kwargs: Any) -> Any:  # noqa: ANN401
                 nonlocal call_count
                 call_count += 1
                 result = func(*args, **kwargs)
+                wrapper.get_call_count = lambda: call_count  # type: ignore[attr-defined]
                 return f"call_{call_count}_{result}"
-
-            wrapper.get_call_count = lambda: call_count
-            return wrapper
+            return wrapper  # type: ignore[return-value]
 
         @counting_decorator
         def counted_function() -> str:
@@ -306,20 +305,20 @@ class TestDecoratorsBasic:
 
         assert counted_function() == "call_1_result"
         assert counted_function() == "call_2_result"
-        assert counted_function.get_call_count() == 2  # type: ignore
+        assert counted_function.get_call_count() == 2  # type: ignore[attr-defined]
 
     @staticmethod
     async def test_async_decorator_error_handling() -> None:
         """Test async decorator with error handling."""
-        def async_error_handler(func: Any) -> Any:
-            async def wrapper(*args: Any, **kwargs: Any) -> Any:
+        def async_error_handler(func: F) -> F:
+            async def wrapper(*args: Any, **kwargs: Any) -> Any:  # noqa: ANN401
                 try:
                     if asyncio.iscoroutinefunction(func):
                         return await func(*args, **kwargs)
                     return func(*args, **kwargs)
-                except Exception:
+                except Exception:  # noqa: BLE001
                     return "async_error_handled"
-            return wrapper
+            return wrapper  # type: ignore[return-value]
 
         @async_error_handler
         async def failing_async_function() -> str:
@@ -331,8 +330,8 @@ class TestDecoratorsBasic:
             sync_error_msg = "Sync error"
             raise ValueError(sync_error_msg)
 
-        result1 = await failing_async_function()
-        assert result1 == "async_error_handled"
+        async_result = await failing_async_function()
+        assert async_result == "async_error_handled"
 
-        result2 = await failing_sync_function()
-        assert result2 == "async_error_handled"
+        sync_result = await failing_sync_function()
+        assert sync_result == "async_error_handled"

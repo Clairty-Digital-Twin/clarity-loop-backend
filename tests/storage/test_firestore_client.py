@@ -59,7 +59,7 @@ def mock_credentials() -> Mock:
 
 
 @pytest.fixture
-def firestore_client(mock_firebase_admin: Mock, mock_credentials: Mock) -> FirestoreClient:
+def firestore_client(_mock_firebase_admin: Mock, _mock_credentials: Mock) -> FirestoreClient:
     """Create FirestoreClient instance with mocked dependencies."""
     return FirestoreClient(
         project_id="test-project",
@@ -316,7 +316,7 @@ class TestFirestoreClientDocumentOperations:
         mock_doc_snapshot = Mock()
         mock_doc_snapshot.exists = True
         mock_doc_snapshot.to_dict.return_value = {"name": "test", "value": 123}
-        
+
         mock_doc_ref = Mock()
         mock_doc_ref.get = AsyncMock(return_value=mock_doc_snapshot)
 
@@ -339,7 +339,7 @@ class TestFirestoreClientDocumentOperations:
         # Mock the database client and document reference chain
         mock_doc_snapshot = Mock()
         mock_doc_snapshot.exists = False
-        
+
         mock_doc_ref = Mock()
         mock_doc_ref.get = AsyncMock(return_value=mock_doc_snapshot)
 
@@ -499,7 +499,7 @@ class TestFirestoreHealthDataRepository:
         assert "pagination" in result
         assert result["pagination"]["total"] == 1
         assert result["metrics"] == mock_metrics
-        
+
         # Verify the methods were called
         mock_query.assert_called_once()
         mock_count.assert_called_once()

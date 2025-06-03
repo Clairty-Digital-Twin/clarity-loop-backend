@@ -6,7 +6,7 @@ depend on abstractions, not concrete implementations.
 """
 
 from abc import ABC, abstractmethod
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 
 class StoragePort(ABC):

@@ -15,7 +15,6 @@ import functools
 import logging
 import time
 from typing import Any, TypeVar
-from unittest.mock import patch
 
 import pytest
 

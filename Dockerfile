@@ -24,6 +24,7 @@ ENV PATH="/opt/venv/bin:$PATH"
 # Copy dependency files
 COPY pyproject.toml ./
 COPY README.md ./
+COPY LICENSE ./
 
 # Install Python dependencies
 RUN pip install --upgrade pip setuptools wheel

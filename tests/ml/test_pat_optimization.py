@@ -525,7 +525,7 @@ class TestErrorHandling:
         # Create a corrupted cache entry with wrong format
         cache_key = optimizer._generate_cache_key(sample_actigraphy_input)
         optimizer._cache[cache_key] = (
-            ("corrupted_data_not_tuple", 0.0)  # Fixed to be a tuple
+            "corrupted_data_not_tuple", 0.0  # This should be a tuple but isn't
         )
 
         # Should handle gracefully and not use corrupted cache

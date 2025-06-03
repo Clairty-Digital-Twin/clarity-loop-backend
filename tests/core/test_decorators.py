@@ -257,7 +257,8 @@ class TestDecoratorsBasic:
             return "documented"
 
         assert documented_function.__name__ == "documented_function"
-        assert documented_function.__doc__ is not None and "documentation" in documented_function.__doc__
+        assert documented_function.__doc__ is not None
+        assert "documentation" in documented_function.__doc__
 
     @staticmethod
     def test_multiple_decorators() -> None:

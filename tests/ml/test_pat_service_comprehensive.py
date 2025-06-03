@@ -125,7 +125,7 @@ class TestPATModelService:
 
         # Test encoder architecture
         if pat_service.model is not None:
-            encoder = pat_service.model.encoder  # type: ignore[union-attr]
+            encoder = pat_service.model.encoder
         else:
             pytest.skip("Model not loaded")
         assert isinstance(encoder, PATEncoder)

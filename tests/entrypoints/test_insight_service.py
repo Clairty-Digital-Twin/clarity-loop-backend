@@ -36,8 +36,6 @@ class TestInsightService:
     @patch("clarity.entrypoints.insight_service.uvicorn.run")
     def test_main_function_with_defaults(self, mock_uvicorn_run: Mock) -> None:
         """Test main function with default environment variables."""
-        from clarity.entrypoints.insight_service import main
-
         with patch.dict(os.environ, {}, clear=True):
             main()
 

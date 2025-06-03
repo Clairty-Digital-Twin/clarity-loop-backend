@@ -64,7 +64,7 @@ def mock_credentials() -> Generator[Mock, None, None]:
 
 @pytest.fixture
 def firestore_client(
-    mock_firebase_admin: Mock, mock_credentials: Mock
+    _mock_firebase_admin: Mock, _mock_credentials: Mock
 ) -> FirestoreClient:
     """Create FirestoreClient instance with mocked dependencies."""
     return FirestoreClient(

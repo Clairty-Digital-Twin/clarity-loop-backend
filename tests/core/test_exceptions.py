@@ -873,7 +873,7 @@ class TestExceptionEdgeCases:
             msg = "Original error"
             raise ValueError(msg)
 
-        with pytest.raises(ValueError) as exc_info:
+        with pytest.raises(ValueError, match="Original error") as exc_info:
             raise_value_error()
 
         original = exc_info.value

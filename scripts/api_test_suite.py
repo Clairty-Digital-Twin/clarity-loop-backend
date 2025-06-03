@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""🚀 CLARITY Digital Twin Platform - Comprehensive API Test Suite
+"""🚀 CLARITY Digital Twin Platform - Comprehensive API Test Suite.
 
 This script tests all major API endpoints to demonstrate the platform's capabilities
 for a technical co-founder audit. Shows off the breadth and depth of functionality.
@@ -41,7 +41,7 @@ BASE_URL = "http://localhost:8000"
 class APITester:
     """Comprehensive API testing suite with beautiful output."""
 
-    def __init__(self, base_url: str = BASE_URL):
+    def __init__(self, base_url: str = BASE_URL) -> None:
         """Initialize the API tester."""
         self.base_url = base_url
         self.session: aiohttp.ClientSession | None = None
@@ -90,7 +90,8 @@ class APITester:
     ) -> "tuple[int, dict[str, Any]]":
         """Make an HTTP request and return status code and response."""
         if not self.session:
-            raise RuntimeError("Session not initialized")
+            msg = "Session not initialized"
+            raise RuntimeError(msg)
 
         url = f"{self.base_url}{endpoint}"
         start_time = time.time()
@@ -157,7 +158,7 @@ class APITester:
         ]
 
         for endpoint, description in docs_endpoints:
-            status, response = await self._make_request("GET", endpoint)
+            status, _response = await self._make_request("GET", endpoint)
             if 200 <= status < 300:
                 self._print_success(f"{description}: Accessible")
             else:
@@ -178,7 +179,7 @@ class APITester:
             }
         }
 
-        status, response = await self._make_request(
+        status, _response = await self._make_request(
             "POST", "/api/v1/auth/register", json=register_data
         )
         if 200 <= status < 300:
@@ -192,7 +193,7 @@ class APITester:
             "password": "DemoPassword123!"
         }
 
-        status, response = await self._make_request(
+        status, _response = await self._make_request(
             "POST", "/api/v1/auth/login", json=login_data
         )
         if 200 <= status < 300:
@@ -227,7 +228,7 @@ class APITester:
             }
         }
 
-        status, response = await self._make_request(
+        status, _response = await self._make_request(
             "POST", "/api/v1/health-data/upload", json=sample_data
         )
         if 200 <= status < 300:
@@ -243,7 +244,7 @@ class APITester:
             "end_date": "2024-12-31"
         }
 
-        status, response = await self._make_request(
+        status, _response = await self._make_request(
             "GET", "/api/v1/health-data/query", params=query_params
         )
         if 200 <= status < 300:
@@ -362,7 +363,7 @@ class APITester:
         print(f"\n{Fore.YELLOW}🔥 READY TO SHOCK THE TECHNICAL CO-FOUNDER! 🔥{Style.RESET_ALL}")
 
 
-async def main():
+async def main() -> None:
     """Main function to run the comprehensive API test."""
     try:
         async with APITester() as tester:

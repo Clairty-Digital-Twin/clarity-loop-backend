@@ -84,14 +84,17 @@ class TestLogExecution:
         with caplog.at_level(logging.INFO):
             @log_execution()
             def failing_function() -> str:
-                raise ValueError("Test error")
+                msg = "Test error"
+                raise ValueError(msg)
 
             with pytest.raises(ValueError, match="Test error"):
                 failing_function()
 
         log_messages = " ".join(caplog.messages)
-        assert "Executing" in log_messages and "failing_function" in log_messages
-        assert "Error in" in log_messages and "failing_function" in log_messages
+        assert "Executing" in log_messages
+        assert "failing_function" in log_messages
+        assert "Error in" in log_messages
+        assert "failing_function" in log_messages
 
     async def test_log_execution_async_exception_handling(self, caplog: pytest.LogCaptureFixture) -> None:
         """Test logging when async function raises exception."""
@@ -99,14 +102,17 @@ class TestLogExecution:
             @log_execution()
             async def failing_async_function() -> str:
                 await asyncio.sleep(0.01)
-                raise ValueError("Async test error")
+                msg = "Async test error"
+                raise ValueError(msg)
 
             with pytest.raises(ValueError, match="Async test error"):
                 await failing_async_function()
 
         log_messages = " ".join(caplog.messages)
-        assert "Executing" in log_messages and "failing_async_function" in log_messages
-        assert "Error in" in log_messages and "failing_async_function" in log_messages
+        assert "Executing" in log_messages
+        assert "failing_async_function" in log_messages
+        assert "Error in" in log_messages
+        assert "failing_async_function" in log_messages
 
     def test_log_execution_custom_level(self, caplog: pytest.LogCaptureFixture) -> None:
         """Test logging with custom log level."""
@@ -186,7 +192,8 @@ class TestMeasureExecutionTime:
             @measure_execution_time()
             def failing_timed_function() -> str:
                 time.sleep(0.02)  # Small delay before failing
-                raise RuntimeError("Timing test error")
+                msg = "Timing test error"
+                raise RuntimeError(msg)
 
             with pytest.raises(RuntimeError, match="Timing test error"):
                 failing_timed_function()
@@ -223,7 +230,8 @@ class TestRetryOnFailure:
                 nonlocal call_count
                 call_count += 1
                 if call_count < 3:
-                    raise ValueError(f"Attempt {call_count} failed")
+                    msg = f"Attempt {call_count} failed"
+                    raise ValueError(msg)
                 return f"success_{call_count}"
 
             result = flaky_function()
@@ -242,7 +250,8 @@ class TestRetryOnFailure:
             def always_failing_function() -> str:
                 nonlocal call_count
                 call_count += 1
-                raise ValueError(f"Failure {call_count}")
+                msg = f"Failure {call_count}"
+                raise ValueError(msg)
 
             with pytest.raises(ValueError, match="Failure 3"):
                 always_failing_function()
@@ -261,7 +270,8 @@ class TestRetryOnFailure:
             call_count += 1
             await asyncio.sleep(0.001)
             if call_count < 2:
-                raise ValueError(f"Async attempt {call_count} failed")
+                msg = f"Async attempt {call_count} failed"
+                raise ValueError(msg)
             return f"async_success_{call_count}"
 
         result = await async_flaky_function()
@@ -276,7 +286,8 @@ class TestRetryOnFailure:
         def backoff_function() -> str:
             call_times.append(time.time())
             if len(call_times) < 3:
-                raise ValueError("Not ready yet")
+                msg = "Not ready yet"
+                raise ValueError(msg)
             return "backoff_success"
 
         result = backoff_function()
@@ -297,9 +308,11 @@ class TestRetryOnFailure:
             nonlocal call_count
             call_count += 1
             if call_count == 1:
-                raise ValueError("Retryable error")
+                msg = "Retryable error"
+                raise ValueError(msg)
             if call_count == 2:
-                raise TypeError("Non-retryable error")
+                msg = "Non-retryable error"
+                raise TypeError(msg)
             return "should_not_reach"
 
         with pytest.raises(TypeError, match="Non-retryable error"):
@@ -395,7 +408,8 @@ class TestAuditTrail:
         with caplog.at_level(logging.INFO):
             @audit_trail("failing_operation")
             def failing_audited_function() -> str:
-                raise RuntimeError("Audit test error")
+                msg = "Audit test error"
+                raise RuntimeError(msg)
 
             with pytest.raises(RuntimeError, match="Audit test error"):
                 failing_audited_function()
@@ -450,7 +464,8 @@ class TestServiceMethod:
                 nonlocal call_count
                 call_count += 1
                 if call_count < 2:
-                    raise ValueError("Service temporarily unavailable")
+                    msg = "Service temporarily unavailable"
+                    raise ValueError(msg)
                 return "service_recovered"
 
             result = flaky_service_function()
@@ -511,7 +526,8 @@ class TestRepositoryMethod:
                 nonlocal call_count
                 call_count += 1
                 if call_count < 3:
-                    raise ConnectionError("Database temporarily unavailable")
+                    msg = "Database temporarily unavailable"
+                    raise ConnectionError(msg)
                 return "repository_recovered"
 
             result = flaky_repository_function()
@@ -550,7 +566,8 @@ class TestDecoratorsIntegration:
                 nonlocal call_count
                 call_count += 1
                 if call_count < 2:
-                    raise ValueError("Need retry")
+                    msg = "Need retry"
+                    raise ValueError(msg)
                 time.sleep(0.02)  # For timing measurement
                 return "multi_decorated_result"
 
@@ -589,7 +606,8 @@ class TestDecoratorsIntegration:
             call_count += 1
             await asyncio.sleep(0.01)
             if call_count < 2:
-                raise ValueError("Async retry needed")
+                msg = "Async retry needed"
+                raise ValueError(msg)
             return "comprehensive_async_result"
 
         result = await comprehensive_async_function()
@@ -601,7 +619,8 @@ class TestDecoratorsIntegration:
         @log_execution()
         @measure_execution_time()
         def error_propagation_function() -> str:
-            raise CustomTestError("Custom test error")
+            msg = "Custom test error"
+            raise CustomTestError(msg)
 
         with pytest.raises(CustomTestError, match="Custom test error"):
             error_propagation_function()

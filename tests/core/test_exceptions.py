@@ -874,7 +874,8 @@ class TestExceptionEdgeCases:
     def test_exception_chaining(self) -> None:
         """Test exception chaining preserves context."""
         try:
-            raise ValueError("Original error")
+            msg = "Original error"
+            raise ValueError(msg)
         except ValueError as original:
             new_error = InferenceError(
                 "Inference failed due to validation",

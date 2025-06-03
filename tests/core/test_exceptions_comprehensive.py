@@ -101,6 +101,9 @@ class TestProblemDetail:
             status=500,
             detail="Minimal detail",
             instance="https://api.clarity.health/requests/minimal",
+            trace_id=None,
+            errors=None,
+            help_url=None,
         )
 
         assert problem.type == "https://api.clarity.health/problems/minimal"

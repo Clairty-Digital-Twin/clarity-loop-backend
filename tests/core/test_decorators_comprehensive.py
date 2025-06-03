@@ -6,7 +6,7 @@ Tests all decorators and edge cases to improve coverage from 11% to 90%+.
 import asyncio
 import logging
 import time
-from typing import Any, Dict, Tuple
+from typing import Any
 
 import pytest
 
@@ -361,7 +361,7 @@ class TestValidateInputDecorator:
     @staticmethod
     def test_validate_input_valid_args() -> None:
         """Test validate_input decorator with valid arguments."""
-        def validator(args_kwargs: Tuple[Tuple[Any, ...], Dict[str, Any]]) -> bool:
+        def validator(args_kwargs: tuple[tuple[Any, ...], dict[str, Any]]) -> bool:
             args, _ = args_kwargs
             return len(args) > 0 and isinstance(args[0], str)
 
@@ -375,7 +375,7 @@ class TestValidateInputDecorator:
     @staticmethod
     def test_validate_input_invalid_args() -> None:
         """Test validate_input decorator with invalid arguments."""
-        def validator(args_kwargs: Tuple[Tuple[Any, ...], Dict[str, Any]]) -> bool:
+        def validator(args_kwargs: tuple[tuple[Any, ...], dict[str, Any]]) -> bool:
             args, _ = args_kwargs
             return len(args) > 0 and isinstance(args[0], str)
 
@@ -389,7 +389,7 @@ class TestValidateInputDecorator:
     @staticmethod
     def test_validate_input_empty_args() -> None:
         """Test validate_input decorator with empty arguments."""
-        def validator(args_kwargs: Tuple[Tuple[Any, ...], Dict[str, Any]]) -> bool:
+        def validator(args_kwargs: tuple[tuple[Any, ...], dict[str, Any]]) -> bool:
             args, _ = args_kwargs
             return len(args) > 0
 
@@ -403,7 +403,7 @@ class TestValidateInputDecorator:
     @staticmethod
     def test_validate_input_kwargs_validation() -> None:
         """Test validate_input decorator with keyword arguments validation."""
-        def validator(args_kwargs: Tuple[Tuple[Any, ...], Dict[str, Any]]) -> bool:
+        def validator(args_kwargs: tuple[tuple[Any, ...], dict[str, Any]]) -> bool:
             _, kwargs = args_kwargs
             return "required_key" in kwargs
 
@@ -420,7 +420,7 @@ class TestValidateInputDecorator:
     @staticmethod
     def test_validate_input_complex_validation() -> None:
         """Test validate_input decorator with complex validation logic."""
-        def validator(args_kwargs: Tuple[Tuple[Any, ...], Dict[str, Any]]) -> bool:
+        def validator(args_kwargs: tuple[tuple[Any, ...], dict[str, Any]]) -> bool:
             args, _kwargs = args_kwargs
             if len(args) == 0:
                 return False
@@ -428,8 +428,8 @@ class TestValidateInputDecorator:
             return isinstance(data, dict) and "id" in data and "name" in data
 
         @validate_input(validator, "Data must be dict with id and name")
-        def test_func(data: Dict[str, Any]) -> str:
-            return data['id'] + data['name']
+        def test_func(data: dict[str, Any]) -> str:
+            return str(data['id']) + str(data['name'])
 
         result = test_func({"id": "123", "name": "test"})
         assert result == "123test"

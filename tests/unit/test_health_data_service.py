@@ -47,9 +47,8 @@ class TestHealthDataServiceApplicationBusinessRules:
     Uses mocks for all dependencies (repositories, external services).
     """
 
-    @staticmethod
     def test_service_initialization_dependency_injection(
-        mock_storage_client: Any,
+        self, mock_storage_client: Any
     ) -> None:
         """Test use case follows Dependency Inversion Principle."""
         # Given: Mock repository (abstraction, not concrete implementation)

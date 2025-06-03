@@ -190,13 +190,13 @@ class AnalysisSubscriber:
 
 # Create FastAPI app for analysis service
 analysis_app = FastAPI(title="Health Data Analysis Service")
-analysis_subscriber = AnalysisSubscriber()
 
 
 @analysis_app.post("/process-task")
 async def process_analysis_task(request: Request) -> dict[str, Any]:
     """Handle Pub/Sub push subscription for health data analysis."""
-    return await analysis_subscriber.process_health_data_message(request)
+    subscriber = get_analysis_subscriber()
+    return await subscriber.process_health_data_message(request)
 
 
 @analysis_app.get("/health")

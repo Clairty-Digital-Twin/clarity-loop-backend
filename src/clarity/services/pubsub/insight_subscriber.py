@@ -385,13 +385,13 @@ class InsightSubscriber:
 
 # Create FastAPI app for insight service
 insight_app = FastAPI(title="Health Insight Generation Service")
-insight_subscriber = InsightSubscriber()
 
 
 @insight_app.post("/generate-insight")
 async def generate_insight_task(request: Request) -> dict[str, Any]:
     """Handle Pub/Sub push subscription for insight generation."""
-    return await insight_subscriber.process_insight_request_message(request)
+    subscriber = get_insight_subscriber()
+    return await subscriber.process_insight_request_message(request)
 
 
 @insight_app.get("/health")

@@ -33,6 +33,7 @@ from clarity.services.health_data_service import (
 )
 
 
+@patch("google.cloud.storage.Client")
 class TestHealthDataServiceApplicationBusinessRules:
     """Test Application Business Rules Layer (Use Cases).
 
@@ -52,8 +53,7 @@ class TestHealthDataServiceApplicationBusinessRules:
         mock_repository = AsyncMock(spec=IHealthDataRepository)
 
         # When: Creating service with dependency injection
-        with patch("google.cloud.storage.Client"):
-            service = HealthDataService(mock_repository)
+        service = HealthDataService(mock_repository)
 
         # Then: Service should depend on abstraction
         assert service.repository is mock_repository
@@ -67,8 +67,7 @@ class TestHealthDataServiceApplicationBusinessRules:
         mock_repository = AsyncMock(spec=IHealthDataRepository)
         mock_repository.save_health_data.return_value = True
 
-        with patch("google.cloud.storage.Client"):
-            service = HealthDataService(mock_repository)
+        service = HealthDataService(mock_repository)
         user_id = uuid4()
 
         # Create valid health metric entity
@@ -133,7 +132,8 @@ class TestHealthDataServiceApplicationBusinessRules:
             "Database connection failed"
         )
 
-        service = HealthDataService(mock_repository)
+        with patch("google.cloud.storage.Client"):
+            service = HealthDataService(mock_repository)
         user_id = uuid4()
 
         biometric_data = BiometricData(

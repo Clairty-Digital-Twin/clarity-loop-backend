@@ -10,7 +10,7 @@ This test suite covers all aspects of the inference engine including:
 
 import asyncio
 from datetime import UTC, datetime
-from typing import Any, Never
+from typing import Never
 from unittest.mock import AsyncMock, MagicMock
 from uuid import uuid4
 
@@ -461,9 +461,7 @@ class TestInferenceEngineErrorHandling:
 
             # Due to the batching mechanism, the error gets caught as a timeout error
             # when the batch processor fails
-            with pytest.raises(
-                InferenceTimeoutError, match="timed out after"
-            ):
+            with pytest.raises(InferenceTimeoutError, match="timed out after"):
                 await engine.predict_async(request)
 
     @staticmethod

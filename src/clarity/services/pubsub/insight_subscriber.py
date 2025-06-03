@@ -84,7 +84,7 @@ class GeminiInsightGenerator:
             return insight
 
         except Exception as e:
-            self.logger.exception("Failed to generate health insight: %s", e)
+            self.logger.exception("Failed to generate health insight")
             raise
 
     @staticmethod

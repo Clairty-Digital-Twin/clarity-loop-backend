@@ -914,7 +914,7 @@ class PATModelService(IMLModelService):
             return is_identical
 
         except Exception as e:
-            logger.exception("Error verifying PAT weights: %s", e)
+            logger.exception("Error verifying PAT weights")
             return False
 
     async def health_check(self) -> dict[str, str | bool]:

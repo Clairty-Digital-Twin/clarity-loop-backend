@@ -12,9 +12,11 @@ The Clarity Loop Backend integrates the Pretrained Actigraphy Transformer (PAT) 
 
 ```
 models/
-├── PAT-L_29k_weights.h5    # Large: 1.99M parameters, 7.6MB
-├── PAT-M_29k_weights.h5    # Medium: 1.00M parameters, 3.8MB
-└── PAT-S_29k_weights.h5    # Small: 285K parameters, 1.1MB
+├── gemini/
+└── pat/
+    ├── PAT-L_29k_weights.h5    # Large: 1.99M parameters, 7.6MB
+    ├── PAT-M_29k_weights.h5    # Medium: 1.00M parameters, 3.8MB
+    └── PAT-S_29k_weights.h5    # Small: 285K parameters, 1.1MB
 ```
 
 ### Model Specifications

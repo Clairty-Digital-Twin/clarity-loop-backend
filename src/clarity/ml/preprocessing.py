@@ -78,8 +78,8 @@ class StandardActigraphyPreprocessor:
                 padded[: len(activity_data)] = activity_data
                 activity_data = padded
 
-        # Convert to tensor and add batch and feature dimensions
-        return torch.FloatTensor(activity_data).unsqueeze(0).unsqueeze(-1)
+        # Convert to tensor (PAT expects 1D sequence, service adds batch dim)
+        return torch.FloatTensor(activity_data)
 
 
 class HealthDataPreprocessor:

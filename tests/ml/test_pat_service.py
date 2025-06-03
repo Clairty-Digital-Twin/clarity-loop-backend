@@ -164,37 +164,37 @@ class TestPATModelServiceLoading:
         service = PATModelService(model_size="medium")
 
         with patch('pathlib.Path.exists', return_value=True):
-            # Create a more realistic h5py mock
+            # Create a proper h5py mock that handles keys() correctly
             mock_h5py = MagicMock()
-            mock_file = MagicMock()
+            
+            # Create a custom mock file object that behaves like h5py
+            class MockH5File:
+                def keys(self):
+                    # Return a simple list, not a MagicMock that h5py tries to convert
+                    return ['inputs', 'dense']
+                
+                def __getitem__(self, key):
+                    # Return mock groups with proper structure
+                    if key == 'inputs':
+                        return {
+                            'kernel:0': np.ones((1, 256)),
+                            'bias:0': np.ones(256)
+                        }
+                    elif key == 'dense':
+                        return {
+                            'kernel:0': np.ones((256, 4)),
+                            'bias:0': np.ones(4)
+                        }
+                    raise KeyError(f"Key {key} not found")
+                
+                def __contains__(self, key):
+                    return key in ['inputs', 'dense']
+            
+            mock_file = MockH5File()
             
             # Set up context manager behavior
             mock_h5py.File.return_value.__enter__.return_value = mock_file
             mock_h5py.File.return_value.__exit__.return_value = None
-            
-            # Mock keys() to return a simple list (not a KeysView)
-            mock_file.keys.return_value = ['inputs', 'dense']
-            
-            # Mock nested access for weight groups
-            mock_inputs = MagicMock()
-            mock_inputs.__contains__ = lambda x: x in ['kernel:0', 'bias:0']
-            mock_inputs.__getitem__ = lambda x: {
-                'kernel:0': np.ones((1, 256)),
-                'bias:0': np.ones(256)
-            }[x]
-            
-            mock_dense = MagicMock()
-            mock_dense.__contains__ = lambda x: x in ['kernel:0', 'bias:0']
-            mock_dense.__getitem__ = lambda x: {
-                'kernel:0': np.ones((256, 4)),
-                'bias:0': np.ones(4)
-            }[x]
-            
-            mock_file.__getitem__ = lambda x: {
-                'inputs': mock_inputs,
-                'dense': mock_dense
-            }[x]
-            mock_file.__contains__ = lambda x: x in ['inputs', 'dense']
 
             with patch.dict('sys.modules', {'h5py': mock_h5py}):
                 await service.load_model()
@@ -261,25 +261,28 @@ class TestPATModelServiceLoading:
 
         with patch('pathlib.Path.exists', return_value=True):
             mock_h5py = MagicMock()
-            mock_file = MagicMock()
+            
+            # Create a custom mock file object that handles h5py properly
+            class MockH5File:
+                def keys(self):
+                    return ['inputs']
+                
+                def __getitem__(self, key):
+                    if key == 'inputs':
+                        return {
+                            'kernel:0': mock_input_weight,
+                            'bias:0': mock_input_bias
+                        }
+                    raise KeyError(f"Key {key} not found")
+                
+                def __contains__(self, key):
+                    return key in ['inputs']
+            
+            mock_file = MockH5File()
             
             # Set up context manager behavior
             mock_h5py.File.return_value.__enter__.return_value = mock_file
             mock_h5py.File.return_value.__exit__.return_value = None
-            
-            # Mock keys() to return a simple list
-            mock_file.keys.return_value = ['inputs']
-            
-            # Mock nested access for inputs group
-            mock_inputs = MagicMock()
-            mock_inputs.__contains__ = lambda x: x in ['kernel:0', 'bias:0']
-            mock_inputs.__getitem__ = lambda x: {
-                'kernel:0': mock_input_weight,
-                'bias:0': mock_input_bias
-            }[x]
-            
-            mock_file.__getitem__ = lambda x: {'inputs': mock_inputs}[x]
-            mock_file.__contains__ = lambda x: x in ['inputs']
 
             with patch.dict('sys.modules', {'h5py': mock_h5py}):
                 await service.load_model()

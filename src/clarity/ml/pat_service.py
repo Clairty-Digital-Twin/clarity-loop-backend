@@ -422,48 +422,61 @@ class PATModelService(IMLModelService):
         attn_group = layer_group[f'encoder_layer_{layer_idx + 1}_attention']
         
         # Get dimensions
-        embed_dim = self.config["embed_dim"]
-        num_heads = self.config["num_heads"]
+        embed_dim = int(self.config["embed_dim"])
+        num_heads = int(self.config["num_heads"])
         head_dim = embed_dim // num_heads
         
-        # Convert Q, K, V weights
+        # Collect Q, K, V weights for combined in_proj
+        qkv_weights = []
+        qkv_biases = []
+        
         for qkv_name in ['query', 'key', 'value']:
             if qkv_name in attn_group:  # type: ignore[operator]
                 qkv_group = attn_group[qkv_name]  # type: ignore[index]
                 
                 if 'kernel:0' in qkv_group:  # type: ignore[operator]
-                    # TF shape: [embed_dim, num_heads, head_dim]
-                    # PyTorch shape: [embed_dim, embed_dim] (flattened)
+                    # TF shape: [embed_dim, num_heads, head_dim] = (96, 12, 96)
                     tf_weight = qkv_group['kernel:0'][:]  # type: ignore[index]
                     
-                    # Reshape and transpose for PyTorch
-                    pytorch_weight = tf_weight.reshape(embed_dim, embed_dim).T  # type: ignore[attr-defined]
-                    
-                    pytorch_name = f'transformer_layers.{layer_idx}.attention.{qkv_name}_proj.weight'
-                    state_dict[pytorch_name] = torch.from_numpy(pytorch_weight)
+                    # Reshape to [embed_dim, embed_dim] for PyTorch
+                    # TF stores as [input_dim, num_heads, head_dim]
+                    # PyTorch wants [embed_dim, embed_dim] 
+                    pytorch_weight = tf_weight.reshape(embed_dim, embed_dim)
+                    qkv_weights.append(pytorch_weight)
                 
-                if 'bias:0' in qkv_group:
-                    tf_bias = qkv_group['bias:0'][:]
-                    # Reshape bias from [num_heads, head_dim] to [embed_dim]
-                    pytorch_bias = tf_bias.reshape(-1)
-                    
-                    pytorch_name = f'transformer_layers.{layer_idx}.attention.{qkv_name}_proj.bias'
-                    state_dict[pytorch_name] = torch.from_numpy(pytorch_bias)
+                if 'bias:0' in qkv_group:  # type: ignore[operator]
+                    tf_bias = qkv_group['bias:0'][:]  # type: ignore[index]
+                    # TF shape: [num_heads, head_dim] = (12, 96)
+                    # Reshape to [embed_dim] for PyTorch
+                    pytorch_bias = tf_bias.reshape(embed_dim)
+                    qkv_biases.append(pytorch_bias)
+        
+        # Combine Q, K, V into PyTorch's in_proj format
+        if len(qkv_weights) == 3:
+            # Stack Q, K, V weights: [3*embed_dim, embed_dim]
+            combined_weight = np.concatenate(qkv_weights, axis=0)
+            state_dict[f'transformer_layers.{layer_idx}.attention.in_proj_weight'] = torch.from_numpy(combined_weight)
+        
+        if len(qkv_biases) == 3:
+            # Stack Q, K, V biases: [3*embed_dim]
+            combined_bias = np.concatenate(qkv_biases, axis=0)
+            state_dict[f'transformer_layers.{layer_idx}.attention.in_proj_bias'] = torch.from_numpy(combined_bias)
         
         # Convert attention output projection
-        if 'attention_output' in attn_group:
-            output_group = attn_group['attention_output']
+        if 'attention_output' in attn_group:  # type: ignore[operator]
+            output_group = attn_group['attention_output']  # type: ignore[index]
             
-            if 'kernel:0' in output_group:
-                tf_weight = output_group['kernel:0'][:]
-                # TF: [num_heads, head_dim, embed_dim] -> PyTorch: [embed_dim, embed_dim]
+            if 'kernel:0' in output_group:  # type: ignore[operator]
+                tf_weight = output_group['kernel:0'][:]  # type: ignore[index]
+                # TF shape: [num_heads, head_dim, embed_dim] = (12, 96, 96)
+                # PyTorch wants: [embed_dim, embed_dim] = (96, 96)
                 pytorch_weight = tf_weight.reshape(embed_dim, embed_dim).T
                 
                 pytorch_name = f'transformer_layers.{layer_idx}.attention.out_proj.weight'
                 state_dict[pytorch_name] = torch.from_numpy(pytorch_weight)
             
-            if 'bias:0' in output_group:
-                tf_bias = output_group['bias:0'][:]
+            if 'bias:0' in output_group:  # type: ignore[operator]
+                tf_bias = output_group['bias:0'][:]  # type: ignore[index]
                 pytorch_name = f'transformer_layers.{layer_idx}.attention.out_proj.bias'
                 state_dict[pytorch_name] = torch.from_numpy(tf_bias)
 
@@ -473,31 +486,31 @@ class PATModelService(IMLModelService):
         """Convert feed-forward network weights."""
         # FF1 layer
         ff1_key = f'encoder_layer_{layer_idx + 1}_ff1'
-        if ff1_key in layer_group:
-            ff1_group = layer_group[ff1_key]
+        if ff1_key in layer_group:  # type: ignore[operator]
+            ff1_group = layer_group[ff1_key]  # type: ignore[index]
             
-            if 'kernel:0' in ff1_group:
-                tf_weight = ff1_group['kernel:0'][:]
+            if 'kernel:0' in ff1_group:  # type: ignore[operator]
+                tf_weight = ff1_group['kernel:0'][:]  # type: ignore[index]
                 pytorch_name = f'transformer_layers.{layer_idx}.ff1.weight'
-                state_dict[pytorch_name] = torch.from_numpy(tf_weight.T)
+                state_dict[pytorch_name] = torch.from_numpy(tf_weight.T)  # type: ignore[attr-defined]
             
-            if 'bias:0' in ff1_group:
-                tf_bias = ff1_group['bias:0'][:]
+            if 'bias:0' in ff1_group:  # type: ignore[operator]
+                tf_bias = ff1_group['bias:0'][:]  # type: ignore[index]
                 pytorch_name = f'transformer_layers.{layer_idx}.ff1.bias'
                 state_dict[pytorch_name] = torch.from_numpy(tf_bias)
         
         # FF2 layer
         ff2_key = f'encoder_layer_{layer_idx + 1}_ff2'
-        if ff2_key in layer_group:
-            ff2_group = layer_group[ff2_key]
+        if ff2_key in layer_group:  # type: ignore[operator]
+            ff2_group = layer_group[ff2_key]  # type: ignore[index]
             
-            if 'kernel:0' in ff2_group:
-                tf_weight = ff2_group['kernel:0'][:]
+            if 'kernel:0' in ff2_group:  # type: ignore[operator]
+                tf_weight = ff2_group['kernel:0'][:]  # type: ignore[index]
                 pytorch_name = f'transformer_layers.{layer_idx}.ff2.weight'
-                state_dict[pytorch_name] = torch.from_numpy(tf_weight.T)
+                state_dict[pytorch_name] = torch.from_numpy(tf_weight.T)  # type: ignore[attr-defined]
             
-            if 'bias:0' in ff2_group:
-                tf_bias = ff2_group['bias:0'][:]
+            if 'bias:0' in ff2_group:  # type: ignore[operator]
+                tf_bias = ff2_group['bias:0'][:]  # type: ignore[index]
                 pytorch_name = f'transformer_layers.{layer_idx}.ff2.bias'
                 state_dict[pytorch_name] = torch.from_numpy(tf_bias)
 
@@ -507,31 +520,31 @@ class PATModelService(IMLModelService):
         """Convert layer normalization weights (gamma/beta -> weight/bias)."""
         # Norm1 (after attention)
         norm1_key = f'encoder_layer_{layer_idx + 1}_norm1'
-        if norm1_key in layer_group:
-            norm1_group = layer_group[norm1_key]
+        if norm1_key in layer_group:  # type: ignore[operator]
+            norm1_group = layer_group[norm1_key]  # type: ignore[index]
             
-            if 'gamma:0' in norm1_group:
-                gamma = norm1_group['gamma:0'][:]
+            if 'gamma:0' in norm1_group:  # type: ignore[operator]
+                gamma = norm1_group['gamma:0'][:]  # type: ignore[index]
                 pytorch_name = f'transformer_layers.{layer_idx}.norm1.weight'
                 state_dict[pytorch_name] = torch.from_numpy(gamma)
             
-            if 'beta:0' in norm1_group:
-                beta = norm1_group['beta:0'][:]
+            if 'beta:0' in norm1_group:  # type: ignore[operator]
+                beta = norm1_group['beta:0'][:]  # type: ignore[index]
                 pytorch_name = f'transformer_layers.{layer_idx}.norm1.bias'
                 state_dict[pytorch_name] = torch.from_numpy(beta)
         
         # Norm2 (after feed-forward)
         norm2_key = f'encoder_layer_{layer_idx + 1}_norm2'
-        if norm2_key in layer_group:
-            norm2_group = layer_group[norm2_key]
+        if norm2_key in layer_group:  # type: ignore[operator]
+            norm2_group = layer_group[norm2_key]  # type: ignore[index]
             
-            if 'gamma:0' in norm2_group:
-                gamma = norm2_group['gamma:0'][:]
+            if 'gamma:0' in norm2_group:  # type: ignore[operator]
+                gamma = norm2_group['gamma:0'][:]  # type: ignore[index]
                 pytorch_name = f'transformer_layers.{layer_idx}.norm2.weight'
                 state_dict[pytorch_name] = torch.from_numpy(gamma)
             
-            if 'beta:0' in norm2_group:
-                beta = norm2_group['beta:0'][:]
+            if 'beta:0' in norm2_group:  # type: ignore[operator]
+                beta = norm2_group['beta:0'][:]  # type: ignore[index]
                 pytorch_name = f'transformer_layers.{layer_idx}.norm2.bias'
                 state_dict[pytorch_name] = torch.from_numpy(beta)
 

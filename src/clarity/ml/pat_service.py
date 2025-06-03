@@ -601,7 +601,7 @@ class PATModelService(IMLModelService):
 
     @staticmethod
     def _convert_ff_weights(
-        layer_group: Any, state_dict: dict[str, torch.Tensor], layer_idx: int  # type: ignore[misc]
+        layer_group: Any, state_dict: dict[str, torch.Tensor], layer_idx: int  # noqa: ANN401
     ) -> None:
         """Convert feed-forward network weights."""
         # FF1 layer
@@ -636,7 +636,7 @@ class PATModelService(IMLModelService):
 
     @staticmethod
     def _convert_layernorm_weights(
-        layer_group: Any, state_dict: dict[str, torch.Tensor], layer_idx: int  # type: ignore[misc]
+        layer_group: Any, state_dict: dict[str, torch.Tensor], layer_idx: int  # noqa: ANN401
     ) -> None:
         """Convert layer normalization weights (gamma/beta -> weight/bias)."""
         # Norm1 (after attention)

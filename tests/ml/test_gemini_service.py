@@ -24,7 +24,8 @@ from clarity.ml.gemini_service import (
 class TestGeminiServiceInitialization:
     """Test Gemini service initialization and configuration."""
 
-    def test_service_initialization_default_config(self):
+    @staticmethod
+    def test_service_initialization_default_config():
         """Test service initialization with default configuration."""
         service = GeminiService()
 
@@ -34,7 +35,8 @@ class TestGeminiServiceInitialization:
         assert service.model is None
         assert not service.is_initialized
 
-    def test_service_initialization_custom_config(self):
+    @staticmethod
+    def test_service_initialization_custom_config():
         """Test service initialization with custom configuration."""
         project_id = "test-project"
         location = "us-west1"
@@ -47,8 +49,9 @@ class TestGeminiServiceInitialization:
         assert service.model is None
         assert not service.is_initialized
 
+    @staticmethod
     @pytest.mark.asyncio
-    async def test_service_initialization_success(self):
+    async def test_service_initialization_success():
         """Test successful service initialization."""
         service = GeminiService(project_id="test-project")
 

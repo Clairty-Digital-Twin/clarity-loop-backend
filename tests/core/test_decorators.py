@@ -9,6 +9,7 @@ Tests cover:
 """
 
 import asyncio
+import functools
 import time
 from typing import Any
 from unittest.mock import Mock, patch

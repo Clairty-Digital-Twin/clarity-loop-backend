@@ -14,6 +14,9 @@ from fastapi import FastAPI, HTTPException, Request
 from google.cloud import firestore
 import google.generativeai as genai
 
+# Constants
+MIN_FEATURE_VECTOR_LENGTH = 8
+
 logger = logging.getLogger(__name__)
 
 
@@ -96,7 +99,7 @@ class GeminiInsightGenerator:
         # Cardiovascular metrics
         if analysis_results.get("cardio_features"):
             cardio = analysis_results["cardio_features"]
-            if len(cardio) >= 8:
+            if len(cardio) >= MIN_FEATURE_VECTOR_LENGTH:
                 metrics_lines.extend(
                     [
                         f"- Average Heart Rate: {cardio[0]:.1f} bpm",

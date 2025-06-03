@@ -57,10 +57,7 @@ def _raise_authorization_error(user_id: str) -> NoReturn:
 
 def _raise_not_found_error(resource_type: str, resource_id: str) -> NoReturn:
     """Raise not found error for missing resources."""
-    raise ResourceNotFoundProblem(
-        resource_type=resource_type,
-        resource_id=resource_id
-    )
+    raise ResourceNotFoundProblem(resource_type=resource_type, resource_id=resource_id)
 
 
 # Dependency injection container - using class-based approach instead of globals
@@ -110,8 +107,7 @@ def get_health_data_service() -> HealthDataService:
     """
     if _container.repository is None:
         raise ServiceUnavailableProblem(
-            service_name="Health Data Repository",
-            retry_after=30
+            service_name="Health Data Repository", retry_after=30
         )
 
     return HealthDataService(_container.repository)
@@ -121,8 +117,7 @@ def get_auth_provider() -> IAuthProvider:
     """Get authentication provider from dependency injection."""
     if _container.auth_provider is None:
         raise ServiceUnavailableProblem(
-            service_name="Authentication Provider",
-            retry_after=30
+            service_name="Authentication Provider", retry_after=30
         )
     return _container.auth_provider
 
@@ -131,8 +126,7 @@ def get_config_provider() -> IConfigProvider:
     """Get configuration provider from dependency injection."""
     if _container.config_provider is None:
         raise ServiceUnavailableProblem(
-            service_name="Configuration Provider",
-            retry_after=30
+            service_name="Configuration Provider", retry_after=30
         )
     return _container.config_provider
 
@@ -174,9 +168,11 @@ def get_config_provider() -> IConfigProvider:
     responses={
         201: {"description": "Health data uploaded successfully"},
         400: {"description": "Validation error - invalid data format"},
-        403: {"description": "Authorization denied - cannot upload data for another user"},
+        403: {
+            "description": "Authorization denied - cannot upload data for another user"
+        },
         503: {"description": "Service temporarily unavailable"},
-    }
+    },
 )
 @require_auth(permissions=[Permission.WRITE_OWN_DATA])
 async def upload_health_data(
@@ -199,11 +195,9 @@ async def upload_health_data(
         logger.exception("Health data service error")
         raise ValidationProblem(
             detail=f"Health data processing failed: {e.message}",
-            errors=[{
-                "field": "health_data",
-                "message": str(e),
-                "code": "PROCESSING_ERROR"
-            }]
+            errors=[
+                {"field": "health_data", "message": str(e), "code": "PROCESSING_ERROR"}
+            ],
         ) from e
     except Exception as e:
         logger.exception("Unexpected error in health data upload")
@@ -238,7 +232,7 @@ async def upload_health_data(
         404: {"description": "Processing job not found"},
         403: {"description": "Access denied - can only view own processing jobs"},
         503: {"description": "Service temporarily unavailable"},
-    }
+    },
 )
 @require_auth(permissions=[Permission.READ_OWN_DATA])
 async def get_processing_status(
@@ -326,7 +320,7 @@ async def get_processing_status(
         400: {"description": "Invalid pagination or filter parameters"},
         403: {"description": "Access denied - can only view own data"},
         503: {"description": "Service temporarily unavailable"},
-    }
+    },
 )
 @require_auth(permissions=[Permission.READ_OWN_DATA])
 async def list_health_data(  # noqa: PLR0913, PLR0917
@@ -334,22 +328,32 @@ async def list_health_data(  # noqa: PLR0913, PLR0917
     current_user: UserContext = Depends(get_current_user),  # noqa: B008
     limit: int = Query(50, ge=1, le=1000, description="Number of items per page"),
     cursor: str | None = Query(None, description="Pagination cursor"),
-    offset: int | None = Query(None, ge=0, description="Offset (alternative to cursor)"),
-    data_type: str | None = Query(None, description="Filter by data type (heart_rate, sleep, etc.)"),
-    start_date: datetime | None = Query(None, description="Filter from date (ISO 8601)"),  # noqa: B008
-    end_date: datetime | None = Query(None, description="Filter to date (ISO 8601)"),  # noqa: B008
-    source: str | None = Query(None, description="Filter by data source (apple_watch, fitbit, etc.)"),
+    offset: int | None = Query(
+        None, ge=0, description="Offset (alternative to cursor)"
+    ),
+    data_type: str | None = Query(
+        None, description="Filter by data type (heart_rate, sleep, etc.)"
+    ),
+    start_date: datetime | None = Query(
+        None, description="Filter from date (ISO 8601)"
+    ),
+    end_date: datetime | None = Query(
+        None, description="Filter to date (ISO 8601)"
+    ),
+    source: str | None = Query(
+        None, description="Filter by data source (apple_watch, fitbit, etc.)"
+    ),
     service: HealthDataService = Depends(get_health_data_service),  # noqa: B008
 ) -> PaginatedResponse[dict[str, Any]]:
     """🔥 Retrieve paginated health data with professional pagination."""
     try:
-        logger.debug("Health data retrieval requested by user: %s", current_user.user_id)
+        logger.debug(
+            "Health data retrieval requested by user: %s", current_user.user_id
+        )
 
         # Validate pagination parameters
         pagination_params = validate_pagination_params(
-            limit=limit,
-            cursor=cursor,
-            offset=offset
+            limit=limit, cursor=cursor, offset=offset
         )
 
         # Build filter parameters
@@ -371,7 +375,7 @@ async def list_health_data(  # noqa: PLR0913, PLR0917
             offset=pagination_params.offset or 0,
             metric_type=filters.get("data_type"),
             start_date=start_date,
-            end_date=end_date
+            end_date=end_date,
         )
 
         # Convert legacy format to paginated format
@@ -385,7 +389,7 @@ async def list_health_data(  # noqa: PLR0913, PLR0917
             "has_previous": has_previous,
             "total_count": None,  # Not available in legacy format
             "next_cursor": None,  # Not implemented yet
-            "previous_cursor": None  # Not implemented yet
+            "previous_cursor": None,  # Not implemented yet
         }
 
         # Extract base URL for pagination links
@@ -393,8 +397,7 @@ async def list_health_data(  # noqa: PLR0913, PLR0917
 
         # Build pagination response
         pagination_builder = PaginationBuilder(
-            base_url=base_url,
-            endpoint="/api/v1/health-data"
+            base_url=base_url, endpoint="/api/v1/health-data"
         )
 
         paginated_response = pagination_builder.build_response(
@@ -405,7 +408,7 @@ async def list_health_data(  # noqa: PLR0913, PLR0917
             total_count=health_data_result.get("total_count"),
             next_cursor=health_data_result.get("next_cursor"),
             previous_cursor=health_data_result.get("previous_cursor"),
-            additional_params=filters
+            additional_params=filters,
         )
 
         logger.debug("Retrieved health data for user: %s", current_user.user_id)
@@ -415,11 +418,9 @@ async def list_health_data(  # noqa: PLR0913, PLR0917
         logger.warning("Invalid pagination parameters: %s", e)
         raise ValidationProblem(
             detail=str(e),
-            errors=[{
-                "field": "pagination",
-                "message": str(e),
-                "code": "INVALID_PARAMETER"
-            }]
+            errors=[
+                {"field": "pagination", "message": str(e), "code": "INVALID_PARAMETER"}
+            ],
         ) from e
     except HealthDataServiceError as e:
         logger.exception("Health data service error")
@@ -443,7 +444,7 @@ async def list_health_data(  # noqa: PLR0913, PLR0917
     responses={
         200: {"description": "Health data retrieved (legacy format)"},
         410: {"description": "Endpoint deprecated - use GET /health-data/ instead"},
-    }
+    },
 )
 @require_auth(permissions=[Permission.READ_OWN_DATA])
 async def query_health_data_legacy(
@@ -451,13 +452,17 @@ async def query_health_data_legacy(
     limit: int = Query(100, ge=1, le=1000, description="Maximum number of records"),
     offset: int = Query(0, ge=0, description="Number of records to skip"),
     metric_type: str | None = Query(None, description="Filter by metric type"),
-    start_date: datetime | None = Query(None, description="Filter from date"),  # noqa: B008
+    start_date: datetime | None = Query(
+        None, description="Filter from date"
+    ),
     end_date: datetime | None = Query(None, description="Filter to date"),  # noqa: B008
     service: HealthDataService = Depends(get_health_data_service),  # noqa: B008
 ) -> dict[str, Any]:
     """🔄 Legacy health data query endpoint (deprecated)."""
     try:
-        logger.warning("Legacy health data endpoint used by user: %s", current_user.user_id)
+        logger.warning(
+            "Legacy health data endpoint used by user: %s", current_user.user_id
+        )
 
         health_data = await service.get_user_health_data(
             user_id=current_user.user_id,
@@ -472,7 +477,7 @@ async def query_health_data_legacy(
         health_data["_deprecated"] = {
             "message": "This endpoint is deprecated. Use GET /api/v1/health-data/ instead.",
             "migration_guide": "https://docs.clarity.health/migration/v1-to-v2",
-            "removal_date": "2025-12-31"
+            "removal_date": "2025-12-31",
         }
 
         logger.debug("Retrieved legacy health data for user: %s", current_user.user_id)
@@ -506,7 +511,7 @@ async def query_health_data_legacy(
         404: {"description": "Processing job not found"},
         403: {"description": "Access denied - can only delete own data"},
         503: {"description": "Service temporarily unavailable"},
-    }
+    },
 )
 @require_auth(permissions=[Permission.WRITE_OWN_DATA])
 async def delete_health_data(
@@ -533,7 +538,7 @@ async def delete_health_data(
         return {
             "message": "Health data deleted successfully",
             "processing_id": str(processing_id),
-            "deleted_at": datetime.now(UTC).isoformat()
+            "deleted_at": datetime.now(UTC).isoformat(),
         }
 
     except HealthDataServiceError as e:
@@ -566,7 +571,7 @@ async def delete_health_data(
     responses={
         200: {"description": "Service is healthy"},
         503: {"description": "Service is unhealthy"},
-    }
+    },
 )
 async def health_check() -> dict[str, Any]:
     """🔥 Comprehensive health check with detailed status information."""
@@ -579,7 +584,7 @@ async def health_check() -> dict[str, Any]:
             "status": "healthy",
             "service": "health-data-api",
             "timestamp": timestamp,
-            "version": "1.0.0"
+            "version": "1.0.0",
         }
 
         # Check if dependencies are available
@@ -609,7 +614,7 @@ async def health_check() -> dict[str, Any]:
         metrics: dict[str, Any] = {
             "uptime_seconds": 0,  # Would be calculated from startup time
             "requests_per_minute": 0,  # Would be tracked by middleware
-            "average_response_time_ms": 0  # Would be tracked by middleware
+            "average_response_time_ms": 0,  # Would be tracked by middleware
         }
         health_status["metrics"] = metrics
 

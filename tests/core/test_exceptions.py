@@ -17,25 +17,20 @@ from fastapi import HTTPException, Request
 from fastapi.responses import JSONResponse
 import pytest
 
-from clarity.core.exceptions import (
+from clarity.core.exceptions import (  # Auth exceptions; Cache exceptions; Base exceptions; Configuration exceptions; Data validation exceptions; ML and model exceptions; NHANES exceptions; Service exceptions; API Problem types; Utility functions; Exception handlers
     AccessDeniedError,
     AccountDisabledError,
-    # Auth exceptions
     AuthenticationError,
     AuthenticationProblem,
     AuthorizationError,
     AuthorizationProblem,
-    # Cache exceptions
     CacheError,
     CacheKeyError,
     ClarityAPIException,
-    # Base exceptions
     ClarityBaseError,
-    # Configuration exceptions
     ConfigurationError,
     ConflictProblem,
     DataLengthMismatchError,
-    # Data validation exceptions
     DataValidationError,
     EmptyDataError,
     InferenceError,
@@ -47,28 +42,22 @@ from clarity.core.exceptions import (
     InvalidNHANESStatsError,
     InvalidStepCountDataError,
     MissingConfigurationError,
-    # ML and model exceptions
     ModelError,
     ModelNotInitializedError,
     NHANESDataNotFoundError,
-    # NHANES exceptions
     NHANESStatsError,
     ProblemDetail,
     ProcessingError,
     RateLimitProblem,
     ResourceNotFoundProblem,
-    # Service exceptions
     ServiceError,
     ServiceNotInitializedError,
     ServiceUnavailableError,
     ServiceUnavailableProblem,
-    # API Problem types
     ValidationProblem,
     create_numeric_validation_error,
-    # Utility functions
     create_validation_error,
     generic_exception_handler,
-    # Exception handlers
     problem_detail_exception_handler,
 )
 
@@ -85,17 +74,31 @@ class TestProblemDetail:
             detail="The submitted health data contains invalid heart rate values",
             instance="https://api.clarity.health/requests/550e8400-e29b-41d4-a716-446655440000",
             trace_id="550e8400-e29b-41d4-a716-446655440000",
-            errors=[{"field": "heart_rate", "message": "Invalid value", "code": "INVALID_RANGE"}],
-            help_url="https://docs.clarity.health/errors/validation-error"
+            errors=[
+                {
+                    "field": "heart_rate",
+                    "message": "Invalid value",
+                    "code": "INVALID_RANGE",
+                }
+            ],
+            help_url="https://docs.clarity.health/errors/validation-error",
         )
 
         assert problem.type == "https://api.clarity.health/problems/validation-error"
         assert problem.title == "Validation Error"
         assert problem.status == 400
-        assert problem.detail == "The submitted health data contains invalid heart rate values"
-        assert problem.instance == "https://api.clarity.health/requests/550e8400-e29b-41d4-a716-446655440000"
+        assert (
+            problem.detail
+            == "The submitted health data contains invalid heart rate values"
+        )
+        assert (
+            problem.instance
+            == "https://api.clarity.health/requests/550e8400-e29b-41d4-a716-446655440000"
+        )
         assert problem.trace_id == "550e8400-e29b-41d4-a716-446655440000"
-        assert problem.errors == [{"field": "heart_rate", "message": "Invalid value", "code": "INVALID_RANGE"}]
+        assert problem.errors == [
+            {"field": "heart_rate", "message": "Invalid value", "code": "INVALID_RANGE"}
+        ]
         assert problem.help_url == "https://docs.clarity.health/errors/validation-error"
 
     def test_problem_detail_minimal(self) -> None:
@@ -105,7 +108,7 @@ class TestProblemDetail:
             title="Generic Error",
             status=500,
             detail="An error occurred",
-            instance="https://api.clarity.health/requests/test-123"
+            instance="https://api.clarity.health/requests/test-123",
         )
 
         assert problem.type == "https://api.clarity.health/problems/generic"
@@ -124,7 +127,7 @@ class TestProblemDetail:
             title="Test Error",
             status=400,
             detail="Test detail",
-            instance="https://api.clarity.health/requests/test"
+            instance="https://api.clarity.health/requests/test",
         )
 
         serialized = problem.model_dump(exclude_none=True)
@@ -150,7 +153,7 @@ class TestClarityAPIException:
             trace_id="trace-123",
             errors=[{"field": "test", "message": "Test error"}],
             help_url="https://docs.clarity.health/errors/test",
-            headers={"X-Custom": "test"}
+            headers={"X-Custom": "test"},
         )
 
         assert exception.status_code == 400
@@ -169,7 +172,7 @@ class TestClarityAPIException:
             status_code=500,
             problem_type="https://api.clarity.health/problems/internal",
             title="Internal Error",
-            detail="Internal server error occurred"
+            detail="Internal server error occurred",
         )
 
         assert exception.status_code == 500
@@ -185,7 +188,7 @@ class TestClarityAPIException:
         instance_id = exception.instance.split("/")[-1]
         trace_id = exception.trace_id
         assert UUID(instance_id)  # Should not raise
-        assert UUID(trace_id)    # Should not raise
+        assert UUID(trace_id)  # Should not raise
 
     def test_to_problem_detail(self) -> None:
         """Test converting ClarityAPIException to Problem Detail."""
@@ -194,7 +197,7 @@ class TestClarityAPIException:
             problem_type="https://api.clarity.health/problems/validation",
             title="Validation Failed",
             detail="Request validation failed",
-            trace_id="test-trace-id"
+            trace_id="test-trace-id",
         )
 
         problem = exception.to_problem_detail()
@@ -212,7 +215,7 @@ class TestClarityAPIException:
             status_code=404,
             problem_type="https://api.clarity.health/problems/not-found",
             title="Not Found",
-            detail="Resource not found"
+            detail="Resource not found",
         )
 
         assert isinstance(exception, HTTPException)
@@ -227,13 +230,14 @@ class TestPredefinedProblemTypes:
         """Test ValidationProblem creation and properties."""
         errors = [{"field": "email", "message": "Invalid email format"}]
         exception = ValidationProblem(
-            detail="Validation failed for request",
-            errors=errors,
-            trace_id="test-trace"
+            detail="Validation failed for request", errors=errors, trace_id="test-trace"
         )
 
         assert exception.status_code == 400
-        assert exception.problem_type == "https://api.clarity.health/problems/validation-error"
+        assert (
+            exception.problem_type
+            == "https://api.clarity.health/problems/validation-error"
+        )
         assert exception.title == "Validation Error"
         assert exception.detail == "Validation failed for request"
         assert exception.errors == errors
@@ -243,12 +247,14 @@ class TestPredefinedProblemTypes:
     def test_authentication_problem(self) -> None:
         """Test AuthenticationProblem creation and properties."""
         exception = AuthenticationProblem(
-            detail="Invalid credentials provided",
-            trace_id="auth-trace"
+            detail="Invalid credentials provided", trace_id="auth-trace"
         )
 
         assert exception.status_code == 401
-        assert exception.problem_type == "https://api.clarity.health/problems/authentication-required"
+        assert (
+            exception.problem_type
+            == "https://api.clarity.health/problems/authentication-required"
+        )
         assert exception.title == "Authentication Required"
         assert exception.detail == "Invalid credentials provided"
         assert exception.trace_id == "auth-trace"
@@ -263,12 +269,14 @@ class TestPredefinedProblemTypes:
     def test_authorization_problem(self) -> None:
         """Test AuthorizationProblem creation and properties."""
         exception = AuthorizationProblem(
-            detail="Access denied to this resource",
-            trace_id="authz-trace"
+            detail="Access denied to this resource", trace_id="authz-trace"
         )
 
         assert exception.status_code == 403
-        assert exception.problem_type == "https://api.clarity.health/problems/authorization-denied"
+        assert (
+            exception.problem_type
+            == "https://api.clarity.health/problems/authorization-denied"
+        )
         assert exception.title == "Authorization Denied"
         assert exception.detail == "Access denied to this resource"
         assert exception.help_url == "https://docs.clarity.health/permissions"
@@ -282,13 +290,14 @@ class TestPredefinedProblemTypes:
     def test_resource_not_found_problem(self) -> None:
         """Test ResourceNotFoundProblem creation and properties."""
         exception = ResourceNotFoundProblem(
-            resource_type="User",
-            resource_id="user-123",
-            trace_id="not-found-trace"
+            resource_type="User", resource_id="user-123", trace_id="not-found-trace"
         )
 
         assert exception.status_code == 404
-        assert exception.problem_type == "https://api.clarity.health/problems/resource-not-found"
+        assert (
+            exception.problem_type
+            == "https://api.clarity.health/problems/resource-not-found"
+        )
         assert exception.title == "Resource Not Found"
         assert exception.detail == "User with ID 'user-123' does not exist"
         assert exception.trace_id == "not-found-trace"
@@ -298,11 +307,14 @@ class TestPredefinedProblemTypes:
         """Test ConflictProblem creation and properties."""
         exception = ConflictProblem(
             detail="Resource already exists with this identifier",
-            trace_id="conflict-trace"
+            trace_id="conflict-trace",
         )
 
         assert exception.status_code == 409
-        assert exception.problem_type == "https://api.clarity.health/problems/resource-conflict"
+        assert (
+            exception.problem_type
+            == "https://api.clarity.health/problems/resource-conflict"
+        )
         assert exception.title == "Resource Conflict"
         assert exception.detail == "Resource already exists with this identifier"
         assert exception.help_url == "https://docs.clarity.health/errors/conflict"
@@ -310,13 +322,14 @@ class TestPredefinedProblemTypes:
     def test_rate_limit_problem(self) -> None:
         """Test RateLimitProblem creation and properties."""
         exception = RateLimitProblem(
-            retry_after=60,
-            detail="Too many requests",
-            trace_id="rate-limit-trace"
+            retry_after=60, detail="Too many requests", trace_id="rate-limit-trace"
         )
 
         assert exception.status_code == 429
-        assert exception.problem_type == "https://api.clarity.health/problems/rate-limit-exceeded"
+        assert (
+            exception.problem_type
+            == "https://api.clarity.health/problems/rate-limit-exceeded"
+        )
         assert exception.title == "Rate Limit Exceeded"
         assert exception.detail == "Too many requests"
         assert exception.headers == {"Retry-After": "60"}
@@ -331,12 +344,14 @@ class TestPredefinedProblemTypes:
     def test_internal_server_problem(self) -> None:
         """Test InternalServerProblem creation and properties."""
         exception = InternalServerProblem(
-            detail="Database connection failed",
-            trace_id="internal-trace"
+            detail="Database connection failed", trace_id="internal-trace"
         )
 
         assert exception.status_code == 500
-        assert exception.problem_type == "https://api.clarity.health/problems/internal-server-error"
+        assert (
+            exception.problem_type
+            == "https://api.clarity.health/problems/internal-server-error"
+        )
         assert exception.title == "Internal Server Error"
         assert exception.detail == "Database connection failed"
         assert exception.help_url == "https://docs.clarity.health/errors/server-error"
@@ -350,23 +365,25 @@ class TestPredefinedProblemTypes:
     def test_service_unavailable_problem(self) -> None:
         """Test ServiceUnavailableProblem creation and properties."""
         exception = ServiceUnavailableProblem(
-            service_name="Database Service",
-            retry_after=120,
-            trace_id="service-trace"
+            service_name="Database Service", retry_after=120, trace_id="service-trace"
         )
 
         assert exception.status_code == 503
-        assert exception.problem_type == "https://api.clarity.health/problems/service-unavailable"
+        assert (
+            exception.problem_type
+            == "https://api.clarity.health/problems/service-unavailable"
+        )
         assert exception.title == "Service Unavailable"
         assert exception.detail == "Database Service is temporarily unavailable"
         assert exception.headers == {"Retry-After": "120"}
-        assert exception.help_url == "https://docs.clarity.health/errors/service-unavailable"
+        assert (
+            exception.help_url
+            == "https://docs.clarity.health/errors/service-unavailable"
+        )
 
     def test_service_unavailable_problem_no_retry(self) -> None:
         """Test ServiceUnavailableProblem without retry-after."""
-        exception = ServiceUnavailableProblem(
-            service_name="ML Service"
-        )
+        exception = ServiceUnavailableProblem(service_name="ML Service")
 
         assert exception.detail == "ML Service is temporarily unavailable"
         assert exception.headers is None
@@ -380,7 +397,7 @@ class TestExceptionHandlers:
         request = Mock(spec=Request)
         exception = ValidationProblem(
             detail="Test validation error",
-            errors=[{"field": "test", "message": "Test error"}]
+            errors=[{"field": "test", "message": "Test error"}],
         )
 
         response = problem_detail_exception_handler(request, exception)
@@ -399,17 +416,14 @@ class TestExceptionHandlers:
     def test_problem_detail_exception_handler_with_headers(self) -> None:
         """Test problem detail exception handler with custom headers."""
         request = Mock(spec=Request)
-        exception = RateLimitProblem(
-            retry_after=60,
-            detail="Rate limit exceeded"
-        )
+        exception = RateLimitProblem(retry_after=60, detail="Rate limit exceeded")
 
         response = problem_detail_exception_handler(request, exception)
 
         assert response.status_code == 429
         assert response.headers["Retry-After"] == "60"
 
-    @patch('clarity.core.exceptions.logger')
+    @patch("clarity.core.exceptions.logger")
     def test_generic_exception_handler(self, mock_logger: Mock) -> None:
         """Test generic exception handler for unexpected exceptions."""
         request = Mock(spec=Request)
@@ -422,7 +436,10 @@ class TestExceptionHandlers:
 
         # Parse response content
         content = json.loads(response.body)
-        assert content["type"] == "https://api.clarity.health/problems/internal-server-error"
+        assert (
+            content["type"]
+            == "https://api.clarity.health/problems/internal-server-error"
+        )
         assert content["title"] == "Internal Server Error"
         assert content["status"] == 500
         assert content["detail"] == "An unexpected error occurred"
@@ -449,9 +466,7 @@ class TestClarityBaseError:
     def test_clarity_base_error_with_code(self) -> None:
         """Test ClarityBaseError with error code."""
         error = ClarityBaseError(
-            "Test error message",
-            error_code="TEST_ERROR",
-            details={"key": "value"}
+            "Test error message", error_code="TEST_ERROR", details={"key": "value"}
         )
 
         assert str(error) == "[TEST_ERROR] Test error message"
@@ -472,7 +487,7 @@ class TestDataValidationExceptions:
         error = DataValidationError(
             "Invalid data format",
             field_name="heart_rate",
-            details={"min": 0, "max": 300}
+            details={"min": 0, "max": 300},
         )
 
         assert str(error) == "[DATA_VALIDATION_ERROR] Invalid data format"
@@ -505,7 +520,7 @@ class TestDataValidationExceptions:
         """Test IntegrationError creation."""
         error = IntegrationError(
             "API integration failed",
-            details={"service": "external_api", "status_code": 500}
+            details={"service": "external_api", "status_code": 500},
         )
 
         assert str(error) == "[INTEGRATION_ERROR] API integration failed"
@@ -515,9 +530,7 @@ class TestDataValidationExceptions:
     def test_data_length_mismatch_error(self) -> None:
         """Test DataLengthMismatchError creation and properties."""
         error = DataLengthMismatchError(
-            expected_length=100,
-            actual_length=95,
-            data_type="heart_rate_samples"
+            expected_length=100, actual_length=95, data_type="heart_rate_samples"
         )
 
         assert "length mismatch" in str(error)
@@ -574,7 +587,7 @@ class TestMLModelExceptions:
         error = InferenceError(
             "Inference computation failed",
             request_id="req-123",
-            details={"model": "PAT", "version": "1.0"}
+            details={"model": "PAT", "version": "1.0"},
         )
 
         assert isinstance(error, ModelError)
@@ -584,10 +597,7 @@ class TestMLModelExceptions:
 
     def test_inference_timeout_error(self) -> None:
         """Test InferenceTimeoutError creation and properties."""
-        error = InferenceTimeoutError(
-            request_id="req-456",
-            timeout_seconds=30.0
-        )
+        error = InferenceTimeoutError(request_id="req-456", timeout_seconds=30.0)
 
         assert isinstance(error, InferenceError)
         assert "req-456" in str(error)
@@ -602,8 +612,7 @@ class TestNHANESExceptions:
     def test_nhanes_stats_error(self) -> None:
         """Test NHANESStatsError creation."""
         error = NHANESStatsError(
-            "NHANES lookup failed",
-            details={"year": 2020, "age_group": "adult"}
+            "NHANES lookup failed", details={"year": 2020, "age_group": "adult"}
         )
 
         assert isinstance(error, ClarityBaseError)
@@ -612,11 +621,7 @@ class TestNHANESExceptions:
 
     def test_nhanes_data_not_found_error(self) -> None:
         """Test NHANESDataNotFoundError with all parameters."""
-        error = NHANESDataNotFoundError(
-            year=2020,
-            age_group="adult",
-            sex="male"
-        )
+        error = NHANESDataNotFoundError(year=2020, age_group="adult", sex="male")
 
         assert isinstance(error, NHANESStatsError)
         assert "year=2020" in str(error)
@@ -647,9 +652,7 @@ class TestNHANESExceptions:
     def test_invalid_nhanes_stats_data_error(self) -> None:
         """Test InvalidNHANESStatsDataError creation and properties."""
         error = InvalidNHANESStatsDataError(
-            data_type="step_count",
-            expected_type="numeric",
-            actual_type="string"
+            data_type="step_count", expected_type="numeric", actual_type="string"
         )
 
         assert isinstance(error, NHANESStatsError)
@@ -682,8 +685,7 @@ class TestServiceExceptions:
     def test_service_unavailable_error(self) -> None:
         """Test ServiceUnavailableError creation and properties."""
         error = ServiceUnavailableError(
-            service_name="Database Service",
-            reason="Connection timeout"
+            service_name="Database Service", reason="Connection timeout"
         )
 
         assert isinstance(error, ServiceError)
@@ -708,7 +710,7 @@ class TestAuthExceptions:
         """Test AuthenticationError base class."""
         error = AuthenticationError(
             "Token validation failed",
-            details={"token_type": "JWT", "issuer": "clarity"}
+            details={"token_type": "JWT", "issuer": "clarity"},
         )
 
         assert isinstance(error, ClarityBaseError)
@@ -719,7 +721,7 @@ class TestAuthExceptions:
         """Test AuthorizationError base class."""
         error = AuthorizationError(
             "Insufficient permissions",
-            details={"required_role": "admin", "user_role": "user"}
+            details={"required_role": "admin", "user_role": "user"},
         )
 
         assert isinstance(error, ClarityBaseError)
@@ -736,10 +738,7 @@ class TestAuthExceptions:
 
     def test_access_denied_error(self) -> None:
         """Test AccessDeniedError creation and properties."""
-        error = AccessDeniedError(
-            resource="health_data",
-            user_id="user-456"
-        )
+        error = AccessDeniedError(resource="health_data", user_id="user-456")
 
         assert isinstance(error, AuthorizationError)
         assert "Access denied to health_data" in str(error)
@@ -764,7 +763,7 @@ class TestConfigurationExceptions:
         error = ConfigurationError(
             "Database connection string invalid",
             config_key="DATABASE_URL",
-            details={"section": "database"}
+            details={"section": "database"},
         )
 
         assert isinstance(error, ClarityBaseError)
@@ -783,9 +782,7 @@ class TestConfigurationExceptions:
     def test_invalid_configuration_error(self) -> None:
         """Test InvalidConfigurationError creation and properties."""
         error = InvalidConfigurationError(
-            config_key="MAX_CONNECTIONS",
-            value=-5,
-            reason="must be positive"
+            config_key="MAX_CONNECTIONS", value=-5, reason="must be positive"
         )
 
         assert isinstance(error, ConfigurationError)
@@ -798,10 +795,7 @@ class TestConfigurationExceptions:
 
     def test_invalid_configuration_error_no_reason(self) -> None:
         """Test InvalidConfigurationError without reason."""
-        error = InvalidConfigurationError(
-            config_key="TIMEOUT",
-            value="invalid"
-        )
+        error = InvalidConfigurationError(config_key="TIMEOUT", value="invalid")
 
         assert "Invalid configuration value for TIMEOUT" in str(error)
         assert "invalid" in str(error)
@@ -814,8 +808,7 @@ class TestCacheExceptions:
     def test_cache_error(self) -> None:
         """Test CacheError creation."""
         error = CacheError(
-            "Redis connection failed",
-            details={"host": "localhost", "port": 6379}
+            "Redis connection failed", details={"host": "localhost", "port": 6379}
         )
 
         assert isinstance(error, ClarityBaseError)
@@ -824,10 +817,7 @@ class TestCacheExceptions:
 
     def test_cache_key_error(self) -> None:
         """Test CacheKeyError creation and properties."""
-        error = CacheKeyError(
-            cache_key="user:123:profile",
-            operation="get"
-        )
+        error = CacheKeyError(cache_key="user:123:profile", operation="get")
 
         assert isinstance(error, CacheError)
         assert "Cache get failed for key: user:123:profile" in str(error)
@@ -841,9 +831,7 @@ class TestUtilityFunctions:
     def test_create_validation_error(self) -> None:
         """Test create_validation_error utility function."""
         error = create_validation_error(
-            field_name="age",
-            expected_type="integer",
-            actual_value="twenty"
+            field_name="age", expected_type="integer", actual_value="twenty"
         )
 
         assert isinstance(error, DataValidationError)
@@ -854,8 +842,7 @@ class TestUtilityFunctions:
     def test_create_numeric_validation_error(self) -> None:
         """Test create_numeric_validation_error utility function."""
         error = create_numeric_validation_error(
-            field_name="heart_rate",
-            value="not_a_number"
+            field_name="heart_rate", value="not_a_number"
         )
 
         assert isinstance(error, InvalidNHANESStatsDataError)
@@ -869,6 +856,7 @@ class TestExceptionEdgeCases:
 
     def test_exception_chaining(self) -> None:
         """Test exception chaining preserves context."""
+
         def raise_value_error() -> None:
             msg = "Original error"
             raise ValueError(msg)
@@ -878,8 +866,7 @@ class TestExceptionEdgeCases:
 
         original = exc_info.value
         new_error = InferenceError(
-            "Inference failed due to validation",
-            request_id="req-789"
+            "Inference failed due to validation", request_id="req-789"
         )
 
         # Test that we can chain exceptions
@@ -892,22 +879,22 @@ class TestExceptionEdgeCases:
             "request": {
                 "url": "/api/v1/health-data",
                 "method": "POST",
-                "headers": {"Content-Type": "application/json"}
+                "headers": {"Content-Type": "application/json"},
             },
             "validation_errors": [
                 {"field": "heart_rate", "value": -10, "constraint": "positive"},
-                {"field": "timestamp", "value": "invalid", "constraint": "iso8601"}
+                {"field": "timestamp", "value": "invalid", "constraint": "iso8601"},
             ],
             "metadata": {
                 "user_id": "user-123",
                 "request_id": "req-456",
-                "timestamp": "2025-01-15T10:30:00Z"
-            }
+                "timestamp": "2025-01-15T10:30:00Z",
+            },
         }
 
         error = ValidationProblem(
             detail="Complex validation failure",
-            errors=complex_details["validation_errors"]
+            errors=complex_details["validation_errors"],
         )
 
         problem = error.to_problem_detail()
@@ -922,8 +909,8 @@ class TestExceptionEdgeCases:
             detail="Test detail",
             instance="https://api.clarity.health/requests/test",
             trace_id=None,  # Should be excluded
-            errors=None,    # Should be excluded
-            help_url=None   # Should be excluded
+            errors=None,  # Should be excluded
+            help_url=None,  # Should be excluded
         )
 
         serialized = problem.model_dump(exclude_none=True)

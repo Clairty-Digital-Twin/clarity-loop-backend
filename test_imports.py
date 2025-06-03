@@ -27,14 +27,16 @@ def test_imports() -> bool:
 
     # Test 3: Main application modules
     try:
-        from clarity.core.config import (  # noqa: PLC0415
-            get_settings,  # type: ignore[import-untyped]
+        from clarity.core.config import (  # noqa: PLC0415; type: ignore[import-untyped]
+            get_settings,
         )
+
         _settings = get_settings()
 
-        from clarity.core.container import (  # noqa: PLC0415
-            create_application,  # type: ignore[import-untyped]
+        from clarity.core.container import (  # noqa: PLC0415; type: ignore[import-untyped]
+            create_application,
         )
+
         _app_instance = create_application()
 
         from clarity.main import get_app  # type: ignore[import-untyped] # noqa: PLC0415
@@ -50,6 +52,7 @@ def test_imports() -> bool:
             sys.path.insert(0, str(root_path))
 
         from main import get_app  # noqa: PLC0415
+
         _app = get_app()
     except Exception:  # noqa: BLE001
         traceback.print_exc()
@@ -62,6 +65,7 @@ def test_configuration() -> bool:
     """Test configuration loading."""
     try:
         from clarity.core.config import get_settings  # noqa: PLC0415
+
         _settings = get_settings()
     except Exception:  # noqa: BLE001
         traceback.print_exc()

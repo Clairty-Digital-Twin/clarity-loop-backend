@@ -23,17 +23,23 @@ else:
         import aiohttp  # type: ignore[import-untyped]
         import colorama  # type: ignore[import-untyped]
         from colorama import Fore, Style  # type: ignore[import-untyped]
+
         # Initialize colorama for cross-platform colored output
         colorama.init()
     except ImportError:
         # Fallback if imports fail
         import sys
+
         print("Installing required packages...")
         import subprocess  # noqa: S404
-        subprocess.check_call([sys.executable, "-m", "pip", "install", "aiohttp", "colorama"])  # noqa: S603
+
+        subprocess.check_call(
+            [sys.executable, "-m", "pip", "install", "aiohttp", "colorama"]
+        )
         import aiohttp  # type: ignore[import-untyped]
         import colorama  # type: ignore[import-untyped]
         from colorama import Fore, Style  # type: ignore[import-untyped]
+
         colorama.init()
 
 BASE_URL = "http://localhost:8000"
@@ -60,11 +66,16 @@ class APITester:
         """Async context manager entry."""
         self.session = aiohttp.ClientSession(
             timeout=aiohttp.ClientTimeout(total=30),
-            connector=aiohttp.TCPConnector(limit=10)
+            connector=aiohttp.TCPConnector(limit=10),
         )
         return self
 
-    async def __aexit__(self, exc_type: type[BaseException] | None, exc_val: BaseException | None, exc_tb: types.TracebackType | None) -> None:
+    async def __aexit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: types.TracebackType | None,
+    ) -> None:
         """Async context manager exit."""
         if self.session:
             await self.session.close()
@@ -97,10 +108,7 @@ class APITester:
         print(f"{Fore.BLUE}i  {message}{Style.RESET_ALL}")
 
     async def _make_request(
-        self,
-        method: str,
-        endpoint: str,
-        **kwargs: Any  # noqa: ANN401
+        self, method: str, endpoint: str, **kwargs: Any  # noqa: ANN401
     ) -> "tuple[int, dict[str, Any]]":
         """Make an HTTP request and return status code and response."""
         if not self.session:
@@ -118,26 +126,30 @@ class APITester:
                 except aiohttp.ContentTypeError:
                     data = {"text": await response.text()}
 
-                self.results.append({
-                    "endpoint": endpoint,
-                    "method": method,
-                    "status": response.status,
-                    "response_time": response_time,
-                    "success": HTTP_OK <= response.status < HTTP_REDIRECT_THRESHOLD
-                })
+                self.results.append(
+                    {
+                        "endpoint": endpoint,
+                        "method": method,
+                        "status": response.status,
+                        "response_time": response_time,
+                        "success": HTTP_OK <= response.status < HTTP_REDIRECT_THRESHOLD,
+                    }
+                )
 
                 return response.status, data
 
         except (TimeoutError, aiohttp.ClientError) as e:
             response_time = time.time() - start_time
-            self.results.append({
-                "endpoint": endpoint,
-                "method": method,
-                "status": 0,
-                "response_time": response_time,
-                "success": False,
-                "error": str(e)
-            })
+            self.results.append(
+                {
+                    "endpoint": endpoint,
+                    "method": method,
+                    "status": 0,
+                    "response_time": response_time,
+                    "success": False,
+                    "error": str(e),
+                }
+            )
             return 0, {"error": str(e)}
 
     async def test_health_endpoints(self) -> None:
@@ -189,8 +201,8 @@ class APITester:
             "profile": {
                 "first_name": "Demo",
                 "last_name": "User",
-                "date_of_birth": "1990-01-01"
-            }
+                "date_of_birth": "1990-01-01",
+            },
         }
 
         status, _response = await self._make_request(
@@ -199,13 +211,12 @@ class APITester:
         if HTTP_OK <= status < HTTP_REDIRECT_THRESHOLD:
             self._print_success("User Registration: Working")
         else:
-            self._print_info(f"User Registration: Status {status} (Mock/Development mode)")
+            self._print_info(
+                f"User Registration: Status {status} (Mock/Development mode)"
+            )
 
         # Test login
-        login_data = {
-            "email": "demo@clarity.health",
-            "password": "DemoPassword123!"
-        }
+        login_data = {"email": "demo@clarity.health", "password": "DemoPassword123!"}
 
         status, _response = await self._make_request(
             "POST", "/api/v1/auth/login", json=login_data
@@ -227,19 +238,16 @@ class APITester:
                 {
                     "timestamp": datetime.now(UTC).isoformat(),
                     "value": 72.5,
-                    "unit": "bpm"
+                    "unit": "bpm",
                 },
                 {
                     "timestamp": datetime.now(UTC).isoformat(),
                     "value": 75.0,
-                    "unit": "bpm"
-                }
+                    "unit": "bpm",
+                },
             ],
             "source": "apple_watch",
-            "device_info": {
-                "model": "Apple Watch Series 9",
-                "os_version": "10.0"
-            }
+            "device_info": {"model": "Apple Watch Series 9", "os_version": "10.0"},
         }
 
         status, _response = await self._make_request(
@@ -255,7 +263,7 @@ class APITester:
             "user_id": "demo_user_123",
             "data_type": "heart_rate",
             "start_date": "2024-01-01",
-            "end_date": "2024-12-31"
+            "end_date": "2024-12-31",
         }
 
         status, _response = await self._make_request(
@@ -283,7 +291,7 @@ class APITester:
                 {"timestamp": "2024-01-16T06:30:00Z", "activity_level": 0.3},
                 {"timestamp": "2024-01-16T07:00:00Z", "activity_level": 0.8},
             ],
-            "analysis_type": "sleep_stages"
+            "analysis_type": "sleep_stages",
         }
 
         status, response = await self._make_request(
@@ -307,9 +315,9 @@ class APITester:
                 "heart_rate_avg": 72,
                 "sleep_quality": 0.85,
                 "activity_level": "moderate",
-                "stress_indicators": ["elevated_hr_variability"]
+                "stress_indicators": ["elevated_hr_variability"],
             },
-            "question": "What are the key health trends and recommendations based on my data?"
+            "question": "What are the key health trends and recommendations based on my data?",
         }
 
         status, response = await self._make_request(
@@ -320,7 +328,9 @@ class APITester:
             if "insights" in response:
                 self._print_info("   AI-powered health recommendations available")
         else:
-            self._print_info(f"Gemini Insights: Status {status} (API key may be needed)")
+            self._print_info(
+                f"Gemini Insights: Status {status} (API key may be needed)"
+            )
 
     async def test_performance_metrics(self) -> None:
         """Test performance and show metrics."""
@@ -332,8 +342,12 @@ class APITester:
         success_rate = (successful_tests / total_tests * 100) if total_tests > 0 else 0
 
         # Calculate average response time
-        response_times = [r["response_time"] for r in self.results if r["response_time"] > 0]
-        avg_response_time = sum(response_times) / len(response_times) if response_times else 0
+        response_times = [
+            r["response_time"] for r in self.results if r["response_time"] > 0
+        ]
+        avg_response_time = (
+            sum(response_times) / len(response_times) if response_times else 0
+        )
 
         print(f"{Fore.CYAN}📊 Test Results:{Style.RESET_ALL}")
         print(f"   Total Tests: {total_tests}")
@@ -374,7 +388,9 @@ class APITester:
         print("✅ Performance Monitoring: VERIFIED")
         print(f"{Style.RESET_ALL}")
 
-        print(f"\n{Fore.YELLOW}🔥 READY TO SHOCK THE TECHNICAL CO-FOUNDER! 🔥{Style.RESET_ALL}")
+        print(
+            f"\n{Fore.YELLOW}🔥 READY TO SHOCK THE TECHNICAL CO-FOUNDER! 🔥{Style.RESET_ALL}"
+        )
 
 
 async def main() -> None:
@@ -397,7 +413,10 @@ if __name__ == "__main__":
         print("Installing required packages...")
         import subprocess  # noqa: S404
         import sys
-        subprocess.check_call([sys.executable, "-m", "pip", "install", "aiohttp", "colorama"])  # noqa: S603
+
+        subprocess.check_call(
+            [sys.executable, "-m", "pip", "install", "aiohttp", "colorama"]
+        )
         import aiohttp
         import colorama
 

@@ -24,34 +24,26 @@ class PaginationInfo(BaseModel):
     total_count: int | None = Field(
         None,
         description="Total number of items (if efficiently calculable)",
-        examples=[15420]
+        examples=[15420],
     )
     page_size: int = Field(
-        ...,
-        description="Number of items per page",
-        examples=[50],
-        ge=1,
-        le=1000
+        ..., description="Number of items per page", examples=[50], ge=1, le=1000
     )
     has_next: bool = Field(
-        ...,
-        description="Whether there are more items available",
-        examples=[True]
+        ..., description="Whether there are more items available", examples=[True]
     )
     has_previous: bool = Field(
-        ...,
-        description="Whether there are previous items available",
-        examples=[False]
+        ..., description="Whether there are previous items available", examples=[False]
     )
     next_cursor: str | None = Field(
         None,
         description="Cursor for fetching the next page",
-        examples=["eyJpZCI6MTU0MjAsInRpbWVzdGFtcCI6IjIwMjUtMDEtMTVUMTA6MzA6MDBaIn0="]
+        examples=["eyJpZCI6MTU0MjAsInRpbWVzdGFtcCI6IjIwMjUtMDEtMTVUMTA6MzA6MDBaIn0="],
     )
     previous_cursor: str | None = Field(
         None,
         description="Cursor for fetching the previous page",
-        examples=["eyJpZCI6MTUzNzAsInRpbWVzdGFtcCI6IjIwMjUtMDEtMTVUMDk6MzA6MDBaIn0="]
+        examples=["eyJpZCI6MTUzNzAsInRpbWVzdGFtcCI6IjIwMjUtMDEtMTVUMDk6MzA6MDBaIn0="],
     )
 
 
@@ -61,27 +53,27 @@ class PaginationLinks(BaseModel):
     self: str = Field(
         ...,
         description="Link to current page",
-        examples=["https://api.clarity.health/health-data?limit=50&cursor=abc123"]
+        examples=["https://api.clarity.health/health-data?limit=50&cursor=abc123"],
     )
     first: str | None = Field(
         None,
         description="Link to first page",
-        examples=["https://api.clarity.health/health-data?limit=50"]
+        examples=["https://api.clarity.health/health-data?limit=50"],
     )
     previous: str | None = Field(
         None,
         description="Link to previous page",
-        examples=["https://api.clarity.health/health-data?limit=50&cursor=xyz789"]
+        examples=["https://api.clarity.health/health-data?limit=50&cursor=xyz789"],
     )
     next: str | None = Field(
         None,
         description="Link to next page",
-        examples=["https://api.clarity.health/health-data?limit=50&cursor=def456"]
+        examples=["https://api.clarity.health/health-data?limit=50&cursor=def456"],
     )
     last: str | None = Field(
         None,
         description="Link to last page (if total count is known)",
-        examples=["https://api.clarity.health/health-data?limit=50&cursor=last123"]
+        examples=["https://api.clarity.health/health-data?limit=50&cursor=last123"],
     )
 
 
@@ -91,17 +83,10 @@ class PaginatedResponse(BaseModel, Generic[T]):
     Follows REST best practices with HAL-style links and comprehensive metadata.
     """
 
-    data: list[T] = Field(
-        ...,
-        description="Array of items for this page"
-    )
-    pagination: PaginationInfo = Field(
-        ...,
-        description="Pagination metadata"
-    )
+    data: list[T] = Field(..., description="Array of items for this page")
+    pagination: PaginationInfo = Field(..., description="Pagination metadata")
     links: PaginationLinks = Field(
-        ...,
-        description="Navigation links following HAL specification"
+        ..., description="Navigation links following HAL specification"
     )
 
     class Config:
@@ -120,12 +105,12 @@ class PaginationParams(BaseModel):
         description="Number of items to return per page",
         ge=1,
         le=1000,
-        examples=[50]
+        examples=[50],
     )
     cursor: str | None = Field(
         None,
         description="Pagination cursor for next/previous page",
-        examples=["eyJpZCI6MTU0MjAsInRpbWVzdGFtcCI6IjIwMjUtMDEtMTVUMTA6MzA6MDBaIn0="]
+        examples=["eyJpZCI6MTU0MjAsInRpbWVzdGFtcCI6IjIwMjUtMDEtMTVUMTA6MzA6MDBaIn0="],
     )
 
     # Offset-based pagination (alternative to cursor)
@@ -133,7 +118,7 @@ class PaginationParams(BaseModel):
         None,
         description="Number of items to skip (alternative to cursor)",
         ge=0,
-        examples=[100]
+        examples=[100],
     )
 
     @validator("limit")
@@ -181,7 +166,7 @@ class PaginationBuilder:
         total_count: int | None = None,
         next_cursor: str | None = None,
         previous_cursor: str | None = None,
-        additional_params: dict[str, Any] | None = None
+        additional_params: dict[str, Any] | None = None,
     ) -> "PaginatedResponse[T]":
         """Build complete paginated response with links and metadata.
 
@@ -202,7 +187,7 @@ class PaginationBuilder:
             has_next=has_next,
             has_previous=has_previous,
             next_cursor=next_cursor,
-            previous_cursor=previous_cursor
+            previous_cursor=previous_cursor,
         )
 
         # Build navigation links
@@ -212,14 +197,10 @@ class PaginationBuilder:
             has_previous=has_previous,
             next_cursor=next_cursor,
             previous_cursor=previous_cursor,
-            additional_params=additional_params
+            additional_params=additional_params,
         )
 
-        return PaginatedResponse(
-            data=data,
-            pagination=pagination,
-            links=links
-        )
+        return PaginatedResponse(data=data, pagination=pagination, links=links)
 
     def _build_links(
         self,
@@ -229,7 +210,7 @@ class PaginationBuilder:
         has_previous: bool,
         next_cursor: str | None,
         previous_cursor: str | None,
-        additional_params: dict[str, Any] | None = None
+        additional_params: dict[str, Any] | None = None,
     ) -> PaginationLinks:
         """Build HAL-style navigation links."""
         base_params = additional_params or {}
@@ -275,7 +256,7 @@ class PaginationBuilder:
             first=first_link,
             next=next_link,
             previous=previous_link,
-            last=None  # Can be computed if total_count is available
+            last=None,  # Can be computed if total_count is available
         )
 
 
@@ -323,9 +304,7 @@ MAX_PAGE_SIZE = 1000
 
 
 def validate_pagination_params(
-    limit: int | None = None,
-    cursor: str | None = None,
-    offset: int | None = None
+    limit: int | None = None, cursor: str | None = None, offset: int | None = None
 ) -> PaginationParams:
     """Validate and normalize pagination parameters.
 
@@ -363,8 +342,4 @@ def validate_pagination_params(
         offset_msg = "Offset must be non-negative"
         raise ValueError(offset_msg)
 
-    return PaginationParams(
-        limit=limit,
-        cursor=cursor,
-        offset=offset
-    )
+    return PaginationParams(limit=limit, cursor=cursor, offset=offset)

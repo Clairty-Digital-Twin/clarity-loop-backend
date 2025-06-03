@@ -214,9 +214,7 @@ class TestE2EHealthDataFlow:
         params = {"limit": "50", "offset": "0", "metric_type": "heart_rate"}
 
         # When: Retrieving health data through complete stack
-        response = client.get(
-            "/api/v1/health-data/", params=params, headers=headers
-        )
+        response = client.get("/api/v1/health-data/", params=params, headers=headers)
 
         # Then: Complete retrieval flow should work
         assert response.status_code in {

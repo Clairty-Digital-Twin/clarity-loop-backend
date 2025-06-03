@@ -391,7 +391,8 @@ class TestValidateInput:
 class TestAuditTrail:
     """Test audit_trail decorator."""
 
-    def test_audit_trail_basic(self, caplog: pytest.LogCaptureFixture) -> None:
+    @staticmethod
+    def test_audit_trail_basic(caplog: pytest.LogCaptureFixture) -> None:
         """Test basic audit trail functionality."""
         with caplog.at_level(logging.INFO):
             @audit_trail("test_operation")
@@ -406,7 +407,8 @@ class TestAuditTrail:
         assert "status" in log_messages
         assert "success" in log_messages
 
-    def test_audit_trail_with_user_and_resource(self, caplog: pytest.LogCaptureFixture) -> None:
+    @staticmethod
+    def test_audit_trail_with_user_and_resource(caplog: pytest.LogCaptureFixture) -> None:
         """Test audit trail with user and resource IDs."""
         with caplog.at_level(logging.INFO):
             @audit_trail("data_access", user_id_param="user_id", resource_id_param="resource_id")
@@ -421,7 +423,8 @@ class TestAuditTrail:
         assert "res456" in log_messages
         assert "data_access" in log_messages
 
-    def test_audit_trail_exception_handling(self, caplog: pytest.LogCaptureFixture) -> None:
+    @staticmethod
+    def test_audit_trail_exception_handling(caplog: pytest.LogCaptureFixture) -> None:
         """Test audit trail when function raises exception."""
         with caplog.at_level(logging.INFO):
             @audit_trail("failing_operation")
@@ -437,7 +440,8 @@ class TestAuditTrail:
         assert "failed" in log_messages
         assert "Audit test error" in log_messages
 
-    async def test_audit_trail_async(self, caplog: pytest.LogCaptureFixture) -> None:
+    @staticmethod
+    async def test_audit_trail_async(caplog: pytest.LogCaptureFixture) -> None:
         """Test audit trail with async functions."""
         with caplog.at_level(logging.INFO):
             @audit_trail("async_operation")

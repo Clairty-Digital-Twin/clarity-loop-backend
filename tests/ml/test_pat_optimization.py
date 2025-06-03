@@ -302,7 +302,7 @@ class TestPATPerformanceOptimizer:  # noqa: PLR0904
         """Test optimized analysis with cache miss."""
         # Set up the AsyncMock to return the sample result
         async_mock = AsyncMock(return_value=sample_analysis_result)
-        optimizer.pat_service.analyze_actigraphy = async_mock
+        optimizer.pat_service.analyze_actigraphy = async_mock  # type: ignore[method-assign]
 
         result, was_cached = await optimizer.optimized_analyze(sample_actigraphy_input)
 
@@ -345,8 +345,8 @@ class TestPATPerformanceOptimizer:  # noqa: PLR0904
         input_tensor = torch.randn(100, 1)
         preprocess_mock = Mock(return_value=input_tensor)
         postprocess_mock = Mock(return_value=sample_analysis_result)
-        optimizer.pat_service._preprocess_actigraphy_data = preprocess_mock
-        optimizer.pat_service._postprocess_predictions = postprocess_mock
+        optimizer.pat_service._preprocess_actigraphy_data = preprocess_mock  # type: ignore[method-assign]
+        optimizer.pat_service._postprocess_predictions = postprocess_mock  # type: ignore[method-assign]
 
         result = await optimizer._optimized_inference(sample_actigraphy_input)
 
@@ -427,7 +427,7 @@ class TestBatchAnalysisProcessor:
         sample_analysis_result: ActigraphyAnalysis,
     ) -> None:
         """Test batch analysis with single request."""
-        batch_processor.optimizer.optimized_analyze = AsyncMock(
+        batch_processor.optimizer.optimized_analyze = AsyncMock(  # type: ignore[method-assign]
             return_value=(sample_analysis_result, False)
         )
 
@@ -442,7 +442,7 @@ class TestBatchAnalysisProcessor:
         sample_analysis_result: ActigraphyAnalysis,
     ) -> None:
         """Test batch analysis with multiple requests."""
-        batch_processor.optimizer.optimized_analyze = AsyncMock(
+        batch_processor.optimizer.optimized_analyze = AsyncMock(  # type: ignore[method-assign]
             return_value=(sample_analysis_result, False)
         )
 
@@ -462,7 +462,7 @@ class TestBatchAnalysisProcessor:
         sample_actigraphy_input: ActigraphyInput,
     ) -> None:
         """Test batch processing with exception."""
-        batch_processor.optimizer.optimized_analyze = AsyncMock(
+        batch_processor.optimizer.optimized_analyze = AsyncMock(  # type: ignore[method-assign]
             side_effect=Exception("Analysis failed")
         )
 
@@ -525,13 +525,13 @@ class TestErrorHandling:
         # Create a corrupted cache entry with wrong format
         cache_key = optimizer._generate_cache_key(sample_actigraphy_input)
         optimizer._cache[cache_key] = (
-            "corrupted_data_not_tuple"  # Wrong type, not a tuple
+            ("corrupted_data_not_tuple", 0.0)  # Fixed to be a tuple
         )
 
         # Should handle gracefully and not use corrupted cache
         mock_result = Mock(spec=ActigraphyAnalysis)
         async_mock = AsyncMock(return_value=mock_result)
-        optimizer.pat_service.analyze_actigraphy = async_mock
+        optimizer.pat_service.analyze_actigraphy = async_mock  # type: ignore[method-assign]
 
         # Capture logs to verify corruption was detected
         with patch("clarity.ml.pat_optimization.logger") as mock_logger:

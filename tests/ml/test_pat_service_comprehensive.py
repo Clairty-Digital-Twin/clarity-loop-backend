@@ -63,10 +63,9 @@ class TestPATModelService:
             activity += rng.normal(0, 5)
             activity = max(0, activity)
 
-            data_points.append(ActigraphyDataPoint(
-                timestamp=timestamp,
-                value=float(activity)
-            ))
+            data_points.append(
+                ActigraphyDataPoint(timestamp=timestamp, value=float(activity))
+            )
 
         return data_points
 
@@ -88,17 +87,18 @@ class TestPATModelService:
 
             if 6 <= hour_of_day <= 22:  # Daytime
                 base_activity = 40 if not is_weekend else 25
-                activity = base_activity + 15 * np.sin(2 * np.pi * (hour_of_day - 6) / 16)
+                activity = base_activity + 15 * np.sin(
+                    2 * np.pi * (hour_of_day - 6) / 16
+                )
             else:  # Nighttime
                 activity = 3 if not is_weekend else 7
 
             activity += rng.normal(0, 8)
             activity = max(0, activity)
 
-            data_points.append(ActigraphyDataPoint(
-                timestamp=timestamp,
-                value=float(activity)
-            ))
+            data_points.append(
+                ActigraphyDataPoint(timestamp=timestamp, value=float(activity))
+            )
 
         return data_points
 
@@ -173,15 +173,14 @@ class TestPATModelService:
 
     @staticmethod
     async def test_inference_24h(
-        pat_service: PATModelService,
-        sample_actigraphy_data: list[ActigraphyDataPoint]
+        pat_service: PATModelService, sample_actigraphy_data: list[ActigraphyDataPoint]
     ) -> None:
         """Test PAT inference with 24-hour data."""
         actigraphy_input = ActigraphyInput(
             user_id="test_user_24h",
             data_points=sample_actigraphy_data,
             sampling_rate=1.0,
-            duration_hours=24
+            duration_hours=24,
         )
 
         analysis = await pat_service.analyze_actigraphy(actigraphy_input)
@@ -204,15 +203,14 @@ class TestPATModelService:
 
     @staticmethod
     async def test_inference_week(
-        pat_service: PATModelService,
-        week_actigraphy_data: list[ActigraphyDataPoint]
+        pat_service: PATModelService, week_actigraphy_data: list[ActigraphyDataPoint]
     ) -> None:
         """Test PAT inference with full week data."""
         actigraphy_input = ActigraphyInput(
             user_id="test_user_week",
             data_points=week_actigraphy_data,
             sampling_rate=1.0,
-            duration_hours=168
+            duration_hours=168,
         )
 
         analysis = await pat_service.analyze_actigraphy(actigraphy_input)
@@ -229,9 +227,7 @@ class TestPATModelService:
         """Test clinical insights generation for different scenarios."""
         # Test high sleep efficiency scenario
         insights_high = pat_service._generate_clinical_insights(
-            sleep_efficiency=90.0,
-            circadian_score=0.9,
-            depression_risk=0.2
+            sleep_efficiency=90.0, circadian_score=0.9, depression_risk=0.2
         )
 
         assert any("excellent" in insight.lower() for insight in insights_high)
@@ -240,9 +236,7 @@ class TestPATModelService:
 
         # Test poor sleep scenario
         insights_poor = pat_service._generate_clinical_insights(
-            sleep_efficiency=60.0,
-            circadian_score=0.3,
-            depression_risk=0.8
+            sleep_efficiency=60.0, circadian_score=0.3, depression_risk=0.8
         )
 
         assert any("poor" in insight.lower() for insight in insights_poor)
@@ -251,8 +245,7 @@ class TestPATModelService:
 
     @staticmethod
     async def test_preprocessing_pipeline(
-        pat_service: PATModelService,
-        sample_actigraphy_data: list[ActigraphyDataPoint]
+        pat_service: PATModelService, sample_actigraphy_data: list[ActigraphyDataPoint]
     ) -> None:
         """Test the actigraphy preprocessing pipeline."""
         # Test normal length data (1440 = 24h)
@@ -289,7 +282,7 @@ class TestPATModelService:
             user_id="test",
             data_points=[ActigraphyDataPoint(timestamp=datetime.now(UTC), value=1.0)],
             sampling_rate=1.0,
-            duration_hours=24
+            duration_hours=24,
         )
 
         with pytest.raises(RuntimeError, match="PAT model not loaded"):
@@ -350,7 +343,7 @@ class TestPATArchitecture:
             embed_dim=96,
             num_layers=2,
             num_heads=12,
-            ff_dim=256
+            ff_dim=256,
         )
 
         batch_size = 2
@@ -409,17 +402,16 @@ class TestPATIntegration:
                 else:
                     activity = rng.exponential(20)  # Awake
 
-                data_points.append(ActigraphyDataPoint(
-                    timestamp=timestamp,
-                    value=float(activity)
-                ))
+                data_points.append(
+                    ActigraphyDataPoint(timestamp=timestamp, value=float(activity))
+                )
 
         # Create input
         actigraphy_input = ActigraphyInput(
             user_id="integration_test",
             data_points=data_points,
             sampling_rate=1.0,
-            duration_hours=24
+            duration_hours=24,
         )
 
         # Run analysis
@@ -431,9 +423,7 @@ class TestPATIntegration:
         assert analysis.confidence_score > 0
 
         # Check timestamp format
-        parsed_time = datetime.fromisoformat(
-            analysis.analysis_timestamp
-        )
+        parsed_time = datetime.fromisoformat(analysis.analysis_timestamp)
         assert isinstance(parsed_time, datetime)
 
     @staticmethod
@@ -447,7 +437,7 @@ class TestPATIntegration:
             data_points = [
                 ActigraphyDataPoint(
                     timestamp=datetime.now(UTC) + timedelta(minutes=i),
-                    value=float(rng.exponential(10))
+                    value=float(rng.exponential(10)),
                 )
                 for i in range(1440)
             ]
@@ -456,7 +446,7 @@ class TestPATIntegration:
                 user_id=user_id,
                 data_points=data_points,
                 sampling_rate=1.0,
-                duration_hours=24
+                duration_hours=24,
             )
 
             return await service.analyze_actigraphy(actigraphy_input)
@@ -486,7 +476,7 @@ def run_quick_test() -> None:
         data_points = [
             ActigraphyDataPoint(
                 timestamp=datetime.now(UTC) + timedelta(minutes=i),
-                value=float(10 + 5 * np.sin(2 * np.pi * i / 1440))
+                value=float(10 + 5 * np.sin(2 * np.pi * i / 1440)),
             )
             for i in range(1440)
         ]
@@ -495,7 +485,7 @@ def run_quick_test() -> None:
             user_id="quick_test",
             data_points=data_points,
             sampling_rate=1.0,
-            duration_hours=24
+            duration_hours=24,
         )
 
         analysis = await service.analyze_actigraphy(actigraphy_input)

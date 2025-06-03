@@ -78,7 +78,9 @@ class PATPerformanceOptimizer:
                 self.compiled_model = self._compile_torchscript(model)
 
                 if self.compiled_model is None:
-                    logger.warning("TorchScript compilation failed, using regular model")
+                    logger.warning(
+                        "TorchScript compilation failed, using regular model"
+                    )
                 else:
                     logger.info("TorchScript compilation successful")
 
@@ -95,21 +97,25 @@ class PATPerformanceOptimizer:
         """Apply structured pruning to reduce model size."""
         # Prune attention layers
         for name, module in model.named_modules():
-            if isinstance(module, torch.nn.Linear) and 'attention' in name:
-                prune.l1_unstructured(module, name='weight', amount=amount)
+            if isinstance(module, torch.nn.Linear) and "attention" in name:
+                prune.l1_unstructured(module, name="weight", amount=amount)
 
         # Prune feed-forward layers
         for name, module in model.named_modules():
-            if isinstance(module, torch.nn.Linear) and ('ff' in name or 'feed_forward' in name):
-                prune.l1_unstructured(module, name='weight', amount=amount * 0.5)
+            if isinstance(module, torch.nn.Linear) and (
+                "ff" in name or "feed_forward" in name
+            ):
+                prune.l1_unstructured(module, name="weight", amount=amount * 0.5)
 
         # Remove pruning masks to make pruning permanent
         for _name, module in model.named_modules():
             if isinstance(module, torch.nn.Linear):
                 with contextlib.suppress(ValueError):
-                    prune.remove(module, 'weight')
+                    prune.remove(module, "weight")
 
-    def _compile_torchscript(self, model: torch.nn.Module) -> torch.jit.ScriptModule | None:
+    def _compile_torchscript(
+        self, model: torch.nn.Module
+    ) -> torch.jit.ScriptModule | None:
         """Compile model to TorchScript for optimized inference."""
         try:
             model.eval()
@@ -173,7 +179,9 @@ class PATPerformanceOptimizer:
             if cache_key in self._cache:
                 cached_result, timestamp = self._cache[cache_key]
                 if self._is_cache_valid(timestamp):
-                    logger.info("Cache hit for analysis %s", cache_key[:HASH_TRUNCATE_LENGTH])
+                    logger.info(
+                        "Cache hit for analysis %s", cache_key[:HASH_TRUNCATE_LENGTH]
+                    )
                     return cached_result, True
                 # Remove expired entry
                 del self._cache[cache_key]
@@ -197,14 +205,18 @@ class PATPerformanceOptimizer:
 
         return result, False
 
-    async def _optimized_inference(self, input_data: ActigraphyInput) -> ActigraphyAnalysis:
+    async def _optimized_inference(
+        self, input_data: ActigraphyInput
+    ) -> ActigraphyAnalysis:
         """Run inference using the optimized compiled model."""
         if self.compiled_model is None:
             msg = "No compiled model available"
             raise RuntimeError(msg)
 
         # Preprocess input data
-        input_tensor = self.pat_service._preprocess_actigraphy_data(input_data.data_points)  # noqa: SLF001
+        input_tensor = self.pat_service._preprocess_actigraphy_data(
+            input_data.data_points
+        )
         input_tensor = input_tensor.unsqueeze(0)  # Add batch dimension
 
         # Run optimized inference
@@ -213,19 +225,25 @@ class PATPerformanceOptimizer:
 
         # Convert outputs to dictionary format expected by postprocessing
         outputs_dict = {
-            'sleep_stage_predictions': outputs[0] if isinstance(outputs, (list, tuple)) else outputs,
-            'confidence_scores': torch.softmax(outputs[0] if isinstance(outputs, (list, tuple)) else outputs, dim=-1),
-            'attention_weights': None,  # Not available in compiled model
-            'intermediate_features': None,  # Not available in compiled model
-            'model_metadata': {
-                'model_type': 'compiled_pat',
-                'optimization_enabled': True,
-                'torchscript_used': True,
-            }
+            "sleep_stage_predictions": (
+                outputs[0] if isinstance(outputs, (list, tuple)) else outputs
+            ),
+            "confidence_scores": torch.softmax(
+                outputs[0] if isinstance(outputs, (list, tuple)) else outputs, dim=-1
+            ),
+            "attention_weights": None,  # Not available in compiled model
+            "intermediate_features": None,  # Not available in compiled model
+            "model_metadata": {
+                "model_type": "compiled_pat",
+                "optimization_enabled": True,
+                "torchscript_used": True,
+            },
         }
 
         # Post-process results
-        return self.pat_service._postprocess_predictions(outputs_dict, input_data.user_id)  # noqa: SLF001
+        return self.pat_service._postprocess_predictions(
+            outputs_dict, input_data.user_id
+        )
 
     def clear_cache(self) -> None:
         """Clear the analysis cache."""
@@ -235,9 +253,9 @@ class PATPerformanceOptimizer:
     def get_cache_stats(self) -> dict[str, Any]:
         """Get cache statistics."""
         return {
-            'cache_size': len(self._cache),
-            'hit_ratio': self._calculate_hit_ratio(),
-            'oldest_entry_age': self._get_oldest_entry_age(),
+            "cache_size": len(self._cache),
+            "hit_ratio": self._calculate_hit_ratio(),
+            "oldest_entry_age": self._get_oldest_entry_age(),
         }
 
     @staticmethod
@@ -253,7 +271,9 @@ class PATPerformanceOptimizer:
         oldest_timestamp = min(timestamp for _, timestamp in self._cache.values())
         return time.time() - oldest_timestamp
 
-    async def warm_up(self, num_iterations: int = DEFAULT_WARMUP_ITERATIONS) -> dict[str, float]:
+    async def warm_up(
+        self, num_iterations: int = DEFAULT_WARMUP_ITERATIONS
+    ) -> dict[str, float]:
         """Warm up the optimized model with dummy data."""
         logger.info("Warming up PAT model with %d iterations...", num_iterations)
 
@@ -284,22 +304,26 @@ class PATPerformanceOptimizer:
             logger.info("Warmup iteration %d: %.3fs", i + 1, iteration_time)
 
         stats = {
-            'mean_time': sum(times) / len(times),
-            'min_time': min(times),
-            'max_time': max(times),
+            "mean_time": sum(times) / len(times),
+            "min_time": min(times),
+            "max_time": max(times),
         }
 
-        logger.info("Warmup completed - Mean: %.3fs", stats['mean_time'])
+        logger.info("Warmup completed - Mean: %.3fs", stats["mean_time"])
         return stats
 
 
 class BatchAnalysisProcessor:
     """Batch processor for handling multiple PAT analysis requests efficiently."""
 
-    def __init__(self, optimizer: PATPerformanceOptimizer, max_batch_size: int = MAX_BATCH_SIZE) -> None:
+    def __init__(
+        self, optimizer: PATPerformanceOptimizer, max_batch_size: int = MAX_BATCH_SIZE
+    ) -> None:
         self.optimizer = optimizer
         self.max_batch_size = max_batch_size
-        self.pending_requests: list[tuple[ActigraphyInput, asyncio.Future[ActigraphyAnalysis]]] = []
+        self.pending_requests: list[
+            tuple[ActigraphyInput, asyncio.Future[ActigraphyAnalysis]]
+        ] = []
         self.processing = False
 
     async def analyze_batch(self, input_data: ActigraphyInput) -> ActigraphyAnalysis:
@@ -322,8 +346,8 @@ class BatchAnalysisProcessor:
         try:
             while self.pending_requests:
                 # Take up to max_batch_size requests
-                batch = self.pending_requests[:self.max_batch_size]
-                self.pending_requests = self.pending_requests[self.max_batch_size:]
+                batch = self.pending_requests[: self.max_batch_size]
+                self.pending_requests = self.pending_requests[self.max_batch_size :]
 
                 # Process batch concurrently
                 tasks = [

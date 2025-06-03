@@ -41,7 +41,7 @@ class TestPATEncoder:
             embed_dim=96,
             num_layers=2,
             num_heads=12,
-            ff_dim=256
+            ff_dim=256,
         )
 
         assert hasattr(encoder, "patch_embedding")
@@ -59,7 +59,7 @@ class TestPATEncoder:
             embed_dim=64,
             num_layers=1,
             num_heads=4,
-            ff_dim=128
+            ff_dim=128,
         )
 
         assert encoder.input_size == 1440
@@ -76,7 +76,7 @@ class TestPATEncoder:
             embed_dim=96,
             num_layers=2,
             num_heads=12,
-            ff_dim=256
+            ff_dim=256,
         )
         encoder.eval()
 
@@ -95,11 +95,7 @@ class TestPATEncoder:
     def test_pat_full_model_forward_pass() -> None:
         """Test forward pass through full PAT model."""
         encoder = PATEncoder(
-            input_size=10080,
-            patch_size=18,
-            embed_dim=96,
-            num_layers=1,
-            num_heads=6
+            input_size=10080, patch_size=18, embed_dim=96, num_layers=1, num_heads=6
         )
         model = PATForMentalHealthClassification(encoder, num_classes=18)
         model.eval()
@@ -197,7 +193,9 @@ class TestPATModelServiceLoading:
         with (
             patch("pathlib.Path.exists", return_value=True),
             patch.object(
-                PATModelService, "_load_tensorflow_weights", return_value=mock_state_dict
+                PATModelService,
+                "_load_tensorflow_weights",
+                return_value=mock_state_dict,
             ),
         ):
             await service.load_model()
@@ -267,17 +265,19 @@ class TestPATModelServiceLoading:
             "encoder.patch_embedding.weight": torch.from_numpy(
                 rng.standard_normal((96, 18))
             ).float(),
-            "encoder.patch_embedding.bias": torch.from_numpy(rng.standard_normal(96)).float(),
-            "classifier.0.weight": torch.from_numpy(
+            "encoder.patch_embedding.bias": torch.from_numpy(
                 rng.standard_normal(96)
             ).float(),
+            "classifier.0.weight": torch.from_numpy(rng.standard_normal(96)).float(),
             "classifier.0.bias": torch.from_numpy(rng.standard_normal(96)).float(),
         }
 
         with (
             patch("pathlib.Path.exists", return_value=True),
             patch.object(
-                PATModelService, "_load_tensorflow_weights", return_value=mock_state_dict
+                PATModelService,
+                "_load_tensorflow_weights",
+                return_value=mock_state_dict,
             ),
         ):
             await service.load_model()

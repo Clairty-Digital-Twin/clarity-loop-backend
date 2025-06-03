@@ -248,8 +248,8 @@ class AsyncInferenceEngine:
                 await self.batch_processor_task
             except asyncio.CancelledError:
                 pass  # Expected when cancelling
-            except Exception as e:
-                logger.warning(f"Error during batch processor shutdown: {e}")
+            except (RuntimeError, OSError) as e:
+                logger.warning("Error during batch processor shutdown: %s", e)
 
         # Clear any remaining items in the queue
         while not self.request_queue.empty():
@@ -339,7 +339,7 @@ class AsyncInferenceEngine:
             return
 
         start_time = time.perf_counter()
-        logger.debug(f"Processing batch of {len(requests)} requests")
+        logger.debug("Processing batch of %d requests", len(requests))
 
         # Process each request in the batch
         for request, future in requests:
@@ -356,7 +356,7 @@ class AsyncInferenceEngine:
                     future.set_exception(e)
 
         processing_time = (time.perf_counter() - start_time) * 1000
-        logger.debug(f"Batch processed in {processing_time:.2f}ms")
+        logger.debug("Batch processed in %.2fms", processing_time)
 
     @performance_monitor
     async def _run_single_inference(

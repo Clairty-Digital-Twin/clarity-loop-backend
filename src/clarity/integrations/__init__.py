@@ -1,5 +1,4 @@
-"""
-Clarity Digital Twin - Integrations Module
+"""Clarity Digital Twin - Integrations Module
 
 External service integrations for the Clarity platform:
 - Apple HealthKit integration for Apple Watch data
@@ -7,7 +6,7 @@ External service integrations for the Clarity platform:
 - Third-party health platforms
 """
 
-from .healthkit import HealthKitClient
 from .apple_watch import AppleWatchDataProcessor
+from .healthkit import HealthKitClient
 
-__all__ = ["HealthKitClient", "AppleWatchDataProcessor"]
+__all__ = ["AppleWatchDataProcessor", "HealthKitClient"]

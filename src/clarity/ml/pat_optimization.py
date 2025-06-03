@@ -127,7 +127,7 @@ class PATPerformanceOptimizer:
             traced_model = torch.jit.trace(model, sample_input)  # type: ignore[no-untyped-call]
 
             # Optimize for inference
-            if hasattr(torch.jit, 'optimize_for_inference'):
+            if hasattr(torch.jit, "optimize_for_inference"):
                 return torch.jit.optimize_for_inference(traced_model)  # type: ignore[misc,return-value]
             return traced_model  # type: ignore[return-value]  # noqa: TRY300
 
@@ -183,7 +183,8 @@ class PATPerformanceOptimizer:
                     cached_result, timestamp = self._cache[cache_key]
                     if self._is_cache_valid(timestamp):
                         logger.info(
-                            "Cache hit for analysis %s", cache_key[:HASH_TRUNCATE_LENGTH]
+                            "Cache hit for analysis %s",
+                            cache_key[:HASH_TRUNCATE_LENGTH],
                         )
                         return cached_result, True
                     # Remove expired entry
@@ -192,7 +193,8 @@ class PATPerformanceOptimizer:
                     # Handle corrupted cache entries gracefully
                     logger.warning(
                         "Cache corruption detected for key %s: %s",
-                        cache_key[:HASH_TRUNCATE_LENGTH], e
+                        cache_key[:HASH_TRUNCATE_LENGTH],
+                        e,
                     )
                     # Remove corrupted entry
                     self._cache.pop(cache_key, None)

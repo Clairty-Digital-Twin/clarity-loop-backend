@@ -90,12 +90,12 @@ class TestAuthServiceBasics:
             # Should fail basic validation
             parts = email.split("@")
             is_invalid = (
-                "@" not in email or
-                len(parts) != 2 or
-                not parts[0] or
-                not parts[1] or
-                "." not in parts[1] or
-                " " in email
+                "@" not in email
+                or len(parts) != 2
+                or not parts[0]
+                or not parts[1]
+                or "." not in parts[1]
+                or " " in email
             )
             assert is_invalid
 
@@ -148,6 +148,7 @@ class TestAuthServiceBasics:
     @staticmethod
     async def test_concurrent_operations() -> None:
         """Test handling of concurrent auth operations."""
+
         # Simulate multiple concurrent auth requests
         async def mock_auth_operation(user_id: str) -> dict[str, Any]:
             await asyncio.sleep(0.01)  # Simulate async work

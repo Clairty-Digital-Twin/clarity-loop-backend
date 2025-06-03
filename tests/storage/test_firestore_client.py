@@ -56,12 +56,16 @@ def mock_firestore_client() -> Generator[AsyncMock, None, None]:
 @pytest.fixture
 def mock_credentials() -> Generator[Mock, None, None]:
     """Mock Firebase credentials."""
-    with patch("clarity.storage.firestore_client.credentials.Certificate") as mock_creds:
+    with patch(
+        "clarity.storage.firestore_client.credentials.Certificate"
+    ) as mock_creds:
         yield mock_creds
 
 
 @pytest.fixture
-def firestore_client(_mock_firebase_admin: Mock, _mock_credentials: Mock) -> FirestoreClient:
+def firestore_client(
+    _mock_firebase_admin: Mock, _mock_credentials: Mock
+) -> FirestoreClient:
     """Create FirestoreClient instance with mocked dependencies."""
     return FirestoreClient(
         project_id="test-project",
@@ -122,7 +126,9 @@ class TestFirestoreClientInitialization:
     """Test FirestoreClient initialization and setup."""
 
     @staticmethod
-    def test_init_with_credentials_path(mock_firebase_admin: Mock, mock_credentials: Mock) -> None:
+    def test_init_with_credentials_path(
+        mock_firebase_admin: Mock, mock_credentials: Mock
+    ) -> None:
         """Test initialization with credentials path."""
         client = FirestoreClient(
             project_id="test-project",
@@ -157,7 +163,9 @@ class TestFirestoreClientInitialization:
         """Test Firebase initialization failure."""
         mock_firebase_admin.initialize_app.side_effect = Exception("Init failed")
 
-        with pytest.raises(FirestoreConnectionError, match="Firebase initialization failed"):
+        with pytest.raises(
+            FirestoreConnectionError, match="Firebase initialization failed"
+        ):
             FirestoreClient(project_id="test-project")
 
     @staticmethod
@@ -183,9 +191,13 @@ class TestFirestoreClientConnection:
     """Test Firestore client connection management."""
 
     @staticmethod
-    async def test_get_db_creates_client(firestore_client: FirestoreClient, mock_firestore_client: AsyncMock) -> None:
+    async def test_get_db_creates_client(
+        firestore_client: FirestoreClient, mock_firestore_client: AsyncMock
+    ) -> None:
         """Test database client creation."""
-        with patch("clarity.storage.firestore_client.firestore.AsyncClient") as mock_client:
+        with patch(
+            "clarity.storage.firestore_client.firestore.AsyncClient"
+        ) as mock_client:
             mock_client.return_value = mock_firestore_client
 
             db = await firestore_client._get_db()
@@ -196,7 +208,9 @@ class TestFirestoreClientConnection:
             )
 
     @staticmethod
-    async def test_get_db_reuses_existing_client(firestore_client: FirestoreClient, mock_firestore_client: AsyncMock) -> None:
+    async def test_get_db_reuses_existing_client(
+        firestore_client: FirestoreClient, mock_firestore_client: AsyncMock
+    ) -> None:
         """Test that existing client is reused."""
         firestore_client._db = mock_firestore_client
 
@@ -207,10 +221,14 @@ class TestFirestoreClientConnection:
     @staticmethod
     async def test_get_db_connection_failure(firestore_client: FirestoreClient) -> None:
         """Test database connection failure."""
-        with patch("clarity.storage.firestore_client.firestore.AsyncClient") as mock_client:
+        with patch(
+            "clarity.storage.firestore_client.firestore.AsyncClient"
+        ) as mock_client:
             mock_client.side_effect = Exception("Connection failed")
 
-            with pytest.raises(FirestoreConnectionError, match="Firestore connection failed"):
+            with pytest.raises(
+                FirestoreConnectionError, match="Firestore connection failed"
+            ):
                 await firestore_client._get_db()
 
 
@@ -261,8 +279,10 @@ class TestFirestoreClientDocumentOperations:
         mock_db.collection.return_value = mock_collection
 
         # Patch the _get_db method to return our mock
-        with patch.object(firestore_client, "_get_db", return_value=mock_db), \
-             patch.object(firestore_client, "_audit_log", new_callable=AsyncMock):
+        with (
+            patch.object(firestore_client, "_get_db", return_value=mock_db),
+            patch.object(firestore_client, "_audit_log", new_callable=AsyncMock),
+        ):
             result = await firestore_client.create_document(
                 collection="test_collection",
                 data={"name": "test"},
@@ -288,8 +308,10 @@ class TestFirestoreClientDocumentOperations:
         mock_db.collection.return_value = mock_collection
 
         # Patch the _get_db method to return our mock
-        with patch.object(firestore_client, "_get_db", return_value=mock_db), \
-             patch.object(firestore_client, "_audit_log", new_callable=AsyncMock):
+        with (
+            patch.object(firestore_client, "_get_db", return_value=mock_db),
+            patch.object(firestore_client, "_audit_log", new_callable=AsyncMock),
+        ):
             result = await firestore_client.create_document(
                 collection="test_collection",
                 data={"name": "test"},
@@ -299,10 +321,18 @@ class TestFirestoreClientDocumentOperations:
         mock_doc_ref.set.assert_called_once()
 
     @staticmethod
-    async def test_create_document_validation_error(firestore_client: FirestoreClient) -> None:
+    async def test_create_document_validation_error(
+        firestore_client: FirestoreClient,
+    ) -> None:
         """Test document creation with validation error."""
-        with patch.object(firestore_client, "_validate_health_data", side_effect=FirestoreValidationError("Invalid data")), \
-             pytest.raises(FirestoreValidationError, match="Invalid data"):
+        with (
+            patch.object(
+                firestore_client,
+                "_validate_health_data",
+                side_effect=FirestoreValidationError("Invalid data"),
+            ),
+            pytest.raises(FirestoreValidationError, match="Invalid data"),
+        ):
             await firestore_client.create_document(
                 collection="health_data",
                 data={"invalid": "data"},
@@ -391,11 +421,15 @@ class TestFirestoreClientHealthData:
             "upload_source": "apple_health",
         }
 
-        with pytest.raises(FirestoreValidationError, match="Missing required field: user_id"):
+        with pytest.raises(
+            FirestoreValidationError, match="Missing required field: user_id"
+        ):
             await FirestoreClient._validate_health_data(invalid_data)
 
     @staticmethod
-    async def test_store_health_data_success(firestore_client: FirestoreClient, sample_health_upload: HealthDataUpload) -> None:
+    async def test_store_health_data_success(
+        firestore_client: FirestoreClient, sample_health_upload: HealthDataUpload
+    ) -> None:
         """Test successful health data storage."""
         with patch.object(firestore_client, "create_document", return_value="proc123"):
             result = await firestore_client.store_health_data(
@@ -410,7 +444,9 @@ class TestFirestoreClientAuditLogging:
     """Test audit logging functionality."""
 
     @staticmethod
-    async def test_audit_log_success(firestore_client: FirestoreClient, mock_firestore_client: AsyncMock) -> None:
+    async def test_audit_log_success(
+        firestore_client: FirestoreClient, mock_firestore_client: AsyncMock
+    ) -> None:
         """Test successful audit log creation."""
         firestore_client._db = mock_firestore_client
 
@@ -430,7 +466,9 @@ class TestFirestoreClientErrorHandling:
     """Test error handling and edge cases."""
 
     @staticmethod
-    async def test_document_operation_generic_error(firestore_client: FirestoreClient, mock_firestore_client: AsyncMock) -> None:
+    async def test_document_operation_generic_error(
+        firestore_client: FirestoreClient, mock_firestore_client: AsyncMock
+    ) -> None:
         """Test generic error handling in document operations."""
         mock_firestore_client.collection.side_effect = Exception("Generic error")
         firestore_client._db = mock_firestore_client
@@ -439,10 +477,18 @@ class TestFirestoreClientErrorHandling:
             await firestore_client.create_document("test", {"data": "test"})
 
     @staticmethod
-    async def test_health_data_storage_error(firestore_client: FirestoreClient, sample_health_upload: HealthDataUpload) -> None:
+    async def test_health_data_storage_error(
+        firestore_client: FirestoreClient, sample_health_upload: HealthDataUpload
+    ) -> None:
         """Test error handling in health data storage."""
-        with patch.object(firestore_client, "create_document", side_effect=Exception("Storage failed")), \
-             pytest.raises(FirestoreError, match="Health data storage failed"):
+        with (
+            patch.object(
+                firestore_client,
+                "create_document",
+                side_effect=Exception("Storage failed"),
+            ),
+            pytest.raises(FirestoreError, match="Health data storage failed"),
+        ):
             await firestore_client.store_health_data(sample_health_upload)
 
 
@@ -463,14 +509,18 @@ class TestFirestoreHealthDataRepository:
                 )
 
     @staticmethod
-    async def test_save_health_data_success(repository: FirestoreHealthDataRepository) -> None:
+    async def test_save_health_data_success(
+        repository: FirestoreHealthDataRepository,
+    ) -> None:
         """Test successful health data saving."""
         user_id = str(uuid4())
         processing_id = str(uuid4())
         metrics = [{"type": "heart_rate", "value": 72}]
 
         # Mock the create_document calls that happen inside save_health_data
-        with patch.object(repository._firestore_client, "create_document", return_value=processing_id) as mock_create:
+        with patch.object(
+            repository._firestore_client, "create_document", return_value=processing_id
+        ) as mock_create:
             result = await repository.save_health_data(
                 user_id=user_id,
                 processing_id=processing_id,
@@ -484,14 +534,24 @@ class TestFirestoreHealthDataRepository:
         assert mock_create.call_count == 2
 
     @staticmethod
-    async def test_get_user_health_data_success(repository: FirestoreHealthDataRepository) -> None:
+    async def test_get_user_health_data_success(
+        repository: FirestoreHealthDataRepository,
+    ) -> None:
         """Test successful user health data retrieval."""
         user_id = str(uuid4())
         mock_metrics = [{"metric_data": {"type": "heart_rate", "value": 72}}]
 
         # Mock both query_documents and count_documents methods
-        with patch.object(repository._firestore_client, "query_documents", return_value=mock_metrics) as mock_query, \
-             patch.object(repository._firestore_client, "count_documents", return_value=1) as mock_count:
+        with (
+            patch.object(
+                repository._firestore_client,
+                "query_documents",
+                return_value=mock_metrics,
+            ) as mock_query,
+            patch.object(
+                repository._firestore_client, "count_documents", return_value=1
+            ) as mock_count,
+        ):
             result = await repository.get_user_health_data(user_id=user_id)
 
         assert "metrics" in result
@@ -529,7 +589,9 @@ class TestFirestoreClientAdvancedFeatures:
         assert "timestamp" in result
 
     @staticmethod
-    async def test_close_cleanup(firestore_client: FirestoreClient, mock_firestore_client: AsyncMock) -> None:
+    async def test_close_cleanup(
+        firestore_client: FirestoreClient, mock_firestore_client: AsyncMock
+    ) -> None:
         """Test client cleanup on close."""
         firestore_client._db = mock_firestore_client
 
@@ -543,9 +605,13 @@ class TestFirestoreClientConcurrency:
     """Test concurrent operations and thread safety."""
 
     @staticmethod
-    async def test_concurrent_db_access(firestore_client: FirestoreClient, mock_firestore_client: AsyncMock) -> None:
+    async def test_concurrent_db_access(
+        firestore_client: FirestoreClient, mock_firestore_client: AsyncMock
+    ) -> None:
         """Test concurrent database access creates only one client."""
-        with patch("clarity.storage.firestore_client.firestore.AsyncClient") as mock_client:
+        with patch(
+            "clarity.storage.firestore_client.firestore.AsyncClient"
+        ) as mock_client:
             mock_client.return_value = mock_firestore_client
 
             # Start multiple coroutines that access the database

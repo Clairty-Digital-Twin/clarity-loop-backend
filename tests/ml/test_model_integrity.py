@@ -99,7 +99,9 @@ class TestModelChecksumManager:
             assert manager.models_dir.exists()
 
     @staticmethod
-    def test_calculate_file_checksum(checksum_manager: ModelChecksumManager, sample_model_file: Path) -> None:
+    def test_calculate_file_checksum(
+        checksum_manager: ModelChecksumManager, sample_model_file: Path
+    ) -> None:
         """Test file checksum calculation."""
         checksum = checksum_manager._calculate_file_checksum(sample_model_file)
 
@@ -111,7 +113,9 @@ class TestModelChecksumManager:
         assert checksum == checksum2
 
     @staticmethod
-    def test_calculate_file_checksum_nonexistent(checksum_manager: ModelChecksumManager, temp_models_dir: Path) -> None:
+    def test_calculate_file_checksum_nonexistent(
+        checksum_manager: ModelChecksumManager, temp_models_dir: Path
+    ) -> None:
         """Test checksum calculation for non-existent file."""
         nonexistent_file = temp_models_dir / "nonexistent.bin"
 
@@ -119,7 +123,9 @@ class TestModelChecksumManager:
             checksum_manager._calculate_file_checksum(nonexistent_file)
 
     @staticmethod
-    def test_generate_model_manifest_success(checksum_manager: ModelChecksumManager, sample_model_files: list[Path]) -> None:
+    def test_generate_model_manifest_success(
+        checksum_manager: ModelChecksumManager, sample_model_files: list[Path]
+    ) -> None:
         """Test successful model manifest generation."""
         file_names = [f.name for f in sample_model_files]
 
@@ -139,13 +145,17 @@ class TestModelChecksumManager:
             assert file_info["algorithm"] == "sha256"
 
     @staticmethod
-    def test_generate_model_manifest_missing_file(checksum_manager: ModelChecksumManager) -> None:
+    def test_generate_model_manifest_missing_file(
+        checksum_manager: ModelChecksumManager,
+    ) -> None:
         """Test manifest generation with missing file."""
         with pytest.raises(ModelIntegrityError, match="Model file not found"):
             checksum_manager.generate_model_manifest(["nonexistent.bin"])
 
     @staticmethod
-    def test_save_and_load_checksums(checksum_manager: ModelChecksumManager, sample_manifest: dict[str, Any]) -> None:
+    def test_save_and_load_checksums(
+        checksum_manager: ModelChecksumManager, sample_manifest: dict[str, Any]
+    ) -> None:
         """Test saving and loading checksums."""
         manifests = {"test_model": sample_manifest}
 
@@ -161,14 +171,18 @@ class TestModelChecksumManager:
         assert loaded_manifests == manifests
 
     @staticmethod
-    def test_load_checksums_missing_file(checksum_manager: ModelChecksumManager) -> None:
+    def test_load_checksums_missing_file(
+        checksum_manager: ModelChecksumManager,
+    ) -> None:
         """Test loading checksums when file doesn't exist."""
         result = checksum_manager.load_checksums()
 
         assert result == {}
 
     @staticmethod
-    def test_load_checksums_invalid_json(checksum_manager: ModelChecksumManager) -> None:
+    def test_load_checksums_invalid_json(
+        checksum_manager: ModelChecksumManager,
+    ) -> None:
         """Test loading checksums with invalid JSON."""
         # Create invalid JSON file
         checksum_manager.checksums_file.write_text("invalid json content")
@@ -177,7 +191,9 @@ class TestModelChecksumManager:
             checksum_manager.load_checksums()
 
     @staticmethod
-    def test_register_model(checksum_manager: ModelChecksumManager, sample_model_files: list[Path]) -> None:
+    def test_register_model(
+        checksum_manager: ModelChecksumManager, sample_model_files: list[Path]
+    ) -> None:
         """Test model registration."""
         file_names = [f.name for f in sample_model_files]
         model_name = "test_model"
@@ -191,7 +207,9 @@ class TestModelChecksumManager:
         assert len(checksums[model_name]["files"]) == len(file_names)
 
     @staticmethod
-    def test_verify_model_integrity_success(checksum_manager: ModelChecksumManager, sample_model_files: list[Path]) -> None:
+    def test_verify_model_integrity_success(
+        checksum_manager: ModelChecksumManager, sample_model_files: list[Path]
+    ) -> None:
         """Test successful model integrity verification."""
         file_names = [f.name for f in sample_model_files]
         model_name = "test_model"
@@ -205,13 +223,17 @@ class TestModelChecksumManager:
         assert result is True
 
     @staticmethod
-    def test_verify_model_integrity_not_registered(checksum_manager: ModelChecksumManager) -> None:
+    def test_verify_model_integrity_not_registered(
+        checksum_manager: ModelChecksumManager,
+    ) -> None:
         """Test verification of unregistered model."""
         with pytest.raises(ModelIntegrityError, match="No checksums found for model"):
             checksum_manager.verify_model_integrity("nonexistent_model")
 
     @staticmethod
-    def test_verify_model_integrity_missing_file(checksum_manager: ModelChecksumManager, sample_model_files: list[Path]) -> None:
+    def test_verify_model_integrity_missing_file(
+        checksum_manager: ModelChecksumManager, sample_model_files: list[Path]
+    ) -> None:
         """Test verification when model file is missing."""
         file_names = [f.name for f in sample_model_files]
         model_name = "test_model"
@@ -228,7 +250,9 @@ class TestModelChecksumManager:
         assert result is False
 
     @staticmethod
-    def test_verify_model_integrity_checksum_mismatch(checksum_manager: ModelChecksumManager, sample_model_files: list[Path]) -> None:
+    def test_verify_model_integrity_checksum_mismatch(
+        checksum_manager: ModelChecksumManager, sample_model_files: list[Path]
+    ) -> None:
         """Test verification with checksum mismatch."""
         file_names = [f.name for f in sample_model_files]
         model_name = "test_model"
@@ -245,7 +269,9 @@ class TestModelChecksumManager:
         assert result is False
 
     @staticmethod
-    def test_verify_all_models(checksum_manager: ModelChecksumManager, sample_model_files: list[Path]) -> None:
+    def test_verify_all_models(
+        checksum_manager: ModelChecksumManager, sample_model_files: list[Path]
+    ) -> None:
         """Test verification of all models."""
         # Register multiple models
         for i, model_file in enumerate(sample_model_files):
@@ -259,7 +285,9 @@ class TestModelChecksumManager:
         assert all(result is True for result in results.values())
 
     @staticmethod
-    def test_get_model_info(checksum_manager: ModelChecksumManager, sample_model_files: list[Path]) -> None:
+    def test_get_model_info(
+        checksum_manager: ModelChecksumManager, sample_model_files: list[Path]
+    ) -> None:
         """Test getting model information."""
         file_names = [f.name for f in sample_model_files]
         model_name = "test_model"
@@ -283,7 +311,9 @@ class TestModelChecksumManager:
         assert info is None
 
     @staticmethod
-    def test_list_registered_models(checksum_manager: ModelChecksumManager, sample_model_files: list[Path]) -> None:
+    def test_list_registered_models(
+        checksum_manager: ModelChecksumManager, sample_model_files: list[Path]
+    ) -> None:
         """Test listing registered models."""
         model_names = []
         for i, model_file in enumerate(sample_model_files):
@@ -297,7 +327,9 @@ class TestModelChecksumManager:
         assert all(name in registered_models for name in model_names)
 
     @staticmethod
-    def test_remove_model(checksum_manager: ModelChecksumManager, sample_model_files: list[Path]) -> None:
+    def test_remove_model(
+        checksum_manager: ModelChecksumManager, sample_model_files: list[Path]
+    ) -> None:
         """Test removing a model from registry."""
         model_name = "test_model"
 
@@ -335,8 +367,10 @@ class TestModuleGlobals:
     @staticmethod
     def test_verify_startup_models_no_models() -> None:
         """Test startup verification with no models."""
-        with patch.object(pat_model_manager, 'verify_all_models', return_value={}), \
-             patch.object(gemini_model_manager, 'verify_all_models', return_value={}):
+        with (
+            patch.object(pat_model_manager, "verify_all_models", return_value={}),
+            patch.object(gemini_model_manager, "verify_all_models", return_value={}),
+        ):
 
             result = verify_startup_models()
 
@@ -345,8 +379,16 @@ class TestModuleGlobals:
     @staticmethod
     def test_verify_startup_models_all_pass() -> None:
         """Test startup verification when all models pass."""
-        with patch.object(pat_model_manager, 'verify_all_models', return_value={"model1": True, "model2": True}), \
-             patch.object(gemini_model_manager, 'verify_all_models', return_value={"model3": True}):
+        with (
+            patch.object(
+                pat_model_manager,
+                "verify_all_models",
+                return_value={"model1": True, "model2": True},
+            ),
+            patch.object(
+                gemini_model_manager, "verify_all_models", return_value={"model3": True}
+            ),
+        ):
 
             result = verify_startup_models()
 
@@ -355,8 +397,16 @@ class TestModuleGlobals:
     @staticmethod
     def test_verify_startup_models_some_fail() -> None:
         """Test startup verification when some models fail."""
-        with patch.object(pat_model_manager, 'verify_all_models', return_value={"model1": True, "model2": False}), \
-             patch.object(gemini_model_manager, 'verify_all_models', return_value={"model3": True}):
+        with (
+            patch.object(
+                pat_model_manager,
+                "verify_all_models",
+                return_value={"model1": True, "model2": False},
+            ),
+            patch.object(
+                gemini_model_manager, "verify_all_models", return_value={"model3": True}
+            ),
+        ):
 
             result = verify_startup_models()
 
@@ -365,8 +415,14 @@ class TestModuleGlobals:
     @staticmethod
     def test_verify_startup_models_exception() -> None:
         """Test startup verification with exception."""
-        with patch.object(pat_model_manager, 'verify_all_models', side_effect=Exception("Test error")), \
-             patch.object(gemini_model_manager, 'verify_all_models', return_value={}):
+        with (
+            patch.object(
+                pat_model_manager,
+                "verify_all_models",
+                side_effect=Exception("Test error"),
+            ),
+            patch.object(gemini_model_manager, "verify_all_models", return_value={}),
+        ):
 
             result = verify_startup_models()
 
@@ -377,7 +433,9 @@ class TestErrorHandling:
     """Test error handling scenarios."""
 
     @staticmethod
-    def test_save_checksums_permission_error(checksum_manager: ModelChecksumManager) -> None:
+    def test_save_checksums_permission_error(
+        checksum_manager: ModelChecksumManager,
+    ) -> None:
         """Test saving checksums with permission error."""
         # Make directory read-only
         checksum_manager.models_dir.chmod(0o444)
@@ -390,7 +448,9 @@ class TestErrorHandling:
             checksum_manager.models_dir.chmod(0o755)
 
     @staticmethod
-    def test_generate_manifest_with_permission_error(checksum_manager: ModelChecksumManager, sample_model_file: Path) -> None:
+    def test_generate_manifest_with_permission_error(
+        checksum_manager: ModelChecksumManager, sample_model_file: Path
+    ) -> None:
         """Test manifest generation with file permission error."""
         # Remove read permissions
         sample_model_file.chmod(0o000)
@@ -403,7 +463,9 @@ class TestErrorHandling:
             sample_model_file.chmod(0o644)
 
     @staticmethod
-    def test_verify_integrity_with_file_error(checksum_manager: ModelChecksumManager, sample_model_files: list[Path]) -> None:
+    def test_verify_integrity_with_file_error(
+        checksum_manager: ModelChecksumManager, sample_model_files: list[Path]
+    ) -> None:
         """Test integrity verification with file access error."""
         model_name = "test_model"
 
@@ -426,7 +488,9 @@ class TestEdgeCases:
     """Test edge cases and boundary conditions."""
 
     @staticmethod
-    def test_empty_file_checksum(checksum_manager: ModelChecksumManager, temp_models_dir: Path) -> None:
+    def test_empty_file_checksum(
+        checksum_manager: ModelChecksumManager, temp_models_dir: Path
+    ) -> None:
         """Test checksum of empty file."""
         empty_file = temp_models_dir / "empty.bin"
         empty_file.touch()
@@ -438,7 +502,9 @@ class TestEdgeCases:
         assert len(checksum) == 64
 
     @staticmethod
-    def test_large_file_handling(checksum_manager: ModelChecksumManager, temp_models_dir: Path) -> None:
+    def test_large_file_handling(
+        checksum_manager: ModelChecksumManager, temp_models_dir: Path
+    ) -> None:
         """Test handling of larger files (chunked reading)."""
         large_file = temp_models_dir / "large.bin"
         # Create file larger than chunk size
@@ -451,7 +517,9 @@ class TestEdgeCases:
         assert len(checksum) == 64
 
     @staticmethod
-    def test_unicode_file_names(checksum_manager: ModelChecksumManager, temp_models_dir: Path) -> None:
+    def test_unicode_file_names(
+        checksum_manager: ModelChecksumManager, temp_models_dir: Path
+    ) -> None:
         """Test handling of unicode file names."""
         unicode_file = temp_models_dir / "模型文件.bin"
         unicode_file.write_bytes(b"test content")
@@ -471,7 +539,9 @@ class TestEdgeCases:
         assert "created_at" in manifest
 
     @staticmethod
-    def test_concurrent_access_simulation(checksum_manager: ModelChecksumManager, sample_model_files: list[Path]) -> None:
+    def test_concurrent_access_simulation(
+        checksum_manager: ModelChecksumManager, sample_model_files: list[Path]
+    ) -> None:
         """Test behavior with multiple operations (simulating concurrent access)."""
         model_name = "concurrent_test"
 

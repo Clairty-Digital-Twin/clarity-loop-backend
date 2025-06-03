@@ -14,7 +14,7 @@ import functools
 import time
 from typing import Any, TypeVar
 
-F = TypeVar('F', bound=Callable[..., Any])
+F = TypeVar("F", bound=Callable[..., Any])
 
 
 class TestDecoratorsBasic:
@@ -23,11 +23,13 @@ class TestDecoratorsBasic:
     @staticmethod
     def test_mock_decorator_behavior() -> None:
         """Test mock decorator behavior for coverage."""
+
         # Mock a simple decorator pattern
         def simple_decorator(func: F) -> F:
             def wrapper(*args: Any, **kwargs: Any) -> Any:  # noqa: ANN401
                 result = func(*args, **kwargs)
                 return f"decorated_{result}"
+
             return wrapper  # type: ignore[return-value]
 
         @simple_decorator
@@ -40,6 +42,7 @@ class TestDecoratorsBasic:
     @staticmethod
     def test_async_decorator_pattern() -> None:
         """Test async decorator pattern."""
+
         def async_decorator(func: F) -> F:
             async def wrapper(*args: Any, **kwargs: Any) -> Any:  # noqa: ANN401
                 if asyncio.iscoroutinefunction(func):
@@ -47,6 +50,7 @@ class TestDecoratorsBasic:
                 else:
                     result = func(*args, **kwargs)
                 return f"async_decorated_{result}"
+
             return wrapper  # type: ignore[return-value]
 
         @async_decorator
@@ -69,12 +73,15 @@ class TestDecoratorsBasic:
     @staticmethod
     def test_decorator_with_parameters() -> None:
         """Test decorator with parameters."""
+
         def parameterized_decorator(prefix: str) -> Callable[[F], F]:
             def decorator(func: F) -> F:
                 def wrapper(*args: Any, **kwargs: Any) -> Any:  # noqa: ANN401
                     result = func(*args, **kwargs)
                     return f"{prefix}_{result}"
+
                 return wrapper  # type: ignore[return-value]
+
             return decorator
 
         @parameterized_decorator("TEST")
@@ -87,6 +94,7 @@ class TestDecoratorsBasic:
     @staticmethod
     def test_decorator_error_handling() -> None:
         """Test decorator error handling patterns."""
+
         def error_handling_decorator(func: F) -> F:
             def wrapper(*args: Any, **kwargs: Any) -> Any:  # noqa: ANN401
                 try:
@@ -95,6 +103,7 @@ class TestDecoratorsBasic:
                     return "handled_error"
                 except Exception as e:  # noqa: BLE001
                     return f"unexpected_error_{type(e).__name__}"
+
             return wrapper  # type: ignore[return-value]
 
         @error_handling_decorator
@@ -131,6 +140,7 @@ class TestDecoratorsBasic:
                 result = func(*args, **kwargs)
                 cache[cache_key] = result
                 return result
+
             return wrapper  # type: ignore[return-value]
 
         call_count = 0
@@ -163,6 +173,7 @@ class TestDecoratorsBasic:
                 end_time = time.time()
                 times.append(end_time - start_time)
                 return result
+
             return wrapper  # type: ignore[return-value]
 
         @timing_decorator
@@ -178,11 +189,13 @@ class TestDecoratorsBasic:
     @staticmethod
     def test_validation_decorator_pattern() -> None:
         """Test validation decorator pattern."""
+
         def validate_positive(func: Callable[[int], str]) -> Callable[[int], str]:
             def wrapper(x: int) -> str:
                 if x <= 0:
                     return "invalid_input"
                 return func(x)
+
             return wrapper
 
         @validate_positive
@@ -196,6 +209,7 @@ class TestDecoratorsBasic:
     @staticmethod
     def test_retry_decorator_pattern() -> None:
         """Test retry decorator pattern."""
+
         def retry_decorator(max_attempts: int = 3) -> Callable[[F], F]:
             def decorator(func: F) -> F:
                 def wrapper(*args: Any, **kwargs: Any) -> Any:  # noqa: ANN401
@@ -206,7 +220,9 @@ class TestDecoratorsBasic:
                             if attempt == max_attempts - 1:
                                 break
                     return f"failed_after_{max_attempts}_attempts"
+
                 return wrapper  # type: ignore[return-value]
+
             return decorator
 
         attempt_count = 0
@@ -227,10 +243,12 @@ class TestDecoratorsBasic:
     @staticmethod
     def test_decorator_metadata_preservation() -> None:
         """Test that decorators preserve function metadata."""
+
         def metadata_preserving_decorator(func: F) -> F:
             @functools.wraps(func)
             def wrapper(*args: Any, **kwargs: Any) -> Any:  # noqa: ANN401
                 return func(*args, **kwargs)
+
             return wrapper  # type: ignore[return-value]
 
         @metadata_preserving_decorator
@@ -244,16 +262,19 @@ class TestDecoratorsBasic:
     @staticmethod
     def test_multiple_decorators() -> None:
         """Test applying multiple decorators."""
+
         def add_prefix(func: F) -> F:
             def wrapper(*args: Any, **kwargs: Any) -> Any:  # noqa: ANN401
                 result = func(*args, **kwargs)
                 return f"prefix_{result}"
+
             return wrapper  # type: ignore[return-value]
 
         def add_suffix(func: F) -> F:
             def wrapper(*args: Any, **kwargs: Any) -> Any:  # noqa: ANN401
                 result = func(*args, **kwargs)
                 return f"{result}_suffix"
+
             return wrapper  # type: ignore[return-value]
 
         @add_prefix
@@ -267,10 +288,12 @@ class TestDecoratorsBasic:
     @staticmethod
     def test_class_method_decorator() -> None:
         """Test decorator on class methods."""
+
         def log_method_calls(func: F) -> F:
             def wrapper(self: Any, *args: Any, **kwargs: Any) -> Any:  # noqa: ANN401
                 result = func(self, *args, **kwargs)
                 return f"logged_{result}"
+
             return wrapper  # type: ignore[return-value]
 
         class TestClass:
@@ -288,6 +311,7 @@ class TestDecoratorsBasic:
     @staticmethod
     def test_decorator_with_state() -> None:
         """Test decorator that maintains state."""
+
         def counting_decorator(func: F) -> F:
             call_count = 0
 
@@ -297,6 +321,7 @@ class TestDecoratorsBasic:
                 result = func(*args, **kwargs)
                 wrapper.get_call_count = lambda: call_count  # type: ignore[attr-defined]
                 return f"call_{call_count}_{result}"
+
             return wrapper  # type: ignore[return-value]
 
         @counting_decorator
@@ -310,6 +335,7 @@ class TestDecoratorsBasic:
     @staticmethod
     async def test_async_decorator_error_handling() -> None:
         """Test async decorator with error handling."""
+
         def async_error_handler(func: F) -> F:
             async def wrapper(*args: Any, **kwargs: Any) -> Any:  # noqa: ANN401
                 try:
@@ -318,6 +344,7 @@ class TestDecoratorsBasic:
                     return func(*args, **kwargs)
                 except Exception:  # noqa: BLE001
                     return "async_error_handled"
+
             return wrapper  # type: ignore[return-value]
 
         @async_error_handler

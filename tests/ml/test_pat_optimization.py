@@ -64,7 +64,9 @@ def sample_actigraphy_data() -> list[ActigraphyDataPoint]:
 
 
 @pytest.fixture
-def sample_actigraphy_input(sample_actigraphy_data: list[ActigraphyDataPoint]) -> ActigraphyInput:
+def sample_actigraphy_input(
+    sample_actigraphy_data: list[ActigraphyDataPoint],
+) -> ActigraphyInput:
     """Sample actigraphy input for testing."""
     return ActigraphyInput(
         user_id=str(uuid4()),
@@ -78,7 +80,8 @@ def sample_analysis_result() -> ActigraphyAnalysis:
     return ActigraphyAnalysis(
         user_id=str(uuid4()),
         analysis_timestamp=datetime.now(UTC).isoformat(),
-        sleep_stages=["wake", "light", "deep", "rem", "wake"] * 20,  # 100 stages as strings
+        sleep_stages=["wake", "light", "deep", "rem", "wake"]
+        * 20,  # 100 stages as strings
         confidence_score=0.85,  # Overall confidence
         sleep_efficiency=92.0,
         sleep_onset_latency=15.5,
@@ -89,7 +92,7 @@ def sample_analysis_result() -> ActigraphyAnalysis:
         depression_risk_score=0.15,
         clinical_insights=[
             "Good sleep efficiency detected",
-            "Normal circadian rhythm pattern"
+            "Normal circadian rhythm pattern",
         ],
     )
 
@@ -110,8 +113,12 @@ class TestPATPerformanceOptimizer:  # noqa: PLR0904
     @staticmethod
     async def test_optimize_model_success(optimizer: PATPerformanceOptimizer) -> None:
         """Test successful model optimization."""
-        with patch.object(optimizer, '_apply_model_pruning') as mock_prune, \
-             patch.object(optimizer, '_compile_torchscript', return_value=Mock()) as mock_compile:
+        with (
+            patch.object(optimizer, "_apply_model_pruning") as mock_prune,
+            patch.object(
+                optimizer, "_compile_torchscript", return_value=Mock()
+            ) as mock_compile,
+        ):
 
             result = await optimizer.optimize_model(
                 use_torchscript=True,
@@ -125,7 +132,9 @@ class TestPATPerformanceOptimizer:  # noqa: PLR0904
             mock_compile.assert_called_once()
 
     @staticmethod
-    async def test_optimize_model_service_not_loaded(optimizer: PATPerformanceOptimizer) -> None:
+    async def test_optimize_model_service_not_loaded(
+        optimizer: PATPerformanceOptimizer,
+    ) -> None:
         """Test optimization when service not loaded."""
         optimizer.pat_service.is_loaded = False
 
@@ -146,7 +155,9 @@ class TestPATPerformanceOptimizer:  # noqa: PLR0904
     @staticmethod
     async def test_optimize_model_exception(optimizer: PATPerformanceOptimizer) -> None:
         """Test optimization with exception."""
-        with patch.object(optimizer, '_compile_torchscript', side_effect=Exception("Compile failed")):
+        with patch.object(
+            optimizer, "_compile_torchscript", side_effect=Exception("Compile failed")
+        ):
 
             result = await optimizer.optimize_model(use_torchscript=True)
 
@@ -176,8 +187,10 @@ class TestPATPerformanceOptimizer:  # noqa: PLR0904
         model = Mock()
         model.eval = Mock()
 
-        with patch("torch.jit.trace") as mock_trace, \
-             patch("torch.jit.optimize_for_inference") as mock_optimize:
+        with (
+            patch("torch.jit.trace") as mock_trace,
+            patch("torch.jit.optimize_for_inference") as mock_optimize,
+        ):
 
             traced_model = Mock()
             mock_trace.return_value = traced_model
@@ -190,13 +203,17 @@ class TestPATPerformanceOptimizer:  # noqa: PLR0904
             mock_trace.assert_called_once()
 
     @staticmethod
-    def test_compile_torchscript_no_optimize_for_inference(optimizer: PATPerformanceOptimizer) -> None:
+    def test_compile_torchscript_no_optimize_for_inference(
+        optimizer: PATPerformanceOptimizer,
+    ) -> None:
         """Test TorchScript compilation without optimize_for_inference."""
         model = Mock()
         model.eval = Mock()
 
-        with patch("torch.jit.trace") as mock_trace, \
-             patch("builtins.hasattr", return_value=False):
+        with (
+            patch("torch.jit.trace") as mock_trace,
+            patch("builtins.hasattr", return_value=False),
+        ):
 
             traced_model = Mock()
             mock_trace.return_value = traced_model
@@ -218,7 +235,9 @@ class TestPATPerformanceOptimizer:  # noqa: PLR0904
             assert result is None
 
     @staticmethod
-    def test_save_compiled_model(optimizer: PATPerformanceOptimizer, tmp_path: Path) -> None:
+    def test_save_compiled_model(
+        optimizer: PATPerformanceOptimizer, tmp_path: Path
+    ) -> None:
         """Test saving compiled model."""
         compiled_model = Mock()
         optimizer.compiled_model = compiled_model
@@ -230,7 +249,9 @@ class TestPATPerformanceOptimizer:  # noqa: PLR0904
             mock_save.assert_called_once_with(compiled_model, str(model_path))
 
     @staticmethod
-    def test_save_compiled_model_no_model(optimizer: PATPerformanceOptimizer, tmp_path: Path) -> None:
+    def test_save_compiled_model_no_model(
+        optimizer: PATPerformanceOptimizer, tmp_path: Path
+    ) -> None:
         """Test saving when no compiled model exists."""
         model_path = tmp_path / "model.pt"
 
@@ -257,7 +278,11 @@ class TestPATPerformanceOptimizer:  # noqa: PLR0904
         assert PATPerformanceOptimizer._is_cache_valid(old_timestamp) is False
 
     @staticmethod
-    async def test_optimized_analyze_cache_hit(optimizer: PATPerformanceOptimizer, sample_actigraphy_input: ActigraphyInput, sample_analysis_result: ActigraphyAnalysis) -> None:
+    async def test_optimized_analyze_cache_hit(
+        optimizer: PATPerformanceOptimizer,
+        sample_actigraphy_input: ActigraphyInput,
+        sample_analysis_result: ActigraphyAnalysis,
+    ) -> None:
         """Test optimized analysis with cache hit."""
         # Set up cache
         cache_key = optimizer._generate_cache_key(sample_actigraphy_input)
@@ -269,7 +294,11 @@ class TestPATPerformanceOptimizer:  # noqa: PLR0904
         assert was_cached is True
 
     @staticmethod
-    async def test_optimized_analyze_cache_miss(optimizer: PATPerformanceOptimizer, sample_actigraphy_input: ActigraphyInput, sample_analysis_result: ActigraphyAnalysis) -> None:
+    async def test_optimized_analyze_cache_miss(
+        optimizer: PATPerformanceOptimizer,
+        sample_actigraphy_input: ActigraphyInput,
+        sample_analysis_result: ActigraphyAnalysis,
+    ) -> None:
         """Test optimized analysis with cache miss."""
         # Set up the AsyncMock to return the sample result
         async_mock = AsyncMock(return_value=sample_analysis_result)
@@ -282,19 +311,31 @@ class TestPATPerformanceOptimizer:  # noqa: PLR0904
         async_mock.assert_called_once()
 
     @staticmethod
-    async def test_optimized_analyze_with_compiled_model(optimizer: PATPerformanceOptimizer, sample_actigraphy_input: ActigraphyInput, sample_analysis_result: ActigraphyAnalysis) -> None:
+    async def test_optimized_analyze_with_compiled_model(
+        optimizer: PATPerformanceOptimizer,
+        sample_actigraphy_input: ActigraphyInput,
+        sample_analysis_result: ActigraphyAnalysis,
+    ) -> None:
         """Test optimized analysis with compiled model."""
         optimizer.optimization_enabled = True
         optimizer.compiled_model = Mock()
 
-        with patch.object(optimizer, '_optimized_inference', return_value=sample_analysis_result):
-            result, was_cached = await optimizer.optimized_analyze(sample_actigraphy_input)
+        with patch.object(
+            optimizer, "_optimized_inference", return_value=sample_analysis_result
+        ):
+            result, was_cached = await optimizer.optimized_analyze(
+                sample_actigraphy_input
+            )
 
             assert result is sample_analysis_result
             assert was_cached is False
 
     @staticmethod
-    async def test_optimized_inference(optimizer: PATPerformanceOptimizer, sample_actigraphy_input: ActigraphyInput, sample_analysis_result: ActigraphyAnalysis) -> None:
+    async def test_optimized_inference(
+        optimizer: PATPerformanceOptimizer,
+        sample_actigraphy_input: ActigraphyInput,
+        sample_analysis_result: ActigraphyAnalysis,
+    ) -> None:
         """Test optimized inference with compiled model."""
         compiled_model = Mock()
         compiled_model.return_value = torch.randn(1, 100, 5)  # Mock output
@@ -314,7 +355,9 @@ class TestPATPerformanceOptimizer:  # noqa: PLR0904
         postprocess_mock.assert_called_once()
 
     @staticmethod
-    async def test_optimized_inference_no_model(optimizer: PATPerformanceOptimizer, sample_actigraphy_input: ActigraphyInput) -> None:
+    async def test_optimized_inference_no_model(
+        optimizer: PATPerformanceOptimizer, sample_actigraphy_input: ActigraphyInput
+    ) -> None:
         """Test optimized inference without compiled model."""
         optimizer.compiled_model = None
 
@@ -347,7 +390,7 @@ class TestPATPerformanceOptimizer:  # noqa: PLR0904
     @staticmethod
     async def test_warm_up(optimizer: PATPerformanceOptimizer) -> None:
         """Test model warmup."""
-        with patch.object(optimizer, 'optimized_analyze') as mock_analyze:
+        with patch.object(optimizer, "optimized_analyze") as mock_analyze:
             mock_analyze.return_value = (Mock(), False)
 
             stats = await optimizer.warm_up(num_iterations=3)
@@ -362,7 +405,9 @@ class TestBatchAnalysisProcessor:
     """Test batch analysis processor."""
 
     @pytest.fixture
-    def batch_processor(self, optimizer: PATPerformanceOptimizer) -> BatchAnalysisProcessor:  # noqa: PLR6301
+    def batch_processor(
+        self, optimizer: PATPerformanceOptimizer
+    ) -> BatchAnalysisProcessor:  # noqa: PLR6301
         """Create batch analysis processor."""
         return BatchAnalysisProcessor(optimizer, max_batch_size=3)
 
@@ -377,23 +422,34 @@ class TestBatchAnalysisProcessor:
         assert processor.processing is False
 
     @staticmethod
-    async def test_analyze_batch_single_request(batch_processor: BatchAnalysisProcessor, sample_actigraphy_input: ActigraphyInput, sample_analysis_result: ActigraphyAnalysis) -> None:
+    async def test_analyze_batch_single_request(
+        batch_processor: BatchAnalysisProcessor,
+        sample_actigraphy_input: ActigraphyInput,
+        sample_analysis_result: ActigraphyAnalysis,
+    ) -> None:
         """Test batch analysis with single request."""
-        batch_processor.optimizer.optimized_analyze = AsyncMock(return_value=(sample_analysis_result, False))
+        batch_processor.optimizer.optimized_analyze = AsyncMock(
+            return_value=(sample_analysis_result, False)
+        )
 
         result = await batch_processor.analyze_batch(sample_actigraphy_input)
 
         assert result is sample_analysis_result
 
     @staticmethod
-    async def test_analyze_batch_multiple_requests(batch_processor: BatchAnalysisProcessor, sample_actigraphy_input: ActigraphyInput, sample_analysis_result: ActigraphyAnalysis) -> None:
+    async def test_analyze_batch_multiple_requests(
+        batch_processor: BatchAnalysisProcessor,
+        sample_actigraphy_input: ActigraphyInput,
+        sample_analysis_result: ActigraphyAnalysis,
+    ) -> None:
         """Test batch analysis with multiple requests."""
-        batch_processor.optimizer.optimized_analyze = AsyncMock(return_value=(sample_analysis_result, False))
+        batch_processor.optimizer.optimized_analyze = AsyncMock(
+            return_value=(sample_analysis_result, False)
+        )
 
         # Start multiple requests concurrently
         tasks = [
-            batch_processor.analyze_batch(sample_actigraphy_input)
-            for _ in range(5)
+            batch_processor.analyze_batch(sample_actigraphy_input) for _ in range(5)
         ]
 
         results = await asyncio.gather(*tasks)
@@ -402,9 +458,14 @@ class TestBatchAnalysisProcessor:
         assert all(result is sample_analysis_result for result in results)
 
     @staticmethod
-    async def test_process_batch_with_exception(batch_processor: BatchAnalysisProcessor, sample_actigraphy_input: ActigraphyInput) -> None:
+    async def test_process_batch_with_exception(
+        batch_processor: BatchAnalysisProcessor,
+        sample_actigraphy_input: ActigraphyInput,
+    ) -> None:
         """Test batch processing with exception."""
-        batch_processor.optimizer.optimized_analyze = AsyncMock(side_effect=Exception("Analysis failed"))
+        batch_processor.optimizer.optimized_analyze = AsyncMock(
+            side_effect=Exception("Analysis failed")
+        )
 
         with pytest.raises(Exception, match="Analysis failed"):
             await batch_processor.analyze_batch(sample_actigraphy_input)
@@ -431,7 +492,9 @@ class TestModuleFunctions:
         # Patch the get_pat_service import inside the initialize function
         with (
             patch("clarity.ml.pat_service.get_pat_service", return_value=mock_service),
-            patch.object(PATPerformanceOptimizer, "optimize_model", return_value=True) as mock_optimize,
+            patch.object(
+                PATPerformanceOptimizer, "optimize_model", return_value=True
+            ) as mock_optimize,
         ):
             optimizer = await initialize_pat_optimizer()
 
@@ -444,7 +507,9 @@ class TestErrorHandling:
     """Test error handling scenarios."""
 
     @staticmethod
-    async def test_optimization_with_invalid_model(optimizer: PATPerformanceOptimizer) -> None:
+    async def test_optimization_with_invalid_model(
+        optimizer: PATPerformanceOptimizer,
+    ) -> None:
         """Test optimization with invalid model structure."""
         # Set up invalid model by setting it to None
         optimizer.pat_service.model = None
@@ -454,11 +519,15 @@ class TestErrorHandling:
         assert result is False
 
     @staticmethod
-    async def test_cache_corruption_handling(optimizer: PATPerformanceOptimizer, sample_actigraphy_input: ActigraphyInput) -> None:
+    async def test_cache_corruption_handling(
+        optimizer: PATPerformanceOptimizer, sample_actigraphy_input: ActigraphyInput
+    ) -> None:
         """Test handling of corrupted cache entries."""
         # Create a corrupted cache entry with wrong format
         cache_key = optimizer._generate_cache_key(sample_actigraphy_input)
-        optimizer._cache[cache_key] = "corrupted_data_not_tuple"  # Wrong type, not a tuple
+        optimizer._cache[cache_key] = (
+            "corrupted_data_not_tuple"  # Wrong type, not a tuple
+        )
 
         # Should handle gracefully and not use corrupted cache
         mock_result = Mock(spec=ActigraphyAnalysis)
@@ -466,11 +535,16 @@ class TestErrorHandling:
         optimizer.pat_service.analyze_actigraphy = async_mock
 
         # Capture logs to verify corruption was detected
-        with patch('clarity.ml.pat_optimization.logger') as mock_logger:
-            result, was_cached = await optimizer.optimized_analyze(sample_actigraphy_input)
+        with patch("clarity.ml.pat_optimization.logger") as mock_logger:
+            result, was_cached = await optimizer.optimized_analyze(
+                sample_actigraphy_input
+            )
 
             # Verify corruption was detected and logged
-            assert any('Cache corruption detected' in str(call) for call in mock_logger.warning.call_args_list)
+            assert any(
+                "Cache corruption detected" in str(call)
+                for call in mock_logger.warning.call_args_list
+            )
 
         assert was_cached is False  # Should not use corrupted cache
         assert result is mock_result

@@ -47,7 +47,7 @@ def test_imports() -> bool:
         if str(root_path) not in sys.path:
             sys.path.insert(0, str(root_path))
 
-        import main  # type: ignore[import-untyped] # noqa: F401
+        import main  # noqa: F401
     except Exception:
         traceback.print_exc()
         return False

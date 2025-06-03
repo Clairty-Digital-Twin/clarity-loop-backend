@@ -137,7 +137,7 @@ class HealthAnalysisPipeline:
             )
             return results
 
-        except Exception as e:
+        except Exception:
             self.logger.exception(
                 "Error in analysis pipeline for user %s", user_id
             )
@@ -465,7 +465,7 @@ async def run_analysis_pipeline(
             "processing_metadata": results.processing_metadata,
         }
 
-    except Exception as e:
+    except Exception:
         logger.exception("Analysis pipeline failed for user %s", user_id)
         raise
 

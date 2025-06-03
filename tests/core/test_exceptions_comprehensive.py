@@ -5,6 +5,7 @@ Tests all exception classes and utility functions to improve coverage from 42% t
 
 from unittest.mock import MagicMock
 from uuid import UUID
+
 from fastapi import Request
 from fastapi.responses import JSONResponse
 import pytest
@@ -372,8 +373,9 @@ class TestExceptionHandlers:
 
         assert response.status_code == 429
         # Check that our custom header is present (case-insensitive)
-        assert "retry-after" in [k.lower() for k in response.headers.keys()]
-        assert response.headers.get("retry-after") == "60" or response.headers.get("Retry-After") == "60"
+        assert "retry-after" in [k.lower() for k in response.headers]
+        retry_after_value = response.headers.get("retry-after") or response.headers.get("Retry-After")
+        assert retry_after_value == "60"
 
     @staticmethod
     def test_generic_exception_handler(caplog: pytest.LogCaptureFixture) -> None:

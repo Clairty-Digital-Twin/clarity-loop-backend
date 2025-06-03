@@ -289,7 +289,7 @@ Generate the health insight now:"""
             )
 
         except Exception as e:
-            self.logger.exception("Failed to store insight in Firestore: %s", e)
+            self.logger.exception("Failed to store insight in Firestore")
             raise
 
 

@@ -215,11 +215,12 @@ class TestMeasureExecutionTimeDecorator:
 class TestRetryOnFailureDecorator:
     """Comprehensive tests for retry_on_failure decorator."""
 
-    def test_retry_on_failure_sync_success_first_try(self, caplog):
+    @staticmethod
+    def test_retry_on_failure_sync_success_first_try(caplog: pytest.LogCaptureFixture) -> None:
         """Test retry decorator when sync function succeeds on first try."""
         with caplog.at_level(logging.WARNING):
             @retry_on_failure(max_retries=2)
-            def test_func():
+            def test_func() -> str:
                 return "success"
 
             result = test_func()
@@ -228,17 +229,19 @@ class TestRetryOnFailureDecorator:
         # Should not log any retry attempts
         assert "failed (attempt" not in caplog.text
 
-    def test_retry_on_failure_sync_success_after_retries(self, caplog):
+    @staticmethod
+    def test_retry_on_failure_sync_success_after_retries(caplog: pytest.LogCaptureFixture) -> None:
         """Test retry decorator when sync function succeeds after retries."""
         call_count = 0
 
         with caplog.at_level(logging.WARNING):
             @retry_on_failure(max_retries=2, delay_seconds=0.001)
-            def test_func():
+            def test_func() -> str:
                 nonlocal call_count
                 call_count += 1
                 if call_count < 3:
-                    raise ValueError("Retry me")
+                    msg = "Retry me"
+                    raise ValueError(msg)
                 return "success after retries"
 
             result = test_func()
@@ -248,28 +251,32 @@ class TestRetryOnFailureDecorator:
         assert "failed (attempt 1/3)" in caplog.text
         assert "failed (attempt 2/3)" in caplog.text
 
-    def test_retry_on_failure_sync_max_retries_exceeded(self, caplog):
+    @staticmethod
+    def test_retry_on_failure_sync_max_retries_exceeded(caplog: pytest.LogCaptureFixture) -> None:
         """Test retry decorator when sync function fails all retries."""
         with caplog.at_level(logging.WARNING):
             @retry_on_failure(max_retries=1, delay_seconds=0.001)
-            def test_func():
-                raise ConnectionError("Always fails")
+            def test_func() -> None:
+                msg = "Always fails"
+                raise ConnectionError(msg)
 
             with pytest.raises(ConnectionError, match="Always fails"):
                 test_func()
 
         assert "failed after 2 attempts" in caplog.text
 
-    def test_retry_on_failure_exponential_backoff(self):
+    @staticmethod
+    def test_retry_on_failure_exponential_backoff() -> None:
         """Test retry decorator with exponential backoff."""
         call_times = []
 
         @retry_on_failure(max_retries=2, delay_seconds=0.01, exponential_backoff=True)
-        def test_func():
+        def test_func() -> None:
             call_times.append(time.time())
-            raise ValueError("Test exponential backoff")
+            msg = "Test exponential backoff"
+            raise ValueError(msg)
 
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="Test exponential backoff"):
             test_func()
 
         # Check that delays increased exponentially
@@ -278,16 +285,18 @@ class TestRetryOnFailureDecorator:
         delay2 = call_times[2] - call_times[1]
         assert delay2 > delay1  # Second delay should be longer
 
-    def test_retry_on_failure_linear_backoff(self):
+    @staticmethod
+    def test_retry_on_failure_linear_backoff() -> None:
         """Test retry decorator without exponential backoff."""
         call_times = []
 
         @retry_on_failure(max_retries=2, delay_seconds=0.01, exponential_backoff=False)
-        def test_func():
+        def test_func() -> None:
             call_times.append(time.time())
-            raise ValueError("Test linear backoff")
+            msg = "Test linear backoff"
+            raise ValueError(msg)
 
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="Test linear backoff"):
             test_func()
 
         # Check that delays are consistent
@@ -297,33 +306,38 @@ class TestRetryOnFailureDecorator:
         # Delays should be approximately equal (within 10ms tolerance)
         assert abs(delay1 - delay2) < 0.01
 
-    def test_retry_on_failure_specific_exceptions(self):
+    @staticmethod
+    def test_retry_on_failure_specific_exceptions() -> None:
         """Test retry decorator with specific exception types."""
         call_count = 0
 
         @retry_on_failure(max_retries=2, exceptions=(ValueError, TypeError))
-        def test_func():
+        def test_func() -> str:
             nonlocal call_count
             call_count += 1
             if call_count == 1:
-                raise ValueError("First error")
+                msg = "First error"
+                raise ValueError(msg)
             if call_count == 2:
-                raise TypeError("Second error")
+                msg = "Second error"
+                raise TypeError(msg)
             return "success"
 
         result = test_func()
         assert result == "success"
         assert call_count == 3
 
-    def test_retry_on_failure_non_retryable_exception(self):
+    @staticmethod
+    def test_retry_on_failure_non_retryable_exception() -> None:
         """Test retry decorator with non-retryable exception."""
         call_count = 0
 
         @retry_on_failure(max_retries=2, exceptions=(ValueError,))
-        def test_func():
+        def test_func() -> None:
             nonlocal call_count
             call_count += 1
-            raise RuntimeError("Non-retryable")
+            msg = "Non-retryable"
+            raise RuntimeError(msg)
 
         with pytest.raises(RuntimeError, match="Non-retryable"):
             test_func()
@@ -331,17 +345,20 @@ class TestRetryOnFailureDecorator:
         # Should only be called once since RuntimeError is not in exceptions list
         assert call_count == 1
 
-    async def test_retry_on_failure_async_success_after_retries(self, caplog):
+    @staticmethod
+    async def test_retry_on_failure_async_success_after_retries(caplog: pytest.LogCaptureFixture) -> None:
         """Test retry decorator on async function with retries."""
         call_count = 0
 
         with caplog.at_level(logging.WARNING):
             @retry_on_failure(max_retries=1, delay_seconds=0.001)
-            async def test_func():
+            async def test_func() -> str:
                 nonlocal call_count
                 call_count += 1
                 if call_count < 2:
-                    raise ValueError("Async retry me")
+                    msg = "Async retry me"
+                    raise ValueError(msg)
+                await asyncio.sleep(0.001)
                 return "async success"
 
             result = await test_func()
@@ -350,12 +367,15 @@ class TestRetryOnFailureDecorator:
         assert call_count == 2
         assert "failed (attempt 1/2)" in caplog.text
 
-    async def test_retry_on_failure_async_max_retries_exceeded(self, caplog):
+    @staticmethod
+    async def test_retry_on_failure_async_max_retries_exceeded(caplog: pytest.LogCaptureFixture) -> None:
         """Test retry decorator when async function fails all retries."""
         with caplog.at_level(logging.WARNING):
             @retry_on_failure(max_retries=1, delay_seconds=0.001)
-            async def test_func():
-                raise ConnectionError("Always fails async")
+            async def test_func() -> None:
+                await asyncio.sleep(0.001)
+                msg = "Always fails async"
+                raise ConnectionError(msg)
 
             with pytest.raises(ConnectionError, match="Always fails async"):
                 await test_func()
@@ -388,7 +408,7 @@ class TestValidateInputDecorator:
             return len(args) > 0 and isinstance(args[0], str)
 
         @validate_input(validator, "Input must be a non-empty string")
-        def test_func(text: Any) -> str:
+        def test_func(text: object) -> str:
             return f"processed: {text}"
 
         with pytest.raises(ValueError, match="Input must be a non-empty string"):
@@ -416,7 +436,7 @@ class TestValidateInputDecorator:
             return "required_key" in kwargs
 
         @validate_input(validator, "Missing required keyword argument")
-        def test_func(**kwargs: Any) -> str:
+        def test_func(**kwargs: object) -> str:
             return f"got: {kwargs}"
 
         result = test_func(required_key="value")
@@ -469,10 +489,10 @@ class TestAuditTrailDecorator:
         """Test audit_trail decorator with user_id and resource_id parameters."""
         with caplog.at_level(logging.INFO):
             @audit_trail("update_resource", user_id_param="user", resource_id_param="resource")
-            def test_func(_user: Any = None, _resource: Any = None) -> str:
+            def test_func(user: object = None, resource: object = None) -> str:
                 return "updated"
 
-            result = test_func(_user="user123", _resource="resource456")
+            result = test_func(user="user123", resource="resource456")
 
         assert result == "updated"
         assert "user123" in caplog.text
@@ -665,7 +685,7 @@ class TestRepositoryMethodDecorator:
         """Test repository_method decorator on async function."""
         with caplog.at_level(logging.DEBUG):
             @repository_method()
-            async def test_func():
+            async def test_func() -> str:
                 await asyncio.sleep(0.001)
                 return "async repository"
 
@@ -678,16 +698,17 @@ class TestRepositoryMethodDecorator:
 class TestDecoratorEdgeCases:
     """Tests for edge cases and error conditions."""
 
-    def test_decorator_on_method_with_self(self, caplog):
+    @staticmethod
+    def test_decorator_on_method_with_self(caplog: pytest.LogCaptureFixture) -> None:
         """Test decorators work correctly with class methods."""
 
         class TestClass:
             @log_execution()
-            def method(self, x):
+            def method(self, x: int) -> int:
                 return x * 2
 
             @measure_execution_time()
-            async def async_method(self, x):
+            async def async_method(self, x: int) -> int:
                 await asyncio.sleep(0.001)
                 return x + 1
 
@@ -701,11 +722,12 @@ class TestDecoratorEdgeCases:
         assert "TestClass.method" in caplog.text
         assert "TestClass.async_method" in caplog.text
 
-    def test_decorator_preserves_function_metadata(self):
+    @staticmethod
+    def test_decorator_preserves_function_metadata() -> None:
         """Test that decorators preserve function metadata."""
         @log_execution()
         @measure_execution_time()
-        def documented_function(x, y):
+        def documented_function(x: int, y: int) -> int:
             """This function adds two numbers."""
             return x + y
 
@@ -713,7 +735,8 @@ class TestDecoratorEdgeCases:
         assert documented_function.__doc__ is not None
         assert "adds two numbers" in documented_function.__doc__
 
-    def test_multiple_decorators_composition(self, caplog):
+    @staticmethod
+    def test_multiple_decorators_composition(caplog: pytest.LogCaptureFixture) -> None:
         """Test multiple decorators working together."""
         call_count = 0
 
@@ -722,11 +745,12 @@ class TestDecoratorEdgeCases:
             @retry_on_failure(max_retries=1, delay_seconds=0.001)
             @measure_execution_time()
             @log_execution(include_args=True, include_result=True)
-            def complex_func(value):
+            def complex_func(value: int) -> int:
                 nonlocal call_count
                 call_count += 1
                 if call_count < 2:
-                    raise ValueError("First attempt fails")
+                    msg = "First attempt fails"
+                    raise ValueError(msg)
                 return value * 3
 
             result = complex_func(7)
@@ -739,26 +763,29 @@ class TestDecoratorEdgeCases:
         assert "failed (attempt" in caplog.text
         assert "Audit:" in caplog.text
 
-    def test_decorator_with_zero_retries(self):
+    @staticmethod
+    def test_decorator_with_zero_retries() -> None:
         """Test retry decorator with zero retries (should not retry)."""
         call_count = 0
 
         @retry_on_failure(max_retries=0)
-        def test_func():
+        def test_func() -> None:
             nonlocal call_count
             call_count += 1
-            raise ValueError("No retries")
+            msg = "No retries"
+            raise ValueError(msg)
 
         with pytest.raises(ValueError, match="No retries"):
             test_func()
 
         assert call_count == 1  # Should only be called once
 
-    def test_timing_threshold_edge_case(self, caplog):
+    @staticmethod
+    def test_timing_threshold_edge_case(caplog: pytest.LogCaptureFixture) -> None:
         """Test timing decorator at threshold boundary."""
         with caplog.at_level(logging.INFO):
             @measure_execution_time(threshold_ms=0.0)  # Log everything
-            def test_func():
+            def test_func() -> str:
                 return "threshold test"
 
             result = test_func()
@@ -766,11 +793,14 @@ class TestDecoratorEdgeCases:
         assert result == "threshold test"
         assert "executed in" in caplog.text
 
-    def test_audit_trail_with_complex_data_types(self, caplog):
+    @staticmethod
+    def test_audit_trail_with_complex_data_types(caplog: pytest.LogCaptureFixture) -> None:
         """Test audit_trail decorator with complex parameter types."""
         with caplog.at_level(logging.INFO):
             @audit_trail("complex_data_op", user_id_param="user_data")
-            def test_func(user_data=None):
+            def test_func(user_data: object = None) -> str:
+                # Use the parameter to avoid ARG001 unused argument error
+                _unused = user_data
                 return "processed"
 
             # Test with dict parameter
@@ -780,14 +810,15 @@ class TestDecoratorEdgeCases:
         # Should handle complex data types in audit log
         assert "Audit:" in caplog.text
 
-    def test_validate_input_with_none_args(self):
+    @staticmethod
+    def test_validate_input_with_none_args() -> None:
         """Test validate_input decorator with None arguments."""
-        def validator(args_kwargs):
+        def validator(args_kwargs: tuple[tuple[Any, ...], dict[str, Any]]) -> bool:
             args, kwargs = args_kwargs
             return args is not None and kwargs is not None
 
         @validate_input(validator, "Args and kwargs cannot be None")
-        def test_func():
+        def test_func() -> str:
             return "validated"
 
         result = test_func()

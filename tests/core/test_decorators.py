@@ -63,7 +63,7 @@ class TestDecoratorsBasic:
             return "async"
 
         # Test sync function
-        sync_result = asyncio.run(sync_function())
+        sync_result: str = asyncio.run(sync_function())  # type: ignore[arg-type]
         assert sync_result == "async_decorated_sync"
 
         # Test async function
@@ -257,7 +257,7 @@ class TestDecoratorsBasic:
             return "documented"
 
         assert documented_function.__name__ == "documented_function"
-        assert "documentation" in documented_function.__doc__
+        assert documented_function.__doc__ is not None and "documentation" in documented_function.__doc__
 
     @staticmethod
     def test_multiple_decorators() -> None:
@@ -361,5 +361,5 @@ class TestDecoratorsBasic:
         async_result = await failing_async_function()
         assert async_result == "async_error_handled"
 
-        sync_result = await failing_sync_function()
+        sync_result = failing_sync_function()  # type: ignore[misc]
         assert sync_result == "async_error_handled"

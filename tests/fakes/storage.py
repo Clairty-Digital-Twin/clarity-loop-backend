@@ -145,7 +145,9 @@ class FakeDocumentSnapshot:
 class FakeQuery:
     """Fake query for testing."""
 
-    def __init__(self, data: dict[str, dict[str, Any]], filters: list[tuple]) -> None:
+    def __init__(
+        self, data: dict[str, dict[str, Any]], filters: list[tuple[str, str, Any]]
+    ) -> None:
         """Initialize query.
 
         Args:
@@ -154,7 +156,7 @@ class FakeQuery:
         """
         self.data = data
         self.filters = filters
-        self._limit = None
+        self._limit: int | None = None
 
     def limit(self, count: int) -> "FakeQuery":
         """Add limit to query.
@@ -180,7 +182,7 @@ class FakeQuery:
             if self._matches_filters(doc_data):
                 results.append(FakeDocumentSnapshot(doc_data, doc_id, exists=True))
 
-        if self._limit:
+        if self._limit is not None:
             results = results[: self._limit]
 
         return results
@@ -369,14 +371,18 @@ class FakeCloudStorage(CloudStoragePort):
 
     def __init__(self, bucket_name: str = "test-raw-data-bucket") -> None:
         self._bucket_name = bucket_name
-        self._stored_data: dict[str, dict] = {}
+        self._stored_data: dict[str, dict[str, Any]] = {}
 
     def bucket(self, bucket_name: str) -> "FakeBucket":
         """Get a fake bucket reference."""
         return FakeBucket(bucket_name, self._stored_data)
 
     def upload_json(
-        self, bucket_name: str, blob_path: str, data: dict, metadata: dict | None = None
+        self,
+        bucket_name: str,
+        blob_path: str,
+        data: dict[str, Any],
+        metadata: dict[str, Any] | None = None,
     ) -> str:
         """Upload JSON data to fake storage."""
         full_path = f"{bucket_name}/{blob_path}"
@@ -395,7 +401,7 @@ class FakeCloudStorage(CloudStoragePort):
 class FakeBucket:
     """Fake bucket implementation."""
 
-    def __init__(self, name: str, storage: dict[str, dict]) -> None:
+    def __init__(self, name: str, storage: dict[str, dict[str, Any]]) -> None:
         self.name = name
         self._storage = storage
 
@@ -407,7 +413,7 @@ class FakeBucket:
 class FakeBlob:
     """Fake blob implementation."""
 
-    def __init__(self, full_path: str, storage: dict[str, dict]) -> None:
+    def __init__(self, full_path: str, storage: dict[str, dict[str, Any]]) -> None:
         self.full_path = full_path
         self._storage = storage
 

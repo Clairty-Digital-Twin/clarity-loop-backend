@@ -34,14 +34,18 @@ from clarity.models.health_data import (
     MentalHealthIndicator,
     SleepData,
 )
-from clarity.ports.storage import CloudStoragePort
 from clarity.ports.data_ports import IHealthDataRepository
+from clarity.ports.storage import CloudStoragePort
 from clarity.services.health_data_service import (
     DataNotFoundError,
     HealthDataService,
     HealthDataServiceError,
 )
 from tests.base import BaseServiceTestCase
+
+
+class MockTestError(Exception):
+    """Custom exception for mock test failures."""
 
 
 class MockCloudStorage(CloudStoragePort):
@@ -59,6 +63,30 @@ class MockCloudStorage(CloudStoragePort):
         """Return mock bucket."""
         self.bucket_name = bucket_name
         return MockBucket(self)
+
+    def upload_json(
+        self,
+        bucket_name: str,
+        blob_path: str,
+        data: dict[str, Any],
+        metadata: dict[str, Any] | None = None,
+    ) -> str:
+        """Upload JSON data to cloud storage."""
+        if self.should_fail:
+            msg = "Mock upload failure"
+            raise MockTestError(msg)
+
+        self.uploaded_data[blob_path] = {
+            "bucket": bucket_name,
+            "data": data,
+            "metadata": metadata,
+        }
+        return f"gs://{bucket_name}/{blob_path}"
+
+    @staticmethod
+    def get_raw_data_bucket_name() -> str:
+        """Get the name of the raw data bucket."""
+        return "clarity-raw-data-test"
 
 
 class MockBucket:
@@ -107,6 +135,49 @@ class MockHealthDataRepository(IHealthDataRepository):
         self.processing_statuses: dict[str, dict[str, Any]] = {}
         self.user_health_data: dict[str, dict[str, Any]] = {}
         self.fail_on_method: str | None = None
+
+    async def initialize(self) -> None:
+        """Initialize the repository."""
+        # Mock implementation
+
+    async def cleanup(self) -> None:
+        """Clean up repository resources."""
+        # Mock implementation
+
+    async def save_data(self, user_id: str, data: dict[str, Any]) -> str:
+        """Save health data for a user (legacy method)."""
+        if self.should_fail:
+            msg = "Mock repository failure"
+            raise MockTestError(msg)
+
+        record_id = f"record_{len(self.saved_data)}"
+        self.saved_data[record_id] = {
+            "user_id": user_id,
+            "data": data,
+        }
+        return record_id
+
+    async def get_data(
+        self, user_id: str, filters: dict[str, Any] | None = None
+    ) -> dict[str, Any]:
+        """Retrieve health data for a user (legacy method)."""
+        if self.should_fail:
+            msg = "Mock repository failure"
+            raise MockTestError(msg)
+
+        # Filter data for user
+        user_data = {
+            k: v
+            for k, v in self.saved_data.items()
+            if v.get("user_id") == user_id
+        }
+
+        # Apply additional filters if provided
+        if filters:
+            # Simple filter implementation for testing
+            pass
+
+        return {"data": user_data}
 
     async def save_health_data(
         self,

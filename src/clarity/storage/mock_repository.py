@@ -144,7 +144,7 @@ class MockHealthDataRepository(IHealthDataRepository):
                 if metric_type and metric["metric_type"] != metric_type:
                     continue
 
-                metric_timestamp = datetime.fromisoformat(metric["timestamp"])
+                metric_timestamp = datetime.fromisoformat(metric["created_at"])
                 if start_date and metric_timestamp < start_date:
                     continue
                 if end_date and metric_timestamp > end_date:
@@ -153,7 +153,7 @@ class MockHealthDataRepository(IHealthDataRepository):
                 all_metrics.append(metric_with_context)
 
         # Sort by timestamp (newest first)
-        all_metrics.sort(key=itemgetter("timestamp"), reverse=True)  # type: ignore[misc]
+        all_metrics.sort(key=itemgetter("created_at"), reverse=True)  # type: ignore[misc]
 
         # Apply pagination
         total_count = len(all_metrics)

@@ -21,7 +21,7 @@ from clarity.core.decorators import (
 )
 
 
-class TestLogExecutionDecorator:
+class TestLogExecutionDecorator:  # ruff: noqa: PLR0904
     """Comprehensive tests for log_execution decorator."""
 
     def test_log_execution_sync_function_default_params(self, caplog):

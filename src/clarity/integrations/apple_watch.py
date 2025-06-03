@@ -11,9 +11,10 @@ import operator
 from typing import Any
 
 import numpy as np
-import pandas as pd
-from scipy.interpolate import interp1d
-import scipy.signal
+import numpy.typing as npt
+import pandas as pd  # type: ignore[import-untyped]
+from scipy.interpolate import interp1d  # type: ignore[import-untyped]
+import scipy.signal  # type: ignore[import-untyped]
 
 from clarity.core.exceptions import ProcessingError
 from clarity.core.logging import get_logger
@@ -45,10 +46,10 @@ class ProcessedHealthData:
     """Processed health data ready for ML models."""
 
     # Time series data (minute-level, 10080 points for a week)
-    heart_rate_series: np.ndarray | None = None
-    hrv_series: np.ndarray | None = None
-    respiratory_rate_series: np.ndarray | None = None
-    movement_proxy_vector: np.ndarray | None = None  # For PAT model
+    heart_rate_series: npt.NDArray[np.floating[Any]] | None = None
+    hrv_series: npt.NDArray[np.floating[Any]] | None = None
+    respiratory_rate_series: npt.NDArray[np.floating[Any]] | None = None
+    movement_proxy_vector: npt.NDArray[np.floating[Any]] | None = None  # For PAT model
 
     # Summary statistics
     resting_hr: float | None = None
@@ -432,9 +433,14 @@ class AppleWatchDataProcessor:
         diastolic_values = []
 
         for sample in samples:
+            # Check if sample has required blood pressure attributes
+            if not (hasattr(sample, "systolic") and hasattr(sample, "diastolic")):
+                continue
+
+            # Check if values are not None and within valid ranges
             if (
-                hasattr(sample, "systolic")
-                and hasattr(sample, "diastolic")
+                sample.systolic is not None
+                and sample.diastolic is not None
                 and self.BP_SYSTOLIC_MIN <= sample.systolic <= self.BP_SYSTOLIC_MAX
                 and self.BP_DIASTOLIC_MIN <= sample.diastolic <= self.BP_DIASTOLIC_MAX
             ):
@@ -443,8 +449,11 @@ class AppleWatchDataProcessor:
 
         if systolic_values:
             # Use most recent or average
-            result.systolic_bp = float(systolic_values[-1])  # Most recent
-            result.diastolic_bp = float(diastolic_values[-1])
+            last_systolic = systolic_values[-1]
+            last_diastolic = diastolic_values[-1]
+            if last_systolic is not None and last_diastolic is not None:
+                result.systolic_bp = float(last_systolic)  # Most recent
+                result.diastolic_bp = float(last_diastolic)
 
     async def _process_temperature(
         self, samples: list[HealthDataPoint], result: ProcessedHealthData
@@ -530,7 +539,7 @@ class AppleWatchDataProcessor:
         for field in expected_fields:
             if field is not None and isinstance(field, np.ndarray):
                 # Calculate percentage of non-NaN values
-                valid_ratio = np.sum(~np.isnan(field)) / len(field)
+                valid_ratio = float(np.sum(~np.isnan(field)) / len(field))
                 completeness_scores.append(valid_ratio)
             else:
                 completeness_scores.append(0.0)

@@ -405,19 +405,20 @@ class PATModelService(IMLModelService):
             logger.info("Loading PAT model from %s", self.model_path)
 
             # Initialize encoder with correct parameters
+            config = cast(dict[str, Any], self.config)
             encoder = PATEncoder(
-                input_size=int(self.config["input_size"]),
-                patch_size=int(self.config["patch_size"]),
-                embed_dim=int(self.config["embed_dim"]),
-                num_layers=int(self.config["num_layers"]),
-                num_heads=int(self.config["num_heads"]),
-                ff_dim=int(self.config["ff_dim"]),
+                input_size=int(config["input_size"]),
+                patch_size=int(config["patch_size"]),
+                embed_dim=int(config["embed_dim"]),
+                num_layers=int(config["num_layers"]),
+                num_heads=int(config["num_heads"]),
+                ff_dim=int(config["ff_dim"]),
             )
 
             # Create full model with classification head
             self.model = PATForMentalHealthClassification(
                 encoder=encoder,
-                num_classes=18 if self.model_size in ["small", "medium"] else 9,
+                num_classes=18 if self.model_size in {"small", "medium"} else 9,
             )
 
             # Load pre-trained encoder weights if available
@@ -496,7 +497,8 @@ class PATModelService(IMLModelService):
                         state_dict['encoder.patch_embedding.bias'] = torch.from_numpy(tf_bias)
 
                 # Convert transformer layers
-                num_layers = int(self.config["num_layers"])
+                config = cast(dict[str, Any], self.config)
+                num_layers = int(config["num_layers"])
                 for layer_idx in range(1, num_layers + 1):
                     tf_layer_name = f'encoder_layer_{layer_idx}_transformer'
 
@@ -521,14 +523,14 @@ class PATModelService(IMLModelService):
 
                 logger.info("Successfully converted %d tensors", len(state_dict))
 
-        except Exception as e:
-            logger.error("Failed to convert TensorFlow weights: %s", e)
+        except Exception:
+            logger.exception("Failed to convert TensorFlow weights")
             return {}
 
         return state_dict
 
     def _convert_attention_weights(
-        self, layer_group: Any, state_dict: dict[str, torch.Tensor], layer_idx: int
+        self, layer_group: h5py.Group, state_dict: dict[str, torch.Tensor], layer_idx: int  # type: ignore[name-defined]
     ) -> None:
         """Convert multi-head attention weights from TensorFlow to PyTorch."""
         if f'encoder_layer_{layer_idx + 1}_attention' not in layer_group:
@@ -537,9 +539,9 @@ class PATModelService(IMLModelService):
         attn_group = layer_group[f'encoder_layer_{layer_idx + 1}_attention']
 
         # Get dimensions from config
-        embed_dim = int(self.config["embed_dim"])  # 96
-        num_heads = int(self.config["num_heads"])  # 6 or 12
-        head_dim = int(self.config["head_dim"])    # 96
+        config = cast(dict[str, Any], self.config)
+        num_heads = int(config["num_heads"])  # 6 or 12
+        head_dim = int(config["head_dim"])    # 96
 
         # Convert Q, K, V weights for each head separately
         for qkv_name in ['query', 'key', 'value']:
@@ -600,7 +602,7 @@ class PATModelService(IMLModelService):
                 state_dict[pytorch_name] = torch.from_numpy(tf_bias)
 
     def _convert_ff_weights(
-        self, layer_group: Any, state_dict: dict[str, torch.Tensor], layer_idx: int
+        self, layer_group: h5py.Group, state_dict: dict[str, torch.Tensor], layer_idx: int  # type: ignore[name-defined]
     ) -> None:
         """Convert feed-forward network weights."""
         # FF1 layer
@@ -634,7 +636,7 @@ class PATModelService(IMLModelService):
                 state_dict[pytorch_name] = torch.from_numpy(tf_bias)
 
     def _convert_layernorm_weights(
-        self, layer_group: Any, state_dict: dict[str, torch.Tensor], layer_idx: int
+        self, layer_group: h5py.Group, state_dict: dict[str, torch.Tensor], layer_idx: int  # type: ignore[name-defined]
     ) -> None:
         """Convert layer normalization weights (gamma/beta -> weight/bias)."""
         # Norm1 (after attention)
@@ -805,7 +807,8 @@ class PATModelService(IMLModelService):
         input_tensor = input_tensor.unsqueeze(0)
 
         # Ensure model is not None for type checker
-        assert self.model is not None, "Model should be loaded at this point"
+        if not self.model:
+            self._raise_model_not_loaded_error()
 
         # Run inference
         with torch.no_grad():
@@ -842,5 +845,6 @@ async def get_pat_service() -> PATModelService:
 
     if _pat_service is None:
         _pat_service = PATModelService()
+        await _pat_service.load_model()
 
     return _pat_service

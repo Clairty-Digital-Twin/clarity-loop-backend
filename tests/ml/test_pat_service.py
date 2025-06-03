@@ -22,82 +22,107 @@ from clarity.ml.pat_service import (
     ActigraphyAnalysis,
     ActigraphyInput,
     PATModelService,
-    PATTransformer,
+    PATEncoder,
+    PATForMentalHealthClassification,
     get_pat_service,
 )
 from clarity.ml.preprocessing import ActigraphyDataPoint
 
 
-class TestPATTransformer:
-    """Test the PyTorch PAT Transformer model architecture."""
+class TestPATEncoder:
+    """Test the PyTorch PAT Encoder model architecture."""
 
     @staticmethod
-    def test_pat_transformer_initialization() -> None:
-        """Test PAT transformer model initialization with default parameters."""
-        model = PATTransformer()
-
-        assert hasattr(model, "positional_encoding")
-        assert hasattr(model, "transformer")
-        assert hasattr(model, "sleep_stage_head")
-        assert hasattr(model, "sleep_metrics_head")
-        assert hasattr(model, "depression_head")
-        assert isinstance(model.sleep_stage_head, torch.nn.Linear)
-
-    @staticmethod
-    def test_pat_transformer_custom_parameters() -> None:
-        """Test PAT transformer with custom architecture parameters."""
-        model = PATTransformer(
-            input_dim=2,
-            hidden_dim=128,
-            num_layers=4,
-            num_heads=4,
-            sequence_length=720,
-            num_classes=3,
+    def test_pat_encoder_initialization() -> None:
+        """Test PAT encoder model initialization with default parameters."""
+        encoder = PATEncoder(
+            input_size=10080,
+            patch_size=18,
+            embed_dim=96,
+            num_layers=2,
+            num_heads=12,
+            ff_dim=256
         )
 
-        assert model.input_dim == 2
-        assert model.hidden_dim == 128
-        assert model.sleep_stage_head.out_features == 3
+        assert hasattr(encoder, "patch_embedding")
+        assert hasattr(encoder, "positional_encoding")
+        assert hasattr(encoder, "transformer_layers")
+        assert len(encoder.transformer_layers) == 2
+        assert encoder.embed_dim == 96
 
     @staticmethod
-    def test_pat_transformer_forward_pass() -> None:
-        """Test forward pass through PAT transformer."""
-        model = PATTransformer()
+    def test_pat_encoder_custom_parameters() -> None:
+        """Test PAT encoder with custom architecture parameters."""
+        encoder = PATEncoder(
+            input_size=1440,
+            patch_size=10,
+            embed_dim=64,
+            num_layers=1,
+            num_heads=4,
+            ff_dim=128
+        )
+
+        assert encoder.input_size == 1440
+        assert encoder.patch_size == 10
+        assert encoder.embed_dim == 64
+        assert len(encoder.transformer_layers) == 1
+
+    @staticmethod
+    def test_pat_encoder_forward_pass() -> None:
+        """Test forward pass through PAT encoder."""
+        encoder = PATEncoder(
+            input_size=10080,
+            patch_size=18,
+            embed_dim=96,
+            num_layers=2,
+            num_heads=12,
+            ff_dim=256
+        )
+        encoder.eval()
+
+        batch_size = 2
+        input_size = 10080
+
+        x = torch.randn(batch_size, input_size)
+
+        with torch.no_grad():
+            outputs = encoder(x)
+
+        expected_patches = input_size // 18  # 560 patches
+        assert outputs.shape == (batch_size, expected_patches, 96)
+
+    @staticmethod
+    def test_pat_full_model_forward_pass() -> None:
+        """Test forward pass through full PAT model."""
+        encoder = PATEncoder(
+            input_size=10080,
+            patch_size=18,
+            embed_dim=96,
+            num_layers=1,
+            num_heads=6
+        )
+        model = PATForMentalHealthClassification(encoder, num_classes=18)
         model.eval()
 
         batch_size = 2
-        seq_length = 1440
-        input_features = 1
+        input_size = 10080
 
-        x = torch.randn(batch_size, seq_length, input_features)
+        x = torch.randn(batch_size, input_size)
 
         with torch.no_grad():
             outputs = model(x)
 
         assert isinstance(outputs, dict)
-        assert "sleep_stages" in outputs
+        assert "raw_logits" in outputs
         assert "sleep_metrics" in outputs
+        assert "circadian_score" in outputs
         assert "depression_risk" in outputs
+        assert "embeddings" in outputs
 
-        assert outputs["sleep_stages"].shape == (batch_size, seq_length, 4)
+        assert outputs["raw_logits"].shape == (batch_size, 18)
         assert outputs["sleep_metrics"].shape == (batch_size, 8)
+        assert outputs["circadian_score"].shape == (batch_size, 1)
         assert outputs["depression_risk"].shape == (batch_size, 1)
-
-    @staticmethod
-    def test_pat_transformer_different_sequence_lengths() -> None:
-        """Test PAT transformer with different input sequence lengths."""
-        model = PATTransformer()
-        model.eval()
-
-        # Only test sequence lengths within the positional encoding bounds
-        for seq_len in [720, 1440]:  # 12h, 24h (removed 2880 which exceeds bounds)
-            x = torch.randn(1, seq_len, 1)
-
-            with torch.no_grad():
-                outputs = model(x)
-
-            assert outputs["sleep_stages"].shape == (1, seq_len, 4)
-            assert outputs["sleep_metrics"].shape == (1, 8)
 
 
 class TestPATModelServiceInitialization:
@@ -163,16 +188,16 @@ class TestPATModelServiceLoading:
 
         # Mock the weight loading method directly to avoid h5py complications
         mock_state_dict = {
-            "input_projection.weight": torch.randn(256, 1),
-            "input_projection.bias": torch.randn(256),
-            "sleep_stage_head.weight": torch.randn(4, 256),
-            "sleep_stage_head.bias": torch.randn(4),
+            "encoder.patch_embedding.weight": torch.randn(96, 18),
+            "encoder.patch_embedding.bias": torch.randn(96),
+            "classifier.0.weight": torch.randn(96),
+            "classifier.0.bias": torch.randn(96),
         }
 
         with (
             patch("pathlib.Path.exists", return_value=True),
             patch.object(
-                PATModelService, "_load_weights_from_h5", return_value=mock_state_dict
+                PATModelService, "_load_tensorflow_weights", return_value=mock_state_dict
             ),
         ):
             await service.load_model()
@@ -239,20 +264,20 @@ class TestPATModelServiceLoading:
         # Create mock weights with correct shapes for realistic testing
         rng = np.random.default_rng(42)
         mock_state_dict = {
-            "input_projection.weight": torch.from_numpy(
-                rng.standard_normal((256, 1))
+            "encoder.patch_embedding.weight": torch.from_numpy(
+                rng.standard_normal((96, 18))
             ).float(),
-            "input_projection.bias": torch.from_numpy(rng.standard_normal(256)).float(),
-            "sleep_stage_head.weight": torch.from_numpy(
-                rng.standard_normal((4, 256))
+            "encoder.patch_embedding.bias": torch.from_numpy(rng.standard_normal(96)).float(),
+            "classifier.0.weight": torch.from_numpy(
+                rng.standard_normal(96)
             ).float(),
-            "sleep_stage_head.bias": torch.from_numpy(rng.standard_normal(4)).float(),
+            "classifier.0.bias": torch.from_numpy(rng.standard_normal(96)).float(),
         }
 
         with (
             patch("pathlib.Path.exists", return_value=True),
             patch.object(
-                PATModelService, "_load_weights_from_h5", return_value=mock_state_dict
+                PATModelService, "_load_tensorflow_weights", return_value=mock_state_dict
             ),
         ):
             await service.load_model()
@@ -305,9 +330,11 @@ class TestPATModelServiceAnalysis:
             # Mock model output
             service.model = MagicMock()
             service.model.return_value = {
-                "sleep_stages": torch.randn(1, 1440, 4),
+                "raw_logits": torch.randn(1, 18),
                 "sleep_metrics": torch.randn(1, 8),
+                "circadian_score": torch.randn(1, 1),
                 "depression_risk": torch.randn(1, 1),
+                "embeddings": torch.randn(1, 96),
             }
 
             # Mock postprocessor output
@@ -361,9 +388,11 @@ class TestPATModelServiceAnalysis:
 
                 service.model = MagicMock()
                 service.model.return_value = {
-                    "sleep_stages": torch.randn(1, 1440, 4),
+                    "raw_logits": torch.randn(1, 18),
                     "sleep_metrics": torch.randn(1, 8),
+                    "circadian_score": torch.randn(1, 1),
                     "depression_risk": torch.randn(1, 1),
+                    "embeddings": torch.randn(1, 96),
                 }
 
                 mock_postprocess.return_value = ActigraphyAnalysis(
@@ -437,12 +466,13 @@ class TestPATModelServicePostprocessing:
         service = PATModelService()
 
         mock_predictions = {
-            "sleep_stages": torch.randn(1, 1440, 4),
+            "raw_logits": torch.randn(1, 18),
             "sleep_metrics": torch.tensor(
                 [[0.85, 0.75, 0.2, 7.5, 30.0, 15.0, 0.75, 0.25]]
             ),
-            "circadian_score": torch.tensor([[0.75]]),  # Added missing key
+            "circadian_score": torch.tensor([[0.75]]),
             "depression_risk": torch.tensor([[0.2]]),
+            "embeddings": torch.randn(1, 96),
         }
 
         user_id = str(uuid4())
@@ -583,7 +613,7 @@ class TestPATModelServiceEdgeCases:
 
         result = service._preprocess_actigraphy_data(data_points, target_length=1440)
 
-        assert result.shape == (1, 1440, 1)
+        assert result.shape == (1440,)
         mock_preprocessor.preprocess_for_pat_model.assert_called_once_with(
             data_points, 1440
         )
@@ -594,10 +624,10 @@ class TestPATModelServiceEdgeCases:
         """Test exception handling during model loading."""
         service = PATModelService()
 
-        # Mock the PATTransformer constructor to raise an exception
+        # Mock the PATEncoder constructor to raise an exception
         with (
             patch(
-                "clarity.ml.pat_service.PATTransformer",
+                "clarity.ml.pat_service.PATEncoder",
                 side_effect=Exception("Critical error"),
             ),
             pytest.raises(Exception, match="Critical error"),

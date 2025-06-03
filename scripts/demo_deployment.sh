@@ -81,7 +81,7 @@ test_endpoint() {
     local expected_status="${3:-200}"
     
     echo -e "${CYAN}Testing: ${description}${NC}"
-    if response=$(curl -s -w "HTTPSTATUS:%{http_code}" "http://localhost:8080${endpoint}"); then
+    if response=$(curl -s -w "HTTPSTATUS:%{http_code}" "http://localhost:8000${endpoint}"); then
         http_code=$(echo "$response" | tr -d '\n' | sed -e 's/.*HTTPSTATUS://')
         body=$(echo "$response" | sed -e 's/HTTPSTATUS\:.*//g')
         
@@ -148,7 +148,7 @@ services=(
     "Firestore:8080"
     "Firebase Auth:9099"
     "Pub/Sub:8085"
-    "Main App:8080"
+    "Main App:8000"
     "Prometheus:9090"
     "Grafana:3000"
     "Jupyter:8888"
@@ -176,8 +176,8 @@ test_endpoint "/api/v1/insights/health" "Gemini Insights Service" 200
 
 # Service Status Summary
 print_section "${CHART} Service Dashboard URLs"
-echo -e "${CYAN}${ROCKET} Main Application:${NC}     http://localhost:8080"
-echo -e "${CYAN}${ROBOT} API Documentation:${NC}    http://localhost:8080/docs"
+echo -e "${CYAN}${ROCKET} Main Application:${NC}     http://localhost:8000"
+echo -e "${CYAN}${ROBOT} API Documentation:${NC}    http://localhost:8000/docs"
 echo -e "${CYAN}${CHART} Prometheus Metrics:${NC}   http://localhost:9090"
 echo -e "${CYAN}${BRAIN} Grafana Dashboard:${NC}    http://localhost:3000 (admin/admin)"
 echo -e "${CYAN}${LIGHTNING} Jupyter Lab:${NC}           http://localhost:8888"

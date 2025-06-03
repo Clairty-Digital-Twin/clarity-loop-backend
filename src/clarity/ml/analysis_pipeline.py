@@ -286,8 +286,8 @@ class HealthAnalysisPipeline:
         # For now, create a synthetic embedding based on analysis results
         return self._create_activity_embedding_from_analysis(analysis_result)
 
-    @staticmethod
-    def _create_activity_embedding_from_analysis(analysis_result: dict[str, Any]) -> list[float]:
+    @staticmethod  
+    def _create_activity_embedding_from_analysis(analysis_result: Any) -> list[float]:
         """Create activity embedding from PAT analysis results."""
         # Extract the actual PAT embedding if available
         if hasattr(analysis_result, "embedding") and analysis_result.embedding:

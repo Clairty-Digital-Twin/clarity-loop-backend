@@ -307,8 +307,8 @@ class EnhancedHealthDataService:
 
             if not success:
                 self._raise_deletion_failed_error()
-            else:
-                return success
+
+            return success
 
         except HealthDataServiceError:
             # Re-raise our specific exceptions

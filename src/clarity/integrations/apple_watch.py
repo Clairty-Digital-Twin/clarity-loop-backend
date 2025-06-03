@@ -440,7 +440,7 @@ class AppleWatchDataProcessor:
         result: ProcessedHealthData
     ):
         """Process VO2 max data."""
-        values = [(s.timestamp, float(s.value)) for s in samples 
+        values = [(s.timestamp, float(s.value)) for s in samples
                   if isinstance(s.value, (int, float)) and self.VO2_MAX_MIN <= s.value <= self.VO2_MAX_MAX]
 
         if values:

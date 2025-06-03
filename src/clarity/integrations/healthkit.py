@@ -60,11 +60,11 @@ class HealthDataPoint:
     unit: str
     source: str = "apple_watch"
     metadata: dict[str, Any] | None = None
-    
+
     # Additional fields for specific data types
-    systolic: Optional[float] = None  # For blood pressure
-    diastolic: Optional[float] = None  # For blood pressure
-    classification: Optional[str] = None  # For ECG
+    systolic: float | None = None  # For blood pressure
+    diastolic: float | None = None  # For blood pressure
+    classification: str | None = None  # For ECG
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
@@ -73,27 +73,27 @@ class HealthDataPoint:
 class HealthDataBatch(BaseModel):
     """Batch of health data for processing"""
     user_id: str
-    data_type: Optional[HealthDataType] = None
-    start_date: Optional[datetime] = None
-    end_date: Optional[datetime] = None
+    data_type: HealthDataType | None = None
+    start_date: datetime | None = None
+    end_date: datetime | None = None
     data_points: list[HealthDataPoint] = Field(default_factory=list)
     total_count: int = Field(ge=0, default=0)
-    
+
     # Additional sample type fields for multi-modal processing
-    heart_rate_samples: Optional[list[HealthDataPoint]] = None
-    hrv_samples: Optional[list[HealthDataPoint]] = None
-    respiratory_rate_samples: Optional[list[HealthDataPoint]] = None
-    step_count_samples: Optional[list[HealthDataPoint]] = None
-    blood_oxygen_samples: Optional[list[HealthDataPoint]] = None
-    blood_pressure_samples: Optional[list[HealthDataPoint]] = None
-    body_temperature_samples: Optional[list[HealthDataPoint]] = None
-    vo2_max_samples: Optional[list[HealthDataPoint]] = None
-    workout_samples: Optional[list[Any]] = None  # Complex workout objects
-    electrocardiogram_samples: Optional[list[Any]] = None  # ECG objects
-    
+    heart_rate_samples: list[HealthDataPoint] | None = None
+    hrv_samples: list[HealthDataPoint] | None = None
+    respiratory_rate_samples: list[HealthDataPoint] | None = None
+    step_count_samples: list[HealthDataPoint] | None = None
+    blood_oxygen_samples: list[HealthDataPoint] | None = None
+    blood_pressure_samples: list[HealthDataPoint] | None = None
+    body_temperature_samples: list[HealthDataPoint] | None = None
+    vo2_max_samples: list[HealthDataPoint] | None = None
+    workout_samples: list[Any] | None = None  # Complex workout objects
+    electrocardiogram_samples: list[Any] | None = None  # ECG objects
+
     # Computed property for end time
     @property
-    def end_time(self) -> Optional[datetime]:
+    def end_time(self) -> datetime | None:
         return self.end_date
 
     @validator('data_points')

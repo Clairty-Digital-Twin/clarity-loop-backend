@@ -461,26 +461,25 @@ class TestErrorHandling:
     @staticmethod
     async def test_cache_corruption_handling(optimizer: PATPerformanceOptimizer, sample_actigraphy_input: ActigraphyInput) -> None:
         """Test handling of corrupted cache entries."""
-        # Test that cache errors are handled gracefully by creating invalid entry
+        # Create a corrupted cache entry with wrong format
         cache_key = optimizer._generate_cache_key(sample_actigraphy_input)
-        mock_corrupted_data = Mock(spec=ActigraphyAnalysis)
+        optimizer._cache[cache_key] = "corrupted_data_not_tuple"  # Wrong type, not a tuple
+        
+        # Should handle gracefully and not use corrupted cache
+        mock_result = Mock(spec=ActigraphyAnalysis)
+        async_mock = AsyncMock(return_value=mock_result)
+        optimizer.pat_service.analyze_actigraphy = async_mock
 
-        # Patch the cache to have a corrupted entry that raises an exception when accessed
-        original_cache = optimizer._cache.copy()
+        # Capture logs to verify corruption was detected
+        with patch('clarity.ml.pat_optimization.logger') as mock_logger:
+            result, was_cached = await optimizer.optimized_analyze(sample_actigraphy_input)
 
-        def corrupted_cache_get(key: str) -> tuple[ActigraphyAnalysis, float]:
-            if key == cache_key:
-                raise ValueError("Simulated cache corruption")
-            return original_cache[key]
+            # Verify corruption was detected and logged
+            assert any('Cache corruption detected' in str(call) for call in mock_logger.warning.call_args_list)
 
-        # Mock the cache access to raise an exception
-        with patch.object(optimizer._cache, '__getitem__', side_effect=corrupted_cache_get):
-            with patch.object(optimizer._cache, '__contains__', return_value=True):
-                # Should handle gracefully and not use corrupted cache
-                mock_result = Mock(spec=ActigraphyAnalysis)
-                async_mock = AsyncMock(return_value=mock_result)
-                optimizer.pat_service.analyze_actigraphy = async_mock
-
-                result, was_cached = await optimizer.optimized_analyze(sample_actigraphy_input)
-
-                assert was_cached is False  # Should not use corrupted cache
+        assert was_cached is False  # Should not use corrupted cache
+        assert result is mock_result
+        # After analysis, the cache should contain a new valid entry (not the corrupted one)
+        assert cache_key in optimizer._cache  # New valid entry was cached
+        cached_result, timestamp = optimizer._cache[cache_key]
+        assert cached_result is mock_result  # Cached the correct result

@@ -5,11 +5,9 @@ and other testing best practices, making individual test files cleaner
 and more focused on testing business logic rather than setup.
 """
 
-from typing import Any, Dict, Optional
+from typing import Any
 import unittest
-from unittest.mock import Mock
 
-from clarity.ports.storage import StoragePort
 from tests.fakes.storage import FakeCloudStorage, FakeStorage
 
 

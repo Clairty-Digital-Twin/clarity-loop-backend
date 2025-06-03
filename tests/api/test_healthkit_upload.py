@@ -1,9 +1,7 @@
 """Tests for HealthKit upload API endpoint."""
 
-from datetime import UTC, datetime
-import json
-from unittest.mock import AsyncMock, Mock, patch
-import uuid
+from datetime import datetime
+from unittest.mock import Mock, patch
 
 from fastapi import HTTPException, status
 from fastapi.testclient import TestClient

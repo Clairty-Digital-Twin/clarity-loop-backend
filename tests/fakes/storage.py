@@ -10,7 +10,7 @@ Fakes are preferred over mocks because they:
 4. Don't require complex mock setup
 """
 
-from typing import Any, Dict, List, Optional
+from typing import Any
 import uuid
 
 from clarity.ports.storage import CloudStoragePort, CollectionPort, StoragePort

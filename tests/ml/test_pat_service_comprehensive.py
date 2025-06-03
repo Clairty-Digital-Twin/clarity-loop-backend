@@ -124,7 +124,10 @@ class TestPATModelService:
         assert isinstance(pat_service.model, PATForMentalHealthClassification)
 
         # Test encoder architecture
-        encoder = pat_service.model.encoder  # type: ignore[union-attr]
+        if pat_service.model is not None:
+            encoder = pat_service.model.encoder  # type: ignore[union-attr]
+        else:
+            pytest.skip("Model not loaded")
         assert isinstance(encoder, PATEncoder)
         assert encoder.embed_dim == 96
         assert encoder.input_size == 10080

@@ -16,7 +16,7 @@ from uuid import uuid4
 
 import pytest
 
-from clarity.ml.inference_engine import (
+from clarity.ml.inference_engine import (  # type: ignore[attr-defined]
     AsyncInferenceEngine,
     InferenceCache,
     InferenceRequest,

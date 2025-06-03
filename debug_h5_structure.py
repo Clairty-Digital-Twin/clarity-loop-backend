@@ -88,8 +88,8 @@ def main() -> None:
             try:
                 explore_h5_structure(model_file, max_depth=3)
                 analyze_weight_structure(model_file)
-            except (OSError, KeyError, ValueError) as e:
-                logger.exception("Error analyzing %s: %s", model_file, e)
+            except (OSError, KeyError, ValueError):
+                logger.exception("Error analyzing %s", model_file)
         else:
             logger.warning("File not found: %s", model_file)
 

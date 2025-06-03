@@ -151,7 +151,8 @@ class ModelChecksumManager:
 
         try:
             with self.checksums_file.open(encoding=DEFAULT_ENCODING) as f:
-                return json.load(f)
+                data: dict[str, dict[str, Any]] = json.load(f)
+                return data
         except (OSError, json.JSONDecodeError) as e:
             error_msg = f"Failed to load checksums: {e}"
             raise ModelIntegrityError(error_msg) from e

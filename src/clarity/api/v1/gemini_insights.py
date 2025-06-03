@@ -462,10 +462,11 @@ async def get_insight_history(
         formatted_insights = [
             {
                 "id": insight.get("id"),
-                "narrative": insight.get("narrative", "")[:NARRATIVE_PREVIEW_LENGTH]
-                + "..."
-                if len(insight.get("narrative", "")) > NARRATIVE_PREVIEW_LENGTH
-                else insight.get("narrative", ""),
+                "narrative": (
+                    insight.get("narrative", "")[:NARRATIVE_PREVIEW_LENGTH] + "..."
+                    if len(insight.get("narrative", "")) > NARRATIVE_PREVIEW_LENGTH
+                    else insight.get("narrative", "")
+                ),
                 "generated_at": insight.get("generated_at"),
                 "confidence_score": insight.get("confidence_score", 0.0),
                 "key_insights_count": len(insight.get("key_insights", [])),

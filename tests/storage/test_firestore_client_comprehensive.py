@@ -30,9 +30,13 @@ class TestFirestoreHealthDataRepositoryBasic:
 
     @pytest.fixture
     @staticmethod
-    def firestore_repository(mock_firestore_client: MagicMock) -> FirestoreHealthDataRepository:
+    def firestore_repository(
+        mock_firestore_client: MagicMock,
+    ) -> FirestoreHealthDataRepository:
         """Create FirestoreHealthDataRepository with mocked client."""
-        with patch('clarity.storage.firestore_client.FirestoreClient') as mock_client_class:
+        with patch(
+            "clarity.storage.firestore_client.FirestoreClient"
+        ) as mock_client_class:
             mock_client_class.return_value = mock_firestore_client
             repository = FirestoreHealthDataRepository(project_id="test-project")
             repository._firestore_client = mock_firestore_client
@@ -57,28 +61,30 @@ class TestFirestoreHealthDataRepositoryBasic:
                 heart_rate_variability=50.0,
                 respiratory_rate=16.0,
                 body_temperature=37.0,
-                blood_glucose=100.0
-            )
+                blood_glucose=100.0,
+            ),
         )
 
     @staticmethod
     async def test_initialization_success() -> None:
         """Test successful FirestoreHealthDataRepository initialization."""
-        with patch('clarity.storage.firestore_client.FirestoreClient'):
+        with patch("clarity.storage.firestore_client.FirestoreClient"):
             repository = FirestoreHealthDataRepository(project_id="test-project")
             assert repository is not None
 
     @staticmethod
     async def test_initialization_failure() -> None:
         """Test FirestoreHealthDataRepository initialization failure."""
-        with patch('clarity.storage.firestore_client.FirestoreClient') as mock_client:
+        with patch("clarity.storage.firestore_client.FirestoreClient") as mock_client:
             mock_client.side_effect = Exception("Connection failed")
 
             with pytest.raises(Exception, match="Connection failed"):
                 FirestoreHealthDataRepository(project_id="test-project")
 
     @staticmethod
-    async def test_initialize_method(firestore_repository: FirestoreHealthDataRepository) -> None:
+    async def test_initialize_method(
+        firestore_repository: FirestoreHealthDataRepository,
+    ) -> None:
         """Test initialize method."""
         # Mock the health_check method to return healthy status
         firestore_repository._firestore_client.health_check = AsyncMock(return_value={"status": "healthy"})  # type: ignore[method-assign]
@@ -88,7 +94,9 @@ class TestFirestoreHealthDataRepositoryBasic:
         firestore_repository._firestore_client.health_check.assert_called_once()
 
     @staticmethod
-    async def test_cleanup_method(firestore_repository: FirestoreHealthDataRepository) -> None:
+    async def test_cleanup_method(
+        firestore_repository: FirestoreHealthDataRepository,
+    ) -> None:
         """Test cleanup method."""
         firestore_repository._firestore_client.close = AsyncMock()  # type: ignore[method-assign]
 
@@ -110,9 +118,13 @@ class TestFirestoreHealthDataSaving:
 
     @pytest.fixture
     @staticmethod
-    def firestore_repository(mock_firestore_client: MagicMock) -> FirestoreHealthDataRepository:
+    def firestore_repository(
+        mock_firestore_client: MagicMock,
+    ) -> FirestoreHealthDataRepository:
         """Create FirestoreHealthDataRepository with mocked client."""
-        with patch('clarity.storage.firestore_client.FirestoreClient') as mock_client_class:
+        with patch(
+            "clarity.storage.firestore_client.FirestoreClient"
+        ) as mock_client_class:
             mock_client_class.return_value = mock_firestore_client
             repository = FirestoreHealthDataRepository(project_id="test-project")
             repository._firestore_client = mock_firestore_client
@@ -137,12 +149,15 @@ class TestFirestoreHealthDataSaving:
                 heart_rate_variability=50.0,
                 respiratory_rate=16.0,
                 body_temperature=37.0,
-                blood_glucose=100.0
-            )
+                blood_glucose=100.0,
+            ),
         )
 
     @staticmethod
-    async def test_save_health_data_success(firestore_repository: FirestoreHealthDataRepository, sample_health_metric: HealthMetric) -> None:
+    async def test_save_health_data_success(
+        firestore_repository: FirestoreHealthDataRepository,
+        sample_health_metric: HealthMetric,
+    ) -> None:
         """Test successful health data saving."""
         # Mock the create_document method
         firestore_repository._firestore_client.create_document = AsyncMock(return_value="doc_123")  # type: ignore[method-assign]
@@ -152,14 +167,17 @@ class TestFirestoreHealthDataSaving:
             processing_id=str(uuid4()),
             metrics=[sample_health_metric],
             upload_source="test",
-            client_timestamp=datetime.now(UTC)
+            client_timestamp=datetime.now(UTC),
         )
 
         assert result is True
         firestore_repository._firestore_client.create_document.assert_called()
 
     @staticmethod
-    async def test_save_health_data_failure(firestore_repository: FirestoreHealthDataRepository, sample_health_metric: HealthMetric) -> None:
+    async def test_save_health_data_failure(
+        firestore_repository: FirestoreHealthDataRepository,
+        sample_health_metric: HealthMetric,
+    ) -> None:
         """Test health data saving failure."""
         # Mock the create_document method to fail
         firestore_repository._firestore_client.create_document = AsyncMock(side_effect=Exception("Firestore error"))  # type: ignore[method-assign]
@@ -169,13 +187,15 @@ class TestFirestoreHealthDataSaving:
             processing_id=str(uuid4()),
             metrics=[sample_health_metric],
             upload_source="test",
-            client_timestamp=datetime.now(UTC)
+            client_timestamp=datetime.now(UTC),
         )
 
         assert result is False
 
     @staticmethod
-    async def test_save_health_data_empty_metrics(firestore_repository: FirestoreHealthDataRepository) -> None:
+    async def test_save_health_data_empty_metrics(
+        firestore_repository: FirestoreHealthDataRepository,
+    ) -> None:
         """Test saving with empty metrics list."""
         firestore_repository._firestore_client.create_document = AsyncMock(return_value="doc_123")  # type: ignore[method-assign]
 
@@ -184,14 +204,16 @@ class TestFirestoreHealthDataSaving:
             processing_id=str(uuid4()),
             metrics=[],
             upload_source="test",
-            client_timestamp=datetime.now(UTC)
+            client_timestamp=datetime.now(UTC),
         )
 
         # Should still return True for empty metrics
         assert result is True
 
     @staticmethod
-    async def test_save_data_generic_success(firestore_repository: FirestoreHealthDataRepository) -> None:
+    async def test_save_data_generic_success(
+        firestore_repository: FirestoreHealthDataRepository,
+    ) -> None:
         """Test generic save_data method success."""
         firestore_repository._firestore_client.create_document = AsyncMock(return_value="doc_123")  # type: ignore[method-assign]
 
@@ -200,7 +222,9 @@ class TestFirestoreHealthDataSaving:
         assert result == "doc_123"
 
     @staticmethod
-    async def test_save_data_generic_failure(firestore_repository: FirestoreHealthDataRepository) -> None:
+    async def test_save_data_generic_failure(
+        firestore_repository: FirestoreHealthDataRepository,
+    ) -> None:
         """Test generic save_data method failure."""
         firestore_repository._firestore_client.create_document = AsyncMock(side_effect=Exception("Firestore error"))  # type: ignore[method-assign]
 
@@ -208,7 +232,10 @@ class TestFirestoreHealthDataSaving:
             await firestore_repository.save_data("test_user", {"test": "data"})
 
     @staticmethod
-    async def test_batch_operations_edge_cases(firestore_repository: FirestoreHealthDataRepository, sample_health_metric: HealthMetric) -> None:
+    async def test_batch_operations_edge_cases(
+        firestore_repository: FirestoreHealthDataRepository,
+        sample_health_metric: HealthMetric,
+    ) -> None:
         """Test batch operations with edge cases."""
         firestore_repository._firestore_client.create_document = AsyncMock(return_value="doc_123")  # type: ignore[method-assign]
 
@@ -220,28 +247,32 @@ class TestFirestoreHealthDataSaving:
             processing_id=str(uuid4()),
             metrics=large_metrics_list,
             upload_source="test",
-            client_timestamp=datetime.now(UTC)
+            client_timestamp=datetime.now(UTC),
         )
 
         assert result is True
 
     @staticmethod
-    async def test_error_handling_in_serialization(firestore_repository: FirestoreHealthDataRepository) -> None:
+    async def test_error_handling_in_serialization(
+        firestore_repository: FirestoreHealthDataRepository,
+    ) -> None:
         """Test error handling during metric serialization."""
         # Create a metric with proper biometric_data to avoid validation error
         problematic_metric = HealthMetric(
             metric_id=uuid4(),
             metric_type=HealthMetricType.HEART_RATE,
             device_id="test_device",
-            raw_data={"problematic": float('inf')},  # This might cause JSON serialization issues
+            raw_data={
+                "problematic": float("inf")
+            },  # This might cause JSON serialization issues
             metadata={},
             created_at=datetime.now(UTC),
             biometric_data=BiometricData(
                 heart_rate=75.0,
                 blood_pressure_systolic=120.0,
                 blood_pressure_diastolic=80.0,
-                timestamp=datetime.now(UTC)
-            )
+                timestamp=datetime.now(UTC),
+            ),
         )
 
         firestore_repository._firestore_client.create_document = AsyncMock(side_effect=Exception("Serialization error"))  # type: ignore[method-assign]
@@ -251,7 +282,7 @@ class TestFirestoreHealthDataSaving:
             processing_id=str(uuid4()),
             metrics=[problematic_metric],
             upload_source="test",
-            client_timestamp=datetime.now(UTC)
+            client_timestamp=datetime.now(UTC),
         )
 
         # Should handle the error gracefully
@@ -271,16 +302,22 @@ class TestFirestoreHealthDataRetrieval:
 
     @pytest.fixture
     @staticmethod
-    def firestore_repository(mock_firestore_client: MagicMock) -> FirestoreHealthDataRepository:
+    def firestore_repository(
+        mock_firestore_client: MagicMock,
+    ) -> FirestoreHealthDataRepository:
         """Create FirestoreHealthDataRepository with mocked client."""
-        with patch('clarity.storage.firestore_client.FirestoreClient') as mock_client_class:
+        with patch(
+            "clarity.storage.firestore_client.FirestoreClient"
+        ) as mock_client_class:
             mock_client_class.return_value = mock_firestore_client
             repository = FirestoreHealthDataRepository(project_id="test-project")
             repository._firestore_client = mock_firestore_client
             return repository
 
     @staticmethod
-    async def test_get_user_health_data_success(firestore_repository: FirestoreHealthDataRepository) -> None:
+    async def test_get_user_health_data_success(
+        firestore_repository: FirestoreHealthDataRepository,
+    ) -> None:
         """Test successful user health data retrieval."""
         # Mock the query_documents method
         mock_data = [
@@ -289,7 +326,7 @@ class TestFirestoreHealthDataRetrieval:
                 "metric_type": "heart_rate",
                 "device_id": "test_device",
                 "created_at": datetime.now(UTC).isoformat(),
-                "biometric_data": {"heart_rate": 75.0}
+                "biometric_data": {"heart_rate": 75.0},
             }
         ]
 
@@ -303,7 +340,9 @@ class TestFirestoreHealthDataRetrieval:
         assert result["pagination"]["total"] == 1
 
     @staticmethod
-    async def test_get_user_health_data_with_filters(firestore_repository: FirestoreHealthDataRepository) -> None:
+    async def test_get_user_health_data_with_filters(
+        firestore_repository: FirestoreHealthDataRepository,
+    ) -> None:
         """Test user health data retrieval with filters."""
         firestore_repository._firestore_client.query_documents = AsyncMock(return_value=[])  # type: ignore[method-assign]
         firestore_repository._firestore_client.count_documents = AsyncMock(return_value=0)  # type: ignore[method-assign]
@@ -314,14 +353,16 @@ class TestFirestoreHealthDataRetrieval:
             start_date=datetime.now(UTC),
             end_date=datetime.now(UTC),
             limit=50,
-            offset=10
+            offset=10,
         )
 
         assert result["metrics"] == []
         assert result["pagination"]["total"] == 0
 
     @staticmethod
-    async def test_get_user_health_data_failure(firestore_repository: FirestoreHealthDataRepository) -> None:
+    async def test_get_user_health_data_failure(
+        firestore_repository: FirestoreHealthDataRepository,
+    ) -> None:
         """Test user health data retrieval failure."""
         firestore_repository._firestore_client.query_documents = AsyncMock(side_effect=Exception("Firestore error"))  # type: ignore[method-assign]
 
@@ -330,7 +371,9 @@ class TestFirestoreHealthDataRetrieval:
             await firestore_repository.get_user_health_data("test_user")
 
     @staticmethod
-    async def test_get_data_generic_success(firestore_repository: FirestoreHealthDataRepository) -> None:
+    async def test_get_data_generic_success(
+        firestore_repository: FirestoreHealthDataRepository,
+    ) -> None:
         """Test generic get_data method success."""
         mock_data = [{"test": "data"}]
         firestore_repository._firestore_client.query_documents = AsyncMock(return_value=mock_data)  # type: ignore[method-assign]
@@ -341,18 +384,24 @@ class TestFirestoreHealthDataRetrieval:
         assert "data" in result
 
     @staticmethod
-    async def test_get_data_generic_with_filters(firestore_repository: FirestoreHealthDataRepository) -> None:
+    async def test_get_data_generic_with_filters(
+        firestore_repository: FirestoreHealthDataRepository,
+    ) -> None:
         """Test generic get_data method with filters."""
         mock_data = [{"test": "data"}]
         firestore_repository._firestore_client.query_documents = AsyncMock(return_value=mock_data)  # type: ignore[method-assign]
 
-        result = await firestore_repository.get_data("test_user", filters={"status": "active"})
+        result = await firestore_repository.get_data(
+            "test_user", filters={"status": "active"}
+        )
 
         assert "user_id" in result
         assert "data" in result
 
     @staticmethod
-    async def test_get_data_generic_failure(firestore_repository: FirestoreHealthDataRepository) -> None:
+    async def test_get_data_generic_failure(
+        firestore_repository: FirestoreHealthDataRepository,
+    ) -> None:
         """Test generic get_data method failure."""
         firestore_repository._firestore_client.query_documents = AsyncMock(side_effect=Exception("Firestore error"))  # type: ignore[method-assign]
 
@@ -361,30 +410,31 @@ class TestFirestoreHealthDataRetrieval:
             await firestore_repository.get_data("test_user")
 
     @staticmethod
-    async def test_pagination_edge_cases(firestore_repository: FirestoreHealthDataRepository) -> None:
+    async def test_pagination_edge_cases(
+        firestore_repository: FirestoreHealthDataRepository,
+    ) -> None:
         """Test pagination edge cases."""
         firestore_repository._firestore_client.query_documents = AsyncMock(return_value=[])  # type: ignore[method-assign]
         firestore_repository._firestore_client.count_documents = AsyncMock(return_value=0)  # type: ignore[method-assign]
 
         # Test with very large offset
         result = await firestore_repository.get_user_health_data(
-            "test_user",
-            limit=10,
-            offset=1000
+            "test_user", limit=10, offset=1000
         )
 
         assert result["metrics"] == []
         assert result["pagination"]["has_more"] is False
 
     @staticmethod
-    async def test_metric_type_filtering(firestore_repository: FirestoreHealthDataRepository) -> None:
+    async def test_metric_type_filtering(
+        firestore_repository: FirestoreHealthDataRepository,
+    ) -> None:
         """Test metric type filtering."""
         firestore_repository._firestore_client.query_documents = AsyncMock(return_value=[])  # type: ignore[method-assign]
         firestore_repository._firestore_client.count_documents = AsyncMock(return_value=0)  # type: ignore[method-assign]
 
         await firestore_repository.get_user_health_data(
-            "test_user",
-            metric_type="heart_rate"
+            "test_user", metric_type="heart_rate"
         )
 
         # Verify the query was called with correct filters
@@ -398,7 +448,9 @@ class TestFirestoreHealthDataRetrieval:
         assert firestore_repository._firestore_client.query_documents.called
 
     @staticmethod
-    async def test_date_range_filtering(firestore_repository: FirestoreHealthDataRepository) -> None:
+    async def test_date_range_filtering(
+        firestore_repository: FirestoreHealthDataRepository,
+    ) -> None:
         """Test date range filtering."""
         firestore_repository._firestore_client.query_documents = AsyncMock(return_value=[])  # type: ignore[method-assign]
         firestore_repository._firestore_client.count_documents = AsyncMock(return_value=0)  # type: ignore[method-assign]
@@ -407,9 +459,7 @@ class TestFirestoreHealthDataRetrieval:
         end_date = datetime(2023, 12, 31, tzinfo=UTC)
 
         await firestore_repository.get_user_health_data(
-            "test_user",
-            start_date=start_date,
-            end_date=end_date
+            "test_user", start_date=start_date, end_date=end_date
         )
 
         # Verify the query was called with date filters
@@ -436,71 +486,97 @@ class TestFirestoreStatusAndDeletion:
 
     @pytest.fixture
     @staticmethod
-    def firestore_repository(mock_firestore_client: MagicMock) -> FirestoreHealthDataRepository:
+    def firestore_repository(
+        mock_firestore_client: MagicMock,
+    ) -> FirestoreHealthDataRepository:
         """Create FirestoreHealthDataRepository with mocked client."""
-        with patch('clarity.storage.firestore_client.FirestoreClient') as mock_client_class:
+        with patch(
+            "clarity.storage.firestore_client.FirestoreClient"
+        ) as mock_client_class:
             mock_client_class.return_value = mock_firestore_client
             repository = FirestoreHealthDataRepository(project_id="test-project")
             repository._firestore_client = mock_firestore_client
             return repository
 
     @staticmethod
-    async def test_get_processing_status_exists(firestore_repository: FirestoreHealthDataRepository) -> None:
+    async def test_get_processing_status_exists(
+        firestore_repository: FirestoreHealthDataRepository,
+    ) -> None:
         """Test getting processing status that exists."""
         mock_status = {
             "processing_id": "test_id",
             "user_id": "test_user",
-            "status": "completed"
+            "status": "completed",
         }
 
         firestore_repository._firestore_client.get_document = AsyncMock(return_value=mock_status)  # type: ignore[method-assign]
 
-        result = await firestore_repository.get_processing_status("test_id", "test_user")
+        result = await firestore_repository.get_processing_status(
+            "test_id", "test_user"
+        )
 
         assert result is not None
         assert result["processing_id"] == "test_id"
 
     @staticmethod
-    async def test_get_processing_status_not_found(firestore_repository: FirestoreHealthDataRepository) -> None:
+    async def test_get_processing_status_not_found(
+        firestore_repository: FirestoreHealthDataRepository,
+    ) -> None:
         """Test getting non-existent processing status."""
         firestore_repository._firestore_client.get_document = AsyncMock(return_value=None)  # type: ignore[method-assign]
 
-        result = await firestore_repository.get_processing_status("non_existent", "test_user")
+        result = await firestore_repository.get_processing_status(
+            "non_existent", "test_user"
+        )
 
         assert result is None
 
     @staticmethod
-    async def test_get_processing_status_wrong_user(firestore_repository: FirestoreHealthDataRepository) -> None:
+    async def test_get_processing_status_wrong_user(
+        firestore_repository: FirestoreHealthDataRepository,
+    ) -> None:
         """Test getting processing status with wrong user."""
         firestore_repository._firestore_client.get_document = AsyncMock(return_value=None)  # type: ignore[method-assign]
 
-        result = await firestore_repository.get_processing_status("test_id", "wrong_user")
+        result = await firestore_repository.get_processing_status(
+            "test_id", "wrong_user"
+        )
 
         assert result is None
 
     @staticmethod
-    async def test_get_processing_status_failure(firestore_repository: FirestoreHealthDataRepository) -> None:
+    async def test_get_processing_status_failure(
+        firestore_repository: FirestoreHealthDataRepository,
+    ) -> None:
         """Test processing status retrieval failure."""
         firestore_repository._firestore_client.get_document = AsyncMock(side_effect=Exception("Firestore error"))  # type: ignore[method-assign]
 
-        result = await firestore_repository.get_processing_status("test_id", "test_user")
+        result = await firestore_repository.get_processing_status(
+            "test_id", "test_user"
+        )
 
         assert result is None
 
     @staticmethod
-    async def test_delete_health_data_specific_processing(firestore_repository: FirestoreHealthDataRepository) -> None:
+    async def test_delete_health_data_specific_processing(
+        firestore_repository: FirestoreHealthDataRepository,
+    ) -> None:
         """Test deleting specific processing job."""
         firestore_repository._firestore_client.delete_documents = AsyncMock(return_value=1)  # type: ignore[method-assign]
         firestore_repository._firestore_client.delete_document = AsyncMock(return_value=True)  # type: ignore[method-assign]
         firestore_repository._firestore_client.create_document = AsyncMock(return_value="audit_123")  # type: ignore[method-assign]
 
-        result = await firestore_repository.delete_health_data("test_user", "test_processing_id")
+        result = await firestore_repository.delete_health_data(
+            "test_user", "test_processing_id"
+        )
 
         assert result is True
         firestore_repository._firestore_client.delete_documents.assert_called()
 
     @staticmethod
-    async def test_delete_health_data_all_user_data(firestore_repository: FirestoreHealthDataRepository) -> None:
+    async def test_delete_health_data_all_user_data(
+        firestore_repository: FirestoreHealthDataRepository,
+    ) -> None:
         """Test deleting all user data."""
         firestore_repository._firestore_client.delete_documents = AsyncMock(return_value=5)  # type: ignore[method-assign]
         firestore_repository._firestore_client.create_document = AsyncMock(return_value="audit_123")  # type: ignore[method-assign]
@@ -511,7 +587,9 @@ class TestFirestoreStatusAndDeletion:
         firestore_repository._firestore_client.delete_documents.assert_called()
 
     @staticmethod
-    async def test_delete_health_data_failure(firestore_repository: FirestoreHealthDataRepository) -> None:
+    async def test_delete_health_data_failure(
+        firestore_repository: FirestoreHealthDataRepository,
+    ) -> None:
         """Test health data deletion failure."""
         firestore_repository._firestore_client.delete_documents = AsyncMock(side_effect=Exception("Firestore error"))  # type: ignore[method-assign]
         firestore_repository._firestore_client.create_document = AsyncMock(return_value="audit_123")  # type: ignore[method-assign]

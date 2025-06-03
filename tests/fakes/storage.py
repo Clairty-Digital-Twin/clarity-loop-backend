@@ -56,7 +56,9 @@ class FakeCollection(CollectionPort):
         """
         return FakeDocument(self.data, doc_id)
 
-    def where(self, field: str, operator: str, value: Any) -> "FakeQuery":  # noqa: ANN401
+    def where(
+        self, field: str, operator: str, value: Any
+    ) -> "FakeQuery":
         """Create a query with a filter condition.
 
         Args:
@@ -119,7 +121,9 @@ class FakeDocument:
 class FakeDocumentSnapshot:
     """Fake document snapshot for testing."""
 
-    def __init__(self, data: dict[str, Any] | None, doc_id: str, exists: bool) -> None:  # noqa: FBT001
+    def __init__(
+        self, data: dict[str, Any] | None, doc_id: str, exists: bool
+    ) -> None:
         """Initialize document snapshot.
 
         Args:
@@ -176,14 +180,18 @@ class FakeQuery:
 
         for doc_id, doc_data in self.data.items():
             if self._matches_filters(doc_data):
-                results.append(FakeDocumentSnapshot(doc_data, doc_id, True))  # noqa: FBT003
+                results.append(
+                    FakeDocumentSnapshot(doc_data, doc_id, True)
+                )
 
         if self._limit:
             results = results[: self._limit]
 
         return results
 
-    def _matches_filters(self, doc_data: dict[str, Any]) -> bool:  # noqa: PLR0911, PLR0912
+    def _matches_filters(
+        self, doc_data: dict[str, Any]
+    ) -> bool:
         """Check if document matches all filters.
 
         Args:

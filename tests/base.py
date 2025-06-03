@@ -131,7 +131,9 @@ class BaseServiceTestCase(BaseTestCase):
 
         return service_class(**dependencies)
 
-    def assert_service_call_successful(self, result: Any) -> None:  # noqa: ANN401, PLR6301
+    def assert_service_call_successful(
+        self, result: Any
+    ) -> None:
         """Assert that a service call was successful.
 
         Args:

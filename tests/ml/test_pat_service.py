@@ -466,9 +466,9 @@ class TestPATModelServicePostprocessing:
 
         mock_predictions = {
             "raw_logits": torch.randn(1, 18),
-            "sleep_metrics": torch.tensor([
-                [0.85, 0.75, 0.2, 7.5, 30.0, 15.0, 0.75, 0.25]
-            ]),
+            "sleep_metrics": torch.tensor(
+                [[0.85, 0.75, 0.2, 7.5, 30.0, 15.0, 0.75, 0.25]]
+            ),
             "circadian_score": torch.tensor([[0.75]]),
             "depression_risk": torch.tensor([[0.2]]),
             "embeddings": torch.randn(1, 96),

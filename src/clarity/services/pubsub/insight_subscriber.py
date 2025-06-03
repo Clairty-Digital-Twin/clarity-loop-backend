@@ -67,13 +67,15 @@ class GeminiInsightGenerator:
                 insight = self._create_mock_insight(analysis_results)
 
             # Add metadata
-            insight.update({
-                "user_id": user_id,
-                "upload_id": upload_id,
-                "generated_at": datetime.now(UTC).isoformat(),
-                "model": "gemini-1.5-pro" if self.model else "mock",
-                "analysis_summary": self._create_analysis_summary(analysis_results),
-            })
+            insight.update(
+                {
+                    "user_id": user_id,
+                    "upload_id": upload_id,
+                    "generated_at": datetime.now(UTC).isoformat(),
+                    "model": "gemini-1.5-pro" if self.model else "mock",
+                    "analysis_summary": self._create_analysis_summary(analysis_results),
+                }
+            )
 
             # Store insight in Firestore
             await self._store_insight(user_id, upload_id, insight)
@@ -98,27 +100,31 @@ class GeminiInsightGenerator:
         if analysis_results.get("cardio_features"):
             cardio = analysis_results["cardio_features"]
             if len(cardio) >= MIN_FEATURE_VECTOR_LENGTH:
-                metrics_lines.extend([
-                    f"- Average Heart Rate: {cardio[0]:.1f} bpm",
-                    f"- Resting Heart Rate: {cardio[2]:.1f} bpm",
-                    f"- Maximum Heart Rate: {cardio[1]:.1f} bpm",
-                    f"- Heart Rate Variability: {cardio[4]:.1f} ms",
-                    f"- Heart Rate Recovery Score: {cardio[6]:.2f}/1.0",
-                    f"- Circadian Rhythm Score: {cardio[7]:.2f}/1.0",
-                ])
+                metrics_lines.extend(
+                    [
+                        f"- Average Heart Rate: {cardio[0]:.1f} bpm",
+                        f"- Resting Heart Rate: {cardio[2]:.1f} bpm",
+                        f"- Maximum Heart Rate: {cardio[1]:.1f} bpm",
+                        f"- Heart Rate Variability: {cardio[4]:.1f} ms",
+                        f"- Heart Rate Recovery Score: {cardio[6]:.2f}/1.0",
+                        f"- Circadian Rhythm Score: {cardio[7]:.2f}/1.0",
+                    ]
+                )
 
         # Respiratory metrics
         if analysis_results.get("respiratory_features"):
             resp = analysis_results["respiratory_features"]
             if len(resp) >= MIN_FEATURE_VECTOR_LENGTH:
-                metrics_lines.extend([
-                    f"- Average Respiratory Rate: {resp[0]:.1f} breaths/min",
-                    f"- Resting Respiratory Rate: {resp[1]:.1f} breaths/min",
-                    f"- Average Oxygen Saturation: {resp[3]:.1f}%",
-                    f"- Minimum Oxygen Saturation: {resp[4]:.1f}%",
-                    f"- Respiratory Stability Score: {resp[6]:.2f}/1.0",
-                    f"- Oxygenation Efficiency Score: {resp[7]:.2f}/1.0",
-                ])
+                metrics_lines.extend(
+                    [
+                        f"- Average Respiratory Rate: {resp[0]:.1f} breaths/min",
+                        f"- Resting Respiratory Rate: {resp[1]:.1f} breaths/min",
+                        f"- Average Oxygen Saturation: {resp[3]:.1f}%",
+                        f"- Minimum Oxygen Saturation: {resp[4]:.1f}%",
+                        f"- Respiratory Stability Score: {resp[6]:.2f}/1.0",
+                        f"- Oxygenation Efficiency Score: {resp[7]:.2f}/1.0",
+                    ]
+                )
 
         # Activity metrics (from PAT analysis)
         if "summary_stats" in analysis_results:

@@ -118,18 +118,20 @@ class TestGeminiServiceHealthInsights:
 
         # Mock successful response
         mock_response = MagicMock()
-        mock_response.text = json.dumps({
-            "narrative": "Your sleep patterns show excellent efficiency at 85%",
-            "key_insights": [
-                "Sleep efficiency of 85% indicates healthy sleep",
-                "Low depression risk factors observed",
-            ],
-            "recommendations": [
-                "Maintain current sleep schedule",
-                "Continue regular exercise routine",
-            ],
-            "confidence_score": 0.85,
-        })
+        mock_response.text = json.dumps(
+            {
+                "narrative": "Your sleep patterns show excellent efficiency at 85%",
+                "key_insights": [
+                    "Sleep efficiency of 85% indicates healthy sleep",
+                    "Low depression risk factors observed",
+                ],
+                "recommendations": [
+                    "Maintain current sleep schedule",
+                    "Continue regular exercise routine",
+                ],
+                "confidence_score": 0.85,
+            }
+        )
 
         mock_model = MagicMock()
         mock_model.generate_content.return_value = mock_response
@@ -161,12 +163,14 @@ class TestGeminiServiceHealthInsights:
         service = GeminiService(project_id="test-project")
 
         mock_response = MagicMock()
-        mock_response.text = json.dumps({
-            "narrative": "Analysis completed",
-            "key_insights": ["Test insight"],
-            "recommendations": ["Test recommendation"],
-            "confidence_score": 0.8,
-        })
+        mock_response.text = json.dumps(
+            {
+                "narrative": "Analysis completed",
+                "key_insights": ["Test insight"],
+                "recommendations": ["Test recommendation"],
+                "confidence_score": 0.8,
+            }
+        )
 
         mock_model = MagicMock()
         mock_model.generate_content.return_value = mock_response
@@ -324,12 +328,14 @@ class TestGeminiServiceResponseParsing:
     def test_parse_gemini_response_valid_json() -> None:
         """Test parsing valid JSON response."""
         mock_response = MagicMock()
-        mock_response.text = json.dumps({
-            "narrative": "Test narrative",
-            "key_insights": ["Insight 1", "Insight 2"],
-            "recommendations": ["Rec 1", "Rec 2"],
-            "confidence_score": 0.9,
-        })
+        mock_response.text = json.dumps(
+            {
+                "narrative": "Test narrative",
+                "key_insights": ["Insight 1", "Insight 2"],
+                "recommendations": ["Rec 1", "Rec 2"],
+                "confidence_score": 0.9,
+            }
+        )
 
         result = GeminiService._parse_gemini_response(mock_response, "test-user")
 
@@ -343,10 +349,12 @@ class TestGeminiServiceResponseParsing:
     def test_parse_gemini_response_partial_json() -> None:
         """Test parsing JSON response with missing fields."""
         mock_response = MagicMock()
-        mock_response.text = json.dumps({
-            "narrative": "Partial narrative"
-            # Missing other fields
-        })
+        mock_response.text = json.dumps(
+            {
+                "narrative": "Partial narrative"
+                # Missing other fields
+            }
+        )
 
         result = GeminiService._parse_gemini_response(mock_response, "test-user")
 

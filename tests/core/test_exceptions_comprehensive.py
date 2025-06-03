@@ -196,7 +196,9 @@ class TestPreDefinedProblemTypes:
         )
 
         assert exc.status_code == 400
-        assert exc.problem_type == "https://api.clarity.health/problems/validation-error"
+        assert (
+            exc.problem_type == "https://api.clarity.health/problems/validation-error"
+        )
         assert exc.title == "Validation Error"
         assert exc.detail == "Validation failed"
         assert exc.errors == errors
@@ -209,7 +211,10 @@ class TestPreDefinedProblemTypes:
         exc = AuthenticationProblem(detail="Invalid token", trace_id="auth-trace")
 
         assert exc.status_code == 401
-        assert exc.problem_type == "https://api.clarity.health/problems/authentication-required"
+        assert (
+            exc.problem_type
+            == "https://api.clarity.health/problems/authentication-required"
+        )
         assert exc.title == "Authentication Required"
         assert exc.detail == "Invalid token"
         assert exc.trace_id == "auth-trace"
@@ -231,7 +236,10 @@ class TestPreDefinedProblemTypes:
         )
 
         assert exc.status_code == 403
-        assert exc.problem_type == "https://api.clarity.health/problems/authorization-denied"
+        assert (
+            exc.problem_type
+            == "https://api.clarity.health/problems/authorization-denied"
+        )
         assert exc.title == "Authorization Denied"
         assert exc.detail == "Access denied to resource"
         assert exc.trace_id == "authz-trace"
@@ -253,7 +261,9 @@ class TestPreDefinedProblemTypes:
         )
 
         assert exc.status_code == 404
-        assert exc.problem_type == "https://api.clarity.health/problems/resource-not-found"
+        assert (
+            exc.problem_type == "https://api.clarity.health/problems/resource-not-found"
+        )
         assert exc.title == "Resource Not Found"
         assert exc.detail == "User with ID 'user123' does not exist"
         assert exc.trace_id == "notfound-trace"
@@ -267,7 +277,9 @@ class TestPreDefinedProblemTypes:
         )
 
         assert exc.status_code == 409
-        assert exc.problem_type == "https://api.clarity.health/problems/resource-conflict"
+        assert (
+            exc.problem_type == "https://api.clarity.health/problems/resource-conflict"
+        )
         assert exc.title == "Resource Conflict"
         assert exc.detail == "Email already exists"
         assert exc.trace_id == "conflict-trace"
@@ -282,7 +294,10 @@ class TestPreDefinedProblemTypes:
         )
 
         assert exc.status_code == 429
-        assert exc.problem_type == "https://api.clarity.health/problems/rate-limit-exceeded"
+        assert (
+            exc.problem_type
+            == "https://api.clarity.health/problems/rate-limit-exceeded"
+        )
         assert exc.title == "Rate Limit Exceeded"
         assert exc.detail == "Too many requests"
         assert exc.headers == {"Retry-After": "60"}
@@ -305,7 +320,10 @@ class TestPreDefinedProblemTypes:
         )
 
         assert exc.status_code == 500
-        assert exc.problem_type == "https://api.clarity.health/problems/internal-server-error"
+        assert (
+            exc.problem_type
+            == "https://api.clarity.health/problems/internal-server-error"
+        )
         assert exc.title == "Internal Server Error"
         assert exc.detail == "Database connection failed"
         assert exc.trace_id == "server-trace"
@@ -327,7 +345,10 @@ class TestPreDefinedProblemTypes:
         )
 
         assert exc.status_code == 503
-        assert exc.problem_type == "https://api.clarity.health/problems/service-unavailable"
+        assert (
+            exc.problem_type
+            == "https://api.clarity.health/problems/service-unavailable"
+        )
         assert exc.title == "Service Unavailable"
         assert exc.detail == "Database is temporarily unavailable"
         assert exc.headers == {"Retry-After": "120"}
@@ -380,7 +401,9 @@ class TestExceptionHandlers:
         assert response.status_code == 429
         # Check that our custom header is present (case-insensitive)
         assert "retry-after" in [k.lower() for k in response.headers]
-        retry_after_value = response.headers.get("retry-after") or response.headers.get("Retry-After")
+        retry_after_value = response.headers.get("retry-after") or response.headers.get(
+            "Retry-After"
+        )
         assert retry_after_value == "60"
 
     @staticmethod
@@ -779,7 +802,9 @@ class TestConfigurationExceptions:
             reason="must be integer",
         )
 
-        expected_msg = "Invalid configuration value for PORT: invalid_port (must be integer)"
+        expected_msg = (
+            "Invalid configuration value for PORT: invalid_port (must be integer)"
+        )
         assert str(exc) == f"[CONFIGURATION_ERROR] {expected_msg}"
         assert exc.config_key == "PORT"
         assert exc.value == "invalid_port"
@@ -911,7 +936,9 @@ class TestExceptionInheritance:
         assert ModelNotInitializedError().error_code == "MODEL_NOT_INITIALIZED"
         assert InferenceError("test").error_code == "INFERENCE_ERROR"
         assert NHANESStatsError("test").error_code == "NHANES_STATS_ERROR"
-        assert ServiceNotInitializedError("test").error_code == "SERVICE_NOT_INITIALIZED"
+        assert (
+            ServiceNotInitializedError("test").error_code == "SERVICE_NOT_INITIALIZED"
+        )
         assert AuthenticationError("test").error_code == "AUTHENTICATION_ERROR"
         assert ConfigurationError("test").error_code == "CONFIGURATION_ERROR"
         assert CacheError("test").error_code == "CACHE_ERROR"

@@ -26,7 +26,9 @@ class TestLogExecutionDecorator:
     """Comprehensive tests for log_execution decorator."""
 
     @staticmethod
-    def test_log_execution_sync_function_default_params(caplog: pytest.LogCaptureFixture) -> None:
+    def test_log_execution_sync_function_default_params(
+        caplog: pytest.LogCaptureFixture,
+    ) -> None:
         """Test log_execution decorator with default parameters on sync function."""
         with caplog.at_level(logging.INFO):
             # Use operator.add instead of custom function per FURB118
@@ -39,9 +41,12 @@ class TestLogExecutionDecorator:
         assert "Completed" in caplog.text
 
     @staticmethod
-    def test_log_execution_sync_function_with_args_result(caplog: pytest.LogCaptureFixture) -> None:
+    def test_log_execution_sync_function_with_args_result(
+        caplog: pytest.LogCaptureFixture,
+    ) -> None:
         """Test log_execution decorator with args and result logging."""
         with caplog.at_level(logging.INFO):
+
             @log_execution(include_args=True, include_result=True)
             def test_func(x: int, y: int = 10) -> int:
                 return x * y
@@ -54,9 +59,12 @@ class TestLogExecutionDecorator:
         assert "result=50" in caplog.text
 
     @staticmethod
-    def test_log_execution_sync_function_with_exception(caplog: pytest.LogCaptureFixture) -> None:
+    def test_log_execution_sync_function_with_exception(
+        caplog: pytest.LogCaptureFixture,
+    ) -> None:
         """Test log_execution decorator when sync function raises exception."""
         with caplog.at_level(logging.INFO):
+
             @log_execution()
             def test_func() -> None:
                 msg = "Test exception"
@@ -69,9 +77,12 @@ class TestLogExecutionDecorator:
         assert "Failed" in caplog.text
 
     @staticmethod
-    async def test_log_execution_async_function_default_params(caplog: pytest.LogCaptureFixture) -> None:
+    async def test_log_execution_async_function_default_params(
+        caplog: pytest.LogCaptureFixture,
+    ) -> None:
         """Test log_execution decorator with default parameters on async function."""
         with caplog.at_level(logging.INFO):
+
             @log_execution()
             async def test_func(x: int, y: int) -> int:
                 await asyncio.sleep(0.001)
@@ -84,9 +95,12 @@ class TestLogExecutionDecorator:
         assert "Completed" in caplog.text
 
     @staticmethod
-    async def test_log_execution_async_function_with_args_result(caplog: pytest.LogCaptureFixture) -> None:
+    async def test_log_execution_async_function_with_args_result(
+        caplog: pytest.LogCaptureFixture,
+    ) -> None:
         """Test log_execution decorator with args and result logging on async function."""
         with caplog.at_level(logging.DEBUG):
+
             @log_execution(level=logging.DEBUG, include_args=True, include_result=True)
             async def test_func(name: str, age: int = 25) -> str:
                 await asyncio.sleep(0.001)
@@ -99,9 +113,12 @@ class TestLogExecutionDecorator:
         assert "Alice" in caplog.text
 
     @staticmethod
-    async def test_log_execution_async_function_with_exception(caplog: pytest.LogCaptureFixture) -> None:
+    async def test_log_execution_async_function_with_exception(
+        caplog: pytest.LogCaptureFixture,
+    ) -> None:
         """Test log_execution decorator when async function raises exception."""
         with caplog.at_level(logging.INFO):
+
             @log_execution()
             async def test_func() -> None:
                 await asyncio.sleep(0.001)
@@ -118,6 +135,7 @@ class TestLogExecutionDecorator:
     def test_log_execution_custom_log_level(caplog: pytest.LogCaptureFixture) -> None:
         """Test log_execution decorator with custom log level."""
         with caplog.at_level(logging.WARNING):
+
             @log_execution(level=logging.WARNING)
             def test_func() -> str:
                 return "custom level"
@@ -132,9 +150,12 @@ class TestMeasureExecutionTimeDecorator:
     """Comprehensive tests for measure_execution_time decorator."""
 
     @staticmethod
-    def test_measure_execution_time_sync_function(caplog: pytest.LogCaptureFixture) -> None:
+    def test_measure_execution_time_sync_function(
+        caplog: pytest.LogCaptureFixture,
+    ) -> None:
         """Test measure_execution_time decorator on sync function."""
         with caplog.at_level(logging.INFO):
+
             @measure_execution_time()
             def test_func() -> str:
                 time.sleep(0.001)  # Small delay
@@ -147,9 +168,12 @@ class TestMeasureExecutionTimeDecorator:
         assert "ms" in caplog.text
 
     @staticmethod
-    def test_measure_execution_time_with_threshold(caplog: pytest.LogCaptureFixture) -> None:
+    def test_measure_execution_time_with_threshold(
+        caplog: pytest.LogCaptureFixture,
+    ) -> None:
         """Test measure_execution_time decorator with threshold."""
         with caplog.at_level(logging.INFO):
+
             @measure_execution_time(threshold_ms=1000.0)  # High threshold
             def test_func() -> str:
                 return "fast"
@@ -161,9 +185,12 @@ class TestMeasureExecutionTimeDecorator:
         assert "test_func executed in" not in caplog.text
 
     @staticmethod
-    def test_measure_execution_time_sync_with_exception(caplog: pytest.LogCaptureFixture) -> None:
+    def test_measure_execution_time_sync_with_exception(
+        caplog: pytest.LogCaptureFixture,
+    ) -> None:
         """Test measure_execution_time decorator when sync function raises exception."""
         with caplog.at_level(logging.INFO):
+
             @measure_execution_time()
             def test_func() -> None:
                 time.sleep(0.001)
@@ -177,9 +204,12 @@ class TestMeasureExecutionTimeDecorator:
         assert "ms" in caplog.text
 
     @staticmethod
-    async def test_measure_execution_time_async_function(caplog: pytest.LogCaptureFixture) -> None:
+    async def test_measure_execution_time_async_function(
+        caplog: pytest.LogCaptureFixture,
+    ) -> None:
         """Test measure_execution_time decorator on async function."""
         with caplog.at_level(logging.INFO):
+
             @measure_execution_time()
             async def test_func() -> str:
                 await asyncio.sleep(0.001)
@@ -191,9 +221,12 @@ class TestMeasureExecutionTimeDecorator:
         assert "test_func executed in" in caplog.text
 
     @staticmethod
-    async def test_measure_execution_time_async_with_exception(caplog: pytest.LogCaptureFixture) -> None:
+    async def test_measure_execution_time_async_with_exception(
+        caplog: pytest.LogCaptureFixture,
+    ) -> None:
         """Test measure_execution_time decorator when async function raises exception."""
         with caplog.at_level(logging.INFO):
+
             @measure_execution_time()
             async def test_func() -> None:
                 await asyncio.sleep(0.001)
@@ -206,9 +239,12 @@ class TestMeasureExecutionTimeDecorator:
         assert "test_func failed after" in caplog.text
 
     @staticmethod
-    def test_measure_execution_time_custom_log_level(caplog: pytest.LogCaptureFixture) -> None:
+    def test_measure_execution_time_custom_log_level(
+        caplog: pytest.LogCaptureFixture,
+    ) -> None:
         """Test measure_execution_time decorator with custom log level."""
         with caplog.at_level(logging.DEBUG):
+
             @measure_execution_time(log_level=logging.DEBUG)
             def test_func() -> str:
                 return "debug timing"
@@ -223,9 +259,12 @@ class TestRetryOnFailureDecorator:
     """Comprehensive tests for retry_on_failure decorator."""
 
     @staticmethod
-    def test_retry_on_failure_sync_success_first_try(caplog: pytest.LogCaptureFixture) -> None:
+    def test_retry_on_failure_sync_success_first_try(
+        caplog: pytest.LogCaptureFixture,
+    ) -> None:
         """Test retry decorator when sync function succeeds on first try."""
         with caplog.at_level(logging.WARNING):
+
             @retry_on_failure(max_retries=2)
             def test_func() -> str:
                 return "success"
@@ -237,11 +276,14 @@ class TestRetryOnFailureDecorator:
         assert "failed (attempt" not in caplog.text
 
     @staticmethod
-    def test_retry_on_failure_sync_success_after_retries(caplog: pytest.LogCaptureFixture) -> None:
+    def test_retry_on_failure_sync_success_after_retries(
+        caplog: pytest.LogCaptureFixture,
+    ) -> None:
         """Test retry decorator when sync function succeeds after retries."""
         call_count = 0
 
         with caplog.at_level(logging.WARNING):
+
             @retry_on_failure(max_retries=2, delay_seconds=0.001)
             def test_func() -> str:
                 nonlocal call_count
@@ -259,9 +301,12 @@ class TestRetryOnFailureDecorator:
         assert "failed (attempt 2/3)" in caplog.text
 
     @staticmethod
-    def test_retry_on_failure_sync_max_retries_exceeded(caplog: pytest.LogCaptureFixture) -> None:
+    def test_retry_on_failure_sync_max_retries_exceeded(
+        caplog: pytest.LogCaptureFixture,
+    ) -> None:
         """Test retry decorator when sync function fails all retries."""
         with caplog.at_level(logging.WARNING):
+
             @retry_on_failure(max_retries=1, delay_seconds=0.001)
             def test_func() -> None:
                 msg = "Always fails"
@@ -353,11 +398,14 @@ class TestRetryOnFailureDecorator:
         assert call_count == 1
 
     @staticmethod
-    async def test_retry_on_failure_async_success_after_retries(caplog: pytest.LogCaptureFixture) -> None:
+    async def test_retry_on_failure_async_success_after_retries(
+        caplog: pytest.LogCaptureFixture,
+    ) -> None:
         """Test retry decorator on async function with retries."""
         call_count = 0
 
         with caplog.at_level(logging.WARNING):
+
             @retry_on_failure(max_retries=1, delay_seconds=0.001)
             async def test_func() -> str:
                 nonlocal call_count
@@ -375,9 +423,12 @@ class TestRetryOnFailureDecorator:
         assert "failed (attempt 1/2)" in caplog.text
 
     @staticmethod
-    async def test_retry_on_failure_async_max_retries_exceeded(caplog: pytest.LogCaptureFixture) -> None:
+    async def test_retry_on_failure_async_max_retries_exceeded(
+        caplog: pytest.LogCaptureFixture,
+    ) -> None:
         """Test retry decorator when async function fails all retries."""
         with caplog.at_level(logging.WARNING):
+
             @retry_on_failure(max_retries=1, delay_seconds=0.001)
             async def test_func() -> None:
                 await asyncio.sleep(0.001)
@@ -396,6 +447,7 @@ class TestValidateInputDecorator:
     @staticmethod
     def test_validate_input_valid_args() -> None:
         """Test validate_input decorator with valid arguments."""
+
         def validator(args_kwargs: tuple[tuple[Any, ...], dict[str, Any]]) -> bool:
             args, _ = args_kwargs
             return len(args) > 0 and isinstance(args[0], str)
@@ -410,6 +462,7 @@ class TestValidateInputDecorator:
     @staticmethod
     def test_validate_input_invalid_args() -> None:
         """Test validate_input decorator with invalid arguments."""
+
         def validator(args_kwargs: tuple[tuple[Any, ...], dict[str, Any]]) -> bool:
             args, _ = args_kwargs
             return len(args) > 0 and isinstance(args[0], str)
@@ -424,6 +477,7 @@ class TestValidateInputDecorator:
     @staticmethod
     def test_validate_input_empty_args() -> None:
         """Test validate_input decorator with empty arguments."""
+
         def validator(args_kwargs: tuple[tuple[Any, ...], dict[str, Any]]) -> bool:
             args, _ = args_kwargs
             return len(args) > 0
@@ -438,6 +492,7 @@ class TestValidateInputDecorator:
     @staticmethod
     def test_validate_input_kwargs_validation() -> None:
         """Test validate_input decorator with keyword arguments validation."""
+
         def validator(args_kwargs: tuple[tuple[Any, ...], dict[str, Any]]) -> bool:
             _, kwargs = args_kwargs
             return "required_key" in kwargs
@@ -455,6 +510,7 @@ class TestValidateInputDecorator:
     @staticmethod
     def test_validate_input_complex_validation() -> None:
         """Test validate_input decorator with complex validation logic."""
+
         def validator(args_kwargs: tuple[tuple[Any, ...], dict[str, Any]]) -> bool:
             args, _kwargs = args_kwargs
             if len(args) == 0:
@@ -464,7 +520,7 @@ class TestValidateInputDecorator:
 
         @validate_input(validator, "Data must be dict with id and name")
         def test_func(data: dict[str, Any]) -> str:
-            return str(data['id']) + str(data['name'])
+            return str(data["id"]) + str(data["name"])
 
         result = test_func({"id": "123", "name": "test"})
         assert result == "123test"
@@ -477,9 +533,12 @@ class TestAuditTrailDecorator:
     """Comprehensive tests for audit_trail decorator."""
 
     @staticmethod
-    def test_audit_trail_sync_function_success(caplog: pytest.LogCaptureFixture) -> None:
+    def test_audit_trail_sync_function_success(
+        caplog: pytest.LogCaptureFixture,
+    ) -> None:
         """Test audit_trail decorator on successful sync function."""
         with caplog.at_level(logging.INFO):
+
             @audit_trail("test_operation")
             def test_func() -> str:
                 return "audited result"
@@ -492,10 +551,15 @@ class TestAuditTrailDecorator:
         assert "Audit completed:" in caplog.text
 
     @staticmethod
-    def test_audit_trail_sync_function_with_user_resource_ids(caplog: pytest.LogCaptureFixture) -> None:
+    def test_audit_trail_sync_function_with_user_resource_ids(
+        caplog: pytest.LogCaptureFixture,
+    ) -> None:
         """Test audit_trail decorator with user_id and resource_id parameters."""
         with caplog.at_level(logging.INFO):
-            @audit_trail("update_resource", user_id_param="user", resource_id_param="resource")
+
+            @audit_trail(
+                "update_resource", user_id_param="user", resource_id_param="resource"
+            )
             def test_func(user: object = None, resource: object = None) -> str:
                 # Use the parameters to avoid ARG001 unused argument error
                 _user_info = str(user) if user else "unknown"
@@ -508,9 +572,12 @@ class TestAuditTrailDecorator:
         assert "Audit:" in caplog.text
 
     @staticmethod
-    def test_audit_trail_sync_function_failure(caplog: pytest.LogCaptureFixture) -> None:
+    def test_audit_trail_sync_function_failure(
+        caplog: pytest.LogCaptureFixture,
+    ) -> None:
         """Test audit_trail decorator when sync function fails."""
         with caplog.at_level(logging.INFO):
+
             @audit_trail("failing_operation")
             def test_func() -> None:
                 msg = "Audit this error"
@@ -524,9 +591,12 @@ class TestAuditTrailDecorator:
         assert "Audit failed:" in caplog.text
 
     @staticmethod
-    async def test_audit_trail_async_function_success(caplog: pytest.LogCaptureFixture) -> None:
+    async def test_audit_trail_async_function_success(
+        caplog: pytest.LogCaptureFixture,
+    ) -> None:
         """Test audit_trail decorator on successful async function."""
         with caplog.at_level(logging.INFO):
+
             @audit_trail("async_operation")
             async def test_func() -> str:
                 await asyncio.sleep(0.001)
@@ -540,9 +610,12 @@ class TestAuditTrailDecorator:
         assert "success" in caplog.text
 
     @staticmethod
-    async def test_audit_trail_async_function_failure(caplog: pytest.LogCaptureFixture) -> None:
+    async def test_audit_trail_async_function_failure(
+        caplog: pytest.LogCaptureFixture,
+    ) -> None:
         """Test audit_trail decorator when async function fails."""
         with caplog.at_level(logging.INFO):
+
             @audit_trail("async_failing_operation")
             async def test_func() -> None:
                 await asyncio.sleep(0.001)
@@ -556,10 +629,17 @@ class TestAuditTrailDecorator:
         assert "Async audit error" in caplog.text
 
     @staticmethod
-    def test_audit_trail_missing_user_resource_params(caplog: pytest.LogCaptureFixture) -> None:
+    def test_audit_trail_missing_user_resource_params(
+        caplog: pytest.LogCaptureFixture,
+    ) -> None:
         """Test audit_trail decorator when user/resource params are not provided."""
         with caplog.at_level(logging.INFO):
-            @audit_trail("test_op", user_id_param="missing_user", resource_id_param="missing_resource")
+
+            @audit_trail(
+                "test_op",
+                user_id_param="missing_user",
+                resource_id_param="missing_resource",
+            )
             def test_func() -> str:
                 return "no params"
 
@@ -573,9 +653,12 @@ class TestServiceMethodDecorator:
     """Comprehensive tests for service_method composite decorator."""
 
     @staticmethod
-    def test_service_method_default_configuration(caplog: pytest.LogCaptureFixture) -> None:
+    def test_service_method_default_configuration(
+        caplog: pytest.LogCaptureFixture,
+    ) -> None:
         """Test service_method decorator with default configuration."""
         with caplog.at_level(logging.INFO):
+
             @service_method()
             def test_func() -> str:
                 time.sleep(0.001)
@@ -589,10 +672,15 @@ class TestServiceMethodDecorator:
         # Timing may or may not be logged depending on execution time and thresholds
 
     @staticmethod
-    def test_service_method_custom_configuration(caplog: pytest.LogCaptureFixture) -> None:
+    def test_service_method_custom_configuration(
+        caplog: pytest.LogCaptureFixture,
+    ) -> None:
         """Test service_method decorator with custom configuration."""
         with caplog.at_level(logging.DEBUG):
-            @service_method(log_level=logging.DEBUG, timing_threshold_ms=0.1, max_retries=1)
+
+            @service_method(
+                log_level=logging.DEBUG, timing_threshold_ms=0.1, max_retries=1
+            )
             def test_func() -> str:
                 return "custom service"
 
@@ -607,6 +695,7 @@ class TestServiceMethodDecorator:
         call_count = 0
 
         with caplog.at_level(logging.WARNING):
+
             @service_method(max_retries=1, log_level=logging.WARNING)
             def test_func() -> str:
                 nonlocal call_count
@@ -623,9 +712,12 @@ class TestServiceMethodDecorator:
         assert "failed (attempt" in caplog.text
 
     @staticmethod
-    async def test_service_method_async_function(caplog: pytest.LogCaptureFixture) -> None:
+    async def test_service_method_async_function(
+        caplog: pytest.LogCaptureFixture,
+    ) -> None:
         """Test service_method decorator on async function."""
         with caplog.at_level(logging.INFO):
+
             @service_method()
             async def test_func() -> str:
                 await asyncio.sleep(0.001)
@@ -641,9 +733,12 @@ class TestRepositoryMethodDecorator:
     """Comprehensive tests for repository_method composite decorator."""
 
     @staticmethod
-    def test_repository_method_default_configuration(caplog: pytest.LogCaptureFixture) -> None:
+    def test_repository_method_default_configuration(
+        caplog: pytest.LogCaptureFixture,
+    ) -> None:
         """Test repository_method decorator with default configuration."""
         with caplog.at_level(logging.DEBUG):
+
             @repository_method()
             def test_func() -> str:
                 time.sleep(0.001)
@@ -661,6 +756,7 @@ class TestRepositoryMethodDecorator:
         call_count = 0
 
         with caplog.at_level(logging.WARNING):
+
             @repository_method(log_level=logging.WARNING)
             def test_func() -> str:
                 nonlocal call_count
@@ -677,10 +773,15 @@ class TestRepositoryMethodDecorator:
         assert "failed (attempt" in caplog.text
 
     @staticmethod
-    def test_repository_method_custom_configuration(caplog: pytest.LogCaptureFixture) -> None:
+    def test_repository_method_custom_configuration(
+        caplog: pytest.LogCaptureFixture,
+    ) -> None:
         """Test repository_method decorator with custom configuration."""
         with caplog.at_level(logging.INFO):
-            @repository_method(log_level=logging.INFO, timing_threshold_ms=0.1, max_retries=0)
+
+            @repository_method(
+                log_level=logging.INFO, timing_threshold_ms=0.1, max_retries=0
+            )
             def test_func() -> str:
                 return "custom repository"
 
@@ -690,9 +791,12 @@ class TestRepositoryMethodDecorator:
         assert "Executing" in caplog.text
 
     @staticmethod
-    async def test_repository_method_async_function(caplog: pytest.LogCaptureFixture) -> None:
+    async def test_repository_method_async_function(
+        caplog: pytest.LogCaptureFixture,
+    ) -> None:
         """Test repository_method decorator on async function."""
         with caplog.at_level(logging.DEBUG):
+
             @repository_method()
             async def test_func() -> str:
                 await asyncio.sleep(0.001)
@@ -736,6 +840,7 @@ class TestDecoratorEdgeCases:
     @staticmethod
     def test_decorator_preserves_function_metadata() -> None:
         """Test that decorators preserve function metadata."""
+
         @log_execution()
         @measure_execution_time()
         def documented_function(x: int, y: int) -> int:
@@ -752,6 +857,7 @@ class TestDecoratorEdgeCases:
         call_count = 0
 
         with caplog.at_level(logging.INFO):
+
             @audit_trail("complex_operation")
             @retry_on_failure(max_retries=1, delay_seconds=0.001)
             @measure_execution_time()
@@ -795,6 +901,7 @@ class TestDecoratorEdgeCases:
     def test_timing_threshold_edge_case(caplog: pytest.LogCaptureFixture) -> None:
         """Test timing decorator at threshold boundary."""
         with caplog.at_level(logging.INFO):
+
             @measure_execution_time(threshold_ms=0.0)  # Log everything
             def test_func() -> str:
                 return "threshold test"
@@ -805,9 +912,12 @@ class TestDecoratorEdgeCases:
         assert "executed in" in caplog.text
 
     @staticmethod
-    def test_audit_trail_with_complex_data_types(caplog: pytest.LogCaptureFixture) -> None:
+    def test_audit_trail_with_complex_data_types(
+        caplog: pytest.LogCaptureFixture,
+    ) -> None:
         """Test audit_trail decorator with complex parameter types."""
         with caplog.at_level(logging.INFO):
+
             @audit_trail("complex_data_op", user_id_param="user_data")
             def test_func(user_data: object = None) -> str:
                 # Use the parameter to avoid ARG001 unused argument error
@@ -824,6 +934,7 @@ class TestDecoratorEdgeCases:
     @staticmethod
     def test_validate_input_with_none_args() -> None:
         """Test validate_input decorator with None arguments."""
+
         def validator(args_kwargs: tuple[tuple[Any, ...], dict[str, Any]]) -> bool:
             args, kwargs = args_kwargs
             return len(args) >= 0 and len(kwargs) >= 0

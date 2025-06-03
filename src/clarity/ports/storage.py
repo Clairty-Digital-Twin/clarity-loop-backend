@@ -157,7 +157,11 @@ class CloudStoragePort(ABC):
 
     @abstractmethod
     def upload_json(
-        self, bucket_name: str, blob_path: str, data: dict[str, Any], metadata: dict[str, Any] | None = None
+        self,
+        bucket_name: str,
+        blob_path: str,
+        data: dict[str, Any],
+        metadata: dict[str, Any] | None = None,
     ) -> str:
         """Upload JSON data to cloud storage.
 

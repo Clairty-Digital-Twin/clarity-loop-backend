@@ -57,8 +57,8 @@ class TestMockHealthDataRepositoryBasics:
                 oxygen_saturation=99.0,
                 heart_rate_variability=50.0,
                 respiratory_rate=16.0,
-                blood_glucose=100.0
-            )
+                blood_glucose=100.0,
+            ),
         )
 
         # Sleep metric
@@ -74,10 +74,15 @@ class TestMockHealthDataRepositoryBasics:
                 sleep_efficiency=0.85,
                 time_to_sleep_minutes=15,
                 wake_count=2,
-                sleep_stages={SleepStage.LIGHT: 240, SleepStage.DEEP: 120, SleepStage.REM: 90, SleepStage.AWAKE: 30},
+                sleep_stages={
+                    SleepStage.LIGHT: 240,
+                    SleepStage.DEEP: 120,
+                    SleepStage.REM: 90,
+                    SleepStage.AWAKE: 30,
+                },
                 sleep_start=sleep_start,
-                sleep_end=sleep_end
-            )
+                sleep_end=sleep_end,
+            ),
         )
 
         # Activity metric
@@ -96,8 +101,8 @@ class TestMockHealthDataRepositoryBasics:
                 flights_climbed=10,
                 vo2_max=45.0,
                 active_minutes=60,
-                resting_heart_rate=60.0
-            )
+                resting_heart_rate=60.0,
+            ),
         )
 
         # Mental health metric
@@ -109,10 +114,8 @@ class TestMockHealthDataRepositoryBasics:
             metadata={},
             created_at=now,
             mental_health_data=MentalHealthIndicator(
-                stress_level=3.0,
-                anxiety_level=2.0,
-                timestamp=now
-            )
+                stress_level=3.0, anxiety_level=2.0, timestamp=now
+            ),
         )
 
         return [biometric_metric, sleep_metric, activity_metric, mental_metric]
@@ -191,8 +194,8 @@ class TestMockHealthDataRepositorySaving:
                 oxygen_saturation=99.0,
                 heart_rate_variability=50.0,
                 respiratory_rate=16.0,
-                blood_glucose=100.0
-            )
+                blood_glucose=100.0,
+            ),
         )
 
         sleep_metric = HealthMetric(
@@ -207,10 +210,15 @@ class TestMockHealthDataRepositorySaving:
                 sleep_efficiency=0.85,
                 time_to_sleep_minutes=15,
                 wake_count=2,
-                sleep_stages={SleepStage.LIGHT: 240, SleepStage.DEEP: 120, SleepStage.REM: 90, SleepStage.AWAKE: 30},
+                sleep_stages={
+                    SleepStage.LIGHT: 240,
+                    SleepStage.DEEP: 120,
+                    SleepStage.REM: 90,
+                    SleepStage.AWAKE: 30,
+                },
                 sleep_start=sleep_start,
-                sleep_end=sleep_end
-            )
+                sleep_end=sleep_end,
+            ),
         )
 
         activity_metric = HealthMetric(
@@ -228,8 +236,8 @@ class TestMockHealthDataRepositorySaving:
                 flights_climbed=10,
                 vo2_max=45.0,
                 active_minutes=60,
-                resting_heart_rate=60.0
-            )
+                resting_heart_rate=60.0,
+            ),
         )
 
         mental_metric = HealthMetric(
@@ -240,16 +248,16 @@ class TestMockHealthDataRepositorySaving:
             metadata={},
             created_at=now,
             mental_health_data=MentalHealthIndicator(
-                stress_level=3.0,
-                anxiety_level=2.0,
-                timestamp=now
-            )
+                stress_level=3.0, anxiety_level=2.0, timestamp=now
+            ),
         )
 
         return [biometric_metric, sleep_metric, activity_metric, mental_metric]
 
     @staticmethod
-    async def test_save_health_data_success(repository: MockHealthDataRepository, sample_metrics: list[HealthMetric]) -> None:
+    async def test_save_health_data_success(
+        repository: MockHealthDataRepository, sample_metrics: list[HealthMetric]
+    ) -> None:
         """Test successful health data saving."""
         user_id = "user_123"
         processing_id = str(uuid4())
@@ -261,7 +269,7 @@ class TestMockHealthDataRepositorySaving:
             processing_id=processing_id,
             metrics=sample_metrics,
             upload_source=upload_source,
-            client_timestamp=client_timestamp
+            client_timestamp=client_timestamp,
         )
 
         assert result is True
@@ -277,7 +285,9 @@ class TestMockHealthDataRepositorySaving:
         assert status["metrics_count"] == 4
 
     @staticmethod
-    async def test_save_health_data_multiple_uploads(repository: MockHealthDataRepository, sample_metrics: list[HealthMetric]) -> None:
+    async def test_save_health_data_multiple_uploads(
+        repository: MockHealthDataRepository, sample_metrics: list[HealthMetric]
+    ) -> None:
         """Test multiple uploads for same user."""
         user_id = "user_123"
 
@@ -288,7 +298,7 @@ class TestMockHealthDataRepositorySaving:
             processing_id=processing_id_1,
             metrics=sample_metrics[:2],
             upload_source="apple_health",
-            client_timestamp=datetime.now(UTC)
+            client_timestamp=datetime.now(UTC),
         )
 
         # Second upload
@@ -298,7 +308,7 @@ class TestMockHealthDataRepositorySaving:
             processing_id=processing_id_2,
             metrics=sample_metrics[2:],
             upload_source="fitbit",
-            client_timestamp=datetime.now(UTC)
+            client_timestamp=datetime.now(UTC),
         )
 
         assert len(repository._health_data[user_id]) == 2
@@ -306,7 +316,9 @@ class TestMockHealthDataRepositorySaving:
         assert processing_id_2 in repository._processing_status
 
     @staticmethod
-    async def test_metric_serialization_all_types(repository: MockHealthDataRepository) -> None:
+    async def test_metric_serialization_all_types(
+        repository: MockHealthDataRepository,
+    ) -> None:
         """Test that all metric types are properly serialized."""
         user_id = "user_123"
         processing_id = str(uuid4())
@@ -327,8 +339,8 @@ class TestMockHealthDataRepositorySaving:
                 heart_rate_variability=50.0,
                 respiratory_rate=16.0,
                 body_temperature=37.0,
-                blood_glucose=100.0
-            )
+                blood_glucose=100.0,
+            ),
         )
 
         await repository.save_health_data(
@@ -336,7 +348,7 @@ class TestMockHealthDataRepositorySaving:
             processing_id=processing_id,
             metrics=[biometric_only],
             upload_source="test",
-            client_timestamp=datetime.now(UTC)
+            client_timestamp=datetime.now(UTC),
         )
 
         result = await repository.get_user_health_data(user_id)
@@ -346,8 +358,11 @@ class TestMockHealthDataRepositorySaving:
         assert metric_data["biometric_data"]["heart_rate"] == 75.0
 
     @staticmethod
-    async def test_error_handling_in_save(repository: MockHealthDataRepository, monkeypatch: MonkeyPatch) -> None:
+    async def test_error_handling_in_save(
+        repository: MockHealthDataRepository, monkeypatch: MonkeyPatch
+    ) -> None:
         """Test error handling during save operation."""
+
         # Mock an exception during metric processing
         def mock_model_dump(*_args: object, **_kwargs: object) -> None:
             error_msg = "Test error"
@@ -373,8 +388,8 @@ class TestMockHealthDataRepositorySaving:
                 heart_rate_variability=50.0,
                 respiratory_rate=16.0,
                 body_temperature=37.0,
-                blood_glucose=100.0
-            )
+                blood_glucose=100.0,
+            ),
         )
 
         # Patch the model_dump method to raise an exception
@@ -385,7 +400,7 @@ class TestMockHealthDataRepositorySaving:
             processing_id=processing_id,
             metrics=[metric],
             upload_source="test",
-            client_timestamp=datetime.now(UTC)
+            client_timestamp=datetime.now(UTC),
         )
 
         assert result is False  # Should return False on error
@@ -424,8 +439,8 @@ class TestMockHealthDataRepositoryRetrieval:
                 oxygen_saturation=99.0,
                 heart_rate_variability=50.0,
                 respiratory_rate=16.0,
-                blood_glucose=100.0
-            )
+                blood_glucose=100.0,
+            ),
         )
 
         sleep_metric = HealthMetric(
@@ -440,10 +455,15 @@ class TestMockHealthDataRepositoryRetrieval:
                 sleep_efficiency=0.85,
                 time_to_sleep_minutes=15,
                 wake_count=2,
-                sleep_stages={SleepStage.LIGHT: 240, SleepStage.DEEP: 120, SleepStage.REM: 90, SleepStage.AWAKE: 30},
+                sleep_stages={
+                    SleepStage.LIGHT: 240,
+                    SleepStage.DEEP: 120,
+                    SleepStage.REM: 90,
+                    SleepStage.AWAKE: 30,
+                },
                 sleep_start=sleep_start,
-                sleep_end=sleep_end
-            )
+                sleep_end=sleep_end,
+            ),
         )
 
         activity_metric = HealthMetric(
@@ -461,8 +481,8 @@ class TestMockHealthDataRepositoryRetrieval:
                 flights_climbed=10,
                 vo2_max=45.0,
                 active_minutes=60,
-                resting_heart_rate=60.0
-            )
+                resting_heart_rate=60.0,
+            ),
         )
 
         mental_metric = HealthMetric(
@@ -473,16 +493,16 @@ class TestMockHealthDataRepositoryRetrieval:
             metadata={},
             created_at=now,
             mental_health_data=MentalHealthIndicator(
-                stress_level=3.0,
-                anxiety_level=2.0,
-                timestamp=now
-            )
+                stress_level=3.0, anxiety_level=2.0, timestamp=now
+            ),
         )
 
         return [biometric_metric, sleep_metric, activity_metric, mental_metric]
 
     @staticmethod
-    async def test_get_user_health_data_empty(repository: MockHealthDataRepository) -> None:
+    async def test_get_user_health_data_empty(
+        repository: MockHealthDataRepository,
+    ) -> None:
         """Test getting data for non-existent user."""
         result = await repository.get_user_health_data("non_existent_user")
 
@@ -491,7 +511,9 @@ class TestMockHealthDataRepositoryRetrieval:
         assert result["page_info"]["has_more"] is False
 
     @staticmethod
-    async def test_get_user_health_data_with_data(repository: MockHealthDataRepository, sample_metrics: list[HealthMetric]) -> None:
+    async def test_get_user_health_data_with_data(
+        repository: MockHealthDataRepository, sample_metrics: list[HealthMetric]
+    ) -> None:
         """Test getting user health data with existing data."""
         user_id = "user_123"
         processing_id = str(uuid4())
@@ -501,7 +523,7 @@ class TestMockHealthDataRepositoryRetrieval:
             processing_id=processing_id,
             metrics=sample_metrics,
             upload_source="apple_health",
-            client_timestamp=datetime.now(UTC)
+            client_timestamp=datetime.now(UTC),
         )
 
         result = await repository.get_user_health_data(user_id)
@@ -511,7 +533,9 @@ class TestMockHealthDataRepositoryRetrieval:
         assert result["page_info"]["has_more"] is False
 
     @staticmethod
-    async def test_get_user_health_data_pagination(repository: MockHealthDataRepository, sample_metrics: list[HealthMetric]) -> None:
+    async def test_get_user_health_data_pagination(
+        repository: MockHealthDataRepository, sample_metrics: list[HealthMetric]
+    ) -> None:
         """Test pagination functionality."""
         user_id = "user_123"
         processing_id = str(uuid4())
@@ -521,7 +545,7 @@ class TestMockHealthDataRepositoryRetrieval:
             processing_id=processing_id,
             metrics=sample_metrics,
             upload_source="apple_health",
-            client_timestamp=datetime.now(UTC)
+            client_timestamp=datetime.now(UTC),
         )
 
         # Test limit
@@ -536,7 +560,9 @@ class TestMockHealthDataRepositoryRetrieval:
         assert result["page_info"]["has_more"] is False
 
     @staticmethod
-    async def test_get_user_health_data_metric_type_filter(repository: MockHealthDataRepository, sample_metrics: list[HealthMetric]) -> None:
+    async def test_get_user_health_data_metric_type_filter(
+        repository: MockHealthDataRepository, sample_metrics: list[HealthMetric]
+    ) -> None:
         """Test filtering by metric type."""
         user_id = "user_123"
         processing_id = str(uuid4())
@@ -546,15 +572,19 @@ class TestMockHealthDataRepositoryRetrieval:
             processing_id=processing_id,
             metrics=sample_metrics,
             upload_source="apple_health",
-            client_timestamp=datetime.now(UTC)
+            client_timestamp=datetime.now(UTC),
         )
 
-        result = await repository.get_user_health_data(user_id, metric_type="heart_rate")
+        result = await repository.get_user_health_data(
+            user_id, metric_type="heart_rate"
+        )
         assert len(result["data"]) == 1
         assert result["data"][0]["metric_type"] == "heart_rate"
 
     @staticmethod
-    async def test_get_user_health_data_date_filters(repository: MockHealthDataRepository, sample_metrics: list[HealthMetric]) -> None:
+    async def test_get_user_health_data_date_filters(
+        repository: MockHealthDataRepository, sample_metrics: list[HealthMetric]
+    ) -> None:
         """Test date range filtering."""
         user_id = "user_123"
         processing_id = str(uuid4())
@@ -568,14 +598,11 @@ class TestMockHealthDataRepositoryRetrieval:
             processing_id=processing_id,
             metrics=sample_metrics,
             upload_source="apple_health",
-            client_timestamp=datetime.now(UTC)
+            client_timestamp=datetime.now(UTC),
         )
 
         # Test start_date filter
-        result = await repository.get_user_health_data(
-            user_id,
-            start_date=now
-        )
+        result = await repository.get_user_health_data(user_id, start_date=now)
         assert len(result["data"]) >= 1
 
 
@@ -612,8 +639,8 @@ class TestMockHealthDataRepositoryProcessingAndDeletion:
                 oxygen_saturation=99.0,
                 heart_rate_variability=50.0,
                 respiratory_rate=16.0,
-                blood_glucose=100.0
-            )
+                blood_glucose=100.0,
+            ),
         )
 
         sleep_metric = HealthMetric(
@@ -628,10 +655,15 @@ class TestMockHealthDataRepositoryProcessingAndDeletion:
                 sleep_efficiency=0.85,
                 time_to_sleep_minutes=15,
                 wake_count=2,
-                sleep_stages={SleepStage.LIGHT: 240, SleepStage.DEEP: 120, SleepStage.REM: 90, SleepStage.AWAKE: 30},
+                sleep_stages={
+                    SleepStage.LIGHT: 240,
+                    SleepStage.DEEP: 120,
+                    SleepStage.REM: 90,
+                    SleepStage.AWAKE: 30,
+                },
                 sleep_start=sleep_start,
-                sleep_end=sleep_end
-            )
+                sleep_end=sleep_end,
+            ),
         )
 
         activity_metric = HealthMetric(
@@ -649,8 +681,8 @@ class TestMockHealthDataRepositoryProcessingAndDeletion:
                 flights_climbed=10,
                 vo2_max=45.0,
                 active_minutes=60,
-                resting_heart_rate=60.0
-            )
+                resting_heart_rate=60.0,
+            ),
         )
 
         mental_metric = HealthMetric(
@@ -661,16 +693,16 @@ class TestMockHealthDataRepositoryProcessingAndDeletion:
             metadata={},
             created_at=now,
             mental_health_data=MentalHealthIndicator(
-                stress_level=3.0,
-                anxiety_level=2.0,
-                timestamp=now
-            )
+                stress_level=3.0, anxiety_level=2.0, timestamp=now
+            ),
         )
 
         return [biometric_metric, sleep_metric, activity_metric, mental_metric]
 
     @staticmethod
-    async def test_get_processing_status_exists(repository: MockHealthDataRepository, sample_metrics: list[HealthMetric]) -> None:
+    async def test_get_processing_status_exists(
+        repository: MockHealthDataRepository, sample_metrics: list[HealthMetric]
+    ) -> None:
         """Test getting processing status that exists."""
         user_id = "user_123"
         processing_id = str(uuid4())
@@ -680,7 +712,7 @@ class TestMockHealthDataRepositoryProcessingAndDeletion:
             processing_id=processing_id,
             metrics=sample_metrics,
             upload_source="apple_health",
-            client_timestamp=datetime.now(UTC)
+            client_timestamp=datetime.now(UTC),
         )
 
         status = await repository.get_processing_status(processing_id, user_id)
@@ -690,13 +722,17 @@ class TestMockHealthDataRepositoryProcessingAndDeletion:
         assert status["status"] == "completed"
 
     @staticmethod
-    async def test_get_processing_status_not_found(repository: MockHealthDataRepository) -> None:
+    async def test_get_processing_status_not_found(
+        repository: MockHealthDataRepository,
+    ) -> None:
         """Test getting non-existent processing status."""
         status = await repository.get_processing_status("non_existent", "user_123")
         assert status is None
 
     @staticmethod
-    async def test_get_processing_status_wrong_user(repository: MockHealthDataRepository, sample_metrics: list[HealthMetric]) -> None:
+    async def test_get_processing_status_wrong_user(
+        repository: MockHealthDataRepository, sample_metrics: list[HealthMetric]
+    ) -> None:
         """Test getting processing status with wrong user."""
         user_id = "user_123"
         processing_id = str(uuid4())
@@ -706,14 +742,16 @@ class TestMockHealthDataRepositoryProcessingAndDeletion:
             processing_id=processing_id,
             metrics=sample_metrics,
             upload_source="apple_health",
-            client_timestamp=datetime.now(UTC)
+            client_timestamp=datetime.now(UTC),
         )
 
         status = await repository.get_processing_status(processing_id, "wrong_user")
         assert status is None
 
     @staticmethod
-    async def test_delete_health_data_specific_processing(repository: MockHealthDataRepository, sample_metrics: list[HealthMetric]) -> None:
+    async def test_delete_health_data_specific_processing(
+        repository: MockHealthDataRepository, sample_metrics: list[HealthMetric]
+    ) -> None:
         """Test deleting specific processing job."""
         user_id = "user_123"
         processing_id_1 = str(uuid4())
@@ -725,7 +763,7 @@ class TestMockHealthDataRepositoryProcessingAndDeletion:
             processing_id=processing_id_1,
             metrics=sample_metrics[:2],
             upload_source="apple_health",
-            client_timestamp=datetime.now(UTC)
+            client_timestamp=datetime.now(UTC),
         )
 
         await repository.save_health_data(
@@ -733,7 +771,7 @@ class TestMockHealthDataRepositoryProcessingAndDeletion:
             processing_id=processing_id_2,
             metrics=sample_metrics[2:],
             upload_source="fitbit",
-            client_timestamp=datetime.now(UTC)
+            client_timestamp=datetime.now(UTC),
         )
 
         # Delete first processing job
@@ -747,7 +785,9 @@ class TestMockHealthDataRepositoryProcessingAndDeletion:
         assert processing_id_2 in repository._processing_status
 
     @staticmethod
-    async def test_delete_health_data_all_user_data(repository: MockHealthDataRepository, sample_metrics: list[HealthMetric]) -> None:
+    async def test_delete_health_data_all_user_data(
+        repository: MockHealthDataRepository, sample_metrics: list[HealthMetric]
+    ) -> None:
         """Test deleting all user data."""
         user_id = "user_123"
         processing_id = str(uuid4())
@@ -757,7 +797,7 @@ class TestMockHealthDataRepositoryProcessingAndDeletion:
             processing_id=processing_id,
             metrics=sample_metrics,
             upload_source="apple_health",
-            client_timestamp=datetime.now(UTC)
+            client_timestamp=datetime.now(UTC),
         )
 
         result = await repository.delete_health_data(user_id)
@@ -765,7 +805,9 @@ class TestMockHealthDataRepositoryProcessingAndDeletion:
         assert user_id not in repository._health_data
 
     @staticmethod
-    async def test_delete_health_data_non_existent_user(repository: MockHealthDataRepository) -> None:
+    async def test_delete_health_data_non_existent_user(
+        repository: MockHealthDataRepository,
+    ) -> None:
         """Test deleting data for non-existent user."""
         result = await repository.delete_health_data("non_existent_user")
         assert result is True  # Should succeed even if no data

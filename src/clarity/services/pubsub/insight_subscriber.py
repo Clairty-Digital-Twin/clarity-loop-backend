@@ -213,7 +213,7 @@ Generate the health insight now:"""
             return insight
 
         except Exception as e:
-            self.logger.exception("Gemini API call failed: %s", e)
+            self.logger.exception("Gemini API call failed")
             raise
 
     @staticmethod

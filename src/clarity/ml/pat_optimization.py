@@ -98,20 +98,20 @@ class PATPerformanceOptimizer:
         # Prune attention layers
         for name, module in model.named_modules():
             if isinstance(module, torch.nn.Linear) and "attention" in name:
-                prune.l1_unstructured(module, name="weight", amount=amount)
+                prune.l1_unstructured(module, name="weight", amount=amount)  # type: ignore[no-untyped-call]
 
         # Prune feed-forward layers
         for name, module in model.named_modules():
             if isinstance(module, torch.nn.Linear) and (
                 "ff" in name or "feed_forward" in name
             ):
-                prune.l1_unstructured(module, name="weight", amount=amount * 0.5)
+                prune.l1_unstructured(module, name="weight", amount=amount * 0.5)  # type: ignore[no-untyped-call]
 
         # Remove pruning masks to make pruning permanent
         for _name, module in model.named_modules():
             if isinstance(module, torch.nn.Linear):
                 with contextlib.suppress(ValueError):
-                    prune.remove(module, "weight")
+                    prune.remove(module, "weight")  # type: ignore[no-untyped-call]
 
     def _compile_torchscript(
         self, model: torch.nn.Module
@@ -124,10 +124,12 @@ class PATPerformanceOptimizer:
             sample_input = torch.randn(1, 10080, device=self.pat_service.device)
 
             # Trace the model
-            traced_model = torch.jit.trace(model, sample_input)
+            traced_model = torch.jit.trace(model, sample_input)  # type: ignore[no-untyped-call]
 
             # Optimize for inference
-            return torch.jit.optimize_for_inference(traced_model)
+            if hasattr(torch.jit, 'optimize_for_inference'):
+                return torch.jit.optimize_for_inference(traced_model)  # type: ignore[misc,return-value]
+            return traced_model  # type: ignore[return-value]
 
         except Exception:
             logger.exception("TorchScript compilation failed")
@@ -284,8 +286,7 @@ class PATPerformanceOptimizer:
             dummy_points = [
                 ActigraphyDataPoint(
                     timestamp=datetime.now(UTC) + timedelta(minutes=j),
-                    activity_level=30.0 + 20.0 * (i % 2),  # Alternating activity
-                    light_level=100.0,
+                    value=30.0 + 20.0 * (i % 2),  # Alternating activity
                 )
                 for j in range(1440)  # 24 hours of minute-by-minute data
             ]
@@ -358,7 +359,7 @@ class BatchAnalysisProcessor:
                 results = await asyncio.gather(*tasks, return_exceptions=True)
 
                 # Set results for futures
-                for (_, future), result in zip(batch, results, strict=False):
+                for (_, future), result in zip(batch, results, strict=False):  # type: ignore[misc]
                     if isinstance(result, Exception):
                         future.set_exception(result)
                     else:

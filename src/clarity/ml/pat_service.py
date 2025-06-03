@@ -256,7 +256,8 @@ class PATTransformerBlock(nn.Module):
         # Feed-forward with residual connection
         ff_out = self.ff2(functional.relu(self.ff1(x)))
         ff_out = self.dropout(ff_out)
-        return self.norm2(x + ff_out)
+        result: torch.Tensor = self.norm2(x + ff_out)
+        return result
 
 
 class PATEncoder(nn.Module):
@@ -837,9 +838,14 @@ class PATModelService(IMLModelService):
         if not self.model:
             self._raise_model_not_loaded_error()
 
+        # Model is guaranteed to be not None after the check above
+        model = self.model
+        if model is None:
+            self._raise_model_not_loaded_error()
+
         # Run inference
         with torch.no_grad():
-            outputs = cast("dict[str, torch.Tensor]", self.model(input_tensor))
+            outputs = cast("dict[str, torch.Tensor]", model(input_tensor))
 
         # Post-process outputs
         analysis = self._postprocess_predictions(outputs, input_data.user_id)

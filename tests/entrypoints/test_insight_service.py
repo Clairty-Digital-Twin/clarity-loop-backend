@@ -30,8 +30,6 @@ class TestInsightService:
 
     def test_app_mounts_insight_app(self) -> None:
         """Test that the insight app is mounted."""
-        from clarity.entrypoints.insight_service import app
-
         # Check if there are routes mounted
         assert len(app.routes) > 0, "Insight app should be mounted"
 

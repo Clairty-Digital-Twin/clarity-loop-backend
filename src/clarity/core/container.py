@@ -21,11 +21,9 @@ from fastapi import FastAPI
 
 from clarity.auth.mock_auth import MockAuthProvider
 from clarity.core.config import get_settings
-from clarity.core.interfaces import (
-    IAuthProvider,
-    IConfigProvider,
-    IHealthDataRepository,
-)
+from clarity.ports.auth_ports import IAuthProvider
+from clarity.ports.config_ports import IConfigProvider
+from clarity.ports.data_ports import IHealthDataRepository
 from clarity.storage.firestore_client import FirestoreHealthDataRepository
 from clarity.storage.mock_repository import MockHealthDataRepository
 

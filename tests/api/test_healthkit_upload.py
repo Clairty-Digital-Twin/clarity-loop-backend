@@ -6,7 +6,6 @@ from unittest.mock import AsyncMock, Mock, patch
 import uuid
 
 from fastapi import HTTPException, status
-
 from fastapi.testclient import TestClient
 import pytest
 
@@ -93,7 +92,6 @@ class TestHealthKitModels:
         assert response.upload_id == "test-user-123-abc123"
         assert response.status == "queued"
         assert response.samples_received["quantity_samples"] == 5
-
 
 
 class TestHealthKitUploadEndpoint:
@@ -316,4 +314,4 @@ class TestHealthKitUploadIntegration:
             # Test that endpoints are accessible (will fail auth but endpoint should be reachable)
             response = client.get("/api/v1/healthkit/status/test-upload-id")
             # We expect it to fail auth, but the endpoint should be reachable
-            assert response.status_code in [401, 422, 500]  # Various possible auth/validation errors
+            assert response.status_code in {401, 422, 500}  # Various possible auth/validation errors

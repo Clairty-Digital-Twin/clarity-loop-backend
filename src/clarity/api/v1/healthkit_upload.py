@@ -11,12 +11,11 @@ from typing import Any
 import uuid
 
 from fastapi import APIRouter, Depends, HTTPException, status
-
 from google.cloud import storage
 from pydantic import BaseModel, Field
 
-from clarity.auth.firebase_auth import get_current_user
 from clarity.auth import UserContext
+from clarity.auth.firebase_auth import get_current_user
 from clarity.services.pubsub.publisher import get_publisher
 
 # Configure logger
@@ -68,7 +67,7 @@ class HealthKitUploadResponse(BaseModel):
     status_code=status.HTTP_202_ACCEPTED,
 )
 async def upload_healthkit_data(
-    request: HealthKitUploadRequest, 
+    request: HealthKitUploadRequest,
     current_user: UserContext = Depends(get_current_user)
 ) -> HealthKitUploadResponse:
     """Upload HealthKit data for asynchronous processing.
@@ -165,7 +164,7 @@ async def upload_healthkit_data(
 
 @router.get("/status/{upload_id}")
 async def get_upload_status(
-    upload_id: str, 
+    upload_id: str,
     current_user: UserContext = Depends(get_current_user)
 ) -> dict[str, Any]:
     """Get status of a HealthKit upload.
@@ -182,11 +181,13 @@ async def get_upload_status(
     try:
         parts = upload_id.split("-")
         if len(parts) < 2:
-            raise ValueError("Invalid format")
+            msg = "Invalid format"
+            raise ValueError(msg)
         # The last part should be a 32-character hex UUID
         uuid_part = parts[-1]
         if len(uuid_part) != 32 or not all(c in '0123456789abcdef' for c in uuid_part.lower()):
-            raise ValueError("Invalid UUID format")
+            msg = "Invalid UUID format"
+            raise ValueError(msg)
         # Join all parts except the last one to get the user_id
         user_id = "-".join(parts[:-1])
     except (IndexError, ValueError):

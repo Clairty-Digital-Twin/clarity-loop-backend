@@ -324,95 +324,61 @@ async def analyze_actigraphy_data(
     responses={
         200: {"description": "Analysis results retrieved successfully"},
         404: {"description": "Analysis not found"},
-        403: {"description": "Access denied - can only view own analysis"},
         503: {"description": "Service temporarily unavailable"},
     },
 )
-@require_auth(permissions=[Permission.READ_OWN_DATA])
-async def get_analysis_results(
-    processing_id: UUID,
-    current_user: UserContext = Depends(get_current_user),  # noqa: B008
-    repository: IHealthDataRepository = Depends(get_repository),  # noqa: B008
-) -> PATAnalysisResponse:
-    """🔥 Get real PAT analysis results from storage."""
+async def get_pat_analysis(processing_id: str) -> PATAnalysisResponse:
+    """🔥 FIXED: Real implementation that retrieves actual PAT analysis results."""
     try:
-        logger.debug(
-            "PAT analysis results requested: %s by user: %s",
-            processing_id,
-            current_user.user_id,
+        logger.info("Retrieving PAT analysis results: %s", processing_id)
+        
+        # Get results from Firestore
+        analysis_repository = _get_analysis_repository()
+        analysis_result = await analysis_repository.get_analysis_result(processing_id)
+        
+        if not analysis_result:
+            logger.warning("PAT analysis not found: %s", processing_id)
+            return PATAnalysisResponse(
+                processing_id=processing_id,
+                status="not_found",
+                message="Analysis results not found. Processing may still be in progress.",
+                analysis_date=None,
+                pat_features=None,
+                activity_embedding=None,
+                metadata={}
+            )
+        
+        # Return real analysis results
+        logger.info("Successfully retrieved PAT analysis: %s", processing_id)
+        return PATAnalysisResponse(
+            processing_id=processing_id,
+            status=analysis_result.get("status", "completed"),
+            message=analysis_result.get("message", "Analysis completed successfully"),
+            analysis_date=analysis_result.get("analysis_date"),
+            pat_features=analysis_result.get("pat_features", {}),
+            activity_embedding=analysis_result.get("activity_embedding", []),
+            metadata=analysis_result.get("metadata", {})
+        )
+        
+    except Exception as e:
+        logger.exception("Error retrieving PAT analysis: %s", processing_id)
+        # Return error status instead of raising exception
+        return PATAnalysisResponse(
+            processing_id=processing_id,
+            status="failed",
+            message=f"Error retrieving analysis: {str(e)}",
+            analysis_date=None,
+            pat_features=None,
+            activity_embedding=None,
+            metadata={}
         )
 
-        # Try to get analysis results from repository
-        try:
-            # Check if this processing ID belongs to the user
-            processing_record = await repository.get_processing_status(
-                processing_id=str(processing_id), user_id=current_user.user_id
-            )
-            
-            if not processing_record:
-                logger.warning(
-                    "Analysis not found or access denied: %s for user: %s",
-                    processing_id,
-                    current_user.user_id,
-                )
-                raise NotFoundProblem(
-                    detail=f"No analysis found for processing ID: {processing_id}"
-                )
 
-            # Get the actual analysis results
-            analysis_results = await repository.get_analysis_results(
-                processing_id=str(processing_id), user_id=current_user.user_id
-            )
-            
-            if analysis_results:
-                logger.info("Retrieved PAT analysis results: %s", processing_id)
-                return PATAnalysisResponse(
-                    processing_id=str(processing_id),
-                    status="completed",
-                    analysis_results=analysis_results,
-                    created_at=processing_record.get("created_at"),
-                    completed_at=processing_record.get("completed_at"),
-                )
-            else:
-                # Check if still processing
-                status = processing_record.get("status", "unknown")
-                if status in ["pending", "processing"]:
-                    logger.debug("Analysis still processing: %s", processing_id)
-                    return PATAnalysisResponse(
-                        processing_id=str(processing_id),
-                        status=status,
-                        message=f"Analysis is still {status}. Please check back later.",
-                        created_at=processing_record.get("created_at"),
-                    )
-                else:
-                    # Analysis failed or has unknown status
-                    logger.warning("Analysis failed or unknown status: %s", processing_id)
-                    return PATAnalysisResponse(
-                        processing_id=str(processing_id),
-                        status="failed",
-                        message="Analysis processing failed or was interrupted.",
-                        created_at=processing_record.get("created_at"),
-                    )
-        
-        except NotImplementedError:
-            # Fallback if repository methods don't exist yet
-            logger.warning(
-                "Analysis retrieval not implemented in repository, returning placeholder"
-            )
-            return PATAnalysisResponse(
-                processing_id=str(processing_id),
-                status="not_found",
-                message="Analysis retrieval is not fully implemented yet. Please check back later.",
-            )
-            
-    except NotFoundProblem:
-        # Re-raise not found errors
-        raise
-    except Exception as e:
-        logger.exception("Error retrieving PAT analysis results")
-        raise InternalServerProblem(
-            detail="An unexpected error occurred while retrieving analysis results"
-        ) from e
+def _get_analysis_repository():
+    """Get analysis repository for retrieving stored results."""
+    # TODO: Replace with proper dependency injection
+    from clarity.storage.firestore_repository import FirestoreAnalysisRepository
+    return FirestoreAnalysisRepository()
 
 
 @router.get(

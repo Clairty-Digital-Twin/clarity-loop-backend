@@ -524,7 +524,7 @@ class TestInferenceEngineErrorHandling:
             )
             for i in range(1440)  # 24 hours of data
         ]
-        
+
         sample_actigraphy_input = ActigraphyInput(
             user_id=str(uuid4()),
             data_points=data_points,
@@ -550,11 +550,11 @@ class TestInferenceEngineErrorHandling:
         # Mock PAT service to return successful analysis
         mock_pat_service = MagicMock(spec=PATModelService)
         mock_pat_service.analyze_actigraphy = AsyncMock(return_value=mock_analysis)
-        
+
         engine = AsyncInferenceEngine(pat_service=mock_pat_service)
-        
+
         await engine.start()
-        
+
         # This should timeout due to the very short timeout
         with pytest.raises(InferenceTimeoutError, match="timed out"):
             await asyncio.wait_for(
@@ -565,7 +565,7 @@ class TestInferenceEngineErrorHandling:
                 ),
                 timeout=0.5
             )
-        
+
         await engine.stop()
 
 

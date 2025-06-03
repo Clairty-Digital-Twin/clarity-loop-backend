@@ -1,4 +1,4 @@
-make"""Comprehensive tests for PAT (Pretrained Actigraphy Transformer) Model Service.
+"""Comprehensive tests for PAT (Pretrained Actigraphy Transformer) Model Service.
 
 This test suite covers all aspects of the PAT service including:
 - Model initialization and loading
@@ -8,16 +8,16 @@ This test suite covers all aspects of the PAT service including:
 - Health checks and status monitoring
 """
 
-import clarity.ml.pat_service
 from datetime import UTC, datetime
+import sys
 from unittest.mock import MagicMock, patch
 from uuid import uuid4
 
 import numpy as np
 import pytest
 import torch
-import sys
 
+import clarity.ml.pat_service
 from clarity.ml.pat_service import (
     ActigraphyAnalysis,
     ActigraphyInput,
@@ -35,7 +35,7 @@ class TestPATTransformer:
     def test_pat_transformer_initialization():
         """Test PAT transformer model initialization with default parameters."""
         model = PATTransformer()
-        
+
         assert hasattr(model, "positional_encoding")
         assert hasattr(model, "transformer")
         assert hasattr(model, "sleep_stage_head")
@@ -54,7 +54,7 @@ class TestPATTransformer:
             sequence_length=720,
             num_classes=3
         )
-        
+
         assert model.input_dim == 2
         assert model.hidden_dim == 128
         assert model.sleep_stage_head.out_features == 3
@@ -64,21 +64,21 @@ class TestPATTransformer:
         """Test forward pass through PAT transformer."""
         model = PATTransformer()
         model.eval()
-        
+
         batch_size = 2
         seq_length = 1440
         input_features = 1
-        
+
         x = torch.randn(batch_size, seq_length, input_features)
-        
+
         with torch.no_grad():
             outputs = model(x)
-        
+
         assert isinstance(outputs, dict)
         assert "sleep_stages" in outputs
         assert "sleep_metrics" in outputs
         assert "depression_risk" in outputs
-        
+
         assert outputs["sleep_stages"].shape == (batch_size, seq_length, 4)
         assert outputs["sleep_metrics"].shape == (batch_size, 8)
         assert outputs["depression_risk"].shape == (batch_size, 1)
@@ -88,14 +88,14 @@ class TestPATTransformer:
         """Test PAT transformer with different input sequence lengths."""
         model = PATTransformer()
         model.eval()
-        
+
         # Only test sequence lengths within the positional encoding bounds
         for seq_len in [720, 1440]:  # 12h, 24h (removed 2880 which exceeds bounds)
             x = torch.randn(1, seq_len, 1)
-            
+
             with torch.no_grad():
                 outputs = model(x)
-            
+
             assert outputs["sleep_stages"].shape == (1, seq_len, 4)
             assert outputs["sleep_metrics"].shape == (1, 8)
 
@@ -107,7 +107,7 @@ class TestPATModelServiceInitialization:
     def test_service_initialization_default_parameters():
         """Test service initialization with default parameters."""
         service = PATModelService()
-        
+
         assert service.model_size == "medium"
         assert service.device in {"cpu", "cuda"}
         assert service.model is None
@@ -123,7 +123,7 @@ class TestPATModelServiceInitialization:
             device="cpu",
             model_path=custom_path
         )
-        
+
         assert service.model_size == "large"
         assert service.device == "cpu"
         assert service.model_path == custom_path
@@ -134,7 +134,7 @@ class TestPATModelServiceInitialization:
         small_service = PATModelService(model_size="small")
         medium_service = PATModelService(model_size="medium")
         large_service = PATModelService(model_size="large")
-        
+
         assert small_service.model_path == "models/PAT-S_29k_weights.h5"
         assert medium_service.model_path == "models/PAT-M_29k_weights.h5"
         assert large_service.model_path == "models/PAT-L_29k_weights.h5"
@@ -162,7 +162,7 @@ class TestPATModelServiceLoading:
     async def test_load_model_success_with_weights():
         """Test successful model loading with existing weight file."""
         service = PATModelService(model_size="medium")
-        
+
         with patch('pathlib.Path.exists', return_value=True):
             # Mock h5py without actually importing it
             mock_h5py = MagicMock()
@@ -173,10 +173,10 @@ class TestPATModelServiceLoading:
                 'input_layer': {'weight': np.ones((1, 256)), 'bias': np.ones(256)},
                 'dense_layer': {'weight': np.ones((256, 8)), 'bias': np.ones(8)}
             }.__getitem__
-            
+
             with patch.dict('sys.modules', {'h5py': mock_h5py}):
                 await service.load_model()
-                
+
                 assert service.is_loaded
                 assert service.model is not None
 
@@ -185,9 +185,9 @@ class TestPATModelServiceLoading:
     async def test_load_model_missing_weights_file():
         """Test model loading when weight file doesn't exist."""
         service = PATModelService(model_path="nonexistent/path.h5")
-        
+
         await service.load_model()
-        
+
         assert service.is_loaded
         assert service.model is not None  # Model initialized without weights
 
@@ -196,16 +196,16 @@ class TestPATModelServiceLoading:
     async def test_load_model_h5py_import_error():
         """Test model loading when h5py is not available."""
         service = PATModelService(model_size="medium")
-        
+
         with patch('pathlib.Path.exists', return_value=True):
             # Simulate h5py not being available by not adding it to sys.modules
             with patch.dict('sys.modules', {}, clear=False):
                 # Remove h5py from sys.modules if it exists
                 if 'h5py' in sys.modules:
                     del sys.modules['h5py']
-                
+
                 await service.load_model()
-                
+
                 assert service.is_loaded
                 assert service.model is not None
 
@@ -214,15 +214,15 @@ class TestPATModelServiceLoading:
     async def test_load_model_h5_file_error():
         """Test model loading when H5 file is corrupted."""
         service = PATModelService(model_size="medium")
-        
+
         with patch('pathlib.Path.exists', return_value=True):
             # Mock h5py to raise an exception without trying to import the real h5py
             mock_h5py = MagicMock()
             mock_h5py.File.side_effect = Exception("Corrupted file")
-            
+
             with patch.dict('sys.modules', {'h5py': mock_h5py}):
                 await service.load_model()
-                
+
                 assert service.is_loaded
                 assert service.model is not None
 
@@ -231,7 +231,7 @@ class TestPATModelServiceLoading:
     async def test_load_model_weight_mapping_success():
         """Test successful weight mapping from H5 to PyTorch."""
         service = PATModelService(model_size="medium")
-        
+
         # Create mock weights with correct shapes
         rng = np.random.default_rng(42)
         mock_input_weight = rng.standard_normal((1, 256))  # (input_dim, hidden_dim)
@@ -246,10 +246,10 @@ class TestPATModelServiceLoading:
                 'weight': mock_input_weight,
                 'bias': mock_input_bias
             }
-            
+
             with patch.dict('sys.modules', {'h5py': mock_h5py}):
                 await service.load_model()
-                
+
                 assert service.is_loaded
 
 
@@ -267,7 +267,7 @@ class TestPATModelServiceAnalysis:
             )
             for i in range(1440)  # 24 hours of minute-by-minute data
         ]
-        
+
         return ActigraphyInput(
             user_id=str(uuid4()),
             data_points=data_points,
@@ -281,22 +281,21 @@ class TestPATModelServiceAnalysis:
         """Test successful actigraphy analysis."""
         service = PATModelService(model_size="medium")
         service.is_loaded = True
-        
+
         # Mock the preprocessor and model
         with patch.object(service, '_preprocess_actigraphy_data') as mock_preprocess, \
              patch.object(service, '_postprocess_predictions') as mock_postprocess:
-            
+
             # Set up the model after load_model is called
             def setup_model():
                 service.model = MagicMock()
                 service.is_loaded = True
-                return None
-                
+
             mock_load = setup_model
-            
+
             # Mock preprocessor output
             mock_preprocess.return_value = torch.randn(1, 1440, 1)
-            
+
             # Mock model output
             service.model = MagicMock()
             service.model.return_value = {
@@ -304,7 +303,7 @@ class TestPATModelServiceAnalysis:
                 "sleep_metrics": torch.randn(1, 8),
                 "depression_risk": torch.randn(1, 1)
             }
-            
+
             # Mock postprocessor output
             mock_postprocess.return_value = ActigraphyAnalysis(
                 user_id=sample_actigraphy_input.user_id,
@@ -320,9 +319,9 @@ class TestPATModelServiceAnalysis:
                 confidence_score=0.85,
                 clinical_insights=["Good sleep efficiency"]
             )
-            
+
             result = await service.analyze_actigraphy(sample_actigraphy_input)
-            
+
             assert isinstance(result, ActigraphyAnalysis)
             assert result.user_id == sample_actigraphy_input.user_id
             assert result.sleep_efficiency == 85.0
@@ -333,26 +332,26 @@ class TestPATModelServiceAnalysis:
         """Test analysis when model is not loaded."""
         service = PATModelService(model_size="medium")
         service.is_loaded = False
-        
+
         with patch.object(service, 'load_model') as mock_load_model:
-            
+
             # Set up the model after load_model is called
             def setup_model() -> None:
                 service.model = MagicMock()
                 service.is_loaded = True
-                
+
             mock_load_model.side_effect = setup_model
-            
+
             with patch.object(service, '_preprocess_actigraphy_data', return_value=torch.randn(1, 1440, 1)), \
                  patch.object(service, '_postprocess_predictions') as mock_postprocess:
-                
+
                 service.model = MagicMock()
                 service.model.return_value = {
                     "sleep_stages": torch.randn(1, 1440, 4),
                     "sleep_metrics": torch.randn(1, 8),
                     "depression_risk": torch.randn(1, 1)
                 }
-                
+
                 mock_postprocess.return_value = ActigraphyAnalysis(
                     user_id=sample_actigraphy_input.user_id,
                     analysis_timestamp=datetime.now(UTC).isoformat(),
@@ -367,9 +366,9 @@ class TestPATModelServiceAnalysis:
                     confidence_score=0.8,
                     clinical_insights=["Moderate sleep quality"]
                 )
-                
+
                 result = await service.analyze_actigraphy(sample_actigraphy_input)
-                
+
                 mock_load_model.assert_called_once()
                 assert isinstance(result, ActigraphyAnalysis)
 
@@ -406,18 +405,18 @@ class TestPATModelServicePostprocessing:
     def test_postprocess_predictions_typical_values():
         """Test postprocessing with typical prediction values."""
         service = PATModelService()
-        
+
         mock_predictions = {
             "sleep_stages": torch.randn(1, 1440, 4),
             "sleep_metrics": torch.tensor([[0.85, 0.75, 0.2, 7.5, 30.0, 15.0, 0.75, 0.25]]),
             "circadian_score": torch.tensor([[0.75]]),  # Added missing key
             "depression_risk": torch.tensor([[0.2]])
         }
-        
+
         user_id = str(uuid4())
-        
+
         result = service._postprocess_predictions(mock_predictions, user_id)
-        
+
         assert isinstance(result, ActigraphyAnalysis)
         assert result.user_id == user_id
         assert 0.0 <= result.sleep_efficiency <= 100.0

@@ -302,7 +302,7 @@ async def get_insight(
     insight_id: str,
     current_user: UserContext = Depends(get_current_user),  # noqa: B008
 ) -> InsightGenerationResponse:
-    """Retrieve cached insights by ID.
+    """🔥 FIXED: Retrieve cached insights by ID from Firestore.
 
     Args:
         insight_id: Unique identifier for the insight
@@ -324,26 +324,52 @@ async def get_insight(
             request_id,
         )
 
-        # TODO: Implement insight retrieval from cache/database
-        # For now, return a placeholder response
-        placeholder_response = HealthInsightResponse(
-            user_id=current_user.user_id,
-            narrative="Cached insight retrieval not yet implemented",
-            key_insights=["Placeholder insight 1", "Placeholder insight 2"],
-            recommendations=[
-                "Placeholder recommendation 1",
-                "Placeholder recommendation 2",
-            ],
-            confidence_score=0.0,
-            generated_at=datetime.now(UTC).isoformat(),
+        # Get insight from Firestore
+        firestore_client = _get_firestore_client()
+        insight_doc = await firestore_client.get_document(
+            collection="insights",
+            document_id=insight_id
+        )
+        
+        if not insight_doc:
+            raise create_error_response(
+                error_code="INSIGHT_NOT_FOUND",
+                message=f"Insight {insight_id} not found",
+                request_id=request_id,
+                status_code=status.HTTP_404_NOT_FOUND,
+                details={"insight_id": insight_id},
+                suggested_action="check_insight_id",
+            )
+        
+        # Verify user owns the insight
+        if insight_doc.get("user_id") != current_user.user_id:
+            raise create_error_response(
+                error_code="ACCESS_DENIED",
+                message="Cannot access another user's insights",
+                request_id=request_id,
+                status_code=status.HTTP_403_FORBIDDEN,
+                details={"insight_id": insight_id},
+                suggested_action="check_permissions",
+            )
+        
+        # Convert Firestore document to HealthInsightResponse
+        insight_response = HealthInsightResponse(
+            user_id=insight_doc["user_id"],
+            narrative=insight_doc.get("narrative", ""),
+            key_insights=insight_doc.get("key_insights", []),
+            recommendations=insight_doc.get("recommendations", []),
+            confidence_score=insight_doc.get("confidence_score", 0.0),
+            generated_at=insight_doc.get("generated_at", datetime.now(UTC).isoformat()),
         )
 
         return InsightGenerationResponse(
             success=True,
-            data=placeholder_response,
+            data=insight_response,
             metadata=create_metadata(request_id),
         )
 
+    except HTTPException:
+        raise
     except Exception as e:
         logger.exception(
             "💥 Failed to retrieve insight %s for user %s (request: %s)",
@@ -356,9 +382,9 @@ async def get_insight(
             error_code="INSIGHT_RETRIEVAL_FAILED",
             message=f"Failed to retrieve insight {insight_id}",
             request_id=request_id,
-            status_code=status.HTTP_404_NOT_FOUND,
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             details={"insight_id": insight_id, "error_message": str(e)},
-            suggested_action="check_insight_id",
+            suggested_action="retry_later",
         ) from e
 
 
@@ -370,11 +396,11 @@ async def get_insight(
 )
 async def get_insight_history(
     user_id: str,
-    limit: int = 10,  # noqa: ARG001
-    offset: int = 0,  # noqa: ARG001
+    limit: int = 10,
+    offset: int = 0,
     current_user: UserContext = Depends(get_current_user),  # noqa: B008
 ) -> InsightHistoryResponse:
-    """Get insight history for a user.
+    """🔥 FIXED: Get insight history for a user from Firestore.
 
     Args:
         user_id: User ID to get history for
@@ -401,12 +427,49 @@ async def get_insight_history(
         if current_user.user_id != user_id:
             _raise_access_denied_error(user_id, current_user.user_id, request_id)
 
-        # TODO: Implement history retrieval from database
-        # For now, return a placeholder response
-        placeholder_history = {"insights": [], "total_count": 0, "has_more": False}
+        # Get insights from Firestore
+        firestore_client = _get_firestore_client()
+        insights = await firestore_client.query_documents(
+            collection="insights",
+            filters=[{"field": "user_id", "op": "==", "value": user_id}],
+            limit=limit,
+            offset=offset,
+            order_by="generated_at",
+            order_direction="desc"
+        )
+        
+        # Get total count for pagination
+        total_count = await firestore_client.count_documents(
+            collection="insights",
+            filters=[{"field": "user_id", "op": "==", "value": user_id}]
+        )
+        
+        # Format insights for response
+        formatted_insights = []
+        for insight in insights:
+            formatted_insights.append({
+                "id": insight.get("id"),
+                "narrative": insight.get("narrative", "")[:200] + "..." if len(insight.get("narrative", "")) > 200 else insight.get("narrative", ""),
+                "generated_at": insight.get("generated_at"),
+                "confidence_score": insight.get("confidence_score", 0.0),
+                "key_insights_count": len(insight.get("key_insights", [])),
+                "recommendations_count": len(insight.get("recommendations", []))
+            })
+        
+        history_data = {
+            "insights": formatted_insights,
+            "total_count": total_count,
+            "has_more": offset + len(insights) < total_count,
+            "pagination": {
+                "limit": limit,
+                "offset": offset,
+                "current_page": (offset // limit) + 1,
+                "total_pages": (total_count + limit - 1) // limit
+            }
+        }
 
         return InsightHistoryResponse(
-            success=True, data=placeholder_history, metadata=create_metadata(request_id)
+            success=True, data=history_data, metadata=create_metadata(request_id)
         )
 
     except HTTPException:
@@ -494,6 +557,15 @@ async def get_service_status(
             details={"error_type": type(e).__name__, "error_message": str(e)},
             suggested_action="check_service_health",
         ) from e
+
+
+def _get_firestore_client():
+    """Get Firestore client for storing/retrieving insights."""
+    import os
+    from clarity.storage.firestore_client import FirestoreClient
+    
+    project_id = os.getenv("GOOGLE_CLOUD_PROJECT", "clarity-digital-twin")
+    return FirestoreClient(project_id=project_id)
 
 
 # Export router

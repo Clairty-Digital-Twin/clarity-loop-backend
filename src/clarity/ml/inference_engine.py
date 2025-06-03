@@ -16,8 +16,6 @@ dependency injection, and comprehensive error handling.
 
 import asyncio
 from collections.abc import Callable
-import contextlib
-from functools import wraps
 import logging
 import time
 from typing import TYPE_CHECKING, Any, Optional
@@ -178,7 +176,7 @@ class AsyncInferenceEngine:
         pat_service: PATModelService,
         batch_size: int = DEFAULT_BATCH_SIZE,
         batch_timeout_ms: int = DEFAULT_BATCH_TIMEOUT_MS,
-        cache_ttl: int = DEFAULT_CACHE_TTL_SECONDS,
+        cache_ttl: int = CACHE_TTL_DEFAULT_SECONDS,
     ) -> None:
         """Initialize the inference engine.
 
@@ -192,14 +190,14 @@ class AsyncInferenceEngine:
         self.batch_size = batch_size
         self.batch_timeout = batch_timeout_ms / 1000.0  # Convert to seconds
 
-        # Performance tracking
+        # Statistics
         self.request_count = 0
         self.cache_hits = 0
         self.error_count = 0
 
         # Async components
         self.cache = InferenceCache(ttl_seconds=cache_ttl)
-        self.request_queue: asyncio.Queue[InferenceRequest] = asyncio.Queue()
+        self.request_queue: asyncio.Queue[tuple[InferenceRequest, asyncio.Future[InferenceResponse]]] = asyncio.Queue()
         self.batch_processor_task: Optional[asyncio.Task] = None
         self.is_running = False
         self._shutdown_event = asyncio.Event()
@@ -326,34 +324,38 @@ class AsyncInferenceEngine:
             logger.warning("Cache store failed: %s", str(e))
 
     async def _process_batch(
-        self, requests: list[InferenceRequest]
+        self, requests: list[tuple[InferenceRequest, asyncio.Future[InferenceResponse]]]
     ) -> None:
         """Process a batch of inference requests.
 
-        This method implements the Template Method pattern, defining the skeleton
-        of the batch processing algorithm while allowing subclasses to override
-        specific steps if needed.
+        This method handles the actual ML inference for a batch of requests,
+        implementing caching and error handling.
 
         Args:
-            requests: List of request to process
+            requests: List of request/future pairs to process
         """
         if not requests:
             return
 
         start_time = time.perf_counter()
-        batch_size = len(requests)
-        logger.debug("Processing batch of %d requests", batch_size)
+        logger.debug(f"Processing batch of {len(requests)} requests")
 
         # Process each request in the batch
-        for request in requests:
+        for request, future in requests:
+            if future.cancelled():
+                continue
+
             try:
                 result = await self._run_single_inference(request)
+                if not future.cancelled():
+                    future.set_result(result)
             except (ValueError, RuntimeError, OSError) as e:
                 self.error_count += 1
-                logger.warning(f"Error processing request {request.request_id}: {e}")
+                if not future.cancelled():
+                    future.set_exception(e)
 
         processing_time = (time.perf_counter() - start_time) * 1000
-        logger.debug("Batch processing completed in %.2fms", processing_time)
+        logger.debug(f"Batch processed in {processing_time:.2f}ms")
 
     @performance_monitor
     async def _run_single_inference(
@@ -429,18 +431,19 @@ class AsyncInferenceEngine:
                     # Continue processing
                     pass
 
+                # Collect requests for batching
+                requests: list[tuple[InferenceRequest, asyncio.Future[InferenceResponse]]] = []
+
                 # Try to get first request with timeout
                 try:
                     first_request = await asyncio.wait_for(
                         self.request_queue.get(),
                         timeout=self.batch_timeout
                     )
+                    requests.append(first_request)
                 except asyncio.TimeoutError:
                     continue  # No requests, continue loop
 
-                # Collect batch
-                batch = [first_request]
-                
                 # Collect additional requests up to batch size
                 for _ in range(self.batch_size - 1):
                     try:
@@ -448,12 +451,12 @@ class AsyncInferenceEngine:
                             self.request_queue.get(),
                             timeout=self.batch_timeout
                         )
-                        batch.append(additional_request)
+                        requests.append(additional_request)
                     except asyncio.TimeoutError:
                         break  # No more requests, process current batch
 
                 # Process the batch
-                await self._process_batch(batch)
+                await self._process_batch(requests)
 
             except asyncio.CancelledError:
                 # Graceful shutdown
@@ -473,30 +476,34 @@ class AsyncInferenceEngine:
                         break  # Shutdown timeout reached
 
     async def predict_async(self, request: InferenceRequest) -> InferenceResponse:
-        """Submit async prediction request.
+        """Process inference request asynchronously with batching.
 
         Args:
             request: Inference request to process
 
         Returns:
-            Inference response with results
+            Inference response with analysis results
 
         Raises:
             InferenceTimeoutError: If request times out
+            RuntimeError: If engine is not running
         """
-        # Ensure engine is running
         if not self.is_running:
             await self.start()
 
+        # Create future for result
+        result_future: asyncio.Future[InferenceResponse] = asyncio.Future()
+
         # Add to queue
-        await self.request_queue.put(request)
+        await self.request_queue.put((request, result_future))
 
         try:
             # Wait for result with timeout
             return await asyncio.wait_for(
-                self.request_queue.get(), timeout=request.timeout_seconds
+                result_future, timeout=request.timeout_seconds
             )
-        except TimeoutError as e:
+        except asyncio.TimeoutError as e:
+            result_future.cancel()
             raise InferenceTimeoutError(
                 request.request_id, request.timeout_seconds
             ) from e

@@ -97,3 +97,35 @@
 10. Regression Testing:
     - Develop a comprehensive regression test suite
     - Automate regression tests to run after each significant change or update
+
+# Subtasks:
+## 1. Integrate and Fetch Apple HealthKit Data [in-progress]
+### Dependencies: None
+### Description: Set up HealthKit integration, request user authorization, and fetch relevant health metrics (activity, sleep, heart rate) from Apple Watch.
+### Details:
+Enable HealthKit capability, check device support, create a single HKHealthStore instance, request permissions, and implement data fetching for required metrics. Normalize and preprocess the data for downstream use.
+
+## 2. Transform and Analyze Data with PAT Model [pending]
+### Dependencies: 36.1
+### Description: Convert HealthKit data into the required format and send it to the PAT (Pretrained Actigraphy Transformer) model service for actigraphy analysis.
+### Details:
+Implement a data transformation layer to map HealthKit data to PAT input schema. Build an API client for the PAT service, handle errors, and process the returned analysis.
+
+## 3. Generate Personalized Insights with Gemini AI [pending]
+### Dependencies: 36.2
+### Description: Integrate Gemini AI to generate personalized insights from PAT analysis and health data.
+### Details:
+Create a service client for Gemini AI, design prompt engineering to format PAT output and health data, and implement response parsing and post-processing.
+
+## 4. Implement Real-time WebSocket Chat Delivery [pending]
+### Dependencies: 36.3
+### Description: Build a real-time chat interface to deliver AI-generated insights to users via WebSocket.
+### Details:
+Connect to the WebSocket chat interface, implement message routing for user queries and AI responses, and manage conversation context for seamless interaction.
+
+## 5. Develop Demo UI and Orchestrate End-to-End Flow [pending]
+### Dependencies: 36.4
+### Description: Create a simple web interface to showcase the complete vertical slice and orchestrate the data flow between all components.
+### Details:
+Develop a demo UI with real-time updates, visualize health data and AI insights, and implement orchestration logic to manage the pipeline from data ingestion to chat delivery.
+

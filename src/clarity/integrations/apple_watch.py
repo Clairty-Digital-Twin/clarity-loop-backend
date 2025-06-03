@@ -24,6 +24,7 @@ logger = get_logger(__name__)
 
 class ActivityLevel(StrEnum):
     """Apple Watch activity levels."""
+
     SEDENTARY = "sedentary"
     LIGHT = "light"
     MODERATE = "moderate"
@@ -32,6 +33,7 @@ class ActivityLevel(StrEnum):
 
 class SleepStage(StrEnum):
     """Sleep stages from Apple Watch."""
+
     AWAKE = "awake"
     REM = "rem"
     CORE = "core"
@@ -41,6 +43,7 @@ class SleepStage(StrEnum):
 @dataclass
 class ProcessedHealthData:
     """Processed health data ready for ML models."""
+
     # Time series data (minute-level, 10080 points for a week)
     heart_rate_series: np.ndarray | None = None
     hrv_series: np.ndarray | None = None
@@ -95,7 +98,7 @@ class AppleWatchDataProcessor:
 
     # NHANES population statistics for normalization
     NHANES_STEP_MEAN = 7.49  # sqrt(steps) mean
-    NHANES_STEP_STD = 7.71   # sqrt(steps) std
+    NHANES_STEP_STD = 7.71  # sqrt(steps) std
 
     # Physiological bounds for validation
     HR_MIN = 30
@@ -118,9 +121,7 @@ class AppleWatchDataProcessor:
         self.logger = get_logger(__name__)
 
     async def process_health_batch(
-        self,
-        batch: HealthDataBatch,
-        target_duration_days: int = 7
+        self, batch: HealthDataBatch, target_duration_days: int = 7
     ) -> ProcessedHealthData:
         """Process a batch of health data into ML-ready format.
 
@@ -137,23 +138,26 @@ class AppleWatchDataProcessor:
             start_time = end_time - timedelta(days=target_duration_days)
 
             # Initialize result
-            result = ProcessedHealthData(
-                start_time=start_time,
-                end_time=end_time
-            )
+            result = ProcessedHealthData(start_time=start_time, end_time=end_time)
 
             # Process each modality
             if batch.heart_rate_samples:
-                await self._process_heart_rate(batch.heart_rate_samples, result, start_time, end_time)
+                await self._process_heart_rate(
+                    batch.heart_rate_samples, result, start_time, end_time
+                )
 
             if batch.hrv_samples:
                 await self._process_hrv(batch.hrv_samples, result, start_time, end_time)
 
             if batch.respiratory_rate_samples:
-                await self._process_respiratory_rate(batch.respiratory_rate_samples, result, start_time, end_time)
+                await self._process_respiratory_rate(
+                    batch.respiratory_rate_samples, result, start_time, end_time
+                )
 
             if batch.step_count_samples:
-                await self._process_steps(batch.step_count_samples, result, start_time, end_time)
+                await self._process_steps(
+                    batch.step_count_samples, result, start_time, end_time
+                )
 
             if batch.blood_oxygen_samples:
                 await self._process_spo2(batch.blood_oxygen_samples, result)
@@ -187,7 +191,7 @@ class AppleWatchDataProcessor:
         samples: list[HealthDataPoint],
         result: ProcessedHealthData,
         start_time: datetime,
-        end_time: datetime
+        end_time: datetime,
     ) -> None:
         """Process heart rate data with advanced filtering."""
         # Extract time series
@@ -204,15 +208,15 @@ class AppleWatchDataProcessor:
 
         # Resample to minute-level (1440 points per day)
         minute_timestamps = np.arange(
-            start_time.timestamp(),
-            end_time.timestamp(),
-            60  # 60 seconds
+            start_time.timestamp(), end_time.timestamp(), 60  # 60 seconds
         )
 
         # Interpolate to regular grid
         if len(values) > 1:
             # Use linear interpolation for gaps < 5 minutes
-            f = interp1d(times, values, kind='linear', bounds_error=False, fill_value=np.nan)
+            f = interp1d(
+                times, values, kind="linear", bounds_error=False, fill_value=np.nan
+            )
             minute_values = f(minute_timestamps)
 
             # Forward fill for small gaps (< 5 minutes)
@@ -221,11 +225,15 @@ class AppleWatchDataProcessor:
             # Apply Butterworth low-pass filter to remove motion artifacts
             # Cutoff at 0.5 Hz (30 bpm variation)
             if not np.all(np.isnan(minute_values)):
-                b, a = scipy.signal.butter(4, 0.5 / (0.5 * 60), btype='low')
+                b, a = scipy.signal.butter(4, 0.5 / (0.5 * 60), btype="low")
                 valid_mask = ~np.isnan(minute_values)
                 min_filter_points = 12
-                if np.sum(valid_mask) > min_filter_points:  # Need at least 12 points for filter
-                    minute_values[valid_mask] = scipy.signal.filtfilt(b, a, minute_values[valid_mask])
+                if (
+                    np.sum(valid_mask) > min_filter_points
+                ):  # Need at least 12 points for filter
+                    minute_values[valid_mask] = scipy.signal.filtfilt(
+                        b, a, minute_values[valid_mask]
+                    )
         else:
             minute_values = np.full(len(minute_timestamps), values[0])
 
@@ -240,7 +248,7 @@ class AppleWatchDataProcessor:
         # Z-score normalization
         if len(valid_values) > 1:
             hr_mean = 70  # Population average
-            hr_std = 12   # Population std
+            hr_std = 12  # Population std
             minute_values = (minute_values - hr_mean) / hr_std
 
         result.heart_rate_series = minute_values
@@ -250,7 +258,7 @@ class AppleWatchDataProcessor:
         samples: list[HealthDataPoint],
         result: ProcessedHealthData,
         start_time: datetime,
-        end_time: datetime
+        end_time: datetime,
     ) -> None:
         """Process HRV data with outlier removal and normalization."""
         # Extract time series
@@ -269,15 +277,13 @@ class AppleWatchDataProcessor:
             return
 
         # Resample to minute-level
-        minute_timestamps = np.arange(
-            start_time.timestamp(),
-            end_time.timestamp(),
-            60
-        )
+        minute_timestamps = np.arange(start_time.timestamp(), end_time.timestamp(), 60)
 
         # Interpolate (HRV changes slowly, so interpolation is reasonable)
         if len(values) > 1:
-            f = interp1d(times, values, kind='linear', bounds_error=False, fill_value=np.nan)
+            f = interp1d(
+                times, values, kind="linear", bounds_error=False, fill_value=np.nan
+            )
             minute_values = f(minute_timestamps)
 
             # Fill small gaps only
@@ -301,7 +307,7 @@ class AppleWatchDataProcessor:
         samples: list[HealthDataPoint],
         result: ProcessedHealthData,
         start_time: datetime,
-        end_time: datetime
+        end_time: datetime,
     ) -> None:
         """Process respiratory rate with median filtering."""
         # Extract time series
@@ -318,14 +324,14 @@ class AppleWatchDataProcessor:
 
         # Resample to 5-minute intervals (respiratory rate changes slowly)
         five_min_timestamps = np.arange(
-            start_time.timestamp(),
-            end_time.timestamp(),
-            300  # 5 minutes
+            start_time.timestamp(), end_time.timestamp(), 300  # 5 minutes
         )
 
         if len(values) > 1:
             # Interpolate
-            f = interp1d(times, values, kind='linear', bounds_error=False, fill_value=np.nan)
+            f = interp1d(
+                times, values, kind="linear", bounds_error=False, fill_value=np.nan
+            )
             five_min_values = f(five_min_timestamps)
 
             # Apply 3-point median filter to remove transient spikes
@@ -342,18 +348,19 @@ class AppleWatchDataProcessor:
 
         # Z-score normalization
         rr_mean = 15  # Population average
-        rr_std = 3    # Population std
+        rr_std = 3  # Population std
         five_min_values = (five_min_values - rr_mean) / rr_std
 
         # Upsample to minute-level for consistency
-        minute_timestamps = np.arange(
-            start_time.timestamp(),
-            end_time.timestamp(),
-            60
-        )
+        minute_timestamps = np.arange(start_time.timestamp(), end_time.timestamp(), 60)
         if len(five_min_values) > 1:
-            f = interp1d(five_min_timestamps, five_min_values, kind='linear',
-                        bounds_error=False, fill_value=np.nan)
+            f = interp1d(
+                five_min_timestamps,
+                five_min_values,
+                kind="linear",
+                bounds_error=False,
+                fill_value=np.nan,
+            )
             minute_values = f(minute_timestamps)
         else:
             minute_values = np.full(len(minute_timestamps), np.nan)
@@ -365,7 +372,7 @@ class AppleWatchDataProcessor:
         samples: list[HealthDataPoint],
         result: ProcessedHealthData,
         start_time: datetime,
-        end_time: datetime
+        end_time: datetime,
     ) -> None:
         """Process steps into PAT-compatible movement proxy vector."""
         # Create minute-level step array
@@ -383,44 +390,54 @@ class AppleWatchDataProcessor:
         movement_vector = np.sqrt(minute_steps)
 
         # Z-score using NHANES population statistics
-        movement_vector = (movement_vector - self.NHANES_STEP_MEAN) / self.NHANES_STEP_STD
+        movement_vector = (
+            movement_vector - self.NHANES_STEP_MEAN
+        ) / self.NHANES_STEP_STD
 
         result.movement_proxy_vector = movement_vector
 
         # Log weekly step summary
         total_steps = np.sum(minute_steps)
         # Calculate days from time range
-        days = (result.end_time - result.start_time).days if result.start_time and result.end_time else 7
-        self.logger.info("Processed steps over period", extra={
-            "total_steps": int(total_steps),
-            "days": days
-        })
+        days = (
+            (result.end_time - result.start_time).days
+            if result.start_time and result.end_time
+            else 7
+        )
+        self.logger.info(
+            "Processed steps over period",
+            extra={"total_steps": int(total_steps), "days": days},
+        )
 
     async def _process_spo2(
-        self,
-        samples: list[HealthDataPoint],
-        result: ProcessedHealthData
+        self, samples: list[HealthDataPoint], result: ProcessedHealthData
     ) -> None:
         """Process SpO2 data (sparse samples)."""
-        values = [float(s.value) for s in samples if isinstance(s.value, (int, float)) and self.SPO2_MIN <= s.value <= self.SPO2_MAX]
+        values = [
+            float(s.value)
+            for s in samples
+            if isinstance(s.value, (int, float))
+            and self.SPO2_MIN <= s.value <= self.SPO2_MAX
+        ]
 
         if values:
             result.avg_spo2 = float(np.mean(values))
             result.min_spo2 = float(np.min(values))
 
     async def _process_blood_pressure(
-        self,
-        samples: list[HealthDataPoint],
-        result: ProcessedHealthData
+        self, samples: list[HealthDataPoint], result: ProcessedHealthData
     ) -> None:
         """Process blood pressure (episodic data)."""
         systolic_values = []
         diastolic_values = []
 
         for sample in samples:
-            if (hasattr(sample, 'systolic') and hasattr(sample, 'diastolic') and
-                self.BP_SYSTOLIC_MIN <= sample.systolic <= self.BP_SYSTOLIC_MAX and
-                self.BP_DIASTOLIC_MIN <= sample.diastolic <= self.BP_DIASTOLIC_MAX):
+            if (
+                hasattr(sample, "systolic")
+                and hasattr(sample, "diastolic")
+                and self.BP_SYSTOLIC_MIN <= sample.systolic <= self.BP_SYSTOLIC_MAX
+                and self.BP_DIASTOLIC_MIN <= sample.diastolic <= self.BP_DIASTOLIC_MAX
+            ):
                 systolic_values.append(sample.systolic)
                 diastolic_values.append(sample.diastolic)
 
@@ -430,24 +447,29 @@ class AppleWatchDataProcessor:
             result.diastolic_bp = float(diastolic_values[-1])
 
     async def _process_temperature(
-        self,
-        samples: list[HealthDataPoint],
-        result: ProcessedHealthData
+        self, samples: list[HealthDataPoint], result: ProcessedHealthData
     ) -> None:
         """Process temperature deviation data."""
-        deviations = [float(s.value) for s in samples if isinstance(s.value, (int, float)) and abs(s.value) <= self.TEMP_DEVIATION_MAX]
+        deviations = [
+            float(s.value)
+            for s in samples
+            if isinstance(s.value, (int, float))
+            and abs(s.value) <= self.TEMP_DEVIATION_MAX
+        ]
 
         if deviations:
             result.avg_temp_deviation = float(np.mean(deviations))
 
     async def _process_vo2_max(
-        self,
-        samples: list[HealthDataPoint],
-        result: ProcessedHealthData
+        self, samples: list[HealthDataPoint], result: ProcessedHealthData
     ) -> None:
         """Process VO2 max data."""
-        values = [(s.timestamp, float(s.value)) for s in samples
-                  if isinstance(s.value, (int, float)) and self.VO2_MAX_MIN <= s.value <= self.VO2_MAX_MAX]
+        values = [
+            (s.timestamp, float(s.value))
+            for s in samples
+            if isinstance(s.value, (int, float))
+            and self.VO2_MAX_MIN <= s.value <= self.VO2_MAX_MAX
+        ]
 
         if values:
             # Sort by time
@@ -460,9 +482,7 @@ class AppleWatchDataProcessor:
                 result.vo2_max_trend = float(values[-1][1] - values[-2][1])
 
     async def _process_workouts(  # noqa: PLR6301
-        self,
-        samples: list[Any],
-        result: ProcessedHealthData
+        self, samples: list[Any], result: ProcessedHealthData
     ) -> None:
         """Process workout data."""
         result.workout_count = len(samples)
@@ -471,11 +491,13 @@ class AppleWatchDataProcessor:
         total_intensity = 0
 
         for workout in samples:
-            if hasattr(workout, 'duration_minutes'):
+            if hasattr(workout, "duration_minutes"):
                 total_minutes += workout.duration_minutes
-            if hasattr(workout, 'avg_heart_rate') and result.resting_hr:
+            if hasattr(workout, "avg_heart_rate") and result.resting_hr:
                 # Calculate intensity as % of HR reserve
-                hr_reserve = (workout.avg_heart_rate - result.resting_hr) / (220 - workout.age - result.resting_hr)
+                hr_reserve = (workout.avg_heart_rate - result.resting_hr) / (
+                    220 - workout.age - result.resting_hr
+                )
                 total_intensity += hr_reserve
 
         result.total_active_minutes = total_minutes
@@ -483,25 +505,25 @@ class AppleWatchDataProcessor:
             result.avg_workout_intensity = total_intensity / result.workout_count
 
     async def _process_ecg(  # noqa: PLR6301
-        self,
-        samples: list[Any],
-        result: ProcessedHealthData
+        self, samples: list[Any], result: ProcessedHealthData
     ) -> None:
         """Process ECG classifications."""
         for ecg in samples:
-            if hasattr(ecg, 'classification'):
+            if hasattr(ecg, "classification"):
                 result.ecg_classification = ecg.classification
-                if ecg.classification == 'Atrial Fibrillation':
+                if ecg.classification == "Atrial Fibrillation":
                     result.afib_detected = True
                     break
 
-    def _calculate_completeness(self, result: ProcessedHealthData) -> float:  # noqa: PLR6301
+    def _calculate_completeness(
+        self, result: ProcessedHealthData
+    ) -> float:
         """Calculate percentage of data completeness."""
         expected_fields = [
             result.heart_rate_series,
             result.movement_proxy_vector,
             result.hrv_series,
-            result.respiratory_rate_series
+            result.respiratory_rate_series,
         ]
 
         completeness_scores = []

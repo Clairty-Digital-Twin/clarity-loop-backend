@@ -33,6 +33,7 @@ DEFAULT_DAYS_BACK = 7
 
 class HealthDataType(StrEnum):
     """Supported Apple HealthKit data types."""
+
     HEART_RATE = "heart_rate"
     STEPS = "steps"
     ACTIVE_ENERGY = "active_energy"
@@ -50,6 +51,7 @@ class HealthDataType(StrEnum):
 
 class HealthKitAuthScope(StrEnum):
     """HealthKit authorization scopes."""
+
     READ_HEART_RATE = "https://www.healthkit.apple.com/heart_rate"
     READ_STEPS = "https://www.healthkit.apple.com/steps"
     READ_ACTIVE_ENERGY = "https://www.healthkit.apple.com/active_energy"
@@ -61,6 +63,7 @@ class HealthKitAuthScope(StrEnum):
 @dataclass
 class HealthDataPoint:
     """Individual health data measurement."""
+
     timestamp: datetime
     value: float
     unit: str
@@ -79,6 +82,7 @@ class HealthDataPoint:
 
 class HealthDataBatch(BaseModel):
     """Batch of health data for processing."""
+
     user_id: str
     data_type: HealthDataType | None = None
     start_date: datetime | None = None
@@ -104,19 +108,24 @@ class HealthDataBatch(BaseModel):
         """Get end time for the batch."""
         return self.end_date
 
-    @validator('data_points')
-    def validate_data_points(cls, v: list[HealthDataPoint]) -> list[HealthDataPoint]:  # noqa: N805
+    @validator("data_points")
+    def validate_data_points(
+        cls, v: list[HealthDataPoint]
+    ) -> list[HealthDataPoint]:
         """Validate data points (allow empty for multi-modal batches)."""
         return v
 
-    @validator('total_count')
-    def validate_count_matches(cls, v: int, values: dict[str, Any]) -> int:  # noqa: N805, ARG002
+    @validator("total_count")
+    def validate_count_matches(
+        cls, v: int, values: dict[str, Any]
+    ) -> int:
         """Validate total count (for multi-modal batches, may not match data_points)."""
         return v
 
 
 class HealthKitTokens(BaseModel):
     """HealthKit OAuth tokens."""
+
     access_token: str
     refresh_token: str
     expires_at: datetime
@@ -154,18 +163,19 @@ class HealthKitClient:
                 "User-Agent": f"Clarity-Digital-Twin/{settings.VERSION}",
                 "Accept": "application/json",
                 "Content-Type": "application/json",
-            }
+            },
         )
 
-        logger.info("HealthKit client initialized", extra={
-            "client_id": self.client_id[:8] + "..." if self.client_id else None,
-            "base_url": self.base_url
-        })
+        logger.info(
+            "HealthKit client initialized",
+            extra={
+                "client_id": self.client_id[:8] + "..." if self.client_id else None,
+                "base_url": self.base_url,
+            },
+        )
 
     async def get_authorization_url(
-        self,
-        state: str,
-        scopes: list[HealthKitAuthScope]
+        self, state: str, scopes: list[HealthKitAuthScope]
     ) -> str:
         """Generate OAuth 2.0 authorization URL for HealthKit.
 
@@ -189,23 +199,22 @@ class HealthKitClient:
         query_string = "&".join([f"{k}={v}" for k, v in params.items()])
         auth_url = f"{self.base_url}/oauth/authorize?{query_string}"
 
-        logger.info("Generated HealthKit authorization URL", extra={
-            "state": state,
-            "scopes": scopes,
-            "redirect_uri": self.redirect_uri
-        })
+        logger.info(
+            "Generated HealthKit authorization URL",
+            extra={"state": state, "scopes": scopes, "redirect_uri": self.redirect_uri},
+        )
 
         return auth_url
 
-    def _handle_token_error(self, response: httpx.Response, operation: str) -> None:  # noqa: PLR6301
+    def _handle_token_error(
+        self, response: httpx.Response, operation: str
+    ) -> None:
         """Handle token-related HTTP errors."""
         error_msg = f"{operation} failed: {response.status_code} {response.text}"
         raise AuthorizationError(error_msg)
 
     async def exchange_code_for_tokens(
-        self,
-        authorization_code: str,
-        state: str  # noqa: ARG002
+        self, authorization_code: str, state: str  # noqa: ARG002
     ) -> HealthKitTokens:
         """Exchange authorization code for access tokens.
 
@@ -228,7 +237,7 @@ class HealthKitClient:
                     "client_secret": self.client_secret,
                     "code": authorization_code,
                     "redirect_uri": self.redirect_uri,
-                }
+                },
             )
 
             if response.status_code != HTTP_STATUS_OK:
@@ -239,26 +248,35 @@ class HealthKitClient:
             tokens = HealthKitTokens(
                 access_token=token_data["access_token"],
                 refresh_token=token_data["refresh_token"],
-                expires_at=datetime.now(UTC) + timedelta(seconds=token_data["expires_in"]),
-                scope=token_data.get("scope", "").split(" ")
+                expires_at=datetime.now(UTC)
+                + timedelta(seconds=token_data["expires_in"]),
+                scope=token_data.get("scope", "").split(" "),
             )
 
-            logger.info("Successfully exchanged authorization code for tokens", extra={
-                "expires_at": tokens.expires_at.isoformat(),
-                "scopes": tokens.scope
-            })
+            logger.info(
+                "Successfully exchanged authorization code for tokens",
+                extra={
+                    "expires_at": tokens.expires_at.isoformat(),
+                    "scopes": tokens.scope,
+                },
+            )
 
         except AuthorizationError:
             raise
         except Exception as e:
-            raise
-        except Exception as e:
-            logger.exception("Failed to exchange authorization code", extra={
-                "error": str(e),
-                "code_preview": authorization_code[:8] + "..." if authorization_code else None
-            })
+            logger.exception(
+                "Failed to exchange authorization code",
+                extra={
+                    "error": str(e),
+                    "code_preview": (
+                        authorization_code[:8] + "..." if authorization_code else None
+                    ),
+                },
+            )
             error_msg = f"Token exchange failed: {e}"
             raise AuthorizationError(error_msg) from e
+        else:
+            return tokens
 
     async def refresh_access_token(self, refresh_token: str) -> HealthKitTokens:
         """Refresh expired access token.
@@ -280,7 +298,7 @@ class HealthKitClient:
                     "client_id": self.client_id,
                     "client_secret": self.client_secret,
                     "refresh_token": refresh_token,
-                }
+                },
             )
 
             if response.status_code != HTTP_STATUS_OK:
@@ -291,26 +309,30 @@ class HealthKitClient:
             tokens = HealthKitTokens(
                 access_token=token_data["access_token"],
                 refresh_token=token_data.get("refresh_token", refresh_token),
-                expires_at=datetime.now(UTC) + timedelta(seconds=token_data["expires_in"]),
-                scope=token_data.get("scope", "").split(" ")
+                expires_at=datetime.now(UTC)
+                + timedelta(seconds=token_data["expires_in"]),
+                scope=token_data.get("scope", "").split(" "),
             )
 
             logger.info("Successfully refreshed access token")
+
         except AuthorizationError:
-            raise
-        except Exception as e:
             raise
         except Exception as e:
             logger.exception("Failed to refresh access token", extra={"error": str(e)})
             error_msg = f"Token refresh failed: {e}"
             raise AuthorizationError(error_msg) from e
+        else:
+            return tokens
 
     def _handle_api_error(self, response: httpx.Response) -> None:  # noqa: PLR6301
         """Handle HealthKit API errors."""
         error_msg = f"HealthKit API error: {response.status_code} {response.text}"
         raise IntegrationError(error_msg)
 
-    def _validate_data_type_support(self, data_type: HealthDataType) -> str:  # noqa: PLR6301
+    def _validate_data_type_support(
+        self, data_type: HealthDataType
+    ) -> str:
         """Validate data type is supported and return endpoint."""
         endpoint_map = {
             HealthDataType.HEART_RATE: "/v1/healthkit/heart_rate",
@@ -335,7 +357,7 @@ class HealthKitClient:
         data_type: HealthDataType,
         start_date: datetime,
         end_date: datetime,
-        limit: int = DEFAULT_LIMIT
+        limit: int = DEFAULT_LIMIT,
     ) -> HealthDataBatch:
         """Fetch health data from HealthKit API.
 
@@ -370,7 +392,7 @@ class HealthKitClient:
             response = await self._http_client.get(
                 f"{self.base_url}{endpoint}",
                 params=params,
-                headers={"Authorization": f"Bearer {tokens.access_token}"}
+                headers={"Authorization": f"Bearer {tokens.access_token}"},
             )
 
             if response.status_code != HTTP_STATUS_OK:
@@ -386,7 +408,7 @@ class HealthKitClient:
                     value=item["value"],
                     unit=item.get("unit", ""),
                     source=item.get("source", "apple_watch"),
-                    metadata=item.get("metadata")
+                    metadata=item.get("metadata"),
                 )
                 data_points.append(point)
 
@@ -396,34 +418,38 @@ class HealthKitClient:
                 start_date=start_date,
                 end_date=end_date,
                 data_points=data_points,
-                total_count=len(data_points)
+                total_count=len(data_points),
             )
 
-            logger.info("Successfully fetched health data", extra={
-                "data_type": data_type,
-                "count": len(data_points),
-                "start_date": start_date.isoformat(),
-                "end_date": end_date.isoformat()
-            })
+            logger.info(
+                "Successfully fetched health data",
+                extra={
+                    "data_type": data_type,
+                    "count": len(data_points),
+                    "start_date": start_date.isoformat(),
+                    "end_date": end_date.isoformat(),
+                },
+            )
 
         except (AuthorizationError, DataValidationError, IntegrationError):
             raise
         except Exception as e:
-            raise
-        except Exception as e:
-            logger.exception("Failed to fetch health data", extra={
-                "data_type": data_type,
-                "error": str(e),
-                "start_date": start_date.isoformat(),
-                "end_date": end_date.isoformat()
-            })
+            logger.exception(
+                "Failed to fetch health data",
+                extra={
+                    "data_type": data_type,
+                    "error": str(e),
+                    "start_date": start_date.isoformat(),
+                    "end_date": end_date.isoformat(),
+                },
+            )
             error_msg = f"Health data fetch failed: {e}"
             raise IntegrationError(error_msg) from e
+        else:
+            return batch
 
     async def fetch_latest_7_days(
-        self,
-        tokens: HealthKitTokens,
-        data_types: list[HealthDataType]
+        self, tokens: HealthKitTokens, data_types: list[HealthDataType]
     ) -> dict[HealthDataType, HealthDataBatch]:
         """Fetch latest 7 days of data for multiple data types.
 
@@ -446,30 +472,32 @@ class HealthKitClient:
                 tokens=tokens,
                 data_type=data_type,
                 start_date=start_date,
-                end_date=end_date
+                end_date=end_date,
             )
             tasks.append((data_type, task))
 
         results = {}
         completed_tasks = await asyncio.gather(
-            *[task for _, task in tasks],
-            return_exceptions=True
+            *[task for _, task in tasks], return_exceptions=True
         )
 
         for (data_type, _), result in zip(tasks, completed_tasks, strict=False):
             if isinstance(result, Exception):
-                logger.error("Failed to fetch data type", extra={
-                    "data_type": str(data_type),
-                    "error": str(result)
-                })
+                logger.error(
+                    "Failed to fetch data type",
+                    extra={"data_type": str(data_type), "error": str(result)},
+                )
                 # Continue with other data types
                 continue
             results[data_type] = result
 
-        logger.info("Completed 7-day data fetch", extra={
-            "successful_types": list(results.keys()),
-            "total_requested": len(data_types)
-        })
+        logger.info(
+            "Completed 7-day data fetch",
+            extra={
+                "successful_types": list(results.keys()),
+                "total_requested": len(data_types),
+            },
+        )
 
         return results
 
@@ -481,6 +509,11 @@ class HealthKitClient:
         """Async context manager entry."""
         return self
 
-    async def __aexit__(self, exc_type: type[BaseException] | None, exc_val: BaseException | None, exc_tb: types.TracebackType | None) -> None:
+    async def __aexit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: types.TracebackType | None,
+    ) -> None:
         """Async context manager exit."""
         await self.close()

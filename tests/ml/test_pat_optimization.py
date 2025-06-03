@@ -70,10 +70,24 @@ def sample_actigraphy_input(sample_actigraphy_data: list[ActigraphyDataPoint]) -
 @pytest.fixture
 def sample_analysis_result() -> ActigraphyAnalysis:
     """Sample analysis result for testing."""
+    from datetime import UTC, datetime
     return ActigraphyAnalysis(
         user_id=str(uuid4()),
-        sleep_stages=[1, 2, 3, 2, 1] * 20,  # 100 stages
+        analysis_timestamp=datetime.now(UTC),
+        sleep_stages=["1", "2", "3", "2", "1"] * 20,  # 100 stages as strings
         confidence_scores=[0.8, 0.9, 0.85, 0.7, 0.75] * 20,
+        confidence_score=0.85,  # Overall confidence
+        sleep_efficiency=0.92,
+        sleep_onset_latency=15.5,
+        wake_after_sleep_onset=45.2,
+        total_sleep_time=420.0,  # minutes
+        circadian_rhythm_score=0.78,
+        activity_fragmentation=0.23,
+        depression_risk_score=0.15,
+        clinical_insights=[
+            "Good sleep efficiency detected",
+            "Normal circadian rhythm pattern"
+        ],
         analysis_metadata={
             "model_version": "test_v1",
             "processing_time": 1.5,

@@ -108,12 +108,13 @@ async def upload_healthkit_data(request: HealthKitUploadRequest,
 In this snippet, we define a /upload route that expects a HealthKitUploadRequest (a Pydantic model describing the payload, e.g. lists of samples and workouts). The handler verifies the Firebase Auth token and ensures the user_id in the request matches the authenticated user (preventing cross-user data access) ￼ ￼. Next, it creates a unique upload_id and writes the raw JSON to GCS for safekeeping. Storing raw data in a Cloud Storage bucket (with proper encryption) ensures we don’t lose detailed data and avoids hitting Firestore size limits for large time-series ￼. The code then uses a shared publish_message utility to send a Pub/Sub message on the health-data-upload topic, containing the upload_id, user_id, and a pointer to the GCS file. This enqueues the data for downstream processing. We respond with a 202 Accepted status, returning the upload_id and a summary of received samples. The client can use this ID to poll a status endpoint or simply wait for a realtime update when insights are ready.
 
 Key points:
-	•	We do minimal work synchronously: just auth, validation, storage, and message enqueue. This keeps the upload API fast (acknowledge immediately) ￼ ￼.
-	•	The heavy lifting (parsing and analyzing data) is deferred to background services. This decoupled design follows an event-driven approach – ingestion just publishes an event and doesn’t block on processing ￼.
-	•	Using Pub/Sub ensures reliable, at-least-once delivery of the processing task. If the analysis service is busy or down, the message will be retried, and the upload is not lost ￼.
-	•	The publish_message function (in shared/core/pubsub.py) wraps the Google Cloud Pub/Sub publisher client. It likely serializes the message dict to JSON and publishes it on the given topic asynchronously. For example:
+ • We do minimal work synchronously: just auth, validation, storage, and message enqueue. This keeps the upload API fast (acknowledge immediately) ￼ ￼.
+ • The heavy lifting (parsing and analyzing data) is deferred to background services. This decoupled design follows an event-driven approach – ingestion just publishes an event and doesn’t block on processing ￼.
+ • Using Pub/Sub ensures reliable, at-least-once delivery of the processing task. If the analysis service is busy or down, the message will be retried, and the upload is not lost ￼.
+ • The publish_message function (in shared/core/pubsub.py) wraps the Google Cloud Pub/Sub publisher client. It likely serializes the message dict to JSON and publishes it on the given topic asynchronously. For example:
 
 # Inside shared/core/pubsub.py
+
 from google.cloud import pubsub_v1
 import json
 publisher = pubsub_v1.PublisherClient()
@@ -146,7 +147,7 @@ async def process_task(request: Request, authorization: str = Header(None)):
     """Handle Pub/Sub push subscription for analysis tasks."""
     # 1. Verify the request is from Pub/Sub by checking the OIDC JWT (if in production)
     if os.getenv("ENVIRONMENT") == "production":
-        token = authorization.split(" ")[1] if authorization else None
+        token = authorization.split[" "](1) if authorization else None
         try:
             # Verify Google-signed JWT (this requires Google's certs; could use google.auth.jwt)
             # For brevity, assume a utility exists:
@@ -160,8 +161,8 @@ async def process_task(request: Request, authorization: str = Header(None)):
     # 3. Download raw data from GCS using the path
     storage_client = storage.Client()
     gcs_uri: str = task["gcs_path"]  # e.g. "gs://healthkit-raw-data/uid/uploadid.json"
-    bucket_name = gcs_uri.split("/")[2]
-    blob_path = "/".join(gcs_uri.split("/")[3:])
+    bucket_name = gcs_uri.split["/"](2)
+    blob_path = "/".join(gcs_uri.split["/"](3:))
     raw_json = storage_client.bucket(bucket_name).blob(blob_path).download_as_text()
     health_data = json.loads(raw_json)
     # 4. Run the analysis pipeline on the data (preprocessing, feature extraction, fusion)
@@ -229,13 +230,13 @@ def preprocess_heart_rate(timestamps, values):
     return final_series.tolist()
 
 In this example, we use pandas for clarity, but one could implement similar logic with pure Python if needed. Here’s what we do, aligned with the plan:
-	•	Resampling: Convert irregular HR samples to a uniform timeline (1-minute bins) by averaging values within each minute ￼. This aligns heart rate with other per-minute signals (like steps, respiratory rate, etc.).
-	•	Outlier removal: HR values of 0 or unrealistically high values (e.g. a single reading of 250 BPM) are replaced with NaN (treated as missing) ￼. We assume any instantaneous spike beyond human limits is sensor error unless it persists.
-	•	Interpolation: Short gaps (we allow up to 2 minutes missing) are filled linearly (or forward-filled) because heart rate generally doesn’t jump drastically in 1-2 minutes if a gap is small. Larger gaps (e.g. no readings for an hour) remain NaN – we won’t fabricate long stretches of data.
-	•	Smoothing: We apply a mild smoothing (3-minute moving average) to filter out jitter and PPG noise ￼. This helps remove high-frequency oscillations that likely aren’t meaningful changes (especially if device reports HR with some noise).
-	•	Normalization: Finally, we normalize the series. In the code above we show two approaches:
-	•	A personal baseline normalization: subtract an estimated resting HR (low percentile of the week’s data) and divide by the user’s HR range. This yields a number roughly in [-1, 1] range representing how elevated the heart rate is relative to their baseline.
-	•	Alternatively, a population z-score: subtract a typical mean (≈70 BPM) and divide by std (≈15) to get standard scores. This might be useful if comparing across population norms.
+ • Resampling: Convert irregular HR samples to a uniform timeline (1-minute bins) by averaging values within each minute ￼. This aligns heart rate with other per-minute signals (like steps, respiratory rate, etc.).
+ • Outlier removal: HR values of 0 or unrealistically high values (e.g. a single reading of 250 BPM) are replaced with NaN (treated as missing) ￼. We assume any instantaneous spike beyond human limits is sensor error unless it persists.
+ • Interpolation: Short gaps (we allow up to 2 minutes missing) are filled linearly (or forward-filled) because heart rate generally doesn’t jump drastically in 1-2 minutes if a gap is small. Larger gaps (e.g. no readings for an hour) remain NaN – we won’t fabricate long stretches of data.
+ • Smoothing: We apply a mild smoothing (3-minute moving average) to filter out jitter and PPG noise ￼. This helps remove high-frequency oscillations that likely aren’t meaningful changes (especially if device reports HR with some noise).
+ • Normalization: Finally, we normalize the series. In the code above we show two approaches:
+ • A personal baseline normalization: subtract an estimated resting HR (low percentile of the week’s data) and divide by the user’s HR range. This yields a number roughly in [-1, 1] range representing how elevated the heart rate is relative to their baseline.
+ • Alternatively, a population z-score: subtract a typical mean (≈70 BPM) and divide by std (≈15) to get standard scores. This might be useful if comparing across population norms.
 Either way, normalization ensures the values are scaled for the model. For example, one could use z-scores so that an average HR ~0, high HR yields +2 or +3, etc., or 0-1 scaling relative to resting HR. The blueprint specifically suggests using either the user’s resting HR or global stats for normalization ￼. We fill any remaining missing values with 0 (assuming 0 meaning “no data” or it could be handled by model masking – here we choose simplicity).
 
 This function would be part of a suite of preprocessing utilities (e.g., you’d have similar preprocess_hrv, preprocess_respiration, etc., each tailored to the data characteristics). The analysis pipeline will call these functions to clean raw data before passing it to processor classes. By keeping these in analysis_service/ml/preprocessing.py, we encapsulate “data cleaning” logic separately from the API and business rules, aligning with Clean Architecture (this is part of the “ML processing” layer, not the web layer) ￼.
@@ -245,10 +246,10 @@ This function would be part of a suite of preprocessing utilities (e.g., you’d
 After preprocessing, each modality’s data goes into a processor class that extracts features or embeddings from that modality. Processors encapsulate the logic for a specific health domain (cardio, respiratory, activity, etc.) and present a common interface (e.g. process(data) -> vector). This modular design means each processor can be developed and tested independently ￼.
 
 For instance, the CardioProcessor might take cleaned heart rate and HRV time series and output a feature vector capturing cardiovascular fitness or stress. We will create one processor per modality or group of related modalities:
-	•	CardioProcessor – handles heart rate (HR) and heart rate variability (HRV) metrics ￼.
-	•	RespirationProcessor – handles respiratory rate (RR) and oxygen saturation (SpO₂).
-	•	ActigraphyProcessor – handles activity data (steps, exercise minutes) – likely by invoking the PAT model for actigraphy (or proxy actigraphy features).
-	•	Other processors – e.g., SleepProcessor, BloodPressureProcessor, etc., as needed for additional metrics ￼.
+ • CardioProcessor – handles heart rate (HR) and heart rate variability (HRV) metrics ￼.
+ • RespirationProcessor – handles respiratory rate (RR) and oxygen saturation (SpO₂).
+ • ActigraphyProcessor – handles activity data (steps, exercise minutes) – likely by invoking the PAT model for actigraphy (or proxy actigraphy features).
+ • Other processors – e.g., SleepProcessor, BloodPressureProcessor, etc., as needed for additional metrics ￼.
 
 Each processor will output a fixed-size vector (say 8, 16 dimensions) summarizing that modality. These outputs will later be fused.
 
@@ -293,16 +294,16 @@ class CardioProcessor:
         return features  # e.g. a list of 6 features
 
 This CardioProcessor.process() takes raw HR and HRV data (with timestamps) and returns a feature vector. We first call our preprocessing functions to get cleaned, aligned time series (minute-by-minute arrays). Then we compute a few illustrative features:
-	•	Average HR over the week, maximum HR observed, an estimate of resting HR, and HR variability (std) over the week.
-	•	For HRV (if provided), average and std of HRV (SDNN) over the period.
+ • Average HR over the week, maximum HR observed, an estimate of resting HR, and HR variability (std) over the week.
+ • For HRV (if provided), average and std of HRV (SDNN) over the period.
 
 In a more advanced scenario, as noted in design discussions, we might replace or augment these stats with an ML model that processes the time series (e.g., a 1-D CNN or transformer that encodes the entire HR sequence) ￼. For example, one could implement a small time-series encoder to capture circadian patterns or day-night variation in HR. Initially, however, simple summary features are easier to validate. The output is a fixed-length list of floats (six in this case).
 
 We would have similar classes for other modalities:
-	•	RespirationProcessor.process(rr_series, spo2_series): compute features like mean resting respiratory rate, min SpO₂, etc.
-	•	ActigraphyProcessor.process(step_vector): possibly call the PAT model to get the 128-dim embedding for activity/sleep ￼. If PAT is heavy, we might have this processor call an external service or use a stub (see PAT stub below).
-	•	SleepProcessor.process(sleep_stages or sleep_duration): compute sleep quality metrics.
-	•	etc.
+ • RespirationProcessor.process(rr_series, spo2_series): compute features like mean resting respiratory rate, min SpO₂, etc.
+ • ActigraphyProcessor.process(step_vector): possibly call the PAT model to get the 128-dim embedding for activity/sleep ￼. If PAT is heavy, we might have this processor call an external service or use a stub (see PAT stub below).
+ • SleepProcessor.process(sleep_stages or sleep_duration): compute sleep quality metrics.
+ • etc.
 
 All processors share a common interface (.process() returning a vector) so that the analysis pipeline can treat them uniformly ￼. They can live in a package like analysis_service/processors/ for organization. This design follows the Single Responsibility Principle: each processor focuses on one domain of health data ￼. It also sets us up to potentially scale out – for example, if needed, each processor could be its own microservice or thread. But within this service, we typically just call them sequentially.
 
@@ -408,7 +409,9 @@ The insight generator service uses the Vertex AI Gemini 2.5 large language model
 File: insight_generator/gemini_client.py
 
 import os, json
+
 # Google Vertex AI SDK (assumed installed)
+
 from vertexai import language_models, init
 
 class GeminiClient:
@@ -480,10 +483,10 @@ class GeminiClient:
         return prompt
 
 We use the official Vertex AI SDK (vertexai) to interact with the model. The GeminiClient manages initialization and generation:
-	•	Model Initialization: We call vertexai.init() with the GCP project and location, then load the Gemini model. In production, project_id would be our cloud project; for dev, we might use a dummy project or a mock.
-	•	Prompt Construction: The _create_prompt method takes the analysis results (the output from the analysis service, e.g. containing things like average HR, etc.) and formats a prompt string. We include the key metrics in a readable form (e.g. bullet points of “Average Heart Rate: 72 bpm…”), plus any additional context (e.g. the user’s demographic or a note like “recovering from flu” if available). We then instruct the model to produce a JSON output with specific keys. Notice we explicitly mention “Respond in JSON format with keys: narrative, key_insights, recommendations, confidence_score.” – this is crucial to later parse the response automatically. In tests, they ensured the word “JSON” and all metrics appear in the prompt ￼.
-	•	Calling the LLM: We use self.model.predict(prompt, ...) with a low temperature (0.3 for more factual consistency) and a token limit (1024 tokens) ￼. The model’s raw text output is captured.
-	•	Parsing Output: We attempt to parse the output as JSON. If the model followed instructions, the output will be a JSON string like:
+ • Model Initialization: We call vertexai.init() with the GCP project and location, then load the Gemini model. In production, project_id would be our cloud project; for dev, we might use a dummy project or a mock.
+ • Prompt Construction: The_create_prompt method takes the analysis results (the output from the analysis service, e.g. containing things like average HR, etc.) and formats a prompt string. We include the key metrics in a readable form (e.g. bullet points of “Average Heart Rate: 72 bpm…”), plus any additional context (e.g. the user’s demographic or a note like “recovering from flu” if available). We then instruct the model to produce a JSON output with specific keys. Notice we explicitly mention “Respond in JSON format with keys: narrative, key_insights, recommendations, confidence_score.” – this is crucial to later parse the response automatically. In tests, they ensured the word “JSON” and all metrics appear in the prompt ￼.
+ • Calling the LLM: We use self.model.predict(prompt, ...) with a low temperature (0.3 for more factual consistency) and a token limit (1024 tokens) ￼. The model’s raw text output is captured.
+ • Parsing Output: We attempt to parse the output as JSON. If the model followed instructions, the output will be a JSON string like:
 
 {
   "narrative": "Your heart rate was above average this week... (some summary)",
@@ -494,7 +497,7 @@ We use the official Vertex AI SDK (vertexai) to interact with the model. The Gem
 
 We load this into a Python dict. If parsing fails (sometimes the model might return something not perfectly JSON), we fall back: we take the text as a narrative and at least put it under "narrative", perhaps also create a minimal "key_insights" list so that the downstream handling isn’t broken ￼. In the snippet above, our fallback just uses the raw text as the narrative and a truncated version as a “key insight” placeholder.
 
-	•	We add a "model": "Gemini2.5" tag for reference, and return the insight dict.
+ • We add a "model": "Gemini2.5" tag for reference, and return the insight dict.
 
 This GeminiClient.generate_insight would be invoked by the FastAPI route handling Pub/Sub messages for insights. For example, insight_generator/main.py might have:
 
@@ -540,13 +543,13 @@ class PatModelStub:
         """
         arr = np.array(actigraphy_vector, dtype=float)
         if arr.size == 0:
-            return [0.0] * self.embedding_dim
+            return [0.0] *self.embedding_dim
         # Simple summary-based fake embedding:
         avg = float(np.nanmean(arr))
         std = float(np.nanstd(arr))
         # Create an embedding filled with the avg and std repeated
         half = self.embedding_dim // 2
-        embedding = [avg] * half + [std] * half
+        embedding = [avg]* half + [std] * half
         if self.embedding_dim % 2 == 1:
             embedding.append(avg)  # if odd dimension, append one more value
         # (Alternative approach: return some fixed random vector seeded by user_id for consistency.)
@@ -581,21 +584,21 @@ We package each component into Docker containers for both local development and 
 For local development and testing, we use Docker Compose to orchestrate our services along with Google Cloud service emulators (Pub/Sub, Firestore, etc.). This allows us to run the entire pipeline on a developer’s machine without needing actual cloud resources.
 
 Key points for local setup:
-	•	Use Emulators/Mocks: Configure the Google Cloud SDK emulators for Pub/Sub, Firestore, and a fake GCS server. This is achieved by environment variables that the Google libraries recognize. For example:
-	•	PUBSUB_EMULATOR_HOST=localhost:8085 causes the Pub/Sub client to send all publishes to the local emulator instead of Google’s API ￼.
-	•	FIRESTORE_EMULATOR_HOST=localhost:8080 does similar for Firestore.
-	•	STORAGE_EMULATOR_HOST=http://localhost:9090 (if using a GCS emulator such as fsouza/fake-gcs-server on port 9090).
-	•	Environment Config: We provide a .env file for development that sets ENVIRONMENT=development (and in production deployment we’ll set it to “production”). This flag is used in our code to toggle behaviors (like skipping Pub/Sub JWT verification, using stubbed models, etc.). The quickstart .env.example contains entries for these, e.g.:
+ • Use Emulators/Mocks: Configure the Google Cloud SDK emulators for Pub/Sub, Firestore, and a fake GCS server. This is achieved by environment variables that the Google libraries recognize. For example:
+ • PUBSUB_EMULATOR_HOST=localhost:8085 causes the Pub/Sub client to send all publishes to the local emulator instead of Google’s API ￼.
+ • FIRESTORE_EMULATOR_HOST=localhost:8080 does similar for Firestore.
+ • STORAGE_EMULATOR_HOST=<http://localhost:9090> (if using a GCS emulator such as fsouza/fake-gcs-server on port 9090).
+ • Environment Config: We provide a .env file for development that sets ENVIRONMENT=development (and in production deployment we’ll set it to “production”). This flag is used in our code to toggle behaviors (like skipping Pub/Sub JWT verification, using stubbed models, etc.). The quickstart .env.example contains entries for these, e.g.:
 
 ENVIRONMENT=development
 GOOGLE_CLOUD_PROJECT=clarity-loop-development
 FIRESTORE_EMULATOR_HOST=localhost:8080
 PUBSUB_EMULATOR_HOST=localhost:8085
-STORAGE_EMULATOR_HOST=http://localhost:9090
+STORAGE_EMULATOR_HOST=<http://localhost:9090>
 
 and other necessary config ￼. When running via Docker Compose, these env vars will be injected into the containers.
 
-	•	Docker Compose File: We define services for each component and for the emulators. For example:
+ • Docker Compose File: We define services for each component and for the emulators. For example:
 
 version: "3.9"
 services:
@@ -610,7 +613,7 @@ services:
       - GOOGLE_CLOUD_PROJECT=clarity-loop-development
       - PUBSUB_EMULATOR_HOST=host.docker.internal:8085
       - FIRESTORE_EMULATOR_HOST=host.docker.internal:8080
-      - STORAGE_EMULATOR_HOST=http://host.docker.internal:9090
+      - STORAGE_EMULATOR_HOST=<http://host.docker.internal:9090>
   analysis:
     build:
       context: .
@@ -621,7 +624,7 @@ services:
       - GOOGLE_CLOUD_PROJECT=clarity-loop-development
       - PUBSUB_EMULATOR_HOST=host.docker.internal:8085
       - FIRESTORE_EMULATOR_HOST=host.docker.internal:8080
-      - STORAGE_EMULATOR_HOST=http://host.docker.internal:9090
+      - STORAGE_EMULATOR_HOST=<http://host.docker.internal:9090>
   insight:
     build:
       context: .
@@ -631,7 +634,7 @@ services:
       - GOOGLE_CLOUD_PROJECT=clarity-loop-development
       - PUBSUB_EMULATOR_HOST=host.docker.internal:8085
       - FIRESTORE_EMULATOR_HOST=host.docker.internal:8080
-      - STORAGE_EMULATOR_HOST=http://host.docker.internal:9090
+      - STORAGE_EMULATOR_HOST=<http://host.docker.internal:9090>
   pubsub-emulator:
     image: google/cloud-sdk:latest
     command: gcloud beta emulators pubsub start --host-port=0.0.0.0:8085
@@ -644,45 +647,45 @@ services:
       - "8080:8080"
   storage-emulator:
     image: fsouza/fake-gcs-server:latest
-    command: -scheme http -port 80 -external-url http://localhost:9090
+    command: -scheme http -port 80 -external-url <http://localhost:9090>
     ports:
       - "9090:80"
 
 This setup will spin up the three Python services and the three emulators. We use host.docker.internal to let containers reach the emulator on the host network (Docker nuance). Now, the ingestion container’s Pub/Sub client will see PUBSUB_EMULATOR_HOST and publish to the local emulator; the analysis container’s Storage client will see STORAGE_EMULATOR_HOST and use the fake GCS, and so on.
 
-	•	Dockerfiles: Each Dockerfile would start from a base image (e.g. python:3.11-slim), copy the code, install requirements, and set the entrypoint to run the FastAPI app (usually via Uvicorn). For example, Dockerfile.ingestion might expose port 8000 and have CMD ["uvicorn", "ingestion_service.app:app", "--host", "0.0.0.0", "--port", "8000"]. The analysis and insight ones similarly but note: analysis and insight might not need to be externally accessible in dev (they only talk via Pub/Sub), but we can still run their FastAPI (which includes the Pub/Sub handler endpoints).
-	•	Running the stack: The developer can simply do:
+ • Dockerfiles: Each Dockerfile would start from a base image (e.g. python:3.11-slim), copy the code, install requirements, and set the entrypoint to run the FastAPI app (usually via Uvicorn). For example, Dockerfile.ingestion might expose port 8000 and have CMD ["uvicorn", "ingestion_service.app:app", "--host", "0.0.0.0", "--port", "8000"]. The analysis and insight ones similarly but note: analysis and insight might not need to be externally accessible in dev (they only talk via Pub/Sub), but we can still run their FastAPI (which includes the Pub/Sub handler endpoints).
+ • Running the stack: The developer can simply do:
 
 docker-compose up --build
 
-or use the provided Makefile target make dev-docker ￼. The quickstart guide demonstrates bringing up all services in one go ￼. Once running, a developer could hit the ingestion API at http://localhost:8000/api/v1/healthkit/upload with a test payload, and watch the logs as the message flows through to analysis and insight services.
+or use the provided Makefile target make dev-docker ￼. The quickstart guide demonstrates bringing up all services in one go ￼. Once running, a developer could hit the ingestion API at <http://localhost:8000/api/v1/healthkit/upload> with a test payload, and watch the logs as the message flows through to analysis and insight services.
 
 Using this isolated local stack, we can iterate quickly: the PAT model stub and the emulator usage ensure we don’t require cloud access or real user data. It’s also suitable for integration tests – one could write tests that spin up these services (or even call the pipeline functions directly) to simulate an end-to-end run with sample data.
 
 3.2 Production Deployment (GCP Cloud Run + Pub/Sub + GCS)
 
 For production, each service will be built into a container and deployed to Cloud Run. We use Google Cloud services for storage and messaging:
-	•	Google Cloud Storage (GCS): The ingestion service writes raw payloads to a secure GCS bucket (as we coded). Ensure this bucket exists (e.g., healthkit-raw-data) and that the Cloud Run service account has permission to write to it. In production, one would also enable CMEK (managed encryption keys) and proper access controls given the sensitive nature of health data ￼.
-	•	Pub/Sub Topics: We need to create Pub/Sub topics and subscriptions:
-	•	Topic e.g. health-data-upload with a push subscription that targets the analysis service’s endpoint (Cloud Run URL for /process-task). This subscription should use OIDC authentication, configuring the service account and audience to match what our code expects (the PUBSUB_PUSH_AUDIENCE env, which could be the Cloud Run service URL or a custom audience string).
-	•	Topic e.g. insight-request with a push subscription to the insight generator service’s endpoint (e.g. /generate-insight).
-	•	The Cloud Run services (analysis and insight) should be deployed with the appropriate IAM allowing Pub/Sub to invoke them. Typically, we’d use the service’s identity and add a Pub/Sub push subscription with that identity’s token.
-	•	Environment Variables: In Cloud Run, we set ENVIRONMENT=production for each service (and any other needed variables like bucket names, project IDs, etc.). In fact, the Makefile snippet shows using --set-env-vars="ENVIRONMENT=production" when deploying ￼. In production mode, our code will perform the real JWT verification for Pub/Sub requests and use real models (if available) instead of stubs.
-	•	Docker Image Build: We can build images and push to Google Container Registry or Artifact Registry. For example, using the Makefile:
+ • Google Cloud Storage (GCS): The ingestion service writes raw payloads to a secure GCS bucket (as we coded). Ensure this bucket exists (e.g., healthkit-raw-data) and that the Cloud Run service account has permission to write to it. In production, one would also enable CMEK (managed encryption keys) and proper access controls given the sensitive nature of health data ￼.
+ • Pub/Sub Topics: We need to create Pub/Sub topics and subscriptions:
+ • Topic e.g. health-data-upload with a push subscription that targets the analysis service’s endpoint (Cloud Run URL for /process-task). This subscription should use OIDC authentication, configuring the service account and audience to match what our code expects (the PUBSUB_PUSH_AUDIENCE env, which could be the Cloud Run service URL or a custom audience string).
+ • Topic e.g. insight-request with a push subscription to the insight generator service’s endpoint (e.g. /generate-insight).
+ • The Cloud Run services (analysis and insight) should be deployed with the appropriate IAM allowing Pub/Sub to invoke them. Typically, we’d use the service’s identity and add a Pub/Sub push subscription with that identity’s token.
+ • Environment Variables: In Cloud Run, we set ENVIRONMENT=production for each service (and any other needed variables like bucket names, project IDs, etc.). In fact, the Makefile snippet shows using --set-env-vars="ENVIRONMENT=production" when deploying ￼. In production mode, our code will perform the real JWT verification for Pub/Sub requests and use real models (if available) instead of stubs.
+ • Docker Image Build: We can build images and push to Google Container Registry or Artifact Registry. For example, using the Makefile:
 
 make docker-build  # builds the image (could be configured to build all or one)
 make docker-push   # pushes to registry
 
 We might adjust the Makefile to build/push separate images for each service, or tag them differently. Alternatively, use Google Cloud Build with separate Dockerfile targets.
 
-	•	Deploying Cloud Run: Deploy each service:
+ • Deploying Cloud Run: Deploy each service:
 
 gcloud run deploy ingestion-service --image gcr.io/your-project/clarity-backend:ingestion \
     --platform managed --region us-central1 \
     --allow-unauthenticated \
     --set-env-vars ENVIRONMENT=production,GOOGLE_CLOUD_PROJECT=your-project,...
 gcloud run deploy analysis-service --image gcr.io/your-project/clarity-backend:analysis \
-    --no-allow-unauthenticated \ 
+    --no-allow-unauthenticated \
     --set-env-vars ENVIRONMENT=production,PUBSUB_PUSH_AUDIENCE=<expected aud>,...
 gcloud run deploy insight-service --image gcr.io/your-project/clarity-backend:insight \
     --no-allow-unauthenticated \
@@ -690,8 +693,8 @@ gcloud run deploy insight-service --image gcr.io/your-project/clarity-backend:in
 
 The ingestion service likely should allow public (authenticated via Firebase JWT in the app) access. The analysis and insight services need not be public; Pub/Sub will invoke them securely. We include relevant env vars (like project ID, region, etc.). For example, if using Vertex AI, the VERTEX_AI_LOCATION=us-central1 and any model identifiers (like GEMINI_MODEL=gemini-2.5-pro) could be set here as well.
 
-	•	Scaling and concurrency: We can configure concurrency and memory for each Cloud Run service. The analysis service might need more memory/CPU if it loads ML models (like PAT) – possibly use a larger instance with concurrency=1 (since it might be CPU intensive per request). The insight service can be smaller (just network calls to Vertex AI).
-	•	Permissions: Ensure the Cloud Run service accounts have the necessary permissions: e.g. analysis service needs permission to read from the GCS bucket and publish to the insight-request Pub/Sub topic; insight service needs permission to call Vertex AI (if using default credentials, assign the “Vertex AI User” role), and to write to Firestore for storing insights. These can be granted via IAM roles on the respective resources.
+ • Scaling and concurrency: We can configure concurrency and memory for each Cloud Run service. The analysis service might need more memory/CPU if it loads ML models (like PAT) – possibly use a larger instance with concurrency=1 (since it might be CPU intensive per request). The insight service can be smaller (just network calls to Vertex AI).
+ • Permissions: Ensure the Cloud Run service accounts have the necessary permissions: e.g. analysis service needs permission to read from the GCS bucket and publish to the insight-request Pub/Sub topic; insight service needs permission to call Vertex AI (if using default credentials, assign the “Vertex AI User” role), and to write to Firestore for storing insights. These can be granted via IAM roles on the respective resources.
 
 With these in place, the pipeline in production works as in dev, just with real services. A user uploads via the FastAPI endpoint, gets “queued”. The processing happens asynchronously and the insight ends up in Firestore (or could be fetched by an API call depending on design). The user’s app can listen on Firestore or call a GET endpoint to retrieve the insight when ready.
 
@@ -700,7 +703,7 @@ With these in place, the pipeline in production works as in dev, just with real 
 We’ve touched on this, but to summarize: our code should detect the environment and adjust behaviors accordingly. This can be done via a simple environment variable or a config file. The project already uses patterns like config_provider.is_development() in places ￼. We will leverage an ENVIRONMENT env var and possibly others.
 
 Configuration approach:
-	•	Create a shared.utils.config module or use Pydantic’s BaseSettings to define configuration values with env var overrides. For example:
+ • Create a shared.utils.config module or use Pydantic’s BaseSettings to define configuration values with env var overrides. For example:
 
 from pydantic import BaseSettings
 class Settings(BaseSettings):
@@ -716,13 +719,13 @@ settings = Settings()
 
 Then throughout the code we use settings.ENVIRONMENT or similar.
 
-	•	Dev vs Prod flags: In code, key switches include:
-	•	Pub/Sub JWT verification: only enforce in prod.
-	•	Using stub vs real PAT model: if ENVIRONMENT != "production", use PatModelStub.
-	•	Logging level or verbosity: maybe debug logs in dev, concise in prod.
-	•	Vertex AI usage: in dev, we might not have real Vertex credentials. The GeminiService in code checks if config_provider.is_development(): ... use dev-project ... else use prod project ￼. We can similarly direct the GeminiClient to either no-op (or use a smaller model, or a dummy response) if in dev. However, if we have internet, we could even call the real Vertex model in dev using a test project – that’s optional. At minimum, we ensure the dev environment doesn’t break if Vertex API is unavailable (e.g., catch errors or skip actual call).
-	•	External service endpoints: e.g., pointing to emulators vs. real endpoints is handled by environment variables (as shown with PUBSUB_EMULATOR_HOST etc.). The presence of those env vars is itself a toggle – the Google SDK auto-detects them.
-	•	Security differences: In local test, we often disable auth requirements (for instance, we might not require a valid Firebase token if running in a test context). Our FastAPI dependency verify_firebase_token could be stubbed to accept any token in dev mode. Alternatively, provide a dummy token via config for testing.
+ • Dev vs Prod flags: In code, key switches include:
+ • Pub/Sub JWT verification: only enforce in prod.
+ • Using stub vs real PAT model: if ENVIRONMENT != "production", use PatModelStub.
+ • Logging level or verbosity: maybe debug logs in dev, concise in prod.
+ • Vertex AI usage: in dev, we might not have real Vertex credentials. The GeminiService in code checks if config_provider.is_development(): ... use dev-project ... else use prod project ￼. We can similarly direct the GeminiClient to either no-op (or use a smaller model, or a dummy response) if in dev. However, if we have internet, we could even call the real Vertex model in dev using a test project – that’s optional. At minimum, we ensure the dev environment doesn’t break if Vertex API is unavailable (e.g., catch errors or skip actual call).
+ • External service endpoints: e.g., pointing to emulators vs. real endpoints is handled by environment variables (as shown with PUBSUB_EMULATOR_HOST etc.). The presence of those env vars is itself a toggle – the Google SDK auto-detects them.
+ • Security differences: In local test, we often disable auth requirements (for instance, we might not require a valid Firebase token if running in a test context). Our FastAPI dependency verify_firebase_token could be stubbed to accept any token in dev mode. Alternatively, provide a dummy token via config for testing.
 
 Given the .env example from quickstart, when a developer copies .env.example to .env, they get a pre-filled dev config that sets all the right toggles for using emulators ￼. For production, those emulator variables would be omitted and instead real service configs would be present (and secrets like service account JSON path or API keys might be provided via Secret Manager or Cloud Run env vars).
 
@@ -731,27 +734,32 @@ Finally, document these configurations in the README so developers know how to s
 5. Reproducibility Aids (Configs, Scripts, Documentation)
 
 To make sure any developer can build and run this system from the blueprint, we provide supporting materials:
-	•	Example Config Files: We maintain an .env.example that lists all required env vars for both dev and prod (with dummy or default values). This includes Google Cloud project IDs, bucket names, API keys, etc. The developer can fill in or override as needed. For instance, in .env.example:
+ • Example Config Files: We maintain an .env.example that lists all required env vars for both dev and prod (with dummy or default values). This includes Google Cloud project IDs, bucket names, API keys, etc. The developer can fill in or override as needed. For instance, in .env.example:
 
 # Google Cloud settings
+
 GOOGLE_CLOUD_PROJECT=your-gcp-project-id
 HEALTHKIT_RAW_BUCKET=healthkit-raw-data
+
 # Emulator toggles (use actual services if not set)
+
 FIRESTORE_EMULATOR_HOST=localhost:8080
 PUBSUB_EMULATOR_HOST=localhost:8085
-STORAGE_EMULATOR_HOST=http://localhost:9090
+STORAGE_EMULATOR_HOST=<http://localhost:9090>
+
 # Environment flag
+
 ENVIRONMENT=development
 
 This makes it explicit what to configure.
 
-	•	Makefile Targets: The Makefile includes handy shortcuts:
-	•	make install – install dependencies.
-	•	make dev – run the FastAPI server locally (perhaps using Uvicorn directly, if one just wants ingestion API without Docker) ￼.
-	•	make dev-docker – as shown above, run Docker Compose for the full stack ￼.
-	•	make test – run all tests ￼.
-	•	make docker-build / make docker-run – build and run the Docker image(s) locally ￼.
-	•	make deploy – possibly a script to deploy to Cloud Run (using gcloud commands, as hints in Makefile around line 175+) ￼.
+ • Makefile Targets: The Makefile includes handy shortcuts:
+ • make install – install dependencies.
+ • make dev – run the FastAPI server locally (perhaps using Uvicorn directly, if one just wants ingestion API without Docker) ￼.
+ • make dev-docker – as shown above, run Docker Compose for the full stack ￼.
+ • make test – run all tests ￼.
+ • make docker-build / make docker-run – build and run the Docker image(s) locally ￼.
+ • make deploy – possibly a script to deploy to Cloud Run (using gcloud commands, as hints in Makefile around line 175+) ￼.
 For example, after writing our code, we can do:
 
 $ make docker-build    # Build the Docker image(s) for services
@@ -762,24 +770,23 @@ And for deployment:
 
 $ make deploy-ingestion  # (if configured) or run gcloud manually as described above
 
-
-	•	README/Documentation: We update the repository README and docs with a quickstart for this feature. The quickstart might say:
-	1.	Setup: clone repo, create .env, run make dev-docker.
-	2.	Uploading Data: an example curl command or a reference to API docs (the docs could have an OpenAPI spec or an example JSON payload for HealthKit).
-	3.	Monitoring: how to see the output. E.g., “after upload, open the Firebase local UI or Firestore emulator console to see the new insight document” or “check the ingestion service logs in the terminal for status”.
-	4.	Running tests: how to run pytest, etc.
-	•	Sample Data & Tests: Include some sample HealthKit JSON data in docs/ or tests/. Perhaps a sample_healthkit_payload.json with a week’s worth of dummy data. Provide a snippet in docs on how that looks. This helps developers understand the expected format and quickly try the pipeline. We also write unit tests for each piece:
-	•	Test that preprocess_heart_rate correctly filters and normalizes data (e.g., if given a list with a 300 BPM outlier, test that it’s removed or capped) ￼.
-	•	Test that CardioProcessor.process returns expected feature shapes given synthetic data.
-	•	Test that FusionTransformer produces the correct output dimension and that increasing one modality’s values actually changes the CLS embedding (basic sanity).
-	•	Test that GeminiClient._create_prompt includes all metrics and the JSON instruction ￼.
-	•	Test that GeminiClient.generate_insight properly parses a known good JSON string and falls back on bad JSON ￼.
-	•	Possibly an end-to-end integration test that stubs the Gemini API call (so we’re not reliant on external service) to return a known JSON, then checks that the insight doc in Firestore (emulator) is as expected.
+ • README/Documentation: We update the repository README and docs with a quickstart for this feature. The quickstart might say:
+ 1. Setup: clone repo, create .env, run make dev-docker.
+ 2. Uploading Data: an example curl command or a reference to API docs (the docs could have an OpenAPI spec or an example JSON payload for HealthKit).
+ 3. Monitoring: how to see the output. E.g., “after upload, open the Firebase local UI or Firestore emulator console to see the new insight document” or “check the ingestion service logs in the terminal for status”.
+ 4. Running tests: how to run pytest, etc.
+ • Sample Data & Tests: Include some sample HealthKit JSON data in docs/ or tests/. Perhaps a sample_healthkit_payload.json with a week’s worth of dummy data. Provide a snippet in docs on how that looks. This helps developers understand the expected format and quickly try the pipeline. We also write unit tests for each piece:
+ • Test that preprocess_heart_rate correctly filters and normalizes data (e.g., if given a list with a 300 BPM outlier, test that it’s removed or capped) ￼.
+ • Test that CardioProcessor.process returns expected feature shapes given synthetic data.
+ • Test that FusionTransformer produces the correct output dimension and that increasing one modality’s values actually changes the CLS embedding (basic sanity).
+ • Test that GeminiClient._create_prompt includes all metrics and the JSON instruction ￼.
+ • Test that GeminiClient.generate_insight properly parses a known good JSON string and falls back on bad JSON ￼.
+ • Possibly an end-to-end integration test that stubs the Gemini API call (so we’re not reliant on external service) to return a known JSON, then checks that the insight doc in Firestore (emulator) is as expected.
 
 All these together ensure the system is implementation-ready. A new developer can follow the structured code, use the provided config and scripts, and get the entire pipeline running consistently.
 
 ⸻
 
 Sources:
-	•	Clarity Loop Backend design docs on HealthKit integration and architecture ￼ ￼ ￼
-	•	Excerpts of the actual codebase (FastAPI endpoints, processing logic, etc.) for guidance ￼ ￼ ￼ ￼. These informed the examples above and ensure alignment with project conventions.
+ • Clarity Loop Backend design docs on HealthKit integration and architecture ￼ ￼ ￼
+ • Excerpts of the actual codebase (FastAPI endpoints, processing logic, etc.) for guidance ￼ ￼ ￼ ￼. These informed the examples above and ensure alignment with project conventions.

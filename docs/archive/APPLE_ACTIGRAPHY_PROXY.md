@@ -16,7 +16,7 @@ Step API / Code Sketch Notes
 2.1 Authorize healthStore.requestAuthorization(toShare: [], read: [.quantityType(forIdentifier: .stepCount)!]) Include HR/HRV/etc. if you plan to ingest more signals.
 2.2 Subscribe to updates HKObserverQuery → HKStatisticsCollectionQuery (minute granularity, .cumulativeSum option, interval.day = 0, interval.minute = 1) Returns time-ordered buckets of HKQuantitySamples.
 2.3 Gather 1 week of data Keep a ring buffer [10 080] of Double step counts. Align Monday-Sunday (ISO 8601); pad leading zeros if first week shorter.
-2.4 Serialize payload json\n{\n "uid":"USER_ID",\n "uploadId":"W20250602T0900Z",\n "vector":[/* 10 080 doubles */],\n "unit":"count/min"\n}\n Upload via HTTPS to /v1/ingest/steps.
+2.4 Serialize payload json\n{\n "uid":"USER_ID",\n "uploadId":"W20250602T0900Z",\n "vector":[/*10 080 doubles*/],\n "unit":"count/min"\n}\n Upload via HTTPS to /v1/ingest/steps.
 
 ⸻
 

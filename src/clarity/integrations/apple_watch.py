@@ -5,7 +5,7 @@ for optimal integration with PAT (Pretrained Actigraphy Transformer) models.
 """
 
 from dataclasses import dataclass
-from datetime import UTC, datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from enum import StrEnum
 import operator
 from typing import Any
@@ -173,15 +173,14 @@ class AppleWatchDataProcessor:
             if batch.electrocardiogram_samples:
                 await self._process_ecg(batch.electrocardiogram_samples, result)
 
-            # Calculate data completeness
-            result.data_completeness = self._calculate_completeness(result)
-
-            return result
-
         except Exception as e:
             self.logger.exception("Error processing health batch")
             msg = f"Failed to process health data: {e!s}"
             raise ProcessingError(msg) from e
+        else:
+            # Calculate data completeness
+            result.data_completeness = self._calculate_completeness(result)
+            return result
 
     async def _process_heart_rate(
         self,
@@ -422,8 +421,8 @@ class AppleWatchDataProcessor:
             if (hasattr(sample, 'systolic') and hasattr(sample, 'diastolic') and
                 self.BP_SYSTOLIC_MIN <= sample.systolic <= self.BP_SYSTOLIC_MAX and
                 self.BP_DIASTOLIC_MIN <= sample.diastolic <= self.BP_DIASTOLIC_MAX):
-                    systolic_values.append(sample.systolic)
-                    diastolic_values.append(sample.diastolic)
+                systolic_values.append(sample.systolic)
+                diastolic_values.append(sample.diastolic)
 
         if systolic_values:
             # Use most recent or average

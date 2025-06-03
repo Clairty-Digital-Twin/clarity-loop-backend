@@ -10,7 +10,7 @@ import os
 from typing import Any
 
 from fastapi import FastAPI, HTTPException, Request
-from google.cloud import storage
+from google.cloud import storage  # type: ignore[attr-defined]
 
 from clarity.ml.analysis_pipeline import run_analysis_pipeline
 from clarity.services.pubsub.publisher import get_publisher
@@ -139,7 +139,7 @@ class AnalysisSubscriber:
                 status_code=400, detail=f"Invalid message format: {e!s}"
             ) from e
         else:
-            return message_data
+            return message_data  # type: ignore[no-any-return]
 
     async def _download_health_data(self, gcs_path: str) -> dict[str, Any]:
         """Download raw health data from GCS.
@@ -180,7 +180,7 @@ class AnalysisSubscriber:
             self.logger.exception("Failed to download health data from %s", gcs_path)
             raise
         else:
-            return health_data
+            return health_data  # type: ignore[no-any-return]
 
     @staticmethod
     def _raise_invalid_token_error() -> None:

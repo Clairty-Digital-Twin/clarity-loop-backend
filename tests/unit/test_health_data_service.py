@@ -132,8 +132,7 @@ class TestHealthDataServiceApplicationBusinessRules:
             "Database connection failed"
         )
 
-        with patch("google.cloud.storage.Client"):
-            service = HealthDataService(mock_repository)
+        service = HealthDataService(mock_repository)
         user_id = uuid4()
 
         biometric_data = BiometricData(

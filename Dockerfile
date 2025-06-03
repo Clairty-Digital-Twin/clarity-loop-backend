@@ -21,14 +21,16 @@ RUN apt-get update && apt-get install -y \
 RUN python -m venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
 
-# Copy source code and dependency files
-COPY pyproject.toml ./
-COPY README.md ./
-COPY LICENSE ./
+# Copy package configuration first for better caching
+COPY pyproject.toml README.md LICENSE ./
+
+# Install Python dependencies first (without source code for better caching)
+RUN pip install --upgrade pip setuptools wheel
+
+# Copy source code for installation
 COPY src/ ./src/
 
-# Install Python dependencies
-RUN pip install --upgrade pip setuptools wheel
+# Install the package in development mode
 RUN pip install -e .
 
 # Production stage
@@ -38,6 +40,7 @@ FROM python:3.11-slim AS production
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
     PATH="/opt/venv/bin:$PATH" \
+    PYTHONPATH="/app/src" \
     PORT=8080 \
     WORKERS=4 \
     MAX_WORKERS=8 \
@@ -60,8 +63,10 @@ RUN groupadd -r clarity && useradd -r -g clarity clarity
 # Set working directory
 WORKDIR /app
 
-# Copy application code
-COPY --chown=clarity:clarity . .
+# Copy application code with proper structure
+COPY --chown=clarity:clarity src/ ./src/
+COPY --chown=clarity:clarity main.py ./
+COPY --chown=clarity:clarity pyproject.toml README.md LICENSE ./
 
 # Switch to non-root user
 USER clarity
@@ -73,5 +78,5 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
 # Expose port
 EXPOSE ${PORT}
 
-# Production startup command
-CMD ["sh", "-c", "exec uvicorn clarity.main:app --host 0.0.0.0 --port ${PORT} --workers ${WORKERS} --loop uvloop --http httptools --access-log --log-level info --timeout-keep-alive ${KEEP_ALIVE} --timeout-graceful-shutdown ${TIMEOUT}"]
+# Production startup command - use the root main.py entry point
+CMD ["sh", "-c", "exec uvicorn main:app --host 0.0.0.0 --port ${PORT} --workers ${WORKERS} --loop uvloop --http httptools --access-log --log-level info --timeout-keep-alive ${KEEP_ALIVE} --timeout-graceful-shutdown ${TIMEOUT}"]

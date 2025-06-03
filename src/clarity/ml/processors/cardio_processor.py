@@ -13,6 +13,33 @@ from pydantic import BaseModel, Field
 
 logger = logging.getLogger(__name__)
 
+# Constants for cardiovascular analysis
+MIN_HEART_RATE = 30  # BPM - minimum physiological HR
+MAX_HEART_RATE = 220  # BPM - maximum physiological HR
+MIN_HRV = 5  # ms - minimum HRV for analysis
+MAX_HRV = 200  # ms - maximum HRV for analysis
+
+# Time constants
+MIN_DATA_HOURS = 24  # hours - minimum data for reliable analysis
+PERCENTILE_10 = 10  # 10th percentile for resting HR
+PERCENTILE_25 = 25  # 25th percentile for recovery analysis
+PERCENTILE_75 = 75  # 75th percentile for elevated HR
+
+# Processing parameters
+HR_RESAMPLE_INTERVAL = "1T"  # 1-minute intervals
+HRV_RESAMPLE_INTERVAL = "5T"  # 5-minute intervals
+HR_INTERPOLATION_LIMIT = 5  # max gap to interpolate
+HRV_INTERPOLATION_LIMIT = 2  # max gap to interpolate
+SMOOTHING_WINDOW = 3  # rolling window size
+
+# Night and day hours for circadian analysis
+NIGHT_HOURS = [22, 23, 0, 1, 2, 3, 4, 5]
+DAY_HOURS = [8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19]
+
+# Circadian analysis constants
+MIN_HOURLY_COVERAGE = 12  # minimum hours of coverage needed
+EXPECTED_DAY_NIGHT_DIFF = 20.0  # BPM - normalization factor
+
 
 class CardioFeatures(BaseModel):
     """Cardiovascular features extracted from HR/HRV data."""
@@ -106,17 +133,17 @@ class CardioProcessor:
         ts = pd.Series(values, index=pd.to_datetime(timestamps))
 
         # Resample to 1-minute frequency
-        hr_per_min = ts.resample("1T").mean()
+        hr_per_min = ts.resample(HR_RESAMPLE_INTERVAL).mean()
 
-        # Remove outliers (HR outside 30-220 BPM range)
-        hr_per_min = hr_per_min.mask((hr_per_min <= 30) | (hr_per_min > 220), np.nan)
+        # Remove outliers (HR outside physiological range)
+        hr_per_min = hr_per_min.mask((hr_per_min <= MIN_HEART_RATE) | (hr_per_min > MAX_HEART_RATE), np.nan)
 
-        # Fill short gaps by interpolation (up to 5 minutes)
-        hr_interpolated = hr_per_min.interpolate(limit=5, limit_direction="forward")
+        # Fill short gaps by interpolation
+        hr_interpolated = hr_per_min.interpolate(limit=HR_INTERPOLATION_LIMIT, limit_direction="forward")
 
-        # Apply smoothing (3-minute moving average)
+        # Apply smoothing
         hr_smoothed = hr_interpolated.rolling(
-            window=3, min_periods=1, center=True
+            window=SMOOTHING_WINDOW, min_periods=1, center=True
         ).mean()
 
         # Fill remaining NaNs with forward fill
@@ -133,15 +160,15 @@ class CardioProcessor:
         ts = pd.Series(values, index=pd.to_datetime(timestamps))
 
         # Resample to 5-minute frequency (HRV is typically less frequent)
-        hrv_resampled = ts.resample("5T").mean()
+        hrv_resampled = ts.resample(HRV_RESAMPLE_INTERVAL).mean()
 
-        # Remove outliers (HRV outside 5-200 ms range)
+        # Remove outliers (HRV outside physiological range)
         hrv_resampled = hrv_resampled.mask(
-            (hrv_resampled <= 5) | (hrv_resampled > 200), np.nan
+            (hrv_resampled <= MIN_HRV) | (hrv_resampled > MAX_HRV), np.nan
         )
 
         # Interpolate short gaps
-        hrv_interpolated = hrv_resampled.interpolate(limit=2)
+        hrv_interpolated = hrv_resampled.interpolate(limit=HRV_INTERPOLATION_LIMIT)
 
         # Fill remaining NaNs
         return hrv_interpolated.ffill().bfill()
@@ -155,7 +182,7 @@ class CardioProcessor:
             avg_hr = float(np.nanmean(hr_series))
             max_hr = float(np.nanmax(hr_series))
             resting_hr = float(
-                np.nanpercentile(hr_series, 10)
+                np.nanpercentile(hr_series, PERCENTILE_10)
             )  # 10th percentile as resting
             hr_variability = float(np.nanstd(hr_series))
         else:
@@ -183,15 +210,16 @@ class CardioProcessor:
             circadian_rhythm_score=circadian_rhythm_score,
         )
 
-    def _calculate_recovery_score(self, hr_series: pd.Series) -> float:
+    @staticmethod
+    def _calculate_recovery_score(hr_series: pd.Series) -> float:
         """Calculate heart rate recovery score (0-1, higher is better)."""
-        if len(hr_series) < 24:  # Need at least 24 hours of data
+        if len(hr_series) < MIN_DATA_HOURS:  # Need at least 24 hours of data
             return 0.5  # Neutral score
 
         try:
             # Calculate ratio of resting periods to elevated periods
-            resting_threshold = np.nanpercentile(hr_series, 25)
-            elevated_threshold = np.nanpercentile(hr_series, 75)
+            resting_threshold = np.nanpercentile(hr_series, PERCENTILE_25)
+            elevated_threshold = np.nanpercentile(hr_series, PERCENTILE_75)
 
             resting_periods = (hr_series <= resting_threshold).sum()
             elevated_periods = (hr_series >= elevated_threshold).sum()
@@ -205,7 +233,8 @@ class CardioProcessor:
         except (ValueError, ZeroDivisionError, TypeError):
             return 0.5
 
-    def _calculate_circadian_score(self, hr_series: pd.Series) -> float:
+    @staticmethod
+    def _calculate_circadian_score(hr_series: pd.Series) -> float:
         """Calculate circadian rhythm regularity score (0-1, higher is better)."""
         if len(hr_series) < 24:  # Need at least 24 hours
             return 0.5

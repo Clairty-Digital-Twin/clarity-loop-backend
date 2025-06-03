@@ -134,13 +134,13 @@ class AnalysisSubscriber:
                     msg = f"Missing required field: {field}"
                     raise ValueError(msg)
 
-            return message_data
-
         except Exception as e:
             self.logger.exception("Failed to extract message data")
             raise HTTPException(
                 status_code=400, detail=f"Invalid message format: {e!s}"
-            )
+            ) from e
+        else:
+            return message_data
 
     async def _download_health_data(self, gcs_path: str) -> dict[str, Any]:
         """Download raw health data from GCS.
@@ -179,13 +179,13 @@ class AnalysisSubscriber:
                 len(raw_json),
             )
 
-            return health_data
-
         except Exception as e:
             self.logger.exception(
-                "Failed to download health data from %s: %s", gcs_path, e
+                "Failed to download health data from %s", gcs_path
             )
             raise
+        else:
+            return health_data
 
 
 # Create FastAPI app for analysis service

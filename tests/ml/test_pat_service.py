@@ -195,11 +195,10 @@ class TestPATModelServiceLoading:
         """Test model loading when h5py is not available."""
         service = PATModelService(model_size="medium")
 
-        with patch('pathlib.Path.exists', return_value=True):
-            # Simulate h5py not being available by not adding it to sys.modules
-            with patch.dict('sys.modules', {}, clear=False):
-                # Remove h5py from sys.modules if it exists
-                if 'h5py' in sys.modules:
+        with patch('pathlib.Path.exists', return_value=True), \
+             patch.dict('sys.modules', {}, clear=False):
+            # Remove h5py from sys.modules if it exists
+            if 'h5py' in sys.modules:
                     del sys.modules['h5py']
 
                 await service.load_model()

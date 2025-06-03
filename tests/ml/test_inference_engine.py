@@ -460,7 +460,7 @@ class TestInferenceEngineErrorHandling:
             )
 
             # The error should be wrapped in an InferenceError, not timeout
-            with pytest.raises(Exception):  # Catch any exception type
+            with pytest.raises(Exception, match="PAT analysis failed"):
                 await engine.predict_async(request)
 
     @staticmethod
@@ -486,7 +486,7 @@ class TestInferenceEngineErrorHandling:
         mock_pat_service = MagicMock(spec=PATModelService)
         # Simulate slow processing
         mock_pat_service.analyze_actigraphy = AsyncMock(
-            side_effect=lambda x: asyncio.sleep(2.0)  # 2 second delay
+            side_effect=lambda _: asyncio.sleep(2.0)  # 2 second delay
         )
 
         async with AsyncInferenceEngine(pat_service=mock_pat_service) as engine:

@@ -292,7 +292,7 @@ class TestInferenceEngineUtilities:
     """Test utility functions of the inference engine."""
 
     @staticmethod
-    def test_generate_cache_key():
+    def test_generate_cache_key() -> None:
         """Test cache key generation."""
         data_points = [
             ActigraphyDataPoint(timestamp=datetime.now(UTC), value=50.0),
@@ -316,7 +316,7 @@ class TestInferenceEngineUtilities:
         assert cache_key == cache_key2
 
     @staticmethod
-    def test_generate_cache_key_different_inputs():
+    def test_generate_cache_key_different_inputs() -> None:
         """Test that different inputs generate different cache keys."""
         data_points1 = [ActigraphyDataPoint(timestamp=datetime.now(UTC), value=50.0)]
         data_points2 = [ActigraphyDataPoint(timestamp=datetime.now(UTC), value=75.0)]
@@ -341,7 +341,7 @@ class TestInferenceEngineUtilities:
         assert key1 != key2
 
     @staticmethod
-    def test_generate_cache_key_empty_data():
+    def test_generate_cache_key_empty_data() -> None:
         """Test cache key generation with empty data points."""
         input_data = ActigraphyInput(
             user_id="test-user",
@@ -359,7 +359,7 @@ class TestInferenceEngineStats:
     """Test inference engine statistics functionality."""
 
     @staticmethod
-    def test_get_stats_initial():
+    def test_get_stats_initial() -> None:
         """Test getting stats from freshly initialized engine."""
         mock_pat_service = MagicMock(spec=PATModelService)
         engine = AsyncInferenceEngine(pat_service=mock_pat_service)
@@ -374,7 +374,7 @@ class TestInferenceEngineStats:
 
     @staticmethod
     @pytest.mark.asyncio
-    async def test_get_stats_after_requests():
+    async def test_get_stats_after_requests() -> None:
         """Test getting stats after processing requests."""
         # Create sample data inline
         data_points = [
@@ -427,8 +427,9 @@ class TestInferenceEngineStats:
 class TestInferenceEngineErrorHandling:
     """Test error handling in the inference engine."""
 
+    @staticmethod
     @pytest.mark.asyncio
-    async def test_pat_service_error_handling(self):
+    async def test_pat_service_error_handling() -> None:
         """Test handling of PAT service errors."""
         # Create sample data inline
         data_points = [
@@ -462,8 +463,9 @@ class TestInferenceEngineErrorHandling:
             with pytest.raises(Exception):  # Catch any exception type
                 await engine.predict_async(request)
 
+    @staticmethod
     @pytest.mark.asyncio
-    async def test_timeout_handling(self):
+    async def test_timeout_handling() -> None:
         """Test timeout handling for slow requests."""
         # Create sample data inline
         data_points = [
@@ -497,8 +499,9 @@ class TestInferenceEngineErrorHandling:
             with pytest.raises(InferenceTimeoutError):
                 await engine.predict_async(request)
 
+    @staticmethod
     @pytest.mark.asyncio
-    async def test_cache_error_handling(self):
+    async def test_cache_error_handling() -> None:
         """Test graceful handling of cache errors."""
         # Create sample data inline
         data_points = [
@@ -550,7 +553,8 @@ class TestInferenceEngineErrorHandling:
 class TestInferenceModels:
     """Test the data models used by the inference engine."""
 
-    def test_inference_request_validation(self):
+    @staticmethod
+    def test_inference_request_validation() -> None:
         """Test inference request model validation."""
         data_points = [ActigraphyDataPoint(timestamp=datetime.now(UTC), value=50.0)]
         input_data = ActigraphyInput(
@@ -572,7 +576,8 @@ class TestInferenceModels:
         assert request.timeout_seconds == 10.0
         assert request.cache_enabled is True
 
-    def test_inference_response_validation(self):
+    @staticmethod
+    def test_inference_response_validation() -> None:
         """Test inference response model validation."""
         mock_analysis = ActigraphyAnalysis(
             user_id="test-user",

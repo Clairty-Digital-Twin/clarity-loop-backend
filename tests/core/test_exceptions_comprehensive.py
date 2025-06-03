@@ -5,7 +5,6 @@ Tests all exception classes and utility functions to improve coverage from 42% t
 
 from unittest.mock import MagicMock
 from uuid import UUID
-
 from fastapi import Request
 from fastapi.responses import JSONResponse
 import pytest
@@ -69,7 +68,8 @@ from clarity.core.exceptions import (
 class TestProblemDetail:
     """Tests for RFC 7807 ProblemDetail model."""
 
-    def test_problem_detail_creation(self):
+    @staticmethod
+    def test_problem_detail_creation() -> None:
         """Test creating ProblemDetail with all fields."""
         problem = ProblemDetail(
             type="https://api.clarity.health/problems/test",
@@ -91,7 +91,8 @@ class TestProblemDetail:
         assert problem.errors == [{"field": "test", "message": "Test error"}]
         assert problem.help_url == "https://docs.clarity.health/test"
 
-    def test_problem_detail_minimal(self):
+    @staticmethod
+    def test_problem_detail_minimal() -> None:
         """Test creating ProblemDetail with minimal required fields."""
         problem = ProblemDetail(
             type="https://api.clarity.health/problems/minimal",
@@ -114,7 +115,8 @@ class TestProblemDetail:
 class TestClarityAPIException:
     """Tests for base ClarityAPIException."""
 
-    def test_clarity_api_exception_creation(self):
+    @staticmethod
+    def test_clarity_api_exception_creation() -> None:
         """Test creating ClarityAPIException with all parameters."""
         exc = ClarityAPIException(
             status_code=400,
@@ -138,7 +140,8 @@ class TestClarityAPIException:
         assert exc.help_url == "https://docs.clarity.health/test"
         assert exc.headers == {"X-Test": "header"}
 
-    def test_clarity_api_exception_defaults(self):
+    @staticmethod
+    def test_clarity_api_exception_defaults() -> None:
         """Test ClarityAPIException with default values."""
         exc = ClarityAPIException(
             status_code=500,
@@ -153,7 +156,8 @@ class TestClarityAPIException:
         assert exc.errors is None
         assert exc.help_url is None
 
-    def test_to_problem_detail(self):
+    @staticmethod
+    def test_to_problem_detail() -> None:
         """Test converting ClarityAPIException to ProblemDetail."""
         exc = ClarityAPIException(
             status_code=400,
@@ -177,7 +181,8 @@ class TestClarityAPIException:
 class TestPreDefinedProblemTypes:
     """Tests for pre-defined problem type exceptions."""
 
-    def test_validation_problem(self):
+    @staticmethod
+    def test_validation_problem() -> None:
         """Test ValidationProblem exception."""
         errors = [{"field": "email", "message": "Invalid email format"}]
         exc = ValidationProblem(
@@ -194,7 +199,8 @@ class TestPreDefinedProblemTypes:
         assert exc.trace_id == "validation-trace"
         assert exc.help_url == "https://docs.clarity.health/errors/validation"
 
-    def test_authentication_problem(self):
+    @staticmethod
+    def test_authentication_problem() -> None:
         """Test AuthenticationProblem exception."""
         exc = AuthenticationProblem(detail="Invalid token", trace_id="auth-trace")
 
@@ -205,13 +211,15 @@ class TestPreDefinedProblemTypes:
         assert exc.trace_id == "auth-trace"
         assert exc.help_url == "https://docs.clarity.health/authentication"
 
-    def test_authentication_problem_default(self):
+    @staticmethod
+    def test_authentication_problem_default() -> None:
         """Test AuthenticationProblem with default message."""
         exc = AuthenticationProblem()
 
         assert exc.detail == "Authentication required"
 
-    def test_authorization_problem(self):
+    @staticmethod
+    def test_authorization_problem() -> None:
         """Test AuthorizationProblem exception."""
         exc = AuthorizationProblem(
             detail="Access denied to resource",
@@ -224,13 +232,15 @@ class TestPreDefinedProblemTypes:
         assert exc.detail == "Access denied to resource"
         assert exc.trace_id == "authz-trace"
 
-    def test_authorization_problem_default(self):
+    @staticmethod
+    def test_authorization_problem_default() -> None:
         """Test AuthorizationProblem with default message."""
         exc = AuthorizationProblem()
 
         assert exc.detail == "Insufficient permissions for this resource"
 
-    def test_resource_not_found_problem(self):
+    @staticmethod
+    def test_resource_not_found_problem() -> None:
         """Test ResourceNotFoundProblem exception."""
         exc = ResourceNotFoundProblem(
             resource_type="User",
@@ -244,7 +254,8 @@ class TestPreDefinedProblemTypes:
         assert exc.detail == "User with ID 'user123' does not exist"
         assert exc.trace_id == "notfound-trace"
 
-    def test_conflict_problem(self):
+    @staticmethod
+    def test_conflict_problem() -> None:
         """Test ConflictProblem exception."""
         exc = ConflictProblem(
             detail="Email already exists",
@@ -257,7 +268,8 @@ class TestPreDefinedProblemTypes:
         assert exc.detail == "Email already exists"
         assert exc.trace_id == "conflict-trace"
 
-    def test_rate_limit_problem(self):
+    @staticmethod
+    def test_rate_limit_problem() -> None:
         """Test RateLimitProblem exception."""
         exc = RateLimitProblem(
             retry_after=60,
@@ -272,14 +284,16 @@ class TestPreDefinedProblemTypes:
         assert exc.headers == {"Retry-After": "60"}
         assert exc.trace_id == "ratelimit-trace"
 
-    def test_rate_limit_problem_default(self):
+    @staticmethod
+    def test_rate_limit_problem_default() -> None:
         """Test RateLimitProblem with default message."""
         exc = RateLimitProblem(retry_after=30)
 
         assert exc.detail == "Rate limit exceeded"
         assert exc.headers == {"Retry-After": "30"}
 
-    def test_internal_server_problem(self):
+    @staticmethod
+    def test_internal_server_problem() -> None:
         """Test InternalServerProblem exception."""
         exc = InternalServerProblem(
             detail="Database connection failed",
@@ -292,13 +306,15 @@ class TestPreDefinedProblemTypes:
         assert exc.detail == "Database connection failed"
         assert exc.trace_id == "server-trace"
 
-    def test_internal_server_problem_default(self):
+    @staticmethod
+    def test_internal_server_problem_default() -> None:
         """Test InternalServerProblem with default message."""
         exc = InternalServerProblem()
 
         assert exc.detail == "An internal server error occurred"
 
-    def test_service_unavailable_problem(self):
+    @staticmethod
+    def test_service_unavailable_problem() -> None:
         """Test ServiceUnavailableProblem exception."""
         exc = ServiceUnavailableProblem(
             service_name="Database",
@@ -313,7 +329,8 @@ class TestPreDefinedProblemTypes:
         assert exc.headers == {"Retry-After": "120"}
         assert exc.trace_id == "unavailable-trace"
 
-    def test_service_unavailable_problem_no_retry_after(self):
+    @staticmethod
+    def test_service_unavailable_problem_no_retry_after() -> None:
         """Test ServiceUnavailableProblem without retry_after."""
         exc = ServiceUnavailableProblem(service_name="Redis")
 
@@ -324,7 +341,8 @@ class TestPreDefinedProblemTypes:
 class TestExceptionHandlers:
     """Tests for exception handler functions."""
 
-    def test_problem_detail_exception_handler(self):
+    @staticmethod
+    def test_problem_detail_exception_handler() -> None:
         """Test problem_detail_exception_handler function."""
         exc = ValidationProblem(
             detail="Test validation error",
@@ -344,7 +362,8 @@ class TestExceptionHandlers:
         assert "validation-error" in content
         assert "Test validation error" in content
 
-    def test_problem_detail_exception_handler_with_headers(self):
+    @staticmethod
+    def test_problem_detail_exception_handler_with_headers() -> None:
         """Test problem_detail_exception_handler with custom headers."""
         exc = RateLimitProblem(retry_after=60, detail="Rate limited")
         request = MagicMock(spec=Request)
@@ -356,7 +375,8 @@ class TestExceptionHandlers:
         assert "retry-after" in [k.lower() for k in response.headers.keys()]
         assert response.headers.get("retry-after") == "60" or response.headers.get("Retry-After") == "60"
 
-    def test_generic_exception_handler(self, caplog):
+    @staticmethod
+    def test_generic_exception_handler(caplog: pytest.LogCaptureFixture) -> None:
         """Test generic_exception_handler function."""
         exc = ValueError("Unexpected error")
         request = MagicMock(spec=Request)
@@ -379,7 +399,8 @@ class TestExceptionHandlers:
 class TestClarityBaseError:
     """Tests for ClarityBaseError base class."""
 
-    def test_clarity_base_error_basic(self):
+    @staticmethod
+    def test_clarity_base_error_basic() -> None:
         """Test basic ClarityBaseError creation."""
         exc = ClarityBaseError("Test error message")
 
@@ -387,7 +408,8 @@ class TestClarityBaseError:
         assert exc.error_code is None
         assert exc.details == {}
 
-    def test_clarity_base_error_with_code_and_details(self):
+    @staticmethod
+    def test_clarity_base_error_with_code_and_details() -> None:
         """Test ClarityBaseError with error code and details."""
         details = {"field": "test", "value": 123}
         exc = ClarityBaseError(
@@ -400,7 +422,8 @@ class TestClarityBaseError:
         assert exc.error_code == "TEST_ERROR"
         assert exc.details == details
 
-    def test_clarity_base_error_empty_details(self):
+    @staticmethod
+    def test_clarity_base_error_empty_details() -> None:
         """Test ClarityBaseError with None details."""
         exc = ClarityBaseError("Test error", details=None)
 
@@ -410,7 +433,8 @@ class TestClarityBaseError:
 class TestDataValidationExceptions:
     """Tests for data validation exception classes."""
 
-    def test_data_validation_error(self):
+    @staticmethod
+    def test_data_validation_error() -> None:
         """Test DataValidationError exception."""
         exc = DataValidationError(
             "Invalid data format",
@@ -423,41 +447,47 @@ class TestDataValidationExceptions:
         assert exc.field_name == "email"
         assert exc.details == {"expected": "email", "got": "string"}
 
-    def test_data_validation_error_no_field(self):
+    @staticmethod
+    def test_data_validation_error_no_field() -> None:
         """Test DataValidationError without field name."""
         exc = DataValidationError("General validation error")
 
         assert exc.field_name is None
 
-    def test_invalid_step_count_data_error(self):
+    @staticmethod
+    def test_invalid_step_count_data_error() -> None:
         """Test InvalidStepCountDataError exception."""
         exc = InvalidStepCountDataError("Step count must be positive")
 
         assert str(exc) == "[DATA_VALIDATION_ERROR] Step count must be positive"
         assert isinstance(exc, DataValidationError)
 
-    def test_invalid_nhanes_stats_error(self):
+    @staticmethod
+    def test_invalid_nhanes_stats_error() -> None:
         """Test InvalidNHANESStatsError exception."""
         exc = InvalidNHANESStatsError("Invalid NHANES format")
 
         assert str(exc) == "[DATA_VALIDATION_ERROR] Invalid NHANES format"
         assert isinstance(exc, DataValidationError)
 
-    def test_processing_error(self):
+    @staticmethod
+    def test_processing_error() -> None:
         """Test ProcessingError exception."""
         exc = ProcessingError("Data processing failed")
 
         assert str(exc) == "[DATA_VALIDATION_ERROR] Data processing failed"
         assert isinstance(exc, DataValidationError)
 
-    def test_integration_error(self):
+    @staticmethod
+    def test_integration_error() -> None:
         """Test IntegrationError exception."""
         exc = IntegrationError("External API failed")
 
         assert str(exc) == "[INTEGRATION_ERROR] External API failed"
         assert exc.error_code == "INTEGRATION_ERROR"
 
-    def test_data_length_mismatch_error(self):
+    @staticmethod
+    def test_data_length_mismatch_error() -> None:
         """Test DataLengthMismatchError exception."""
         exc = DataLengthMismatchError(
             expected_length=10,
@@ -471,21 +501,24 @@ class TestDataValidationExceptions:
         assert exc.actual_length == 5
         assert exc.data_type == "step_counts"
 
-    def test_data_length_mismatch_error_default_type(self):
+    @staticmethod
+    def test_data_length_mismatch_error_default_type() -> None:
         """Test DataLengthMismatchError with default data type."""
         exc = DataLengthMismatchError(expected_length=3, actual_length=7)
 
         assert "data length mismatch: expected 3, got 7" in str(exc)
         assert exc.data_type == "data"
 
-    def test_empty_data_error(self):
+    @staticmethod
+    def test_empty_data_error() -> None:
         """Test EmptyDataError exception."""
         exc = EmptyDataError("measurements")
 
         assert str(exc) == "[DATA_VALIDATION_ERROR] measurements cannot be empty"
         assert exc.data_type == "measurements"
 
-    def test_empty_data_error_default_type(self):
+    @staticmethod
+    def test_empty_data_error_default_type() -> None:
         """Test EmptyDataError with default data type."""
         exc = EmptyDataError()
 
@@ -496,14 +529,16 @@ class TestDataValidationExceptions:
 class TestMLModelExceptions:
     """Tests for ML model and inference exception classes."""
 
-    def test_model_error(self):
+    @staticmethod
+    def test_model_error() -> None:
         """Test base ModelError exception."""
         exc = ModelError("Model operation failed")
 
         assert str(exc) == "Model operation failed"
         assert isinstance(exc, ClarityBaseError)
 
-    def test_model_not_initialized_error(self):
+    @staticmethod
+    def test_model_not_initialized_error() -> None:
         """Test ModelNotInitializedError exception."""
         exc = ModelNotInitializedError("TransformerModel")
 
@@ -511,14 +546,16 @@ class TestMLModelExceptions:
         assert exc.model_name == "TransformerModel"
         assert exc.error_code == "MODEL_NOT_INITIALIZED"
 
-    def test_model_not_initialized_error_default(self):
+    @staticmethod
+    def test_model_not_initialized_error_default() -> None:
         """Test ModelNotInitializedError with default model name."""
         exc = ModelNotInitializedError()
 
         assert "Model is not initialized" in str(exc)
         assert exc.model_name == "Model"
 
-    def test_inference_error(self):
+    @staticmethod
+    def test_inference_error() -> None:
         """Test InferenceError exception."""
         exc = InferenceError(
             "Inference failed",
@@ -531,13 +568,15 @@ class TestMLModelExceptions:
         assert exc.error_code == "INFERENCE_ERROR"
         assert exc.details == {"error": "timeout"}
 
-    def test_inference_error_no_request_id(self):
+    @staticmethod
+    def test_inference_error_no_request_id() -> None:
         """Test InferenceError without request ID."""
         exc = InferenceError("General inference error")
 
         assert exc.request_id is None
 
-    def test_inference_timeout_error(self):
+    @staticmethod
+    def test_inference_timeout_error() -> None:
         """Test InferenceTimeoutError exception."""
         exc = InferenceTimeoutError(request_id="req456", timeout_seconds=30.5)
 
@@ -551,14 +590,16 @@ class TestMLModelExceptions:
 class TestNHANESStatsExceptions:
     """Tests for NHANES statistics exception classes."""
 
-    def test_nhanes_stats_error(self):
+    @staticmethod
+    def test_nhanes_stats_error() -> None:
         """Test base NHANESStatsError exception."""
         exc = NHANESStatsError("NHANES operation failed")
 
         assert str(exc) == "[NHANES_STATS_ERROR] NHANES operation failed"
         assert exc.error_code == "NHANES_STATS_ERROR"
 
-    def test_nhanes_data_not_found_error_all_params(self):
+    @staticmethod
+    def test_nhanes_data_not_found_error_all_params() -> None:
         """Test NHANESDataNotFoundError with all parameters."""
         exc = NHANESDataNotFoundError(year=2020, age_group="18-25", sex="M")
 
@@ -568,7 +609,8 @@ class TestNHANESStatsExceptions:
         assert exc.age_group == "18-25"
         assert exc.sex == "M"
 
-    def test_nhanes_data_not_found_error_partial_params(self):
+    @staticmethod
+    def test_nhanes_data_not_found_error_partial_params() -> None:
         """Test NHANESDataNotFoundError with partial parameters."""
         exc = NHANESDataNotFoundError(year=2019, sex="F")
 
@@ -578,7 +620,8 @@ class TestNHANESStatsExceptions:
         assert exc.age_group is None
         assert exc.sex == "F"
 
-    def test_nhanes_data_not_found_error_no_params(self):
+    @staticmethod
+    def test_nhanes_data_not_found_error_no_params() -> None:
         """Test NHANESDataNotFoundError with no parameters."""
         exc = NHANESDataNotFoundError()
 
@@ -588,7 +631,8 @@ class TestNHANESStatsExceptions:
         assert exc.age_group is None
         assert exc.sex is None
 
-    def test_invalid_nhanes_stats_data_error(self):
+    @staticmethod
+    def test_invalid_nhanes_stats_data_error() -> None:
         """Test InvalidNHANESStatsDataError exception."""
         exc = InvalidNHANESStatsDataError(
             data_type="blood_pressure",
@@ -606,14 +650,16 @@ class TestNHANESStatsExceptions:
 class TestServiceExceptions:
     """Tests for service exception classes."""
 
-    def test_service_error(self):
+    @staticmethod
+    def test_service_error() -> None:
         """Test base ServiceError exception."""
         exc = ServiceError("Service operation failed")
 
         assert str(exc) == "Service operation failed"
         assert isinstance(exc, ClarityBaseError)
 
-    def test_service_not_initialized_error(self):
+    @staticmethod
+    def test_service_not_initialized_error() -> None:
         """Test ServiceNotInitializedError exception."""
         exc = ServiceNotInitializedError("DatabaseService")
 
@@ -622,7 +668,8 @@ class TestServiceExceptions:
         assert exc.service_name == "DatabaseService"
         assert exc.error_code == "SERVICE_NOT_INITIALIZED"
 
-    def test_service_unavailable_error_with_reason(self):
+    @staticmethod
+    def test_service_unavailable_error_with_reason() -> None:
         """Test ServiceUnavailableError with reason."""
         exc = ServiceUnavailableError("APIService", reason="Network timeout")
 
@@ -631,7 +678,8 @@ class TestServiceExceptions:
         assert exc.service_name == "APIService"
         assert exc.reason == "Network timeout"
 
-    def test_service_unavailable_error_no_reason(self):
+    @staticmethod
+    def test_service_unavailable_error_no_reason() -> None:
         """Test ServiceUnavailableError without reason."""
         exc = ServiceUnavailableError("CacheService")
 
@@ -644,21 +692,24 @@ class TestServiceExceptions:
 class TestAuthenticationAuthorizationExceptions:
     """Tests for authentication and authorization exception classes."""
 
-    def test_authentication_error(self):
+    @staticmethod
+    def test_authentication_error() -> None:
         """Test base AuthenticationError exception."""
         exc = AuthenticationError("Auth failed")
 
         assert str(exc) == "[AUTHENTICATION_ERROR] Auth failed"
         assert exc.error_code == "AUTHENTICATION_ERROR"
 
-    def test_authorization_error(self):
+    @staticmethod
+    def test_authorization_error() -> None:
         """Test base AuthorizationError exception."""
         exc = AuthorizationError("Access denied")
 
         assert str(exc) == "[AUTHORIZATION_ERROR] Access denied"
         assert exc.error_code == "AUTHORIZATION_ERROR"
 
-    def test_account_disabled_error(self):
+    @staticmethod
+    def test_account_disabled_error() -> None:
         """Test AccountDisabledError exception."""
         exc = AccountDisabledError("user123")
 
@@ -667,7 +718,8 @@ class TestAuthenticationAuthorizationExceptions:
         assert exc.user_id == "user123"
         assert isinstance(exc, AuthenticationError)
 
-    def test_access_denied_error_with_user(self):
+    @staticmethod
+    def test_access_denied_error_with_user() -> None:
         """Test AccessDeniedError with user ID."""
         exc = AccessDeniedError("admin_panel", user_id="user456")
 
@@ -676,7 +728,8 @@ class TestAuthenticationAuthorizationExceptions:
         assert exc.resource == "admin_panel"
         assert exc.user_id == "user456"
 
-    def test_access_denied_error_no_user(self):
+    @staticmethod
+    def test_access_denied_error_no_user() -> None:
         """Test AccessDeniedError without user ID."""
         exc = AccessDeniedError("private_data")
 
@@ -689,14 +742,16 @@ class TestAuthenticationAuthorizationExceptions:
 class TestConfigurationExceptions:
     """Tests for configuration exception classes."""
 
-    def test_configuration_error(self):
+    @staticmethod
+    def test_configuration_error() -> None:
         """Test base ConfigurationError exception."""
         exc = ConfigurationError("Config error", config_key="database.url")
 
         assert str(exc) == "[CONFIGURATION_ERROR] Config error"
         assert exc.config_key == "database.url"
 
-    def test_missing_configuration_error(self):
+    @staticmethod
+    def test_missing_configuration_error() -> None:
         """Test MissingConfigurationError exception."""
         exc = MissingConfigurationError("API_KEY")
 
@@ -704,7 +759,8 @@ class TestConfigurationExceptions:
         assert str(exc) == f"[CONFIGURATION_ERROR] {expected_msg}"
         assert exc.config_key == "API_KEY"
 
-    def test_invalid_configuration_error_with_reason(self):
+    @staticmethod
+    def test_invalid_configuration_error_with_reason() -> None:
         """Test InvalidConfigurationError with reason."""
         exc = InvalidConfigurationError(
             config_key="PORT",
@@ -718,7 +774,8 @@ class TestConfigurationExceptions:
         assert exc.value == "invalid_port"
         assert exc.reason == "must be integer"
 
-    def test_invalid_configuration_error_no_reason(self):
+    @staticmethod
+    def test_invalid_configuration_error_no_reason() -> None:
         """Test InvalidConfigurationError without reason."""
         exc = InvalidConfigurationError(config_key="DEBUG", value=123)
 
@@ -732,14 +789,16 @@ class TestConfigurationExceptions:
 class TestCacheExceptions:
     """Tests for cache exception classes."""
 
-    def test_cache_error(self):
+    @staticmethod
+    def test_cache_error() -> None:
         """Test base CacheError exception."""
         exc = CacheError("Cache operation failed")
 
         assert str(exc) == "[CACHE_ERROR] Cache operation failed"
         assert exc.error_code == "CACHE_ERROR"
 
-    def test_cache_key_error(self):
+    @staticmethod
+    def test_cache_key_error() -> None:
         """Test CacheKeyError exception."""
         exc = CacheKeyError("user:123", "get")
 
@@ -752,7 +811,8 @@ class TestCacheExceptions:
 class TestUtilityFunctions:
     """Tests for utility functions."""
 
-    def test_create_validation_error(self):
+    @staticmethod
+    def test_create_validation_error() -> None:
         """Test create_validation_error utility function."""
         exc = create_validation_error("age", "int", "not_a_number")
 
@@ -761,7 +821,8 @@ class TestUtilityFunctions:
         assert exc.field_name == "age"
         assert isinstance(exc, DataValidationError)
 
-    def test_create_validation_error_different_types(self):
+    @staticmethod
+    def test_create_validation_error_different_types() -> None:
         """Test create_validation_error with different value types."""
         # Test with list value
         exc = create_validation_error("scores", "dict", [1, 2, 3])
@@ -771,7 +832,8 @@ class TestUtilityFunctions:
         exc = create_validation_error("data", "str", None)
         assert "expected str, got NoneType" in str(exc)
 
-    def test_create_numeric_validation_error(self):
+    @staticmethod
+    def test_create_numeric_validation_error() -> None:
         """Test create_numeric_validation_error utility function."""
         exc = create_numeric_validation_error("heart_rate", "invalid")
 
@@ -780,7 +842,8 @@ class TestUtilityFunctions:
         assert exc.actual_type == "str"
         assert isinstance(exc, InvalidNHANESStatsDataError)
 
-    def test_create_numeric_validation_error_different_types(self):
+    @staticmethod
+    def test_create_numeric_validation_error_different_types() -> None:
         """Test create_numeric_validation_error with different value types."""
         # Test with list
         exc = create_numeric_validation_error("blood_pressure", [120, 80])
@@ -794,7 +857,8 @@ class TestUtilityFunctions:
 class TestExceptionInheritance:
     """Tests for exception inheritance hierarchy."""
 
-    def test_exception_inheritance_hierarchy(self):
+    @staticmethod
+    def test_exception_inheritance_hierarchy() -> None:
         """Test that all exceptions inherit from correct base classes."""
         # Test that all custom exceptions inherit from ClarityBaseError
         assert issubclass(DataValidationError, ClarityBaseError)
@@ -811,7 +875,8 @@ class TestExceptionInheritance:
         assert issubclass(AccountDisabledError, AuthenticationError)
         assert issubclass(AccessDeniedError, AuthorizationError)
 
-    def test_exception_isinstance_checks(self):
+    @staticmethod
+    def test_exception_isinstance_checks() -> None:
         """Test isinstance checks work correctly."""
         # Create specific exceptions
         validation_exc = InvalidStepCountDataError("Invalid step count")
@@ -826,7 +891,8 @@ class TestExceptionInheritance:
         assert isinstance(auth_exc, AuthenticationError)
         assert isinstance(auth_exc, ClarityBaseError)
 
-    def test_exception_error_codes(self):
+    @staticmethod
+    def test_exception_error_codes() -> None:
         """Test that exceptions have correct error codes."""
         # Test various exceptions have expected error codes
         assert DataValidationError("test").error_code == "DATA_VALIDATION_ERROR"
@@ -843,7 +909,8 @@ class TestExceptionInheritance:
 class TestExceptionEdgeCases:
     """Tests for edge cases and error conditions."""
 
-    def test_exception_with_complex_details(self):
+    @staticmethod
+    def test_exception_with_complex_details() -> None:
         """Test exceptions with complex details objects."""
         complex_details = {
             "validation_errors": [
@@ -867,7 +934,8 @@ class TestExceptionEdgeCases:
         assert exc.details["validation_errors"][0]["field"] == "email"
         assert exc.details["request_context"]["user_id"] == "user123"
 
-    def test_exception_string_representation(self):
+    @staticmethod
+    def test_exception_string_representation() -> None:
         """Test string representation of exceptions."""
         # Test exception without error code
         exc1 = ClarityBaseError("Simple error")
@@ -882,7 +950,8 @@ class TestExceptionEdgeCases:
         exc3 = ClarityBaseError(long_message, error_code="LONG_ERROR")
         assert str(exc3) == f"[LONG_ERROR] {long_message}"
 
-    def test_exception_with_special_characters(self):
+    @staticmethod
+    def test_exception_with_special_characters() -> None:
         """Test exceptions with special characters in messages."""
         special_msg = "Error with émojis 🚀 and unicode characters: ñáéíóú"
         exc = DataValidationError(special_msg)
@@ -890,7 +959,8 @@ class TestExceptionEdgeCases:
         assert special_msg in str(exc)
         assert exc.error_code == "DATA_VALIDATION_ERROR"
 
-    def test_api_exception_with_empty_values(self):
+    @staticmethod
+    def test_api_exception_with_empty_values() -> None:
         """Test ClarityAPIException with empty/None values."""
         exc = ClarityAPIException(
             status_code=400,

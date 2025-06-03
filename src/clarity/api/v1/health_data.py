@@ -20,7 +20,7 @@ from typing import Any, NoReturn
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, Query, Request, status
-from google.cloud import storage
+from google.cloud import storage  # type: ignore[attr-defined]
 
 from clarity.auth import Permission, UserContext, get_current_user, require_auth
 from clarity.core.exceptions import (

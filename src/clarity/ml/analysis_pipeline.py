@@ -466,7 +466,7 @@ async def run_analysis_pipeline(
         }
 
     except Exception as e:
-        logger.exception("Analysis pipeline failed for user %s: %s", user_id, e)
+        logger.exception("Analysis pipeline failed for user %s", user_id)
         raise
 
 

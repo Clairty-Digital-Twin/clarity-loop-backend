@@ -229,7 +229,7 @@ async def upload_health_data(
                     json.dumps(raw_data), content_type="application/json"
                 )
                 logger.info("Saved health data to GCS: %s", gcs_path)
-            except Exception as gcs_error:
+            except Exception:
                 logger.exception("Failed to save to GCS")
                 # Continue anyway - we can retry later
 

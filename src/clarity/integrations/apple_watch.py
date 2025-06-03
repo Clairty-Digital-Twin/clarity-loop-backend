@@ -78,7 +78,7 @@ class ProcessedHealthData:
     # ECG
     afib_detected: bool = False
     ecg_classification: str | None = None
-
+    
     # Metadata
     start_time: datetime | None = None
     end_time: datetime | None = None
@@ -124,11 +124,11 @@ class AppleWatchDataProcessor:
         self, batch: HealthDataBatch, target_duration_days: int = 7
     ) -> ProcessedHealthData:
         """Process a batch of health data into ML-ready format.
-
+        
         Args:
             batch: Raw health data batch from HealthKit
             target_duration_days: Target duration for time series (default 7 days)
-
+            
         Returns:
             ProcessedHealthData with all modalities processed and aligned
         """
@@ -176,7 +176,7 @@ class AppleWatchDataProcessor:
 
             if batch.electrocardiogram_samples:
                 await self._process_ecg(batch.electrocardiogram_samples, result)
-
+            
         except Exception as e:
             self.logger.exception("Error processing health batch")
             msg = f"Failed to process health data: {e!s}"
@@ -515,8 +515,9 @@ class AppleWatchDataProcessor:
                     result.afib_detected = True
                     break
 
+    @staticmethod
     def _calculate_completeness(
-        self, result: ProcessedHealthData
+        result: ProcessedHealthData
     ) -> float:
         """Calculate percentage of data completeness."""
         expected_fields = [

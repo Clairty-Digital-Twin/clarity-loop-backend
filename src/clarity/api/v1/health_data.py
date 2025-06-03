@@ -49,6 +49,21 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/health-data", tags=["Health Data"])
 
 
+# Helper functions to fix linting issues (TRY300/TRY301)
+def _raise_authorization_error(user_id: str) -> None:
+    """Raise authorization error for user data access."""
+    error_msg = f"Cannot upload health data for user '{user_id}'. Users can only upload their own data."
+    raise AuthorizationProblem(detail=error_msg)
+
+
+def _raise_not_found_error(resource_type: str, resource_id: str) -> None:
+    """Raise not found error for missing resources."""
+    raise ResourceNotFoundProblem(
+        resource_type=resource_type,
+        resource_id=resource_id
+    )
+
+
 # Dependency injection container - using class-based approach instead of globals
 class DependencyContainer:
     """Container for dependency injection to avoid global variables."""
@@ -176,13 +191,10 @@ async def upload_health_data(
 
         # Validate user owns the data
         if str(health_data.user_id) != current_user.user_id:
-            raise AuthorizationProblem(
-                detail=f"Cannot upload health data for user '{health_data.user_id}'. Users can only upload their own data."
-            )
+            _raise_authorization_error(str(health_data.user_id))
 
         # Process health data
         response = await service.process_health_data(health_data)
-
         logger.info("Health data uploaded successfully: %s", response.processing_id)
         return response
 
@@ -248,11 +260,9 @@ async def get_processing_status(
         )
 
         if not status_info:
-            raise ResourceNotFoundProblem(
-                resource_type="Processing Job",
-                resource_id=str(processing_id)
-            )
-
+            _raise_not_found_error("Processing Job", str(processing_id))
+            
+        logger.debug("Retrieved processing status: %s", processing_id)
         return status_info
 
     except HealthDataServiceError as e:
@@ -399,11 +409,7 @@ async def list_health_data(
             additional_params=filters
         )
 
-        logger.info(
-            "Retrieved %s health data records for user: %s",
-            len(paginated_response.data),
-            current_user.user_id,
-        )
+        logger.debug("Retrieved health data for user: %s", current_user.user_id)
         return paginated_response
 
     except ValueError as e:
@@ -470,11 +476,7 @@ async def query_health_data_legacy(
             "removal_date": "2025-12-31"
         }
 
-        logger.info(
-            "Retrieved %s health data records (legacy) for user: %s",
-            len(health_data.get("metrics", [])),
-            current_user.user_id,
-        )
+        logger.debug("Retrieved legacy health data for user: %s", current_user.user_id)
         return health_data
 
     except HealthDataServiceError as e:
@@ -526,10 +528,7 @@ async def delete_health_data(
         )
 
         if not success:
-            raise ResourceNotFoundProblem(
-                resource_type="Processing Job",
-                resource_id=str(processing_id)
-            )
+            _raise_not_found_error("Processing Job", str(processing_id))
 
         logger.info("Health data deleted successfully: %s", processing_id)
         return {
@@ -591,7 +590,8 @@ async def health_check() -> dict[str, Any]:
             else:
                 health_status["database"] = "not_configured"
                 health_status["status"] = "degraded"
-        except Exception:
+        except Exception as db_error:
+            logger.warning("Database health check failed: %s", db_error)
             health_status["database"] = "error"
             health_status["status"] = "degraded"
 
@@ -601,7 +601,8 @@ async def health_check() -> dict[str, Any]:
             else:
                 health_status["authentication"] = "not_configured"
                 health_status["status"] = "degraded"
-        except Exception:
+        except Exception as auth_error:
+            logger.warning("Auth health check failed: %s", auth_error)
             health_status["authentication"] = "error"
             health_status["status"] = "degraded"
 
@@ -613,6 +614,7 @@ async def health_check() -> dict[str, Any]:
         }
         health_status["metrics"] = metrics
 
+        logger.debug("Health check completed successfully")
         return health_status
 
     except Exception as e:

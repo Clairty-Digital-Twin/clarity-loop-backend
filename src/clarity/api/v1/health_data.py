@@ -606,11 +606,12 @@ async def health_check() -> dict[str, Any]:
             health_status["status"] = "degraded"
 
         # Add performance metrics
-        health_status["metrics"]: dict[str, int] = {
+        metrics: dict[str, int] = {
             "uptime_seconds": 0,  # Would be calculated from startup time
             "requests_per_minute": 0,  # Would be tracked by middleware
             "average_response_time_ms": 0  # Would be tracked by middleware
         }
+        health_status["metrics"] = metrics
 
         return health_status
 

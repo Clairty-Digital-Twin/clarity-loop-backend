@@ -59,7 +59,7 @@ def mock_credentials() -> Mock:
 
 
 @pytest.fixture
-def firestore_client(_mock_firebase_admin: Mock, _mock_credentials: Mock) -> FirestoreClient:
+def firestore_client(mock_firebase_admin: Mock, mock_credentials: Mock) -> FirestoreClient:
     """Create FirestoreClient instance with mocked dependencies."""
     return FirestoreClient(
         project_id="test-project",
@@ -254,13 +254,13 @@ class TestFirestoreClientDocumentOperations:
         mock_doc_ref = AsyncMock()
         mock_doc_ref.id = "doc123"
         mock_doc_ref.set = AsyncMock()
-        
+
         mock_collection = Mock()
         mock_collection.document.return_value = mock_doc_ref
-        
+
         mock_db = AsyncMock()
         mock_db.collection.return_value = mock_collection
-        
+
         # Patch the _get_db method to return our mock
         with patch.object(firestore_client, "_get_db", return_value=mock_db), \
              patch.object(firestore_client, "_audit_log", new_callable=AsyncMock):

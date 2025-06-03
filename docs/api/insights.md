@@ -1,6 +1,6 @@
 # AI Insights API
 
-**UPDATED:** December 6, 2025 - Based on actual implementation in `src/clarity/api/v1/insights.py`
+**UPDATED:** June 3rd, 2025 - Based on actual implementation in `src/clarity/api/v1/insights.py`
 
 ## Overview
 

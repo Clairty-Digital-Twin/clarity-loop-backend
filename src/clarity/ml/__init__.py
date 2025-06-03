@@ -7,13 +7,22 @@ This module contains AI/ML services including:
 - Real-time inference capabilities
 """
 
+from clarity.ml.analysis_pipeline import HealthAnalysisPipeline
+from clarity.ml.fusion_transformer import FusionTransformer, HealthFusionService
 from clarity.ml.gemini_service import GeminiService
 from clarity.ml.pat_service import PATModelService
 from clarity.ml.preprocessing import ActigraphyDataPoint, HealthDataPreprocessor
+from clarity.ml.processors.cardio_processor import CardioProcessor
+from clarity.ml.processors.respiration_processor import RespirationProcessor
 
 __all__ = [
     "ActigraphyDataPoint",
+    "CardioProcessor",
+    "FusionTransformer",
     "GeminiService",
+    "HealthAnalysisPipeline",
     "HealthDataPreprocessor",
+    "HealthFusionService",
     "PATModelService",
+    "RespirationProcessor",
 ]

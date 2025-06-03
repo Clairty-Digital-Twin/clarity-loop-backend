@@ -8,6 +8,6 @@ from .cardio_processor import CardioProcessor
 from .respiration_processor import RespirationProcessor
 
 __all__ = [
-    "CardioProcessor", 
+    "CardioProcessor",
     "RespirationProcessor"
 ]

@@ -40,6 +40,7 @@ from clarity.services.health_data_service import (
     HealthDataService,
     HealthDataServiceError,
 )
+from clarity.services.pubsub.publisher import get_publisher
 
 # Configure logger
 logger = logging.getLogger(__name__)
@@ -197,6 +198,28 @@ async def upload_health_data(
         # Process health data
         response = await service.process_health_data(health_data)
         logger.info("Health data uploaded successfully: %s", response.processing_id)
+
+        # Publish to Pub/Sub for async processing if GCS path is available
+        # Note: In a full implementation, we'd save to GCS first
+        # For now, we'll use a placeholder path
+        try:
+            publisher = get_publisher()
+            gcs_path = f"gs://healthkit-raw-data/{current_user.user_id}/{response.processing_id}.json"
+
+            await publisher.publish_health_data_event(
+                user_id=current_user.user_id,
+                upload_id=str(response.processing_id),
+                gcs_path=gcs_path,
+                metadata={
+                    "source": health_data.upload_source,
+                    "metrics_count": len(health_data.metrics),
+                    "timestamp": health_data.client_timestamp.isoformat()
+                }
+            )
+            logger.info("Published health data event for async processing: %s", response.processing_id)
+        except Exception as pub_error:
+            # Don't fail the upload if Pub/Sub fails - data is already saved
+            logger.warning("Failed to publish health data event: %s", pub_error)
     except HealthDataServiceError as e:
         logger.exception("Health data service error")
         raise ValidationProblem(

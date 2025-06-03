@@ -20,7 +20,7 @@ from clarity.core.exceptions import (
     DataValidationError,
     IntegrationError,
 )
-from clarity.core.logging import get_logger
+from clarity.core.logging import get_logger  # type: ignore[import-untyped]
 
 logger = get_logger(__name__)
 

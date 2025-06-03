@@ -10,7 +10,7 @@ from uuid import uuid4
 import pytest
 
 from clarity.models.health_data import BiometricData, HealthMetric, HealthMetricType
-from clarity.storage.firestore_client import FirestoreHealthDataRepository
+from clarity.storage.firestore_client import FirestoreHealthDataRepository, FirestoreError
 
 
 class TestFirestoreHealthDataRepositoryComprehensive:
@@ -157,11 +157,9 @@ class TestFirestoreHealthDataRepositoryComprehensive:
         """Test user health data retrieval failure."""
         firestore_repository._firestore_client.query_documents = AsyncMock(side_effect=Exception("Firestore error"))
 
-        result = await firestore_repository.get_user_health_data("test_user")
-
-        # Should return empty result on failure
-        assert result["metrics"] == []
-        assert result["pagination"]["total"] == 0
+        # Should raise FirestoreError instead of returning empty result
+        with pytest.raises(FirestoreError):
+            await firestore_repository.get_user_health_data("test_user")
 
     async def test_get_processing_status_exists(self, firestore_repository):
         """Test getting processing status that exists."""
@@ -271,15 +269,18 @@ class TestFirestoreHealthDataRepositoryComprehensive:
         """Test generic get_data method failure."""
         firestore_repository._firestore_client.query_documents = AsyncMock(side_effect=Exception("Firestore error"))
 
-        result = await firestore_repository.get_data("test_user")
-
-        # Should return empty data structure on failure
-        assert result["data"] == []
+        # Should raise FirestoreError instead of returning empty result
+        with pytest.raises(FirestoreError):
+            await firestore_repository.get_data("test_user")
 
     async def test_initialize_method(self, firestore_repository):
         """Test initialize method."""
+        # Mock the health_check method to return healthy status
+        firestore_repository._firestore_client.health_check = AsyncMock(return_value={"status": "healthy"})
+        
         await firestore_repository.initialize()
         # Should complete without error
+        firestore_repository._firestore_client.health_check.assert_called_once()
 
     async def test_cleanup_method(self, firestore_repository):
         """Test cleanup method."""
@@ -316,9 +317,11 @@ class TestFirestoreHealthDataRepositoryComprehensive:
 
         # Verify the query was called with correct filters
         firestore_repository._firestore_client.query_documents.assert_called()
-        args, kwargs = firestore_repository._firestore_client.query_documents.call_args
-
+        call_args = firestore_repository._firestore_client.query_documents.call_args
+        
         # Should have filters for user_id and metric_type
+        assert call_args is not None
+        args, kwargs = call_args
         assert len(args) >= 2  # collection name and filters
 
     async def test_date_range_filtering(self, firestore_repository):
@@ -337,9 +340,11 @@ class TestFirestoreHealthDataRepositoryComprehensive:
 
         # Verify the query was called with date filters
         firestore_repository._firestore_client.query_documents.assert_called()
-        args, kwargs = firestore_repository._firestore_client.query_documents.call_args
-
+        call_args = firestore_repository._firestore_client.query_documents.call_args
+        
         # Should have filters for date range
+        assert call_args is not None
+        args, kwargs = call_args
         assert len(args) >= 2  # collection name and filters
 
     async def test_batch_operations_edge_cases(self, firestore_repository, sample_health_metric):

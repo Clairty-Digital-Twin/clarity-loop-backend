@@ -220,7 +220,7 @@ class PATModelService(IMLModelService):
             raise
 
     @staticmethod
-    def _load_weights_from_h5(h5_file: Any) -> dict[str, torch.Tensor]:
+    def _load_weights_from_h5(h5_file: Any) -> dict[str, torch.Tensor]:  # noqa: ANN401
         """Extract and map weights from H5 file to PyTorch format."""
         state_dict = {}
 

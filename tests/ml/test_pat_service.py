@@ -1,4 +1,4 @@
-"""Comprehensive tests for PAT (Pretrained Actigraphy Transformer) Model Service.
+make"""Comprehensive tests for PAT (Pretrained Actigraphy Transformer) Model Service.
 
 This test suite covers all aspects of the PAT service including:
 - Model initialization and loading
@@ -215,14 +215,16 @@ class TestPATModelServiceLoading:
         """Test model loading when H5 file is corrupted."""
         service = PATModelService(model_size="medium")
         
-        with patch('pathlib.Path.exists', return_value=True), \
-             patch('builtins.__import__', return_value=MagicMock()), \
-             patch('h5py.File', side_effect=Exception("Corrupted file")):
+        with patch('pathlib.Path.exists', return_value=True):
+            # Mock h5py to raise an exception without trying to import the real h5py
+            mock_h5py = MagicMock()
+            mock_h5py.File.side_effect = Exception("Corrupted file")
             
-            await service.load_model()
-            
-            assert service.is_loaded
-            assert service.model is not None
+            with patch.dict('sys.modules', {'h5py': mock_h5py}):
+                await service.load_model()
+                
+                assert service.is_loaded
+                assert service.model is not None
 
     @pytest.mark.asyncio
     @staticmethod
@@ -408,6 +410,7 @@ class TestPATModelServicePostprocessing:
         mock_predictions = {
             "sleep_stages": torch.randn(1, 1440, 4),
             "sleep_metrics": torch.tensor([[0.85, 0.75, 0.2, 7.5, 30.0, 15.0, 0.75, 0.25]]),
+            "circadian_score": torch.tensor([[0.75]]),  # Added missing key
             "depression_risk": torch.tensor([[0.2]])
         }
         

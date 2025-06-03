@@ -545,7 +545,7 @@ class PATModelService(IMLModelService):
 
     def _convert_attention_weights(
         self,
-        layer_group: Any,
+        layer_group: Any,  # noqa: ANN401
         state_dict: dict[str, torch.Tensor],
         layer_idx: int,
     ) -> None:

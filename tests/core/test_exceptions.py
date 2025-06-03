@@ -65,7 +65,8 @@ from clarity.core.exceptions import (  # Auth exceptions; Cache exceptions; Base
 class TestProblemDetail:
     """Test RFC 7807 Problem Detail model."""
 
-    def test_problem_detail_creation(self) -> None:
+    @staticmethod
+    def test_problem_detail_creation() -> None:
         """Test creating Problem Detail with all fields."""
         problem = ProblemDetail(
             type="https://api.clarity.health/problems/validation-error",
@@ -101,7 +102,8 @@ class TestProblemDetail:
         ]
         assert problem.help_url == "https://docs.clarity.health/errors/validation-error"
 
-    def test_problem_detail_minimal(self) -> None:
+    @staticmethod
+    def test_problem_detail_minimal() -> None:
         """Test creating Problem Detail with minimal required fields."""
         problem = ProblemDetail(
             type="https://api.clarity.health/problems/generic",
@@ -120,7 +122,8 @@ class TestProblemDetail:
         assert problem.errors is None
         assert problem.help_url is None
 
-    def test_problem_detail_serialization(self) -> None:
+    @staticmethod
+    def test_problem_detail_serialization() -> None:
         """Test Problem Detail serialization."""
         problem = ProblemDetail(
             type="https://api.clarity.health/problems/test",
@@ -142,7 +145,8 @@ class TestProblemDetail:
 class TestClarityAPIException:
     """Test ClarityAPIException base class."""
 
-    def test_clarity_api_exception_creation(self) -> None:
+    @staticmethod
+    def test_clarity_api_exception_creation() -> None:
         """Test creating ClarityAPIException with all parameters."""
         exception = ClarityAPIException(
             status_code=400,
@@ -166,7 +170,8 @@ class TestClarityAPIException:
         assert exception.help_url == "https://docs.clarity.health/errors/test"
         assert exception.headers == {"X-Custom": "test"}
 
-    def test_clarity_api_exception_auto_generation(self) -> None:
+    @staticmethod
+    def test_clarity_api_exception_auto_generation() -> None:
         """Test ClarityAPIException with auto-generated fields."""
         exception = ClarityAPIException(
             status_code=500,
@@ -190,7 +195,8 @@ class TestClarityAPIException:
         assert UUID(instance_id)  # Should not raise
         assert UUID(trace_id)  # Should not raise
 
-    def test_to_problem_detail(self) -> None:
+    @staticmethod
+    def test_to_problem_detail() -> None:
         """Test converting ClarityAPIException to Problem Detail."""
         exception = ClarityAPIException(
             status_code=422,
@@ -209,7 +215,8 @@ class TestClarityAPIException:
         assert problem.detail == "Request validation failed"
         assert problem.trace_id == "test-trace-id"
 
-    def test_clarity_api_exception_inheritance(self) -> None:
+    @staticmethod
+    def test_clarity_api_exception_inheritance() -> None:
         """Test that ClarityAPIException properly inherits from HTTPException."""
         exception = ClarityAPIException(
             status_code=404,
@@ -226,7 +233,8 @@ class TestClarityAPIException:
 class TestPredefinedProblemTypes:
     """Test predefined Problem Detail exception types."""
 
-    def test_validation_problem(self) -> None:
+    @staticmethod
+    def test_validation_problem() -> None:
         """Test ValidationProblem creation and properties."""
         errors = [{"field": "email", "message": "Invalid email format"}]
         exception = ValidationProblem(
@@ -244,7 +252,8 @@ class TestPredefinedProblemTypes:
         assert exception.trace_id == "test-trace"
         assert exception.help_url == "https://docs.clarity.health/errors/validation"
 
-    def test_authentication_problem(self) -> None:
+    @staticmethod
+    def test_authentication_problem() -> None:
         """Test AuthenticationProblem creation and properties."""
         exception = AuthenticationProblem(
             detail="Invalid credentials provided", trace_id="auth-trace"
@@ -260,13 +269,15 @@ class TestPredefinedProblemTypes:
         assert exception.trace_id == "auth-trace"
         assert exception.help_url == "https://docs.clarity.health/authentication"
 
-    def test_authentication_problem_default(self) -> None:
+    @staticmethod
+    def test_authentication_problem_default() -> None:
         """Test AuthenticationProblem with default message."""
         exception = AuthenticationProblem()
 
         assert exception.detail == "Authentication required"
 
-    def test_authorization_problem(self) -> None:
+    @staticmethod
+    def test_authorization_problem() -> None:
         """Test AuthorizationProblem creation and properties."""
         exception = AuthorizationProblem(
             detail="Access denied to this resource", trace_id="authz-trace"
@@ -281,13 +292,15 @@ class TestPredefinedProblemTypes:
         assert exception.detail == "Access denied to this resource"
         assert exception.help_url == "https://docs.clarity.health/permissions"
 
-    def test_authorization_problem_default(self) -> None:
+    @staticmethod
+    def test_authorization_problem_default() -> None:
         """Test AuthorizationProblem with default message."""
         exception = AuthorizationProblem()
 
         assert exception.detail == "Insufficient permissions for this resource"
 
-    def test_resource_not_found_problem(self) -> None:
+    @staticmethod
+    def test_resource_not_found_problem() -> None:
         """Test ResourceNotFoundProblem creation and properties."""
         exception = ResourceNotFoundProblem(
             resource_type="User", resource_id="user-123", trace_id="not-found-trace"
@@ -303,7 +316,8 @@ class TestPredefinedProblemTypes:
         assert exception.trace_id == "not-found-trace"
         assert exception.help_url == "https://docs.clarity.health/errors/not-found"
 
-    def test_conflict_problem(self) -> None:
+    @staticmethod
+    def test_conflict_problem() -> None:
         """Test ConflictProblem creation and properties."""
         exception = ConflictProblem(
             detail="Resource already exists with this identifier",
@@ -319,7 +333,8 @@ class TestPredefinedProblemTypes:
         assert exception.detail == "Resource already exists with this identifier"
         assert exception.help_url == "https://docs.clarity.health/errors/conflict"
 
-    def test_rate_limit_problem(self) -> None:
+    @staticmethod
+    def test_rate_limit_problem() -> None:
         """Test RateLimitProblem creation and properties."""
         exception = RateLimitProblem(
             retry_after=60, detail="Too many requests", trace_id="rate-limit-trace"
@@ -335,13 +350,15 @@ class TestPredefinedProblemTypes:
         assert exception.headers == {"Retry-After": "60"}
         assert exception.help_url == "https://docs.clarity.health/rate-limits"
 
-    def test_rate_limit_problem_default(self) -> None:
+    @staticmethod
+    def test_rate_limit_problem_default() -> None:
         """Test RateLimitProblem with default message."""
         exception = RateLimitProblem(retry_after=30)
 
         assert exception.detail == "Rate limit exceeded"
 
-    def test_internal_server_problem(self) -> None:
+    @staticmethod
+    def test_internal_server_problem() -> None:
         """Test InternalServerProblem creation and properties."""
         exception = InternalServerProblem(
             detail="Database connection failed", trace_id="internal-trace"
@@ -356,13 +373,15 @@ class TestPredefinedProblemTypes:
         assert exception.detail == "Database connection failed"
         assert exception.help_url == "https://docs.clarity.health/errors/server-error"
 
-    def test_internal_server_problem_default(self) -> None:
+    @staticmethod
+    def test_internal_server_problem_default() -> None:
         """Test InternalServerProblem with default message."""
         exception = InternalServerProblem()
 
         assert exception.detail == "An internal server error occurred"
 
-    def test_service_unavailable_problem(self) -> None:
+    @staticmethod
+    def test_service_unavailable_problem() -> None:
         """Test ServiceUnavailableProblem creation and properties."""
         exception = ServiceUnavailableProblem(
             service_name="Database Service", retry_after=120, trace_id="service-trace"
@@ -381,7 +400,8 @@ class TestPredefinedProblemTypes:
             == "https://docs.clarity.health/errors/service-unavailable"
         )
 
-    def test_service_unavailable_problem_no_retry(self) -> None:
+    @staticmethod
+    def test_service_unavailable_problem_no_retry() -> None:
         """Test ServiceUnavailableProblem without retry-after."""
         exception = ServiceUnavailableProblem(service_name="ML Service")
 
@@ -392,7 +412,8 @@ class TestPredefinedProblemTypes:
 class TestExceptionHandlers:
     """Test FastAPI exception handlers."""
 
-    def test_problem_detail_exception_handler(self) -> None:
+    @staticmethod
+    def test_problem_detail_exception_handler() -> None:
         """Test problem detail exception handler."""
         request = Mock(spec=Request)
         exception = ValidationProblem(
@@ -413,7 +434,8 @@ class TestExceptionHandlers:
         assert content["detail"] == "Test validation error"
         assert content["errors"] == [{"field": "test", "message": "Test error"}]
 
-    def test_problem_detail_exception_handler_with_headers(self) -> None:
+    @staticmethod
+    def test_problem_detail_exception_handler_with_headers() -> None:
         """Test problem detail exception handler with custom headers."""
         request = Mock(spec=Request)
         exception = RateLimitProblem(retry_after=60, detail="Rate limit exceeded")
@@ -424,7 +446,8 @@ class TestExceptionHandlers:
         assert response.headers["Retry-After"] == "60"
 
     @patch("clarity.core.exceptions.logger")
-    def test_generic_exception_handler(self, mock_logger: Mock) -> None:
+    @staticmethod
+    def test_generic_exception_handler(mock_logger: Mock) -> None:
         """Test generic exception handler for unexpected exceptions."""
         request = Mock(spec=Request)
         exception = ValueError("Unexpected error")
@@ -455,7 +478,8 @@ class TestExceptionHandlers:
 class TestClarityBaseError:
     """Test ClarityBaseError base exception class."""
 
-    def test_clarity_base_error_basic(self) -> None:
+    @staticmethod
+    def test_clarity_base_error_basic() -> None:
         """Test basic ClarityBaseError creation."""
         error = ClarityBaseError("Test error message")
 
@@ -463,7 +487,8 @@ class TestClarityBaseError:
         assert error.error_code is None
         assert error.details == {}
 
-    def test_clarity_base_error_with_code(self) -> None:
+    @staticmethod
+    def test_clarity_base_error_with_code() -> None:
         """Test ClarityBaseError with error code."""
         error = ClarityBaseError(
             "Test error message", error_code="TEST_ERROR", details={"key": "value"}
@@ -473,7 +498,8 @@ class TestClarityBaseError:
         assert error.error_code == "TEST_ERROR"
         assert error.details == {"key": "value"}
 
-    def test_clarity_base_error_inheritance(self) -> None:
+    @staticmethod
+    def test_clarity_base_error_inheritance() -> None:
         """Test that ClarityBaseError inherits from Exception."""
         error = ClarityBaseError("Test message")
         assert isinstance(error, Exception)
@@ -482,7 +508,8 @@ class TestClarityBaseError:
 class TestDataValidationExceptions:
     """Test data validation exception classes."""
 
-    def test_data_validation_error(self) -> None:
+    @staticmethod
+    def test_data_validation_error() -> None:
         """Test DataValidationError creation and properties."""
         error = DataValidationError(
             "Invalid data format",
@@ -495,28 +522,32 @@ class TestDataValidationExceptions:
         assert error.field_name == "heart_rate"
         assert error.details == {"min": 0, "max": 300}
 
-    def test_invalid_step_count_data_error(self) -> None:
+    @staticmethod
+    def test_invalid_step_count_data_error() -> None:
         """Test InvalidStepCountDataError inherits from DataValidationError."""
         error = InvalidStepCountDataError("Invalid step count")
 
         assert isinstance(error, DataValidationError)
         assert error.error_code == "DATA_VALIDATION_ERROR"
 
-    def test_invalid_nhanes_stats_error(self) -> None:
+    @staticmethod
+    def test_invalid_nhanes_stats_error() -> None:
         """Test InvalidNHANESStatsError inherits from DataValidationError."""
         error = InvalidNHANESStatsError("Invalid NHANES stats")
 
         assert isinstance(error, DataValidationError)
         assert error.error_code == "DATA_VALIDATION_ERROR"
 
-    def test_processing_error(self) -> None:
+    @staticmethod
+    def test_processing_error() -> None:
         """Test ProcessingError inherits from DataValidationError."""
         error = ProcessingError("Processing failed")
 
         assert isinstance(error, DataValidationError)
         assert error.error_code == "DATA_VALIDATION_ERROR"
 
-    def test_integration_error(self) -> None:
+    @staticmethod
+    def test_integration_error() -> None:
         """Test IntegrationError creation."""
         error = IntegrationError(
             "API integration failed",
@@ -527,7 +558,8 @@ class TestDataValidationExceptions:
         assert error.error_code == "INTEGRATION_ERROR"
         assert error.details == {"service": "external_api", "status_code": 500}
 
-    def test_data_length_mismatch_error(self) -> None:
+    @staticmethod
+    def test_data_length_mismatch_error() -> None:
         """Test DataLengthMismatchError creation and properties."""
         error = DataLengthMismatchError(
             expected_length=100, actual_length=95, data_type="heart_rate_samples"
@@ -541,14 +573,16 @@ class TestDataValidationExceptions:
         assert error.actual_length == 95
         assert error.data_type == "heart_rate_samples"
 
-    def test_empty_data_error(self) -> None:
+    @staticmethod
+    def test_empty_data_error() -> None:
         """Test EmptyDataError creation and properties."""
         error = EmptyDataError("sensor_readings")
 
         assert "sensor_readings cannot be empty" in str(error)
         assert error.data_type == "sensor_readings"
 
-    def test_empty_data_error_default(self) -> None:
+    @staticmethod
+    def test_empty_data_error_default() -> None:
         """Test EmptyDataError with default data type."""
         error = EmptyDataError()
 
@@ -559,14 +593,16 @@ class TestDataValidationExceptions:
 class TestMLModelExceptions:
     """Test ML model and inference exception classes."""
 
-    def test_model_error(self) -> None:
+    @staticmethod
+    def test_model_error() -> None:
         """Test ModelError base class."""
         error = ModelError("Model operation failed")
 
         assert isinstance(error, ClarityBaseError)
         assert str(error) == "Model operation failed"
 
-    def test_model_not_initialized_error(self) -> None:
+    @staticmethod
+    def test_model_not_initialized_error() -> None:
         """Test ModelNotInitializedError creation and properties."""
         error = ModelNotInitializedError("PAT Model")
 
@@ -575,14 +611,16 @@ class TestMLModelExceptions:
         assert error.error_code == "MODEL_NOT_INITIALIZED"
         assert error.model_name == "PAT Model"
 
-    def test_model_not_initialized_error_default(self) -> None:
+    @staticmethod
+    def test_model_not_initialized_error_default() -> None:
         """Test ModelNotInitializedError with default model name."""
         error = ModelNotInitializedError()
 
         assert "Model is not initialized" in str(error)
         assert error.model_name == "Model"
 
-    def test_inference_error(self) -> None:
+    @staticmethod
+    def test_inference_error() -> None:
         """Test InferenceError creation and properties."""
         error = InferenceError(
             "Inference computation failed",
@@ -595,7 +633,8 @@ class TestMLModelExceptions:
         assert error.request_id == "req-123"
         assert error.details == {"model": "PAT", "version": "1.0"}
 
-    def test_inference_timeout_error(self) -> None:
+    @staticmethod
+    def test_inference_timeout_error() -> None:
         """Test InferenceTimeoutError creation and properties."""
         error = InferenceTimeoutError(request_id="req-456", timeout_seconds=30.0)
 
@@ -609,7 +648,8 @@ class TestMLModelExceptions:
 class TestNHANESExceptions:
     """Test NHANES statistics exception classes."""
 
-    def test_nhanes_stats_error(self) -> None:
+    @staticmethod
+    def test_nhanes_stats_error() -> None:
         """Test NHANESStatsError creation."""
         error = NHANESStatsError(
             "NHANES lookup failed", details={"year": 2020, "age_group": "adult"}
@@ -619,7 +659,8 @@ class TestNHANESExceptions:
         assert error.error_code == "NHANES_STATS_ERROR"
         assert error.details == {"year": 2020, "age_group": "adult"}
 
-    def test_nhanes_data_not_found_error(self) -> None:
+    @staticmethod
+    def test_nhanes_data_not_found_error() -> None:
         """Test NHANESDataNotFoundError with all parameters."""
         error = NHANESDataNotFoundError(year=2020, age_group="adult", sex="male")
 
@@ -631,7 +672,8 @@ class TestNHANESExceptions:
         assert error.age_group == "adult"
         assert error.sex == "male"
 
-    def test_nhanes_data_not_found_error_partial(self) -> None:
+    @staticmethod
+    def test_nhanes_data_not_found_error_partial() -> None:
         """Test NHANESDataNotFoundError with partial parameters."""
         error = NHANESDataNotFoundError(year=2018)
 
@@ -640,7 +682,8 @@ class TestNHANESExceptions:
         assert error.age_group is None
         assert error.sex is None
 
-    def test_nhanes_data_not_found_error_empty(self) -> None:
+    @staticmethod
+    def test_nhanes_data_not_found_error_empty() -> None:
         """Test NHANESDataNotFoundError with no parameters."""
         error = NHANESDataNotFoundError()
 
@@ -649,7 +692,8 @@ class TestNHANESExceptions:
         assert error.age_group is None
         assert error.sex is None
 
-    def test_invalid_nhanes_stats_data_error(self) -> None:
+    @staticmethod
+    def test_invalid_nhanes_stats_data_error() -> None:
         """Test InvalidNHANESStatsDataError creation and properties."""
         error = InvalidNHANESStatsDataError(
             data_type="step_count", expected_type="numeric", actual_type="string"
@@ -667,13 +711,15 @@ class TestNHANESExceptions:
 class TestServiceExceptions:
     """Test service-level exception classes."""
 
-    def test_service_error(self) -> None:
+    @staticmethod
+    def test_service_error() -> None:
         """Test ServiceError base class."""
         error = ServiceError("Service operation failed")
 
         assert isinstance(error, ClarityBaseError)
 
-    def test_service_not_initialized_error(self) -> None:
+    @staticmethod
+    def test_service_not_initialized_error() -> None:
         """Test ServiceNotInitializedError creation and properties."""
         error = ServiceNotInitializedError("Authentication Service")
 
@@ -682,7 +728,8 @@ class TestServiceExceptions:
         assert error.error_code == "SERVICE_NOT_INITIALIZED"
         assert error.service_name == "Authentication Service"
 
-    def test_service_unavailable_error(self) -> None:
+    @staticmethod
+    def test_service_unavailable_error() -> None:
         """Test ServiceUnavailableError creation and properties."""
         error = ServiceUnavailableError(
             service_name="Database Service", reason="Connection timeout"
@@ -695,7 +742,8 @@ class TestServiceExceptions:
         assert error.service_name == "Database Service"
         assert error.reason == "Connection timeout"
 
-    def test_service_unavailable_error_no_reason(self) -> None:
+    @staticmethod
+    def test_service_unavailable_error_no_reason() -> None:
         """Test ServiceUnavailableError without reason."""
         error = ServiceUnavailableError("ML Service")
 
@@ -706,7 +754,8 @@ class TestServiceExceptions:
 class TestAuthExceptions:
     """Test authentication and authorization exception classes."""
 
-    def test_authentication_error(self) -> None:
+    @staticmethod
+    def test_authentication_error() -> None:
         """Test AuthenticationError base class."""
         error = AuthenticationError(
             "Token validation failed",
@@ -717,7 +766,8 @@ class TestAuthExceptions:
         assert error.error_code == "AUTHENTICATION_ERROR"
         assert error.details == {"token_type": "JWT", "issuer": "clarity"}
 
-    def test_authorization_error(self) -> None:
+    @staticmethod
+    def test_authorization_error() -> None:
         """Test AuthorizationError base class."""
         error = AuthorizationError(
             "Insufficient permissions",
@@ -728,7 +778,8 @@ class TestAuthExceptions:
         assert error.error_code == "AUTHORIZATION_ERROR"
         assert error.details == {"required_role": "admin", "user_role": "user"}
 
-    def test_account_disabled_error(self) -> None:
+    @staticmethod
+    def test_account_disabled_error() -> None:
         """Test AccountDisabledError creation and properties."""
         error = AccountDisabledError("user-123")
 
@@ -736,7 +787,8 @@ class TestAuthExceptions:
         assert "User account user-123 is disabled" in str(error)
         assert error.user_id == "user-123"
 
-    def test_access_denied_error(self) -> None:
+    @staticmethod
+    def test_access_denied_error() -> None:
         """Test AccessDeniedError creation and properties."""
         error = AccessDeniedError(resource="health_data", user_id="user-456")
 
@@ -746,7 +798,8 @@ class TestAuthExceptions:
         assert error.resource == "health_data"
         assert error.user_id == "user-456"
 
-    def test_access_denied_error_no_user(self) -> None:
+    @staticmethod
+    def test_access_denied_error_no_user() -> None:
         """Test AccessDeniedError without user ID."""
         error = AccessDeniedError("admin_panel")
 
@@ -758,7 +811,8 @@ class TestAuthExceptions:
 class TestConfigurationExceptions:
     """Test configuration exception classes."""
 
-    def test_configuration_error(self) -> None:
+    @staticmethod
+    def test_configuration_error() -> None:
         """Test ConfigurationError creation and properties."""
         error = ConfigurationError(
             "Database connection string invalid",
@@ -771,7 +825,8 @@ class TestConfigurationExceptions:
         assert error.config_key == "DATABASE_URL"
         assert error.details == {"section": "database"}
 
-    def test_missing_configuration_error(self) -> None:
+    @staticmethod
+    def test_missing_configuration_error() -> None:
         """Test MissingConfigurationError creation and properties."""
         error = MissingConfigurationError("API_KEY")
 
@@ -779,7 +834,8 @@ class TestConfigurationExceptions:
         assert "Missing required configuration: API_KEY" in str(error)
         assert error.config_key == "API_KEY"
 
-    def test_invalid_configuration_error(self) -> None:
+    @staticmethod
+    def test_invalid_configuration_error() -> None:
         """Test InvalidConfigurationError creation and properties."""
         error = InvalidConfigurationError(
             config_key="MAX_CONNECTIONS", value=-5, reason="must be positive"
@@ -793,7 +849,8 @@ class TestConfigurationExceptions:
         assert error.value == -5
         assert error.reason == "must be positive"
 
-    def test_invalid_configuration_error_no_reason(self) -> None:
+    @staticmethod
+    def test_invalid_configuration_error_no_reason() -> None:
         """Test InvalidConfigurationError without reason."""
         error = InvalidConfigurationError(config_key="TIMEOUT", value="invalid")
 
@@ -805,7 +862,8 @@ class TestConfigurationExceptions:
 class TestCacheExceptions:
     """Test cache-related exception classes."""
 
-    def test_cache_error(self) -> None:
+    @staticmethod
+    def test_cache_error() -> None:
         """Test CacheError creation."""
         error = CacheError(
             "Redis connection failed", details={"host": "localhost", "port": 6379}
@@ -815,7 +873,8 @@ class TestCacheExceptions:
         assert error.error_code == "CACHE_ERROR"
         assert error.details == {"host": "localhost", "port": 6379}
 
-    def test_cache_key_error(self) -> None:
+    @staticmethod
+    def test_cache_key_error() -> None:
         """Test CacheKeyError creation and properties."""
         error = CacheKeyError(cache_key="user:123:profile", operation="get")
 
@@ -828,7 +887,8 @@ class TestCacheExceptions:
 class TestUtilityFunctions:
     """Test exception utility functions."""
 
-    def test_create_validation_error(self) -> None:
+    @staticmethod
+    def test_create_validation_error() -> None:
         """Test create_validation_error utility function."""
         error = create_validation_error(
             field_name="age", expected_type="integer", actual_value="twenty"
@@ -839,7 +899,8 @@ class TestUtilityFunctions:
         assert "got str: twenty" in str(error)
         assert error.field_name == "age"
 
-    def test_create_numeric_validation_error(self) -> None:
+    @staticmethod
+    def test_create_numeric_validation_error() -> None:
         """Test create_numeric_validation_error utility function."""
         error = create_numeric_validation_error(
             field_name="heart_rate", value="not_a_number"
@@ -854,7 +915,8 @@ class TestUtilityFunctions:
 class TestExceptionEdgeCases:
     """Test edge cases and integration scenarios for exceptions."""
 
-    def test_exception_chaining(self) -> None:
+    @staticmethod
+    def test_exception_chaining() -> None:
         """Test exception chaining preserves context."""
 
         def raise_value_error() -> None:
@@ -873,7 +935,8 @@ class TestExceptionEdgeCases:
         assert original is not None
         assert isinstance(new_error, InferenceError)
 
-    def test_exception_with_complex_details(self) -> None:
+    @staticmethod
+    def test_exception_with_complex_details() -> None:
         """Test exceptions with complex detail objects."""
         complex_details = {
             "request": {
@@ -900,7 +963,8 @@ class TestExceptionEdgeCases:
         problem = error.to_problem_detail()
         assert problem.errors == complex_details["validation_errors"]
 
-    def test_problem_detail_exclude_none_serialization(self) -> None:
+    @staticmethod
+    def test_problem_detail_exclude_none_serialization() -> None:
         """Test Problem Detail serialization excludes None values."""
         problem = ProblemDetail(
             type="https://api.clarity.health/problems/test",
@@ -919,7 +983,8 @@ class TestExceptionEdgeCases:
         assert "help_url" not in serialized
         assert len(serialized) == 5  # Only non-None fields
 
-    def test_exception_handler_with_no_headers(self) -> None:
+    @staticmethod
+    def test_exception_handler_with_no_headers() -> None:
         """Test exception handler with exception that has no headers."""
         request = Mock(spec=Request)
         exception = ValidationProblem("Test error")

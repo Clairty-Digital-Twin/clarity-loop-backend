@@ -674,7 +674,8 @@ class TestDecoratorsIntegration:
         assert "Completed" in log_messages
         assert "executed in" in log_messages
 
-    def test_decorator_function_metadata_preservation(self) -> None:
+    @staticmethod
+    def test_decorator_function_metadata_preservation() -> None:
         """Test that decorators preserve function metadata."""
 
         @service_method()
@@ -687,7 +688,8 @@ class TestDecoratorsIntegration:
         assert documented_service_function.__doc__ is not None
         assert "documentation" in documented_service_function.__doc__
 
-    async def test_decorator_async_compatibility(self) -> None:
+    @staticmethod
+    async def test_decorator_async_compatibility() -> None:
         """Test that all decorators work correctly with async functions."""
         call_count = 0
 
@@ -707,7 +709,8 @@ class TestDecoratorsIntegration:
         assert result == "comprehensive_async_result"
         assert call_count == 2
 
-    def test_decorator_error_propagation(self) -> None:
+    @staticmethod
+    def test_decorator_error_propagation() -> None:
         """Test that decorators properly propagate exceptions."""
 
         @log_execution()
@@ -719,7 +722,8 @@ class TestDecoratorsIntegration:
         with pytest.raises(CustomTestError, match="Custom test error"):
             error_propagation_function()
 
-    def test_decorator_return_type_preservation(self) -> None:
+    @staticmethod
+    def test_decorator_return_type_preservation() -> None:
         """Test that decorators preserve return types."""
 
         @service_method()

@@ -1,14 +1,15 @@
 #!/usr/bin/env python3
 """Debug script to explore H5 file structure for PAT weights."""
 
-import h5py
 from pathlib import Path
+
+import h5py
 
 
 def explore_h5_structure(filepath, max_depth=4):
     """Recursively explore H5 file structure."""
     print(f"\n=== Exploring {filepath} ===")
-    
+
     with h5py.File(filepath, 'r') as f:
         def print_structure(name, obj, depth=0):
             indent = "  " * depth
@@ -22,7 +23,7 @@ def explore_h5_structure(filepath, max_depth=4):
                 if depth < max_depth:
                     for key in obj.keys():
                         print_structure(f"{name}/{key}", obj[key], depth + 1)
-        
+
         print("Root keys:", list(f.keys()))
         for key in f.keys():
             print_structure(key, f[key])
@@ -31,7 +32,7 @@ def explore_h5_structure(filepath, max_depth=4):
 def analyze_weight_structure(filepath):
     """Analyze the weight structure to understand mapping."""
     print(f"\n=== Weight Analysis for {filepath} ===")
-    
+
     with h5py.File(filepath, 'r') as f:
         # Check for common TensorFlow/Keras patterns
         if 'top_level_model_weights' in f:
@@ -39,7 +40,7 @@ def analyze_weight_structure(filepath):
             tlmw = f['top_level_model_weights']
             if isinstance(tlmw, h5py.Group):
                 print("TLMW keys:", list(tlmw.keys()))
-            
+
         # Check input layer
         if 'inputs' in f:
             inputs = f['inputs']
@@ -48,16 +49,16 @@ def analyze_weight_structure(filepath):
                 for key in inputs.keys():
                     if isinstance(inputs[key], h5py.Dataset):
                         print(f"  {key}: {inputs[key].shape} {inputs[key].dtype}")
-        
+
         # Check transformer layers
         transformer_layers = [k for k in f.keys() if 'encoder_layer' in k]
         print(f"Found {len(transformer_layers)} transformer layers")
-        
+
         if transformer_layers:
             layer = f[transformer_layers[0]]
             if isinstance(layer, h5py.Group):
                 print(f"First layer ({transformer_layers[0]}) keys:", list(layer.keys()))
-            
+
         # Check output layers
         if 'dense' in f:
             dense = f['dense']
@@ -72,10 +73,10 @@ def main():
     """Main function to analyze all PAT model files."""
     model_files = [
         "models/PAT-S_29k_weights.h5",
-        "models/PAT-M_29k_weights.h5", 
+        "models/PAT-M_29k_weights.h5",
         "models/PAT-L_29k_weights.h5"
     ]
-    
+
     for model_file in model_files:
         if Path(model_file).exists():
             try:
@@ -88,4 +89,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main() 
+    main()

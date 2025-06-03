@@ -2,8 +2,8 @@
 """Test script to check PAT service status."""
 
 import asyncio
-import sys
 from pathlib import Path
+import sys
 
 # Add src to path
 sys.path.insert(0, str(Path(__file__).parent / "src"))
@@ -17,15 +17,15 @@ async def test_pat_service():
         print("Testing PAT service...")
         service = await get_pat_service()
         print(f"Service created: {service}")
-        
+
         print("Loading model...")
         await service.load_model()
         print(f"Model loaded: {service.is_loaded}")
-        
+
         print("Checking health...")
         health = await service.health_check()
         print(f"Health: {health}")
-        
+
     except Exception as e:
         print(f"Error: {e}")
         import traceback
@@ -33,4 +33,4 @@ async def test_pat_service():
 
 
 if __name__ == "__main__":
-    asyncio.run(test_pat_service()) 
+    asyncio.run(test_pat_service())

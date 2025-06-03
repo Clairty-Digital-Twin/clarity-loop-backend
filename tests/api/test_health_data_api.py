@@ -10,14 +10,15 @@ Tests cover:
 """
 
 import asyncio
+from collections.abc import Generator
 from datetime import UTC, datetime
-from typing import Any, Generator
+from typing import Any
 from unittest.mock import AsyncMock
 from uuid import uuid4
 
-import pytest
 from fastapi import status
 from fastapi.testclient import TestClient
+import pytest
 
 from clarity.api.v1.health_data import router as health_data_router
 from clarity.core.exceptions import (
@@ -46,10 +47,10 @@ def mock_auth_service() -> AsyncMock:
 def app_client(mock_health_service: AsyncMock, mock_auth_service: AsyncMock) -> Generator[tuple[TestClient, AsyncMock, AsyncMock], None, None]:
     """Create test client with mocked dependencies."""
     from fastapi import FastAPI
-    
+
     app = FastAPI()
     app.include_router(health_data_router, prefix="/v1")
-    
+
     # Mock dependency injection
     with patch("clarity.api.v1.health_data.get_health_data_service", return_value=mock_health_service):
         with patch("clarity.api.v1.health_data.get_auth_service", return_value=mock_auth_service):
@@ -103,20 +104,20 @@ class TestHealthDataUploadAPI:
     def test_upload_health_data_success(app_client: tuple[TestClient, AsyncMock, AsyncMock], sample_upload_request: dict[str, Any], auth_headers: dict[str, str]) -> None:
         """Test successful health data upload."""
         client, mock_service, mock_auth = app_client
-        
+
         # Mock successful authentication
         mock_auth.validate_token.return_value = {"user_id": sample_upload_request["user_id"]}
-        
+
         # Mock successful service call
         processing_id = str(uuid4())
         mock_service.process_health_data.return_value = {"processing_id": processing_id}
-        
+
         response = client.post(
             "/v1/health-data/upload",
             json=sample_upload_request,
             headers=auth_headers,
         )
-        
+
         assert response.status_code == status.HTTP_202_ACCEPTED
         response_data = response.json()
         assert response_data["processing_id"] == processing_id
@@ -126,22 +127,22 @@ class TestHealthDataUploadAPI:
     def test_upload_health_data_validation_error(app_client: tuple[TestClient, AsyncMock, AsyncMock], auth_headers: dict[str, str]) -> None:
         """Test health data upload with validation error."""
         client, mock_service, mock_auth = app_client
-        
+
         # Mock authentication
         mock_auth.validate_token.return_value = {"user_id": str(uuid4())}
-        
+
         # Invalid request - missing required fields
         invalid_request = {
             "metrics": [],  # Empty metrics should fail validation
             "upload_source": "test",
         }
-        
+
         response = client.post(
             "/v1/health-data/upload",
             json=invalid_request,
             headers=auth_headers,
         )
-        
+
         assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
 
 
@@ -152,10 +153,10 @@ class TestHealthDataRetrievalAPI:
     def test_get_user_health_data_success(app_client: tuple[TestClient, AsyncMock, AsyncMock], auth_headers: dict[str, str]) -> None:
         """Test successful user health data retrieval."""
         client, mock_service, mock_auth = app_client
-        
+
         user_id = str(uuid4())
         mock_auth.validate_token.return_value = {"user_id": user_id}
-        
+
         # Mock service response
         mock_data = {
             "data": [
@@ -169,12 +170,12 @@ class TestHealthDataRetrievalAPI:
             "has_more": False,
         }
         mock_service.get_user_health_data.return_value = mock_data
-        
+
         response = client.get(
             f"/v1/health-data/users/{user_id}",
             headers=auth_headers,
         )
-        
+
         assert response.status_code == status.HTTP_200_OK
         response_data = response.json()
         assert response_data["data"] == mock_data["data"]
@@ -188,9 +189,9 @@ class TestHealthDataAPIHealthCheck:
     def test_health_check_success(app_client: tuple[TestClient, AsyncMock, AsyncMock]) -> None:
         """Test successful health check."""
         client, mock_service, mock_auth = app_client
-        
+
         response = client.get("/v1/health-data/health")
-        
+
         assert response.status_code == status.HTTP_200_OK
         response_data = response.json()
         assert response_data["status"] == "healthy"

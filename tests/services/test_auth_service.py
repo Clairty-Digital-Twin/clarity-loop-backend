@@ -36,7 +36,7 @@ def mock_firebase_auth() -> AsyncMock:
 class TestAuthServiceBasics:
     """Test basic AuthService functionality."""
 
-    @staticmethod 
+    @staticmethod
     def test_auth_service_initialization(mock_firebase_auth: AsyncMock) -> None:
         """Test AuthService initialization."""
         # Basic test that doesn't require actual AuthService import
@@ -48,10 +48,10 @@ class TestAuthServiceBasics:
         # Test strong passwords
         strong_passwords = [
             "SecurePass123!",
-            "MyStr0ng_P@ssw0rd", 
+            "MyStr0ng_P@ssw0rd",
             "C0mpl3x!P@55w0rd",
         ]
-        
+
         for password in strong_passwords:
             # Mock validation - at least 8 chars, has upper, lower, digit, special
             has_length = len(password) >= 8
@@ -59,7 +59,7 @@ class TestAuthServiceBasics:
             has_lower = any(c.islower() for c in password)
             has_digit = any(c.isdigit() for c in password)
             has_special = any(c in "!@#$%^&*" for c in password)
-            
+
             assert has_length and has_upper and has_lower and has_digit and has_special
 
     @staticmethod
@@ -70,25 +70,25 @@ class TestAuthServiceBasics:
             "user.name@domain.org",
             "firstname+lastname@company.co.uk",
         ]
-        
+
         invalid_emails = [
             "invalid.email",
-            "@domain.com", 
+            "@domain.com",
             "user@",
             "user name@domain.com",
         ]
-        
+
         for email in valid_emails:
             # Simple email validation check
             assert "@" in email and "." in email.split("@")[1]
-            
+
         for email in invalid_emails:
             # Should fail basic validation
             parts = email.split("@")
             is_invalid = (
-                "@" not in email or 
+                "@" not in email or
                 len(parts) != 2 or
-                not parts[0] or 
+                not parts[0] or
                 not parts[1] or
                 "." not in parts[1] or
                 " " in email
@@ -106,20 +106,20 @@ class TestAuthServiceBasics:
             "last_name": "Doe",
             "role": UserRole.PATIENT.value,
         }
-        
+
         # Mock successful registration
         mock_user_id = str(uuid4())
         assert user_data["email"] == "test@example.com"
         assert len(mock_user_id) == 36  # UUID length
-        
+
         # Mock token generation
         mock_tokens = {
             "access_token": "mock_access_token",
-            "refresh_token": "mock_refresh_token", 
+            "refresh_token": "mock_refresh_token",
             "user_id": mock_user_id,
             "expires_in": 3600,
         }
-        
+
         assert mock_tokens["access_token"] is not None
         assert mock_tokens["user_id"] == mock_user_id
 
@@ -129,11 +129,11 @@ class TestAuthServiceBasics:
         # Test authentication error
         with pytest.raises(AuthenticationError):
             raise AuthenticationError("Invalid credentials")
-            
-        # Test authorization error  
+
+        # Test authorization error
         with pytest.raises(AuthorizationError):
             raise AuthorizationError("Insufficient permissions")
-            
+
         # Test validation error
         with pytest.raises(DataValidationError):
             raise DataValidationError("Invalid data format")
@@ -145,12 +145,12 @@ class TestAuthServiceBasics:
         async def mock_auth_operation(user_id: str) -> dict[str, Any]:
             await asyncio.sleep(0.01)  # Simulate async work
             return {"user_id": user_id, "status": "authenticated"}
-        
+
         # Run multiple operations concurrently
         user_ids = [str(uuid4()) for _ in range(5)]
         tasks = [mock_auth_operation(uid) for uid in user_ids]
         results = await asyncio.gather(*tasks)
-        
+
         assert len(results) == 5
         for i, result in enumerate(results):
             assert result["user_id"] == user_ids[i]

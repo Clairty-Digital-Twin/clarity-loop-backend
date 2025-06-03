@@ -5,8 +5,8 @@ including model loading, weight conversion, inference, and clinical analysis.
 """
 
 import asyncio
-import logging
 from datetime import UTC, datetime, timedelta
+import logging
 
 import numpy as np
 import pytest

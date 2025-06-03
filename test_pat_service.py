@@ -31,7 +31,7 @@ async def test_pat_service() -> None:
         health = await service.health_check()
         logger.info("Health: %s", health)
 
-    except (RuntimeError, ValueError, ConnectionError) as e:
+    except (RuntimeError, ValueError, ConnectionError):
         logger.exception("Error occurred during PAT service testing")
 
 

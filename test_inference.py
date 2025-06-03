@@ -2,10 +2,10 @@
 """Test PAT model inference with sample data."""
 
 import asyncio
-import logging
-import sys
 from datetime import UTC, datetime
+import logging
 from pathlib import Path
+import sys
 
 import numpy as np
 
@@ -114,7 +114,7 @@ async def test_pat_inference() -> None:
 
         logger.info("🎯 PAT MODEL IS WORKING WITH REAL WEIGHTS!")
 
-    except (RuntimeError, ValueError, ConnectionError) as e:
+    except (RuntimeError, ValueError, ConnectionError):
         logger.exception("❌ Inference failed")
 
     # Test model internals

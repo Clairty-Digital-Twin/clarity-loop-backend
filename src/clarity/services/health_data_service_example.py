@@ -199,8 +199,8 @@ class EnhancedHealthDataService:
 
             if not status_info:
                 self._raise_data_not_found_error(processing_id)
-            else:
-                return status_info
+
+            return status_info
 
         except (DataNotFoundError, HealthDataServiceError):
             # Re-raise our specific exceptions

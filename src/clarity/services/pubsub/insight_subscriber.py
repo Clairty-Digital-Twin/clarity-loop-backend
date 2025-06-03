@@ -114,7 +114,7 @@ class GeminiInsightGenerator:
         # Respiratory metrics
         if analysis_results.get("respiratory_features"):
             resp = analysis_results["respiratory_features"]
-            if len(resp) >= 8:
+            if len(resp) >= MIN_FEATURE_VECTOR_LENGTH:
                 metrics_lines.extend(
                     [
                         f"- Average Respiratory Rate: {resp[0]:.1f} breaths/min",

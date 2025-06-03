@@ -249,7 +249,7 @@ async def upload_health_data(
                 "Published health data event for async processing: %s",
                 response.processing_id,
             )
-        except Exception:
+        except Exception:  # noqa: BLE001
             # Don't fail the upload if Pub/Sub fails - data is already saved
             logger.warning("Failed to publish health data event")
     except HealthDataServiceError as e:

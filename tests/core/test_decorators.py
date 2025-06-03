@@ -214,7 +214,8 @@ class TestMeasureExecutionTime:
 class TestRetryOnFailure:
     """Test retry_on_failure decorator."""
 
-    def test_retry_on_failure_success_on_first_try(self) -> None:
+    @staticmethod
+    def test_retry_on_failure_success_on_first_try() -> None:
         """Test retry decorator when function succeeds on first try."""
         call_count = 0
 

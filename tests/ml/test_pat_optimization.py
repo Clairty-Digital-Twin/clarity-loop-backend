@@ -94,6 +94,7 @@ def sample_analysis_result() -> ActigraphyAnalysis:
             "Good sleep efficiency detected",
             "Normal circadian rhythm pattern",
         ],
+        embedding=[0.0] * 128,
     )
 
 

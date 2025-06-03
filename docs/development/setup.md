@@ -100,7 +100,7 @@ git --version
 
 ```bash
 # Clone the repository
-git clone https://github.com/your-org/clarity-loop-backend.git
+git clone https://github.com/The-Obstacle-Is-The-Way/clarity-loop-backend.git
 cd clarity-loop-backend
 
 # Verify clone

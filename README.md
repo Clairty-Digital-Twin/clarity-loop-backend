@@ -55,7 +55,7 @@ CLARITY is a **production-ready digital twin platform** for psychiatry and menta
 
 ```bash
 # Clone and launch the entire platform in 60 seconds
-git clone https://github.com/your-org/clarity-loop-backend.git
+git clone https://github.com/The-Obstacle-Is-The-Way/clarity-loop-backend.git
 cd clarity-loop-backend
 bash quick_demo.sh
 ```
@@ -146,7 +146,7 @@ open http://localhost:9090/targets  # Prometheus targets
 
 ```bash
 # Clone the repository
-git clone https://github.com/your-org/clarity-loop-backend.git
+git clone https://github.com/The-Obstacle-Is-The-Way/clarity-loop-backend.git
 cd clarity-loop-backend
 
 # Create virtual environment
@@ -452,7 +452,7 @@ Perfect for technical interviews, investor meetings, or impressing potential co-
 
 **1. One-Command Deploy** (30 seconds)
 ```bash
-git clone <repo> && cd clarity-loop-backend && bash quick_demo.sh
+git clone https://github.com/The-Obstacle-Is-The-Way/clarity-loop-backend.git && cd clarity-loop-backend && bash quick_demo.sh
 ```
 
 **2. Show Live Architecture** (60 seconds)

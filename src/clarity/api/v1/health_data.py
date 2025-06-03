@@ -182,7 +182,7 @@ async def upload_health_data(
 
         # Process health data
         response = await service.process_health_data(health_data)
-
+        
         logger.info("Health data uploaded successfully: %s", response.processing_id)
         return response
 
@@ -234,7 +234,7 @@ async def get_processing_status(
     processing_id: UUID,
     current_user: UserContext = Depends(get_current_user),  # noqa: B008
     service: HealthDataService = Depends(get_health_data_service),  # noqa: B008
-) -> dict[str, Any]:
+) -> Dict[str, Any]:
     """🔥 Get processing status with detailed progress information."""
     try:
         logger.debug(
@@ -311,7 +311,7 @@ async def get_processing_status(
     }
     ```
     """,
-    response_model=PaginatedResponse[dict[str, Any]],
+    response_model=PaginatedResponse[Dict[str, Any]],
     responses={
         200: {"description": "Health data retrieved successfully"},
         400: {"description": "Invalid pagination or filter parameters"},
@@ -324,14 +324,14 @@ async def list_health_data(
     request: Request,
     current_user: UserContext = Depends(get_current_user),  # noqa: B008
     limit: int = Query(50, ge=1, le=1000, description="Number of items per page"),
-    cursor: str | None = Query(None, description="Pagination cursor"),
-    offset: int | None = Query(None, ge=0, description="Offset (alternative to cursor)"),
-    data_type: str | None = Query(None, description="Filter by data type (heart_rate, sleep, etc.)"),
-    start_date: datetime | None = Query(None, description="Filter from date (ISO 8601)"),
-    end_date: datetime | None = Query(None, description="Filter to date (ISO 8601)"),
-    source: str | None = Query(None, description="Filter by data source (apple_watch, fitbit, etc.)"),
+    cursor: Optional[str] = Query(None, description="Pagination cursor"),
+    offset: Optional[int] = Query(None, ge=0, description="Offset (alternative to cursor)"),
+    data_type: Optional[str] = Query(None, description="Filter by data type (heart_rate, sleep, etc.)"),
+    start_date: Optional[datetime] = Query(None, description="Filter from date (ISO 8601)"),
+    end_date: Optional[datetime] = Query(None, description="Filter to date (ISO 8601)"),
+    source: Optional[str] = Query(None, description="Filter by data source (apple_watch, fitbit, etc.)"),
     service: HealthDataService = Depends(get_health_data_service),  # noqa: B008
-) -> PaginatedResponse[dict[str, Any]]:
+) -> PaginatedResponse[Dict[str, Any]]:
     """🔥 Retrieve paginated health data with professional pagination."""
     try:
         logger.debug("Health data retrieval requested by user: %s", current_user.user_id)
@@ -365,7 +365,7 @@ async def list_health_data(
 
         # Extract base URL for pagination links
         base_url = f"{request.url.scheme}://{request.url.netloc}"
-
+        
         # Build pagination response
         pagination_builder = PaginationBuilder(
             base_url=base_url,
@@ -429,11 +429,11 @@ async def query_health_data_legacy(
     current_user: UserContext = Depends(get_current_user),  # noqa: B008
     limit: int = Query(100, ge=1, le=1000, description="Maximum number of records"),
     offset: int = Query(0, ge=0, description="Number of records to skip"),
-    metric_type: str | None = Query(None, description="Filter by metric type"),
-    start_date: datetime | None = Query(None, description="Filter from date"),
-    end_date: datetime | None = Query(None, description="Filter to date"),
+    metric_type: Optional[str] = Query(None, description="Filter by metric type"),
+    start_date: Optional[datetime] = Query(None, description="Filter from date"),
+    end_date: Optional[datetime] = Query(None, description="Filter to date"),
     service: HealthDataService = Depends(get_health_data_service),  # noqa: B008
-) -> dict[str, Any]:
+) -> Dict[str, Any]:
     """🔄 Legacy health data query endpoint (deprecated)."""
     try:
         logger.warning("Legacy health data endpoint used by user: %s", current_user.user_id)
@@ -496,7 +496,7 @@ async def delete_health_data(
     processing_id: UUID,
     current_user: UserContext = Depends(get_current_user),  # noqa: B008
     service: HealthDataService = Depends(get_health_data_service),  # noqa: B008
-) -> dict[str, str]:
+) -> Dict[str, str]:
     """🔥 Delete health data with proper authorization and audit trail."""
     try:
         logger.info(
@@ -554,12 +554,12 @@ async def delete_health_data(
         503: {"description": "Service is unhealthy"},
     }
 )
-async def health_check() -> dict[str, Any]:
+async def health_check() -> Dict[str, Any]:
     """🔥 Comprehensive health check with detailed status information."""
     try:
         # Get current timestamp
         timestamp = datetime.now(UTC).isoformat()
-
+        
         # Basic health indicators
         health_status = {
             "status": "healthy",

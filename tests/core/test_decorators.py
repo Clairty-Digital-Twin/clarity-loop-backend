@@ -24,8 +24,8 @@ class TestDecoratorsBasic:
     def test_mock_decorator_behavior() -> None:
         """Test mock decorator behavior for coverage."""
         # Mock a simple decorator pattern
-        def simple_decorator(func: Any) -> Any:
-            def wrapper(*args: Any, **kwargs: Any) -> Any:
+        def simple_decorator(func: Any) -> Any:  # noqa: ANN401
+            def wrapper(*args: Any, **kwargs: Any) -> Any:  # noqa: ANN401
                 result = func(*args, **kwargs)
                 return f"decorated_{result}"
             return wrapper
@@ -227,8 +227,6 @@ class TestDecoratorsBasic:
     @staticmethod
     def test_decorator_metadata_preservation() -> None:
         """Test that decorators preserve function metadata."""
-        import functools
-
         def metadata_preserving_decorator(func: Any) -> Any:
             @functools.wraps(func)
             def wrapper(*args: Any, **kwargs: Any) -> Any:
@@ -278,7 +276,7 @@ class TestDecoratorsBasic:
 
         class TestClass:
             @log_method_calls
-            def test_method(self) -> str:
+            def test_method(self) -> str:  # noqa: PLR6301
                 return "method_result"
 
         instance = TestClass()
@@ -323,11 +321,13 @@ class TestDecoratorsBasic:
 
         @async_error_handler
         async def failing_async_function() -> str:
-            raise ValueError("Async error")
+            async_error_msg = "Async error"
+            raise ValueError(async_error_msg)
 
         @async_error_handler
         def failing_sync_function() -> str:
-            raise ValueError("Sync error")
+            sync_error_msg = "Sync error"
+            raise ValueError(sync_error_msg)
 
         result1 = await failing_async_function()
         assert result1 == "async_error_handled"

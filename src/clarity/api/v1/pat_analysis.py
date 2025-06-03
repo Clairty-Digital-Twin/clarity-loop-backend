@@ -10,15 +10,14 @@ Endpoints:
 - GET /health - Service health check
 """
 
-from datetime import UTC, datetime
 import logging
+from datetime import datetime, UTC
 from typing import Any
 import uuid
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
 from pydantic import BaseModel, Field, validator
 
-from clarity.auth import UserContext, require_auth
 from clarity.auth.firebase_auth import get_current_user
 from clarity.ml.inference_engine import AsyncInferenceEngine, get_inference_engine
 from clarity.ml.pat_service import ActigraphyAnalysis, ActigraphyInput
@@ -32,6 +31,19 @@ logger = logging.getLogger(__name__)
 
 # Create API router
 router = APIRouter(prefix="/pat", tags=["PAT Analysis"])
+
+
+# 🔥 FIXED: Response model for PAT analysis results - moved before usage
+class PATAnalysisResponse(BaseModel):
+    """Response model for PAT analysis results."""
+
+    processing_id: str = Field(description="Processing ID for the analysis")
+    status: str = Field(description="Status: completed, processing, failed, not_found")
+    message: str | None = Field(None, description="Status message")
+    analysis_date: str | None = Field(None, description="When analysis was completed")
+    pat_features: dict[str, float] | None = Field(None, description="PAT model features")
+    activity_embedding: list[float] | None = Field(None, description="Activity embedding vector")
+    metadata: dict[str, Any] | None = Field(None, description="Additional metadata")
 
 
 class StepDataRequest(BaseModel):
@@ -391,19 +403,6 @@ async def get_pat_analysis(processing_id: str) -> PATAnalysisResponse:
             activity_embedding=None,
             metadata={}
         )
-
-
-# 🔥 FIXED: Response model for PAT analysis results
-class PATAnalysisResponse(BaseModel):
-    """Response model for PAT analysis results."""
-
-    processing_id: str = Field(description="Processing ID for the analysis")
-    status: str = Field(description="Status: completed, processing, failed, not_found")
-    message: str | None = Field(None, description="Status message")
-    analysis_date: str | None = Field(None, description="When analysis was completed")
-    pat_features: dict[str, float] | None = Field(None, description="PAT model features")
-    activity_embedding: list[float] | None = Field(None, description="Activity embedding vector")
-    metadata: dict[str, Any] | None = Field(None, description="Additional metadata")
 
 
 def _get_analysis_repository():

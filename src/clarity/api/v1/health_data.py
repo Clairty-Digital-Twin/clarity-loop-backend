@@ -230,7 +230,7 @@ async def upload_health_data(
                 )
                 logger.info("Saved health data to GCS: %s", gcs_path)
             except Exception as gcs_error:
-                logger.exception("Failed to save to GCS: %s", gcs_error)
+                logger.exception("Failed to save to GCS")
                 # Continue anyway - we can retry later
 
             # Publish to Pub/Sub
@@ -249,9 +249,9 @@ async def upload_health_data(
                 "Published health data event for async processing: %s",
                 response.processing_id,
             )
-        except Exception as pub_error:
+        except Exception:
             # Don't fail the upload if Pub/Sub fails - data is already saved
-            logger.warning("Failed to publish health data event: %s", pub_error)
+            logger.warning("Failed to publish health data event")
     except HealthDataServiceError as e:
         logger.exception("Health data service error")
         raise ValidationProblem(

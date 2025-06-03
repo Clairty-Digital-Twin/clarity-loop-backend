@@ -208,13 +208,12 @@ class HealthAnalysisPipeline:
             elif (
                 metric.metric_type.value.lower() == "heart_rate_variability"
                 and metric.biometric_data
+            ) and (
+                hasattr(metric.biometric_data, "hrv_sdnn")
+                and metric.biometric_data.hrv_sdnn
             ):
-                if (
-                    hasattr(metric.biometric_data, "hrv_sdnn")
-                    and metric.biometric_data.hrv_sdnn
-                ):
-                    hrv_timestamps.append(metric.created_at)
-                    hrv_values.append(float(metric.biometric_data.hrv_sdnn))
+                hrv_timestamps.append(metric.created_at)
+                hrv_values.append(float(metric.biometric_data.hrv_sdnn))
 
         return self.cardio_processor.process(
             hr_timestamps, hr_values, hrv_timestamps, hrv_values
@@ -244,13 +243,12 @@ class HealthAnalysisPipeline:
             elif (
                 metric.metric_type.value.lower() == "oxygen_saturation"
                 and metric.biometric_data
+            ) and (
+                hasattr(metric.biometric_data, "oxygen_saturation")
+                and metric.biometric_data.oxygen_saturation
             ):
-                if (
-                    hasattr(metric.biometric_data, "oxygen_saturation")
-                    and metric.biometric_data.oxygen_saturation
-                ):
-                    spo2_timestamps.append(metric.created_at)
-                    spo2_values.append(float(metric.biometric_data.oxygen_saturation))
+                spo2_timestamps.append(metric.created_at)
+                spo2_values.append(float(metric.biometric_data.oxygen_saturation))
 
         return self.respiratory_processor.process(
             rr_timestamps, rr_values, spo2_timestamps, spo2_values

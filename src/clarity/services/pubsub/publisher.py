@@ -3,13 +3,12 @@
 Publishes health data processing events to Pub/Sub topics for async processing.
 """
 
-from datetime import UTC, datetime, timezone
+from datetime import UTC, datetime
 import json
 import logging
 import os
 from typing import Any
 
-from google.api_core import retry
 from google.cloud import pubsub_v1
 from pydantic import BaseModel
 
@@ -59,7 +58,7 @@ class HealthDataPublisher:
             "Initialized HealthDataPublisher for project: %s", self.project_id
         )
 
-    @log_execution(level="DEBUG")
+    @log_execution(level=logging.DEBUG)
     def publish_health_data_upload(
         self,
         user_id: str,
@@ -100,7 +99,7 @@ class HealthDataPublisher:
             )
 
             # Get message ID
-            message_id = future.result(timeout=30.0)
+            message_id: str = future.result(timeout=30.0)
 
             self.logger.info(
                 "Published health data upload event for user %s, upload %s, message ID: %s",
@@ -108,13 +107,12 @@ class HealthDataPublisher:
                 upload_id,
                 message_id,
             )
-        except Exception as e:
-            self.logger.exception("Failed to publish health data event: %s", e)
-            raise
-        else:
             return message_id
+        except Exception:
+            self.logger.exception("Failed to publish health data event")
+            raise
 
-    @log_execution(level="DEBUG")
+    @log_execution(level=logging.DEBUG)
     def publish_insight_request(
         self,
         user_id: str,
@@ -155,7 +153,7 @@ class HealthDataPublisher:
             )
 
             # Get message ID
-            message_id = future.result(timeout=30.0)
+            message_id: str = future.result(timeout=30.0)
 
             self.logger.info(
                 "Published insight request event for user %s, upload %s, message ID: %s",
@@ -163,11 +161,10 @@ class HealthDataPublisher:
                 upload_id,
                 message_id,
             )
-        except Exception as e:
-            self.logger.exception("Failed to publish insight request event: %s", e)
-            raise
-        else:
             return message_id
+        except Exception:
+            self.logger.exception("Failed to publish insight request event")
+            raise
 
     def close(self) -> None:
         """Close publisher client."""
@@ -181,7 +178,7 @@ _publisher: HealthDataPublisher | None = None
 
 def get_publisher() -> HealthDataPublisher:
     """Get or create global publisher instance."""
-    global _publisher
+    global _publisher  # noqa: PLW0603
 
     if _publisher is None:
         _publisher = HealthDataPublisher()

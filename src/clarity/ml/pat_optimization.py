@@ -27,7 +27,7 @@ logger = logging.getLogger(__name__)
 class PATPerformanceOptimizer:
     """Performance optimizer for PAT model service."""
 
-    def __init__(self, pat_service: PATModelService):
+    def __init__(self, pat_service: PATModelService) -> None:
         self.pat_service = pat_service
         self.compiled_model: torch.jit.ScriptModule | None = None
         self.optimization_enabled = False
@@ -41,12 +41,12 @@ class PATPerformanceOptimizer:
         pruning_amount: float = 0.1,
     ) -> bool:
         """Optimize the PAT model for inference performance.
-        
+
         Args:
             use_torchscript: Enable TorchScript compilation
             use_pruning: Enable model pruning
             pruning_amount: Amount of weights to prune (0.0-1.0)
-            
+
         Returns:
             True if optimization succeeded
         """
@@ -81,7 +81,7 @@ class PATPerformanceOptimizer:
             return True
 
         except Exception as e:
-            logger.error(f"Model optimization failed: {e}")
+            logger.exception(f"Model optimization failed: {e}")
             return False
 
     def _apply_model_pruning(self, model: torch.nn.Module, amount: float) -> None:
@@ -123,12 +123,10 @@ class PATPerformanceOptimizer:
                 traced_model = torch.jit.trace(model, sample_input, strict=False)
 
             # Optimize the traced model
-            traced_model = torch.jit.optimize_for_inference(traced_model)
-
-            return traced_model
+            return torch.jit.optimize_for_inference(traced_model)
 
         except Exception as e:
-            logger.error(f"TorchScript compilation failed: {e}")
+            logger.exception(f"TorchScript compilation failed: {e}")
             return None
 
     async def _save_compiled_model(self) -> None:
@@ -144,7 +142,7 @@ class PATPerformanceOptimizer:
             logger.info(f"Compiled model saved to {model_path}")
 
         except Exception as e:
-            logger.error(f"Failed to save compiled model: {e}")
+            logger.exception(f"Failed to save compiled model: {e}")
 
     def _generate_cache_key(self, input_data: ActigraphyInput) -> str:
         """Generate a cache key for actigraphy input."""
@@ -167,7 +165,7 @@ class PATPerformanceOptimizer:
         self, input_data: ActigraphyInput, use_cache: bool = True
     ) -> tuple[ActigraphyAnalysis, bool]:
         """Optimized analysis with caching and model optimization.
-        
+
         Returns:
             Tuple of (analysis_result, was_cached)
         """
@@ -307,7 +305,7 @@ class PATPerformanceOptimizer:
 class PATBatchProcessor:
     """Batch processor for handling multiple PAT analysis requests efficiently."""
 
-    def __init__(self, optimizer: PATPerformanceOptimizer, max_batch_size: int = 8):
+    def __init__(self, optimizer: PATPerformanceOptimizer, max_batch_size: int = 8) -> None:
         self.optimizer = optimizer
         self.max_batch_size = max_batch_size
         self.pending_requests: list[tuple[ActigraphyInput, asyncio.Future]] = []
@@ -369,8 +367,9 @@ def get_pat_optimizer() -> PATPerformanceOptimizer:
 
     # This would need to be called after the service is loaded
     # In practice, you'd initialize this during app startup
+    msg = "Call initialize_pat_optimizer() during app startup"
     raise NotImplementedError(
-        "Call initialize_pat_optimizer() during app startup"
+        msg
     )
 
 

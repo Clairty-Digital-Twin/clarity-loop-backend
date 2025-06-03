@@ -432,7 +432,7 @@ class TestPATIntegration:
 
         # Check timestamp format
         parsed_time = datetime.fromisoformat(
-            analysis.analysis_timestamp.replace('Z', '+00:00')
+            analysis.analysis_timestamp
         )
         assert isinstance(parsed_time, datetime)
 

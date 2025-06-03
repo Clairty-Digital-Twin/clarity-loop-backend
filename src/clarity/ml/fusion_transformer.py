@@ -27,14 +27,14 @@ class FusionConfig(BaseModel):
 
 class FusionTransformer(nn.Module):
     """Multimodal fusion transformer for health data.
-    
+
     Uses transformer encoder with CLS token to fuse multiple health modalities
     (cardio, respiratory, activity, etc.) into a unified health state vector.
     """
 
     def __init__(self, config: FusionConfig) -> None:
         """Initialize FusionTransformer.
-        
+
         Args:
             config: Fusion configuration with modality dimensions and model params
         """
@@ -44,18 +44,19 @@ class FusionTransformer(nn.Module):
         self.modality_names = list(config.modality_dims.keys())
 
         # Linear projection for each modality to common embedding dimension
-        self.modality_projections = nn.ModuleDict({
-            name: nn.Linear(dim, config.embed_dim)
-            for name, dim in config.modality_dims.items()
-        })
+        self.modality_projections = nn.ModuleDict(
+            {
+                name: nn.Linear(dim, config.embed_dim)
+                for name, dim in config.modality_dims.items()
+            }
+        )
 
         # Learnable [CLS] token embedding
         self.cls_token = nn.Parameter(torch.zeros(1, 1, config.embed_dim))
 
         # Positional embeddings for modalities (optional but can help)
         self.modality_embeddings = nn.Embedding(
-            len(config.modality_dims) + 1,  # +1 for CLS token
-            config.embed_dim
+            len(config.modality_dims) + 1, config.embed_dim  # +1 for CLS token
         )
 
         # Transformer encoder layers
@@ -64,13 +65,12 @@ class FusionTransformer(nn.Module):
             nhead=config.num_heads,
             dim_feedforward=config.embed_dim * 4,
             dropout=config.dropout,
-            activation='relu',
-            batch_first=True  # Use batch_first=True for easier handling
+            activation="relu",
+            batch_first=True,  # Use batch_first=True for easier handling
         )
 
         self.transformer = nn.TransformerEncoder(
-            encoder_layer,
-            num_layers=config.num_layers
+            encoder_layer, num_layers=config.num_layers
         )
 
         # Output projection to final dimension
@@ -98,11 +98,11 @@ class FusionTransformer(nn.Module):
 
     def forward(self, inputs: dict[str, torch.Tensor]) -> torch.Tensor:
         """Forward pass through fusion transformer.
-        
+
         Args:
             inputs: Dictionary mapping modality names to feature tensors
                    Each tensor should have shape (batch_size, feature_dim)
-                   
+
         Returns:
             Unified health state vector of shape (batch_size, output_dim)
         """
@@ -119,12 +119,16 @@ class FusionTransformer(nn.Module):
                 batch_size = features.size(0)
 
             # Project modality features to common embedding space
-            projected = self.modality_projections[modality_name](features)  # (batch, embed_dim)
+            projected = self.modality_projections[modality_name](
+                features
+            )  # (batch, embed_dim)
 
             # Add positional embedding for this modality
-            pos_id = torch.tensor(i + 1, device=features.device)  # +1 because 0 is for CLS
+            pos_id = torch.tensor(
+                i + 1, device=features.device
+            )  # +1 because 0 is for CLS
             pos_embedding = self.modality_embeddings(pos_id)  # (embed_dim,)
-            projected = projected + pos_embedding.unsqueeze(0)  # Broadcast to (batch, embed_dim)
+            projected += pos_embedding.unsqueeze(0)  # Broadcast to (batch, embed_dim)
 
             # Add sequence dimension: (batch, 1, embed_dim)
             modality_tokens.append(projected.unsqueeze(1))
@@ -134,17 +138,23 @@ class FusionTransformer(nn.Module):
             return torch.zeros(batch_size or 1, self.config.output_dim)
 
         # Concatenate all modality tokens
-        modality_sequence = torch.cat(modality_tokens, dim=1)  # (batch, num_modalities, embed_dim)
+        modality_sequence = torch.cat(
+            modality_tokens, dim=1
+        )  # (batch, num_modalities, embed_dim)
 
         # Prepare CLS token
         cls_tokens = self.cls_token.expand(batch_size, 1, -1)  # (batch, 1, embed_dim)
 
         # Add CLS positional embedding
-        cls_pos_embedding = self.modality_embeddings(torch.tensor(0, device=cls_tokens.device))
-        cls_tokens = cls_tokens + cls_pos_embedding.unsqueeze(0).unsqueeze(0)
+        cls_pos_embedding = self.modality_embeddings(
+            torch.tensor(0, device=cls_tokens.device)
+        )
+        cls_tokens += cls_pos_embedding.unsqueeze(0).unsqueeze(0)
 
         # Concatenate CLS token with modality tokens
-        sequence = torch.cat([cls_tokens, modality_sequence], dim=1)  # (batch, 1+num_modalities, embed_dim)
+        sequence = torch.cat(
+            [cls_tokens, modality_sequence], dim=1
+        )  # (batch, 1+num_modalities, embed_dim)
 
         # Apply transformer encoder
         encoded = self.transformer(sequence)  # (batch, 1+num_modalities, embed_dim)
@@ -156,16 +166,14 @@ class FusionTransformer(nn.Module):
         output = self.output_projection(cls_output)  # (batch, output_dim)
 
         # Apply layer normalization
-        output = self.layer_norm(output)
-
-        return output
+        return self.layer_norm(output)
 
     def get_attention_weights(self, inputs: dict[str, torch.Tensor]) -> torch.Tensor:
         """Get attention weights for interpretability.
-        
+
         Args:
             inputs: Dictionary mapping modality names to feature tensors
-            
+
         Returns:
             Attention weights tensor
         """
@@ -173,7 +181,9 @@ class FusionTransformer(nn.Module):
         # For now, return a placeholder
         batch_size = next(iter(inputs.values())).size(0)
         num_modalities = len(inputs)
-        return torch.ones(batch_size, self.config.num_heads, num_modalities + 1, num_modalities + 1)
+        return torch.ones(
+            batch_size, self.config.num_heads, num_modalities + 1, num_modalities + 1
+        )
 
 
 class HealthFusionService:
@@ -181,7 +191,7 @@ class HealthFusionService:
 
     def __init__(self, device: str = "cpu") -> None:
         """Initialize fusion service.
-        
+
         Args:
             device: Device to run model on ('cpu' or 'cuda')
         """
@@ -192,7 +202,7 @@ class HealthFusionService:
 
     def initialize_model(self, modality_dims: dict[str, int]) -> None:
         """Initialize fusion model with given modality dimensions.
-        
+
         Args:
             modality_dims: Dictionary mapping modality names to feature dimensions
         """
@@ -202,26 +212,29 @@ class HealthFusionService:
             num_heads=4,
             num_layers=2,
             dropout=0.1,
-            output_dim=64
+            output_dim=64,
         )
 
         self.model = FusionTransformer(self.config)
         self.model.to(self.device)
         self.model.eval()  # Set to evaluation mode
 
-        self.logger.info("Initialized fusion model with modalities: %s", list(modality_dims.keys()))
+        self.logger.info(
+            "Initialized fusion model with modalities: %s", list(modality_dims.keys())
+        )
 
     def fuse_modalities(self, modality_features: dict[str, list[float]]) -> list[float]:
         """Fuse multiple modality features into unified health vector.
-        
+
         Args:
             modality_features: Dictionary mapping modality names to feature lists
-            
+
         Returns:
             Unified health state vector as list of floats
         """
         if self.model is None:
-            raise RuntimeError("Model not initialized. Call initialize_model() first.")
+            msg = "Model not initialized. Call initialize_model() first."
+            raise RuntimeError(msg)
 
         try:
             # Convert to tensors
@@ -243,13 +256,16 @@ class HealthFusionService:
             # Convert back to list
             result = fused_vector.cpu().numpy().tolist()[0]  # Remove batch dimension
 
-            self.logger.info("Fused %d modalities into %d-dim vector",
-                           len(tensor_inputs), len(result))
+            self.logger.info(
+                "Fused %d modalities into %d-dim vector",
+                len(tensor_inputs),
+                len(result),
+            )
 
             return result
 
         except Exception as e:
-            self.logger.error("Error during fusion: %s", e)
+            self.logger.exception("Error during fusion: %s", e)
             # Return zero vector on error
             return [0.0] * (self.config.output_dim if self.config else 64)
 

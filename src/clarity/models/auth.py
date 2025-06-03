@@ -171,7 +171,9 @@ class UserLoginRequest(BaseModel):
 
     email: EmailStr = Field(..., description="User email address")
     password: str = Field(..., description="User password")
-    remember_me: bool = Field(default=False, description="Remember user for extended session")
+    remember_me: bool = Field(
+        default=False, description="Remember user for extended session"
+    )
     device_info: dict[str, Any] | None = Field(
         None, description="Optional device information for security tracking"
     )

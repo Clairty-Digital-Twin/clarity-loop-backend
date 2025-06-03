@@ -16,8 +16,7 @@ from clarity.services.pubsub.insight_subscriber import insight_app
 
 # Configure logging
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
@@ -25,7 +24,7 @@ logger = logging.getLogger(__name__)
 app = FastAPI(
     title="CLARITY Insight Service",
     description="AI-powered health insight generation service",
-    version="1.0.0"
+    version="1.0.0",
 )
 
 # Configure CORS
@@ -41,7 +40,7 @@ app.add_middleware(
 app.mount("/", insight_app)
 
 
-def main():
+def main() -> None:
     """Run the insight service."""
     host = os.getenv("HOST", "0.0.0.0")
     port = int(os.getenv("PORT", "8082"))
@@ -55,7 +54,7 @@ def main():
         host=host,
         port=port,
         reload=os.getenv("ENVIRONMENT") == "development",
-        log_level="info"
+        log_level="info",
     )
 
 

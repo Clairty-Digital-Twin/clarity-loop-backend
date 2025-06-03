@@ -409,7 +409,7 @@ class PATModelService(IMLModelService):
         if not Path(self.model_path).exists():
             logger.warning(
                 "PAT weights file not found at %s - will use random initialization",
-                self.model_path
+                self.model_path,
             )
         else:
             logger.info("PAT weights file found at %s", self.model_path)
@@ -739,7 +739,9 @@ class PATModelService(IMLModelService):
         # Extract the PAT embedding (96-dim from model, expand to 128 for compatibility)
         pat_embedding = outputs["embeddings"].cpu().numpy()[0]  # (96,)
         # Pad to 128 dimensions for fusion compatibility
-        full_embedding = np.pad(pat_embedding, (0, 128 - len(pat_embedding)), mode='constant').tolist()
+        full_embedding = np.pad(
+            pat_embedding, (0, 128 - len(pat_embedding)), mode="constant"
+        ).tolist()
 
         # Calculate sleep metrics with explicit type annotations
         sleep_efficiency: float = float(sleep_metrics[0] * 100)  # Convert to percentage
@@ -878,7 +880,7 @@ class PATModelService(IMLModelService):
 
     async def verify_weights_loaded(self) -> bool:
         """Verify that real weights are loaded (not random initialization).
-        
+
         This runs a test input through the model twice and checks if embeddings are identical.
         Random weights would produce different results each time due to dropout/randomness.
         """
@@ -905,18 +907,22 @@ class PATModelService(IMLModelService):
             if is_identical:
                 logger.info("✅ PAT weights verification PASSED - using real weights")
             else:
-                logger.warning("⚠️ PAT weights verification FAILED - may be using random weights")
+                logger.warning(
+                    "⚠️ PAT weights verification FAILED - may be using random weights"
+                )
 
             return is_identical
 
         except Exception as e:
-            logger.error("Error verifying PAT weights: %s", e)
+            logger.exception("Error verifying PAT weights: %s", e)
             return False
 
     async def health_check(self) -> dict[str, str | bool]:
         """Check the health status of the PAT service."""
         status = "healthy" if self.is_loaded else "not_loaded"
-        weights_verified = await self.verify_weights_loaded() if self.is_loaded else False
+        weights_verified = (
+            await self.verify_weights_loaded() if self.is_loaded else False
+        )
 
         return {
             "service": "PAT Model Service",

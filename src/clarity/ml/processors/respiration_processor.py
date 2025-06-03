@@ -18,19 +18,25 @@ logger = logging.getLogger(__name__)
 class RespirationFeatures(BaseModel):
     """Respiratory features extracted from RR/SpO2 data."""
 
-    avg_respiratory_rate: float = Field(description="Average respiratory rate (breaths/min)")
+    avg_respiratory_rate: float = Field(
+        description="Average respiratory rate (breaths/min)"
+    )
     resting_respiratory_rate: float = Field(description="Resting respiratory rate")
     respiratory_variability: float = Field(description="Respiratory rate variability")
     avg_spo2: float = Field(description="Average oxygen saturation (%)")
     min_spo2: float = Field(description="Minimum oxygen saturation (%)")
     spo2_variability: float = Field(description="SpO2 standard deviation")
-    respiratory_stability_score: float = Field(description="Breathing pattern stability (0-1)")
-    oxygenation_efficiency_score: float = Field(description="Oxygen efficiency score (0-1)")
+    respiratory_stability_score: float = Field(
+        description="Breathing pattern stability (0-1)"
+    )
+    oxygenation_efficiency_score: float = Field(
+        description="Oxygen efficiency score (0-1)"
+    )
 
 
 class RespirationProcessor:
     """Extract respiratory features from breathing rate and SpO2 time series.
-    
+
     Processes respiratory rate and oxygen saturation data to extract meaningful
     respiratory health indicators including breathing efficiency and oxygenation.
     """
@@ -44,23 +50,25 @@ class RespirationProcessor:
         rr_timestamps: list[datetime] | None = None,
         rr_values: list[float] | None = None,
         spo2_timestamps: list[datetime] | None = None,
-        spo2_values: list[float] | None = None
+        spo2_values: list[float] | None = None,
     ) -> list[float]:
         """Process respiratory rate and SpO2 data to extract respiratory features.
-        
+
         Args:
             rr_timestamps: Optional list of timestamps for RR samples
             rr_values: Optional list of respiratory rate values (breaths/min)
             spo2_timestamps: Optional list of timestamps for SpO2 samples
             spo2_values: Optional list of SpO2 values (%)
-            
+
         Returns:
             List of 8 respiratory features
         """
         try:
-            self.logger.info("Processing respiratory data: %d RR samples, %d SpO2 samples",
-                           len(rr_values) if rr_values else 0,
-                           len(spo2_values) if spo2_values else 0)
+            self.logger.info(
+                "Processing respiratory data: %d RR samples, %d SpO2 samples",
+                len(rr_values) if rr_values else 0,
+                len(spo2_values) if spo2_values else 0,
+            )
 
             # Preprocess respiratory rate data
             rr_clean = None
@@ -75,8 +83,11 @@ class RespirationProcessor:
             # Extract features
             features = self._extract_features(rr_clean, spo2_clean)
 
-            self.logger.info("Extracted respiratory features: avg_rr=%.1f, avg_spo2=%.1f",
-                           features.avg_respiratory_rate, features.avg_spo2)
+            self.logger.info(
+                "Extracted respiratory features: avg_rr=%.1f, avg_spo2=%.1f",
+                features.avg_respiratory_rate,
+                features.avg_spo2,
+            )
 
             # Return as list for fusion layer
             return [
@@ -87,18 +98,25 @@ class RespirationProcessor:
                 features.min_spo2,
                 features.spo2_variability,
                 features.respiratory_stability_score,
-                features.oxygenation_efficiency_score
+                features.oxygenation_efficiency_score,
             ]
 
         except Exception as e:
-            self.logger.error("Error processing respiratory data: %s", e)
+            self.logger.exception("Error processing respiratory data: %s", e)
             # Return default values on error
-            return [16.0, 14.0, 2.0, 98.0, 95.0, 1.0, 0.5, 0.8]  # Typical healthy values
+            return [
+                16.0,
+                14.0,
+                2.0,
+                98.0,
+                95.0,
+                1.0,
+                0.5,
+                0.8,
+            ]  # Typical healthy values
 
     def _preprocess_respiratory_rate(
-        self,
-        timestamps: list[datetime],
-        values: list[float]
+        self, timestamps: list[datetime], values: list[float]
     ) -> pd.Series:
         """Clean and normalize respiratory rate time series."""
         if not timestamps or not values:
@@ -108,16 +126,15 @@ class RespirationProcessor:
         ts = pd.Series(values, index=pd.to_datetime(timestamps))
 
         # Resample to 5-minute frequency (RR is typically less frequent than HR)
-        rr_resampled = ts.resample('5T').mean()
+        rr_resampled = ts.resample("5T").mean()
 
         # Remove outliers (RR outside 5-60 breaths/min range)
         rr_resampled = rr_resampled.mask(
-            (rr_resampled <= 5) | (rr_resampled > 60),
-            np.nan
+            (rr_resampled <= 5) | (rr_resampled > 60), np.nan
         )
 
         # Fill short gaps by interpolation (up to 3 periods = 15 minutes)
-        rr_interpolated = rr_resampled.interpolate(limit=3, limit_direction='forward')
+        rr_interpolated = rr_resampled.interpolate(limit=3, limit_direction="forward")
 
         # Apply light smoothing (3-period moving average)
         rr_smoothed = rr_interpolated.rolling(
@@ -125,14 +142,10 @@ class RespirationProcessor:
         ).mean()
 
         # Fill remaining NaNs
-        rr_final = rr_smoothed.fillna(method='ffill').fillna(method='bfill')
-
-        return rr_final
+        return rr_smoothed.fillna(method="ffill").fillna(method="bfill")
 
     def _preprocess_spo2(
-        self,
-        timestamps: list[datetime],
-        values: list[float]
+        self, timestamps: list[datetime], values: list[float]
     ) -> pd.Series:
         """Clean and normalize SpO2 time series."""
         if not timestamps or not values:
@@ -142,32 +155,29 @@ class RespirationProcessor:
         ts = pd.Series(values, index=pd.to_datetime(timestamps))
 
         # Resample to 10-minute frequency (SpO2 is often periodic)
-        spo2_resampled = ts.resample('10T').mean()
+        spo2_resampled = ts.resample("10T").mean()
 
         # Remove outliers (SpO2 outside 80-100% range)
         spo2_resampled = spo2_resampled.mask(
-            (spo2_resampled <= 80) | (spo2_resampled > 100),
-            np.nan
+            (spo2_resampled <= 80) | (spo2_resampled > 100), np.nan
         )
 
         # Interpolate short gaps
         spo2_interpolated = spo2_resampled.interpolate(limit=2)
 
         # Fill remaining NaNs
-        spo2_final = spo2_interpolated.fillna(method='ffill').fillna(method='bfill')
-
-        return spo2_final
+        return spo2_interpolated.fillna(method="ffill").fillna(method="bfill")
 
     def _extract_features(
-        self,
-        rr_series: pd.Series | None,
-        spo2_series: pd.Series | None
+        self, rr_series: pd.Series | None, spo2_series: pd.Series | None
     ) -> RespirationFeatures:
         """Extract respiratory features from cleaned time series."""
         # Respiratory rate statistics
         if rr_series is not None and len(rr_series) > 0:
             avg_respiratory_rate = float(np.nanmean(rr_series))
-            resting_respiratory_rate = float(np.nanpercentile(rr_series, 25))  # 25th percentile
+            resting_respiratory_rate = float(
+                np.nanpercentile(rr_series, 25)
+            )  # 25th percentile
             respiratory_variability = float(np.nanstd(rr_series))
         else:
             avg_respiratory_rate = 16.0  # Default healthy RR
@@ -196,7 +206,7 @@ class RespirationProcessor:
             min_spo2=min_spo2,
             spo2_variability=spo2_variability,
             respiratory_stability_score=respiratory_stability_score,
-            oxygenation_efficiency_score=oxygenation_efficiency_score
+            oxygenation_efficiency_score=oxygenation_efficiency_score,
         )
 
     def _calculate_stability_score(self, rr_series: pd.Series | None) -> float:
@@ -238,7 +248,7 @@ class RespirationProcessor:
             # Fair: avg >94%, min >90%
 
             avg_score = np.clip((mean_spo2 - 94) / 4, 0.0, 1.0)  # 94-98% maps to 0-1
-            min_score = np.clip((min_spo2 - 90) / 8, 0.0, 1.0)   # 90-98% maps to 0-1
+            min_score = np.clip((min_spo2 - 90) / 8, 0.0, 1.0)  # 90-98% maps to 0-1
 
             # Weighted combination (average is more important than minimum)
             oxygenation_score = 0.7 * avg_score + 0.3 * min_score

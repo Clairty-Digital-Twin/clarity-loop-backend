@@ -160,7 +160,10 @@ class SleepData(BaseModel):
                 raise ValueError(msg)
 
             calculated_minutes = int((end - start).total_seconds() / 60)
-            if total_minutes and abs(calculated_minutes - total_minutes) > MAX_SLEEP_DURATION_MINUTES:
+            if (
+                total_minutes
+                and abs(calculated_minutes - total_minutes) > MAX_SLEEP_DURATION_MINUTES
+            ):
                 msg = "Total sleep minutes inconsistent with start/end times"
                 raise ValueError(msg)
 
@@ -229,7 +232,9 @@ class MentalHealthIndicator(BaseModel):
     )
 
     notes: str | None = Field(
-        None, max_length=MAX_NOTES_LENGTH, description="Free-form notes about mental state"
+        None,
+        max_length=MAX_NOTES_LENGTH,
+        description="Free-form notes about mental state",
     )
 
     timestamp: datetime = Field(

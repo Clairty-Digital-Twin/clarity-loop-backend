@@ -50,7 +50,9 @@ class HealthDataPublisher:
         self.logger = logging.getLogger(__name__)
 
         # Topic names
-        self.health_data_topic = f"projects/{self.project_id}/topics/health-data-uploads"
+        self.health_data_topic = (
+            f"projects/{self.project_id}/topics/health-data-uploads"
+        )
         self.insight_topic = f"projects/{self.project_id}/topics/insight-requests"
 
         self.logger.info(
@@ -78,13 +80,13 @@ class HealthDataPublisher:
         """
         try:
             # Create message payload
-            message_data = dict(
-                user_id=user_id,
-                upload_id=upload_id,
-                gcs_path=gcs_path,
-                timestamp=datetime.now(UTC).isoformat(),
-                metadata=metadata or {}
-            )
+            message_data = {
+                "user_id": user_id,
+                "upload_id": upload_id,
+                "gcs_path": gcs_path,
+                "timestamp": datetime.now(UTC).isoformat(),
+                "metadata": metadata or {},
+            }
 
             # Convert to JSON bytes
             message_bytes = json.dumps(message_data).encode("utf-8")
@@ -102,7 +104,10 @@ class HealthDataPublisher:
 
             self.logger.info(
                 "Published health data upload event for user %s, upload %s, message ID: %s",
-                user_id, upload_id, message_id)
+                user_id,
+                upload_id,
+                message_id,
+            )
         except Exception as e:
             self.logger.exception("Failed to publish health data event: %s", e)
             raise
@@ -130,13 +135,13 @@ class HealthDataPublisher:
         """
         try:
             # Create message payload
-            message_data = dict(
-                user_id=user_id,
-                upload_id=upload_id,
-                analysis_results=analysis_results,
-                timestamp=datetime.now(UTC).isoformat(),
-                metadata=metadata or {}
-            )
+            message_data = {
+                "user_id": user_id,
+                "upload_id": upload_id,
+                "analysis_results": analysis_results,
+                "timestamp": datetime.now(UTC).isoformat(),
+                "metadata": metadata or {},
+            }
 
             # Convert to JSON bytes
             message_bytes = json.dumps(message_data).encode("utf-8")
@@ -154,7 +159,10 @@ class HealthDataPublisher:
 
             self.logger.info(
                 "Published insight request event for user %s, upload %s, message ID: %s",
-                user_id, upload_id, message_id)
+                user_id,
+                upload_id,
+                message_id,
+            )
         except Exception as e:
             self.logger.exception("Failed to publish insight request event: %s", e)
             raise
@@ -163,7 +171,7 @@ class HealthDataPublisher:
 
     def close(self) -> None:
         """Close publisher client."""
-        if hasattr(self.publisher, 'close'):
+        if hasattr(self.publisher, "close"):
             self.publisher.close()
 
 

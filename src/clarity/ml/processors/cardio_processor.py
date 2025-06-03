@@ -30,7 +30,7 @@ class CardioFeatures(BaseModel):
 
 class CardioProcessor:
     """Extract cardiovascular features from heart rate and HRV time series.
-    
+
     Processes heart rate and heart rate variability data to extract meaningful
     cardiovascular health indicators including fitness, stress, and recovery metrics.
     """
@@ -44,21 +44,23 @@ class CardioProcessor:
         hr_timestamps: list[datetime],
         hr_values: list[float],
         hrv_timestamps: list[datetime] | None = None,
-        hrv_values: list[float] | None = None
+        hrv_values: list[float] | None = None,
     ) -> list[float]:
         """Process heart rate and HRV data to extract cardiovascular features.
-        
+
         Args:
             hr_timestamps: List of timestamps for HR samples
             hr_values: List of heart rate values (BPM)
             hrv_timestamps: Optional list of timestamps for HRV samples
             hrv_values: Optional list of HRV SDNN values (ms)
-            
+
         Returns:
             List of 8 cardiovascular features
         """
         try:
-            self.logger.info("Processing cardiovascular data: %d HR samples", len(hr_values))
+            self.logger.info(
+                "Processing cardiovascular data: %d HR samples", len(hr_values)
+            )
 
             # Preprocess heart rate data
             hr_clean = self._preprocess_heart_rate(hr_timestamps, hr_values)
@@ -71,8 +73,11 @@ class CardioProcessor:
             # Extract features
             features = self._extract_features(hr_clean, hrv_clean)
 
-            self.logger.info("Extracted cardiovascular features: avg_hr=%.1f, resting_hr=%.1f",
-                           features.avg_hr, features.resting_hr)
+            self.logger.info(
+                "Extracted cardiovascular features: avg_hr=%.1f, resting_hr=%.1f",
+                features.avg_hr,
+                features.resting_hr,
+            )
 
             # Return as list for fusion layer
             return [
@@ -83,18 +88,16 @@ class CardioProcessor:
                 features.avg_hrv,
                 features.hrv_variability,
                 features.hr_recovery_score,
-                features.circadian_rhythm_score
+                features.circadian_rhythm_score,
             ]
 
         except Exception as e:
-            self.logger.error("Error processing cardiovascular data: %s", e)
+            self.logger.exception("Error processing cardiovascular data: %s", e)
             # Return zero vector on error
             return [0.0] * 8
 
     def _preprocess_heart_rate(
-        self,
-        timestamps: list[datetime],
-        values: list[float]
+        self, timestamps: list[datetime], values: list[float]
     ) -> pd.Series:
         """Clean and normalize heart rate time series."""
         if not timestamps or not values:
@@ -104,16 +107,13 @@ class CardioProcessor:
         ts = pd.Series(values, index=pd.to_datetime(timestamps))
 
         # Resample to 1-minute frequency
-        hr_per_min = ts.resample('1T').mean()
+        hr_per_min = ts.resample("1T").mean()
 
         # Remove outliers (HR outside 30-220 BPM range)
-        hr_per_min = hr_per_min.mask(
-            (hr_per_min <= 30) | (hr_per_min > 220),
-            np.nan
-        )
+        hr_per_min = hr_per_min.mask((hr_per_min <= 30) | (hr_per_min > 220), np.nan)
 
         # Fill short gaps by interpolation (up to 5 minutes)
-        hr_interpolated = hr_per_min.interpolate(limit=5, limit_direction='forward')
+        hr_interpolated = hr_per_min.interpolate(limit=5, limit_direction="forward")
 
         # Apply smoothing (3-minute moving average)
         hr_smoothed = hr_interpolated.rolling(
@@ -121,14 +121,10 @@ class CardioProcessor:
         ).mean()
 
         # Fill remaining NaNs with forward fill
-        hr_final = hr_smoothed.fillna(method='ffill').fillna(method='bfill')
-
-        return hr_final
+        return hr_smoothed.fillna(method="ffill").fillna(method="bfill")
 
     def _preprocess_hrv(
-        self,
-        timestamps: list[datetime],
-        values: list[float]
+        self, timestamps: list[datetime], values: list[float]
     ) -> pd.Series:
         """Clean and normalize HRV time series."""
         if not timestamps or not values:
@@ -138,33 +134,30 @@ class CardioProcessor:
         ts = pd.Series(values, index=pd.to_datetime(timestamps))
 
         # Resample to 5-minute frequency (HRV is typically less frequent)
-        hrv_resampled = ts.resample('5T').mean()
+        hrv_resampled = ts.resample("5T").mean()
 
         # Remove outliers (HRV outside 5-200 ms range)
         hrv_resampled = hrv_resampled.mask(
-            (hrv_resampled <= 5) | (hrv_resampled > 200),
-            np.nan
+            (hrv_resampled <= 5) | (hrv_resampled > 200), np.nan
         )
 
         # Interpolate short gaps
         hrv_interpolated = hrv_resampled.interpolate(limit=2)
 
         # Fill remaining NaNs
-        hrv_final = hrv_interpolated.fillna(method='ffill').fillna(method='bfill')
-
-        return hrv_final
+        return hrv_interpolated.fillna(method="ffill").fillna(method="bfill")
 
     def _extract_features(
-        self,
-        hr_series: pd.Series,
-        hrv_series: pd.Series | None
+        self, hr_series: pd.Series, hrv_series: pd.Series | None
     ) -> CardioFeatures:
         """Extract cardiovascular features from cleaned time series."""
         # Basic HR statistics
         if len(hr_series) > 0:
             avg_hr = float(np.nanmean(hr_series))
             max_hr = float(np.nanmax(hr_series))
-            resting_hr = float(np.nanpercentile(hr_series, 10))  # 10th percentile as resting
+            resting_hr = float(
+                np.nanpercentile(hr_series, 10)
+            )  # 10th percentile as resting
             hr_variability = float(np.nanstd(hr_series))
         else:
             avg_hr = max_hr = resting_hr = hr_variability = 0.0
@@ -188,7 +181,7 @@ class CardioProcessor:
             avg_hrv=avg_hrv,
             hrv_variability=hrv_variability,
             hr_recovery_score=hr_recovery_score,
-            circadian_rhythm_score=circadian_rhythm_score
+            circadian_rhythm_score=circadian_rhythm_score,
         )
 
     def _calculate_recovery_score(self, hr_series: pd.Series) -> float:

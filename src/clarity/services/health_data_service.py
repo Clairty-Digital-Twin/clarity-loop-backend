@@ -80,24 +80,23 @@ class HealthDataService:
 
         # Initialize GCS client for raw data storage
         self.storage_client = storage.Client()
-        self.raw_data_bucket = os.getenv("HEALTHKIT_RAW_BUCKET", "clarity-healthkit-raw-data")
+        self.raw_data_bucket = os.getenv(
+            "HEALTHKIT_RAW_BUCKET", "clarity-healthkit-raw-data"
+        )
 
     async def _upload_raw_data_to_gcs(
-        self,
-        user_id: str,
-        processing_id: str,
-        health_data: HealthDataUpload
+        self, user_id: str, processing_id: str, health_data: HealthDataUpload
     ) -> str:
         """Upload raw health data to Google Cloud Storage.
-        
+
         Args:
             user_id: User identifier
             processing_id: Unique processing job ID
             health_data: Raw health data to upload
-            
+
         Returns:
             GCS path where data was stored
-            
+
         Raises:
             HealthDataServiceError: If upload fails
         """
@@ -121,10 +120,26 @@ class HealthDataService:
                         "metric_type": metric.metric_type.value,
                         "created_at": metric.created_at.isoformat(),
                         "device_id": metric.device_id,
-                        "biometric_data": metric.biometric_data.model_dump() if metric.biometric_data else None,
-                        "activity_data": metric.activity_data.model_dump() if metric.activity_data else None,
-                        "sleep_data": metric.sleep_data.model_dump() if metric.sleep_data else None,
-                        "mental_health_data": metric.mental_health_data.model_dump() if metric.mental_health_data else None,
+                        "biometric_data": (
+                            metric.biometric_data.model_dump()
+                            if metric.biometric_data
+                            else None
+                        ),
+                        "activity_data": (
+                            metric.activity_data.model_dump()
+                            if metric.activity_data
+                            else None
+                        ),
+                        "sleep_data": (
+                            metric.sleep_data.model_dump()
+                            if metric.sleep_data
+                            else None
+                        ),
+                        "mental_health_data": (
+                            metric.mental_health_data.model_dump()
+                            if metric.mental_health_data
+                            else None
+                        ),
                     }
                     for metric in health_data.metrics
                 ],
@@ -146,14 +161,13 @@ class HealthDataService:
 
             # Upload the JSON data
             blob.upload_from_string(
-                json.dumps(raw_data, indent=2),
-                content_type="application/json"
+                json.dumps(raw_data, indent=2), content_type="application/json"
             )
 
             self.logger.info(
                 "Raw health data uploaded to GCS: %s (%d metrics)",
                 gcs_path,
-                len(health_data.metrics)
+                len(health_data.metrics),
             )
 
             return gcs_path

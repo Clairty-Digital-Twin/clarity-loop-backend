@@ -46,7 +46,9 @@ class TestHealthDataServiceApplicationBusinessRules:
     Uses mocks for all dependencies (repositories, external services).
     """
 
-    def test_service_initialization_dependency_injection(self, mock_storage_client) -> None:
+    def test_service_initialization_dependency_injection(
+        self, mock_storage_client
+    ) -> None:
         """Test use case follows Dependency Inversion Principle."""
         # Given: Mock repository (abstraction, not concrete implementation)
         mock_repository = AsyncMock(spec=IHealthDataRepository)
@@ -59,7 +61,9 @@ class TestHealthDataServiceApplicationBusinessRules:
         assert hasattr(service, "repository")  # Service has injected dependency
 
     @pytest.mark.asyncio
-    async def test_process_health_data_use_case_orchestration(self, mock_storage_client) -> None:
+    async def test_process_health_data_use_case_orchestration(
+        self, mock_storage_client
+    ) -> None:
         """Test use case orchestrates entity validation and repository storage."""
         # Given: Mock repository and valid health data upload
         mock_repository = AsyncMock(spec=IHealthDataRepository)
@@ -102,7 +106,9 @@ class TestHealthDataServiceApplicationBusinessRules:
         mock_repository.save_health_data.assert_called_once()
 
     @pytest.mark.asyncio
-    async def test_use_case_handles_business_rule_violations(self, mock_storage_client) -> None:
+    async def test_use_case_handles_business_rule_violations(
+        self, mock_storage_client
+    ) -> None:
         """Test use case properly handles business rule violations from entities."""
         # When: Creating invalid entity (business rule violation)
         with pytest.raises(
@@ -120,7 +126,9 @@ class TestHealthDataServiceApplicationBusinessRules:
             # Should not reach repository call due to entity validation
 
     @pytest.mark.asyncio
-    async def test_use_case_repository_error_handling(self, mock_storage_client) -> None:
+    async def test_use_case_repository_error_handling(
+        self, mock_storage_client
+    ) -> None:
         """Test use case handles repository failures gracefully."""
         # Given: Mock repository that fails
         mock_repository = AsyncMock(spec=IHealthDataRepository)
@@ -181,7 +189,9 @@ class TestHealthDataServiceApplicationBusinessRules:
         )
 
     @pytest.mark.asyncio
-    async def test_get_user_health_data_use_case_orchestration(self, mock_storage_client) -> None:
+    async def test_get_user_health_data_use_case_orchestration(
+        self, mock_storage_client
+    ) -> None:
         """Test use case orchestrates health data retrieval with filters."""
         # Given: Mock repository with health data
         mock_repository = AsyncMock(spec=IHealthDataRepository)
@@ -288,7 +298,9 @@ class TestServiceApplicationBusinessRules:
         # Note: Not calling protected method directly to avoid lint error
 
     @pytest.mark.asyncio
-    async def test_processing_id_generation_business_rule(self, mock_storage_client) -> None:
+    async def test_processing_id_generation_business_rule(
+        self, mock_storage_client
+    ) -> None:
         """Test application business rule: Each upload gets unique processing ID."""
         # Given: Mock repository
         mock_repository = AsyncMock(spec=IHealthDataRepository)
@@ -372,7 +384,9 @@ class TestServiceApplicationBusinessRules:
 class TestServiceFollowsSOLIDPrinciples:
     """Test that service follows Dependency Inversion Principle (SOLID)."""
 
-    def test_service_depends_on_abstraction_not_concretion(self, mock_storage_client) -> None:
+    def test_service_depends_on_abstraction_not_concretion(
+        self, mock_storage_client
+    ) -> None:
         """Test service depends on repository interface, not concrete implementation."""
         # Given: Mock repository interface
         mock_repository = Mock(spec=IHealthDataRepository)
@@ -390,7 +404,9 @@ class TestServiceFollowsSOLIDPrinciples:
         assert hasattr(service.repository, "get_user_health_data")
         assert hasattr(service.repository, "delete_health_data")
 
-    def test_service_is_testable_without_real_implementations(self, mock_storage_client) -> None:
+    def test_service_is_testable_without_real_implementations(
+        self, mock_storage_client
+    ) -> None:
         """Test service can be fully tested with mocks (no real database needed)."""
         # Given: All dependencies are mocked
         mock_repository = Mock(spec=IHealthDataRepository)
@@ -444,7 +460,9 @@ class TestServiceFollowsSingleResponsibilityPrinciple:
         for method in non_health_methods:
             assert not hasattr(service, method)
 
-    def test_service_validation_is_health_data_specific(self, mock_storage_client) -> None:
+    def test_service_validation_is_health_data_specific(
+        self, mock_storage_client
+    ) -> None:
         """Test service validation logic is specific to health data domain."""
         # Given: Service with mock repository
         mock_repository = Mock(spec=IHealthDataRepository)

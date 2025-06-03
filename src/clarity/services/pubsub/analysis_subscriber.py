@@ -35,10 +35,10 @@ class AnalysisSubscriber:
 
     async def process_health_data_message(self, request: Request) -> dict[str, Any]:
         """Process incoming Pub/Sub message for health data analysis.
-        
+
         Args:
             request: FastAPI request object containing Pub/Sub message
-            
+
         Returns:
             Processing result
         """
@@ -51,37 +51,43 @@ class AnalysisSubscriber:
             body = await request.json()
             message_data = self._extract_message_data(body)
 
-            self.logger.info("Processing health data analysis for user: %s, upload: %s",
-                           message_data.get("user_id"), message_data.get("upload_id"))
+            self.logger.info(
+                "Processing health data analysis for user: %s, upload: %s",
+                message_data.get("user_id"),
+                message_data.get("upload_id"),
+            )
 
             # Download raw data from GCS
             raw_health_data = await self._download_health_data(message_data["gcs_path"])
 
             # Run analysis pipeline
             analysis_results = await run_analysis_pipeline(
-                user_id=message_data["user_id"],
-                health_data=raw_health_data
+                user_id=message_data["user_id"], health_data=raw_health_data
             )
 
             # Publish insight request event
             await self.publisher.publish_insight_request_event(
                 user_id=message_data["user_id"],
                 upload_id=message_data["upload_id"],
-                analysis_results=analysis_results
+                analysis_results=analysis_results,
             )
 
-            self.logger.info("Completed health data analysis for user: %s", message_data["user_id"])
+            self.logger.info(
+                "Completed health data analysis for user: %s", message_data["user_id"]
+            )
 
             return {
                 "status": "success",
                 "user_id": message_data["user_id"],
                 "upload_id": message_data["upload_id"],
-                "analysis_completed": True
+                "analysis_completed": True,
             }
 
         except Exception as e:
-            self.logger.error("Error processing health data message: %s", e)
-            raise HTTPException(status_code=500, detail=f"Analysis processing failed: {e!s}")
+            self.logger.exception("Error processing health data message: %s", e)
+            raise HTTPException(
+                status_code=500, detail=f"Analysis processing failed: {e!s}"
+            )
 
     async def _verify_pubsub_token(self, request: Request) -> None:
         """Verify Pub/Sub OIDC token in production."""
@@ -92,7 +98,9 @@ class AnalysisSubscriber:
 
         try:
             # Extract token from "Bearer <token>" format
-            token = authorization.split(" ")[1] if " " in authorization else authorization
+            token = (
+                authorization.split(" ")[1] if " " in authorization else authorization
+            )
 
             # TODO: Implement proper JWT verification using Google's public keys
             # For now, just check that token exists
@@ -103,7 +111,7 @@ class AnalysisSubscriber:
             # using google.auth.jwt or similar library
 
         except Exception as e:
-            self.logger.error("Token verification failed: %s", e)
+            self.logger.exception("Token verification failed: %s", e)
             raise HTTPException(status_code=401, detail="Invalid Pub/Sub token")
 
     def _extract_message_data(self, pubsub_body: dict[str, Any]) -> dict[str, Any]:
@@ -123,27 +131,31 @@ class AnalysisSubscriber:
             required_fields = ["user_id", "upload_id", "gcs_path"]
             for field in required_fields:
                 if field not in message_data:
-                    raise ValueError(f"Missing required field: {field}")
+                    msg = f"Missing required field: {field}"
+                    raise ValueError(msg)
 
             return message_data
 
         except Exception as e:
-            self.logger.error("Failed to extract message data: %s", e)
-            raise HTTPException(status_code=400, detail=f"Invalid message format: {e!s}")
+            self.logger.exception("Failed to extract message data: %s", e)
+            raise HTTPException(
+                status_code=400, detail=f"Invalid message format: {e!s}"
+            )
 
     async def _download_health_data(self, gcs_path: str) -> dict[str, Any]:
         """Download raw health data from GCS.
-        
+
         Args:
             gcs_path: GCS path in format gs://bucket/path
-            
+
         Returns:
             Raw health data as dictionary
         """
         try:
             # Parse GCS path
             if not gcs_path.startswith("gs://"):
-                raise ValueError(f"Invalid GCS path format: {gcs_path}")
+                msg = f"Invalid GCS path format: {gcs_path}"
+                raise ValueError(msg)
 
             path_parts = gcs_path[5:].split("/", 1)  # Remove "gs://" prefix
             bucket_name = path_parts[0]
@@ -154,19 +166,25 @@ class AnalysisSubscriber:
             blob = bucket.blob(blob_path)
 
             if not blob.exists():
-                raise FileNotFoundError(f"Health data not found at: {gcs_path}")
+                msg = f"Health data not found at: {gcs_path}"
+                raise FileNotFoundError(msg)
 
             # Download and parse JSON
             raw_json = blob.download_as_text()
             health_data = json.loads(raw_json)
 
-            self.logger.info("Downloaded health data from GCS: %s (%d bytes)",
-                           gcs_path, len(raw_json))
+            self.logger.info(
+                "Downloaded health data from GCS: %s (%d bytes)",
+                gcs_path,
+                len(raw_json),
+            )
 
             return health_data
 
         except Exception as e:
-            self.logger.error("Failed to download health data from %s: %s", gcs_path, e)
+            self.logger.exception(
+                "Failed to download health data from %s: %s", gcs_path, e
+            )
             raise
 
 

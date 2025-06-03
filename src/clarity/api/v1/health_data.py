@@ -222,16 +222,15 @@ async def upload_health_data(
                     "upload_source": health_data.upload_source,
                     "client_timestamp": health_data.client_timestamp.isoformat(),
                     "sync_token": health_data.sync_token,
-                    "metrics": [metric.model_dump() for metric in health_data.metrics]
+                    "metrics": [metric.model_dump() for metric in health_data.metrics],
                 }
 
                 blob.upload_from_string(
-                    json.dumps(raw_data),
-                    content_type="application/json"
+                    json.dumps(raw_data), content_type="application/json"
                 )
                 logger.info("Saved health data to GCS: %s", gcs_path)
             except Exception as gcs_error:
-                logger.error("Failed to save to GCS: %s", gcs_error)
+                logger.exception("Failed to save to GCS: %s", gcs_error)
                 # Continue anyway - we can retry later
 
             # Publish to Pub/Sub
@@ -243,10 +242,13 @@ async def upload_health_data(
                 metadata={
                     "source": health_data.upload_source,
                     "metrics_count": len(health_data.metrics),
-                    "timestamp": health_data.client_timestamp.isoformat()
-                }
+                    "timestamp": health_data.client_timestamp.isoformat(),
+                },
             )
-            logger.info("Published health data event for async processing: %s", response.processing_id)
+            logger.info(
+                "Published health data event for async processing: %s",
+                response.processing_id,
+            )
         except Exception as pub_error:
             # Don't fail the upload if Pub/Sub fails - data is already saved
             logger.warning("Failed to publish health data event: %s", pub_error)

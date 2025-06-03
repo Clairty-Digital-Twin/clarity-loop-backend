@@ -58,27 +58,30 @@ class HealthKitUploadResponse(BaseModel):
     message: str
 
 
-@router.post("/upload", response_model=HealthKitUploadResponse, status_code=status.HTTP_202_ACCEPTED)
+@router.post(
+    "/upload",
+    response_model=HealthKitUploadResponse,
+    status_code=status.HTTP_202_ACCEPTED,
+)
 async def upload_healthkit_data(
-    request: HealthKitUploadRequest,
-    token: HTTPBearer = Depends(auth_scheme)
+    request: HealthKitUploadRequest, token: HTTPBearer = Depends(auth_scheme)
 ) -> HealthKitUploadResponse:
     """Upload HealthKit data for asynchronous processing.
-    
+
     This endpoint:
     1. Authenticates the request via Firebase
     2. Validates user authorization
     3. Stores raw data to GCS
     4. Publishes Pub/Sub message for processing
     5. Returns immediate acknowledgment
-    
+
     Args:
         request: HealthKit upload data
         token: Bearer token for authentication
-        
+
     Returns:
         Upload acknowledgment with tracking ID
-        
+
     Raises:
         HTTPException: For authentication/authorization failures
     """
@@ -89,7 +92,7 @@ async def upload_healthkit_data(
         if user_claims.get("uid") != request.user_id:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail="Cannot upload data for a different user"
+                detail="Cannot upload data for a different user",
             )
 
         # 2. Generate unique upload ID
@@ -111,8 +114,7 @@ async def upload_healthkit_data(
         upload_data["upload_id"] = upload_id
 
         blob.upload_from_string(
-            request.model_dump_json(indent=2),
-            content_type="application/json"
+            request.model_dump_json(indent=2), content_type="application/json"
         )
 
         # 4. Publish to Pub/Sub for processing
@@ -127,11 +129,11 @@ async def upload_healthkit_data(
                     "quantity": len(request.quantity_samples),
                     "category": len(request.category_samples),
                     "workouts": len(request.workouts),
-                    "correlations": len(request.correlation_samples)
+                    "correlations": len(request.correlation_samples),
                 },
                 "sync_token": request.sync_token,
-                "upload_source": "healthkit_ios"
-            }
+                "upload_source": "healthkit_ios",
+            },
         )
 
         # 5. Return immediate acknowledgment
@@ -143,32 +145,31 @@ async def upload_healthkit_data(
                 "quantity_samples": len(request.quantity_samples),
                 "category_samples": len(request.category_samples),
                 "workouts": len(request.workouts),
-                "correlation_samples": len(request.correlation_samples)
+                "correlation_samples": len(request.correlation_samples),
             },
-            message="Health data queued for processing successfully"
+            message="Health data queued for processing successfully",
         )
 
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to process HealthKit upload: {e}")
+        logger.exception(f"Failed to process HealthKit upload: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to process health data upload"
+            detail="Failed to process health data upload",
         )
 
 
 @router.get("/status/{upload_id}")
 async def get_upload_status(
-    upload_id: str,
-    token: HTTPBearer = Depends(auth_scheme)
+    upload_id: str, token: HTTPBearer = Depends(auth_scheme)
 ) -> dict[str, Any]:
     """Get status of a HealthKit upload.
-    
+
     Args:
         upload_id: The upload ID to check
         token: Bearer token for authentication
-        
+
     Returns:
         Upload status information
     """
@@ -177,16 +178,14 @@ async def get_upload_status(
         user_id = upload_id.split("-")[0]
     except (IndexError, ValueError):
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Invalid upload ID format"
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid upload ID format"
         )
 
     # Verify user access
     user_claims = await verify_firebase_token(token.credentials)
     if user_claims.get("uid") != user_id:
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Access denied to this upload"
+            status_code=status.HTTP_403_FORBIDDEN, detail="Access denied to this upload"
         )
 
     # TODO: Implement status checking from Firestore
@@ -196,7 +195,7 @@ async def get_upload_status(
         "status": "processing",
         "progress": 0.75,
         "message": "Analyzing cardiovascular patterns",
-        "last_updated": datetime.utcnow().isoformat()
+        "last_updated": datetime.utcnow().isoformat(),
     }
 
 

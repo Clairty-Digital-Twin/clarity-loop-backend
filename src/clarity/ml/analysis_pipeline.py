@@ -35,7 +35,7 @@ class AnalysisResults:
 
 class HealthAnalysisPipeline:
     """Main analysis pipeline for processing health data.
-    
+
     Orchestrates the complete workflow:
     1. Data preprocessing and cleaning
     2. Modality-specific feature extraction
@@ -56,21 +56,22 @@ class HealthAnalysisPipeline:
         self.pat_service = None  # Will be initialized on first use
 
     async def process_health_data(
-        self,
-        user_id: str,
-        health_metrics: list[HealthMetric]
+        self, user_id: str, health_metrics: list[HealthMetric]
     ) -> AnalysisResults:
         """Process health data through the complete analysis pipeline.
-        
+
         Args:
             user_id: User identifier
             health_metrics: List of health metrics to process
-            
+
         Returns:
             Analysis results with features and embeddings
         """
-        self.logger.info("Starting analysis pipeline for user %s with %d metrics",
-                        user_id, len(health_metrics))
+        self.logger.info(
+            "Starting analysis pipeline for user %s with %d metrics",
+            user_id,
+            len(health_metrics),
+        )
 
         results = AnalysisResults()
 
@@ -84,21 +85,27 @@ class HealthAnalysisPipeline:
             # Process cardiovascular data
             if organized_data.get("cardio"):
                 self.logger.info("Processing cardiovascular data...")
-                cardio_features = await self._process_cardio_data(organized_data["cardio"])
+                cardio_features = await self._process_cardio_data(
+                    organized_data["cardio"]
+                )
                 results.cardio_features = cardio_features
                 modality_features["cardio"] = cardio_features
 
             # Process respiratory data
             if organized_data.get("respiratory"):
                 self.logger.info("Processing respiratory data...")
-                respiratory_features = await self._process_respiratory_data(organized_data["respiratory"])
+                respiratory_features = await self._process_respiratory_data(
+                    organized_data["respiratory"]
+                )
                 results.respiratory_features = respiratory_features
                 modality_features["respiratory"] = respiratory_features
 
             # Process activity data with PAT model
             if organized_data.get("activity"):
                 self.logger.info("Processing activity data with PAT model...")
-                activity_embedding = await self._process_activity_data(user_id, organized_data["activity"])
+                activity_embedding = await self._process_activity_data(
+                    user_id, organized_data["activity"]
+                )
                 results.activity_embedding = activity_embedding
                 modality_features["activity"] = activity_embedding
 
@@ -109,10 +116,12 @@ class HealthAnalysisPipeline:
                 results.fused_vector = fused_vector
             elif len(modality_features) == 1:
                 # Single modality - use it as the fused vector
-                results.fused_vector = list(modality_features.values())[0]
+                results.fused_vector = next(iter(modality_features.values()))
 
             # Step 4: Generate summary statistics
-            results.summary_stats = self._generate_summary_stats(organized_data, modality_features)
+            results.summary_stats = self._generate_summary_stats(
+                organized_data, modality_features
+            )
 
             # Step 5: Add processing metadata
             results.processing_metadata = {
@@ -120,36 +129,51 @@ class HealthAnalysisPipeline:
                 "processed_at": datetime.utcnow().isoformat(),
                 "total_metrics": len(health_metrics),
                 "modalities_processed": list(modality_features.keys()),
-                "fused_vector_dim": len(results.fused_vector)
+                "fused_vector_dim": len(results.fused_vector),
             }
 
-            self.logger.info("Analysis pipeline completed successfully for user %s", user_id)
+            self.logger.info(
+                "Analysis pipeline completed successfully for user %s", user_id
+            )
             return results
 
         except Exception as e:
-            self.logger.error("Error in analysis pipeline for user %s: %s", user_id, e)
+            self.logger.exception(
+                "Error in analysis pipeline for user %s: %s", user_id, e
+            )
             raise
 
-    def _organize_metrics_by_modality(self, metrics: list[HealthMetric]) -> dict[str, list[HealthMetric]]:
+    def _organize_metrics_by_modality(
+        self, metrics: list[HealthMetric]
+    ) -> dict[str, list[HealthMetric]]:
         """Organize health metrics by modality type."""
         organized = {
             "cardio": [],
             "respiratory": [],
             "activity": [],
             "sleep": [],
-            "other": []
+            "other": [],
         }
 
         for metric in metrics:
             metric_type = metric.metric_type.value.lower()
 
-            if metric_type in ["heart_rate", "heart_rate_variability", "blood_pressure"]:
+            if metric_type in {
+                "heart_rate",
+                "heart_rate_variability",
+                "blood_pressure",
+            }:
                 organized["cardio"].append(metric)
-            elif metric_type in ["respiratory_rate", "oxygen_saturation"]:
+            elif metric_type in {"respiratory_rate", "oxygen_saturation"}:
                 organized["respiratory"].append(metric)
-            elif metric_type in ["step_count", "active_energy", "distance_walking", "exercise_time"]:
+            elif metric_type in {
+                "step_count",
+                "active_energy",
+                "distance_walking",
+                "exercise_time",
+            }:
                 organized["activity"].append(metric)
-            elif metric_type in ["sleep_analysis", "sleep_duration"]:
+            elif metric_type in {"sleep_analysis", "sleep_duration"}:
                 organized["sleep"].append(metric)
             else:
                 organized["other"].append(metric)
@@ -157,11 +181,15 @@ class HealthAnalysisPipeline:
         # Log organization results
         for modality, metrics_list in organized.items():
             if metrics_list:
-                self.logger.info("Organized %d metrics for %s modality", len(metrics_list), modality)
+                self.logger.info(
+                    "Organized %d metrics for %s modality", len(metrics_list), modality
+                )
 
         return organized
 
-    async def _process_cardio_data(self, cardio_metrics: list[HealthMetric]) -> list[float]:
+    async def _process_cardio_data(
+        self, cardio_metrics: list[HealthMetric]
+    ) -> list[float]:
         """Process cardiovascular metrics."""
         hr_timestamps = []
         hr_values = []
@@ -169,19 +197,32 @@ class HealthAnalysisPipeline:
         hrv_values = []
 
         for metric in cardio_metrics:
-            if metric.metric_type.value.lower() == "heart_rate" and metric.biometric_data:
+            if (
+                metric.metric_type.value.lower() == "heart_rate"
+                and metric.biometric_data
+            ):
                 if metric.biometric_data.heart_rate:
                     hr_timestamps.append(metric.created_at)
                     hr_values.append(float(metric.biometric_data.heart_rate))
 
-            elif metric.metric_type.value.lower() == "heart_rate_variability" and metric.biometric_data:
-                if hasattr(metric.biometric_data, 'hrv_sdnn') and metric.biometric_data.hrv_sdnn:
+            elif (
+                metric.metric_type.value.lower() == "heart_rate_variability"
+                and metric.biometric_data
+            ):
+                if (
+                    hasattr(metric.biometric_data, "hrv_sdnn")
+                    and metric.biometric_data.hrv_sdnn
+                ):
                     hrv_timestamps.append(metric.created_at)
                     hrv_values.append(float(metric.biometric_data.hrv_sdnn))
 
-        return self.cardio_processor.process(hr_timestamps, hr_values, hrv_timestamps, hrv_values)
+        return self.cardio_processor.process(
+            hr_timestamps, hr_values, hrv_timestamps, hrv_values
+        )
 
-    async def _process_respiratory_data(self, respiratory_metrics: list[HealthMetric]) -> list[float]:
+    async def _process_respiratory_data(
+        self, respiratory_metrics: list[HealthMetric]
+    ) -> list[float]:
         """Process respiratory metrics."""
         rr_timestamps = []
         rr_values = []
@@ -189,22 +230,40 @@ class HealthAnalysisPipeline:
         spo2_values = []
 
         for metric in respiratory_metrics:
-            if metric.metric_type.value.lower() == "respiratory_rate" and metric.biometric_data:
-                if hasattr(metric.biometric_data, 'respiratory_rate') and metric.biometric_data.respiratory_rate:
+            if (
+                metric.metric_type.value.lower() == "respiratory_rate"
+                and metric.biometric_data
+            ):
+                if (
+                    hasattr(metric.biometric_data, "respiratory_rate")
+                    and metric.biometric_data.respiratory_rate
+                ):
                     rr_timestamps.append(metric.created_at)
                     rr_values.append(float(metric.biometric_data.respiratory_rate))
 
-            elif metric.metric_type.value.lower() == "oxygen_saturation" and metric.biometric_data:
-                if hasattr(metric.biometric_data, 'oxygen_saturation') and metric.biometric_data.oxygen_saturation:
+            elif (
+                metric.metric_type.value.lower() == "oxygen_saturation"
+                and metric.biometric_data
+            ):
+                if (
+                    hasattr(metric.biometric_data, "oxygen_saturation")
+                    and metric.biometric_data.oxygen_saturation
+                ):
                     spo2_timestamps.append(metric.created_at)
                     spo2_values.append(float(metric.biometric_data.oxygen_saturation))
 
-        return self.respiratory_processor.process(rr_timestamps, rr_values, spo2_timestamps, spo2_values)
+        return self.respiratory_processor.process(
+            rr_timestamps, rr_values, spo2_timestamps, spo2_values
+        )
 
-    async def _process_activity_data(self, user_id: str, activity_metrics: list[HealthMetric]) -> list[float]:
+    async def _process_activity_data(
+        self, user_id: str, activity_metrics: list[HealthMetric]
+    ) -> list[float]:
         """Process activity data using PAT model."""
         # Convert activity metrics to actigraphy data points
-        actigraphy_points = self.preprocessor.convert_health_metrics_to_actigraphy(activity_metrics)
+        actigraphy_points = self.preprocessor.convert_health_metrics_to_actigraphy(
+            activity_metrics
+        )
 
         if not actigraphy_points:
             self.logger.warning("No activity data available for PAT processing")
@@ -219,7 +278,7 @@ class HealthAnalysisPipeline:
             user_id=user_id,
             data_points=actigraphy_points,
             sampling_rate=1.0,  # 1 sample per minute
-            duration_hours=168   # 1 week
+            duration_hours=168,  # 1 week
         )
 
         # Run PAT analysis
@@ -227,14 +286,12 @@ class HealthAnalysisPipeline:
 
         # Extract embedding from PAT analysis (we'll need to modify PAT service to return embedding)
         # For now, create a synthetic embedding based on analysis results
-        embedding = self._create_activity_embedding_from_analysis(analysis_result)
-
-        return embedding
+        return self._create_activity_embedding_from_analysis(analysis_result)
 
     def _create_activity_embedding_from_analysis(self, analysis_result) -> list[float]:
         """Create activity embedding from PAT analysis results."""
         # Extract the actual PAT embedding if available
-        if hasattr(analysis_result, 'embedding') and analysis_result.embedding:
+        if hasattr(analysis_result, "embedding") and analysis_result.embedding:
             # Use the actual PAT model embedding
             return analysis_result.embedding
 
@@ -242,25 +299,35 @@ class HealthAnalysisPipeline:
         embedding = [0.0] * 128
 
         # Fill embedding with analysis metrics
-        if hasattr(analysis_result, 'sleep_efficiency'):
-            embedding[0] = (analysis_result.sleep_efficiency - 75) / 25  # Normalize around 75%
+        if hasattr(analysis_result, "sleep_efficiency"):
+            embedding[0] = (
+                analysis_result.sleep_efficiency - 75
+            ) / 25  # Normalize around 75%
 
-        if hasattr(analysis_result, 'total_sleep_time'):
-            embedding[1] = (analysis_result.total_sleep_time - 7.5) / 2.5  # Normalize around 7.5 hours
+        if hasattr(analysis_result, "total_sleep_time"):
+            embedding[1] = (
+                analysis_result.total_sleep_time - 7.5
+            ) / 2.5  # Normalize around 7.5 hours
 
-        if hasattr(analysis_result, 'circadian_rhythm_score'):
-            embedding[2] = (analysis_result.circadian_rhythm_score - 0.5) / 0.5  # Already 0-1
+        if hasattr(analysis_result, "circadian_rhythm_score"):
+            embedding[2] = (
+                analysis_result.circadian_rhythm_score - 0.5
+            ) / 0.5  # Already 0-1
 
-        if hasattr(analysis_result, 'activity_fragmentation'):
+        if hasattr(analysis_result, "activity_fragmentation"):
             embedding[3] = (analysis_result.activity_fragmentation - 0.5) / 0.5
 
-        if hasattr(analysis_result, 'wake_after_sleep_onset'):
-            embedding[4] = (analysis_result.wake_after_sleep_onset - 30) / 30  # Normalize around 30 min
+        if hasattr(analysis_result, "wake_after_sleep_onset"):
+            embedding[4] = (
+                analysis_result.wake_after_sleep_onset - 30
+            ) / 30  # Normalize around 30 min
 
-        if hasattr(analysis_result, 'sleep_onset_latency'):
-            embedding[5] = (analysis_result.sleep_onset_latency - 15) / 15  # Normalize around 15 min
+        if hasattr(analysis_result, "sleep_onset_latency"):
+            embedding[5] = (
+                analysis_result.sleep_onset_latency - 15
+            ) / 15  # Normalize around 15 min
 
-        if hasattr(analysis_result, 'depression_risk_score'):
+        if hasattr(analysis_result, "depression_risk_score"):
             embedding[6] = (analysis_result.depression_risk_score - 0.5) / 0.5
 
         # Fill remaining dimensions with mathematically derived features
@@ -272,30 +339,28 @@ class HealthAnalysisPipeline:
 
         return embedding
 
-    async def _fuse_modalities(self, modality_features: dict[str, list[float]]) -> list[float]:
+    async def _fuse_modalities(
+        self, modality_features: dict[str, list[float]]
+    ) -> list[float]:
         """Fuse multiple modality features using transformer."""
         # Determine modality dimensions
-        modality_dims = {name: len(features) for name, features in modality_features.items()}
+        modality_dims = {
+            name: len(features) for name, features in modality_features.items()
+        }
 
         # Initialize fusion model
         self.fusion_service.initialize_model(modality_dims)
 
         # Perform fusion
-        fused_vector = self.fusion_service.fuse_modalities(modality_features)
-
-        return fused_vector
+        return self.fusion_service.fuse_modalities(modality_features)
 
     def _generate_summary_stats(
         self,
         organized_data: dict[str, list[HealthMetric]],
-        modality_features: dict[str, list[float]]
+        modality_features: dict[str, list[float]],
     ) -> dict[str, Any]:
         """Generate summary statistics for the analysis."""
-        summary = {
-            "data_coverage": {},
-            "feature_summary": {},
-            "health_indicators": {}
-        }
+        summary = {"data_coverage": {}, "feature_summary": {}, "health_indicators": {}}
 
         # Data coverage
         for modality, metrics in organized_data.items():
@@ -303,7 +368,8 @@ class HealthAnalysisPipeline:
                 summary["data_coverage"][modality] = {
                     "metric_count": len(metrics),
                     "time_span_hours": self._calculate_time_span(metrics),
-                    "data_density": len(metrics) / max(1, self._calculate_time_span(metrics))
+                    "data_density": len(metrics)
+                    / max(1, self._calculate_time_span(metrics)),
                 }
 
         # Feature summary
@@ -314,7 +380,7 @@ class HealthAnalysisPipeline:
                     "mean_value": float(np.mean(features)),
                     "std_value": float(np.std(features)),
                     "min_value": float(np.min(features)),
-                    "max_value": float(np.max(features))
+                    "max_value": float(np.max(features)),
                 }
 
         # Health indicators (simplified)
@@ -324,16 +390,19 @@ class HealthAnalysisPipeline:
                 "avg_heart_rate": cardio[0],
                 "resting_heart_rate": cardio[2],
                 "heart_rate_recovery": cardio[6],
-                "circadian_rhythm": cardio[7]
+                "circadian_rhythm": cardio[7],
             }
 
-        if "respiratory" in modality_features and len(modality_features["respiratory"]) >= 8:
+        if (
+            "respiratory" in modality_features
+            and len(modality_features["respiratory"]) >= 8
+        ):
             resp = modality_features["respiratory"]
             summary["health_indicators"]["respiratory_health"] = {
                 "avg_respiratory_rate": resp[0],
                 "avg_oxygen_saturation": resp[3],
                 "respiratory_stability": resp[6],
-                "oxygenation_efficiency": resp[7]
+                "oxygenation_efficiency": resp[7],
             }
 
         return summary
@@ -362,13 +431,15 @@ async def get_analysis_pipeline() -> HealthAnalysisPipeline:
     return _analysis_pipeline
 
 
-async def run_analysis_pipeline(user_id: str, health_data: dict[str, Any]) -> dict[str, Any]:
+async def run_analysis_pipeline(
+    user_id: str, health_data: dict[str, Any]
+) -> dict[str, Any]:
     """Main entry point for running the analysis pipeline.
-    
+
     Args:
         user_id: User identifier
         health_data: Raw health data dictionary
-        
+
     Returns:
         Analysis results dictionary
     """
@@ -392,11 +463,11 @@ async def run_analysis_pipeline(user_id: str, health_data: dict[str, Any]) -> di
             "activity_embedding": results.activity_embedding,
             "fused_vector": results.fused_vector,
             "summary_stats": results.summary_stats,
-            "processing_metadata": results.processing_metadata
+            "processing_metadata": results.processing_metadata,
         }
 
     except Exception as e:
-        logger.error("Analysis pipeline failed for user %s: %s", user_id, e)
+        logger.exception("Analysis pipeline failed for user %s: %s", user_id, e)
         raise
 
 
@@ -437,25 +508,30 @@ def _convert_raw_data_to_metrics(health_data: dict[str, Any]) -> list[HealthMetr
             if metric_type_str in type_mapping:
                 biometric_data = BiometricData()
 
-                if metric_type_str in ["heartrate", "heart_rate"]:
+                if metric_type_str in {"heartrate", "heart_rate"}:
                     biometric_data.heart_rate = float(sample.get("value", 0))
                 elif metric_type_str == "heartratevariabilitysdnn":
                     biometric_data.hrv_sdnn = float(sample.get("value", 0))
-                elif metric_type_str in ["respiratoryrate", "respiratory_rate"]:
+                elif metric_type_str in {"respiratoryrate", "respiratory_rate"}:
                     biometric_data.respiratory_rate = float(sample.get("value", 0))
                 elif metric_type_str == "oxygensaturation":
                     biometric_data.oxygen_saturation = float(sample.get("value", 0))
-                elif metric_type_str in ["bloodpressuresystolic", "bloodpressurediastolic"]:
+                elif metric_type_str in {
+                    "bloodpressuresystolic",
+                    "bloodpressurediastolic",
+                }:
                     biometric_data.blood_pressure_systolic = sample.get("systolic")
                     biometric_data.blood_pressure_diastolic = sample.get("diastolic")
 
                 metric = HealthMetric(
                     user_id=health_data.get("user_id", "unknown"),
                     metric_type=type_mapping[metric_type_str],
-                    created_at=datetime.fromisoformat(sample.get("timestamp", datetime.now().isoformat())),
+                    created_at=datetime.fromisoformat(
+                        sample.get("timestamp", datetime.now().isoformat())
+                    ),
                     biometric_data=biometric_data,
                     source_device=sample.get("source", "unknown"),
-                    confidence_score=sample.get("confidence", 1.0)
+                    confidence_score=sample.get("confidence", 1.0),
                 )
                 metrics.append(metric)
 
@@ -466,18 +542,21 @@ def _convert_raw_data_to_metrics(health_data: dict[str, Any]) -> list[HealthMetr
 
             if "sleep" in category_type:
                 sleep_data = SleepData(
-                    total_sleep_time=sample.get("duration", 0) / 3600,  # Convert to hours
+                    total_sleep_time=sample.get("duration", 0)
+                    / 3600,  # Convert to hours
                     sleep_efficiency=sample.get("efficiency", 0.85),
                     sleep_onset_latency=sample.get("onset_latency", 15),
-                    wake_after_sleep_onset=sample.get("waso", 30)
+                    wake_after_sleep_onset=sample.get("waso", 30),
                 )
 
                 metric = HealthMetric(
                     user_id=health_data.get("user_id", "unknown"),
                     metric_type=MetricType.SLEEP_ANALYSIS,
-                    created_at=datetime.fromisoformat(sample.get("timestamp", datetime.now().isoformat())),
+                    created_at=datetime.fromisoformat(
+                        sample.get("timestamp", datetime.now().isoformat())
+                    ),
                     sleep_data=sleep_data,
-                    source_device=sample.get("source", "unknown")
+                    source_device=sample.get("source", "unknown"),
                 )
                 metrics.append(metric)
 
@@ -489,15 +568,17 @@ def _convert_raw_data_to_metrics(health_data: dict[str, Any]) -> list[HealthMetr
                 distance_km=workout.get("distance", 0) / 1000,  # Convert m to km
                 calories_burned=workout.get("active_energy", 0),
                 exercise_minutes=workout.get("duration", 0) / 60,  # Convert to minutes
-                activity_type=workout.get("type", "unknown")
+                activity_type=workout.get("type", "unknown"),
             )
 
             metric = HealthMetric(
                 user_id=health_data.get("user_id", "unknown"),
                 metric_type=MetricType.ACTIVITY_LEVEL,
-                created_at=datetime.fromisoformat(workout.get("timestamp", datetime.now().isoformat())),
+                created_at=datetime.fromisoformat(
+                    workout.get("timestamp", datetime.now().isoformat())
+                ),
                 activity_data=activity_data,
-                source_device=workout.get("source", "unknown")
+                source_device=workout.get("source", "unknown"),
             )
             metrics.append(metric)
 

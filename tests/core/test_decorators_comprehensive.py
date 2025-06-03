@@ -124,11 +124,12 @@ class TestLogExecutionDecorator:  # ruff: noqa: PLR0904
 class TestMeasureExecutionTimeDecorator:
     """Comprehensive tests for measure_execution_time decorator."""
 
-    def test_measure_execution_time_sync_function(self, caplog):
+    @staticmethod
+    def test_measure_execution_time_sync_function(caplog: pytest.LogCaptureFixture) -> None:
         """Test measure_execution_time decorator on sync function."""
         with caplog.at_level(logging.INFO):
             @measure_execution_time()
-            def test_func():
+            def test_func() -> str:
                 time.sleep(0.001)  # Small delay
                 return "timed"
 
@@ -138,11 +139,12 @@ class TestMeasureExecutionTimeDecorator:
         assert "test_func executed in" in caplog.text
         assert "ms" in caplog.text
 
-    def test_measure_execution_time_with_threshold(self, caplog):
+    @staticmethod
+    def test_measure_execution_time_with_threshold(caplog: pytest.LogCaptureFixture) -> None:
         """Test measure_execution_time decorator with threshold."""
         with caplog.at_level(logging.INFO):
             @measure_execution_time(threshold_ms=1000.0)  # High threshold
-            def test_func():
+            def test_func() -> str:
                 return "fast"
 
             result = test_func()
@@ -151,13 +153,15 @@ class TestMeasureExecutionTimeDecorator:
         # Should not log because execution time is below threshold
         assert "test_func executed in" not in caplog.text
 
-    def test_measure_execution_time_sync_with_exception(self, caplog):
+    @staticmethod
+    def test_measure_execution_time_sync_with_exception(caplog: pytest.LogCaptureFixture) -> None:
         """Test measure_execution_time decorator when sync function raises exception."""
         with caplog.at_level(logging.INFO):
             @measure_execution_time()
-            def test_func():
+            def test_func() -> None:
                 time.sleep(0.001)
-                raise ValueError("Timing error")
+                msg = "Timing error"
+                raise ValueError(msg)
 
             with pytest.raises(ValueError, match="Timing error"):
                 test_func()
@@ -165,11 +169,12 @@ class TestMeasureExecutionTimeDecorator:
         assert "test_func failed after" in caplog.text
         assert "ms" in caplog.text
 
-    async def test_measure_execution_time_async_function(self, caplog):
+    @staticmethod
+    async def test_measure_execution_time_async_function(caplog: pytest.LogCaptureFixture) -> None:
         """Test measure_execution_time decorator on async function."""
         with caplog.at_level(logging.INFO):
             @measure_execution_time()
-            async def test_func():
+            async def test_func() -> str:
                 await asyncio.sleep(0.001)
                 return "async timed"
 
@@ -178,24 +183,27 @@ class TestMeasureExecutionTimeDecorator:
         assert result == "async timed"
         assert "test_func executed in" in caplog.text
 
-    async def test_measure_execution_time_async_with_exception(self, caplog):
+    @staticmethod
+    async def test_measure_execution_time_async_with_exception(caplog: pytest.LogCaptureFixture) -> None:
         """Test measure_execution_time decorator when async function raises exception."""
         with caplog.at_level(logging.INFO):
             @measure_execution_time()
-            async def test_func():
+            async def test_func() -> None:
                 await asyncio.sleep(0.001)
-                raise RuntimeError("Async timing error")
+                msg = "Async timing error"
+                raise RuntimeError(msg)
 
             with pytest.raises(RuntimeError, match="Async timing error"):
                 await test_func()
 
         assert "test_func failed after" in caplog.text
 
-    def test_measure_execution_time_custom_log_level(self, caplog):
+    @staticmethod
+    def test_measure_execution_time_custom_log_level(caplog: pytest.LogCaptureFixture) -> None:
         """Test measure_execution_time decorator with custom log level."""
         with caplog.at_level(logging.DEBUG):
             @measure_execution_time(log_level=logging.DEBUG)
-            def test_func():
+            def test_func() -> str:
                 return "debug timing"
 
             result = test_func()

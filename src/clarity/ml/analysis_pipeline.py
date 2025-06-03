@@ -17,6 +17,10 @@ from clarity.ml.processors.cardio_processor import CardioProcessor
 from clarity.ml.processors.respiration_processor import RespirationProcessor
 from clarity.models.health_data import HealthMetric
 
+# Constants
+MIN_FEATURE_VECTOR_LENGTH = 8
+MIN_METRICS_FOR_TIME_SPAN = 2
+
 logger = logging.getLogger(__name__)
 
 
@@ -382,7 +386,7 @@ class HealthAnalysisPipeline:
                 }
 
         # Health indicators (simplified)
-        if "cardio" in modality_features and len(modality_features["cardio"]) >= 8:
+        if "cardio" in modality_features and len(modality_features["cardio"]) >= MIN_FEATURE_VECTOR_LENGTH:
             cardio = modality_features["cardio"]
             summary["health_indicators"]["cardiovascular_health"] = {
                 "avg_heart_rate": cardio[0],
@@ -393,7 +397,7 @@ class HealthAnalysisPipeline:
 
         if (
             "respiratory" in modality_features
-            and len(modality_features["respiratory"]) >= 8
+            and len(modality_features["respiratory"]) >= MIN_FEATURE_VECTOR_LENGTH
         ):
             resp = modality_features["respiratory"]
             summary["health_indicators"]["respiratory_health"] = {
@@ -407,7 +411,7 @@ class HealthAnalysisPipeline:
 
     def _calculate_time_span(self, metrics: list[HealthMetric]) -> float:
         """Calculate time span of metrics in hours."""
-        if len(metrics) < 2:
+        if len(metrics) < MIN_METRICS_FOR_TIME_SPAN:
             return 1.0  # Default to 1 hour
 
         timestamps = [metric.created_at for metric in metrics]

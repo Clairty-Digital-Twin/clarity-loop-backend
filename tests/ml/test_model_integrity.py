@@ -7,11 +7,10 @@ Tests cover:
 - Error handling and edge cases
 """
 
-import json
 from pathlib import Path
 import tempfile
-from typing import Any, Dict
-from unittest.mock import Mock, patch
+from typing import Any
+from unittest.mock import patch
 
 import pytest
 

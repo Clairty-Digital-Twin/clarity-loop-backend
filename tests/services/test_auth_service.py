@@ -10,7 +10,6 @@ Tests cover:
 """
 
 import asyncio
-from datetime import UTC, datetime
 from typing import Any
 from unittest.mock import AsyncMock
 from uuid import uuid4
@@ -60,7 +59,11 @@ class TestAuthServiceBasics:
             has_digit = any(c.isdigit() for c in password)
             has_special = any(c in "!@#$%^&*" for c in password)
 
-            assert has_length and has_upper and has_lower and has_digit and has_special
+            assert has_length
+            assert has_upper
+            assert has_lower
+            assert has_digit
+            assert has_special
 
     @staticmethod
     def test_email_validation() -> None:
@@ -80,7 +83,8 @@ class TestAuthServiceBasics:
 
         for email in valid_emails:
             # Simple email validation check
-            assert "@" in email and "." in email.split("@")[1]
+            assert "@" in email
+            assert "." in email.split("@")[1]
 
         for email in invalid_emails:
             # Should fail basic validation
@@ -127,16 +131,19 @@ class TestAuthServiceBasics:
     async def test_error_handling() -> None:
         """Test error handling patterns."""
         # Test authentication error
+        auth_error_msg = "Invalid credentials"
         with pytest.raises(AuthenticationError):
-            raise AuthenticationError("Invalid credentials")
+            raise AuthenticationError(auth_error_msg)
 
         # Test authorization error
+        authz_error_msg = "Insufficient permissions"
         with pytest.raises(AuthorizationError):
-            raise AuthorizationError("Insufficient permissions")
+            raise AuthorizationError(authz_error_msg)
 
         # Test validation error
+        validation_error_msg = "Invalid data format"
         with pytest.raises(DataValidationError):
-            raise DataValidationError("Invalid data format")
+            raise DataValidationError(validation_error_msg)
 
     @staticmethod
     async def test_concurrent_operations() -> None:

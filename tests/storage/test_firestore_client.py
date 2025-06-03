@@ -11,14 +11,12 @@ Tests cover:
 """
 
 import asyncio
-from collections.abc import Generator
 from datetime import UTC, datetime
 import time
 from typing import Any
 from unittest.mock import AsyncMock, Mock, patch
 from uuid import uuid4
 
-from google.cloud.exceptions import NotFound
 import pytest
 
 from clarity.models.health_data import (
@@ -61,7 +59,7 @@ def mock_credentials() -> Mock:
 
 
 @pytest.fixture
-def firestore_client(mock_firebase_admin: Mock, mock_credentials: Mock) -> FirestoreClient:
+def firestore_client(_mock_firebase_admin: Mock, _mock_credentials: Mock) -> FirestoreClient:
     """Create FirestoreClient instance with mocked dependencies."""
     return FirestoreClient(
         project_id="test-project",
@@ -111,13 +109,13 @@ def sample_health_upload() -> HealthDataUpload:
                     systolic_bp=120.0,
                     diastolic_bp=80.0,
                     respiratory_rate=16.0,
-                    skin_temperature=98.6,
+                    skin_temperature=37.0,  # 37°C (normal body temperature)
                 ),
             )
         ],
         upload_source="apple_health",
         client_timestamp=datetime.now(UTC),
-        sync_token="test_sync_token",
+        sync_token="sync_12345",  # noqa: S106
     )
 
 
@@ -418,7 +416,8 @@ class TestFirestoreHealthDataRepository:
     """Test FirestoreHealthDataRepository implementation."""
 
     @pytest.fixture
-    def repository(self) -> FirestoreHealthDataRepository:
+    @staticmethod
+    def repository() -> FirestoreHealthDataRepository:
         """Create FirestoreHealthDataRepository instance."""
         with patch("clarity.storage.firestore_client.firebase_admin") as mock_admin:
             mock_admin._apps = {}

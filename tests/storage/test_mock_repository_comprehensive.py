@@ -5,7 +5,6 @@ Split into focused test classes to avoid PLR0904 (too many public methods).
 """
 
 from datetime import UTC, datetime, timedelta
-from typing import TYPE_CHECKING
 from uuid import uuid4
 
 from _pytest.monkeypatch import MonkeyPatch
@@ -21,9 +20,6 @@ from clarity.models.health_data import (
     SleepStage,
 )
 from clarity.storage.mock_repository import MockHealthDataRepository
-
-if TYPE_CHECKING:
-    from clarity.storage.mock_repository import MockHealthDataRepository
 
 
 class TestMockHealthDataRepositoryBasics:

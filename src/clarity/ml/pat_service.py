@@ -510,7 +510,7 @@ class PATModelService(IMLModelService):
                         )
 
                         # Convert feed-forward weights
-                        self._convert_ff_weights(
+                        PATModelService._convert_ff_weights(
                             layer_group, state_dict, pytorch_layer_idx
                         )
 

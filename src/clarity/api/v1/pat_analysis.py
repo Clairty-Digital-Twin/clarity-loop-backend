@@ -10,8 +10,8 @@ Endpoints:
 - GET /health - Service health check
 """
 
+from datetime import UTC, datetime
 import logging
-from datetime import datetime, UTC
 from typing import Any
 import uuid
 

@@ -16,7 +16,13 @@ import time
 from typing import Any
 
 from fastapi import APIRouter, Response
-from prometheus_client import Counter, Histogram, Gauge, generate_latest, CONTENT_TYPE_LATEST
+from prometheus_client import (
+    CONTENT_TYPE_LATEST,
+    Counter,
+    Gauge,
+    Histogram,
+    generate_latest,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -145,13 +151,13 @@ async def get_metrics() -> Response:
     """
     try:
         logger.debug("Generating Prometheus metrics")
-        
+
         # Update system metrics before generating output
         _update_system_metrics()
-        
+
         # Generate Prometheus metrics format
         metrics_data = generate_latest()
-        
+
         return Response(
             content=metrics_data,
             media_type=CONTENT_TYPE_LATEST,
@@ -161,12 +167,12 @@ async def get_metrics() -> Response:
                 "Expires": "0"
             }
         )
-        
+
     except Exception as e:
         logger.exception("Failed to generate metrics")
         # Return empty metrics rather than failing
         return Response(
-            content=f"# HELP clarity_metrics_error Metrics generation error\n# TYPE clarity_metrics_error gauge\nclarity_metrics_error 1\n",
+            content="# HELP clarity_metrics_error Metrics generation error\n# TYPE clarity_metrics_error gauge\nclarity_metrics_error 1\n",
             media_type=CONTENT_TYPE_LATEST
         )
 
@@ -175,11 +181,11 @@ def _update_system_metrics() -> None:
     """Update system-level metrics before exposition."""
     try:
         import psutil
-        
+
         # Memory usage
         memory = psutil.virtual_memory()
         system_memory_usage_bytes.set(memory.used)
-        
+
     except ImportError:
         # psutil not available - skip system metrics
         logger.debug("psutil not available for system metrics")
@@ -203,7 +209,7 @@ def record_http_request(method: str, endpoint: str, status_code: int, duration: 
         endpoint=endpoint,
         status_code=str(status_code)
     ).inc()
-    
+
     http_request_duration_seconds.labels(
         method=method,
         endpoint=endpoint
@@ -250,7 +256,7 @@ def record_pat_inference(status: str, duration: float | None = None) -> None:
         duration: Inference duration in seconds (optional)
     """
     pat_inference_requests_total.labels(status=status).inc()
-    
+
     if duration is not None:
         pat_inference_duration_seconds.observe(duration)
 
@@ -276,7 +282,7 @@ def record_insight_generation(status: str, model: str, duration: float | None = 
         status=status,
         model=model
     ).inc()
-    
+
     if duration is not None:
         insight_generation_duration_seconds.labels(model=model).observe(duration)
 
@@ -317,7 +323,7 @@ def record_firestore_operation(operation: str, collection: str, status: str, dur
         collection=collection,
         status=status
     ).inc()
-    
+
     if duration is not None:
         firestore_operation_duration_seconds.labels(
             operation=operation,
@@ -337,7 +343,7 @@ def record_pubsub_message(topic: str, status: str, processing_duration: float | 
         topic=topic,
         status=status
     ).inc()
-    
+
     if processing_duration is not None:
         pubsub_message_processing_duration_seconds.labels(topic=topic).observe(processing_duration)
 
@@ -346,23 +352,23 @@ def record_pubsub_message(topic: str, status: str, processing_duration: float | 
 
 class MetricsContext:
     """Context manager for automatic metrics recording."""
-    
+
     def __init__(self, operation_type: str, labels: dict[str, Any] | None = None):
         self.operation_type = operation_type
         self.labels = labels or {}
         self.start_time = time.time()
-    
+
     def __enter__(self):
         return self
-    
+
     def __exit__(self, exc_type, exc_val, exc_tb):
         duration = time.time() - self.start_time
-        
+
         if exc_type is None:
             status = "success"
         else:
             status = "failed"
-        
+
         # Record based on operation type
         if self.operation_type == "pat_inference":
             record_pat_inference(status, duration)
@@ -380,17 +386,17 @@ class MetricsContext:
 
 # Export router and helper functions
 __all__ = [
-    "router",
-    "record_http_request",
-    "record_health_data_upload",
-    "record_health_data_processing",
-    "record_health_metric_processed",
-    "record_pat_inference",
-    "record_pat_model_loading",
-    "record_insight_generation",
-    "record_processing_job_status",
+    "MetricsContext",
     "record_failed_job",
     "record_firestore_operation",
+    "record_health_data_processing",
+    "record_health_data_upload",
+    "record_health_metric_processed",
+    "record_http_request",
+    "record_insight_generation",
+    "record_pat_inference",
+    "record_pat_model_loading",
+    "record_processing_job_status",
     "record_pubsub_message",
-    "MetricsContext",
+    "router",
 ]

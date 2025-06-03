@@ -13,9 +13,9 @@ import numpy as np
 from clarity.ml.fusion_transformer import get_fusion_service
 from clarity.ml.pat_service import ActigraphyInput, get_pat_service
 from clarity.ml.preprocessing import HealthDataPreprocessor
+from clarity.ml.processors.activity_processor import ActivityProcessor
 from clarity.ml.processors.cardio_processor import CardioProcessor
 from clarity.ml.processors.respiration_processor import RespirationProcessor
-from clarity.ml.processors.activity_processor import ActivityProcessor
 from clarity.models.health_data import (
     ActivityData,
     BiometricData,
@@ -115,11 +115,11 @@ class HealthAnalysisPipeline:
             # Process activity data with both basic processor and PAT model
             if organized_data.get("activity"):
                 self.logger.info("Processing activity data...")
-                
+
                 # 🔥 ADDED: Extract basic activity features first
                 activity_features = self.activity_processor.process(organized_data["activity"])
                 results.activity_features = activity_features
-                
+
                 # Then process with PAT model for advanced analysis
                 activity_embedding = await self._process_activity_data(
                     user_id, organized_data["activity"]
@@ -426,7 +426,7 @@ class HealthAnalysisPipeline:
         # 🔥 ADDED: Activity health indicators from basic features
         if activity_features:
             activity_health = {}
-            
+
             for feature in activity_features:
                 if feature["feature_name"] == "total_steps":
                     activity_health["total_steps"] = feature["value"]
@@ -442,7 +442,7 @@ class HealthAnalysisPipeline:
                     activity_health["consistency_score"] = round(feature["value"], 2)
                 elif feature["feature_name"] == "latest_vo2_max":
                     activity_health["cardio_fitness_vo2_max"] = round(feature["value"], 1)
-            
+
             if activity_health:
                 summary["health_indicators"]["activity_health"] = activity_health
 

@@ -16,9 +16,10 @@ This fills the gap where the PAT model provides deep insights but users
 need direct answers to questions like "How many steps did I walk this week?"
 """
 
-import logging
+from collections.abc import Sequence
 from datetime import datetime
-from typing import Any, Sequence
+import logging
+from typing import Any
 
 import numpy as np
 
@@ -47,13 +48,13 @@ class ActivityProcessor:
     These metrics are designed to be easily understood and provide direct
     answers to common user questions about their activity levels.
     """
-    
+
     def __init__(self):
         """Initialize the activity processor."""
         self.processor_name = "ActivityProcessor"
         self.version = "1.0.0"
         logger.info("✅ %s v%s initialized", self.processor_name, self.version)
-    
+
     def process(self, metrics: list[HealthMetric]) -> list[dict[str, Any]]:
         """Process activity metrics and extract key features.
         
@@ -65,24 +66,24 @@ class ActivityProcessor:
         """
         try:
             logger.info("🏃 Processing %d metrics for activity analysis", len(metrics))
-            
+
             # Extract activity data from metrics
             activity_data = self._extract_activity_data(metrics)
-            
+
             if not activity_data:
                 logger.warning("No activity data found in metrics")
                 return []
-            
+
             # Calculate features
             features = self._calculate_activity_features(activity_data)
-            
+
             logger.info("✅ Extracted %d activity features", len(features))
             return features
-            
+
         except Exception as e:
             logger.exception("❌ Failed to process activity metrics")
-            return [{"error": f"ActivityProcessor failed: {str(e)}"}]
-    
+            return [{"error": f"ActivityProcessor failed: {e!s}"}]
+
     def _extract_activity_data(self, metrics: list[HealthMetric]) -> list[ActivityData]:
         """Extract activity data from health metrics.
         
@@ -93,14 +94,14 @@ class ActivityProcessor:
             List of ActivityData objects
         """
         activity_data = []
-        
+
         for metric in metrics:
             if metric.activity_data is not None:
                 activity_data.append(metric.activity_data)
-                
+
         logger.debug("Extracted %d activity data points", len(activity_data))
         return activity_data
-    
+
     def _calculate_activity_features(self, activity_data: list[ActivityData]) -> list[dict[str, Any]]:
         """Calculate comprehensive activity features.
         
@@ -112,7 +113,7 @@ class ActivityProcessor:
         """
         if not activity_data:
             return []
-        
+
         # Aggregate metrics
         steps = [data.steps for data in activity_data if data.steps is not None]
         distances = [data.distance for data in activity_data if data.distance is not None]
@@ -122,30 +123,30 @@ class ActivityProcessor:
         active_minutes = [data.active_minutes for data in activity_data if data.active_minutes is not None]
         vo2_max_values = [data.vo2_max for data in activity_data if data.vo2_max is not None]
         resting_hr_values = [data.resting_heart_rate for data in activity_data if data.resting_heart_rate is not None]
-        
+
         # Calculate features
         features = []
-        
+
         # 1. Step Count Features
         if steps:
             step_features = self._calculate_step_features(steps)
             features.extend(step_features)
-        
+
         # 2. Distance Features
         if distances:
             distance_features = self._calculate_distance_features(distances)
             features.extend(distance_features)
-        
+
         # 3. Energy Features
         if active_energy:
             energy_features = self._calculate_energy_features(active_energy)
             features.extend(energy_features)
-        
+
         # 4. Exercise Features
         if exercise_minutes:
             exercise_features = self._calculate_exercise_features(exercise_minutes)
             features.extend(exercise_features)
-        
+
         # 5. Other Activity Features
         if flights_climbed:
             features.append({
@@ -154,7 +155,7 @@ class ActivityProcessor:
                 "unit": "flights",
                 "description": "Total flights of stairs climbed"
             })
-        
+
         if active_minutes:
             features.append({
                 "feature_name": "total_active_minutes",
@@ -162,14 +163,14 @@ class ActivityProcessor:
                 "unit": "minutes",
                 "description": "Total minutes of active movement"
             })
-            
+
             features.append({
                 "feature_name": "average_daily_active_minutes",
                 "value": np.mean(active_minutes),
                 "unit": "minutes/day",
                 "description": "Average active minutes per day"
             })
-        
+
         # 6. Fitness Level Features
         if vo2_max_values:
             latest_vo2_max = vo2_max_values[-1]  # Most recent value
@@ -179,7 +180,7 @@ class ActivityProcessor:
                 "unit": "mL/kg/min",
                 "description": "Most recent VO₂ max measurement (cardio fitness)"
             })
-        
+
         if resting_hr_values:
             features.append({
                 "feature_name": "average_resting_heart_rate",
@@ -187,7 +188,7 @@ class ActivityProcessor:
                 "unit": "bpm",
                 "description": "Average resting heart rate"
             })
-        
+
         # 7. Activity Consistency Score
         if steps and len(steps) > 1:
             consistency_score = self._calculate_consistency_score(steps)
@@ -197,9 +198,9 @@ class ActivityProcessor:
                 "unit": "score",
                 "description": "Activity consistency (0=inconsistent, 1=very consistent)"
             })
-        
+
         return features
-    
+
     def _calculate_step_features(self, steps: list[int]) -> list[dict[str, Any]]:
         """Calculate step-related features.
         
@@ -212,7 +213,7 @@ class ActivityProcessor:
         total_steps = sum(steps)
         avg_daily_steps = np.mean(steps)
         peak_daily_steps = max(steps)
-        
+
         return [
             {
                 "feature_name": "total_steps",
@@ -233,7 +234,7 @@ class ActivityProcessor:
                 "description": "Highest single-day step count"
             }
         ]
-    
+
     def _calculate_distance_features(self, distances: list[float]) -> list[dict[str, Any]]:
         """Calculate distance-related features.
         
@@ -245,7 +246,7 @@ class ActivityProcessor:
         """
         total_distance = sum(distances)
         avg_daily_distance = np.mean(distances)
-        
+
         return [
             {
                 "feature_name": "total_distance",
@@ -260,7 +261,7 @@ class ActivityProcessor:
                 "description": "Average distance per day"
             }
         ]
-    
+
     def _calculate_energy_features(self, active_energy: list[float]) -> list[dict[str, Any]]:
         """Calculate active energy features.
         
@@ -272,7 +273,7 @@ class ActivityProcessor:
         """
         total_energy = sum(active_energy)
         avg_daily_energy = np.mean(active_energy)
-        
+
         return [
             {
                 "feature_name": "total_active_energy",
@@ -287,7 +288,7 @@ class ActivityProcessor:
                 "description": "Average active calories per day"
             }
         ]
-    
+
     def _calculate_exercise_features(self, exercise_minutes: list[int]) -> list[dict[str, Any]]:
         """Calculate exercise-related features.
         
@@ -299,7 +300,7 @@ class ActivityProcessor:
         """
         total_exercise = sum(exercise_minutes)
         avg_daily_exercise = np.mean(exercise_minutes)
-        
+
         return [
             {
                 "feature_name": "total_exercise_minutes",
@@ -314,7 +315,7 @@ class ActivityProcessor:
                 "description": "Average exercise time per day"
             }
         ]
-    
+
     def _calculate_consistency_score(self, values: Sequence[int | float]) -> float:
         """Calculate activity consistency score.
         
@@ -326,22 +327,22 @@ class ActivityProcessor:
         """
         if len(values) < 2:
             return 1.0
-        
+
         # Calculate coefficient of variation (CV)
         mean_val = np.mean(values)
         std_val = np.std(values)
-        
+
         if mean_val == 0:
             return 0.0
-        
+
         cv = std_val / mean_val
-        
+
         # Convert CV to consistency score (lower CV = higher consistency)
         # CV of 0 = score of 1, CV of 1 = score of 0
         consistency_score = max(0.0, min(1.0, 1.0 - float(cv)))
-        
+
         return consistency_score
-    
+
     def get_summary_stats(self, features: list[dict[str, Any]]) -> dict[str, Any]:
         """Get summary statistics for activity features.
         
@@ -353,7 +354,7 @@ class ActivityProcessor:
         """
         if not features:
             return {"summary": "No activity features calculated"}
-        
+
         # Extract key metrics
         summary = {
             "total_features": len(features),
@@ -362,7 +363,7 @@ class ActivityProcessor:
             "processor": self.processor_name,
             "version": self.version
         }
-        
+
         # Add key values if available
         for feature in features:
             if feature["feature_name"] == "total_steps":
@@ -373,9 +374,9 @@ class ActivityProcessor:
                 summary["total_distance_km"] = round(feature["value"], 1)
             elif feature["feature_name"] == "total_active_energy":
                 summary["total_calories"] = round(feature["value"])
-        
+
         return summary
-    
+
     def _categorize_features(self, features: list[dict[str, Any]]) -> dict[str, int]:
         """Categorize features by type.
         
@@ -392,7 +393,7 @@ class ActivityProcessor:
             "exercise": 0,
             "other": 0
         }
-        
+
         for feature in features:
             name = feature["feature_name"]
             if "step" in name:
@@ -405,5 +406,5 @@ class ActivityProcessor:
                 categories["exercise"] += 1
             else:
                 categories["other"] += 1
-        
+
         return categories

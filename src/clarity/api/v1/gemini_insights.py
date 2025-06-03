@@ -17,13 +17,13 @@ from pydantic import BaseModel, Field
 
 from clarity.auth import UserContext
 from clarity.auth.firebase_auth import get_current_user
-from clarity.ports.auth_ports import IAuthProvider
-from clarity.ports.config_ports import IConfigProvider
 from clarity.ml.gemini_service import (
     GeminiService,
     HealthInsightRequest,
     HealthInsightResponse,
 )
+from clarity.ports.auth_ports import IAuthProvider
+from clarity.ports.config_ports import IConfigProvider
 
 logger = logging.getLogger(__name__)
 
@@ -299,7 +299,8 @@ async def generate_insights(
     description="Retrieve a previously generated insight by ID",
 )
 async def get_insight(
-    insight_id: str, current_user: UserContext = Depends(get_current_user)  # noqa: B008
+    insight_id: str,
+    current_user: UserContext = Depends(get_current_user),  # noqa: B008
 ) -> InsightGenerationResponse:
     """Retrieve cached insights by ID.
 

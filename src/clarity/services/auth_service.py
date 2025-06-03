@@ -12,7 +12,6 @@ import uuid
 
 from firebase_admin import auth  # type: ignore[import-untyped]
 
-from clarity.ports.auth_ports import IAuthProvider
 from clarity.models.auth import (
     AuthProvider,
     LoginResponse,
@@ -24,15 +23,14 @@ from clarity.models.auth import (
     UserSessionResponse,
     UserStatus,
 )
+from clarity.ports.auth_ports import IAuthProvider
 from clarity.storage.firestore_client import FirestoreClient
 
 # Configure logger
 logger = logging.getLogger(__name__)
 
 # Constants
-BEARER_TOKEN_TYPE = (
-    "bearer"  # noqa: S105  # nosec B105 - Standard OAuth token type, not a password
-)
+BEARER_TOKEN_TYPE = "bearer"  # noqa: S105  # nosec B105 - Standard OAuth token type, not a password
 
 
 class AuthenticationError(Exception):

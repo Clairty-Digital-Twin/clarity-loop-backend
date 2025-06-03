@@ -11,8 +11,8 @@
 - ✅ Enhanced error handling and business rule validation
 
 💡 PURPOSE:
-This serves as a reference implementation showing how to upgrade existing 
-services with the new architectural patterns. Copy patterns from here into 
+This serves as a reference implementation showing how to upgrade existing
+services with the new architectural patterns. Copy patterns from here into
 production services as needed.
 
 🔄 MIGRATION:
@@ -29,14 +29,12 @@ import logging
 from typing import Any
 import uuid
 
-# Import from new ports layer instead of core interfaces
-from clarity.ports.data_ports import IHealthDataRepository
 from clarity.core.decorators import (
     audit_trail,
     log_execution,
     measure_execution_time,
-    service_method,
     retry_on_failure,
+    service_method,
 )
 from clarity.ml.model_integrity import verify_startup_models
 from clarity.models.health_data import (
@@ -45,6 +43,9 @@ from clarity.models.health_data import (
     HealthMetric,
     ProcessingStatus,
 )
+
+# Import from new ports layer instead of core interfaces
+from clarity.ports.data_ports import IHealthDataRepository
 
 # Configure logger
 logger = logging.getLogger(__name__)
@@ -68,7 +69,7 @@ class DataNotFoundError(HealthDataServiceError):
 
 class EnhancedHealthDataService:
     """Enhanced Health Data Service with architectural improvements.
-    
+
     Demonstrates the new architectural patterns including:
     - Decorator patterns for cross-cutting concerns
     - Ports layer for clean interfaces
@@ -113,7 +114,7 @@ class EnhancedHealthDataService:
             if not await self._verify_processing_models():
                 raise HealthDataServiceError(
                     "ML model integrity verification failed. Processing cannot continue.",
-                    status_code=503
+                    status_code=503,
                 )
 
             # Generate unique processing ID
@@ -121,10 +122,12 @@ class EnhancedHealthDataService:
 
             # Enhanced validation with detailed error reporting
             validation_errors = await self._validate_health_metrics(health_data.metrics)
-            
+
             if validation_errors:
                 error_summary = f"Validation failed: {len(validation_errors)} errors"
-                self.logger.warning("Health data validation failed: %s", validation_errors)
+                self.logger.warning(
+                    "Health data validation failed: %s", validation_errors
+                )
                 raise HealthDataServiceError(error_summary, status_code=400)
 
             # Store health data using repository with enhanced error handling
@@ -138,8 +141,7 @@ class EnhancedHealthDataService:
 
             if not success:
                 raise HealthDataServiceError(
-                    "Failed to store health data in repository",
-                    status_code=500
+                    "Failed to store health data in repository", status_code=500
                 )
 
             return HealthDataResponse(
@@ -236,9 +238,11 @@ class EnhancedHealthDataService:
             # Validate parameters
             if limit <= 0 or limit > 1000:
                 raise HealthDataServiceError("Invalid limit parameter", status_code=400)
-            
+
             if offset < 0:
-                raise HealthDataServiceError("Invalid offset parameter", status_code=400)
+                raise HealthDataServiceError(
+                    "Invalid offset parameter", status_code=400
+                )
 
             health_data = await self.repository.get_user_health_data(
                 user_id=user_id,
@@ -257,7 +261,9 @@ class EnhancedHealthDataService:
             self.logger.exception("Error retrieving health data")
             raise HealthDataServiceError(f"Failed to retrieve health data: {e}") from e
 
-    @audit_trail("delete_health_data", user_id_param="user_id", resource_id_param="processing_id")
+    @audit_trail(
+        "delete_health_data", user_id_param="user_id", resource_id_param="processing_id"
+    )
     @service_method(log_level=logging.WARNING, timing_threshold_ms=300.0)
     async def delete_health_data(
         self, user_id: str, processing_id: str | None = None
@@ -283,8 +289,7 @@ class EnhancedHealthDataService:
             # Check data retention policies (example business rule)
             if not await self._can_delete_data(user_id, processing_id):
                 raise HealthDataServiceError(
-                    "Data deletion not allowed due to retention policy",
-                    status_code=403
+                    "Data deletion not allowed due to retention policy", status_code=403
                 )
 
             success = await self.repository.delete_health_data(
@@ -293,8 +298,7 @@ class EnhancedHealthDataService:
 
             if not success:
                 raise HealthDataServiceError(
-                    "Data deletion failed at repository level",
-                    status_code=500
+                    "Data deletion failed at repository level", status_code=500
                 )
 
             return success
@@ -320,7 +324,7 @@ class EnhancedHealthDataService:
     async def _validate_health_metrics(self, metrics: list[HealthMetric]) -> list[str]:
         """Enhanced validation with detailed error reporting."""
         validation_errors: list[str] = []
-        
+
         for metric in metrics:
             try:
                 if not metric.metric_type or not metric.created_at:
@@ -333,7 +337,7 @@ class EnhancedHealthDataService:
                     )
             except ValueError as e:
                 validation_errors.append(f"Metric {metric.metric_id}: {e}")
-        
+
         return validation_errors
 
     @log_execution(level=logging.DEBUG)
@@ -360,15 +364,14 @@ class EnhancedHealthDataService:
 
             if metric_type_value in {"heart_rate", "blood_pressure"}:
                 return bool(metric.biometric_data)
-            elif metric_type_value == "sleep_analysis":
+            if metric_type_value == "sleep_analysis":
                 return bool(metric.sleep_data)
-            elif metric_type_value == "activity_level":
+            if metric_type_value == "activity_level":
                 return bool(metric.activity_data)
-            elif metric_type_value == "mood_assessment":
+            if metric_type_value == "mood_assessment":
                 return metric.mental_health_data is not None
-            else:
-                # Unknown metric type
-                return False
+            # Unknown metric type
+            return False
 
         except (ValueError, AttributeError, TypeError) as e:
             logger.warning("Business rule validation failed: %s", e)
@@ -380,13 +383,13 @@ def create_enhanced_health_data_service(
     repository: IHealthDataRepository,
 ) -> EnhancedHealthDataService:
     """Factory function to create enhanced health data service.
-    
+
     Demonstrates proper dependency injection using the ports layer.
-    
+
     Args:
         repository: Health data repository implementation
-        
+
     Returns:
         Configured enhanced health data service
     """
-    return EnhancedHealthDataService(repository) 
+    return EnhancedHealthDataService(repository)

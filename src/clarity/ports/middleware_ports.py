@@ -27,11 +27,11 @@ class IMiddleware(ABC):
         self, request: "Request", call_next: "Awaitable[Response]"
     ) -> "Response":
         """Process request through middleware.
-        
+
         Args:
             request: The incoming HTTP request
             call_next: The next middleware or route handler in the chain
-            
+
         Returns:
             The HTTP response after processing
-        """ 
+        """

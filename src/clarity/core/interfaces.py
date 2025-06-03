@@ -11,12 +11,12 @@
 
 📋 COMPLETE MIGRATION GUIDE:
 - IAuthProvider        → from clarity.ports.auth_ports import IAuthProvider
-- IConfigProvider      → from clarity.ports.config_ports import IConfigProvider  
+- IConfigProvider      → from clarity.ports.config_ports import IConfigProvider
 - IHealthDataRepository → from clarity.ports.data_ports import IHealthDataRepository
 - IMiddleware          → from clarity.ports.middleware_ports import IMiddleware
 - IMLModelService      → from clarity.ports.ml_ports import IMLModelService
 
-🎯 All existing imports have been updated. This file provides backward 
+🎯 All existing imports have been updated. This file provides backward
    compatibility only and will be removed once all tests are verified.
 """
 
@@ -30,7 +30,7 @@ from clarity.ports.ml_ports import IMLModelService
 __all__ = [
     "IAuthProvider",
     "IConfigProvider",
-    "IHealthDataRepository", 
-    "IMiddleware",
+    "IHealthDataRepository",
     "IMLModelService",
+    "IMiddleware",
 ]

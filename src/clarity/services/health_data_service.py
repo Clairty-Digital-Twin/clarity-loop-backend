@@ -11,13 +11,13 @@ import logging
 from typing import Any
 import uuid
 
-from clarity.ports.data_ports import IHealthDataRepository
 from clarity.models.health_data import (
     HealthDataResponse,
     HealthDataUpload,
     HealthMetric,
     ProcessingStatus,
 )
+from clarity.ports.data_ports import IHealthDataRepository
 
 # Configure logger
 logger = logging.getLogger(__name__)

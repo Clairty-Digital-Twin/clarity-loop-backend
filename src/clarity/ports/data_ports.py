@@ -94,11 +94,11 @@ class IHealthDataRepository(ABC):
     @abstractmethod
     async def save_data(self, user_id: str, data: dict[str, str]) -> str:
         """Save health data for a user (legacy method).
-        
+
         Args:
             user_id: User identifier
             data: Health data to save
-            
+
         Returns:
             Record identifier
         """
@@ -108,11 +108,11 @@ class IHealthDataRepository(ABC):
         self, user_id: str, filters: dict[str, str] | None = None
     ) -> dict[str, str]:
         """Retrieve health data for a user (legacy method).
-        
+
         Args:
             user_id: User identifier
             filters: Optional filters to apply
-            
+
         Returns:
             Health data dictionary
         """
@@ -120,7 +120,7 @@ class IHealthDataRepository(ABC):
     @abstractmethod
     async def initialize(self) -> None:
         """Initialize the repository.
-        
+
         Performs any necessary setup operations like connecting to database,
         creating indexes, etc.
         """
@@ -128,6 +128,6 @@ class IHealthDataRepository(ABC):
     @abstractmethod
     async def cleanup(self) -> None:
         """Clean up repository resources.
-        
+
         Performs cleanup operations like closing connections, releasing resources, etc.
-        """ 
+        """

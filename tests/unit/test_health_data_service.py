@@ -16,7 +16,6 @@ from uuid import UUID, uuid4
 
 import pytest
 
-from clarity.ports.data_ports import IHealthDataRepository
 from clarity.models.health_data import (
     BiometricData,
     HealthDataResponse,
@@ -25,6 +24,7 @@ from clarity.models.health_data import (
     HealthMetricType,
     ProcessingStatus,
 )
+from clarity.ports.data_ports import IHealthDataRepository
 
 # Import use cases and services (Application layer)
 from clarity.services.health_data_service import (

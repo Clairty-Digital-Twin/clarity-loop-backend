@@ -17,7 +17,7 @@ class IMLModelService(ABC):
     @abstractmethod
     async def load_model(self) -> None:
         """Load the ML model asynchronously.
-        
+
         Performs model initialization, weight loading, and any other
         setup operations required before the model can be used for inference.
         """
@@ -25,8 +25,8 @@ class IMLModelService(ABC):
     @abstractmethod
     async def health_check(self) -> dict[str, str | bool]:
         """Check the health status of the ML model service.
-        
+
         Returns:
             Dictionary containing health status information including
             model readiness, version, last update time, etc.
-        """ 
+        """

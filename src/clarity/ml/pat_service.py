@@ -20,8 +20,8 @@ from torch import nn
 if TYPE_CHECKING:
     from numpy.typing import NDArray
 
-from clarity.ports.ml_ports import IMLModelService
 from clarity.ml.preprocessing import ActigraphyDataPoint, HealthDataPreprocessor
+from clarity.ports.ml_ports import IMLModelService
 
 logger = logging.getLogger(__name__)
 

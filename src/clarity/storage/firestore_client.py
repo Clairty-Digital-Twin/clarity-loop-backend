@@ -29,8 +29,8 @@ from firebase_admin import credentials  # type: ignore[import-untyped]
 from google.cloud import firestore_v1 as firestore  # type: ignore[import-untyped]
 from google.cloud.exceptions import NotFound  # type: ignore[import-untyped]
 
-from clarity.ports.data_ports import IHealthDataRepository
 from clarity.models.health_data import HealthDataUpload, ProcessingStatus
+from clarity.ports.data_ports import IHealthDataRepository
 
 # Configure logger
 logger = logging.getLogger(__name__)
@@ -924,31 +924,25 @@ class FirestoreHealthDataRepository(IHealthDataRepository):
             filters = [{"field": "user_id", "op": "==", "value": user_id}]
 
             if metric_type:
-                filters.append(
-                    {
-                        "field": "metric_data.metric_type",
-                        "op": "==",
-                        "value": metric_type,
-                    }
-                )
+                filters.append({
+                    "field": "metric_data.metric_type",
+                    "op": "==",
+                    "value": metric_type,
+                })
 
             if start_date:
-                filters.append(
-                    {
-                        "field": "created_at",
-                        "op": ">=",
-                        "value": start_date.isoformat(),
-                    }
-                )
+                filters.append({
+                    "field": "created_at",
+                    "op": ">=",
+                    "value": start_date.isoformat(),
+                })
 
             if end_date:
-                filters.append(
-                    {
-                        "field": "created_at",
-                        "op": "<=",
-                        "value": end_date.isoformat(),
-                    }
-                )
+                filters.append({
+                    "field": "created_at",
+                    "op": "<=",
+                    "value": end_date.isoformat(),
+                })
 
             # Query health metrics
             metrics = await self._firestore_client.query_documents(

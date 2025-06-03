@@ -16,8 +16,8 @@ from .ml_ports import IMLModelService
 
 __all__ = [
     "IAuthProvider",
-    "IConfigProvider", 
+    "IConfigProvider",
     "IHealthDataRepository",
-    "IMiddleware",
     "IMLModelService",
-] 
+    "IMiddleware",
+]

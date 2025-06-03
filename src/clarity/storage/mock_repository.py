@@ -12,8 +12,8 @@ from operator import itemgetter
 from typing import Any
 import uuid
 
-from clarity.ports.data_ports import IHealthDataRepository
 from clarity.models.health_data import HealthMetric
+from clarity.ports.data_ports import IHealthDataRepository
 
 logger = logging.getLogger(__name__)
 

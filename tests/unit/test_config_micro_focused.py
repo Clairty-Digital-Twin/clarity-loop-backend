@@ -74,8 +74,9 @@ class TestBasicConfigCreation:
 class TestEnvironmentVariables:
     """Test environment variable handling - MICRO CHUNK 3B."""
 
+    @staticmethod
     @patch.dict(os.environ, {"LOG_LEVEL": "ERROR"}, clear=False)
-    def test_log_level_from_env(self) -> None:
+    def test_log_level_from_env() -> None:
         """Test setting log level from environment variable."""
         # Act
         config = Settings()
@@ -83,8 +84,9 @@ class TestEnvironmentVariables:
         # Assert
         assert config.log_level == "ERROR"
 
+    @staticmethod
     @patch.dict(os.environ, {"ENVIRONMENT": "production", "SKIP_EXTERNAL_SERVICES": "true", "ENABLE_AUTH": "false"}, clear=False)
-    def test_environment_from_env(self) -> None:
+    def test_environment_from_env() -> None:
         """Test setting environment from environment variable."""
         # Act
         config = Settings()

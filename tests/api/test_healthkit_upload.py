@@ -6,7 +6,7 @@ from unittest.mock import AsyncMock, Mock, patch
 import uuid
 
 from fastapi import HTTPException, status
-from fastapi.security import HTTPBearer
+
 from fastapi.testclient import TestClient
 import pytest
 
@@ -14,11 +14,11 @@ from clarity.api.v1.healthkit_upload import (
     HealthKitSample,
     HealthKitUploadRequest,
     HealthKitUploadResponse,
-    get_auth_scheme,
     get_upload_status,
     router,
     upload_healthkit_data,
 )
+from clarity.auth import UserContext
 
 
 class TestHealthKitModels:
@@ -95,14 +95,6 @@ class TestHealthKitModels:
         assert response.samples_received["quantity_samples"] == 5
 
 
-class TestAuthScheme:
-    """Test authentication scheme helper."""
-
-    def test_get_auth_scheme(self) -> None:
-        """Test get_auth_scheme returns HTTPBearer instance."""
-        auth_scheme = get_auth_scheme()
-        assert isinstance(auth_scheme, HTTPBearer)
-
 
 class TestHealthKitUploadEndpoint:
     """Test the main HealthKit upload endpoint."""
@@ -135,13 +127,17 @@ class TestHealthKitUploadEndpoint:
         )
 
     @pytest.fixture
-    def mock_token(self) -> HTTPBearer:
-        """Create a mock authentication token."""
-        token = Mock(spec=HTTPBearer)
-        token.credentials = "valid-firebase-token"
-        return token
+    def mock_user(self) -> UserContext:
+        """Create a mock user context."""
+        return UserContext(
+            user_id="test-user-123",
+            email="test@example.com",
+            role="patient",
+            permissions=[],
+            is_verified=True,
+            is_active=True,
+        )
 
-    @patch("clarity.auth.firebase_auth.verify_firebase_token")
     @patch("clarity.api.v1.healthkit_upload.storage.Client")
     @patch("clarity.api.v1.healthkit_upload.get_publisher")
     @patch("clarity.api.v1.healthkit_upload.uuid.uuid4")
@@ -151,14 +147,12 @@ class TestHealthKitUploadEndpoint:
         mock_uuid: Mock,
         mock_get_publisher: Mock,
         mock_storage_client: Mock,
-        mock_verify_token: AsyncMock,
         sample_upload_request: HealthKitUploadRequest,
-        mock_token: HTTPBearer,
+        mock_user: UserContext,
     ) -> None:
         """Test successful HealthKit data upload."""
         # Setup mocks
         mock_uuid.return_value = Mock(hex="abc123")
-        mock_verify_token.return_value = {"uid": "test-user-123"}
 
         # Mock storage
         mock_bucket = Mock()
@@ -171,7 +165,7 @@ class TestHealthKitUploadEndpoint:
         mock_get_publisher.return_value = mock_publisher
 
         # Call the endpoint
-        result = await upload_healthkit_data(sample_upload_request, mock_token)
+        result = await upload_healthkit_data(sample_upload_request, mock_user)
 
         # Verify result
         assert isinstance(result, HealthKitUploadResponse)
@@ -181,7 +175,6 @@ class TestHealthKitUploadEndpoint:
         assert result.samples_received["workouts"] == 1
 
         # Verify mocks were called
-        mock_verify_token.assert_called_once_with("valid-firebase-token")
         mock_blob.upload_from_string.assert_called_once()
         mock_publisher.publish_health_data_upload.assert_called_once()
 

@@ -105,7 +105,7 @@ class AnalysisSubscriber:
             # TODO: Implement proper JWT verification using Google's public keys
             # For now, just check that token exists
             if not token:
-                raise HTTPException(status_code=401, detail="Invalid token format")
+                self._raise_invalid_token_error()
 
             # In production, you would verify the JWT signature and claims here
             # using google.auth.jwt or similar library
@@ -131,8 +131,7 @@ class AnalysisSubscriber:
             required_fields = ["user_id", "upload_id", "gcs_path"]
             for field in required_fields:
                 if field not in message_data:
-                    msg = f"Missing required field: {field}"
-                    raise ValueError(msg)
+                    self._raise_missing_field_error(field)
 
         except Exception as e:
             self.logger.exception("Failed to extract message data")
@@ -154,8 +153,7 @@ class AnalysisSubscriber:
         try:
             # Parse GCS path
             if not gcs_path.startswith("gs://"):
-                msg = f"Invalid GCS path format: {gcs_path}"
-                raise ValueError(msg)
+                self._raise_invalid_gcs_path_error(gcs_path)
 
             path_parts = gcs_path[5:].split("/", 1)  # Remove "gs://" prefix
             bucket_name = path_parts[0]
@@ -166,8 +164,7 @@ class AnalysisSubscriber:
             blob = bucket.blob(blob_path)
 
             if not blob.exists():
-                msg = f"Health data not found at: {gcs_path}"
-                raise FileNotFoundError(msg)
+                self._raise_health_data_not_found_error(gcs_path)
 
             # Download and parse JSON
             raw_json = blob.download_as_text()
@@ -186,6 +183,25 @@ class AnalysisSubscriber:
             raise
         else:
             return health_data
+
+    def _raise_invalid_token_error(self) -> None:
+        """Raise HTTPException for invalid token format."""
+        raise HTTPException(status_code=401, detail="Invalid token format")
+
+    def _raise_missing_field_error(self, field: str) -> None:
+        """Raise ValueError for missing required field."""
+        msg = f"Missing required field: {field}"
+        raise ValueError(msg)
+
+    def _raise_invalid_gcs_path_error(self, gcs_path: str) -> None:
+        """Raise ValueError for invalid GCS path format."""
+        msg = f"Invalid GCS path format: {gcs_path}"
+        raise ValueError(msg)
+
+    def _raise_health_data_not_found_error(self, gcs_path: str) -> None:
+        """Raise FileNotFoundError for missing health data."""
+        msg = f"Health data not found at: {gcs_path}"
+        raise FileNotFoundError(msg)
 
 
 # Create FastAPI app for analysis service

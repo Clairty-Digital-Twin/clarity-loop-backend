@@ -371,8 +371,7 @@ class InsightSubscriber:
             required_fields = ["user_id", "upload_id", "analysis_results"]
             for field in required_fields:
                 if field not in message_data:
-                    msg = f"Missing required field: {field}"
-                    raise ValueError(msg)
+                    self._raise_missing_field_error(field)
 
         except Exception as e:
             self.logger.exception("Failed to extract message data")
@@ -381,6 +380,11 @@ class InsightSubscriber:
             ) from None
         else:
             return message_data
+
+    def _raise_missing_field_error(self, field: str) -> None:
+        """Raise ValueError for missing required field."""
+        msg = f"Missing required field: {field}"
+        raise ValueError(msg)
 
 
 # Create FastAPI app for insight service

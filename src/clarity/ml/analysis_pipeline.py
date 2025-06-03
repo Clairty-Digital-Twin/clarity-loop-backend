@@ -191,15 +191,16 @@ class HealthAnalysisPipeline:
                     self.logger.exception("Failed to save analysis results to Firestore")
                     # Don't fail the entire pipeline if saving fails
 
-            self.logger.info(
-                "✅ Analysis pipeline completed successfully for user %s", user_id
-            )
-            return results
         except Exception:
             self.logger.exception(
                 "❌ Error in analysis pipeline for user %s", user_id
             )
             raise
+        else:
+            self.logger.info(
+                "✅ Analysis pipeline completed successfully for user %s", user_id
+            )
+            return results
 
     def _organize_metrics_by_modality(
         self, metrics: list[HealthMetric]
@@ -537,6 +538,10 @@ async def run_analysis_pipeline(
         # Run analysis
         results = await pipeline.process_health_data(user_id, health_metrics)
 
+    except Exception:
+        logger.exception("Analysis pipeline failed for user %s", user_id)
+        raise
+    else:
         # Convert results to dictionary
         return {
             "user_id": user_id,
@@ -548,10 +553,6 @@ async def run_analysis_pipeline(
             "summary_stats": results.summary_stats,
             "processing_metadata": results.processing_metadata,
         }
-
-    except Exception:
-        logger.exception("Analysis pipeline failed for user %s", user_id)
-        raise
 
 
 def _convert_raw_data_to_metrics(health_data: dict[str, Any]) -> list[HealthMetric]:

@@ -119,11 +119,11 @@ class TestDecoratorsBasic:
         def simple_cache_decorator(func: Any) -> Any:
             def wrapper(*args: Any, **kwargs: Any) -> Any:
                 # Simple cache key from args
-                cache_key = f"{func.__name__}_{str(args)}_{str(kwargs)}"
-                
+                cache_key = f"{func.__name__}_{args!s}_{kwargs!s}"
+
                 if cache_key in cache:
                     return f"cached_{cache[cache_key]}"
-                
+
                 result = func(*args, **kwargs)
                 cache[cache_key] = result
                 return result
@@ -288,13 +288,13 @@ class TestDecoratorsBasic:
         """Test decorator that maintains state."""
         def counting_decorator(func: Any) -> Any:
             call_count = 0
-            
+
             def wrapper(*args: Any, **kwargs: Any) -> Any:
                 nonlocal call_count
                 call_count += 1
                 result = func(*args, **kwargs)
                 return f"call_{call_count}_{result}"
-            
+
             wrapper.get_call_count = lambda: call_count
             return wrapper
 
@@ -314,8 +314,7 @@ class TestDecoratorsBasic:
                 try:
                     if asyncio.iscoroutinefunction(func):
                         return await func(*args, **kwargs)
-                    else:
-                        return func(*args, **kwargs)
+                    return func(*args, **kwargs)
                 except Exception:
                     return "async_error_handled"
             return wrapper

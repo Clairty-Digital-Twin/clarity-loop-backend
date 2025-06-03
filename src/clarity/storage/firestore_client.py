@@ -573,13 +573,13 @@ class FirestoreClient:
                 user_id=user_id,
             )
 
-            logger.info("Analysis result saved: %s for user %s", document_id, user_id)
-            return document_id
-
         except Exception as e:
             logger.exception("Failed to save analysis result for user %s", user_id)
             msg = f"Analysis result storage failed: {e}"
             raise FirestoreError(msg) from e
+        else:
+            logger.info("Analysis result saved: %s for user %s", document_id, user_id)
+            return document_id
 
     async def get_analysis_result(
         self, processing_id: str, user_id: str | None = None
@@ -599,6 +599,11 @@ class FirestoreClient:
                 document_id=processing_id
             )
 
+        except Exception as e:
+            logger.exception("Failed to get analysis result %s", processing_id)
+            msg = f"Analysis result retrieval failed: {e}"
+            raise FirestoreError(msg) from e
+        else:
             # Validate user ownership if user_id provided
             if result and user_id and result.get("user_id") != user_id:
                 logger.warning(
@@ -608,11 +613,6 @@ class FirestoreClient:
                 return None
 
             return result
-
-        except Exception as e:
-            logger.exception("Failed to get analysis result %s", processing_id)
-            msg = f"Analysis result retrieval failed: {e}"
-            raise FirestoreError(msg) from e
 
     # Query Operations
 

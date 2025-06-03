@@ -101,6 +101,10 @@ class HealthDataPublisher:
             # Get message ID
             message_id: str = future.result(timeout=30.0)
 
+        except Exception:
+            self.logger.exception("Failed to publish health data event")
+            raise
+        else:
             self.logger.info(
                 "Published health data upload event for user %s, upload %s, message ID: %s",
                 user_id,
@@ -108,9 +112,6 @@ class HealthDataPublisher:
                 message_id,
             )
             return message_id
-        except Exception:
-            self.logger.exception("Failed to publish health data event")
-            raise
 
     @log_execution(level=logging.DEBUG)
     def publish_insight_request(
@@ -155,6 +156,10 @@ class HealthDataPublisher:
             # Get message ID
             message_id: str = future.result(timeout=30.0)
 
+        except Exception:
+            self.logger.exception("Failed to publish insight request event")
+            raise
+        else:
             self.logger.info(
                 "Published insight request event for user %s, upload %s, message ID: %s",
                 user_id,
@@ -162,9 +167,6 @@ class HealthDataPublisher:
                 message_id,
             )
             return message_id
-        except Exception:
-            self.logger.exception("Failed to publish insight request event")
-            raise
 
     def close(self) -> None:
         """Close publisher client."""

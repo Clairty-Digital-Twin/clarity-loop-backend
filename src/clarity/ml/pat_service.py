@@ -904,6 +904,10 @@ class PATModelService(IMLModelService):
             # Embeddings should be identical with loaded weights
             is_identical = np.allclose(embedding1, embedding2, atol=1e-6)
 
+        except Exception:
+            logger.exception("Error verifying PAT weights")
+            return False
+        else:
             if is_identical:
                 logger.info("✅ PAT weights verification PASSED - using real weights")
             else:
@@ -912,10 +916,6 @@ class PATModelService(IMLModelService):
                 )
 
             return is_identical
-
-        except Exception:
-            logger.exception("Error verifying PAT weights")
-            return False
 
     async def health_check(self) -> dict[str, str | bool]:
         """Check the health status of the PAT service."""

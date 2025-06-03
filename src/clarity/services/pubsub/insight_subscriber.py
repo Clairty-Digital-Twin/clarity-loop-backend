@@ -80,15 +80,15 @@ class GeminiInsightGenerator:
             # Store insight in Firestore
             await self._store_insight(user_id, upload_id, insight)
 
+        except Exception:
+            self.logger.exception("Failed to generate health insight")
+            raise
+        else:
             self.logger.info(
                 "Generated and stored health insight for user: %s", user_id
             )
 
             return insight
-
-        except Exception:
-            self.logger.exception("Failed to generate health insight")
-            raise
 
     @staticmethod
     def _create_health_prompt(analysis_results: dict[str, Any]) -> str:

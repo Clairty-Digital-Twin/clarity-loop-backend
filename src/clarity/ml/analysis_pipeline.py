@@ -627,6 +627,7 @@ def _convert_raw_data_to_metrics(health_data: dict[str, Any]) -> list[HealthMetr
                     sleep_efficiency=sample.get("efficiency", 0.85),
                     time_to_sleep_minutes=sample.get("onset_latency", 15),
                     wake_count=sample.get("wake_count", 2),
+                    sleep_stages=sample.get("sleep_stages"),  # Optional sleep stages data
                     sleep_start=start_time,
                     sleep_end=end_time,
                 )

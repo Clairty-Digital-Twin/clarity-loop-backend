@@ -99,6 +99,11 @@ class CardioProcessor:
             # Extract features
             features = self._extract_features(hr_clean, hrv_clean)
 
+        except Exception:
+            self.logger.exception("Error processing cardiovascular data")
+            # Return zero vector on error
+            return [0.0] * 8
+        else:
             self.logger.info(
                 "Extracted cardiovascular features: avg_hr=%.1f, resting_hr=%.1f",
                 features.avg_hr,
@@ -116,11 +121,6 @@ class CardioProcessor:
                 features.hr_recovery_score,
                 features.circadian_rhythm_score,
             ]
-
-        except Exception:
-            self.logger.exception("Error processing cardiovascular data")
-            # Return zero vector on error
-            return [0.0] * 8
 
     @staticmethod
     def _preprocess_heart_rate(

@@ -219,7 +219,8 @@ class PATModelService(IMLModelService):
             logger.exception("Failed to load PAT model")
             raise
 
-    def _load_weights_from_h5(self, h5_file: Any) -> dict[str, torch.Tensor]:
+    @staticmethod
+    def _load_weights_from_h5(h5_file: "h5py.File[Any]") -> dict[str, torch.Tensor]:
         """Extract and map weights from H5 file to PyTorch format."""
         state_dict = {}
 

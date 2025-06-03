@@ -69,7 +69,7 @@ class TestHealthKitModels:
                     end_date="2023-01-01T12:01:00Z",
                 )
             ],
-            sync_token="token-123",
+            sync_token="token-123",  # noqa: S106
         )
 
         assert request.user_id == "test-user-123"
@@ -120,7 +120,7 @@ class TestHealthKitUploadEndpoint:
                     "distance": 2.5,
                 }
             ],
-            sync_token="sync-token-123",
+            sync_token="sync-token-123",  # noqa: S106
         )
 
     @pytest.fixture

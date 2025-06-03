@@ -7,7 +7,7 @@ Implements Liskov Substitution Principle - can substitute real auth provider.
 
 from typing import Any
 
-from clarity.core.interfaces import IAuthProvider
+from clarity.ports.auth_ports import IAuthProvider
 
 
 class MockAuthProvider(IAuthProvider):

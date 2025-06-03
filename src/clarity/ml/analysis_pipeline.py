@@ -4,8 +4,8 @@ Coordinates the entire health data analysis workflow from raw data to insights.
 Integrates preprocessing, modality processors, fusion, and PAT model.
 """
 
-import asyncio
-from datetime import UTC, datetime
+import os
+from datetime import UTC, datetime, timedelta
 import logging
 from typing import Any
 
@@ -13,7 +13,7 @@ import numpy as np
 
 from clarity.ml.fusion_transformer import get_fusion_service
 from clarity.ml.pat_service import ActigraphyInput, get_pat_service
-from clarity.ml.preprocessing import ActigraphyDataPoint, HealthDataPreprocessor
+from clarity.ml.preprocessing import HealthDataPreprocessor
 from clarity.ml.processors.activity_processor import ActivityProcessor
 from clarity.ml.processors.cardio_processor import CardioProcessor
 from clarity.ml.processors.respiration_processor import RespirationProcessor
@@ -79,7 +79,6 @@ class HealthAnalysisPipeline:
     async def _get_firestore_client(self) -> FirestoreClient:
         """Get or create Firestore client for saving results."""
         if self.firestore_client is None:
-            import os
             project_id = os.getenv("GOOGLE_CLOUD_PROJECT", "clarity-digital-twin")
             self.firestore_client = FirestoreClient(project_id=project_id)
         return self.firestore_client
@@ -581,32 +580,34 @@ def _convert_raw_data_to_metrics(health_data: dict[str, Any]) -> list[HealthMetr
             }
 
             if metric_type_str in type_mapping:
-                biometric_data = BiometricData()
+                biometric_data_kwargs = {}
 
                 if metric_type_str in {"heartrate", "heart_rate"}:
-                    biometric_data.heart_rate = float(sample.get("value", 0))
+                    biometric_data_kwargs["heart_rate"] = float(sample.get("value", 0))
                 elif metric_type_str == "heartratevariabilitysdnn":
-                    biometric_data.hrv_sdnn = float(sample.get("value", 0))
+                    biometric_data_kwargs["heart_rate_variability"] = float(sample.get("value", 0))
                 elif metric_type_str in {"respiratoryrate", "respiratory_rate"}:
-                    biometric_data.respiratory_rate = float(sample.get("value", 0))
+                    biometric_data_kwargs["respiratory_rate"] = float(sample.get("value", 0))
                 elif metric_type_str == "oxygensaturation":
-                    biometric_data.oxygen_saturation = float(sample.get("value", 0))
+                    biometric_data_kwargs["oxygen_saturation"] = float(sample.get("value", 0))
                 elif metric_type_str in {
                     "bloodpressuresystolic",
                     "bloodpressurediastolic",
                 }:
-                    biometric_data.blood_pressure_systolic = sample.get("systolic")
-                    biometric_data.blood_pressure_diastolic = sample.get("diastolic")
+                    biometric_data_kwargs["blood_pressure_systolic"] = sample.get("systolic")
+                    biometric_data_kwargs["blood_pressure_diastolic"] = sample.get("diastolic")
+
+                biometric_data = BiometricData(**biometric_data_kwargs)
 
                 metric = HealthMetric(
-                    user_id=health_data.get("user_id", "unknown"),
                     metric_type=type_mapping[metric_type_str],
                     created_at=datetime.fromisoformat(
                         sample.get("timestamp", datetime.now(UTC).isoformat())
                     ),
                     biometric_data=biometric_data,
-                    source_device=sample.get("source", "unknown"),
-                    confidence_score=sample.get("confidence", 1.0),
+                    device_id=sample.get("source", "unknown"),
+                    raw_data={"original_sample": sample},
+                    metadata={"user_id": health_data.get("user_id", "unknown"), "confidence_score": sample.get("confidence", 1.0)},
                 )
                 metrics.append(metric)
 
@@ -616,22 +617,26 @@ def _convert_raw_data_to_metrics(health_data: dict[str, Any]) -> list[HealthMetr
             category_type = sample.get("type", "").lower()
 
             if "sleep" in category_type:
+                start_time = datetime.fromisoformat(sample.get("start_timestamp", datetime.now(UTC).isoformat()))
+                end_time = datetime.fromisoformat(sample.get("end_timestamp", (start_time + timedelta(hours=8)).isoformat()))
                 sleep_data = SleepData(
-                    total_sleep_time=sample.get("duration", 0)
-                    / 3600,  # Convert to hours
+                    total_sleep_minutes=int(sample.get("duration", 480)),  # Duration in minutes
                     sleep_efficiency=sample.get("efficiency", 0.85),
-                    sleep_onset_latency=sample.get("onset_latency", 15),
-                    wake_after_sleep_onset=sample.get("waso", 30),
+                    time_to_sleep_minutes=sample.get("onset_latency", 15),
+                    wake_count=sample.get("wake_count", 2),
+                    sleep_start=start_time,
+                    sleep_end=end_time,
                 )
 
                 metric = HealthMetric(
-                    user_id=health_data.get("user_id", "unknown"),
                     metric_type=HealthMetricType.SLEEP_ANALYSIS,
                     created_at=datetime.fromisoformat(
                         sample.get("timestamp", datetime.now(UTC).isoformat())
                     ),
                     sleep_data=sleep_data,
-                    source_device=sample.get("source", "unknown"),
+                    device_id=sample.get("source", "unknown"),
+                    raw_data={"original_sample": sample},
+                    metadata={"user_id": health_data.get("user_id", "unknown")},
                 )
                 metrics.append(metric)
 

@@ -97,12 +97,9 @@ class ActivityProcessor:
         Returns:
             List of ActivityData objects
         """
-        activity_data = []
         logger = __import__("logging").getLogger(__name__)
 
-        for metric in metrics:
-            if metric.activity_data:
-                activity_data.append(metric.activity_data)
+        activity_data = [metric.activity_data for metric in metrics if metric.activity_data]
 
         logger.debug("Extracted %d activity data points", len(activity_data))
         return activity_data

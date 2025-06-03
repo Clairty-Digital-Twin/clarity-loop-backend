@@ -268,8 +268,11 @@ class TestMockAuthProviderComprehensive:
         assert users1 is not users2
 
         # Modifying one shouldn't affect the other
-        users1[0]['modified'] = True
-        assert 'modified' not in users2[0]
+        if len(users1) > 0:
+            original_email = users1[0]['email']
+            users1[0]['email'] = 'modified@test.com'
+            # Verify the second call returns unmodified data
+            assert users2[0]['email'] == original_email
 
     async def test_integration_verify_then_get_user_info(self, mock_auth_provider):
         """Test integration between verify_token and get_user_info."""

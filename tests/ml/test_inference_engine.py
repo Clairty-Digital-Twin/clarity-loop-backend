@@ -30,7 +30,7 @@ class TestAsyncInferenceEngineInitialization:
     """Test async inference engine initialization and configuration."""
 
     @staticmethod
-    def test_engine_initialization_default_config():
+    def test_engine_initialization_default_config() -> None:
         """Test engine initialization with default configuration."""
         mock_pat_service = MagicMock(spec=PATModelService)
         engine = AsyncInferenceEngine(pat_service=mock_pat_service)
@@ -44,7 +44,7 @@ class TestAsyncInferenceEngineInitialization:
         assert not engine.is_running
 
     @staticmethod
-    def test_engine_initialization_custom_config():
+    def test_engine_initialization_custom_config() -> None:
         """Test engine initialization with custom configuration."""
         mock_pat_service = MagicMock(spec=PATModelService)
         batch_size = 50
@@ -64,7 +64,7 @@ class TestAsyncInferenceEngineInitialization:
 
     @staticmethod
     @pytest.mark.asyncio
-    async def test_engine_start_and_stop():
+    async def test_engine_start_and_stop() -> None:
         """Test engine start and stop functionality."""
         mock_pat_service = MagicMock(spec=PATModelService)
         engine = AsyncInferenceEngine(pat_service=mock_pat_service)
@@ -113,7 +113,7 @@ class TestAsyncInferenceEngineInference:
 
     @staticmethod
     @pytest.mark.asyncio
-    async def test_single_inference_success(sample_inference_request: InferenceRequest):
+    async def test_single_inference_success(sample_inference_request: InferenceRequest) -> None:
         """Test successful single inference."""
         mock_analysis = ActigraphyAnalysis(
             user_id=sample_inference_request.input_data.user_id,
@@ -143,7 +143,7 @@ class TestAsyncInferenceEngineInference:
 
     @staticmethod
     @pytest.mark.asyncio
-    async def test_batch_processing(sample_actigraphy_input: ActigraphyInput):
+    async def test_batch_processing(sample_actigraphy_input: ActigraphyInput) -> None:
         """Test batch processing of multiple requests."""
         mock_analysis = ActigraphyAnalysis(
             user_id=sample_actigraphy_input.user_id,
@@ -187,7 +187,7 @@ class TestAsyncInferenceEngineInference:
 
     @staticmethod
     @pytest.mark.asyncio
-    async def test_caching_functionality(sample_inference_request: InferenceRequest):
+    async def test_caching_functionality(sample_inference_request: InferenceRequest) -> None:
         """Test that caching works correctly."""
         mock_analysis = ActigraphyAnalysis(
             user_id=sample_inference_request.input_data.user_id,
@@ -222,7 +222,7 @@ class TestInferenceCache:
     """Test inference cache functionality."""
 
     @staticmethod
-    def test_cache_initialization():
+    def test_cache_initialization() -> None:
         """Test cache initialization with TTL."""
         cache = InferenceCache(ttl_seconds=3600)
         assert cache.ttl == 3600
@@ -230,7 +230,7 @@ class TestInferenceCache:
 
     @staticmethod
     @pytest.mark.asyncio
-    async def test_cache_set_and_get():
+    async def test_cache_set_and_get() -> None:
         """Test basic cache set and get operations."""
         cache = InferenceCache(ttl_seconds=3600)
 
@@ -246,7 +246,7 @@ class TestInferenceCache:
 
     @staticmethod
     @pytest.mark.asyncio
-    async def test_cache_expiration():
+    async def test_cache_expiration() -> None:
         """Test cache expiration functionality."""
         # Short TTL for testing
         cache = InferenceCache(ttl_seconds=1)
@@ -268,7 +268,7 @@ class TestInferenceCache:
 
     @staticmethod
     @pytest.mark.asyncio
-    async def test_cache_miss():
+    async def test_cache_miss() -> None:
         """Test cache miss for non-existent key."""
         cache = InferenceCache()
 
@@ -276,7 +276,7 @@ class TestInferenceCache:
         assert result is None
 
     @staticmethod
-    def test_cache_clear():
+    def test_cache_clear() -> None:
         """Test cache clear functionality."""
         cache = InferenceCache()
         cache.cache["key1"] = ("value1", 12345)

@@ -17,6 +17,7 @@ services:
     volumes:
       - .:/app
       - /app/.venv
+      - clarity_logs:/app/logs
     depends_on:
       - redis
       - firestore
@@ -147,6 +148,8 @@ volumes:
   grafana_data:
     driver: local
   jupyter_data:
+    driver: local
+  clarity_logs:
     driver: local
 
 # Network for service communication

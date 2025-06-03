@@ -26,7 +26,7 @@ When ready to use these patterns in production:
 
 from datetime import UTC, datetime
 import logging
-from typing import Any
+from typing import Any, NoReturn
 import uuid
 from uuid import UUID
 
@@ -435,7 +435,7 @@ class EnhancedHealthDataService:
         raise HealthDataServiceError(error_summary, status_code=400)
 
     @staticmethod
-    def _raise_data_not_found_error(processing_id: str) -> None:
+    def _raise_data_not_found_error(processing_id: str) -> NoReturn:
         """Raise data not found error."""
         error_msg = f"Processing job {processing_id} not found"
         raise DataNotFoundError(error_msg)

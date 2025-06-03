@@ -115,6 +115,9 @@ unfixable = [
     "T201", # print() found (OK in scripts)
     "D100", # Missing docstring in public module
 ]
+"src/clarity/core/decorators.py" = [
+    "ANN401", # Any type annotations are necessary in generic decorators
+]
 
 # Import sorting configuration
 [lint.isort]

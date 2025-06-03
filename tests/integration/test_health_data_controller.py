@@ -180,8 +180,8 @@ class TestHealthDataController:
         """Test health data retrieval endpoint adapts query parameters."""
         # When: Making request with query parameters
         response = client.get(
-            "/api/v1/health-data/health-data",
-            params={"limit": 50, "offset": 0, "metric_type": "heart_rate"},
+            "/api/v1/health-data/",
+            params={"limit": 50, "offset": 0, "data_type": "heart_rate"},
             headers=valid_auth_headers,
         )
 
@@ -200,7 +200,7 @@ class TestHealthDataController:
         # When: Making DELETE request
         processing_id = str(uuid4())
         response = client.delete(
-            f"/api/v1/health-data/health-data/{processing_id}",
+            f"/api/v1/health-data/{processing_id}",
             headers=valid_auth_headers,
         )
 

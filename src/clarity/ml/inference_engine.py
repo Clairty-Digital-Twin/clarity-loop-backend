@@ -201,7 +201,7 @@ class AsyncInferenceEngine:
         self.request_queue: asyncio.Queue[
             tuple[InferenceRequest, asyncio.Future[InferenceResponse]]
         ] = asyncio.Queue()
-        self.batch_processor_task: asyncio.Task | None = None
+        self.batch_processor_task: asyncio.Task[None] | None = None
         self.is_running = False
         self._shutdown_event = asyncio.Event()
 

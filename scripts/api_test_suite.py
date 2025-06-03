@@ -35,7 +35,7 @@ else:
         from colorama import Fore, Style  # type: ignore[import-untyped]
         colorama.init()
 
-BASE_URL = "http://localhost:8080"
+BASE_URL = "http://localhost:8000"
 
 
 class APITester:

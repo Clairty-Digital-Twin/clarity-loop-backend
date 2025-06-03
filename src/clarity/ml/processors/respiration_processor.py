@@ -118,7 +118,7 @@ class RespirationProcessor:
                 features.avg_spo2,
             )
 
-        except Exception as e:
+        except Exception:
             self.logger.exception("Error processing respiratory data")
             # Return default values on error
             return [

@@ -336,7 +336,8 @@ class TestExceptionHandlers:
 
         assert isinstance(response, JSONResponse)
         assert response.status_code == 400
-        assert response.headers == {}
+        # FastAPI automatically adds content headers
+        assert "Retry-After" not in response.headers
 
         # Check response content structure
         content = response.body.decode()
@@ -351,7 +352,9 @@ class TestExceptionHandlers:
         response = problem_detail_exception_handler(request, exc)
 
         assert response.status_code == 429
-        assert response.headers == {"Retry-After": "60"}
+        # Check that our custom header is present (case-insensitive)
+        assert "retry-after" in [k.lower() for k in response.headers.keys()]
+        assert response.headers.get("retry-after") == "60" or response.headers.get("Retry-After") == "60"
 
     def test_generic_exception_handler(self, caplog):
         """Test generic_exception_handler function."""

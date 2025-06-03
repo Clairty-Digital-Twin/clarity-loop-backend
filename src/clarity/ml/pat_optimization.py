@@ -129,7 +129,7 @@ class PATPerformanceOptimizer:
             # Optimize for inference
             if hasattr(torch.jit, "optimize_for_inference"):
                 return torch.jit.optimize_for_inference(traced_model)  # type: ignore[misc,return-value]
-            return traced_model  # type: ignore[return-value,no-any-return]  # noqa: TRY300
+            return traced_model  # type: ignore[return-value,no-any-return,misc]  # noqa: TRY300
 
         except Exception:
             logger.exception("TorchScript compilation failed")
@@ -142,7 +142,7 @@ class PATPerformanceOptimizer:
             return
 
         try:
-            torch.jit.save(self.compiled_model, str(model_path))  # type: ignore[no-untyped-call]
+            torch.jit.save(self.compiled_model, str(model_path))  # type: ignore[no-untyped-call,misc]
             logger.info("Compiled model saved to %s", model_path)
 
         except Exception:
@@ -374,7 +374,7 @@ class BatchAnalysisProcessor:
                     if isinstance(result, Exception):
                         future.set_exception(result)
                     else:
-                        analysis, _ = result  # type: ignore[misc]  # Unpack (analysis, was_cached) tuple
+                        analysis, _ = result  # type: ignore[misc,assignment]  # Unpack (analysis, was_cached) tuple
                         future.set_result(analysis)
 
                 logger.info("Processed batch of %d requests", len(batch))

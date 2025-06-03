@@ -1,863 +1,202 @@
 # Health Data API
 
-This document provides comprehensive documentation for health data endpoints in the Clarity Loop Backend API.
+**UPDATED:** December 6, 2025 - Based on actual implementation in `src/clarity/api/v1/health_data.py`
 
 ## Overview
 
-The Health Data API enables iOS and watchOS applications to upload, retrieve, and manage health data from HealthKit. The API is designed for high-throughput, real-time health data processing with advanced validation and quality assessment.
+The Health Data API handles upload, storage, and retrieval of health metrics from various sources including Apple HealthKit, wearable devices, and manual inputs.
 
-## Core Concepts
+## Authentication
 
-### Data Types Supported
-
-- **Heart Rate**: BPM measurements with context
-- **Activity**: Steps, distance, calories, workouts
-- **Sleep**: Sleep stages, quality metrics, duration
-- **Biometrics**: Height, weight, body composition
-- **Workout Sessions**: Detailed exercise tracking
-- **Health Records**: Clinical data and vitals
-
-### Data Quality Assessment
-
-All uploaded health data undergoes automatic quality assessment:
-
-- **Physiological Validation**: Range checking against normal human values
-- **Temporal Consistency**: Logical timestamp relationships
-- **Sensor Reliability**: Data source and confidence scoring
-- **Anomaly Detection**: Statistical outlier identification
-
-### Processing Pipeline
-
-```mermaid
-graph TD
-    A[Health Data Upload] --> B[Input Validation]
-    B --> C[Quality Assessment]
-    C --> D[Data Enrichment]
-    D --> E[Storage]
-    E --> F[Async Processing Queue]
-    F --> G[ML Analysis]
-    G --> H[Insight Generation]
+All endpoints require Firebase JWT token:
+```
+Authorization: Bearer <firebase-jwt-token>
 ```
 
-## HealthKit Upload v1 (effective: 2025-06-01)
+## Endpoints
 
-### 1. Payload envelope
-
-```jsonc
-{
-  "deviceTimeZone" : "America/Los_Angeles",        // Olson ID of the source iPhone
-  "samples"        : [ <HKSamplePayload>, … ],     // ordered by startDate ASC
-  "uploadId"       : "U20250601T071557Z_123",      // client-generated, idempotent
-  "sdkVersion"     : "1.4.2"                       // app build that produced the file
-}
-```
-
-- The upload must be gzip-compressed (Content-Encoding: gzip) if > 2 MiB.
-- uploadId MUST be unique per user; the server may safely PUT the same
-  payload again without double-processing (idempotency).
-- deviceTimeZone is captured once, not per sample, to cut payload size.
-  All date strings are still UTC ISO-8601 (2025-06-01T07:15:57Z).
-
-### 2. HKSamplePayload canonical schema
-
-| Field | Type | Required | Notes |
-|-------|------|----------|-------|
-| uuid | string | ✅ | sample.uuid.uuidString – basis for deduplication. |
-| type | string | ✅ | Raw identifier (HKQuantityTypeIdentifierHeartRate, HKCategoryTypeIdentifierSleepAnalysis, etc.). |
-| startDate | string | ✅ | UTC ISO-8601. |
-| endDate | string | ✅ | UTC ISO-8601. For point samples set equal to startDate. |
-| value | number\|int | ⚠ | Present only for HKQuantitySample. |
-| unit | string | ⚠ | count/min, count, bpm, ms, … Apple's canonical unit string. |
-| categoryValue | int | ⚠ | Present only for HKCategorySample (e.g., HKCategoryValueSleepAnalysisAsleep = 1). |
-| metadata | object | ❌ | Mirror sample.metadata; omit keys with NSNull. |
-| source | {bundleId:String, name:String} | ✅ | sample.sourceRevision.source. |
-| device | {model:String, name:String} | ❌ | Populated if sample.device != nil. |
-
-**Validation rules:**
-
-- **Dedup**: uuid must be unique per user; server discards duplicates.
-- **Time order**: startDate ≤ endDate ≤ now + 1 min; else reject 422.
-- **Unit canonicalisation**: backend converts all quantities to the SI unit listed in Table A (below) before storage.
-- **Size cap**: ≤ 10 000 samples per upload; else respond 413 (Request Entity Too Large).
-
-### 3. Table A — quantity-type → canonical SI unit
-
-| Identifier | Canonical unit | Notes |
-|------------|----------------|-------|
-| HKQuantityTypeIdentifierStepCount | count | already integer |
-| HKQuantityTypeIdentifierHeartRate | count/min | bpm |
-| HKQuantityTypeIdentifierHeartRateVariabilitySDNN | ms | — |
-| HKQuantityTypeIdentifierActiveEnergyBurned | kcal | convert from kJ if needed |
-| HKQuantityTypeIdentifierDistanceWalkingRunning | m | — |
-| HKQuantityTypeIdentifierFlightsClimbed | count | — |
-
-(Extend table as new types are enabled.)
-
-### 4. Backend ingest procedure
-
-1. **Auth**: verify Firebase ID token → uid.
-2. **Stream-parse** the gzip JSON to avoid RAM blow-up.
-3. **For each sample**:
-   - Validate against schema & rules above.
-   - Convert units to SI; round value to 6 decimal places.
-   - Write to BigQuery raw partition or append to Parquet in Cloud Storage.
-4. **Insert uploadId** into uploads table (PRIMARY KEY(uid, uploadId)) to guarantee idempotency.
-5. **Publish Pub/Sub msg** {uid, uploadId, weekISO} for PAT micro-service.
-
-### 5. Apple privacy obligations (server-side)
-
-- HealthKit data must remain encrypted at rest (GCS default AES-256 is acceptable).
-- Do NOT log raw sample values or UUIDs to Cloud Logging; emit only counts & timing metrics.
-- Data may be stored solely for the user's benefit (App Store Review §5.1.3(i)).
-  No advertising, no third-party resale.
-- Provide a data-deletion endpoint (DELETE /v1/user/{uid}/purge) and honor within 30 days (App Store §5.1.3(ii)).
-
-**Reference**: [Works with Apple Health privacy guidelines](https://developer.apple.com/health-fitness/works-with-apple-health/)
-
-### 6. External link bookmarks (optional)
-
-| Topic | Doc URL |
-|-------|---------|
-| HKSample subclass reference | [HealthKit HKSample](https://developer.apple.com/documentation/healthkit/hksample) |
-| HKQuantityType identifiers | [HKQuantityType identifiers](https://developer.apple.com/documentation/healthkit/hkquantitytypeidentifier) |
-| HKCategoryType identifiers | [HKCategoryType identifiers](https://developer.apple.com/documentation/healthkit/hkcategorytypeidentifier) |
-
-## Health Data Endpoints
-
-### Upload Health Data Batch
-
-Upload a batch of health data from HealthKit for processing.
-
-#### Request
+### Upload Health Data
 
 ```http
-POST /v1/health/data/upload
+POST /api/v1/health-data/upload
 Content-Type: application/json
 Authorization: Bearer <firebase-jwt-token>
 ```
 
+**Request Body:**
 ```json
 {
-  "session_info": {
-    "session_id": "session_20240120_143000",
-    "device_info": {
-      "device_type": "apple_watch_series_9",
-      "os_version": "watchOS 10.2",
-      "app_version": "1.2.0"
-    },
-    "sync_timestamp": "2024-01-20T14:30:00Z",
-    "data_source": "healthkit"
-  },
-  "heart_rate_data": [
+  "user_id": "firebase-uid-123",
+  "metrics": [
     {
-      "timestamp": "2024-01-20T14:30:00Z",
-      "value": 72,
-      "context": "active",
-      "confidence": 0.95,
-      "source": {
-        "device": "Apple Watch",
-        "sensor": "photoplethysmography"
+      "type": "heart_rate",
+      "value": 72.5,
+      "unit": "bpm",
+      "timestamp": "2025-01-15T10:30:00Z",
+      "source": "apple_watch",
+      "metadata": {
+        "device_model": "Apple Watch Series 9",
+        "confidence": 0.95
       }
     },
     {
-      "timestamp": "2024-01-20T14:31:00Z",
-      "value": 75,
-      "context": "active",
-      "confidence": 0.93
+      "type": "step_count", 
+      "value": 1500,
+      "unit": "steps",
+      "timestamp": "2025-01-15T10:30:00Z",
+      "source": "iphone"
     }
   ],
-  "activity_data": [
-    {
-      "timestamp": "2024-01-20T14:30:00Z",
-      "steps": 120,
-      "distance_meters": 85.5,
-      "active_energy_calories": 12.3,
-      "activity_type": "walking",
-      "confidence": 0.98
-    }
-  ],
-  "sleep_data": [
-    {
-      "start_time": "2024-01-19T23:00:00Z",
-      "end_time": "2024-01-20T07:00:00Z",
-      "stages": [
-        {
-          "start_time": "2024-01-19T23:00:00Z",
-          "end_time": "2024-01-19T23:30:00Z",
-          "stage": "awake",
-          "confidence": 0.92
-        },
-        {
-          "start_time": "2024-01-19T23:30:00Z",
-          "end_time": "2024-01-20T01:00:00Z",
-          "stage": "light",
-          "confidence": 0.88
-        }
-      ],
-      "quality_metrics": {
-        "total_sleep_time": 7.5,
-        "sleep_efficiency": 0.89,
-        "awakenings": 2,
-        "restlessness_score": 0.15
-      }
-    }
-  ],
-  "workout_data": [
-    {
-      "start_time": "2024-01-20T14:00:00Z",
-      "end_time": "2024-01-20T14:45:00Z",
-      "workout_type": "running",
-      "total_distance": 5000.0,
-      "total_energy_burned": 320.5,
-      "average_heart_rate": 145,
-      "max_heart_rate": 165,
-      "samples": [
-        {
-          "timestamp": "2024-01-20T14:05:00Z",
-          "heart_rate": 142,
-          "pace": 6.2,
-          "distance": 520.0
-        }
-      ]
-    }
-  ]
+  "upload_source": "ios_app",
+  "client_timestamp": "2025-01-15T10:30:00Z",
+  "sync_token": "optional-sync-identifier"
 }
 ```
 
-#### Response (Immediate Acknowledgment)
-
+**Response (201 Created):**
 ```json
 {
-  "success": true,
-  "data": {
-    "upload_id": "upload_20240120_143000_001",
-    "session_id": "session_20240120_143000",
-    "status": "received",
-    "processing_job_id": "job_20240120_143000_001",
-    "estimated_processing_time": "30-120 seconds",
-    "data_summary": {
-      "heart_rate_samples": 2,
-      "activity_samples": 1,
-      "sleep_sessions": 1,
-      "workout_sessions": 1,
-      "total_data_points": 5
-    },
-    "quality_assessment": {
-      "overall_score": 0.92,
-      "issues": [],
-      "warnings": [
-        "Heart rate variance slightly higher than typical"
-      ]
-    }
-  },
-  "metadata": {
-    "request_id": "req_health_001",
-    "timestamp": "2024-01-20T14:30:00Z",
-    "processing_time_ms": 180
-  }
+  "processing_id": "proc-uuid-abc123",
+  "status": "queued",
+  "message": "Health data uploaded successfully",
+  "metrics_count": 2,
+  "uploaded_at": "2025-01-15T10:30:00Z"
 }
 ```
 
-#### Validation Errors
-
-```json
-{
-  "error": {
-    "code": "VALIDATION_ERROR",
-    "message": "Health data validation failed",
-    "details": {
-      "field": "heart_rate_data[0].value",
-      "value": 300,
-      "constraint": "Heart rate must be between 30-220 BPM",
-      "data_quality_issues": [
-        {
-          "type": "physiological_anomaly",
-          "field": "heart_rate_data[0].value",
-          "message": "Heart rate value outside normal human range",
-          "severity": "error"
-        }
-      ]
-    },
-    "request_id": "req_health_001"
-  }
-}
-```
+**Supported Metric Types:**
+- `heart_rate` (bpm)
+- `step_count` (steps)
+- `sleep_analysis` (hours)
+- `respiratory_rate` (breaths/min)
+- `active_energy` (calories)
+- `distance_walking` (meters)
 
 ### Get Processing Status
 
-Check the status of a health data processing job.
-
-#### Request
-
 ```http
-GET /v1/health/data/processing/{job_id}
+GET /api/v1/health-data/processing/{processing_id}
 Authorization: Bearer <firebase-jwt-token>
 ```
 
-#### Response
-
+**Response (200 OK):**
 ```json
 {
-  "success": true,
-  "data": {
-    "job_id": "job_20240120_143000_001",
-    "status": "completed",
-    "progress": {
-      "stage": "insight_generation",
-      "percentage": 100,
-      "current_step": "narrative_creation",
-      "steps_completed": 5,
-      "total_steps": 5
-    },
-    "timing": {
-      "started_at": "2024-01-20T14:30:05Z",
-      "completed_at": "2024-01-20T14:31:45Z",
-      "total_processing_time": 100.5
-    },
-    "results": {
-      "session_id": "session_20240120_143000",
-      "insights_generated": true,
-      "insight_id": "insight_20240120_daily",
-      "data_quality_score": 0.92,
-      "anomalies_detected": 0
-    },
-    "metrics": {
-      "data_processed": {
-        "heart_rate_samples": 2,
-        "activity_samples": 1,
-        "sleep_sessions": 1
-      },
-      "ml_processing": {
-        "model_version": "actigraphy_v2.1",
-        "inference_time": 15.3,
-        "confidence_score": 0.94
-      }
-    }
+  "processing_id": "proc-uuid-abc123",
+  "status": "completed",
+  "progress": 100,
+  "created_at": "2025-01-15T10:30:00Z",
+  "updated_at": "2025-01-15T10:31:00Z",
+  "results": {
+    "insights_generated": true,
+    "quality_score": 0.95,
+    "metrics_processed": 2
   }
 }
 ```
 
-### Get Health Data Sessions
+**Status Values:**
+- `pending` - Upload received, processing queued
+- `processing` - Data currently being analyzed  
+- `completed` - Processing finished successfully
+- `failed` - Processing encountered an error
+- `cancelled` - Processing was cancelled
 
-Retrieve a list of health data sessions for the authenticated user.
-
-#### Request
+### List Health Data
 
 ```http
-GET /v1/health/data/sessions?start_date=2024-01-15&end_date=2024-01-20&limit=20&offset=0
+GET /api/v1/health-data/?limit=50&cursor=xyz
 Authorization: Bearer <firebase-jwt-token>
 ```
 
-#### Query Parameters
+**Query Parameters:**
+- `limit` (optional): Number of items (1-1000, default: 50)
+- `cursor` (optional): Pagination cursor
+- `offset` (optional): Alternative to cursor for pagination
+- `data_type` (optional): Filter by metric type
+- `start_date` (optional): ISO 8601 date (e.g., 2025-01-15T00:00:00Z)
+- `end_date` (optional): ISO 8601 date
+- `source` (optional): Filter by data source
 
-- `start_date` (optional): Filter sessions from this date (ISO 8601)
-- `end_date` (optional): Filter sessions to this date (ISO 8601)
-- `data_types` (optional): Comma-separated list (heart_rate,activity,sleep)
-- `limit` (optional): Number of sessions to return (default: 20, max: 100)
-- `offset` (optional): Pagination offset (default: 0)
-- `quality_min` (optional): Minimum data quality score (0.0-1.0)
-
-#### Response
-
+**Response (200 OK):**
 ```json
 {
-  "success": true,
-  "data": {
-    "sessions": [
-      {
-        "session_id": "session_20240120_143000",
-        "start_time": "2024-01-20T14:30:00Z",
-        "end_time": "2024-01-20T15:30:00Z",
-        "data_types": ["heart_rate", "activity", "sleep"],
-        "data_summary": {
-          "heart_rate_samples": 60,
-          "activity_samples": 12,
-          "sleep_duration": 8.5
-        },
-        "quality_score": 0.92,
-        "processing_status": "completed",
-        "insights_available": true,
-        "device_info": {
-          "device_type": "apple_watch_series_9",
-          "os_version": "watchOS 10.2"
-        }
-      }
-    ],
-    "pagination": {
-      "total_sessions": 150,
-      "page": 1,
-      "per_page": 20,
-      "total_pages": 8,
-      "has_next": true,
-      "next_offset": 20
+  "data": [
+    {
+      "id": "metric-uuid-456",
+      "type": "heart_rate",
+      "value": 72.5,
+      "unit": "bpm", 
+      "timestamp": "2025-01-15T10:30:00Z",
+      "source": "apple_watch",
+      "quality_score": 0.95
     }
-  }
-}
-```
-
-### Get Specific Health Session
-
-Retrieve detailed data for a specific health session.
-
-#### Request
-
-```http
-GET /v1/health/data/session/{session_id}
-Authorization: Bearer <firebase-jwt-token>
-```
-
-#### Response
-
-```json
-{
-  "success": true,
-  "data": {
-    "session_info": {
-      "session_id": "session_20240120_143000",
-      "user_id": "user_12345",
-      "start_time": "2024-01-20T14:30:00Z",
-      "end_time": "2024-01-20T15:30:00Z",
-      "data_source": "healthkit",
-      "processing_status": "completed"
-    },
-    "heart_rate_data": {
-      "samples": [
-        {
-          "timestamp": "2024-01-20T14:30:00Z",
-          "value": 72,
-          "context": "active",
-          "confidence": 0.95
-        }
-      ],
-      "statistics": {
-        "min": 65,
-        "max": 85,
-        "average": 72.5,
-        "median": 71.0,
-        "standard_deviation": 4.2
-      }
-    },
-    "activity_data": {
-      "samples": [
-        {
-          "timestamp": "2024-01-20T14:30:00Z",
-          "steps": 120,
-          "distance_meters": 85.5,
-          "active_energy_calories": 12.3
-        }
-      ],
-      "totals": {
-        "total_steps": 8750,
-        "total_distance": 6200.5,
-        "total_calories": 320.7
-      }
-    },
-    "quality_assessment": {
-      "overall_score": 0.92,
-      "component_scores": {
-        "heart_rate": 0.95,
-        "activity": 0.88,
-        "sleep": 0.93
-      },
-      "issues": [],
-      "recommendations": [
-        "Consider wearing device more consistently during sleep"
-      ]
-    }
-  }
-}
-```
-
-### Export Health Data
-
-Export health data in various formats for user download or sharing.
-
-#### Request
-
-```http
-POST /v1/health/data/export
-Content-Type: application/json
-Authorization: Bearer <firebase-jwt-token>
-```
-
-```json
-{
-  "export_format": "json",
-  "date_range": {
-    "start_date": "2024-01-01",
-    "end_date": "2024-01-31"
+  ],
+  "pagination": {
+    "page_size": 50,
+    "has_next": true,
+    "has_previous": false,
+    "next_cursor": "eyJpZCI6IjQ1NiJ9"
   },
-  "data_types": ["heart_rate", "activity", "sleep"],
-  "include_raw_data": true,
-  "include_insights": true,
-  "anonymize": false,
-  "compression": "gzip"
-}
-```
-
-#### Response (Async Job)
-
-```json
-{
-  "success": true,
-  "data": {
-    "export_job_id": "export_20240120_143000_001",
-    "status": "queued",
-    "estimated_completion": "2024-01-20T14:35:00Z",
-    "export_size_estimate": "2.3 MB",
-    "data_points_estimate": 15000
+  "links": {
+    "self": "https://api.clarity.health/api/v1/health-data?limit=50",
+    "next": "https://api.clarity.health/api/v1/health-data?limit=50&cursor=eyJpZCI6IjQ1NiJ9"
   }
 }
 ```
 
-### Delete Health Session
-
-Delete a specific health data session and all associated data.
-
-#### Request
+### Delete Health Data
 
 ```http
-DELETE /v1/health/data/session/{session_id}
+DELETE /api/v1/health-data/{processing_id}
 Authorization: Bearer <firebase-jwt-token>
 ```
 
+**Response (200 OK):**
 ```json
 {
-  "confirm_deletion": true,
-  "reason": "user_request",
-  "delete_insights": true
+  "message": "Health data deleted successfully",
+  "processing_id": "proc-uuid-abc123",
+  "deleted_at": "2025-01-15T10:30:00Z"
 }
 ```
 
-#### Response
+### Health Check
 
+```http
+GET /api/v1/health-data/health
+```
+
+**Response (200 OK):**
 ```json
 {
-  "success": true,
-  "data": {
-    "session_id": "session_20240120_143000",
-    "deletion_timestamp": "2024-01-20T14:30:00Z",
-    "items_deleted": {
-      "health_data_points": 150,
-      "insights": 3,
-      "ml_artifacts": 5
-    },
-    "audit_log_id": "audit_deletion_001"
-  }
+  "status": "healthy",
+  "service": "health-data-api",
+  "database": "connected",
+  "authentication": "available",
+  "timestamp": "2025-01-15T10:30:00Z",
+  "version": "1.0.0"
 }
 ```
 
-## Data Validation Rules
+## Data Processing Flow
 
-### Heart Rate Validation
+1. **Upload** → Health data stored in Cloud Storage
+2. **Queue** → Analysis task published to Pub/Sub
+3. **Process** → Background analysis (PAT model + Gemini insights)
+4. **Results** → Insights saved to Firestore, real-time updates to client
 
-```python
-from pydantic import BaseModel, validator
-from typing import Optional, List
-from datetime import datetime
+## Security & Privacy
 
-class HeartRateData(BaseModel):
-    timestamp: datetime
-    value: int
-    context: Optional[str] = None
-    confidence: float
-    
-    @validator('value')
-    def validate_heart_rate(cls, v):
-        if v < 30 or v > 220:
-            raise ValueError('Heart rate must be between 30-220 BPM')
-        return v
-    
-    @validator('confidence')
-    def validate_confidence(cls, v):
-        if v < 0.0 or v > 1.0:
-            raise ValueError('Confidence must be between 0.0 and 1.0')
-        return v
-    
-    @validator('context')
-    def validate_context(cls, v):
-        if v and v not in ['resting', 'active', 'exercise', 'recovery']:
-            raise ValueError('Invalid heart rate context')
-        return v
-```
+- **User Isolation**: Users can only access their own data
+- **Encryption**: All data encrypted at rest and in transit
+- **Audit Logging**: All data access logged for compliance
+- **HIPAA Ready**: Designed with healthcare compliance in mind
 
-### Activity Data Validation
+## Implementation Details
 
-```python
-class ActivityData(BaseModel):
-    timestamp: datetime
-    steps: Optional[int] = None
-    distance_meters: Optional[float] = None
-    active_energy_calories: Optional[float] = None
-    activity_type: Optional[str] = None
-    
-    @validator('steps')
-    def validate_steps(cls, v):
-        if v is not None and (v < 0 or v > 1000):  # Per minute
-            raise ValueError('Steps per minute must be between 0-1000')
-        return v
-    
-    @validator('distance_meters')
-    def validate_distance(cls, v):
-        if v is not None and (v < 0 or v > 5000):  # Per minute
-            raise ValueError('Distance per minute must be between 0-5000 meters')
-        return v
-    
-    @validator('active_energy_calories')
-    def validate_calories(cls, v):
-        if v is not None and (v < 0 or v > 50):  # Per minute
-            raise ValueError('Calories per minute must be between 0-50')
-        return v
-```
-
-### Sleep Data Validation
-
-```python
-class SleepStage(BaseModel):
-    start_time: datetime
-    end_time: datetime
-    stage: str
-    confidence: float
-    
-    @validator('stage')
-    def validate_stage(cls, v):
-        valid_stages = {'awake', 'light', 'deep', 'rem'}
-        if v not in valid_stages:
-            raise ValueError(f'Sleep stage must be one of: {valid_stages}')
-        return v
-    
-    @validator('end_time')
-    def validate_duration(cls, v, values):
-        if 'start_time' in values:
-            duration = v - values['start_time']
-            if duration.total_seconds() < 60:  # Minimum 1 minute
-                raise ValueError('Sleep stage duration must be at least 1 minute')
-            if duration.total_seconds() > 14400:  # Maximum 4 hours
-                raise ValueError('Sleep stage duration cannot exceed 4 hours')
-        return v
-```
-
-## Data Quality Assessment
-
-### Quality Scoring Algorithm
-
-```python
-class DataQualityAssessor:
-    """Assess health data quality using multiple criteria"""
-    
-    def assess_heart_rate_quality(self, heart_rate_data: List[HeartRateData]) -> float:
-        """Assess heart rate data quality"""
-        if not heart_rate_data:
-            return 0.0
-        
-        quality_factors = []
-        
-        # 1. Value consistency
-        values = [hr.value for hr in heart_rate_data]
-        variance = np.var(values)
-        consistency_score = max(0, 1 - (variance / 1000))  # Normalize variance
-        quality_factors.append(consistency_score * 0.3)
-        
-        # 2. Temporal consistency
-        timestamps = [hr.timestamp for hr in heart_rate_data]
-        time_gaps = [(timestamps[i+1] - timestamps[i]).total_seconds() 
-                    for i in range(len(timestamps)-1)]
-        avg_gap = np.mean(time_gaps)
-        temporal_score = 1.0 if avg_gap <= 60 else max(0, 1 - (avg_gap - 60) / 240)
-        quality_factors.append(temporal_score * 0.2)
-        
-        # 3. Confidence scores
-        confidence_score = np.mean([hr.confidence for hr in heart_rate_data])
-        quality_factors.append(confidence_score * 0.3)
-        
-        # 4. Physiological plausibility
-        plausibility_score = self._assess_physiological_plausibility(values)
-        quality_factors.append(plausibility_score * 0.2)
-        
-        return sum(quality_factors)
-    
-    def _assess_physiological_plausibility(self, values: List[int]) -> float:
-        """Check if heart rate patterns are physiologically plausible"""
-        if len(values) < 2:
-            return 1.0
-        
-        # Check for impossible rapid changes
-        max_change = max(abs(values[i] - values[i-1]) for i in range(1, len(values)))
-        if max_change > 50:  # >50 BPM change per minute is unlikely
-            return 0.5
-        
-        # Check for sustained extreme values
-        extreme_count = sum(1 for v in values if v < 40 or v > 180)
-        extreme_ratio = extreme_count / len(values)
-        if extreme_ratio > 0.3:
-            return 0.6
-        
-        return 1.0
-```
-
-### Quality Issues Detection
-
-```python
-class QualityIssueDetector:
-    """Detect and classify data quality issues"""
-    
-    def detect_issues(self, health_data: dict) -> List[dict]:
-        """Detect quality issues in health data"""
-        issues = []
-        
-        # Heart rate issues
-        if 'heart_rate_data' in health_data:
-            hr_issues = self._detect_heart_rate_issues(health_data['heart_rate_data'])
-            issues.extend(hr_issues)
-        
-        # Activity issues
-        if 'activity_data' in health_data:
-            activity_issues = self._detect_activity_issues(health_data['activity_data'])
-            issues.extend(activity_issues)
-        
-        return issues
-    
-    def _detect_heart_rate_issues(self, hr_data: List[dict]) -> List[dict]:
-        """Detect heart rate specific issues"""
-        issues = []
-        
-        for i, hr in enumerate(hr_data):
-            # Extreme values
-            if hr['value'] < 35 or hr['value'] > 200:
-                issues.append({
-                    'type': 'extreme_value',
-                    'severity': 'warning',
-                    'field': f'heart_rate_data[{i}].value',
-                    'value': hr['value'],
-                    'message': 'Heart rate value is outside typical range'
-                })
-            
-            # Low confidence
-            if hr['confidence'] < 0.7:
-                issues.append({
-                    'type': 'low_confidence',
-                    'severity': 'info',
-                    'field': f'heart_rate_data[{i}].confidence',
-                    'value': hr['confidence'],
-                    'message': 'Low confidence measurement'
-                })
-        
-        return issues
-```
-
-## Binary Label Derivation for Test Fixtures (PAT Research-Based)
-
-When creating synthetic test data or fixtures, apply these binary classification rules derived from PAT research (pp 23-25):
-
-#### Depression Classification
-
-- **Rule**: PHQ-9 score ≥ 10
-- **Implementation**: Sum all PHQ-9 questionnaire responses; label as depression if total ≥ 10
-- **Test fixture usage**: Generate synthetic users with known PHQ-9 scores to validate depression detection
-
-#### Sleep Abnormality Classification  
-
-- **Rule**: Daily sleep duration > 12 hours OR < 5 hours
-- **Implementation**: Calculate average daily sleep from HealthKit sleep analysis data
-- **Test fixture usage**: Create sleep data with various durations to test abnormality detection
-
-#### Sleep Disorder Classification
-
-- **Rule**: Self-reported sleep disorder diagnosis flag in health records
-- **Implementation**: Check user health profile for sleep disorder diagnosis boolean
-- **Test fixture usage**: Generate user profiles with known sleep disorder status
-
-#### Implementation Example
-
-```python
-def create_test_fixtures_with_labels():
-    """Create synthetic test data with known ground truth labels"""
-    
-    # Depression test case
-    depression_user = {
-        "phq9_responses": [2, 2, 3, 1, 2, 1, 1, 1, 1],  # Sum = 14 ≥ 10 → Depression
-        "expected_label": {"depression": True}
-    }
-    
-    # Sleep abnormality test case  
-    sleep_abnormal_user = {
-        "daily_sleep_hours": [3.5, 4.0, 3.8, 4.2],  # All < 5h → Sleep abnormality
-        "expected_label": {"sleep_abnormality": True}
-    }
-    
-    # Normal control case
-    healthy_user = {
-        "phq9_responses": [0, 1, 0, 0, 1, 0, 0, 0, 1],  # Sum = 3 < 10 → No depression
-        "daily_sleep_hours": [7.5, 8.0, 7.8, 8.2],     # 5h ≤ sleep ≤ 12h → Normal
-        "expected_label": {"depression": False, "sleep_abnormality": False}
-    }
-    
-    return [depression_user, sleep_abnormal_user, healthy_user]
-```
-
-## Rate Limiting and Quotas
-
-### Upload Rate Limits
-
-- **Individual Uploads**: 100 per hour per user
-- **Batch Size**: Maximum 1000 data points per upload
-- **Total Data**: 10MB per hour per user
-- **Concurrent Uploads**: 5 simultaneous uploads per user
-
-### Query Rate Limits
-
-- **Session Queries**: 300 per hour per user
-- **Export Requests**: 10 per day per user
-- **Status Checks**: 1000 per hour per user
-
-## Error Handling
-
-### Common Error Scenarios
-
-#### Data Validation Errors
-
-```json
-{
-  "error": {
-    "code": "DATA_VALIDATION_ERROR",
-    "message": "Health data contains validation errors",
-    "details": {
-      "validation_errors": [
-        {
-          "field": "heart_rate_data[0].value",
-          "error": "Value must be between 30-220",
-          "provided_value": 300
-        }
-      ],
-      "quality_issues": [
-        {
-          "type": "physiological_anomaly",
-          "field": "heart_rate_data[0].value",
-          "message": "Heart rate value outside normal human range",
-          "severity": "error"
-        }
-      ]
-    }
-  }
-}
-```
-
-#### Processing Errors
-
-```json
-{
-  "error": {
-    "code": "PROCESSING_ERROR",
-    "message": "Health data processing failed",
-    "details": {
-      "job_id": "job_20240120_143000_001",
-      "stage": "ml_analysis",
-      "error_type": "model_inference_error",
-      "retry_available": true,
-      "estimated_retry_time": "2024-01-20T14:35:00Z"
-    }
-  }
-}
-```
-
-This comprehensive health data API documentation provides all the necessary information for implementing robust health data upload, processing, and retrieval functionality.
+- **Location**: `src/clarity/api/v1/health_data.py`
+- **Storage**: Google Cloud Storage for raw data
+- **Database**: Firestore for processed results
+- **Async Processing**: Pub/Sub for background jobs
+- **Validation**: Pydantic models with strict type checking

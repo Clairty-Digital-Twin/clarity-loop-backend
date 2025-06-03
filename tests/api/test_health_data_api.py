@@ -25,7 +25,7 @@ class TestHealthDataAPIBasics:
     @staticmethod
     def test_basic_endpoint_structure() -> None:
         """Test that endpoints are configured."""
-        routes = [getattr(route, 'path', str(route)) for route in router.routes]  # type: ignore[attr-defined]
+        routes = [getattr(route, "path", str(route)) for route in router.routes]  # type: ignore[attr-defined]
 
         # Should have health check endpoint at minimum
         assert any("/health" in path for path in routes)

@@ -771,6 +771,7 @@ And for deployment:
 $ make deploy-ingestion  # (if configured) or run gcloud manually as described above
 
  • README/Documentation: We update the repository README and docs with a quickstart for this feature. The quickstart might say:
+
  1. Setup: clone repo, create .env, run make dev-docker.
  2. Uploading Data: an example curl command or a reference to API docs (the docs could have an OpenAPI spec or an example JSON payload for HealthKit).
  3. Monitoring: how to see the output. E.g., “after upload, open the Firebase local UI or Firestore emulator console to see the new insight document” or “check the ingestion service logs in the terminal for status”.

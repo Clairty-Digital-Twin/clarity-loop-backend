@@ -125,18 +125,20 @@ class TestPATModelService:
 
         # Test encoder architecture
         if pat_service.model is not None:
-            encoder = pat_service.model.encoder
+            encoder = pat_service.model.encoder  # type: ignore[union-attr]
+            assert isinstance(encoder, PATEncoder)
+            assert encoder.embed_dim == 96
+            assert encoder.input_size == 10080
+            assert encoder.patch_size == 18
+            assert len(encoder.transformer_layers) == 2  # PAT-M
         else:
             pytest.skip("Model not loaded")
-        assert isinstance(encoder, PATEncoder)
-        assert encoder.embed_dim == 96
-        assert encoder.input_size == 10080
-        assert encoder.patch_size == 18
-        assert len(encoder.transformer_layers) == 2  # PAT-M
 
     @staticmethod
     async def test_weight_conversion(pat_service: PATModelService) -> None:
         """Test that TensorFlow weights were converted correctly."""
+        if pat_service.model is None:
+            pytest.skip("Model not loaded")
         encoder = pat_service.model.encoder  # type: ignore[union-attr]
 
         # Check if weights are loaded (not random)
@@ -157,7 +159,9 @@ class TestPATModelService:
     @staticmethod
     async def test_attention_mechanism(pat_service: PATModelService) -> None:
         """Test the custom PAT attention mechanism."""
-        encoder = pat_service.model.encoder
+        if pat_service.model is None:
+            pytest.skip("Model not loaded")
+        encoder = pat_service.model.encoder  # type: ignore[union-attr]
         attention = encoder.transformer_layers[0].attention
 
         assert isinstance(attention, PATMultiHeadAttention)

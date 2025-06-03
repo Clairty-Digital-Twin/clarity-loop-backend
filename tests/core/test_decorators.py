@@ -362,5 +362,5 @@ class TestDecoratorsBasic:
         async_result = await failing_async_function()
         assert async_result == "async_error_handled"
 
-        sync_result = failing_sync_function()  # type: ignore[misc]
+        sync_result = await failing_sync_function()  # type: ignore[misc]
         assert sync_result == "async_error_handled"

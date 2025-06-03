@@ -70,8 +70,9 @@ class TestGeminiServiceInitialization:
             assert service.is_initialized
             assert service.model is mock_model_instance
 
+    @staticmethod
     @pytest.mark.asyncio
-    async def test_service_initialization_failure(self):
+    async def test_service_initialization_failure():
         """Test service initialization failure."""
         service = GeminiService(project_id="test-project")
 
@@ -86,8 +87,9 @@ class TestGeminiServiceInitialization:
 class TestGeminiServiceHealthInsights:
     """Test Gemini service health insight generation."""
 
+    @staticmethod
     @pytest.fixture
-    def sample_insight_request(self) -> HealthInsightRequest:
+    def sample_insight_request() -> HealthInsightRequest:
         """Create sample health insight request."""
         return HealthInsightRequest(
             user_id=str(uuid4()),
@@ -103,8 +105,9 @@ class TestGeminiServiceHealthInsights:
             insight_type="comprehensive"
         )
 
+    @staticmethod
     @pytest.mark.asyncio
-    async def test_generate_health_insights_success(self, sample_insight_request):
+    async def test_generate_health_insights_success(sample_insight_request: HealthInsightRequest):
         """Test successful health insight generation."""
         service = GeminiService(project_id="test-project")
 

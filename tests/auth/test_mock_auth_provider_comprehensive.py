@@ -10,7 +10,8 @@ import pytest
 from clarity.auth.mock_auth import MockAuthProvider
 
 
-class TestMockAuthProviderComprehensive:  # ruff: noqa: PLR0904
+# ruff: noqa: PLR0904
+class TestMockAuthProviderComprehensive:
     """Comprehensive test coverage for MockAuthProvider."""
 
     @pytest.fixture

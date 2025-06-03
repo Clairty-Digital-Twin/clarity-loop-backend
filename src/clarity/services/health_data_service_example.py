@@ -258,7 +258,7 @@ class EnhancedHealthDataService:
 
             # Ensure we return a list of dicts
             if isinstance(result, dict) and "data" in result:
-                data = result.get("data", [])
+                data: Any = result.get("data", [])
                 if isinstance(data, list):
                     return data
                 return []
@@ -384,7 +384,7 @@ class EnhancedHealthDataService:
 
             validator = validation_map.get(metric_type_value)
             if validator:
-                return bool(validator(metric))
+                return bool(validator(metric))  # type: ignore[no-untyped-call]
             return False  # noqa: TRY300
 
         except (ValueError, AttributeError, TypeError) as e:

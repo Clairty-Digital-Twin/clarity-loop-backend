@@ -42,9 +42,9 @@ class AnalysisResults:
     def __init__(self) -> None:
         self.cardio_features: list[float] = []
         self.respiratory_features: list[float] = []
-        self.activity_features: list[
-            dict[str, Any]
-        ] = []  # 🔥 ADDED: Basic activity features
+        self.activity_features: list[dict[str, Any]] = (
+            []
+        )  # 🔥 ADDED: Basic activity features
         self.activity_embedding: list[float] = []
         self.fused_vector: list[float] = []
         self.summary_stats: dict[str, Any] = {}
@@ -176,9 +176,9 @@ class HealthAnalysisPipeline:
                 "processed_at": datetime.now(UTC).isoformat(),
                 "total_metrics": len(health_metrics),
                 "modalities_processed": list(modality_features.keys()),
-                "fused_vector_dim": len(results.fused_vector)
-                if results.fused_vector
-                else 0,
+                "fused_vector_dim": (
+                    len(results.fused_vector) if results.fused_vector else 0
+                ),
                 "processing_id": processing_id,
             }
 
@@ -435,8 +435,9 @@ class HealthAnalysisPipeline:
         self,
         organized_data: dict[str, list[HealthMetric]],
         modality_features: dict[str, list[float]],
-        activity_features: list[dict[str, Any]]
-        | None = None,  # 🔥 ADDED: Activity features parameter
+        activity_features: (
+            list[dict[str, Any]] | None
+        ) = None,  # 🔥 ADDED: Activity features parameter
     ) -> dict[str, Any]:
         """Generate summary statistics for the analysis."""
         return {
@@ -449,7 +450,7 @@ class HealthAnalysisPipeline:
 
     @staticmethod
     def _generate_data_coverage(
-        organized_data: dict[str, list[HealthMetric]]
+        organized_data: dict[str, list[HealthMetric]],
     ) -> dict[str, Any]:
         """Generate data coverage statistics."""
         data_coverage = {}
@@ -465,7 +466,7 @@ class HealthAnalysisPipeline:
 
     @staticmethod
     def _generate_feature_summary(
-        modality_features: dict[str, list[float]]
+        modality_features: dict[str, list[float]],
     ) -> dict[str, Any]:
         """Generate feature summary statistics."""
         feature_summary = {}
@@ -494,12 +495,16 @@ class HealthAnalysisPipeline:
             health_indicators["cardiovascular_health"] = cardio_indicators
 
         # Process respiratory health indicators
-        respiratory_indicators = self._extract_respiratory_health_indicators(modality_features)
+        respiratory_indicators = self._extract_respiratory_health_indicators(
+            modality_features
+        )
         if respiratory_indicators:
             health_indicators["respiratory_health"] = respiratory_indicators
 
         # Process activity health indicators
-        activity_indicators = self._extract_activity_health_indicators(activity_features)
+        activity_indicators = self._extract_activity_health_indicators(
+            activity_features
+        )
         if activity_indicators:
             health_indicators["activity_health"] = activity_indicators
 
@@ -507,7 +512,7 @@ class HealthAnalysisPipeline:
 
     @staticmethod
     def _extract_cardio_health_indicators(
-        modality_features: dict[str, list[float]]
+        modality_features: dict[str, list[float]],
     ) -> dict[str, Any] | None:
         """Extract cardiovascular health indicators."""
         if (
@@ -526,7 +531,7 @@ class HealthAnalysisPipeline:
 
     @staticmethod
     def _extract_respiratory_health_indicators(
-        modality_features: dict[str, list[float]]
+        modality_features: dict[str, list[float]],
     ) -> dict[str, Any] | None:
         """Extract respiratory health indicators."""
         if (
@@ -545,7 +550,7 @@ class HealthAnalysisPipeline:
 
     @staticmethod
     def _extract_activity_health_indicators(
-        activity_features: list[dict[str, Any]] | None
+        activity_features: list[dict[str, Any]] | None,
     ) -> dict[str, Any] | None:
         """Extract activity health indicators from basic features."""
         if not activity_features:
@@ -725,7 +730,9 @@ def _process_quantity_samples(health_data: dict[str, Any]) -> list[HealthMetric]
     return metrics
 
 
-def _create_biometric_data_from_sample(sample: dict[str, Any], metric_type_str: str) -> BiometricData:
+def _create_biometric_data_from_sample(
+    sample: dict[str, Any], metric_type_str: str
+) -> BiometricData:
     """Create BiometricData object from a quantity sample."""
     biometric_data_kwargs = {}
 
@@ -758,15 +765,15 @@ def _process_category_samples(health_data: dict[str, Any]) -> list[HealthMetric]
     return metrics
 
 
-def _create_sleep_metric_from_sample(sample: dict[str, Any], health_data: dict[str, Any]) -> HealthMetric:
+def _create_sleep_metric_from_sample(
+    sample: dict[str, Any], health_data: dict[str, Any]
+) -> HealthMetric:
     """Create a sleep HealthMetric from a category sample."""
     start_time = datetime.fromisoformat(
         sample.get("start_timestamp", datetime.now(UTC).isoformat())
     )
     end_time = datetime.fromisoformat(
-        sample.get(
-            "end_timestamp", (start_time + timedelta(hours=8)).isoformat()
-        )
+        sample.get("end_timestamp", (start_time + timedelta(hours=8)).isoformat())
     )
 
     sleep_data = SleepData(

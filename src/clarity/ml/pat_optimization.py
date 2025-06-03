@@ -103,13 +103,10 @@ class PATPerformanceOptimizer:
                 prune.l1_unstructured(module, name='weight', amount=amount * 0.5)
 
         # Remove pruning masks to make pruning permanent
-        for name, module in model.named_modules():
+        for _name, module in model.named_modules():
             if isinstance(module, torch.nn.Linear):
-                try:
+                with contextlib.suppress(ValueError):
                     prune.remove(module, 'weight')
-                except ValueError:
-                    # No pruning mask to remove
-                    pass
 
     def _compile_torchscript(self, model: torch.nn.Module) -> torch.jit.ScriptModule | None:
         """Compile model to TorchScript for optimized inference."""

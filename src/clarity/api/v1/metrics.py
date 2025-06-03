@@ -20,6 +20,8 @@ try:
 except ImportError:
     psutil = None
 
+import types
+
 from fastapi import APIRouter, Response
 from prometheus_client import (
     CONTENT_TYPE_LATEST,
@@ -366,7 +368,7 @@ class MetricsContext:
     def __enter__(self) -> "MetricsContext":
         return self
 
-    def __exit__(self, exc_type: type[BaseException] | None, exc_val: BaseException | None, exc_tb: Any) -> None:
+    def __exit__(self, exc_type: type[BaseException] | None, exc_val: BaseException | None, exc_tb: types.TracebackType | None) -> None:
         duration = time.time() - self.start_time
 
         status = "success" if exc_type is None else "failed"

@@ -117,7 +117,7 @@ class CardioProcessor:
                 features.circadian_rhythm_score,
             ]
 
-        except Exception as e:
+        except Exception:
             self.logger.exception("Error processing cardiovascular data")
             # Return zero vector on error
             return [0.0] * 8

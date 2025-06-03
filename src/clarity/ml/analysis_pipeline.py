@@ -7,12 +7,15 @@ Integrates preprocessing, modality processors, fusion, and PAT model.
 from datetime import UTC, datetime, timedelta
 import logging
 import os
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 
 from clarity.ml.fusion_transformer import get_fusion_service
 from clarity.ml.pat_service import ActigraphyInput, get_pat_service
+
+if TYPE_CHECKING:
+    from clarity.ml.pat_service import ActigraphyAnalysis
 from clarity.ml.preprocessing import HealthDataPreprocessor
 from clarity.ml.processors.activity_processor import ActivityProcessor
 from clarity.ml.processors.cardio_processor import CardioProcessor
@@ -342,7 +345,7 @@ class HealthAnalysisPipeline:
         return self._create_activity_embedding_from_analysis(analysis_result)
 
     @staticmethod
-    def _create_activity_embedding_from_analysis(analysis_result: Any) -> list[float]:  # type: ignore[misc]
+    def _create_activity_embedding_from_analysis(analysis_result: "ActigraphyAnalysis") -> list[float]:
         """Create activity embedding from PAT analysis results."""
         # Extract the actual PAT embedding if available
         if hasattr(analysis_result, "embedding") and analysis_result.embedding:

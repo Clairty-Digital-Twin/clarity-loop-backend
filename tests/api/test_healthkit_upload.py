@@ -151,8 +151,8 @@ class TestHealthKitUploadEndpoint:
         mock_user: UserContext,
     ) -> None:
         """Test successful HealthKit data upload."""
-        # Setup mocks
-        mock_uuid.return_value = Mock(hex="abc123")
+        # Setup mocks - use proper 32-character hex UUID
+        mock_uuid.return_value = Mock(hex="abcdef1234567890abcdef1234567890")
 
         # Mock storage
         mock_bucket = Mock()
@@ -169,7 +169,7 @@ class TestHealthKitUploadEndpoint:
 
         # Verify result
         assert isinstance(result, HealthKitUploadResponse)
-        assert result.upload_id == "test-user-123-abc123"
+        assert result.upload_id == "test-user-123-abcdef1234567890abcdef1234567890"
         assert result.status == "queued"
         assert result.samples_received["quantity_samples"] == 1
         assert result.samples_received["workouts"] == 1
@@ -245,11 +245,11 @@ class TestUploadStatusEndpoint:
     ) -> None:
         """Test successful upload status retrieval."""
         # Call endpoint
-        result = await get_upload_status("test-user-123-abc123", mock_user)
+        result = await get_upload_status("test-user-123-abcdef1234567890abcdef1234567890", mock_user)
 
         # Verify result
         assert isinstance(result, dict)
-        assert result["upload_id"] == "test-user-123-abc123"
+        assert result["upload_id"] == "test-user-123-abcdef1234567890abcdef1234567890"
         assert result["status"] == "processing"
         assert "progress" in result
         assert "message" in result
@@ -272,7 +272,7 @@ class TestUploadStatusEndpoint:
 
         # Call should raise forbidden error
         with pytest.raises(HTTPException) as exc_info:
-            await get_upload_status("test-user-123-abc123", different_user)
+            await get_upload_status("test-user-123-abcdef1234567890abcdef1234567890", different_user)
 
         assert exc_info.value.status_code == status.HTTP_403_FORBIDDEN
         assert "Access denied to this upload" in str(exc_info.value.detail)

@@ -1,186 +1,182 @@
 #!/usr/bin/env python3
-"""Model Integrity CLI Tool.
+"""
+Model Integrity CLI Tool
 
-Command-line interface for managing ML model checksums and integrity verification
-in the Clarity Loop Backend healthcare AI system.
+Command-line interface for managing ML model integrity verification.
+Provides commands to register, verify, list, and manage model checksums.
 """
 
 import argparse
 import logging
-from pathlib import Path
 import sys
-
-# Add src to path for imports
-sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
+from pathlib import Path
 
 from clarity.ml.model_integrity import (
     ModelChecksumManager,
     ModelIntegrityError,
-    gemini_model_manager,
-    pat_model_manager,
     verify_startup_models,
 )
 
 # Configure logging
 logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    level=logging.INFO,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
 )
 logger = logging.getLogger(__name__)
 
 
-def register_model_command(args: argparse.Namespace) -> None:
-    """Register a new model with checksum generation."""
-    manager = ModelChecksumManager(args.models_dir)
-
+def register_command(args: argparse.Namespace) -> None:
+    """Register a new model with the integrity manager."""
     try:
-        # Get list of model files
-        models_dir = Path(args.models_dir)
-        if args.files:
-            model_files = args.files
-        else:
-            # Auto-discover model files
-            model_files = []
-            for pattern in ["*.pth", "*.pkl", "*.joblib", "*.h5", "*.onnx"]:
-                model_files.extend([f.name for f in models_dir.glob(pattern)])
+        manager = ModelChecksumManager(args.models_dir)
 
-            if not model_files:
-                logger.error(f"No model files found in {models_dir}")
+        # Get model files from directory
+        models_dir = Path(args.models_dir)
+        if args.model_files:
+            model_files = [str(Path(f)) for f in args.model_files]
+        else:
+            # Auto-discover model files in the model directory
+            model_dir = models_dir / args.model_name
+            if not model_dir.exists():
+                logger.error("Model directory %s does not exist", model_dir)
                 return
 
-        logger.info(f"Registering model '{args.model_name}' with files: {model_files}")
+            model_files_paths = list(model_dir.glob("**/*"))
+            model_files = [str(f) for f in model_files_paths if f.is_file()]
+
+            if not model_files:
+                logger.error("No model files found in %s", models_dir)
+                return
+
+        logger.info("Registering model '%s' with files: %s", args.model_name, model_files)
         manager.register_model(args.model_name, model_files)
         logger.info("✓ Model registered successfully")
 
-    except ModelIntegrityError as e:
-        logger.exception(f"Failed to register model: {e}")
+    except ModelIntegrityError:
+        logger.exception("Failed to register model")
         sys.exit(1)
 
 
-def verify_model_command(args: argparse.Namespace) -> None:
+def verify_command(args: argparse.Namespace) -> None:
     """Verify model integrity."""
-    manager = ModelChecksumManager(args.models_dir)
-
     try:
+        manager = ModelChecksumManager(args.models_dir)
+
         if args.model_name:
             # Verify specific model
             result = manager.verify_model_integrity(args.model_name)
             if result:
-                logger.info(f"✓ Model '{args.model_name}' verification PASSED")
+                logger.info("✓ Model '%s' verification PASSED", args.model_name)
             else:
-                logger.error(f"✗ Model '{args.model_name}' verification FAILED")
+                logger.error("✗ Model '%s' verification FAILED", args.model_name)
                 sys.exit(1)
         else:
             # Verify all models
             results = manager.verify_all_models()
-
-            if not results:
-                logger.info("No models found to verify")
-                return
-
             passed_count = sum(results.values())
             total_count = len(results)
 
+            logger.info("Verification Results:")
             for model_name, passed in results.items():
                 status = "✓ PASSED" if passed else "✗ FAILED"
-                logger.info(f"{model_name}: {status}")
+                logger.info("%s: %s", model_name, status)
 
             if passed_count == total_count:
-                logger.info(f"✓ All models ({total_count}) verification PASSED")
+                logger.info("✓ All models (%d) verification PASSED", total_count)
             else:
                 logger.error(
-                    f"✗ Verification: {passed_count}/{total_count} models passed"
+                    "✗ Verification: %d/%d models passed", passed_count, total_count
                 )
                 sys.exit(1)
 
-    except ModelIntegrityError as e:
-        logger.exception(f"Verification failed: {e}")
+    except ModelIntegrityError:
+        logger.exception("Verification failed")
         sys.exit(1)
 
 
-def list_models_command(args: argparse.Namespace) -> None:
+def list_command(args: argparse.Namespace) -> None:
     """List registered models."""
-    manager = ModelChecksumManager(args.models_dir)
-
     try:
+        manager = ModelChecksumManager(args.models_dir)
         models = manager.list_registered_models()
 
         if not models:
-            logger.info("No models registered")
+            logger.info("No models registered in %s", args.models_dir)
             return
 
-        logger.info(f"Registered models in {args.models_dir}:")
+        logger.info("Registered models in %s:", args.models_dir)
         for model_name in models:
             info = manager.get_model_info(model_name)
             if info:
                 file_count = info.get("total_files", 0)
-                size_mb = info.get("total_size_bytes", 0) / (1024 * 1024)
+                size_bytes = info.get("total_size_bytes", 0)
+                size_mb = size_bytes / (1024 * 1024)
                 created = info.get("created_at", "unknown")
                 logger.info(
-                    f"  {model_name}: {file_count} files, {size_mb:.1f}MB, created {created}"
+                    "  %s: %d files, %.1fMB, created %s", model_name, file_count, size_mb, created
                 )
             else:
-                logger.info(f"  {model_name}: (info unavailable)")
+                logger.info("  %s: (info unavailable)", model_name)
 
-    except ModelIntegrityError as e:
-        logger.exception(f"Failed to list models: {e}")
+    except ModelIntegrityError:
+        logger.exception("Failed to list models")
         sys.exit(1)
 
 
-def info_model_command(args: argparse.Namespace) -> None:
-    """Show detailed information about a model."""
-    manager = ModelChecksumManager(args.models_dir)
-
+def info_command(args: argparse.Namespace) -> None:
+    """Show detailed information about a specific model."""
     try:
+        manager = ModelChecksumManager(args.models_dir)
         info = manager.get_model_info(args.model_name)
 
         if not info:
-            logger.error(f"Model '{args.model_name}' not found")
+            logger.error("Model '%s' not found", args.model_name)
             sys.exit(1)
 
-        logger.info(f"Model: {info['model_name']}")
-        logger.info(f"Created: {info['created_at']}")
-        logger.info(f"Total files: {info['total_files']}")
-        logger.info(f"Total size: {info['total_size_bytes'] / (1024 * 1024):.1f}MB")
+        logger.info("Model: %s", info['model_name'])
+        logger.info("Created: %s", info['created_at'])
+        logger.info("Total files: %d", info['total_files'])
+        logger.info("Total size: %.1fMB", info['total_size_bytes'] / (1024 * 1024))
         logger.info("Files:")
 
         for file_name, file_info in info["files"].items():
             size_mb = file_info["size_bytes"] / (1024 * 1024)
-            logger.info(f"  {file_name}:")
-            logger.info(f"    Checksum: {file_info['checksum']}")
-            logger.info(f"    Size: {size_mb:.1f}MB")
-            logger.info(f"    Modified: {file_info['last_modified']}")
+            logger.info("  %s:", file_name)
+            logger.info("    Checksum: %s", file_info['checksum'])
+            logger.info("    Size: %.1fMB", size_mb)
+            logger.info("    Modified: %s", file_info['last_modified'])
 
-    except ModelIntegrityError as e:
-        logger.exception(f"Failed to get model info: {e}")
+    except ModelIntegrityError:
+        logger.exception("Failed to get model info")
         sys.exit(1)
 
 
-def remove_model_command(args: argparse.Namespace) -> None:
+def remove_command(args: argparse.Namespace) -> None:
     """Remove a model from the registry."""
-    manager = ModelChecksumManager(args.models_dir)
-
     try:
+        manager = ModelChecksumManager(args.models_dir)
         manager.remove_model(args.model_name)
-        logger.info(f"✓ Model '{args.model_name}' removed from registry")
+        logger.info("✓ Model '%s' removed from registry", args.model_name)
 
-    except ModelIntegrityError as e:
-        logger.exception(f"Failed to remove model: {e}")
+    except ModelIntegrityError:
+        logger.exception("Failed to remove model")
         sys.exit(1)
 
 
-def verify_startup_command(args: argparse.Namespace) -> None:
+def verify_startup_command(_args: argparse.Namespace) -> None:
     """Verify all critical models for application startup."""
     try:
-        result = verify_startup_models()
+        logger.info("Verifying critical models for startup...")
+        success = verify_startup_models()
 
-        if result:
-            logger.info("✓ All startup models verification PASSED")
+        if success:
+            logger.info("✓ All critical models verified successfully")
         else:
-            logger.error("✗ Startup models verification FAILED")
+            logger.error("✗ Critical model verification failed")
             sys.exit(1)
 
-    except Exception as e:
-        logger.exception(f"Startup verification failed: {e}")
+    except Exception:
+        logger.exception("Startup verification failed")
         sys.exit(1)
 
 
@@ -234,7 +230,7 @@ Examples:
         nargs="+",
         help="Specific model files to include (auto-discover if not specified)",
     )
-    register_parser.set_defaults(func=register_model_command)
+    register_parser.set_defaults(func=register_command)
 
     # Verify command
     verify_parser = subparsers.add_parser("verify", help="Verify model integrity")
@@ -248,7 +244,7 @@ Examples:
         default="models",
         help="Directory containing model files (default: models)",
     )
-    verify_parser.set_defaults(func=verify_model_command)
+    verify_parser.set_defaults(func=verify_command)
 
     # List command
     list_parser = subparsers.add_parser("list", help="List registered models")
@@ -257,7 +253,7 @@ Examples:
         default="models",
         help="Directory containing model files (default: models)",
     )
-    list_parser.set_defaults(func=list_models_command)
+    list_parser.set_defaults(func=list_command)
 
     # Info command
     info_parser = subparsers.add_parser("info", help="Show detailed model information")
@@ -267,7 +263,7 @@ Examples:
         default="models",
         help="Directory containing model files (default: models)",
     )
-    info_parser.set_defaults(func=info_model_command)
+    info_parser.set_defaults(func=info_command)
 
     # Remove command
     remove_parser = subparsers.add_parser("remove", help="Remove model from registry")
@@ -277,7 +273,7 @@ Examples:
         default="models",
         help="Directory containing model files (default: models)",
     )
-    remove_parser.set_defaults(func=remove_model_command)
+    remove_parser.set_defaults(func=remove_command)
 
     # Verify startup command
     startup_parser = subparsers.add_parser(

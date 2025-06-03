@@ -312,7 +312,8 @@ class DependencyContainer:
 
         return app
 
-    def _configure_exception_handlers(self, app: FastAPI) -> None:
+    @staticmethod
+    def _configure_exception_handlers(app: FastAPI) -> None:
         """Configure RFC 7807 Problem Details exception handling."""
         from clarity.core.exceptions import (  # noqa: PLC0415
             ClarityAPIException,

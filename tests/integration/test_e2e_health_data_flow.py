@@ -215,7 +215,7 @@ class TestE2EHealthDataFlow:
 
         # When: Retrieving health data through complete stack
         response = client.get(
-            "/api/v1/health-data/health-data", params=params, headers=headers
+            "/api/v1/health-data/", params=params, headers=headers
         )
 
         # Then: Complete retrieval flow should work

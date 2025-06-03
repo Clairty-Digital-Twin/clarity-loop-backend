@@ -10,6 +10,7 @@ The exception hierarchy is designed to be:
 - Self-documenting through clear names and messages
 """
 
+import logging
 from typing import Any
 from uuid import uuid4
 
@@ -20,7 +21,7 @@ from pydantic import BaseModel, Field
 
 class ProblemDetail(BaseModel):
     """RFC 7807 Problem Details for HTTP APIs.
-    
+
     Professional-grade error responses with structured debugging info.
     """
 
@@ -67,7 +68,7 @@ class ProblemDetail(BaseModel):
 
 class ClarityAPIException(HTTPException):
     """🚀 CLARITY Platform Custom Exception with RFC 7807 Support.
-    
+
     Enterprise-grade exception handling that outputs professional Problem Details.
     """
 
@@ -82,7 +83,7 @@ class ClarityAPIException(HTTPException):
         errors: list[dict[str, Any]] | None = None,
         help_url: str | None = None,
         headers: dict[str, str] | None = None
-    ):
+    ) -> None:
         self.problem_type = problem_type
         self.title = title
         self.detail = detail
@@ -117,7 +118,7 @@ class ValidationProblem(ClarityAPIException):
         detail: str,
         errors: list[dict[str, Any]] | None = None,
         trace_id: str | None = None
-    ):
+    ) -> None:
         super().__init__(
             status_code=400,
             problem_type="https://api.clarity.health/problems/validation-error",
@@ -136,7 +137,7 @@ class AuthenticationProblem(ClarityAPIException):
         self,
         detail: str = "Authentication required",
         trace_id: str | None = None
-    ):
+    ) -> None:
         super().__init__(
             status_code=401,
             problem_type="https://api.clarity.health/problems/authentication-required",
@@ -154,7 +155,7 @@ class AuthorizationProblem(ClarityAPIException):
         self,
         detail: str = "Insufficient permissions for this resource",
         trace_id: str | None = None
-    ):
+    ) -> None:
         super().__init__(
             status_code=403,
             problem_type="https://api.clarity.health/problems/authorization-denied",
@@ -173,7 +174,7 @@ class ResourceNotFoundProblem(ClarityAPIException):
         resource_type: str,
         resource_id: str,
         trace_id: str | None = None
-    ):
+    ) -> None:
         super().__init__(
             status_code=404,
             problem_type="https://api.clarity.health/problems/resource-not-found",
@@ -191,7 +192,7 @@ class ConflictProblem(ClarityAPIException):
         self,
         detail: str,
         trace_id: str | None = None
-    ):
+    ) -> None:
         super().__init__(
             status_code=409,
             problem_type="https://api.clarity.health/problems/resource-conflict",
@@ -210,7 +211,7 @@ class RateLimitProblem(ClarityAPIException):
         retry_after: int,
         detail: str = "Rate limit exceeded",
         trace_id: str | None = None
-    ):
+    ) -> None:
         headers = {"Retry-After": str(retry_after)}
         super().__init__(
             status_code=429,
@@ -230,7 +231,7 @@ class InternalServerProblem(ClarityAPIException):
         self,
         detail: str = "An internal server error occurred",
         trace_id: str | None = None
-    ):
+    ) -> None:
         super().__init__(
             status_code=500,
             problem_type="https://api.clarity.health/problems/internal-server-error",
@@ -249,7 +250,7 @@ class ServiceUnavailableProblem(ClarityAPIException):
         service_name: str,
         retry_after: int | None = None,
         trace_id: str | None = None
-    ):
+    ) -> None:
         detail = f"{service_name} is temporarily unavailable"
         headers = {"Retry-After": str(retry_after)} if retry_after else None
 
@@ -266,13 +267,13 @@ class ServiceUnavailableProblem(ClarityAPIException):
 
 # 🎯 Exception Handler for FastAPI
 
-async def problem_detail_exception_handler(
-    request: Request,
+def problem_detail_exception_handler(
+    _request: Request,
     exc: ClarityAPIException
 ) -> JSONResponse:
     """Convert ClarityAPIException to RFC 7807 Problem Detail response."""
     problem = exc.to_problem_detail()
-
+    
     return JSONResponse(
         status_code=exc.status_code,
         content=problem.model_dump(exclude_none=True),
@@ -280,23 +281,23 @@ async def problem_detail_exception_handler(
     )
 
 
-async def generic_exception_handler(
-    request: Request,
+def generic_exception_handler(
+    _request: Request,
     exc: Exception
 ) -> JSONResponse:
     """Handle unexpected exceptions with Problem Details format."""
     trace_id = str(uuid4())
-
+    
     problem = InternalServerProblem(
         detail="An unexpected error occurred",
         trace_id=trace_id
     ).to_problem_detail()
-
+    
     # Log the actual exception for debugging
-    import logging
     logger = logging.getLogger(__name__)
-    logger.error(f"Unhandled exception (trace_id={trace_id}): {exc}", exc_info=True)
-
+    error_msg = f"Unhandled exception (trace_id={trace_id}): {exc}"
+    logger.error(error_msg, exc_info=exc)
+    
     return JSONResponse(
         status_code=500,
         content=problem.model_dump(exclude_none=True)

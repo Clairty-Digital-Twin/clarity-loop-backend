@@ -381,17 +381,20 @@ class EnhancedHealthDataService:
 
     # Error raising helper methods to satisfy TRY301
 
-    def _raise_model_integrity_error(self) -> None:
+    @staticmethod
+    def _raise_model_integrity_error() -> None:
         """Raise model integrity verification error."""
         msg = "ML model integrity verification failed. Processing cannot continue."
         raise HealthDataServiceError(msg, status_code=503)
 
-    def _raise_storage_error(self) -> None:
+    @staticmethod
+    def _raise_storage_error() -> None:
         """Raise storage error."""
         msg = "Failed to store health data in repository"
         raise HealthDataServiceError(msg, status_code=500)
 
-    def _raise_invalid_limit_error(self) -> None:
+    @staticmethod
+    def _raise_invalid_limit_error() -> None:
         """Raise invalid limit parameter error."""
         msg = "Invalid limit parameter"
         raise HealthDataServiceError(msg, status_code=400)

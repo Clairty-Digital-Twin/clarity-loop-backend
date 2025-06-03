@@ -41,7 +41,8 @@ class ModelChecksumManager:
         # Ensure models directory exists
         self.models_dir.mkdir(exist_ok=True)
 
-    def _calculate_file_checksum(self, file_path: Path) -> str:
+    @staticmethod
+    def _calculate_file_checksum(file_path: Path) -> str:
         """Calculate SHA-256 checksum for a file.
 
         Args:

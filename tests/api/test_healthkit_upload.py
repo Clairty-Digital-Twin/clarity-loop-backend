@@ -1,6 +1,5 @@
 """Tests for HealthKit upload API endpoint."""
 
-from datetime import datetime
 from unittest.mock import Mock, patch
 
 from fastapi import HTTPException, status

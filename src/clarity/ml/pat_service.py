@@ -10,7 +10,7 @@ arXiv:2411.15240 (Dartmouth College, 29,307 participants, NHANES 2003-2014)
 from datetime import UTC, datetime
 import logging
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Dict, cast
+from typing import TYPE_CHECKING, Any, cast
 
 import numpy as np
 from pydantic import BaseModel, Field
@@ -188,7 +188,7 @@ class PATModelService(IMLModelService):
                 logger.info("Loading pre-trained PAT weights from %s", self.model_path)
 
                 if not _has_h5py:
-                    logger.exception("h5py not available, cannot load .h5 weights")
+                    logger.error("h5py not available, cannot load .h5 weights")
                     logger.warning("Using random initialization for PAT model")
                 else:
                     try:

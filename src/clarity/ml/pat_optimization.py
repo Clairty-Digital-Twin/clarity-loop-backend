@@ -83,8 +83,8 @@ class PATPerformanceOptimizer:
 
             self.optimization_enabled = True
             logger.info("PAT model optimization completed")
-            return True
 
+            return True
         except Exception:
             logger.exception("Model optimization failed")
             return False

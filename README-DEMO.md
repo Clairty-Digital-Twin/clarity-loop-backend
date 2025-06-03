@@ -1,29 +1,21 @@
-# CLARITY Digital Twin Platform - Demo
+# CLARITY Digital Twin Platform - Demo Guide
 
-> **AI-powered psychiatric health analytics that actually works**
+A digital twin platform for psychiatric care that processes Apple HealthKit data and generates AI-powered insights using machine learning models.
 
-A legit health platform that ingests Apple HealthKit data and runs it through some serious AI models to generate clinical insights. Built with proper architecture, not just another hackathon project.
+## Overview
 
-## What This Actually Does
+CLARITY integrates real health data processing with advanced AI models to provide clinical insights for psychiatric care. The platform uses the Pretrained Actigraphy Transformer (PAT) for sleep analysis and Google Gemini for generating natural language health insights.
 
-**Real Health AI Pipeline:**
+**Core Components:**
+- FastAPI backend with async processing
+- PyTorch ML inference pipeline
+- Google Cloud infrastructure
+- Clean Architecture implementation
+- Comprehensive monitoring and observability
 
-- Pulls biometric data from Apple HealthKit (heart rate, sleep, steps, etc.)
-- Runs it through PAT (Pretrained Actigraphy Transformer) for sleep analysis
-- Generates natural language insights with Google Gemini
-- Stores everything securely with HIPAA compliance
+## Quick Demo Setup
 
-**Tech Stack That Doesn't Suck:**
-
-- FastAPI with async everything
-- PyTorch for ML inference
-- Google Cloud with proper security
-- Clean Architecture (no spaghetti code)
-- 100% type safety (zero MyPy errors)
-
-## Quick Demo
-
-### Start Everything
+### Start the Platform
 
 ```bash
 git clone <repository>
@@ -31,17 +23,22 @@ cd clarity-loop-backend
 ./scripts/demo_deployment.sh
 ```
 
-### What You Get
+### Available Services
 
-- **API**: <http://localhost:8080> - Main backend
-- **Docs**: <http://localhost:8080/docs> - Interactive API explorer
-- **Monitoring**: <http://localhost:9090> - Prometheus metrics
-- **Dashboards**: <http://localhost:3000> - Grafana (admin/admin)
+| Service | URL | Purpose |
+|---------|-----|---------|
+| API Backend | http://localhost:8080 | Main FastAPI application |
+| API Documentation | http://localhost:8080/docs | Interactive OpenAPI explorer |
+| Grafana | http://localhost:3000 | Monitoring dashboards (admin/admin) |
+| Prometheus | http://localhost:9090 | Metrics collection |
 
-### Test the AI
+### Test the API Endpoints
 
 ```bash
-# Health insights from Gemini
+# Health check
+curl http://localhost:8080/health
+
+# Test AI insights generation
 curl -X POST http://localhost:8080/api/v1/insights/generate \
   -H "Content-Type: application/json" \
   -d '{
@@ -53,7 +50,7 @@ curl -X POST http://localhost:8080/api/v1/insights/generate \
     "question": "How is my sleep affecting my health?"
   }'
 
-# Sleep analysis with PAT model
+# Test PAT model sleep analysis
 curl -X POST http://localhost:8080/api/v1/pat/analyze-step-data \
   -H "Content-Type: application/json" \
   -d '{
@@ -67,10 +64,10 @@ curl -X POST http://localhost:8080/api/v1/pat/analyze-step-data \
 ```
 ┌─────────────────────────────────────────┐
 │  FastAPI Backend                        │
-│  ├─ Auth (Firebase)                     │
+│  ├─ Authentication (Firebase)           │
 │  ├─ Health Data API                     │
-│  ├─ PAT Analysis                        │
-│  └─ Gemini Insights                     │
+│  ├─ PAT Sleep Analysis                  │
+│  └─ Gemini Insights Generation          │
 ├─────────────────────────────────────────┤
 │  AI/ML Pipeline                         │
 │  ├─ PAT (Sleep Analysis)                │
@@ -88,59 +85,51 @@ curl -X POST http://localhost:8080/api/v1/pat/analyze-step-data \
 
 ## Key Features
 
-**AI Models:**
+**AI Models**
+- **PAT**: Pretrained Actigraphy Transformer from Jacobson Lab (Dartmouth) for sleep analysis
+- **Gemini**: Google's language model for generating health insights from data
 
-- **PAT**: [Pretrained Actigraphy Transformer](https://github.com/njacobsonlab/Pretrained-Actigraphy-Transformer) from Jacobson Lab (Dartmouth) for sleep analysis
-- **Gemini**: Google's LLM for generating health insights from data
-
-**Real Health Data:**
-
-- Apple HealthKit integration for heart rate, HRV, steps, sleep
-- Proxy actigraphy conversion (turns step data into sleep analysis)
+**Health Data Processing**
+- Apple HealthKit integration for biometric data (heart rate, HRV, steps, sleep)
+- Proxy actigraphy conversion (converts step data into sleep analysis)
 - HIPAA-compliant storage and processing
 
-**Production Ready:**
-
-- Async FastAPI with proper error handling
-- Firebase auth with role-based permissions
-- Monitoring with Prometheus/Grafana
+**Production Features**
+- Async FastAPI with comprehensive error handling
+- Firebase authentication with role-based permissions
+- Monitoring with Prometheus and Grafana
 - Docker containerization
-- Comprehensive test suite
+- Comprehensive test suite with type safety
 
-## Demo Flow
+## Demo Workflow
 
-1. **Health Checks**: Verify all services are running
-2. **Upload Data**: Send HealthKit data via API
-3. **PAT Analysis**: Get sleep insights from step data
+1. **Health Checks**: Verify all services are operational
+2. **Data Upload**: Submit HealthKit data via API endpoints
+3. **PAT Analysis**: Process step data for sleep insights
 4. **Gemini Insights**: Generate natural language health summaries
-5. **Monitor**: Check metrics and performance
+5. **Monitoring**: Review metrics and system performance
 
-## Tech Highlights
+## Technical Highlights
 
-- **Type Safety**: Zero MyPy errors across the entire codebase
-- **Clean Architecture**: Proper dependency injection and SOLID principles
-- **ML Integration**: Real AI models, not just mock responses
-- **Security**: Firebase auth, encrypted storage, audit logging
-- **Observability**: Metrics, health checks, structured logging
+- **Type Safety**: Full MyPy compliance across the codebase
+- **Clean Architecture**: SOLID principles with proper dependency injection
+- **ML Integration**: Production-ready AI models with real inference
+- **Security**: Firebase authentication, encrypted storage, audit logging
+- **Observability**: Comprehensive metrics, health checks, and structured logging
 
 ## Test Suite
 
 ```bash
+# Run the comprehensive API test suite
 python scripts/api_test_suite.py
 ```
 
-Runs comprehensive tests against all endpoints to verify everything works.
+This validates all endpoints and verifies the platform functionality.
 
----
+## Research Attribution
 
-## 🙏 **Research Attribution**
+This platform leverages the Pretrained Actigraphy Transformer (PAT) open-source foundation model:
 
-This platform leverages the **Pretrained Actigraphy Transformer (PAT)** open-source foundation model:
+**Paper:** Ruan, F.Y., Zhang, A., Oh, J., Jin, S., & Jacobson, N.C. (2024). "AI Foundation Models for Wearable Movement Data in Mental Health Research." *arXiv:2411.15240*. https://doi.org/10.48550/arXiv.2411.15240
 
-**Paper:** Ruan, F.Y., Zhang, A., Oh, J., Jin, S., & Jacobson, N.C. (2024). "AI Foundation Models for Wearable Movement Data in Mental Health Research." *arXiv:2411.15240*. <https://doi.org/10.48550/arXiv.2411.15240>
-
-**Repository:** <https://github.com/njacobsonlab/Pretrained-Actigraphy-Transformer> (CC-BY-4.0 License)
-
----
-
-**Built for advancing psychiatric care through practical AI applications**
+**Repository:** https://github.com/njacobsonlab/Pretrained-Actigraphy-Transformer (CC-BY-4.0 License)

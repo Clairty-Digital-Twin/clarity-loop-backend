@@ -251,14 +251,14 @@ class TestFirestoreClientDocumentOperations:
     async def test_create_document_success(firestore_client: FirestoreClient) -> None:
         """Test successful document creation."""
         # Mock the database client and document reference chain
-        mock_doc_ref = AsyncMock()
+        mock_doc_ref = Mock()
         mock_doc_ref.id = "doc123"
         mock_doc_ref.set = AsyncMock()
 
         mock_collection = Mock()
         mock_collection.document.return_value = mock_doc_ref
 
-        mock_db = AsyncMock()
+        mock_db = Mock()  # Changed from AsyncMock to Mock
         mock_db.collection.return_value = mock_collection
 
         # Patch the _get_db method to return our mock
@@ -278,14 +278,14 @@ class TestFirestoreClientDocumentOperations:
     async def test_create_document_auto_id(firestore_client: FirestoreClient) -> None:
         """Test document creation with auto-generated ID."""
         # Mock the database client and document reference chain
-        mock_doc_ref = AsyncMock()
+        mock_doc_ref = Mock()
         mock_doc_ref.id = "auto_id_123"
         mock_doc_ref.set = AsyncMock()
 
         mock_collection = Mock()
         mock_collection.document.return_value = mock_doc_ref
 
-        mock_db = AsyncMock()
+        mock_db = Mock()  # Changed from AsyncMock to Mock
         mock_db.collection.return_value = mock_collection
 
         # Patch the _get_db method to return our mock
@@ -317,13 +317,13 @@ class TestFirestoreClientDocumentOperations:
         mock_doc_snapshot.exists = True
         mock_doc_snapshot.to_dict.return_value = {"name": "test", "value": 123}
         
-        mock_doc_ref = AsyncMock()
-        mock_doc_ref.get.return_value = mock_doc_snapshot
+        mock_doc_ref = Mock()
+        mock_doc_ref.get = AsyncMock(return_value=mock_doc_snapshot)
 
         mock_collection = Mock()
         mock_collection.document.return_value = mock_doc_ref
 
-        mock_db = AsyncMock()
+        mock_db = Mock()  # Changed from AsyncMock to Mock
         mock_db.collection.return_value = mock_collection
 
         # Patch the _get_db method to return our mock
@@ -334,17 +334,27 @@ class TestFirestoreClientDocumentOperations:
         mock_doc_ref.get.assert_called_once()
 
     @staticmethod
-    async def test_get_document_not_found(firestore_client: FirestoreClient, mock_firestore_client: AsyncMock) -> None:
+    async def test_get_document_not_found(firestore_client: FirestoreClient) -> None:
         """Test document retrieval when document doesn't exist."""
-        mock_doc = Mock()
-        mock_doc.exists = False
-        mock_firestore_client.collection.return_value.document.return_value.get.return_value = mock_doc
+        # Mock the database client and document reference chain
+        mock_doc_snapshot = Mock()
+        mock_doc_snapshot.exists = False
+        
+        mock_doc_ref = Mock()
+        mock_doc_ref.get = AsyncMock(return_value=mock_doc_snapshot)
 
-        firestore_client._db = mock_firestore_client
+        mock_collection = Mock()
+        mock_collection.document.return_value = mock_doc_ref
 
-        result = await firestore_client.get_document("test_collection", "doc123")
+        mock_db = Mock()  # Changed from AsyncMock to Mock
+        mock_db.collection.return_value = mock_collection
+
+        # Patch the _get_db method to return our mock
+        with patch.object(firestore_client, "_get_db", return_value=mock_db):
+            result = await firestore_client.get_document("test_collection", "doc123")
 
         assert result is None
+        mock_doc_ref.get.assert_called_once()
 
     @staticmethod
     async def test_get_document_cache_hit(firestore_client: FirestoreClient) -> None:
@@ -460,7 +470,8 @@ class TestFirestoreHealthDataRepository:
         processing_id = str(uuid4())
         metrics = [{"type": "heart_rate", "value": 72}]
 
-        with patch.object(repository.client, "store_health_data", return_value=processing_id):
+        # Mock the create_document calls that happen inside save_health_data
+        with patch.object(repository._firestore_client, "create_document", return_value=processing_id) as mock_create:
             result = await repository.save_health_data(
                 user_id=user_id,
                 processing_id=processing_id,
@@ -470,33 +481,53 @@ class TestFirestoreHealthDataRepository:
             )
 
         assert result is True
+        # Should be called twice: once for processing doc, once per metric
+        assert mock_create.call_count == 2
 
     @staticmethod
     async def test_get_user_health_data_success(repository: FirestoreHealthDataRepository) -> None:
         """Test successful user health data retrieval."""
         user_id = str(uuid4())
+        mock_metrics = [{"metric_data": {"type": "heart_rate", "value": 72}}]
 
-        with patch.object(repository.client, "query_documents", return_value=[{"metrics": []}]):
+        # Mock both query_documents and count_documents methods
+        with patch.object(repository._firestore_client, "query_documents", return_value=mock_metrics) as mock_query, \
+             patch.object(repository._firestore_client, "count_documents", return_value=1) as mock_count:
             result = await repository.get_user_health_data(user_id=user_id)
 
-        assert "data" in result
-        assert "total_count" in result
-        assert "has_more" in result
+        assert "metrics" in result
+        assert "pagination" in result
+        assert result["pagination"]["total"] == 1
+        assert result["metrics"] == mock_metrics
+        
+        # Verify the methods were called
+        mock_query.assert_called_once()
+        mock_count.assert_called_once()
 
 
 class TestFirestoreClientAdvancedFeatures:
     """Test advanced Firestore client features."""
 
     @staticmethod
-    async def test_health_check_success(firestore_client: FirestoreClient, mock_firestore_client: AsyncMock) -> None:
+    async def test_health_check_success(firestore_client: FirestoreClient) -> None:
         """Test successful health check."""
-        firestore_client._db = mock_firestore_client
+        # Mock the database client and document reference chain for health check
+        mock_doc_ref = Mock()
+        mock_doc_ref.get = AsyncMock()
 
-        result = await firestore_client.health_check()
+        mock_collection = Mock()
+        mock_collection.document.return_value = mock_doc_ref
+
+        mock_db = Mock()
+        mock_db.collection.return_value = mock_collection
+
+        # Patch the _get_db method to return our mock
+        with patch.object(firestore_client, "_get_db", return_value=mock_db):
+            result = await firestore_client.health_check()
 
         assert result["status"] == "healthy"
         assert result["project_id"] == "test-project"
-        assert "response_time_ms" in result
+        assert "timestamp" in result
 
     @staticmethod
     async def test_close_cleanup(firestore_client: FirestoreClient, mock_firestore_client: AsyncMock) -> None:
@@ -528,7 +559,7 @@ class TestFirestoreClientConcurrency:
             mock_client.assert_called_once()
 
     @staticmethod
-    async def test_cache_thread_safety(firestore_client: FirestoreClient) -> None:
+    def test_cache_thread_safety(firestore_client: FirestoreClient) -> None:
         """Test cache operations are thread-safe."""
         # Add item to cache
         cache_key = "test:doc1"
@@ -537,12 +568,12 @@ class TestFirestoreClientConcurrency:
             "timestamp": time.time(),
         }
 
-        # Multiple cache validity checks
-        tasks = [
+        # Multiple cache validity checks (synchronous since _is_cache_valid is not async)
+        results = [
             firestore_client._is_cache_valid(firestore_client._cache[cache_key])
             for _ in range(10)
         ]
-        results = await asyncio.gather(*tasks, return_exceptions=True)
 
         # All should succeed
         assert all(isinstance(result, bool) for result in results)
+        assert all(result is True for result in results)  # Should all be valid

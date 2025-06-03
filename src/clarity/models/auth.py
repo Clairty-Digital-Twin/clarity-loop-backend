@@ -31,7 +31,7 @@ class AuthProvider(StrEnum):
     actual passwords or security credentials.
     """
 
-    EMAIL_PASSWORD = "email_password"  # noqa: S105 - String literal identifies auth provider type, not a password
+    EMAIL_PASSWORD = "email_password"  # noqa: S105  # nosec: B105 - String literal identifies auth provider type, not a password
     GOOGLE = "google"
     APPLE = "apple"
     MICROSOFT = "microsoft"

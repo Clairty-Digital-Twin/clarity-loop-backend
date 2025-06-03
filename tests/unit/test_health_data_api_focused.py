@@ -14,10 +14,10 @@ Each test targets specific uncovered code paths.
 """
 
 from datetime import UTC, datetime
-from unittest.mock import AsyncMock, Mock, patch
+from unittest.mock import Mock, patch
 from uuid import uuid4
 
-from fastapi import status
+# Import removed - not used
 import pytest
 from starlette.datastructures import Headers
 
@@ -48,7 +48,7 @@ class MockHealthDataService:
         self.upload_result = "test_processing_id"
 
     async def upload_health_data(
-        self, user_id: str, upload: HealthDataUpload
+        self, user_id: str, upload: HealthDataUpload  # noqa: ARG002
     ) -> str:
         """Mock upload health data."""
         if self.should_fail:
@@ -101,7 +101,7 @@ class TestHealthDataUploadEndpoint(BaseServiceTestCase):
         )
 
         # Act & Assert
-        with pytest.raises(Exception):  # Should raise some form of auth error
+        with pytest.raises((ValueError, RuntimeError, AttributeError)):
             await health_data_router.upload_health_data(request, upload_data)
 
     @patch("clarity.api.v1.health_data.get_health_data_service")
@@ -213,7 +213,7 @@ class TestHealthDataMetricsEndpoint(BaseServiceTestCase):
         request = MockRequest(user_id=None)
 
         # Act & Assert
-        with pytest.raises(Exception):  # Should raise auth error
+        with pytest.raises((ValueError, RuntimeError, AttributeError)):
             await health_data_router.get_user_metrics(request)
 
     @patch("clarity.api.v1.health_data.get_health_data_service")
@@ -291,7 +291,7 @@ class TestHealthDataQueryEndpoint(BaseServiceTestCase):
         request = MockRequest(user_id=None)
 
         # Act & Assert
-        with pytest.raises(Exception):
+        with pytest.raises((ValueError, RuntimeError, AttributeError)):
             await health_data_router.query_health_data(request)
 
     @patch("clarity.api.v1.health_data.get_health_data_service")

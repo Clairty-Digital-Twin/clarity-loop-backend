@@ -27,13 +27,13 @@ def test_imports() -> bool:
 
     # Test 3: Main application modules
     try:
-        from clarity.core.config import (  # noqa: PLC0415; type: ignore[import-untyped]
+        from clarity.core.config import (  # noqa: PLC0415  # type: ignore[import-untyped]
             get_settings,
         )
 
         _settings = get_settings()
 
-        from clarity.core.container import (  # noqa: PLC0415; type: ignore[import-untyped]
+        from clarity.core.container import (  # noqa: PLC0415  # type: ignore[import-untyped]
             create_application,
         )
 

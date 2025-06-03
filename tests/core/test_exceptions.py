@@ -445,8 +445,9 @@ class TestExceptionHandlers:
         assert response.status_code == 429
         assert response.headers["Retry-After"] == "60"
 
+    @staticmethod
     @patch("clarity.core.exceptions.logger")
-    def test_generic_exception_handler(self, mock_logger: Mock) -> None:
+    def test_generic_exception_handler(mock_logger: Mock) -> None:
         """Test generic exception handler for unexpected exceptions."""
         request = Mock(spec=Request)
         exception = ValueError("Unexpected error")

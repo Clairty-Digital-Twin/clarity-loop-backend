@@ -311,7 +311,7 @@ def audit_trail(
 
     def decorator(func: F) -> F:
         @functools.wraps(func)
-        def sync_wrapper(*args: Any, **kwargs: Any) -> Any:  # type: ignore[no-untyped-def]
+        def sync_wrapper(*args: Any, **kwargs: Any) -> Any:  # type: ignore[no-untyped-def, misc]
             # Extract audit information
             audit_info = {
                 "operation": operation,

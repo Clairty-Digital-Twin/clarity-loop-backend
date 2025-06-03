@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-Model Integrity CLI Tool
+"""Model Integrity CLI Tool.
 
 Command-line interface for managing ML model integrity verification.
 Provides commands to register, verify, list, and manage model checksums.
@@ -8,8 +7,8 @@ Provides commands to register, verify, list, and manage model checksums.
 
 import argparse
 import logging
-import sys
 from pathlib import Path
+import sys
 
 from clarity.ml.model_integrity import (
     ModelChecksumManager,
@@ -301,8 +300,8 @@ def main() -> None:
     except KeyboardInterrupt:
         logger.info("Operation cancelled by user")
         sys.exit(1)
-    except Exception as e:
-        logger.exception(f"Unexpected error: {e}")
+    except Exception:
+        logger.exception("Unexpected error occurred")
         if args.verbose:
             logger.exception("Full traceback:")
         sys.exit(1)

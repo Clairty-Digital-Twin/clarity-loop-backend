@@ -200,7 +200,7 @@ class ModelChecksumManager:
                     )
                     verification_results.append(False)
 
-            except Exception as e:
+            except Exception:
                 logger.exception("Error verifying file: %s", file_name)
                 verification_results.append(False)
 
@@ -225,7 +225,7 @@ class ModelChecksumManager:
         for model_name in checksums:
             try:
                 results[model_name] = self.verify_model_integrity(model_name)
-            except Exception as e:
+            except Exception:
                 logger.exception("Error verifying model: %s", model_name)
                 results[model_name] = False
 

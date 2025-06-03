@@ -109,6 +109,7 @@ class HealthDataBatch(BaseModel):
         return self.end_date
 
     @validator("data_points")
+    @classmethod
     def validate_data_points(
         cls, v: list[HealthDataPoint]
     ) -> list[HealthDataPoint]:
@@ -116,6 +117,7 @@ class HealthDataBatch(BaseModel):
         return v
 
     @validator("total_count")
+    @classmethod
     def validate_count_matches(
         cls, v: int, values: dict[str, Any]
     ) -> int:
@@ -206,8 +208,9 @@ class HealthKitClient:
 
         return auth_url
 
+    @staticmethod
     def _handle_token_error(
-        self, response: httpx.Response, operation: str
+        response: httpx.Response, operation: str
     ) -> None:
         """Handle token-related HTTP errors."""
         error_msg = f"{operation} failed: {response.status_code} {response.text}"
@@ -241,7 +244,7 @@ class HealthKitClient:
             )
 
             if response.status_code != HTTP_STATUS_OK:
-                self._handle_token_error(response, "Token exchange")
+                HealthKitClient._handle_token_error(response, "Token exchange")
 
             token_data = response.json()
 
@@ -302,7 +305,7 @@ class HealthKitClient:
             )
 
             if response.status_code != HTTP_STATUS_OK:
-                self._handle_token_error(response, "Token refresh")
+                HealthKitClient._handle_token_error(response, "Token refresh")
 
             token_data = response.json()
 
@@ -330,8 +333,9 @@ class HealthKitClient:
         error_msg = f"HealthKit API error: {response.status_code} {response.text}"
         raise IntegrationError(error_msg)
 
+    @staticmethod
     def _validate_data_type_support(
-        self, data_type: HealthDataType
+        data_type: HealthDataType
     ) -> str:
         """Validate data type is supported and return endpoint."""
         endpoint_map = {
@@ -381,7 +385,7 @@ class HealthKitClient:
             raise AuthorizationError(error_msg)
 
         try:
-            endpoint = self._validate_data_type_support(data_type)
+            endpoint = HealthKitClient._validate_data_type_support(data_type)
 
             params = {
                 "start_date": start_date.isoformat(),

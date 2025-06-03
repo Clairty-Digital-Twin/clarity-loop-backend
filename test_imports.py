@@ -20,23 +20,23 @@ def test_imports() -> bool:
 
     # Test 2: Core clarity module
     try:
-        import clarity  # type: ignore[import-untyped]
-    except Exception as e:
+        import clarity  # type: ignore[import-untyped] # noqa: F401
+    except Exception:
         traceback.print_exc()
         return False
 
         # Test 3: Main application modules
     try:
         from clarity.core.config import get_settings  # type: ignore[import-untyped]
-        settings = get_settings()
+        _settings = get_settings()
 
         from clarity.core.container import (
             create_application,  # type: ignore[import-untyped]
         )
-        app_instance = create_application()
+        _app_instance = create_application()
 
         from clarity.main import get_app  # type: ignore[import-untyped]
-    except Exception as e:
+    except Exception:
         traceback.print_exc()
         return False
 
@@ -47,16 +47,16 @@ def test_imports() -> bool:
         if str(root_path) not in sys.path:
             sys.path.insert(0, str(root_path))
 
-        import main
-    except Exception as e:
+        import main  # type: ignore[import-untyped] # noqa: F401
+    except Exception:
         traceback.print_exc()
         return False
 
     # Test 5: FastAPI app creation
     try:
         from main import get_app
-        app = get_app()
-    except Exception as e:
+        _app = get_app()
+    except Exception:
         traceback.print_exc()
         return False
 
@@ -67,9 +67,9 @@ def test_configuration() -> bool:
     """Test configuration loading."""
     try:
         from clarity.core.config import get_settings
-        settings = get_settings()
+        _settings = get_settings()
         return True
-    except Exception as e:
+    except Exception:
         traceback.print_exc()
         return False
 

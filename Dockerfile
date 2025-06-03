@@ -63,6 +63,9 @@ RUN groupadd -r clarity && useradd -r -g clarity clarity
 # Set working directory
 WORKDIR /app
 
+# Create logs directory
+RUN mkdir -p logs
+
 # Copy application code with proper structure
 COPY --chown=clarity:clarity src/ ./src/
 COPY --chown=clarity:clarity main.py ./

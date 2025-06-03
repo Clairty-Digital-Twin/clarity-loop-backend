@@ -20,9 +20,10 @@ from clarity.core.exceptions import (
     DataValidationError,
     IntegrationError,
 )
-from clarity.core.logging import get_logger  # type: ignore[import-untyped]
+import logging
 
-logger = get_logger(__name__)
+# Configure logger
+logger = logging.getLogger(__name__)
 
 # Constants to avoid magic numbers
 HTTP_STATUS_OK = 200

@@ -8,6 +8,7 @@ This module provides optimization features including:
 """
 
 import asyncio
+import contextlib
 from datetime import UTC, datetime, timedelta
 import hashlib
 import logging

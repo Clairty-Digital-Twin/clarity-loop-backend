@@ -178,91 +178,74 @@ class TestHealthKitUploadEndpoint:
         mock_blob.upload_from_string.assert_called_once()
         mock_publisher.publish_health_data_upload.assert_called_once()
 
-    @patch("clarity.auth.firebase_auth.verify_firebase_token")
     @pytest.mark.asyncio
     async def test_upload_forbidden_different_user(
         self,
-        mock_verify_token: AsyncMock,
         sample_upload_request: HealthKitUploadRequest,
-        mock_token: HTTPBearer,
     ) -> None:
         """Test upload fails when user tries to upload for different user."""
-        # Setup mock to return different user ID
-        mock_verify_token.return_value = {"uid": "different-user"}
+        # Create user with different ID
+        different_user = UserContext(
+            user_id="different-user",
+            email="different@example.com",
+            role="patient",
+            permissions=[],
+            is_verified=True,
+            is_active=True,
+        )
 
         # Call should raise forbidden error
         with pytest.raises(HTTPException) as exc_info:
-            await upload_healthkit_data(sample_upload_request, mock_token)
+            await upload_healthkit_data(sample_upload_request, different_user)
 
         assert exc_info.value.status_code == status.HTTP_403_FORBIDDEN
         assert "Cannot upload data for a different user" in str(exc_info.value.detail)
 
-    @patch("clarity.auth.firebase_auth.verify_firebase_token")
     @patch("clarity.api.v1.healthkit_upload.storage.Client")
     @pytest.mark.asyncio
     async def test_upload_storage_error(
         self,
         mock_storage_client: Mock,
-        mock_verify_token: AsyncMock,
         sample_upload_request: HealthKitUploadRequest,
-        mock_token: HTTPBearer,
+        mock_user: UserContext,
     ) -> None:
         """Test upload handles storage errors gracefully."""
         # Setup mocks
-        mock_verify_token.return_value = {"uid": "test-user-123"}
         mock_storage_client.side_effect = Exception("Storage unavailable")
 
         # Call should raise internal server error
         with pytest.raises(HTTPException) as exc_info:
-            await upload_healthkit_data(sample_upload_request, mock_token)
+            await upload_healthkit_data(sample_upload_request, mock_user)
 
         assert exc_info.value.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR
         assert "Failed to process health data upload" in str(exc_info.value.detail)
 
-    @patch("clarity.auth.firebase_auth.verify_firebase_token")
-    @pytest.mark.asyncio
-    async def test_upload_authentication_error(
-        self,
-        mock_verify_token: AsyncMock,
-        sample_upload_request: HealthKitUploadRequest,
-        mock_token: HTTPBearer,
-    ) -> None:
-        """Test upload handles authentication errors."""
-        # Setup mock to raise auth error
-        auth_error = HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token"
-        )
-        mock_verify_token.side_effect = auth_error
-
-        # Call should re-raise the auth error
-        with pytest.raises(HTTPException) as exc_info:
-            await upload_healthkit_data(sample_upload_request, mock_token)
-
-        assert exc_info.value.status_code == status.HTTP_401_UNAUTHORIZED
-        assert exc_info.value.detail == "Invalid token"
+    # Note: Authentication errors are now handled by FastAPI middleware
+    # so we don't need to test them at the endpoint level
 
 
 class TestUploadStatusEndpoint:
     """Test the upload status endpoint."""
 
     @pytest.fixture
-    def mock_token(self) -> HTTPBearer:
-        """Create a mock authentication token."""
-        token = Mock(spec=HTTPBearer)
-        token.credentials = "valid-firebase-token"
-        return token
+    def mock_user(self) -> UserContext:
+        """Create a mock user context."""
+        return UserContext(
+            user_id="test-user-123",
+            email="test@example.com",
+            role="patient",
+            permissions=[],
+            is_verified=True,
+            is_active=True,
+        )
 
-    @patch("clarity.auth.firebase_auth.verify_firebase_token")
     @pytest.mark.asyncio
     async def test_get_upload_status_success(
-        self, mock_verify_token: AsyncMock, mock_token: HTTPBearer
+        self, mock_user: UserContext
     ) -> None:
         """Test successful upload status retrieval."""
-        # Setup mock
-        mock_verify_token.return_value = {"uid": "test-user-123"}
-
         # Call endpoint
-        result = await get_upload_status("test-user-123-abc123", mock_token)
+        result = await get_upload_status("test-user-123-abc123", mock_user)
 
         # Verify result
         assert isinstance(result, dict)
@@ -272,30 +255,36 @@ class TestUploadStatusEndpoint:
         assert "message" in result
         assert "last_updated" in result
 
-    @patch("clarity.auth.firebase_auth.verify_firebase_token")
     @pytest.mark.asyncio
     async def test_get_upload_status_forbidden(
-        self, mock_verify_token: AsyncMock, mock_token: HTTPBearer
+        self,
     ) -> None:
         """Test upload status fails for different user."""
-        # Setup mock to return different user
-        mock_verify_token.return_value = {"uid": "different-user"}
+        # Create user with different ID
+        different_user = UserContext(
+            user_id="different-user",
+            email="different@example.com",
+            role="patient",
+            permissions=[],
+            is_verified=True,
+            is_active=True,
+        )
 
         # Call should raise forbidden error
         with pytest.raises(HTTPException) as exc_info:
-            await get_upload_status("test-user-123-abc123", mock_token)
+            await get_upload_status("test-user-123-abc123", different_user)
 
         assert exc_info.value.status_code == status.HTTP_403_FORBIDDEN
         assert "Access denied to this upload" in str(exc_info.value.detail)
 
     @pytest.mark.asyncio
     async def test_get_upload_status_invalid_format(
-        self, mock_token: HTTPBearer
+        self, mock_user: UserContext
     ) -> None:
         """Test upload status with invalid upload ID format."""
         # Call with invalid upload ID format
         with pytest.raises(HTTPException) as exc_info:
-            await get_upload_status("invalid-format", mock_token)
+            await get_upload_status("invalid-format", mock_user)
 
         assert exc_info.value.status_code == status.HTTP_400_BAD_REQUEST
         assert "Invalid upload ID format" in str(exc_info.value.detail)
@@ -312,11 +301,11 @@ class TestHealthKitUploadIntegration:
     def test_router_endpoints(self) -> None:
         """Test that router has expected endpoints."""
         routes = [route.path for route in router.routes]
-        assert "/upload" in routes
-        assert "/status/{upload_id}" in routes
+        # Routes include the full prefix path
+        assert any("upload" in route for route in routes)
+        assert any("status" in route for route in routes)
 
-    @patch("clarity.auth.firebase_auth.verify_firebase_token")
-    def test_router_with_test_client(self, mock_verify_token: Mock) -> None:
+    def test_router_with_test_client(self) -> None:
         """Test router with FastAPI test client."""
         from fastapi import FastAPI
 
@@ -324,7 +313,7 @@ class TestHealthKitUploadIntegration:
         app.include_router(router)
 
         with TestClient(app) as client:
-            # Test that endpoints are accessible
+            # Test that endpoints are accessible (will fail auth but endpoint should be reachable)
             response = client.get("/api/v1/healthkit/status/test-upload-id")
             # We expect it to fail auth, but the endpoint should be reachable
             assert response.status_code in [401, 422, 500]  # Various possible auth/validation errors

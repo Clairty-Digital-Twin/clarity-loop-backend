@@ -3,7 +3,7 @@
 Tests all methods and edge cases to improve coverage from 37% to 90%+.
 """
 
-from unittest.mock import MagicMock, patch
+# Comprehensive testing imports
 
 import pytest
 

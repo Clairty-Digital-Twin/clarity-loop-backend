@@ -6,8 +6,8 @@ Tests all decorators and edge cases to improve coverage from 11% to 90%+.
 import asyncio
 import logging
 import time
-# Imports for comprehensive decorator testing
 
+# Imports for comprehensive decorator testing
 import pytest
 
 from clarity.core.decorators import (
@@ -669,6 +669,7 @@ class TestDecoratorEdgeCases:
             return x + y
 
         assert documented_function.__name__ == "documented_function"
+        assert documented_function.__doc__ is not None
         assert "adds two numbers" in documented_function.__doc__
 
     def test_multiple_decorators_composition(self, caplog):

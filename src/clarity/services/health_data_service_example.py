@@ -28,6 +28,7 @@ import logging
 import uuid
 from datetime import UTC, datetime
 from typing import Any
+from uuid import UUID
 
 # Import from new ports layer instead of core interfaces
 from clarity.core.decorators import (

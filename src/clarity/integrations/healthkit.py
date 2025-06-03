@@ -6,9 +6,10 @@ for Apple Watch health metrics including activity, sleep, and heart rate.
 
 import asyncio
 from dataclasses import asdict, dataclass
-from datetime import UTC, datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from enum import StrEnum
 from typing import Any
+import types
 
 import httpx
 from pydantic import BaseModel, Field, validator
@@ -109,7 +110,7 @@ class HealthDataBatch(BaseModel):
         return v
 
     @validator('total_count')
-    def validate_count_matches(cls, v: int, values: dict[str, Any]) -> int:  # noqa: N805
+    def validate_count_matches(cls, v: int, values: dict[str, Any]) -> int:  # noqa: N805, ARG002
         """Validate total count (for multi-modal batches, may not match data_points)."""
         return v
 
@@ -196,7 +197,7 @@ class HealthKitClient:
 
         return auth_url
 
-    def _handle_token_error(self, response: httpx.Response, operation: str) -> None:
+    def _handle_token_error(self, response: httpx.Response, operation: str) -> None:  # noqa: PLR6301
         """Handle token-related HTTP errors."""
         error_msg = f"{operation} failed: {response.status_code} {response.text}"
         raise AuthorizationError(error_msg)
@@ -247,9 +248,9 @@ class HealthKitClient:
                 "scopes": tokens.scope
             })
 
-            return tokens
-
         except AuthorizationError:
+            raise
+        except Exception as e:
             raise
         except Exception as e:
             logger.exception("Failed to exchange authorization code", extra={
@@ -295,21 +296,21 @@ class HealthKitClient:
             )
 
             logger.info("Successfully refreshed access token")
-            return tokens
-
         except AuthorizationError:
+            raise
+        except Exception as e:
             raise
         except Exception as e:
             logger.exception("Failed to refresh access token", extra={"error": str(e)})
             error_msg = f"Token refresh failed: {e}"
             raise AuthorizationError(error_msg) from e
 
-    def _handle_api_error(self, response: httpx.Response) -> None:
+    def _handle_api_error(self, response: httpx.Response) -> None:  # noqa: PLR6301
         """Handle HealthKit API errors."""
         error_msg = f"HealthKit API error: {response.status_code} {response.text}"
         raise IntegrationError(error_msg)
 
-    def _validate_data_type_support(self, data_type: HealthDataType) -> str:
+    def _validate_data_type_support(self, data_type: HealthDataType) -> str:  # noqa: PLR6301
         """Validate data type is supported and return endpoint."""
         endpoint_map = {
             HealthDataType.HEART_RATE: "/v1/healthkit/heart_rate",
@@ -405,9 +406,9 @@ class HealthKitClient:
                 "end_date": end_date.isoformat()
             })
 
-            return batch
-
         except (AuthorizationError, DataValidationError, IntegrationError):
+            raise
+        except Exception as e:
             raise
         except Exception as e:
             logger.exception("Failed to fetch health data", extra={
@@ -480,6 +481,6 @@ class HealthKitClient:
         """Async context manager entry."""
         return self
 
-    async def __aexit__(self, exc_type: type[BaseException] | None, exc_val: BaseException | None, exc_tb: Any) -> None:
+    async def __aexit__(self, exc_type: type[BaseException] | None, exc_val: BaseException | None, exc_tb: types.TracebackType | None) -> None:
         """Async context manager exit."""
         await self.close()

@@ -5,7 +5,7 @@ for optimal integration with PAT (Pretrained Actigraphy Transformer) models.
 """
 
 from dataclasses import dataclass
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta, timezone
 from enum import StrEnum
 import operator
 from typing import Any
@@ -133,7 +133,7 @@ class AppleWatchDataProcessor:
         """
         try:
             # Determine time range
-            end_time = batch.end_time or datetime.now(timezone.utc)
+            end_time = batch.end_time or datetime.now(UTC)
             start_time = end_time - timedelta(days=target_duration_days)
 
             # Initialize result

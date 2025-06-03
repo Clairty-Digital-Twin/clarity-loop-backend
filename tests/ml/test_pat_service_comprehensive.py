@@ -36,14 +36,14 @@ class TestPATModelService:
     """Test the core PAT model service functionality."""
 
     @pytest.fixture
-    async def pat_service(self) -> PATModelService:
+    async def pat_service(self) -> PATModelService:  # noqa: PLR6301
         """Create a PAT service instance for testing."""
         service = PATModelService(model_size="medium")
         await service.load_model()
         return service
 
     @pytest.fixture
-    def sample_actigraphy_data(self) -> list[ActigraphyDataPoint]:
+    def sample_actigraphy_data(self) -> list[ActigraphyDataPoint]:  # noqa: PLR6301
         """Generate sample actigraphy data for testing."""
         data_points = []
         base_time = datetime.now(UTC)

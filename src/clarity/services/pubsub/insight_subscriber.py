@@ -83,7 +83,7 @@ class GeminiInsightGenerator:
 
             return insight
 
-        except Exception as e:
+        except Exception:
             self.logger.exception("Failed to generate health insight")
             raise
 
@@ -212,7 +212,7 @@ Generate the health insight now:"""
 
             return insight
 
-        except Exception as e:
+        except Exception:
             self.logger.exception("Gemini API call failed")
             raise
 
@@ -288,7 +288,7 @@ Generate the health insight now:"""
                 "Stored insight in Firestore: user=%s, upload=%s", user_id, upload_id
             )
 
-        except Exception as e:
+        except Exception:
             self.logger.exception("Failed to store insight in Firestore")
             raise
 
@@ -327,7 +327,7 @@ class InsightSubscriber:
             )
 
             # Generate insight
-            insight = await self.insight_generator.generate_health_insight(
+            await self.insight_generator.generate_health_insight(
                 user_id=message_data["user_id"],
                 upload_id=message_data["upload_id"],
                 analysis_results=message_data["analysis_results"],

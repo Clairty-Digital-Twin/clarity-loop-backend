@@ -179,7 +179,7 @@ class AnalysisSubscriber:
                 len(raw_json),
             )
 
-        except Exception as e:
+        except Exception:
             self.logger.exception(
                 "Failed to download health data from %s", gcs_path
             )

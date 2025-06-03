@@ -108,11 +108,16 @@ gcp-credentials*.json
 .config/gcloud/
 
 # ===== ML MODELS & DATA =====
-models/
+# Note: models/pat/ contains CC BY-4.0 licensed files that MUST be tracked
+models/*
+!models/pat/
+!models/pat/LICENSE
+!models/pat/README.md
+# Ignore large model weight files but keep licensing
+models/pat/*.h5
 *.pth
 *.pkl
 *.joblib
-*.h5
 *.onnx
 *.tflite
 weights/

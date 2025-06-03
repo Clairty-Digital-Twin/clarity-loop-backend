@@ -13,16 +13,12 @@ class TestInsightService:
 
     def test_app_initialization(self) -> None:
         """Test that the FastAPI app is properly initialized."""
-        from clarity.entrypoints.insight_service import app
-
         assert app.title == "CLARITY Insight Service"
         assert app.description == "AI-powered health insight generation service"
         assert app.version == "1.0.0"
 
     def test_app_has_cors_middleware(self) -> None:
         """Test that CORS middleware is properly configured."""
-        from clarity.entrypoints.insight_service import app
-
         # Check if CORS middleware is in the middleware stack
         cors_found = False
         for middleware in app.user_middleware:

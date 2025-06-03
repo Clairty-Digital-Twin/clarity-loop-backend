@@ -34,6 +34,8 @@ from clarity.models.health_data import (
     MentalHealthIndicator,
     SleepData,
 )
+from clarity.ports.storage import CloudStoragePort
+from clarity.ports.data_ports import IHealthDataRepository
 from clarity.services.health_data_service import (
     DataNotFoundError,
     HealthDataService,
@@ -42,11 +44,12 @@ from clarity.services.health_data_service import (
 from tests.base import BaseServiceTestCase
 
 
-class MockCloudStorage:
+class MockCloudStorage(CloudStoragePort):
     """Mock cloud storage client for testing GCS operations."""
 
     def __init__(self, *, should_fail: bool = False) -> None:
         """Initialize mock cloud storage."""
+        super().__init__()
         self.should_fail = should_fail
         self.uploaded_data: dict[str, Any] = {}
         self.bucket_name = ""
@@ -93,11 +96,12 @@ class MockBlob:
         }
 
 
-class MockHealthDataRepository:
+class MockHealthDataRepository(IHealthDataRepository):
     """Enhanced mock repository for comprehensive testing."""
 
     def __init__(self) -> None:
         """Initialize mock repository."""
+        super().__init__()
         self.saved_data: dict[str, Any] = {}
         self.should_fail = False
         self.processing_statuses: dict[str, dict[str, Any]] = {}
@@ -180,7 +184,7 @@ class TestHealthDataServiceGCSIntegration(BaseServiceTestCase):
         super().setUp()
         self.mock_repository = MockHealthDataRepository()
         self.mock_cloud_storage = MockCloudStorage()
-        self.service = HealthDataService(
+        self.service: HealthDataService = HealthDataService(
             repository=self.mock_repository,
             cloud_storage=self.mock_cloud_storage,
         )
@@ -331,7 +335,7 @@ class TestHealthDataServiceValidation(BaseServiceTestCase):
         """Set up test dependencies."""
         super().setUp()
         self.mock_repository = MockHealthDataRepository()
-        self.service = HealthDataService(
+        self.service: HealthDataService = HealthDataService(
             repository=self.mock_repository,
             cloud_storage=MockCloudStorage(),
         )
@@ -527,7 +531,7 @@ class TestHealthDataServiceErrorHandling(BaseServiceTestCase):
         """Set up test dependencies."""
         super().setUp()
         self.mock_repository = MockHealthDataRepository()
-        self.service = HealthDataService(
+        self.service: HealthDataService = HealthDataService(
             repository=self.mock_repository,
             cloud_storage=MockCloudStorage(),
         )
@@ -605,7 +609,7 @@ class TestHealthDataServiceEdgeCases(BaseServiceTestCase):
         """Set up test dependencies."""
         super().setUp()
         self.mock_repository = MockHealthDataRepository()
-        self.service = HealthDataService(
+        self.service: HealthDataService = HealthDataService(
             repository=self.mock_repository,
             cloud_storage=MockCloudStorage(),
         )

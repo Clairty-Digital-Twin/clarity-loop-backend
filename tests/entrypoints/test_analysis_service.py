@@ -19,8 +19,6 @@ class TestAnalysisService:
 
     def test_app_has_cors_middleware(self) -> None:
         """Test that CORS middleware is properly configured."""
-        from clarity.entrypoints.analysis_service import app
-
         # Check if CORS middleware is in the middleware stack
         cors_found = False
         for middleware in app.user_middleware:
@@ -32,8 +30,6 @@ class TestAnalysisService:
 
     def test_app_mounts_analysis_app(self) -> None:
         """Test that the analysis app is mounted."""
-        from clarity.entrypoints.analysis_service import app
-
         # Check if there are routes mounted
         assert len(app.routes) > 0, "Analysis app should be mounted"
 
@@ -69,8 +65,6 @@ class TestAnalysisService:
 
     def test_health_endpoint_access(self) -> None:
         """Test that we can create a test client and the app responds."""
-        from clarity.entrypoints.analysis_service import app
-
         with TestClient(app) as client:
             # The mounted analysis_app should handle requests
             # We just test that the app is accessible

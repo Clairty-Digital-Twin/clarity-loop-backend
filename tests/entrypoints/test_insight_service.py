@@ -5,6 +5,8 @@ from unittest.mock import Mock, patch
 
 from fastapi.testclient import TestClient
 
+from clarity.entrypoints.insight_service import app, main
+
 
 class TestInsightService:
     """Test the insight service entrypoint."""

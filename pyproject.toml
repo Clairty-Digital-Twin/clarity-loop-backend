@@ -59,6 +59,7 @@ dependencies = [
     "matplotlib>=3.9.0,<4.0.0",
     "seaborn>=0.13.0,<0.14.0",
     "plotly>=5.24.0,<6.0.0",
+    "h5py>=3.11.0,<4.0.0",  # Required for PAT model weight loading
     
     # Google AI/Gemini Integration
     "google-generativeai>=0.8.3,<1.0.0",

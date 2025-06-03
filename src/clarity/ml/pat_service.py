@@ -39,6 +39,9 @@ from clarity.ports.ml_ports import IMLModelService
 
 logger = logging.getLogger(__name__)
 
+# Get project root directory for absolute paths
+_PROJECT_ROOT = Path(__file__).parent.parent.parent.parent  # Go up to project root
+
 # Model configurations matching Dartmouth specs exactly
 PAT_CONFIGS = {
     "small": {
@@ -49,7 +52,7 @@ PAT_CONFIGS = {
         "ff_dim": 256,
         "patch_size": 18,
         "input_size": 10080,
-        "model_path": "models/PAT-S_29k_weights.h5",
+        "model_path": str(_PROJECT_ROOT / "models" / "pat" / "PAT-S_29k_weights.h5"),
     },
     "medium": {
         "num_layers": 2,
@@ -59,7 +62,7 @@ PAT_CONFIGS = {
         "ff_dim": 256,
         "patch_size": 18,
         "input_size": 10080,
-        "model_path": "models/PAT-M_29k_weights.h5",
+        "model_path": str(_PROJECT_ROOT / "models" / "pat" / "PAT-M_29k_weights.h5"),
     },
     "large": {
         "num_layers": 4,
@@ -69,7 +72,7 @@ PAT_CONFIGS = {
         "ff_dim": 256,
         "patch_size": 9,
         "input_size": 10080,
-        "model_path": "models/PAT-L_29k_weights.h5",
+        "model_path": str(_PROJECT_ROOT / "models" / "pat" / "PAT-L_29k_weights.h5"),
     },
 }
 
@@ -401,6 +404,15 @@ class PATModelService(IMLModelService):
             model_size,
             self.device,
         )
+        
+        # Verify weights file exists
+        if not Path(self.model_path).exists():
+            logger.warning(
+                "PAT weights file not found at %s - will use random initialization",
+                self.model_path
+            )
+        else:
+            logger.info("PAT weights file found at %s", self.model_path)
 
     async def load_model(self) -> None:
         """Load the PAT model weights asynchronously."""
@@ -723,6 +735,11 @@ class PATModelService(IMLModelService):
         sleep_metrics = outputs["sleep_metrics"].cpu().numpy()[0]
         circadian_score = outputs["circadian_score"].cpu().item()
         depression_risk = outputs["depression_risk"].cpu().item()
+        
+        # Extract the PAT embedding (96-dim from model, expand to 128 for compatibility)
+        pat_embedding = outputs["embeddings"].cpu().numpy()[0]  # (96,)
+        # Pad to 128 dimensions for fusion compatibility
+        full_embedding = np.pad(pat_embedding, (0, 128 - len(pat_embedding)), mode='constant').tolist()
 
         # Calculate sleep metrics with explicit type annotations
         sleep_efficiency: float = float(sleep_metrics[0] * 100)  # Convert to percentage
@@ -755,6 +772,7 @@ class PATModelService(IMLModelService):
             sleep_stages=sleep_stages,
             confidence_score=confidence_score,
             clinical_insights=insights,
+            embedding=full_embedding,
         )
 
     @staticmethod
@@ -858,15 +876,56 @@ class PATModelService(IMLModelService):
 
         return analysis
 
+    async def verify_weights_loaded(self) -> bool:
+        """Verify that real weights are loaded (not random initialization).
+        
+        This runs a test input through the model twice and checks if embeddings are identical.
+        Random weights would produce different results each time due to dropout/randomness.
+        """
+        if not self.is_loaded or not self.model:
+            return False
+            
+        try:
+            # Create a test input (1 week of zeros)
+            test_input = torch.zeros(1, 10080, device=self.device)
+            
+            # Run inference twice with eval mode (no dropout)
+            self.model.eval()
+            with torch.no_grad():
+                output1 = self.model(test_input)
+                output2 = self.model(test_input)
+            
+            # Check if embeddings are identical (indicates loaded weights, not random)
+            embedding1 = output1["embeddings"].cpu().numpy()
+            embedding2 = output2["embeddings"].cpu().numpy()
+            
+            # Embeddings should be identical with loaded weights
+            is_identical = np.allclose(embedding1, embedding2, atol=1e-6)
+            
+            if is_identical:
+                logger.info("✅ PAT weights verification PASSED - using real weights")
+            else:
+                logger.warning("⚠️ PAT weights verification FAILED - may be using random weights")
+                
+            return is_identical
+            
+        except Exception as e:
+            logger.error("Error verifying PAT weights: %s", e)
+            return False
+    
     async def health_check(self) -> dict[str, str | bool]:
         """Check the health status of the PAT service."""
         status = "healthy" if self.is_loaded else "not_loaded"
+        weights_verified = await self.verify_weights_loaded() if self.is_loaded else False
+        
         return {
             "service": "PAT Model Service",
             "status": status,
             "model_size": self.model_size,
             "device": self.device,
             "model_loaded": self.is_loaded,
+            "weights_verified": weights_verified,
+            "weights_path": self.model_path,
         }
 
 

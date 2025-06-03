@@ -21,7 +21,14 @@ from uuid import uuid4
 import pytest
 from starlette.datastructures import Headers
 
-from clarity.api.v1.health_data import router as health_data_router
+from clarity.api.v1.health_data import (
+    _validate_date_range,
+    _validate_request_state,
+    _validate_upload_data,
+)
+from clarity.api.v1.health_data import (
+    router as health_data_router,
+)
 from clarity.core.exceptions import DataValidationError
 from clarity.models.health_data import ActivityData, HealthDataUpload
 from clarity.services.health_data_service import HealthDataServiceError
@@ -373,10 +380,10 @@ class TestHealthDataErrorHandling(BaseServiceTestCase):
         with pytest.raises(DataValidationError):
             await health_data_router.upload_health_data(request, upload_data)
 
-    async def test_request_state_validation(self) -> None:
+    @staticmethod
+    async def test_request_state_validation() -> None:
         """Test request state validation utility."""
         # This tests the internal validation logic
-        from clarity.api.v1.health_data import _validate_request_state
 
         # Valid request
         valid_request = MockRequest(user_id=str(uuid4()))
@@ -385,13 +392,12 @@ class TestHealthDataErrorHandling(BaseServiceTestCase):
 
         # Invalid request
         invalid_request = MockRequest(user_id=None)
-        with pytest.raises(Exception):
+        with pytest.raises((ValueError, RuntimeError, AttributeError)):
             _validate_request_state(invalid_request)
 
-    async def test_date_range_validation(self) -> None:
+    @staticmethod
+    async def test_date_range_validation() -> None:
         """Test date range validation utility."""
-        from clarity.api.v1.health_data import _validate_date_range
-
         # Valid range
         start = datetime.now(UTC).replace(day=1)
         end = datetime.now(UTC)
@@ -401,10 +407,9 @@ class TestHealthDataErrorHandling(BaseServiceTestCase):
         with pytest.raises(DataValidationError):
             _validate_date_range(end, start)  # end before start
 
-    async def test_upload_data_validation(self) -> None:
+    @staticmethod
+    async def test_upload_data_validation() -> None:
         """Test upload data validation utility."""
-        from clarity.api.v1.health_data import _validate_upload_data
-
         # Valid data
         valid_upload = HealthDataUpload(
             source="test_app",

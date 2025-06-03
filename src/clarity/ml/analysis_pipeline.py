@@ -223,7 +223,7 @@ class HealthAnalysisPipeline:
         self, metrics: list[HealthMetric]
     ) -> dict[str, list[HealthMetric]]:
         """Organize health metrics by modality type."""
-        organized = {
+        organized: dict[str, Any] = {
             "cardio": [],
             "respiratory": [],
             "activity": [],
@@ -345,7 +345,7 @@ class HealthAnalysisPipeline:
 
         # Initialize PAT service if needed
         if self.pat_service is None:
-            self.pat_service = await get_pat_service()
+            self.pat_service = await get_pat_service()  # type: ignore[assignment]
 
         # Create actigraphy input
         actigraphy_input = ActigraphyInput(
@@ -356,7 +356,7 @@ class HealthAnalysisPipeline:
         )
 
         # Run PAT analysis
-        analysis_result = await self.pat_service.analyze_actigraphy(actigraphy_input)
+        analysis_result = await self.pat_service.analyze_actigraphy(actigraphy_input)  # type: ignore[attr-defined]
 
         # Extract embedding from PAT analysis (we'll need to modify PAT service to return embedding)
         # For now, create a synthetic embedding based on analysis results
@@ -668,7 +668,7 @@ def _convert_raw_data_to_metrics(health_data: dict[str, Any]) -> list[HealthMetr
     # Handle different data formats - could be from HealthKit upload or direct metrics
     if "metrics" in health_data:
         # Already in metric format
-        return health_data["metrics"]
+        return health_data["metrics"]  # type: ignore[no-any-return]
 
     # Process different data types
     if "quantity_samples" in health_data:

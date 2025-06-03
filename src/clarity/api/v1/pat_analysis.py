@@ -12,6 +12,7 @@ Endpoints:
 
 from datetime import UTC, datetime
 import logging
+import os
 from typing import Any
 import uuid
 
@@ -26,6 +27,7 @@ from clarity.ml.proxy_actigraphy import (
     StepCountData,
     create_proxy_actigraphy_transformer,
 )
+from clarity.storage.firestore_client import FirestoreClient
 
 logger = logging.getLogger(__name__)
 
@@ -334,33 +336,57 @@ async def analyze_actigraphy_data(
         503: {"description": "Service temporarily unavailable"},
     },
 )
-async def get_pat_analysis(processing_id: str) -> PATAnalysisResponse:
-    """🔥 FIXED: Real implementation that retrieves actual PAT analysis results."""
+async def get_pat_analysis(
+    processing_id: str,
+    user_id: str = Depends(get_current_user)
+) -> PATAnalysisResponse:
+    """Retrieve actual PAT analysis results from Firestore."""
     try:
-        logger.info("Retrieving PAT analysis results: %s", processing_id)
+        logger.info("Retrieving PAT analysis results: %s for user %s", processing_id, user_id)
 
-        # Get results from Firestore using the actual client
+        # Get Firestore client
         firestore_client = _get_analysis_repository()
 
-        # Try to get analysis results from the insights collection first
-        analysis_result = await firestore_client.get_document(
-            collection="analysis_results",
+        # Try to get analysis results from the analysis_results collection
+        analysis_result = await firestore_client.get_analysis_result(
+            processing_id=processing_id,
+            user_id=user_id
+        )
+
+        if analysis_result:
+            # Found completed analysis results
+            logger.info("Successfully retrieved PAT analysis: %s", processing_id)
+            return PATAnalysisResponse(
+                processing_id=processing_id,
+                status=analysis_result.get("status", "completed"),
+                message="Analysis completed successfully",
+                analysis_date=analysis_result.get("analysis_date"),
+                pat_features=analysis_result.get("pat_features", {}),
+                activity_embedding=analysis_result.get("activity_embedding", []),
+                metadata={
+                    "cardio_features": analysis_result.get("cardio_features", []),
+                    "respiratory_features": analysis_result.get("respiratory_features", []),
+                    "activity_features": analysis_result.get("activity_features", []),
+                    "fused_vector": analysis_result.get("fused_vector", []),
+                    "summary_stats": analysis_result.get("summary_stats", {}),
+                    "processing_metadata": analysis_result.get("processing_metadata", {}),
+                }
+            )
+
+        # If not found in analysis_results, check processing_jobs collection for status
+        processing_status = await firestore_client.get_document(
+            collection="processing_jobs",
             document_id=processing_id
         )
 
-        # If not found, check processing_jobs collection for status
-        if not analysis_result:
-            processing_status = await firestore_client.get_document(
-                collection="processing_jobs",
-                document_id=processing_id
-            )
-
-            if not processing_status:
-                logger.warning("PAT analysis not found: %s", processing_id)
+        if processing_status:
+            # Check if user owns this processing job
+            if processing_status.get("user_id") != user_id:
+                logger.warning("User %s attempted to access processing job %s", user_id, processing_id)
                 return PATAnalysisResponse(
                     processing_id=processing_id,
                     status="not_found",
-                    message="Analysis results not found. Processing may still be in progress.",
+                    message="Analysis not found",
                     analysis_date=None,
                     pat_features=None,
                     activity_embedding=None,
@@ -379,21 +405,21 @@ async def get_pat_analysis(processing_id: str) -> PATAnalysisResponse:
                 metadata=processing_status
             )
 
-        # Return real analysis results
-        logger.info("Successfully retrieved PAT analysis: %s", processing_id)
+        # Neither analysis results nor processing job found
+        logger.warning("PAT analysis not found: %s", processing_id)
         return PATAnalysisResponse(
             processing_id=processing_id,
-            status=analysis_result.get("status", "completed"),
-            message=analysis_result.get("message", "Analysis completed successfully"),
-            analysis_date=analysis_result.get("analysis_date"),
-            pat_features=analysis_result.get("pat_features", {}),
-            activity_embedding=analysis_result.get("activity_embedding", []),
-            metadata=analysis_result.get("metadata", {})
+            status="not_found",
+            message="Analysis results not found. Processing may never have started or may have been removed.",
+            analysis_date=None,
+            pat_features=None,
+            activity_embedding=None,
+            metadata={}
         )
 
     except Exception as e:
         logger.exception("Error retrieving PAT analysis: %s", processing_id)
-        # Return error status instead of raising exception
+        # Return error status instead of raising exception to provide better UX
         return PATAnalysisResponse(
             processing_id=processing_id,
             status="failed",
@@ -405,13 +431,9 @@ async def get_pat_analysis(processing_id: str) -> PATAnalysisResponse:
         )
 
 
-def _get_analysis_repository():
+def _get_analysis_repository() -> FirestoreClient:
     """Get analysis repository for retrieving stored results."""
     # TODO: Replace with proper dependency injection
-    import os
-
-    from clarity.storage.firestore_client import FirestoreClient
-
     project_id = os.getenv("GOOGLE_CLOUD_PROJECT", "clarity-digital-twin")
     return FirestoreClient(project_id=project_id)
 

@@ -17,7 +17,7 @@ need direct answers to questions like "How many steps did I walk this week?"
 """
 
 from collections.abc import Sequence
-from datetime import datetime
+from datetime import UTC, datetime
 import logging
 from typing import Any
 
@@ -26,6 +26,9 @@ import numpy as np
 from clarity.models.health_data import ActivityData, HealthMetric
 
 logger = logging.getLogger(__name__)
+
+# Constants
+MIN_VALUES_FOR_CONSISTENCY = 2
 
 
 class ActivityProcessor:
@@ -72,19 +75,20 @@ class ActivityProcessor:
 
             if not activity_data:
                 logger.warning("No activity data found in metrics")
-                return []
+                return [{"warning": "No activity data available"}]
 
             # Calculate features
             features = self._calculate_activity_features(activity_data)
 
             logger.info("✅ Extracted %d activity features", len(features))
+        except Exception as e:
+            logger.exception("Failed to process activity data: %s", e)
+            return [{"error": f"ActivityProcessor failed: {e!s}"}]
+        else:
             return features
 
-        except Exception as e:
-            logger.exception("❌ Failed to process activity metrics")
-            return [{"error": f"ActivityProcessor failed: {e!s}"}]
-
-    def _extract_activity_data(self, metrics: list[HealthMetric]) -> list[ActivityData]:
+    @staticmethod
+    def _extract_activity_data(metrics: list[HealthMetric]) -> list[ActivityData]:
         """Extract activity data from health metrics.
 
         Args:
@@ -93,7 +97,12 @@ class ActivityProcessor:
         Returns:
             List of ActivityData objects
         """
-        activity_data = [metric.activity_data for metric in metrics if metric.activity_data is not None]
+        activity_data = []
+        logger = __import__("logging").getLogger(__name__)
+
+        for metric in metrics:
+            if metric.activity_data:
+                activity_data.append(metric.activity_data)
 
         logger.debug("Extracted %d activity data points", len(activity_data))
         return activity_data
@@ -185,7 +194,8 @@ class ActivityProcessor:
 
         return features
 
-    def _calculate_step_features(self, steps: list[int]) -> list[dict[str, Any]]:
+    @staticmethod
+    def _calculate_step_features(steps: list[int]) -> list[dict[str, Any]]:
         """Calculate step-related features.
 
         Args:
@@ -219,7 +229,8 @@ class ActivityProcessor:
             }
         ]
 
-    def _calculate_distance_features(self, distances: list[float]) -> list[dict[str, Any]]:
+    @staticmethod
+    def _calculate_distance_features(distances: list[float]) -> list[dict[str, Any]]:
         """Calculate distance-related features.
 
         Args:
@@ -246,7 +257,8 @@ class ActivityProcessor:
             }
         ]
 
-    def _calculate_energy_features(self, active_energy: list[float]) -> list[dict[str, Any]]:
+    @staticmethod
+    def _calculate_energy_features(active_energy: list[float]) -> list[dict[str, Any]]:
         """Calculate active energy features.
 
         Args:
@@ -273,7 +285,8 @@ class ActivityProcessor:
             }
         ]
 
-    def _calculate_exercise_features(self, exercise_minutes: list[int]) -> list[dict[str, Any]]:
+    @staticmethod
+    def _calculate_exercise_features(exercise_minutes: list[int]) -> list[dict[str, Any]]:
         """Calculate exercise-related features.
 
         Args:
@@ -300,7 +313,8 @@ class ActivityProcessor:
             }
         ]
 
-    def _calculate_consistency_score(self, values: Sequence[int | float]) -> float:
+    @staticmethod
+    def _calculate_consistency_score(values: Sequence[int | float]) -> float:
         """Calculate activity consistency score.
 
         Args:
@@ -309,7 +323,7 @@ class ActivityProcessor:
         Returns:
             Consistency score between 0 and 1
         """
-        if len(values) < 2:
+        if len(values) < MIN_VALUES_FOR_CONSISTENCY:
             return 1.0
 
         # Calculate coefficient of variation (CV)
@@ -341,7 +355,7 @@ class ActivityProcessor:
         summary = {
             "total_features": len(features),
             "feature_categories": self._categorize_features(features),
-            "processed_at": datetime.now().isoformat(),
+            "processed_at": datetime.now(UTC).isoformat(),
             "processor": self.processor_name,
             "version": self.version
         }
@@ -359,7 +373,8 @@ class ActivityProcessor:
 
         return summary
 
-    def _categorize_features(self, features: list[dict[str, Any]]) -> dict[str, int]:
+    @staticmethod
+    def _categorize_features(features: list[dict[str, Any]]) -> dict[str, int]:
         """Categorize features by type.
 
         Args:

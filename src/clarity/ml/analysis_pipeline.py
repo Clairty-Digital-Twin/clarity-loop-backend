@@ -4,6 +4,7 @@ Coordinates the entire health data analysis workflow from raw data to insights.
 Integrates preprocessing, modality processors, fusion, and PAT model.
 """
 
+import asyncio
 from datetime import UTC, datetime
 import logging
 from typing import Any
@@ -12,7 +13,7 @@ import numpy as np
 
 from clarity.ml.fusion_transformer import get_fusion_service
 from clarity.ml.pat_service import ActigraphyInput, get_pat_service
-from clarity.ml.preprocessing import HealthDataPreprocessor
+from clarity.ml.preprocessing import ActigraphyDataPoint, HealthDataPreprocessor
 from clarity.ml.processors.activity_processor import ActivityProcessor
 from clarity.ml.processors.cardio_processor import CardioProcessor
 from clarity.ml.processors.respiration_processor import RespirationProcessor
@@ -23,6 +24,7 @@ from clarity.models.health_data import (
     HealthMetricType,
     SleepData,
 )
+from clarity.storage.firestore_client import FirestoreClient
 
 # Constants
 MIN_FEATURE_VECTOR_LENGTH = 8
@@ -56,46 +58,60 @@ class HealthAnalysisPipeline:
     """
 
     def __init__(self) -> None:
-        """Initialize analysis pipeline."""
+        """Initialize the analysis pipeline with all processors."""
         self.logger = logging.getLogger(__name__)
-        self.preprocessor = HealthDataPreprocessor()
+
+        # Initialize processors
         self.cardio_processor = CardioProcessor()
         self.respiratory_processor = RespirationProcessor()
-        self.activity_processor = ActivityProcessor()  # 🔥 ADDED: Activity processor for basic metrics
+        self.activity_processor = ActivityProcessor()  # 🔥 ADDED: Activity processor
+        self.preprocessor = HealthDataPreprocessor()
 
-        # Initialize services
+        # ML services (loaded on-demand)
+        self.pat_service = None
         self.fusion_service = get_fusion_service()
-        self.pat_service = None  # Will be initialized on first use
+
+        # Storage client for saving analysis results
+        self.firestore_client: FirestoreClient | None = None
+
+        self.logger.info("✅ Health Analysis Pipeline initialized")
+
+    async def _get_firestore_client(self) -> FirestoreClient:
+        """Get or create Firestore client for saving results."""
+        if self.firestore_client is None:
+            import os
+            project_id = os.getenv("GOOGLE_CLOUD_PROJECT", "clarity-digital-twin")
+            self.firestore_client = FirestoreClient(project_id=project_id)
+        return self.firestore_client
 
     async def process_health_data(
-        self, user_id: str, health_metrics: list[HealthMetric]
+        self, user_id: str, health_metrics: list[HealthMetric], processing_id: str | None = None
     ) -> AnalysisResults:
-        """Process health data through the complete analysis pipeline.
+        """Process health metrics through the analysis pipeline.
 
         Args:
             user_id: User identifier
-            health_metrics: List of health metrics to process
+            health_metrics: List of health metrics to analyze
+            processing_id: Optional processing ID for tracking
 
         Returns:
-            Analysis results with features and embeddings
+            AnalysisResults object with all computed features
         """
-        self.logger.info(
-            "Starting analysis pipeline for user %s with %d metrics",
-            user_id,
-            len(health_metrics),
-        )
-
-        results = AnalysisResults()
-
         try:
-            # Step 1: Organize data by modality
+            self.logger.info(
+                "🔬 Starting analysis pipeline for user %s with %d metrics",
+                user_id,
+                len(health_metrics),
+            )
+
+            results = AnalysisResults()
+            modality_features: dict[str, list[float]] = {}
+
+            # Step 1: Organize metrics by modality
             organized_data = self._organize_metrics_by_modality(health_metrics)
 
             # Step 2: Process each modality
-            modality_features = {}
-
-            # Process cardiovascular data
-            if organized_data.get("cardio"):
+            if organized_data["cardio"]:
                 self.logger.info("Processing cardiovascular data...")
                 cardio_features = await self._process_cardio_data(
                     organized_data["cardio"]
@@ -103,8 +119,7 @@ class HealthAnalysisPipeline:
                 results.cardio_features = cardio_features
                 modality_features["cardio"] = cardio_features
 
-            # Process respiratory data
-            if organized_data.get("respiratory"):
+            if organized_data["respiratory"]:
                 self.logger.info("Processing respiratory data...")
                 respiratory_features = await self._process_respiratory_data(
                     organized_data["respiratory"]
@@ -112,13 +127,12 @@ class HealthAnalysisPipeline:
                 results.respiratory_features = respiratory_features
                 modality_features["respiratory"] = respiratory_features
 
-            # Process activity data with both basic processor and PAT model
-            if organized_data.get("activity"):
-                self.logger.info("Processing activity data...")
+            if organized_data["activity"]:
+                self.logger.info("Processing activity data with both basic features and PAT model...")
 
-                # 🔥 ADDED: Extract basic activity features first
+                # First, extract basic activity features using ActivityProcessor
                 activity_features = self.activity_processor.process(organized_data["activity"])
-                results.activity_features = activity_features
+                results.activity_features = activity_features  # 🔥 ADDED: Store basic activity features
 
                 # Then process with PAT model for advanced analysis
                 activity_embedding = await self._process_activity_data(
@@ -147,19 +161,44 @@ class HealthAnalysisPipeline:
                 "processed_at": datetime.now(UTC).isoformat(),
                 "total_metrics": len(health_metrics),
                 "modalities_processed": list(modality_features.keys()),
-                "fused_vector_dim": len(results.fused_vector),
+                "fused_vector_dim": len(results.fused_vector) if results.fused_vector else 0,
+                "processing_id": processing_id,
             }
 
-            self.logger.info(
-                "Analysis pipeline completed successfully for user %s", user_id
-            )
-            return results
+            # Step 6: Save analysis results to Firestore if processing_id provided
+            if processing_id:
+                try:
+                    firestore_client = await self._get_firestore_client()
+                    analysis_dict = {
+                        "user_id": user_id,
+                        "cardio_features": results.cardio_features,
+                        "respiratory_features": results.respiratory_features,
+                        "activity_features": results.activity_features,
+                        "activity_embedding": results.activity_embedding,
+                        "fused_vector": results.fused_vector,
+                        "summary_stats": results.summary_stats,
+                        "processing_metadata": results.processing_metadata,
+                    }
+                    await firestore_client.save_analysis_result(
+                        user_id=user_id,
+                        processing_id=processing_id,
+                        analysis_result=analysis_dict
+                    )
+                    self.logger.info("✅ Analysis results saved to Firestore: %s", processing_id)
+                except Exception as e:
+                    self.logger.exception("Failed to save analysis results to Firestore: %s", e)
+                    # Don't fail the entire pipeline if saving fails
 
+            self.logger.info(
+                "✅ Analysis pipeline completed successfully for user %s", user_id
+            )
         except Exception:
             self.logger.exception(
-                "Error in analysis pipeline for user %s", user_id
+                "❌ Error in analysis pipeline for user %s", user_id
             )
             raise
+        else:
+            return results
 
     def _organize_metrics_by_modality(
         self, metrics: list[HealthMetric]

@@ -17,13 +17,15 @@ from pydantic import BaseModel, Field
 
 from clarity.auth import UserContext
 from clarity.auth.firebase_auth import get_current_user
-from clarity.ml.gemini_service import (
+from clarity.core.user_context import UserContext
+from clarity.ports.auth_ports import IAuthProvider
+from clarity.ports.config_ports import IConfigProvider
+from clarity.services.gemini_service import (
     GeminiService,
     HealthInsightRequest,
     HealthInsightResponse,
 )
-from clarity.ports.auth_ports import IAuthProvider
-from clarity.ports.config_ports import IConfigProvider
+from clarity.storage.firestore_client import FirestoreClient
 
 logger = logging.getLogger(__name__)
 
@@ -557,11 +559,9 @@ async def get_service_status(
         ) from e
 
 
-def _get_firestore_client():
+def _get_firestore_client() -> FirestoreClient:
     """Get Firestore client for storing/retrieving insights."""
     import os
-
-    from clarity.storage.firestore_client import FirestoreClient
 
     project_id = os.getenv("GOOGLE_CLOUD_PROJECT", "clarity-digital-twin")
     return FirestoreClient(project_id=project_id)

@@ -15,6 +15,11 @@ import logging
 import time
 from typing import Any
 
+try:
+    import psutil
+except ImportError:
+    psutil = None
+
 from fastapi import APIRouter, Response
 from prometheus_client import (
     CONTENT_TYPE_LATEST,
@@ -168,7 +173,7 @@ async def get_metrics() -> Response:
             }
         )
 
-    except Exception as e:
+    except Exception:
         logger.exception("Failed to generate metrics")
         # Return empty metrics rather than failing
         return Response(
@@ -180,15 +185,15 @@ async def get_metrics() -> Response:
 def _update_system_metrics() -> None:
     """Update system-level metrics before exposition."""
     try:
-        import psutil
+        if psutil is None:
+            # psutil not available - skip system metrics
+            logger.debug("psutil not available for system metrics")
+            return
 
         # Memory usage
         memory = psutil.virtual_memory()
         system_memory_usage_bytes.set(memory.used)
 
-    except ImportError:
-        # psutil not available - skip system metrics
-        logger.debug("psutil not available for system metrics")
     except Exception:
         logger.exception("Failed to update system metrics")
 
@@ -358,10 +363,10 @@ class MetricsContext:
         self.labels = labels or {}
         self.start_time = time.time()
 
-    def __enter__(self):
+    def __enter__(self) -> "MetricsContext":
         return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    def __exit__(self, exc_type: type[BaseException] | None, exc_val: BaseException | None, exc_tb: Any) -> None:
         duration = time.time() - self.start_time
 
         status = "success" if exc_type is None else "failed"

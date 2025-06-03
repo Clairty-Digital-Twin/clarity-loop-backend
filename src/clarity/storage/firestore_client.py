@@ -107,6 +107,7 @@ class FirestoreClient:
             "audit_logs": "audit_logs",
             "ml_models": "ml_models",
             "insights": "insights",
+            "analysis_results": "analysis_results",
         }
 
         logger.info("Firestore client initialized for project: %s", project_id)
@@ -529,6 +530,89 @@ class FirestoreClient:
             document_id=processing_id,
             data=update_data,
         )
+
+    async def save_analysis_result(
+        self,
+        user_id: str,
+        processing_id: str,
+        analysis_result: dict[str, Any]
+    ) -> str:
+        """Save PAT analysis results to Firestore.
+
+        Args:
+            user_id: User identifier
+            processing_id: Processing ID from the upload
+            analysis_result: Analysis results dictionary
+
+        Returns:
+            str: Document ID of saved analysis result
+        """
+        try:
+            # Prepare analysis data for storage
+            analysis_data = {
+                "user_id": user_id,
+                "processing_id": processing_id,
+                "status": "completed",
+                "analysis_date": datetime.now(UTC).isoformat(),
+                "pat_features": analysis_result.get("pat_features", {}),
+                "activity_embedding": analysis_result.get("activity_embedding", []),
+                "cardio_features": analysis_result.get("cardio_features", []),
+                "respiratory_features": analysis_result.get("respiratory_features", []),
+                "activity_features": analysis_result.get("activity_features", []),
+                "fused_vector": analysis_result.get("fused_vector", []),
+                "summary_stats": analysis_result.get("summary_stats", {}),
+                "processing_metadata": analysis_result.get("processing_metadata", {}),
+                "created_at": datetime.now(UTC),
+            }
+
+            # Store in analysis_results collection using processing_id as document ID
+            document_id = await self.create_document(
+                collection=self.collections["analysis_results"],
+                data=analysis_data,
+                document_id=processing_id,
+                user_id=user_id,
+            )
+
+            logger.info("Analysis result saved: %s for user %s", document_id, user_id)
+            return document_id
+
+        except Exception as e:
+            logger.exception("Failed to save analysis result for user %s", user_id)
+            msg = f"Analysis result storage failed: {e}"
+            raise FirestoreError(msg) from e
+
+    async def get_analysis_result(
+        self, processing_id: str, user_id: str | None = None
+    ) -> dict[str, Any] | None:
+        """Get analysis result by processing ID.
+
+        Args:
+            processing_id: Processing ID to retrieve
+            user_id: Optional user ID for validation
+
+        Returns:
+            Dict with analysis result or None if not found
+        """
+        try:
+            result = await self.get_document(
+                collection=self.collections["analysis_results"],
+                document_id=processing_id
+            )
+
+            # Validate user ownership if user_id provided
+            if result and user_id and result.get("user_id") != user_id:
+                logger.warning(
+                    "User %s attempted to access analysis %s owned by %s",
+                    user_id, processing_id, result.get("user_id")
+                )
+                return None
+
+            return result
+
+        except Exception as e:
+            logger.exception("Failed to get analysis result %s", processing_id)
+            msg = f"Analysis result retrieval failed: {e}"
+            raise FirestoreError(msg) from e
 
     # Query Operations
 

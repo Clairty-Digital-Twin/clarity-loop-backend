@@ -330,7 +330,7 @@ async def get_insight(
             collection="insights",
             document_id=insight_id
         )
-        
+
         if not insight_doc:
             raise create_error_response(
                 error_code="INSIGHT_NOT_FOUND",
@@ -340,7 +340,7 @@ async def get_insight(
                 details={"insight_id": insight_id},
                 suggested_action="check_insight_id",
             )
-        
+
         # Verify user owns the insight
         if insight_doc.get("user_id") != current_user.user_id:
             raise create_error_response(
@@ -351,7 +351,7 @@ async def get_insight(
                 details={"insight_id": insight_id},
                 suggested_action="check_permissions",
             )
-        
+
         # Convert Firestore document to HealthInsightResponse
         insight_response = HealthInsightResponse(
             user_id=insight_doc["user_id"],
@@ -437,13 +437,13 @@ async def get_insight_history(
             order_by="generated_at",
             order_direction="desc"
         )
-        
+
         # Get total count for pagination
         total_count = await firestore_client.count_documents(
             collection="insights",
             filters=[{"field": "user_id", "op": "==", "value": user_id}]
         )
-        
+
         # Format insights for response
         formatted_insights = []
         for insight in insights:
@@ -455,7 +455,7 @@ async def get_insight_history(
                 "key_insights_count": len(insight.get("key_insights", [])),
                 "recommendations_count": len(insight.get("recommendations", []))
             })
-        
+
         history_data = {
             "insights": formatted_insights,
             "total_count": total_count,
@@ -562,8 +562,9 @@ async def get_service_status(
 def _get_firestore_client():
     """Get Firestore client for storing/retrieving insights."""
     import os
+
     from clarity.storage.firestore_client import FirestoreClient
-    
+
     project_id = os.getenv("GOOGLE_CLOUD_PROJECT", "clarity-digital-twin")
     return FirestoreClient(project_id=project_id)
 

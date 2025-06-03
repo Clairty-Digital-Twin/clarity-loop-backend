@@ -14,11 +14,12 @@ from datetime import UTC, datetime
 import logging
 from typing import Any
 import uuid
+
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
 from pydantic import BaseModel, Field, validator
 
-from clarity.auth.firebase_auth import get_current_user
 from clarity.auth import UserContext, require_auth
+from clarity.auth.firebase_auth import get_current_user
 from clarity.ml.inference_engine import AsyncInferenceEngine, get_inference_engine
 from clarity.ml.pat_service import ActigraphyAnalysis, ActigraphyInput
 from clarity.ml.preprocessing import ActigraphyDataPoint
@@ -325,23 +326,23 @@ async def get_pat_analysis(processing_id: str) -> PATAnalysisResponse:
     """🔥 FIXED: Real implementation that retrieves actual PAT analysis results."""
     try:
         logger.info("Retrieving PAT analysis results: %s", processing_id)
-        
+
         # Get results from Firestore using the actual client
         firestore_client = _get_analysis_repository()
-        
+
         # Try to get analysis results from the insights collection first
         analysis_result = await firestore_client.get_document(
-            collection="analysis_results", 
+            collection="analysis_results",
             document_id=processing_id
         )
-        
+
         # If not found, check processing_jobs collection for status
         if not analysis_result:
             processing_status = await firestore_client.get_document(
                 collection="processing_jobs",
                 document_id=processing_id
             )
-            
+
             if not processing_status:
                 logger.warning("PAT analysis not found: %s", processing_id)
                 return PATAnalysisResponse(
@@ -353,7 +354,7 @@ async def get_pat_analysis(processing_id: str) -> PATAnalysisResponse:
                     activity_embedding=None,
                     metadata={}
                 )
-            
+
             # Return status from processing job
             job_status = processing_status.get("status", "unknown")
             return PATAnalysisResponse(
@@ -365,7 +366,7 @@ async def get_pat_analysis(processing_id: str) -> PATAnalysisResponse:
                 activity_embedding=None,
                 metadata=processing_status
             )
-        
+
         # Return real analysis results
         logger.info("Successfully retrieved PAT analysis: %s", processing_id)
         return PATAnalysisResponse(
@@ -377,14 +378,14 @@ async def get_pat_analysis(processing_id: str) -> PATAnalysisResponse:
             activity_embedding=analysis_result.get("activity_embedding", []),
             metadata=analysis_result.get("metadata", {})
         )
-        
+
     except Exception as e:
         logger.exception("Error retrieving PAT analysis: %s", processing_id)
         # Return error status instead of raising exception
         return PATAnalysisResponse(
             processing_id=processing_id,
             status="failed",
-            message=f"Error retrieving analysis: {str(e)}",
+            message=f"Error retrieving analysis: {e!s}",
             analysis_date=None,
             pat_features=None,
             activity_embedding=None,
@@ -395,7 +396,7 @@ async def get_pat_analysis(processing_id: str) -> PATAnalysisResponse:
 # 🔥 FIXED: Response model for PAT analysis results
 class PATAnalysisResponse(BaseModel):
     """Response model for PAT analysis results."""
-    
+
     processing_id: str = Field(description="Processing ID for the analysis")
     status: str = Field(description="Status: completed, processing, failed, not_found")
     message: str | None = Field(None, description="Status message")
@@ -409,8 +410,9 @@ def _get_analysis_repository():
     """Get analysis repository for retrieving stored results."""
     # TODO: Replace with proper dependency injection
     import os
+
     from clarity.storage.firestore_client import FirestoreClient
-    
+
     project_id = os.getenv("GOOGLE_CLOUD_PROJECT", "clarity-digital-twin")
     return FirestoreClient(project_id=project_id)
 

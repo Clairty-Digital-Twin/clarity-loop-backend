@@ -1,6 +1,7 @@
 Do you need a local database to work on / test this repo?
 
 Short version: No mandatory local DB right now—the tree already gives you two “plugs”:
+
  1. MockRepository (pure-Python, in-memory) - used by unit tests and can be wired in for local dev.
  2. FirestoreClient - real Cloud Firestore; for integration/E2E you can point it at Google’s local Emulator Suite if you don’t want to hit GCP.
 

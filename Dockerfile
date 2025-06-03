@@ -28,7 +28,7 @@ COPY LICENSE ./
 
 # Install Python dependencies
 RUN pip install --upgrade pip setuptools wheel
-RUN pip install -e .[dev]
+RUN pip install -e .
 
 # Production stage
 FROM python:3.11-slim AS production

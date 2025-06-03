@@ -370,11 +370,11 @@ class BatchAnalysisProcessor:
                 results = await asyncio.gather(*tasks, return_exceptions=True)
 
                 # Set results for futures
-                for (_, future), result in zip(batch, results, strict=False):  # type: ignore[misc]
+                for (_, future), result in zip(batch, results, strict=False):
                     if isinstance(result, Exception):
                         future.set_exception(result)
                     else:
-                        analysis, _ = result  # Unpack (analysis, was_cached) tuple
+                        analysis, _ = result  # type: ignore[misc]  # Unpack (analysis, was_cached) tuple
                         future.set_result(analysis)
 
                 logger.info("Processed batch of %d requests", len(batch))

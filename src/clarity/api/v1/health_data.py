@@ -14,11 +14,9 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 
 from clarity.auth import Permission, UserContext, get_current_user, require_auth
-from clarity.core.interfaces import (
-    IAuthProvider,
-    IConfigProvider,
-    IHealthDataRepository,
-)
+from clarity.ports.auth_ports import IAuthProvider
+from clarity.ports.config_ports import IConfigProvider
+from clarity.ports.data_ports import IHealthDataRepository
 from clarity.models.health_data import HealthDataResponse, HealthDataUpload
 from clarity.services.health_data_service import (
     HealthDataService,

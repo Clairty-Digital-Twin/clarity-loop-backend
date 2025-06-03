@@ -530,7 +530,7 @@ class PATModelService(IMLModelService):
         return state_dict
 
     def _convert_attention_weights(
-        self, layer_group: h5py.Group, state_dict: dict[str, torch.Tensor], layer_idx: int  # type: ignore[name-defined]
+        self, layer_group: Any, state_dict: dict[str, torch.Tensor], layer_idx: int
     ) -> None:
         """Convert multi-head attention weights from TensorFlow to PyTorch."""
         if f'encoder_layer_{layer_idx + 1}_attention' not in layer_group:
@@ -602,7 +602,7 @@ class PATModelService(IMLModelService):
                 state_dict[pytorch_name] = torch.from_numpy(tf_bias)
 
     def _convert_ff_weights(
-        self, layer_group: h5py.Group, state_dict: dict[str, torch.Tensor], layer_idx: int  # type: ignore[name-defined]
+        self, layer_group: Any, state_dict: dict[str, torch.Tensor], layer_idx: int
     ) -> None:
         """Convert feed-forward network weights."""
         # FF1 layer
@@ -636,7 +636,7 @@ class PATModelService(IMLModelService):
                 state_dict[pytorch_name] = torch.from_numpy(tf_bias)
 
     def _convert_layernorm_weights(
-        self, layer_group: h5py.Group, state_dict: dict[str, torch.Tensor], layer_idx: int  # type: ignore[name-defined]
+        self, layer_group: Any, state_dict: dict[str, torch.Tensor], layer_idx: int
     ) -> None:
         """Convert layer normalization weights (gamma/beta -> weight/bias)."""
         # Norm1 (after attention)

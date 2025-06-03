@@ -379,8 +379,8 @@ class TestControllerAdapterPattern:
 
         # When: Making request with query parameters
         response = client.get(
-            "/api/v1/health-data/health-data",
-            params={"limit": 100, "offset": 0, "metric_type": "heart_rate"},
+            "/api/v1/health-data/",
+            params={"limit": 100, "offset": 0, "data_type": "heart_rate"},
             headers={"Authorization": "Bearer test-token"},
         )
 

@@ -248,7 +248,7 @@ class TestHealthDataServiceApplicationBusinessRules:
         )
 
     @staticmethod
-    def test_business_rule_validation_orchestration() -> None:
+    def test_business_rule_validation_orchestration(mock_storage_client) -> None:
         """Test use case orchestrates business rule validation."""
         # Given: Mock repository
         mock_repository = AsyncMock(spec=IHealthDataRepository)
@@ -261,7 +261,7 @@ class TestHealthDataServiceApplicationBusinessRules:
         # Test that service has the method, but don't call it directly
 
     @staticmethod
-    def test_service_logging_and_monitoring() -> None:
+    def test_service_logging_and_monitoring(mock_storage_client) -> None:
         """Test use case includes proper logging for monitoring."""
         # Given: Mock repository
         mock_repository = AsyncMock(spec=IHealthDataRepository)
@@ -286,7 +286,7 @@ class TestServiceApplicationBusinessRules:
     """Test application-specific business rules in the service layer."""
 
     @staticmethod
-    def test_metric_validation_business_rule() -> None:
+    def test_metric_validation_business_rule(mock_storage_client) -> None:
         """Test application business rule: Metrics must pass validation."""
         # Given: Service with mock repository
         mock_repository = AsyncMock(spec=IHealthDataRepository)
@@ -299,7 +299,7 @@ class TestServiceApplicationBusinessRules:
 
     @pytest.mark.asyncio
     @staticmethod
-    async def test_processing_id_generation_business_rule() -> None:
+    async def test_processing_id_generation_business_rule(mock_storage_client) -> None:
         """Test application business rule: Each upload gets unique processing ID."""
         # Given: Mock repository
         mock_repository = AsyncMock(spec=IHealthDataRepository)
@@ -342,7 +342,7 @@ class TestServiceApplicationBusinessRules:
 
     @pytest.mark.asyncio
     @staticmethod
-    async def test_error_response_business_rule() -> None:
+    async def test_error_response_business_rule(mock_storage_client) -> None:
         """Test application business rule: Errors are wrapped in service exceptions."""
         # Given: Service with failing repository
         mock_repository = AsyncMock(spec=IHealthDataRepository)
@@ -385,7 +385,7 @@ class TestServiceFollowsSOLIDPrinciples:
     """Test that service follows Dependency Inversion Principle (SOLID)."""
 
     @staticmethod
-    def test_service_depends_on_abstraction_not_concretion() -> None:
+    def test_service_depends_on_abstraction_not_concretion(mock_storage_client) -> None:
         """Test service depends on repository interface, not concrete implementation."""
         # Given: Mock repository interface
         mock_repository = Mock(spec=IHealthDataRepository)
@@ -404,7 +404,7 @@ class TestServiceFollowsSOLIDPrinciples:
         assert hasattr(service.repository, "delete_health_data")
 
     @staticmethod
-    def test_service_is_testable_without_real_implementations() -> None:
+    def test_service_is_testable_without_real_implementations(mock_storage_client) -> None:
         """Test service can be fully tested with mocks (no real database needed)."""
         # Given: All dependencies are mocked
         mock_repository = Mock(spec=IHealthDataRepository)
@@ -428,7 +428,7 @@ class TestServiceFollowsSingleResponsibilityPrinciple:
     """Test service follows Single Responsibility Principle (SOLID)."""
 
     @staticmethod
-    def test_service_has_single_responsibility() -> None:
+    def test_service_has_single_responsibility(mock_storage_client) -> None:
         """Test service only handles health data operations."""
         # Given: Mock repository
         mock_repository = Mock(spec=IHealthDataRepository)
@@ -460,7 +460,7 @@ class TestServiceFollowsSingleResponsibilityPrinciple:
             assert not hasattr(service, method)
 
     @staticmethod
-    def test_service_validation_is_health_data_specific() -> None:
+    def test_service_validation_is_health_data_specific(mock_storage_client) -> None:
         """Test service validation logic is specific to health data domain."""
         # Given: Service with mock repository
         mock_repository = Mock(spec=IHealthDataRepository)

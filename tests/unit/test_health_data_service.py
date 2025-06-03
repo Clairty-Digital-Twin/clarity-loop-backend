@@ -61,7 +61,7 @@ class TestHealthDataServiceApplicationBusinessRules:
 
     @pytest.mark.asyncio
     @staticmethod
-    async def test_process_health_data_use_case_orchestration() -> None:
+    async def test_process_health_data_use_case_orchestration(mock_storage_client) -> None:
         """Test use case orchestrates entity validation and repository storage."""
         # Given: Mock repository and valid health data upload
         mock_repository = AsyncMock(spec=IHealthDataRepository)
@@ -105,7 +105,7 @@ class TestHealthDataServiceApplicationBusinessRules:
 
     @pytest.mark.asyncio
     @staticmethod
-    async def test_use_case_handles_business_rule_violations() -> None:
+    async def test_use_case_handles_business_rule_violations(mock_storage_client) -> None:
         """Test use case properly handles business rule violations from entities."""
         # When: Creating invalid entity (business rule violation)
         with pytest.raises(
@@ -124,7 +124,7 @@ class TestHealthDataServiceApplicationBusinessRules:
 
     @pytest.mark.asyncio
     @staticmethod
-    async def test_use_case_repository_error_handling() -> None:
+    async def test_use_case_repository_error_handling(mock_storage_client) -> None:
         """Test use case handles repository failures gracefully."""
         # Given: Mock repository that fails
         mock_repository = AsyncMock(spec=IHealthDataRepository)
@@ -165,7 +165,7 @@ class TestHealthDataServiceApplicationBusinessRules:
 
     @pytest.mark.asyncio
     @staticmethod
-    async def test_get_processing_status_use_case() -> None:
+    async def test_get_processing_status_use_case(mock_storage_client) -> None:
         """Test use case for retrieving processing status."""
         # Given: Mock repository with status data
         mock_repository = AsyncMock(spec=IHealthDataRepository)

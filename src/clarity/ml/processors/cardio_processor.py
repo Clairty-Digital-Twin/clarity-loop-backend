@@ -125,7 +125,7 @@ class CardioProcessor:
     @staticmethod
     def _preprocess_heart_rate(
         timestamps: list[datetime], values: list[float]
-    ) -> pd.Series[float]:
+    ) -> pd.Series:  # type: ignore[type-arg]
         """Clean and normalize heart rate time series."""
         if not timestamps or not values:
             return pd.Series(dtype=float)
@@ -155,7 +155,7 @@ class CardioProcessor:
         return hr_smoothed.ffill().bfill()
 
     @staticmethod
-    def _preprocess_hrv(timestamps: list[datetime], values: list[float]) -> pd.Series[float]:
+    def _preprocess_hrv(timestamps: list[datetime], values: list[float]) -> pd.Series:  # type: ignore[type-arg]
         """Clean and normalize HRV time series."""
         if not timestamps or not values:
             return pd.Series(dtype=float)
@@ -178,7 +178,7 @@ class CardioProcessor:
         return hrv_interpolated.ffill().bfill()
 
     def _extract_features(
-        self, hr_series: pd.Series[float], hrv_series: pd.Series[float] | None
+        self, hr_series: pd.Series, hrv_series: pd.Series | None  # type: ignore[type-arg]
     ) -> CardioFeatures:
         """Extract cardiovascular features from cleaned time series."""
         # Basic HR statistics
@@ -215,7 +215,7 @@ class CardioProcessor:
         )
 
     @staticmethod
-    def _calculate_recovery_score(hr_series: pd.Series[float]) -> float:
+    def _calculate_recovery_score(hr_series: pd.Series) -> float:  # type: ignore[type-arg]
         """Calculate heart rate recovery score (0-1, higher is better)."""
         if len(hr_series) < MIN_DATA_HOURS:  # Need at least 24 hours of data
             return 0.5  # Neutral score
@@ -238,7 +238,7 @@ class CardioProcessor:
             return 0.5
 
     @staticmethod
-    def _calculate_circadian_score(hr_series: pd.Series[float]) -> float:
+    def _calculate_circadian_score(hr_series: pd.Series) -> float:  # type: ignore[type-arg]
         """Calculate circadian rhythm regularity score (0-1, higher is better)."""
         if len(hr_series) < MIN_DATA_HOURS:  # Need at least 24 hours
             return 0.5

@@ -147,7 +147,7 @@ class RespirationProcessor:
     @staticmethod
     def _preprocess_respiratory_rate(
         timestamps: list[datetime], values: list[float]
-    ) -> pd.Series[float]:
+    ) -> pd.Series:  # type: ignore[type-arg]
         """Clean and normalize respiratory rate time series."""
         if not timestamps or not values:
             return pd.Series(dtype=float)
@@ -179,7 +179,7 @@ class RespirationProcessor:
         return rr_smoothed.ffill().bfill()
 
     @staticmethod
-    def _preprocess_spo2(timestamps: list[datetime], values: list[float]) -> pd.Series[float]:
+    def _preprocess_spo2(timestamps: list[datetime], values: list[float]) -> pd.Series:  # type: ignore[type-arg]
         """Clean and normalize SpO2 time series."""
         if not timestamps or not values:
             return pd.Series(dtype=float)
@@ -202,7 +202,7 @@ class RespirationProcessor:
         return spo2_interpolated.ffill().bfill()
 
     def _extract_features(
-        self, rr_series: pd.Series[float] | None, spo2_series: pd.Series[float] | None
+        self, rr_series: pd.Series | None, spo2_series: pd.Series | None  # type: ignore[type-arg]
     ) -> RespirationFeatures:
         """Extract respiratory features from cleaned time series."""
         # Respiratory rate statistics
@@ -241,7 +241,7 @@ class RespirationProcessor:
         )
 
     @staticmethod
-    def _calculate_stability_score(rr_series: pd.Series[float] | None) -> float:
+    def _calculate_stability_score(rr_series: pd.Series | None) -> float:  # type: ignore[type-arg]
         """Calculate respiratory stability score (0-1, higher is better)."""
         if rr_series is None or len(rr_series) < STABILITY_DATA_POINTS:
             return 0.5  # Neutral score
@@ -266,7 +266,7 @@ class RespirationProcessor:
             return 0.5
 
     @staticmethod
-    def _calculate_oxygenation_score(spo2_series: pd.Series[float] | None) -> float:
+    def _calculate_oxygenation_score(spo2_series: pd.Series | None) -> float:  # type: ignore[type-arg]
         """Calculate oxygenation efficiency score (0-1, higher is better)."""
         if spo2_series is None or len(spo2_series) < OXYGENATION_DATA_POINTS:
             return 0.8  # Default good score

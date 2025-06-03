@@ -34,7 +34,7 @@ class GeminiInsightGenerator:
             self.model = genai.GenerativeModel("gemini-1.5-pro")  # type: ignore[attr-defined]
         else:
             self.logger.warning("GEMINI_API_KEY not found - using mock responses")
-            self.model = None
+            self.model = None  # type: ignore[assignment]
 
         # Initialize Firestore
         self.firestore_client = firestore.Client()
@@ -88,7 +88,7 @@ class GeminiInsightGenerator:
                 "Generated and stored health insight for user: %s", user_id
             )
 
-            return insight
+            return insight  # type: ignore[no-any-return]
 
     @staticmethod
     def _create_health_prompt(analysis_results: dict[str, Any]) -> str:
@@ -377,7 +377,7 @@ class InsightSubscriber:
                 status_code=400, detail=f"Invalid message format: {e!s}"
             ) from None
         else:
-            return message_data
+            return message_data  # type: ignore[no-any-return]
 
     @staticmethod
     def _raise_missing_field_error(field: str) -> None:

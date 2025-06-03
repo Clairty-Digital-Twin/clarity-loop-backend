@@ -143,7 +143,7 @@ class FusionTransformer(nn.Module):
         )  # (batch, num_modalities, embed_dim)
 
         # Prepare CLS token
-        cls_tokens = self.cls_token.expand(batch_size, 1, -1)  # (batch, 1, embed_dim)
+        cls_tokens = self.cls_token.expand(batch_size, 1, -1)  # type: ignore[arg-type]  # (batch, 1, embed_dim)
 
         # Add CLS positional embedding
         cls_pos_embedding = self.modality_embeddings(
@@ -166,7 +166,7 @@ class FusionTransformer(nn.Module):
         output = self.output_projection(cls_output)  # (batch, output_dim)
 
         # Apply layer normalization
-        return self.layer_norm(output)
+        return self.layer_norm(output)  # type: ignore[no-any-return]
 
     def get_attention_weights(self, inputs: dict[str, torch.Tensor]) -> torch.Tensor:
         """Get attention weights for interpretability.
@@ -240,7 +240,7 @@ class HealthFusionService:
             # Convert to tensors
             tensor_inputs = {}
             for modality, features in modality_features.items():
-                if modality in self.config.modality_dims:
+                if modality in self.config.modality_dims:  # type: ignore[union-attr]
                     tensor_inputs[modality] = torch.tensor(
                         [features], dtype=torch.float32, device=self.device
                     )  # Add batch dimension

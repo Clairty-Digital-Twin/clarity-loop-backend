@@ -16,7 +16,7 @@ import time
 from typing import Any
 
 try:
-    import psutil
+    import psutil  # type: ignore[import-untyped]
 except ImportError:
     psutil = None
 

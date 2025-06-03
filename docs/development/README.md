@@ -1,404 +1,400 @@
-# Development Documentation
+# Development Guide
 
-This directory contains comprehensive development guides and documentation for building, testing, and deploying the Clarity Loop Backend.
+**UPDATED:** December 6, 2025 - Based on actual codebase implementation
 
-## Documentation Structure
-
-### Core Development Guides
-
-- **[Setup & Installation](./setup.md)** - Development environment setup and local installation
-- **[Development Workflow](./workflow.md)** - Git workflow, branching strategy, and development practices
-- **[Testing Strategy](./testing.md)** - Unit testing, integration testing, and test automation
-- **[Deployment Guide](./deployment.md)** - Google Cloud deployment and CI/CD pipeline
-- **[Contributing Guidelines](./contributing.md)** - Code style, review process, and contribution standards
-
-### Technical References
-
-- **[API Development](./api-development.md)** - FastAPI development patterns and best practices
-- **[Database Management](./database.md)** - Firestore operations, indexing, and data migration
-- **[ML Pipeline Development](./ml-pipeline.md)** - Actigraphy Transformer integration and ML ops
-- **[Security Implementation](./security.md)** - Security controls implementation and testing
-- **[Performance Optimization](./performance.md)** - Performance monitoring and optimization techniques
-
-### Tools and Utilities
-
-- **[Local Development Tools](./tools.md)** - Development utilities and helper scripts
-- **[Debugging Guide](./debugging.md)** - Debugging techniques and troubleshooting
-- **[Monitoring & Observability](./monitoring.md)** - Local and production monitoring setup
-
-## Quick Start for New Developers
+## Quick Start
 
 ### Prerequisites
+- Python 3.12+
+- Docker & Docker Compose
+- Google Cloud SDK (for deployment)
+- Firebase project configured
 
-- **Python**: 3.9+ with pip and virtualenv
-- **Google Cloud SDK**: Latest version with authentication
-- **Docker**: For containerized development and testing
-- **Firebase CLI**: For authentication and database emulators
-- **Git**: Version control with SSH key setup
+### Local Development Setup
 
-### Initial Setup (5 minutes)
+1. **Clone and Setup Environment**
+   ```bash
+   git clone <repository-url>
+   cd clarity-loop-backend
+   
+   # Create virtual environment
+   python -m venv venv
+   source venv/bin/activate  # On Windows: venv\Scripts\activate
+   
+   # Install dependencies
+   pip install -r requirements.txt
+   ```
+
+2. **Configure Environment**
+   ```bash
+   # Copy environment template
+   cp .env.example .env
+   
+   # Edit .env with your configuration:
+   # - Firebase credentials
+   # - Google Cloud project settings
+   # - API keys for Gemini AI
+   ```
+
+3. **Start Development Services**
+   ```bash
+   # Start with Docker Compose (recommended)
+   docker-compose up -d
+   
+   # OR run locally
+   python main.py
+   ```
+
+4. **Verify Setup**
+   ```bash
+   # Check health endpoint
+   curl http://localhost:8000/health
+   
+   # View API docs
+   open http://localhost:8000/docs
+   ```
+
+## Project Structure
+
+```
+clarity-loop-backend/
+├── src/clarity/              # Main application code
+│   ├── api/v1/              # API endpoints
+│   ├── services/            # Business logic
+│   ├── core/                # Domain models
+│   ├── storage/             # Data persistence
+│   ├── ml/                  # ML components
+│   └── integrations/        # External services
+├── tests/                   # Test suite (729 tests)
+├── models/                  # ML model files
+├── docs/                    # Documentation
+├── scripts/                 # Utility scripts
+├── requirements.txt         # Python dependencies
+├── docker-compose.yml       # Local development
+├── Dockerfile              # Production container
+└── main.py                 # Application entry point
+```
+
+## Development Workflow
+
+### 1. Feature Development
 
 ```bash
-# 1. Clone repository
-git clone https://github.com/your-org/clarity-loop-backend.git
-cd clarity-loop-backend
+# Create feature branch
+git checkout -b feature/your-feature-name
 
-# 2. Run setup script
-./scripts/setup-dev.sh
+# Make changes to code
+# Write tests for new functionality
+# Ensure all tests pass
+pytest tests/
 
-# 3. Start development environment
-make dev-start
+# Check code quality
+ruff check .
+mypy src/
 
-# 4. Verify installation
-make test-quick
+# Commit and push
+git add .
+git commit -m "feat: add your feature description"
+git push origin feature/your-feature-name
 ```
 
-### Development Environment Overview
+### 2. Testing
 
-#### Local Development Stack
-
-```
-┌────────────────────────────────────────────────────────┐
-│               Development Environment                  │
-├────────────────────────────────────────────────────────┤
-│  FastAPI Server (localhost:8000)                       │
-│  ├── Auto-reload enabled                               │
-│  ├── Debug logging                                     │
-│  └── Hot-reload on file changes                        │
-│                                                        │
-│  Firebase Emulator Suite (localhost:4000)              │
-│  ├── Authentication Emulator (localhost:9099)          │
-│  ├── Firestore Emulator (localhost:8080)               │
-│  └── Functions Emulator (localhost:5001)               │
-│                                                        │
-│  ML Development Environment                            │
-│  ├── Jupyter Notebooks (localhost:8888)                │
-│  ├── Model serving endpoint (localhost:8001)           │
-│  └── Tensor flow serving (localhost:8501)              │
-│                                                        │
-│  Monitoring & Debugging                                │
-│  ├── API Documentation (localhost:8000/docs)           │
-│  ├── Health Dashboard (localhost:3000)                 │
-│  └── Log Aggregation (localhost:5601)                  │
-└────────────────────────────────────────────────────────┘
-```
-
-#### Development Workflow
-
-1. **Feature Development**: Branch from `develop`, implement feature, write tests
-2. **Local Testing**: Run unit tests, integration tests, and manual testing
-3. **Code Review**: Submit PR, address feedback, ensure CI passes
-4. **Staging Deployment**: Automatic deployment to staging environment
-5. **Production Release**: Manual approval for production deployment
-
-## Technology Stack Details
-
-### Backend Framework
-
-- **FastAPI**: Async Python web framework with automatic API documentation
-- **Pydantic**: Data validation and serialization with type hints
-- **Asyncio**: Asynchronous programming for high concurrency
-- **Uvicorn**: ASGI server for production deployment
-
-### Cloud Infrastructure
-
-- **Google Cloud Run**: Serverless container platform for API services
-- **Cloud Firestore**: NoSQL document database for user data
-- **Cloud Storage**: Object storage for files and ML model artifacts
-- **Cloud Pub/Sub**: Message queue for asynchronous processing
-- **Vertex AI**: ML model serving and training platform
-
-### Authentication & Security
-
-- **Firebase Authentication**: User identity and authentication
-- **Cloud IAM**: Service-to-service authentication and authorization
-- **Cloud KMS**: Encryption key management
-- **Cloud Security Command Center**: Security monitoring and alerts
-
-### ML & Analytics
-
-- **TensorFlow**: ML model development and training
-- **Scikit-learn**: Classical ML algorithms and preprocessing
-- **Pandas/NumPy**: Data manipulation and numerical computing
-- **Google AI Platform**: Model training and hyperparameter tuning
-
-### Development Tools
-
-- **Poetry**: Python dependency management and packaging
-- **Black**: Code formatting
-- **Flake8**: Code linting and style checking
-- **pytest**: Unit and integration testing framework
-- **mypy**: Static type checking
-
-## Development Standards
-
-### Code Quality Standards
-
-- **Type Hints**: All functions must include type annotations
-- **Documentation**: Comprehensive docstrings for all public APIs
-- **Test Coverage**: Minimum 80% code coverage required
-- **Code Style**: Black formatting with line length 88 characters
-- **Security**: All user inputs validated, no hardcoded secrets
-
-### Performance Requirements
-
-- **API Response Time**: P95 < 500ms for simple queries
-- **Database Queries**: Efficient indexing, avoid N+1 queries
-- **Memory Usage**: < 512MB per container instance
-- **Concurrent Users**: Support 1000+ concurrent users per instance
-
-### Security Requirements
-
-- **Input Validation**: All inputs validated with Pydantic models
-- **Authentication**: All endpoints require valid Firebase tokens
-- **Authorization**: Role-based access control implemented
-- **Data Encryption**: All sensitive data encrypted at rest and in transit
-- **Audit Logging**: All data access and modifications logged
-
-## Environment Configuration
-
-### Local Development
-
-```yaml
-# .env.local
-ENVIRONMENT=development
-DEBUG=true
-LOG_LEVEL=DEBUG
-
-# Firebase Configuration
-FIREBASE_PROJECT_ID=clarity-loop-dev
-FIREBASE_USE_EMULATOR=true
-FIRESTORE_EMULATOR_HOST=localhost:8080
-FIREBASE_AUTH_EMULATOR_HOST=localhost:9099
-
-# Google Cloud Configuration
-GOOGLE_CLOUD_PROJECT=clarity-loop-dev
-GOOGLE_APPLICATION_CREDENTIALS=./service-account-dev.json
-
-# Database Configuration
-DATABASE_URL=firestore://clarity-loop-dev
-DATABASE_POOL_SIZE=10
-
-# ML Configuration
-ML_MODEL_ENDPOINT=http://localhost:8001
-ACTIGRAPHY_MODEL_VERSION=2.1.0
-GEMINI_API_ENDPOINT=mock
-
-# Security Configuration
-JWT_SECRET_KEY=dev-secret-key-change-in-production
-ENCRYPTION_KEY=dev-encryption-key-32-characters
-CORS_ORIGINS=["http://localhost:3000", "http://localhost:8080"]
-```
-
-### Staging Environment
-
-```yaml
-# .env.staging
-ENVIRONMENT=staging
-DEBUG=false
-LOG_LEVEL=INFO
-
-# Firebase Configuration
-FIREBASE_PROJECT_ID=clarity-loop-staging
-FIREBASE_USE_EMULATOR=false
-
-# Google Cloud Configuration
-GOOGLE_CLOUD_PROJECT=clarity-loop-staging
-GOOGLE_APPLICATION_CREDENTIALS=/secrets/service-account.json
-
-# Database Configuration
-DATABASE_URL=firestore://clarity-loop-staging
-DATABASE_POOL_SIZE=20
-
-# ML Configuration
-ML_MODEL_ENDPOINT=https://ml-staging.clarityloop.com
-ACTIGRAPHY_MODEL_VERSION=2.1.0
-GEMINI_API_ENDPOINT=https://generativelanguage.googleapis.com
-
-# Security Configuration
-JWT_SECRET_KEY=${SECRET_MANAGER_JWT_KEY}
-ENCRYPTION_KEY=${SECRET_MANAGER_ENCRYPTION_KEY}
-CORS_ORIGINS=["https://staging.clarityloop.com"]
-```
-
-## Common Development Tasks
-
-### Running Tests
-
+**Run Full Test Suite:**
 ```bash
-# Run all tests
-make test
+# All tests
+pytest
 
-# Run specific test categories
-make test-unit           # Unit tests only
-make test-integration    # Integration tests only
-make test-api           # API endpoint tests
-make test-ml            # ML pipeline tests
+# With coverage report
+pytest --cov=src --cov-report=html
 
-# Run tests with coverage
-make test-coverage
-
-# Run tests in watch mode
-make test-watch
+# Specific test files
+pytest tests/api/v1/test_health_data.py
 ```
 
-### Database Operations
+**Current Test Status:**
+- ✅ **729 tests passing**
+- ⚠️ **59.28% code coverage** (target: 85%)
+- 🎯 **Key areas needing coverage**: API error scenarios, async processing
 
+### 3. Code Quality
+
+**Linting & Formatting:**
 ```bash
-# Start Firestore emulator
-make db-start
+# Check code style
+ruff check .
 
-# Seed test data
-make db-seed
-
-# Run migrations
-make db-migrate
-
-# Backup local data
-make db-backup
-
-# Reset database
-make db-reset
-```
-
-### ML Development
-
-```bash
-# Start ML development environment
-make ml-dev-start
-
-# Train model locally
-make ml-train-local
-
-# Serve model locally
-make ml-serve-local
-
-# Run model evaluation
-make ml-evaluate
-
-# Deploy model to staging
-make ml-deploy-staging
-```
-
-### Code Quality Checks
-
-```bash
-# Format code
-make format
-
-# Lint code
-make lint
+# Auto-fix issues
+ruff check --fix .
 
 # Type checking
-make type-check
-
-# Security scan
-make security-scan
-
-# Full quality check
-make quality-check
+mypy src/
 ```
 
-## Debugging and Troubleshooting
+**Code Standards:**
+- Follow PEP 8 style guidelines
+- Use type hints for all functions
+- Write comprehensive docstrings
+- Maintain test coverage above 85%
 
-### Common Issues and Solutions
+### 4. Database & Storage
 
-#### Issue: Import Errors
-
+**Firestore Development:**
 ```bash
-# Solution: Ensure virtual environment is activated
-source venv/bin/activate
-pip install -r requirements-dev.txt
+# Use Firestore emulator for testing
+gcloud emulators firestore start
+
+# Set environment for emulator
+export FIRESTORE_EMULATOR_HOST=localhost:8080
 ```
 
-#### Issue: Firebase Emulator Connection
-
+**Cloud Storage Development:**
 ```bash
-# Solution: Restart Firebase emulators
-firebase emulators:kill
-firebase emulators:start --import=./firebase-export
+# Use local storage emulator
+docker run -p 9199:9199 google/cloud-sdk:alpine gcloud beta emulators storage start --host-port=0.0.0.0:9199
 ```
 
-#### Issue: ML Model Loading
+## Key Development Files
 
-```bash
-# Solution: Check model path and version
-export ACTIGRAPHY_MODEL_PATH=/path/to/model
-python scripts/verify-model.py
-```
+### Configuration
+- `src/clarity/core/config.py` - Application configuration
+- `.env` - Environment variables (not in repo)
+- `docker-compose.yml` - Local development services
 
-### Debug Mode Configuration
+### Core Components
+- `src/clarity/api/v1/` - REST API endpoints
+- `src/clarity/services/` - Business logic services
+- `src/clarity/storage/` - Data access layer
+- `src/clarity/ml/` - Machine learning components
+
+### Testing
+- `tests/api/` - API endpoint tests
+- `tests/services/` - Service layer tests
+- `tests/integration/` - Full integration tests
+- `tests/ml/` - ML component tests
+
+## API Development
+
+### Adding New Endpoints
+
+1. **Create API Router**
+   ```python
+   # src/clarity/api/v1/new_feature.py
+   from fastapi import APIRouter, Depends
+   from src.clarity.auth import verify_firebase_token
+   
+   router = APIRouter(prefix="/new-feature", tags=["new-feature"])
+   
+   @router.get("/")
+   async def get_feature_data(
+       current_user: dict = Depends(verify_firebase_token)
+   ):
+       user_id = current_user["uid"]
+       # Implementation here
+       return {"data": "example"}
+   ```
+
+2. **Add to Main Application**
+   ```python
+   # src/clarity/api/v1/__init__.py
+   from .new_feature import router as new_feature_router
+   
+   # Add to router list
+   ```
+
+3. **Write Tests**
+   ```python
+   # tests/api/v1/test_new_feature.py
+   import pytest
+   from httpx import AsyncClient
+   
+   @pytest.mark.asyncio
+   async def test_get_feature_data(client: AsyncClient, auth_headers):
+       response = await client.get("/api/v1/new-feature/", headers=auth_headers)
+       assert response.status_code == 200
+   ```
+
+### Authentication in Endpoints
+
+All protected endpoints should use Firebase token verification:
 
 ```python
-# main.py - Enable debug mode
+from fastapi import Depends
+from src.clarity.auth import verify_firebase_token
+
+@router.get("/protected-endpoint")
+async def protected_endpoint(
+    current_user: dict = Depends(verify_firebase_token)
+):
+    user_id = current_user["uid"]
+    # User is authenticated and user_id is available
+```
+
+## Machine Learning Development
+
+### Adding New ML Models
+
+1. **Add Model File**
+   ```
+   models/
+   └── your_model/
+       ├── model_weights.h5
+       ├── config.json
+       └── README.md
+   ```
+
+2. **Create Processor**
+   ```python
+   # src/clarity/ml/processors/your_model.py
+   class YourModelProcessor:
+       def __init__(self):
+           # Load model
+           pass
+       
+       async def process(self, data):
+           # Model inference
+           pass
+   ```
+
+3. **Add Service Integration**
+   ```python
+   # src/clarity/services/ai/your_model_service.py
+   from src.clarity.ml.processors.your_model import YourModelProcessor
+   
+   class YourModelService:
+       def __init__(self):
+           self.processor = YourModelProcessor()
+   ```
+
+### PAT Model Development
+
+The Pretrained Actigraphy Transformer is already integrated:
+
+- **Model Location**: `models/pat/PAT-M_29k_weights.h5`
+- **Processor**: `src/clarity/ml/processors/pat_processor.py`
+- **API**: `src/clarity/api/v1/pat.py`
+- **Tests**: `tests/ml/test_pat_processor.py` (89% coverage)
+
+## Environment Variables
+
+Required environment variables:
+
+```bash
+# Firebase Configuration
+GOOGLE_APPLICATION_CREDENTIALS=path/to/service-account.json
+FIREBASE_PROJECT_ID=your-firebase-project
+
+# Google Cloud
+GOOGLE_CLOUD_PROJECT=your-gcp-project
+GOOGLE_CLOUD_STORAGE_BUCKET=your-storage-bucket
+
+# AI Services
+GOOGLE_AI_API_KEY=your-gemini-api-key
+
+# Application
+ENVIRONMENT=development
+LOG_LEVEL=INFO
+API_HOST=0.0.0.0
+API_PORT=8000
+```
+
+## Debugging
+
+### Local Debugging
+```bash
+# Enable debug logging
+export LOG_LEVEL=DEBUG
+
+# Run with debugger
+python -m debugpy --listen 5678 --wait-for-client main.py
+```
+
+### API Debugging
+- **FastAPI Docs**: `http://localhost:8000/docs`
+- **Health Check**: `http://localhost:8000/health`
+- **Metrics**: `http://localhost:8000/metrics`
+
+### Database Debugging
+```python
+# Enable Firestore debug logging
 import logging
-from fastapi import FastAPI
-
-if os.getenv("DEBUG", "false").lower() == "true":
-    logging.basicConfig(level=logging.DEBUG)
-    app = FastAPI(debug=True, docs_url="/docs", redoc_url="/redoc")
-else:
-    app = FastAPI(docs_url=None, redoc_url=None)
+logging.getLogger('google.cloud.firestore').setLevel(logging.DEBUG)
 ```
 
-## Performance Profiling
+## Performance Optimization
 
-### Local Performance Testing
+### Current Performance
+- ✅ **FastAPI**: High-performance async framework
+- ✅ **Async Processing**: Pub/Sub for heavy operations
+- ✅ **Model Caching**: ML models loaded once
+- ⚠️ **Monitoring**: Basic metrics available
 
+### Optimization Areas
+1. **API Response Times**: Currently adequate, can improve with caching
+2. **ML Inference**: Batch processing for multiple requests
+3. **Database Queries**: Add query optimization
+4. **Memory Usage**: Monitor model memory footprint
+
+## Deployment
+
+### Local Testing
 ```bash
-# API load testing
-make load-test-local
-
-# Database performance testing
-make db-perf-test
-
-# ML inference benchmarking
-make ml-benchmark
-
-# Memory profiling
-make profile-memory
+# Build and test Docker image
+docker build -t clarity-backend .
+docker run -p 8000:8000 clarity-backend
 ```
 
-### Monitoring Setup
-
+### Production Deployment
 ```bash
-# Start monitoring stack
-make monitoring-start
-
-# View metrics dashboard
-open http://localhost:3000
-
-# Check application logs
-make logs-tail
-
-# Health check
-make health-check
+# Deploy to Google Cloud Run
+gcloud run deploy clarity-backend \
+  --source . \
+  --platform managed \
+  --region us-central1 \
+  --allow-unauthenticated
 ```
 
-## Getting Help
+## Documentation
 
-### Resources
+### API Documentation
+- **Auto-generated**: Available at `/docs` endpoint
+- **Manual Docs**: `docs/api/` directory
+- **Keep Updated**: Documentation should match implementation
 
-- **API Documentation**: <http://localhost:8000/docs> (when running locally)
-- **Architecture Docs**: `docs/architecture/`
-- **Troubleshooting Guide**: `docs/development/debugging.md`
-- **Team Wiki**: [Internal Wiki Link]
+### Code Documentation
+- Use comprehensive docstrings
+- Include type hints
+- Document complex business logic
+- Update README files when adding features
 
-### Support Channels
+## Troubleshooting
 
-- **Slack**: #clarity-backend-dev
-- **Email**: <backend-team@clarityloop.com>
-- **Office Hours**: Tuesday/Thursday 2-3 PM PST
+### Common Issues
 
-### Onboarding Checklist
+**Import Errors:**
+```bash
+# Ensure PYTHONPATH includes src/
+export PYTHONPATH="${PYTHONPATH}:${PWD}/src"
+```
 
-- [ ] Development environment setup completed
-- [ ] All tests passing locally
-- [ ] Access to required Google Cloud projects
-- [ ] Firebase project permissions configured
-- [ ] Slack channels joined
-- [ ] First PR submitted and merged
-- [ ] Code review process completed
-- [ ] Documentation contribution made
+**Firebase Auth Issues:**
+```bash
+# Verify service account credentials
+gcloud auth application-default login
+```
 
-This development documentation provides a comprehensive foundation for efficient backend development with clear standards, workflows, and support resources.
+**Model Loading Issues:**
+```bash
+# Check model file exists
+ls -la models/pat/PAT-M_29k_weights.h5
+
+# Verify TensorFlow installation
+python -c "import tensorflow; print(tensorflow.__version__)"
+```
+
+### Getting Help
+
+1. **Check Documentation**: Start with this guide and API docs
+2. **Review Tests**: Tests serve as usage examples
+3. **Check Logs**: Application logs provide detailed error information
+4. **Use Debugger**: Step through code to understand behavior

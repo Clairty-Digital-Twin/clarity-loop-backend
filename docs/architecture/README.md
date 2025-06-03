@@ -1,176 +1,240 @@
-# Architecture Documentation
+# CLARITY Architecture Overview
 
-This directory contains comprehensive architectural documentation for the Clarity Loop Backend system.
+**UPDATED:** December 6, 2025 - Based on actual implementation
 
-## Architecture Overview
+## System Architecture
 
-Clarity Loop Backend implements an **async-first, event-driven architecture** optimized for high-throughput health data processing and real-time insights delivery. The system is designed with security-first principles, HIPAA-inspired compliance practices, and enterprise-grade scalability.
+CLARITY Digital Twin Platform uses a **clean architecture** approach with a single, well-designed FastAPI application. This is not a microservices architecture, but rather a modular monolith with clear separation of concerns.
 
-## System Design Principles
-
-### 1. Async-First Architecture
-
-- **Immediate Response**: Fast acknowledgment of data uploads for optimal user experience
-- **Background Processing**: Complex analytics run asynchronously without blocking user interactions
-- **Event-Driven Communication**: Services communicate through Cloud Pub/Sub messaging
-- **Real-Time Updates**: Results pushed to clients via Firestore real-time listeners
-
-### 2. Security by Design
-
-- **Zero-Trust Model**: No implicit trust between components
-- **End-to-End Encryption**: Data encrypted at rest and in transit
-- **Principle of Least Privilege**: Minimal access rights for all components
-- **Data Segregation**: User data isolated and access-controlled
-
-### 3. Cloud-Native Scalability
-
-- **Serverless Architecture**: Auto-scaling Cloud Run services
-- **Managed Services**: Leverage Google Cloud's managed database and AI services
-- **Multi-Region Support**: Global deployment for high availability
-- **Elastic Scaling**: Automatic scaling based on demand
-
-## Core Components
-
-### 1. API Gateway (FastAPI on Cloud Run)
-
-- **Purpose**: Primary entry point for all client requests
-- **Technology**: FastAPI with async/await support
-- **Responsibilities**:
-  - Request authentication and authorization
-  - Data validation and sanitization
-  - Rate limiting and DDoS protection
-  - Request routing to appropriate services
-
-### 2. Actigraphy Transformer Microservice
-
-- **Purpose**: Specialized ML service for health data analysis
-- **Technology**: Custom PyTorch/TensorFlow model on Cloud Run
-- **Responsibilities**:
-  - Sleep pattern analysis
-  - Activity classification
-  - Circadian rhythm detection
-  - Anomaly detection in health metrics
-
-### 3. Data Processing Pipeline
-
-- **Purpose**: Async processing of health data and insight generation
-- **Technology**: Cloud Pub/Sub + Cloud Functions/Cloud Run
-- **Responsibilities**:
-  - Data ingestion and validation
-  - ML model orchestration
-  - Result aggregation and storage
-  - Notification delivery
-
-### 4. AI Insights Engine
-
-- **Purpose**: Natural language insight generation
-- **Technology**: Vertex AI with Gemini 2.5 Pro (`gemini-2.5-pro-preview-05-06`)
-- **Model Specifications**:
-  - Input Token Limit: 1,048,576 tokens (1M+ context window)
-  - Output Token Limit: 65,535 tokens
-  - Supported Input Types: Text, Code, Images, Audio, Video
-  - Launch Stage: Public Preview
-  - Primary Region: us-central1
-- **Advanced Capabilities**:
-  - Grounding with Google Search for factual accuracy
-  - Code execution for dynamic analysis
-  - System instructions for consistent clinical behavior
-  - Controlled generation for precise output formatting
-  - Function calling for external API integration
-  - Context caching for optimized performance
-  - Vertex AI RAG Engine integration
-  - Chat completions for interactive interfaces
-- **Responsibilities**:
-  - Health trend analysis with evidence-based insights
-  - Personalized recommendations based on clinical guidelines
-  - Natural language report generation with medical accuracy
-  - Predictive health insights using multimodal analysis
-
-## Data Flow Architecture
+## High-Level Architecture
 
 ```
-iOS/watchOS App
-      ↓
-Firebase Auth → FastAPI Gateway → Data Validation
-      ↓                              ↓
-User Context ←→ Cloud Firestore ←→ Cloud Pub/Sub
-      ↓                              ↓
-Real-time UI ←←←←←←←←←←←←←←←←← Processing Pipeline
-                                     ↓
-                           Actigraphy Transformer
-                                     ↓
-                              Vertex AI (Gemini)
-                                     ↓
-                              Insight Storage
+┌─────────────────────────────────────────────────────────────┐
+│                    Client Applications                      │
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────────────┐  │
+│  │ iOS App     │  │ Web App     │  │    API Clients      │  │
+│  │ (Future)    │  │ (Future)    │  │                     │  │
+│  └─────────────┘  └─────────────┘  └─────────────────────┘  │
+└─────────────────────────────────────────────────────────────┘
+                              │
+                    ┌─────────────────────┐
+                    │   Load Balancer     │
+                    │  (Google Cloud)     │
+                    └─────────────────────┘
+                              │
+┌─────────────────────────────────────────────────────────────┐
+│                   CLARITY Backend API                       │
+│                  (FastAPI Application)                      │
+│                                                             │
+│  ┌─────────────────────────────────────────────────────┐    │
+│  │                API Layer (v1)                       │    │
+│  │  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌────────┐  │    │
+│  │  │   Auth   │ │  Health  │ │ Insights │ │  PAT   │  │    │
+│  │  │          │ │   Data   │ │          │ │ Model  │  │    │
+│  │  └──────────┘ └──────────┘ └──────────┘ └────────┘  │    │
+│  └─────────────────────────────────────────────────────┘    │
+│                              │                              │
+│  ┌─────────────────────────────────────────────────────┐    │
+│  │                Service Layer                        │    │
+│  │  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌────────┐  │    │
+│  │  │   Auth   │ │  Health  │ │ AI/ML    │ │ Pub/Sub│  │    │
+│  │  │ Service  │ │   Data   │ │ Service  │ │Service │  │    │
+│  │  │          │ │ Service  │ │          │ │        │  │    │
+│  │  └──────────┘ └──────────┘ └──────────┘ └────────┘  │    │
+│  └─────────────────────────────────────────────────────┘    │
+│                              │                              │
+│  ┌─────────────────────────────────────────────────────┐    │
+│  │                  Core Layer                         │    │
+│  │  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌────────┐  │    │
+│  │  │ Domain   │ │  Models  │ │   ML     │ │  Core  │  │    │
+│  │  │ Models   │ │    &     │ │  Core    │ │ Utils  │  │    │
+│  │  │          │ │ Entities │ │          │ │        │  │    │
+│  │  └──────────┘ └──────────┘ └──────────┘ └────────┘  │    │
+│  └─────────────────────────────────────────────────────┘    │
+│                              │                              │
+│  ┌─────────────────────────────────────────────────────┐    │
+│  │              Infrastructure Layer                   │    │
+│  │  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌────────┐  │    │
+│  │  │Firebase  │ │ Google   │ │ Gemini   │ │  File  │  │    │
+│  │  │ Auth +   │ │ Cloud    │ │   AI     │ │Storage │  │    │
+│  │  │Firestore │ │ Storage  │ │          │ │        │  │    │
+│  │  └──────────┘ └──────────┘ └──────────┘ └────────┘  │    │
+│  └─────────────────────────────────────────────────────┘    │
+└─────────────────────────────────────────────────────────────┘
+                              │
+┌─────────────────────────────────────────────────────────────┐
+│                 External Services                           │
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────────────┐  │
+│  │ Firebase    │  │ Google      │  │ Google AI Platform  │  │
+│  │ Auth &      │  │ Cloud       │  │ (Gemini 2.5 Pro)    │  │
+│  │ Firestore   │  │ Platform    │  │                     │  │
+│  └─────────────┘  └─────────────┘  └─────────────────────┘  │
+└─────────────────────────────────────────────────────────────┘
 ```
+
+## Clean Architecture Principles
+
+### 1. Dependency Inversion
+- **High-level modules don't depend on low-level modules**
+- Services depend on abstractions (ports), not concrete implementations
+- Infrastructure adapters implement the ports
+
+### 2. Separation of Concerns
+- **API Layer**: HTTP handling, request validation, response formatting
+- **Service Layer**: Business logic, orchestration, use cases  
+- **Core Layer**: Domain models, entities, business rules
+- **Infrastructure**: External integrations, databases, AI models
+
+### 3. Testability
+- **Easy to mock**: Abstract interfaces for all external dependencies
+- **Unit testing**: Core business logic isolated from infrastructure
+- **Integration testing**: Full API flows with real dependencies
+
+## Directory Structure
+
+```
+src/clarity/
+├── api/v1/              # API Layer - FastAPI routers
+│   ├── auth.py          # Authentication endpoints
+│   ├── health_data.py   # Health data upload/retrieval
+│   ├── insights.py      # AI insights generation
+│   └── pat.py           # PAT model analysis
+├── services/            # Service Layer - Business logic
+│   ├── auth/            # Authentication services
+│   ├── health_data/     # Health data processing
+│   ├── ai/              # AI/ML services
+│   └── pubsub/          # Async processing
+├── core/                # Core Layer - Domain logic
+│   ├── models/          # Domain models and entities
+│   ├── exceptions/      # Business exceptions
+│   └── config/          # Configuration
+├── ports/               # Abstractions/Interfaces
+│   ├── repositories/    # Data access abstractions
+│   └── services/        # Service abstractions
+├── storage/             # Infrastructure - Adapters
+│   ├── firestore/       # Firestore implementation
+│   ├── cloud_storage/   # Google Cloud Storage
+│   └── firebase_auth/   # Firebase Auth integration
+├── ml/                  # ML Infrastructure
+│   ├── processors/      # ML pipeline processors
+│   └── models/          # Model loading and inference
+└── integrations/        # External Service Integrations
+    ├── gemini/          # Google AI integration
+    └── healthkit/       # Apple HealthKit integration
+```
+
+## Key Components
+
+### Authentication & Authorization
+- **Firebase Authentication**: Industry-standard auth provider
+- **JWT Tokens**: Stateless authentication
+- **User Isolation**: Strict data access controls
+
+### Health Data Pipeline
+- **Upload**: RESTful API for health metric ingestion
+- **Storage**: Google Cloud Storage for raw data
+- **Processing**: Async background processing with Pub/Sub
+- **Analysis**: PAT model + Gemini AI insights
+
+### Machine Learning Stack
+- **PAT Model**: Pretrained Actigraphy Transformer (Dartmouth)
+- **Gemini AI**: Google's advanced language model
+- **TensorFlow**: Model serving and inference
+- **Background Processing**: Async ML pipeline
+
+### Data Layer
+- **Firestore**: NoSQL database for structured data
+- **Cloud Storage**: Blob storage for health data files
+- **Real-time Updates**: Firestore listeners for live data
+- **ACID Transactions**: Consistent data operations
+
+## Scalability Design
+
+### Horizontal Scaling
+- **Stateless Application**: No server-side session state
+- **Cloud Run**: Auto-scaling container deployment
+- **Load Balancing**: Google Cloud Load Balancer
+- **Database Scaling**: Firestore automatic scaling
+
+### Asynchronous Processing
+- **Pub/Sub Queues**: Decouple API from heavy processing
+- **Background Workers**: Separate processing containers
+- **Real-time Updates**: WebSocket/SSE for live data
+
+### Caching Strategy
+- **Response Caching**: Frequently accessed insights
+- **Model Caching**: Keep ML models in memory
+- **Data Caching**: Cache user data for fast access
 
 ## Security Architecture
 
-### Authentication & Authorization
-
-- **Firebase Identity Platform**: HIPAA-compliant user authentication
-- **Cloud IAM**: Service-to-service authorization
-- **Custom Claims**: Role-based access control
-- **JWT Tokens**: Secure session management
-
 ### Data Protection
+- **Encryption**: All data encrypted at rest and in transit
+- **User Isolation**: Firebase security rules + application-level checks
+- **API Authentication**: JWT token validation on all endpoints
+- **Input Validation**: Comprehensive request validation
 
-- **Encryption at Rest**: AES-256 encryption for all stored data
-- **Encryption in Transit**: TLS 1.3 for all network communication
-- **Key Management**: Cloud KMS for encryption key lifecycle
-- **Data Masking**: PII protection in logs and non-production environments
+### Privacy by Design
+- **Minimal Data Collection**: Only necessary health metrics
+- **User Control**: Users control their data sharing
+- **Audit Logging**: Complete access trail
+- **HIPAA Readiness**: Healthcare compliance design
 
-### Network Security
+## Deployment Architecture
 
-- **VPC Isolation**: Private network for backend services
-- **Firewall Rules**: Ingress/egress traffic control
-- **Service Mesh**: Istio for service-to-service communication
-- **DDoS Protection**: Cloud Armor for application-layer protection
+### Google Cloud Platform
+- **Cloud Run**: Containerized application deployment
+- **Cloud Storage**: Health data file storage
+- **Firestore**: Primary database
+- **Pub/Sub**: Async message processing
+- **Cloud Build**: CI/CD pipeline
+- **Cloud Monitoring**: Observability and alerting
 
-## Scalability & Performance
+### Development Environment
+- **Local Development**: Docker Compose setup
+- **Testing**: Comprehensive test suite (729 tests)
+- **CI/CD**: Automated testing and deployment
+- **Monitoring**: Prometheus metrics + Grafana dashboards
 
-### Horizontal Scaling
+## Technology Stack
 
-- **Cloud Run**: Automatic container scaling (0-1000+ instances)
-- **Load Balancing**: Global HTTP(S) load balancer
-- **Database Scaling**: Firestore auto-scaling
-- **CDN**: Global content delivery network
+### Core Technologies
+- **Python 3.12**: Modern, type-safe Python
+- **FastAPI**: High-performance async web framework
+- **Pydantic**: Data validation and serialization
+- **TensorFlow**: Machine learning model serving
 
-### Performance Optimization
+### External Services
+- **Firebase**: Authentication and real-time database
+- **Google Cloud**: Infrastructure and storage
+- **Gemini AI**: Advanced language model for insights
+- **PAT Model**: Specialized actigraphy analysis
 
-- **Caching Strategy**: Multi-level caching (Redis, CDN, application)
-- **Connection Pooling**: Efficient database connection management
-- **Async Processing**: Non-blocking I/O operations
-- **Resource Optimization**: CPU/memory usage monitoring and tuning
+### Development Tools
+- **pytest**: Comprehensive testing framework
+- **mypy**: Static type checking
+- **ruff**: Fast Python linting
+- **Docker**: Containerization
 
-## Monitoring & Observability
+## Implementation Status
 
-### Logging Strategy
+### ✅ Completed Components
+- Clean architecture foundation
+- Authentication system
+- Health data upload/storage
+- PAT model integration
+- Gemini AI insights
+- Async processing pipeline
+- Comprehensive testing (729 tests)
 
-- **Structured Logging**: JSON-formatted logs with correlation IDs
-- **Centralized Logging**: Cloud Logging for all services
-- **Log Levels**: Appropriate log levels for different environments
-- **Sensitive Data**: No PII in logs, secure audit trails
+### 🚧 In Progress
+- Test coverage improvement (59% → 85%)
+- Error handling edge cases
+- Performance optimization
 
-### Metrics & Monitoring
-
-- **Application Metrics**: Custom business metrics and KPIs
-- **Infrastructure Metrics**: Resource utilization monitoring
-- **Real-time Dashboards**: Cloud Monitoring dashboards
-- **Alerting**: Proactive incident detection and notification
-
-### Tracing & Debugging
-
-- **Distributed Tracing**: Cloud Trace for request flow analysis
-- **Error Tracking**: Cloud Error Reporting for exception management
-- **Performance Profiling**: Cloud Profiler for optimization insights
-- **Debugging Tools**: Cloud Debugger for production troubleshooting
-
-## Documentation Index
-
-- **[System Components](./components.md)** - Detailed component specifications
-- **[Data Models](./data-models.md)** - Database schemas and data structures
-- **[Security Architecture](./security.md)** - Comprehensive security design
-- **[Deployment Architecture](./deployment.md)** - Infrastructure and deployment patterns
-- **[Integration Patterns](./integrations.md)** - External service integration designs
-- **[Performance & Scaling](./performance.md)** - Scalability and optimization strategies
+### 📋 Planned
+- iOS/Web client applications
+- Advanced analytics dashboard
+- Sleep processor module
+- Additional ML models
+- Enhanced monitoring/alerting

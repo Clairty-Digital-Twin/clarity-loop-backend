@@ -231,7 +231,8 @@ class TestGeminiServiceHealthInsights:
 class TestGeminiServicePromptGeneration:
     """Test Gemini service prompt generation functionality."""
 
-    def test_create_health_insight_prompt_comprehensive(self):
+    @staticmethod
+    def test_create_health_insight_prompt_comprehensive():
         """Test comprehensive health insight prompt generation."""
         request = HealthInsightRequest(
             user_id="test-user",
@@ -258,7 +259,8 @@ class TestGeminiServicePromptGeneration:
         assert "Stressful work period" in prompt  # Context
         assert "JSON" in prompt  # Format specification
 
-    def test_create_health_insight_prompt_edge_cases(self):
+    @staticmethod
+    def test_create_health_insight_prompt_edge_cases():
         """Test health insight prompt generation with edge case values."""
         request = HealthInsightRequest(
             user_id="edge-case-user",
@@ -280,7 +282,8 @@ class TestGeminiServicePromptGeneration:
         assert "0.0" in prompt
         assert "12.0 hours" in prompt
 
-    def test_create_health_insight_prompt_missing_data(self):
+    @staticmethod
+    def test_create_health_insight_prompt_missing_data():
         """Test health insight prompt generation with missing data."""
         request = HealthInsightRequest(
             user_id="missing-data-user",
@@ -298,7 +301,8 @@ class TestGeminiServicePromptGeneration:
 class TestGeminiServiceResponseParsing:
     """Test Gemini service response parsing functionality."""
 
-    def test_parse_gemini_response_valid_json(self):
+    @staticmethod
+    def test_parse_gemini_response_valid_json():
         """Test parsing valid JSON response."""
         mock_response = MagicMock()
         mock_response.text = json.dumps({
@@ -316,7 +320,8 @@ class TestGeminiServiceResponseParsing:
         assert len(result.recommendations) == 2
         assert result.confidence_score == 0.9
 
-    def test_parse_gemini_response_partial_json(self):
+    @staticmethod
+    def test_parse_gemini_response_partial_json():
         """Test parsing JSON response with missing fields."""
         mock_response = MagicMock()
         mock_response.text = json.dumps({
@@ -331,7 +336,8 @@ class TestGeminiServiceResponseParsing:
         assert result.recommendations == []  # Default empty list
         assert result.confidence_score == 0.8  # Default value
 
-    def test_parse_gemini_response_invalid_json(self):
+    @staticmethod
+    def test_parse_gemini_response_invalid_json():
         """Test parsing invalid JSON response with fallback."""
         mock_response = MagicMock()
         mock_response.text = "Not valid JSON"
@@ -343,7 +349,8 @@ class TestGeminiServiceResponseParsing:
         assert len(result.key_insights) > 0  # Fallback insights
         assert len(result.recommendations) > 0  # Fallback recommendations
 
-    def test_create_fallback_response(self):
+    @staticmethod
+    def test_create_fallback_response():
         """Test creation of fallback response."""
         long_text = "A" * 500  # Long text to test truncation
 
@@ -355,7 +362,8 @@ class TestGeminiServiceResponseParsing:
         assert len(result.recommendations) > 0
         assert result.confidence_score == 0.7
 
-    def test_create_fallback_response_short_text(self):
+    @staticmethod
+    def test_create_fallback_response_short_text():
         """Test creation of fallback response with short text."""
         short_text = "Short response"
 

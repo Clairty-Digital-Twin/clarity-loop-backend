@@ -122,8 +122,9 @@ class CardioProcessor:
             # Return zero vector on error
             return [0.0] * 8
 
+    @staticmethod
     def _preprocess_heart_rate(
-        self, timestamps: list[datetime], values: list[float]
+        timestamps: list[datetime], values: list[float]
     ) -> pd.Series:
         """Clean and normalize heart rate time series."""
         if not timestamps or not values:
@@ -149,8 +150,9 @@ class CardioProcessor:
         # Fill remaining NaNs with forward fill
         return hr_smoothed.ffill().bfill()
 
+    @staticmethod
     def _preprocess_hrv(
-        self, timestamps: list[datetime], values: list[float]
+        timestamps: list[datetime], values: list[float]
     ) -> pd.Series:
         """Clean and normalize HRV time series."""
         if not timestamps or not values:

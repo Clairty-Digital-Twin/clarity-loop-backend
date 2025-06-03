@@ -152,15 +152,20 @@ class HealthKitClient:
         base_url: str = "https://www.healthkit.apple.com",
     ) -> None:
         """Initialize HealthKit client with configuration."""
-        self.client_id = client_id or settings.APPLE_HEALTHKIT_CLIENT_ID
-        self.client_secret = client_secret or settings.APPLE_HEALTHKIT_CLIENT_SECRET
-        self.redirect_uri = redirect_uri or settings.APPLE_HEALTHKIT_REDIRECT_URI
+        settings = get_settings()
+        self.client_id = client_id or getattr(settings, "APPLE_HEALTHKIT_CLIENT_ID", "")
+        self.client_secret = client_secret or getattr(
+            settings, "APPLE_HEALTHKIT_CLIENT_SECRET", ""
+        )
+        self.redirect_uri = redirect_uri or getattr(
+            settings, "APPLE_HEALTHKIT_REDIRECT_URI", ""
+        )
         self.base_url = base_url
 
         self._http_client = httpx.AsyncClient(
             timeout=httpx.Timeout(DEFAULT_TIMEOUT),
             headers={
-                "User-Agent": f"Clarity-Digital-Twin/{settings.VERSION}",
+                "User-Agent": f"Clarity-Digital-Twin/{getattr(settings, 'VERSION', settings.app_version)}",
                 "Accept": "application/json",
                 "Content-Type": "application/json",
             },
@@ -381,10 +386,10 @@ class HealthKitClient:
         try:
             endpoint = HealthKitClient._validate_data_type_support(data_type)
 
-            params = {
+            params: dict[str, str | int] = {
                 "start_date": start_date.isoformat(),
                 "end_date": end_date.isoformat(),
-                "limit": limit,
+                "limit": str(limit),
             }
 
             response = await self._http_client.get(
@@ -474,7 +479,7 @@ class HealthKitClient:
             )
             tasks.append((data_type, task))
 
-        results = {}
+        results: dict[HealthDataType, HealthDataBatch] = {}
         completed_tasks = await asyncio.gather(
             *[task for _, task in tasks], return_exceptions=True
         )
@@ -487,6 +492,7 @@ class HealthKitClient:
                 )
                 # Continue with other data types
                 continue
+            # Result is confirmed to be HealthDataBatch here
             results[data_type] = result
 
         logger.info(

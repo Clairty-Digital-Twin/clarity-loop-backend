@@ -9,7 +9,7 @@ from dataclasses import asdict, dataclass
 from datetime import datetime, timedelta
 from enum import Enum
 import logging
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional
 
 import httpx
 from pydantic import BaseModel, Field, validator
@@ -34,6 +34,12 @@ class HealthDataType(str, Enum):
     WORKOUT = "workout"
     RESTING_HEART_RATE = "resting_heart_rate"
     HEART_RATE_VARIABILITY = "heart_rate_variability"
+    RESPIRATORY_RATE = "respiratory_rate"
+    BLOOD_OXYGEN = "blood_oxygen"
+    BLOOD_PRESSURE = "blood_pressure"
+    BODY_TEMPERATURE = "body_temperature"
+    VO2_MAX = "vo2_max"
+    ELECTROCARDIOGRAM = "electrocardiogram"
 
 
 class HealthKitAuthScope(str, Enum):
@@ -50,10 +56,15 @@ class HealthKitAuthScope(str, Enum):
 class HealthDataPoint:
     """Individual health data measurement"""
     timestamp: datetime
-    value: float | int | str
+    value: float
     unit: str
     source: str = "apple_watch"
     metadata: dict[str, Any] | None = None
+    
+    # Additional fields for specific data types
+    systolic: Optional[float] = None  # For blood pressure
+    diastolic: Optional[float] = None  # For blood pressure
+    classification: Optional[str] = None  # For ECG
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
@@ -62,22 +73,37 @@ class HealthDataPoint:
 class HealthDataBatch(BaseModel):
     """Batch of health data for processing"""
     user_id: str
-    data_type: HealthDataType
-    start_date: datetime
-    end_date: datetime
-    data_points: list[HealthDataPoint]
-    total_count: int = Field(ge=0)
+    data_type: Optional[HealthDataType] = None
+    start_date: Optional[datetime] = None
+    end_date: Optional[datetime] = None
+    data_points: list[HealthDataPoint] = Field(default_factory=list)
+    total_count: int = Field(ge=0, default=0)
+    
+    # Additional sample type fields for multi-modal processing
+    heart_rate_samples: Optional[list[HealthDataPoint]] = None
+    hrv_samples: Optional[list[HealthDataPoint]] = None
+    respiratory_rate_samples: Optional[list[HealthDataPoint]] = None
+    step_count_samples: Optional[list[HealthDataPoint]] = None
+    blood_oxygen_samples: Optional[list[HealthDataPoint]] = None
+    blood_pressure_samples: Optional[list[HealthDataPoint]] = None
+    body_temperature_samples: Optional[list[HealthDataPoint]] = None
+    vo2_max_samples: Optional[list[HealthDataPoint]] = None
+    workout_samples: Optional[list[Any]] = None  # Complex workout objects
+    electrocardiogram_samples: Optional[list[Any]] = None  # ECG objects
+    
+    # Computed property for end time
+    @property
+    def end_time(self) -> Optional[datetime]:
+        return self.end_date
 
     @validator('data_points')
     def validate_data_points(cls, v):
-        if not v:
-            raise ValueError("Data points cannot be empty")
+        # Allow empty data points for multi-modal batches
         return v
 
     @validator('total_count')
     def validate_count_matches(cls, v, values):
-        if 'data_points' in values and v != len(values['data_points']):
-            raise ValueError("Total count must match data points length")
+        # For multi-modal batches, total_count may not match data_points
         return v
 
 

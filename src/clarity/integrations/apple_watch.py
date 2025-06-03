@@ -396,7 +396,7 @@ class AppleWatchDataProcessor:
         result: ProcessedHealthData
     ):
         """Process SpO2 data (sparse samples)."""
-        values = [s.value for s in samples if self.SPO2_MIN <= s.value <= self.SPO2_MAX]
+        values = [float(s.value) for s in samples if isinstance(s.value, (int, float)) and self.SPO2_MIN <= s.value <= self.SPO2_MAX]
 
         if values:
             result.avg_spo2 = float(np.mean(values))
@@ -429,7 +429,7 @@ class AppleWatchDataProcessor:
         result: ProcessedHealthData
     ):
         """Process temperature deviation data."""
-        deviations = [s.value for s in samples if abs(s.value) <= self.TEMP_DEVIATION_MAX]
+        deviations = [float(s.value) for s in samples if isinstance(s.value, (int, float)) and abs(s.value) <= self.TEMP_DEVIATION_MAX]
 
         if deviations:
             result.avg_temp_deviation = float(np.mean(deviations))
@@ -440,8 +440,8 @@ class AppleWatchDataProcessor:
         result: ProcessedHealthData
     ):
         """Process VO2 max data."""
-        values = [(s.timestamp, s.value) for s in samples
-                  if self.VO2_MAX_MIN <= s.value <= self.VO2_MAX_MAX]
+        values = [(s.timestamp, float(s.value)) for s in samples 
+                  if isinstance(s.value, (int, float)) and self.VO2_MAX_MIN <= s.value <= self.VO2_MAX_MAX]
 
         if values:
             # Sort by time

@@ -24,6 +24,10 @@ logger = logging.getLogger(__name__)
 # Configure router
 router = APIRouter(prefix="/api/v1/healthkit", tags=["HealthKit"])
 
+# Constants for upload ID validation
+MIN_UPLOAD_ID_PARTS = 2
+UUID_HEX_LENGTH = 32
+
 
 class HealthKitSample(BaseModel):
     """Individual HealthKit sample."""
@@ -81,7 +85,7 @@ async def upload_healthkit_data(
 
     Args:
         request: HealthKit upload data
-        token: Bearer token for authentication
+        current_user: Authenticated user context from Firebase
 
     Returns:
         Upload acknowledgment with tracking ID
@@ -171,7 +175,7 @@ async def get_upload_status(
 
     Args:
         upload_id: The upload ID to check
-        token: Bearer token for authentication
+        current_user: Authenticated user context from Firebase
 
     Returns:
         Upload status information
@@ -180,12 +184,12 @@ async def get_upload_status(
     # The UUID is always the last 32-character hex string after the final dash
     try:
         parts = upload_id.split("-")
-        if len(parts) < 2:
+        if len(parts) < MIN_UPLOAD_ID_PARTS:
             msg = "Invalid format"
             raise ValueError(msg)
         # The last part should be a 32-character hex UUID
         uuid_part = parts[-1]
-        if len(uuid_part) != 32 or not all(c in '0123456789abcdef' for c in uuid_part.lower()):
+        if len(uuid_part) != UUID_HEX_LENGTH or not all(c in '0123456789abcdef' for c in uuid_part.lower()):
             msg = "Invalid UUID format"
             raise ValueError(msg)
         # Join all parts except the last one to get the user_id

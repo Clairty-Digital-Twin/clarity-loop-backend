@@ -103,7 +103,7 @@ class PaginatedResponse(BaseModel, Generic[T]):
     class Config:
         """Pydantic configuration."""
         from typing import ClassVar
-        
+
         json_encoders: ClassVar[dict[str, object]] = {
             # Custom encoders if needed
         }
@@ -138,7 +138,7 @@ class PaginationParams(BaseModel):
         """Ensure reasonable page size limits."""
         min_limit_msg = "Limit must be at least 1"
         max_limit_msg = f"Limit cannot exceed {MAX_PAGE_SIZE}"
-        
+
         if v < 1:
             raise ValueError(min_limit_msg)
         if v > MAX_PAGE_SIZE:
@@ -285,7 +285,6 @@ def create_cursor(cursor_info: CursorInfo) -> str:
     Returns:
         Base64-encoded cursor string
     """
-
     cursor_data = cursor_info.dict(exclude_none=True)
     cursor_json = json.dumps(cursor_data, sort_keys=True)
     cursor_bytes = cursor_json.encode("utf-8")
@@ -304,7 +303,6 @@ def decode_cursor(cursor: str) -> CursorInfo:
     Raises:
         ValueError: If cursor is invalid
     """
-
     try:
         cursor_bytes = base64.b64decode(cursor.encode("utf-8"))
         cursor_json = cursor_bytes.decode("utf-8")

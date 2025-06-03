@@ -273,7 +273,7 @@ def problem_detail_exception_handler(
 ) -> JSONResponse:
     """Convert ClarityAPIException to RFC 7807 Problem Detail response."""
     problem = exc.to_problem_detail()
-    
+
     return JSONResponse(
         status_code=exc.status_code,
         content=problem.model_dump(exclude_none=True),
@@ -287,17 +287,17 @@ def generic_exception_handler(
 ) -> JSONResponse:
     """Handle unexpected exceptions with Problem Details format."""
     trace_id = str(uuid4())
-    
+
     problem = InternalServerProblem(
         detail="An unexpected error occurred",
         trace_id=trace_id
     ).to_problem_detail()
-    
+
     # Log the actual exception for debugging
     logger = logging.getLogger(__name__)
     error_msg = f"Unhandled exception (trace_id={trace_id}): {exc}"
     logger.error(error_msg, exc_info=exc)
-    
+
     return JSONResponse(
         status_code=500,
         content=problem.model_dump(exclude_none=True)

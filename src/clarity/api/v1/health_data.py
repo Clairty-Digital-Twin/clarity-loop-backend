@@ -30,7 +30,6 @@ from clarity.core.exceptions import (
 from clarity.core.pagination import (
     PaginatedResponse,
     PaginationBuilder,
-
     validate_pagination_params,
 )
 from clarity.models.health_data import HealthDataResponse, HealthDataUpload
@@ -261,7 +260,7 @@ async def get_processing_status(
 
         if not status_info:
             _raise_not_found_error("Processing Job", str(processing_id))
-            
+
         logger.debug("Retrieved processing status: %s", processing_id)
         return status_info
 

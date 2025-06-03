@@ -322,10 +322,11 @@ class DependencyContainer:
         )
 
         # Register custom exception handler for ClarityAPIException
-        app.add_exception_handler(ClarityAPIException, problem_detail_exception_handler)
+        # Cast to the expected handler type to resolve typing issues
+        app.add_exception_handler(ClarityAPIException, problem_detail_exception_handler)  # type: ignore[arg-type]
 
         # Register generic exception handler for unhandled exceptions
-        app.add_exception_handler(Exception, generic_exception_handler)
+        app.add_exception_handler(Exception, generic_exception_handler)  # type: ignore[arg-type]
 
         logger.info("✅ RFC 7807 Problem Details exception handling configured")
 

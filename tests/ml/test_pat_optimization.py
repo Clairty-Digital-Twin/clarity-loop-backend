@@ -405,9 +405,8 @@ class TestBatchAnalysisProcessor:
     """Test batch analysis processor."""
 
     @pytest.fixture
-    def batch_processor(
-        self, optimizer: PATPerformanceOptimizer
-    ) -> BatchAnalysisProcessor:
+    @staticmethod
+    def batch_processor(optimizer: PATPerformanceOptimizer) -> BatchAnalysisProcessor:
         """Create batch analysis processor."""
         return BatchAnalysisProcessor(optimizer, max_batch_size=3)
 

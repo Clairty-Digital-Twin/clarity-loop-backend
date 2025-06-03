@@ -394,43 +394,43 @@ class EnhancedHealthDataService:
     # Error raising helper methods to satisfy TRY301
 
     @staticmethod
-    def _raise_model_integrity_error() -> None:
+    def _raise_model_integrity_error() -> NoReturn:
         """Raise model integrity verification error."""
         msg = "ML model integrity verification failed. Processing cannot continue."
         raise HealthDataServiceError(msg, status_code=503)
 
     @staticmethod
-    def _raise_storage_error() -> None:
+    def _raise_storage_error() -> NoReturn:
         """Raise storage error."""
         msg = "Failed to store health data in repository"
         raise HealthDataServiceError(msg, status_code=500)
 
     @staticmethod
-    def _raise_invalid_limit_error() -> None:
+    def _raise_invalid_limit_error() -> NoReturn:
         """Raise invalid limit parameter error."""
         msg = "Invalid limit parameter"
         raise HealthDataServiceError(msg, status_code=400)
 
     @staticmethod
-    def _raise_invalid_offset_error() -> None:
+    def _raise_invalid_offset_error() -> NoReturn:
         """Raise invalid offset parameter error."""
         msg = "Invalid offset parameter"
         raise HealthDataServiceError(msg, status_code=400)
 
     @staticmethod
-    def _raise_retention_policy_error() -> None:
+    def _raise_retention_policy_error() -> NoReturn:
         """Raise retention policy error."""
         msg = "Data deletion not allowed due to retention policy"
         raise HealthDataServiceError(msg, status_code=403)
 
     @staticmethod
-    def _raise_deletion_failed_error() -> None:
+    def _raise_deletion_failed_error() -> NoReturn:
         """Raise deletion failed error."""
         msg = "Data deletion failed at repository level"
         raise HealthDataServiceError(msg, status_code=500)
 
     @staticmethod
-    def _raise_validation_error(error_summary: str) -> None:
+    def _raise_validation_error(error_summary: str) -> NoReturn:
         """Raise validation error."""
         raise HealthDataServiceError(error_summary, status_code=400)
 

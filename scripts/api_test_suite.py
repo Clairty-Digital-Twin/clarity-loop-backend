@@ -8,17 +8,28 @@ Built in 2 days with 112 days of programming experience - SHOCK THE TECH WORLD! 
 """
 
 import asyncio
-import json
 import time
 from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, TYPE_CHECKING
 
-import aiohttp
-import colorama
-from colorama import Fore, Style
-
-# Initialize colorama for cross-platform colored output
-colorama.init()
+# Dynamic imports - packages installed at runtime if needed
+if TYPE_CHECKING:
+    import aiohttp  # type: ignore[import-untyped]
+    import colorama  # type: ignore[import-untyped]
+    from colorama import Fore, Style  # type: ignore[import-untyped]
+else:
+    try:
+        import aiohttp  # type: ignore[import-untyped]
+        import colorama  # type: ignore[import-untyped]
+        from colorama import Fore, Style  # type: ignore[import-untyped]
+        # Initialize colorama for cross-platform colored output
+        colorama.init()
+    except ImportError:
+        # Will be installed at runtime
+        aiohttp = None  # type: ignore[misc,assignment]
+        colorama = None  # type: ignore[misc,assignment]
+        Fore = None  # type: ignore[misc,assignment]
+        Style = None  # type: ignore[misc,assignment]
 
 BASE_URL = "http://localhost:8080"
 

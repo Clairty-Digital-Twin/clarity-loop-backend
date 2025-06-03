@@ -20,7 +20,7 @@ import contextlib
 from functools import wraps
 import logging
 import time
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Optional
 
 from pydantic import BaseModel, Field
 
@@ -176,17 +176,17 @@ class AsyncInferenceEngine:
     def __init__(
         self,
         pat_service: PATModelService,
-        cache_ttl: int = CACHE_TTL_DEFAULT_SECONDS,
         batch_size: int = DEFAULT_BATCH_SIZE,
         batch_timeout_ms: int = DEFAULT_BATCH_TIMEOUT_MS,
+        cache_ttl: int = DEFAULT_CACHE_TTL_SECONDS,
     ) -> None:
         """Initialize the inference engine.
 
         Args:
             pat_service: PAT model service instance
-            cache_ttl: Cache time-to-live in seconds
             batch_size: Maximum batch size for processing
             batch_timeout_ms: Batch timeout in milliseconds
+            cache_ttl: Cache time-to-live in seconds
         """
         self.pat_service = pat_service
         self.batch_size = batch_size
@@ -199,11 +199,10 @@ class AsyncInferenceEngine:
 
         # Async components
         self.cache = InferenceCache(ttl_seconds=cache_ttl)
-        self.request_queue: asyncio.Queue[
-            tuple[InferenceRequest, asyncio.Future[InferenceResponse]]
-        ] = asyncio.Queue()
-        self.batch_processor_task: asyncio.Task[None] | None = None
+        self.request_queue: asyncio.Queue[InferenceRequest] = asyncio.Queue()
+        self.batch_processor_task: Optional[asyncio.Task] = None
         self.is_running = False
+        self._shutdown_event = asyncio.Event()
 
         logger.info(
             "Initialized AsyncInferenceEngine: batch_size=%d, "
@@ -212,6 +211,15 @@ class AsyncInferenceEngine:
             cache_ttl,
             batch_timeout_ms,
         )
+
+    async def __aenter__(self):
+        """Async context manager entry."""
+        await self.start()
+        return self
+
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
+        """Async context manager exit with proper cleanup."""
+        await self.stop()
 
     async def start(self) -> None:
         """Start the batch processor.
@@ -223,6 +231,7 @@ class AsyncInferenceEngine:
             return
 
         self.is_running = True
+        self._shutdown_event.clear()
         self.batch_processor_task = asyncio.create_task(self._batch_processor())
         logger.info("AsyncInferenceEngine started")
 
@@ -232,11 +241,23 @@ class AsyncInferenceEngine:
         This method implements graceful shutdown with proper resource cleanup.
         """
         self.is_running = False
+        self._shutdown_event.set()
 
-        if self.batch_processor_task:
+        if self.batch_processor_task and not self.batch_processor_task.done():
             self.batch_processor_task.cancel()
-            with contextlib.suppress(asyncio.CancelledError):
+            try:
                 await self.batch_processor_task
+            except asyncio.CancelledError:
+                pass  # Expected when cancelling
+            except Exception as e:
+                logger.warning(f"Error during batch processor shutdown: {e}")
+
+        # Clear any remaining items in the queue
+        while not self.request_queue.empty():
+            try:
+                self.request_queue.get_nowait()
+            except asyncio.QueueEmpty:
+                break
 
         logger.info("AsyncInferenceEngine stopped")
 
@@ -305,7 +326,7 @@ class AsyncInferenceEngine:
             logger.warning("Cache store failed: %s", str(e))
 
     async def _process_batch(
-        self, requests: list[tuple[InferenceRequest, asyncio.Future[InferenceResponse]]]
+        self, requests: list[InferenceRequest]
     ) -> None:
         """Process a batch of inference requests.
 
@@ -314,7 +335,7 @@ class AsyncInferenceEngine:
         specific steps if needed.
 
         Args:
-            requests: List of request/future pairs to process
+            requests: List of request to process
         """
         if not requests:
             return
@@ -324,18 +345,12 @@ class AsyncInferenceEngine:
         logger.debug("Processing batch of %d requests", batch_size)
 
         # Process each request in the batch
-        for request, future in requests:
-            if future.cancelled():
-                continue
-
+        for request in requests:
             try:
                 result = await self._run_single_inference(request)
-                if not future.cancelled():
-                    future.set_result(result)
             except (ValueError, RuntimeError, OSError) as e:
                 self.error_count += 1
-                if not future.cancelled():
-                    future.set_exception(e)
+                logger.warning(f"Error processing request {request.request_id}: {e}")
 
         processing_time = (time.perf_counter() - start_time) * 1000
         logger.debug("Batch processing completed in %.2fms", processing_time)
@@ -399,53 +414,63 @@ class AsyncInferenceEngine:
             raise InferenceError(error_message, request_id=request.request_id) from e
 
     async def _batch_processor(self) -> None:
-        """Main batch processing loop.
-
-        This method implements the Producer-Consumer pattern for handling
-        inference requests efficiently in batches.
-        """
-        logger.info("Batch processor started")
-
+        """Process inference requests in batches."""
         while self.is_running:
             try:
-                # Collect requests for batching
-                requests: list[
-                    tuple[InferenceRequest, asyncio.Future[InferenceResponse]]
-                ] = []
+                # Check for shutdown signal with timeout
+                try:
+                    await asyncio.wait_for(
+                        self._shutdown_event.wait(), 
+                        timeout=self.batch_timeout
+                    )
+                    # Shutdown signal received
+                    break
+                except asyncio.TimeoutError:
+                    # Continue processing
+                    pass
 
-                # Wait for first request
+                # Try to get first request with timeout
                 try:
                     first_request = await asyncio.wait_for(
-                        self.request_queue.get(), timeout=1.0
+                        self.request_queue.get(),
+                        timeout=self.batch_timeout
                     )
-                    requests.append(first_request)
-                except TimeoutError:
-                    continue
+                except asyncio.TimeoutError:
+                    continue  # No requests, continue loop
 
+                # Collect batch
+                batch = [first_request]
+                
                 # Collect additional requests up to batch size
-                batch_deadline = time.time() + self.batch_timeout
-
-                while len(requests) < self.batch_size and time.time() < batch_deadline:
+                for _ in range(self.batch_size - 1):
                     try:
                         additional_request = await asyncio.wait_for(
                             self.request_queue.get(),
-                            timeout=max(0.001, batch_deadline - time.time()),
+                            timeout=self.batch_timeout
                         )
-                        requests.append(additional_request)
-                    except TimeoutError:
-                        break
+                        batch.append(additional_request)
+                    except asyncio.TimeoutError:
+                        break  # No more requests, process current batch
 
                 # Process the batch
-                if requests:
-                    await self._process_batch(requests)
+                await self._process_batch(batch)
 
             except asyncio.CancelledError:
+                # Graceful shutdown
+                logger.info("Batch processor cancelled, shutting down gracefully")
                 break
-            except Exception:
-                logger.exception("Batch processor error")
-                await asyncio.sleep(BATCH_PROCESSOR_ERROR_SLEEP_SECONDS)
-
-        logger.info("Batch processor stopped")
+            except Exception as e:
+                logger.error(f"Batch processor error: {e}")
+                self.error_count += 1
+                # Don't sleep on shutdown
+                if self.is_running:
+                    try:
+                        await asyncio.wait_for(
+                            asyncio.sleep(BATCH_PROCESSOR_ERROR_SLEEP_SECONDS),
+                            timeout=1.0
+                        )
+                    except asyncio.TimeoutError:
+                        break  # Shutdown timeout reached
 
     async def predict_async(self, request: InferenceRequest) -> InferenceResponse:
         """Submit async prediction request.
@@ -463,19 +488,15 @@ class AsyncInferenceEngine:
         if not self.is_running:
             await self.start()
 
-        # Create future for result
-        result_future: asyncio.Future[InferenceResponse] = asyncio.Future()
-
         # Add to queue
-        await self.request_queue.put((request, result_future))
+        await self.request_queue.put(request)
 
         try:
             # Wait for result with timeout
             return await asyncio.wait_for(
-                result_future, timeout=request.timeout_seconds
+                self.request_queue.get(), timeout=request.timeout_seconds
             )
         except TimeoutError as e:
-            result_future.cancel()
             raise InferenceTimeoutError(
                 request.request_id, request.timeout_seconds
             ) from e

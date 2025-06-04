@@ -255,7 +255,10 @@ class HealthAnalysisPipeline:
                 "blood_pressure",
             }:
                 organized["cardio"].append(metric)
-            elif metric_type in {"respiratory_rate", "blood_oxygen"}:  # 🚀 FIXED: Updated to use blood_oxygen
+            elif metric_type in {
+                "respiratory_rate",
+                "blood_oxygen",
+            }:  # 🚀 FIXED: Updated to use blood_oxygen
                 organized["respiratory"].append(metric)
             elif metric_type in {
                 "step_count",
@@ -354,7 +357,8 @@ class HealthAnalysisPipeline:
                     rr_values.append(float(metric.biometric_data.respiratory_rate))
 
             elif (
-                metric.metric_type.value.lower() == "blood_oxygen"  # 🚀 FIXED: Updated to use blood_oxygen
+                metric.metric_type.value.lower()
+                == "blood_oxygen"  # 🚀 FIXED: Updated to use blood_oxygen
                 and metric.biometric_data
             ) and (
                 hasattr(metric.biometric_data, "oxygen_saturation")
@@ -548,7 +552,9 @@ class HealthAnalysisPipeline:
 
         # 🚀 FIXED: Add sleep health indicators
         if organized_data and "sleep" in organized_data:
-            sleep_indicators = self.sleep_processor.get_summary_stats(organized_data["sleep"])
+            sleep_indicators = self.sleep_processor.get_summary_stats(
+                organized_data["sleep"]
+            )
             if sleep_indicators:
                 health_indicators["sleep_health"] = sleep_indicators
 

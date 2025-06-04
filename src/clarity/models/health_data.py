@@ -36,7 +36,9 @@ class HealthMetricType(StrEnum):
     HEART_RATE_VARIABILITY = "heart_rate_variability"
     BLOOD_PRESSURE = "blood_pressure"
     BLOOD_OXYGEN = "blood_oxygen"
-    RESPIRATORY_RATE = "respiratory_rate"  # 🚀 FIXED: New dedicated respiratory rate type
+    RESPIRATORY_RATE = (
+        "respiratory_rate"  # 🚀 FIXED: New dedicated respiratory rate type
+    )
     SLEEP_ANALYSIS = "sleep_analysis"
     ACTIVITY_LEVEL = "activity_level"
     STRESS_INDICATORS = "stress_indicators"

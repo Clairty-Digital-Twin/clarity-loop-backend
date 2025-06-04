@@ -75,7 +75,7 @@ class DependencyContainer:
         ):
             from clarity.auth.firebase_middleware import (
                 FirebaseAuthProvider,
-            )  # noqa: PLC0415  # Conditional import to avoid circular dependency
+            )  # Conditional import to avoid circular dependency
 
             firebase_config = config_provider.get_firebase_config()
             return FirebaseAuthProvider(

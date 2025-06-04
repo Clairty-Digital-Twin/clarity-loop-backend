@@ -21,6 +21,7 @@ def get_connection_manager() -> ConnectionManager:
     Uses app.state.connection_manager if available, else falls back to module-level singleton.
     """
     import sys
+
     from fastapi import Request
 
     # Try to get from FastAPI app state if running in request context

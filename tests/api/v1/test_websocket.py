@@ -380,12 +380,12 @@ def create_mock_connection_manager() -> _TestConnectionManager:
 
 def mock_get_current_user_websocket(token: str) -> User:
     """Mock for get_current_user_websocket dependency."""
-    if token == "test-token":
+    if token == "test-token":  # noqa: S105
         return User(
             uid="test-user-123",
             email="test@example.com",
             display_name="Test User",
-            firebase_token="mock-firebase-token",
+            firebase_token="mock-firebase-token",  # noqa: S106
             created_at=datetime.now(UTC),
             last_login=datetime.now(UTC),
             profile={},

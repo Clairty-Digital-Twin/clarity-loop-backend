@@ -28,11 +28,11 @@ def require_permission(permission: str):
         @wraps(func)
         async def wrapper(*args, **kwargs):
             # Extract user from kwargs (injected by dependency)
-            user = kwargs.get('current_user')
+            user = kwargs.get("current_user")
             if not user:
                 raise HTTPException(
                     status_code=status.HTTP_401_UNAUTHORIZED,
-                    detail="Authentication required"
+                    detail="Authentication required",
                 )
 
             # Check permission (simplified - in real app check user roles/permissions)
@@ -40,6 +40,7 @@ def require_permission(permission: str):
             return await func(*args, **kwargs)
 
         return wrapper
+
     return decorator
 
 
@@ -50,11 +51,11 @@ def require_role(role: str):
         @wraps(func)
         async def wrapper(*args, **kwargs):
             # Extract user from kwargs (injected by dependency)
-            user = kwargs.get('current_user')
+            user = kwargs.get("current_user")
             if not user:
                 raise HTTPException(
                     status_code=status.HTTP_401_UNAUTHORIZED,
-                    detail="Authentication required"
+                    detail="Authentication required",
                 )
 
             # Check role (simplified - in real app check user roles)
@@ -62,4 +63,5 @@ def require_role(role: str):
             return await func(*args, **kwargs)
 
         return wrapper
+
     return decorator

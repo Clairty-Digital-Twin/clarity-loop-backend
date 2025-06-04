@@ -3,13 +3,14 @@
 import asyncio
 from collections.abc import Callable
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from fastapi import FastAPI, Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware
 
 from clarity.auth.firebase_auth import get_user_from_request
 from clarity.models.user import User
+from clarity.ports.auth_ports import Dict, IAuthProvider, List, Optional
 
 logger = logging.getLogger(__name__)
 

@@ -321,7 +321,7 @@ def mock_get_current_user_websocket(token: str) -> User:
 
 
 @pytest.fixture
-def app(_monkeypatch: pytest.MonkeyPatch) -> FastAPI:  # Fixed unused parameter
+def app(monkeypatch: pytest.MonkeyPatch) -> FastAPI:
     """Create FastAPI app for testing."""
     # This fixture should return a FastAPI app instance configured for testing.
     # It needs to override dependencies to use our mocks.

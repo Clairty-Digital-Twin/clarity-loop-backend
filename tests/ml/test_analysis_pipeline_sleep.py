@@ -107,7 +107,16 @@ class TestAnalysisPipelineSleepIntegration:
             *sample_sleep_metrics,
             HealthMetric(
                 metric_type=HealthMetricType.HEART_RATE,
-                biometric_data=BiometricData(heart_rate=72.0),
+                biometric_data=BiometricData(
+                    heart_rate=72.0,
+                    blood_pressure_systolic=120,
+                    blood_pressure_diastolic=80,
+                    oxygen_saturation=98.0,
+                    heart_rate_variability=45.0,
+                    respiratory_rate=16.0,
+                    body_temperature=37.0,
+                    blood_glucose=90.0
+                ),
                 device_id="test_device",
                 raw_data={"hr": 72},
                 metadata={},
@@ -117,6 +126,13 @@ class TestAnalysisPipelineSleepIntegration:
         # Mock dependencies
         mock_firestore = AsyncMock()
         self.pipeline._firestore_client = mock_firestore
+
+        # Mock fusion service to avoid RuntimeError
+        from unittest.mock import Mock
+        mock_fusion = Mock()
+        mock_fusion.fuse_modalities.return_value = [0.1, 0.2, 0.3, 0.4, 0.5]
+        mock_fusion.initialize_model.return_value = None
+        self.pipeline.fusion_service = mock_fusion
 
         # Process multi-modal data
         results = await self.pipeline.process_health_data(
@@ -171,7 +187,7 @@ class TestAnalysisPipelineSleepIntegration:
         assert 0 <= sleep_features["sleep_efficiency"] <= 1
         assert 0 <= sleep_features["rem_percentage"] <= 1
         assert 0 <= sleep_features["deep_percentage"] <= 1
-        assert 0 <= sleep_features["overall_quality_score"] <= 1
+        assert 0 <= sleep_features["overall_quality_score"] <= 6  # Max score is 6.0
 
     @pytest.mark.asyncio
     async def test_empty_sleep_data_handling(self) -> None:

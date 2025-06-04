@@ -344,6 +344,7 @@ class SleepProcessor:
             awakenings_count=0.0,
             rem_percentage=0.0,
             deep_percentage=0.0,
+            light_percentage=0.0,
             waso_minutes=0.0,
             consistency_score=0.0,
             overall_quality_score=0.0,

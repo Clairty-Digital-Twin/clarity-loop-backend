@@ -1,8 +1,8 @@
 """User models for the CLARITY Digital Twin Platform."""
 
 from datetime import datetime
-from typing import Dict, Optional
 
+# typing imports removed - using built-in dict instead
 from pydantic import BaseModel, EmailStr, Field
 
 

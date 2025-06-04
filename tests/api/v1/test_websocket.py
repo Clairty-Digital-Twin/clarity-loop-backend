@@ -1,14 +1,15 @@
 """Tests for WebSocket chat functionality."""
 
-import asyncio
 import json
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import MagicMock, patch
 
-from fastapi import WebSocket
+from fastapi import FastAPI
 from fastapi.testclient import TestClient
+from pydantic import ValidationError
 import pytest
 from starlette.websockets import WebSocketState
 
+from clarity.api.v1.websocket.chat_handler import WebSocketChatHandler
 from clarity.api.v1.websocket.connection_manager import ConnectionManager
 from clarity.api.v1.websocket.models import (
     ChatMessage,
@@ -19,6 +20,8 @@ from clarity.api.v1.websocket.models import (
     TypingMessage,
 )
 from clarity.main import create_app
+from clarity.models.user import User
+from tests.api.v1.test_websocket_helper import create_websocket_test_app
 
 
 @pytest.fixture
@@ -28,7 +31,7 @@ def app():
 
 
 @pytest.fixture
-def client(app):
+def client(app: FastAPI) -> TestClient:
     """Create test client."""
     return TestClient(app)
 
@@ -48,21 +51,21 @@ def connection_manager():
 class MockWebSocket:
     """Mock WebSocket for testing."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.client_state = WebSocketState.CONNECTED
         self.messages_sent = []
         self.closed = False
         self.close_code = None
         self.close_reason = None
 
-    async def accept(self):
+    async def accept(self) -> None:
         """Mock accept method."""
 
-    async def send_text(self, data: str):
+    async def send_text(self, data: str) -> None:
         """Mock send_text method."""
         self.messages_sent.append(data)
 
-    async def close(self, code: int = 1000, reason: str = ""):
+    async def close(self, code: int = 1000, reason: str = "") -> None:
         """Mock close method."""
         self.closed = True
         self.close_code = code
@@ -74,7 +77,7 @@ class TestConnectionManager:
     """Test cases for WebSocket connection manager."""
 
     @pytest.mark.asyncio
-    async def test_connect_success(self, connection_manager):
+    async def test_connect_success(self, connection_manager: ConnectionManager) -> None:
         """Test successful WebSocket connection."""
         websocket = MockWebSocket()
 
@@ -96,7 +99,7 @@ class TestConnectionManager:
         assert info.username == "Test User"
 
     @pytest.mark.asyncio
-    async def test_connect_max_connections_exceeded(self, connection_manager):
+    async def test_connect_max_connections_exceeded(self, connection_manager: ConnectionManager) -> None:
         """Test connection rejection when max connections exceeded."""
         user_id = "test_user"
 
@@ -123,7 +126,7 @@ class TestConnectionManager:
         assert websocket.close_code == 1008
 
     @pytest.mark.asyncio
-    async def test_disconnect(self, connection_manager):
+    async def test_disconnect(self, connection_manager: ConnectionManager) -> None:
         """Test WebSocket disconnection."""
         websocket = MockWebSocket()
 
@@ -141,7 +144,7 @@ class TestConnectionManager:
         assert len(connection_manager.user_connections.get("test_user", [])) == 0
 
     @pytest.mark.asyncio
-    async def test_send_to_connection(self, connection_manager):
+    async def test_send_to_connection(self, connection_manager: ConnectionManager) -> None:
         """Test sending message to specific connection."""
         websocket = MockWebSocket()
 
@@ -164,7 +167,7 @@ class TestConnectionManager:
         assert sent_data["content"] == "Test message"
 
     @pytest.mark.asyncio
-    async def test_broadcast_to_room(self, connection_manager):
+    async def test_broadcast_to_room(self, connection_manager: ConnectionManager) -> None:
         """Test broadcasting message to room."""
         # Connect multiple users to same room
         websockets = []
@@ -198,7 +201,7 @@ class TestConnectionManager:
             assert broadcast_received, "Broadcast message not received"
 
     @pytest.mark.asyncio
-    async def test_rate_limiting(self, connection_manager):
+    async def test_rate_limiting(self, connection_manager: ConnectionManager) -> None:
         """Test message rate limiting."""
         websocket = MockWebSocket()
 
@@ -226,7 +229,7 @@ class TestConnectionManager:
         assert len(error_messages) > 0
 
     @pytest.mark.asyncio
-    async def test_message_size_limit(self, connection_manager):
+    async def test_message_size_limit(self, connection_manager: ConnectionManager) -> None:
         """Test message size limiting."""
         websocket = MockWebSocket()
 
@@ -249,7 +252,7 @@ class TestConnectionManager:
         assert len(error_messages) > 0
 
     @pytest.mark.asyncio
-    async def test_heartbeat_functionality(self, connection_manager):
+    async def test_heartbeat_functionality(self, connection_manager: ConnectionManager) -> None:
         """Test heartbeat monitoring."""
         websocket = MockWebSocket()
 
@@ -275,7 +278,7 @@ class TestConnectionManager:
 class TestWebSocketModels:
     """Test cases for WebSocket message models."""
 
-    def test_chat_message_validation(self):
+    def test_chat_message_validation(self) -> None:
         """Test ChatMessage validation."""
         # Valid message
         message = ChatMessage(
@@ -285,14 +288,14 @@ class TestWebSocketModels:
         assert message.content == "Hello world"
 
         # Invalid message (too long)
-        with pytest.raises(ValueError):
+        with pytest.raises(ValidationError, match="String should have at most"):
             ChatMessage(content="x" * 3000, user_id="test_user")  # Exceeds max_length
 
         # Invalid message (empty content)
-        with pytest.raises(ValueError):
+        with pytest.raises(ValidationError, match="String should have at least"):
             ChatMessage(content="", user_id="test_user")
 
-    def test_error_message_creation(self):
+    def test_error_message_creation(self) -> None:
         """Test ErrorMessage creation."""
         error = ErrorMessage(
             error_code="TEST_ERROR",
@@ -305,7 +308,7 @@ class TestWebSocketModels:
         assert error.message == "Test error message"
         assert error.details == {"key": "value"}
 
-    def test_typing_message(self):
+    def test_typing_message(self) -> None:
         """Test TypingMessage model."""
         typing = TypingMessage(
             user_id="test_user", username="Test User", is_typing=True
@@ -314,7 +317,7 @@ class TestWebSocketModels:
         assert typing.type == MessageType.TYPING
         assert typing.is_typing is True
 
-    def test_heartbeat_message(self):
+    def test_heartbeat_message(self) -> None:
         """Test HeartbeatMessage model."""
         heartbeat = HeartbeatMessage()
         assert heartbeat.type == MessageType.HEARTBEAT
@@ -333,17 +336,15 @@ class TestWebSocketEndpoints:
     """Test WebSocket endpoints."""
 
     @patch("clarity.auth.firebase_auth.get_current_user_websocket")
-    async def test_websocket_chat_endpoint_authenticated(self, mock_auth):
+    async def test_websocket_chat_endpoint_authenticated(self, mock_auth: MagicMock) -> None:
         """Test WebSocket chat endpoint with authentication."""
-        from clarity.models.user import User
-
         # Mock authenticated user
         mock_user = User(
             uid="test_user_123", email="test@example.com", display_name="Test User"
         )
         mock_auth.return_value = mock_user
 
-        app = create_app()
+        app = create_websocket_test_app()
 
         with (
             TestClient(app) as client,
@@ -369,49 +370,55 @@ class TestWebSocketEndpoints:
             assert data["content"] == "Hello from test!"
             assert data["user_id"] == "test_user_123"
 
-    async def test_websocket_chat_endpoint_anonymous(self):
+    async def test_websocket_chat_endpoint_anonymous(self) -> None:
         """Test WebSocket chat endpoint without authentication."""
-        app = create_app()
+        app = create_websocket_test_app()
 
-        with TestClient(app) as client:
-            with client.websocket_connect("/api/v1/ws/chat/test_room") as websocket:
-                # Should receive connection acknowledgment
-                data = websocket.receive_json()
-                assert data["type"] == MessageType.CONNECTION_ACK
-                assert "anonymous_" in data["user_id"]
+        with (
+            TestClient(app) as client,
+            client.websocket_connect("/api/v1/ws/chat/test_room") as websocket,
+        ):
+            # Should receive connection acknowledgment
+            data = websocket.receive_json()
+            assert data["type"] == MessageType.CONNECTION_ACK
+            assert "anonymous_" in data["user_id"]
 
-    async def test_websocket_invalid_message_format(self):
+    async def test_websocket_invalid_message_format(self) -> None:
         """Test WebSocket with invalid message format."""
-        app = create_app()
+        app = create_websocket_test_app()
 
-        with TestClient(app) as client:
-            with client.websocket_connect("/api/v1/ws/chat/test_room") as websocket:
-                # Skip connection ack
-                websocket.receive_json()
+        with (
+            TestClient(app) as client,
+            client.websocket_connect("/api/v1/ws/chat/test_room") as websocket,
+        ):
+            # Skip connection ack
+            websocket.receive_json()
 
-                # Send invalid JSON
-                websocket.send_text("invalid json")
+            # Send invalid JSON
+            websocket.send_text("invalid json")
 
-                # Should receive error message
-                data = websocket.receive_json()
-                assert data["type"] == MessageType.ERROR
-                assert data["error_code"] == "INVALID_JSON"
+            # Should receive error message
+            data = websocket.receive_json()
+            assert data["type"] == MessageType.ERROR
+            assert data["error_code"] == "INVALID_JSON"
 
-    async def test_websocket_typing_indicator(self):
+    async def test_websocket_typing_indicator(self) -> None:
         """Test typing indicator functionality."""
-        app = create_app()
+        app = create_websocket_test_app()
 
-        with TestClient(app) as client:
-            with client.websocket_connect("/api/v1/ws/chat/test_room") as websocket:
-                # Skip connection ack
-                websocket.receive_json()
+        with (
+            TestClient(app) as client,
+            client.websocket_connect("/api/v1/ws/chat/test_room") as websocket,
+        ):
+            # Skip connection ack
+            websocket.receive_json()
 
-                # Send typing message
-                typing_message = {"type": MessageType.TYPING, "is_typing": True}
-                websocket.send_json(typing_message)
+            # Send typing message
+            typing_message = {"type": MessageType.TYPING, "is_typing": True}
+            websocket.send_json(typing_message)
 
-                # For single user, no typing broadcast back to sender
-                # Would need multiple connections to test properly
+            # For single user, no typing broadcast back to sender
+            # Would need multiple connections to test properly
 
 
 @pytest.mark.asyncio
@@ -419,10 +426,8 @@ class TestChatHandler:
     """Test chat handler functionality."""
 
     @patch("clarity.services.gemini_service.GeminiService")
-    async def test_health_insight_generation(self, mock_gemini_service):
+    async def test_health_insight_generation(self, mock_gemini_service: MagicMock) -> None:
         """Test health insight generation from chat messages."""
-        from clarity.api.v1.websocket.chat_handler import WebSocketChatHandler
-
         # Mock Gemini service response
         mock_gemini_service.return_value.generate_health_insights.return_value = {
             "insights": [

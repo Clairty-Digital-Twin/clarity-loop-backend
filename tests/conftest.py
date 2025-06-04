@@ -32,8 +32,10 @@ os.environ["ENVIRONMENT"] = "testing"
 # --- 1. ADC ↦ AnonymousCredentials ----------------------------------
 
 
-def mock_auth_default(*_a: Any, **_kw: Any) -> tuple[AnonymousCredentials, str]:
+def mock_auth_default(*args: object, **kwargs: object) -> tuple[AnonymousCredentials, str]:
     """Mock Google auth default function."""
+    # Arguments are unused as this is a mock function
+    del args, kwargs  # Explicitly delete to satisfy linter
     return (AnonymousCredentials(), "test-project")
 
 
@@ -43,22 +45,31 @@ os.environ["GOOGLE_CLOUD_PROJECT"] = "test-project"
 
 # --- 2. Firestore fake ----------------------------------------------
 class _FakeFS:  # minimal façade
-    def __init__(self, *_a: Any, **_kw: Any) -> None:
-        pass
+    def __init__(self, *args: object, **kwargs: object) -> None:
+        """Initialize fake Firestore client."""
+        # Arguments are unused as this is a mock class
+        del args, kwargs  # Explicitly delete to satisfy linter
 
     def collection(
         self, _name: str
     ) -> "_FakeFS":  # returns self so .document() still works
         return self
 
-    def document(self, *_a: Any) -> "_FakeFS":  # → Fake doc ref
+    def document(self, *args: str) -> "_FakeFS":  # → Fake doc ref
+        # Arguments are unused in this mock
+        del args  # Explicitly delete to satisfy linter
         return self
 
-    def set(self, *_a: Any, **_kw: Any) -> None:
-        pass
+    def set(self, *args: object, **kwargs: object) -> None:
+        """Mock set method."""
+        # Arguments are unused as this is a mock method
+        del args, kwargs  # Explicitly delete to satisfy linter
 
     @staticmethod
-    def get(*_a: Any, **_kw: Any) -> dict[Any, Any]:
+    def get(*args: object, **kwargs: object) -> dict[str, Any]:
+        """Mock get method."""
+        # Arguments are unused as this is a mock method
+        del args, kwargs  # Explicitly delete to satisfy linter
         return {}
 
 
@@ -67,12 +78,16 @@ google.cloud.firestore.Client = _FakeFS
 
 # --- 3. Pub/Sub fake -------------------------------------------------
 class _FakePublisher:
-    def __init__(self, *_a: Any, **_kw: Any) -> None:
-        pass
+    def __init__(self, *args: object, **kwargs: object) -> None:
+        """Initialize fake publisher."""
+        # Arguments are unused as this is a mock class
+        del args, kwargs  # Explicitly delete to satisfy linter
 
     @staticmethod
-    async def publish(*_a: Any, **_kw: Any) -> None:
-        return None
+    async def publish(*args: object, **kwargs: object) -> None:
+        """Mock publish method."""
+        # Arguments are unused as this is a mock method
+        del args, kwargs  # Explicitly delete to satisfy linter
 
 
 google.cloud.pubsub_v1.PublisherClient = _FakePublisher
@@ -241,8 +256,8 @@ def mock_redis():
 @pytest.fixture
 def mock_test_connection_manager():
     """Stateful mock connection manager for WebSocket testing."""
-    # Import here to avoid circular imports
-    from tests.api.v1.test_websocket import _TestConnectionManager
+    # Import here to avoid circular imports - this is necessary for test fixtures
+    from tests.api.v1.test_websocket import _TestConnectionManager  # noqa: PLC0415
 
     return _TestConnectionManager()
 
@@ -257,7 +272,7 @@ def mock_environment_variables(monkeypatch: pytest.MonkeyPatch):
         "DATABASE_URL": "sqlite:///test.db",
         "FIREBASE_PROJECT_ID": "test-project",
         "FIREBASE_CREDENTIALS": "test-credentials.json",
-        "JWT_SECRET_KEY": "test-secret-key-for-testing-only",
+        "JWT_SECRET_KEY": "test-secret-key-for-testing-only",  # noqa: S105  # This is a test secret
         "LOG_LEVEL": "DEBUG",
         "CORS_ORIGINS": '["http://localhost:3000", "http://localhost:8000"]',  # Fixed: JSON format
         "SKIP_EXTERNAL_SERVICES": "true",  # Skip Firebase/Firestore in tests

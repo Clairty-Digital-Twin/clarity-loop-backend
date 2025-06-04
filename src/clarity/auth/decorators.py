@@ -1,22 +1,27 @@
 """Authentication decorators and utilities for API endpoints."""
 
-from collections.abc import Callable
+from collections.abc import Awaitable, Callable
 from functools import wraps
-from typing import Any
+from typing import ParamSpec, TypeVar
 
 from fastapi import HTTPException, status
+
+from clarity.models.user import User
+
+P = ParamSpec("P")
+T = TypeVar("T")
 
 
 def require_auth(
     permissions: list[str] | None = None, roles: list[str] | None = None
-) -> Callable[..., Any]:
+) -> Callable[[Callable[P, Awaitable[T]]], Callable[P, Awaitable[T]]]:
     """Decorator to require authentication and optionally check permissions/roles."""
 
-    def decorator(func: Callable[..., Any]) -> Callable[..., Any]:
+    def decorator(func: Callable[P, Awaitable[T]]) -> Callable[P, Awaitable[T]]:
         @wraps(func)
-        async def wrapper(*args: Any, **kwargs: Any) -> Any:
+        async def wrapper(*args: P.args, **kwargs: P.kwargs) -> T:
             # Extract user from kwargs (injected by dependency)
-            user = kwargs.get("current_user")
+            user: User | None = kwargs.get("current_user")  # type: ignore[misc]
             if not user:
                 raise HTTPException(
                     status_code=status.HTTP_401_UNAUTHORIZED,
@@ -42,14 +47,14 @@ def require_auth(
     return decorator
 
 
-def require_permission(_permission: str) -> Callable[..., Any]:
+def require_permission(_permission: str) -> Callable[[Callable[P, Awaitable[T]]], Callable[P, Awaitable[T]]]:
     """Decorator to require specific permission for an endpoint."""
 
-    def decorator(func: Callable) -> Callable:
+    def decorator(func: Callable[P, Awaitable[T]]) -> Callable[P, Awaitable[T]]:
         @wraps(func)
-        async def wrapper(*args: Any, **kwargs: Any) -> Any:
+        async def wrapper(*args: P.args, **kwargs: P.kwargs) -> T:
             # Extract user from kwargs (injected by dependency)
-            user = kwargs.get("current_user")
+            user: User | None = kwargs.get("current_user")  # type: ignore[misc]
             if not user:
                 raise HTTPException(
                     status_code=status.HTTP_401_UNAUTHORIZED,
@@ -65,14 +70,14 @@ def require_permission(_permission: str) -> Callable[..., Any]:
     return decorator
 
 
-def require_role(_role: str) -> Callable[..., Any]:
+def require_role(_role: str) -> Callable[[Callable[P, Awaitable[T]]], Callable[P, Awaitable[T]]]:
     """Decorator to require specific role for an endpoint."""
 
-    def decorator(func: Callable[..., Any]) -> Callable[..., Any]:
+    def decorator(func: Callable[P, Awaitable[T]]) -> Callable[P, Awaitable[T]]:
         @wraps(func)
-        async def wrapper(*args: Any, **kwargs: Any) -> Any:
+        async def wrapper(*args: P.args, **kwargs: P.kwargs) -> T:
             # Extract user from kwargs (injected by dependency)
-            user = kwargs.get("current_user")
+            user: User | None = kwargs.get("current_user")  # type: ignore[misc]
             if not user:
                 raise HTTPException(
                     status_code=status.HTTP_401_UNAUTHORIZED,

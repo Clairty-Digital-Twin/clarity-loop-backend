@@ -1,7 +1,7 @@
 """Firebase authentication middleware and provider classes."""
 
 import asyncio
-from collections.abc import Callable
+from collections.abc import Awaitable, Callable
 import logging
 import time
 from typing import Any
@@ -52,9 +52,11 @@ class FirebaseAuthMiddleware(BaseHTTPMiddleware):
         self._user_cache: dict[str, User] = {}
 
         logger.info("Firebase authentication middleware initialized")
-        logger.info(f"Exempt paths: {self.exempt_paths}")
+        logger.info("Exempt paths: %s", self.exempt_paths)
 
-    async def dispatch(self, request: Request, call_next: Callable) -> Response:
+    async def dispatch(
+        self, request: Request, call_next: Callable[[Request], Awaitable[Response]]
+    ) -> Response:
         """Process request through authentication middleware.
 
         Args:
@@ -66,7 +68,8 @@ class FirebaseAuthMiddleware(BaseHTTPMiddleware):
         """
         # Check if path is exempt from authentication
         if self._is_exempt_path(request.url.path):
-            return await call_next(request)
+            response = await call_next(request)
+            return response
 
         # Try to authenticate the request
         try:
@@ -89,7 +92,7 @@ class FirebaseAuthMiddleware(BaseHTTPMiddleware):
                         "timestamp": datetime.now(UTC).isoformat(),
                     },
                 )
-            logger.warning(f"Authentication failed: {e}")
+            logger.warning("Authentication failed: %s", e)
             if not self.graceful_degradation:
                 return JSONResponse(
                     status_code=401,
@@ -102,7 +105,8 @@ class FirebaseAuthMiddleware(BaseHTTPMiddleware):
             # For graceful degradation, set user as None
             request.state.user = None
 
-        return await call_next(request)
+        response = await call_next(request)
+        return response
 
     def _is_exempt_path(self, path: str) -> bool:
         """Check if a path is exempt from authentication.
@@ -271,7 +275,7 @@ class FirebaseAuthProvider:
         self,
         credentials_path: str | None = None,
         project_id: str | None = None,
-        middleware_config: dict | Any | None = None,
+        middleware_config: dict[str, Any] | Any | None = None,
     ) -> None:
         """Initialize Firebase authentication provider.
 
@@ -302,9 +306,9 @@ class FirebaseAuthProvider:
 
         logger.info("Firebase authentication provider created")
         if credentials_path:
-            logger.info(f"Using credentials from: {credentials_path}")
+            logger.info("Using credentials from: %s", credentials_path)
         if project_id:
-            logger.info(f"Firebase project ID: {project_id}")
+            logger.info("Firebase project ID: %s", project_id)
 
     async def initialize(self) -> None:
         """Initialize the Firebase authentication provider.
@@ -323,7 +327,7 @@ class FirebaseAuthProvider:
             logger.info("Firebase authentication provider initialized successfully")
 
         except Exception as e:
-            logger.error(f"Failed to initialize Firebase auth provider: {e}")
+            logger.error("Failed to initialize Firebase auth provider: %s", e)
             raise
 
     async def verify_token(self, token: str) -> User | None:
@@ -349,7 +353,8 @@ class FirebaseAuthProvider:
             cached_data = self._token_cache[token]
             if current_time - cached_data["timestamp"] <= self._cache_ttl:
                 # Cache hit - return cached user
-                return cached_data["user"]
+                cached_user: User = cached_data["user"]
+                return cached_user
             # Cache expired - remove entry
             del self._token_cache[token]
 
@@ -381,7 +386,7 @@ class FirebaseAuthProvider:
             return user
 
         except Exception as e:
-            logger.debug(f"Token verification failed: {e}")
+            logger.debug("Token verification failed: %s", e)
             return None
 
     async def create_user(self, user_data: dict[str, Any]) -> User:
@@ -417,11 +422,11 @@ class FirebaseAuthProvider:
                 profile=None,
             )
 
-            logger.info(f"Created new user: {user.uid}")
+            logger.info("Created new user: %s", user.uid)
             return user
 
         except Exception as e:
-            logger.error(f"Failed to create user: {e}")
+            logger.error("Failed to create user: %s", e)
             raise
 
     async def get_user_info(self, user_id: str) -> User | None:
@@ -455,7 +460,7 @@ class FirebaseAuthProvider:
             return user
 
         except Exception as e:
-            logger.debug(f"Failed to get user info: {e}")
+            logger.debug("Failed to get user info: %s", e)
             return None
 
     def _cleanup_expired_cache(self) -> None:

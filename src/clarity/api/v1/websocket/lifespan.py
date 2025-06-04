@@ -38,6 +38,7 @@ def get_connection_manager() -> ConnectionManager:
         from tests.api.v1.test_websocket_helper import (
             get_test_connection_manager,
         )
+
         return get_test_connection_manager()
     except (ImportError, RuntimeError):
         pass

@@ -693,7 +693,9 @@ class TestWebSocketEndpoints:
             del app.dependency_overrides[get_connection_manager]
 
     @staticmethod
-    async def test_typing_indicator_processing(client: TestClient, app: FastAPI) -> None:
+    async def test_typing_indicator_processing(
+        client: TestClient, app: FastAPI
+    ) -> None:
         user_id = "test-user-123"  # Must match the user ID from mock_get_current_user_websocket
         test_token = "test-token"  # noqa: S105
 

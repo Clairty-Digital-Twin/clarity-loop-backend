@@ -128,7 +128,6 @@ class TestAnalysisPipelineSleepIntegration:
         self.pipeline._firestore_client = mock_firestore
 
         # Mock fusion service to avoid RuntimeError
-        from unittest.mock import Mock
         mock_fusion = Mock()
         mock_fusion.fuse_modalities.return_value = [0.1, 0.2, 0.3, 0.4, 0.5]
         mock_fusion.initialize_model.return_value = None

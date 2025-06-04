@@ -10,6 +10,7 @@ import pytest
 
 from clarity.ml.processors.sleep_processor import SleepProcessor
 from clarity.models.health_data import (
+    BiometricData,
     HealthMetric,
     HealthMetricType,
     SleepData,
@@ -90,11 +91,11 @@ class TestSleepProcessor:
         """Test consistency calculation with multiple nights."""
         base_time = datetime(2024, 6, 1, 23, 0, tzinfo=UTC)
 
-                metrics = []
+        metrics = []
         for _i, offset_hours in enumerate([0, 0.5, 1.0]):  # 23:00, 23:30, 00:00
             sleep_start = base_time + timedelta(hours=offset_hours)
             sleep_end = sleep_start + timedelta(hours=7.5)  # Consistent 7.5 hour window
-            
+
             sleep_data = SleepData(
                 total_sleep_minutes=420,  # 7 hours
                 sleep_efficiency=0.88,
@@ -109,7 +110,7 @@ class TestSleepProcessor:
                 sleep_start=sleep_start,
                 sleep_end=sleep_end
             )
-            
+
             metric = HealthMetric(
                 metric_type=HealthMetricType.SLEEP_ANALYSIS,
                 sleep_data=sleep_data,
@@ -117,7 +118,7 @@ class TestSleepProcessor:
                 raw_data={"test": "data"},
                 metadata={}
             )
-            
+
             metrics.append(metric)
 
         result = self.processor.process(metrics)
@@ -166,11 +167,18 @@ class TestSleepProcessor:
 
     def test_process_invalid_metrics(self) -> None:
         """Test processing with metrics that have no sleep data."""
-        from clarity.models.health_data import BiometricData
-
         metric = HealthMetric(
             metric_type=HealthMetricType.HEART_RATE,  # Not sleep data
-            biometric_data=BiometricData(heart_rate=72.0),  # Required for heart rate metrics
+            biometric_data=BiometricData(
+                heart_rate=72.0,
+                blood_pressure_systolic=120,
+                blood_pressure_diastolic=80,
+                oxygen_saturation=98.0,
+                heart_rate_variability=45.0,
+                respiratory_rate=16.0,
+                body_temperature=98.6,
+                blood_glucose=90.0
+            ),
             sleep_data=None,
             device_id="test_device",
             raw_data={"test": "data"},

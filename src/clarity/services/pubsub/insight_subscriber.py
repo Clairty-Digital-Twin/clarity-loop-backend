@@ -344,9 +344,15 @@ class InsightSubscriber:
 
         except HTTPException:
             raise
-        except Exception as e:
+        except Exception:
             logger.exception("❌ Failed to process insight request")
             self._raise_processing_error()
+        else:
+            return {
+                "status": "success",
+                "message": "Health insight generated successfully",
+                **result,  # Include the actual insight data
+            }
 
     def _extract_message_data(self, pubsub_body: dict[str, Any]) -> dict[str, Any]:
         """Extract and validate message data from Pub/Sub payload."""

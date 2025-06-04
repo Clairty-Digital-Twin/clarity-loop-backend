@@ -479,17 +479,17 @@ class TestTokenManagement:
     async def test_generate_tokens(auth_service: AuthenticationService) -> None:
         """Test token generation."""
         user_id = "test-uid-123"
-
-        # Add the missing create_custom_token method to the mock
-        auth_service.auth_provider.create_custom_token = Mock(return_value=b"mock-token")
-
-        with patch('secrets.token_urlsafe') as mock_token_safe:
-            mock_token_safe.return_value = "mock-refresh-token"
+        
+        # The auth service uses secrets.token_urlsafe for both tokens
+        # First call is for access_token, second call is for refresh_token
+        with patch('clarity.services.auth_service.secrets.token_urlsafe') as mock_token_safe:
+            # Return different values on consecutive calls
+            mock_token_safe.side_effect = ["mock-access-token", "mock-refresh-token"]
 
             result = await auth_service._generate_tokens(user_id)
 
             assert isinstance(result, TokenResponse)
-            assert result.access_token == "mock-token"  # noqa: S105 # Test assertion
+            assert result.access_token == "mock-access-token"  # noqa: S105 # Test assertion
             assert result.refresh_token == "mock-refresh-token"  # noqa: S105 # Test assertion
             assert result.token_type == "bearer"  # noqa: S105 # Test assertion
             assert result.expires_in == 3600  # default expiry
@@ -498,12 +498,10 @@ class TestTokenManagement:
     async def test_generate_tokens_remember_me(auth_service: AuthenticationService) -> None:
         """Test token generation with remember me flag."""
         user_id = "test-uid-123"
-
-        # Add the missing create_custom_token method to the mock
-        auth_service.auth_provider.create_custom_token = Mock(return_value=b"mock-token")
-
-        with patch('secrets.token_urlsafe') as mock_token_safe:
-            mock_token_safe.return_value = "mock-refresh-token"
+        
+        # The auth service uses secrets.token_urlsafe for both tokens
+        with patch('clarity.services.auth_service.secrets.token_urlsafe') as mock_token_safe:
+            mock_token_safe.side_effect = ["mock-access-token", "mock-refresh-token"]
 
             result = await auth_service._generate_tokens(user_id, remember_me=True)
 
@@ -515,28 +513,30 @@ class TestTokenManagement:
         """Test successful token refresh."""
         refresh_token = "valid-refresh-token"  # noqa: S105 # Test value
 
-        # Mock refresh token document with a real datetime object
+        # Mock refresh token query results - not get_document, but query_documents
         token_data = {
+            "id": "token-doc-id",
             "user_id": "test-uid-123",
             "expires_at": datetime.now(UTC) + timedelta(days=1),  # Valid
-            "revoked": False,
+            "is_revoked": False,
         }
-        auth_service.firestore_client.get_document.return_value = token_data
+        auth_service.firestore_client.query_documents.return_value = [token_data]
+        
+        # Mock the new token generation using secrets.token_urlsafe
+        with patch('clarity.services.auth_service.secrets.token_urlsafe') as mock_token_safe:
+            mock_token_safe.side_effect = ["new-access-token", "new-refresh-token"]
 
-        # Add the missing create_custom_token method to the mock
-        auth_service.auth_provider.create_custom_token = Mock(return_value=b"new-access-token")
+            result = await auth_service.refresh_access_token(refresh_token)
 
-        result = await auth_service.refresh_access_token(refresh_token)
-
-        assert isinstance(result, TokenResponse)
-        assert result.access_token == "new-access-token"  # noqa: S105 # Test assertion
+            assert isinstance(result, TokenResponse)
+            assert result.access_token == "new-access-token"  # noqa: S105 # Test assertion
 
     @staticmethod
     async def test_refresh_access_token_not_found(auth_service: AuthenticationService) -> None:
         """Test token refresh with invalid token."""
         refresh_token = "invalid-refresh-token"  # noqa: S105 # Test value
 
-        auth_service.firestore_client.get_document.return_value = None
+        auth_service.firestore_client.query_documents.return_value = []
 
         with pytest.raises(InvalidCredentialsError):
             await auth_service.refresh_access_token(refresh_token)
@@ -548,11 +548,12 @@ class TestTokenManagement:
 
         # Mock expired token document
         token_data = {
+            "id": "token-doc-id",
             "user_id": "test-uid-123",
             "expires_at": datetime.now(UTC) - timedelta(days=1),  # Expired
-            "revoked": False,
+            "is_revoked": False,
         }
-        auth_service.firestore_client.get_document.return_value = token_data
+        auth_service.firestore_client.query_documents.return_value = [token_data]
 
         with pytest.raises(InvalidCredentialsError):
             await auth_service.refresh_access_token(refresh_token)
@@ -562,13 +563,8 @@ class TestTokenManagement:
         """Test token refresh with revoked token."""
         refresh_token = "revoked-refresh-token"  # noqa: S105 # Test value
 
-        # Mock revoked token document
-        token_data = {
-            "user_id": "test-uid-123",
-            "expires_at": datetime.now(UTC) + timedelta(days=1),  # Valid expiry
-            "revoked": True,  # But revoked
-        }
-        auth_service.firestore_client.get_document.return_value = token_data
+        # Mock query returning empty list because revoked tokens are filtered out
+        auth_service.firestore_client.query_documents.return_value = []
 
         with pytest.raises(InvalidCredentialsError):
             await auth_service.refresh_access_token(refresh_token)

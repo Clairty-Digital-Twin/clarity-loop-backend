@@ -1,7 +1,6 @@
 """Firebase authentication utilities for WebSocket and HTTP endpoints."""
 
 import logging
-from typing import Optional
 
 from fastapi import Depends, HTTPException, Request, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
@@ -16,7 +15,10 @@ settings = get_settings()
 
 # Initialize Firebase Admin SDK
 try:
-    if not firebase_admin._apps:
+    try:
+        firebase_admin.get_app()
+    except ValueError:
+        # No default app exists, initialize it
         # In production, use service account key
         # In development, you can use default credentials
         if (
@@ -33,14 +35,14 @@ try:
         firebase_admin.initialize_app(cred)
         logger.info("Firebase Admin SDK initialized successfully")
 except Exception as e:
-    logger.error(f"Failed to initialize Firebase Admin SDK: {e}")
+    logger.exception("Failed to initialize Firebase Admin SDK")
     # In development, continue without Firebase
 
 # Security scheme for API endpoints
 security = HTTPBearer(auto_error=False)
 
 
-async def get_current_user(
+def get_current_user(
     credentials: HTTPAuthorizationCredentials | None = Depends(security),
 ) -> User | None:
     """Get current authenticated user from Firebase token.
@@ -56,7 +58,7 @@ async def get_current_user(
         decoded_token = auth.verify_id_token(credentials.credentials)
 
         # Create user object from token
-        user = User(
+        return User(
             uid=decoded_token["uid"],
             email=decoded_token.get("email"),
             display_name=decoded_token.get("name"),
@@ -67,24 +69,22 @@ async def get_current_user(
             profile=None,
         )
 
-        return user
-
-    except (auth.InvalidIdTokenError, auth.ExpiredIdTokenError):
+    except (auth.InvalidIdTokenError, auth.ExpiredIdTokenError) as e:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid or expired authentication token",
             headers={"WWW-Authenticate": "Bearer"},
-        )
+        ) from e
     except Exception as e:
-        logger.error(f"Error verifying Firebase token: {e}")
+        logger.exception("Error verifying Firebase token")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Authentication failed",
             headers={"WWW-Authenticate": "Bearer"},
-        )
+        ) from e
 
 
-async def get_current_user_required(
+def get_current_user_required(
     user: User | None = Depends(get_current_user),
 ) -> User:
     """Get current authenticated user (required).
@@ -101,7 +101,7 @@ async def get_current_user_required(
     return user
 
 
-async def get_current_user_websocket(token: str) -> User:
+def get_current_user_websocket(token: str) -> User:
     """Get current authenticated user from WebSocket token parameter.
 
     Args:
@@ -118,7 +118,7 @@ async def get_current_user_websocket(token: str) -> User:
         decoded_token = auth.verify_id_token(token)
 
         # Create user object from token
-        user = User(
+        return User(
             uid=decoded_token["uid"],
             email=decoded_token.get("email"),
             display_name=decoded_token.get("name"),
@@ -129,18 +129,16 @@ async def get_current_user_websocket(token: str) -> User:
             profile=None,
         )
 
-        return user
-
-    except (auth.InvalidIdTokenError, auth.ExpiredIdTokenError):
+    except (auth.InvalidIdTokenError, auth.ExpiredIdTokenError) as e:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid or expired authentication token",
-        )
+        ) from e
     except Exception as e:
-        logger.error(f"Error verifying WebSocket Firebase token: {e}")
+        logger.exception("Error verifying WebSocket Firebase token")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Authentication failed"
-        )
+        ) from e
 
 
 def get_user_from_request(request: Request) -> User | None:
@@ -165,7 +163,7 @@ def get_user_from_request(request: Request) -> User | None:
         decoded_token = auth.verify_id_token(token)
 
         # Create user object from token
-        user = User(
+        return User(
             uid=decoded_token["uid"],
             email=decoded_token.get("email"),
             display_name=decoded_token.get("name"),
@@ -176,14 +174,12 @@ def get_user_from_request(request: Request) -> User | None:
             profile=None,
         )
 
-        return user
-
     except Exception as e:
-        logger.debug(f"Could not extract user from request: {e}")
+        logger.debug("Could not extract user from request: %s", e)
         return None
 
 
-async def verify_admin_user(user: User = Depends(get_current_user_required)) -> User:
+def verify_admin_user(user: User = Depends(get_current_user_required)) -> User:
     """Verify that the current user has admin privileges.
 
     This is a placeholder implementation. In a real application,
@@ -204,16 +200,16 @@ async def verify_admin_user(user: User = Depends(get_current_user_required)) -> 
 
         return user
 
-    except auth.UserNotFoundError:
+    except auth.UserNotFoundError as e:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found"
-        )
+        ) from e
     except Exception as e:
-        logger.error(f"Error verifying admin user: {e}")
+        logger.exception("Error verifying admin user")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Error verifying admin privileges",
-        )
+        ) from e
 
 
 def create_custom_token(uid: str, additional_claims: dict | None = None) -> str:
@@ -231,11 +227,11 @@ def create_custom_token(uid: str, additional_claims: dict | None = None) -> str:
     try:
         return auth.create_custom_token(uid, additional_claims)
     except Exception as e:
-        logger.error(f"Error creating custom token: {e}")
+        logger.exception("Error creating custom token")
         raise
 
 
-def set_custom_user_claims(uid: str, custom_claims: dict):
+def set_custom_user_claims(uid: str, custom_claims: dict) -> None:
     """Set custom claims for a user.
 
     Args:
@@ -244,13 +240,13 @@ def set_custom_user_claims(uid: str, custom_claims: dict):
     """
     try:
         auth.set_custom_user_claims(uid, custom_claims)
-        logger.info(f"Custom claims set for user {uid}: {custom_claims}")
+        logger.info("Custom claims set for user %s: %s", uid, custom_claims)
     except Exception as e:
-        logger.error(f"Error setting custom claims for user {uid}: {e}")
+        logger.exception("Error setting custom claims for user %s", uid)
         raise
 
 
-def get_user_by_email(email: str):
+def get_user_by_email(email: str) -> auth.UserRecord | None:
     """Get user record by email.
 
     Args:
@@ -264,11 +260,11 @@ def get_user_by_email(email: str):
     except auth.UserNotFoundError:
         return None
     except Exception as e:
-        logger.error(f"Error getting user by email {email}: {e}")
+        logger.exception("Error getting user by email %s", email)
         raise
 
 
-def delete_user(uid: str):
+def delete_user(uid: str) -> None:
     """Delete a user account.
 
     Args:
@@ -276,7 +272,7 @@ def delete_user(uid: str):
     """
     try:
         auth.delete_user(uid)
-        logger.info(f"User {uid} deleted successfully")
+        logger.info("User %s deleted successfully", uid)
     except Exception as e:
-        logger.error(f"Error deleting user {uid}: {e}")
+        logger.exception("Error deleting user %s", uid)
         raise

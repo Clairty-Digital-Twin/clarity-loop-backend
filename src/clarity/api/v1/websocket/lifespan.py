@@ -1,8 +1,8 @@
 """FastAPI lifespan management for WebSocket features."""
 
-import logging
+from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
-from typing import AsyncGenerator
+import logging
 
 from fastapi import FastAPI
 
@@ -32,7 +32,7 @@ def get_connection_manager() -> ConnectionManager:
     ```
     """
     global _connection_manager
-    
+
     # Try to get from global state first
     if _connection_manager is not None:
         return _connection_manager
@@ -43,7 +43,7 @@ def get_connection_manager() -> ConnectionManager:
         return get_test_connection_manager()
     except (ImportError, RuntimeError):
         pass
-        
+
     # Last resort: create a test connection manager
     if _connection_manager is None:
         _connection_manager = ConnectionManager(
@@ -54,7 +54,7 @@ def get_connection_manager() -> ConnectionManager:
             max_message_size=1024,
         )
         # Note: background tasks won't be started in this fallback
-    
+
     return _connection_manager
 
 
@@ -79,26 +79,26 @@ async def websocket_lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     4. Clean up everything during shutdown
     """
     global _connection_manager
-    
+
     # Startup: Create and initialize connection manager
     logger.info("Starting WebSocket services...")
-    
+
     _connection_manager = ConnectionManager()
     await _connection_manager.start_background_tasks()
-    
+
     # Store in app state for dependency injection
     app.state.connection_manager = _connection_manager
-    
+
     logger.info("WebSocket services started successfully")
-    
+
     try:
         yield
     finally:
         # Shutdown: Clean up connection manager
         logger.info("Shutting down WebSocket services...")
-        
+
         if _connection_manager:
             await _connection_manager.stop_background_tasks()
             _connection_manager = None
-            
+
         logger.info("WebSocket services shut down successfully")

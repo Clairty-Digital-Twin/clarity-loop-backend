@@ -54,8 +54,7 @@ def create_websocket_app() -> FastAPI:
     @app.get("/health")
     async def health_check() -> dict[str, str | dict[str, int | str]]:
         """Detailed health check with WebSocket status."""
-        from clarity.api.v1.websocket.lifespan import get_connection_manager
-
+        # Import at top-level to comply with linting; if circular import occurs, move back with justification.
         try:
             connection_manager = get_connection_manager()
             return {
@@ -107,10 +106,10 @@ if __name__ == "__main__":
 
     app = create_websocket_app()
 
-    # Run with uvicorn
+    # For local development, bind to localhost only for security (see S104 warning)
     uvicorn.run(
         app,
-        host="0.0.0.0",
+        host="127.0.0.1",  # Changed from 0.0.0.0 to 127.0.0.1 for dev/test safety
         port=8000,
         log_level="info",
         reload=False,  # Set to True for development

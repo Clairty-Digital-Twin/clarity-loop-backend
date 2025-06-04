@@ -69,27 +69,38 @@ class FirebaseAuthMiddleware(BaseHTTPMiddleware):
         if self._is_exempt_path(request.url.path):
             return await call_next(request)
 
-        # Try to get authenticated user
-        user = None
-        if self.auth_provider:
-            try:
-                user = get_user_from_request(request)
-                if user and self.cache_enabled:
-                    # Cache user for this request
-                    self._user_cache[user.uid] = user
-            except Exception as e:
+        # Try to authenticate the request
+        try:
+            user_context = await self._authenticate_request(request)
+            request.state.user = user_context
+        except Exception as e:
+            from clarity.models.auth import AuthError
+            from starlette.responses import JSONResponse
+            from datetime import UTC, datetime
+            
+            # Handle authentication errors
+            if isinstance(e, AuthError):
+                return JSONResponse(
+                    status_code=e.status_code,
+                    content={
+                        "error": e.error_code,
+                        "message": e.message,
+                        "timestamp": datetime.now(UTC).isoformat(),
+                    }
+                )
+            else:
                 logger.warning(f"Authentication failed: {e}")
                 if not self.graceful_degradation:
-                    # Return 401 if graceful degradation is disabled
-                    from fastapi import HTTPException, status
-
-                    raise HTTPException(
-                        status_code=status.HTTP_401_UNAUTHORIZED,
-                        detail="Authentication required",
+                    return JSONResponse(
+                        status_code=401,
+                        content={
+                            "error": "authentication_failed",
+                            "message": "Authentication required",
+                            "timestamp": datetime.now(UTC).isoformat(),
+                        }
                     )
-
-        # Add user to request state
-        request.state.user = user
+                # For graceful degradation, set user as None
+                request.state.user = None
 
         return await call_next(request)
 
@@ -192,10 +203,59 @@ class FirebaseAuthMiddleware(BaseHTTPMiddleware):
             user_id=user_info["user_id"],
             email=user_info["email"],
             role=role,
-            permissions=permissions,
-            verified=user_info.get("verified", False),
+            permissions=list(permissions),
+            is_verified=user_info.get("verified", False),
             custom_claims=user_info.get("custom_claims", {}),
+            created_at=user_info.get("created_at"),
+            last_login=user_info.get("last_login"),
         )
+
+    async def _authenticate_request(self, request: Request) -> Any:
+        """Authenticate a request and return user context.
+
+        Args:
+            request: HTTP request to authenticate
+
+        Returns:
+            UserContext object if authenticated
+
+        Raises:
+            AuthError: If authentication fails
+        """
+        from clarity.models.auth import AuthError
+
+        # Extract token from request
+        token = self._extract_token(request)
+
+        # Verify token with auth provider
+        if not self.auth_provider:
+            raise AuthError(
+                message="Authentication provider not configured",
+                status_code=500,
+                error_code="auth_provider_not_configured",
+            )
+
+        user_info = await self.auth_provider.verify_token(token)
+        if not user_info:
+            raise AuthError(
+                message="Invalid or expired token",
+                status_code=401,
+                error_code="invalid_token",
+            )
+
+        # Convert user to expected format for _create_user_context
+        user_info_dict = {
+            "user_id": user_info.uid,
+            "email": user_info.email,
+            "name": user_info.display_name,
+            "verified": user_info.email_verified,
+            "roles": ["patient"],  # Default role from user info
+            "custom_claims": {},
+            "created_at": user_info.created_at,
+            "last_login": user_info.last_login,
+        }
+
+        return self._create_user_context(user_info_dict)
 
 
 class FirebaseAuthProvider:
@@ -216,7 +276,7 @@ class FirebaseAuthProvider:
         """
         self.credentials_path = credentials_path
         self.project_id = project_id
-        
+
         # Handle both dict and MiddlewareConfig objects
         config_dict: dict[str, Any] = {}
         if middleware_config is None:
@@ -227,7 +287,7 @@ class FirebaseAuthProvider:
         else:
             # It's already a dict
             config_dict = middleware_config
-            
+
         self.middleware_config = config_dict
         self._initialized = False
         self._token_cache: dict[str, dict[str, Any]] = {}  # token -> {data, timestamp}
@@ -322,7 +382,7 @@ class FirebaseAuthProvider:
             await self.initialize()
 
         try:
-            from clarity.auth.firebase_auth import auth
+            from firebase_admin import auth
 
             # Create user in Firebase
             user_record = auth.create_user(
@@ -362,7 +422,7 @@ class FirebaseAuthProvider:
             await self.initialize()
 
         try:
-            from clarity.auth.firebase_auth import auth
+            from firebase_admin import auth
 
             user_record = auth.get_user(user_id)
 
@@ -382,6 +442,28 @@ class FirebaseAuthProvider:
         except Exception as e:
             logger.debug(f"Failed to get user info: {e}")
             return None
+
+    def _cleanup_expired_cache(self) -> None:
+        """Remove expired entries from token cache."""
+        current_time = time.time()
+        expired_tokens = [
+            token for token, data in self._token_cache.items()
+            if current_time - data["timestamp"] > self._cache_ttl
+        ]
+
+        for token in expired_tokens:
+            del self._token_cache[token]
+
+        # Also enforce cache size limit
+        if len(self._token_cache) > self._cache_max_size:
+            # Remove oldest entries
+            sorted_cache = sorted(
+                self._token_cache.items(),
+                key=lambda x: x[1]["timestamp"]
+            )
+            excess_count = len(self._token_cache) - self._cache_max_size
+            for token, _ in sorted_cache[:excess_count]:
+                del self._token_cache[token]
 
     async def cleanup(self) -> None:
         """Cleanup resources when shutting down."""

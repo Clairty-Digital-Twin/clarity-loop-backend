@@ -463,6 +463,9 @@ class TestChatHandler:
         await connection_manager.connect(
             websocket=websocket, user_id="test_user", username="Test User"
         )
+        # Map user_id to websocket for send_to_user to work
+        connection_manager.connections["test_user"] = websocket
+        connection_manager.user_connections["test_user"] = [websocket]
 
         # Create health-related message
         message = ChatMessage(

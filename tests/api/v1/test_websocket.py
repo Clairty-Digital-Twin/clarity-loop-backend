@@ -495,7 +495,6 @@ class TestWebSocketEndpoints:
     async def test_health_insight_generation(self, client: TestClient, app: FastAPI):
         user_id = "test_user_id_1"
         test_token = "test-token"
-        auth_headers = {"Authorization": f"Bearer {test_token}"}
 
         # Mock the external services for this specific test
         mock_gemini_service = AsyncMock(spec=GeminiService)
@@ -524,7 +523,7 @@ class TestWebSocketEndpoints:
         app.dependency_overrides[chat_handler.get_connection_manager] = lambda: mock_manager
 
         # Use TestClient.websocket_connect to interact with the WebSocket endpoint
-        with client.websocket_connect(f"/api/v1/chat/{user_id}", headers=auth_headers) as websocket:
+        with client.websocket_connect(f"/api/v1/chat/{user_id}?token={test_token}") as websocket:
             # Send a chat message to trigger insight generation
             chat_message = ChatMessage(
                 user_id=user_id,
@@ -574,7 +573,6 @@ class TestWebSocketEndpoints:
     async def test_typing_indicator_processing(self, client: TestClient, app: FastAPI):
         user_id = "test_user_id_2"
         test_token = "test-token"
-        auth_headers = {"Authorization": f"Bearer {test_token}"}
 
         # Mock the external services for this specific test
         mock_gemini_service = AsyncMock(spec=GeminiService)
@@ -596,7 +594,7 @@ class TestWebSocketEndpoints:
 
         app.dependency_overrides[chat_handler.get_connection_manager] = lambda: mock_manager
 
-        with client.websocket_connect(f"/api/v1/chat/{user_id}", headers=auth_headers) as websocket:
+        with client.websocket_connect(f"/api/v1/chat/{user_id}?token={test_token}") as websocket:
             # Send a typing indicator message
             typing_message = TypingMessage(
                 user_id=user_id,
@@ -667,7 +665,7 @@ class TestWebSocketEndpoints:
 
         app.dependency_overrides[chat_handler.get_connection_manager] = lambda: mock_manager
 
-        with client.websocket_connect(f"/api/v1/chat/{user_id}", headers=auth_headers) as websocket:
+        with client.websocket_connect(f"/api/v1/chat/{user_id}?token={test_token}") as websocket:
             # Send a heartbeat message
             heartbeat_message = HeartbeatMessage(
                 timestamp=datetime.now(UTC),

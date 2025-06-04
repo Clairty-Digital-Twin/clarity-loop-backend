@@ -57,7 +57,7 @@ def require_permission(
         @wraps(func)
         async def wrapper(*args: P.args, **kwargs: P.kwargs) -> T:
             # Extract user from kwargs (injected by dependency)
-            user: User | None = kwargs.get("current_user")  # type: ignore[misc]
+            user: "User | None" = kwargs.get("current_user")  # type: ignore[misc]
             if not user:
                 raise HTTPException(
                     status_code=status.HTTP_401_UNAUTHORIZED,
@@ -82,7 +82,7 @@ def require_role(
         @wraps(func)
         async def wrapper(*args: P.args, **kwargs: P.kwargs) -> T:
             # Extract user from kwargs (injected by dependency)
-            user: User | None = kwargs.get("current_user")  # type: ignore[misc]
+            user: "User | None" = kwargs.get("current_user")  # type: ignore[misc]
             if not user:
                 raise HTTPException(
                     status_code=status.HTTP_401_UNAUTHORIZED,

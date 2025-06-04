@@ -687,7 +687,7 @@ class TestWebSocketEndpoints:
 
     async def test_typing_indicator_processing(self, client: TestClient, app: FastAPI):
         user_id = "test-user-123"  # Must match the user ID from mock_get_current_user_websocket
-        test_token = "test-token"
+        test_token = "test-token"  # noqa: S105
 
         # Mock the external services for this specific test
         mock_gemini_service = AsyncMock(spec=GeminiService)

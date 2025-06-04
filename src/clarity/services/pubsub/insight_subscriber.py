@@ -16,6 +16,8 @@ import google.generativeai as genai
 
 # Constants
 MIN_FEATURE_VECTOR_LENGTH = 8
+HIGH_CONSISTENCY_THRESHOLD = 0.8
+MODERATE_CONSISTENCY_THRESHOLD = 0.5
 
 logger = logging.getLogger(__name__)
 
@@ -96,7 +98,7 @@ class GeminiInsightGenerator:
     @staticmethod
     def _enhance_analysis_results_for_gemini(analysis_results: dict[str, Any]) -> dict[str, Any]:
         """Enhance analysis results with fields expected by Gemini service.
-        
+
         Maps sleep_features to the specific field names that Gemini expects.
         """
         enhanced = analysis_results.copy()
@@ -121,12 +123,17 @@ class GeminiInsightGenerator:
             # Provide consistency in a user-friendly way
             cons_score = sf.get("consistency_score", 0)
             enhanced["sleep_consistency_rating"] = (
-                "high" if cons_score > 0.8
-                else "moderate" if cons_score > 0.5
+                "high" if cons_score > HIGH_CONSISTENCY_THRESHOLD
+                else "moderate" if cons_score > MODERATE_CONSISTENCY_THRESHOLD
                 else "low"
             )
 
         return enhanced
+
+    def _raise_model_not_initialized_error(self) -> None:
+        """Raise error when Gemini model is not initialized."""
+        msg = "Gemini model not initialized"
+        raise RuntimeError(msg)
 
     @staticmethod
     def _create_health_prompt(analysis_results: dict[str, Any]) -> str:
@@ -238,7 +245,7 @@ Generate the health insight now:"""
         """Call Gemini API to generate insight."""
         try:
             if self.model is None:
-                raise RuntimeError("Gemini model not initialized")
+                self._raise_model_not_initialized_error()
 
             response = self.model.generate_content(
                 prompt,

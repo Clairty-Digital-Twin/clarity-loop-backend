@@ -478,17 +478,22 @@ class TestGeminiInsightGeneratorStorage:
         upload_id = "upload-456"
         insight = {"insights": ["Great health!"], "confidence": 0.9}
 
-        # Mock Firestore collection and document
-        mock_collection = Mock()
+        # Mock Firestore collection chain
         mock_document = Mock()
-        mock_collection.document.return_value = mock_document
-        mock_generator.firestore_client.collection.return_value = mock_collection
+        mock_uploads_collection = Mock()
+        mock_user_collection = Mock()
+        
+        mock_uploads_collection.document.return_value = mock_document
+        mock_user_collection.collection.return_value = mock_uploads_collection
+        mock_generator.firestore_client.collection.return_value = mock_user_collection
 
         await mock_generator._store_insight(user_id, upload_id, insight)
 
         # Verify Firestore calls
-        mock_generator.firestore_client.collection.assert_called_once_with("health_insights")
-        mock_collection.document.assert_called_once_with(f"{user_id}_{upload_id}")
+        mock_generator.firestore_client.collection.assert_called_once_with("insights")
+        mock_user_collection.document.assert_called_once_with(user_id)
+        mock_user_collection.collection.assert_called_once_with("uploads")
+        mock_uploads_collection.document.assert_called_once_with(upload_id)
         mock_document.set.assert_called_once_with(insight)
 
     async def test_store_insight_exception(self, mock_generator):

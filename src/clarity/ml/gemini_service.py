@@ -64,7 +64,7 @@ class GeminiService:
         project_id: str | None = None,
         location: str = "us-central1",
         testing: bool | None = None,
-        model=None,
+        model: Any = None,
     ) -> None:
         self.project_id = project_id
         self.location = location

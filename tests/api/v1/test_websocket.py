@@ -21,17 +21,23 @@ from unittest.mock import (  # Keep MagicMock for other potential uses if any
 )
 import uuid  # Added uuid
 
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException
+from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
 from fastapi.testclient import TestClient
+from pydantic import Field, ValidationError
 import pytest
 from starlette.websockets import WebSocketState
 
 from clarity.api.v1.websocket import chat_handler, models
 from clarity.api.v1.websocket.connection_manager import ConnectionManager
-from clarity.api.v1.websocket.models import ConnectionInfo, MessageType, ChatMessage, TypingMessage, HeartbeatMessage
+from clarity.api.v1.websocket.models import (
+    ChatMessage,
+    ConnectionInfo,
+    HeartbeatMessage,
+    MessageType,
+    TypingMessage,
+)
 from clarity.auth.firebase_auth import User, get_current_user_websocket
 from clarity.models.user import User, UserPreferences, UserProfile
-from pydantic import Field, ValidationError
 
 logger = logging.getLogger(__name__)
 # Basic logging for tests, customize as needed, e.g., in conftest.py for global config
@@ -319,6 +325,7 @@ def app() -> FastAPI:
 
     app.include_router(chat_handler.router, prefix="/api/v1/chat")
     # This mock should return a User instance for successful authentication
+
     async def mock_get_current_user_websocket(token: str | None = None) -> User:
         if token == "test-token":
             # Correctly instantiate the User model based on its __init__ or create method
@@ -343,7 +350,7 @@ def app() -> FastAPI:
         create_mock_connection_manager
     )
 
-    yield app
+    return app
 
 
 @pytest.fixture

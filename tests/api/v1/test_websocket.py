@@ -232,11 +232,11 @@ class _TestConnectionManager:
                         )
 
                     logger.info(
-                        f"Recorded direct message send to user {user_id} via {websocket}"
+                        "Recorded direct message send to user %s via %s", user_id, websocket
                     )
         else:
             logger.warning(
-                f"User {user_id} has no active connections to send messages to."
+                "User %s has no active connections to send messages to.", user_id
             )
 
     async def broadcast_to_room(

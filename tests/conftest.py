@@ -47,7 +47,7 @@ class _FakeFS:  # minimal façade
         pass
 
     def collection(
-        self, name: str
+        self, _name: str
     ) -> "_FakeFS":  # returns self so .document() still works
         return self
 

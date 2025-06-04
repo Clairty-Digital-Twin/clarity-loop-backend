@@ -31,7 +31,6 @@ from clarity.models.health_data import (
     BiometricData,
     HealthMetric,
     HealthMetricType,
-    SleepData,
 )
 
 
@@ -154,7 +153,13 @@ class TestHealthAnalysisPipelineDataOrganization:
         pipeline = HealthAnalysisPipeline()
         result = pipeline._organize_metrics_by_modality([])
 
-        assert result == {"cardio": [], "respiratory": [], "activity": [], "sleep": [], "other": []}
+        assert result == {
+            "cardio": [],
+            "respiratory": [],
+            "activity": [],
+            "sleep": [],
+            "other": [],
+        }
 
     @staticmethod
     def test_organize_metrics_by_modality_cardio_only() -> None:
@@ -164,7 +169,7 @@ class TestHealthAnalysisPipelineDataOrganization:
         # Create cardio metrics
         cardio_metric = HealthMetric(
             metric_type=HealthMetricType.HEART_RATE,
-            biometric_data=BiometricData(heart_rate=75.0)
+            biometric_data=BiometricData(heart_rate=75.0),
         )
 
         result = pipeline._organize_metrics_by_modality([cardio_metric])
@@ -184,17 +189,17 @@ class TestHealthAnalysisPipelineDataOrganization:
         # Create metrics for each modality
         cardio_metric = HealthMetric(
             metric_type=HealthMetricType.HEART_RATE,
-            biometric_data=BiometricData(heart_rate=75.0)
+            biometric_data=BiometricData(heart_rate=75.0),
         )
 
         respiratory_metric = HealthMetric(
             metric_type=HealthMetricType.HEART_RATE_VARIABILITY,
-            biometric_data=BiometricData(heart_rate_variability=50.0)
+            biometric_data=BiometricData(heart_rate_variability=50.0),
         )
 
         activity_metric = HealthMetric(
             metric_type=HealthMetricType.ACTIVITY_LEVEL,
-            activity_data=ActivityData(steps=1000, distance=2.5)
+            activity_data=ActivityData(steps=1000, distance=2.5),
         )
 
         metrics = [cardio_metric, respiratory_metric, activity_metric]
@@ -223,7 +228,7 @@ class TestHealthAnalysisPipelineModalityProcessing:
 
         cardio_metric = HealthMetric(
             metric_type=HealthMetricType.HEART_RATE,
-            biometric_data=BiometricData(heart_rate=75.0)
+            biometric_data=BiometricData(heart_rate=75.0),
         )
 
         result = await pipeline._process_cardio_data([cardio_metric])
@@ -239,17 +244,21 @@ class TestHealthAnalysisPipelineModalityProcessing:
 
         # Mock respiratory processor
         expected_features = [4.0, 5.0, 6.0]
-        pipeline.respiratory_processor.process = MagicMock(return_value=expected_features)
+        pipeline.respiratory_processor.process = MagicMock(
+            return_value=expected_features
+        )
 
         respiratory_metric = HealthMetric(
             metric_type=HealthMetricType.HEART_RATE_VARIABILITY,
-            biometric_data=BiometricData(heart_rate_variability=50.0)
+            biometric_data=BiometricData(heart_rate_variability=50.0),
         )
 
         result = await pipeline._process_respiratory_data([respiratory_metric])
 
         assert result == expected_features
-        pipeline.respiratory_processor.process.assert_called_once_with([respiratory_metric])
+        pipeline.respiratory_processor.process.assert_called_once_with(
+            [respiratory_metric]
+        )
 
     @pytest.mark.asyncio
     @staticmethod
@@ -263,10 +272,13 @@ class TestHealthAnalysisPipelineModalityProcessing:
         mock_analysis.embedding = [0.1, 0.2, 0.3, 0.4]
         mock_pat_service.analyze_actigraphy.return_value = mock_analysis
 
-        with patch("clarity.ml.analysis_pipeline.get_pat_service", return_value=mock_pat_service):
+        with patch(
+            "clarity.ml.analysis_pipeline.get_pat_service",
+            return_value=mock_pat_service,
+        ):
             activity_metric = HealthMetric(
                 metric_type=HealthMetricType.ACTIVITY_LEVEL,
-                activity_data=ActivityData(steps=1000)
+                activity_data=ActivityData(steps=1000),
             )
 
             result = await pipeline._process_activity_data("user1", [activity_metric])
@@ -282,12 +294,17 @@ class TestHealthAnalysisPipelineModalityProcessing:
 
         # Mock PAT service to raise error
         mock_pat_service = AsyncMock()
-        mock_pat_service.analyze_actigraphy.side_effect = RuntimeError("PAT service error")
+        mock_pat_service.analyze_actigraphy.side_effect = RuntimeError(
+            "PAT service error"
+        )
 
-        with patch("clarity.ml.analysis_pipeline.get_pat_service", return_value=mock_pat_service):
+        with patch(
+            "clarity.ml.analysis_pipeline.get_pat_service",
+            return_value=mock_pat_service,
+        ):
             activity_metric = HealthMetric(
                 metric_type=HealthMetricType.ACTIVITY_LEVEL,
-                activity_data=ActivityData(steps=1000)
+                activity_data=ActivityData(steps=1000),
             )
 
             result = await pipeline._process_activity_data("user1", [activity_metric])
@@ -309,15 +326,14 @@ class TestHealthAnalysisPipelineFusion:
         expected_fused = [7.0, 8.0, 9.0]
         pipeline.fusion_service.fuse_embeddings = AsyncMock(return_value=expected_fused)
 
-        modality_features = {
-            "cardio": [1.0, 2.0, 3.0],
-            "respiratory": [4.0, 5.0, 6.0]
-        }
+        modality_features = {"cardio": [1.0, 2.0, 3.0], "respiratory": [4.0, 5.0, 6.0]}
 
         result = await pipeline._fuse_modalities(modality_features)
 
         assert result == expected_fused
-        pipeline.fusion_service.fuse_embeddings.assert_called_once_with(modality_features)
+        pipeline.fusion_service.fuse_embeddings.assert_called_once_with(
+            modality_features
+        )
 
     @pytest.mark.asyncio
     @staticmethod
@@ -326,12 +342,11 @@ class TestHealthAnalysisPipelineFusion:
         pipeline = HealthAnalysisPipeline()
 
         # Mock fusion service to raise error
-        pipeline.fusion_service.fuse_embeddings = AsyncMock(side_effect=RuntimeError("Fusion error"))
+        pipeline.fusion_service.fuse_embeddings = AsyncMock(
+            side_effect=RuntimeError("Fusion error")
+        )
 
-        modality_features = {
-            "cardio": [1.0, 2.0, 3.0],
-            "respiratory": [4.0, 5.0, 6.0]
-        }
+        modality_features = {"cardio": [1.0, 2.0, 3.0], "respiratory": [4.0, 5.0, 6.0]}
 
         result = await pipeline._fuse_modalities(modality_features)
 
@@ -353,18 +368,12 @@ class TestHealthAnalysisPipelineSummaryStats:
             user_id="user1",
             metric_type=HealthMetricType.HEART_RATE,
             timestamp=datetime.now(UTC),
-            data=BiometricData(value=75.0, unit="bpm")
+            data=BiometricData(value=75.0, unit="bpm"),
         )
 
-        organized_data = {
-            "cardio": [cardio_metric],
-            "respiratory": [],
-            "activity": []
-        }
+        organized_data = {"cardio": [cardio_metric], "respiratory": [], "activity": []}
 
-        modality_features = {
-            "cardio": [1.0, 2.0, 3.0]
-        }
+        modality_features = {"cardio": [1.0, 2.0, 3.0]}
 
         result = pipeline._generate_summary_stats(organized_data, modality_features)
 
@@ -380,25 +389,21 @@ class TestHealthAnalysisPipelineSummaryStats:
         end_time = start_time + timedelta(hours=24)
 
         cardio_metric1 = HealthMetric(
-            id="1",
-            user_id="user1",
             metric_type=HealthMetricType.HEART_RATE,
-            timestamp=start_time,
-            biometric_data=BiometricData(heart_rate=75.0)
+            created_at=start_time,
+            biometric_data=BiometricData(heart_rate=75.0),
         )
 
         cardio_metric2 = HealthMetric(
-            id="2",
-            user_id="user1",
             metric_type=HealthMetricType.HEART_RATE,
-            timestamp=end_time,
-            biometric_data=BiometricData(heart_rate=80.0)
+            created_at=end_time,
+            biometric_data=BiometricData(heart_rate=80.0),
         )
 
         organized_data = {
             "cardio": [cardio_metric1, cardio_metric2],
             "respiratory": [],
-            "activity": []
+            "activity": [],
         }
 
         result = HealthAnalysisPipeline._generate_data_coverage(organized_data)
@@ -418,7 +423,7 @@ class TestHealthAnalysisPipelineSummaryStats:
         """Test feature summary generation."""
         modality_features = {
             "cardio": [1.0, 2.0, 3.0],
-            "respiratory": [4.0, 5.0, 6.0, 7.0]
+            "respiratory": [4.0, 5.0, 6.0, 7.0],
         }
 
         result = HealthAnalysisPipeline._generate_feature_summary(modality_features)
@@ -445,15 +450,17 @@ class TestHealthAnalysisPipelineSummaryStats:
         modality_features = {
             "cardio": [75.0, 80.0, 70.0],  # Heart rate values
             "respiratory": [16.0, 18.0, 14.0],  # Breathing rate values
-            "activity": [1000.0, 1500.0, 800.0]  # Activity values
+            "activity": [1000.0, 1500.0, 800.0],  # Activity values
         }
 
         activity_features = [
             {"avg_heart_rate": 75.0, "total_steps": 1000},
-            {"avg_heart_rate": 80.0, "total_steps": 1500}
+            {"avg_heart_rate": 80.0, "total_steps": 1500},
         ]
 
-        result = pipeline._generate_health_indicators(modality_features, activity_features)
+        result = pipeline._generate_health_indicators(
+            modality_features, activity_features
+        )
 
         assert "cardio" in result
         assert "respiratory" in result
@@ -463,11 +470,11 @@ class TestHealthAnalysisPipelineSummaryStats:
     def test_extract_cardio_health_indicators() -> None:
         """Test cardio health indicators extraction."""
         # Need at least MIN_FEATURE_VECTOR_LENGTH (8) features
-        modality_features = {
-            "cardio": [75.0, 80.0, 70.0, 85.0, 90.0, 65.0, 78.0, 82.0]
-        }
+        modality_features = {"cardio": [75.0, 80.0, 70.0, 85.0, 90.0, 65.0, 78.0, 82.0]}
 
-        result = HealthAnalysisPipeline._extract_cardio_health_indicators(modality_features)
+        result = HealthAnalysisPipeline._extract_cardio_health_indicators(
+            modality_features
+        )
 
         assert result is not None
         assert "avg_heart_rate" in result
@@ -487,7 +494,9 @@ class TestHealthAnalysisPipelineSummaryStats:
             "respiratory": [16.0, 18.0, 14.0, 95.5, 20.0, 15.0, 0.85, 0.92]
         }
 
-        result = HealthAnalysisPipeline._extract_respiratory_health_indicators(modality_features)
+        result = HealthAnalysisPipeline._extract_respiratory_health_indicators(
+            modality_features
+        )
 
         assert result is not None
         assert "avg_respiratory_rate" in result
@@ -509,10 +518,12 @@ class TestHealthAnalysisPipelineSummaryStats:
             {"feature_name": "total_active_energy", "value": 450.7},
             {"feature_name": "total_exercise_minutes", "value": 35.2},
             {"feature_name": "activity_consistency_score", "value": 0.8765},
-            {"feature_name": "latest_vo2_max", "value": 42.345}
+            {"feature_name": "latest_vo2_max", "value": 42.345},
         ]
 
-        result = HealthAnalysisPipeline._extract_activity_health_indicators(activity_features)
+        result = HealthAnalysisPipeline._extract_activity_health_indicators(
+            activity_features
+        )
 
         assert result is not None
         assert "total_steps" in result
@@ -554,7 +565,7 @@ class TestHealthAnalysisPipelineSummaryStats:
             user_id="user1",
             metric_type=HealthMetricType.HEART_RATE,
             timestamp=start_time,
-            biometric_data=BiometricData(heart_rate=75.0)
+            biometric_data=BiometricData(heart_rate=75.0),
         )
 
         metric2 = HealthMetric(
@@ -562,7 +573,7 @@ class TestHealthAnalysisPipelineSummaryStats:
             user_id="user1",
             metric_type=HealthMetricType.HEART_RATE,
             timestamp=end_time,
-            biometric_data=BiometricData(heart_rate=80.0)
+            biometric_data=BiometricData(heart_rate=80.0),
         )
 
         result = HealthAnalysisPipeline._calculate_time_span([metric1, metric2])
@@ -576,7 +587,7 @@ class TestHealthAnalysisPipelineSummaryStats:
             user_id="user1",
             metric_type=HealthMetricType.HEART_RATE,
             timestamp=datetime.now(UTC),
-            biometric_data=BiometricData(heart_rate=75.0)
+            biometric_data=BiometricData(heart_rate=75.0),
         )
 
         result = HealthAnalysisPipeline._calculate_time_span([metric])
@@ -610,14 +621,16 @@ class TestHealthAnalysisPipelineMainWorkflow:
 
         # Mock cardio processor
         expected_cardio_features = [1.0, 2.0, 3.0]
-        pipeline.cardio_processor.process = MagicMock(return_value=expected_cardio_features)
+        pipeline.cardio_processor.process = MagicMock(
+            return_value=expected_cardio_features
+        )
 
         cardio_metric = HealthMetric(
             id="1",
             user_id="user1",
             metric_type=HealthMetricType.HEART_RATE,
             timestamp=datetime.now(UTC),
-            data=BiometricData(value=75.0, unit="bpm")
+            data=BiometricData(value=75.0, unit="bpm"),
         )
 
         result = await pipeline.process_health_data("user1", [cardio_metric])
@@ -643,7 +656,9 @@ class TestHealthAnalysisPipelineMainWorkflow:
         expected_fused = [7.0, 8.0, 9.0]
 
         pipeline.cardio_processor.process = MagicMock(return_value=expected_cardio)
-        pipeline.respiratory_processor.process = MagicMock(return_value=expected_respiratory)
+        pipeline.respiratory_processor.process = MagicMock(
+            return_value=expected_respiratory
+        )
         pipeline.fusion_service.fuse_embeddings = AsyncMock(return_value=expected_fused)
 
         cardio_metric = HealthMetric(
@@ -651,7 +666,7 @@ class TestHealthAnalysisPipelineMainWorkflow:
             user_id="user1",
             metric_type=HealthMetricType.HEART_RATE,
             timestamp=datetime.now(UTC),
-            data=BiometricData(value=75.0, unit="bpm")
+            data=BiometricData(value=75.0, unit="bpm"),
         )
 
         respiratory_metric = HealthMetric(
@@ -659,15 +674,20 @@ class TestHealthAnalysisPipelineMainWorkflow:
             user_id="user1",
             metric_type=HealthMetricType.RESPIRATORY_RATE,
             timestamp=datetime.now(UTC),
-            data=BiometricData(value=16.0, unit="breaths/min")
+            data=BiometricData(value=16.0, unit="breaths/min"),
         )
 
-        result = await pipeline.process_health_data("user1", [cardio_metric, respiratory_metric])
+        result = await pipeline.process_health_data(
+            "user1", [cardio_metric, respiratory_metric]
+        )
 
         assert result.cardio_features == expected_cardio
         assert result.respiratory_features == expected_respiratory
         assert result.fused_vector == expected_fused
-        assert set(result.processing_metadata["modalities_processed"]) == {"cardio", "respiratory"}
+        assert set(result.processing_metadata["modalities_processed"]) == {
+            "cardio",
+            "respiratory",
+        }
 
     @pytest.mark.asyncio
     @staticmethod
@@ -688,11 +708,13 @@ class TestHealthAnalysisPipelineMainWorkflow:
             user_id="user1",
             metric_type=HealthMetricType.HEART_RATE,
             timestamp=datetime.now(UTC),
-            data=BiometricData(value=75.0, unit="bpm")
+            data=BiometricData(value=75.0, unit="bpm"),
         )
 
         processing_id = "test_processing_123"
-        result = await pipeline.process_health_data("user1", [cardio_metric], processing_id)
+        result = await pipeline.process_health_data(
+            "user1", [cardio_metric], processing_id
+        )
 
         # Verify Firestore save was called
         mock_firestore.save_analysis_result.assert_called_once()
@@ -747,14 +769,16 @@ class TestRunAnalysisPipelineFunction:
                     "value": 75.0,
                     "unit": "bpm",
                     "start_date": datetime.now(UTC).isoformat(),
-                    "end_date": datetime.now(UTC).isoformat()
+                    "end_date": datetime.now(UTC).isoformat(),
                 }
             ],
             "category_samples": [],
-            "workout_data": []
+            "workout_data": [],
         }
 
-        with patch("clarity.ml.analysis_pipeline.get_analysis_pipeline") as mock_get_pipeline:
+        with patch(
+            "clarity.ml.analysis_pipeline.get_analysis_pipeline"
+        ) as mock_get_pipeline:
             mock_pipeline = AsyncMock()
             mock_results = AnalysisResults()
             mock_results.cardio_features = [1.0, 2.0, 3.0]
@@ -776,7 +800,7 @@ class TestRunAnalysisPipelineFunction:
         # Invalid health data that should cause conversion to fail
         invalid_health_data = {"invalid_key": "invalid_value"}
 
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match=r".*metrics.*"):
             await run_analysis_pipeline("user1", invalid_health_data)
 
 
@@ -803,14 +827,16 @@ class TestAnalysisPipelineErrorHandling:
         pipeline = HealthAnalysisPipeline()
 
         # Mock cardio processor to raise error
-        pipeline.cardio_processor.process = MagicMock(side_effect=RuntimeError("Processor error"))
+        pipeline.cardio_processor.process = MagicMock(
+            side_effect=RuntimeError("Processor error")
+        )
 
         cardio_metric = HealthMetric(
             id="1",
             user_id="user1",
             metric_type=HealthMetricType.HEART_RATE,
             timestamp=datetime.now(UTC),
-            data=BiometricData(value=75.0, unit="bpm")
+            data=BiometricData(value=75.0, unit="bpm"),
         )
 
         # Should not raise exception, but handle gracefully
@@ -831,7 +857,9 @@ class TestAnalysisPipelineErrorHandling:
 
         # Mock Firestore client to raise error
         mock_firestore = AsyncMock()
-        mock_firestore.save_analysis_result.side_effect = RuntimeError("Firestore error")
+        mock_firestore.save_analysis_result.side_effect = RuntimeError(
+            "Firestore error"
+        )
         pipeline.firestore_client = mock_firestore
 
         cardio_metric = HealthMetric(
@@ -839,11 +867,13 @@ class TestAnalysisPipelineErrorHandling:
             user_id="user1",
             metric_type=HealthMetricType.HEART_RATE,
             timestamp=datetime.now(UTC),
-            data=BiometricData(value=75.0, unit="bpm")
+            data=BiometricData(value=75.0, unit="bpm"),
         )
 
         # Should continue processing despite Firestore error
-        result = await pipeline.process_health_data("user1", [cardio_metric], "processing_123")
+        result = await pipeline.process_health_data(
+            "user1", [cardio_metric], "processing_123"
+        )
 
         assert isinstance(result, AnalysisResults)
         assert result.cardio_features == [1.0, 2.0, 3.0]

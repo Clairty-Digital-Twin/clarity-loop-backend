@@ -437,6 +437,7 @@ def app(monkeypatch: pytest.MonkeyPatch) -> FastAPI:
     # Create a mock response that returns dynamic content
     async def mock_generate_insights(request):
         from unittest.mock import MagicMock
+
         response = MagicMock()
         response.narrative = f"AI Response to: {request.context}"
         return response
@@ -615,18 +616,23 @@ class TestWebSocketEndpoints:
         # Create a proper async mock response
         async def mock_generate_insights(request):
             from unittest.mock import MagicMock
+
             response = MagicMock()
             response.narrative = f"AI Response to: {request.context}"
             return response
 
-        mock_gemini_service.generate_health_insights = AsyncMock(side_effect=mock_generate_insights)
+        mock_gemini_service.generate_health_insights = AsyncMock(
+            side_effect=mock_generate_insights
+        )
         mock_pat_model_service = AsyncMock(spec=PATModelService)
         # Mock the actual method used by the chat handler
-        mock_pat_model_service.analyze_actigraphy = AsyncMock(return_value=AsyncMock(
-            sleep_efficiency=0.85,
-            total_sleep_time=7.5,
-            model_dump=lambda: {"sleep_efficiency": 0.85, "total_sleep_time": 7.5}
-        ))
+        mock_pat_model_service.analyze_actigraphy = AsyncMock(
+            return_value=AsyncMock(
+                sleep_efficiency=0.85,
+                total_sleep_time=7.5,
+                model_dump=lambda: {"sleep_efficiency": 0.85, "total_sleep_time": 7.5},
+            )
+        )
 
         # Temporarily override dependencies for this test to use our explicit mocks
         original_gemini_service = app.dependency_overrides.get(

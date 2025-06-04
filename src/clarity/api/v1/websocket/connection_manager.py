@@ -3,7 +3,7 @@
 import asyncio
 from collections import defaultdict
 import contextlib
-from datetime import datetime
+from datetime import UTC, datetime
 import logging
 import time
 from typing import Any
@@ -213,7 +213,7 @@ class ConnectionManager:
                 user_id=user_id,
                 session_id=session_id,
                 server_info={
-                    "server_time": datetime.utcnow().isoformat(),
+                    "server_time": datetime.now(UTC).isoformat(),
                     "heartbeat_interval": self.heartbeat_interval,
                 },
             )

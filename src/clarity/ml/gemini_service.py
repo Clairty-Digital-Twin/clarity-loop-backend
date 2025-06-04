@@ -63,6 +63,7 @@ class GeminiService:
         self,
         project_id: str | None = None,
         location: str = "us-central1",
+        *,
         testing: bool | None = None,
         model: Any = None,
     ) -> None:
@@ -75,8 +76,9 @@ class GeminiService:
             except (AttributeError, ImportError, RuntimeError):
                 testing = False
         self.testing = testing
-        self.model = None
+        self.model: GenerativeModel | Any | None = None
         self.is_initialized = False
+        
         if self.testing:
             self.model = model if model is not None else object()
             self.is_initialized = True
@@ -84,9 +86,8 @@ class GeminiService:
                 "GeminiService initialized in TEST mode (no external Vertex AI calls)."
             )
         else:
-            self.initialize()
-        self.model: GenerativeModel | None = None
-        self.is_initialized = False
+            # Initialize in production mode
+            pass
 
     @staticmethod
     def _raise_model_not_initialized() -> NoReturn:

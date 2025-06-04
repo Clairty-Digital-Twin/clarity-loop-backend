@@ -201,13 +201,16 @@ class TestSleepProcessor:
 
         summary = self.processor.get_summary_stats(result)
 
-        assert "sleep_quality_score" in summary
-        assert "total_nights_analyzed" in summary
-        assert "avg_sleep_duration_hours" in summary
+        assert "overall_quality_rating" in summary
+        assert "sleep_duration_hours" in summary
         assert "sleep_efficiency_rating" in summary
+        assert "sleep_latency_rating" in summary
+        assert "waso_rating" in summary
+        assert "rem_sleep_rating" in summary
+        assert "deep_sleep_rating" in summary
+        assert "consistency_rating" in summary
 
         # Verify reasonable values
-        assert 0 <= summary["sleep_quality_score"] <= 1
-        assert summary["total_nights_analyzed"] == 1
-        assert summary["avg_sleep_duration_hours"] == pytest.approx(7.75, abs=0.1)  # 465/60
+        assert summary["sleep_duration_hours"] == pytest.approx(7.75, abs=0.1)  # 465/60
         assert summary["sleep_efficiency_rating"] in ["excellent", "good", "fair", "poor"]
+        assert summary["overall_quality_rating"] in ["excellent", "good", "fair", "poor"]

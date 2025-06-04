@@ -341,8 +341,8 @@ async def websocket_chat_endpoint(
                 await connection_manager.disconnect(websocket, "internal_error")
                 break
 
-    except Exception as e:
-        logger.exception("Error in WebSocket connection: %s", e)
+    except Exception:
+        logger.exception("Error in WebSocket connection")
 
     finally:
         await connection_manager.disconnect(websocket, "Connection closed")

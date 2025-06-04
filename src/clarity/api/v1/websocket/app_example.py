@@ -10,7 +10,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 
 from clarity.api.v1.websocket.chat_handler import router as chat_router
-from clarity.api.v1.websocket.lifespan import websocket_lifespan
+from clarity.api.v1.websocket.lifespan import websocket_lifespan, get_connection_manager
 
 
 @asynccontextmanager

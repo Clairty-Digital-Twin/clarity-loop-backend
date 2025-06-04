@@ -1,14 +1,14 @@
 """WebSocket API endpoint tests for the CLARITY chat system."""
 
-from datetime import UTC, datetime
 import logging
+from datetime import UTC, datetime
 from typing import Any
 from unittest.mock import AsyncMock, MagicMock
 
+import pytest
 from fastapi import FastAPI, HTTPException
 from fastapi.testclient import TestClient
-from pydantic import BaseModel, Field
-import pytest
+from pydantic import Field
 from starlette.websockets import WebSocket, WebSocketDisconnect
 
 from clarity.api.v1.websocket import chat_handler

@@ -225,7 +225,7 @@ class WebSocketChatHandler:
             await connection_manager.send_to_user(user_id, error_msg)
 
 
-@router.websocket("/chat/{room_id}")
+@router.websocket("/{room_id}")
 async def websocket_chat_endpoint(
     websocket: WebSocket,
     room_id: str = "general",
@@ -256,12 +256,9 @@ async def websocket_chat_endpoint(
     logger.info("WebSocket connection attempt: token=%s", token)
 
     try:
-        connected = await connection_manager.connect(
+        await connection_manager.connect(
             websocket=websocket, user_id=user_id, username=username, room_id=room_id
         )
-
-        if not connected:
-            return
 
         logger.info(
             "WebSocket chat connection established for %s in room %s",
@@ -396,15 +393,12 @@ async def websocket_health_analysis_endpoint(
             user.display_name if user and user.display_name else "User_%s" % user_id[:8]
         )
 
-        connected = await connection_manager.connect(
+        await connection_manager.connect(
             websocket=websocket,
             user_id=user_id,
             username=username,
             room_id="health_analysis_%s" % user_id,
         )
-
-        if not connected:
-            return
 
         logger.info("Health analysis WebSocket connected for %s", username)
 

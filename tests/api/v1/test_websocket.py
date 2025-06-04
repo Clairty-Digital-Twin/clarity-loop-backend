@@ -295,7 +295,10 @@ class _TestConnectionManager:
     def get_room_users(self, room_id: str) -> set[str]:
         return self.rooms.get(room_id, set())
 
-    def get_user_count(self, room_id: str) -> int:
+    def get_user_count(self) -> int:
+        return len(self.user_connections)
+
+    def get_room_user_count(self, room_id: str) -> int:
         return len(self.rooms.get(room_id, set()))
 
     def get_connection_count(self) -> int:
@@ -347,9 +350,9 @@ def app(monkeypatch: pytest.MonkeyPatch) -> FastAPI:
     app.dependency_overrides[chat_handler.get_pat_model_service] = lambda: AsyncMock(spec=PATModelService)
     app.dependency_overrides[chat_handler.get_connection_manager] = create_mock_connection_manager
 
-    # Patch the GeminiService to accept a mock client
-    monkeypatch.setattr(GeminiService, "__init__", lambda self, cfg=None, client=None: None)
-    monkeypatch.setattr(GeminiService, "client", AsyncMock())
+    # Patch the GeminiService to accept a mock model
+    monkeypatch.setattr(GeminiService, "__init__", lambda self, cfg=None, model=None: None)
+    monkeypatch.setattr(GeminiService, "model", AsyncMock())
 
     return app
 

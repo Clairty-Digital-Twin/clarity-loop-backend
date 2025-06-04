@@ -206,6 +206,7 @@ class HealthAnalysisPipeline:
                         "respiratory_features": results.respiratory_features,
                         "activity_features": results.activity_features,
                         "activity_embedding": results.activity_embedding,
+                        "sleep_features": results.sleep_features,
                         "fused_vector": results.fused_vector,
                         "summary_stats": results.summary_stats,
                         "processing_metadata": results.processing_metadata,
@@ -690,6 +691,7 @@ async def run_analysis_pipeline(
             "respiratory_features": results.respiratory_features,
             "activity_features": results.activity_features,  # 🔥 ADDED: Basic activity features
             "activity_embedding": results.activity_embedding,
+            "sleep_features": results.sleep_features,  # 🚀 FIXED: Sleep features now persisted
             "fused_vector": results.fused_vector,
             "summary_stats": results.summary_stats,
             "processing_metadata": results.processing_metadata,

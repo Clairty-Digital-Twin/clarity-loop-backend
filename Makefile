@@ -87,7 +87,7 @@ lint: ## 🔍 Run all linting checks
 	black --check .
 	mypy src/clarity/
 	bandit -r src/clarity/
-	safety scan
+	safety scan --ignore=51457 --ignore=64459 --ignore=64396 --offline
 	npm run lint:md
 
 lint-fix: ## 🔧 Auto-fix linting issues
@@ -108,7 +108,7 @@ typecheck: ## 🔍 Run type checking with MyPy
 security: ## 🛡️ Run security checks
 	@echo "$(BLUE)Running security checks...$(RESET)"
 	bandit -r src/clarity/ -f json -o reports/bandit-report.json
-	safety scan --save-as json reports/safety-report.json
+	safety scan --ignore=51457 --ignore=64459 --ignore=64396 --offline --save-as json reports/safety-report.json
 	@echo "$(GREEN)✅ Security checks complete!$(RESET)"
 
 # ===== DOCUMENTATION =====

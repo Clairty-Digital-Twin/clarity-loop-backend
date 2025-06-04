@@ -350,9 +350,7 @@ def app(monkeypatch: pytest.MonkeyPatch) -> FastAPI:
     app.dependency_overrides[chat_handler.get_pat_model_service] = lambda: AsyncMock(spec=PATModelService)
     app.dependency_overrides[chat_handler.get_connection_manager] = create_mock_connection_manager
 
-    # Patch the GeminiService to accept a mock model
-    monkeypatch.setattr(GeminiService, "__init__", lambda self, cfg=None, model=None: None)
-    monkeypatch.setattr(GeminiService, "model", AsyncMock())
+    # GeminiService is mocked via dependency override above
 
     return app
 
@@ -400,9 +398,8 @@ class TestWebSocketEndpoints:
     ) -> None:
         user_id = "test-user-123"
         test_token = "test-token"
-        auth_headers = {"Authorization": f"Bearer {test_token}"}
 
-        with client.websocket_connect(f"/api/v1/chat/{user_id}", headers=auth_headers) as websocket:
+        with client.websocket_connect(f"/api/v1/chat/{user_id}?token={test_token}") as websocket:
             # Send a chat message
             chat_message = ChatMessage(
                 user_id=user_id,
@@ -455,9 +452,8 @@ class TestWebSocketEndpoints:
     async def test_websocket_invalid_message_format(self, client: TestClient) -> None:
         user_id = "test-user-123"
         test_token = "test-token"
-        auth_headers = {"Authorization": f"Bearer {test_token}"}
 
-        with client.websocket_connect(f"/api/v1/chat/{user_id}", headers=auth_headers) as websocket:
+        with client.websocket_connect(f"/api/v1/chat/{user_id}?token={test_token}") as websocket:
             # Send an invalid message format
             websocket.send_text("this is not json")
 
@@ -468,9 +464,8 @@ class TestWebSocketEndpoints:
     async def test_websocket_typing_indicator(self, client: TestClient) -> None:
         user_id = "test-user-123"
         test_token = "test-token"
-        auth_headers = {"Authorization": f"Bearer {test_token}"}
 
-        with client.websocket_connect(f"/api/v1/chat/{user_id}", headers=auth_headers) as websocket:
+        with client.websocket_connect(f"/api/v1/chat/{user_id}?token={test_token}") as websocket:
             # Send a typing indicator message
             typing_message = TypingMessage(
                 user_id=user_id,

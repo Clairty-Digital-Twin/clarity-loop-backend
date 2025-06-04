@@ -121,7 +121,7 @@ class TestFirebaseAuthProvider:
             # display_name can be None in test mocks
             assert result.display_name is None
             assert result.email_verified is True
-            assert result.firebase_token == "valid_token"
+            assert result.firebase_token == "valid_token"  # noqa: S105
 
     @pytest.mark.asyncio
     @staticmethod

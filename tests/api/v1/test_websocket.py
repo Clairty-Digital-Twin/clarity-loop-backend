@@ -610,15 +610,17 @@ class TestWebSocketEndpoints:
 
         # Mock the external services for this specific test
         mock_gemini_service = AsyncMock(spec=GeminiService)
-        mock_gemini_service.stream_chat_response.return_value = [
-            "AI ",
-            "Response ",
-            "Chunk",
-        ]
+
+        # Create a mock response that matches HealthInsightResponse
+        async def mock_generate_insights(request):
+            response = AsyncMock()
+            response.narrative = f"AI Response to: {request.context}"
+            return response
+
+        mock_gemini_service.generate_health_insights = mock_generate_insights
         mock_pat_model_service = AsyncMock(spec=PATModelService)
-        mock_pat_model_service.analyze_health_data.return_value = {
-            "insight": "Test Insight"
-        }
+        # Mock whatever methods are actually used by the chat handler
+        mock_pat_model_service.get_health_insights = AsyncMock(return_value={"insight": "Test Insight"})
 
         # Temporarily override dependencies for this test to use our explicit mocks
         original_gemini_service = app.dependency_overrides.get(
@@ -674,7 +676,7 @@ class TestWebSocketEndpoints:
 
             # Assert that the mocked services were called
             mock_pat_model_service.analyze_health_data.assert_awaited_once()
-            mock_gemini_service.stream_chat_response.assert_awaited_once()
+            mock_gemini_service.generate_health_insights.assert_awaited_once()
 
             # Check that the connection manager methods were called correctly
             # Assert on the explicit mock_manager created for this test

@@ -388,7 +388,7 @@ class ConnectionManager:
         self._record_message(user_id)
 
         # Update last seen
-        connection_info.last_seen = datetime.utcnow()
+        connection_info.last_seen = datetime.now(UTC)
         self.last_heartbeat[websocket] = time.time()
 
         return True

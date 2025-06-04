@@ -59,9 +59,24 @@ class TestConnectionManager:
         message_rate_limit_period_seconds: int = 1,  # Per second
         max_message_size: int = 64 * 1024,
     ):
-        self.active_websockets: set[WebSocket] = (
-            set()
-        )  # All currently active websockets
+        # Core connection storage
+        self.active_websockets: Set[WebSocket] = set()  # All currently active websockets
+        self.user_connections: DefaultDict[str, List[WebSocket]] = defaultdict(list)  # user_id -> [websockets]
+        self.connection_info: Dict[WebSocket, ConnectionInfo] = {}  # websocket -> connection info
+        self.rooms: DefaultDict[str, Set[str]] = defaultdict(set)  # room_id -> {user_ids}
+        
+        # Configuration settings
+        self.heartbeat_interval = heartbeat_interval
+        self.max_connections_per_user = max_connections_per_user
+        self.connection_timeout = connection_timeout
+        self.message_rate_limit_count = message_rate_limit_count
+        self.message_rate_limit_period_seconds = message_rate_limit_period_seconds
+        self.max_message_size = max_message_size
+        
+        # Test-specific tracking
+        self.messages_sent: List[Dict[str, Any]] = []  # Track all messages sent for assertions
+        self.broadcasts_sent: List[Dict[str, Any]] = []  # Track all broadcasts for assertions
+        self.heartbeats_processed: List[Dict[str, Any]] = []  # Track heartbeats for assertions
         # user_id -> list of websockets. Tracks multiple connections per user.
         self.user_connections: defaultdict[str, list[WebSocket]] = defaultdict(list)
         # websocket -> ConnectionInfo. The primary store for connection-specific data.
@@ -344,7 +359,13 @@ class TestConnectionManager:
 
 
 @pytest.fixture
-def app(client: TestClient) -> FastAPI:
+def mock_test_connection_manager() -> TestConnectionManager:
+    """Provides an instance of the stateful TestConnectionManager."""
+    return TestConnectionManager()
+
+
+@pytest.fixture
+def app(client: TestClient, mock_test_connection_manager: TestConnectionManager) -> FastAPI:
     from fastapi import FastAPI
 
     from clarity.api.v1.websocket.chat_handler import (
@@ -843,8 +864,7 @@ class TestChatHandler:
         message_content = "I feel tired all the time"
 
         # Mock the connection manager to return a successful broadcast
-        mock_manager = MagicMock()
-        mock_manager.broadcast_to_room = AsyncMock(return_value=None)
+        mock_manager = create_mock_connection_manager()
         # Directly assign to avoid attribute error
         if not hasattr(chat_handler, "connection_manager"):
             chat_handler.connection_manager = mock_manager

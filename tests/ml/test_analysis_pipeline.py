@@ -192,27 +192,18 @@ class TestHealthAnalysisPipelineDataOrganization:
 
         # Create metrics for each modality
         cardio_metric = HealthMetric(
-            id="1",
-            user_id="user1",
             metric_type=HealthMetricType.HEART_RATE,
-            timestamp=datetime.now(UTC),
-            data=BiometricData(value=75.0, unit="bpm")
+            biometric_data=BiometricData(heart_rate=75.0)
         )
 
         respiratory_metric = HealthMetric(
-            id="2",
-            user_id="user1",
-            metric_type=HealthMetricType.RESPIRATORY_RATE,
-            timestamp=datetime.now(UTC),
-            data=BiometricData(value=16.0, unit="breaths/min")
+            metric_type=HealthMetricType.HEART_RATE_VARIABILITY,
+            biometric_data=BiometricData(heart_rate_variability=50.0)
         )
 
         activity_metric = HealthMetric(
-            id="3",
-            user_id="user1",
-            metric_type=HealthMetricType.STEPS,
-            timestamp=datetime.now(UTC),
-            data=ActivityData(value=1000, unit="count")
+            metric_type=HealthMetricType.ACTIVITY_LEVEL,
+            activity_data=ActivityData(steps=1000, distance=2.5)
         )
 
         metrics = [cardio_metric, respiratory_metric, activity_metric]
@@ -263,11 +254,8 @@ class TestHealthAnalysisPipelineModalityProcessing:
         pipeline.respiratory_processor.process = MagicMock(return_value=expected_features)
 
         respiratory_metric = HealthMetric(
-            id="1",
-            user_id="user1",
-            metric_type=HealthMetricType.RESPIRATORY_RATE,
-            timestamp=datetime.now(UTC),
-            data=BiometricData(value=16.0, unit="breaths/min")
+            metric_type=HealthMetricType.HEART_RATE_VARIABILITY,
+            biometric_data=BiometricData(respiratory_rate=16.0)
         )
 
         result = await pipeline._process_respiratory_data([respiratory_metric])

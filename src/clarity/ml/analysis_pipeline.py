@@ -278,10 +278,10 @@ class HealthAnalysisPipeline:
     @staticmethod
     def _convert_sleep_features_to_vector(sleep_features: SleepFeatures) -> list[float]:
         """Convert SleepFeatures to a vector for modality fusion.
-        
+
         Args:
             sleep_features: SleepFeatures object
-            
+
         Returns:
             Vector representation of sleep features
         """

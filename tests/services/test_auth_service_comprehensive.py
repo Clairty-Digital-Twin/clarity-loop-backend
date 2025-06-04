@@ -515,10 +515,10 @@ class TestTokenManagement:
 
             assert isinstance(result, TokenResponse)
             assert (
-                result.access_token == "mock-access-token"
+                result.access_token == "mock-access-token"  # noqa: S105
             )  # Test assertion
             assert (
-                result.refresh_token == "mock-refresh-token"
+                result.refresh_token == "mock-refresh-token"  # noqa: S105
             )  # Test assertion
             assert result.token_type == "bearer"  # noqa: S105 # Test assertion
             assert result.expires_in == 3600  # default expiry
@@ -567,7 +567,7 @@ class TestTokenManagement:
 
             assert isinstance(result, TokenResponse)
             assert (
-                result.access_token == "new-access-token"
+                result.access_token == "new-access-token"  # noqa: S105
             )  # Test assertion
 
     @staticmethod

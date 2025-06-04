@@ -3,6 +3,7 @@
 import asyncio
 from collections.abc import Callable
 import logging
+import time
 from typing import Any
 
 from fastapi import FastAPI, Request, Response
@@ -204,22 +205,34 @@ class FirebaseAuthProvider:
         self,
         credentials_path: str | None = None,
         project_id: str | None = None,
-        middleware_config: dict | None = None,
+        middleware_config: dict | Any | None = None,
     ) -> None:
         """Initialize Firebase authentication provider.
 
         Args:
             credentials_path: Path to Firebase service account credentials
             project_id: Firebase project ID
-            middleware_config: Middleware configuration options
+            middleware_config: Middleware configuration options (dict or MiddlewareConfig)
         """
         self.credentials_path = credentials_path
         self.project_id = project_id
-        self.middleware_config = middleware_config or {}
+        
+        # Handle both dict and MiddlewareConfig objects
+        config_dict: dict[str, Any] = {}
+        if middleware_config is None:
+            config_dict = {}
+        elif hasattr(middleware_config, '__dict__'):
+            # It's a MiddlewareConfig object, convert to dict
+            config_dict = middleware_config.__dict__
+        else:
+            # It's already a dict
+            config_dict = middleware_config
+            
+        self.middleware_config = config_dict
         self._initialized = False
-        self._token_cache: dict[str, Any] = {}
-        self._cache_ttl = 300  # 5 minutes
-        self._cache_max_size = 1000
+        self._token_cache: dict[str, dict[str, Any]] = {}  # token -> {data, timestamp}
+        self._cache_ttl = config_dict.get('cache_ttl_seconds', 300)  # 5 minutes
+        self._cache_max_size = config_dict.get('cache_max_size', 1000)
 
         logger.info("Firebase authentication provider created")
         if credentials_path:

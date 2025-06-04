@@ -41,6 +41,15 @@ def get_app() -> FastAPI:
 app = create_application()
 
 
+# Add WebSocket route
+@app.websocket("/ws")
+async def websocket_endpoint(websocket):
+    await websocket.accept()
+    while True:
+        data = await websocket.receive_text()
+        await websocket.send_text(f"Message text was: {data}")
+
+
 # For production deployment and direct execution
 if __name__ == "__main__":
     # Setup logging first

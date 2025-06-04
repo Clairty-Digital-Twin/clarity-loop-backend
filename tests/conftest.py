@@ -204,6 +204,41 @@ def mock_environment_variables(monkeypatch: pytest.MonkeyPatch):
         monkeypatch.setenv(key, value)
 
 
+@pytest.fixture(autouse=True, scope="session")
+def _patch_gcp(monkeypatch):
+    """
+    1. Stops google-auth from trying to load ADC.
+    2. Replaces Firestore / PubSub clients with lightweight fakes
+       so code that instantiates them keeps working.
+    """
+    # --- 1. ADC ↦ AnonymousCredentials ----------------------------------
+    from google.auth.credentials import AnonymousCredentials
+    monkeypatch.setattr(
+        "google.auth.default",
+        lambda *a, **kw: (AnonymousCredentials(), "test-project"),
+        raising=True,
+    )
+    monkeypatch.setenv("GOOGLE_CLOUD_PROJECT", "test-project")
+
+    # --- 2. Firestore fake ----------------------------------------------
+    class _FakeFS:                      # minimal façade
+        def __init__(self, *a, **kw): pass
+        def collection(self, name):    # returns self so .document() still works
+            return self
+        def document(self, *a):        # → Fake doc ref
+            return self
+        def set(self, *a, **kw): pass
+        def get(self, *a, **kw): return {}
+    monkeypatch.setattr("google.cloud.firestore.Client", _FakeFS, raising=False)
+
+    # --- 3. Pub/Sub fake -------------------------------------------------
+    class _FakePublisher:
+        def __init__(self, *a, **kw): pass
+        async def publish(self, *a, **kw): return None
+    monkeypatch.setattr("google.cloud.pubsub_v1.PublisherClient",
+                        _FakePublisher, raising=False)
+
+
 # Pytest markers for test organization
 pytest_plugins = ["pytest_asyncio"]
 

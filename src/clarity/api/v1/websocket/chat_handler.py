@@ -1,10 +1,13 @@
 """WebSocket chat handler for real-time health insights and communication."""
 
-from datetime import datetime
+import inspect
 import json
 import logging
-import inspect
 import uuid
+from datetime import datetime
+from typing import Any, Dict, Optional
+
+import asyncio  # Add this import at the top
 
 from fastapi import (
     APIRouter,
@@ -17,7 +20,7 @@ from fastapi import (
 
 from clarity.auth.firebase_auth import get_current_user_websocket
 from clarity.core.config import get_settings
-from clarity.ml.gemini_service import GeminiService
+from clarity.ml.gemini_service import GeminiService, HealthInsightRequest  # Add HealthInsightRequest
 from clarity.ml.pat_service import PATModelService
 from clarity.models.user import User
 
@@ -43,7 +46,9 @@ class WebSocketChatHandler:
     """Handles WebSocket chat functionality with health insights integration."""
 
     def __init__(
-        self, gemini_service: GeminiService = None, pat_service: PATModelService = None
+        self,
+        gemini_service: GeminiService = None,
+        pat_service: PATModelService = None,
     ):
         self.gemini_service = (
             gemini_service if gemini_service is not None else GeminiService()
@@ -51,7 +56,7 @@ class WebSocketChatHandler:
         self.pat_service = pat_service if pat_service is not None else PATModelService()
 
     async def process_chat_message(
-        self, websocket: WebSocket, message: ChatMessage, connection_manager
+        self, websocket: WebSocket, message: ChatMessage, connection_manager: Any
     ) -> None:
         """Process a chat message and potentially generate health insights."""
         try:
@@ -78,7 +83,7 @@ class WebSocketChatHandler:
             await connection_manager.send_to_connection(websocket, error_msg)
 
     async def _analyze_for_health_insights(
-        self, message: ChatMessage, connection_manager
+        self, message: ChatMessage, connection_manager: Any
     ) -> None:
         """Analyze message content for potential health insights."""
         # Keywords that might trigger health analysis
@@ -106,17 +111,14 @@ class WebSocketChatHandler:
         if any(keyword in message_lower for keyword in health_keywords):
             try:
                 # Generate health insight using Gemini
-                generate_coro = self.gemini_service.generate_health_insights(
-                    {
-                        "user_query": message.content,
-                        "context": "chat_message",
-                        "timestamp": message.timestamp.isoformat(),
-                    }
+                request = HealthInsightRequest(
+                    user_id=message.user_id,  # Add required user_id
+                    user_query=message.content,
+                    context="chat_message",
+                    timestamp=message.timestamp.isoformat(),
+                    analysis_results={}  # Add placeholder for analysis results
                 )
-                if inspect.isawaitable(generate_coro):
-                    insight_response = await generate_coro
-                else:
-                    insight_response = generate_coro
+                insight_response = await self.gemini_service.generate_health_insights(request)
 
                 if insight_response.get("insights"):
                     insight_message = HealthInsightMessage(
@@ -138,7 +140,7 @@ class WebSocketChatHandler:
                 logger.error(f"Error generating health insight: {e}")
 
     async def process_typing_message(
-        self, websocket: WebSocket, message: TypingMessage, connection_manager
+        self, websocket: WebSocket, message: TypingMessage, connection_manager: Any
     ) -> None:
         """Process typing indicator message."""
         connection_info = connection_manager.connection_info.get(websocket)
@@ -155,7 +157,7 @@ class WebSocketChatHandler:
         )
 
     async def process_heartbeat(
-        self, websocket: WebSocket, message, connection_manager
+        self, websocket: WebSocket, message: Dict[str, Any], connection_manager: Any
     ) -> None:
         """Process heartbeat message and send acknowledgment."""
         try:
@@ -167,7 +169,7 @@ class WebSocketChatHandler:
             logger.error(f"Error processing heartbeat: {e}")
 
     async def trigger_health_analysis(
-        self, user_id: str, health_data: dict, connection_manager
+        self, user_id: str, health_data: Dict[str, Any], connection_manager: Any
     ) -> None:
         """Trigger comprehensive health analysis and send real-time updates."""
         try:
@@ -244,7 +246,7 @@ chat_handler = WebSocketChatHandler()
 async def websocket_chat_endpoint(
     websocket: WebSocket,
     room_id: str = "general",
-    token: str | None = Query(None),
+    token: str | None = Query(...),
     connection_manager=Depends(get_connection_manager),
 ):
     """WebSocket endpoint for real-time chat with health insights.
@@ -259,12 +261,16 @@ async def websocket_chat_endpoint(
     """
     user: User | None = None
 
+    logger.info(f"WebSocket connection attempt: token={token}")
+
     try:
         # Authenticate user
         if token:
             try:
                 auth_result = get_current_user_websocket(token)
-                if inspect.isawaitable(auth_result):
+                if asyncio.iscoroutine(auth_result):
+                    user = await auth_result
+                elif inspect.isawaitable(auth_result):
                     user = await auth_result
                 else:
                     user = auth_result
@@ -346,11 +352,13 @@ async def websocket_chat_endpoint(
                     )
                     await connection_manager.send_to_connection(websocket, error_msg)
 
-            except WebSocketDisconnect:
-                break
+            except WebSocketDisconnect as e:
+                logger.warning(f"WebSocket disconnected: code={e.code}, reason={e.reason}")
+                raise
 
             except Exception as e:
-                logger.error(f"Error in WebSocket message loop: {e}")
+                logger.error(f"Unexpected error in chat endpoint: {e}")
+                await connection_manager.disconnect(websocket, "internal_error")
                 break
 
     except Exception as e:
@@ -368,7 +376,7 @@ async def websocket_chat_endpoint(
 async def websocket_health_analysis_endpoint(
     websocket: WebSocket,
     user_id: str,
-    token: str | None = Query(None),
+    token: str | None = Query(...),
     connection_manager=Depends(get_connection_manager),
 ):
     """WebSocket endpoint for real-time health analysis updates.
@@ -378,12 +386,16 @@ async def websocket_health_analysis_endpoint(
     """
     user: User | None = None
 
+    logger.info(f"WebSocket connection attempt: token={token}")
+
     try:
         # Authenticate user
         if token:
             try:
                 auth_result = get_current_user_websocket(token)
-                if inspect.isawaitable(auth_result):
+                if asyncio.iscoroutine(auth_result):
+                    user = await auth_result
+                elif inspect.isawaitable(auth_result):
                     user = await auth_result
                 else:
                     user = auth_result
@@ -446,11 +458,13 @@ async def websocket_health_analysis_endpoint(
                     )
                     await connection_manager.send_to_connection(websocket, error_msg)
 
-            except WebSocketDisconnect:
-                break
+            except WebSocketDisconnect as e:
+                logger.warning(f"WebSocket disconnected: code={e.code}, reason={e.reason}")
+                raise
 
             except Exception as e:
                 logger.error(f"Error in health analysis WebSocket: {e}")
+                await connection_manager.disconnect(websocket, "internal_error")
                 break
 
     except Exception as e:

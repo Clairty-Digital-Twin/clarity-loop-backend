@@ -57,8 +57,11 @@ class GeminiInsightGenerator:
         try:
             self.logger.info("Generating health insight for user: %s", user_id)
 
-            # Create prompt from analysis results
-            prompt = self._create_health_prompt(analysis_results)
+            # 🚀 FIXED: Map sleep_features to expected Gemini field names
+            enhanced_results = self._enhance_analysis_results_for_gemini(analysis_results)
+
+            # Create prompt from enhanced analysis results
+            prompt = self._create_health_prompt(enhanced_results)
 
             # Generate insight using Gemini
             if self.model:
@@ -89,6 +92,41 @@ class GeminiInsightGenerator:
             )
 
             return insight  # type: ignore[no-any-return]
+
+    @staticmethod
+    def _enhance_analysis_results_for_gemini(analysis_results: dict[str, Any]) -> dict[str, Any]:
+        """Enhance analysis results with fields expected by Gemini service.
+        
+        Maps sleep_features to the specific field names that Gemini expects.
+        """
+        enhanced = analysis_results.copy()
+        
+        # 🚀 FIXED: Map sleep_features to expected Gemini field names
+        if "sleep_features" in analysis_results:
+            sf = analysis_results["sleep_features"]
+            # Ensure BaseModel is dict
+            if hasattr(sf, "model_dump"):
+                sf = sf.model_dump()  # convert to dict if Pydantic model
+            elif hasattr(sf, "dict"):
+                sf = sf.dict()  # fallback for older Pydantic
+            
+            # Map to expected field names for Gemini
+            enhanced["sleep_efficiency"] = sf.get("sleep_efficiency", 0) * 100  # as percentage
+            enhanced["total_sleep_time"] = (sf.get("total_sleep_minutes", 0) / 60)  # in hours
+            enhanced["wake_after_sleep_onset"] = sf.get("waso_minutes", 0)
+            enhanced["sleep_onset_latency"] = sf.get("sleep_latency", 0)
+            enhanced["rem_sleep_percent"] = sf.get("rem_percentage", 0) * 100
+            enhanced["deep_sleep_percent"] = sf.get("deep_percentage", 0) * 100
+            
+            # Provide consistency in a user-friendly way
+            cons_score = sf.get("consistency_score", 0)
+            enhanced["sleep_consistency_rating"] = (
+                "high" if cons_score > 0.8 
+                else "moderate" if cons_score > 0.5 
+                else "low"
+            )
+        
+        return enhanced
 
     @staticmethod
     def _create_health_prompt(analysis_results: dict[str, Any]) -> str:
@@ -144,6 +182,20 @@ class GeminiInsightGenerator:
                         f"- Respiratory Health Score: {resp_health.get('respiratory_stability', 0):.2f}/1.0"
                     )
 
+        # 🚀 FIXED: Sleep metrics for Gemini insights
+        if analysis_results.get("sleep_efficiency") is not None:
+            metrics_lines.extend(
+                [
+                    f"- Sleep Efficiency: {analysis_results['sleep_efficiency']:.0f}%",
+                    f"- Total Sleep Time: {analysis_results['total_sleep_time']:.1f} hours",
+                    f"- Wake After Sleep Onset: {analysis_results['wake_after_sleep_onset']:.0f} min",
+                    f"- Sleep Onset Latency: {analysis_results['sleep_onset_latency']:.0f} min",
+                    f"- REM Sleep: {analysis_results['rem_sleep_percent']:.0f}%",
+                    f"- Deep Sleep: {analysis_results['deep_sleep_percent']:.0f}%",
+                    f"- Sleep Consistency: {analysis_results['sleep_consistency_rating'].title()}",
+                ]
+            )
+
         metrics_summary = (
             "\\n".join(metrics_lines)
             if metrics_lines
@@ -185,6 +237,9 @@ Generate the health insight now:"""
     async def _call_gemini_api(self, prompt: str) -> dict[str, Any]:
         """Call Gemini API to generate insight."""
         try:
+            if self.model is None:
+                raise RuntimeError("Gemini model not initialized")
+                
             response = self.model.generate_content(
                 prompt,
                 generation_config=genai.types.GenerationConfig(  # type: ignore[attr-defined]

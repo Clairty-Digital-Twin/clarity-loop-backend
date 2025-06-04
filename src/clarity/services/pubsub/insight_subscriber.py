@@ -1,121 +1,103 @@
-"""Insight Subscriber Service.
-
-Handles Pub/Sub messages for AI-powered health insight generation using Gemini 2.5.
-"""
+"""Health insight subscriber for processing Pub/Sub messages and generating health insights."""
 
 import base64
-from datetime import UTC, datetime
 import json
-import logging
-import os
 from typing import Any, NoReturn
 
-from fastapi import FastAPI, HTTPException, Request
-from google.cloud import firestore  # type: ignore[attr-defined]
-import google.generativeai as genai
+from fastapi import HTTPException, Request
+import google.generativeai as genai  # type: ignore[import-untyped]
 
-# Constants
-MIN_FEATURE_VECTOR_LENGTH = 8
-HIGH_CONSISTENCY_THRESHOLD = 0.8
+from clarity.core.exception_manager import ExceptionHandler
+from clarity.core.exceptions import DatabaseConfigError
+from clarity.core.logging_setup import logger
+from clarity.integrations.gemini import GeminiClient
+from clarity.services.pubsub.base_subscriber import insight_app
+from clarity.storage.firestore_client import FirestoreClient
+
+# Health insight thresholds
+HIGH_CONSISTENCY_THRESHOLD = 0.7
 MODERATE_CONSISTENCY_THRESHOLD = 0.5
-
-logger = logging.getLogger(__name__)
+MIN_CARDIO_FEATURES_REQUIRED = 3
+MIN_RESPIRATORY_FEATURES_REQUIRED = 4
 
 
 class GeminiInsightGenerator:
-    """AI-powered insight generator using Gemini 2.5."""
+    """Handles health insight generation using Google's Gemini AI."""
 
     def __init__(self) -> None:
         """Initialize Gemini insight generator."""
-        self.logger = logging.getLogger(__name__)
+        self.logger = logger
+        self.firestore_client = FirestoreClient()
+        self.model = None
 
-        # Initialize Gemini
-        api_key = os.getenv("GEMINI_API_KEY")
-        if api_key:
-            genai.configure(api_key=api_key)  # type: ignore[attr-defined]
-            self.model = genai.GenerativeModel("gemini-1.5-pro")  # type: ignore[attr-defined]
-        else:
-            self.logger.warning("GEMINI_API_KEY not found - using mock responses")
-            self.model = None  # type: ignore[assignment]
-
-        # Initialize Firestore
-        self.firestore_client = firestore.Client()
-
-        self.logger.info("Initialized Gemini insight generator")
+        try:
+            # Initialize Gemini client
+            gemini_client = GeminiClient()
+            self.model = gemini_client.get_model()
+            self.logger.info("✅ Gemini model initialized for health insights")
+        except Exception:
+            self.logger.warning("⚠️ Failed to initialize Gemini model")
 
     async def generate_health_insight(
         self, user_id: str, upload_id: str, analysis_results: dict[str, Any]
     ) -> dict[str, Any]:
-        """Generate health insight from analysis results.
-
-        Args:
-            user_id: User identifier
-            upload_id: Upload identifier
-            analysis_results: Results from analysis pipeline
-
-        Returns:
-            Generated insight
-        """
+        """Generate health insight from analysis results."""
         try:
-            self.logger.info("Generating health insight for user: %s", user_id)
+            self.logger.info(f"🧠 Generating health insight for user {user_id}")
 
-            # 🚀 FIXED: Map sleep_features to expected Gemini field names
-            enhanced_results = self._enhance_analysis_results_for_gemini(analysis_results)
+            if self.model is not None:
+                # Generate AI-powered insight
+                prompt = GeminiInsightGenerator._create_health_prompt(analysis_results)
+                self.logger.debug(f"📝 Generated prompt for Gemini: {prompt[:200]}...")
 
-            # Create prompt from enhanced analysis results
-            prompt = self._create_health_prompt(enhanced_results)
-
-            # Generate insight using Gemini
-            if self.model:
                 insight = await self._call_gemini_api(prompt)
+                self.logger.info("✅ Generated AI health insight")
             else:
-                insight = self._create_mock_insight(analysis_results)
+                # Fallback to mock insight
+                insight = GeminiInsightGenerator._create_mock_insight(analysis_results)
+                self.logger.info("✅ Generated mock health insight (Gemini unavailable)")
 
             # Add metadata
-            insight.update(
-                {
-                    "user_id": user_id,
-                    "upload_id": upload_id,
-                    "generated_at": datetime.now(UTC).isoformat(),
-                    "model": "gemini-1.5-pro" if self.model else "mock",
-                    "analysis_summary": self._create_analysis_summary(analysis_results),
-                }
+            insight["analysis_summary"] = GeminiInsightGenerator._create_analysis_summary(
+                analysis_results
             )
+            insight["generated_timestamp"] = analysis_results.get(
+                "processing_metadata", {}
+            ).get("processing_timestamp")
 
-            # Store insight in Firestore
+            # Store the insight
             await self._store_insight(user_id, upload_id, insight)
 
-        except Exception:
-            self.logger.exception("Failed to generate health insight")
-            raise
-        else:
-            self.logger.info(
-                "Generated and stored health insight for user: %s", user_id
-            )
+            return {
+                "status": "success",
+                "message": "Health insight generated successfully",
+            }
 
-            return insight  # type: ignore[no-any-return]
+        except HTTPException:
+            raise
+        except Exception as e:
+            self.logger.exception(f"❌ Failed to generate health insight: {e}")
+            ExceptionHandler.log_exception(e, {"user_id": user_id, "upload_id": upload_id})
+            raise HTTPException(
+                status_code=500, detail="Failed to generate health insight"
+            ) from e
 
     @staticmethod
     def _enhance_analysis_results_for_gemini(analysis_results: dict[str, Any]) -> dict[str, Any]:
-        """Enhance analysis results with fields expected by Gemini service.
+        """Enhance analysis results to be more readable for Gemini AI."""
+        enhanced: dict[str, Any] = {}
 
-        Maps sleep_features to the specific field names that Gemini expects.
-        """
-        enhanced = analysis_results.copy()
+        # Handle sleep features if available
+        if sleep_features := analysis_results.get("sleep_features"):
+            sf = sleep_features[0] if isinstance(sleep_features, list) and sleep_features else {}
 
-        # 🚀 FIXED: Map sleep_features to expected Gemini field names
-        if "sleep_features" in analysis_results:
-            sf = analysis_results["sleep_features"]
-            # Ensure BaseModel is dict - handle different input types
+            # Convert Pydantic model to dict if needed
             if hasattr(sf, "model_dump"):
                 try:
                     sf = sf.model_dump()  # convert to dict if Pydantic model
                 except AttributeError:
                     # Handle mock that raises AttributeError
-                    if hasattr(sf, "dict"):
-                        sf = sf.dict()  # fallback for older Pydantic
-                    else:
-                        sf = {}  # fallback for invalid types
+                    sf = sf.dict() if hasattr(sf, "dict") else {}
             elif hasattr(sf, "dict"):
                 try:
                     sf = sf.dict()  # fallback for older Pydantic
@@ -165,7 +147,7 @@ class GeminiInsightGenerator:
         prompt_parts = ["Analyze the following health metrics and provide insights:\n"]
 
         # Cardiovascular metrics (need at least 3 for basic analysis)
-        if len(cardio_features) >= 3:
+        if len(cardio_features) >= MIN_CARDIO_FEATURES_REQUIRED:
             prompt_parts.extend([
                 f"Average Heart Rate: {cardio_features[0]} bpm",
                 f"Max Heart Rate: {cardio_features[1]} bpm",
@@ -173,7 +155,7 @@ class GeminiInsightGenerator:
             ])
 
         # Respiratory metrics (need at least 4 for basic analysis)
-        if len(respiratory_features) >= 4:
+        if len(respiratory_features) >= MIN_RESPIRATORY_FEATURES_REQUIRED:
             prompt_parts.extend([
                 f"Average Respiratory Rate: {respiratory_features[0]} rpm",
                 f"SpO2 Average: {respiratory_features[3]}%",
@@ -193,13 +175,11 @@ class GeminiInsightGenerator:
         summary_stats = analysis_results.get("summary_stats", {})
         health_indicators = summary_stats.get("health_indicators", {})
 
-        if cardio_health := health_indicators.get("cardiovascular_health"):
-            if circadian_score := cardio_health.get("circadian_rhythm"):
-                prompt_parts.append(f"Circadian Rhythm Score: {circadian_score}/1.0")
+        if (cardio_health := health_indicators.get("cardiovascular_health")) and (circadian_score := cardio_health.get("circadian_rhythm")):
+            prompt_parts.append(f"Circadian Rhythm Score: {circadian_score}/1.0")
 
-        if respiratory_health := health_indicators.get("respiratory_health"):
-            if respiratory_score := respiratory_health.get("respiratory_stability"):
-                prompt_parts.append(f"Respiratory Health Score: {respiratory_score}/1.0")
+        if (respiratory_health := health_indicators.get("respiratory_health")) and (respiratory_score := respiratory_health.get("respiratory_stability")):
+            prompt_parts.append(f"Respiratory Health Score: {respiratory_score}/1.0")
 
         # If no meaningful metrics found, provide general prompt
         if len(prompt_parts) == 1:  # Only has the initial prompt part
@@ -210,13 +190,13 @@ class GeminiInsightGenerator:
 Please provide a comprehensive health analysis with:
 1. Key insights about health patterns and trends
 2. Specific recommendations for improvement
-3. Risk factors or areas of concern (if any)  
+3. Risk factors or areas of concern (if any)
 4. Overall health score (1-10)
 
 Respond in JSON format with these fields:
 {
   "insights": ["insight1", "insight2", ...],
-  "recommendations": ["rec1", "rec2", ...], 
+  "recommendations": ["rec1", "rec2", ...],
   "risk_factors": ["risk1", "risk2", ...],
   "health_score": 8,
   "confidence_level": "high"
@@ -248,17 +228,16 @@ Respond in JSON format with these fields:
 
             try:
                 insight: dict[str, Any] = json.loads(response_text)
+                return insight
             except json.JSONDecodeError:
                 # Fallback if JSON parsing fails
-                insight = {
+                return {
                     "insights": [response_text[:200] + "..."],
                     "recommendations": ["Continue monitoring your health metrics"],
                     "risk_factors": ["Unable to determine from current data"],
                     "health_score": 7,
                     "confidence_level": "medium",
                 }
-
-            return insight
 
         except Exception:
             self.logger.exception("Gemini API call failed")
@@ -299,97 +278,71 @@ Respond in JSON format with these fields:
                 modality_name = key.replace("_features", "")
                 modalities_processed.append(modality_name)
 
-        summary = {
+        return {
             "total_features": total_features,
             "modalities_processed": modalities_processed,
             "processing_metadata": analysis_results.get("processing_metadata", {}),
         }
 
-        return summary
-
     async def _store_insight(
         self, user_id: str, upload_id: str, insight: dict[str, Any]
     ) -> None:
-        """Store insight in Firestore."""
+        """Store generated insight in Firestore."""
         try:
-            doc_ref = (
-                self.firestore_client.collection("users")
-                .document(user_id)
-                .collection("insights")
-                .document(upload_id)
+            collection_path = f"users/{user_id}/health_insights"
+            await self.firestore_client.create_document(
+                collection_path=collection_path,
+                data=insight,
+                document_id=upload_id,
             )
+            self.logger.info(f"✅ Stored insight for user {user_id}")
 
-            doc_ref.set(insight)
-
-            self.logger.info(
-                "Stored insight in Firestore: user=%s, upload=%s", user_id, upload_id
-            )
-
-        except Exception:
-            self.logger.exception("Failed to store insight in Firestore")
+        except Exception as e:
+            self.logger.exception(f"❌ Failed to store insight: {e}")
             raise
 
 
 class InsightSubscriber:
-    """Subscriber service for insight generation."""
+    """Pub/Sub subscriber for processing health insight requests."""
 
     def __init__(self) -> None:
         """Initialize insight subscriber."""
-        self.logger = logging.getLogger(__name__)
-        self.generator = GeminiInsightGenerator()
-
-        # Environment settings
-        self.environment = os.getenv("ENVIRONMENT", "development")
-
-        self.logger.info("Initialized insight subscriber (env: %s)", self.environment)
+        self.logger = logger
+        self.insight_generator = GeminiInsightGenerator()
 
     async def process_insight_request_message(self, request: Request) -> dict[str, Any]:
-        """Process incoming Pub/Sub message for insight generation.
-
-        Args:
-            request: FastAPI request object containing Pub/Sub message
-
-        Returns:
-            Processing result
-        """
+        """Process incoming Pub/Sub message for insight generation."""
         try:
-            # Parse Pub/Sub message
-            body = await request.json()
-            message_data = self._extract_message_data(body)
+            self.logger.info("📨 Processing insight generation request")
 
-            self.logger.info(
-                "Processing insight request for user: %s, upload: %s",
-                message_data.get("user_id"),
-                message_data.get("upload_id"),
-            )
+            # Get request body
+            pubsub_body = await request.json()
+            self.logger.debug(f"📨 Received Pub/Sub body: {pubsub_body}")
 
-            # Generate insight
-            await self.generator.generate_health_insight(
+            # Extract and validate message data
+            message_data = self._extract_message_data(pubsub_body)
+
+            # Generate health insight
+            result = await self.insight_generator.generate_health_insight(
                 user_id=message_data["user_id"],
                 upload_id=message_data["upload_id"],
                 analysis_results=message_data["analysis_results"],
             )
 
-            self.logger.info(
-                "Completed insight generation for user: %s", message_data["user_id"]
-            )
-
-            return {
-                "status": "success",
-                "message": "Health insight generated successfully",
-            }
+            self.logger.info("✅ Successfully processed insight request")
+            return result
 
         except HTTPException:
-            # Re-raise HTTP exceptions as-is
             raise
         except Exception as e:
-            self.logger.exception("Error processing insight request message")
+            self.logger.exception(f"❌ Failed to process insight request: {e}")
+            ExceptionHandler.log_exception(e)
             raise HTTPException(
-                status_code=500, detail=f"Insight generation failed: {e!s}"
-            ) from None
+                status_code=500, detail="Failed to process insight request"
+            ) from e
 
     def _extract_message_data(self, pubsub_body: dict[str, Any]) -> dict[str, Any]:
-        """Extract and decode Pub/Sub message data."""
+        """Extract and validate message data from Pub/Sub payload."""
         try:
             # Pub/Sub push format: {"message": {"data": "<base64>", "attributes": {...}}}
             if "message" not in pubsub_body:
@@ -401,43 +354,36 @@ class InsightSubscriber:
                 raise HTTPException(status_code=400, detail="Missing 'data' field")
 
             # Decode base64 data
-            encoded_data = message["data"]
-            decoded_data = base64.b64decode(encoded_data).decode("utf-8")
-
-            # Parse JSON
-            message_data: dict[str, Any] = json.loads(decoded_data)
+            try:
+                decoded_data = base64.b64decode(message["data"]).decode("utf-8")
+                message_data: dict[str, Any] = json.loads(decoded_data)
+            except (base64.binascii.Error, json.JSONDecodeError) as e:
+                raise HTTPException(status_code=400, detail="Invalid message data") from e
 
             # Validate required fields
-            required_fields = ["user_id", "upload_id", "analysis_results"]
-            for field in required_fields:
+            for field in ["user_id", "upload_id", "analysis_results"]:
                 if field not in message_data:
                     self._raise_missing_field_error(field)
 
             return message_data
 
         except HTTPException:
-            # Re-raise HTTP exceptions as-is
             raise
         except Exception as e:
-            self.logger.exception("Failed to extract message data")
-            raise HTTPException(
-                status_code=500, detail=f"Invalid message format: {e!s}"
-            ) from None
+            self.logger.exception(f"❌ Failed to extract message data: {e}")
+            raise HTTPException(status_code=400, detail="Invalid message format") from e
 
     @staticmethod
     def _raise_missing_field_error(field: str) -> NoReturn:
-        """Raise error for missing required field."""
-        msg = f"Missing required field: {field}"
-        raise ValueError(msg)
+        """Raise HTTPException for missing required field."""
+        detail = f"Missing required field: {field}"
+        raise HTTPException(status_code=400, detail=detail)
 
 
-# Create FastAPI app for insight service
-insight_app = FastAPI(title="Health Insight Generation Service")
-
-
+# FastAPI endpoint handlers
 @insight_app.post("/generate-insight")
 async def generate_insight_task(request: Request) -> dict[str, Any]:
-    """Handle Pub/Sub push subscription for insight generation."""
+    """Handle Pub/Sub messages for insight generation."""
     subscriber = get_insight_subscriber()
     return await subscriber.process_insight_request_message(request)
 
@@ -445,7 +391,7 @@ async def generate_insight_task(request: Request) -> dict[str, Any]:
 @insight_app.get("/health")
 async def health_check() -> dict[str, str]:
     """Health check endpoint."""
-    return {"status": "healthy", "service": "insight"}
+    return {"status": "healthy", "service": "insight-subscriber"}
 
 
 class InsightSubscriberSingleton:
@@ -462,5 +408,5 @@ class InsightSubscriberSingleton:
 
 
 def get_insight_subscriber() -> InsightSubscriber:
-    """Get or create global insight subscriber instance."""
+    """Get insight subscriber instance."""
     return InsightSubscriberSingleton.get_instance()

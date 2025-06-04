@@ -508,7 +508,7 @@ class TestGeminiInsightGeneratorStorage:
 
         with patch.object(mock_generator.firestore_client, 'collection', side_effect=Exception("Firestore error")), \
              pytest.raises(Exception, match="Firestore error"):
-                await mock_generator._store_insight(user_id, upload_id, insight)
+            await mock_generator._store_insight(user_id, upload_id, insight)
 
 
 class TestInsightSubscriberInitialization:

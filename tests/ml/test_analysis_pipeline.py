@@ -222,11 +222,8 @@ class TestHealthAnalysisPipelineModalityProcessing:
         pipeline.cardio_processor.process = MagicMock(return_value=expected_features)
 
         cardio_metric = HealthMetric(
-            id="1",
-            user_id="user1",
             metric_type=HealthMetricType.HEART_RATE,
-            timestamp=datetime.now(UTC),
-            data=BiometricData(value=75.0, unit="bpm")
+            biometric_data=BiometricData(heart_rate=75.0)
         )
 
         result = await pipeline._process_cardio_data([cardio_metric])
@@ -246,7 +243,7 @@ class TestHealthAnalysisPipelineModalityProcessing:
 
         respiratory_metric = HealthMetric(
             metric_type=HealthMetricType.HEART_RATE_VARIABILITY,
-            biometric_data=BiometricData(respiratory_rate=16.0)
+            biometric_data=BiometricData(heart_rate_variability=50.0)
         )
 
         result = await pipeline._process_respiratory_data([respiratory_metric])
@@ -268,11 +265,8 @@ class TestHealthAnalysisPipelineModalityProcessing:
 
         with patch("clarity.ml.analysis_pipeline.get_pat_service", return_value=mock_pat_service):
             activity_metric = HealthMetric(
-                id="1",
-                user_id="user1",
                 metric_type=HealthMetricType.ACTIVITY_LEVEL,
-                timestamp=datetime.now(UTC),
-                data=ActivityData(value=1000, unit="count")
+                activity_data=ActivityData(steps=1000)
             )
 
             result = await pipeline._process_activity_data("user1", [activity_metric])
@@ -292,11 +286,8 @@ class TestHealthAnalysisPipelineModalityProcessing:
 
         with patch("clarity.ml.analysis_pipeline.get_pat_service", return_value=mock_pat_service):
             activity_metric = HealthMetric(
-                id="1",
-                user_id="user1",
                 metric_type=HealthMetricType.ACTIVITY_LEVEL,
-                timestamp=datetime.now(UTC),
-                data=ActivityData(value=1000, unit="count")
+                activity_data=ActivityData(steps=1000)
             )
 
             result = await pipeline._process_activity_data("user1", [activity_metric])

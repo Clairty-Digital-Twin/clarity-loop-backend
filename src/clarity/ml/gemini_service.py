@@ -78,7 +78,7 @@ class GeminiService:
         self.testing = testing
         self.model: GenerativeModel | Any | None = None
         self.is_initialized = False
-        
+
         if self.testing:
             self.model = model if model is not None else object()
             self.is_initialized = True

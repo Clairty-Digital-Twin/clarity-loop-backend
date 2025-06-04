@@ -74,7 +74,8 @@ class _TestConnectionManager:
         self.message_counts: defaultdict[str, list[float]] = defaultdict(list)
 
         logger.info(
-            f"TestConnectionManager initialized with max_connections_per_user={self.max_connections_per_user}"
+            "TestConnectionManager initialized with max_connections_per_user=%s",
+            self.max_connections_per_user,
         )
 
     async def connect(
@@ -85,11 +86,16 @@ class _TestConnectionManager:
         room_id: str = "general",
     ) -> _TestConnectionInfo:
         logger.info(
-            f"Attempting to connect user {user_id} to room {room_id} with session {uuid.uuid4()}"
+            "Attempting to connect user %s to room %s with session %s",
+            user_id,
+            room_id,
+            uuid.uuid4(),
         )
         if len(self.user_connections[user_id]) >= self.max_connections_per_user:
             logger.warning(
-                f"Connection limit exceeded for user {user_id}. Max: {self.max_connections_per_user}"
+                "Connection limit exceeded for user %s. Max: %s",
+                user_id,
+                self.max_connections_per_user,
             )
 
         connection_time = datetime.now(UTC)

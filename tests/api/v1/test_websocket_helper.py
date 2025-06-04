@@ -10,19 +10,22 @@ from clarity.api.v1.websocket.connection_manager import ConnectionManager
 # Global test connection manager
 _test_connection_manager: ConnectionManager | None = None
 
+MSG_MANAGER_NOT_INITIALIZED = "Test connection manager not initialized"
+
 
 def get_test_connection_manager() -> ConnectionManager:
     """Get the test connection manager instance."""
     global _test_connection_manager
     if _test_connection_manager is None:
-        raise RuntimeError("Test connection manager not initialized")
+        msg = MSG_MANAGER_NOT_INITIALIZED
+        raise RuntimeError(msg)
     return _test_connection_manager
 
 
 @asynccontextmanager
 async def websocket_test_lifespan(app: FastAPI):
     """Lifespan function for WebSocket tests."""
-    global _test_connection_manager
+    global _test_connection_manager  # noqa: PLW0603
 
     # Create and start connection manager
     _test_connection_manager = ConnectionManager(

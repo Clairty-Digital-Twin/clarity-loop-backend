@@ -2,16 +2,18 @@
 
 import asyncio
 from collections.abc import Awaitable, Callable
+from datetime import UTC, datetime
 import logging
 import time
 from typing import Any
 
 from fastapi import FastAPI, Request, Response
+from firebase_admin import auth as firebase_auth
 from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.responses import JSONResponse
 
+from clarity.models.auth import AuthError, Permission, UserContext, UserRole
 from clarity.models.user import User
-
-# Removed unused imports - using built-in types instead
 
 logger = logging.getLogger(__name__)
 
@@ -22,7 +24,7 @@ class FirebaseAuthMiddleware(BaseHTTPMiddleware):
     def __init__(
         self,
         app: FastAPI,
-        auth_provider: Any,
+        auth_provider: "FirebaseAuthProvider",
         exempt_paths: list[str] | None = None,
         *,
         cache_enabled: bool = True,
@@ -68,30 +70,23 @@ class FirebaseAuthMiddleware(BaseHTTPMiddleware):
         """
         # Check if path is exempt from authentication
         if self._is_exempt_path(request.url.path):
-            response = await call_next(request)
-            return response
+            return await call_next(request)
 
         # Try to authenticate the request
         try:
             user_context = await self._authenticate_request(request)
             request.state.user = user_context
-        except Exception as e:
-            from datetime import UTC, datetime
-
-            from starlette.responses import JSONResponse
-
-            from clarity.models.auth import AuthError
-
+        except AuthError as e:
             # Handle authentication errors
-            if isinstance(e, AuthError):
-                return JSONResponse(
-                    status_code=e.status_code,
-                    content={
-                        "error": e.error_code,
-                        "message": e.message,
-                        "timestamp": datetime.now(UTC).isoformat(),
-                    },
-                )
+            return JSONResponse(
+                status_code=e.status_code,
+                content={
+                    "error": e.error_code,
+                    "message": e.message,
+                    "timestamp": datetime.now(UTC).isoformat(),
+                },
+            )
+        except Exception as e:  # noqa: BLE001
             logger.warning("Authentication failed: %s", e)
             if not self.graceful_degradation:
                 return JSONResponse(
@@ -105,8 +100,7 @@ class FirebaseAuthMiddleware(BaseHTTPMiddleware):
             # For graceful degradation, set user as None
             request.state.user = None
 
-        response = await call_next(request)
-        return response
+        return await call_next(request)
 
     def _is_exempt_path(self, path: str) -> bool:
         """Check if a path is exempt from authentication.
@@ -117,12 +111,10 @@ class FirebaseAuthMiddleware(BaseHTTPMiddleware):
         Returns:
             True if path is exempt
         """
-        for exempt_path in self.exempt_paths:
-            if path.startswith(exempt_path):
-                return True
-        return False
+        return any(path.startswith(exempt_path) for exempt_path in self.exempt_paths)
 
-    def _extract_token(self, request: Request) -> str:
+    @staticmethod
+    def _extract_token(request: Request) -> str:
         """Extract Firebase token from Authorization header.
 
         Args:
@@ -134,8 +126,6 @@ class FirebaseAuthMiddleware(BaseHTTPMiddleware):
         Raises:
             AuthError: If token is missing or invalid format
         """
-        from clarity.models.auth import AuthError
-
         auth_header = request.headers.get("Authorization")
         if not auth_header:
             raise AuthError(
@@ -161,7 +151,8 @@ class FirebaseAuthMiddleware(BaseHTTPMiddleware):
 
         return token
 
-    def _create_user_context(self, user_info: dict[str, Any]) -> Any:
+    @staticmethod
+    def _create_user_context(user_info: dict[str, Any]) -> UserContext:
         """Create user context from user information.
 
         Args:
@@ -170,8 +161,6 @@ class FirebaseAuthMiddleware(BaseHTTPMiddleware):
         Returns:
             UserContext object with user details and permissions
         """
-        from clarity.models.auth import Permission, UserContext, UserRole
-
         # Extract user role from custom claims or roles list
         roles = user_info.get("roles", [])
         if "admin" in roles:
@@ -214,7 +203,7 @@ class FirebaseAuthMiddleware(BaseHTTPMiddleware):
             last_login=user_info.get("last_login"),
         )
 
-    async def _authenticate_request(self, request: Request) -> Any:
+    async def _authenticate_request(self, request: Request) -> UserContext:
         """Authenticate a request and return user context.
 
         Args:
@@ -226,8 +215,6 @@ class FirebaseAuthMiddleware(BaseHTTPMiddleware):
         Raises:
             AuthError: If authentication fails
         """
-        from clarity.models.auth import AuthError
-
         # Extract token from request
         token = self._extract_token(request)
 
@@ -275,7 +262,7 @@ class FirebaseAuthProvider:
         self,
         credentials_path: str | None = None,
         project_id: str | None = None,
-        middleware_config: dict[str, Any] | Any | None = None,
+        middleware_config: dict[str, Any] | None = None,
     ) -> None:
         """Initialize Firebase authentication provider.
 
@@ -322,12 +309,10 @@ class FirebaseAuthProvider:
         try:
             # Perform any async initialization here
             await asyncio.sleep(0.1)  # Placeholder for actual initialization
-
             self._initialized = True
             logger.info("Firebase authentication provider initialized successfully")
-
-        except Exception as e:
-            logger.error("Failed to initialize Firebase auth provider: %s", e)
+        except Exception:
+            logger.exception("Failed to initialize Firebase auth provider")
             raise
 
     async def verify_token(self, token: str) -> User | None:
@@ -359,10 +344,7 @@ class FirebaseAuthProvider:
             del self._token_cache[token]
 
         try:
-            # Use the existing Firebase auth verification
-            from firebase_admin import auth
-
-            decoded_token = auth.verify_id_token(token)
+            decoded_token = firebase_auth.verify_id_token(token)
 
             # Create user object from Firebase token data
             user = User(
@@ -379,15 +361,13 @@ class FirebaseAuthProvider:
             # Cache the user data with timestamp if caching is enabled
             if cache_enabled:
                 self._token_cache[token] = {"user": user, "timestamp": current_time}
-
                 # Clean up expired cache entries
                 self._cleanup_expired_cache()
-
-            return user
-
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.debug("Token verification failed: %s", e)
             return None
+        else:
+            return user
 
     async def create_user(self, user_data: dict[str, Any]) -> User:
         """Create a new user account.
@@ -402,10 +382,8 @@ class FirebaseAuthProvider:
             await self.initialize()
 
         try:
-            from firebase_admin import auth
-
             # Create user in Firebase
-            user_record = auth.create_user(
+            user_record = firebase_auth.create_user(
                 email=user_data.get("email"),
                 display_name=user_data.get("display_name"),
                 email_verified=False,
@@ -423,11 +401,11 @@ class FirebaseAuthProvider:
             )
 
             logger.info("Created new user: %s", user.uid)
-            return user
-
-        except Exception as e:
-            logger.error("Failed to create user: %s", e)
+        except Exception:
+            logger.exception("Failed to create user")
             raise
+        else:
+            return user
 
     async def get_user_info(self, user_id: str) -> User | None:
         """Get user information by user ID.
@@ -442,11 +420,9 @@ class FirebaseAuthProvider:
             await self.initialize()
 
         try:
-            from firebase_admin import auth
+            user_record = firebase_auth.get_user(user_id)
 
-            user_record = auth.get_user(user_id)
-
-            user = User(
+            return User(
                 uid=user_record.uid,
                 email=user_record.email,
                 display_name=user_record.display_name,
@@ -456,10 +432,7 @@ class FirebaseAuthProvider:
                 last_login=None,
                 profile=None,
             )
-
-            return user
-
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.debug("Failed to get user info: %s", e)
             return None
 

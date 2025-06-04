@@ -413,12 +413,14 @@ def app(monkeypatch: pytest.MonkeyPatch) -> FastAPI:  # noqa: ARG001
     mock_gemini = AsyncMock(spec=GeminiService)
 
     # Create a mock response that returns dynamic content
-    async def mock_generate_insights(request: Any) -> object:  # noqa: RUF029, ANN401
+    async def mock_generate_insights(
+        request: Any,
+    ) -> object:
         response = MagicMock()
         response.narrative = f"AI Response to: {request.context}"
         return response
 
-    mock_gemini.generate_health_insights = mock_generate_insights
+    mock_gemini.generate_health_insights = AsyncMock(side_effect=mock_generate_insights)
     app.dependency_overrides[chat_handler.get_gemini_service] = lambda: mock_gemini
     app.dependency_overrides[chat_handler.get_pat_model_service] = lambda: AsyncMock(
         spec=PATModelService
@@ -588,14 +590,14 @@ class TestWebSocketEndpoints:
         mock_gemini_service = AsyncMock(spec=GeminiService)
 
         # Create a proper mock response
-        def mock_generate_insights(
+        async def mock_generate_insights(
             request: object,
         ) -> object:
             response = MagicMock()
             response.narrative = f"AI Response to: {request.context}"
             return response
 
-        mock_gemini_service.generate_health_insights = mock_generate_insights
+        mock_gemini_service.generate_health_insights = AsyncMock(side_effect=mock_generate_insights)
         mock_pat_model_service = AsyncMock(spec=PATModelService)
         # Mock the actual method used by the chat handler
         mock_pat_model_service.analyze_actigraphy = AsyncMock(

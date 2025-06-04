@@ -474,7 +474,7 @@ class TestWebSocketEndpoints:
                 is_typing=True,
                 type=MessageType.TYPING,
             )
-            websocket.send_json(typing_message.model_dump())
+            websocket.send_json(typing_message.model_dump(mode='json'))
 
             # Expect a typing indicator response
             response_data = websocket.receive_json()
@@ -484,7 +484,7 @@ class TestWebSocketEndpoints:
 
             # Send another typing indicator, now indicating not typing
             typing_message.is_typing = False
-            websocket.send_json(typing_message.model_dump())
+            websocket.send_json(typing_message.model_dump(mode='json'))
 
             # Expect a typing indicator response
             response_data = websocket.receive_json()

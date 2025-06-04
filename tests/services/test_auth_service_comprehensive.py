@@ -42,17 +42,14 @@ from clarity.storage.firestore_client import FirestoreClient
 # Create proper mock exceptions that inherit from BaseException
 class MockUserNotFoundError(Exception):
     """Mock Firebase UserNotFoundError that properly inherits from BaseException."""
-    pass
 
 
 class MockInvalidIdTokenError(Exception):
     """Mock Firebase InvalidIdTokenError that properly inherits from BaseException."""
-    pass
 
 
 class MockAuthError(Exception):
     """Mock Firebase AuthError that properly inherits from BaseException."""
-    pass
 
 
 class TestAuthServiceExceptionHelpers:
@@ -223,7 +220,7 @@ class TestUserRegistration:
 
         # Execute & verify
         with pytest.raises(UserAlreadyExistsError) as exc_info:
-            await auth_service.register_user(sample_registration_request)
+            await auth_service.register_user(sample_registration_request, device_info={})
 
         assert "already exists" in str(exc_info.value)
         mock_auth.create_user.assert_not_called()
@@ -459,7 +456,7 @@ class TestTokenManagement:
 
         with patch.object(auth_service.auth_provider, 'create_custom_token') as mock_create_token:
             mock_create_token.return_value = b"mock-token"
-            
+
             with patch('secrets.token_urlsafe') as mock_token_safe:
                 mock_token_safe.return_value = "mock-refresh-token"
 
@@ -477,7 +474,7 @@ class TestTokenManagement:
 
         with patch.object(auth_service.auth_provider, 'create_custom_token') as mock_create_token:
             mock_create_token.return_value = b"mock-token"
-            
+
             with patch('secrets.token_urlsafe') as mock_token_safe:
                 mock_token_safe.return_value = "mock-refresh-token"
 
@@ -586,14 +583,14 @@ class TestSessionManagement:
             "last_name": "Doe",
             "role": UserRole.PATIENT.value,
             "status": UserStatus.ACTIVE.value,
-            "last_login": datetime.now(UTC),
             "mfa_enabled": False,
             "email_verified": True,
             "created_at": datetime.now(UTC),
+            "last_login": datetime.now(UTC),
         }
 
         result = await AuthenticationService._create_user_session_response(
-            mock_user_record, user_data
+            mock_user_record, user_data, scope=["read_own_data", "write_own_data"]
         )
 
         assert isinstance(result, UserSessionResponse)
@@ -651,10 +648,10 @@ class TestUserRetrieval:
             "last_name": "Doe",
             "role": UserRole.PATIENT.value,
             "status": UserStatus.ACTIVE.value,
-            "last_login": datetime.now(UTC),
             "mfa_enabled": False,
             "email_verified": True,
             "created_at": datetime.now(UTC),
+            "last_login": datetime.now(UTC),
         }
         auth_service.firestore_client.get_document.return_value = user_data
 
@@ -784,7 +781,7 @@ class TestEdgeCases:
 
         with patch.object(custom_service.auth_provider, 'create_custom_token') as mock_create_token:
             mock_create_token.return_value = b"mock-token"
-            
+
             with patch('secrets.token_urlsafe') as mock_token_safe:
                 mock_token_safe.return_value = "mock-refresh-token"
 
@@ -795,12 +792,12 @@ class TestEdgeCases:
 
     async def test_concurrent_token_operations(self, auth_service: AuthenticationService) -> None:
         """Test concurrent token operations."""
-        
+
         async def mock_token_op(user_id: str) -> TokenResponse:
             """Mock token operation."""
             with patch.object(auth_service.auth_provider, 'create_custom_token') as mock_create_token:
                 mock_create_token.return_value = b"mock-token"
-                
+
                 with patch('secrets.token_urlsafe') as mock_token_safe:
                     mock_token_safe.return_value = f"mock-refresh-token-{user_id}"
 

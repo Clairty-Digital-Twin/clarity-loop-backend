@@ -152,7 +152,7 @@ class GeminiInsightGenerator:
             return dict(result) if result else {}
         elif isinstance(sleep_features, dict):
             return sleep_features
-        
+
         # Default return for all other cases
         return {}
 

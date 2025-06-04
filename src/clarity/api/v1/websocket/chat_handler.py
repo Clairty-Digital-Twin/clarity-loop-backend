@@ -3,6 +3,7 @@
 from datetime import datetime
 import json
 import logging
+import inspect
 import uuid
 
 from fastapi import (
@@ -105,13 +106,17 @@ class WebSocketChatHandler:
         if any(keyword in message_lower for keyword in health_keywords):
             try:
                 # Generate health insight using Gemini
-                insight_response = await self.gemini_service.generate_health_insights(
+                generate_coro = self.gemini_service.generate_health_insights(
                     {
                         "user_query": message.content,
                         "context": "chat_message",
                         "timestamp": message.timestamp.isoformat(),
                     }
                 )
+                if inspect.isawaitable(generate_coro):
+                    insight_response = await generate_coro
+                else:
+                    insight_response = generate_coro
 
                 if insight_response.get("insights"):
                     insight_message = HealthInsightMessage(
@@ -258,7 +263,11 @@ async def websocket_chat_endpoint(
         # Authenticate user
         if token:
             try:
-                user = await get_current_user_websocket(token)
+                auth_result = get_current_user_websocket(token)
+                if inspect.isawaitable(auth_result):
+                    user = await auth_result
+                else:
+                    user = auth_result
             except HTTPException:
                 await websocket.close(code=1008, reason="Invalid authentication token")
                 return
@@ -373,7 +382,11 @@ async def websocket_health_analysis_endpoint(
         # Authenticate user
         if token:
             try:
-                user = await get_current_user_websocket(token)
+                auth_result = get_current_user_websocket(token)
+                if inspect.isawaitable(auth_result):
+                    user = await auth_result
+                else:
+                    user = auth_result
                 if user.uid != user_id:
                     await websocket.close(code=1008, reason="User ID mismatch")
                     return

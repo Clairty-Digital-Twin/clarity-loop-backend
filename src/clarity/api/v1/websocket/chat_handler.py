@@ -336,8 +336,8 @@ async def websocket_chat_endpoint(
                 )
                 break
 
-            except Exception as e:
-                logger.exception("Unexpected error in chat endpoint: %s", e)
+            except Exception:
+                logger.exception("Unexpected error in chat endpoint")
                 await connection_manager.disconnect(websocket, "internal_error")
                 break
 

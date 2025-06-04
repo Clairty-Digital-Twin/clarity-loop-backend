@@ -71,7 +71,7 @@ class _FakePublisher:
         pass
 
     @staticmethod
-    async def publish(*a: Any, **kw: Any) -> None:
+    async def publish(*_a: Any, **_kw: Any) -> None:
         return None
 
 

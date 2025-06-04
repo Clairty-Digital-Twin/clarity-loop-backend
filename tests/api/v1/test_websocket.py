@@ -393,7 +393,7 @@ def mock_get_current_user_websocket(token: str) -> User:
 
 
 @pytest.fixture
-def app(monkeypatch: pytest.MonkeyPatch) -> FastAPI:
+def app(_monkeypatch: pytest.MonkeyPatch) -> FastAPI:
     # This fixture should return a FastAPI app instance configured for testing.
     # It needs to override dependencies to use our mocks.
     app = FastAPI()

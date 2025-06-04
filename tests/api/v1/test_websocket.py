@@ -181,9 +181,7 @@ class _TestConnectionManager:
             len(self.active_websockets),
         )
 
-    async def send_to_connection(
-        self, websocket: WebSocket, message: Any
-    ) -> None:
+    async def send_to_connection(self, websocket: WebSocket, message: Any) -> None:
         logger.info("Attempting to send message to connection: %s", message)
 
         if websocket not in self.connection_info:
@@ -521,9 +519,7 @@ class TestWebSocketEndpoints:
             response_data = websocket.receive_json()
             assert response_data["type"] == MessageType.HEARTBEAT_ACK.value
 
-    async def test_websocket_chat_endpoint_anonymous(
-        self, client: TestClient
-    ) -> None:
+    async def test_websocket_chat_endpoint_anonymous(self, client: TestClient) -> None:
         user_id = "anonymous-user-123"
         with (
             pytest.raises(WebSocketDisconnect) as excinfo,
@@ -533,9 +529,7 @@ class TestWebSocketEndpoints:
             websocket.send_text("Hello")
         assert excinfo.value.code == 1008  # Policy Violation
 
-    async def test_websocket_invalid_message_format(
-        self, client: TestClient
-    ) -> None:
+    async def test_websocket_invalid_message_format(self, client: TestClient) -> None:
         user_id = "test-user-123"
         test_token = "test-token"  # noqa: S105
 
@@ -549,9 +543,7 @@ class TestWebSocketEndpoints:
             assert response_data["type"] == MessageType.ERROR.value
             assert "Invalid JSON format" in response_data["message"]
 
-    async def test_websocket_typing_indicator(
-        self, client: TestClient
-    ) -> None:
+    async def test_websocket_typing_indicator(self, client: TestClient) -> None:
         user_id = "test-user-123"
         test_token = "test-token"  # noqa: S105
 
@@ -584,9 +576,7 @@ class TestWebSocketEndpoints:
             assert response_data["user_id"] == user_id
             assert response_data["is_typing"] is False
 
-    async def test_health_insight_generation(
-        self, client: TestClient, app: FastAPI
-    ):
+    async def test_health_insight_generation(self, client: TestClient, app: FastAPI):
         user_id = "test-user-123"  # Must match the user ID from mock_get_current_user_websocket
         test_token = "test-token"  # noqa: S105
 
@@ -700,9 +690,7 @@ class TestWebSocketEndpoints:
         else:
             del app.dependency_overrides[get_connection_manager]
 
-    async def test_typing_indicator_processing(
-        self, client: TestClient, app: FastAPI
-    ):
+    async def test_typing_indicator_processing(self, client: TestClient, app: FastAPI):
         user_id = "test-user-123"  # Must match the user ID from mock_get_current_user_websocket
         test_token = "test-token"  # noqa: S105
 
@@ -796,9 +784,7 @@ class TestWebSocketEndpoints:
         else:
             del app.dependency_overrides[get_connection_manager]
 
-    async def test_heartbeat_processing(
-        self, client: TestClient, app: FastAPI
-    ):
+    async def test_heartbeat_processing(self, client: TestClient, app: FastAPI):
         user_id = "test-user-123"  # Must match the user ID from mock_get_current_user_websocket
         test_token = "test-token"  # noqa: S105
 

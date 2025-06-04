@@ -216,6 +216,14 @@ ignore = [
     "B008",  # do not perform function calls in argument defaults
     "C901",  # too complex
     "W191",  # indentation contains tabs
+    "S104",  # binding to all interfaces in example apps
+    "PLR6301",  # test methods could be functions – acceptable in test classes
+    "PLR1702",  # nested blocks – accepted for complex websocket handler
+    "PLR0912",  # too many branches – accepted for handler endpoints
+    "PLR0915",  # too many statements – accepted for handler endpoints
+    "PLW0603",  # global statement usage in lifespan for singleton pattern
+    "ANN401",   # allow use of Any in some interfaces & tests
+    "RUF029",   # allow async def without await in mock helpers
 ]
 
 [tool.ruff.lint.pyupgrade]

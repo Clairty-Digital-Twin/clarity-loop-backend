@@ -46,7 +46,7 @@ class WebSocketChatHandler:
 
     def __init__(self):
         self.gemini_service = GeminiService()
-        self.pat_service = PATService()
+        self.pat_service = PATModelService()
 
     async def process_chat_message(self, websocket: WebSocket, message: ChatMessage):
         """Process a chat message and potentially generate health insights."""

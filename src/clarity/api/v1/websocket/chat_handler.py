@@ -3,7 +3,6 @@
 from datetime import datetime
 import json
 import logging
-from typing import Optional
 import uuid
 
 from fastapi import (
@@ -14,7 +13,6 @@ from fastapi import (
     WebSocket,
     WebSocketDisconnect,
 )
-from starlette.websockets import WebSocketState
 
 from clarity.auth.firebase_auth import get_current_user_websocket
 from clarity.core.config import get_settings
@@ -32,7 +30,6 @@ from .models import (
     MessageType,
     SystemMessage,
     TypingMessage,
-    WebSocketMessage,
 )
 
 logger = logging.getLogger(__name__)
@@ -54,7 +51,7 @@ class WebSocketChatHandler:
 
     async def process_chat_message(
         self, websocket: WebSocket, message: ChatMessage, connection_manager
-    ):
+    ) -> None:
         """Process a chat message and potentially generate health insights."""
         try:
             connection_info = connection_manager.connection_info.get(websocket)
@@ -70,7 +67,7 @@ class WebSocketChatHandler:
             await connection_manager.broadcast_to_room("general", message)
 
             # Check if message contains health-related content for AI analysis
-            await self._analyze_for_health_insights(message)
+            await self._analyze_for_health_insights(message, connection_manager)
 
         except Exception as e:
             logger.error(f"Error processing chat message: {e}")
@@ -79,7 +76,9 @@ class WebSocketChatHandler:
             )
             await connection_manager.send_to_connection(websocket, error_msg)
 
-    async def _analyze_for_health_insights(self, message: ChatMessage):
+    async def _analyze_for_health_insights(
+        self, message: ChatMessage, connection_manager
+    ) -> None:
         """Analyze message content for potential health insights."""
         # Keywords that might trigger health analysis
         health_keywords = [
@@ -135,7 +134,7 @@ class WebSocketChatHandler:
 
     async def process_typing_message(
         self, websocket: WebSocket, message: TypingMessage, connection_manager
-    ):
+    ) -> None:
         """Process typing indicator message."""
         connection_info = connection_manager.connection_info.get(websocket)
         if not connection_info:
@@ -150,7 +149,9 @@ class WebSocketChatHandler:
             "general", message, exclude_user=connection_info.user_id
         )
 
-    async def process_heartbeat(self, websocket: WebSocket, message):
+    async def process_heartbeat(
+        self, websocket: WebSocket, message, connection_manager
+    ) -> None:
         """Process heartbeat message and send acknowledgment."""
         try:
             ack_message = HeartbeatAckMessage(
@@ -162,7 +163,7 @@ class WebSocketChatHandler:
 
     async def trigger_health_analysis(
         self, user_id: str, health_data: dict, connection_manager
-    ):
+    ) -> None:
         """Trigger comprehensive health analysis and send real-time updates."""
         try:
             # Send analysis started message
@@ -308,7 +309,9 @@ async def websocket_chat_endpoint(
                         )
 
                     elif message_type == MessageType.HEARTBEAT:
-                        await chat_handler.process_heartbeat(websocket, message_data)
+                        await chat_handler.process_heartbeat(
+                            websocket, message_data, connection_manager
+                        )
 
                     else:
                         logger.warning(f"Unknown message type: {message_type}")
@@ -420,7 +423,9 @@ async def websocket_health_analysis_endpoint(
                         )
 
                     elif message_data.get("type") == MessageType.HEARTBEAT:
-                        await chat_handler.process_heartbeat(websocket, message_data)
+                        await chat_handler.process_heartbeat(
+                            websocket, message_data, connection_manager
+                        )
 
                 except json.JSONDecodeError:
                     error_msg = ErrorMessage(

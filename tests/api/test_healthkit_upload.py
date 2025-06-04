@@ -314,9 +314,10 @@ class TestHealthKitUploadIntegration:
         with TestClient(app) as client:
             # Test that endpoints are accessible (will fail auth but endpoint should be reachable)
             response = client.get("/api/v1/healthkit/status/test-upload-id")
-            # We expect it to fail auth, but the endpoint should be reachable
+            # We expect it to fail auth/validation, but the endpoint should be reachable
             assert response.status_code in {
-                401,
-                422,
-                500,
+                400,  # Bad Request (invalid upload ID format)
+                401,  # Unauthorized
+                422,  # Validation Error
+                500,  # Internal Server Error
             }  # Various possible auth/validation errors

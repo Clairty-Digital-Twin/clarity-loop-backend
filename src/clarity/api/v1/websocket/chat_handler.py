@@ -18,9 +18,9 @@ from starlette.websockets import WebSocketState
 
 from clarity.auth.firebase_auth import get_current_user_websocket
 from clarity.core.config import get_settings
-from clarity.models.user import User
 from clarity.ml.gemini_service import GeminiService
-from clarity.ml.pat_service import PATService
+from clarity.ml.pat_service import PATModelService
+from clarity.models.user import User
 
 from .connection_manager import connection_manager
 from .models import (

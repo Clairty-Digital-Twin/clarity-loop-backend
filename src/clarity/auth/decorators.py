@@ -12,7 +12,7 @@ from clarity.models.user import User
 
 def require_auth(permissions: list[str] | None = None, roles: list[str] | None = None):
     """Decorator to require authentication and optionally check permissions/roles."""
-    
+
     def decorator(func: Callable) -> Callable:
         @wraps(func)
         async def wrapper(*args, **kwargs):
@@ -30,7 +30,7 @@ def require_auth(permissions: list[str] | None = None, roles: list[str] | None =
                 # In a real app, check user.permissions or roles
                 pass
 
-            # Check roles if specified  
+            # Check roles if specified
             if roles:
                 # For now, all authenticated users have all roles
                 # In a real app, check user.roles

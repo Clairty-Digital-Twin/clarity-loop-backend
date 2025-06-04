@@ -128,7 +128,7 @@ class HeartbeatAckMessage(BaseMessage):
 
     type: MessageType = MessageType.HEARTBEAT_ACK
     client_timestamp: datetime | None = None
-    server_timestamp: datetime = Field(default_factory=datetime.utcnow)
+    server_timestamp: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
 
 # Union type for all possible WebSocket messages

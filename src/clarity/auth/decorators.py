@@ -47,7 +47,9 @@ def require_auth(
     return decorator
 
 
-def require_permission(_permission: str) -> Callable[[Callable[P, Awaitable[T]]], Callable[P, Awaitable[T]]]:
+def require_permission(
+    _permission: str,
+) -> Callable[[Callable[P, Awaitable[T]]], Callable[P, Awaitable[T]]]:
     """Decorator to require specific permission for an endpoint."""
 
     def decorator(func: Callable[P, Awaitable[T]]) -> Callable[P, Awaitable[T]]:
@@ -70,7 +72,9 @@ def require_permission(_permission: str) -> Callable[[Callable[P, Awaitable[T]]]
     return decorator
 
 
-def require_role(_role: str) -> Callable[[Callable[P, Awaitable[T]]], Callable[P, Awaitable[T]]]:
+def require_role(
+    _role: str,
+) -> Callable[[Callable[P, Awaitable[T]]], Callable[P, Awaitable[T]]]:
     """Decorator to require specific role for an endpoint."""
 
     def decorator(func: Callable[P, Awaitable[T]]) -> Callable[P, Awaitable[T]]:

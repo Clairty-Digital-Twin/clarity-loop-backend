@@ -1,7 +1,7 @@
 """WebSocket API endpoint tests for the CLARITY chat system."""
 
+from datetime import UTC, datetime
 import logging
-from datetime import datetime, UTC
 from typing import Any
 from unittest.mock import AsyncMock, MagicMock
 
@@ -104,9 +104,7 @@ class _TestConnectionManager:
             self.room_connections[room_id] = set()
         self.room_connections[room_id].add(websocket)
 
-        logger.info(
-            "Test connection established: user=%s, room=%s", username, room_id
-        )
+        logger.info("Test connection established: user=%s, room=%s", username, room_id)
         self.connection_log.append(f"Connected: {username} to {room_id}")
 
         return connection_info
@@ -156,11 +154,13 @@ class _TestConnectionManager:
             message_dict = message
 
         # Log for test verification
-        self.sent_messages.append({
-            "target": "connection",
-            "websocket": websocket,
-            "message": message_dict,
-        })
+        self.sent_messages.append(
+            {
+                "target": "connection",
+                "websocket": websocket,
+                "message": message_dict,
+            }
+        )
 
         # In a real implementation, this would send via WebSocket
         # For tests, we just log
@@ -177,16 +177,16 @@ class _TestConnectionManager:
             message_dict = message
 
         # Log for test verification
-        self.sent_messages.append({
-            "target": "user",
-            "user_id": user_id,
-            "message": message_dict,
-        })
+        self.sent_messages.append(
+            {
+                "target": "user",
+                "user_id": user_id,
+                "message": message_dict,
+            }
+        )
 
         user_connections = self.user_connections.get(user_id, set())
-        logger.info(
-            "Found %d connections for user %s", len(user_connections), user_id
-        )
+        logger.info("Found %d connections for user %s", len(user_connections), user_id)
 
         # In a real implementation, this would send to all user connections
         for websocket in user_connections:
@@ -205,20 +205,22 @@ class _TestConnectionManager:
             message_dict = message
 
         # Log for test verification
-        self.sent_messages.append({
-            "target": "room",
-            "room_id": room_id,
-            "message": message_dict,
-            "exclude_websocket": exclude_websocket,
-        })
+        self.sent_messages.append(
+            {
+                "target": "room",
+                "room_id": room_id,
+                "message": message_dict,
+                "exclude_websocket": exclude_websocket,
+            }
+        )
 
         room_connections = self.room_connections.get(room_id, set())
-        target_connections = {
-            ws for ws in room_connections if ws != exclude_websocket
-        }
+        target_connections = {ws for ws in room_connections if ws != exclude_websocket}
 
         logger.info(
-            "Broadcasting to %d connections in room %s", len(target_connections), room_id
+            "Broadcasting to %d connections in room %s",
+            len(target_connections),
+            room_id,
         )
 
         # In a real implementation, this would send to all room connections
@@ -230,7 +232,9 @@ class _TestConnectionManager:
         connection_info = self.connection_info.get(websocket)
         if connection_info:
             connection_info.last_heartbeat_ack = datetime.now(UTC)
-            logger.info("Heartbeat handled for connection: %s", connection_info.username)
+            logger.info(
+                "Heartbeat handled for connection: %s", connection_info.username
+            )
 
     def is_rate_limited(self, websocket: WebSocket) -> bool:
         """Check if a connection is rate limited."""
@@ -307,7 +311,7 @@ def create_mock_connection_manager() -> _TestConnectionManager:
 
 def mock_get_current_user_websocket(token: str) -> User:
     """Mock for get_current_user_websocket dependency."""
-    if token == TEST_TOKEN:  # noqa: S105  # This is a test comparison
+    if token == TEST_TOKEN:  # This is a test comparison
         return User(
             uid=TEST_USER_ID,
             email="test@example.com",

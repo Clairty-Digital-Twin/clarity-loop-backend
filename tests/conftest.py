@@ -32,7 +32,9 @@ os.environ["ENVIRONMENT"] = "testing"
 # --- 1. ADC ↦ AnonymousCredentials ----------------------------------
 
 
-def mock_auth_default(*args: object, **kwargs: object) -> tuple[AnonymousCredentials, str]:
+def mock_auth_default(
+    *args: object, **kwargs: object
+) -> tuple[AnonymousCredentials, str]:
     """Mock Google auth default function."""
     # Arguments are unused as this is a mock function
     del args, kwargs  # Explicitly delete to satisfy linter
@@ -272,7 +274,7 @@ def mock_environment_variables(monkeypatch: pytest.MonkeyPatch):
         "DATABASE_URL": "sqlite:///test.db",
         "FIREBASE_PROJECT_ID": "test-project",
         "FIREBASE_CREDENTIALS": "test-credentials.json",
-        "JWT_SECRET_KEY": "test-secret-key-for-testing-only",  # noqa: S105  # This is a test secret
+        "JWT_SECRET_KEY": "test-secret-key-for-testing-only",  # This is a test secret
         "LOG_LEVEL": "DEBUG",
         "CORS_ORIGINS": '["http://localhost:3000", "http://localhost:8000"]',  # Fixed: JSON format
         "SKIP_EXTERNAL_SERVICES": "true",  # Skip Firebase/Firestore in tests

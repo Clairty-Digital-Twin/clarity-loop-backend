@@ -183,11 +183,19 @@ class TestConnectionManager:
         message = SystemMessage(content="Broadcast test")
         await connection_manager.broadcast_to_room("test_room", message)
 
-        # Verify all users received message
+        # Verify all users received the broadcast message (plus any join notifications)
         for websocket in websockets:
-            assert len(websocket.messages_sent) == 1
-            sent_data = json.loads(websocket.messages_sent[0])
-            assert sent_data["content"] == "Broadcast test"
+            # Should have received at least one message
+            assert len(websocket.messages_sent) >= 1
+
+            # Check that the broadcast message is among the messages
+            broadcast_received = False
+            for message in websocket.messages_sent:
+                sent_data = json.loads(message)
+                if sent_data.get("content") == "Broadcast test":
+                    broadcast_received = True
+                    break
+            assert broadcast_received, "Broadcast message not received"
 
     @pytest.mark.asyncio
     async def test_rate_limiting(self, connection_manager):

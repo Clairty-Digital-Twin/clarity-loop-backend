@@ -232,14 +232,14 @@ class _TestConnectionManager:
                     )
                     # Actually send the message through the WebSocket for TestClient
                     try:
-                        print(f"🔄 DEBUG TestConnectionManager: Attempting to send through websocket...")
+                        print("🔄 DEBUG TestConnectionManager: Attempting to send through websocket...")
                         await websocket.send_json(message_content)
-                        print(f"✅ DEBUG TestConnectionManager: Successfully sent message through websocket")
+                        print("✅ DEBUG TestConnectionManager: Successfully sent message through websocket")
                         logger.info(f"Sent message to user {user_id} through websocket: {message_content}")
                     except Exception as e:
                         print(f"❌ DEBUG TestConnectionManager: Failed to send through websocket: {e}")
                         logger.warning(f"Failed to send message to user {user_id} through websocket: {e}")
-                        
+
                     logger.info(
                         f"Recorded direct message send to user {user_id} via {websocket}"
                     )
@@ -338,6 +338,12 @@ class _TestConnectionManager:
         self, websocket: WebSocket
     ) -> _TestConnectionInfo | None:
         return self.connection_info.get(websocket)
+
+    async def handle_message(self, websocket: WebSocket, raw_message: str) -> bool:
+        """Handle an incoming WebSocket message - always allow in tests."""
+        print(f"🔄 DEBUG TestConnectionManager: handle_message called with: {raw_message}")
+        # In tests, always return True to allow message processing
+        return True
 
 
 @pytest.fixture
@@ -450,7 +456,7 @@ class TestWebSocketEndpoints:
             f"/api/v1/chat/{user_id}?token={test_token}"
         ) as websocket:
             print("✅ DEBUG: WebSocket connection established")
-            
+
             # Send a chat message
             chat_message = ChatMessage(
                 user_id=user_id,
@@ -466,7 +472,7 @@ class TestWebSocketEndpoints:
             print("⏳ DEBUG: Waiting for response...")
             response_data = websocket.receive_json()
             print(f"📥 DEBUG: Received response: {response_data}")
-            
+
             assert response_data["message_type"] == MessageType.MESSAGE
             assert "AI Response to: Hello AI" in response_data["content"]
             assert response_data["user_id"] == user_id

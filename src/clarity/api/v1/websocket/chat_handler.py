@@ -20,7 +20,7 @@ from clarity.auth.firebase_auth import get_current_user_websocket
 from clarity.core.config import get_settings
 from clarity.models.user import User
 from clarity.ml.gemini_service import GeminiService
-from clarity.services.pat_service import PATService
+from clarity.ml.pat_service import PATService
 
 from .connection_manager import connection_manager
 from .models import (

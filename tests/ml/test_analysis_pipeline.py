@@ -240,7 +240,9 @@ class TestHealthAnalysisPipelineModalityProcessing:
         assert result == expected_features
         # Verify processor is called with extracted timestamps and values
         call_args = pipeline.cardio_processor.process.call_args[0]
-        assert len(call_args) == 4  # hr_timestamps, hr_values, hrv_timestamps, hrv_values
+        assert (
+            len(call_args) == 4
+        )  # hr_timestamps, hr_values, hrv_timestamps, hrv_values
         assert len(call_args[0]) == 1  # hr_timestamps
         assert call_args[1] == [75.0]  # hr_values
         assert call_args[2] == []  # hrv_timestamps (empty)
@@ -256,11 +258,6 @@ class TestHealthAnalysisPipelineModalityProcessing:
         expected_features = [4.0, 5.0, 6.0]
         pipeline.respiratory_processor.process = MagicMock(
             return_value=expected_features
-        )
-
-        respiratory_metric = HealthMetric(
-            metric_type=HealthMetricType.HEART_RATE_VARIABILITY,
-            biometric_data=BiometricData(heart_rate_variability=50.0),
         )
 
         # Since HRV is categorized as cardio, pass empty list to respiratory processor
@@ -594,7 +591,9 @@ class TestHealthAnalysisPipelineSummaryStats:
         )
 
         result = HealthAnalysisPipeline._calculate_time_span([metric])
-        assert result == 1.0  # Single metric returns default 1.0 (below MIN_METRICS_FOR_TIME_SPAN)
+        assert (
+            result == 1.0
+        )  # Single metric returns default 1.0 (below MIN_METRICS_FOR_TIME_SPAN)
 
 
 class TestHealthAnalysisPipelineMainWorkflow:

@@ -60,18 +60,26 @@ class ConnectionManager:
         self.last_heartbeat: dict[WebSocket, float] = {}
         self.failed_connections: WeakSet = WeakSet()
 
-        # Background tasks
+        # Background tasks (started explicitly during app startup)
         self._cleanup_task: asyncio.Task | None = None
         self._heartbeat_task: asyncio.Task | None = None
-        self._start_background_tasks()
+        self._started = False
 
-    def _start_background_tasks(self):
-        """Start background maintenance tasks."""
+    async def start_background_tasks(self):
+        """Start background maintenance tasks (called during app startup)."""
+        if self._started:
+            return
+            
+        logger.info("Starting WebSocket background tasks...")
+        
         if self._cleanup_task is None or self._cleanup_task.done():
             self._cleanup_task = asyncio.create_task(self._cleanup_loop())
 
         if self._heartbeat_task is None or self._heartbeat_task.done():
             self._heartbeat_task = asyncio.create_task(self._heartbeat_loop())
+            
+        self._started = True
+        logger.info("WebSocket background tasks started")
 
     async def _cleanup_loop(self):
         """Background task to clean up stale connections and rate limiting data."""
@@ -417,16 +425,37 @@ class ConnectionManager:
 
         return None
 
+    async def stop_background_tasks(self):
+        """Stop background tasks (called during app shutdown)."""
+        if not self._started:
+            return
+            
+        logger.info("Stopping WebSocket background tasks...")
+        
+        # Cancel background tasks
+        if self._cleanup_task and not self._cleanup_task.done():
+            self._cleanup_task.cancel()
+            try:
+                await self._cleanup_task
+            except asyncio.CancelledError:
+                pass
+
+        if self._heartbeat_task and not self._heartbeat_task.done():
+            self._heartbeat_task.cancel()
+            try:
+                await self._heartbeat_task
+            except asyncio.CancelledError:
+                pass
+                
+        self._started = False
+        logger.info("WebSocket background tasks stopped")
+        
     async def shutdown(self):
         """Gracefully shutdown the connection manager."""
         logger.info("Shutting down WebSocket connection manager...")
 
-        # Cancel background tasks
-        if self._cleanup_task and not self._cleanup_task.done():
-            self._cleanup_task.cancel()
-
-        if self._heartbeat_task and not self._heartbeat_task.done():
-            self._heartbeat_task.cancel()
+        # Stop background tasks first
+        await self.stop_background_tasks()
 
         # Close all connections
         for websocket in list(self.connection_info.keys()):
@@ -435,5 +464,5 @@ class ConnectionManager:
         logger.info("WebSocket connection manager shutdown complete")
 
 
-# Global connection manager instance
-connection_manager = ConnectionManager()
+# Connection manager will be created during app startup
+# Use get_connection_manager() dependency to access it

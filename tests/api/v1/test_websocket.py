@@ -99,7 +99,9 @@ class TestConnectionManager:
         assert info.username == "Test User"
 
     @pytest.mark.asyncio
-    async def test_connect_max_connections_exceeded(self, connection_manager: ConnectionManager) -> None:
+    async def test_connect_max_connections_exceeded(
+        self, connection_manager: ConnectionManager
+    ) -> None:
         """Test connection rejection when max connections exceeded."""
         user_id = "test_user"
 
@@ -144,7 +146,9 @@ class TestConnectionManager:
         assert len(connection_manager.user_connections.get("test_user", [])) == 0
 
     @pytest.mark.asyncio
-    async def test_send_to_connection(self, connection_manager: ConnectionManager) -> None:
+    async def test_send_to_connection(
+        self, connection_manager: ConnectionManager
+    ) -> None:
         """Test sending message to specific connection."""
         websocket = MockWebSocket()
 
@@ -167,7 +171,9 @@ class TestConnectionManager:
         assert sent_data["content"] == "Test message"
 
     @pytest.mark.asyncio
-    async def test_broadcast_to_room(self, connection_manager: ConnectionManager) -> None:
+    async def test_broadcast_to_room(
+        self, connection_manager: ConnectionManager
+    ) -> None:
         """Test broadcasting message to room."""
         # Connect multiple users to same room
         websockets = []
@@ -229,7 +235,9 @@ class TestConnectionManager:
         assert len(error_messages) > 0
 
     @pytest.mark.asyncio
-    async def test_message_size_limit(self, connection_manager: ConnectionManager) -> None:
+    async def test_message_size_limit(
+        self, connection_manager: ConnectionManager
+    ) -> None:
         """Test message size limiting."""
         websocket = MockWebSocket()
 
@@ -252,7 +260,9 @@ class TestConnectionManager:
         assert len(error_messages) > 0
 
     @pytest.mark.asyncio
-    async def test_heartbeat_functionality(self, connection_manager: ConnectionManager) -> None:
+    async def test_heartbeat_functionality(
+        self, connection_manager: ConnectionManager
+    ) -> None:
         """Test heartbeat monitoring."""
         websocket = MockWebSocket()
 
@@ -336,7 +346,9 @@ class TestWebSocketEndpoints:
     """Test WebSocket endpoints."""
 
     @patch("clarity.auth.firebase_auth.get_current_user_websocket")
-    async def test_websocket_chat_endpoint_authenticated(self, mock_auth: MagicMock) -> None:
+    async def test_websocket_chat_endpoint_authenticated(
+        self, mock_auth: MagicMock
+    ) -> None:
         """Test WebSocket chat endpoint with authentication."""
         # Mock authenticated user
         mock_user = User(
@@ -426,7 +438,9 @@ class TestChatHandler:
     """Test chat handler functionality."""
 
     @patch("clarity.ml.gemini_service.GeminiService")
-    async def test_health_insight_generation(self, mock_gemini_service: MagicMock) -> None:
+    async def test_health_insight_generation(
+        self, mock_gemini_service: MagicMock
+    ) -> None:
         """Test health insight generation from chat messages."""
         # Mock Gemini service response
         mock_gemini_service.return_value.generate_health_insights.return_value = {

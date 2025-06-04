@@ -16,13 +16,13 @@ _connection_manager: ConnectionManager | None = None
 
 def get_connection_manager() -> ConnectionManager:
     """Dependency to get the connection manager instance.
-    
+
     This should be used as a FastAPI dependency:
-    
+
     ```python
     from fastapi import Depends
     from .lifespan import get_connection_manager
-    
+
     @app.websocket("/ws")
     async def websocket_endpoint(
         websocket: WebSocket,
@@ -40,6 +40,7 @@ def get_connection_manager() -> ConnectionManager:
     # For testing, try to get from test helper
     try:
         from tests.api.v1.test_websocket_helper import get_test_connection_manager
+
         return get_test_connection_manager()
     except (ImportError, RuntimeError):
         pass
@@ -61,17 +62,17 @@ def get_connection_manager() -> ConnectionManager:
 @asynccontextmanager
 async def websocket_lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     """FastAPI lifespan context manager for WebSocket features.
-    
+
     This should be used as the lifespan parameter when creating FastAPI apps
     that need WebSocket functionality:
-    
+
     ```python
     from fastapi import FastAPI
     from .lifespan import websocket_lifespan
-    
+
     app = FastAPI(lifespan=websocket_lifespan)
     ```
-    
+
     The lifespan will:
     1. Create and initialize the connection manager during startup
     2. Start background tasks (heartbeat, cleanup)

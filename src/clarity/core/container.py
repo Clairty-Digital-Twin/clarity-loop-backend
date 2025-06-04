@@ -73,7 +73,7 @@ class DependencyContainer:
         if middleware_config.enabled and config_provider.get_setting(
             "enable_auth", default=False
         ):
-            from clarity.auth.firebase_auth import FirebaseAuthProvider  # noqa: PLC0415
+            from clarity.auth.firebase_middleware import FirebaseAuthProvider  # noqa: PLC0415
 
             firebase_config = config_provider.get_firebase_config()
             return FirebaseAuthProvider(
@@ -337,7 +337,7 @@ class DependencyContainer:
 
         # Add authentication middleware if enabled
         if middleware_config.enabled:
-            from clarity.auth.firebase_auth import (  # noqa: PLC0415
+            from clarity.auth.firebase_middleware import (  # noqa: PLC0415
                 FirebaseAuthMiddleware,
             )
 

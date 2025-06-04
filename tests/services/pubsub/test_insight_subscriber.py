@@ -19,9 +19,7 @@ from clarity.services.pubsub.insight_subscriber import (
     GeminiInsightGenerator,
     InsightSubscriber,
     InsightSubscriberSingleton,
-    generate_insight_task,
     get_insight_subscriber,
-    health_check,
 )
 
 

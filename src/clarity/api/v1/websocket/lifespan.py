@@ -1,11 +1,10 @@
 """FastAPI lifespan management for WebSocket features."""
 
+import logging
+import inspect
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
-import inspect
-import logging
 from fastapi import FastAPI
-
 from clarity.api.v1.websocket.connection_manager import ConnectionManager
 
 logger = logging.getLogger(__name__)

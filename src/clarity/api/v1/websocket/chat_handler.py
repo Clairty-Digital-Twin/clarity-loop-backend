@@ -371,7 +371,8 @@ async def _authenticate_websocket_user(
             if user and getattr(user, "uid", None) != user_id:
                 await websocket.close(code=1008, reason="User ID mismatch")
                 return None
-            return user
+            else:
+                return user
         except HTTPException:
             await websocket.close(code=1008, reason="Invalid authentication token")
             return None
@@ -426,6 +427,7 @@ async def websocket_health_analysis_endpoint(
     pat_service: PATModelService = Depends(get_pat_model_service),
 ) -> None:
     """WebSocket endpoint for real-time health analysis updates.
+
     This endpoint provides real-time updates during health data processing,
     including PAT analysis and AI insight generation.
     """

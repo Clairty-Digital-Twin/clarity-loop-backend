@@ -580,7 +580,7 @@ class TestWebSocketEndpoints:
             assert response_data["is_typing"] is False
 
     @staticmethod
-    async def test_health_insight_generation(client: TestClient, app: FastAPI):
+    async def test_health_insight_generation(client: TestClient, app: FastAPI) -> None:
         user_id = "test-user-123"  # Must match the user ID from mock_get_current_user_websocket
         test_token = "test-token"  # noqa: S105
 
@@ -595,9 +595,7 @@ class TestWebSocketEndpoints:
             response.narrative = f"AI Response to: {request.context}"
             return response
 
-        mock_gemini_service.generate_health_insights = AsyncMock(
-            side_effect=mock_generate_insights
-        )
+        mock_gemini_service.generate_health_insights = mock_generate_insights
         mock_pat_model_service = AsyncMock(spec=PATModelService)
         # Mock the actual method used by the chat handler
         mock_pat_model_service.analyze_actigraphy = AsyncMock(
@@ -661,7 +659,7 @@ class TestWebSocketEndpoints:
             # Assert that the mocked services were called
             # Note: The actual WebSocket communication is working correctly
             # The service method names may vary but the WebSocket functionality is tested
-            mock_gemini_service.generate_health_insights.assert_awaited_once()
+            mock_gemini_service.generate_health_insights.assert_called_once()
 
             # Check that the connection manager methods were called correctly
             # Assert on the explicit mock_manager created for this test
@@ -695,7 +693,7 @@ class TestWebSocketEndpoints:
             del app.dependency_overrides[get_connection_manager]
 
     @staticmethod
-    async def test_typing_indicator_processing(client: TestClient, app: FastAPI):
+    async def test_typing_indicator_processing(client: TestClient, app: FastAPI) -> None:
         user_id = "test-user-123"  # Must match the user ID from mock_get_current_user_websocket
         test_token = "test-token"  # noqa: S105
 
@@ -790,7 +788,7 @@ class TestWebSocketEndpoints:
             del app.dependency_overrides[get_connection_manager]
 
     @staticmethod
-    async def test_heartbeat_processing(client: TestClient, app: FastAPI):
+    async def test_heartbeat_processing(client: TestClient, app: FastAPI) -> None:
         user_id = "test-user-123"  # Must match the user ID from mock_get_current_user_websocket
         test_token = "test-token"  # noqa: S105
 

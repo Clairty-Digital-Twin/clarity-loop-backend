@@ -157,9 +157,9 @@ class ConnectionManager:
         user_messages = self.message_counts[user_id]
 
         # Remove messages older than 1 minute
-        MESSAGE_EXPIRY_SECONDS = 60
+        message_expiry_seconds = 60
         recent_messages = [
-            ts for ts in user_messages if current_time - ts < MESSAGE_EXPIRY_SECONDS
+            ts for ts in user_messages if current_time - ts < message_expiry_seconds
         ]
         self.message_counts[user_id] = recent_messages
 

@@ -3,6 +3,7 @@
 Tests cover all functionality to achieve 95%+ test coverage.
 """
 
+from typing import Any
 from unittest.mock import Mock, patch
 
 import pytest
@@ -14,7 +15,8 @@ from clarity.models.health_data import ActivityData, HealthMetric
 class TestActivityProcessorInitialization:
     """Test ActivityProcessor initialization."""
 
-    def test_processor_initialization(self):
+    @staticmethod
+    def test_processor_initialization() -> None:
         """Test successful processor initialization."""
         processor = ActivityProcessor()
         assert processor.processor_name == "ActivityProcessor"
@@ -25,12 +27,14 @@ class TestActivityProcessorMainFlow:
     """Test main processing workflow."""
 
     @pytest.fixture
-    def processor(self):
+    @staticmethod
+    def processor() -> ActivityProcessor:
         """Create activity processor instance."""
         return ActivityProcessor()
 
     @pytest.fixture
-    def sample_metrics(self):
+    @staticmethod
+    def sample_metrics() -> list[Mock]:
         """Create sample health metrics with activity data."""
         metrics = []
         for i in range(3):
@@ -47,7 +51,10 @@ class TestActivityProcessorMainFlow:
             metrics.append(metric)
         return metrics
 
-    def test_process_success_with_data(self, processor, sample_metrics):
+    @staticmethod
+    def test_process_success_with_data(
+        processor: ActivityProcessor, sample_metrics: list[Mock]
+    ) -> None:
         """Test successful processing with valid activity data."""
         result = processor.process(sample_metrics)
 
@@ -73,7 +80,8 @@ class TestActivityProcessorMainFlow:
         for expected in expected_features:
             assert expected in feature_names
 
-    def test_process_empty_metrics(self, processor):
+    @staticmethod
+    def test_process_empty_metrics(processor: ActivityProcessor) -> None:
         """Test processing with empty metrics list."""
         result = processor.process([])
 
@@ -82,7 +90,10 @@ class TestActivityProcessorMainFlow:
         assert "warning" in result[0]
         assert result[0]["warning"] == "No activity data available"
 
-    def test_process_metrics_without_activity_data(self, processor):
+    @staticmethod
+    def test_process_metrics_without_activity_data(
+        processor: ActivityProcessor,
+    ) -> None:
         """Test processing metrics that don't have activity data."""
         metrics = [Mock(spec=HealthMetric) for _ in range(3)]
         for metric in metrics:
@@ -94,7 +105,10 @@ class TestActivityProcessorMainFlow:
         assert len(result) == 1
         assert "warning" in result[0]
 
-    def test_process_with_exception(self, processor, sample_metrics):
+    @staticmethod
+    def test_process_with_exception(
+        processor: ActivityProcessor, sample_metrics: list[Mock]
+    ) -> None:
         """Test that exceptions are handled gracefully."""
         # Mock the _extract_activity_data to raise an exception
         with patch.object(
@@ -111,7 +125,8 @@ class TestActivityProcessorMainFlow:
 class TestActivityDataExtraction:
     """Test activity data extraction from metrics."""
 
-    def test_extract_activity_data_success(self):
+    @staticmethod
+    def test_extract_activity_data_success() -> None:
         """Test successful extraction of activity data."""
         metrics = []
         for _i in range(3):
@@ -124,7 +139,8 @@ class TestActivityDataExtraction:
         assert len(result) == 3
         assert all(isinstance(data, Mock) for data in result)
 
-    def test_extract_activity_data_mixed(self):
+    @staticmethod
+    def test_extract_activity_data_mixed() -> None:
         """Test extraction with some metrics having no activity data."""
         metrics = []
         for i in range(5):
@@ -137,7 +153,8 @@ class TestActivityDataExtraction:
         # Should only get 3 (indices 0, 2, 4)
         assert len(result) == 3
 
-    def test_extract_activity_data_empty(self):
+    @staticmethod
+    def test_extract_activity_data_empty() -> None:
         """Test extraction from empty metrics list."""
         result = ActivityProcessor._extract_activity_data([])
         assert result == []
@@ -147,16 +164,19 @@ class TestActivityFeatureCalculation:
     """Test activity feature calculation methods."""
 
     @pytest.fixture
-    def processor(self):
+    @staticmethod
+    def processor() -> ActivityProcessor:
         """Create activity processor instance."""
         return ActivityProcessor()
 
-    def test_calculate_activity_features_empty(self, processor):
+    @staticmethod
+    def test_calculate_activity_features_empty(processor: ActivityProcessor) -> None:
         """Test feature calculation with empty activity data."""
         result = processor._calculate_activity_features([])
         assert result == []
 
-    def test_calculate_step_features(self):
+    @staticmethod
+    def test_calculate_step_features() -> None:
         """Test step feature calculations."""
         steps = [5000, 7000, 6000, 8000, 4000]
 
@@ -179,7 +199,8 @@ class TestActivityFeatureCalculation:
         peak_steps = next(f for f in result if f["feature_name"] == "peak_daily_steps")
         assert peak_steps["value"] == 8000
 
-    def test_calculate_distance_features(self):
+    @staticmethod
+    def test_calculate_distance_features() -> None:
         """Test distance feature calculations."""
         distances = [3.5, 4.0, 2.8, 5.2, 3.1]
 
@@ -198,7 +219,8 @@ class TestActivityFeatureCalculation:
         )
         assert avg_dist["value"] == pytest.approx(3.72, rel=1e-2)
 
-    def test_calculate_energy_features(self):
+    @staticmethod
+    def test_calculate_energy_features() -> None:
         """Test energy feature calculations."""
         energy = [200.5, 250.0, 180.2, 300.8, 220.5]
 
@@ -219,7 +241,8 @@ class TestActivityFeatureCalculation:
         )
         assert avg_energy["value"] == pytest.approx(230.4, rel=1e-2)
 
-    def test_calculate_exercise_features(self):
+    @staticmethod
+    def test_calculate_exercise_features() -> None:
         """Test exercise feature calculations."""
         exercise = [30, 45, 25, 60, 35]
 
@@ -240,25 +263,29 @@ class TestActivityFeatureCalculation:
         )
         assert avg_ex["value"] == 39
 
-    def test_calculate_consistency_score_perfect(self):
+    @staticmethod
+    def test_calculate_consistency_score_perfect() -> None:
         """Test consistency score with perfectly consistent values."""
         values = [100, 100, 100, 100, 100]
         score = ActivityProcessor._calculate_consistency_score(values)
         assert score == 1.0
 
-    def test_calculate_consistency_score_variable(self):
+    @staticmethod
+    def test_calculate_consistency_score_variable() -> None:
         """Test consistency score with variable values."""
         values = [100, 200, 50, 150, 75]
         score = ActivityProcessor._calculate_consistency_score(values)
         assert 0.0 <= score <= 1.0
 
-    def test_calculate_consistency_score_single_value(self):
+    @staticmethod
+    def test_calculate_consistency_score_single_value() -> None:
         """Test consistency score with single value."""
         values = [100]
         score = ActivityProcessor._calculate_consistency_score(values)
         assert score == 1.0
 
-    def test_calculate_consistency_score_empty(self):
+    @staticmethod
+    def test_calculate_consistency_score_empty() -> None:
         """Test consistency score with empty values."""
         values = []
         score = ActivityProcessor._calculate_consistency_score(values)
@@ -269,12 +296,14 @@ class TestActivitySummaryStats:
     """Test activity summary statistics generation."""
 
     @pytest.fixture
-    def processor(self):
+    @staticmethod
+    def processor() -> ActivityProcessor:
         """Create activity processor instance."""
         return ActivityProcessor()
 
     @pytest.fixture
-    def sample_features(self):
+    @staticmethod
+    def sample_features() -> list[dict[str, Any]]:
         """Create sample activity features."""
         return [
             {"feature_name": "total_steps", "value": 25000, "unit": "steps"},
@@ -286,7 +315,10 @@ class TestActivitySummaryStats:
             {"feature_name": "activity_consistency", "value": 0.85, "unit": "score"},
         ]
 
-    def test_get_summary_stats_success(self, processor, sample_features):
+    @staticmethod
+    def test_get_summary_stats_success(
+        processor: ActivityProcessor, sample_features: list[dict[str, Any]]
+    ) -> None:
         """Test successful summary stats generation."""
         result = processor.get_summary_stats(sample_features)
 
@@ -298,14 +330,16 @@ class TestActivitySummaryStats:
 
         assert result["total_features"] == len(sample_features)
 
-    def test_get_summary_stats_empty_features(self, processor):
+    @staticmethod
+    def test_get_summary_stats_empty_features(processor: ActivityProcessor) -> None:
         """Test summary stats with empty features."""
         result = processor.get_summary_stats([])
 
         assert isinstance(result, dict)
         assert result["summary"] == "No activity features calculated"
 
-    def test_categorize_features(self, sample_features):
+    @staticmethod
+    def test_categorize_features(sample_features: list[dict[str, Any]]) -> None:
         """Test feature categorization."""
         result = ActivityProcessor._categorize_features(sample_features)
 
@@ -328,11 +362,15 @@ class TestActivityProcessorEdgeCases:
     """Test edge cases and error conditions."""
 
     @pytest.fixture
-    def processor(self):
+    @staticmethod
+    def processor() -> ActivityProcessor:
         """Create activity processor instance."""
         return ActivityProcessor()
 
-    def test_process_with_none_values_in_activity_data(self, processor):
+    @staticmethod
+    def test_process_with_none_values_in_activity_data(
+        processor: ActivityProcessor,
+    ) -> None:
         """Test processing with None values in activity data."""
         metrics = []
         for i in range(3):
@@ -358,7 +396,8 @@ class TestActivityProcessorEdgeCases:
         assert "total_steps" in feature_names
         assert "total_distance" in feature_names
 
-    def test_activity_features_with_partial_data(self, processor):
+    @staticmethod
+    def test_activity_features_with_partial_data(processor: ActivityProcessor) -> None:
         """Test feature calculation with only some data types available."""
         activity_data = []
         for _i in range(2):
@@ -382,19 +421,22 @@ class TestActivityProcessorEdgeCases:
         assert "total_distance" not in feature_names
         assert "total_active_energy" not in feature_names
 
-    def test_consistency_score_with_zeros(self):
+    @staticmethod
+    def test_consistency_score_with_zeros() -> None:
         """Test consistency score calculation with zero values."""
         values = [0, 0, 0, 0, 0]
         score = ActivityProcessor._calculate_consistency_score(values)
         assert score == 0.0  # 🔥 FIXED: zero mean returns 0.0
 
-    def test_consistency_score_with_negative_values(self):
+    @staticmethod
+    def test_consistency_score_with_negative_values() -> None:
         """Test consistency score with negative values (edge case)."""
         values = [-10, -5, -8, -12, -6]
         score = ActivityProcessor._calculate_consistency_score(values)
         assert 0.0 <= score <= 1.0
 
-    def test_feature_calculations_with_single_data_point(self):
+    @staticmethod
+    def test_feature_calculations_with_single_data_point() -> None:
         """Test feature calculations with only one data point."""
         # Single step count
         result = ActivityProcessor._calculate_step_features([5000])
@@ -416,11 +458,13 @@ class TestActivityProcessorIntegration:
     """Integration tests combining multiple components."""
 
     @pytest.fixture
-    def processor(self):
+    @staticmethod
+    def processor() -> ActivityProcessor:
         """Create activity processor instance."""
         return ActivityProcessor()
 
-    def test_full_workflow_comprehensive_data(self, processor):
+    @staticmethod
+    def test_full_workflow_comprehensive_data(processor: ActivityProcessor) -> None:
         """Test complete workflow with comprehensive activity data."""
         # Create realistic activity data
         metrics = []
@@ -467,7 +511,8 @@ class TestActivityProcessorIntegration:
         assert summary["total_features"] == len(features)
         assert "feature_categories" in summary
 
-    def test_workflow_with_realistic_variation(self, processor):
+    @staticmethod
+    def test_workflow_with_realistic_variation(processor: ActivityProcessor) -> None:
         """Test workflow with realistic daily variation in activity."""
         # Simulate more realistic activity patterns
         realistic_steps = [3500, 8200, 6800, 4200, 9500, 12000, 2800]  # Varied week

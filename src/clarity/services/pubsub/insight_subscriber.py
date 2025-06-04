@@ -102,12 +102,6 @@ class GeminiInsightGenerator:
             # Store the insight in Firestore
             await self._store_insight(user_id, upload_id, insight_dict)
 
-            return {
-                "status": "success",
-                "message": "Health insight generated successfully",
-                **insight_dict,  # Include the actual insight data
-            }
-
         except HTTPException:
             raise
         except Exception as e:
@@ -115,6 +109,12 @@ class GeminiInsightGenerator:
             raise HTTPException(
                 status_code=500, detail="Failed to generate health insight"
             ) from e
+        else:
+            return {
+                "status": "success",
+                "message": "Health insight generated successfully",
+                **insight_dict,  # Include the actual insight data
+            }
 
     @staticmethod
     def _enhance_analysis_results_for_gemini(
@@ -126,44 +126,60 @@ class GeminiInsightGenerator:
         # Extract sleep features if present
         sleep_features = analysis_results.get("sleep_features")
         if sleep_features is not None:
-            # Handle both dict and Pydantic model
-            if hasattr(sleep_features, "model_dump"):
-                try:
-                    sleep_dict = sleep_features.model_dump()
-                except AttributeError:
-                    # Fall back to dict() for older Pydantic versions
-                    sleep_dict = sleep_features.dict()
-            elif hasattr(sleep_features, "dict"):
-                sleep_dict = sleep_features.dict()
-            elif isinstance(sleep_features, dict):
-                sleep_dict = sleep_features
-            else:
-                sleep_dict = {}
-
-            # Convert and enhance metrics
-            if "sleep_efficiency" in sleep_dict:
-                enhanced["sleep_efficiency"] = sleep_dict["sleep_efficiency"] * 100
-            if "total_sleep_minutes" in sleep_dict:
-                enhanced["total_sleep_time"] = sleep_dict["total_sleep_minutes"] / 60
-            if "waso_minutes" in sleep_dict:
-                enhanced["wake_after_sleep_onset"] = sleep_dict["waso_minutes"]
-            if "sleep_latency" in sleep_dict:
-                enhanced["sleep_onset_latency"] = sleep_dict["sleep_latency"]
-            if "rem_percentage" in sleep_dict:
-                enhanced["rem_sleep_percent"] = sleep_dict["rem_percentage"] * 100
-            if "deep_percentage" in sleep_dict:
-                enhanced["deep_sleep_percent"] = sleep_dict["deep_percentage"] * 100
-
-            # Sleep consistency rating
-            consistency_score = sleep_dict.get("consistency_score", 0)
-            if consistency_score > HIGH_CONSISTENCY_THRESHOLD:
-                enhanced["sleep_consistency_rating"] = "high"
-            elif consistency_score > MODERATE_CONSISTENCY_THRESHOLD:
-                enhanced["sleep_consistency_rating"] = "moderate"
-            else:
-                enhanced["sleep_consistency_rating"] = "low"
+            sleep_dict = GeminiInsightGenerator._extract_sleep_dict(sleep_features)
+            GeminiInsightGenerator._add_sleep_metrics(enhanced, sleep_dict)
+            GeminiInsightGenerator._add_sleep_consistency_rating(enhanced, sleep_dict)
 
         return enhanced
+
+    @staticmethod
+    def _extract_sleep_dict(sleep_features: dict[str, Any] | object) -> dict[str, Any]:
+        """Extract sleep features as a dictionary."""
+        # Handle both dict and Pydantic model
+        if hasattr(sleep_features, "model_dump"):
+            try:
+                return sleep_features.model_dump()
+            except AttributeError:
+                # Fall back to dict() for older Pydantic versions
+                return sleep_features.dict()
+        elif hasattr(sleep_features, "dict"):
+            return sleep_features.dict()
+        elif isinstance(sleep_features, dict):
+            return sleep_features
+        else:
+            return {}
+
+    @staticmethod
+    def _add_sleep_metrics(
+        enhanced: dict[str, Any], sleep_dict: dict[str, Any]
+    ) -> None:
+        """Add sleep metrics to enhanced results."""
+        # Convert and enhance metrics
+        if "sleep_efficiency" in sleep_dict:
+            enhanced["sleep_efficiency"] = sleep_dict["sleep_efficiency"] * 100
+        if "total_sleep_minutes" in sleep_dict:
+            enhanced["total_sleep_time"] = sleep_dict["total_sleep_minutes"] / 60
+        if "waso_minutes" in sleep_dict:
+            enhanced["wake_after_sleep_onset"] = sleep_dict["waso_minutes"]
+        if "sleep_latency" in sleep_dict:
+            enhanced["sleep_onset_latency"] = sleep_dict["sleep_latency"]
+        if "rem_percentage" in sleep_dict:
+            enhanced["rem_sleep_percent"] = sleep_dict["rem_percentage"] * 100
+        if "deep_percentage" in sleep_dict:
+            enhanced["deep_sleep_percent"] = sleep_dict["deep_percentage"] * 100
+
+    @staticmethod
+    def _add_sleep_consistency_rating(
+        enhanced: dict[str, Any], sleep_dict: dict[str, Any]
+    ) -> None:
+        """Add sleep consistency rating to enhanced results."""
+        consistency_score = sleep_dict.get("consistency_score", 0)
+        if consistency_score > HIGH_CONSISTENCY_THRESHOLD:
+            enhanced["sleep_consistency_rating"] = "high"
+        elif consistency_score > MODERATE_CONSISTENCY_THRESHOLD:
+            enhanced["sleep_consistency_rating"] = "moderate"
+        else:
+            enhanced["sleep_consistency_rating"] = "low"
 
     @staticmethod
     def _create_health_prompt(analysis_results: dict[str, Any]) -> str:
@@ -268,19 +284,6 @@ class GeminiInsightGenerator:
             if total_sleep_time < MIN_SLEEP_HOURS:
                 recommendations.append("Aim for 7-9 hours of sleep per night")
 
-            # Create test-compatible response format
-            return {
-                "insights": insights or ["Analysis completed successfully"],
-                "recommendations": recommendations
-                or ["Continue monitoring your health patterns"],
-                "health_score": 75,  # Default health score
-                "confidence_level": "medium",
-                "risk_factors": ["None identified"],
-                "narrative": narrative,
-                "generated_at": "fallback_mode",
-                "source": "fallback_algorithm",
-            }
-
         except Exception:
             logger.exception("Failed to create fallback insight")
             return {
@@ -292,6 +295,19 @@ class GeminiInsightGenerator:
                 "narrative": "Health analysis completed.",
                 "generated_at": "fallback_mode",
                 "source": "minimal_fallback",
+            }
+        else:
+            # Create test-compatible response format
+            return {
+                "insights": insights or ["Analysis completed successfully"],
+                "recommendations": recommendations
+                or ["Continue monitoring your health patterns"],
+                "health_score": 75,  # Default health score
+                "confidence_level": "medium",
+                "risk_factors": ["None identified"],
+                "narrative": narrative,
+                "generated_at": "fallback_mode",
+                "source": "fallback_algorithm",
             }
 
     async def _store_insight(
@@ -378,13 +394,13 @@ class InsightSubscriber:
                 if field not in message_data:
                     self._raise_missing_field_http_error(field)
 
-            return message_data
-
         except HTTPException:
             raise
         except Exception:
             logger.exception("❌ Failed to extract message data")
             self._raise_invalid_format_error()
+        else:
+            return message_data
 
     @staticmethod
     def _raise_missing_field_error(field: str) -> NoReturn:

@@ -514,8 +514,12 @@ class TestTokenManagement:
             result = await auth_service._generate_tokens(user_id)
 
             assert isinstance(result, TokenResponse)
-            assert result.access_token == "mock-access-token"  # Test assertion
-            assert result.refresh_token == "mock-refresh-token"  # Test assertion
+            assert (
+                result.access_token == "mock-access-token"
+            )  # Test assertion
+            assert (
+                result.refresh_token == "mock-refresh-token"
+            )  # Test assertion
             assert result.token_type == "bearer"  # noqa: S105 # Test assertion
             assert result.expires_in == 3600  # default expiry
 
@@ -562,7 +566,9 @@ class TestTokenManagement:
             result = await auth_service.refresh_access_token(refresh_token)
 
             assert isinstance(result, TokenResponse)
-            assert result.access_token == "new-access-token"  # Test assertion
+            assert (
+                result.access_token == "new-access-token"
+            )  # Test assertion
 
     @staticmethod
     async def test_refresh_access_token_not_found(

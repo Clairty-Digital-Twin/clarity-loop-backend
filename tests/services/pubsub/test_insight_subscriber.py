@@ -6,9 +6,10 @@ import json
 from typing import Any
 from unittest.mock import AsyncMock, Mock, patch
 
-from fastapi import HTTPException
+from fastapi import HTTPException, Request
 import pytest
 
+from clarity.ml.gemini_service import HealthInsightResponse
 from clarity.services.pubsub.insight_subscriber import (
     HIGH_CONSISTENCY_THRESHOLD,
     MIN_CARDIO_FEATURES_REQUIRED,
@@ -324,8 +325,6 @@ class TestGeminiInsightGeneratorInsightGeneration:
         upload_id = "upload-456"
 
         # Mock GeminiService response structure
-        from clarity.ml.gemini_service import HealthInsightResponse
-
         mock_response = HealthInsightResponse(
             key_insights=["Great sleep efficiency!", "Heart rate variability is good."],
             recommendations=[
@@ -456,8 +455,6 @@ class TestInsightSubscriberMessageProcessing:
     ) -> None:
         """Test successful message processing."""
         # Create mock request
-        from fastapi import Request
-
         mock_request = Mock(spec=Request)
 
         # Create proper Pub/Sub message structure
@@ -476,10 +473,7 @@ class TestInsightSubscriberMessageProcessing:
             }
         }
 
-        async def mock_json() -> dict[str, Any]:
-            return pubsub_body
-
-        mock_request.json = mock_json
+        mock_request.json = AsyncMock(return_value=pubsub_body)
 
         # Mock the generate_health_insight method
         mock_insight = {
@@ -512,8 +506,6 @@ class TestInsightSubscriberMessageProcessing:
         insight_subscriber: InsightSubscriber,
     ) -> None:
         """Test message processing with missing required fields."""
-        from fastapi import Request
-
         mock_request = Mock(spec=Request)
 
         # Missing user_id
@@ -525,10 +517,7 @@ class TestInsightSubscriberMessageProcessing:
 
         pubsub_body = {"message": {"data": encoded_data}}
 
-        async def mock_json() -> dict[str, Any]:
-            return pubsub_body
-
-        mock_request.json = mock_json
+        mock_request.json = AsyncMock(return_value=pubsub_body)
 
         with pytest.raises(HTTPException) as exc_info:
             await insight_subscriber.process_insight_request_message(mock_request)
@@ -541,16 +530,11 @@ class TestInsightSubscriberMessageProcessing:
         insight_subscriber: InsightSubscriber,
     ) -> None:
         """Test message processing with invalid base64 data."""
-        from fastapi import Request
-
         mock_request = Mock(spec=Request)
 
         pubsub_body = {"message": {"data": "invalid-base64!@#$"}}
 
-        async def mock_json() -> dict[str, Any]:
-            return pubsub_body
-
-        mock_request.json = mock_json
+        mock_request.json = AsyncMock(return_value=pubsub_body)
 
         with pytest.raises(HTTPException) as exc_info:
             await insight_subscriber.process_insight_request_message(mock_request)
@@ -562,8 +546,6 @@ class TestInsightSubscriberMessageProcessing:
         insight_subscriber: InsightSubscriber,
     ) -> None:
         """Test message processing with invalid JSON in data."""
-        from fastapi import Request
-
         mock_request = Mock(spec=Request)
 
         # Valid base64 but invalid JSON
@@ -571,10 +553,7 @@ class TestInsightSubscriberMessageProcessing:
 
         pubsub_body = {"message": {"data": encoded_data}}
 
-        async def mock_json() -> dict[str, Any]:
-            return pubsub_body
-
-        mock_request.json = mock_json
+        mock_request.json = AsyncMock(return_value=pubsub_body)
 
         with pytest.raises(HTTPException) as exc_info:
             await insight_subscriber.process_insight_request_message(mock_request)
@@ -586,8 +565,6 @@ class TestInsightSubscriberMessageProcessing:
         insight_subscriber: InsightSubscriber,
     ) -> None:
         """Test message processing with insight generation error."""
-        from fastapi import Request
-
         mock_request = Mock(spec=Request)
 
         message_data = {
@@ -599,10 +576,7 @@ class TestInsightSubscriberMessageProcessing:
 
         pubsub_body = {"message": {"data": encoded_data}}
 
-        async def mock_json() -> dict[str, Any]:
-            return pubsub_body
-
-        mock_request.json = mock_json
+        mock_request.json = AsyncMock(return_value=pubsub_body)
 
         # Mock generation failure
         with patch.object(

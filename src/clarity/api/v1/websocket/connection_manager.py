@@ -97,8 +97,8 @@ class ConnectionManager:
             try:
                 await asyncio.sleep(self.heartbeat_interval)
                 await self._send_heartbeats()
-            except Exception as e:
-                logger.exception("Error in heartbeat loop: %s", e)
+            except Exception:
+                logger.exception("Error in heartbeat loop")
 
     async def _cleanup_stale_connections(self) -> None:
         """Remove connections that haven't responded to heartbeats."""
@@ -225,8 +225,8 @@ class ConnectionManager:
             )
             await self.broadcast_to_room(room_id, system_message, exclude_user=user_id)
 
-        except Exception as e:
-            logger.exception("Error connecting user %s: %s", user_id, e)
+        except Exception:
+            logger.exception("Error connecting user %s", user_id)
             with contextlib.suppress(Exception):
                 await websocket.close(code=1011, reason="Server error")
             return False
@@ -319,8 +319,8 @@ class ConnectionManager:
                 await websocket.send_text(message_str)
             else:
                 await self._force_disconnect(websocket, "Connection not active")
-        except Exception as e:
-            logger.exception(f"Error sending message: {e}")
+        except Exception:
+            logger.exception("Error sending message")
             await self._force_disconnect(websocket, "Send error")
 
     async def send_to_user(self, user_id: str, message: WebSocketMessage) -> None:

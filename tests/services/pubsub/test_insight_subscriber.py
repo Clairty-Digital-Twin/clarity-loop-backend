@@ -338,24 +338,24 @@ class TestGeminiInsightGeneratorInsightGeneration:
 
     @staticmethod
     async def test_generate_health_insight_without_model(mock_generator: GeminiInsightGenerator, sample_analysis_results: dict[str, Any]) -> None:
-        """Test insight generation without Gemini model (mock mode)."""
+        """Test insight generation without model (mock mode)."""
         user_id = "test-user-123"
         upload_id = "upload-456"
 
         # Set model to None to trigger mock mode
         with patch.object(mock_generator, 'model', None), \
              patch.object(mock_generator, '_store_insight') as mock_store:
-                result = await mock_generator.generate_health_insight(
-                    user_id, upload_id, sample_analysis_results
-                )
+            result = await mock_generator.generate_health_insight(
+                user_id, upload_id, sample_analysis_results
+            )
 
-                # Should return mock insight
-                assert "insights" in result
-                assert "recommendations" in result
-                assert "health_score" in result
-                assert isinstance(result["insights"], list)
+            # Should return mock insight
+            assert "insights" in result
+            assert "recommendations" in result
+            assert "health_score" in result
+            assert isinstance(result["insights"], list)
 
-                mock_store.assert_called_once_with(user_id, upload_id, result)
+            mock_store.assert_called_once_with(user_id, upload_id, result)
 
     @staticmethod
     async def test_generate_health_insight_exception(mock_generator: GeminiInsightGenerator, sample_analysis_results: dict[str, Any]) -> None:
@@ -410,7 +410,7 @@ class TestGeminiInsightGeneratorGeminiAPI:
 
         with patch.object(mock_generator.model, 'generate_content', side_effect=Exception("API error")), \
              pytest.raises(Exception, match="API error"):
-                await mock_generator._call_gemini_api(prompt)
+            await mock_generator._call_gemini_api(prompt)
 
 
 class TestGeminiInsightGeneratorMockInsight:

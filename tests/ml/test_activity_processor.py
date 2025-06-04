@@ -106,7 +106,7 @@ class TestActivityDataExtraction:
     def test_extract_activity_data_success(self):
         """Test successful extraction of activity data."""
         metrics = []
-        for i in range(3):
+        for _i in range(3):
             metric = Mock(spec=HealthMetric)
             metric.activity_data = Mock(spec=ActivityData)
             metrics.append(metric)
@@ -341,7 +341,7 @@ class TestActivityProcessorEdgeCases:
     def test_activity_features_with_partial_data(self, processor):
         """Test feature calculation with only some data types available."""
         activity_data = []
-        for i in range(2):
+        for _i in range(2):
             data = Mock(spec=ActivityData)
             data.steps = 5000
             data.distance = None  # No distance data
@@ -446,7 +446,7 @@ class TestActivityProcessorIntegration:
         realistic_distances = [2.1, 5.8, 4.2, 3.1, 6.9, 8.5, 1.8]
 
         metrics = []
-        for i, (steps, distance) in enumerate(zip(realistic_steps, realistic_distances, strict=False)):
+        for _i, (steps, distance) in enumerate(zip(realistic_steps, realistic_distances, strict=False)):
             metric = Mock(spec=HealthMetric)
             metric.activity_data = Mock(spec=ActivityData)
             metric.activity_data.steps = steps

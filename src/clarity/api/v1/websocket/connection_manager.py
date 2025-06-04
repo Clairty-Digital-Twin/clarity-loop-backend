@@ -184,8 +184,8 @@ class ConnectionManager:
                 await websocket.close(code=1008, reason="Too many connections")
                 return False
 
-            # Accept the connection
-            await websocket.accept()
+            # Connection should already be accepted by the endpoint handler
+            # Do not call websocket.accept() here as it can only be called once
 
             # Create connection info
             session_id = str(uuid.uuid4())

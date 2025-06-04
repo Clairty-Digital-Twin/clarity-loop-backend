@@ -1,13 +1,12 @@
 """WebSocket chat handler for real-time health insights and communication."""
 
+import asyncio  # Add this import at the top
+from datetime import datetime
 import inspect
 import json
 import logging
-import uuid
-from datetime import datetime
 from typing import Any, Dict, Optional
-
-import asyncio  # Add this import at the top
+import uuid
 
 from fastapi import (
     APIRouter,
@@ -20,7 +19,10 @@ from fastapi import (
 
 from clarity.auth.firebase_auth import get_current_user_websocket
 from clarity.core.config import get_settings
-from clarity.ml.gemini_service import GeminiService, HealthInsightRequest  # Add HealthInsightRequest
+from clarity.ml.gemini_service import (  # Add HealthInsightRequest
+    GeminiService,
+    HealthInsightRequest,
+)
 from clarity.ml.pat_service import PATModelService
 from clarity.models.user import User
 
@@ -116,9 +118,11 @@ class WebSocketChatHandler:
                     user_query=message.content,
                     context="chat_message",
                     timestamp=message.timestamp.isoformat(),
-                    analysis_results={}  # Add placeholder for analysis results
+                    analysis_results={},  # Add placeholder for analysis results
                 )
-                insight_response = await self.gemini_service.generate_health_insights(request)
+                insight_response = await self.gemini_service.generate_health_insights(
+                    request
+                )
 
                 if insight_response.get("insights"):
                     insight_message = HealthInsightMessage(
@@ -157,7 +161,7 @@ class WebSocketChatHandler:
         )
 
     async def process_heartbeat(
-        self, websocket: WebSocket, message: Dict[str, Any], connection_manager: Any
+        self, websocket: WebSocket, message: dict[str, Any], connection_manager: Any
     ) -> None:
         """Process heartbeat message and send acknowledgment."""
         try:
@@ -169,7 +173,7 @@ class WebSocketChatHandler:
             logger.error(f"Error processing heartbeat: {e}")
 
     async def trigger_health_analysis(
-        self, user_id: str, health_data: Dict[str, Any], connection_manager: Any
+        self, user_id: str, health_data: dict[str, Any], connection_manager: Any
     ) -> None:
         """Trigger comprehensive health analysis and send real-time updates."""
         try:
@@ -268,9 +272,7 @@ async def websocket_chat_endpoint(
         if token:
             try:
                 auth_result = get_current_user_websocket(token)
-                if asyncio.iscoroutine(auth_result):
-                    user = await auth_result
-                elif inspect.isawaitable(auth_result):
+                if asyncio.iscoroutine(auth_result) or inspect.isawaitable(auth_result):
                     user = await auth_result
                 else:
                     user = auth_result
@@ -353,7 +355,9 @@ async def websocket_chat_endpoint(
                     await connection_manager.send_to_connection(websocket, error_msg)
 
             except WebSocketDisconnect as e:
-                logger.warning(f"WebSocket disconnected: code={e.code}, reason={e.reason}")
+                logger.warning(
+                    f"WebSocket disconnected: code={e.code}, reason={e.reason}"
+                )
                 raise
 
             except Exception as e:
@@ -393,9 +397,7 @@ async def websocket_health_analysis_endpoint(
         if token:
             try:
                 auth_result = get_current_user_websocket(token)
-                if asyncio.iscoroutine(auth_result):
-                    user = await auth_result
-                elif inspect.isawaitable(auth_result):
+                if asyncio.iscoroutine(auth_result) or inspect.isawaitable(auth_result):
                     user = await auth_result
                 else:
                     user = auth_result
@@ -459,7 +461,9 @@ async def websocket_health_analysis_endpoint(
                     await connection_manager.send_to_connection(websocket, error_msg)
 
             except WebSocketDisconnect as e:
-                logger.warning(f"WebSocket disconnected: code={e.code}, reason={e.reason}")
+                logger.warning(
+                    f"WebSocket disconnected: code={e.code}, reason={e.reason}"
+                )
                 raise
 
             except Exception as e:

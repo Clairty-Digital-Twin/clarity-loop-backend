@@ -26,35 +26,54 @@ os.environ["ENVIRONMENT"] = "testing"
 
 # Apply GCP patch directly at module level to avoid scope mismatch
 # --- 1. ADC ↦ AnonymousCredentials ----------------------------------
-from google.auth.credentials import AnonymousCredentials
-import google.auth
 import os
+
+import google.auth
+from google.auth.credentials import AnonymousCredentials
+
 
 def mock_auth_default(*a, **kw):
     return (AnonymousCredentials(), "test-project")
 
+
 google.auth.default = mock_auth_default
 os.environ["GOOGLE_CLOUD_PROJECT"] = "test-project"
 
+
 # --- 2. Firestore fake ----------------------------------------------
-class _FakeFS:                      # minimal façade
-    def __init__(self, *a, **kw): pass
-    def collection(self, name):    # returns self so .document() still works
+class _FakeFS:  # minimal façade
+    def __init__(self, *a, **kw):
+        pass
+
+    def collection(self, name):  # returns self so .document() still works
         return self
-    def document(self, *a):        # → Fake doc ref
+
+    def document(self, *a):  # → Fake doc ref
         return self
-    def set(self, *a, **kw): pass
-    def get(self, *a, **kw): return {}
+
+    def set(self, *a, **kw):
+        pass
+
+    def get(self, *a, **kw):
+        return {}
+
 
 import google.cloud.firestore
+
 google.cloud.firestore.Client = _FakeFS
+
 
 # --- 3. Pub/Sub fake -------------------------------------------------
 class _FakePublisher:
-    def __init__(self, *a, **kw): pass
-    async def publish(self, *a, **kw): return None
+    def __init__(self, *a, **kw):
+        pass
+
+    async def publish(self, *a, **kw):
+        return None
+
 
 import google.cloud.pubsub_v1
+
 google.cloud.pubsub_v1.PublisherClient = _FakePublisher
 
 

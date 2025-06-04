@@ -37,6 +37,8 @@ from clarity.api.v1.websocket.models import (
     TypingMessage,
 )
 from clarity.auth.firebase_auth import User, get_current_user_websocket
+from clarity.ml.gemini_service import GeminiService
+from clarity.ml.pat_service import PATModelService
 from clarity.models.user import User, UserProfile
 
 logger = logging.getLogger(__name__)
@@ -310,45 +312,44 @@ def mock_test_connection_manager() -> _TestConnectionManager:
     return _TestConnectionManager()
 
 
-def create_mock_connection_manager():
-    # This function is likely called in chat_handler.py to get the manager instance
-    # We need to ensure it returns the _TestConnectionManager for tests
+def create_mock_connection_manager() -> _TestConnectionManager:
+    """Helper to create a _TestConnectionManager instance."""
     return _TestConnectionManager()
 
 
+async def mock_get_current_user_websocket(token: str | None = None) -> User:
+    """Mock for get_current_user_websocket dependency."""
+    if token == "test-token":
+        return User(
+            uid="test-user-123",
+            email="test@example.com",
+            display_name="Test User",
+            firebase_token="mock-firebase-token",
+            created_at=datetime.now(UTC),
+            last_login=datetime.now(UTC),
+            profile={},
+        )
+    raise HTTPException(status_code=401, detail="Could not validate credentials")
+
+
 @pytest.fixture
-def app() -> FastAPI:
+def app(monkeypatch: pytest.MonkeyPatch) -> FastAPI:
     # This fixture should return a FastAPI app instance configured for testing.
     # It needs to override dependencies to use our mocks.
-
     app = FastAPI()
 
+    # Include the chat router
     app.include_router(chat_handler.router, prefix="/api/v1")
-    # This mock should return a User instance for successful authentication
 
-    async def mock_get_current_user_websocket(token: str | None = None) -> User:
-        if token == "test-token":
-            # Correctly instantiate the User model based on its __init__ or create method
-            # Assuming User has user_id, email, and display_name for simplicity in tests
-            # Adjust these fields to match the actual User model's __init__
-            return User(
-                uid="test-user-123",
-                email="test@example.com",
-                display_name="Test User",
-                firebase_token="mock-firebase-token",
-                created_at=datetime.now(UTC),
-                last_login=datetime.now(UTC),
-                profile={},
-            )
-        raise HTTPException(status_code=401, detail="Could not validate credentials")
-
+    # Override dependencies for testing
     app.dependency_overrides[get_current_user_websocket] = mock_get_current_user_websocket
+    app.dependency_overrides[chat_handler.get_gemini_service] = lambda: AsyncMock(spec=GeminiService)
+    app.dependency_overrides[chat_handler.get_pat_model_service] = lambda: AsyncMock(spec=PATModelService)
+    app.dependency_overrides[chat_handler.get_connection_manager] = create_mock_connection_manager
 
-    # Override the get_connection_manager dependency in chat_handler
-    # This ensures our test mock is used when the WebSocket endpoint is called
-    app.dependency_overrides[chat_handler.get_connection_manager] = (
-        create_mock_connection_manager
-    )
+    # Patch the GeminiService to accept a mock client
+    monkeypatch.setattr(GeminiService, "__init__", lambda self, cfg=None, client=None: None)
+    monkeypatch.setattr(GeminiService, "client", AsyncMock())
 
     return app
 
@@ -508,9 +509,21 @@ class TestWebSocketEndpoints:
             "insight": "Test Insight"
         }
 
-        # Override dependencies for this test
+        # Temporarily override dependencies for this test to use our explicit mocks
+        original_gemini_service = app.dependency_overrides.get(chat_handler.get_gemini_service)
+        original_pat_model_service = app.dependency_overrides.get(chat_handler.get_pat_model_service)
+        original_connection_manager = app.dependency_overrides.get(chat_handler.get_connection_manager)
+
         app.dependency_overrides[chat_handler.get_gemini_service] = lambda: mock_gemini_service
         app.dependency_overrides[chat_handler.get_pat_model_service] = lambda: mock_pat_model_service
+
+        # Create a specific mock_manager for this test and apply AsyncMock to its methods
+        mock_manager = _TestConnectionManager()
+        mock_manager.send_to_user = AsyncMock(side_effect=mock_manager.send_to_user)
+        mock_manager.send_to_connection = AsyncMock(side_effect=mock_manager.send_to_connection)
+        mock_manager.broadcast_to_room = AsyncMock(side_effect=mock_manager.broadcast_to_room)
+
+        app.dependency_overrides[chat_handler.get_connection_manager] = lambda: mock_manager
 
         # Use TestClient.websocket_connect to interact with the WebSocket endpoint
         with client.websocket_connect(f"/api/v1/chat/{user_id}", headers=auth_headers) as websocket:
@@ -540,15 +553,25 @@ class TestWebSocketEndpoints:
             mock_gemini_service.stream_chat_response.assert_awaited_once()
 
             # Check that the connection manager methods were called correctly
-            mock_manager = app.dependency_overrides[chat_handler.get_connection_manager]()
-            # Ensure send_to_user and broadcast_to_room were called on the mock_manager
-            # This requires mock_test_connection_manager to return a MagicMock with tracking
-            assert mock_manager.send_to_user.call_count == 2 # One for typing, one for insight
-            assert mock_manager.broadcast_to_room.call_count == 1 # One for chat message
+            # Assert on the explicit mock_manager created for this test
+            assert mock_manager.send_to_user.call_count == 2  # One for typing, one for insight
+            assert mock_manager.broadcast_to_room.call_count == 1  # One for chat message
 
         # Clean up dependency overrides after the test
-        del app.dependency_overrides[chat_handler.get_gemini_service]
-        del app.dependency_overrides[chat_handler.get_pat_model_service]
+        if original_gemini_service is not None:
+            app.dependency_overrides[chat_handler.get_gemini_service] = original_gemini_service
+        else:
+            del app.dependency_overrides[chat_handler.get_gemini_service]
+
+        if original_pat_model_service is not None:
+            app.dependency_overrides[chat_handler.get_pat_model_service] = original_pat_model_service
+        else:
+            del app.dependency_overrides[chat_handler.get_pat_model_service]
+
+        if original_connection_manager is not None:
+            app.dependency_overrides[chat_handler.get_connection_manager] = original_connection_manager
+        else:
+            del app.dependency_overrides[chat_handler.get_connection_manager]
 
     async def test_typing_indicator_processing(self, client: TestClient, app: FastAPI):
         user_id = "test_user_id_2"
@@ -559,9 +582,21 @@ class TestWebSocketEndpoints:
         mock_gemini_service = AsyncMock(spec=GeminiService)
         mock_pat_model_service = AsyncMock(spec=PATModelService)
 
-        # Override dependencies for this test
+        # Temporarily override dependencies for this test to use our explicit mocks
+        original_gemini_service = app.dependency_overrides.get(chat_handler.get_gemini_service)
+        original_pat_model_service = app.dependency_overrides.get(chat_handler.get_pat_model_service)
+        original_connection_manager = app.dependency_overrides.get(chat_handler.get_connection_manager)
+
         app.dependency_overrides[chat_handler.get_gemini_service] = lambda: mock_gemini_service
         app.dependency_overrides[chat_handler.get_pat_model_service] = lambda: mock_pat_model_service
+
+        # Create a specific mock_manager for this test and apply AsyncMock to its methods
+        mock_manager = _TestConnectionManager()
+        mock_manager.send_to_user = AsyncMock(side_effect=mock_manager.send_to_user)
+        mock_manager.send_to_connection = AsyncMock(side_effect=mock_manager.send_to_connection)
+        mock_manager.broadcast_to_room = AsyncMock(side_effect=mock_manager.broadcast_to_room)
+
+        app.dependency_overrides[chat_handler.get_connection_manager] = lambda: mock_manager
 
         with client.websocket_connect(f"/api/v1/chat/{user_id}", headers=auth_headers) as websocket:
             # Send a typing indicator message
@@ -591,12 +626,23 @@ class TestWebSocketEndpoints:
             assert response_data["is_typing"] is False
 
             # Check that the connection manager methods were called correctly
-            mock_manager = app.dependency_overrides[chat_handler.get_connection_manager]()
-            assert mock_manager.broadcast_to_room.call_count == 2 # One for True, one for False
+            assert mock_manager.broadcast_to_room.call_count == 2  # One for True, one for False
 
         # Clean up dependency overrides after the test
-        del app.dependency_overrides[chat_handler.get_gemini_service]
-        del app.dependency_overrides[chat_handler.get_pat_model_service]
+        if original_gemini_service is not None:
+            app.dependency_overrides[chat_handler.get_gemini_service] = original_gemini_service
+        else:
+            del app.dependency_overrides[chat_handler.get_gemini_service]
+
+        if original_pat_model_service is not None:
+            app.dependency_overrides[chat_handler.get_pat_model_service] = original_pat_model_service
+        else:
+            del app.dependency_overrides[chat_handler.get_pat_model_service]
+
+        if original_connection_manager is not None:
+            app.dependency_overrides[chat_handler.get_connection_manager] = original_connection_manager
+        else:
+            del app.dependency_overrides[chat_handler.get_connection_manager]
 
     async def test_heartbeat_processing(self, client: TestClient, app: FastAPI):
         user_id = "test_user_id_3"
@@ -607,9 +653,21 @@ class TestWebSocketEndpoints:
         mock_gemini_service = AsyncMock(spec=GeminiService)
         mock_pat_model_service = AsyncMock(spec=PATModelService)
 
-        # Override dependencies for this test
+        # Temporarily override dependencies for this test to use our explicit mocks
+        original_gemini_service = app.dependency_overrides.get(chat_handler.get_gemini_service)
+        original_pat_model_service = app.dependency_overrides.get(chat_handler.get_pat_model_service)
+        original_connection_manager = app.dependency_overrides.get(chat_handler.get_connection_manager)
+
         app.dependency_overrides[chat_handler.get_gemini_service] = lambda: mock_gemini_service
         app.dependency_overrides[chat_handler.get_pat_model_service] = lambda: mock_pat_model_service
+
+        # Create a specific mock_manager for this test and apply AsyncMock to its methods
+        mock_manager = _TestConnectionManager()
+        mock_manager.send_to_user = AsyncMock(side_effect=mock_manager.send_to_user)
+        mock_manager.send_to_connection = AsyncMock(side_effect=mock_manager.send_to_connection)
+        mock_manager.broadcast_to_room = AsyncMock(side_effect=mock_manager.broadcast_to_room)
+
+        app.dependency_overrides[chat_handler.get_connection_manager] = lambda: mock_manager
 
         with client.websocket_connect(f"/api/v1/chat/{user_id}", headers=auth_headers) as websocket:
             # Send a heartbeat message
@@ -623,15 +681,26 @@ class TestWebSocketEndpoints:
             # Expect a heartbeat acknowledgment response
             response_data = websocket.receive_json()
             assert response_data["message_type"] == MessageType.HEARTBEAT_ACK
-            assert response_data["user_id"] == user_id # user_id is automatically added by the handler
+            assert response_data["user_id"] == user_id  # user_id is automatically added by the handler
 
             # Check that the connection manager methods were called correctly
-            mock_manager = app.dependency_overrides[chat_handler.get_connection_manager]()
             assert mock_manager.send_to_connection.call_count == 1
 
         # Clean up dependency overrides after the test
-        del app.dependency_overrides[chat_handler.get_gemini_service]
-        del app.dependency_overrides[chat_handler.get_pat_model_service]
+        if original_gemini_service is not None:
+            app.dependency_overrides[chat_handler.get_gemini_service] = original_gemini_service
+        else:
+            del app.dependency_overrides[chat_handler.get_gemini_service]
+
+        if original_pat_model_service is not None:
+            app.dependency_overrides[chat_handler.get_pat_model_service] = original_pat_model_service
+        else:
+            del app.dependency_overrides[chat_handler.get_pat_model_service]
+
+        if original_connection_manager is not None:
+            app.dependency_overrides[chat_handler.get_connection_manager] = original_connection_manager
+        else:
+            del app.dependency_overrides[chat_handler.get_connection_manager]
 
 
 if __name__ == "__main__":

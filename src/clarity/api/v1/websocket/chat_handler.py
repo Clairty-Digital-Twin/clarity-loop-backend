@@ -1,7 +1,7 @@
 """WebSocket chat handler for real-time health insights and communication."""
 
 import asyncio  # Add this import at the top
-from datetime import datetime
+from datetime import UTC, datetime
 import inspect
 import json
 import logging
@@ -19,11 +19,13 @@ from fastapi import (
 
 from clarity.auth.firebase_auth import get_current_user_websocket
 from clarity.core.config import get_settings
-from clarity.ml.gemini_service import (  # Add HealthInsightRequest
+from clarity.core.container import container
+from clarity.ml.gemini_service import (
     GeminiService,
     HealthInsightRequest,
 )
-from clarity.ml.pat_service import PATModelService
+from clarity.ml.pat_service import ActigraphyAnalysis, ActigraphyInput, PATModelService
+from clarity.ml.preprocessing import ActigraphyDataPoint
 from clarity.models.user import User
 
 from .lifespan import get_connection_manager
@@ -41,7 +43,15 @@ from .models import (
 logger = logging.getLogger(__name__)
 settings = get_settings()
 
-router = APIRouter(prefix="/ws", tags=["websocket"])
+router = APIRouter(prefix="/chat", tags=["websocket"])
+
+
+def get_gemini_service() -> GeminiService:
+    return container.gemini_service()
+
+
+def get_pat_model_service() -> PATModelService:
+    return container.pat_model_service()
 
 
 class WebSocketChatHandler:
@@ -49,209 +59,163 @@ class WebSocketChatHandler:
 
     def __init__(
         self,
-        gemini_service: GeminiService = None,
-        pat_service: PATModelService = None,
+        gemini_service: GeminiService,
+        pat_service: PATModelService,
     ):
-        self.gemini_service = (
-            gemini_service if gemini_service is not None else GeminiService()
-        )
-        self.pat_service = pat_service if pat_service is not None else PATModelService()
+        self.gemini_service = gemini_service
+        self.pat_service = pat_service
 
     async def process_chat_message(
-        self, websocket: WebSocket, message: ChatMessage, connection_manager: Any
+        self, websocket: WebSocket, chat_message: ChatMessage, connection_manager: Any
     ) -> None:
-        """Process a chat message and potentially generate health insights."""
+        logger.info(f"Processing chat message for user {chat_message.user_id}")
+        # Add conversation context for Gemini
+        user_query = chat_message.content
+
+        # Use Gemini service to generate response
+        gemini_request = HealthInsightRequest(
+            user_id=chat_message.user_id,
+            analysis_results={},  # Assuming chat messages don't have analysis results directly
+            context=user_query,
+            insight_type="chat_response",
+        )
         try:
-            connection_info = connection_manager.connection_info.get(websocket)
-            if not connection_info:
-                return
-
-            # Update message with user info
-            message.user_id = connection_info.user_id
-            message.username = connection_info.username
-            message.message_id = str(uuid.uuid4())
-
-            # Broadcast message to room
-            await connection_manager.broadcast_to_room("general", message)
-
-            # Check if message contains health-related content for AI analysis
-            await self._analyze_for_health_insights(message, connection_manager)
-
-        except Exception as e:
-            logger.error(f"Error processing chat message: {e}")
-            error_msg = ErrorMessage(
-                error_code="PROCESSING_ERROR", message="Failed to process message"
+            gemini_response = await self.gemini_service.generate_health_insights(
+                gemini_request
             )
-            await connection_manager.send_to_connection(websocket, error_msg)
+            # Extract content from narrative or key_insights
+            ai_response_content = gemini_response.narrative  # Access narrative attribute
+        except Exception as e:
+            logger.error(f"Error generating Gemini response: {e}")
+            ai_response_content = "I am sorry, I could not generate a response at this time."
 
-    async def _analyze_for_health_insights(
-        self, message: ChatMessage, connection_manager: Any
-    ) -> None:
-        """Analyze message content for potential health insights."""
-        # Keywords that might trigger health analysis
-        health_keywords = [
-            "sleep",
-            "tired",
-            "energy",
-            "stress",
-            "anxiety",
-            "mood",
-            "exercise",
-            "workout",
-            "heart rate",
-            "steps",
-            "activity",
-            "pain",
-            "headache",
-            "feel",
-            "feeling",
-            "health",
-            "wellness",
-        ]
-
-        message_lower = message.content.lower()
-        if any(keyword in message_lower for keyword in health_keywords):
-            try:
-                # Generate health insight using Gemini
-                request = HealthInsightRequest(
-                    user_id=message.user_id,  # Add required user_id
-                    user_query=message.content,
-                    context="chat_message",
-                    timestamp=message.timestamp.isoformat(),
-                    analysis_results={},  # Add placeholder for analysis results
-                )
-                insight_response = await self.gemini_service.generate_health_insights(
-                    request
-                )
-
-                if insight_response.get("insights"):
-                    insight_message = HealthInsightMessage(
-                        user_id=message.user_id,
-                        insight=insight_response["insights"][0]["content"],
-                        confidence=insight_response["insights"][0].get(
-                            "confidence", 0.8
-                        ),
-                        category="conversational_health",
-                        recommendations=insight_response.get("recommendations", []),
-                    )
-
-                    # Send insight back to user
-                    await connection_manager.send_to_user(
-                        message.user_id, insight_message
-                    )
-
-            except Exception as e:
-                logger.error(f"Error generating health insight: {e}")
+        response_message = ChatMessage(
+            user_id="AI",
+            timestamp=datetime.now(UTC),
+            type=MessageType.MESSAGE,
+            content=ai_response_content,
+        )
+        await connection_manager.send_to_user(chat_message.user_id, response_message)
 
     async def process_typing_message(
-        self, websocket: WebSocket, message: TypingMessage, connection_manager: Any
+        self, websocket: WebSocket, typing_message: TypingMessage, connection_manager: Any
     ) -> None:
-        """Process typing indicator message."""
-        connection_info = connection_manager.connection_info.get(websocket)
-        if not connection_info:
-            return
-
-        # Update message with user info
-        message.user_id = connection_info.user_id
-        message.username = connection_info.username
-
-        # Broadcast typing status to room (excluding sender)
-        await connection_manager.broadcast_to_room(
-            "general", message, exclude_user=connection_info.user_id
+        logger.info(
+            f"Processing typing indicator for user {typing_message.user_id}: "
+            f"is_typing={typing_message.is_typing}"
         )
+        # Broadcast typing status to the room where the user is connected
+        # (Assuming room_id is stored in connection_manager.connection_info)
+        connection_info = connection_manager.connection_info.get(websocket)
+        if connection_info and connection_info.room_id:
+            await connection_manager.broadcast_to_room(
+                connection_info.room_id,
+                typing_message,
+                exclude_websocket=websocket,  # Don't send back to sender
+            )
+        else:
+            logger.warning("Could not find connection info or room_id for typing message.")
 
     async def process_heartbeat(
         self, websocket: WebSocket, message: dict[str, Any], connection_manager: Any
     ) -> None:
-        """Process heartbeat message and send acknowledgment."""
-        try:
-            ack_message = HeartbeatAckMessage(
-                client_timestamp=message.get("client_timestamp")
-            )
-            await connection_manager.send_to_connection(websocket, ack_message)
-        except Exception as e:
-            logger.error(f"Error processing heartbeat: {e}")
+        user_id = message.get("user_id", "unknown")
+        logger.info(f"Processing heartbeat for user {user_id}")
+        # Update last active time for the connection
+        connection_manager.update_last_active(websocket)
+        # Acknowledge heartbeat
+        heartbeat_ack_message = HeartbeatAckMessage(
+            user_id=user_id,
+            timestamp=datetime.now(UTC),  # Use UTC for consistency
+            type=MessageType.HEARTBEAT_ACK,
+            client_timestamp=message.get("client_timestamp", ""),
+        )
+        await connection_manager.send_to_connection(websocket, heartbeat_ack_message)
 
     async def trigger_health_analysis(
-        self, user_id: str, health_data: dict[str, Any], connection_manager: Any
+        self,
+        user_id: str,
+        health_data: dict[str, Any],
+        connection_manager: Any
     ) -> None:
-        """Trigger comprehensive health analysis and send real-time updates."""
+        logger.info(f"Triggering health analysis for user {user_id} with data: {health_data}")
         try:
-            # Send analysis started message
-            update_message = AnalysisUpdateMessage(
+            # Calculate duration from data_points if available, otherwise use default
+            duration_hours = 24
+            if len(health_data) > 1 and "timestamp" in health_data:
+                timestamps = [dp["timestamp"] for dp in health_data["data_points"]]
+                if timestamps:
+                    # Assuming timestamps are sortable (ISO format or datetime objects)
+                    min_ts = min(timestamps)
+                    max_ts = max(timestamps)
+                    # Convert to datetime objects if they are strings
+                    if isinstance(min_ts, str):
+                        min_ts = datetime.fromisoformat(min_ts.replace("Z", "+00:00"))
+                    if isinstance(max_ts, str):
+                        max_ts = datetime.fromisoformat(max_ts.replace("Z", "+00:00"))
+                    duration_hours = (max_ts - min_ts).total_seconds() / 3600
+                    if duration_hours == 0:  # Handle single data point case
+                        duration_hours = 24  # Default to 24 hours if only one point
+
+            actigraphy_input = ActigraphyInput(
                 user_id=user_id,
-                status="started",
-                progress=0,
-                details="Starting health data analysis...",
-            )
-            await connection_manager.send_to_user(user_id, update_message)
-
-            # Process with PAT service
-            update_message.status = "processing"
-            update_message.progress = 25
-            update_message.details = "Analyzing activity patterns..."
-            await connection_manager.send_to_user(user_id, update_message)
-
-            pat_results = await self.pat_service.analyze_health_data(health_data)
-
-            # Generate insights with Gemini
-            update_message.progress = 75
-            update_message.details = "Generating AI insights..."
-            await connection_manager.send_to_user(user_id, update_message)
-
-            gemini_insights = await self.gemini_service.generate_health_insights(
-                {
-                    "pat_analysis": pat_results,
-                    "raw_data": health_data,
-                    "user_id": user_id,
-                }
-            )
-
-            # Send completion message
-            update_message.status = "completed"
-            update_message.progress = 100
-            update_message.details = "Analysis complete!"
-            await connection_manager.send_to_user(user_id, update_message)
-
-            # Send detailed insights
-            if gemini_insights.get("insights"):
-                for insight_data in gemini_insights["insights"]:
-                    insight_message = HealthInsightMessage(
-                        user_id=user_id,
-                        insight=insight_data["content"],
-                        confidence=insight_data.get("confidence", 0.9),
-                        category=insight_data.get("category", "health_analysis"),
-                        source_data={
-                            "pat_analysis": pat_results,
-                            "analysis_timestamp": datetime.utcnow().isoformat(),
-                        },
-                        recommendations=gemini_insights.get("recommendations", []),
+                data_points=[
+                    ActigraphyDataPoint(
+                        timestamp=datetime.now(UTC),
+                        value=float(health_data.get("steps", 0))
                     )
-                    await connection_manager.send_to_user(user_id, insight_message)
-
-        except Exception as e:
-            logger.error(f"Error in health analysis: {e}")
-
-            # Send error message
-            error_update = AnalysisUpdateMessage(
-                user_id=user_id,
-                status="failed",
-                progress=100,
-                details=f"Analysis failed: {e!s}",
+                ],
+                sampling_rate=1.0,
+                duration_hours=duration_hours  # Use calculated duration
             )
-            await connection_manager.send_to_user(user_id, error_update)
+
+            # Call PATModelService to analyze health data
+            pat_analysis_results: ActigraphyAnalysis = await self.pat_service.analyze_actigraphy(
+                actigraphy_input
+            )
+
+            # Generate insights using Gemini service
+            insight_request = HealthInsightRequest(
+                user_id=user_id,
+                analysis_results=pat_analysis_results.model_dump(),  # Use model_dump()
+                context="Based on recent health data.",
+                insight_type="health_analysis",
+            )
+            insight_response = await self.gemini_service.generate_health_insights(
+                insight_request
+            )
+
+            # Send insights back to the user
+            insight_message = ChatMessage(
+                user_id="AI",
+                timestamp=datetime.now(UTC),
+                type=MessageType.MESSAGE,
+                content=insight_response.narrative,
+            )
+            await connection_manager.send_to_user(user_id, insight_message)
+
+        except WebSocketDisconnect:
+            logger.info(f"Health analysis interrupted by client disconnect for user {user_id}")
+            # Re-raise the exception to be caught by the outer loop's WebSocketDisconnect handler
+            raise
+        except Exception as e:
+            logger.error(f"Error during health analysis: {e}")
+            error_msg = ErrorMessage(
+                error_code="HEALTH_ANALYSIS_ERROR",
+                message=f"Failed to perform health analysis: {e}",
+            )
+            await connection_manager.send_to_user(user_id, error_msg)
 
 
-# Global chat handler instance
-chat_handler = WebSocketChatHandler()
-
-
-@router.websocket("/chat/{room_id}")
+@router.websocket("/{room_id}")
 async def websocket_chat_endpoint(
     websocket: WebSocket,
     room_id: str = "general",
     token: str | None = Query(...),
     connection_manager=Depends(get_connection_manager),
+    gemini_service: GeminiService = Depends(get_gemini_service),
+    pat_service: PATModelService = Depends(get_pat_model_service),
+    current_user: User = Depends(get_current_user_websocket)
 ):
     """WebSocket endpoint for real-time chat with health insights.
 
@@ -263,29 +227,13 @@ async def websocket_chat_endpoint(
     - Rate limiting
     - Heartbeat monitoring
     """
-    user: User | None = None
+    handler = WebSocketChatHandler(gemini_service=gemini_service, pat_service=pat_service)
+    user_id = current_user.uid
+    username = current_user.display_name or current_user.email
 
     logger.info(f"WebSocket connection attempt: token={token}")
 
     try:
-        # Authenticate user
-        if token:
-            try:
-                auth_result = get_current_user_websocket(token)
-                if asyncio.iscoroutine(auth_result) or inspect.isawaitable(auth_result):
-                    user = await auth_result
-                else:
-                    user = auth_result
-            except HTTPException:
-                await websocket.close(code=1008, reason="Invalid authentication token")
-                return
-
-        # Use authenticated user info or fallback to anonymous
-        user_id = user.uid if user else f"anonymous_{uuid.uuid4().hex[:8]}"
-        username = (
-            user.display_name if user and user.display_name else f"User_{user_id[:8]}"
-        )
-
         # Connect to chat
         connected = await connection_manager.connect(
             websocket=websocket, user_id=user_id, username=username, room_id=room_id
@@ -315,19 +263,25 @@ async def websocket_chat_endpoint(
 
                     if message_type == MessageType.MESSAGE:
                         message = ChatMessage(**message_data)
-                        await chat_handler.process_chat_message(
+                        await handler.process_chat_message(
                             websocket, message, connection_manager
                         )
 
                     elif message_type == MessageType.TYPING:
                         message = TypingMessage(**message_data)
-                        await chat_handler.process_typing_message(
+                        await handler.process_typing_message(
                             websocket, message, connection_manager
                         )
 
                     elif message_type == MessageType.HEARTBEAT:
-                        await chat_handler.process_heartbeat(
+                        await handler.process_heartbeat(
                             websocket, message_data, connection_manager
+                        )
+
+                    elif message_type == MessageType.HEALTH_INSIGHT:
+                        health_data = message_data.get("data", {})
+                        await handler.trigger_health_analysis(
+                            user_id, health_data, connection_manager
                         )
 
                     else:
@@ -445,12 +399,12 @@ async def websocket_health_analysis_endpoint(
 
                     if message_data.get("type") == "health_data":
                         health_data = message_data.get("data", {})
-                        await chat_handler.trigger_health_analysis(
+                        await handler.trigger_health_analysis(
                             user_id, health_data, connection_manager
                         )
 
                     elif message_data.get("type") == MessageType.HEARTBEAT:
-                        await chat_handler.process_heartbeat(
+                        await handler.process_heartbeat(
                             websocket, message_data, connection_manager
                         )
 

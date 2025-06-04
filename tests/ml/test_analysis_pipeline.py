@@ -209,10 +209,10 @@ class TestHealthAnalysisPipelineDataOrganization:
         assert len(result["cardio"]) == 2
         assert cardio_metric in result["cardio"]
         assert respiratory_metric in result["cardio"]  # HRV is cardio-related
-        # ACTIVITY_LEVEL is not in the recognized activity types, so it goes to "other"
-        assert len(result["activity"]) == 0
-        assert len(result["other"]) == 1
-        assert result["other"][0] == activity_metric
+        # ACTIVITY_LEVEL is now properly routed to activity (fixed behavior)
+        assert len(result["activity"]) == 1
+        assert result["activity"][0] == activity_metric
+        assert len(result["other"]) == 0  # No unrecognized metrics
         assert result["respiratory"] == []  # No respiratory metrics in this test
         assert result["sleep"] == []
 

@@ -100,7 +100,7 @@ class GeminiInsightGenerator:
         Maps sleep_features to the specific field names that Gemini expects.
         """
         enhanced = analysis_results.copy()
-        
+
         # 🚀 FIXED: Map sleep_features to expected Gemini field names
         if "sleep_features" in analysis_results:
             sf = analysis_results["sleep_features"]
@@ -109,7 +109,7 @@ class GeminiInsightGenerator:
                 sf = sf.model_dump()  # convert to dict if Pydantic model
             elif hasattr(sf, "dict"):
                 sf = sf.dict()  # fallback for older Pydantic
-            
+
             # Map to expected field names for Gemini
             enhanced["sleep_efficiency"] = sf.get("sleep_efficiency", 0) * 100  # as percentage
             enhanced["total_sleep_time"] = (sf.get("total_sleep_minutes", 0) / 60)  # in hours
@@ -117,15 +117,15 @@ class GeminiInsightGenerator:
             enhanced["sleep_onset_latency"] = sf.get("sleep_latency", 0)
             enhanced["rem_sleep_percent"] = sf.get("rem_percentage", 0) * 100
             enhanced["deep_sleep_percent"] = sf.get("deep_percentage", 0) * 100
-            
+
             # Provide consistency in a user-friendly way
             cons_score = sf.get("consistency_score", 0)
             enhanced["sleep_consistency_rating"] = (
-                "high" if cons_score > 0.8 
-                else "moderate" if cons_score > 0.5 
+                "high" if cons_score > 0.8
+                else "moderate" if cons_score > 0.5
                 else "low"
             )
-        
+
         return enhanced
 
     @staticmethod
@@ -239,7 +239,7 @@ Generate the health insight now:"""
         try:
             if self.model is None:
                 raise RuntimeError("Gemini model not initialized")
-                
+
             response = self.model.generate_content(
                 prompt,
                 generation_config=genai.types.GenerationConfig(  # type: ignore[attr-defined]

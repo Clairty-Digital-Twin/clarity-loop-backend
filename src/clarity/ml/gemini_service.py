@@ -19,6 +19,8 @@ from vertexai.generative_models import (  # type: ignore[import-untyped]
     SafetySetting,
 )
 
+from clarity.core.config import get_settings
+
 logger = logging.getLogger(__name__)
 
 # Clinical thresholds as constants
@@ -64,15 +66,13 @@ class GeminiService:
         testing: bool | None = None,
         model=None,
     ) -> None:
-        from clarity.core.config import get_settings
-
         self.project_id = project_id
         self.location = location
         # Auto-detect testing mode if not explicitly set
         if testing is None:
             try:
                 testing = get_settings().testing
-            except Exception:
+            except (AttributeError, ImportError, RuntimeError):
                 testing = False
         self.testing = testing
         self.model = None

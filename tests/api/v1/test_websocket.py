@@ -188,7 +188,7 @@ class _TestConnectionManager:
         try:
             await websocket.send_json(message_content)
             logger.info(f"Sent message through websocket: {message_content}")
-        except Exception as e:
+        except (RuntimeError, ConnectionError, OSError) as e:
             logger.warning(f"Failed to send message through websocket: {e}")
 
         logger.info(f"Recorded direct message send to {websocket}")
@@ -220,7 +220,7 @@ class _TestConnectionManager:
                         logger.info(
                             f"Sent message to user {user_id} through websocket: {message_content}"
                         )
-                    except Exception as e:
+                    except (RuntimeError, ConnectionError, OSError) as e:
                         logger.warning(
                             f"Failed to send message to user {user_id} through websocket: {e}"
                         )
@@ -272,7 +272,7 @@ class _TestConnectionManager:
                             else json.dumps(message_content)
                         )
                         await ws.send_text(message_str)
-                    except Exception:
+                    except (RuntimeError, ConnectionError, OSError):
                         pass
 
         logger.info(
@@ -388,8 +388,6 @@ def app(monkeypatch: pytest.MonkeyPatch) -> FastAPI:
 
     # Create a mock response that returns dynamic content
     async def mock_generate_insights(request):
-        from unittest.mock import MagicMock
-
         response = MagicMock()
         response.narrative = f"AI Response to: {request.context}"
         return response
@@ -559,8 +557,6 @@ class TestWebSocketEndpoints:
 
         # Create a proper async mock response
         async def mock_generate_insights(request):
-            from unittest.mock import MagicMock
-
             response = MagicMock()
             response.narrative = f"AI Response to: {request.context}"
             return response

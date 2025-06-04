@@ -6,6 +6,7 @@ and middleware behavior under various conditions.
 
 import asyncio
 from collections.abc import Awaitable, Callable
+from dataclasses import asdict
 from datetime import UTC, datetime
 import json
 import logging
@@ -56,8 +57,6 @@ class TestFirebaseAuthProvider:
     @staticmethod
     def auth_provider(middleware_config: MiddlewareConfig) -> FirebaseAuthProvider:
         """Create Firebase auth provider with test configuration."""
-        from dataclasses import asdict
-
         return FirebaseAuthProvider(
             credentials_path="test/path",
             project_id="test-project",

@@ -121,6 +121,12 @@ unfixable = [
 "src/clarity/storage/mock_repository.py" = [
     "PLR6301", # Interface methods cannot be static
 ]
+"src/clarity/api/v1/websocket/chat_handler.py" = [
+    "B008", # FastAPI Depends() calls are correct pattern
+]
+"src/clarity/auth/firebase_auth.py" = [
+    "B008", # FastAPI Depends() calls are correct pattern
+]
 
 # Import sorting configuration
 [lint.isort]

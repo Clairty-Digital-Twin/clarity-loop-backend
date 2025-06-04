@@ -14,6 +14,7 @@ from starlette.websockets import WebSocketState
 
 from clarity.api.v1.websocket.models import (
     ConnectionInfo,
+    ConnectionMessage,
     ErrorMessage,
     HeartbeatMessage,
     SystemMessage,
@@ -87,7 +88,7 @@ class ConnectionManager:
                 await self._cleanup_stale_connections()
                 self._cleanup_rate_limiting_data()
             except Exception as e:
-                logger.exception(f"Error in cleanup loop: {e}")
+                logger.exception("Error in cleanup loop: %s", e)
 
     async def _heartbeat_loop(self) -> None:
         """Background task to send heartbeat messages."""
@@ -96,7 +97,7 @@ class ConnectionManager:
                 await asyncio.sleep(self.heartbeat_interval)
                 await self._send_heartbeats()
             except Exception as e:
-                logger.exception(f"Error in heartbeat loop: {e}")
+                logger.exception("Error in heartbeat loop: %s", e)
 
     async def _cleanup_stale_connections(self) -> None:
         """Remove connections that haven't responded to heartbeats."""
@@ -141,8 +142,8 @@ class ConnectionManager:
                     await websocket.send_text(message_str)
                 else:
                     disconnected.append(websocket)
-            except Exception as e:
-                logger.warning(f"Failed to send heartbeat: {e}")
+            except (RuntimeError, ConnectionError, OSError) as e:
+                logger.warning("Failed to send heartbeat: %s", e)
                 disconnected.append(websocket)
 
         # Clean up disconnected websockets
@@ -203,12 +204,10 @@ class ConnectionManager:
             self.rooms[room_id].add(user_id)
 
             logger.info(
-                f"User {username} ({user_id}) connected with session {session_id}"
+                "User %s (%s) connected with session %s", username, user_id, session_id
             )
 
             # Send connection acknowledgment
-            from clarity.api.v1.websocket.models import ConnectionMessage
-
             ack_message = ConnectionMessage(
                 user_id=user_id,
                 session_id=session_id,
@@ -228,7 +227,7 @@ class ConnectionManager:
             return True
 
         except Exception as e:
-            logger.exception(f"Error connecting user {user_id}: {e}")
+            logger.exception("Error connecting user %s: %s", user_id, e)
             with contextlib.suppress(Exception):
                 await websocket.close(code=1011, reason="Server error")
             return False
@@ -264,14 +263,14 @@ class ConnectionManager:
             )
             await self.broadcast_to_room(room_id, system_message)
 
-        logger.info(f"User {username} ({user_id}) disconnected: {reason}")
+        logger.info("User %s (%s) disconnected: %s", username, user_id, reason)
 
     async def _force_disconnect(self, websocket: WebSocket, reason: str) -> None:
         """Force disconnect a WebSocket connection."""
         try:
             if websocket.client_state == WebSocketState.CONNECTED:
                 await websocket.close(code=1000, reason=reason)
-        except:
+        except (RuntimeError, ConnectionError, OSError):
             pass
 
         await self.disconnect(websocket, reason)

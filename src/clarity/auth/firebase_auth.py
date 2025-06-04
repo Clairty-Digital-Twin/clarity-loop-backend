@@ -177,7 +177,7 @@ def get_user_from_request(request: Request) -> User | None:
     except (auth.InvalidIdTokenError, auth.ExpiredIdTokenError, ValueError):
         # Common auth/token parsing errors
         return None
-    except Exception as e:
+    except (auth.RevokedIdTokenError, auth.CertificateFetchError, AttributeError) as e:
         logger.debug("Could not extract user from request: %s", e)
         return None
 

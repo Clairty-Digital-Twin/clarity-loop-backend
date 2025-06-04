@@ -1,10 +1,12 @@
 """FastAPI lifespan management for WebSocket features."""
 
-import logging
-import inspect
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
+import inspect
+import logging
+
 from fastapi import FastAPI
+
 from clarity.api.v1.websocket.connection_manager import ConnectionManager
 
 logger = logging.getLogger(__name__)
@@ -33,7 +35,9 @@ def get_connection_manager() -> ConnectionManager:
 
     # For testing, try to get from test helper
     try:
-        from tests.api.v1.test_websocket_helper import get_test_connection_manager  # noqa: PLC0415
+        from tests.api.v1.test_websocket_helper import (
+            get_test_connection_manager,
+        )
         return get_test_connection_manager()
     except (ImportError, RuntimeError):
         pass

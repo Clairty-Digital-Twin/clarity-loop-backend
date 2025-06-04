@@ -56,10 +56,11 @@ class TestFirebaseAuthProvider:
     @staticmethod
     def auth_provider(middleware_config: MiddlewareConfig) -> FirebaseAuthProvider:
         """Create Firebase auth provider with test configuration."""
+        from dataclasses import asdict
         return FirebaseAuthProvider(
             credentials_path="test/path",
             project_id="test-project",
-            middleware_config=middleware_config,
+            middleware_config=asdict(middleware_config),
         )
 
     @pytest.fixture
@@ -107,7 +108,7 @@ class TestFirebaseAuthProvider:
         with (
             patch("clarity.auth.firebase_auth.auth.verify_id_token") as mock_verify,
             patch("clarity.auth.firebase_auth.auth.get_user") as mock_get_user,
-            patch.object(auth_provider, "_ensure_initialized", new_callable=AsyncMock),
+            patch.object(auth_provider, "initialize", new_callable=AsyncMock),
         ):
             mock_verify.return_value = mock_decoded_token
             mock_get_user.return_value = mock_firebase_user_record

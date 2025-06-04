@@ -9,7 +9,6 @@ from datetime import UTC, datetime, timedelta
 from unittest.mock import AsyncMock, Mock, patch
 import uuid
 
-from firebase_admin import auth
 import pytest
 
 from clarity.models.auth import (
@@ -31,10 +30,6 @@ from clarity.services.auth_service import (
     InvalidCredentialsError,
     UserAlreadyExistsError,
     UserNotFoundError,
-    _raise_account_disabled,
-    _raise_invalid_refresh_token,
-    _raise_refresh_token_expired,
-    _raise_user_not_found_in_db,
 )
 from clarity.storage.firestore_client import FirestoreClient
 
@@ -590,7 +585,7 @@ class TestSessionManagement:
         }
 
         result = await AuthenticationService._create_user_session_response(
-            mock_user_record, user_data, scope=["read_own_data", "write_own_data"]
+            mock_user_record, user_data
         )
 
         assert isinstance(result, UserSessionResponse)

@@ -43,7 +43,7 @@ from clarity.models.user import User
 logger = logging.getLogger(__name__)
 settings = get_settings()
 
-router = APIRouter(prefix="")
+router = APIRouter(prefix="/chat")
 
 
 def get_gemini_service() -> GeminiService:

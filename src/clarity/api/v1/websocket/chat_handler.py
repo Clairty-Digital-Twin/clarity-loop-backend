@@ -48,7 +48,9 @@ class WebSocketChatHandler:
         self.gemini_service = GeminiService()
         self.pat_service = PATModelService()
 
-    async def process_chat_message(self, websocket: WebSocket, message: ChatMessage, connection_manager):
+    async def process_chat_message(
+        self, websocket: WebSocket, message: ChatMessage, connection_manager
+    ):
         """Process a chat message and potentially generate health insights."""
         try:
             connection_info = connection_manager.connection_info.get(websocket)
@@ -154,7 +156,9 @@ class WebSocketChatHandler:
         except Exception as e:
             logger.error(f"Error processing heartbeat: {e}")
 
-    async def trigger_health_analysis(self, user_id: str, health_data: dict, connection_manager):
+    async def trigger_health_analysis(
+        self, user_id: str, health_data: dict, connection_manager
+    ):
         """Trigger comprehensive health analysis and send real-time updates."""
         try:
             # Send analysis started message
@@ -231,7 +235,7 @@ async def websocket_chat_endpoint(
     websocket: WebSocket,
     room_id: str = "general",
     token: str | None = Query(None),
-    connection_manager = Depends(get_connection_manager),
+    connection_manager=Depends(get_connection_manager),
 ):
     """WebSocket endpoint for real-time chat with health insights.
 
@@ -289,11 +293,15 @@ async def websocket_chat_endpoint(
 
                     if message_type == MessageType.MESSAGE:
                         message = ChatMessage(**message_data)
-                        await chat_handler.process_chat_message(websocket, message, connection_manager)
+                        await chat_handler.process_chat_message(
+                            websocket, message, connection_manager
+                        )
 
                     elif message_type == MessageType.TYPING:
                         message = TypingMessage(**message_data)
-                        await chat_handler.process_typing_message(websocket, message, connection_manager)
+                        await chat_handler.process_typing_message(
+                            websocket, message, connection_manager
+                        )
 
                     elif message_type == MessageType.HEARTBEAT:
                         await chat_handler.process_heartbeat(websocket, message_data)
@@ -345,7 +353,7 @@ async def websocket_health_analysis_endpoint(
     websocket: WebSocket,
     user_id: str,
     token: str | None = Query(None),
-    connection_manager = Depends(get_connection_manager),
+    connection_manager=Depends(get_connection_manager),
 ):
     """WebSocket endpoint for real-time health analysis updates.
 
@@ -403,7 +411,9 @@ async def websocket_health_analysis_endpoint(
 
                     if message_data.get("type") == "health_data":
                         health_data = message_data.get("data", {})
-                        await chat_handler.trigger_health_analysis(user_id, health_data, connection_manager)
+                        await chat_handler.trigger_health_analysis(
+                            user_id, health_data, connection_manager
+                        )
 
                     elif message_data.get("type") == MessageType.HEARTBEAT:
                         await chat_handler.process_heartbeat(websocket, message_data)
@@ -432,7 +442,7 @@ async def websocket_health_analysis_endpoint(
 
 
 @router.get("/chat/stats")
-async def get_chat_stats(connection_manager = Depends(get_connection_manager)):
+async def get_chat_stats(connection_manager=Depends(get_connection_manager)):
     """Get current chat statistics."""
     return {
         "total_users": connection_manager.get_user_count(),
@@ -444,7 +454,9 @@ async def get_chat_stats(connection_manager = Depends(get_connection_manager)):
 
 
 @router.get("/chat/users/{room_id}")
-async def get_room_users(room_id: str, connection_manager = Depends(get_connection_manager)):
+async def get_room_users(
+    room_id: str, connection_manager=Depends(get_connection_manager)
+):
     """Get list of users in a specific room."""
     users = connection_manager.get_room_users(room_id)
     user_info = []

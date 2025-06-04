@@ -69,15 +69,15 @@ class ConnectionManager:
         """Start background maintenance tasks (called during app startup)."""
         if self._started:
             return
-            
+
         logger.info("Starting WebSocket background tasks...")
-        
+
         if self._cleanup_task is None or self._cleanup_task.done():
             self._cleanup_task = asyncio.create_task(self._cleanup_loop())
 
         if self._heartbeat_task is None or self._heartbeat_task.done():
             self._heartbeat_task = asyncio.create_task(self._heartbeat_loop())
-            
+
         self._started = True
         logger.info("WebSocket background tasks started")
 
@@ -429,9 +429,9 @@ class ConnectionManager:
         """Stop background tasks (called during app shutdown)."""
         if not self._started:
             return
-            
+
         logger.info("Stopping WebSocket background tasks...")
-        
+
         # Cancel background tasks
         if self._cleanup_task and not self._cleanup_task.done():
             self._cleanup_task.cancel()
@@ -446,10 +446,10 @@ class ConnectionManager:
                 await self._heartbeat_task
             except asyncio.CancelledError:
                 pass
-                
+
         self._started = False
         logger.info("WebSocket background tasks stopped")
-        
+
     async def shutdown(self):
         """Gracefully shutdown the connection manager."""
         logger.info("Shutting down WebSocket connection manager...")

@@ -7,6 +7,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 from fastapi import WebSocket
 from fastapi.testclient import TestClient
 import pytest
+from starlette.websockets import WebSocketState
 
 from clarity.api.v1.websocket.connection_manager import ConnectionManager
 from clarity.api.v1.websocket.models import (
@@ -48,7 +49,7 @@ class MockWebSocket:
     """Mock WebSocket for testing."""
 
     def __init__(self):
-        self.client_state = "CONNECTED"
+        self.client_state = WebSocketState.CONNECTED
         self.messages_sent = []
         self.closed = False
         self.close_code = None
@@ -66,6 +67,7 @@ class MockWebSocket:
         self.closed = True
         self.close_code = code
         self.close_reason = reason
+        self.client_state = WebSocketState.DISCONNECTED
 
 
 class TestConnectionManager:

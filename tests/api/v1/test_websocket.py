@@ -643,7 +643,6 @@ class TestWebSocketEndpoints:
     async def test_heartbeat_processing(self, client: TestClient, app: FastAPI):
         user_id = "test_user_id_3"
         test_token = "test-token"
-        auth_headers = {"Authorization": f"Bearer {test_token}"}
 
         # Mock the external services for this specific test
         mock_gemini_service = AsyncMock(spec=GeminiService)

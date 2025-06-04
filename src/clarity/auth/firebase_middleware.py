@@ -106,6 +106,96 @@ class FirebaseAuthMiddleware(BaseHTTPMiddleware):
                 return True
         return False
 
+    def _extract_token(self, request: Request) -> str:
+        """Extract Firebase token from Authorization header.
+
+        Args:
+            request: HTTP request to extract token from
+
+        Returns:
+            Firebase ID token
+
+        Raises:
+            AuthError: If token is missing or invalid format
+        """
+        from clarity.models.auth import AuthError
+
+        auth_header = request.headers.get("Authorization")
+        if not auth_header:
+            raise AuthError(
+                message="Missing Authorization header",
+                status_code=401,
+                error_code="missing_token",
+            )
+
+        if not auth_header.startswith("Bearer "):
+            raise AuthError(
+                message="Invalid Authorization header format",
+                status_code=401,
+                error_code="invalid_token_format",
+            )
+
+        token = auth_header[7:]  # Remove "Bearer " prefix
+        if not token:
+            raise AuthError(
+                message="Empty token in Authorization header",
+                status_code=401,
+                error_code="empty_token",
+            )
+
+        return token
+
+    def _create_user_context(self, user_info: dict[str, Any]) -> Any:
+        """Create user context from user information.
+
+        Args:
+            user_info: Dictionary containing user information
+
+        Returns:
+            UserContext object with user details and permissions
+        """
+        from clarity.models.auth import Permission, UserContext, UserRole
+
+        # Extract user role from custom claims or roles list
+        roles = user_info.get("roles", [])
+        if "admin" in roles:
+            role = UserRole.ADMIN
+        elif "clinician" in roles:
+            role = UserRole.CLINICIAN
+        else:
+            role = UserRole.PATIENT  # Default to patient
+
+        # Set permissions based on role
+        permissions = set()
+        if role == UserRole.ADMIN:
+            permissions = {
+                Permission.SYSTEM_ADMIN,
+                Permission.MANAGE_USERS,
+                Permission.READ_OWN_DATA,
+                Permission.WRITE_OWN_DATA,
+                Permission.READ_PATIENT_DATA,
+                Permission.WRITE_PATIENT_DATA,
+                Permission.READ_ANONYMIZED_DATA,
+            }
+        elif role == UserRole.CLINICIAN:
+            permissions = {
+                Permission.READ_OWN_DATA,
+                Permission.WRITE_OWN_DATA,
+                Permission.READ_PATIENT_DATA,
+                Permission.WRITE_PATIENT_DATA,
+            }
+        else:  # PATIENT
+            permissions = {Permission.READ_OWN_DATA, Permission.WRITE_OWN_DATA}
+
+        return UserContext(
+            user_id=user_info["user_id"],
+            email=user_info["email"],
+            role=role,
+            permissions=permissions,
+            verified=user_info.get("verified", False),
+            custom_claims=user_info.get("custom_claims", {}),
+        )
+
 
 class FirebaseAuthProvider:
     """Firebase authentication provider for dependency injection."""
@@ -127,6 +217,9 @@ class FirebaseAuthProvider:
         self.project_id = project_id
         self.middleware_config = middleware_config or {}
         self._initialized = False
+        self._token_cache: dict[str, Any] = {}
+        self._cache_ttl = 300  # 5 minutes
+        self._cache_max_size = 1000
 
         logger.info("Firebase authentication provider created")
         if credentials_path:
@@ -232,7 +325,42 @@ class FirebaseAuthProvider:
             logger.error(f"Failed to create user: {e}")
             raise
 
+    async def get_user_info(self, user_id: str) -> User | None:
+        """Get user information by user ID.
+
+        Args:
+            user_id: Firebase user ID
+
+        Returns:
+            User object if found, None otherwise
+        """
+        if not self._initialized:
+            await self.initialize()
+
+        try:
+            from clarity.auth.firebase_auth import auth
+
+            user_record = auth.get_user(user_id)
+
+            user = User(
+                uid=user_record.uid,
+                email=user_record.email,
+                display_name=user_record.display_name,
+                email_verified=user_record.email_verified,
+                firebase_token=None,
+                created_at=None,
+                last_login=None,
+                profile=None,
+            )
+
+            return user
+
+        except Exception as e:
+            logger.debug(f"Failed to get user info: {e}")
+            return None
+
     async def cleanup(self) -> None:
         """Cleanup resources when shutting down."""
+        self._token_cache.clear()
         logger.info("Firebase authentication provider cleanup complete")
         self._initialized = False

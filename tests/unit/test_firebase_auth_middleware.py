@@ -312,8 +312,8 @@ class TestFirebaseAuthProvider:
             result = await auth_provider.get_user_info("test_user_123")
 
             assert result is not None
-            assert result["user_id"] == "test_user_123"
-            assert result["email"] == "test@example.com"
+            assert result.uid == "test_user_123"
+            assert result.email == "test@example.com"
 
     @pytest.mark.asyncio
     @staticmethod

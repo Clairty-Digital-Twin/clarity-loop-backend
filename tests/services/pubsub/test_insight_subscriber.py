@@ -438,20 +438,21 @@ class TestGeminiInsightGeneratorAnalysisSummary:
         """Test analysis summary with full data."""
         summary = GeminiInsightGenerator._create_analysis_summary(sample_analysis_results)
 
-        assert summary["total_features"] == 3
-        assert "cardio_features" in summary["feature_types"]
-        assert "respiratory_features" in summary["feature_types"]
-        assert "sleep_features" in summary["feature_types"]
-        assert summary["feature_vector_lengths"]["cardio_features"] == 8
-        assert summary["feature_vector_lengths"]["respiratory_features"] == 8
+        assert len(summary["modalities_processed"]) == 2
+        assert "cardiovascular" in summary["modalities_processed"]
+        assert "respiratory" in summary["modalities_processed"]
+        assert summary["feature_counts"]["cardio"] == 8
+        assert summary["feature_counts"]["respiratory"] == 8
+        assert "processing_metadata" in summary
 
     def test_create_analysis_summary_empty(self):
         """Test analysis summary with empty data."""
         summary = GeminiInsightGenerator._create_analysis_summary({})
 
-        assert summary["total_features"] == 0
-        assert summary["feature_types"] == []
-        assert summary["feature_vector_lengths"] == {}
+        assert len(summary["modalities_processed"]) == 0
+        assert summary["modalities_processed"] == []
+        assert summary["feature_counts"] == {}
+        assert "processing_metadata" in summary
 
     def test_create_analysis_summary_mixed(self):
         """Test analysis summary with mixed data types."""

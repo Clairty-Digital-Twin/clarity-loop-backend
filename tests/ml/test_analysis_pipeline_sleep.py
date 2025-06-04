@@ -115,7 +115,7 @@ class TestAnalysisPipelineSleepIntegration:
                     heart_rate_variability=45.0,
                     respiratory_rate=16.0,
                     body_temperature=37.0,
-                    blood_glucose=90.0
+                    blood_glucose=90.0,
                 ),
                 device_id="test_device",
                 raw_data={"hr": 72},

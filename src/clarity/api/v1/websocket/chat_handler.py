@@ -87,8 +87,8 @@ class WebSocketChatHandler:
             )
             # Extract content from narrative or key_insights
             ai_response_content = gemini_response.narrative
-        except Exception as e:
-            logger.exception("Error generating Gemini response: %s", e)
+        except Exception:
+            logger.exception("Error generating Gemini response")
             ai_response_content = (
                 "I am sorry, I could not generate a response at this time."
             )
@@ -214,11 +214,11 @@ class WebSocketChatHandler:
                 "Health analysis interrupted by client disconnect for user %s", user_id
             )
             raise
-        except Exception as e:
-            logger.exception("Error during health analysis: %s", e)
+        except Exception:
+            logger.exception("Error during health analysis")
             error_msg = ErrorMessage(
                 error_code="HEALTH_ANALYSIS_ERROR",
-                message=f"Failed to perform health analysis: {e}",
+                message="Failed to perform health analysis",
             )
             await connection_manager.send_to_user(user_id, error_msg)
 
@@ -322,8 +322,8 @@ async def websocket_chat_endpoint(
                     )
                     await connection_manager.send_to_connection(websocket, error_msg)
 
-                except Exception as e:
-                    logger.exception("Error parsing message: %s", e)
+                except Exception:
+                    logger.exception("Error parsing message")
                     error_msg = ErrorMessage(
                         error_code="MESSAGE_PARSE_ERROR",
                         message="Failed to parse message",

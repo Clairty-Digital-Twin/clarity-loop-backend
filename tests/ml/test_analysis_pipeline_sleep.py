@@ -5,7 +5,7 @@ ensuring proper data flow and feature fusion.
 """
 
 from datetime import UTC, datetime
-from unittest.mock import AsyncMock
+from unittest.mock import AsyncMock, Mock
 
 import pytest
 

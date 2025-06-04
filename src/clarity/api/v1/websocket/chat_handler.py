@@ -128,8 +128,7 @@ class WebSocketChatHandler:
     ) -> None:
         user_id = message.get("user_id", "unknown")
         logger.info("Processing heartbeat for user %s", user_id)
-        # The ConnectionManager handles last active time internally, so this explicit call is removed.
-        # connection_manager.update_last_active(websocket)
+        # The ConnectionManager handles last active time internally
         # Acknowledge heartbeat
         heartbeat_ack_message = HeartbeatMessage(
             timestamp=datetime.now(UTC),

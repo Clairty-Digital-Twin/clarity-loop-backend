@@ -38,7 +38,6 @@ def get_connection_manager() -> ConnectionManager:
         from tests.api.v1.test_websocket_helper import (
             get_test_connection_manager,
         )
-
         return get_test_connection_manager()
     except (ImportError, RuntimeError):
         pass
@@ -76,7 +75,7 @@ async def websocket_lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     3. Store the manager in app state for dependency injection
     4. Clean up everything during shutdown
     """
-    global _connection_manager
+    global _connection_manager  # noqa: PLW0603
 
     # Startup: Create and initialize connection manager
     logger.info("Starting WebSocket services...")

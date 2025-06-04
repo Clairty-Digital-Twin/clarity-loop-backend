@@ -157,6 +157,15 @@ class HealthAnalysisPipeline:
                 results.activity_embedding = activity_embedding
                 modality_features["activity"] = activity_embedding
 
+            if organized_data["sleep"]:
+                self.logger.info("🚀 Processing sleep data with SleepProcessor...")
+                sleep_features = self.sleep_processor.process(organized_data["sleep"])
+                results.sleep_features = sleep_features.__dict__
+                
+                # Convert sleep features to vector for fusion
+                sleep_vector = self._convert_sleep_features_to_vector(sleep_features)
+                modality_features["sleep"] = sleep_vector
+
             # Step 3: Fuse modalities if we have multiple
             if len(modality_features) > 1:
                 self.logger.info("Fusing %d modalities...", len(modality_features))
@@ -265,6 +274,27 @@ class HealthAnalysisPipeline:
                 )
 
         return organized
+
+    @staticmethod
+    def _convert_sleep_features_to_vector(sleep_features) -> list[float]:
+        """Convert SleepFeatures to a vector for modality fusion.
+        
+        Args:
+            sleep_features: SleepFeatures object
+            
+        Returns:
+            Vector representation of sleep features
+        """
+        return [
+            float(sleep_features.total_sleep_minutes) / 480.0,  # Normalize by 8 hours
+            float(sleep_features.sleep_efficiency),
+            float(sleep_features.sleep_latency) / 60.0,  # Normalize by 1 hour
+            float(sleep_features.waso_minutes) / 120.0,  # Normalize by 2 hours
+            float(sleep_features.awakenings_count) / 10.0,  # Normalize by 10 awakenings
+            float(sleep_features.rem_percentage),
+            float(sleep_features.deep_percentage),
+            float(sleep_features.consistency_score)
+        ]
 
     async def _process_cardio_data(
         self, cardio_metrics: list[HealthMetric]

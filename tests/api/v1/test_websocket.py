@@ -181,7 +181,7 @@ class _TestConnectionManager:
             len(self.active_websockets),
         )
 
-    async def send_to_connection(self, websocket: WebSocket, message: Any) -> None:
+    async def send_to_connection(self, websocket: WebSocket, message: object) -> None:
         logger.info("Attempting to send message to connection: %s", message)
 
         if websocket not in self.connection_info:
@@ -256,7 +256,7 @@ class _TestConnectionManager:
     async def broadcast_to_room(
         self,
         room_id: str,
-        message: Any,
+        message: object,
         exclude_websocket: WebSocket | None = None,
     ) -> None:
         logger.info("Attempting to broadcast message to room %s: %s", room_id, message)

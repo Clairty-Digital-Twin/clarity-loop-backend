@@ -101,8 +101,8 @@ class WebSocketChatHandler:
         )
         await connection_manager.send_to_user(chat_message.user_id, response_message)
 
+    @staticmethod
     async def process_typing_message(
-        self,
         typing_message: TypingMessage,
         connection_manager: ConnectionManager,
         room_id: str,
@@ -119,8 +119,8 @@ class WebSocketChatHandler:
             typing_message,
         )
 
+    @staticmethod
     async def process_heartbeat(
-        self,
         websocket: WebSocket,
         message: dict[str, Any],
         connection_manager: ConnectionManager,

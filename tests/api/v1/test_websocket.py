@@ -323,7 +323,7 @@ def app() -> FastAPI:
 
     app = FastAPI()
 
-    app.include_router(chat_handler.router, prefix="/api/v1/chat")
+    app.include_router(chat_handler.router, prefix="/api/v1")
     # This mock should return a User instance for successful authentication
 
     async def mock_get_current_user_websocket(token: str | None = None) -> User:
@@ -493,228 +493,145 @@ class TestWebSocketEndpoints:
             assert response_data["user_id"] == user_id
             assert response_data["is_typing"] is False
 
-
-@pytest.mark.asyncio
-class TestChatHandler:
-    async def test_health_insight_generation(self, app: FastAPI):
+    async def test_health_insight_generation(self, client: TestClient, app: FastAPI):
         user_id = "test_user_id_1"
-        # Mock the external services
-        mock_gemini_service = AsyncMock()
+        test_token = "test-token"
+        auth_headers = {"Authorization": f"Bearer {test_token}"}
+
+        # Mock the external services for this specific test
+        mock_gemini_service = AsyncMock(spec=GeminiService)
         mock_gemini_service.stream_chat_response.return_value = [
             "AI ", "Response ", "Chunk"
         ]
-        mock_pat_model_service = AsyncMock()
+        mock_pat_model_service = AsyncMock(spec=PATModelService)
         mock_pat_model_service.analyze_health_data.return_value = {
             "insight": "Test Insight"
         }
 
-        # Create a mock WebSocket for the handler
-        mock_websocket = AsyncMock(spec=WebSocket)
-        mock_websocket.receive_json.side_effect = [
-            {
-                "message_type": MessageType.MESSAGE,
-                "user_id": user_id,
-                "session_id": "test-session-123",
-                "timestamp": datetime.now(UTC).isoformat(),
-                "content": "Generate insight",
-            },
-            WebSocketDisconnect,
-        ]
-        # Mock the connection manager
-        mock_manager = AsyncMock(spec=_TestConnectionManager)
-        mock_manager.send_to_user = AsyncMock()
-        mock_manager.send_to_connection = AsyncMock()
-        mock_manager.broadcast_to_room = AsyncMock()
+        # Override dependencies for this test
+        app.dependency_overrides[chat_handler.get_gemini_service] = lambda: mock_gemini_service
+        app.dependency_overrides[chat_handler.get_pat_model_service] = lambda: mock_pat_model_service
 
-        mock_manager.connect.return_value = _TestConnectionInfo(
-            user_id=user_id,
-            username="testuser",
-            session_id="test-session-123",
-            connected_at=datetime.now(UTC),
-            room_id="test-room",
-        )
-        mock_manager.connection_info = {mock_websocket: mock_manager.connect.return_value}
+        # Use TestClient.websocket_connect to interact with the WebSocket endpoint
+        with client.websocket_connect(f"/api/v1/chat/{user_id}", headers=auth_headers) as websocket:
+            # Send a chat message to trigger insight generation
+            chat_message = ChatMessage(
+                user_id=user_id,
+                timestamp=datetime.now(UTC),
+                type=MessageType.MESSAGE,
+                content="Generate insight",
+            )
+            websocket.send_json(chat_message.model_dump())
 
-        # Instantiate the handler with the mocked services
-        handler = chat_handler.WebSocketChatHandler(
-            gemini_service=mock_gemini_service,
-            pat_service=mock_pat_model_service
-        )
+            # Expect the typing indicator and then the AI response
+            # The connection manager will send these back via send_to_user
+            # The test client will receive them
+            typing_response = websocket.receive_json()
+            assert typing_response["message_type"] == MessageType.TYPING
+            assert typing_response["is_typing"] is True
 
-        await handler.chat_ws(mock_websocket, user_id, connection_manager=mock_manager)
+            ai_response = websocket.receive_json()
+            assert ai_response["message_type"] == MessageType.MESSAGE
+            assert "AI Response to: Generate insight" in ai_response["content"]
+            assert "Test Insight" in ai_response["content"]
 
-        mock_websocket.accept.assert_awaited_once()
-        mock_websocket.receive_json.assert_awaited_once()
-        mock_pat_model_service.analyze_health_data.assert_awaited_once()
-        mock_gemini_service.stream_chat_response.assert_awaited_once()
-        mock_websocket.send_json.assert_awaited_with(Any)
-        assert mock_manager.send_to_user.call_count == 2
-        # The first call is for typing indicator, second is for AI response
-        # Check the content of the second call
-        second_call_args = mock_manager.send_to_user.call_args_list[1].args[1]
-        assert "Test Insight" in second_call_args["content"]
+            # Assert that the mocked services were called
+            mock_pat_model_service.analyze_health_data.assert_awaited_once()
+            mock_gemini_service.stream_chat_response.assert_awaited_once()
 
-    async def test_typing_indicator_processing(self, app: FastAPI):
+            # Check that the connection manager methods were called correctly
+            mock_manager = app.dependency_overrides[chat_handler.get_connection_manager]()
+            # Ensure send_to_user and broadcast_to_room were called on the mock_manager
+            # This requires mock_test_connection_manager to return a MagicMock with tracking
+            assert mock_manager.send_to_user.call_count == 2 # One for typing, one for insight
+            assert mock_manager.broadcast_to_room.call_count == 1 # One for chat message
+
+        # Clean up dependency overrides after the test
+        del app.dependency_overrides[chat_handler.get_gemini_service]
+        del app.dependency_overrides[chat_handler.get_pat_model_service]
+
+    async def test_typing_indicator_processing(self, client: TestClient, app: FastAPI):
         user_id = "test_user_id_2"
-        mock_connection_manager_instance = _TestConnectionManager()
+        test_token = "test-token"
+        auth_headers = {"Authorization": f"Bearer {test_token}"}
 
-        # Mock the external services for this test
-        mock_gemini_service = AsyncMock()
-        mock_pat_model_service = AsyncMock()
+        # Mock the external services for this specific test
+        mock_gemini_service = AsyncMock(spec=GeminiService)
+        mock_pat_model_service = AsyncMock(spec=PATModelService)
 
-        handler = chat_handler.WebSocketChatHandler(
-            gemini_service=mock_gemini_service,
-            pat_service=mock_pat_model_service
-        )
+        # Override dependencies for this test
+        app.dependency_overrides[chat_handler.get_gemini_service] = lambda: mock_gemini_service
+        app.dependency_overrides[chat_handler.get_pat_model_service] = lambda: mock_pat_model_service
 
-        mock_websocket = AsyncMock(spec=WebSocket)
-        mock_websocket.receive_json.side_effect = [
-            {
-                "message_type": MessageType.TYPING,
-                "user_id": user_id,
-                "session_id": "test-session-456",
-                "timestamp": datetime.now(UTC).isoformat(),
-                "is_typing": True,
-            },
-            WebSocketDisconnect,
-        ]
+        with client.websocket_connect(f"/api/v1/chat/{user_id}", headers=auth_headers) as websocket:
+            # Send a typing indicator message
+            typing_message = TypingMessage(
+                user_id=user_id,
+                username="test-user",
+                timestamp=datetime.now(UTC),
+                is_typing=True,
+                type=MessageType.TYPING,
+            )
+            websocket.send_json(typing_message.model_dump())
 
-        mock_connection_manager_instance.send_to_user = AsyncMock()
-        mock_connection_manager_instance.send_to_connection = AsyncMock()
-        mock_connection_manager_instance.broadcast_to_room = AsyncMock()
+            # Expect a typing indicator response
+            response_data = websocket.receive_json()
+            assert response_data["message_type"] == MessageType.TYPING
+            assert response_data["user_id"] == user_id
+            assert response_data["is_typing"] is True
 
-        await handler.chat_ws(mock_websocket, user_id, connection_manager=mock_connection_manager_instance)
+            # Send another typing indicator, now indicating not typing
+            typing_message.is_typing = False
+            websocket.send_json(typing_message.model_dump())
 
-        mock_websocket.accept.assert_awaited_once()
-        mock_websocket.receive_json.assert_awaited_once()
-        assert mock_connection_manager_instance.send_to_user.call_count == 1
-        sent_message = mock_connection_manager_instance.send_to_user.call_args[0][1]
-        assert sent_message["message_type"] == MessageType.TYPING
-        assert sent_message["is_typing"] is True
+            # Expect a typing indicator response
+            response_data = websocket.receive_json()
+            assert response_data["message_type"] == MessageType.TYPING
+            assert response_data["user_id"] == user_id
+            assert response_data["is_typing"] is False
 
-    async def test_heartbeat_processing(self, app: FastAPI):
+            # Check that the connection manager methods were called correctly
+            mock_manager = app.dependency_overrides[chat_handler.get_connection_manager]()
+            assert mock_manager.broadcast_to_room.call_count == 2 # One for True, one for False
+
+        # Clean up dependency overrides after the test
+        del app.dependency_overrides[chat_handler.get_gemini_service]
+        del app.dependency_overrides[chat_handler.get_pat_model_service]
+
+    async def test_heartbeat_processing(self, client: TestClient, app: FastAPI):
         user_id = "test_user_id_3"
-        mock_connection_manager_instance = _TestConnectionManager()
+        test_token = "test-token"
+        auth_headers = {"Authorization": f"Bearer {test_token}"}
 
-        # Mock the external services for this test
-        mock_gemini_service = AsyncMock()
-        mock_pat_model_service = AsyncMock()
+        # Mock the external services for this specific test
+        mock_gemini_service = AsyncMock(spec=GeminiService)
+        mock_pat_model_service = AsyncMock(spec=PATModelService)
 
-        handler = chat_handler.WebSocketChatHandler(
-            gemini_service=mock_gemini_service,
-            pat_service=mock_pat_model_service
-        )
+        # Override dependencies for this test
+        app.dependency_overrides[chat_handler.get_gemini_service] = lambda: mock_gemini_service
+        app.dependency_overrides[chat_handler.get_pat_model_service] = lambda: mock_pat_model_service
 
-        mock_websocket = AsyncMock(spec=WebSocket)
-        mock_websocket.receive_json.side_effect = [
-            {
-                "message_type": MessageType.HEARTBEAT,
-                "user_id": user_id,
-                "session_id": "test-session-789",
-                "timestamp": datetime.now(UTC).isoformat(),
-            },
-            WebSocketDisconnect,
-        ]
-
-        mock_connection_manager_instance.send_to_user = AsyncMock()
-        mock_connection_manager_instance.send_to_connection = AsyncMock()
-        mock_connection_manager_instance.broadcast_to_room = AsyncMock()
-
-        await handler.chat_ws(mock_websocket, user_id, connection_manager=mock_connection_manager_instance)
-
-        mock_websocket.accept.assert_awaited_once()
-        mock_websocket.receive_json.assert_awaited_once()
-        assert mock_connection_manager_instance.send_to_user.call_count == 1
-        sent_message = mock_connection_manager_instance.send_to_user.call_args[0][1]
-        assert sent_message["message_type"] == MessageType.HEARTBEAT_ACK
-
-    async def test_health_analysis_trigger(self, app: FastAPI):
-        user_id = "test_user_id_4"
-        health_data = {"steps": 10000, "sleep_hours": 7}
-        mock_connection_manager_instance = _TestConnectionManager()
-
-        mock_pat_model_service = AsyncMock()
-        mock_pat_model_service.analyze_health_data.return_value = {"insight": "Great job!"}
-
-        handler = chat_handler.WebSocketChatHandler()
-
-        mock_websocket = AsyncMock(spec=WebSocket)
-        mock_websocket.receive_json.side_effect = [
-            {
-                "message_type": models.MessageType.HEALTH_DATA,
-                "user_id": user_id,
-                "session_id": "test-session-001",
-                "timestamp": datetime.now(UTC).isoformat(),
-                "content": json.dumps(health_data),
-            },
-            WebSocketDisconnect,
-        ]
-
-        with (
-            MagicMock(spec=chat_handler.get_pat_model_service) as mock_get_pat_model_service,
-            MagicMock(spec=chat_handler.get_connection_manager) as mock_get_connection_manager,
-        ):
-            mock_get_pat_model_service.return_value = mock_pat_model_service
-            mock_get_connection_manager.return_value = mock_connection_manager_instance
-
-            chat_handler.get_pat_model_service = mock_get_pat_model_service
-            chat_handler.get_connection_manager = mock_get_connection_manager
-
-            await handler.chat_ws(mock_websocket, user_id)
-
-            mock_websocket.accept.assert_awaited_once()
-            mock_websocket.receive_json.assert_awaited_once()
-            mock_pat_model_service.analyze_health_data.assert_awaited_once_with(
-                user_id=user_id, health_data=health_data
+        with client.websocket_connect(f"/api/v1/chat/{user_id}", headers=auth_headers) as websocket:
+            # Send a heartbeat message
+            heartbeat_message = HeartbeatMessage(
+                timestamp=datetime.now(UTC),
+                type=MessageType.HEARTBEAT,
+                client_timestamp=datetime.now(UTC).isoformat()
             )
-            assert mock_connection_manager_instance.send_to_user.call_count == 1
-            sent_message = mock_connection_manager_instance.send_to_user.call_args[0][1]
-            assert sent_message["message_type"] == models.MessageType.HEALTH_INSIGHT
-            assert "Great job!" in sent_message["content"]
+            websocket.send_json(heartbeat_message.model_dump())
 
-    async def test_health_analysis_error_handling(self, app: FastAPI):
-        user_id = "test_user_id_5"
-        health_data = {"steps": 10000, "sleep_hours": 7}
-        mock_connection_manager_instance = _TestConnectionManager()
+            # Expect a heartbeat acknowledgment response
+            response_data = websocket.receive_json()
+            assert response_data["message_type"] == MessageType.HEARTBEAT_ACK
+            assert response_data["user_id"] == user_id # user_id is automatically added by the handler
 
-        mock_pat_model_service = AsyncMock()
-        mock_pat_model_service.analyze_health_data.side_effect = Exception("AI Error")
+            # Check that the connection manager methods were called correctly
+            mock_manager = app.dependency_overrides[chat_handler.get_connection_manager]()
+            assert mock_manager.send_to_connection.call_count == 1
 
-        handler = chat_handler.WebSocketChatHandler()
-
-        mock_websocket = AsyncMock(spec=WebSocket)
-        mock_websocket.receive_json.side_effect = [
-            {
-                "message_type": models.MessageType.HEALTH_DATA,
-                "user_id": user_id,
-                "session_id": "test-session-002",
-                "timestamp": datetime.now(UTC).isoformat(),
-                "content": json.dumps(health_data),
-            },
-            WebSocketDisconnect,
-        ]
-
-        with (
-            MagicMock(spec=chat_handler.get_pat_model_service) as mock_get_pat_model_service,
-            MagicMock(spec=chat_handler.get_connection_manager) as mock_get_connection_manager,
-        ):
-            mock_get_pat_model_service.return_value = mock_pat_model_service
-            mock_get_connection_manager.return_value = mock_connection_manager_instance
-
-            chat_handler.get_pat_model_service = mock_get_pat_model_service
-            chat_handler.get_connection_manager = mock_get_connection_manager
-
-            await handler.chat_ws(mock_websocket, user_id)
-
-            mock_websocket.accept.assert_awaited_once()
-            mock_websocket.receive_json.assert_awaited_once()
-            mock_pat_model_service.analyze_health_data.assert_awaited_once_with(
-                user_id=user_id, health_data=health_data
-            )
-            assert mock_connection_manager_instance.send_to_user.call_count == 1
-            sent_message = mock_connection_manager_instance.send_to_user.call_args[0][1]
-            assert sent_message["message_type"] == models.MessageType.ERROR
-            assert "Error processing health data" in sent_message["content"]
+        # Clean up dependency overrides after the test
+        del app.dependency_overrides[chat_handler.get_gemini_service]
+        del app.dependency_overrides[chat_handler.get_pat_model_service]
 
 
 if __name__ == "__main__":

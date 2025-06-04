@@ -12,6 +12,11 @@ from clarity.auth.firebase_middleware import (
     FirebaseAuthMiddleware,
     FirebaseAuthProvider,
 )
+from clarity.auth.decorators import (
+    require_auth,
+    require_permission,
+    require_role,
+)
 from clarity.models.auth import (
     AuthError,
     Permission,

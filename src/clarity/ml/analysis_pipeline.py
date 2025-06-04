@@ -20,7 +20,7 @@ from clarity.ml.preprocessing import HealthDataPreprocessor
 from clarity.ml.processors.activity_processor import ActivityProcessor
 from clarity.ml.processors.cardio_processor import CardioProcessor
 from clarity.ml.processors.respiration_processor import RespirationProcessor
-from clarity.ml.processors.sleep_processor import SleepProcessor
+from clarity.ml.processors.sleep_processor import SleepFeatures, SleepProcessor
 from clarity.models.health_data import (
     ActivityData,
     BiometricData,
@@ -161,9 +161,9 @@ class HealthAnalysisPipeline:
                 self.logger.info("🚀 Processing sleep data with SleepProcessor...")
                 sleep_features = self.sleep_processor.process(organized_data["sleep"])
                 results.sleep_features = sleep_features.__dict__
-                
+
                 # Convert sleep features to vector for fusion
-                sleep_vector = self._convert_sleep_features_to_vector(sleep_features)
+                sleep_vector = HealthAnalysisPipeline._convert_sleep_features_to_vector(sleep_features)
                 modality_features["sleep"] = sleep_vector
 
             # Step 3: Fuse modalities if we have multiple
@@ -276,7 +276,7 @@ class HealthAnalysisPipeline:
         return organized
 
     @staticmethod
-    def _convert_sleep_features_to_vector(sleep_features) -> list[float]:
+    def _convert_sleep_features_to_vector(sleep_features: SleepFeatures) -> list[float]:
         """Convert SleepFeatures to a vector for modality fusion.
         
         Args:

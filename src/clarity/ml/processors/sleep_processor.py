@@ -37,60 +37,60 @@ MIN_VALUES_FOR_CONSISTENCY = 2
 
 class SleepFeatures(BaseModel):
     """Clinical-grade sleep features extracted from sleep stage data."""
-    
+
     total_sleep_minutes: int = Field(
-        ..., 
-        ge=0, 
+        ...,
+        ge=0,
         le=720,  # Max 12 hours
         description="Total sleep duration in minutes"
     )
-    
+
     sleep_efficiency: float = Field(
-        ..., 
-        ge=0.0, 
-        le=1.0, 
+        ...,
+        ge=0.0,
+        le=1.0,
         description="Sleep efficiency ratio (time asleep / time in bed)"
     )
-    
+
     sleep_latency: float = Field(
-        ..., 
-        ge=0.0, 
-        le=180.0, 
+        ...,
+        ge=0.0,
+        le=180.0,
         description="Sleep onset latency in minutes"
     )
-    
+
     waso_minutes: float = Field(
-        ..., 
-        ge=0.0, 
-        le=480.0, 
+        ...,
+        ge=0.0,
+        le=480.0,
         description="Wake After Sleep Onset in minutes"
     )
-    
+
     awakenings_count: int = Field(
-        ..., 
-        ge=0, 
-        le=50, 
+        ...,
+        ge=0,
+        le=50,
         description="Number of awakenings after sleep onset"
     )
-    
+
     rem_percentage: float = Field(
-        ..., 
-        ge=0.0, 
-        le=1.0, 
+        ...,
+        ge=0.0,
+        le=1.0,
         description="REM sleep as percentage of total sleep"
     )
-    
+
     deep_percentage: float = Field(
-        ..., 
-        ge=0.0, 
-        le=1.0, 
+        ...,
+        ge=0.0,
+        le=1.0,
         description="Deep sleep as percentage of total sleep"
     )
-    
+
     consistency_score: float = Field(
-        ..., 
-        ge=0.0, 
-        le=1.0, 
+        ...,
+        ge=0.0,
+        le=1.0,
         description="Sleep schedule consistency score (0=irregular, 1=regular)"
     )
 
@@ -112,7 +112,7 @@ class SleepProcessor:
         """Initialize the sleep processor."""
         self.processor_name = "SleepProcessor"
         self.version = "1.0.0"
-        logger.info("✅ %s v%s initialized - Clinical sleep analysis ready", 
+        logger.info("✅ %s v%s initialized - Clinical sleep analysis ready",
                    self.processor_name, self.version)
 
     def process(self, metrics: list[HealthMetric]) -> SleepFeatures:
@@ -126,26 +126,26 @@ class SleepProcessor:
         """
         try:
             logger.info("😴 Processing %d sleep metrics for analysis", len(metrics))
-            
+
             # Extract sleep data from metrics
             sleep_data_list = self._extract_sleep_data(metrics)
-            
+
             if not sleep_data_list:
                 logger.warning("No valid sleep data found in metrics")
                 return self._create_empty_features()
-            
+
             # Calculate comprehensive sleep features
             features = self._calculate_sleep_features(sleep_data_list)
-            
+
             logger.info("✅ Extracted sleep features for %d nights: "
                        "avg_sleep=%.1fh, efficiency=%.1f%%, quality_score=%.2f",
-                       len(sleep_data_list), 
+                       len(sleep_data_list),
                        features.total_sleep_minutes / 60,
                        features.sleep_efficiency * 100,
                        self._calculate_quality_score(features))
-            
+
             return features
-            
+
         except Exception as e:
             logger.exception("Failed to process sleep data")
             return self._create_empty_features()
@@ -161,11 +161,11 @@ class SleepProcessor:
             List of SleepData objects
         """
         sleep_data = []
-        
+
         for metric in metrics:
             if metric.sleep_data is not None:
                 sleep_data.append(metric.sleep_data)
-        
+
         logger.debug("Extracted %d valid sleep data records", len(sleep_data))
         return sleep_data
 
@@ -195,24 +195,24 @@ class SleepProcessor:
             # Basic sleep metrics
             total_sleep_values.append(sleep_data.total_sleep_minutes)
             efficiency_values.append(sleep_data.sleep_efficiency)
-            
+
             # Sleep latency
             latency = sleep_data.time_to_sleep_minutes if sleep_data.time_to_sleep_minutes is not None else 0.0
             latency_values.append(float(latency))
-            
+
             # Awakenings
             awakenings = sleep_data.wake_count if sleep_data.wake_count is not None else 0
             awakening_values.append(int(awakenings))
-            
+
             # WASO calculation
             waso = self._calculate_waso(sleep_data)
             waso_values.append(waso)
-            
+
             # Sleep stage percentages
             rem_pct, deep_pct = self._calculate_stage_percentages(sleep_data)
             rem_percentage_values.append(rem_pct)
             deep_percentage_values.append(deep_pct)
-            
+
             # Sleep timing for consistency
             sleep_start_times.append(sleep_data.sleep_start)
 
@@ -224,7 +224,7 @@ class SleepProcessor:
         avg_awakenings = int(round(np.mean(awakening_values)))
         avg_rem_percentage = float(np.mean(rem_percentage_values))
         avg_deep_percentage = float(np.mean(deep_percentage_values))
-        
+
         # Calculate consistency score
         consistency_score = self._calculate_consistency_score(sleep_start_times)
 
@@ -254,12 +254,12 @@ class SleepProcessor:
         if sleep_data.sleep_stages and SleepStage.AWAKE in sleep_data.sleep_stages:
             # Use awake minutes from sleep stages
             return float(sleep_data.sleep_stages[SleepStage.AWAKE])
-        
+
         # Fallback: calculate from timing
         time_in_bed = (sleep_data.sleep_end - sleep_data.sleep_start).total_seconds() / 60.0
         latency = sleep_data.time_to_sleep_minutes if sleep_data.time_to_sleep_minutes is not None else 0.0
         waso = max(0.0, time_in_bed - sleep_data.total_sleep_minutes - latency)
-        
+
         return waso
 
     @staticmethod
@@ -274,13 +274,13 @@ class SleepProcessor:
         """
         if not sleep_data.sleep_stages or sleep_data.total_sleep_minutes == 0:
             return 0.0, 0.0
-        
+
         rem_minutes = sleep_data.sleep_stages.get(SleepStage.REM, 0)
         deep_minutes = sleep_data.sleep_stages.get(SleepStage.DEEP, 0)
-        
+
         rem_percentage = rem_minutes / sleep_data.total_sleep_minutes
         deep_percentage = deep_minutes / sleep_data.total_sleep_minutes
-        
+
         return rem_percentage, deep_percentage
 
     @staticmethod
@@ -298,23 +298,22 @@ class SleepProcessor:
         """
         if len(sleep_start_times) < MIN_VALUES_FOR_CONSISTENCY:
             return 0.5  # Neutral score for insufficient data
-        
+
         # Convert to minutes of day (0-1439)
         start_minutes = []
         for dt in sleep_start_times:
             minutes_of_day = dt.hour * 60 + dt.minute
             start_minutes.append(minutes_of_day)
-        
+
         # Calculate standard deviation
         std_minutes = float(np.std(start_minutes))
-        
+
         # Map to 0-1 score: <15min = 1.0, >120min = 0.0, linear between
         if std_minutes <= 15:
             return 1.0
-        elif std_minutes >= 120:
+        if std_minutes >= 120:
             return 0.0
-        else:
-            return max(0.0, 1.0 - (std_minutes - 15) / (120 - 15))
+        return max(0.0, 1.0 - (std_minutes - 15) / (120 - 15))
 
     @staticmethod
     def _create_empty_features() -> SleepFeatures:
@@ -344,7 +343,7 @@ class SleepProcessor:
             Dictionary of summary statistics
         """
         quality_score = self._calculate_quality_score(features)
-        
+
         return {
             "sleep_quality_score": round(quality_score, 3),
             "total_nights_analyzed": 1,  # Based on single feature set
@@ -371,11 +370,11 @@ class SleepProcessor:
             Overall quality score
         """
         scores = []
-        
+
         # Sleep efficiency (weight: 25%)
         eff_score = min(1.0, features.sleep_efficiency / MIN_SLEEP_EFFICIENCY)
         scores.append(eff_score * 0.25)
-        
+
         # Sleep duration (weight: 20%) - optimal around 7-9 hours
         duration_hours = features.total_sleep_minutes / 60
         if 7 <= duration_hours <= 9:
@@ -385,28 +384,28 @@ class SleepProcessor:
         else:  # > 9 hours
             duration_score = max(0.0, 1.0 - (duration_hours - 9) / 3)
         scores.append(duration_score * 0.20)
-        
+
         # Sleep latency (weight: 15%)
         latency_score = max(0.0, 1.0 - features.sleep_latency / MAX_HEALTHY_LATENCY)
         scores.append(latency_score * 0.15)
-        
+
         # WASO (weight: 15%)
         waso_score = max(0.0, 1.0 - features.waso_minutes / MAX_HEALTHY_WASO)
         scores.append(waso_score * 0.15)
-        
+
         # REM percentage (weight: 10%) - optimal 20-25%
         rem_optimal = 0.225  # 22.5%
         rem_score = max(0.0, 1.0 - abs(features.rem_percentage - rem_optimal) / rem_optimal)
         scores.append(rem_score * 0.10)
-        
+
         # Deep percentage (weight: 10%) - optimal 15-20%
         deep_optimal = 0.175  # 17.5%
         deep_score = max(0.0, 1.0 - abs(features.deep_percentage - deep_optimal) / deep_optimal)
         scores.append(deep_score * 0.10)
-        
+
         # Consistency (weight: 5%)
         scores.append(features.consistency_score * 0.05)
-        
+
         return sum(scores)
 
     @staticmethod
@@ -414,36 +413,33 @@ class SleepProcessor:
         """Rate sleep efficiency."""
         if efficiency >= 0.90:
             return "excellent"
-        elif efficiency >= 0.85:
+        if efficiency >= 0.85:
             return "good"
-        elif efficiency >= 0.75:
+        if efficiency >= 0.75:
             return "fair"
-        else:
-            return "poor"
+        return "poor"
 
     @staticmethod
     def _rate_sleep_latency(latency: float) -> str:
         """Rate sleep latency."""
         if latency <= 10:
             return "excellent"
-        elif latency <= 20:
+        if latency <= 20:
             return "good"
-        elif latency <= 30:
+        if latency <= 30:
             return "fair"
-        else:
-            return "poor"
+        return "poor"
 
     @staticmethod
     def _rate_waso(waso: float) -> str:
         """Rate WASO."""
         if waso <= 20:
             return "excellent"
-        elif waso <= 30:
+        if waso <= 30:
             return "good"
-        elif waso <= 45:
+        if waso <= 45:
             return "fair"
-        else:
-            return "poor"
+        return "poor"
 
     @staticmethod
     def _rate_rem_percentage(rem_pct: float) -> str:
@@ -451,12 +447,11 @@ class SleepProcessor:
         rem_percent = rem_pct * 100
         if 20 <= rem_percent <= 25:
             return "excellent"
-        elif 15 <= rem_percent <= 30:
+        if 15 <= rem_percent <= 30:
             return "good"
-        elif 10 <= rem_percent <= 35:
+        if 10 <= rem_percent <= 35:
             return "fair"
-        else:
-            return "poor"
+        return "poor"
 
     @staticmethod
     def _rate_deep_percentage(deep_pct: float) -> str:
@@ -464,21 +459,19 @@ class SleepProcessor:
         deep_percent = deep_pct * 100
         if 15 <= deep_percent <= 20:
             return "excellent"
-        elif 10 <= deep_percent <= 25:
+        if 10 <= deep_percent <= 25:
             return "good"
-        elif 5 <= deep_percent <= 30:
+        if 5 <= deep_percent <= 30:
             return "fair"
-        else:
-            return "poor"
+        return "poor"
 
     @staticmethod
     def _rate_consistency(consistency: float) -> str:
         """Rate sleep consistency."""
         if consistency >= 0.8:
             return "excellent"
-        elif consistency >= 0.6:
+        if consistency >= 0.6:
             return "good"
-        elif consistency >= 0.4:
+        if consistency >= 0.4:
             return "fair"
-        else:
-            return "poor"
+        return "poor"

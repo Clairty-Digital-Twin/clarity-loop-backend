@@ -19,7 +19,7 @@ import pytest
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.responses import JSONResponse, Response
 
-from clarity.auth.firebase_auth import (
+from clarity.auth.firebase_middleware import (
     FirebaseAuthMiddleware,
     FirebaseAuthProvider,
 )

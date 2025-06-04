@@ -242,7 +242,7 @@ class FirebaseAuthMiddleware(BaseHTTPMiddleware):
                 status_code=401,
                 error_code="invalid_token",
             )
-        
+
         # Convert user to expected format for _create_user_context
         # Handle both User objects and dict objects (for tests)
         if hasattr(user_info, 'uid'):

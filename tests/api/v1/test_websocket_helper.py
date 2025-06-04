@@ -15,7 +15,6 @@ MSG_MANAGER_NOT_INITIALIZED = "Test connection manager not initialized"
 
 def get_test_connection_manager() -> ConnectionManager:
     """Get the test connection manager instance."""
-    global _test_connection_manager
     if _test_connection_manager is None:
         msg = MSG_MANAGER_NOT_INITIALIZED
         raise RuntimeError(msg)

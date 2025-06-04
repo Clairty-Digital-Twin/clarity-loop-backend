@@ -117,9 +117,14 @@ class _TestConnectionManager:
         self.last_heartbeat[websocket] = time.time()
 
         logger.info(
-            "User %s connected to room %s. Total active websockets: %s", user_id, room_id, len(self.active_websockets)
+            "User %s connected to room %s. Total active websockets: %s",
+            user_id,
+            room_id,
+            len(self.active_websockets),
         )
-        logger.info("Connection info for websocket: %s", self.connection_info[websocket])
+        logger.info(
+            "Connection info for websocket: %s", self.connection_info[websocket]
+        )
         return new_connection_info
 
     async def disconnect(self, websocket: WebSocket, reason: str | None = None) -> None:
@@ -170,7 +175,10 @@ class _TestConnectionManager:
                 logger.info("Room %s is now empty and removed.", room_id)
 
         logger.info(
-            "Websocket disconnected for user %s from room %s. Total active websockets: %s", user_id, room_id, len(self.active_websockets)
+            "Websocket disconnected for user %s from room %s. Total active websockets: %s",
+            user_id,
+            room_id,
+            len(self.active_websockets),
         )
 
     async def send_to_connection(self, websocket: WebSocket, message: Any) -> None:
@@ -224,15 +232,21 @@ class _TestConnectionManager:
                     try:
                         await websocket.send_json(message_content)
                         logger.info(
-                            "Sent message to user %s through websocket: %s", user_id, message_content
+                            "Sent message to user %s through websocket: %s",
+                            user_id,
+                            message_content,
                         )
                     except (RuntimeError, ConnectionError, OSError) as e:
                         logger.warning(
-                            "Failed to send message to user %s through websocket: %s", user_id, e
+                            "Failed to send message to user %s through websocket: %s",
+                            user_id,
+                            e,
                         )
 
                     logger.info(
-                        "Recorded direct message send to user %s via %s", user_id, websocket
+                        "Recorded direct message send to user %s via %s",
+                        user_id,
+                        websocket,
                     )
         else:
             logger.warning(
@@ -282,7 +296,9 @@ class _TestConnectionManager:
                         pass
 
         logger.info(
-            "Broadcast sent to %s connections in room %s", len(target_websockets), room_id
+            "Broadcast sent to %s connections in room %s",
+            len(target_websockets),
+            room_id,
         )
 
     async def handle_heartbeat(self, websocket: WebSocket) -> None:

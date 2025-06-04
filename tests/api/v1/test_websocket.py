@@ -207,6 +207,7 @@ class _TestConnectionManager:
 
     async def send_to_user(self, user_id: str, message: Any) -> None:
         """Send a message to all active connections for a given user."""
+        print(f"🔄 DEBUG TestConnectionManager: send_to_user called for {user_id}")
         logger.info(f"Attempting to send message to user {user_id}: {message}")
 
         message_content = message
@@ -215,7 +216,10 @@ class _TestConnectionManager:
         elif hasattr(message, "dict"):
             message_content = message.dict()
 
+        print(f"🔄 DEBUG TestConnectionManager: Processed message content: {message_content}")
+
         if user_id in self.user_connections:
+            print(f"🔄 DEBUG TestConnectionManager: Found {len(self.user_connections[user_id])} connections for user {user_id}")
             for websocket in self.user_connections[user_id]:
                 if websocket in self.active_websockets:
                     self.messages_sent.append(
@@ -228,15 +232,19 @@ class _TestConnectionManager:
                     )
                     # Actually send the message through the WebSocket for TestClient
                     try:
+                        print(f"🔄 DEBUG TestConnectionManager: Attempting to send through websocket...")
                         await websocket.send_json(message_content)
+                        print(f"✅ DEBUG TestConnectionManager: Successfully sent message through websocket")
                         logger.info(f"Sent message to user {user_id} through websocket: {message_content}")
                     except Exception as e:
+                        print(f"❌ DEBUG TestConnectionManager: Failed to send through websocket: {e}")
                         logger.warning(f"Failed to send message to user {user_id} through websocket: {e}")
                         
                     logger.info(
                         f"Recorded direct message send to user {user_id} via {websocket}"
                     )
         else:
+            print(f"❌ DEBUG TestConnectionManager: User {user_id} has no active connections")
             logger.warning(
                 f"User {user_id} has no active connections to send messages to."
             )
@@ -372,8 +380,14 @@ def app(monkeypatch: pytest.MonkeyPatch) -> FastAPI:
     )
     # Create properly mocked GeminiService
     mock_gemini = AsyncMock(spec=GeminiService)
-    mock_gemini.generate_health_insights.return_value = AsyncMock()
-    mock_gemini.generate_health_insights.return_value.narrative = "AI Response to: {content}"
+
+    # Create a mock response that returns dynamic content
+    async def mock_generate_insights(request):
+        response = AsyncMock()
+        response.narrative = f"AI Response to: {request.context}"
+        return response
+
+    mock_gemini.generate_health_insights = mock_generate_insights
     app.dependency_overrides[chat_handler.get_gemini_service] = lambda: mock_gemini
     app.dependency_overrides[chat_handler.get_pat_model_service] = lambda: AsyncMock(
         spec=PATModelService
@@ -431,9 +445,12 @@ class TestWebSocketEndpoints:
         user_id = "test-user-123"
         test_token = "test-token"
 
+        print(f"\n🔌 DEBUG: Starting WebSocket connection test for user {user_id}")
         with client.websocket_connect(
             f"/api/v1/chat/{user_id}?token={test_token}"
         ) as websocket:
+            print("✅ DEBUG: WebSocket connection established")
+            
             # Send a chat message
             chat_message = ChatMessage(
                 user_id=user_id,
@@ -441,10 +458,15 @@ class TestWebSocketEndpoints:
                 type=MessageType.MESSAGE,
                 content="Hello AI",
             )
+            print(f"📤 DEBUG: Sending message: {chat_message.model_dump(mode='json')}")
             websocket.send_json(chat_message.model_dump(mode="json"))
+            print("✅ DEBUG: Message sent successfully")
 
             # Expecting a response from the AI handler
+            print("⏳ DEBUG: Waiting for response...")
             response_data = websocket.receive_json()
+            print(f"📥 DEBUG: Received response: {response_data}")
+            
             assert response_data["message_type"] == MessageType.MESSAGE
             assert "AI Response to: Hello AI" in response_data["content"]
             assert response_data["user_id"] == user_id

@@ -275,14 +275,19 @@ async def websocket_chat_endpoint(
                     continue
 
                 try:
+                    print(f"🔧 DEBUG ChatHandler: Processing raw message: {raw_message}")
                     message_data = json.loads(raw_message)
                     message_type = message_data.get("type")
+                    print(f"🔧 DEBUG ChatHandler: Message type: {message_type}")
 
                     if message_type == MessageType.MESSAGE.value:
+                        print(f"🔧 DEBUG ChatHandler: Processing MESSAGE type")
                         chat_msg: ChatMessage = ChatMessage(**message_data)
+                        print(f"🔧 DEBUG ChatHandler: Created ChatMessage: {chat_msg}")
                         await handler.process_chat_message(
                             websocket, chat_msg, connection_manager
                         )
+                        print(f"🔧 DEBUG ChatHandler: Finished processing MESSAGE")
 
                     elif message_type == MessageType.TYPING.value:
                         typing_msg: TypingMessage = TypingMessage(**message_data)

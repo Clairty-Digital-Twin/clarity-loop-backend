@@ -469,7 +469,7 @@ class TestWebSocketEndpoints:
         self, client: TestClient
     ) -> None:
         user_id = "test-user-123"
-        test_token = "test-token"
+        test_token = "test-token"  # noqa: S105
 
         with client.websocket_connect(
             f"/api/v1/chat/{user_id}?token={test_token}"
@@ -528,7 +528,7 @@ class TestWebSocketEndpoints:
 
     async def test_websocket_invalid_message_format(self, client: TestClient) -> None:
         user_id = "test-user-123"
-        test_token = "test-token"
+        test_token = "test-token"  # noqa: S105
 
         with client.websocket_connect(
             f"/api/v1/chat/{user_id}?token={test_token}"
@@ -542,7 +542,7 @@ class TestWebSocketEndpoints:
 
     async def test_websocket_typing_indicator(self, client: TestClient) -> None:
         user_id = "test-user-123"
-        test_token = "test-token"
+        test_token = "test-token"  # noqa: S105
 
         with client.websocket_connect(
             f"/api/v1/chat/{user_id}?token={test_token}"

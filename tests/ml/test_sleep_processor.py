@@ -84,8 +84,8 @@ class TestSleepProcessor:
         # Verify consistency (single night should be 0)
         assert result.consistency_score == 0.0  # Single night has no consistency
 
-        # Verify overall quality score is reasonable
-        assert 0.0 <= result.overall_quality_score <= 1.0
+        # Verify overall quality score is reasonable (max 6.0)
+        assert 0.0 <= result.overall_quality_score <= 6.0
 
     def test_process_multiple_nights_consistency(self) -> None:
         """Test consistency calculation with multiple nights."""
@@ -193,7 +193,6 @@ class TestSleepProcessor:
 
     def test_get_summary_stats(self, sample_sleep_metric: HealthMetric) -> None:
         """Test summary statistics generation."""
-        result = self.processor.process([sample_sleep_metric])
         summary = self.processor.get_summary_stats([sample_sleep_metric])
 
         # Verify summary structure

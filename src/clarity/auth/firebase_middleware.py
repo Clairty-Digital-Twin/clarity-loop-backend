@@ -10,7 +10,7 @@ from starlette.middleware.base import BaseHTTPMiddleware
 
 from clarity.auth.firebase_auth import get_user_from_request
 from clarity.models.user import User
-from clarity.ports.auth_ports import Dict, IAuthProvider, List, Optional
+# Removed unused imports - using built-in types instead
 
 logger = logging.getLogger(__name__)
 
@@ -23,9 +23,10 @@ class FirebaseAuthMiddleware(BaseHTTPMiddleware):
         app: FastAPI,
         auth_provider: Any,
         exempt_paths: list[str] | None = None,
+        *,
         cache_enabled: bool = True,
         graceful_degradation: bool = True,
-    ):
+    ) -> None:
         """Initialize Firebase authentication middleware.
 
         Args:
@@ -113,7 +114,7 @@ class FirebaseAuthProvider:
         credentials_path: str | None = None,
         project_id: str | None = None,
         middleware_config: dict | None = None,
-    ):
+    ) -> None:
         """Initialize Firebase authentication provider.
 
         Args:

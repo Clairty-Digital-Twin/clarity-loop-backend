@@ -88,8 +88,8 @@ class ConnectionManager:
                 await asyncio.sleep(60)  # Run every minute
                 await self._cleanup_stale_connections()
                 self._cleanup_rate_limiting_data()
-            except Exception as e:
-                logger.exception("Error in cleanup loop: %s", e)
+            except Exception:
+                logger.exception("Error in cleanup loop")
 
     async def _heartbeat_loop(self) -> None:
         """Background task to send heartbeat messages."""

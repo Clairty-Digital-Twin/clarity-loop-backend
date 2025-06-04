@@ -278,9 +278,7 @@ async def websocket_chat_endpoint(
 
                     if message_type == MessageType.MESSAGE.value:
                         chat_msg: ChatMessage = ChatMessage(**message_data)
-                        await handler.process_chat_message(
-                            chat_msg, connection_manager
-                        )
+                        await handler.process_chat_message(chat_msg, connection_manager)
 
                     elif message_type == MessageType.TYPING.value:
                         typing_msg: TypingMessage = TypingMessage(**message_data)
@@ -447,14 +445,14 @@ async def websocket_health_analysis_endpoint(
                 await connection_manager.disconnect(websocket, "internal_error")
                 break
 
-    except Exception as e:
-        logger.exception("Error in health analysis WebSocket connection: %s", e)
+    except Exception:
+        logger.exception("Error in health analysis WebSocket connection")
 
     finally:
         await connection_manager.disconnect(
             websocket, "Health analysis connection closed"
         )
-        logger.info(f"Health analysis WebSocket closed for {user_id}")
+        logger.info("Health analysis WebSocket closed for %s", user_id)
 
 
 @router.get("/chat/stats")

@@ -5,7 +5,7 @@ from datetime import UTC, datetime
 import inspect
 import json
 import logging
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from fastapi import (
     APIRouter,
@@ -23,12 +23,12 @@ from clarity.ml.gemini_service import (
     GeminiService,
     HealthInsightRequest,
 )
-from clarity.ml.pat_service import ActigraphyAnalysis, ActigraphyInput, PATModelService
-from clarity.ml.preprocessing import ActigraphyDataPoint
-from clarity.models.user import User
 
-from .lifespan import get_connection_manager
-from .models import (
+if TYPE_CHECKING:
+    from clarity.ml.pat_service import ActigraphyAnalysis
+from clarity.api.v1.websocket.connection_manager import ConnectionManager
+from clarity.api.v1.websocket.lifespan import get_connection_manager
+from clarity.api.v1.websocket.models import (
     ChatMessage,
     ErrorMessage,
     HeartbeatMessage,
@@ -36,6 +36,9 @@ from .models import (
     SystemMessage,
     TypingMessage,
 )
+from clarity.ml.pat_service import ActigraphyInput, PATModelService
+from clarity.ml.preprocessing import ActigraphyDataPoint
+from clarity.models.user import User
 
 logger = logging.getLogger(__name__)
 settings = get_settings()
@@ -58,14 +61,17 @@ class WebSocketChatHandler:
         self,
         gemini_service: GeminiService,
         pat_service: PATModelService,
-    ):
+    ) -> None:
         self.gemini_service = gemini_service
         self.pat_service = pat_service
 
     async def process_chat_message(
-        self, websocket: WebSocket, chat_message: ChatMessage, connection_manager: Any
+        self,
+        websocket: WebSocket,
+        chat_message: ChatMessage,
+        connection_manager: ConnectionManager,
     ) -> None:
-        logger.info(f"Processing chat message for user {chat_message.user_id}")
+        logger.info("Processing chat message for user %s", chat_message.user_id)
         # Add conversation context for Gemini
         user_query = chat_message.content
 
@@ -83,8 +89,10 @@ class WebSocketChatHandler:
             # Extract content from narrative or key_insights
             ai_response_content = gemini_response.narrative
         except Exception as e:
-            logger.error(f"Error generating Gemini response: {e}")
-            ai_response_content = "I am sorry, I could not generate a response at this time."
+            logger.exception("Error generating Gemini response: %s", e)
+            ai_response_content = (
+                "I am sorry, I could not generate a response at this time."
+            )
 
         response_message = ChatMessage(
             user_id="AI",
@@ -95,31 +103,33 @@ class WebSocketChatHandler:
         await connection_manager.send_to_user(chat_message.user_id, response_message)
 
     async def process_typing_message(
-        self, websocket: WebSocket, typing_message: TypingMessage, connection_manager: Any
+        self,
+        typing_message: TypingMessage,
+        connection_manager: ConnectionManager,
+        room_id: str,
     ) -> None:
         logger.info(
-            f"Processing typing indicator for user {typing_message.user_id}: "
-            f"is_typing={typing_message.is_typing}"
+            "Processing typing indicator for user %s: is_typing=%s",
+            typing_message.user_id,
+            typing_message.is_typing,
         )
         # Broadcast typing status to the room where the user is connected
-        # (Assuming room_id is stored in connection_manager.connection_info)
-        connection_info = connection_manager.connection_info.get(websocket)
-        if connection_info and connection_info.room_id:
-            await connection_manager.broadcast_to_room(
-                connection_info.room_id,
-                typing_message,
-                exclude_websocket=websocket,  # Don't send back to sender
-            )
-        else:
-            logger.warning("Could not find connection info or room_id for typing message.")
+        await connection_manager.broadcast_to_room(
+            room_id,
+            typing_message,
+            exclude_user=typing_message.user_id,  # Don't send back to sender
+        )
 
     async def process_heartbeat(
-        self, websocket: WebSocket, message: dict[str, Any], connection_manager: Any
+        self,
+        websocket: WebSocket,
+        message: dict[str, Any],
+        connection_manager: ConnectionManager,
     ) -> None:
         user_id = message.get("user_id", "unknown")
-        logger.info(f"Processing heartbeat for user {user_id}")
-        # Update last active time for the connection
-        connection_manager.update_last_active(websocket)
+        logger.info("Processing heartbeat for user %s", user_id)
+        # The ConnectionManager handles last active time internally, so this explicit call is removed.
+        # connection_manager.update_last_active(websocket)
         # Acknowledge heartbeat
         heartbeat_ack_message = HeartbeatMessage(
             timestamp=datetime.now(UTC),
@@ -131,23 +141,32 @@ class WebSocketChatHandler:
         self,
         user_id: str,
         health_data: dict[str, Any],
-        connection_manager: Any
+        connection_manager: ConnectionManager,
     ) -> None:
-        logger.info(f"Triggering health analysis for user {user_id} with data: {health_data}")
+        logger.info(
+            "Triggering health analysis for user %s with data: %s", user_id, health_data
+        )
         try:
             duration_hours = 24
-            if "data_points" in health_data and isinstance(health_data["data_points"], list) and len(health_data["data_points"]) > 1:
+            if (
+                "data_points" in health_data
+                and isinstance(health_data["data_points"], list)
+                and len(health_data["data_points"]) > 1
+            ):
                 timestamps = []
                 for dp in health_data["data_points"]:
                     try:
-                        # Attempt to parse timestamp, handle potential errors
                         if isinstance(dp, dict) and "timestamp" in dp:
                             ts = dp["timestamp"]
                             if isinstance(ts, str):
-                                timestamps.append(datetime.fromisoformat(ts.replace("Z", "+00:00")))
+                                timestamps.append(datetime.fromisoformat(ts))
                     except (ValueError, TypeError) as ts_e:
-                        logger.warning(f"Invalid timestamp format in health data point: {dp}. Error: {ts_e}")
-                        continue  # Skip invalid timestamp
+                        logger.warning(
+                            "Invalid timestamp format in health data point: %s. Error: %s",
+                            dp,
+                            ts_e,
+                        )
+                        continue
 
                 if len(timestamps) > 1:
                     min_ts = min(timestamps)
@@ -156,22 +175,22 @@ class WebSocketChatHandler:
                     if duration_seconds > 0:
                         duration_hours = max(1, int(duration_seconds / 3600))
                 elif len(timestamps) == 1:
-                    duration_hours = 1  # For single data point, assume 1 hour of activity
+                    duration_hours = 1
 
             actigraphy_input = ActigraphyInput(
                 user_id=user_id,
                 data_points=[
                     ActigraphyDataPoint(
                         timestamp=datetime.now(UTC),
-                        value=float(health_data.get("steps", 0))
+                        value=float(health_data.get("steps", 0)),
                     )
                 ],
                 sampling_rate=1.0,
-                duration_hours=duration_hours
+                duration_hours=duration_hours,
             )
 
-            pat_analysis_results: ActigraphyAnalysis = await self.pat_service.analyze_actigraphy(
-                actigraphy_input
+            pat_analysis_results: ActigraphyAnalysis = (
+                await self.pat_service.analyze_actigraphy(actigraphy_input)
             )
 
             insight_request = HealthInsightRequest(
@@ -193,13 +212,15 @@ class WebSocketChatHandler:
             await connection_manager.send_to_user(user_id, insight_message)
 
         except WebSocketDisconnect:
-            logger.info(f"Health analysis interrupted by client disconnect for user {user_id}")
-            raise  # Re-raise to be caught by outer handler
+            logger.info(
+                "Health analysis interrupted by client disconnect for user %s", user_id
+            )
+            raise
         except Exception as e:
-            logger.error(f"Error during health analysis: {e}")
+            logger.exception("Error during health analysis: %s", e)
             error_msg = ErrorMessage(
                 error_code="HEALTH_ANALYSIS_ERROR",
-                message=f"Failed to perform health analysis: {e}",
+                message="Failed to perform health analysis: %s" % e,
             )
             await connection_manager.send_to_user(user_id, error_msg)
 
@@ -209,10 +230,10 @@ async def websocket_chat_endpoint(
     websocket: WebSocket,
     room_id: str = "general",
     token: str | None = Query(...),
-    connection_manager: Any = Depends(get_connection_manager),
+    connection_manager: ConnectionManager = Depends(get_connection_manager),
     gemini_service: GeminiService = Depends(get_gemini_service),
     pat_service: PATModelService = Depends(get_pat_model_service),
-    current_user: User = Depends(get_current_user_websocket)
+    current_user: User = Depends(get_current_user_websocket),
 ) -> None:
     """WebSocket endpoint for real-time chat with health insights.
 
@@ -224,11 +245,15 @@ async def websocket_chat_endpoint(
     - Rate limiting
     - Heartbeat monitoring
     """
-    handler = WebSocketChatHandler(gemini_service=gemini_service, pat_service=pat_service)
+    handler = WebSocketChatHandler(
+        gemini_service=gemini_service, pat_service=pat_service
+    )
     user_id = current_user.uid
-    username = current_user.display_name or current_user.email
+    username = str(
+        current_user.display_name or current_user.email
+    )  # Ensure username is string
 
-    logger.info(f"WebSocket connection attempt: token={token}")
+    logger.info("WebSocket connection attempt: token=%s", token)
 
     try:
         connected = await connection_manager.connect(
@@ -239,7 +264,9 @@ async def websocket_chat_endpoint(
             return
 
         logger.info(
-            f"WebSocket chat connection established for {username} in room {room_id}"
+            "WebSocket chat connection established for %s in room %s",
+            username,
+            room_id,
         )
 
         while True:
@@ -254,15 +281,16 @@ async def websocket_chat_endpoint(
                     message_type = message_data.get("type")
 
                     if message_type == MessageType.MESSAGE.value:
-                        message = ChatMessage(**message_data)
+                        chat_msg: ChatMessage = ChatMessage(**message_data)
                         await handler.process_chat_message(
-                            websocket, message, connection_manager
+                            websocket, chat_msg, connection_manager
                         )
 
                     elif message_type == MessageType.TYPING.value:
-                        message = TypingMessage(**message_data)
+                        typing_msg: TypingMessage = TypingMessage(**message_data)
+                        # Pass the room_id from the endpoint directly
                         await handler.process_typing_message(
-                            websocket, message, connection_manager
+                            typing_msg, connection_manager, room_id
                         )
 
                     elif message_type == MessageType.HEARTBEAT.value:
@@ -274,15 +302,19 @@ async def websocket_chat_endpoint(
                         health_data_content = message_data.get("content", {})
                         user_id_from_message = message_data.get("user_id", "")
                         if user_id_from_message:
-                            await handler.trigger_health_analysis(user_id_from_message, health_data_content, connection_manager)
+                            await handler.trigger_health_analysis(
+                                user_id_from_message,
+                                health_data_content,
+                                connection_manager,
+                            )
                         else:
                             logger.warning("User ID not found in health data message.")
 
                     else:
-                        logger.warning(f"Unknown message type: {message_type}")
+                        logger.warning("Unknown message type: %s", message_type)
                         error_msg = ErrorMessage(
                             error_code="UNKNOWN_MESSAGE_TYPE",
-                            message=f"Unknown message type: {message_type}",
+                            message="Unknown message type: %s" % message_type,
                         )
                         await connection_manager.send_to_connection(
                             websocket, error_msg
@@ -295,7 +327,7 @@ async def websocket_chat_endpoint(
                     await connection_manager.send_to_connection(websocket, error_msg)
 
                 except Exception as e:
-                    logger.error(f"Error parsing message: {e}")
+                    logger.exception("Error parsing message: %s", e)
                     error_msg = ErrorMessage(
                         error_code="MESSAGE_PARSE_ERROR",
                         message="Failed to parse message",
@@ -304,22 +336,23 @@ async def websocket_chat_endpoint(
 
             except WebSocketDisconnect as e:
                 logger.warning(
-                    f"WebSocket disconnected: code={e.code}, reason={e.reason}"
+                    "WebSocket disconnected: code=%s, reason=%s", e.code, e.reason
                 )
-                raise
+                break
 
             except Exception as e:
-                logger.error(f"Unexpected error in chat endpoint: {e}")
+                logger.exception("Unexpected error in chat endpoint: %s", e)
                 await connection_manager.disconnect(websocket, "internal_error")
                 break
 
     except Exception as e:
-        logger.error(f"Error in WebSocket connection: {e}")
+        logger.exception("Error in WebSocket connection: %s", e)
 
     finally:
         await connection_manager.disconnect(websocket, "Connection closed")
         logger.info(
-            f"WebSocket connection closed for {username if 'username' in locals() else 'unknown user'}"
+            "WebSocket connection closed for %s",
+            username if "username" in locals() else "unknown user",
         )
 
 
@@ -328,7 +361,9 @@ async def websocket_health_analysis_endpoint(
     websocket: WebSocket,
     user_id: str,
     token: str | None = Query(...),
-    connection_manager: Any = Depends(get_connection_manager),
+    connection_manager: ConnectionManager = Depends(get_connection_manager),
+    gemini_service: GeminiService = Depends(get_gemini_service),
+    pat_service: PATModelService = Depends(get_pat_model_service),
 ) -> None:
     """WebSocket endpoint for real-time health analysis updates.
 
@@ -337,11 +372,10 @@ async def websocket_health_analysis_endpoint(
     """
     user: User | None = None
     handler = WebSocketChatHandler(
-        gemini_service=Depends(get_gemini_service),
-        pat_service=Depends(get_pat_model_service)
+        gemini_service=gemini_service, pat_service=pat_service
     )
 
-    logger.info(f"WebSocket connection attempt: token={token}")
+    logger.info("WebSocket connection attempt: %s", token)
 
     try:
         if token:
@@ -359,20 +393,20 @@ async def websocket_health_analysis_endpoint(
                 return
 
         username = (
-            user.display_name if user and user.display_name else f"User_{user_id[:8]}"
+            user.display_name if user and user.display_name else "User_%s" % user_id[:8]
         )
 
         connected = await connection_manager.connect(
             websocket=websocket,
             user_id=user_id,
             username=username,
-            room_id=f"health_analysis_{user_id}",
+            room_id="health_analysis_%s" % user_id,
         )
 
         if not connected:
             return
 
-        logger.info(f"Health analysis WebSocket connected for {username}")
+        logger.info("Health analysis WebSocket connected for %s", username)
 
         welcome_msg = SystemMessage(
             content="Connected to health analysis service. Send health data to start analysis.",
@@ -409,17 +443,17 @@ async def websocket_health_analysis_endpoint(
 
             except WebSocketDisconnect as e:
                 logger.warning(
-                    f"WebSocket disconnected: code={e.code}, reason={e.reason}"
+                    "WebSocket disconnected: code=%s, reason=%s", e.code, e.reason
                 )
-                break  # Exit loop on disconnect
+                break
 
             except Exception as e:
-                logger.error(f"Error in health analysis WebSocket: {e}")
+                logger.exception("Error in health analysis WebSocket: %s", e)
                 await connection_manager.disconnect(websocket, "internal_error")
                 break
 
     except Exception as e:
-        logger.error(f"Error in health analysis WebSocket connection: {e}")
+        logger.exception("Error in health analysis WebSocket connection: %s", e)
 
     finally:
         await connection_manager.disconnect(
@@ -429,7 +463,9 @@ async def websocket_health_analysis_endpoint(
 
 
 @router.get("/chat/stats")
-async def get_chat_stats(connection_manager: Any = Depends(get_connection_manager)) -> dict[str, Any]:
+async def get_chat_stats(
+    connection_manager: ConnectionManager = Depends(get_connection_manager),
+) -> dict[str, Any]:
     """Get current chat statistics."""
     return {
         "total_users": connection_manager.get_user_count(),
@@ -442,7 +478,8 @@ async def get_chat_stats(connection_manager: Any = Depends(get_connection_manage
 
 @router.get("/chat/users/{room_id}")
 async def get_room_users(
-    room_id: str, connection_manager: Any = Depends(get_connection_manager)
+    room_id: str,
+    connection_manager: ConnectionManager = Depends(get_connection_manager),
 ) -> dict[str, Any]:
     """Get list of users in a specific room."""
     users = connection_manager.get_room_users(room_id)

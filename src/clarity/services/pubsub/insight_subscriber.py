@@ -8,7 +8,7 @@ from datetime import UTC, datetime
 import json
 import logging
 import os
-from typing import Any
+from typing import Any, NoReturn
 
 from fastapi import FastAPI, HTTPException, Request
 from google.cloud import firestore  # type: ignore[attr-defined]
@@ -130,123 +130,92 @@ class GeminiInsightGenerator:
 
         return enhanced
 
-    def _raise_model_not_initialized_error(self) -> None:
+    @staticmethod
+    def _raise_model_not_initialized_error() -> NoReturn:
         """Raise error when Gemini model is not initialized."""
-        msg = "Gemini model not initialized"
+        msg = "Gemini model not properly initialized"
         raise RuntimeError(msg)
 
     @staticmethod
     def _create_health_prompt(analysis_results: dict[str, Any]) -> str:
-        """Create structured prompt for Gemini from analysis results."""
-        # Extract key metrics
-        metrics_lines = []
-
-        # Cardiovascular metrics
-        if analysis_results.get("cardio_features"):
-            cardio = analysis_results["cardio_features"]
-            if len(cardio) >= MIN_FEATURE_VECTOR_LENGTH:
-                metrics_lines.extend(
-                    [
-                        f"- Average Heart Rate: {cardio[0]:.1f} bpm",
-                        f"- Resting Heart Rate: {cardio[2]:.1f} bpm",
-                        f"- Maximum Heart Rate: {cardio[1]:.1f} bpm",
-                        f"- Heart Rate Variability: {cardio[4]:.1f} ms",
-                        f"- Heart Rate Recovery Score: {cardio[6]:.2f}/1.0",
-                        f"- Circadian Rhythm Score: {cardio[7]:.2f}/1.0",
-                    ]
-                )
-
-        # Respiratory metrics
-        if analysis_results.get("respiratory_features"):
-            resp = analysis_results["respiratory_features"]
-            if len(resp) >= MIN_FEATURE_VECTOR_LENGTH:
-                metrics_lines.extend(
-                    [
-                        f"- Average Respiratory Rate: {resp[0]:.1f} breaths/min",
-                        f"- Resting Respiratory Rate: {resp[1]:.1f} breaths/min",
-                        f"- Average Oxygen Saturation: {resp[3]:.1f}%",
-                        f"- Minimum Oxygen Saturation: {resp[4]:.1f}%",
-                        f"- Respiratory Stability Score: {resp[6]:.2f}/1.0",
-                        f"- Oxygenation Efficiency Score: {resp[7]:.2f}/1.0",
-                    ]
-                )
-
-        # Activity metrics (from PAT analysis)
-        if "summary_stats" in analysis_results:
-            summary = analysis_results["summary_stats"]
-            if "health_indicators" in summary:
-                indicators = summary["health_indicators"]
-
-                if "cardiovascular_health" in indicators:
-                    cv = indicators["cardiovascular_health"]
-                    metrics_lines.append(
-                        f"- Cardiovascular Health Score: {cv.get('circadian_rhythm', 0):.2f}/1.0"
-                    )
-
-                if "respiratory_health" in indicators:
-                    resp_health = indicators["respiratory_health"]
-                    metrics_lines.append(
-                        f"- Respiratory Health Score: {resp_health.get('respiratory_stability', 0):.2f}/1.0"
-                    )
-
-        # 🚀 FIXED: Sleep metrics for Gemini insights
-        if analysis_results.get("sleep_efficiency") is not None:
-            metrics_lines.extend(
-                [
-                    f"- Sleep Efficiency: {analysis_results['sleep_efficiency']:.0f}%",
-                    f"- Total Sleep Time: {analysis_results['total_sleep_time']:.1f} hours",
-                    f"- Wake After Sleep Onset: {analysis_results['wake_after_sleep_onset']:.0f} min",
-                    f"- Sleep Onset Latency: {analysis_results['sleep_onset_latency']:.0f} min",
-                    f"- REM Sleep: {analysis_results['rem_sleep_percent']:.0f}%",
-                    f"- Deep Sleep: {analysis_results['deep_sleep_percent']:.0f}%",
-                    f"- Sleep Consistency: {analysis_results['sleep_consistency_rating'].title()}",
-                ]
-            )
-
-        metrics_summary = (
-            "\\n".join(metrics_lines)
-            if metrics_lines
-            else "Limited health data available"
+        """Create health analysis prompt for Gemini."""
+        # First, enhance the results for better prompt generation
+        enhanced = GeminiInsightGenerator._enhance_analysis_results_for_gemini(
+            analysis_results
         )
 
-        # Create structured prompt
-        return f"""You are a health AI assistant analyzing a user's health data. Generate a comprehensive health insight report.
+        cardio_features = analysis_results.get("cardio_features", [])
+        respiratory_features = analysis_results.get("respiratory_features", [])
 
-HEALTH DATA SUMMARY:
-{metrics_summary}
+        # Build prompt with available metrics
+        prompt_parts = ["Analyze the following health metrics and provide insights:\n"]
 
-INSTRUCTIONS:
-1. Analyze the health metrics and identify key patterns
-2. Provide actionable health recommendations
-3. Maintain an encouraging and supportive tone
-4. Focus on trends and improvements, not just current values
-5. Respond in JSON format with the following structure:
+        # Cardiovascular metrics (need at least 3 for basic analysis)
+        if len(cardio_features) >= 3:
+            prompt_parts.extend([
+                f"Average Heart Rate: {cardio_features[0]} bpm",
+                f"Max Heart Rate: {cardio_features[1]} bpm",
+                f"Min Heart Rate: {cardio_features[2]} bpm",
+            ])
 
-{{
-    "narrative": "A comprehensive 2-3 paragraph summary of the user's health status",
-    "key_insights": [
-        "Specific insight about cardiovascular health",
-        "Specific insight about respiratory health",
-        "Specific insight about activity patterns",
-        "Overall health trend observation"
-    ],
-    "recommendations": [
-        "Specific actionable recommendation #1",
-        "Specific actionable recommendation #2",
-        "Specific actionable recommendation #3"
-    ],
-    "health_score": "Overall health score from 1-10",
-    "confidence_level": "Confidence in analysis (high/medium/low)"
-}}
+        # Respiratory metrics (need at least 4 for basic analysis)
+        if len(respiratory_features) >= 4:
+            prompt_parts.extend([
+                f"Average Respiratory Rate: {respiratory_features[0]} rpm",
+                f"SpO2 Average: {respiratory_features[3]}%",
+            ])
 
-Generate the health insight now:"""
+        # Enhanced sleep metrics if available
+        if "sleep_efficiency" in enhanced:
+            prompt_parts.extend([
+                f"Sleep Efficiency: {enhanced['sleep_efficiency']}%",
+                f"Total Sleep Time: {enhanced['total_sleep_time']} hours",
+            ])
+
+        if "sleep_consistency_rating" in enhanced:
+            prompt_parts.append(f"Sleep Consistency: {enhanced['sleep_consistency_rating'].title()}")
+
+        # Health scores from summary stats
+        summary_stats = analysis_results.get("summary_stats", {})
+        health_indicators = summary_stats.get("health_indicators", {})
+        
+        if cardio_health := health_indicators.get("cardiovascular_health"):
+            if circadian_score := cardio_health.get("circadian_rhythm"):
+                prompt_parts.append(f"Circadian Rhythm Score: {circadian_score}/1.0")
+
+        if respiratory_health := health_indicators.get("respiratory_health"):
+            if respiratory_score := respiratory_health.get("respiratory_stability"):
+                prompt_parts.append(f"Respiratory Health Score: {respiratory_score}/1.0")
+
+        # If no meaningful metrics found, provide general prompt
+        if len(prompt_parts) == 1:  # Only has the initial prompt part
+            prompt_parts.append("Limited health metrics available for analysis.")
+
+        prompt_parts.append("""
+
+Please provide a comprehensive health analysis with:
+1. Key insights about health patterns and trends
+2. Specific recommendations for improvement
+3. Risk factors or areas of concern (if any)  
+4. Overall health score (1-10)
+
+Respond in JSON format with these fields:
+{
+  "insights": ["insight1", "insight2", ...],
+  "recommendations": ["rec1", "rec2", ...], 
+  "risk_factors": ["risk1", "risk2", ...],
+  "health_score": 8,
+  "confidence_level": "high"
+}""")
+
+        return "\n".join(prompt_parts)
 
     async def _call_gemini_api(self, prompt: str) -> dict[str, Any]:
         """Call Gemini API to generate insight."""
-        try:
-            if self.model is None:
-                self._raise_model_not_initialized_error()
+        if self.model is None:
+            GeminiInsightGenerator._raise_model_not_initialized_error()
 
+        try:
             response = self.model.generate_content(
                 prompt,
                 generation_config=genai.types.GenerationConfig(  # type: ignore[attr-defined]
@@ -264,29 +233,28 @@ Generate the health insight now:"""
                 )
 
             try:
-                insight = json.loads(response_text)
+                insight: dict[str, Any] = json.loads(response_text)
             except json.JSONDecodeError:
                 # Fallback if JSON parsing fails
                 insight = {
-                    "narrative": response_text,
-                    "key_insights": [response_text[:200] + "..."],
+                    "insights": [response_text[:200] + "..."],
                     "recommendations": ["Continue monitoring your health metrics"],
-                    "health_score": "7",
+                    "risk_factors": ["Unable to determine from current data"],
+                    "health_score": 7,
                     "confidence_level": "medium",
                 }
+
+            return insight
 
         except Exception:
             self.logger.exception("Gemini API call failed")
             raise
-        else:
-            return insight  # type: ignore[no-any-return]
 
     @staticmethod
     def _create_mock_insight(_analysis_results: dict[str, Any]) -> dict[str, Any]:
         """Create mock insight when Gemini is not available."""
         return {
-            "narrative": "Your health data shows generally positive trends. Your cardiovascular and respiratory metrics are within healthy ranges, indicating good overall fitness. Continue maintaining your current activity levels and healthy lifestyle habits.",
-            "key_insights": [
+            "insights": [
                 "Your heart rate patterns show good cardiovascular fitness",
                 "Respiratory efficiency is within optimal ranges",
                 "Activity levels demonstrate consistent healthy habits",
@@ -297,39 +265,31 @@ Generate the health insight now:"""
                 "Continue monitoring your heart rate during activities",
                 "Ensure adequate sleep for optimal recovery",
             ],
-            "health_score": "8",
+            "risk_factors": [
+                "No significant risk factors identified from current data",
+            ],
+            "health_score": 8,
             "confidence_level": "medium",
         }
 
     @staticmethod
     def _create_analysis_summary(analysis_results: dict[str, Any]) -> dict[str, Any]:
         """Create summary of analysis results for storage."""
+        total_features = 0
+        modalities_processed = []
+
+        # Count features from different modalities
+        for key, value in analysis_results.items():
+            if isinstance(value, list) and key.endswith("_features"):
+                total_features += len(value)
+                modality_name = key.replace("_features", "")
+                modalities_processed.append(modality_name)
+
         summary = {
-            "modalities_processed": [],
-            "feature_counts": {},
+            "total_features": total_features,
+            "modalities_processed": modalities_processed,
             "processing_metadata": analysis_results.get("processing_metadata", {}),
         }
-
-        if analysis_results.get("cardio_features"):
-            summary["modalities_processed"].append("cardiovascular")
-            summary["feature_counts"]["cardio"] = len(
-                analysis_results["cardio_features"]
-            )
-
-        if analysis_results.get("respiratory_features"):
-            summary["modalities_processed"].append("respiratory")
-            summary["feature_counts"]["respiratory"] = len(
-                analysis_results["respiratory_features"]
-            )
-
-        if analysis_results.get("activity_embedding"):
-            summary["modalities_processed"].append("activity")
-            summary["feature_counts"]["activity"] = len(
-                analysis_results["activity_embedding"]
-            )
-
-        if analysis_results.get("fused_vector"):
-            summary["feature_counts"]["fused"] = len(analysis_results["fused_vector"])
 
         return summary
 
@@ -339,9 +299,9 @@ Generate the health insight now:"""
         """Store insight in Firestore."""
         try:
             doc_ref = (
-                self.firestore_client.collection("insights")
+                self.firestore_client.collection("users")
                 .document(user_id)
-                .collection("uploads")
+                .collection("insights")
                 .document(upload_id)
             )
 
@@ -362,7 +322,7 @@ class InsightSubscriber:
     def __init__(self) -> None:
         """Initialize insight subscriber."""
         self.logger = logging.getLogger(__name__)
-        self.insight_generator = GeminiInsightGenerator()
+        self.generator = GeminiInsightGenerator()
 
         # Environment settings
         self.environment = os.getenv("ENVIRONMENT", "development")
@@ -390,7 +350,7 @@ class InsightSubscriber:
             )
 
             # Generate insight
-            await self.insight_generator.generate_health_insight(
+            await self.generator.generate_health_insight(
                 user_id=message_data["user_id"],
                 upload_id=message_data["upload_id"],
                 analysis_results=message_data["analysis_results"],
@@ -402,12 +362,12 @@ class InsightSubscriber:
 
             return {
                 "status": "success",
-                "user_id": message_data["user_id"],
-                "upload_id": message_data["upload_id"],
-                "insight_generated": True,
-                "insight_id": f"{message_data['user_id']}/{message_data['upload_id']}",
+                "message": "Health insight generated successfully",
             }
 
+        except HTTPException:
+            # Re-raise HTTP exceptions as-is
+            raise
         except Exception as e:
             self.logger.exception("Error processing insight request message")
             raise HTTPException(
@@ -418,14 +378,20 @@ class InsightSubscriber:
         """Extract and decode Pub/Sub message data."""
         try:
             # Pub/Sub push format: {"message": {"data": "<base64>", "attributes": {...}}}
-            message = pubsub_body.get("message", {})
+            if "message" not in pubsub_body:
+                raise HTTPException(status_code=400, detail="Missing 'message' field")
+
+            message = pubsub_body["message"]
+
+            if "data" not in message:
+                raise HTTPException(status_code=400, detail="Missing 'data' field")
 
             # Decode base64 data
-            encoded_data = message.get("data", "")
+            encoded_data = message["data"]
             decoded_data = base64.b64decode(encoded_data).decode("utf-8")
 
             # Parse JSON
-            message_data = json.loads(decoded_data)
+            message_data: dict[str, Any] = json.loads(decoded_data)
 
             # Validate required fields
             required_fields = ["user_id", "upload_id", "analysis_results"]
@@ -433,17 +399,20 @@ class InsightSubscriber:
                 if field not in message_data:
                     self._raise_missing_field_error(field)
 
+            return message_data
+
+        except HTTPException:
+            # Re-raise HTTP exceptions as-is
+            raise
         except Exception as e:
             self.logger.exception("Failed to extract message data")
             raise HTTPException(
-                status_code=400, detail=f"Invalid message format: {e!s}"
+                status_code=500, detail=f"Invalid message format: {e!s}"
             ) from None
-        else:
-            return message_data  # type: ignore[no-any-return]
 
     @staticmethod
-    def _raise_missing_field_error(field: str) -> None:
-        """Raise ValueError for missing required field."""
+    def _raise_missing_field_error(field: str) -> NoReturn:
+        """Raise error for missing required field."""
         msg = f"Missing required field: {field}"
         raise ValueError(msg)
 

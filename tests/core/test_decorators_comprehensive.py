@@ -322,7 +322,7 @@ class TestRetryOnFailureDecorator:
         """Test retry decorator with exponential backoff."""
         call_times = []
 
-        @retry_on_failure(max_retries=2, delay_seconds=0.01, exponential_backoff=True)
+        @retry_on_failure(max_retries=2, delay_seconds=0.05, exponential_backoff=True)
         def test_func() -> None:
             call_times.append(time.time())
             msg = "Test exponential backoff"
@@ -335,7 +335,13 @@ class TestRetryOnFailureDecorator:
         assert len(call_times) == 3
         delay1 = call_times[1] - call_times[0]
         delay2 = call_times[2] - call_times[1]
-        assert delay2 > delay1  # Second delay should be longer
+
+        # The expected delays are 0.05s and 0.10s, but we allow for timing variations
+        # delay1 should be approximately 0.05s (first retry delay)
+        # delay2 should be approximately 0.10s (second retry delay with 2x backoff)
+        assert delay1 >= 0.04  # At least 40ms (allowing 20% tolerance)
+        assert delay2 >= 0.08  # At least 80ms (allowing 20% tolerance)
+        assert delay2 > delay1 * 1.5  # Second delay should be at least 1.5x longer
 
     @staticmethod
     def test_retry_on_failure_linear_backoff() -> None:

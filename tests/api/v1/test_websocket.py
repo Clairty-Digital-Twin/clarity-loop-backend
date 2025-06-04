@@ -193,15 +193,15 @@ class _TestConnectionManager:
         # Actually send the message through the WebSocket for TestClient
         try:
             await websocket.send_json(message_content)
-            logger.info(f"Sent message through websocket: {message_content}")
+            logger.info("Sent message through websocket: %s", message_content)
         except (RuntimeError, ConnectionError, OSError) as e:
-            logger.warning(f"Failed to send message through websocket: {e}")
+            logger.warning("Failed to send message through websocket: %s", e)
 
-        logger.info(f"Recorded direct message send to {websocket}")
+        logger.info("Recorded direct message send to %s", websocket)
 
     async def send_to_user(self, user_id: str, message: Any) -> None:
         """Send a message to all active connections for a given user."""
-        logger.info(f"Attempting to send message to user {user_id}: {message}")
+        logger.info("Attempting to send message to user %s: %s", user_id, message)
 
         message_content = message
         if hasattr(message, "model_dump_json"):
@@ -224,11 +224,11 @@ class _TestConnectionManager:
                     try:
                         await websocket.send_json(message_content)
                         logger.info(
-                            f"Sent message to user {user_id} through websocket: {message_content}"
+                            "Sent message to user %s through websocket: %s", user_id, message_content
                         )
                     except (RuntimeError, ConnectionError, OSError) as e:
                         logger.warning(
-                            f"Failed to send message to user {user_id} through websocket: {e}"
+                            "Failed to send message to user %s through websocket: %s", user_id, e
                         )
 
                     logger.info(

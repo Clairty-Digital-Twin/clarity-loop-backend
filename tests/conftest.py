@@ -51,7 +51,7 @@ class _FakeFS:  # minimal façade
     ) -> "_FakeFS":  # returns self so .document() still works
         return self
 
-    def document(self, *a: Any) -> "_FakeFS":  # → Fake doc ref
+    def document(self, *_a: Any) -> "_FakeFS":  # → Fake doc ref
         return self
 
     def set(self, *a: Any, **kw: Any) -> None:

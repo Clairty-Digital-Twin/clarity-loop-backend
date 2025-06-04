@@ -32,7 +32,7 @@ os.environ["ENVIRONMENT"] = "testing"
 # --- 1. ADC ↦ AnonymousCredentials ----------------------------------
 
 
-def mock_auth_default(*a: Any, **kw: Any) -> tuple[AnonymousCredentials, str]:
+def mock_auth_default(*_a: Any, **_kw: Any) -> tuple[AnonymousCredentials, str]:
     """Mock Google auth default function."""
     return (AnonymousCredentials(), "test-project")
 

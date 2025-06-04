@@ -144,6 +144,7 @@ class SleepProcessor:
             "awakenings": [],
             "rem_pct": [],
             "deep_pct": [],
+            "light_pct": [],
             "waso": [],
             "start_times": [],
         }
@@ -162,6 +163,7 @@ class SleepProcessor:
             awakenings_count=float(np.mean(feature_sets["awakenings"])),
             rem_percentage=float(np.mean(feature_sets["rem_pct"])),
             deep_percentage=float(np.mean(feature_sets["deep_pct"])),
+            light_percentage=float(np.mean(feature_sets["light_pct"])),
             waso_minutes=float(np.mean(feature_sets["waso"])),
             consistency_score=self._calculate_consistency_score(
                 feature_sets["start_times"]

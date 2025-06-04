@@ -176,7 +176,7 @@ class TestSleepProcessor:
                 oxygen_saturation=98.0,
                 heart_rate_variability=45.0,
                 respiratory_rate=16.0,
-                body_temperature=98.6,
+                body_temperature=37.0,  # 37°C instead of 98.6°F
                 blood_glucose=90.0
             ),
             sleep_data=None,

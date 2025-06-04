@@ -42,7 +42,7 @@ def require_auth(
     return decorator
 
 
-def require_permission(permission: str) -> Callable[..., Any]:
+def require_permission(_permission: str) -> Callable[..., Any]:
     """Decorator to require specific permission for an endpoint."""
 
     def decorator(func: Callable) -> Callable:
@@ -65,7 +65,7 @@ def require_permission(permission: str) -> Callable[..., Any]:
     return decorator
 
 
-def require_role(role: str) -> Callable[..., Any]:
+def require_role(_role: str) -> Callable[..., Any]:
     """Decorator to require specific role for an endpoint."""
 
     def decorator(func: Callable[..., Any]) -> Callable[..., Any]:

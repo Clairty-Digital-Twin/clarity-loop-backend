@@ -18,29 +18,26 @@ def get_connection_manager() -> ConnectionManager:
     """Dependency to get the connection manager instance.
 
     This should be used as a FastAPI dependency:
-
-    ```python
-    from fastapi import Depends
-    from .lifespan import get_connection_manager
-
-    @app.websocket("/ws")
-    async def websocket_endpoint(
-        websocket: WebSocket,
-        manager: ConnectionManager = Depends(get_connection_manager)
-    ):
-        # Use manager here
-    ```
+    Uses app.state.connection_manager if available, else falls back to module-level singleton.
     """
-    global _connection_manager
+    import sys
+    from fastapi import Request
 
-    # Try to get from global state first
+    # Try to get from FastAPI app state if running in request context
+    frame = sys._getframe(1)
+    local_vars = frame.f_locals
+    if "request" in local_vars and hasattr(local_vars["request"], "app"):
+        app = local_vars["request"].app
+        if hasattr(app.state, "connection_manager"):
+            return app.state.connection_manager
+
+    # Fallback to module-level singleton
     if _connection_manager is not None:
         return _connection_manager
 
     # For testing, try to get from test helper
     try:
         from tests.api.v1.test_websocket_helper import get_test_connection_manager
-
         return get_test_connection_manager()
     except (ImportError, RuntimeError):
         pass
@@ -55,7 +52,6 @@ def get_connection_manager() -> ConnectionManager:
             max_message_size=1024,
         )
         # Note: background tasks won't be started in this fallback
-
     return _connection_manager
 
 
@@ -98,8 +94,9 @@ async def websocket_lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
         # Shutdown: Clean up connection manager
         logger.info("Shutting down WebSocket services...")
 
-        if _connection_manager:
-            await _connection_manager.stop_background_tasks()
-            _connection_manager = None
+        if hasattr(app.state, "connection_manager"):
+            await app.state.connection_manager.stop_background_tasks()
+            app.state.connection_manager = None
+        _connection_manager = None
 
         logger.info("WebSocket services shut down successfully")

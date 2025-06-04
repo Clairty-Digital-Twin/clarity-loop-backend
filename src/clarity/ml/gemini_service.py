@@ -38,7 +38,7 @@ class HealthInsightRequest(BaseModel):
     """Request for generating health insights."""
 
     user_id: str
-    analysis_results: dict[str, Any] = Field(description="PAT analysis results")
+    analysis_results: dict[str, object] = Field(description="PAT analysis results")
     context: str | None = Field(None, description="Additional context for insights")
     insight_type: str = Field(
         default="comprehensive", description="Type of insight to generate"
@@ -65,7 +65,7 @@ class GeminiService:
         location: str = "us-central1",
         *,
         testing: bool | None = None,
-        model: Any = None,
+        model: object = None,
     ) -> None:
         self.project_id = project_id
         self.location = location

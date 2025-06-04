@@ -238,7 +238,7 @@ class FirebaseAuthMiddleware(BaseHTTPMiddleware):
         # Handle both User objects and dict objects (for tests)
         if hasattr(user_info, "uid"):
             # It's a User object
-            user_info_dict = {
+            user_info_dict: dict[str, Any] = {
                 "user_id": user_info.uid,
                 "email": user_info.email,
                 "name": user_info.display_name,
@@ -250,7 +250,7 @@ class FirebaseAuthMiddleware(BaseHTTPMiddleware):
             }
         else:
             # It's already a dict (test case)
-            user_info_dict = user_info
+            user_info_dict = user_info  # type: ignore[assignment]
 
         return self._create_user_context(user_info_dict)
 

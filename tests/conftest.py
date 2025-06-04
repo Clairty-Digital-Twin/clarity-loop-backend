@@ -11,6 +11,10 @@ from unittest.mock import AsyncMock, MagicMock
 
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
+import google.auth
+from google.auth.credentials import AnonymousCredentials
+import google.cloud.firestore
+import google.cloud.pubsub_v1
 from httpx import AsyncClient
 import numpy as np
 import pytest
@@ -26,13 +30,10 @@ os.environ["ENVIRONMENT"] = "testing"
 
 # Apply GCP patch directly at module level to avoid scope mismatch
 # --- 1. ADC ↦ AnonymousCredentials ----------------------------------
-import os
-
-import google.auth
-from google.auth.credentials import AnonymousCredentials
 
 
-def mock_auth_default(*a, **kw):
+def mock_auth_default(*a: Any, **kw: Any) -> tuple[AnonymousCredentials, str]:
+    """Mock Google auth default function."""
     return (AnonymousCredentials(), "test-project")
 
 
@@ -42,37 +43,35 @@ os.environ["GOOGLE_CLOUD_PROJECT"] = "test-project"
 
 # --- 2. Firestore fake ----------------------------------------------
 class _FakeFS:  # minimal façade
-    def __init__(self, *a, **kw):
+    def __init__(self, *a: Any, **kw: Any) -> None:
         pass
 
-    def collection(self, name):  # returns self so .document() still works
+    def collection(self, name: str) -> "_FakeFS":  # returns self so .document() still works
         return self
 
-    def document(self, *a):  # → Fake doc ref
+    def document(self, *a: Any) -> "_FakeFS":  # → Fake doc ref
         return self
 
-    def set(self, *a, **kw):
+    def set(self, *a: Any, **kw: Any) -> None:
         pass
 
-    def get(self, *a, **kw):
+    @staticmethod
+    def get(*a: Any, **kw: Any) -> dict[Any, Any]:
         return {}
 
-
-import google.cloud.firestore
 
 google.cloud.firestore.Client = _FakeFS
 
 
 # --- 3. Pub/Sub fake -------------------------------------------------
 class _FakePublisher:
-    def __init__(self, *a, **kw):
+    def __init__(self, *a: Any, **kw: Any) -> None:
         pass
 
-    async def publish(self, *a, **kw):
+    @staticmethod
+    async def publish(*a: Any, **kw: Any) -> None:
         return None
 
-
-import google.cloud.pubsub_v1
 
 google.cloud.pubsub_v1.PublisherClient = _FakePublisher
 
@@ -240,6 +239,7 @@ def mock_redis():
 @pytest.fixture
 def mock_test_connection_manager():
     """Stateful mock connection manager for WebSocket testing."""
+    # Import here to avoid circular imports
     from tests.api.v1.test_websocket import _TestConnectionManager
 
     return _TestConnectionManager()

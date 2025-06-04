@@ -1,33 +1,23 @@
 """Tests for WebSocket chat functionality."""
 
-import asyncio  # Added asyncio
-from collections import defaultdict  # Added defaultdict
-from collections.abc import Callable
-from datetime import UTC, datetime, timedelta, timezone  # Added timedelta
+from collections import defaultdict
+from datetime import UTC, datetime, timedelta
 import json
-import logging  # Added logging
+import logging
 import time
-from typing import (  # Added Dict, List, Any, Set, DefaultDict
-    Any,
-    DefaultDict,
-    Dict,
-    List,
-    Optional,
-    Set,
-)
-from unittest.mock import (  # Keep MagicMock for other potential uses if any
+from typing import Any
+from unittest.mock import (
     AsyncMock,
     MagicMock,
 )
-import uuid  # Added uuid
+import uuid
 
 from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
 from fastapi.testclient import TestClient
-from pydantic import Field, ValidationError
+from pydantic import Field
 import pytest
-from starlette.websockets import WebSocketState
 
-from clarity.api.v1.websocket import chat_handler, models
+from clarity.api.v1.websocket import chat_handler
 from clarity.api.v1.websocket.connection_manager import ConnectionManager
 from clarity.api.v1.websocket.lifespan import get_connection_manager
 from clarity.api.v1.websocket.models import (
@@ -40,7 +30,7 @@ from clarity.api.v1.websocket.models import (
 from clarity.auth.firebase_auth import get_current_user_websocket
 from clarity.ml.gemini_service import GeminiService
 from clarity.ml.pat_service import PATModelService
-from clarity.models.user import User, UserProfile
+from clarity.models.user import User
 
 logger = logging.getLogger(__name__)
 # Basic logging for tests, customize as needed, e.g., in conftest.py for global config
@@ -447,7 +437,7 @@ def app(monkeypatch: pytest.MonkeyPatch) -> FastAPI:
     app.dependency_overrides[chat_handler.get_pat_model_service] = lambda: AsyncMock(
         spec=PATModelService
     )
-    app.dependency_overrides[chat_handler.get_connection_manager] = (
+    app.dependency_overrides[get_connection_manager] = (
         create_mock_connection_manager
     )
 
@@ -642,7 +632,7 @@ class TestWebSocketEndpoints:
             chat_handler.get_pat_model_service
         )
         original_connection_manager = app.dependency_overrides.get(
-            chat_handler.get_connection_manager
+            get_connection_manager
         )
 
         app.dependency_overrides[chat_handler.get_gemini_service] = (
@@ -654,15 +644,15 @@ class TestWebSocketEndpoints:
 
         # Create a specific mock_manager for this test and apply AsyncMock to its methods
         mock_manager = _TestConnectionManager()
-        mock_manager.send_to_user = AsyncMock(side_effect=mock_manager.send_to_user)
-        mock_manager.send_to_connection = AsyncMock(
+        mock_manager.send_to_user = AsyncMock(side_effect=mock_manager.send_to_user)  # type: ignore[method-assign]
+        mock_manager.send_to_connection = AsyncMock(  # type: ignore[method-assign]
             side_effect=mock_manager.send_to_connection
         )
-        mock_manager.broadcast_to_room = AsyncMock(
+        mock_manager.broadcast_to_room = AsyncMock(  # type: ignore[method-assign]
             side_effect=mock_manager.broadcast_to_room
         )
 
-        app.dependency_overrides[chat_handler.get_connection_manager] = (
+        app.dependency_overrides[get_connection_manager] = (
             lambda: mock_manager
         )
 
@@ -716,11 +706,11 @@ class TestWebSocketEndpoints:
             del app.dependency_overrides[chat_handler.get_pat_model_service]
 
         if original_connection_manager is not None:
-            app.dependency_overrides[chat_handler.get_connection_manager] = (
+            app.dependency_overrides[get_connection_manager] = (
                 original_connection_manager
             )
         else:
-            del app.dependency_overrides[chat_handler.get_connection_manager]
+            del app.dependency_overrides[get_connection_manager]
 
     async def test_typing_indicator_processing(self, client: TestClient, app: FastAPI):
         user_id = "test-user-123"  # Must match the user ID from mock_get_current_user_websocket
@@ -738,7 +728,7 @@ class TestWebSocketEndpoints:
             chat_handler.get_pat_model_service
         )
         original_connection_manager = app.dependency_overrides.get(
-            chat_handler.get_connection_manager
+            get_connection_manager
         )
 
         app.dependency_overrides[chat_handler.get_gemini_service] = (
@@ -750,15 +740,15 @@ class TestWebSocketEndpoints:
 
         # Create a specific mock_manager for this test and apply AsyncMock to its methods
         mock_manager = _TestConnectionManager()
-        mock_manager.send_to_user = AsyncMock(side_effect=mock_manager.send_to_user)
-        mock_manager.send_to_connection = AsyncMock(
+        mock_manager.send_to_user = AsyncMock(side_effect=mock_manager.send_to_user)  # type: ignore[method-assign]
+        mock_manager.send_to_connection = AsyncMock(  # type: ignore[method-assign]
             side_effect=mock_manager.send_to_connection
         )
-        mock_manager.broadcast_to_room = AsyncMock(
+        mock_manager.broadcast_to_room = AsyncMock(  # type: ignore[method-assign]
             side_effect=mock_manager.broadcast_to_room
         )
 
-        app.dependency_overrides[chat_handler.get_connection_manager] = (
+        app.dependency_overrides[get_connection_manager] = (
             lambda: mock_manager
         )
 
@@ -812,11 +802,11 @@ class TestWebSocketEndpoints:
             del app.dependency_overrides[chat_handler.get_pat_model_service]
 
         if original_connection_manager is not None:
-            app.dependency_overrides[chat_handler.get_connection_manager] = (
+            app.dependency_overrides[get_connection_manager] = (
                 original_connection_manager
             )
         else:
-            del app.dependency_overrides[chat_handler.get_connection_manager]
+            del app.dependency_overrides[get_connection_manager]
 
     async def test_heartbeat_processing(self, client: TestClient, app: FastAPI):
         user_id = "test-user-123"  # Must match the user ID from mock_get_current_user_websocket
@@ -834,7 +824,7 @@ class TestWebSocketEndpoints:
             chat_handler.get_pat_model_service
         )
         original_connection_manager = app.dependency_overrides.get(
-            chat_handler.get_connection_manager
+            get_connection_manager
         )
 
         app.dependency_overrides[chat_handler.get_gemini_service] = (
@@ -846,15 +836,15 @@ class TestWebSocketEndpoints:
 
         # Create a specific mock_manager for this test and apply AsyncMock to its methods
         mock_manager = _TestConnectionManager()
-        mock_manager.send_to_user = AsyncMock(side_effect=mock_manager.send_to_user)
-        mock_manager.send_to_connection = AsyncMock(
+        mock_manager.send_to_user = AsyncMock(side_effect=mock_manager.send_to_user)  # type: ignore[method-assign]
+        mock_manager.send_to_connection = AsyncMock(  # type: ignore[method-assign]
             side_effect=mock_manager.send_to_connection
         )
-        mock_manager.broadcast_to_room = AsyncMock(
+        mock_manager.broadcast_to_room = AsyncMock(  # type: ignore[method-assign]
             side_effect=mock_manager.broadcast_to_room
         )
 
-        app.dependency_overrides[chat_handler.get_connection_manager] = (
+        app.dependency_overrides[get_connection_manager] = (
             lambda: mock_manager
         )
 
@@ -894,11 +884,11 @@ class TestWebSocketEndpoints:
             del app.dependency_overrides[chat_handler.get_pat_model_service]
 
         if original_connection_manager is not None:
-            app.dependency_overrides[chat_handler.get_connection_manager] = (
+            app.dependency_overrides[get_connection_manager] = (
                 original_connection_manager
             )
         else:
-            del app.dependency_overrides[chat_handler.get_connection_manager]
+            del app.dependency_overrides[get_connection_manager]
 
 
 if __name__ == "__main__":

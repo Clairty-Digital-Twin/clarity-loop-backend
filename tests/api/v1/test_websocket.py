@@ -117,13 +117,13 @@ class _TestConnectionManager:
         self.last_heartbeat[websocket] = time.time()
 
         logger.info(
-            f"User {user_id} connected to room {room_id}. Total active websockets: {len(self.active_websockets)}"
+            "User %s connected to room %s. Total active websockets: %s", user_id, room_id, len(self.active_websockets)
         )
-        logger.info(f"Connection info for websocket: {self.connection_info[websocket]}")
+        logger.info("Connection info for websocket: %s", self.connection_info[websocket])
         return new_connection_info
 
     async def disconnect(self, websocket: WebSocket, reason: str | None = None) -> None:
-        logger.info(f"Attempting to disconnect websocket. Reason: {reason}")
+        logger.info("Attempting to disconnect websocket. Reason: %s", reason)
         connection_info_to_remove = self.connection_info.get(websocket)
 
         if not connection_info_to_remove:
@@ -148,7 +148,7 @@ class _TestConnectionManager:
                 self.user_connections[user_id].remove(websocket)
             if not self.user_connections[user_id]:
                 del self.user_connections[user_id]
-                logger.info(f"User {user_id} has no more active connections.")
+                logger.info("User %s has no more active connections.", user_id)
 
         user_still_in_room = False
         if user_id in self.user_connections:
@@ -164,17 +164,17 @@ class _TestConnectionManager:
             and user_id in self.rooms[room_id]
         ):
             self.rooms[room_id].remove(user_id)
-            logger.info(f"User {user_id} removed from room {room_id}.")
+            logger.info("User %s removed from room %s.", user_id, room_id)
             if not self.rooms[room_id]:
                 del self.rooms[room_id]
-                logger.info(f"Room {room_id} is now empty and removed.")
+                logger.info("Room %s is now empty and removed.", room_id)
 
         logger.info(
-            f"Websocket disconnected for user {user_id} from room {room_id}. Total active websockets: {len(self.active_websockets)}"
+            "Websocket disconnected for user %s from room %s. Total active websockets: %s", user_id, room_id, len(self.active_websockets)
         )
 
     async def send_to_connection(self, websocket: WebSocket, message: Any) -> None:
-        logger.info(f"Attempting to send message to connection: {message}")
+        logger.info("Attempting to send message to connection: %s", message)
 
         if websocket not in self.connection_info:
             logger.warning("Cannot send to unknown websocket connection")

@@ -57,11 +57,17 @@ class TestActivityProcessorMainFlow:
         # Check that features are generated
         feature_names = [f.get("feature_name") for f in result]
         expected_features = [
-            "total_steps", "average_daily_steps", "peak_daily_steps",
-            "total_distance", "average_daily_distance",
-            "total_active_energy", "average_daily_active_energy",
-            "total_exercise_minutes", "average_daily_exercise",  # 🔥 FIXED: actual name
-            "total_flights_climbed", "total_active_minutes"
+            "total_steps",
+            "average_daily_steps",
+            "peak_daily_steps",
+            "total_distance",
+            "average_daily_distance",
+            "total_active_energy",
+            "average_daily_active_energy",
+            "total_exercise_minutes",
+            "average_daily_exercise",  # 🔥 FIXED: actual name
+            "total_flights_climbed",
+            "total_active_minutes",
         ]
 
         for expected in expected_features:
@@ -91,7 +97,9 @@ class TestActivityProcessorMainFlow:
     def test_process_with_exception(self, processor, sample_metrics):
         """Test that exceptions are handled gracefully."""
         # Mock the _extract_activity_data to raise an exception
-        with patch.object(processor, '_extract_activity_data', side_effect=Exception("Test error")):
+        with patch.object(
+            processor, "_extract_activity_data", side_effect=Exception("Test error")
+        ):
             result = processor.process(sample_metrics)
 
             assert isinstance(result, list)
@@ -162,7 +170,9 @@ class TestActivityFeatureCalculation:
         assert total_steps["unit"] == "steps"
 
         # Check average daily steps
-        avg_steps = next(f for f in result if f["feature_name"] == "average_daily_steps")
+        avg_steps = next(
+            f for f in result if f["feature_name"] == "average_daily_steps"
+        )
         assert avg_steps["value"] == 6000
 
         # Check peak daily steps
@@ -183,7 +193,9 @@ class TestActivityFeatureCalculation:
         assert total_dist["unit"] == "km"
 
         # Check average daily distance
-        avg_dist = next(f for f in result if f["feature_name"] == "average_daily_distance")
+        avg_dist = next(
+            f for f in result if f["feature_name"] == "average_daily_distance"
+        )
         assert avg_dist["value"] == pytest.approx(3.72, rel=1e-2)
 
     def test_calculate_energy_features(self):
@@ -195,12 +207,16 @@ class TestActivityFeatureCalculation:
         assert len(result) == 2
 
         # Check total energy
-        total_energy = next(f for f in result if f["feature_name"] == "total_active_energy")
+        total_energy = next(
+            f for f in result if f["feature_name"] == "total_active_energy"
+        )
         assert total_energy["value"] == pytest.approx(1152.0, rel=1e-2)
         assert total_energy["unit"] == "kcal"
 
         # Check average daily energy
-        avg_energy = next(f for f in result if f["feature_name"] == "average_daily_active_energy")
+        avg_energy = next(
+            f for f in result if f["feature_name"] == "average_daily_active_energy"
+        )
         assert avg_energy["value"] == pytest.approx(230.4, rel=1e-2)
 
     def test_calculate_exercise_features(self):
@@ -212,12 +228,16 @@ class TestActivityFeatureCalculation:
         assert len(result) == 2
 
         # Check total exercise minutes
-        total_ex = next(f for f in result if f["feature_name"] == "total_exercise_minutes")
+        total_ex = next(
+            f for f in result if f["feature_name"] == "total_exercise_minutes"
+        )
         assert total_ex["value"] == 195
         assert total_ex["unit"] == "minutes"
 
         # Check average daily exercise
-        avg_ex = next(f for f in result if f["feature_name"] == "average_daily_exercise")
+        avg_ex = next(
+            f for f in result if f["feature_name"] == "average_daily_exercise"
+        )
         assert avg_ex["value"] == 39
 
     def test_calculate_consistency_score_perfect(self):
@@ -383,7 +403,9 @@ class TestActivityProcessorEdgeCases:
         total_steps = next(f for f in result if f["feature_name"] == "total_steps")
         assert total_steps["value"] == 5000
 
-        avg_steps = next(f for f in result if f["feature_name"] == "average_daily_steps")
+        avg_steps = next(
+            f for f in result if f["feature_name"] == "average_daily_steps"
+        )
         assert avg_steps["value"] == 5000
 
         peak_steps = next(f for f in result if f["feature_name"] == "peak_daily_steps")
@@ -423,11 +445,17 @@ class TestActivityProcessorIntegration:
         feature_names = [f.get("feature_name") for f in features]
 
         expected_features = [
-            "total_steps", "average_daily_steps", "peak_daily_steps",
-            "total_distance", "average_daily_distance",
-            "total_active_energy", "average_daily_active_energy",
-            "total_exercise_minutes", "average_daily_exercise",  # 🔥 FIXED: actual name
-            "total_flights_climbed", "total_active_minutes"
+            "total_steps",
+            "average_daily_steps",
+            "peak_daily_steps",
+            "total_distance",
+            "average_daily_distance",
+            "total_active_energy",
+            "average_daily_active_energy",
+            "total_exercise_minutes",
+            "average_daily_exercise",  # 🔥 FIXED: actual name
+            "total_flights_climbed",
+            "total_active_minutes",
         ]
 
         for expected in expected_features:
@@ -446,7 +474,9 @@ class TestActivityProcessorIntegration:
         realistic_distances = [2.1, 5.8, 4.2, 3.1, 6.9, 8.5, 1.8]
 
         metrics = []
-        for _i, (steps, distance) in enumerate(zip(realistic_steps, realistic_distances, strict=False)):
+        for _i, (steps, distance) in enumerate(
+            zip(realistic_steps, realistic_distances, strict=False)
+        ):
             metric = Mock(spec=HealthMetric)
             metric.activity_data = Mock(spec=ActivityData)
             metric.activity_data.steps = steps
@@ -465,7 +495,9 @@ class TestActivityProcessorIntegration:
         assert len(features) > 0
 
         # Check that consistency score reflects the variation
-        consistency_features = [f for f in features if "consistency" in f.get("feature_name", "")]
+        consistency_features = [
+            f for f in features if "consistency" in f.get("feature_name", "")
+        ]
         if consistency_features:
             consistency_score = consistency_features[0]["value"]
             assert 0.0 <= consistency_score <= 1.0

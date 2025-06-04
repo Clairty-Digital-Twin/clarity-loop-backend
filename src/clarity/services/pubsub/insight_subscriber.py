@@ -64,23 +64,36 @@ class GeminiInsightGenerator:
                 user_id=user_id,
                 analysis_results=analysis_results,
                 context="Health analysis results",
-                insight_type="comprehensive"
+                insight_type="comprehensive",
             )
 
             # Generate insight using GeminiService
             try:
-                insight_response = await self.gemini_service.generate_health_insights(insight_request)
+                insight_response = await self.gemini_service.generate_health_insights(
+                    insight_request
+                )
 
                 # Convert response to dict for consistency with expected test format
                 insight_dict = {
                     "insights": insight_response.key_insights,  # Map key_insights to insights for test compatibility
                     "recommendations": insight_response.recommendations,
-                    "health_score": int(insight_response.confidence_score * 100),  # Convert to health score format
-                    "confidence_level": "high" if insight_response.confidence_score > HIGH_CONFIDENCE_THRESHOLD else "medium" if insight_response.confidence_score > MEDIUM_CONFIDENCE_THRESHOLD else "low",
+                    "health_score": int(
+                        insight_response.confidence_score * 100
+                    ),  # Convert to health score format
+                    "confidence_level": (
+                        "high"
+                        if insight_response.confidence_score > HIGH_CONFIDENCE_THRESHOLD
+                        else (
+                            "medium"
+                            if insight_response.confidence_score
+                            > MEDIUM_CONFIDENCE_THRESHOLD
+                            else "low"
+                        )
+                    ),
                     "risk_factors": ["None identified"],  # Default for now
                     "narrative": insight_response.narrative,
                     "generated_at": insight_response.generated_at,
-                    "user_id": insight_response.user_id
+                    "user_id": insight_response.user_id,
                 }
             except Exception as e:  # noqa: BLE001
                 logger.warning("⚠️ Gemini service failed, using fallback: %s", str(e))
@@ -92,7 +105,7 @@ class GeminiInsightGenerator:
             return {
                 "status": "success",
                 "message": "Health insight generated successfully",
-                **insight_dict  # Include the actual insight data
+                **insight_dict,  # Include the actual insight data
             }
 
         except HTTPException:
@@ -104,7 +117,9 @@ class GeminiInsightGenerator:
             ) from e
 
     @staticmethod
-    def _enhance_analysis_results_for_gemini(analysis_results: dict[str, Any]) -> dict[str, Any]:
+    def _enhance_analysis_results_for_gemini(
+        analysis_results: dict[str, Any],
+    ) -> dict[str, Any]:
         """Enhance analysis results with computed metrics for Gemini."""
         enhanced = analysis_results.copy()
 
@@ -112,13 +127,13 @@ class GeminiInsightGenerator:
         sleep_features = analysis_results.get("sleep_features")
         if sleep_features is not None:
             # Handle both dict and Pydantic model
-            if hasattr(sleep_features, 'model_dump'):
+            if hasattr(sleep_features, "model_dump"):
                 try:
                     sleep_dict = sleep_features.model_dump()
                 except AttributeError:
                     # Fall back to dict() for older Pydantic versions
                     sleep_dict = sleep_features.dict()
-            elif hasattr(sleep_features, 'dict'):
+            elif hasattr(sleep_features, "dict"):
                 sleep_dict = sleep_features.dict()
             elif isinstance(sleep_features, dict):
                 sleep_dict = sleep_features
@@ -153,34 +168,46 @@ class GeminiInsightGenerator:
     @staticmethod
     def _create_health_prompt(analysis_results: dict[str, Any]) -> str:
         """Create a health analysis prompt for Gemini."""
-        enhanced = GeminiInsightGenerator._enhance_analysis_results_for_gemini(analysis_results)
+        enhanced = GeminiInsightGenerator._enhance_analysis_results_for_gemini(
+            analysis_results
+        )
 
         prompt_parts = ["Please analyze the following health metrics:"]
 
         # Add sleep metrics
         if "sleep_efficiency" in enhanced:
-            prompt_parts.append(f"Sleep Efficiency: {enhanced['sleep_efficiency']:.1f}%")
+            prompt_parts.append(
+                f"Sleep Efficiency: {enhanced['sleep_efficiency']:.1f}%"
+            )
         if "total_sleep_time" in enhanced:
-            prompt_parts.append(f"Total Sleep Time: {enhanced['total_sleep_time']:.1f} hours")
+            prompt_parts.append(
+                f"Total Sleep Time: {enhanced['total_sleep_time']:.1f} hours"
+            )
         if "sleep_consistency_rating" in enhanced:
-            prompt_parts.append(f"Sleep Consistency: {enhanced['sleep_consistency_rating'].title()}")
+            prompt_parts.append(
+                f"Sleep Consistency: {enhanced['sleep_consistency_rating'].title()}"
+            )
 
         # Add cardio metrics if sufficient features
         cardio_features = analysis_results.get("cardio_features", [])
         if len(cardio_features) >= MIN_CARDIO_FEATURES_REQUIRED:
-            prompt_parts.extend([
-                f"Average Heart Rate: {cardio_features[0]:.1f} bpm",
-                f"Max Heart Rate: {cardio_features[1]:.1f} bpm",
-                f"Min Heart Rate: {cardio_features[2]:.1f} bpm"
-            ])
+            prompt_parts.extend(
+                [
+                    f"Average Heart Rate: {cardio_features[0]:.1f} bpm",
+                    f"Max Heart Rate: {cardio_features[1]:.1f} bpm",
+                    f"Min Heart Rate: {cardio_features[2]:.1f} bpm",
+                ]
+            )
 
         # Add respiratory metrics if sufficient features
         respiratory_features = analysis_results.get("respiratory_features", [])
         if len(respiratory_features) >= MIN_RESPIRATORY_FEATURES_REQUIRED:
-            prompt_parts.extend([
-                f"Average Respiratory Rate: {respiratory_features[0]:.1f} rpm",
-                f"SpO2 Average: {respiratory_features[3]:.1f}%"
-            ])
+            prompt_parts.extend(
+                [
+                    f"Average Respiratory Rate: {respiratory_features[0]:.1f} rpm",
+                    f"SpO2 Average: {respiratory_features[3]:.1f}%",
+                ]
+            )
 
         # Add summary stats if available
         summary_stats = analysis_results.get("summary_stats", {})
@@ -188,11 +215,15 @@ class GeminiInsightGenerator:
 
         cardio_health = health_indicators.get("cardiovascular_health", {})
         if "circadian_rhythm" in cardio_health:
-            prompt_parts.append(f"Circadian Rhythm Score: {cardio_health['circadian_rhythm']:.2f}/1.0")
+            prompt_parts.append(
+                f"Circadian Rhythm Score: {cardio_health['circadian_rhythm']:.2f}/1.0"
+            )
 
         respiratory_health = health_indicators.get("respiratory_health", {})
         if "respiratory_stability" in respiratory_health:
-            prompt_parts.append(f"Respiratory Health Score: {respiratory_health['respiratory_stability']:.2f}/1.0")
+            prompt_parts.append(
+                f"Respiratory Health Score: {respiratory_health['respiratory_stability']:.2f}/1.0"
+            )
 
         if len(prompt_parts) == 1:  # Only the initial prompt
             prompt_parts.append("No specific health metrics available for analysis.")
@@ -231,20 +262,23 @@ class GeminiInsightGenerator:
             # Basic recommendations
             recommendations = []
             if sleep_efficiency < GOOD_SLEEP_EFFICIENCY:
-                recommendations.append("Consider establishing a consistent bedtime routine")
+                recommendations.append(
+                    "Consider establishing a consistent bedtime routine"
+                )
             if total_sleep_time < MIN_SLEEP_HOURS:
                 recommendations.append("Aim for 7-9 hours of sleep per night")
 
             # Create test-compatible response format
             return {
                 "insights": insights or ["Analysis completed successfully"],
-                "recommendations": recommendations or ["Continue monitoring your health patterns"],
+                "recommendations": recommendations
+                or ["Continue monitoring your health patterns"],
                 "health_score": 75,  # Default health score
                 "confidence_level": "medium",
                 "risk_factors": ["None identified"],
                 "narrative": narrative,
                 "generated_at": "fallback_mode",
-                "source": "fallback_algorithm"
+                "source": "fallback_algorithm",
             }
 
         except Exception:
@@ -257,17 +291,19 @@ class GeminiInsightGenerator:
                 "risk_factors": ["None identified"],
                 "narrative": "Health analysis completed.",
                 "generated_at": "fallback_mode",
-                "source": "minimal_fallback"
+                "source": "minimal_fallback",
             }
 
-    async def _store_insight(self, user_id: str, upload_id: str, insight: dict[str, Any]) -> None:
+    async def _store_insight(
+        self, user_id: str, upload_id: str, insight: dict[str, Any]
+    ) -> None:
         """Store generated insight in Firestore."""
         try:
             document_path = f"users/{user_id}/insights/{upload_id}"
             await self.firestore_client.create_document(
                 collection="insights",
                 document_id=f"{user_id}_{upload_id}",
-                data=insight
+                data=insight,
             )
             logger.info("✅ Insight stored successfully: %s", document_path)
 

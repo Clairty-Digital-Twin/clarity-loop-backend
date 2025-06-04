@@ -5,8 +5,7 @@ from datetime import UTC, datetime
 import inspect
 import json
 import logging
-from typing import Any, Dict, Optional
-import uuid
+from typing import Any, Dict
 
 from fastapi import (
     APIRouter,
@@ -30,13 +29,9 @@ from clarity.models.user import User
 
 from .lifespan import get_connection_manager
 from .models import (
-    AnalysisUpdateMessage,
     ChatMessage,
     ErrorMessage,
-    HealthInsightMessage,
-    HeartbeatAckMessage,
     MessageType,
-    SystemMessage,
     TypingMessage,
 )
 
@@ -117,32 +112,32 @@ class WebSocketChatHandler:
             logger.warning("Could not find connection info or room_id for typing message.")
 
     async def process_heartbeat(
-        self, websocket: WebSocket, message: dict[str, Any], connection_manager: Any
+        self, websocket: WebSocket, message: Dict[str, Any], connection_manager: Any
     ) -> None:
         user_id = message.get("user_id", "unknown")
         logger.info(f"Processing heartbeat for user {user_id}")
         # Update last active time for the connection
         connection_manager.update_last_active(websocket)
         # Acknowledge heartbeat
-        heartbeat_ack_message = HeartbeatAckMessage(
+        heartbeat_ack_message = HeartbeatMessage(
             user_id=user_id,
             timestamp=datetime.now(UTC),  # Use UTC for consistency
-            type=MessageType.HEARTBEAT_ACK,
             client_timestamp=message.get("client_timestamp", ""),
+            type=MessageType.HEARTBEAT_ACK,
         )
         await connection_manager.send_to_connection(websocket, heartbeat_ack_message)
 
     async def trigger_health_analysis(
         self,
         user_id: str,
-        health_data: dict[str, Any],
+        health_data: Dict[str, Any],
         connection_manager: Any
     ) -> None:
         logger.info(f"Triggering health analysis for user {user_id} with data: {health_data}")
         try:
             # Calculate duration from data_points if available, otherwise use default
             duration_hours = 24
-            if len(health_data) > 1 and "timestamp" in health_data:
+            if len(health_data) > 1 and "data_points" in health_data:
                 timestamps = [dp["timestamp"] for dp in health_data["data_points"]]
                 if timestamps:
                     # Assuming timestamps are sortable (ISO format or datetime objects)
@@ -153,9 +148,9 @@ class WebSocketChatHandler:
                         min_ts = datetime.fromisoformat(min_ts.replace("Z", "+00:00"))
                     if isinstance(max_ts, str):
                         max_ts = datetime.fromisoformat(max_ts.replace("Z", "+00:00"))
-                    duration_hours = (max_ts - min_ts).total_seconds() / 3600
-                    if duration_hours == 0:  # Handle single data point case
-                        duration_hours = 24  # Default to 24 hours if only one point
+                    duration_hours = int((max_ts - min_ts).total_seconds() / 3600) # Cast to int
+                    if duration_hours == 0: # Handle single data point case
+                        duration_hours = 24 # Default to 24 hours if only one point
 
             actigraphy_input = ActigraphyInput(
                 user_id=user_id,
@@ -166,7 +161,7 @@ class WebSocketChatHandler:
                     )
                 ],
                 sampling_rate=1.0,
-                duration_hours=duration_hours  # Use calculated duration
+                duration_hours=duration_hours # Use calculated duration
             )
 
             # Call PATModelService to analyze health data
@@ -279,10 +274,12 @@ async def websocket_chat_endpoint(
                         )
 
                     elif message_type == MessageType.HEALTH_INSIGHT:
-                        health_data = message_data.get("data", {})
-                        await handler.trigger_health_analysis(
-                            user_id, health_data, connection_manager
-                        )
+                        health_data_content = message_data.get("data", {})
+                        user_id_from_message = message_data.get("user_id", "")
+                        if user_id_from_message:  # Ensure user_id is present before triggering analysis
+                            await handler.trigger_health_analysis(user_id_from_message, health_data_content, connection_manager)
+                        else:
+                            logger.warning("User ID not found in health data message.")
 
                     else:
                         logger.warning(f"Unknown message type: {message_type}")

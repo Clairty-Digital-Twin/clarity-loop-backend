@@ -178,12 +178,12 @@ class ConnectionManager:
         Returns:
             bool: True if connection was accepted, False if rejected
         """
-        try:
-            # Check connection limits
-            if len(self.user_connections[user_id]) >= self.max_connections_per_user:
-                await websocket.close(code=1008, reason="Too many connections")
-                return False
+        # Check connection limits
+        if len(self.user_connections[user_id]) >= self.max_connections_per_user:
+            await websocket.close(code=1008, reason="Too many connections")
+            return False
 
+        try:
             # Connection should already be accepted by the endpoint handler
             # Do not call websocket.accept() here as it can only be called once
 
@@ -225,13 +225,13 @@ class ConnectionManager:
             )
             await self.broadcast_to_room(room_id, system_message, exclude_user=user_id)
 
-            return True
-
         except Exception as e:
             logger.exception("Error connecting user %s: %s", user_id, e)
             with contextlib.suppress(Exception):
                 await websocket.close(code=1011, reason="Server error")
             return False
+        else:
+            return True
 
     async def disconnect(
         self, websocket: WebSocket, reason: str = "Normal closure"

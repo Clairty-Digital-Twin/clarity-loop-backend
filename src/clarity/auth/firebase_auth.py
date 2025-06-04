@@ -43,6 +43,14 @@ except Exception:
 security = HTTPBearer(auto_error=False)
 
 
+def _raise_admin_required_error() -> None:
+    """Raise admin privileges required error."""
+    raise HTTPException(
+        status_code=status.HTTP_403_FORBIDDEN,
+        detail="Admin privileges required",
+    )
+
+
 def get_current_user(
     credentials: HTTPAuthorizationCredentials | None = Depends(security),
 ) -> User | None:
@@ -197,11 +205,7 @@ def verify_admin_user(user: User = Depends(get_current_user_required)) -> User:
         # Check if user has admin claim
         custom_claims = user_record.custom_claims or {}
         if not custom_claims.get("admin", False):
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Admin privileges required",
-            )
-        return user
+            _raise_admin_required_error()
 
     except auth.UserNotFoundError as e:
         raise HTTPException(
@@ -213,6 +217,8 @@ def verify_admin_user(user: User = Depends(get_current_user_required)) -> User:
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Error verifying admin privileges",
         ) from e
+    else:
+        return user
 
 
 def create_custom_token(

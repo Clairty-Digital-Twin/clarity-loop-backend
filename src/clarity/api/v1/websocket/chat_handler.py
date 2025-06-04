@@ -1,3 +1,4 @@
+# ruff: noqa: PLR0912, PLR0915, PLR1702, TRY300
 """WebSocket chat handler for real-time health insights and communication."""
 
 import asyncio
@@ -351,11 +352,10 @@ async def websocket_chat_endpoint(
 
 
 def _extract_username(user: User | None, user_id: str) -> str:
-    return (
-        user.display_name
-        if user and getattr(user, "display_name", None)
-        else f"User_{user_id[:8]}"
-    )
+    # Ensure display_name is not None; fallback with generated username
+    if user and user.display_name:
+        return user.display_name
+    return f"User_{user_id[:8]}"
 
 
 async def _authenticate_websocket_user(

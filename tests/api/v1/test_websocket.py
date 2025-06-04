@@ -7,8 +7,8 @@ import logging
 import time
 from typing import Any
 from unittest.mock import (
-    AsyncMock,
     MagicMock,
+    Mock,
 )
 import uuid
 
@@ -207,7 +207,7 @@ class _TestConnectionManager:
 
         logger.info("Recorded direct message send to %s", websocket)
 
-    async def send_to_user(self, user_id: str, message: Any) -> None:  # noqa: ANN401
+    async def send_to_user(self, user_id: str, message: object) -> None:
         """Send a message to all active connections for a given user."""
         logger.info("Attempting to send message to user %s: %s", user_id, message)
 
@@ -410,19 +410,19 @@ def app(monkeypatch: pytest.MonkeyPatch) -> FastAPI:  # noqa: ARG001
         mock_get_current_user_websocket
     )
     # Create properly mocked GeminiService
-    mock_gemini = AsyncMock(spec=GeminiService)
+    mock_gemini = Mock(spec=GeminiService)
 
     # Create a mock response that returns dynamic content
-    async def mock_generate_insights(
-        request: Any,
+    def mock_generate_insights(
+        request: object,
     ) -> object:
         response = MagicMock()
         response.narrative = f"AI Response to: {request.context}"
         return response
 
-    mock_gemini.generate_health_insights = AsyncMock(side_effect=mock_generate_insights)
+    mock_gemini.generate_health_insights = Mock(side_effect=mock_generate_insights)
     app.dependency_overrides[chat_handler.get_gemini_service] = lambda: mock_gemini
-    app.dependency_overrides[chat_handler.get_pat_model_service] = lambda: AsyncMock(
+    app.dependency_overrides[chat_handler.get_pat_model_service] = lambda: Mock(
         spec=PATModelService
     )
     app.dependency_overrides[get_connection_manager] = create_mock_connection_manager
@@ -441,7 +441,7 @@ def client(app: FastAPI) -> TestClient:
 def mock_get_connection_manager():
     # This fixture provides a MagicMock for the ConnectionManager.
     # It's used in tests that directly patch get_connection_manager.
-    with MagicMock(spec=ConnectionManager) as mock_manager:
+    with Mock(spec=ConnectionManager) as mock_manager:
         yield mock_manager
 
 
@@ -587,21 +587,21 @@ class TestWebSocketEndpoints:
         test_token = "test-token"  # noqa: S105
 
         # Mock the external services for this specific test
-        mock_gemini_service = AsyncMock(spec=GeminiService)
+        mock_gemini_service = Mock(spec=GeminiService)
 
         # Create a proper mock response
-        async def mock_generate_insights(
+        def mock_generate_insights(
             request: object,
         ) -> object:
             response = MagicMock()
             response.narrative = f"AI Response to: {request.context}"
             return response
 
-        mock_gemini_service.generate_health_insights = AsyncMock(side_effect=mock_generate_insights)
-        mock_pat_model_service = AsyncMock(spec=PATModelService)
+        mock_gemini_service.generate_health_insights = Mock(side_effect=mock_generate_insights)
+        mock_pat_model_service = Mock(spec=PATModelService)
         # Mock the actual method used by the chat handler
-        mock_pat_model_service.analyze_actigraphy = AsyncMock(
-            return_value=AsyncMock(
+        mock_pat_model_service.analyze_actigraphy = Mock(
+            return_value=Mock(
                 sleep_efficiency=0.85,
                 total_sleep_time=7.5,
                 model_dump=lambda: {"sleep_efficiency": 0.85, "total_sleep_time": 7.5},
@@ -626,13 +626,13 @@ class TestWebSocketEndpoints:
             lambda: mock_pat_model_service
         )
 
-        # Create a specific mock_manager for this test and apply AsyncMock to its methods
+        # Create a specific mock_manager for this test and apply Mock to its methods
         mock_manager = _TestConnectionManager()
-        mock_manager.send_to_user = AsyncMock(side_effect=mock_manager.send_to_user)  # type: ignore[method-assign]
-        mock_manager.send_to_connection = AsyncMock(  # type: ignore[method-assign]
+        mock_manager.send_to_user = Mock(side_effect=mock_manager.send_to_user)  # type: ignore[method-assign]
+        mock_manager.send_to_connection = Mock(  # type: ignore[method-assign]
             side_effect=mock_manager.send_to_connection
         )
-        mock_manager.broadcast_to_room = AsyncMock(  # type: ignore[method-assign]
+        mock_manager.broadcast_to_room = Mock(  # type: ignore[method-assign]
             side_effect=mock_manager.broadcast_to_room
         )
 
@@ -702,8 +702,8 @@ class TestWebSocketEndpoints:
         test_token = "test-token"  # noqa: S105
 
         # Mock the external services for this specific test
-        mock_gemini_service = AsyncMock(spec=GeminiService)
-        mock_pat_model_service = AsyncMock(spec=PATModelService)
+        mock_gemini_service = Mock(spec=GeminiService)
+        mock_pat_model_service = Mock(spec=PATModelService)
 
         # Temporarily override dependencies for this test to use our explicit mocks
         original_gemini_service = app.dependency_overrides.get(
@@ -723,13 +723,13 @@ class TestWebSocketEndpoints:
             lambda: mock_pat_model_service
         )
 
-        # Create a specific mock_manager for this test and apply AsyncMock to its methods
+        # Create a specific mock_manager for this test and apply Mock to its methods
         mock_manager = _TestConnectionManager()
-        mock_manager.send_to_user = AsyncMock(side_effect=mock_manager.send_to_user)  # type: ignore[method-assign]
-        mock_manager.send_to_connection = AsyncMock(  # type: ignore[method-assign]
+        mock_manager.send_to_user = Mock(side_effect=mock_manager.send_to_user)  # type: ignore[method-assign]
+        mock_manager.send_to_connection = Mock(  # type: ignore[method-assign]
             side_effect=mock_manager.send_to_connection
         )
-        mock_manager.broadcast_to_room = AsyncMock(  # type: ignore[method-assign]
+        mock_manager.broadcast_to_room = Mock(  # type: ignore[method-assign]
             side_effect=mock_manager.broadcast_to_room
         )
 
@@ -797,8 +797,8 @@ class TestWebSocketEndpoints:
         test_token = "test-token"  # noqa: S105
 
         # Mock the external services for this specific test
-        mock_gemini_service = AsyncMock(spec=GeminiService)
-        mock_pat_model_service = AsyncMock(spec=PATModelService)
+        mock_gemini_service = Mock(spec=GeminiService)
+        mock_pat_model_service = Mock(spec=PATModelService)
 
         # Temporarily override dependencies for this test to use our explicit mocks
         original_gemini_service = app.dependency_overrides.get(
@@ -818,13 +818,13 @@ class TestWebSocketEndpoints:
             lambda: mock_pat_model_service
         )
 
-        # Create a specific mock_manager for this test and apply AsyncMock to its methods
+        # Create a specific mock_manager for this test and apply Mock to its methods
         mock_manager = _TestConnectionManager()
-        mock_manager.send_to_user = AsyncMock(side_effect=mock_manager.send_to_user)  # type: ignore[method-assign]
-        mock_manager.send_to_connection = AsyncMock(  # type: ignore[method-assign]
+        mock_manager.send_to_user = Mock(side_effect=mock_manager.send_to_user)  # type: ignore[method-assign]
+        mock_manager.send_to_connection = Mock(  # type: ignore[method-assign]
             side_effect=mock_manager.send_to_connection
         )
-        mock_manager.broadcast_to_room = AsyncMock(  # type: ignore[method-assign]
+        mock_manager.broadcast_to_room = Mock(  # type: ignore[method-assign]
             side_effect=mock_manager.broadcast_to_room
         )
 

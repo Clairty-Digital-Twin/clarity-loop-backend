@@ -4,16 +4,16 @@ This test suite follows TDD principles and mirrors the patterns from existing
 processor tests (cardio, activity, respiration) while achieving high coverage.
 """
 
+from datetime import UTC, datetime, timedelta
+
 import pytest
-from datetime import datetime, UTC, timedelta
-from typing import Any
 
 from clarity.ml.processors.sleep_processor import SleepProcessor
 from clarity.models.health_data import (
     HealthMetric,
     HealthMetricType,
     SleepData,
-    SleepStage
+    SleepStage,
 )
 
 
@@ -30,7 +30,7 @@ class TestSleepProcessor:
         """Create sample sleep data for testing."""
         return SleepData(
             total_sleep_minutes=465,  # 7h 45min to match 8-hour window minus awake
-            sleep_efficiency=0.97,    # 465/480 
+            sleep_efficiency=0.97,    # 465/480
             time_to_sleep_minutes=15,
             wake_count=2,
             sleep_stages={
@@ -64,25 +64,25 @@ class TestSleepProcessor:
     def test_process_single_night_complete_data(self, sample_sleep_metric: HealthMetric) -> None:
         """Test processing single night with complete sleep data."""
         metrics = [sample_sleep_metric]
-        
+
         result = self.processor.process(metrics)
-        
+
         # Verify basic sleep metrics
         assert result.total_sleep_minutes == 465
         assert result.sleep_efficiency == 0.97
         assert result.sleep_latency == 15
         assert result.awakenings_count == 2
-        
+
         # Verify sleep stage percentages
-        assert result.rem_percentage == pytest.approx(90/465, abs=0.01)  # 90 min REM
-        assert result.deep_percentage == pytest.approx(90/465, abs=0.01)  # 90 min Deep
-        
+        assert result.rem_percentage == pytest.approx(90 / 465, abs=0.01)  # 90 min REM
+        assert result.deep_percentage == pytest.approx(90 / 465, abs=0.01)  # 90 min Deep
+
         # Verify WASO calculation
         assert result.waso_minutes == 15  # From sleep stages
-        
+
         # Verify consistency (single night should be 0)
         assert result.consistency_score == 0.0  # Single night has no consistency
-        
+
         # Verify overall quality score is reasonable
         assert 0.0 <= result.overall_quality_score <= 1.0
 
@@ -90,6 +90,7 @@ class TestSleepProcessor:
         """Test consistency calculation with multiple nights."""
         base_time = datetime(2024, 6, 1, 23, 0, tzinfo=UTC)
 
+                metrics = []
         for _i, offset_hours in enumerate([0, 0.5, 1.0]):  # 23:00, 23:30, 00:00
             sleep_start = base_time + timedelta(hours=offset_hours)
             sleep_end = sleep_start + timedelta(hours=7.5)  # Consistent 7.5 hour window
@@ -117,13 +118,10 @@ class TestSleepProcessor:
                 metadata={}
             )
             
-            if _i == 0:
-                metrics = [metric]
-            else:
-                metrics.append(metric)
-        
+            metrics.append(metric)
+
         result = self.processor.process(metrics)
-        
+
         # Consistency should be very low due to 1-hour variation
         # Standard deviation of 30 minutes gives low score
         assert result.consistency_score < 0.5
@@ -132,14 +130,14 @@ class TestSleepProcessor:
         """Test processing when sleep stages are not available."""
         sleep_data = SleepData(
             total_sleep_minutes=465,  # Match 8 hour window - 15 min latency
-            sleep_efficiency=0.97,    # 465/480 
+            sleep_efficiency=0.97,    # 465/480
             time_to_sleep_minutes=12,
             wake_count=1,
             sleep_stages=None,  # No stage breakdown
             sleep_start=datetime(2024, 6, 1, 23, 30, tzinfo=UTC),
             sleep_end=datetime(2024, 6, 2, 7, 30, tzinfo=UTC)  # 8 hours total
         )
-        
+
         metric = HealthMetric(
             metric_type=HealthMetricType.SLEEP_ANALYSIS,
             sleep_data=sleep_data,
@@ -147,9 +145,9 @@ class TestSleepProcessor:
             raw_data={"test": "data"},
             metadata={}
         )
-        
+
         result = self.processor.process([metric])
-        
+
         assert result.total_sleep_minutes == 465
         assert result.sleep_efficiency == 0.97
         assert result.rem_percentage == 0.0  # No stage data
@@ -160,7 +158,7 @@ class TestSleepProcessor:
     def test_process_empty_metrics(self) -> None:
         """Test processing with no sleep metrics."""
         result = self.processor.process([])
-        
+
         # Should return empty features
         assert result.total_sleep_minutes == 0.0
         assert result.sleep_efficiency == 0.0
@@ -168,16 +166,19 @@ class TestSleepProcessor:
 
     def test_process_invalid_metrics(self) -> None:
         """Test processing with metrics that have no sleep data."""
+        from clarity.models.health_data import BiometricData
+
         metric = HealthMetric(
             metric_type=HealthMetricType.HEART_RATE,  # Not sleep data
+            biometric_data=BiometricData(heart_rate=72.0),  # Required for heart rate metrics
             sleep_data=None,
             device_id="test_device",
             raw_data={"test": "data"},
             metadata={}
         )
-        
+
         result = self.processor.process([metric])
-        
+
         # Should return empty features
         assert result.total_sleep_minutes == 0.0
         assert result.overall_quality_score == 0.0
@@ -186,7 +187,7 @@ class TestSleepProcessor:
         """Test summary statistics generation."""
         result = self.processor.process([sample_sleep_metric])
         summary = self.processor.get_summary_stats([sample_sleep_metric])
-        
+
         # Verify summary structure
         assert "overall_quality_rating" in summary
         assert "sleep_duration_hours" in summary

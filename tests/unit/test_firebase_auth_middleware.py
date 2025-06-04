@@ -57,6 +57,7 @@ class TestFirebaseAuthProvider:
     def auth_provider(middleware_config: MiddlewareConfig) -> FirebaseAuthProvider:
         """Create Firebase auth provider with test configuration."""
         from dataclasses import asdict
+
         return FirebaseAuthProvider(
             credentials_path="test/path",
             project_id="test-project",
@@ -116,13 +117,11 @@ class TestFirebaseAuthProvider:
             result = await auth_provider.verify_token("valid_token")
 
             assert result is not None
-            assert result["user_id"] == "test_user_123"
-            assert result["email"] == "test@example.com"
-            assert result["name"] == "Test User"
-            assert result["verified"] is True
-            assert result["roles"] == ["patient"]
-            assert "created_at" in result
-            assert "custom_claims" in result
+            assert result.uid == "test_user_123"
+            assert result.email == "test@example.com"
+            assert result.display_name == "Test User"
+            assert result.email_verified is True
+            assert result.firebase_token == "valid_token"
 
     @pytest.mark.asyncio
     @staticmethod
@@ -130,7 +129,7 @@ class TestFirebaseAuthProvider:
         """Test token verification with expired token."""
         with (
             patch("firebase_admin.auth.verify_id_token") as mock_verify,
-            patch.object(auth_provider, "_ensure_initialized", new_callable=AsyncMock),
+            patch.object(auth_provider, "initialize", new_callable=AsyncMock),
         ):
             # Create mock exception directly to avoid import issues
             mock_verify.side_effect = Exception(
@@ -147,7 +146,7 @@ class TestFirebaseAuthProvider:
         """Test token verification with revoked token."""
         with (
             patch("firebase_admin.auth.verify_id_token") as mock_verify,
-            patch.object(auth_provider, "_ensure_initialized", new_callable=AsyncMock),
+            patch.object(auth_provider, "initialize", new_callable=AsyncMock),
         ):
             # Create mock exception directly to avoid import issues
             mock_verify.side_effect = Exception(
@@ -164,7 +163,7 @@ class TestFirebaseAuthProvider:
         """Test token verification with invalid token."""
         with (
             patch("firebase_admin.auth.verify_id_token") as mock_verify,
-            patch.object(auth_provider, "_ensure_initialized", new_callable=AsyncMock),
+            patch.object(auth_provider, "initialize", new_callable=AsyncMock),
         ):
             # Create mock exception directly to avoid import issues
             mock_verify.side_effect = Exception(
@@ -186,7 +185,7 @@ class TestFirebaseAuthProvider:
         with (
             patch("clarity.auth.firebase_auth.auth.verify_id_token") as mock_verify,
             patch("clarity.auth.firebase_auth.auth.get_user") as mock_get_user,
-            patch.object(auth_provider, "_ensure_initialized", new_callable=AsyncMock),
+            patch.object(auth_provider, "initialize", new_callable=AsyncMock),
         ):
             mock_verify.return_value = mock_decoded_token
             mock_get_user.return_value = mock_firebase_user_record
@@ -225,7 +224,7 @@ class TestFirebaseAuthProvider:
         with (
             patch("clarity.auth.firebase_auth.auth.verify_id_token") as mock_verify,
             patch("clarity.auth.firebase_auth.auth.get_user") as mock_get_user,
-            patch.object(auth_provider, "_ensure_initialized", new_callable=AsyncMock),
+            patch.object(auth_provider, "initialize", new_callable=AsyncMock),
         ):
             mock_verify.return_value = {"uid": "test_user", "custom_claims": {}}
             mock_get_user.return_value = mock_user_record
@@ -250,7 +249,7 @@ class TestFirebaseAuthProvider:
         with (
             patch("clarity.auth.firebase_auth.auth.verify_id_token") as mock_verify,
             patch("clarity.auth.firebase_auth.auth.get_user") as mock_get_user,
-            patch.object(auth_provider, "_ensure_initialized", new_callable=AsyncMock),
+            patch.object(auth_provider, "initialize", new_callable=AsyncMock),
         ):
             mock_verify.return_value = mock_decoded_token
             mock_get_user.return_value = mock_firebase_user_record
@@ -282,7 +281,7 @@ class TestFirebaseAuthProvider:
         with (
             patch("clarity.auth.firebase_auth.auth.verify_id_token") as mock_verify,
             patch("clarity.auth.firebase_auth.auth.get_user") as mock_get_user,
-            patch.object(auth_provider, "_ensure_initialized", new_callable=AsyncMock),
+            patch.object(auth_provider, "initialize", new_callable=AsyncMock),
         ):
             mock_verify.return_value = mock_decoded_token
             mock_get_user.return_value = mock_firebase_user_record
@@ -304,7 +303,7 @@ class TestFirebaseAuthProvider:
         """Test successful user info retrieval."""
         with (
             patch("clarity.auth.firebase_auth.auth.get_user") as mock_get_user,
-            patch.object(auth_provider, "_ensure_initialized", new_callable=AsyncMock),
+            patch.object(auth_provider, "initialize", new_callable=AsyncMock),
         ):
             mock_get_user.return_value = mock_firebase_user_record
 
@@ -320,7 +319,7 @@ class TestFirebaseAuthProvider:
         """Test user info retrieval for non-existent user."""
         with (
             patch("clarity.auth.firebase_auth.auth.get_user") as mock_get_user,
-            patch.object(auth_provider, "_ensure_initialized", new_callable=AsyncMock),
+            patch.object(auth_provider, "initialize", new_callable=AsyncMock),
         ):
             if firebase_admin:
                 mock_get_user.side_effect = firebase_admin.auth.UserNotFoundError(

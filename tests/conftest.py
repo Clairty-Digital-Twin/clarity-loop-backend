@@ -62,8 +62,7 @@ class _FakeFS:  # minimal façade
         del args  # Explicitly delete to satisfy linter
         return self
 
-    @staticmethod
-    def set(*args: object, **kwargs: object) -> None:
+    def set(self, *args: object, **kwargs: object) -> None:  # noqa: PLR6301
         """Mock set method."""
         # Arguments are unused as this is a mock method
         del args, kwargs  # Explicitly delete to satisfy linter

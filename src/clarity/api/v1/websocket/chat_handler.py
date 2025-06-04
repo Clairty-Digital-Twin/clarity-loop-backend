@@ -67,7 +67,6 @@ class WebSocketChatHandler:
 
     async def process_chat_message(
         self,
-        websocket: WebSocket,
         chat_message: ChatMessage,
         connection_manager: ConnectionManager,
     ) -> None:
@@ -280,7 +279,7 @@ async def websocket_chat_endpoint(
                     if message_type == MessageType.MESSAGE.value:
                         chat_msg: ChatMessage = ChatMessage(**message_data)
                         await handler.process_chat_message(
-                            websocket, chat_msg, connection_manager
+                            chat_msg, connection_manager
                         )
 
                     elif message_type == MessageType.TYPING.value:

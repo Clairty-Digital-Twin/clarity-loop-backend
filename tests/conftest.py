@@ -43,7 +43,7 @@ os.environ["GOOGLE_CLOUD_PROJECT"] = "test-project"
 
 # --- 2. Firestore fake ----------------------------------------------
 class _FakeFS:  # minimal façade
-    def __init__(self, *a: Any, **kw: Any) -> None:
+    def __init__(self, *_a: Any, **_kw: Any) -> None:
         pass
 
     def collection(

@@ -174,6 +174,9 @@ def get_user_from_request(request: Request) -> User | None:
             profile=None,
         )
 
+    except (auth.InvalidIdTokenError, auth.ExpiredIdTokenError, ValueError):
+        # Common auth/token parsing errors
+        return None
     except Exception as e:
         logger.debug("Could not extract user from request: %s", e)
         return None
@@ -197,7 +200,6 @@ def verify_admin_user(user: User = Depends(get_current_user_required)) -> User:
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Admin privileges required",
             )
-
         return user
 
     except auth.UserNotFoundError as e:

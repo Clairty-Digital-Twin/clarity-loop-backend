@@ -425,7 +425,7 @@ class TestWebSocketEndpoints:
 class TestChatHandler:
     """Test chat handler functionality."""
 
-    @patch("clarity.services.gemini_service.GeminiService")
+    @patch("clarity.ml.gemini_service.GeminiService")
     async def test_health_insight_generation(self, mock_gemini_service: MagicMock) -> None:
         """Test health insight generation from chat messages."""
         # Mock Gemini service response

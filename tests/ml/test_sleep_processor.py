@@ -31,17 +31,17 @@ class TestSleepProcessor:
         """Create sample sleep data for testing."""
         return SleepData(
             total_sleep_minutes=465,  # 7h 45min to match 8-hour window minus awake
-            sleep_efficiency=0.97,    # 465/480
+            sleep_efficiency=0.97,  # 465/480
             time_to_sleep_minutes=15,
             wake_count=2,
             sleep_stages={
                 SleepStage.AWAKE: 15,
                 SleepStage.REM: 90,
                 SleepStage.LIGHT: 285,
-                SleepStage.DEEP: 90
+                SleepStage.DEEP: 90,
             },
             sleep_start=datetime(2024, 6, 1, 23, 0, tzinfo=UTC),
-            sleep_end=datetime(2024, 6, 2, 7, 0, tzinfo=UTC)  # 8 hours total
+            sleep_end=datetime(2024, 6, 2, 7, 0, tzinfo=UTC),  # 8 hours total
         )
 
     @pytest.fixture
@@ -53,16 +53,18 @@ class TestSleepProcessor:
             sleep_data=sample_sleep_data,
             device_id="test_device",
             raw_data={"test": "data"},
-            metadata={"test": "metadata"}
+            metadata={"test": "metadata"},
         )
 
     def test_processor_initialization(self) -> None:
         """Test processor initializes correctly."""
         assert isinstance(self.processor, SleepProcessor)
         # Processor doesn't have processor_name attribute, just check it exists
-        assert hasattr(self.processor, 'process')
+        assert hasattr(self.processor, "process")
 
-    def test_process_single_night_complete_data(self, sample_sleep_metric: HealthMetric) -> None:
+    def test_process_single_night_complete_data(
+        self, sample_sleep_metric: HealthMetric
+    ) -> None:
         """Test processing single night with complete sleep data."""
         metrics = [sample_sleep_metric]
 
@@ -76,7 +78,9 @@ class TestSleepProcessor:
 
         # Verify sleep stage percentages
         assert result.rem_percentage == pytest.approx(90 / 465, abs=0.01)  # 90 min REM
-        assert result.deep_percentage == pytest.approx(90 / 465, abs=0.01)  # 90 min Deep
+        assert result.deep_percentage == pytest.approx(
+            90 / 465, abs=0.01
+        )  # 90 min Deep
 
         # Verify WASO calculation
         assert result.waso_minutes == 15  # From sleep stages
@@ -105,10 +109,10 @@ class TestSleepProcessor:
                     SleepStage.AWAKE: 20,
                     SleepStage.REM: 84,
                     SleepStage.LIGHT: 252,
-                    SleepStage.DEEP: 84
+                    SleepStage.DEEP: 84,
                 },
                 sleep_start=sleep_start,
-                sleep_end=sleep_end
+                sleep_end=sleep_end,
             )
 
             metric = HealthMetric(
@@ -116,7 +120,7 @@ class TestSleepProcessor:
                 sleep_data=sleep_data,
                 device_id="test_device",
                 raw_data={"test": "data"},
-                metadata={}
+                metadata={},
             )
 
             metrics.append(metric)
@@ -131,12 +135,12 @@ class TestSleepProcessor:
         """Test processing when sleep stages are not available."""
         sleep_data = SleepData(
             total_sleep_minutes=465,  # Match 8 hour window - 15 min latency
-            sleep_efficiency=0.97,    # 465/480
+            sleep_efficiency=0.97,  # 465/480
             time_to_sleep_minutes=12,
             wake_count=1,
             sleep_stages=None,  # No stage breakdown
             sleep_start=datetime(2024, 6, 1, 23, 30, tzinfo=UTC),
-            sleep_end=datetime(2024, 6, 2, 7, 30, tzinfo=UTC)  # 8 hours total
+            sleep_end=datetime(2024, 6, 2, 7, 30, tzinfo=UTC),  # 8 hours total
         )
 
         metric = HealthMetric(
@@ -144,7 +148,7 @@ class TestSleepProcessor:
             sleep_data=sleep_data,
             device_id="test_device",
             raw_data={"test": "data"},
-            metadata={}
+            metadata={},
         )
 
         result = self.processor.process([metric])
@@ -177,12 +181,12 @@ class TestSleepProcessor:
                 heart_rate_variability=45.0,
                 respiratory_rate=16.0,
                 body_temperature=37.0,  # 37°C instead of 98.6°F
-                blood_glucose=90.0
+                blood_glucose=90.0,
             ),
             sleep_data=None,
             device_id="test_device",
             raw_data={"test": "data"},
-            metadata={}
+            metadata={},
         )
 
         result = self.processor.process([metric])
@@ -207,5 +211,15 @@ class TestSleepProcessor:
 
         # Verify reasonable values
         assert summary["sleep_duration_hours"] == pytest.approx(7.75, abs=0.1)  # 465/60
-        assert summary["sleep_efficiency_rating"] in {"excellent", "good", "fair", "poor"}
-        assert summary["overall_quality_rating"] in {"excellent", "good", "fair", "poor"}
+        assert summary["sleep_efficiency_rating"] in {
+            "excellent",
+            "good",
+            "fair",
+            "poor",
+        }
+        assert summary["overall_quality_rating"] in {
+            "excellent",
+            "good",
+            "fair",
+            "poor",
+        }

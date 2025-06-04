@@ -206,9 +206,7 @@ class TestAnalysisPipelineSleepIntegration:
         )
 
         # Test conversion
-        vector = HealthAnalysisPipeline._convert_sleep_features_to_vector(
-            test_features
-        )
+        vector = HealthAnalysisPipeline._convert_sleep_features_to_vector(test_features)
 
         # Verify vector structure
         assert len(vector) == 8

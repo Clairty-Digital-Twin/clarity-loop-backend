@@ -83,17 +83,24 @@ class SleepFeatures(BaseModel):
     # Basic sleep metrics
     total_sleep_minutes: float = Field(default=0.0, description="Total sleep duration")
     sleep_efficiency: float = Field(default=0.0, description="Sleep efficiency ratio")
-    sleep_latency: float = Field(default=0.0, description="Time to fall asleep (minutes)")
+    sleep_latency: float = Field(
+        default=0.0, description="Time to fall asleep (minutes)"
+    )
     awakenings_count: float = Field(default=0.0, description="Number of awakenings")
 
     # Sleep architecture
     rem_percentage: float = Field(default=0.0, description="REM sleep percentage")
     deep_percentage: float = Field(default=0.0, description="Deep sleep percentage")
+    light_percentage: float = Field(default=0.0, description="Light sleep percentage")
     waso_minutes: float = Field(default=0.0, description="Wake after sleep onset")
 
     # Sleep consistency and quality
-    consistency_score: float = Field(default=0.0, description="Sleep schedule consistency")
-    overall_quality_score: float = Field(default=0.0, description="Overall sleep quality")
+    consistency_score: float = Field(
+        default=0.0, description="Sleep schedule consistency"
+    )
+    overall_quality_score: float = Field(
+        default=0.0, description="Overall sleep quality"
+    )
 
 
 class SleepProcessor:
@@ -118,7 +125,8 @@ class SleepProcessor:
         """
         # Filter to sleep-related metrics only
         sleep_data_list = [
-            metric.sleep_data for metric in sleep_metrics
+            metric.sleep_data
+            for metric in sleep_metrics
             if metric.sleep_data is not None
         ]
 
@@ -137,7 +145,7 @@ class SleepProcessor:
             "rem_pct": [],
             "deep_pct": [],
             "waso": [],
-            "start_times": []
+            "start_times": [],
         }
 
         # Process each sleep data record
@@ -155,7 +163,9 @@ class SleepProcessor:
             rem_percentage=float(np.mean(feature_sets["rem_pct"])),
             deep_percentage=float(np.mean(feature_sets["deep_pct"])),
             waso_minutes=float(np.mean(feature_sets["waso"])),
-            consistency_score=self._calculate_consistency_score(feature_sets["start_times"]),
+            consistency_score=self._calculate_consistency_score(
+                feature_sets["start_times"]
+            ),
         )
 
         # Calculate overall quality score
@@ -163,21 +173,29 @@ class SleepProcessor:
 
         return features
 
-    def _extract_basic_features(self, sleep_data: SleepData, feature_sets: dict[str, list[float]]) -> None:
+    @staticmethod
+    def _extract_basic_features(
+        sleep_data: SleepData, feature_sets: dict[str, list[float]]
+    ) -> None:
         """Extract basic sleep metrics from sleep data."""
         feature_sets["total_sleep"].append(float(sleep_data.total_sleep_minutes))
         feature_sets["efficiency"].append(float(sleep_data.sleep_efficiency))
         feature_sets["latency"].append(float(sleep_data.time_to_sleep_minutes or 0))
         feature_sets["awakenings"].append(float(sleep_data.wake_count or 0))
 
-    def _extract_sleep_stages(self, sleep_data: SleepData, feature_sets: dict[str, list[float]]) -> None:
+    def _extract_sleep_stages(
+        self, sleep_data: SleepData, feature_sets: dict[str, list[float]]
+    ) -> None:
         """Extract sleep stage percentages and WASO."""
         rem_pct, deep_pct = self._extract_stage_percentages(sleep_data)
         feature_sets["rem_pct"].append(rem_pct)
         feature_sets["deep_pct"].append(deep_pct)
         feature_sets["waso"].append(self._calculate_waso(sleep_data))
 
-    def _extract_timing_features(self, sleep_data: SleepData, feature_sets: dict[str, list[float]]) -> None:
+    @staticmethod
+    def _extract_timing_features(
+        sleep_data: SleepData, feature_sets: dict[str, list[float]]
+    ) -> None:
         """Extract sleep timing features for consistency analysis."""
         start_hour = sleep_data.sleep_start.hour + sleep_data.sleep_start.minute / 60.0
         # Convert to consistent time scale (e.g., 23:30 = 23.5, 00:30 = 24.5)
@@ -193,7 +211,9 @@ class SleepProcessor:
             return float(sleep_data.sleep_stages[SleepStage.AWAKE])
 
         # Fallback: estimate from efficiency and latency
-        time_in_bed = (sleep_data.sleep_end - sleep_data.sleep_start).total_seconds() / 60
+        time_in_bed = (
+            sleep_data.sleep_end - sleep_data.sleep_start
+        ).total_seconds() / 60
         latency = sleep_data.time_to_sleep_minutes or 0
         waso = time_in_bed - sleep_data.total_sleep_minutes - latency
         return max(0.0, waso)  # Ensure non-negative
@@ -216,12 +236,16 @@ class SleepProcessor:
 
         return float(rem_percentage), float(deep_percentage)
 
-    def get_summary_stats(self, sleep_metrics: list[HealthMetric]) -> dict[str, str | float]:
+    def get_summary_stats(
+        self, sleep_metrics: list[HealthMetric]
+    ) -> dict[str, str | float]:
         """Get summary statistics and ratings for sleep data."""
         features = self.process(sleep_metrics)
 
         return {
-            "overall_quality_rating": self._rate_overall_quality(features.overall_quality_score),
+            "overall_quality_rating": self._rate_overall_quality(
+                features.overall_quality_score
+            ),
             "sleep_duration_hours": features.total_sleep_minutes / 60,
             "sleep_efficiency_rating": self._rate_efficiency(features.sleep_efficiency),
             "sleep_latency_rating": self._rate_latency(features.sleep_latency),
@@ -258,8 +282,10 @@ class SleepProcessor:
         if std_minutes >= CONSISTENCY_STD_THRESHOLD:  # 30+ minutes variation
             return 0.0
 
-        return 1.0 - ((std_minutes - CONSISTENCY_PERFECT_THRESHOLD) /
-                      (CONSISTENCY_STD_THRESHOLD - CONSISTENCY_PERFECT_THRESHOLD))
+        return 1.0 - (
+            (std_minutes - CONSISTENCY_PERFECT_THRESHOLD)
+            / (CONSISTENCY_STD_THRESHOLD - CONSISTENCY_PERFECT_THRESHOLD)
+        )
 
     @staticmethod
     def _calculate_overall_quality_score(features: SleepFeatures) -> float:
@@ -270,7 +296,9 @@ class SleepProcessor:
         scores.append(min(1.0, features.sleep_efficiency))
 
         # Sleep latency component (0-1, inverted - lower is better)
-        latency_score = max(0.0, 1.0 - (features.sleep_latency / 60))  # 60 min = 0 score
+        latency_score = max(
+            0.0, 1.0 - (features.sleep_latency / 60)
+        )  # 60 min = 0 score
         scores.append(latency_score)
 
         # WASO component (0-1, inverted - lower is better)

@@ -163,7 +163,9 @@ class HealthAnalysisPipeline:
                 results.sleep_features = sleep_features.__dict__
 
                 # Convert sleep features to vector for fusion
-                sleep_vector = HealthAnalysisPipeline._convert_sleep_features_to_vector(sleep_features)
+                sleep_vector = HealthAnalysisPipeline._convert_sleep_features_to_vector(
+                    sleep_features
+                )
                 modality_features["sleep"] = sleep_vector
 
             # Step 3: Fuse modalities if we have multiple
@@ -293,7 +295,7 @@ class HealthAnalysisPipeline:
             float(sleep_features.awakenings_count) / 10.0,  # Normalize by 10 awakenings
             float(sleep_features.rem_percentage),
             float(sleep_features.deep_percentage),
-            float(sleep_features.consistency_score)
+            float(sleep_features.consistency_score),
         ]
 
     async def _process_cardio_data(

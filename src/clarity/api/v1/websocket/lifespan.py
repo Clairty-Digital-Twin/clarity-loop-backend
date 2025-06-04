@@ -36,7 +36,7 @@ def get_connection_manager() -> ConnectionManager:
 
     # For testing, try to get from test helper without top-level import to avoid circular dependencies
     try:
-        from tests.api.v1.test_websocket_helper import (
+        from tests.api.v1.test_websocket_helper import (  # noqa: PLC0415
             get_test_connection_manager,
         )
 

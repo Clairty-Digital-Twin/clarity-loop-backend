@@ -87,7 +87,7 @@ class FirebaseAuthMiddleware(BaseHTTPMiddleware):
                         "error": e.error_code,
                         "message": e.message,
                         "timestamp": datetime.now(UTC).isoformat(),
-                    }
+                    },
                 )
             logger.warning(f"Authentication failed: {e}")
             if not self.graceful_degradation:
@@ -97,7 +97,7 @@ class FirebaseAuthMiddleware(BaseHTTPMiddleware):
                         "error": "authentication_failed",
                         "message": "Authentication required",
                         "timestamp": datetime.now(UTC).isoformat(),
-                    }
+                    },
                 )
             # For graceful degradation, set user as None
             request.state.user = None
@@ -245,7 +245,7 @@ class FirebaseAuthMiddleware(BaseHTTPMiddleware):
 
         # Convert user to expected format for _create_user_context
         # Handle both User objects and dict objects (for tests)
-        if hasattr(user_info, 'uid'):
+        if hasattr(user_info, "uid"):
             # It's a User object
             user_info_dict = {
                 "user_id": user_info.uid,
@@ -287,7 +287,7 @@ class FirebaseAuthProvider:
         config_dict: dict[str, Any] = {}
         if middleware_config is None:
             config_dict = {}
-        elif hasattr(middleware_config, '__dict__'):
+        elif hasattr(middleware_config, "__dict__"):
             # It's a MiddlewareConfig object, convert to dict
             config_dict = middleware_config.__dict__
         else:
@@ -297,8 +297,8 @@ class FirebaseAuthProvider:
         self.middleware_config = config_dict
         self._initialized = False
         self._token_cache: dict[str, dict[str, Any]] = {}  # token -> {data, timestamp}
-        self._cache_ttl = config_dict.get('cache_ttl_seconds', 300)  # 5 minutes
-        self._cache_max_size = config_dict.get('cache_max_size', 1000)
+        self._cache_ttl = config_dict.get("cache_ttl_seconds", 300)  # 5 minutes
+        self._cache_max_size = config_dict.get("cache_max_size", 1000)
 
         logger.info("Firebase authentication provider created")
         if credentials_path:
@@ -342,7 +342,7 @@ class FirebaseAuthProvider:
             await self.initialize()
 
         # Check cache first if caching is enabled
-        cache_enabled = self.middleware_config.get('cache_enabled', True)
+        cache_enabled = self.middleware_config.get("cache_enabled", True)
         current_time = time.time()
 
         if cache_enabled and token in self._token_cache:
@@ -373,10 +373,7 @@ class FirebaseAuthProvider:
 
             # Cache the user data with timestamp if caching is enabled
             if cache_enabled:
-                self._token_cache[token] = {
-                    "user": user,
-                    "timestamp": current_time
-                }
+                self._token_cache[token] = {"user": user, "timestamp": current_time}
 
                 # Clean up expired cache entries
                 self._cleanup_expired_cache()
@@ -465,7 +462,8 @@ class FirebaseAuthProvider:
         """Remove expired entries from token cache."""
         current_time = time.time()
         expired_tokens = [
-            token for token, data in self._token_cache.items()
+            token
+            for token, data in self._token_cache.items()
             if current_time - data["timestamp"] > self._cache_ttl
         ]
 
@@ -476,8 +474,7 @@ class FirebaseAuthProvider:
         if len(self._token_cache) > self._cache_max_size:
             # Remove oldest entries
             sorted_cache = sorted(
-                self._token_cache.items(),
-                key=lambda x: x[1]["timestamp"]
+                self._token_cache.items(), key=lambda x: x[1]["timestamp"]
             )
             excess_count = len(self._token_cache) - self._cache_max_size
             for token, _ in sorted_cache[:excess_count]:

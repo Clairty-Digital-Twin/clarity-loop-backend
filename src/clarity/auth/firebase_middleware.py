@@ -277,10 +277,12 @@ class FirebaseAuthProvider:
 
         try:
             # Use the existing Firebase auth verification
-            from clarity.auth.firebase_auth import auth
+            from firebase_admin import auth
 
             decoded_token = auth.verify_id_token(token)
+            current_time = time.time()
 
+            # Create user object from Firebase token data
             user = User(
                 uid=decoded_token["uid"],
                 email=decoded_token.get("email"),
@@ -291,6 +293,15 @@ class FirebaseAuthProvider:
                 last_login=None,
                 profile=None,
             )
+
+            # Cache the user data with timestamp
+            self._token_cache[token] = {
+                "user": user,
+                "timestamp": current_time
+            }
+
+            # Clean up expired cache entries
+            self._cleanup_expired_cache()
 
             return user
 

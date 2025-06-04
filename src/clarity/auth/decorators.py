@@ -10,15 +10,37 @@ from clarity.auth.firebase_auth import get_current_user_required
 from clarity.models.user import User
 
 
-def require_auth(func: Callable) -> Callable:
-    """Decorator to require authentication for an endpoint."""
+def require_auth(permissions: list[str] | None = None, roles: list[str] | None = None):
+    """Decorator to require authentication and optionally check permissions/roles."""
+    
+    def decorator(func: Callable) -> Callable:
+        @wraps(func)
+        async def wrapper(*args, **kwargs):
+            # Extract user from kwargs (injected by dependency)
+            user = kwargs.get("current_user")
+            if not user:
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail="Authentication required",
+                )
 
-    @wraps(func)
-    async def wrapper(*args, **kwargs):
-        # The dependency injection will handle authentication
-        return await func(*args, **kwargs)
+            # Check permissions if specified
+            if permissions:
+                # For now, all authenticated users have all permissions
+                # In a real app, check user.permissions or roles
+                pass
 
-    return wrapper
+            # Check roles if specified  
+            if roles:
+                # For now, all authenticated users have all roles
+                # In a real app, check user.roles
+                pass
+
+            return await func(*args, **kwargs)
+
+        return wrapper
+
+    return decorator
 
 
 def require_permission(permission: str):

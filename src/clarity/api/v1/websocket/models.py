@@ -1,6 +1,6 @@
 """WebSocket data models for structured communication."""
 
-from datetime import datetime
+from datetime import UTC, datetime
 from enum import StrEnum
 from typing import Any
 

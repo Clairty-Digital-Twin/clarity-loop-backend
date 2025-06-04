@@ -36,7 +36,7 @@ class BaseMessage(BaseModel):
     model_config = ConfigDict(str_strip_whitespace=True)
 
     type: MessageType
-    timestamp: datetime = Field(default_factory=datetime.utcnow)
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(UTC))
     message_id: str | None = None
 
 

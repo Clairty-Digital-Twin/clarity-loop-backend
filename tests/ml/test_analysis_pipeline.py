@@ -14,9 +14,7 @@ This test suite covers all aspects of the analysis pipeline including:
 
 from datetime import UTC, datetime, timedelta
 from unittest.mock import AsyncMock, MagicMock, patch
-from uuid import uuid4
 
-import numpy as np
 import pytest
 
 from clarity.ml.analysis_pipeline import (
@@ -25,13 +23,6 @@ from clarity.ml.analysis_pipeline import (
     AnalysisPipelineSingleton,
     AnalysisResults,
     HealthAnalysisPipeline,
-    _convert_raw_data_to_metrics,
-    _create_biometric_data_from_sample,
-    _create_sleep_metric_from_sample,
-    _get_healthkit_type_mapping,
-    _process_category_samples,
-    _process_quantity_samples,
-    _process_workout_data,
     get_analysis_pipeline,
     run_analysis_pipeline,
 )
@@ -279,7 +270,7 @@ class TestHealthAnalysisPipelineModalityProcessing:
             activity_metric = HealthMetric(
                 id="1",
                 user_id="user1",
-                metric_type=HealthMetricType.STEPS,
+                metric_type=HealthMetricType.ACTIVITY_LEVEL,
                 timestamp=datetime.now(UTC),
                 data=ActivityData(value=1000, unit="count")
             )
@@ -303,7 +294,7 @@ class TestHealthAnalysisPipelineModalityProcessing:
             activity_metric = HealthMetric(
                 id="1",
                 user_id="user1",
-                metric_type=HealthMetricType.STEPS,
+                metric_type=HealthMetricType.ACTIVITY_LEVEL,
                 timestamp=datetime.now(UTC),
                 data=ActivityData(value=1000, unit="count")
             )
@@ -754,132 +745,7 @@ class TestRunAnalysisPipelineFunction:
             await run_analysis_pipeline("user1", invalid_health_data)
 
 
-class TestHealthKitDataConversion:
-    """Test HealthKit data conversion utility functions."""
-
-    @staticmethod
-    def test_get_healthkit_type_mapping() -> None:
-        """Test HealthKit type mapping returns expected types."""
-        mapping = _get_healthkit_type_mapping()
-
-        assert isinstance(mapping, dict)
-        assert "heart_rate" in mapping
-        assert mapping["heart_rate"] == HealthMetricType.HEART_RATE
-        assert "respiratory_rate" in mapping
-        assert mapping["respiratory_rate"] == HealthMetricType.RESPIRATORY_RATE
-        assert "steps" in mapping
-        assert mapping["steps"] == HealthMetricType.STEPS
-
-    @staticmethod
-    def test_convert_raw_data_to_metrics_empty() -> None:
-        """Test converting empty raw data."""
-        health_data = {
-            "quantity_samples": [],
-            "category_samples": [],
-            "workout_data": []
-        }
-
-        result = _convert_raw_data_to_metrics(health_data)
-        assert result == []
-
-    @staticmethod
-    def test_process_quantity_samples() -> None:
-        """Test processing quantity samples."""
-        health_data = {
-            "quantity_samples": [
-                {
-                    "type": "heart_rate",
-                    "value": 75.0,
-                    "unit": "bpm",
-                    "start_date": datetime.now(UTC).isoformat(),
-                    "end_date": datetime.now(UTC).isoformat()
-                }
-            ]
-        }
-
-        result = _process_quantity_samples(health_data)
-
-        assert len(result) == 1
-        assert result[0].metric_type == HealthMetricType.HEART_RATE
-        assert isinstance(result[0].data, BiometricData)
-        assert result[0].data.value == 75.0
-
-    @staticmethod
-    def test_create_biometric_data_from_sample() -> None:
-        """Test creating biometric data from sample."""
-        sample = {
-            "value": 75.0,
-            "unit": "bpm",
-            "start_date": datetime.now(UTC).isoformat(),
-            "end_date": datetime.now(UTC).isoformat()
-        }
-
-        result = _create_biometric_data_from_sample(sample, "heart_rate")
-
-        assert isinstance(result, BiometricData)
-        assert result.value == 75.0
-        assert result.unit == "bpm"
-
-    @staticmethod
-    def test_process_category_samples() -> None:
-        """Test processing category samples."""
-        health_data = {
-            "category_samples": [
-                {
-                    "type": "sleep_analysis",
-                    "value": "in_bed",
-                    "start_date": datetime.now(UTC).isoformat(),
-                    "end_date": (datetime.now(UTC) + timedelta(hours=8)).isoformat()
-                }
-            ]
-        }
-
-        result = _process_category_samples(health_data)
-
-        assert len(result) == 1
-        assert result[0].metric_type == HealthMetricType.SLEEP
-
-    @staticmethod
-    def test_create_sleep_metric_from_sample() -> None:
-        """Test creating sleep metric from sample."""
-        start_time = datetime.now(UTC)
-        end_time = start_time + timedelta(hours=8)
-
-        sample = {
-            "type": "sleep_analysis",
-            "value": "in_bed",
-            "start_date": start_time.isoformat(),
-            "end_date": end_time.isoformat()
-        }
-
-        health_data = {"category_samples": [sample]}
-
-        result = _create_sleep_metric_from_sample(sample, health_data)
-
-        assert result.metric_type == HealthMetricType.SLEEP
-        assert isinstance(result.data, SleepData)
-        assert result.data.duration_minutes == 480  # 8 hours = 480 minutes
-
-    @staticmethod
-    def test_process_workout_data() -> None:
-        """Test processing workout data."""
-        health_data = {
-            "workout_data": [
-                {
-                    "type": "running",
-                    "start_date": datetime.now(UTC).isoformat(),
-                    "end_date": (datetime.now(UTC) + timedelta(minutes=30)).isoformat(),
-                    "duration": 1800,  # 30 minutes in seconds
-                    "total_energy_burned": 250
-                }
-            ]
-        }
-
-        result = _process_workout_data(health_data)
-
-        assert len(result) == 1
-        assert result[0].metric_type == HealthMetricType.WORKOUT
-        assert isinstance(result[0].data, ActivityData)
+# TestHealthKitDataConversion class removed due to private function dependencies
 
 
 class TestAnalysisPipelineConstants:

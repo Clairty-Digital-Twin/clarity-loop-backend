@@ -359,14 +359,14 @@ class InsightSubscriber:
                 analysis_results=message_data["analysis_results"],
             )
 
-            logger.info("✅ Successfully processed insight request")
-            return result
-
         except HTTPException:
             raise
         except Exception:
             logger.exception("❌ Failed to process insight request")
             self._raise_processing_error()
+        else:
+            logger.info("✅ Successfully processed insight request")
+            return result
 
     def _extract_message_data(self, pubsub_body: dict[str, Any]) -> dict[str, Any]:
         """Extract and validate message data from Pub/Sub payload."""

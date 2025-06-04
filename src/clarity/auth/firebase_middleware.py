@@ -9,7 +9,6 @@ from typing import Any
 from fastapi import FastAPI, Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware
 
-from clarity.auth.firebase_auth import get_user_from_request
 from clarity.models.user import User
 
 # Removed unused imports - using built-in types instead

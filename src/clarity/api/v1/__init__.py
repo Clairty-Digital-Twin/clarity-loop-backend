@@ -33,7 +33,7 @@ router.include_router(pat_analysis_router)
 # Include Gemini insights routes
 router.include_router(gemini_insights_router)
 
-# Include WebSocket routes  
+# Include WebSocket routes
 router.include_router(chat_router)
 
 __all__ = [

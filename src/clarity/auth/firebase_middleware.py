@@ -1,8 +1,9 @@
 """Firebase authentication middleware and provider classes."""
 
 import asyncio
+from collections.abc import Callable
 import logging
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 from fastapi import FastAPI, Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -15,18 +16,17 @@ logger = logging.getLogger(__name__)
 
 class FirebaseAuthMiddleware(BaseHTTPMiddleware):
     """Firebase authentication middleware for FastAPI applications."""
-    
+
     def __init__(
         self,
         app: FastAPI,
         auth_provider: Any,
-        exempt_paths: Optional[List[str]] = None,
+        exempt_paths: list[str] | None = None,
         cache_enabled: bool = True,
         graceful_degradation: bool = True,
     ):
-        """
-        Initialize Firebase authentication middleware.
-        
+        """Initialize Firebase authentication middleware.
+
         Args:
             app: FastAPI application instance
             auth_provider: Authentication provider instance
@@ -46,26 +46,25 @@ class FirebaseAuthMiddleware(BaseHTTPMiddleware):
         ]
         self.cache_enabled = cache_enabled
         self.graceful_degradation = graceful_degradation
-        self._user_cache: Dict[str, User] = {}
-        
+        self._user_cache: dict[str, User] = {}
+
         logger.info("Firebase authentication middleware initialized")
         logger.info(f"Exempt paths: {self.exempt_paths}")
-    
+
     async def dispatch(self, request: Request, call_next: Callable) -> Response:
-        """
-        Process request through authentication middleware.
-        
+        """Process request through authentication middleware.
+
         Args:
             request: Incoming HTTP request
             call_next: Next middleware/handler in chain
-            
+
         Returns:
             HTTP response
         """
         # Check if path is exempt from authentication
         if self._is_exempt_path(request.url.path):
             return await call_next(request)
-        
+
         # Try to get authenticated user
         user = None
         if self.auth_provider:
@@ -79,23 +78,23 @@ class FirebaseAuthMiddleware(BaseHTTPMiddleware):
                 if not self.graceful_degradation:
                     # Return 401 if graceful degradation is disabled
                     from fastapi import HTTPException, status
+
                     raise HTTPException(
                         status_code=status.HTTP_401_UNAUTHORIZED,
-                        detail="Authentication required"
+                        detail="Authentication required",
                     )
-        
+
         # Add user to request state
         request.state.user = user
-        
+
         return await call_next(request)
-    
+
     def _is_exempt_path(self, path: str) -> bool:
-        """
-        Check if a path is exempt from authentication.
-        
+        """Check if a path is exempt from authentication.
+
         Args:
             path: Request path to check
-            
+
         Returns:
             True if path is exempt
         """
@@ -107,16 +106,15 @@ class FirebaseAuthMiddleware(BaseHTTPMiddleware):
 
 class FirebaseAuthProvider:
     """Firebase authentication provider for dependency injection."""
-    
+
     def __init__(
         self,
-        credentials_path: Optional[str] = None,
-        project_id: Optional[str] = None,
-        middleware_config: Optional[Dict] = None,
+        credentials_path: str | None = None,
+        project_id: str | None = None,
+        middleware_config: dict | None = None,
     ):
-        """
-        Initialize Firebase authentication provider.
-        
+        """Initialize Firebase authentication provider.
+
         Args:
             credentials_path: Path to Firebase service account credentials
             project_id: Firebase project ID
@@ -126,54 +124,54 @@ class FirebaseAuthProvider:
         self.project_id = project_id
         self.middleware_config = middleware_config or {}
         self._initialized = False
-        
+
         logger.info("Firebase authentication provider created")
         if credentials_path:
             logger.info(f"Using credentials from: {credentials_path}")
         if project_id:
             logger.info(f"Firebase project ID: {project_id}")
-    
+
     async def initialize(self) -> None:
-        """
-        Initialize the Firebase authentication provider.
-        
+        """Initialize the Firebase authentication provider.
+
         This method can be called during application startup to perform
         any necessary initialization that might take time or fail.
         """
         if self._initialized:
             return
-        
+
         try:
             # Perform any async initialization here
             await asyncio.sleep(0.1)  # Placeholder for actual initialization
-            
+
             self._initialized = True
             logger.info("Firebase authentication provider initialized successfully")
-            
+
         except Exception as e:
             logger.error(f"Failed to initialize Firebase auth provider: {e}")
             raise
-    
-    async def verify_token(self, token: str) -> Optional[User]:
-        """
-        Verify a Firebase ID token and return user information.
-        
+
+    async def verify_token(self, token: str) -> User | None:
+        """Verify a Firebase ID token and return user information.
+
         Args:
             token: Firebase ID token to verify
-            
+
         Returns:
             User object if token is valid, None otherwise
         """
         if not self._initialized:
-            logger.warning("Auth provider not initialized, attempting lazy initialization")
+            logger.warning(
+                "Auth provider not initialized, attempting lazy initialization"
+            )
             await self.initialize()
-        
+
         try:
             # Use the existing Firebase auth verification
             from clarity.auth.firebase_auth import auth
-            
+
             decoded_token = auth.verify_id_token(token)
-            
+
             user = User(
                 uid=decoded_token["uid"],
                 email=decoded_token.get("email"),
@@ -182,38 +180,37 @@ class FirebaseAuthProvider:
                 firebase_token=token,
                 created_at=None,
                 last_login=None,
-                profile=None
+                profile=None,
             )
-            
+
             return user
-            
+
         except Exception as e:
             logger.debug(f"Token verification failed: {e}")
             return None
-    
-    async def create_user(self, user_data: Dict[str, Any]) -> User:
-        """
-        Create a new user account.
-        
+
+    async def create_user(self, user_data: dict[str, Any]) -> User:
+        """Create a new user account.
+
         Args:
             user_data: User information for account creation
-            
+
         Returns:
             Created user object
         """
         if not self._initialized:
             await self.initialize()
-        
+
         try:
             from clarity.auth.firebase_auth import auth
-            
+
             # Create user in Firebase
             user_record = auth.create_user(
                 email=user_data.get("email"),
                 display_name=user_data.get("display_name"),
-                email_verified=False
+                email_verified=False,
             )
-            
+
             user = User(
                 uid=user_record.uid,
                 email=user_record.email,
@@ -222,19 +219,17 @@ class FirebaseAuthProvider:
                 firebase_token=None,
                 created_at=None,
                 last_login=None,
-                profile=None
+                profile=None,
             )
-            
+
             logger.info(f"Created new user: {user.uid}")
             return user
-            
+
         except Exception as e:
             logger.error(f"Failed to create user: {e}")
             raise
-    
+
     async def cleanup(self) -> None:
-        """
-        Cleanup resources when shutting down.
-        """
+        """Cleanup resources when shutting down."""
         logger.info("Firebase authentication provider cleanup complete")
         self._initialized = False

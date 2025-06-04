@@ -145,13 +145,16 @@ class GeminiInsightGenerator:
                 if hasattr(sleep_features, "dict"):
                     result = sleep_features.dict()  # type: ignore[attr-defined]
                     return dict(result) if result else {}
+                # If model_dump failed and no dict method, return empty dict
+                return {}
         elif hasattr(sleep_features, "dict"):
             result = sleep_features.dict()  # type: ignore[attr-defined]
             return dict(result) if result else {}
         elif isinstance(sleep_features, dict):
             return sleep_features
-        else:
-            return {}
+        
+        # Default return for all other cases
+        return {}
 
     @staticmethod
     def _add_sleep_metrics(

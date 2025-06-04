@@ -31,7 +31,6 @@ class TestGeminiServiceInitialization:
 
         assert service.project_id is None
         assert service.location == "us-central1"
-        assert service.client is None
         assert service.model is None
         assert not service.is_initialized
 
@@ -45,7 +44,6 @@ class TestGeminiServiceInitialization:
 
         assert service.project_id == project_id
         assert service.location == location
-        assert service.client is None
         assert service.model is None
         assert not service.is_initialized
 

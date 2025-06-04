@@ -211,9 +211,9 @@ def client(app: FastAPI) -> TestClient:
 
 
 @pytest.fixture
-async def async_client(_app: FastAPI) -> AsyncGenerator[AsyncClient, None]:
+async def async_client(app: FastAPI) -> AsyncGenerator[AsyncClient, None]:
     """Create async test client for asynchronous testing."""
-    async with AsyncClient(transport=None, base_url="http://test") as ac:
+    async with AsyncClient(app=app, base_url="http://test") as ac:
         yield ac
 
 
@@ -235,6 +235,13 @@ def mock_redis():
     mock_client.delete.return_value = 1
     mock_client.exists.return_value = False
     return mock_client
+
+
+@pytest.fixture
+def mock_test_connection_manager():
+    """Stateful mock connection manager for WebSocket testing."""
+    from tests.api.v1.test_websocket import _TestConnectionManager
+    return _TestConnectionManager()
 
 
 @pytest.fixture(autouse=True)

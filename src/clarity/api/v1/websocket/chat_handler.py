@@ -114,10 +114,10 @@ class WebSocketChatHandler:
             typing_message.is_typing,
         )
         # Broadcast typing status to the room where the user is connected
+        # Note: We would need the websocket reference to exclude the sender properly
         await connection_manager.broadcast_to_room(
             room_id,
             typing_message,
-            exclude_user=typing_message.user_id,  # Don't send back to sender
         )
 
     async def process_heartbeat(
@@ -256,6 +256,7 @@ async def websocket_chat_endpoint(
     logger.info("WebSocket connection attempt: token=%s", token)
 
     try:
+        await websocket.accept()
         await connection_manager.connect(
             websocket=websocket, user_id=user_id, username=username, room_id=room_id
         )
@@ -375,6 +376,8 @@ async def websocket_health_analysis_endpoint(
     logger.info("WebSocket connection attempt: %s", token)
 
     try:
+        await websocket.accept()
+
         if token:
             try:
                 auth_result = get_current_user_websocket(token)

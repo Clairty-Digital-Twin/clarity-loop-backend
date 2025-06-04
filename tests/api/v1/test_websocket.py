@@ -21,24 +21,16 @@ from unittest.mock import (  # Keep MagicMock for other potential uses if any
 )
 import uuid  # Added uuid
 
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException
 from fastapi.testclient import TestClient
 import pytest
 from starlette.websockets import WebSocketState
 
 from clarity.api.v1.websocket import chat_handler, models
 from clarity.api.v1.websocket.connection_manager import ConnectionManager
-from clarity.api.v1.websocket.models import ConnectionInfo
+from clarity.api.v1.websocket.models import ConnectionInfo, MessageType, ChatMessage, TypingMessage, HeartbeatMessage
 from clarity.auth.firebase_auth import User, get_current_user_websocket
-from clarity.models.user import User
-
-try:
-    from clarity.models.preferences import UserPreferences
-    from clarity.models.profile import UserProfile
-except ImportError:
-    UserProfile = None
-    UserPreferences = None
-    print("UserProfile and UserPreferences import failed, using None as fallback")
+from clarity.models.user import User, UserPreferences, UserProfile
 from pydantic import Field, ValidationError
 
 logger = logging.getLogger(__name__)
@@ -46,7 +38,7 @@ logger = logging.getLogger(__name__)
 # logging.basicConfig(level=logging.INFO)
 
 
-class TestConnectionInfo(ConnectionInfo):
+class _TestConnectionInfo(ConnectionInfo):
     """Extended ConnectionInfo for testing purposes."""
 
     room_id: str
@@ -55,7 +47,7 @@ class TestConnectionInfo(ConnectionInfo):
     message_timestamps: list[datetime] = Field(default_factory=list)
 
 
-class TestConnectionManager:
+class _TestConnectionManager:
     """Stateful mock for ConnectionManager to be used in tests."""
 
     def __init__(
@@ -69,7 +61,7 @@ class TestConnectionManager:
     ):
         self.active_websockets: set[WebSocket] = set()
         self.user_connections: defaultdict[str, list[WebSocket]] = defaultdict(list)
-        self.connection_info: dict[WebSocket, TestConnectionInfo] = {}
+        self.connection_info: dict[WebSocket, _TestConnectionInfo] = {}
         self.rooms: defaultdict[str, set[str]] = defaultdict(set)
 
         self.heartbeat_interval = heartbeat_interval
@@ -94,7 +86,7 @@ class TestConnectionManager:
         user_id: str,
         username: str,
         room_id: str = "general",
-    ) -> TestConnectionInfo:
+    ) -> _TestConnectionInfo:
         logger.info(
             f"Attempting to connect user {user_id} to room {room_id} with session {uuid.uuid4()}"
         )
@@ -104,7 +96,7 @@ class TestConnectionManager:
             )
 
         connection_time = datetime.now(UTC)
-        new_connection_info = TestConnectionInfo(
+        new_connection_info = _TestConnectionInfo(
             user_id=user_id,
             username=username,
             session_id=str(uuid.uuid4()),
@@ -303,50 +295,55 @@ class TestConnectionManager:
 
     def get_connection_info_for_websocket(
         self, websocket: WebSocket
-    ) -> TestConnectionInfo | None:
+    ) -> _TestConnectionInfo | None:
         return self.connection_info.get(websocket)
 
 
 @pytest.fixture
-def mock_test_connection_manager() -> TestConnectionManager:
-    return TestConnectionManager()
+def mock_test_connection_manager() -> _TestConnectionManager:
+    return _TestConnectionManager()
 
 
 def create_mock_connection_manager():
     # This function is likely called in chat_handler.py to get the manager instance
-    # We need to ensure it returns the TestConnectionManager for tests
-    return mock_test_connection_manager()
+    # We need to ensure it returns the _TestConnectionManager for tests
+    return _TestConnectionManager()
 
 
 @pytest.fixture
-def app(client: TestClient) -> FastAPI:
+def app() -> FastAPI:
     # This fixture should return a FastAPI app instance configured for testing.
     # It needs to override dependencies to use our mocks.
 
-    # Create a dummy FastAPI app
-    app_instance = FastAPI()
+    app = FastAPI()
 
-    # Override the get_connection_manager dependency to use our mock
-    app_instance.dependency_overrides[chat_handler.get_connection_manager] = (
+    app.include_router(chat_handler.router, prefix="/api/v1/chat")
+    # This mock should return a User instance for successful authentication
+    async def mock_get_current_user_websocket(token: str | None = None) -> User:
+        if token == "test-token":
+            # Correctly instantiate the User model based on its __init__ or create method
+            # Assuming User has user_id, email, and display_name for simplicity in tests
+            # Adjust these fields to match the actual User model's __init__
+            return User(
+                uid="test-user-123",
+                email="test@example.com",
+                display_name="Test User",
+                firebase_token="mock-firebase-token",
+                created_at=datetime.now(UTC),
+                last_login=datetime.now(UTC),
+                profile={},
+            )
+        raise HTTPException(status_code=401, detail="Could not validate credentials")
+
+    app.dependency_overrides[get_current_user_websocket] = mock_get_current_user_websocket
+
+    # Override the get_connection_manager dependency in chat_handler
+    # This ensures our test mock is used when the WebSocket endpoint is called
+    app.dependency_overrides[chat_handler.get_connection_manager] = (
         create_mock_connection_manager
     )
 
-    # Override the get_current_user_websocket dependency to use a mock user
-    async def mock_get_current_user_websocket(token: str | None = None) -> User:
-        if token == "valid_token":
-            return User(uid="test_user_123", email="test@example.com", display_name="TestUser", firebase_token="mock_token", created_at=datetime.now(UTC), last_login=datetime.now(UTC), profile={})
-        if token == "anonymous_token":
-            return User(uid="anonymous_user", email="anonymous@example.com", display_name="AnonymousUser", firebase_token="mock_token", created_at=datetime.now(UTC), last_login=datetime.now(UTC), profile={})
-        raise HTTPException(status_code=401, detail="Invalid credentials")
-
-    app_instance.dependency_overrides[chat_handler.get_current_user_websocket] = (
-        mock_get_current_user_websocket
-    )
-
-    # Include the chat router in the app (this was a missing step from WEBSOCKET_2.md)
-    app_instance.include_router(chat_handler.router, prefix="/api/v1")
-
-    return app_instance
+    yield app
 
 
 @pytest.fixture
@@ -356,48 +353,24 @@ def client(app: FastAPI) -> TestClient:
 
 @pytest.fixture
 def mock_get_connection_manager():
-    mock_manager = MagicMock(spec=ConnectionManager)
-    # Configure the mock to return a mock ConnectionInfo object when connection_info.get is called
-    mock_connection_info = MagicMock(spec=ConnectionInfo)
-    mock_connection_info.user_id = "test_user_123"
-    mock_connection_info.username = "TestUser"
-    mock_connection_info.room_id = "test_room"
-    mock_connection_info.session_id = "mock_session_id"
-    mock_connection_info.connected_at = datetime.now(UTC)
-    mock_connection_info.last_active = datetime.now(UTC)
-    mock_connection_info.last_heartbeat_ack = datetime.now(UTC)
-    mock_connection_info.message_timestamps = []
-
-    mock_manager.connection_info.get.return_value = mock_connection_info
-    mock_manager.connect.return_value = mock_connection_info
-    mock_manager.disconnect = AsyncMock()
-    mock_manager.send_to_connection = AsyncMock()
-    mock_manager.send_to_user = AsyncMock()
-    mock_manager.broadcast_to_room = AsyncMock()
-    mock_manager.handle_heartbeat = AsyncMock()
-    mock_manager.is_rate_limited.return_value = False
-    mock_manager._cleanup_stale_connections = AsyncMock()
-    mock_manager._send_heartbeats = AsyncMock()
-    mock_manager.start_background_tasks = AsyncMock()
-    mock_manager.shutdown = AsyncMock()
-    mock_manager.get_room_users.return_value = {"test_user_123"}
-    mock_manager.get_user_count.return_value = 1
-    mock_manager.get_connection_count.return_value = 1
-
-    return mock_manager
+    # This fixture provides a MagicMock for the ConnectionManager.
+    # It's used in tests that directly patch get_connection_manager.
+    with MagicMock(spec=ConnectionManager) as mock_manager:
+        yield mock_manager
 
 
 @pytest.fixture
 def connection_manager():
+    # This fixture provides an instance of the actual ConnectionManager for tests
+    # that need to interact with it directly.
     return ConnectionManager()
 
 
 class MockWebSocket:
     def __init__(self) -> None:
         self.sent_data: list[str] = []
-        self.close_code: int | None = None
-        self.close_reason: str | None = None
-        self.client_state = WebSocketState.CONNECTED
+        self.received_data: list[str] = []
+        self.closed: bool = False
 
     async def accept(self) -> None:
         pass
@@ -406,362 +379,333 @@ class MockWebSocket:
         self.sent_data.append(data)
 
     async def close(self, code: int = 1000, reason: str = "") -> None:
-        self.close_code = code
-        self.close_reason = reason
-        self.client_state = WebSocketState.DISCONNECTED
+        self.closed = True
 
 
 @pytest.mark.asyncio
 class TestWebSocketEndpoints:
-
     async def test_websocket_chat_endpoint_authenticated(
         self, client: TestClient
     ) -> None:
-        user_id = "test_user_123"
-        auth_headers = {"Authorization": "Bearer valid_token"}
-        room_id = "test_room"
+        user_id = "test-user-123"
+        test_token = "test-token"
+        auth_headers = {"Authorization": f"Bearer {test_token}"}
 
-        print("Attempting WebSocket connection for authenticated user")
-        try:
-            with client.websocket_connect(f"/api/v1/ws/chat/{room_id}?token=valid_token", headers=auth_headers) as websocket:
-                message_payload = {"type": models.MessageType.MESSAGE, "content": "Hello AI", "user_id": user_id}
-                websocket.send_json(message_payload)
+        with client.websocket_connect(f"/api/v1/chat/{user_id}", headers=auth_headers) as websocket:
+            # Send a chat message
+            chat_message = ChatMessage(
+                user_id=user_id,
+                timestamp=datetime.now(UTC).isoformat(),
+                type=MessageType.MESSAGE,
+                content="Hello AI",
+            )
+            websocket.send_json(chat_message.model_dump())
 
-                response = websocket.receive_json()
-                print(f"Received response: {response}")
+            # Expecting a response from the AI handler
+            response_data = websocket.receive_json()
+            assert response_data["message_type"] == MessageType.MESSAGE
+            assert "AI Response to: Hello AI" in response_data["content"]
+            assert response_data["user_id"] == user_id
 
-                assert response["type"] == models.MessageType.MESSAGE
-                assert "Hello" in response["content"]
+            # Test typing indicator
+            typing_indicator = TypingMessage(
+                user_id=user_id,
+                timestamp=datetime.now(UTC).isoformat(),
+                is_typing=True,
+                type=MessageType.TYPING,
+                username="test-user",
+            )
+            websocket.send_json(typing_indicator.model_dump())
 
-                # Test typing indicator
-                typing_payload = {"type": models.MessageType.TYPING, "user_id": user_id, "is_typing": True}
-                websocket.send_json(typing_payload)
+            response_data = websocket.receive_json()
+            assert response_data["message_type"] == MessageType.TYPING
+            assert response_data["user_id"] == user_id
+            assert response_data["is_typing"] is True
 
-                # The typing message should be broadcast, but not necessarily sent back to sender.
-                # For now, we'll just ensure no error occurs.
+            # Test heartbeat
+            heartbeat_message = HeartbeatMessage(
+                timestamp=datetime.now(UTC).isoformat(),
+                type=MessageType.HEARTBEAT,
+            )
+            websocket.send_json(heartbeat_message.model_dump())
 
-        except WebSocketDisconnect as e:
-            pytest.fail(f"WebSocket connection failed: {e!s}")
-        except Exception as e:
-            pytest.fail(f"Unexpected error: {e!s}")
+            response_data = websocket.receive_json()
+            assert response_data["message_type"] == MessageType.HEARTBEAT_ACK
+            assert response_data["user_id"] == user_id
 
     async def test_websocket_chat_endpoint_anonymous(self, client: TestClient) -> None:
-        room_id = "test_room"
-
-        print("Attempting WebSocket connection for anonymous user")
-        try:
-            # FastAPI's Firebase auth middleware expects a token, even if it's dummy
-            # So we pass an anonymous_token and ensure the mock handles it.
-            with client.websocket_connect(f"/api/v1/ws/chat/{room_id}?token=anonymous_token") as websocket:
-                message_payload = {"type": models.MessageType.MESSAGE, "content": "Hello anonymous", "user_id": "anonymous_user"}
-                websocket.send_json(message_payload)
-
-                response = websocket.receive_json()
-                print(f"Received response: {response}")
-
-                assert response["type"] == models.MessageType.MESSAGE
-                assert "Hello" in response["content"]
-
-        except WebSocketDisconnect as e:
-            print(f"WebSocket connection failed for anonymous user with WebSocketDisconnect: {e!s}")
-            print(f"Error code: {e.code}, Reason: {e.reason}")
-            pytest.fail(f"WebSocket connection failed: {e!s}")
-        except Exception as e:
-            pytest.fail(f"Unexpected error: {e!s}")
+        user_id = "anonymous-user-123"
+        with pytest.raises(WebSocketDisconnect) as excinfo:
+            with client.websocket_connect(f"/api/v1/chat/{user_id}") as websocket:
+                # This connection should be rejected by the auth middleware
+                websocket.send_text("Hello")
+        assert excinfo.value.code == 1008  # Policy Violation
 
     async def test_websocket_invalid_message_format(self, client: TestClient) -> None:
-        user_id = "test_user_123"
-        auth_headers = {"Authorization": "Bearer valid_token"}
-        room_id = "test_room"
+        user_id = "test-user-123"
+        test_token = "test-token"
+        auth_headers = {"Authorization": f"Bearer {test_token}"}
 
-        print("Attempting WebSocket connection for invalid message format test")
-        try:
-            with client.websocket_connect(f"/api/v1/ws/chat/{room_id}?token=valid_token", headers=auth_headers) as websocket:
-                # Send an invalid message payload (e.g., missing 'content' or wrong 'type')
-                invalid_payload = {"type": "INVALID_TYPE", "user_id": user_id}
-                websocket.send_json(invalid_payload)
+        with client.websocket_connect(f"/api/v1/chat/{user_id}", headers=auth_headers) as websocket:
+            # Send an invalid message format
+            websocket.send_text("this is not json")
 
-                response = websocket.receive_json()
-                print(f"Received response for invalid message: {response}")
-
-                assert response["type"] == models.MessageType.ERROR
-                assert "error_code" in response
-                assert "message" in response
-
-        except WebSocketDisconnect as e:
-            pytest.fail(f"WebSocket connection failed: {e!s}")
-        except Exception as e:
-            print(f"Unexpected error during invalid message WebSocket test: {e!s}")
-            pytest.fail(f"Unexpected error: {e!s}")
+            response_data = websocket.receive_json()
+            assert response_data["message_type"] == models.MessageType.ERROR
+            assert "Invalid message format" in response_data["content"]
 
     async def test_websocket_typing_indicator(self, client: TestClient) -> None:
-        user_id = "test_user_123"
-        auth_headers = {"Authorization": "Bearer valid_token"}
-        room_id = "test_room"
+        user_id = "test-user-123"
+        test_token = "test-token"
+        auth_headers = {"Authorization": f"Bearer {test_token}"}
 
-        print("Attempting WebSocket connection for typing indicator test")
-        try:
-            with client.websocket_connect(f"/api/v1/ws/chat/{room_id}?token=valid_token", headers=auth_headers) as websocket:
-                typing_payload = {"type": models.MessageType.TYPING, "user_id": user_id, "username": "TestUser", "is_typing": True}
-                websocket.send_json(typing_payload)
+        with client.websocket_connect(f"/api/v1/chat/{user_id}", headers=auth_headers) as websocket:
+            # Send a typing indicator message
+            typing_message = TypingMessage(
+                user_id=user_id,
+                session_id="test-session-123",
+                timestamp=datetime.now(UTC).isoformat(),
+                is_typing=True,
+                type=MessageType.TYPING,
+            )
+            websocket.send_json(typing_message.model_dump())
 
-                # In a real scenario, the typing message would be broadcast to others.
-                # The sender usually doesn't receive their own typing notification.
-                # We will assert that the mock connection manager received the broadcast.
+            # Expect a typing indicator response
+            response_data = websocket.receive_json()
+            assert response_data["message_type"] == MessageType.TYPING
+            assert response_data["user_id"] == user_id
+            assert response_data["is_typing"] is True
 
-                # If the chat_handler echoes back, we might receive something.
-                # For now, we'll try to receive and assert if something comes back,
-                # but the primary check should be on the mock manager's state.
+            # Send another typing indicator, now indicating not typing
+            typing_message.is_typing = False
+            websocket.send_json(typing_message.model_dump())
 
-                # Verify that the typing message was processed (e.g., by checking mock calls)
-                # This requires access to the mock_test_connection_manager instance from the fixture.
-                # We can't directly access it here, so we need to mock chat_handler.chat_handler
-                # or pass the mock manager to the test function if it's truly isolated.
-                # For now, assume it's handled internally without an immediate return to sender.
-
-                # You might need to add an assertion to check if the message was sent to the room
-                # This would typically involve inspecting the mock_test_connection_manager's messages_sent list
-                # which is not directly accessible from this test method without modifying the app fixture or using global mocks.
-                # For now, we'll rely on the handler not raising an exception.
-
-                # Add a receive with a timeout to avoid hanging, as no immediate response is expected.
-                try:
-                    # Expecting a potential message (e.g., an ACK or system message, or nothing)
-                    # Adding a timeout to prevent tests from hanging indefinitely
-                    response = websocket.receive(timeout=1)
-                    print(f"Received response for typing: {response}")
-                    # You could assert something if a response is expected, e.g., a system message ACK
-                    # assert response["type"] == models.MessageType.SYSTEM
-                except WebSocketDisconnect:
-                    # Expected if connection closes after sending typing
-                    pass
-                except Exception as e:
-                    # For any other unexpected errors during receive
-                    print(f"Error receiving during typing test: {e!s}")
-                    # pytest.fail(f"Error receiving during typing test: {e!s}")
-
-        except WebSocketDisconnect as e:
-            pytest.fail(f"WebSocket connection failed: {e!s}")
-        except Exception as e:
-            print(f"Unexpected error during typing indicator WebSocket test: {e!s}")
-            pytest.fail(f"Unexpected error: {e!s}")
+            # Expect a typing indicator response
+            response_data = websocket.receive_json()
+            assert response_data["message_type"] == MessageType.TYPING
+            assert response_data["user_id"] == user_id
+            assert response_data["is_typing"] is False
 
 
 @pytest.mark.asyncio
 class TestChatHandler:
-
     async def test_health_insight_generation(self, app: FastAPI):
         user_id = "test_user_id_1"
-        # Create an instance of the handler, injecting the mock connection manager
-        # We need to get the mock_test_connection_manager instance that the app is using
-        # This is a bit tricky with FastAPI's dependency injection unless we make the mock
-        # a global singleton or pass it more explicitly.
-
-        # For simplicity in testing the handler's internal logic, we can directly instantiate it
-        # and pass a mock connection manager.
-        mock_connection_manager_instance = TestConnectionManager()
-
-        handler = chat_handler.WebSocketChatHandler(
-            gemini_service=AsyncMock(), pat_service=AsyncMock()
-        )
-
-        # Mock the connection manager that the handler will interact with
-        # This assumes chat_handler.get_connection_manager is NOT used directly within the handler methods
-        # but rather passed as an argument. If it's used directly, we need to patch it globally.
-
-        # Simulate a message that triggers health insight generation
-        chat_message = models.ChatMessage(
-            user_id=user_id,
-            username="TestUser",
-            content="I feel tired and stressed, need some sleep advice.",
-            type=models.MessageType.MESSAGE,  # Corrected from CHAT
-        )
-
-        # Mock the Gemini service response
-        handler.gemini_service.generate_health_insights.return_value = {
-            "insights": [
-                {"content": "Consider improving your sleep hygiene.", "confidence": 0.9}
-            ],
-            "recommendations": ["Exercise regularly", "Manage stress"]
+        # Mock the external services
+        mock_gemini_service = AsyncMock()
+        mock_gemini_service.stream_chat_response.return_value = [
+            "AI ", "Response ", "Chunk"
+        ]
+        mock_pat_model_service = AsyncMock()
+        mock_pat_model_service.analyze_health_data.return_value = {
+            "insight": "Test Insight"
         }
 
-        await handler.process_chat_message(
-            websocket=MagicMock(),
-            message=chat_message,
-            connection_manager=mock_connection_manager_instance
-        )
+        # Patch the dependencies in the handler
+        with (
+            MagicMock(spec=chat_handler.get_gemini_service) as mock_get_gemini_service,
+            MagicMock(spec=chat_handler.get_pat_model_service) as mock_get_pat_model_service,
+            MagicMock(spec=chat_handler.get_user_service) as mock_get_user_service,
+            MagicMock(spec=chat_handler.get_connection_manager) as mock_get_connection_manager,
+        ):
+            mock_get_gemini_service.return_value = mock_gemini_service
+            mock_get_pat_model_service.return_value = mock_pat_model_service
 
-        # Assertions
-        # Check if broadcast was called for the original message
-        assert any(
-            msg["type"] == "broadcast" and msg["message"]["content"] == chat_message.content
-            for msg in mock_connection_manager_instance.messages_sent
-        )
+            # Create a mock WebSocket for the handler
+            mock_websocket = AsyncMock(spec=WebSocket)
+            mock_websocket.receive_json.side_effect = [
+                {
+                    "message_type": models.MessageType.CHAT,
+                    "user_id": user_id,
+                    "session_id": "test-session-123",
+                    "timestamp": datetime.now(UTC).isoformat(),
+                    "content": "Generate insight",
+                },
+                WebSocketDisconnect,
+            ]
+            # Mock the connection manager
+            mock_manager = AsyncMock(spec=_TestConnectionManager)
+            mock_manager.connect.return_value = _TestConnectionInfo(
+                user_id=user_id,
+                username="testuser",
+                session_id="test-session-123",
+                connected_at=datetime.now(UTC),
+                room_id="test-room",
+            )
+            mock_manager.connection_info = {mock_websocket: mock_manager.connect.return_value}
 
-        # Check if health insight was sent to the user
-        assert any(
-            msg["type"] == "direct_to_user"
-            and msg["target_user"] == user_id
-            and msg["message"]["type"] == models.MessageType.HEALTH_INSIGHT
-            and "sleep hygiene" in msg["message"]["insight"]
-            for msg in mock_connection_manager_instance.messages_sent
-        )
+            # Patch the actual functions that the handler calls
+            chat_handler.get_gemini_service = mock_get_gemini_service
+            chat_handler.get_pat_model_service = mock_get_pat_model_service
+            chat_handler.get_user_service = mock_get_user_service
+            chat_handler.get_connection_manager = mock_get_connection_manager
 
-        handler.gemini_service.generate_health_insights.assert_awaited_once()
+            mock_get_connection_manager.return_value = mock_manager
+
+            handler = chat_handler.WebSocketChatHandler()
+
+            await handler.chat_ws(mock_websocket, user_id)
+
+            mock_websocket.accept.assert_awaited_once()
+            mock_websocket.receive_json.assert_awaited_once()
+            mock_pat_model_service.analyze_health_data.assert_awaited_once()
+            mock_gemini_service.stream_chat_response.assert_awaited_once()
+            mock_websocket.send_json.assert_awaited_with(Any)
+            assert mock_manager.send_to_user.call_count == 2
+            # The first call is for typing indicator, second is for AI response
+            # Check the content of the second call
+            second_call_args = mock_manager.send_to_user.call_args_list[1].args[1]
+            assert "Test Insight" in second_call_args["content"]
 
     async def test_typing_indicator_processing(self, app: FastAPI):
         user_id = "test_user_id_2"
-        mock_connection_manager_instance = TestConnectionManager()
+        mock_connection_manager_instance = _TestConnectionManager()
 
         handler = chat_handler.WebSocketChatHandler()
 
-        typing_message = models.TypingMessage(
-            user_id=user_id,
-            username="TestUser2",
-            is_typing=True
-        )
+        mock_websocket = AsyncMock(spec=WebSocket)
+        mock_websocket.receive_json.side_effect = [
+            {
+                "message_type": MessageType.TYPING,
+                "user_id": user_id,
+                "session_id": "test-session-456",
+                "timestamp": datetime.now(UTC).isoformat(),
+                "is_typing": True,
+            },
+            WebSocketDisconnect,
+        ]
 
-        await handler.process_typing_message(
-            websocket=MagicMock(),
-            message=typing_message,
-            connection_manager=mock_connection_manager_instance
-        )
+        # Patch the actual function that the handler calls
+        with MagicMock(spec=chat_handler.get_connection_manager) as mock_get_connection_manager:
+            mock_get_connection_manager.return_value = mock_connection_manager_instance
+            chat_handler.get_connection_manager = mock_get_connection_manager
 
-        # Assert that the typing message was broadcast (excluding the sender)
-        assert any(
-            msg["type"] == "broadcast"
-            and msg["message"]["type"] == models.MessageType.TYPING
-            and msg["message"]["user_id"] == user_id
-            and msg["excluded"] is not None  # Ensure exclude_user was passed
-            for msg in mock_connection_manager_instance.messages_sent
-        )
+            await handler.chat_ws(mock_websocket, user_id)
+
+            mock_websocket.accept.assert_awaited_once()
+            mock_websocket.receive_json.assert_awaited_once()
+            assert mock_connection_manager_instance.send_to_user.call_count == 1
+            sent_message = mock_connection_manager_instance.send_to_user.call_args[0][1]
+            assert sent_message["message_type"] == MessageType.TYPING
+            assert sent_message["is_typing"] is True
 
     async def test_heartbeat_processing(self, app: FastAPI):
         user_id = "test_user_id_3"
-        mock_connection_manager_instance = TestConnectionManager()
+        mock_connection_manager_instance = _TestConnectionManager()
 
         handler = chat_handler.WebSocketChatHandler()
-        mock_websocket = MagicMock(spec=WebSocket)
 
-        # Simulate a connection to ensure connection_info is set up for the websocket
-        await mock_connection_manager_instance.connect(
-            websocket=mock_websocket,
-            user_id=user_id,
-            username="TestUser3",
-            room_id="general"
-        )
+        mock_websocket = AsyncMock(spec=WebSocket)
+        mock_websocket.receive_json.side_effect = [
+            {
+                "message_type": MessageType.HEARTBEAT,
+                "user_id": user_id,
+                "session_id": "test-session-789",
+                "timestamp": datetime.now(UTC).isoformat(),
+            },
+            WebSocketDisconnect,
+        ]
 
-        heartbeat_message_payload = {"type": models.MessageType.HEARTBEAT, "client_timestamp": datetime.now(UTC).isoformat()}
+        # Patch the actual function that the handler calls
+        with MagicMock(spec=chat_handler.get_connection_manager) as mock_get_connection_manager:
+            mock_get_connection_manager.return_value = mock_connection_manager_instance
+            chat_handler.get_connection_manager = mock_get_connection_manager
 
-        await handler.process_heartbeat(
-            websocket=mock_websocket,
-            message=heartbeat_message_payload,
-            connection_manager=mock_connection_manager_instance
-        )
+            await handler.chat_ws(mock_websocket, user_id)
 
-        # Assert that heartbeat was processed and connection info updated
-        connection_info_after_heartbeat = mock_connection_manager_instance.get_connection_info_for_websocket(mock_websocket)
-        assert connection_info_after_heartbeat is not None
-        assert connection_info_after_heartbeat.last_heartbeat_ack.date() == datetime.now(UTC).date()
-        assert connection_info_after_heartbeat.last_active.date() == datetime.now(UTC).date()
-
-        # Assert that a HeartbeatAckMessage was sent back (via send_to_connection)
-        assert any(
-            msg["type"] == "direct"
-            and msg["target_ws"] == mock_websocket
-            and msg["message"]["type"] == models.MessageType.HEARTBEAT_ACK
-            for msg in mock_connection_manager_instance.messages_sent
-        )
+            mock_websocket.accept.assert_awaited_once()
+            mock_websocket.receive_json.assert_awaited_once()
+            assert mock_connection_manager_instance.send_to_user.call_count == 1
+            sent_message = mock_connection_manager_instance.send_to_user.call_args[0][1]
+            assert sent_message["message_type"] == MessageType.HEARTBEAT_ACK
 
     async def test_health_analysis_trigger(self, app: FastAPI):
         user_id = "test_user_id_4"
         health_data = {"steps": 10000, "sleep_hours": 7}
-        mock_connection_manager_instance = TestConnectionManager()
+        mock_connection_manager_instance = _TestConnectionManager()
 
-        handler = chat_handler.WebSocketChatHandler(
-            pat_service=AsyncMock(), gemini_service=AsyncMock()
-        )
+        mock_pat_model_service = AsyncMock()
+        mock_pat_model_service.analyze_health_data.return_value = {"insight": "Great job!"}
 
-        # Mock PAT service response
-        handler.pat_service.analyze_health_data.return_value = {"activity_score": 0.8}
+        handler = chat_handler.WebSocketChatHandler()
 
-        # Mock Gemini service response
-        handler.gemini_service.generate_health_insights.return_value = {
-            "insights": [
-                {"content": "Great activity levels!", "category": "activity"}
-            ],
-            "recommendations": ["Keep it up!"]
-        }
+        mock_websocket = AsyncMock(spec=WebSocket)
+        mock_websocket.receive_json.side_effect = [
+            {
+                "message_type": models.MessageType.HEALTH_DATA,
+                "user_id": user_id,
+                "session_id": "test-session-001",
+                "timestamp": datetime.now(UTC).isoformat(),
+                "content": json.dumps(health_data),
+            },
+            WebSocketDisconnect,
+        ]
 
-        await handler.trigger_health_analysis(
-            user_id=user_id,
-            health_data=health_data,
-            connection_manager=mock_connection_manager_instance
-        )
+        with (
+            MagicMock(spec=chat_handler.get_pat_model_service) as mock_get_pat_model_service,
+            MagicMock(spec=chat_handler.get_connection_manager) as mock_get_connection_manager,
+        ):
+            mock_get_pat_model_service.return_value = mock_pat_model_service
+            mock_get_connection_manager.return_value = mock_connection_manager_instance
 
-        # Assert initial update message
-        assert any(
-            msg["type"] == "direct_to_user"
-            and msg["message"]["type"] == models.MessageType.ANALYSIS_UPDATE
-            and msg["message"]["status"] == "started"
-            for msg in mock_connection_manager_instance.messages_sent
-        )
+            chat_handler.get_pat_model_service = mock_get_pat_model_service
+            chat_handler.get_connection_manager = mock_get_connection_manager
 
-        # Assert PAT service was called
-        handler.pat_service.analyze_health_data.assert_awaited_once_with(health_data)
+            await handler.chat_ws(mock_websocket, user_id)
 
-        # Assert Gemini service was called
-        assert handler.gemini_service.generate_health_insights.called
-
-        # Assert final update message
-        assert any(
-            msg["type"] == "direct_to_user"
-            and msg["message"]["type"] == models.MessageType.ANALYSIS_UPDATE
-            and msg["message"]["status"] == "completed"
-            for msg in mock_connection_manager_instance.messages_sent
-        )
-
-        # Assert health insight message was sent
-        assert any(
-            msg["type"] == "direct_to_user"
-            and msg["message"]["type"] == models.MessageType.HEALTH_INSIGHT
-            and "Great activity levels!" in msg["message"]["insight"]
-            for msg in mock_connection_manager_instance.messages_sent
-        )
+            mock_websocket.accept.assert_awaited_once()
+            mock_websocket.receive_json.assert_awaited_once()
+            mock_pat_model_service.analyze_health_data.assert_awaited_once_with(
+                user_id=user_id, health_data=health_data
+            )
+            assert mock_connection_manager_instance.send_to_user.call_count == 1
+            sent_message = mock_connection_manager_instance.send_to_user.call_args[0][1]
+            assert sent_message["message_type"] == models.MessageType.HEALTH_INSIGHT
+            assert "Great job!" in sent_message["content"]
 
     async def test_health_analysis_error_handling(self, app: FastAPI):
         user_id = "test_user_id_5"
         health_data = {"steps": 10000, "sleep_hours": 7}
-        mock_connection_manager_instance = TestConnectionManager()
+        mock_connection_manager_instance = _TestConnectionManager()
 
-        handler = chat_handler.WebSocketChatHandler(
-            pat_service=AsyncMock(), gemini_service=AsyncMock()
-        )
+        mock_pat_model_service = AsyncMock()
+        mock_pat_model_service.analyze_health_data.side_effect = Exception("AI Error")
 
-        # Simulate an error during PAT analysis
-        handler.pat_service.analyze_health_data.side_effect = Exception("PAT Service Error")
+        handler = chat_handler.WebSocketChatHandler()
 
-        await handler.trigger_health_analysis(
-            user_id=user_id,
-            health_data=health_data,
-            connection_manager=mock_connection_manager_instance
-        )
+        mock_websocket = AsyncMock(spec=WebSocket)
+        mock_websocket.receive_json.side_effect = [
+            {
+                "message_type": models.MessageType.HEALTH_DATA,
+                "user_id": user_id,
+                "session_id": "test-session-002",
+                "timestamp": datetime.now(UTC).isoformat(),
+                "content": json.dumps(health_data),
+            },
+            WebSocketDisconnect,
+        ]
 
-        # Assert error message was sent
-        assert any(
-            msg["type"] == "direct_to_user"
-            and msg["message"]["type"] == models.MessageType.ANALYSIS_UPDATE
-            and msg["message"]["status"] == "failed"
-            and "PAT Service Error" in msg["message"]["details"]
-            for msg in mock_connection_manager_instance.messages_sent
-        )
+        with (
+            MagicMock(spec=chat_handler.get_pat_model_service) as mock_get_pat_model_service,
+            MagicMock(spec=chat_handler.get_connection_manager) as mock_get_connection_manager,
+        ):
+            mock_get_pat_model_service.return_value = mock_pat_model_service
+            mock_get_connection_manager.return_value = mock_connection_manager_instance
 
-        # Ensure no health insight message was sent after the error
-        assert not any(
-            msg["type"] == "direct_to_user"
-            and msg["message"]["type"] == models.MessageType.HEALTH_INSIGHT
-            for msg in mock_connection_manager_instance.messages_sent
-        )
+            chat_handler.get_pat_model_service = mock_get_pat_model_service
+            chat_handler.get_connection_manager = mock_get_connection_manager
+
+            await handler.chat_ws(mock_websocket, user_id)
+
+            mock_websocket.accept.assert_awaited_once()
+            mock_websocket.receive_json.assert_awaited_once()
+            mock_pat_model_service.analyze_health_data.assert_awaited_once_with(
+                user_id=user_id, health_data=health_data
+            )
+            assert mock_connection_manager_instance.send_to_user.call_count == 1
+            sent_message = mock_connection_manager_instance.send_to_user.call_args[0][1]
+            assert sent_message["message_type"] == models.MessageType.ERROR
+            assert "Error processing health data" in sent_message["content"]
 
 
 if __name__ == "__main__":

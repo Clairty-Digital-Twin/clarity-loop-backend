@@ -531,7 +531,7 @@ class TestWebSocketEndpoints:
                 type=MessageType.MESSAGE,
                 content="Generate insight",
             )
-            websocket.send_json(chat_message.model_dump())
+            websocket.send_json(chat_message.model_dump(mode='json'))
 
             # Expect the typing indicator and then the AI response
             # The connection manager will send these back via send_to_user

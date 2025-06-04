@@ -361,7 +361,8 @@ class _TestConnectionManager:
     ) -> _TestConnectionInfo | None:
         return self.connection_info.get(websocket)
 
-    async def handle_message(self, _websocket: WebSocket, _raw_message: str) -> bool:
+    @staticmethod
+    async def handle_message(_websocket: WebSocket, _raw_message: str) -> bool:
         """Handle an incoming WebSocket message - always allow in tests."""
         # In tests, always return True to allow message processing
         return True

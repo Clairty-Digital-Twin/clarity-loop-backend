@@ -2,8 +2,8 @@
 
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
+import inspect
 import logging
-
 from fastapi import FastAPI
 
 from clarity.api.v1.websocket.connection_manager import ConnectionManager
@@ -11,7 +11,7 @@ from clarity.api.v1.websocket.connection_manager import ConnectionManager
 logger = logging.getLogger(__name__)
 
 # Application state storage
-_connection_manager: ConnectionManager | None = None
+connection_manager: ConnectionManager | None = None
 
 
 def get_connection_manager() -> ConnectionManager:
@@ -20,40 +20,36 @@ def get_connection_manager() -> ConnectionManager:
     This should be used as a FastAPI dependency:
     Uses app.state.connection_manager if available, else falls back to module-level singleton.
     """
-    import sys
-
-    from fastapi import Request
-
     # Try to get from FastAPI app state if running in request context
-    frame = sys._getframe(1)
-    local_vars = frame.f_locals
+    frame = inspect.currentframe().f_back
+    local_vars = frame.f_locals if frame else {}
     if "request" in local_vars and hasattr(local_vars["request"], "app"):
         app = local_vars["request"].app
         if hasattr(app.state, "connection_manager"):
             return app.state.connection_manager
 
     # Fallback to module-level singleton
-    if _connection_manager is not None:
-        return _connection_manager
+    if connection_manager is not None:
+        return connection_manager
 
     # For testing, try to get from test helper
     try:
-        from tests.api.v1.test_websocket_helper import get_test_connection_manager
+        from tests.api.v1.test_websocket_helper import get_test_connection_manager  # noqa: PLC0415
         return get_test_connection_manager()
     except (ImportError, RuntimeError):
         pass
 
     # Last resort: create a test connection manager
-    if _connection_manager is None:
-        _connection_manager = ConnectionManager(
+    if connection_manager is None:
+        # Note: background tasks won't be started in this fallback
+        globals()["connection_manager"] = ConnectionManager(
             heartbeat_interval=5,
             max_connections_per_user=2,
             connection_timeout=30,
             message_rate_limit=10,
             max_message_size=1024,
         )
-        # Note: background tasks won't be started in this fallback
-    return _connection_manager
+    return globals()["connection_manager"]
 
 
 @asynccontextmanager

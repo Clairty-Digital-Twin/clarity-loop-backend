@@ -350,6 +350,72 @@ async def websocket_chat_endpoint(
         )
 
 
+def _extract_username(user: User | None, user_id: str) -> str:
+    return (
+        user.display_name
+        if user and getattr(user, "display_name", None)
+        else f"User_{user_id[:8]}"
+    )
+
+
+async def _authenticate_websocket_user(
+    token: str | None, user_id: str, websocket: WebSocket
+) -> User | None:
+    if token:
+        try:
+            auth_result = get_current_user_websocket(token)
+            if asyncio.iscoroutine(auth_result) or inspect.isawaitable(auth_result):
+                user = await auth_result
+            else:
+                user = auth_result
+            if user and getattr(user, "uid", None) != user_id:
+                await websocket.close(code=1008, reason="User ID mismatch")
+                return None
+            return user
+        except HTTPException:
+            await websocket.close(code=1008, reason="Invalid authentication token")
+            return None
+    return None
+
+
+async def _handle_health_analysis_message(
+    raw_message: str,
+    user_id: str,
+    handler: WebSocketChatHandler,
+    connection_manager: ConnectionManager,
+    websocket: WebSocket,
+) -> None:
+    try:
+        message_data = json.loads(raw_message)
+        msg_type = message_data.get("type")
+        if msg_type == "health_data":
+            health_data = message_data.get("data", {})
+            await handler.trigger_health_analysis(
+                user_id, health_data, connection_manager
+            )
+        elif msg_type == MessageType.HEARTBEAT.value:
+            await handler.process_heartbeat(websocket, message_data, connection_manager)
+        else:
+            logger.warning("Unknown message type: %s", msg_type)
+            error_msg = ErrorMessage(
+                error_code="UNKNOWN_MESSAGE_TYPE",
+                message=f"Unknown message type: {msg_type}",
+            )
+            await connection_manager.send_to_connection(websocket, error_msg)
+    except json.JSONDecodeError:
+        error_msg = ErrorMessage(
+            error_code="INVALID_JSON", message="Invalid JSON format"
+        )
+        await connection_manager.send_to_connection(websocket, error_msg)
+    except Exception:
+        logger.exception("Error parsing message")
+        error_msg = ErrorMessage(
+            error_code="MESSAGE_PARSE_ERROR",
+            message="Failed to parse message",
+        )
+        await connection_manager.send_to_connection(websocket, error_msg)
+
+
 @router.websocket("/health-analysis/{user_id}")
 async def websocket_health_analysis_endpoint(
     websocket: WebSocket,
@@ -360,94 +426,50 @@ async def websocket_health_analysis_endpoint(
     pat_service: PATModelService = Depends(get_pat_model_service),
 ) -> None:
     """WebSocket endpoint for real-time health analysis updates.
-
     This endpoint provides real-time updates during health data processing,
     including PAT analysis and AI insight generation.
     """
-    user: User | None = None
     handler = WebSocketChatHandler(
         gemini_service=gemini_service, pat_service=pat_service
     )
-
     logger.info("WebSocket connection attempt: %s", token)
-
     try:
         await websocket.accept()
-
-        if token:
-            try:
-                auth_result = get_current_user_websocket(token)
-                if asyncio.iscoroutine(auth_result) or inspect.isawaitable(auth_result):
-                    user = await auth_result
-                else:
-                    user = auth_result
-                if user and user.uid != user_id:
-                    await websocket.close(code=1008, reason="User ID mismatch")
-                    return
-            except HTTPException:
-                await websocket.close(code=1008, reason="Invalid authentication token")
-                return
-
-        username = (
-            user.display_name if user and user.display_name else f"User_{user_id[:8]}"
-        )
-
+        user = await _authenticate_websocket_user(token, user_id, websocket)
+        if token and user is None:
+            return
+        username = _extract_username(user, user_id)
         await connection_manager.connect(
             websocket=websocket,
             user_id=user_id,
             username=username,
             room_id=f"health_analysis_{user_id}",
         )
-
         logger.info("Health analysis WebSocket connected for %s", username)
-
         welcome_msg = SystemMessage(
             content="Connected to health analysis service. Send health data to start analysis.",
             level="info",
         )
         await connection_manager.send_to_connection(websocket, welcome_msg)
-
         while True:
             try:
                 raw_message = await websocket.receive_text()
-
                 if not await connection_manager.handle_message(websocket, raw_message):
                     continue
-
-                try:
-                    message_data = json.loads(raw_message)
-
-                    if message_data.get("type") == "health_data":
-                        health_data = message_data.get("data", {})
-                        await handler.trigger_health_analysis(
-                            user_id, health_data, connection_manager
-                        )
-
-                    elif message_data.get("type") == MessageType.HEARTBEAT.value:
-                        await handler.process_heartbeat(
-                            websocket, message_data, connection_manager
-                        )
-
-                except json.JSONDecodeError:
-                    error_msg = ErrorMessage(
-                        error_code="INVALID_JSON", message="Invalid JSON format"
-                    )
-                    await connection_manager.send_to_connection(websocket, error_msg)
-
+                await _handle_health_analysis_message(
+                    raw_message, user_id, handler, connection_manager, websocket
+                )
             except WebSocketDisconnect as e:
                 logger.warning(
                     "WebSocket disconnected: code=%s, reason=%s", e.code, e.reason
                 )
                 break
-
             except Exception:
                 logger.exception("Error in health analysis WebSocket")
                 await connection_manager.disconnect(websocket, "internal_error")
                 break
-
     except Exception:
         logger.exception("Error in health analysis WebSocket connection")
-
     finally:
         await connection_manager.disconnect(
             websocket, "Health analysis connection closed"

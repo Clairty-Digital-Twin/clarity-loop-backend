@@ -519,7 +519,8 @@ class TestWebSocketEndpoints:
             response_data = websocket.receive_json()
             assert response_data["type"] == MessageType.HEARTBEAT_ACK.value
 
-    async def test_websocket_chat_endpoint_anonymous(self, client: TestClient) -> None:
+    @staticmethod
+    async def test_websocket_chat_endpoint_anonymous(client: TestClient) -> None:
         user_id = "anonymous-user-123"
         with (
             pytest.raises(WebSocketDisconnect) as excinfo,
@@ -529,7 +530,8 @@ class TestWebSocketEndpoints:
             websocket.send_text("Hello")
         assert excinfo.value.code == 1008  # Policy Violation
 
-    async def test_websocket_invalid_message_format(self, client: TestClient) -> None:
+    @staticmethod
+    async def test_websocket_invalid_message_format(client: TestClient) -> None:
         user_id = "test-user-123"
         test_token = "test-token"  # noqa: S105
 
@@ -543,7 +545,8 @@ class TestWebSocketEndpoints:
             assert response_data["type"] == MessageType.ERROR.value
             assert "Invalid JSON format" in response_data["message"]
 
-    async def test_websocket_typing_indicator(self, client: TestClient) -> None:
+    @staticmethod
+    async def test_websocket_typing_indicator(client: TestClient) -> None:
         user_id = "test-user-123"
         test_token = "test-token"  # noqa: S105
 
@@ -576,7 +579,8 @@ class TestWebSocketEndpoints:
             assert response_data["user_id"] == user_id
             assert response_data["is_typing"] is False
 
-    async def test_health_insight_generation(self, client: TestClient, app: FastAPI):
+    @staticmethod
+    async def test_health_insight_generation(client: TestClient, app: FastAPI):
         user_id = "test-user-123"  # Must match the user ID from mock_get_current_user_websocket
         test_token = "test-token"  # noqa: S105
 
@@ -584,8 +588,8 @@ class TestWebSocketEndpoints:
         mock_gemini_service = AsyncMock(spec=GeminiService)
 
         # Create a proper mock response
-        async def mock_generate_insights(
-            request: Any,
+        def mock_generate_insights(
+            request: object,
         ) -> object:
             response = MagicMock()
             response.narrative = f"AI Response to: {request.context}"
@@ -690,7 +694,8 @@ class TestWebSocketEndpoints:
         else:
             del app.dependency_overrides[get_connection_manager]
 
-    async def test_typing_indicator_processing(self, client: TestClient, app: FastAPI):
+    @staticmethod
+    async def test_typing_indicator_processing(client: TestClient, app: FastAPI):
         user_id = "test-user-123"  # Must match the user ID from mock_get_current_user_websocket
         test_token = "test-token"  # noqa: S105
 
@@ -784,7 +789,8 @@ class TestWebSocketEndpoints:
         else:
             del app.dependency_overrides[get_connection_manager]
 
-    async def test_heartbeat_processing(self, client: TestClient, app: FastAPI):
+    @staticmethod
+    async def test_heartbeat_processing(client: TestClient, app: FastAPI):
         user_id = "test-user-123"  # Must match the user ID from mock_get_current_user_websocket
         test_token = "test-token"  # noqa: S105
 

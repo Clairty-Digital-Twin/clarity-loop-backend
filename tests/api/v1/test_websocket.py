@@ -677,7 +677,7 @@ class TestWebSocketEndpoints:
             heartbeat_message = HeartbeatMessage(
                 timestamp=datetime.now(UTC),
                 type=MessageType.HEARTBEAT,
-                client_timestamp=datetime.now(UTC).isoformat()
+                client_timestamp=datetime.now(UTC)
             )
             websocket.send_json(heartbeat_message.model_dump())
 

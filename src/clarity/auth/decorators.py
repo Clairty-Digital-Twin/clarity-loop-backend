@@ -2,12 +2,8 @@
 
 from collections.abc import Callable
 from functools import wraps
-from typing import Any
 
-from fastapi import Depends, HTTPException, status
-
-from clarity.auth.firebase_auth import get_current_user_required
-from clarity.models.user import User
+from fastapi import HTTPException, status
 
 
 def require_auth(permissions: list[str] | None = None, roles: list[str] | None = None):

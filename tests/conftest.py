@@ -46,7 +46,9 @@ class _FakeFS:  # minimal façade
     def __init__(self, *a: Any, **kw: Any) -> None:
         pass
 
-    def collection(self, name: str) -> "_FakeFS":  # returns self so .document() still works
+    def collection(
+        self, name: str
+    ) -> "_FakeFS":  # returns self so .document() still works
         return self
 
     def document(self, *a: Any) -> "_FakeFS":  # → Fake doc ref

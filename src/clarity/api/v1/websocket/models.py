@@ -1,8 +1,8 @@
 """WebSocket data models for structured communication."""
 
 from datetime import datetime
-from enum import Enum, StrEnum
-from typing import Any, Dict, List, Optional, Union
+from enum import StrEnum
+from typing import Any, Union
 
 from pydantic import BaseModel, ConfigDict, Field
 

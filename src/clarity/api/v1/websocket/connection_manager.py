@@ -3,22 +3,19 @@
 import asyncio
 from collections import defaultdict
 import contextlib
-from datetime import datetime, timedelta
-import json
+from datetime import datetime
 import logging
 import time
-from typing import Dict, List, Optional, Set
 import uuid
 from weakref import WeakSet
 
-from fastapi import WebSocket, WebSocketDisconnect
+from fastapi import WebSocket
 from starlette.websockets import WebSocketState
 
 from clarity.api.v1.websocket.models import (
     ConnectionInfo,
     ErrorMessage,
     HeartbeatMessage,
-    MessageType,
     SystemMessage,
     WebSocketMessage,
 )
@@ -236,7 +233,9 @@ class ConnectionManager:
                 await websocket.close(code=1011, reason="Server error")
             return False
 
-    async def disconnect(self, websocket: WebSocket, reason: str = "Normal closure") -> None:
+    async def disconnect(
+        self, websocket: WebSocket, reason: str = "Normal closure"
+    ) -> None:
         """Handle WebSocket disconnection."""
         if websocket not in self.connection_info:
             return
@@ -300,7 +299,9 @@ class ConnectionManager:
             except ValueError:
                 pass
 
-    async def send_to_connection(self, websocket: WebSocket, message: WebSocketMessage) -> None:
+    async def send_to_connection(
+        self, websocket: WebSocket, message: WebSocketMessage
+    ) -> None:
         """Send a message to a specific WebSocket connection."""
         try:
             if websocket.client_state == WebSocketState.CONNECTED:

@@ -6,7 +6,7 @@ This module serves as the composition root for the entire application.
 
 import logging
 
-from fastapi import FastAPI
+from fastapi import FastAPI, WebSocket
 import uvicorn
 
 from clarity.core.config import get_settings
@@ -43,7 +43,7 @@ app = create_application()
 
 # Add WebSocket route
 @app.websocket("/ws")
-async def websocket_endpoint(websocket) -> None:
+async def websocket_endpoint(websocket: WebSocket) -> None:
     await websocket.accept()
     while True:
         data = await websocket.receive_text()

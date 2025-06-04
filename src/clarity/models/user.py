@@ -1,8 +1,8 @@
 """User models for the CLARITY Digital Twin Platform."""
 
 from datetime import datetime
+from typing import Any, ClassVar
 
-# typing imports removed - using built-in dict instead
 from pydantic import BaseModel, EmailStr, Field
 
 
@@ -21,7 +21,9 @@ class User(BaseModel):
     class Config:
         """Pydantic configuration."""
 
-        json_encoders = {datetime: lambda v: v.isoformat() if v else None}
+        json_encoders: ClassVar[dict[type, Any]] = {
+            datetime: lambda v: v.isoformat() if v else None
+        }
 
 
 class UserProfile(BaseModel):
@@ -44,7 +46,7 @@ class UserProfile(BaseModel):
     class Config:
         """Pydantic configuration."""
 
-        schema_extra = {
+        schema_extra: ClassVar[dict[str, Any]] = {
             "example": {
                 "uid": "firebase_user_id_123",
                 "display_name": "John Doe",
@@ -72,7 +74,7 @@ class UserRegistration(BaseModel):
     class Config:
         """Pydantic configuration."""
 
-        schema_extra = {
+        schema_extra: ClassVar[dict[str, Any]] = {
             "example": {
                 "email": "user@example.com",
                 "display_name": "John Doe",
@@ -96,7 +98,7 @@ class UserUpdate(BaseModel):
     class Config:
         """Pydantic configuration."""
 
-        schema_extra = {
+        schema_extra: ClassVar[dict[str, Any]] = {
             "example": {
                 "display_name": "John Smith",
                 "bio": "Updated bio information",
@@ -120,4 +122,6 @@ class UserSession(BaseModel):
     class Config:
         """Pydantic configuration."""
 
-        json_encoders = {datetime: lambda v: v.isoformat() if v else None}
+        json_encoders: ClassVar[dict[type, Any]] = {
+            datetime: lambda v: v.isoformat() if v else None
+        }

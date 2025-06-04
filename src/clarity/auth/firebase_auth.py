@@ -34,7 +34,7 @@ try:
 
         firebase_admin.initialize_app(cred)
         logger.info("Firebase Admin SDK initialized successfully")
-except Exception as e:
+except Exception:
     logger.exception("Failed to initialize Firebase Admin SDK")
     # In development, continue without Firebase
 
@@ -228,7 +228,7 @@ def create_custom_token(uid: str, additional_claims: dict | None = None) -> str:
     """
     try:
         return auth.create_custom_token(uid, additional_claims)
-    except Exception as e:
+    except Exception:
         logger.exception("Error creating custom token")
         raise
 
@@ -243,7 +243,7 @@ def set_custom_user_claims(uid: str, custom_claims: dict) -> None:
     try:
         auth.set_custom_user_claims(uid, custom_claims)
         logger.info("Custom claims set for user %s: %s", uid, custom_claims)
-    except Exception as e:
+    except Exception:
         logger.exception("Error setting custom claims for user %s", uid)
         raise
 
@@ -261,7 +261,7 @@ def get_user_by_email(email: str) -> auth.UserRecord | None:
         return auth.get_user_by_email(email)
     except auth.UserNotFoundError:
         return None
-    except Exception as e:
+    except Exception:
         logger.exception("Error getting user by email %s", email)
         raise
 
@@ -275,6 +275,6 @@ def delete_user(uid: str) -> None:
     try:
         auth.delete_user(uid)
         logger.info("User %s deleted successfully", uid)
-    except Exception as e:
+    except Exception:
         logger.exception("Error deleting user %s", uid)
         raise

@@ -33,8 +33,6 @@ from clarity.ml.pat_service import PATModelService
 from clarity.models.user import User
 
 logger = logging.getLogger(__name__)
-# Basic logging for tests, customize as needed, e.g., in conftest.py for global config
-# logging.basicConfig(level=logging.INFO)
 
 
 class _TestConnectionInfo(ConnectionInfo):
@@ -257,7 +255,11 @@ class _TestConnectionManager:
 
         target_websockets = []
         for user_id in self.rooms.get(room_id, set()):
-            target_websockets.extend(ws for ws in self.user_connections.get(user_id, []) if ws != exclude_websocket and ws in self.active_websockets)
+            target_websockets.extend(
+                ws
+                for ws in self.user_connections.get(user_id, [])
+                if ws != exclude_websocket and ws in self.active_websockets
+            )
 
         # In tests, send to all connections in room for testing purposes
         for user_id in self.rooms.get(room_id, set()):
@@ -270,7 +272,7 @@ class _TestConnectionManager:
                             else json.dumps(message_content)
                         )
                         await ws.send_text(message_str)
-                    except Exception as e:
+                    except Exception:
                         pass
 
         logger.info(
@@ -397,9 +399,7 @@ def app(monkeypatch: pytest.MonkeyPatch) -> FastAPI:
     app.dependency_overrides[chat_handler.get_pat_model_service] = lambda: AsyncMock(
         spec=PATModelService
     )
-    app.dependency_overrides[get_connection_manager] = (
-        create_mock_connection_manager
-    )
+    app.dependency_overrides[get_connection_manager] = create_mock_connection_manager
 
     # GeminiService is mocked via dependency override above
 
@@ -606,9 +606,7 @@ class TestWebSocketEndpoints:
             side_effect=mock_manager.broadcast_to_room
         )
 
-        app.dependency_overrides[get_connection_manager] = (
-            lambda: mock_manager
-        )
+        app.dependency_overrides[get_connection_manager] = lambda: mock_manager
 
         # Use TestClient.websocket_connect to interact with the WebSocket endpoint
         with client.websocket_connect(
@@ -702,9 +700,7 @@ class TestWebSocketEndpoints:
             side_effect=mock_manager.broadcast_to_room
         )
 
-        app.dependency_overrides[get_connection_manager] = (
-            lambda: mock_manager
-        )
+        app.dependency_overrides[get_connection_manager] = lambda: mock_manager
 
         with client.websocket_connect(
             f"/api/v1/chat/{user_id}?token={test_token}"
@@ -798,9 +794,7 @@ class TestWebSocketEndpoints:
             side_effect=mock_manager.broadcast_to_room
         )
 
-        app.dependency_overrides[get_connection_manager] = (
-            lambda: mock_manager
-        )
+        app.dependency_overrides[get_connection_manager] = lambda: mock_manager
 
         with client.websocket_connect(
             f"/api/v1/chat/{user_id}?token={test_token}"

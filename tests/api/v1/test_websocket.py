@@ -671,7 +671,7 @@ class TestWebSocketEndpoints:
                 type=MessageType.HEARTBEAT,
                 client_timestamp=datetime.now(UTC)
             )
-            websocket.send_json(heartbeat_message.model_dump())
+            websocket.send_json(heartbeat_message.model_dump(mode='json'))
 
             # Expect a heartbeat acknowledgment response
             response_data = websocket.receive_json()

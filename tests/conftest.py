@@ -24,6 +24,40 @@ os.environ["TESTING"] = "1"
 os.environ["ENVIRONMENT"] = "testing"
 
 
+# Apply GCP patch directly at module level to avoid scope mismatch
+# --- 1. ADC ↦ AnonymousCredentials ----------------------------------
+from google.auth.credentials import AnonymousCredentials
+import google.auth
+import os
+
+def mock_auth_default(*a, **kw):
+    return (AnonymousCredentials(), "test-project")
+
+google.auth.default = mock_auth_default
+os.environ["GOOGLE_CLOUD_PROJECT"] = "test-project"
+
+# --- 2. Firestore fake ----------------------------------------------
+class _FakeFS:                      # minimal façade
+    def __init__(self, *a, **kw): pass
+    def collection(self, name):    # returns self so .document() still works
+        return self
+    def document(self, *a):        # → Fake doc ref
+        return self
+    def set(self, *a, **kw): pass
+    def get(self, *a, **kw): return {}
+
+import google.cloud.firestore
+google.cloud.firestore.Client = _FakeFS
+
+# --- 3. Pub/Sub fake -------------------------------------------------
+class _FakePublisher:
+    def __init__(self, *a, **kw): pass
+    async def publish(self, *a, **kw): return None
+
+import google.cloud.pubsub_v1
+google.cloud.pubsub_v1.PublisherClient = _FakePublisher
+
+
 @pytest.fixture(scope="session")
 def event_loop() -> Generator[asyncio.AbstractEventLoop, None, None]:
     """Create an instance of the default event loop for the test session."""
@@ -204,55 +238,6 @@ def mock_environment_variables(monkeypatch: pytest.MonkeyPatch):
         monkeypatch.setenv(key, value)
 
 
-@pytest.fixture(autouse=True, scope="session")
-def _patch_gcp(monkeypatch):
-    """
-    1. Stops google-auth from trying to load ADC.
-    2. Replaces Firestore / PubSub clients with lightweight fakes
-       so code that instantiates them keeps working.
-    """
-    # --- 1. ADC ↦ AnonymousCredentials ----------------------------------
-    from google.auth.credentials import AnonymousCredentials
-    monkeypatch.setattr(
-        "google.auth.default",
-        lambda *a, **kw: (AnonymousCredentials(), "test-project"),
-        raising=True,
-    )
-    monkeypatch.setenv("GOOGLE_CLOUD_PROJECT", "test-project")
-
-    # --- 2. Firestore fake ----------------------------------------------
-    class _FakeFS:                      # minimal façade
-        def __init__(self, *a, **kw): pass
-        def collection(self, name):    # returns self so .document() still works
-            return self
-        def document(self, *a):        # → Fake doc ref
-            return self
-        def set(self, *a, **kw): pass
-        def get(self, *a, **kw): return {}
-    monkeypatch.setattr("google.cloud.firestore.Client", _FakeFS, raising=False)
-
-    # --- 3. Pub/Sub fake -------------------------------------------------
-    class _FakePublisher:
-        def __init__(self, *a, **kw): pass
-        async def publish(self, *a, **kw): return None
-    monkeypatch.setattr("google.cloud.pubsub_v1.PublisherClient",
-                        _FakePublisher, raising=False)
-
-
-# Pytest markers for test organization
-pytest_plugins = ["pytest_asyncio"]
-
-
-def pytest_configure(config: pytest.Config) -> None:
-    """Configure pytest with custom markers."""
-    config.addinivalue_line("markers", "unit: Unit tests")
-    config.addinivalue_line("markers", "integration: Integration tests")
-    config.addinivalue_line("markers", "e2e: End-to-end tests")
-    config.addinivalue_line("markers", "slow: Slow running tests")
-    config.addinivalue_line("markers", "auth: Authentication related tests")
-    config.addinivalue_line("markers", "database: Database related tests")
-
-
 @pytest.fixture
 def sample_health_metrics() -> list[dict[str, Any]]:
     """Provide sample health metrics for testing."""
@@ -315,3 +300,17 @@ def sample_biometric_data() -> dict[str, Any]:
             },
         ],
     }
+
+
+# Pytest markers for test organization
+pytest_plugins = ["pytest_asyncio"]
+
+
+def pytest_configure(config: pytest.Config) -> None:
+    """Configure pytest with custom markers."""
+    config.addinivalue_line("markers", "unit: Unit tests")
+    config.addinivalue_line("markers", "integration: Integration tests")
+    config.addinivalue_line("markers", "e2e: End-to-end tests")
+    config.addinivalue_line("markers", "slow: Slow running tests")
+    config.addinivalue_line("markers", "auth: Authentication related tests")
+    config.addinivalue_line("markers", "database: Database related tests")

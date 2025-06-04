@@ -187,9 +187,11 @@ class SleepProcessor:
         self, sleep_data: SleepData, feature_sets: dict[str, list[float]]
     ) -> None:
         """Extract sleep stage percentages and WASO."""
-        rem_pct, deep_pct = self._extract_stage_percentages(sleep_data)
+        rem_pct, deep_pct, light_pct = self._extract_stage_percentages(sleep_data)
         feature_sets["rem_pct"].append(rem_pct)
         feature_sets["deep_pct"].append(deep_pct)
+        feature_sets["light_pct"] = feature_sets.get("light_pct", [])
+        feature_sets["light_pct"].append(light_pct)
         feature_sets["waso"].append(self._calculate_waso(sleep_data))
 
     @staticmethod
@@ -219,22 +221,24 @@ class SleepProcessor:
         return max(0.0, waso)  # Ensure non-negative
 
     @staticmethod
-    def _extract_stage_percentages(sleep_data: SleepData) -> tuple[float, float]:
-        """Extract REM and deep sleep percentages."""
+    def _extract_stage_percentages(sleep_data: SleepData) -> tuple[float, float, float]:
+        """Extract REM, deep, and light sleep percentages."""
         if not sleep_data.sleep_stages:
-            return 0.0, 0.0
+            return 0.0, 0.0, 0.0
 
         total_sleep = sleep_data.total_sleep_minutes
         if total_sleep <= 0:
-            return 0.0, 0.0
+            return 0.0, 0.0, 0.0
 
         rem_minutes = sleep_data.sleep_stages.get(SleepStage.REM, 0)
         deep_minutes = sleep_data.sleep_stages.get(SleepStage.DEEP, 0)
+        light_minutes = sleep_data.sleep_stages.get(SleepStage.LIGHT, 0)
 
         rem_percentage = rem_minutes / total_sleep
         deep_percentage = deep_minutes / total_sleep
+        light_percentage = light_minutes / total_sleep
 
-        return float(rem_percentage), float(deep_percentage)
+        return float(rem_percentage), float(deep_percentage), float(light_percentage)
 
     def get_summary_stats(
         self, sleep_metrics: list[HealthMetric]

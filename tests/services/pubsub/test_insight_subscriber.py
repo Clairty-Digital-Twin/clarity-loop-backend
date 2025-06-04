@@ -399,7 +399,7 @@ class TestGeminiInsightGeneratorGeminiAPI:
 
         # Should not raise exception, fallback to default response
         result = await mock_generator._call_gemini_api(prompt)
-        
+
         # Should return fallback response
         assert "narrative" in result
         assert "key_insights" in result
@@ -458,16 +458,17 @@ class TestGeminiInsightGeneratorAnalysisSummary:
         """Test analysis summary with mixed data types."""
         analysis_results = {
             "cardio_features": [1, 2, 3, 4, 5],
-            "sleep_features": {"efficiency": 0.85},
-            "other_data": "string",
+            "activity_embedding": [0.1, 0.2, 0.3],  # This will be detected
+            "other_data": "string",  # This won't be detected
         }
 
         summary = GeminiInsightGenerator._create_analysis_summary(analysis_results)
 
-        assert summary["total_features"] == 3
-        assert "cardio_features" in summary["feature_types"]
-        assert "sleep_features" in summary["feature_types"]
-        assert "other_data" in summary["feature_types"]
+        assert len(summary["modalities_processed"]) == 2
+        assert "cardiovascular" in summary["modalities_processed"]
+        assert "activity" in summary["modalities_processed"]
+        assert summary["feature_counts"]["cardio"] == 5
+        assert summary["feature_counts"]["activity"] == 3
 
 
 class TestGeminiInsightGeneratorStorage:
@@ -483,7 +484,7 @@ class TestGeminiInsightGeneratorStorage:
         mock_document = Mock()
         mock_uploads_collection = Mock()
         mock_user_collection = Mock()
-        
+
         mock_uploads_collection.document.return_value = mock_document
         mock_user_collection.collection.return_value = mock_uploads_collection
         mock_generator.firestore_client.collection.return_value = mock_user_collection
@@ -521,7 +522,7 @@ class TestInsightSubscriberInitialization:
 
         subscriber = InsightSubscriber()
 
-        assert subscriber.generator == mock_generator
+        assert subscriber.insight_generator == mock_generator
         mock_generator_class.assert_called_once()
 
 
@@ -532,7 +533,7 @@ def insight_subscriber():
         mock_generator = Mock()
         mock_generator_class.return_value = mock_generator
         subscriber = InsightSubscriber()
-        subscriber.generator = mock_generator
+        subscriber.insight_generator = mock_generator
         return subscriber
 
 
@@ -562,20 +563,21 @@ class TestInsightSubscriberMessageProcessing:
 
         # Mock insight generation
         mock_insight = {
-            "insights": ["Great cardiovascular health!"],
+            "key_insights": ["Great cardiovascular health!"],
             "user_id": "test-user-123",
             "upload_id": "upload-456",
         }
-        insight_subscriber.generator.generate_health_insight = AsyncMock(return_value=mock_insight)
+        insight_subscriber.insight_generator.generate_health_insight = AsyncMock(return_value=mock_insight)
 
         result = await insight_subscriber.process_insight_request_message(mock_request)
 
         assert result["status"] == "success"
-        assert result["insight"] == mock_insight
-        assert result["message_id"] == "message-123"
+        assert result["user_id"] == "test-user-123"
+        assert result["upload_id"] == "upload-456"
+        assert result["insight_generated"] is True
 
         # Verify insight generation was called
-        insight_subscriber.generator.generate_health_insight.assert_called_once_with(
+        insight_subscriber.insight_generator.generate_health_insight.assert_called_once_with(
             "test-user-123",
             "upload-456",
             {"cardio_features": [75.0, 150.0, 65.0]}

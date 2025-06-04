@@ -282,7 +282,7 @@ class TestHealthAnalysisPipelineModalityProcessing:
 
         # Mock PAT service to raise error
         mock_pat_service = AsyncMock()
-        mock_pat_service.analyze_actigraphy.side_effect = Exception("PAT service error")
+        mock_pat_service.analyze_actigraphy.side_effect = RuntimeError("PAT service error")
 
         with patch("clarity.ml.analysis_pipeline.get_pat_service", return_value=mock_pat_service):
             activity_metric = HealthMetric(
@@ -326,7 +326,7 @@ class TestHealthAnalysisPipelineFusion:
         pipeline = HealthAnalysisPipeline()
 
         # Mock fusion service to raise error
-        pipeline.fusion_service.fuse_embeddings = AsyncMock(side_effect=Exception("Fusion error"))
+        pipeline.fusion_service.fuse_embeddings = AsyncMock(side_effect=RuntimeError("Fusion error"))
 
         modality_features = {
             "cardio": [1.0, 2.0, 3.0],
@@ -384,7 +384,7 @@ class TestHealthAnalysisPipelineSummaryStats:
             user_id="user1",
             metric_type=HealthMetricType.HEART_RATE,
             timestamp=start_time,
-            data=BiometricData(value=75.0, unit="bpm")
+            biometric_data=BiometricData(heart_rate=75.0)
         )
 
         cardio_metric2 = HealthMetric(
@@ -392,7 +392,7 @@ class TestHealthAnalysisPipelineSummaryStats:
             user_id="user1",
             metric_type=HealthMetricType.HEART_RATE,
             timestamp=end_time,
-            data=BiometricData(value=80.0, unit="bpm")
+            biometric_data=BiometricData(heart_rate=80.0)
         )
 
         organized_data = {
@@ -403,9 +403,15 @@ class TestHealthAnalysisPipelineSummaryStats:
 
         result = HealthAnalysisPipeline._generate_data_coverage(organized_data)
 
-        assert result["total_metrics"] == 2
-        assert result["modalities"] == ["cardio"]
-        assert result["time_span_hours"] == 24.0
+        # Check cardio modality data
+        assert "cardio" in result
+        assert result["cardio"]["metric_count"] == 2
+        assert result["cardio"]["time_span_hours"] == 24.0
+        assert result["cardio"]["data_density"] == 2.0 / 24.0
+
+        # Empty modalities should not be in result
+        assert "respiratory" not in result
+        assert "activity" not in result
 
     @staticmethod
     def test_generate_feature_summary() -> None:
@@ -417,9 +423,19 @@ class TestHealthAnalysisPipelineSummaryStats:
 
         result = HealthAnalysisPipeline._generate_feature_summary(modality_features)
 
-        assert result["total_features"] == 7
-        assert result["modality_dimensions"]["cardio"] == 3
-        assert result["modality_dimensions"]["respiratory"] == 4
+        # Check cardio features summary
+        assert "cardio" in result
+        assert result["cardio"]["feature_count"] == 3
+        assert result["cardio"]["mean_value"] == 2.0  # (1+2+3)/3
+        assert result["cardio"]["min_value"] == 1.0
+        assert result["cardio"]["max_value"] == 3.0
+
+        # Check respiratory features summary
+        assert "respiratory" in result
+        assert result["respiratory"]["feature_count"] == 4
+        assert result["respiratory"]["mean_value"] == 5.5  # (4+5+6+7)/4
+        assert result["respiratory"]["min_value"] == 4.0
+        assert result["respiratory"]["max_value"] == 7.0
 
     @staticmethod
     def test_generate_health_indicators_all_modalities() -> None:
@@ -446,46 +462,74 @@ class TestHealthAnalysisPipelineSummaryStats:
     @staticmethod
     def test_extract_cardio_health_indicators() -> None:
         """Test cardio health indicators extraction."""
+        # Need at least MIN_FEATURE_VECTOR_LENGTH (8) features
         modality_features = {
-            "cardio": [75.0, 80.0, 70.0, 85.0]
+            "cardio": [75.0, 80.0, 70.0, 85.0, 90.0, 65.0, 78.0, 82.0]
         }
 
         result = HealthAnalysisPipeline._extract_cardio_health_indicators(modality_features)
 
         assert result is not None
         assert "avg_heart_rate" in result
-        assert "heart_rate_variability" in result
-        assert result["avg_heart_rate"] == 77.5  # (75+80+70+85)/4
+        assert "resting_heart_rate" in result
+        assert "heart_rate_recovery" in result
+        assert "circadian_rhythm" in result
+        assert result["avg_heart_rate"] == 75.0  # cardio[0]
+        assert result["resting_heart_rate"] == 85.0  # cardio[2]
+        assert result["heart_rate_recovery"] == 78.0  # cardio[6]
+        assert result["circadian_rhythm"] == 82.0  # cardio[7]
 
     @staticmethod
     def test_extract_respiratory_health_indicators() -> None:
         """Test respiratory health indicators extraction."""
+        # Need at least MIN_FEATURE_VECTOR_LENGTH (8) features
         modality_features = {
-            "respiratory": [16.0, 18.0, 14.0, 20.0]
+            "respiratory": [16.0, 18.0, 14.0, 95.5, 20.0, 15.0, 0.85, 0.92]
         }
 
         result = HealthAnalysisPipeline._extract_respiratory_health_indicators(modality_features)
 
         assert result is not None
         assert "avg_respiratory_rate" in result
-        assert "respiratory_variability" in result
-        assert result["avg_respiratory_rate"] == 17.0  # (16+18+14+20)/4
+        assert "avg_oxygen_saturation" in result
+        assert "respiratory_stability" in result
+        assert "oxygenation_efficiency" in result
+        assert result["avg_respiratory_rate"] == 16.0  # resp[0]
+        assert result["avg_oxygen_saturation"] == 95.5  # resp[3]
+        assert result["respiratory_stability"] == 0.85  # resp[6]
+        assert result["oxygenation_efficiency"] == 0.92  # resp[7]
 
     @staticmethod
     def test_extract_activity_health_indicators() -> None:
         """Test activity health indicators extraction."""
         activity_features = [
-            {"avg_heart_rate": 75.0, "total_steps": 1000, "active_minutes": 30},
-            {"avg_heart_rate": 80.0, "total_steps": 1500, "active_minutes": 45}
+            {"feature_name": "total_steps", "value": 1000},
+            {"feature_name": "average_daily_steps", "value": 1250.5},
+            {"feature_name": "total_distance", "value": 5.75},
+            {"feature_name": "total_active_energy", "value": 450.7},
+            {"feature_name": "total_exercise_minutes", "value": 35.2},
+            {"feature_name": "activity_consistency_score", "value": 0.8765},
+            {"feature_name": "latest_vo2_max", "value": 42.345}
         ]
 
         result = HealthAnalysisPipeline._extract_activity_health_indicators(activity_features)
 
         assert result is not None
+        assert "total_steps" in result
         assert "avg_daily_steps" in result
-        assert "avg_active_minutes" in result
-        assert result["avg_daily_steps"] == 1250.0  # (1000+1500)/2
-        assert result["avg_active_minutes"] == 37.5  # (30+45)/2
+        assert "total_distance_km" in result
+        assert "total_calories" in result
+        assert "total_exercise_minutes" in result
+        assert "consistency_score" in result
+        assert "cardio_fitness_vo2_max" in result
+
+        assert result["total_steps"] == 1000
+        assert result["avg_daily_steps"] == 1251  # Rounded
+        assert result["total_distance_km"] == 5.8  # Rounded to 1 decimal
+        assert result["total_calories"] == 451  # Rounded
+        assert result["total_exercise_minutes"] == 35  # Rounded
+        assert result["consistency_score"] == 0.88  # Rounded to 2 decimals
+        assert result["cardio_fitness_vo2_max"] == 42.3  # Rounded to 1 decimal
 
     @staticmethod
     def test_extract_activity_health_indicators_none_input() -> None:
@@ -510,7 +554,7 @@ class TestHealthAnalysisPipelineSummaryStats:
             user_id="user1",
             metric_type=HealthMetricType.HEART_RATE,
             timestamp=start_time,
-            data=BiometricData(value=75.0, unit="bpm")
+            biometric_data=BiometricData(heart_rate=75.0)
         )
 
         metric2 = HealthMetric(
@@ -518,7 +562,7 @@ class TestHealthAnalysisPipelineSummaryStats:
             user_id="user1",
             metric_type=HealthMetricType.HEART_RATE,
             timestamp=end_time,
-            data=BiometricData(value=80.0, unit="bpm")
+            biometric_data=BiometricData(heart_rate=80.0)
         )
 
         result = HealthAnalysisPipeline._calculate_time_span([metric1, metric2])
@@ -532,7 +576,7 @@ class TestHealthAnalysisPipelineSummaryStats:
             user_id="user1",
             metric_type=HealthMetricType.HEART_RATE,
             timestamp=datetime.now(UTC),
-            data=BiometricData(value=75.0, unit="bpm")
+            biometric_data=BiometricData(heart_rate=75.0)
         )
 
         result = HealthAnalysisPipeline._calculate_time_span([metric])
@@ -732,7 +776,7 @@ class TestRunAnalysisPipelineFunction:
         # Invalid health data that should cause conversion to fail
         invalid_health_data = {"invalid_key": "invalid_value"}
 
-        with pytest.raises(Exception):
+        with pytest.raises(ValueError):
             await run_analysis_pipeline("user1", invalid_health_data)
 
 
@@ -759,7 +803,7 @@ class TestAnalysisPipelineErrorHandling:
         pipeline = HealthAnalysisPipeline()
 
         # Mock cardio processor to raise error
-        pipeline.cardio_processor.process = MagicMock(side_effect=Exception("Processor error"))
+        pipeline.cardio_processor.process = MagicMock(side_effect=RuntimeError("Processor error"))
 
         cardio_metric = HealthMetric(
             id="1",
@@ -787,7 +831,7 @@ class TestAnalysisPipelineErrorHandling:
 
         # Mock Firestore client to raise error
         mock_firestore = AsyncMock()
-        mock_firestore.save_analysis_result.side_effect = Exception("Firestore error")
+        mock_firestore.save_analysis_result.side_effect = RuntimeError("Firestore error")
         pipeline.firestore_client = mock_firestore
 
         cardio_metric = HealthMetric(

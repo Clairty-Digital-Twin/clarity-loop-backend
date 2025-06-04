@@ -597,7 +597,9 @@ class TestWebSocketEndpoints:
             response.narrative = f"AI Response to: {request.context}"
             return response
 
-        mock_gemini_service.generate_health_insights = Mock(side_effect=mock_generate_insights)
+        mock_gemini_service.generate_health_insights = Mock(
+            side_effect=mock_generate_insights
+        )
         mock_pat_model_service = Mock(spec=PATModelService)
         # Mock the actual method used by the chat handler
         mock_pat_model_service.analyze_actigraphy = Mock(

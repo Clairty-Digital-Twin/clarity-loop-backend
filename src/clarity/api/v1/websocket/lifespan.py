@@ -22,7 +22,8 @@ def get_connection_manager() -> ConnectionManager:
     Uses app.state.connection_manager if available, else falls back to module-level singleton.
     """
     # Try to get from FastAPI app state if running in request context
-    frame = inspect.currentframe().f_back
+    current_frame = inspect.currentframe()
+    frame = current_frame.f_back if current_frame is not None else None
     local_vars = frame.f_locals if frame else {}
     if "request" in local_vars and hasattr(local_vars["request"], "app"):
         app = local_vars["request"].app
@@ -33,7 +34,7 @@ def get_connection_manager() -> ConnectionManager:
     if connection_manager is not None:
         return connection_manager
 
-    # For testing, try to get from test helper
+    # For testing, try to get from test helper without top-level import to avoid circular dependencies
     try:
         from tests.api.v1.test_websocket_helper import (
             get_test_connection_manager,

@@ -7,6 +7,7 @@ import logging
 import time
 from typing import Any
 from unittest.mock import (
+    AsyncMock,
     MagicMock,
     Mock,
 )
@@ -412,15 +413,15 @@ def app(monkeypatch: pytest.MonkeyPatch) -> FastAPI:  # noqa: ARG001
     # Create properly mocked GeminiService
     mock_gemini = Mock(spec=GeminiService)
 
-    # Create a mock response that returns dynamic content
-    def mock_generate_insights(
+    # Create a proper mock response
+    async def mock_generate_insights(  # noqa: RUF029
         request: object,
     ) -> object:
         response = MagicMock()
         response.narrative = f"AI Response to: {request.context}"
         return response
 
-    mock_gemini.generate_health_insights = Mock(side_effect=mock_generate_insights)
+    mock_gemini.generate_health_insights = AsyncMock(side_effect=mock_generate_insights)
     app.dependency_overrides[chat_handler.get_gemini_service] = lambda: mock_gemini
     app.dependency_overrides[chat_handler.get_pat_model_service] = lambda: Mock(
         spec=PATModelService
@@ -590,14 +591,14 @@ class TestWebSocketEndpoints:
         mock_gemini_service = Mock(spec=GeminiService)
 
         # Create a proper mock response
-        def mock_generate_insights(
+        async def mock_generate_insights(  # noqa: RUF029
             request: object,
         ) -> object:
             response = MagicMock()
             response.narrative = f"AI Response to: {request.context}"
             return response
 
-        mock_gemini_service.generate_health_insights = Mock(
+        mock_gemini_service.generate_health_insights = AsyncMock(
             side_effect=mock_generate_insights
         )
         mock_pat_model_service = Mock(spec=PATModelService)
@@ -663,7 +664,7 @@ class TestWebSocketEndpoints:
             # Assert that the mocked services were called
             # Note: The actual WebSocket communication is working correctly
             # The service method names may vary but the WebSocket functionality is tested
-            mock_gemini_service.generate_health_insights.assert_called_once()
+            mock_gemini_service.generate_health_insights.assert_awaited_once()
 
             # Check that the connection manager methods were called correctly
             # Assert on the explicit mock_manager created for this test

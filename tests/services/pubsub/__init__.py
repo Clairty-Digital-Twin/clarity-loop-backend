@@ -1,1 +1,1 @@
-"""Tests for pubsub services.""" 
+"""Tests for pubsub services."""

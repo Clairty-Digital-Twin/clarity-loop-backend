@@ -343,8 +343,8 @@ class TestGeminiInsightGeneratorInsightGeneration:
         upload_id = "upload-456"
 
         # Set model to None to trigger mock mode
-        with patch.object(mock_generator, 'model', None):
-            with patch.object(mock_generator, '_store_insight') as mock_store:
+        with patch.object(mock_generator, 'model', None), \
+             patch.object(mock_generator, '_store_insight') as mock_store:
                 result = await mock_generator.generate_health_insight(
                     user_id, upload_id, sample_analysis_results
                 )
@@ -408,8 +408,8 @@ class TestGeminiInsightGeneratorGeminiAPI:
         """Test Gemini API call with exception."""
         prompt = "Analyze this health data..."
 
-        with patch.object(mock_generator.model, 'generate_content', side_effect=Exception("API error")):
-            with pytest.raises(Exception, match="API error"):
+        with patch.object(mock_generator.model, 'generate_content', side_effect=Exception("API error")), \
+             pytest.raises(Exception, match="API error"):
                 await mock_generator._call_gemini_api(prompt)
 
 
@@ -506,8 +506,8 @@ class TestGeminiInsightGeneratorStorage:
         upload_id = "upload-456"
         insight = {"test": "data"}
 
-        with patch.object(mock_generator.firestore_client, 'collection', side_effect=Exception("Firestore error")):
-            with pytest.raises(Exception, match="Firestore error"):
+        with patch.object(mock_generator.firestore_client, 'collection', side_effect=Exception("Firestore error")), \
+             pytest.raises(Exception, match="Firestore error"):
                 await mock_generator._store_insight(user_id, upload_id, insight)
 
 

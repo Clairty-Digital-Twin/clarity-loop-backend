@@ -20,6 +20,7 @@ from clarity.ml.preprocessing import HealthDataPreprocessor
 from clarity.ml.processors.activity_processor import ActivityProcessor
 from clarity.ml.processors.cardio_processor import CardioProcessor
 from clarity.ml.processors.respiration_processor import RespirationProcessor
+from clarity.ml.processors.sleep_processor import SleepProcessor
 from clarity.models.health_data import (
     ActivityData,
     BiometricData,
@@ -46,6 +47,7 @@ class AnalysisResults:
             []
         )  # 🔥 ADDED: Basic activity features
         self.activity_embedding: list[float] = []
+        self.sleep_features: dict[str, Any] = {}  # 🚀 GENIUS: Sleep features
         self.fused_vector: list[float] = []
         self.summary_stats: dict[str, Any] = {}
         self.processing_metadata: dict[str, Any] = {}
@@ -70,6 +72,7 @@ class HealthAnalysisPipeline:
         self.cardio_processor = CardioProcessor()
         self.respiratory_processor = RespirationProcessor()
         self.activity_processor = ActivityProcessor()  # 🔥 ADDED: Activity processor
+        self.sleep_processor = SleepProcessor()  # 🚀 GENIUS: Sleep processor
         self.preprocessor = HealthDataPreprocessor()
 
         # ML services (loaded on-demand)

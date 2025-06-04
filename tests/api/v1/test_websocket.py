@@ -242,7 +242,7 @@ class _TestConnectionManager:
     async def broadcast_to_room(
         self, room_id: str, message: Any, exclude_websocket: WebSocket | None = None
     ) -> None:
-        logger.info(f"Attempting to broadcast message to room {room_id}: {message}")
+        logger.info("Attempting to broadcast message to room %s: %s", room_id, message)
 
         message_content = message
         if hasattr(message, "model_dump_json"):
@@ -282,7 +282,7 @@ class _TestConnectionManager:
                         pass
 
         logger.info(
-            f"Broadcast sent to {len(target_websockets)} connections in room {room_id}"
+            "Broadcast sent to %s connections in room %s", len(target_websockets), room_id
         )
 
     async def handle_heartbeat(self, websocket: WebSocket) -> None:
@@ -316,7 +316,7 @@ class _TestConnectionManager:
         self.message_counts[user_id] = recent_messages
 
         if len(recent_messages) > self.message_rate_limit_count:
-            logger.warning(f"User {user_id} is rate-limited.")
+            logger.warning("User %s is rate-limited.", user_id)
             return True
         return False
 
@@ -345,7 +345,7 @@ class _TestConnectionManager:
     ) -> _TestConnectionInfo | None:
         return self.connection_info.get(websocket)
 
-    async def handle_message(self, websocket: WebSocket, raw_message: str) -> bool:
+    async def handle_message(self, _websocket: WebSocket, _raw_message: str) -> bool:
         """Handle an incoming WebSocket message - always allow in tests."""
         # In tests, always return True to allow message processing
         return True
@@ -442,7 +442,7 @@ class MockWebSocket:
     async def send_text(self, data: str) -> None:
         self.sent_data.append(data)
 
-    async def close(self, code: int = 1000, reason: str = "") -> None:
+    async def close(self, _code: int = 1000, _reason: str = "") -> None:
         self.closed = True
 
 

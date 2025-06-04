@@ -138,12 +138,16 @@ class GeminiInsightGenerator:
         # Handle both dict and Pydantic model
         if hasattr(sleep_features, "model_dump"):
             try:
-                return sleep_features.model_dump()
+                result = sleep_features.model_dump()  # type: ignore[attr-defined]
+                return dict(result) if result else {}
             except AttributeError:
                 # Fall back to dict() for older Pydantic versions
-                return sleep_features.dict()
+                if hasattr(sleep_features, "dict"):
+                    result = sleep_features.dict()  # type: ignore[attr-defined]
+                    return dict(result) if result else {}
         elif hasattr(sleep_features, "dict"):
-            return sleep_features.dict()
+            result = sleep_features.dict()  # type: ignore[attr-defined]
+            return dict(result) if result else {}
         elif isinstance(sleep_features, dict):
             return sleep_features
         else:
@@ -363,12 +367,6 @@ class InsightSubscriber:
         except Exception:
             logger.exception("❌ Failed to process insight request")
             self._raise_processing_error()
-        else:
-            return {
-                "status": "success",
-                "message": "Health insight generated successfully",
-                **result,  # Include the actual insight data
-            }
 
     def _extract_message_data(self, pubsub_body: dict[str, Any]) -> dict[str, Any]:
         """Extract and validate message data from Pub/Sub payload."""

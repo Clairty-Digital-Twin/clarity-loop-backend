@@ -2,7 +2,7 @@
 
 from datetime import datetime
 from enum import StrEnum
-from typing import Any, Union
+from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -132,18 +132,18 @@ class HeartbeatAckMessage(BaseMessage):
 
 
 # Union type for all possible WebSocket messages
-WebSocketMessage = Union[
-    ChatMessage,
-    SystemMessage,
-    ErrorMessage,
-    HealthInsightMessage,
-    AnalysisUpdateMessage,
-    UserStatusMessage,
-    TypingMessage,
-    ConnectionMessage,
-    HeartbeatMessage,
-    HeartbeatAckMessage,
-]
+WebSocketMessage = (
+    ChatMessage
+    | SystemMessage
+    | ErrorMessage
+    | HealthInsightMessage
+    | AnalysisUpdateMessage
+    | UserStatusMessage
+    | TypingMessage
+    | ConnectionMessage
+    | HeartbeatMessage
+    | HeartbeatAckMessage
+)
 
 
 class ConnectionInfo(BaseModel):

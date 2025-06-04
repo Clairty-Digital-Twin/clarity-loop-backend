@@ -44,9 +44,9 @@ router = APIRouter(prefix="/ws", tags=["websocket"])
 class WebSocketChatHandler:
     """Handles WebSocket chat functionality with health insights integration."""
 
-    def __init__(self):
-        self.gemini_service = GeminiService()
-        self.pat_service = PATModelService()
+    def __init__(self, gemini_service: GeminiService = None, pat_service: PATModelService = None):
+        self.gemini_service = gemini_service if gemini_service is not None else GeminiService()
+        self.pat_service = pat_service if pat_service is not None else PATModelService()
 
     async def process_chat_message(
         self, websocket: WebSocket, message: ChatMessage, connection_manager

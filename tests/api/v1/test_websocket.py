@@ -437,13 +437,11 @@ class TestWebSocketEndpoints:
 class TestChatHandler:
     """Test chat handler functionality."""
 
-    @patch("clarity.ml.gemini_service.GeminiService")
-    async def test_health_insight_generation(
-        self, mock_gemini_service: MagicMock
-    ) -> None:
+    async def test_health_insight_generation(self) -> None:
         """Test health insight generation from chat messages."""
-        # Mock Gemini service response
-        mock_gemini_service.return_value.generate_health_insights.return_value = {
+        # Create a mock Gemini service
+        mock_gemini_service = MagicMock()
+        mock_gemini_service.generate_health_insights.return_value = {
             "insights": [
                 {
                     "content": "Based on your message about feeling tired, consider improving your sleep schedule.",
@@ -457,7 +455,7 @@ class TestChatHandler:
             ],
         }
 
-        handler = WebSocketChatHandler()
+        handler = WebSocketChatHandler(gemini_service=mock_gemini_service)
         websocket = MockWebSocket()
 
         # Create connection manager and connect
@@ -477,7 +475,7 @@ class TestChatHandler:
         await handler.process_chat_message(websocket, message, connection_manager)
 
         # Should have generated health insight
-        mock_gemini_service.return_value.generate_health_insights.assert_called_once()
+        mock_gemini_service.generate_health_insights.assert_called_once()
 
         # Check if insight message was sent
         insight_messages = [

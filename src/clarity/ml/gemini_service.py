@@ -58,11 +58,27 @@ class GeminiService:
     """Service for generating health insights using Vertex AI Gemini."""
 
     def __init__(
-        self, project_id: str | None = None, location: str = "us-central1"
+        self, project_id: str | None = None, location: str = "us-central1", testing: bool | None = None, model=None
     ) -> None:
+        from clarity.core.config import get_settings
         self.project_id = project_id
         self.location = location
-        self.client: Any = None
+        # Auto-detect testing mode if not explicitly set
+        if testing is None:
+            try:
+                testing = get_settings().testing
+            except Exception:
+                testing = False
+        self.testing = testing
+        self.model = None
+        self.is_initialized = False
+        if self.testing:
+            self.model = model if model is not None else object()
+            self.is_initialized = True
+            logger.info("GeminiService initialized in TEST mode (no external Vertex AI calls).")
+        else:
+            self.initialize()
+        .client: Any = None
         self.model: GenerativeModel | None = None
         self.is_initialized = False
 

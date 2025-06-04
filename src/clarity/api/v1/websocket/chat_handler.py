@@ -112,7 +112,7 @@ class WebSocketChatHandler:
             logger.warning("Could not find connection info or room_id for typing message.")
 
     async def process_heartbeat(
-        self, websocket: WebSocket, message: Dict[str, Any], connection_manager: Any
+        self, websocket: WebSocket, message: dict[str, Any], connection_manager: Any
     ) -> None:
         user_id = message.get("user_id", "unknown")
         logger.info(f"Processing heartbeat for user {user_id}")
@@ -130,7 +130,7 @@ class WebSocketChatHandler:
     async def trigger_health_analysis(
         self,
         user_id: str,
-        health_data: Dict[str, Any],
+        health_data: dict[str, Any],
         connection_manager: Any
     ) -> None:
         logger.info(f"Triggering health analysis for user {user_id} with data: {health_data}")
@@ -148,9 +148,9 @@ class WebSocketChatHandler:
                         min_ts = datetime.fromisoformat(min_ts.replace("Z", "+00:00"))
                     if isinstance(max_ts, str):
                         max_ts = datetime.fromisoformat(max_ts.replace("Z", "+00:00"))
-                    duration_hours = int((max_ts - min_ts).total_seconds() / 3600) # Cast to int
-                    if duration_hours == 0: # Handle single data point case
-                        duration_hours = 24 # Default to 24 hours if only one point
+                    duration_hours = int((max_ts - min_ts).total_seconds() / 3600)  # Cast to int
+                    if duration_hours == 0:  # Handle single data point case
+                        duration_hours = 24  # Default to 24 hours if only one point
 
             actigraphy_input = ActigraphyInput(
                 user_id=user_id,
@@ -161,7 +161,7 @@ class WebSocketChatHandler:
                     )
                 ],
                 sampling_rate=1.0,
-                duration_hours=duration_hours # Use calculated duration
+                duration_hours=duration_hours  # Use calculated duration
             )
 
             # Call PATModelService to analyze health data

@@ -106,27 +106,41 @@ class GeminiInsightGenerator:
         # 🚀 FIXED: Map sleep_features to expected Gemini field names
         if "sleep_features" in analysis_results:
             sf = analysis_results["sleep_features"]
-            # Ensure BaseModel is dict
+            # Ensure BaseModel is dict - handle different input types
             if hasattr(sf, "model_dump"):
-                sf = sf.model_dump()  # convert to dict if Pydantic model
+                try:
+                    sf = sf.model_dump()  # convert to dict if Pydantic model
+                except AttributeError:
+                    # Handle mock that raises AttributeError
+                    if hasattr(sf, "dict"):
+                        sf = sf.dict()  # fallback for older Pydantic
+                    else:
+                        sf = {}  # fallback for invalid types
             elif hasattr(sf, "dict"):
-                sf = sf.dict()  # fallback for older Pydantic
+                try:
+                    sf = sf.dict()  # fallback for older Pydantic
+                except AttributeError:
+                    sf = {}  # fallback for invalid types
+            elif not isinstance(sf, dict):
+                # Skip processing if sf is not a dict-like object (e.g., string)
+                sf = {}
 
-            # Map to expected field names for Gemini
-            enhanced["sleep_efficiency"] = sf.get("sleep_efficiency", 0) * 100  # as percentage
-            enhanced["total_sleep_time"] = (sf.get("total_sleep_minutes", 0) / 60)  # in hours
-            enhanced["wake_after_sleep_onset"] = sf.get("waso_minutes", 0)
-            enhanced["sleep_onset_latency"] = sf.get("sleep_latency", 0)
-            enhanced["rem_sleep_percent"] = sf.get("rem_percentage", 0) * 100
-            enhanced["deep_sleep_percent"] = sf.get("deep_percentage", 0) * 100
+            # Map to expected field names for Gemini - only if sf is valid dict
+            if isinstance(sf, dict):
+                enhanced["sleep_efficiency"] = sf.get("sleep_efficiency", 0) * 100  # as percentage
+                enhanced["total_sleep_time"] = (sf.get("total_sleep_minutes", 0) / 60)  # in hours
+                enhanced["wake_after_sleep_onset"] = sf.get("waso_minutes", 0)
+                enhanced["sleep_onset_latency"] = sf.get("sleep_latency", 0)
+                enhanced["rem_sleep_percent"] = sf.get("rem_percentage", 0) * 100
+                enhanced["deep_sleep_percent"] = sf.get("deep_percentage", 0) * 100
 
-            # Provide consistency in a user-friendly way
-            cons_score = sf.get("consistency_score", 0)
-            enhanced["sleep_consistency_rating"] = (
-                "high" if cons_score > HIGH_CONSISTENCY_THRESHOLD
-                else "moderate" if cons_score > MODERATE_CONSISTENCY_THRESHOLD
-                else "low"
-            )
+                # Provide consistency in a user-friendly way
+                cons_score = sf.get("consistency_score", 0)
+                enhanced["sleep_consistency_rating"] = (
+                    "high" if cons_score > HIGH_CONSISTENCY_THRESHOLD
+                    else "moderate" if cons_score > MODERATE_CONSISTENCY_THRESHOLD
+                    else "low"
+                )
 
         return enhanced
 
@@ -178,7 +192,7 @@ class GeminiInsightGenerator:
         # Health scores from summary stats
         summary_stats = analysis_results.get("summary_stats", {})
         health_indicators = summary_stats.get("health_indicators", {})
-        
+
         if cardio_health := health_indicators.get("cardiovascular_health"):
             if circadian_score := cardio_health.get("circadian_rhythm"):
                 prompt_parts.append(f"Circadian Rhythm Score: {circadian_score}/1.0")

@@ -579,8 +579,8 @@ class TestInsightSubscriberMessageProcessing:
         assert result["message"] == "Health insight generated successfully"
 
         insight_subscriber.generator.generate_health_insight.assert_called_once_with(
-            user_id="test-user-123", 
-            upload_id="upload-456", 
+            user_id="test-user-123",
+            upload_id="upload-456",
             analysis_results={"features": [1, 2, 3]}
         )
 

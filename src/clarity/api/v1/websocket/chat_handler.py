@@ -442,8 +442,8 @@ async def websocket_health_analysis_endpoint(
                 )
                 break
 
-            except Exception as e:
-                logger.exception("Error in health analysis WebSocket: %s", e)
+            except Exception:
+                logger.exception("Error in health analysis WebSocket")
                 await connection_manager.disconnect(websocket, "internal_error")
                 break
 

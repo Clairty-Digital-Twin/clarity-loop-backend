@@ -6,6 +6,7 @@ import contextlib
 from datetime import datetime
 import logging
 import time
+from typing import Any
 import uuid
 from weakref import WeakSet
 
@@ -57,11 +58,11 @@ class ConnectionManager:
             list
         )  # user_id -> [timestamps]
         self.last_heartbeat: dict[WebSocket, float] = {}
-        self.failed_connections: WeakSet = WeakSet()
+        self.failed_connections: WeakSet[WebSocket] = WeakSet()
 
         # Background tasks (started explicitly during app startup)
-        self._cleanup_task: asyncio.Task | None = None
-        self._heartbeat_task: asyncio.Task | None = None
+        self._cleanup_task: asyncio.Task[None] | None = None
+        self._heartbeat_task: asyncio.Task[None] | None = None
         self._started = False
 
     async def start_background_tasks(self) -> None:
@@ -404,7 +405,7 @@ class ConnectionManager:
         """Get total number of active connections."""
         return len(self.connection_info)
 
-    def get_user_info(self, user_id: str) -> dict | None:
+    def get_user_info(self, user_id: str) -> dict[str, Any] | None:
         """Get information about a connected user."""
         connections = self.user_connections.get(user_id, [])
         if not connections:

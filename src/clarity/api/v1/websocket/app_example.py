@@ -47,12 +47,12 @@ def create_websocket_app() -> FastAPI:
     app.include_router(chat_router, prefix="/api/v1")
 
     @app.get("/")
-    async def root():
+    async def root() -> dict[str, str]:
         """Health check endpoint."""
         return {"message": "WebSocket Chat API is running"}
 
     @app.get("/health")
-    async def health_check():
+    async def health_check() -> dict[str, str | dict[str, int | str]]:
         """Detailed health check with WebSocket status."""
         from clarity.api.v1.websocket.lifespan import get_connection_manager
 
@@ -94,7 +94,7 @@ def create_extended_app() -> FastAPI:
     app.include_router(chat_router, prefix="/api/v1")
 
     @app.get("/")
-    async def root():
+    async def root() -> dict[str, str]:
         """Health check endpoint."""
         return {"message": "Extended WebSocket API is running"}
 

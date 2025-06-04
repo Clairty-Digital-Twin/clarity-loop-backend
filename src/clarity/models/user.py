@@ -16,7 +16,7 @@ class User(BaseModel):
     firebase_token: str | None = Field(None, description="Firebase ID token")
     created_at: datetime | None = Field(None, description="Account creation timestamp")
     last_login: datetime | None = Field(None, description="Last login timestamp")
-    profile: dict | None = Field(None, description="Additional user profile data")
+    profile: dict[str, Any] | None = Field(None, description="Additional user profile data")
 
     class Config:
         """Pydantic configuration."""
@@ -35,13 +35,13 @@ class UserProfile(BaseModel):
     avatar_url: str | None = Field(None, description="Avatar image URL")
     timezone: str | None = Field(None, description="User timezone")
     language: str = Field(default="en", description="Preferred language")
-    privacy_settings: dict = Field(
+    privacy_settings: dict[str, Any] = Field(
         default_factory=dict, description="Privacy preferences"
     )
-    notification_settings: dict = Field(
+    notification_settings: dict[str, Any] = Field(
         default_factory=dict, description="Notification preferences"
     )
-    health_goals: dict | None = Field(None, description="User health goals and targets")
+    health_goals: dict[str, Any] | None = Field(None, description="User health goals and targets")
 
     class Config:
         """Pydantic configuration."""
@@ -91,9 +91,9 @@ class UserUpdate(BaseModel):
     bio: str | None = Field(None, max_length=500)
     timezone: str | None = Field(None)
     language: str | None = Field(None)
-    privacy_settings: dict | None = Field(None)
-    notification_settings: dict | None = Field(None)
-    health_goals: dict | None = Field(None)
+    privacy_settings: dict[str, Any] | None = Field(None)
+    notification_settings: dict[str, Any] | None = Field(None)
+    health_goals: dict[str, Any] | None = Field(None)
 
     class Config:
         """Pydantic configuration."""

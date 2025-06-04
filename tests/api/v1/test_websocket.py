@@ -387,7 +387,7 @@ def app(monkeypatch: pytest.MonkeyPatch) -> FastAPI:
     mock_gemini = AsyncMock(spec=GeminiService)
 
     # Create a mock response that returns dynamic content
-    async def mock_generate_insights(request):
+    async def mock_generate_insights(request) -> object:
         response = MagicMock()
         response.narrative = f"AI Response to: {request.context}"
         return response
@@ -556,7 +556,7 @@ class TestWebSocketEndpoints:
         mock_gemini_service = AsyncMock(spec=GeminiService)
 
         # Create a proper async mock response
-        async def mock_generate_insights(request):
+        async def mock_generate_insights(request) -> object:
             response = MagicMock()
             response.narrative = f"AI Response to: {request.context}"
             return response

@@ -1,6 +1,7 @@
 """Firebase authentication utilities for WebSocket and HTTP endpoints."""
 
 import logging
+from typing import Any
 
 from fastapi import Depends, HTTPException, Request, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
@@ -214,7 +215,7 @@ def verify_admin_user(user: User = Depends(get_current_user_required)) -> User:
         ) from e
 
 
-def create_custom_token(uid: str, additional_claims: dict | None = None) -> str:
+def create_custom_token(uid: str, additional_claims: dict[str, Any] | None = None) -> str:
     """Create a custom Firebase token for a user.
 
     This is useful for server-side user creation or testing.
@@ -233,7 +234,7 @@ def create_custom_token(uid: str, additional_claims: dict | None = None) -> str:
         raise
 
 
-def set_custom_user_claims(uid: str, custom_claims: dict) -> None:
+def set_custom_user_claims(uid: str, custom_claims: dict[str, Any]) -> None:
     """Set custom claims for a user.
 
     Args:

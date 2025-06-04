@@ -445,7 +445,7 @@ class TestChatHandler:
         )
 
         # Process message
-        await handler.process_chat_message(websocket, message)
+        await handler.process_chat_message(websocket, message, connection_manager)
 
         # Should have generated health insight
         mock_gemini_service.return_value.generate_health_insights.assert_called_once()

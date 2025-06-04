@@ -37,7 +37,7 @@ from clarity.api.v1.websocket.models import (
     TypingMessage,
 )
 from clarity.auth.firebase_auth import User, get_current_user_websocket
-from clarity.models.user import User, UserPreferences, UserProfile
+from clarity.models.user import User, UserProfile
 
 logger = logging.getLogger(__name__)
 # Basic logging for tests, customize as needed, e.g., in conftest.py for global config
@@ -402,7 +402,7 @@ class TestWebSocketEndpoints:
             # Send a chat message
             chat_message = ChatMessage(
                 user_id=user_id,
-                timestamp=datetime.now(UTC).isoformat(),
+                timestamp=datetime.now(UTC),
                 type=MessageType.MESSAGE,
                 content="Hello AI",
             )
@@ -417,7 +417,7 @@ class TestWebSocketEndpoints:
             # Test typing indicator
             typing_indicator = TypingMessage(
                 user_id=user_id,
-                timestamp=datetime.now(UTC).isoformat(),
+                timestamp=datetime.now(UTC),
                 is_typing=True,
                 type=MessageType.TYPING,
                 username="test-user",
@@ -431,7 +431,7 @@ class TestWebSocketEndpoints:
 
             # Test heartbeat
             heartbeat_message = HeartbeatMessage(
-                timestamp=datetime.now(UTC).isoformat(),
+                timestamp=datetime.now(UTC),
                 type=MessageType.HEARTBEAT,
             )
             websocket.send_json(heartbeat_message.model_dump())
@@ -458,7 +458,7 @@ class TestWebSocketEndpoints:
             websocket.send_text("this is not json")
 
             response_data = websocket.receive_json()
-            assert response_data["message_type"] == models.MessageType.ERROR
+            assert response_data["message_type"] == MessageType.ERROR
             assert "Invalid message format" in response_data["content"]
 
     async def test_websocket_typing_indicator(self, client: TestClient) -> None:
@@ -470,8 +470,8 @@ class TestWebSocketEndpoints:
             # Send a typing indicator message
             typing_message = TypingMessage(
                 user_id=user_id,
-                session_id="test-session-123",
-                timestamp=datetime.now(UTC).isoformat(),
+                username="test-user",
+                timestamp=datetime.now(UTC),
                 is_typing=True,
                 type=MessageType.TYPING,
             )
@@ -522,7 +522,7 @@ class TestChatHandler:
             mock_websocket = AsyncMock(spec=WebSocket)
             mock_websocket.receive_json.side_effect = [
                 {
-                    "message_type": models.MessageType.CHAT,
+                    "message_type": MessageType.CHAT,
                     "user_id": user_id,
                     "session_id": "test-session-123",
                     "timestamp": datetime.now(UTC).isoformat(),

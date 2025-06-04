@@ -29,6 +29,7 @@ from starlette.websockets import WebSocketState
 
 from clarity.api.v1.websocket import chat_handler, models
 from clarity.api.v1.websocket.connection_manager import ConnectionManager
+from clarity.api.v1.websocket.lifespan import get_connection_manager
 from clarity.api.v1.websocket.models import (
     ChatMessage,
     ConnectionInfo,
@@ -36,7 +37,7 @@ from clarity.api.v1.websocket.models import (
     MessageType,
     TypingMessage,
 )
-from clarity.auth.firebase_auth import User, get_current_user_websocket
+from clarity.auth.firebase_auth import get_current_user_websocket
 from clarity.ml.gemini_service import GeminiService
 from clarity.ml.pat_service import PATModelService
 from clarity.models.user import User, UserProfile
@@ -195,6 +196,13 @@ class _TestConnectionManager:
             {"type": "direct", "target_ws": websocket, "message": message_content}
         )
 
+        # Actually send the message through the WebSocket for TestClient
+        try:
+            await websocket.send_json(message_content)
+            logger.info(f"Sent message through websocket: {message_content}")
+        except Exception as e:
+            logger.warning(f"Failed to send message through websocket: {e}")
+
         logger.info(f"Recorded direct message send to {websocket}")
 
     async def send_to_user(self, user_id: str, message: Any) -> None:
@@ -218,6 +226,13 @@ class _TestConnectionManager:
                             "message": message_content,
                         }
                     )
+                    # Actually send the message through the WebSocket for TestClient
+                    try:
+                        await websocket.send_json(message_content)
+                        logger.info(f"Sent message to user {user_id} through websocket: {message_content}")
+                    except Exception as e:
+                        logger.warning(f"Failed to send message to user {user_id} through websocket: {e}")
+                        
                     logger.info(
                         f"Recorded direct message send to user {user_id} via {websocket}"
                     )
@@ -327,7 +342,7 @@ def create_mock_connection_manager() -> _TestConnectionManager:
     return _TestConnectionManager()
 
 
-async def mock_get_current_user_websocket(token: str | None = None) -> User:
+def mock_get_current_user_websocket(token: str) -> User:
     """Mock for get_current_user_websocket dependency."""
     if token == "test-token":
         return User(
@@ -355,9 +370,11 @@ def app(monkeypatch: pytest.MonkeyPatch) -> FastAPI:
     app.dependency_overrides[get_current_user_websocket] = (
         mock_get_current_user_websocket
     )
-    app.dependency_overrides[chat_handler.get_gemini_service] = lambda: AsyncMock(
-        spec=GeminiService
-    )
+    # Create properly mocked GeminiService
+    mock_gemini = AsyncMock(spec=GeminiService)
+    mock_gemini.generate_health_insights.return_value = AsyncMock()
+    mock_gemini.generate_health_insights.return_value.narrative = "AI Response to: {content}"
+    app.dependency_overrides[chat_handler.get_gemini_service] = lambda: mock_gemini
     app.dependency_overrides[chat_handler.get_pat_model_service] = lambda: AsyncMock(
         spec=PATModelService
     )

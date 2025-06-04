@@ -18,7 +18,7 @@ from fastapi import (
 
 from clarity.auth.firebase_auth import get_current_user_websocket
 from clarity.core.config import get_settings
-from clarity.core.container import container
+from clarity.core.container import get_container
 from clarity.ml.gemini_service import (
     GeminiService,
     HealthInsightRequest,
@@ -31,6 +31,7 @@ from .lifespan import get_connection_manager
 from .models import (
     ChatMessage,
     ErrorMessage,
+    HeartbeatMessage,
     MessageType,
     TypingMessage,
 )
@@ -42,11 +43,11 @@ router = APIRouter(prefix="/chat", tags=["websocket"])
 
 
 def get_gemini_service() -> GeminiService:
-    return container.gemini_service()
+    return get_container().get_instance(GeminiService)
 
 
 def get_pat_model_service() -> PATModelService:
-    return container.pat_model_service()
+    return get_container().get_instance(PATModelService)
 
 
 class WebSocketChatHandler:
@@ -120,9 +121,7 @@ class WebSocketChatHandler:
         connection_manager.update_last_active(websocket)
         # Acknowledge heartbeat
         heartbeat_ack_message = HeartbeatMessage(
-            user_id=user_id,
             timestamp=datetime.now(UTC),  # Use UTC for consistency
-            client_timestamp=message.get("client_timestamp", ""),
             type=MessageType.HEARTBEAT_ACK,
         )
         await connection_manager.send_to_connection(websocket, heartbeat_ack_message)
@@ -211,7 +210,7 @@ async def websocket_chat_endpoint(
     gemini_service: GeminiService = Depends(get_gemini_service),
     pat_service: PATModelService = Depends(get_pat_model_service),
     current_user: User = Depends(get_current_user_websocket)
-):
+) -> None:
     """WebSocket endpoint for real-time chat with health insights.
 
     Features:
@@ -256,25 +255,25 @@ async def websocket_chat_endpoint(
                     message_data = json.loads(raw_message)
                     message_type = message_data.get("type")
 
-                    if message_type == MessageType.MESSAGE:
+                    if message_type == MessageType.MESSAGE.value:
                         message = ChatMessage(**message_data)
                         await handler.process_chat_message(
                             websocket, message, connection_manager
                         )
 
-                    elif message_type == MessageType.TYPING:
+                    elif message_type == MessageType.TYPING.value:
                         message = TypingMessage(**message_data)
                         await handler.process_typing_message(
                             websocket, message, connection_manager
                         )
 
-                    elif message_type == MessageType.HEARTBEAT:
+                    elif message_type == MessageType.HEARTBEAT.value:
                         await handler.process_heartbeat(
                             websocket, message_data, connection_manager
                         )
 
-                    elif message_type == MessageType.HEALTH_INSIGHT:
-                        health_data_content = message_data.get("data", {})
+                    elif message_type == MessageType.HEALTH_INSIGHT.value:
+                        health_data_content = message_data.get("content", {})
                         user_id_from_message = message_data.get("user_id", "")
                         if user_id_from_message:  # Ensure user_id is present before triggering analysis
                             await handler.trigger_health_analysis(user_id_from_message, health_data_content, connection_manager)
@@ -400,7 +399,7 @@ async def websocket_health_analysis_endpoint(
                             user_id, health_data, connection_manager
                         )
 
-                    elif message_data.get("type") == MessageType.HEARTBEAT:
+                    elif message_data.get("type") == MessageType.HEARTBEAT.value:
                         await handler.process_heartbeat(
                             websocket, message_data, connection_manager
                         )

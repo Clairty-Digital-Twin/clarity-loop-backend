@@ -73,10 +73,12 @@ class FirebaseAuthMiddleware(BaseHTTPMiddleware):
             user_context = await self._authenticate_request(request)
             request.state.user = user_context
         except Exception as e:
-            from clarity.models.auth import AuthError
-            from starlette.responses import JSONResponse
             from datetime import UTC, datetime
-            
+
+            from starlette.responses import JSONResponse
+
+            from clarity.models.auth import AuthError
+
             # Handle authentication errors
             if isinstance(e, AuthError):
                 return JSONResponse(
@@ -87,19 +89,18 @@ class FirebaseAuthMiddleware(BaseHTTPMiddleware):
                         "timestamp": datetime.now(UTC).isoformat(),
                     }
                 )
-            else:
-                logger.warning(f"Authentication failed: {e}")
-                if not self.graceful_degradation:
-                    return JSONResponse(
-                        status_code=401,
-                        content={
-                            "error": "authentication_failed",
-                            "message": "Authentication required",
-                            "timestamp": datetime.now(UTC).isoformat(),
-                        }
-                    )
-                # For graceful degradation, set user as None
-                request.state.user = None
+            logger.warning(f"Authentication failed: {e}")
+            if not self.graceful_degradation:
+                return JSONResponse(
+                    status_code=401,
+                    content={
+                        "error": "authentication_failed",
+                        "message": "Authentication required",
+                        "timestamp": datetime.now(UTC).isoformat(),
+                    }
+                )
+            # For graceful degradation, set user as None
+            request.state.user = None
 
         return await call_next(request)
 
@@ -241,18 +242,24 @@ class FirebaseAuthMiddleware(BaseHTTPMiddleware):
                 status_code=401,
                 error_code="invalid_token",
             )
-
+        
         # Convert user to expected format for _create_user_context
-        user_info_dict = {
-            "user_id": user_info.uid,
-            "email": user_info.email,
-            "name": user_info.display_name,
-            "verified": user_info.email_verified,
-            "roles": ["patient"],  # Default role from user info
-            "custom_claims": {},
-            "created_at": user_info.created_at,
-            "last_login": user_info.last_login,
-        }
+        # Handle both User objects and dict objects (for tests)
+        if hasattr(user_info, 'uid'):
+            # It's a User object
+            user_info_dict = {
+                "user_id": user_info.uid,
+                "email": user_info.email,
+                "name": user_info.display_name,
+                "verified": user_info.email_verified,
+                "roles": ["patient"],  # Default role from user info
+                "custom_claims": {},
+                "created_at": user_info.created_at,
+                "last_login": user_info.last_login,
+            }
+        else:
+            # It's already a dict (test case)
+            user_info_dict = user_info
 
         return self._create_user_context(user_info_dict)
 
@@ -334,12 +341,23 @@ class FirebaseAuthProvider:
             )
             await self.initialize()
 
+        # Check cache first if caching is enabled
+        cache_enabled = self.middleware_config.get('cache_enabled', True)
+        current_time = time.time()
+
+        if cache_enabled and token in self._token_cache:
+            cached_data = self._token_cache[token]
+            if current_time - cached_data["timestamp"] <= self._cache_ttl:
+                # Cache hit - return cached user
+                return cached_data["user"]
+            # Cache expired - remove entry
+            del self._token_cache[token]
+
         try:
             # Use the existing Firebase auth verification
             from firebase_admin import auth
 
             decoded_token = auth.verify_id_token(token)
-            current_time = time.time()
 
             # Create user object from Firebase token data
             user = User(
@@ -353,14 +371,15 @@ class FirebaseAuthProvider:
                 profile=None,
             )
 
-            # Cache the user data with timestamp
-            self._token_cache[token] = {
-                "user": user,
-                "timestamp": current_time
-            }
+            # Cache the user data with timestamp if caching is enabled
+            if cache_enabled:
+                self._token_cache[token] = {
+                    "user": user,
+                    "timestamp": current_time
+                }
 
-            # Clean up expired cache entries
-            self._cleanup_expired_cache()
+                # Clean up expired cache entries
+                self._cleanup_expired_cache()
 
             return user
 

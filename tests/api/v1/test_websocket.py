@@ -181,7 +181,9 @@ class _TestConnectionManager:
             len(self.active_websockets),
         )
 
-    async def send_to_connection(self, websocket: WebSocket, message: Any) -> None:  # noqa: ANN401
+    async def send_to_connection(
+        self, websocket: WebSocket, message: Any
+    ) -> None:
         logger.info("Attempting to send message to connection: %s", message)
 
         if websocket not in self.connection_info:
@@ -254,7 +256,10 @@ class _TestConnectionManager:
             )
 
     async def broadcast_to_room(
-        self, room_id: str, message: Any, exclude_websocket: WebSocket | None = None  # noqa: ANN401
+        self,
+        room_id: str,
+        message: Any,
+        exclude_websocket: WebSocket | None = None,
     ) -> None:
         logger.info("Attempting to broadcast message to room %s: %s", room_id, message)
 
@@ -516,7 +521,9 @@ class TestWebSocketEndpoints:
             response_data = websocket.receive_json()
             assert response_data["type"] == MessageType.HEARTBEAT_ACK.value
 
-    async def test_websocket_chat_endpoint_anonymous(self, client: TestClient) -> None:  # noqa: PLR6301
+    async def test_websocket_chat_endpoint_anonymous(
+        self, client: TestClient
+    ) -> None:
         user_id = "anonymous-user-123"
         with (
             pytest.raises(WebSocketDisconnect) as excinfo,
@@ -526,7 +533,9 @@ class TestWebSocketEndpoints:
             websocket.send_text("Hello")
         assert excinfo.value.code == 1008  # Policy Violation
 
-    async def test_websocket_invalid_message_format(self, client: TestClient) -> None:  # noqa: PLR6301
+    async def test_websocket_invalid_message_format(
+        self, client: TestClient
+    ) -> None:
         user_id = "test-user-123"
         test_token = "test-token"  # noqa: S105
 
@@ -540,7 +549,9 @@ class TestWebSocketEndpoints:
             assert response_data["type"] == MessageType.ERROR.value
             assert "Invalid JSON format" in response_data["message"]
 
-    async def test_websocket_typing_indicator(self, client: TestClient) -> None:  # noqa: PLR6301
+    async def test_websocket_typing_indicator(
+        self, client: TestClient
+    ) -> None:
         user_id = "test-user-123"
         test_token = "test-token"  # noqa: S105
 
@@ -573,7 +584,9 @@ class TestWebSocketEndpoints:
             assert response_data["user_id"] == user_id
             assert response_data["is_typing"] is False
 
-    async def test_health_insight_generation(self, client: TestClient, app: FastAPI):  # noqa: PLR6301
+    async def test_health_insight_generation(
+        self, client: TestClient, app: FastAPI
+    ):
         user_id = "test-user-123"  # Must match the user ID from mock_get_current_user_websocket
         test_token = "test-token"  # noqa: S105
 
@@ -581,7 +594,9 @@ class TestWebSocketEndpoints:
         mock_gemini_service = AsyncMock(spec=GeminiService)
 
         # Create a proper mock response
-        async def mock_generate_insights(request: Any) -> object:  # noqa: RUF029, ANN401
+        async def mock_generate_insights(
+            request: Any,
+        ) -> object:
             response = MagicMock()
             response.narrative = f"AI Response to: {request.context}"
             return response
@@ -685,7 +700,9 @@ class TestWebSocketEndpoints:
         else:
             del app.dependency_overrides[get_connection_manager]
 
-    async def test_typing_indicator_processing(self, client: TestClient, app: FastAPI):  # noqa: PLR6301
+    async def test_typing_indicator_processing(
+        self, client: TestClient, app: FastAPI
+    ):
         user_id = "test-user-123"  # Must match the user ID from mock_get_current_user_websocket
         test_token = "test-token"  # noqa: S105
 
@@ -779,7 +796,9 @@ class TestWebSocketEndpoints:
         else:
             del app.dependency_overrides[get_connection_manager]
 
-    async def test_heartbeat_processing(self, client: TestClient, app: FastAPI):  # noqa: PLR6301
+    async def test_heartbeat_processing(
+        self, client: TestClient, app: FastAPI
+    ):
         user_id = "test-user-123"  # Must match the user ID from mock_get_current_user_websocket
         test_token = "test-token"  # noqa: S105
 

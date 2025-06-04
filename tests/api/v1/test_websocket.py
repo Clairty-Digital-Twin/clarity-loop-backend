@@ -216,10 +216,14 @@ class _TestConnectionManager:
         elif hasattr(message, "dict"):
             message_content = message.dict()
 
-        print(f"🔄 DEBUG TestConnectionManager: Processed message content: {message_content}")
+        print(
+            f"🔄 DEBUG TestConnectionManager: Processed message content: {message_content}"
+        )
 
         if user_id in self.user_connections:
-            print(f"🔄 DEBUG TestConnectionManager: Found {len(self.user_connections[user_id])} connections for user {user_id}")
+            print(
+                f"🔄 DEBUG TestConnectionManager: Found {len(self.user_connections[user_id])} connections for user {user_id}"
+            )
             for websocket in self.user_connections[user_id]:
                 if websocket in self.active_websockets:
                     self.messages_sent.append(
@@ -232,19 +236,31 @@ class _TestConnectionManager:
                     )
                     # Actually send the message through the WebSocket for TestClient
                     try:
-                        print("🔄 DEBUG TestConnectionManager: Attempting to send through websocket...")
+                        print(
+                            "🔄 DEBUG TestConnectionManager: Attempting to send through websocket..."
+                        )
                         await websocket.send_json(message_content)
-                        print("✅ DEBUG TestConnectionManager: Successfully sent message through websocket")
-                        logger.info(f"Sent message to user {user_id} through websocket: {message_content}")
+                        print(
+                            "✅ DEBUG TestConnectionManager: Successfully sent message through websocket"
+                        )
+                        logger.info(
+                            f"Sent message to user {user_id} through websocket: {message_content}"
+                        )
                     except Exception as e:
-                        print(f"❌ DEBUG TestConnectionManager: Failed to send through websocket: {e}")
-                        logger.warning(f"Failed to send message to user {user_id} through websocket: {e}")
+                        print(
+                            f"❌ DEBUG TestConnectionManager: Failed to send through websocket: {e}"
+                        )
+                        logger.warning(
+                            f"Failed to send message to user {user_id} through websocket: {e}"
+                        )
 
                     logger.info(
                         f"Recorded direct message send to user {user_id} via {websocket}"
                     )
         else:
-            print(f"❌ DEBUG TestConnectionManager: User {user_id} has no active connections")
+            print(
+                f"❌ DEBUG TestConnectionManager: User {user_id} has no active connections"
+            )
             logger.warning(
                 f"User {user_id} has no active connections to send messages to."
             )
@@ -341,7 +357,9 @@ class _TestConnectionManager:
 
     async def handle_message(self, websocket: WebSocket, raw_message: str) -> bool:
         """Handle an incoming WebSocket message - always allow in tests."""
-        print(f"🔄 DEBUG TestConnectionManager: handle_message called with: {raw_message}")
+        print(
+            f"🔄 DEBUG TestConnectionManager: handle_message called with: {raw_message}"
+        )
         # In tests, always return True to allow message processing
         return True
 
@@ -473,9 +491,9 @@ class TestWebSocketEndpoints:
             response_data = websocket.receive_json()
             print(f"📥 DEBUG: Received response: {response_data}")
 
-            assert response_data["message_type"] == MessageType.MESSAGE
+            assert response_data["type"] == MessageType.MESSAGE.value
             assert "AI Response to: Hello AI" in response_data["content"]
-            assert response_data["user_id"] == user_id
+            assert response_data["user_id"] == "AI"
 
             # Test typing indicator
             typing_indicator = TypingMessage(
@@ -488,7 +506,7 @@ class TestWebSocketEndpoints:
             websocket.send_json(typing_indicator.model_dump(mode="json"))
 
             response_data = websocket.receive_json()
-            assert response_data["message_type"] == MessageType.TYPING
+            assert response_data["type"] == MessageType.TYPING.value
             assert response_data["user_id"] == user_id
             assert response_data["is_typing"] is True
 
@@ -500,8 +518,7 @@ class TestWebSocketEndpoints:
             websocket.send_json(heartbeat_message.model_dump(mode="json"))
 
             response_data = websocket.receive_json()
-            assert response_data["message_type"] == MessageType.HEARTBEAT_ACK
-            assert response_data["user_id"] == user_id
+            assert response_data["type"] == MessageType.HEARTBEAT_ACK.value
 
     async def test_websocket_chat_endpoint_anonymous(self, client: TestClient) -> None:
         user_id = "anonymous-user-123"

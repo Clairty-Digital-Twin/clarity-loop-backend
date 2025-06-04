@@ -71,7 +71,9 @@ class WebSocketChatHandler:
         chat_message: ChatMessage,
         connection_manager: ConnectionManager,
     ) -> None:
-        print(f"🔧 DEBUG process_chat_message: Starting for user {chat_message.user_id}")
+        print(
+            f"🔧 DEBUG process_chat_message: Starting for user {chat_message.user_id}"
+        )
         logger.info("Processing chat message for user %s", chat_message.user_id)
         # Add conversation context for Gemini
         user_query = chat_message.content
@@ -86,16 +88,24 @@ class WebSocketChatHandler:
         )
         print("🔧 DEBUG process_chat_message: Created Gemini request")
         try:
-            print("🔧 DEBUG process_chat_message: Calling gemini_service.generate_health_insights")
+            print(
+                "🔧 DEBUG process_chat_message: Calling gemini_service.generate_health_insights"
+            )
             gemini_response = await self.gemini_service.generate_health_insights(
                 gemini_request
             )
-            print(f"🔧 DEBUG process_chat_message: Got Gemini response: {gemini_response}")
+            print(
+                f"🔧 DEBUG process_chat_message: Got Gemini response: {gemini_response}"
+            )
             # Extract content from narrative or key_insights
             ai_response_content = gemini_response.narrative
-            print(f"🔧 DEBUG process_chat_message: AI response content: {ai_response_content}")
+            print(
+                f"🔧 DEBUG process_chat_message: AI response content: {ai_response_content}"
+            )
         except Exception as e:
-            print(f"🔧 DEBUG process_chat_message: Exception generating Gemini response: {e}")
+            print(
+                f"🔧 DEBUG process_chat_message: Exception generating Gemini response: {e}"
+            )
             logger.exception("Error generating Gemini response: %s", e)
             ai_response_content = (
                 "I am sorry, I could not generate a response at this time."
@@ -107,7 +117,9 @@ class WebSocketChatHandler:
             type=MessageType.MESSAGE,
             content=ai_response_content,
         )
-        print(f"🔧 DEBUG process_chat_message: Created response message: {response_message}")
+        print(
+            f"🔧 DEBUG process_chat_message: Created response message: {response_message}"
+        )
         print("🔧 DEBUG process_chat_message: Calling connection_manager.send_to_user")
         await connection_manager.send_to_user(chat_message.user_id, response_message)
         print("🔧 DEBUG process_chat_message: Finished send_to_user call")
@@ -285,7 +297,9 @@ async def websocket_chat_endpoint(
                     continue
 
                 try:
-                    print(f"🔧 DEBUG ChatHandler: Processing raw message: {raw_message}")
+                    print(
+                        f"🔧 DEBUG ChatHandler: Processing raw message: {raw_message}"
+                    )
                     message_data = json.loads(raw_message)
                     message_type = message_data.get("type")
                     print(f"🔧 DEBUG ChatHandler: Message type: {message_type}")

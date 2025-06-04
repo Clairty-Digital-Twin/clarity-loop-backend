@@ -247,7 +247,7 @@ class GeminiInsightGenerator:
                 "source": "fallback_algorithm"
             }
 
-        except Exception:  # noqa: BLE001
+        except Exception:
             logger.exception("Failed to create fallback insight")
             return {
                 "insights": ["Analysis results available"],

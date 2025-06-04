@@ -1,24 +1,24 @@
 """Tests for insight subscriber functionality."""
 
+import asyncio
 import base64
 import json
-import asyncio
 from typing import Any
 from unittest.mock import AsyncMock, Mock, patch
 
-import pytest
 from fastapi import HTTPException
+import pytest
 
 from clarity.services.pubsub.insight_subscriber import (
-    GeminiInsightGenerator,
-    InsightSubscriber,
-    InsightSubscriberSingleton,
-    get_insight_subscriber,
     HIGH_CONSISTENCY_THRESHOLD,
     MIN_CARDIO_FEATURES_REQUIRED,
     MIN_FEATURE_VECTOR_LENGTH,
     MIN_RESPIRATORY_FEATURES_REQUIRED,
     MODERATE_CONSISTENCY_THRESHOLD,
+    GeminiInsightGenerator,
+    InsightSubscriber,
+    InsightSubscriberSingleton,
+    get_insight_subscriber,
 )
 
 

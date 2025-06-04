@@ -407,7 +407,7 @@ class TestWebSocketEndpoints:
                 type=MessageType.MESSAGE,
                 content="Hello AI",
             )
-            websocket.send_json(chat_message.model_dump())
+            websocket.send_json(chat_message.model_dump(mode='json'))
 
             # Expecting a response from the AI handler
             response_data = websocket.receive_json()
@@ -423,7 +423,7 @@ class TestWebSocketEndpoints:
                 type=MessageType.TYPING,
                 username="test-user",
             )
-            websocket.send_json(typing_indicator.model_dump())
+            websocket.send_json(typing_indicator.model_dump(mode='json'))
 
             response_data = websocket.receive_json()
             assert response_data["message_type"] == MessageType.TYPING
@@ -435,7 +435,7 @@ class TestWebSocketEndpoints:
                 timestamp=datetime.now(UTC),
                 type=MessageType.HEARTBEAT,
             )
-            websocket.send_json(heartbeat_message.model_dump())
+            websocket.send_json(heartbeat_message.model_dump(mode='json'))
 
             response_data = websocket.receive_json()
             assert response_data["message_type"] == MessageType.HEARTBEAT_ACK

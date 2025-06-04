@@ -241,6 +241,7 @@ def mock_redis():
 def mock_test_connection_manager():
     """Stateful mock connection manager for WebSocket testing."""
     from tests.api.v1.test_websocket import _TestConnectionManager
+
     return _TestConnectionManager()
 
 

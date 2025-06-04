@@ -1,6 +1,6 @@
 # Task ID: 36
 # Title: Implement Complete Vertical Slice: Apple Watch to AI Insights
-# Status: pending
+# Status: in-progress
 # Dependencies: 33, 34, 35, 4, 13, 12, 15, 17
 # Priority: high
 # Description: Create an end-to-end flow that processes Apple Watch/HealthKit data through the PAT model for actigraphy analysis, generates personalized insights with Gemini AI, and delivers results via real-time WebSocket chat.
@@ -104,6 +104,46 @@
 ### Description: Set up HealthKit integration, request user authorization, and fetch relevant health metrics (activity, sleep, heart rate) from Apple Watch.
 ### Details:
 Enable HealthKit capability, check device support, create a single HKHealthStore instance, request permissions, and implement data fetching for required metrics. Normalize and preprocess the data for downstream use.
+<info added on 2025-06-04T14:46:24.444Z>
+To implement the HealthKit integration endpoint, first add the HealthKit capability to your Xcode project by selecting your target, navigating to "Signing & Capabilities," clicking the "+ Capability" button, and adding HealthKit. This enables your app to access health data with proper user permissions.
+
+Create a singleton HKHealthStore instance as the entry point to the HealthKit API:
+
+```swift
+import HealthKit
+
+class HealthKitManager {
+    static let shared = HealthKitManager()
+    let healthStore = HKHealthStore()
+    
+    private init() {}
+    
+    func isHealthKitAvailable() -> Bool {
+        return HKHealthStore.isHealthDataAvailable()
+    }
+    
+    func requestAuthorization(completion: @escaping (Bool, Error?) -> Void) {
+        // Define the types of data your app needs to read
+        let readTypes: Set<HKObjectType> = [
+            HKObjectType.quantityType(forIdentifier: .stepCount)!,
+            HKObjectType.quantityType(forIdentifier: .distanceWalkingRunning)!,
+            HKObjectType.quantityType(forIdentifier: .heartRate)!
+            // Add other required metrics
+        ]
+        
+        // Request authorization
+        healthStore.requestAuthorization(toShare: [], read: readTypes, completion: completion)
+    }
+    
+    func fetchHealthData(completion: @escaping (Result<[String: Any], Error>) -> Void) {
+        // Implementation for fetching required metrics
+        // This will collect data from HealthKit and prepare it for the endpoint
+    }
+}
+```
+
+Create a dedicated API endpoint that accepts Apple Watch data from HealthKit, transforms it to your internal format, and connects with the existing PAT service for analysis. Implement data normalization and preprocessing to ensure compatibility with downstream services.
+</info added on 2025-06-04T14:46:24.444Z>
 
 ## 2. Transform and Analyze Data with PAT Model [pending]
 ### Dependencies: 36.1

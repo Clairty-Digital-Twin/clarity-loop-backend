@@ -1,0 +1,169 @@
+"""WebSocket data models for structured communication."""
+
+from enum import Enum
+from typing import Any, Dict, List, Optional, Union
+from datetime import datetime
+from pydantic import BaseModel, Field, ConfigDict
+
+
+class MessageType(str, Enum):
+    """Message types for WebSocket communication."""
+    
+    # Chat messages
+    MESSAGE = "message"
+    SYSTEM = "system"
+    ERROR = "error"
+    
+    # Health insights
+    HEALTH_INSIGHT = "health_insight"
+    ANALYSIS_UPDATE = "analysis_update"
+    
+    # User status
+    USER_JOINED = "user_joined"
+    USER_LEFT = "user_left"
+    TYPING = "typing"
+    
+    # Connection management
+    CONNECTION_ACK = "connection_ack"
+    HEARTBEAT = "heartbeat"
+    HEARTBEAT_ACK = "heartbeat_ack"
+
+
+class BaseMessage(BaseModel):
+    """Base message structure for all WebSocket communications."""
+    
+    model_config = ConfigDict(str_strip_whitespace=True)
+    
+    type: MessageType
+    timestamp: datetime = Field(default_factory=datetime.utcnow)
+    message_id: Optional[str] = None
+
+
+class ChatMessage(BaseMessage):
+    """Chat message for user communication."""
+    
+    type: MessageType = MessageType.MESSAGE
+    content: str = Field(..., min_length=1, max_length=2000)
+    user_id: str = Field(..., min_length=1, max_length=100)
+    username: Optional[str] = None
+    metadata: Optional[Dict[str, Any]] = None
+
+
+class SystemMessage(BaseMessage):
+    """System notification message."""
+    
+    type: MessageType = MessageType.SYSTEM
+    content: str
+    level: str = Field(default="info")  # info, warning, error
+
+
+class ErrorMessage(BaseMessage):
+    """Error message for communication failures."""
+    
+    type: MessageType = MessageType.ERROR
+    error_code: str
+    message: str
+    details: Optional[Dict[str, Any]] = None
+
+
+class HealthInsightMessage(BaseMessage):
+    """Health insight from AI analysis."""
+    
+    type: MessageType = MessageType.HEALTH_INSIGHT
+    user_id: str
+    insight: str = Field(..., min_length=1, max_length=5000)
+    confidence: float = Field(..., ge=0.0, le=1.0)
+    category: str
+    source_data: Optional[Dict[str, Any]] = None
+    recommendations: Optional[List[str]] = None
+
+
+class AnalysisUpdateMessage(BaseMessage):
+    """Real-time analysis progress update."""
+    
+    type: MessageType = MessageType.ANALYSIS_UPDATE
+    user_id: str
+    status: str  # "started", "processing", "completed", "failed"
+    progress: int = Field(..., ge=0, le=100)
+    details: Optional[str] = None
+
+
+class UserStatusMessage(BaseMessage):
+    """User status change notification."""
+    
+    type: MessageType = MessageType.USER_JOINED
+    user_id: str
+    username: str
+    status: str = "online"  # online, offline, away
+
+
+class TypingMessage(BaseMessage):
+    """Typing indicator message."""
+    
+    type: MessageType = MessageType.TYPING
+    user_id: str
+    username: str
+    is_typing: bool
+
+
+class ConnectionMessage(BaseMessage):
+    """Connection acknowledgment message."""
+    
+    type: MessageType = MessageType.CONNECTION_ACK
+    user_id: str
+    session_id: str
+    server_info: Optional[Dict[str, Any]] = None
+
+
+class HeartbeatMessage(BaseMessage):
+    """Heartbeat message for connection health."""
+    
+    type: MessageType = MessageType.HEARTBEAT
+    client_timestamp: Optional[datetime] = None
+
+
+class HeartbeatAckMessage(BaseMessage):
+    """Heartbeat acknowledgment message."""
+    
+    type: MessageType = MessageType.HEARTBEAT_ACK
+    client_timestamp: Optional[datetime] = None
+    server_timestamp: datetime = Field(default_factory=datetime.utcnow)
+
+
+# Union type for all possible WebSocket messages
+WebSocketMessage = Union[
+    ChatMessage,
+    SystemMessage,
+    ErrorMessage,
+    HealthInsightMessage,
+    AnalysisUpdateMessage,
+    UserStatusMessage,
+    TypingMessage,
+    ConnectionMessage,
+    HeartbeatMessage,
+    HeartbeatAckMessage,
+]
+
+
+class ConnectionInfo(BaseModel):
+    """Information about a WebSocket connection."""
+    
+    user_id: str
+    username: str
+    session_id: str
+    connected_at: datetime = Field(default_factory=datetime.utcnow)
+    last_seen: datetime = Field(default_factory=datetime.utcnow)
+    connection_count: int = 1
+    metadata: Optional[Dict[str, Any]] = None
+
+
+class RoomInfo(BaseModel):
+    """Information about a chat room or channel."""
+    
+    room_id: str
+    name: str
+    description: Optional[str] = None
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    max_users: int = 100
+    active_users: List[str] = Field(default_factory=list)
+    permissions: Optional[Dict[str, Any]] = None

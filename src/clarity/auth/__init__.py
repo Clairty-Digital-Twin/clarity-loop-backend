@@ -4,11 +4,13 @@ Firebase-based authentication and authorization for enterprise healthcare applic
 """
 
 from clarity.auth.firebase_auth import (
-    FirebaseAuthMiddleware,
     get_current_user,
-    require_auth,
-    require_permission,
-    require_role,
+    get_current_user_required,
+    get_current_user_websocket,
+)
+from clarity.auth.firebase_middleware import (
+    FirebaseAuthMiddleware,
+    FirebaseAuthProvider,
 )
 from clarity.models.auth import (
     AuthError,
@@ -21,12 +23,12 @@ from clarity.models.auth import (
 __all__ = [
     "AuthError",
     "FirebaseAuthMiddleware",
+    "FirebaseAuthProvider",
     "Permission",
     "TokenInfo",
     "UserContext",
     "UserRole",
     "get_current_user",
-    "require_auth",
-    "require_permission",
-    "require_role",
+    "get_current_user_required",
+    "get_current_user_websocket",
 ]

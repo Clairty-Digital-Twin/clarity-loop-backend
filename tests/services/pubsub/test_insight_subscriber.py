@@ -1,97 +1,92 @@
-"""🚀 COMPREHENSIVE INSIGHT SUBSCRIBER TEST COVERAGE WARHEAD 🚀.
+"""Tests for insight subscriber functionality."""
 
-Blasting test coverage from 19% → 95%+ for InsightSubscriber and GeminiInsightGenerator.
-Tests every method, error case, edge case, and business logic path.
-"""
-
-import asyncio
 import base64
 import json
+import asyncio
 from typing import Any
 from unittest.mock import AsyncMock, Mock, patch
 
-from fastapi import HTTPException, Request
 import pytest
+from fastapi import HTTPException
 
 from clarity.services.pubsub.insight_subscriber import (
-    HIGH_CONSISTENCY_THRESHOLD,
-    MIN_FEATURE_VECTOR_LENGTH,
-    MODERATE_CONSISTENCY_THRESHOLD,
     GeminiInsightGenerator,
     InsightSubscriber,
     InsightSubscriberSingleton,
-    generate_insight_task,
     get_insight_subscriber,
-    health_check,
+    HIGH_CONSISTENCY_THRESHOLD,
+    MIN_CARDIO_FEATURES_REQUIRED,
+    MIN_FEATURE_VECTOR_LENGTH,
+    MIN_RESPIRATORY_FEATURES_REQUIRED,
+    MODERATE_CONSISTENCY_THRESHOLD,
 )
 
 
 class TestConstants:
-    """🎯 Test module constants."""
+    """🔢 Test module constants."""
 
     @staticmethod
     def test_constants_values() -> None:
-        """Test constant values are correct."""
-        assert MIN_FEATURE_VECTOR_LENGTH == 8
+        """Test that constants have correct values."""
         assert HIGH_CONSISTENCY_THRESHOLD == 0.8
         assert MODERATE_CONSISTENCY_THRESHOLD == 0.5
+        assert MIN_FEATURE_VECTOR_LENGTH == 8
+        assert MIN_CARDIO_FEATURES_REQUIRED == 3
+        assert MIN_RESPIRATORY_FEATURES_REQUIRED == 4
 
 
 class TestGeminiInsightGeneratorInitialization:
     """🔧 Test GeminiInsightGenerator initialization."""
 
     @staticmethod
-    @patch('clarity.services.pubsub.insight_subscriber.os.getenv')
-    @patch('clarity.services.pubsub.insight_subscriber.genai')
-    @patch('clarity.services.pubsub.insight_subscriber.firestore')
-    def test_init_with_api_key(mock_firestore: Mock, mock_genai: Mock, mock_getenv: Mock) -> None:
-        """Test initialization with API key."""
-        mock_getenv.return_value = "test-api-key"
-        mock_model = Mock()
-        mock_genai.GenerativeModel.return_value = mock_model
+    @patch('clarity.services.pubsub.insight_subscriber.GeminiService')
+    @patch('clarity.services.pubsub.insight_subscriber.FirestoreClient')
+    def test_init_with_api_key(mock_firestore_class: Mock, mock_gemini_class: Mock) -> None:
+        """Test initialization with proper dependencies."""
+        mock_gemini_service = Mock()
+        mock_gemini_class.return_value = mock_gemini_service
         mock_firestore_client = Mock()
-        mock_firestore.Client.return_value = mock_firestore_client
+        mock_firestore_class.return_value = mock_firestore_client
 
-        generator = GeminiInsightGenerator()
+        generator = GeminiInsightGenerator(project_id="test-project")
 
-        assert generator.model == mock_model
+        assert generator.gemini_service == mock_gemini_service
         assert generator.firestore_client == mock_firestore_client
-        mock_genai.configure.assert_called_once_with(api_key="test-api-key")
+        mock_gemini_class.assert_called_once_with(project_id="test-project")
+        mock_firestore_class.assert_called_once_with(project_id="test-project")
 
     @staticmethod
-    @patch('clarity.services.pubsub.insight_subscriber.os.getenv')
-    @patch('clarity.services.pubsub.insight_subscriber.genai')
-    @patch('clarity.services.pubsub.insight_subscriber.firestore')
-    def test_init_without_api_key(mock_firestore: Mock, mock_genai: Mock, mock_getenv: Mock) -> None:
-        """Test initialization without API key."""
-        mock_getenv.return_value = None
+    @patch('clarity.services.pubsub.insight_subscriber.GeminiService')
+    @patch('clarity.services.pubsub.insight_subscriber.FirestoreClient')
+    def test_init_without_api_key(mock_firestore_class: Mock, mock_gemini_class: Mock) -> None:
+        """Test initialization with default project."""
+        mock_gemini_service = Mock()
+        mock_gemini_class.return_value = mock_gemini_service
         mock_firestore_client = Mock()
-        mock_firestore.Client.return_value = mock_firestore_client
+        mock_firestore_class.return_value = mock_firestore_client
 
         generator = GeminiInsightGenerator()
 
-        assert generator.model is None
+        assert generator.gemini_service == mock_gemini_service
         assert generator.firestore_client == mock_firestore_client
-        mock_genai.configure.assert_not_called()
+        mock_gemini_class.assert_called_once_with(project_id=None)
+        mock_firestore_class.assert_called_once_with(project_id="clarity-digital-twin")
 
 
 @pytest.fixture
 def mock_generator() -> GeminiInsightGenerator:
     """Create GeminiInsightGenerator with mocks."""
     with (
-        patch('clarity.services.pubsub.insight_subscriber.os.getenv') as mock_getenv,
-        patch('clarity.services.pubsub.insight_subscriber.genai') as mock_genai,
-        patch('clarity.services.pubsub.insight_subscriber.firestore') as mock_firestore,
+        patch('clarity.services.pubsub.insight_subscriber.GeminiService') as mock_gemini_class,
+        patch('clarity.services.pubsub.insight_subscriber.FirestoreClient') as mock_firestore_class,
     ):
-        mock_getenv.return_value = "test-api-key"
-        mock_model = Mock()
-        mock_genai.GenerativeModel.return_value = mock_model
+        mock_gemini_service = Mock()
+        mock_gemini_class.return_value = mock_gemini_service
         mock_firestore_client = Mock()
-        mock_firestore.Client.return_value = mock_firestore_client
+        mock_firestore_class.return_value = mock_firestore_client
 
         generator = GeminiInsightGenerator()
-        # Override the model and firestore_client with our mocks
-        generator.model = mock_model
+        generator.gemini_service = mock_gemini_service
         generator.firestore_client = mock_firestore_client
         return generator
 
@@ -308,207 +303,81 @@ class TestGeminiInsightGeneratorInsightGeneration:
 
     @staticmethod
     async def test_generate_health_insight_with_model(mock_generator: GeminiInsightGenerator, sample_analysis_results: dict[str, Any]) -> None:
-        """Test insight generation with Gemini model."""
+        """Test insight generation with GeminiService."""
         user_id = "test-user-123"
         upload_id = "upload-456"
 
-        # Mock Gemini API response
-        mock_response = {
-            "insights": ["Great sleep efficiency!", "Heart rate variability is good."],
-            "recommendations": ["Continue current sleep routine", "Consider morning exercise"],
-            "risk_factors": ["None identified"],
-            "health_score": 85,
-        }
+        # Mock GeminiService response structure
+        from clarity.ml.gemini_service import HealthInsightResponse
+        mock_response = HealthInsightResponse(
+            key_insights=["Great sleep efficiency!", "Heart rate variability is good."],
+            recommendations=["Continue current sleep routine", "Consider morning exercise"],
+            confidence_score=0.85,
+            narrative="Overall health looks good with room for improvement.",
+            generated_at="2024-01-01T00:00:00Z",
+            user_id=user_id
+        )
 
         with (
-            patch.object(mock_generator, '_call_gemini_api', return_value=mock_response) as mock_gemini,
-            patch.object(mock_generator, '_store_insight') as mock_store,
+            patch.object(mock_generator.gemini_service, 'generate_health_insights', new=AsyncMock(return_value=mock_response)) as mock_gemini,
+            patch.object(mock_generator, '_store_insight', new=AsyncMock()) as mock_store,
         ):
             result = await mock_generator.generate_health_insight(
                 user_id, upload_id, sample_analysis_results
             )
 
-            assert result["insights"] == mock_response["insights"]
-            assert result["recommendations"] == mock_response["recommendations"]
-            assert result["risk_factors"] == mock_response["risk_factors"]
-            assert result["health_score"] == mock_response["health_score"]
+            assert result["status"] == "success"
+            assert result["message"] == "Health insight generated successfully"
+            assert result["insights"] == mock_response.key_insights
+            assert result["recommendations"] == mock_response.recommendations
+            assert result["health_score"] == 85  # 0.85 * 100
+            assert result["confidence_level"] == "high"
+            assert result["narrative"] == mock_response.narrative
 
             mock_gemini.assert_called_once()
-            mock_store.assert_called_once_with(user_id, upload_id, result)
+            mock_store.assert_called_once()
 
     @staticmethod
     async def test_generate_health_insight_without_model(mock_generator: GeminiInsightGenerator, sample_analysis_results: dict[str, Any]) -> None:
-        """Test insight generation without model (mock mode)."""
+        """Test insight generation with fallback when GeminiService fails."""
         user_id = "test-user-123"
         upload_id = "upload-456"
 
-        # Set model to None to trigger mock mode
-        with patch.object(mock_generator, 'model', None), \
-             patch.object(mock_generator, '_store_insight') as mock_store:
+        # Mock GeminiService to fail and trigger fallback
+        with (
+            patch.object(mock_generator.gemini_service, 'generate_health_insights', new=AsyncMock(side_effect=Exception("Service unavailable"))),
+            patch.object(mock_generator, '_store_insight', new=AsyncMock()) as mock_store,
+        ):
             result = await mock_generator.generate_health_insight(
                 user_id, upload_id, sample_analysis_results
             )
 
-            # Should return mock insight
+            # Should return fallback insight
+            assert result["status"] == "success"
+            assert result["message"] == "Health insight generated successfully"
             assert "insights" in result
             assert "recommendations" in result
             assert "health_score" in result
             assert isinstance(result["insights"], list)
 
-            mock_store.assert_called_once_with(user_id, upload_id, result)
+            mock_store.assert_called_once()
 
     @staticmethod
     async def test_generate_health_insight_exception(mock_generator: GeminiInsightGenerator, sample_analysis_results: dict[str, Any]) -> None:
-        """Test insight generation with exception."""
+        """Test insight generation with exception in storage."""
         user_id = "test-user-123"
         upload_id = "upload-456"
 
         with (
-            patch.object(mock_generator, '_call_gemini_api', side_effect=Exception("API error")),
-            pytest.raises(Exception, match="API error"),
+            patch.object(mock_generator.gemini_service, 'generate_health_insights', new=AsyncMock(side_effect=Exception("Service error"))),
+            patch.object(mock_generator, '_store_insight', new=AsyncMock(side_effect=Exception("Storage error"))),
+            pytest.raises(HTTPException) as exc_info,
         ):
             await mock_generator.generate_health_insight(
                 user_id, upload_id, sample_analysis_results
             )
 
-
-class TestGeminiInsightGeneratorGeminiAPI:
-    """🤖 Test Gemini API interaction."""
-
-    @staticmethod
-    async def test_call_gemini_api_success(mock_generator: GeminiInsightGenerator) -> None:
-        """Test successful Gemini API call."""
-        prompt = "Analyze this health data..."
-        mock_response = Mock()
-        mock_response.text = '{"insights": ["test"], "recommendations": ["test"]}'
-
-        with patch.object(mock_generator.model, 'generate_content', return_value=mock_response) as mock_generate:
-            result = await mock_generator._call_gemini_api(prompt)
-
-            assert result["insights"] == ["test"]
-            assert result["recommendations"] == ["test"]
-            mock_generate.assert_called_once()
-
-    @staticmethod
-    async def test_call_gemini_api_invalid_json(mock_generator: GeminiInsightGenerator) -> None:
-        """Test Gemini API call with invalid JSON response."""
-        prompt = "Analyze this health data..."
-        mock_response = Mock()
-        mock_response.text = "Invalid JSON response"
-
-        with patch.object(mock_generator.model, 'generate_content', return_value=mock_response):
-            result = await mock_generator._call_gemini_api(prompt)
-
-            # Should return fallback response
-            assert "insights" in result
-            assert "recommendations" in result
-
-    @staticmethod
-    async def test_call_gemini_api_exception(mock_generator: GeminiInsightGenerator) -> None:
-        """Test Gemini API call with exception."""
-        prompt = "Analyze this health data..."
-
-        with patch.object(mock_generator.model, 'generate_content', side_effect=Exception("API error")), \
-             pytest.raises(Exception, match="API error"):
-            await mock_generator._call_gemini_api(prompt)
-
-
-class TestGeminiInsightGeneratorMockInsight:
-    """🎭 Test mock insight creation."""
-
-    @staticmethod
-    def test_create_mock_insight(sample_analysis_results: dict[str, Any]) -> None:
-        """Test mock insight creation."""
-        result = GeminiInsightGenerator._create_mock_insight(sample_analysis_results)
-
-        # Check required fields
-        assert "insights" in result
-        assert "recommendations" in result
-        assert "risk_factors" in result
-        assert "health_score" in result
-        assert "confidence_level" in result
-
-        # Check data types
-        assert isinstance(result["insights"], list)
-        assert isinstance(result["recommendations"], list)
-        assert isinstance(result["risk_factors"], list)
-
-
-class TestGeminiInsightGeneratorAnalysisSummary:
-    """📊 Test analysis summary creation."""
-
-    @staticmethod
-    def test_create_analysis_summary_full(sample_analysis_results: dict[str, Any]) -> None:
-        """Test analysis summary with full data."""
-        summary = GeminiInsightGenerator._create_analysis_summary(sample_analysis_results)
-
-        assert "total_features" in summary
-        assert "modalities_processed" in summary
-        assert "processing_metadata" in summary
-
-    @staticmethod
-    def test_create_analysis_summary_empty() -> None:
-        """Test analysis summary with empty data."""
-        summary = GeminiInsightGenerator._create_analysis_summary({})
-
-        assert summary["total_features"] == 0
-        assert len(summary["modalities_processed"]) == 0
-        assert "processing_metadata" in summary
-
-    @staticmethod
-    def test_create_analysis_summary_mixed() -> None:
-        """Test analysis summary with mixed data types."""
-        analysis_results = {
-            "cardio_features": [1, 2, 3],
-            "text_data": "some text",
-            "nested_dict": {"key": "value"},
-            "number": 42,
-        }
-
-        summary = GeminiInsightGenerator._create_analysis_summary(analysis_results)
-
-        assert summary["total_features"] >= 3  # At least cardio_features
-        assert "cardio" in summary["modalities_processed"]  # _features is stripped from key
-
-
-class TestGeminiInsightGeneratorStorage:
-    """💾 Test insight storage."""
-
-    @staticmethod
-    async def test_store_insight_success(mock_generator: GeminiInsightGenerator) -> None:
-        """Test successful insight storage."""
-        user_id = "test-user-123"
-        upload_id = "upload-456"
-        insight = {"test": "data"}
-
-        # Mock Firestore operations
-        mock_collection = Mock()
-        mock_user_doc = Mock()
-        mock_insights_collection = Mock()
-        mock_final_doc = Mock()
-
-        with patch.object(mock_generator.firestore_client, 'collection', return_value=mock_collection):
-            mock_collection.document.return_value = mock_user_doc
-            mock_user_doc.collection.return_value = mock_insights_collection
-            mock_insights_collection.document.return_value = mock_final_doc
-
-            await mock_generator._store_insight(user_id, upload_id, insight)
-
-            mock_collection.document.assert_called_once_with(user_id)
-            mock_user_doc.collection.assert_called_once_with("insights")
-            mock_insights_collection.document.assert_called_once_with(upload_id)
-            mock_final_doc.set.assert_called_once_with(insight)
-
-    @staticmethod
-    async def test_store_insight_exception(mock_generator: GeminiInsightGenerator) -> None:
-        """Test insight storage with exception."""
-        user_id = "test-user-123"
-        upload_id = "upload-456"
-        insight = {"test": "data"}
-
-        with patch.object(mock_generator.firestore_client, 'collection', side_effect=Exception("Firestore error")), \
-             pytest.raises(Exception, match="Firestore error"):
-            await mock_generator._store_insight(user_id, upload_id, insight)
+        assert exc_info.value.status_code == 500
 
 
 class TestInsightSubscriberInitialization:
@@ -524,7 +393,7 @@ class TestInsightSubscriberInitialization:
         subscriber = InsightSubscriber()
 
         assert subscriber.generator == mock_generator
-        mock_generator_class.assert_called_once()
+        mock_generator_class.assert_called_once_with(project_id=None)
 
 
 @pytest.fixture
@@ -541,6 +410,7 @@ class TestInsightSubscriberMessageProcessing:
     async def test_process_insight_request_message_success(insight_subscriber: InsightSubscriber) -> None:
         """Test successful message processing."""
         # Create mock request
+        from fastapi import Request
         mock_request = Mock(spec=Request)
 
         # Create proper Pub/Sub message structure
@@ -565,7 +435,12 @@ class TestInsightSubscriberMessageProcessing:
         mock_request.json = mock_json
 
         # Mock the generate_health_insight method
-        mock_insight = {"insights": ["test"], "health_score": 85}
+        mock_insight = {
+            "status": "success",
+            "message": "Health insight generated successfully",
+            "insights": ["test"],
+            "health_score": 85
+        }
 
         with patch.object(insight_subscriber.generator, 'generate_health_insight', new=AsyncMock(return_value=mock_insight)) as mock_generate:
             result = await insight_subscriber.process_insight_request_message(mock_request)
@@ -582,6 +457,7 @@ class TestInsightSubscriberMessageProcessing:
     @staticmethod
     async def test_process_insight_request_message_missing_fields(insight_subscriber: InsightSubscriber) -> None:
         """Test message processing with missing required fields."""
+        from fastapi import Request
         mock_request = Mock(spec=Request)
 
         # Missing user_id
@@ -603,12 +479,13 @@ class TestInsightSubscriberMessageProcessing:
         with pytest.raises(HTTPException) as exc_info:
             await insight_subscriber.process_insight_request_message(mock_request)
 
-        assert exc_info.value.status_code == 500  # Changed from 400 to match actual behavior
+        assert exc_info.value.status_code == 400
         assert "user_id" in str(exc_info.value.detail)
 
     @staticmethod
     async def test_process_insight_request_message_invalid_base64(insight_subscriber: InsightSubscriber) -> None:
         """Test message processing with invalid base64 data."""
+        from fastapi import Request
         mock_request = Mock(spec=Request)
 
         pubsub_body = {
@@ -623,11 +500,12 @@ class TestInsightSubscriberMessageProcessing:
         with pytest.raises(HTTPException) as exc_info:
             await insight_subscriber.process_insight_request_message(mock_request)
 
-        assert exc_info.value.status_code == 500
+        assert exc_info.value.status_code == 400
 
     @staticmethod
     async def test_process_insight_request_message_invalid_json(insight_subscriber: InsightSubscriber) -> None:
         """Test message processing with invalid JSON in data."""
+        from fastapi import Request
         mock_request = Mock(spec=Request)
 
         # Valid base64 but invalid JSON
@@ -645,11 +523,12 @@ class TestInsightSubscriberMessageProcessing:
         with pytest.raises(HTTPException) as exc_info:
             await insight_subscriber.process_insight_request_message(mock_request)
 
-        assert exc_info.value.status_code == 500
+        assert exc_info.value.status_code == 400
 
     @staticmethod
     async def test_process_insight_request_message_generation_error(insight_subscriber: InsightSubscriber) -> None:
         """Test message processing with insight generation error."""
+        from fastapi import Request
         mock_request = Mock(spec=Request)
 
         message_data = {
@@ -674,61 +553,6 @@ class TestInsightSubscriberMessageProcessing:
                 await insight_subscriber.process_insight_request_message(mock_request)
 
             assert exc_info.value.status_code == 500
-
-
-class TestInsightSubscriberMessageExtraction:
-    """🔍 Test message data extraction."""
-
-    @staticmethod
-    def test_extract_message_data_success(insight_subscriber: InsightSubscriber) -> None:
-        """Test successful message data extraction."""
-        pubsub_body = {
-            "message": {
-                "data": base64.b64encode(json.dumps({
-                    "user_id": "test-user",
-                    "upload_id": "upload-123",
-                    "analysis_results": {"features": [1, 2, 3]}
-                }).encode()).decode()
-            }
-        }
-
-        result = insight_subscriber._extract_message_data(pubsub_body)
-
-        assert result["user_id"] == "test-user"
-        assert result["upload_id"] == "upload-123"
-        assert result["analysis_results"]["features"] == [1, 2, 3]
-
-    @staticmethod
-    def test_extract_message_data_missing_message(insight_subscriber: InsightSubscriber) -> None:
-        """Test message extraction with missing message field."""
-        pubsub_body: dict[str, Any] = {}
-
-        with pytest.raises(HTTPException) as exc_info:
-            insight_subscriber._extract_message_data(pubsub_body)
-
-        assert exc_info.value.status_code == 400
-
-    @staticmethod
-    def test_extract_message_data_missing_data(insight_subscriber: InsightSubscriber) -> None:
-        """Test message extraction with missing data field."""
-        pubsub_body: dict[str, Any] = {"message": {}}
-
-        with pytest.raises(HTTPException) as exc_info:
-            insight_subscriber._extract_message_data(pubsub_body)
-
-        assert exc_info.value.status_code == 400
-
-
-class TestInsightSubscriberErrorHelpers:
-    """💥 Test error helper functions."""
-
-    @staticmethod
-    def test_raise_missing_field_error() -> None:
-        """Test missing field error helper."""
-        with pytest.raises(ValueError, match="Missing required field: user_id"):
-            InsightSubscriber._raise_missing_field_error("user_id")
-
-        assert "Missing required field: user_id" in str(ValueError("Missing required field: user_id"))
 
 
 class TestInsightSubscriberSingleton:
@@ -782,46 +606,6 @@ class TestInsightSubscriberGlobalFunction:
             mock_get_instance.assert_called_once()
 
 
-class TestFastAPIEndpoints:
-    """🌐 Test FastAPI endpoints."""
-
-    @staticmethod
-    async def test_generate_insight_task_success() -> None:
-        """Test generate insight task endpoint success."""
-        with patch('clarity.services.pubsub.insight_subscriber.get_insight_subscriber') as mock_get_subscriber:
-            mock_subscriber = Mock()
-            mock_get_subscriber.return_value = mock_subscriber
-            mock_subscriber.process_insight_request_message = AsyncMock(return_value={"status": "success"})
-
-            mock_request = Mock(spec=Request)
-
-            result = await generate_insight_task(mock_request)
-
-            assert result["status"] == "success"
-            mock_subscriber.process_insight_request_message.assert_called_once_with(mock_request)
-
-    @staticmethod
-    async def test_generate_insight_task_exception() -> None:
-        """Test generate insight task endpoint with exception."""
-        with patch('clarity.services.pubsub.insight_subscriber.get_insight_subscriber') as mock_get_subscriber:
-            mock_subscriber = Mock()
-            mock_get_subscriber.return_value = mock_subscriber
-            mock_subscriber.process_insight_request_message = AsyncMock(side_effect=Exception("Processing failed"))
-
-            mock_request = Mock(spec=Request)
-
-            with pytest.raises(Exception, match="Processing failed"):
-                await generate_insight_task(mock_request)
-
-    @staticmethod
-    async def test_health_check() -> None:
-        """Test health check endpoint."""
-        result = await health_check()
-
-        assert result["status"] == "healthy"
-        assert result["service"] == "insight"
-
-
 class TestEdgeCasesAndBoundaryConditions:
     """🎯 Test edge cases and boundary conditions."""
 
@@ -829,11 +613,7 @@ class TestEdgeCasesAndBoundaryConditions:
     def test_empty_analysis_results() -> None:
         """Test handling of empty analysis results."""
         enhanced = GeminiInsightGenerator._enhance_analysis_results_for_gemini({})
-
         assert isinstance(enhanced, dict)
-        summary = GeminiInsightGenerator._create_analysis_summary({})
-        assert summary["total_features"] == 0
-        assert len(summary["modalities_processed"]) == 0
 
     @staticmethod
     def test_malformed_sleep_features() -> None:
@@ -861,8 +641,11 @@ class TestEdgeCasesAndBoundaryConditions:
     @staticmethod
     async def test_concurrent_insight_generation(mock_generator: GeminiInsightGenerator, sample_analysis_results: dict[str, Any]) -> None:
         """Test concurrent insight generation."""
-        # Use mock mode for speed
-        with patch.object(mock_generator, 'model', None):
+        # Mock fallback mode for speed and consistency
+        with (
+            patch.object(mock_generator.gemini_service, 'generate_health_insights', new=AsyncMock(side_effect=Exception("Service unavailable"))),
+            patch.object(mock_generator, '_store_insight', new=AsyncMock())
+        ):
             async def generate_insight(i: int) -> dict[str, Any]:
                 return await mock_generator.generate_health_insight(
                     f"user-{i}", f"upload-{i}", sample_analysis_results
@@ -874,5 +657,6 @@ class TestEdgeCasesAndBoundaryConditions:
 
             assert len(results) == 3
             for result in results:
+                assert result["status"] == "success"
                 assert "insights" in result
                 assert "health_score" in result

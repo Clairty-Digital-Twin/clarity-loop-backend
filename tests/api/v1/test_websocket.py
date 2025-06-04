@@ -26,10 +26,8 @@ import pytest
 from starlette.websockets import WebSocketState
 
 from clarity.api.v1.websocket import chat_handler, models
-from clarity.api.v1.websocket.connection_manager import (
-    ConnectionInfo,
-    ConnectionManager,
-)
+from clarity.api.v1.websocket.connection_manager import ConnectionManager
+from clarity.api.v1.websocket.models import ConnectionInfo
 from clarity.auth.firebase_auth import User, get_current_user_websocket
 from clarity.models.user import User
 
@@ -60,11 +58,11 @@ class TestConnectionManager:
         max_message_size: int = 64 * 1024,
     ):
         # Core connection storage
-        self.active_websockets: Set[WebSocket] = set()  # All currently active websockets
-        self.user_connections: DefaultDict[str, List[WebSocket]] = defaultdict(list)  # user_id -> [websockets]
-        self.connection_info: Dict[WebSocket, ConnectionInfo] = {}  # websocket -> connection info
-        self.rooms: DefaultDict[str, Set[str]] = defaultdict(set)  # room_id -> {user_ids}
-        
+        self.active_websockets: set[WebSocket] = set()  # All currently active websockets
+        self.user_connections: defaultdict[str, list[WebSocket]] = defaultdict(list)  # user_id -> [websockets]
+        self.connection_info: dict[WebSocket, ConnectionInfo] = {}  # websocket -> connection info
+        self.rooms: defaultdict[str, set[str]] = defaultdict(set)  # room_id -> {user_ids}
+
         # Configuration settings
         self.heartbeat_interval = heartbeat_interval
         self.max_connections_per_user = max_connections_per_user
@@ -72,27 +70,10 @@ class TestConnectionManager:
         self.message_rate_limit_count = message_rate_limit_count
         self.message_rate_limit_period_seconds = message_rate_limit_period_seconds
         self.max_message_size = max_message_size
-        
-        # Test-specific tracking
-        self.messages_sent: List[Dict[str, Any]] = []  # Track all messages sent for assertions
-        self.broadcasts_sent: List[Dict[str, Any]] = []  # Track all broadcasts for assertions
-        self.heartbeats_processed: List[Dict[str, Any]] = []  # Track heartbeats for assertions
-        # user_id -> list of websockets. Tracks multiple connections per user.
-        self.user_connections: defaultdict[str, list[WebSocket]] = defaultdict(list)
-        # websocket -> ConnectionInfo. The primary store for connection-specific data.
-        self.connection_info: dict[WebSocket, ConnectionInfo] = {}
-        # room_id -> set of user_ids. Tracks users present in each room.
-        self.rooms: defaultdict[str, set[str]] = defaultdict(set)
-        # For test assertions: records messages sent directly or broadcast.
-        self.messages_sent: list[dict[str, Any]] = []
 
-        # Configuration parameters (can be used by mock methods if needed)
-        self.heartbeat_interval = heartbeat_interval
-        self.max_connections_per_user = max_connections_per_user
-        self.connection_timeout = connection_timeout
-        self.message_rate_limit_count = message_rate_limit_count
-        self.message_rate_limit_period_seconds = message_rate_limit_period_seconds
-        self.max_message_size = max_message_size
+        # Test-specific tracking
+        self.messages_sent: list[dict[str, Any]] = []  # Track all messages sent for assertions
+        self.heartbeats_processed: list[dict[str, Any]] = []  # Track heartbeats for assertions
 
         logger.info(
             f"TestConnectionManager initialized with max_connections_per_user={self.max_connections_per_user}"
@@ -204,152 +185,126 @@ class TestConnectionManager:
         )
 
     async def send_to_connection(self, websocket: WebSocket, message: Any) -> None:
+        logger.info(f"Attempting to send message to connection: {message}")
+
+        # Verify websocket is in connection_info
         if websocket not in self.connection_info:
-            logger.error(
-                f"Attempted to send message to an unknown websocket: {websocket}"
-            )
+            logger.warning("Cannot send to unknown websocket connection")
             return
 
-        # Determine message content (string or dict for JSON)
+        # Record the message for test assertions
         message_content = message
-        if hasattr(message, "model_dump_json"):  # For Pydantic models
-            message_content = json.loads(message.model_dump_json())  # Store as dict
-        elif isinstance(message, str):
-            try:
-                message_content = json.loads(message)  # If it's a JSON string
-            except json.JSONDecodeError:
-                message_content = message  # Plain string
+        if hasattr(message, "model_dump_json"):
+            message_content = json.loads(message.model_dump_json())
+        elif hasattr(message, "dict"):
+            message_content = message.dict()
 
-        self.messages_sent.append(
-            {
-                "type": "direct",
-                "target_ws_session_id": self.connection_info[
-                    websocket
-                ].session_id,  # Log session_id for easier identification
-                "message": message_content,
-            }
-        )
-        logger.info(
-            f"Message recorded (direct) to websocket (session: {self.connection_info[websocket].session_id}): {message_content}"
-        )
-        # Optionally, simulate the actual send if TestClient needs to receive it:
-        # await websocket.send_json(message_content) # or send_text
+        self.messages_sent.append({
+            "type": "direct",
+            "target_ws": websocket,
+            "message": message_content
+        })
+
+        logger.info(f"Recorded direct message send to {websocket}")
 
     async def broadcast_to_room(
         self, room_id: str, message: Any, exclude_websocket: WebSocket | None = None
     ) -> None:
-        if room_id not in self.rooms:
-            logger.warning(
-                f"Attempted to broadcast to a non-existent or empty room: {room_id}"
-            )
-            return
+        logger.info(f"Attempting to broadcast message to room {room_id}: {message}")
 
+        # Record the broadcast for test assertions
         message_content = message
         if hasattr(message, "model_dump_json"):
             message_content = json.loads(message.model_dump_json())
-        elif isinstance(message, str):
-            try:
-                message_content = json.loads(message)
-            except json.JSONDecodeError:
-                message_content = message
+        elif hasattr(message, "dict"):
+            message_content = message.dict()
 
-        self.messages_sent.append(
-            {
-                "type": "broadcast",
-                "room_id": room_id,
-                "message": message_content,
-                "excluded_ws_session_id": (
-                    self.connection_info[exclude_websocket].session_id
-                    if exclude_websocket and exclude_websocket in self.connection_info
-                    else None
-                ),
-            }
-        )
-        logger.info(
-            f"Message recorded (broadcast) to room {room_id}: {message_content}"
-        )
+        self.messages_sent.append({
+            "type": "broadcast",
+            "room_id": room_id,
+            "message": message_content,
+            "excluded": exclude_websocket
+        })
 
-        # Optionally, simulate actual sends to each websocket in the room
-        # for user_id_in_room in self.rooms[room_id]:
-        #     for ws_conn in self.user_connections.get(user_id_in_room, []):
-        #         if ws_conn != exclude_websocket and ws_conn in self.connection_info:
-        #             logger.debug(f"Simulating broadcast send to websocket (session: {self.connection_info[ws_conn].session_id})")
-        #             # await ws_conn.send_json(message_content) # or send_text
+        # Identify websockets in this room
+        target_websockets = []
+        for user_id in self.rooms.get(room_id, set()):
+            for ws in self.user_connections.get(user_id, []):
+                if ws != exclude_websocket and ws in self.active_websockets:
+                    target_websockets.append(ws)
+
+        logger.info(f"Broadcast recorded to {len(target_websockets)} connections in room {room_id}")
 
     async def handle_heartbeat(self, websocket: WebSocket) -> None:
-        connection_info = self.connection_info.get(websocket)
-        if not connection_info:
-            logger.warning(f"Heartbeat received from unknown websocket: {websocket}")
-            return
+        logger.info("Handling heartbeat for websocket")
 
-        now = datetime.now(UTC)
-        connection_info.last_heartbeat_ack = now
-        connection_info.last_active = now
-        logger.info(
-            f"Heartbeat acknowledged for websocket (session: {connection_info.session_id})"
-        )
+        # Update connection_info heartbeat timestamp
+        connection_info = self.connection_info.get(websocket)
+        if connection_info:
+            now = datetime.now(UTC)
+            connection_info.last_heartbeat_ack = now
+            connection_info.last_active = now
+
+            # Record heartbeat for test assertions
+            self.heartbeats_processed.append({
+                "websocket": websocket,
+                "timestamp": now
+            })
+
+            logger.info(f"Updated heartbeat timestamp for {websocket}")
 
     def is_rate_limited(self, websocket: WebSocket) -> bool:
+        logger.info("Checking rate limit for websocket")
+
+        # Simple rate limiting check
         connection_info = self.connection_info.get(websocket)
         if not connection_info:
-            logger.warning(f"Rate limit check for unknown websocket: {websocket}")
-            return False  # Or True, depending on desired strictness for unknown sockets
+            return False
 
         now = datetime.now(UTC)
-        # Add current message timestamp
         connection_info.message_timestamps.append(now)
 
-        # Prune timestamps older than the rate limit period
-        period_start_time = now - timedelta(
-            seconds=self.message_rate_limit_period_seconds
-        )
-        connection_info.message_timestamps = [
-            ts for ts in connection_info.message_timestamps if ts > period_start_time
+        one_second_ago = now - timedelta(seconds=1)
+        recent_messages = [
+            ts for ts in connection_info.message_timestamps
+            if ts > one_second_ago
         ]
 
-        # Check if count exceeds limit
-        if len(connection_info.message_timestamps) > self.message_rate_limit_count:
-            logger.warning(
-                f"Rate limit exceeded for websocket (session: {connection_info.session_id}). "
-                f"Count: {len(connection_info.message_timestamps)}, Limit: {self.message_rate_limit_count}"
-            )
-            return True
+        connection_info.message_timestamps = recent_messages
 
-        logger.debug(
-            f"Rate limit check passed for websocket (session: {connection_info.session_id}). Count: {len(connection_info.message_timestamps)}"
-        )
-        return False
+        return len(recent_messages) > self.message_rate_limit_count
 
-    # --- Getter methods to inspect state (optional, but useful for some tests) ---
-    def get_user_info_from_mock(
-        self, user_id: str
-    ) -> (
-        dict[str, Any] | None
-    ):  # Renamed to avoid clash if real manager has same method
-        if self.user_connections.get(user_id):
-            # Return info from the first connection of this user
-            first_ws = self.user_connections[user_id][0]
-            if first_ws in self.connection_info:
-                ci = self.connection_info[first_ws]
-                return {
-                    "user_id": ci.user_id,
-                    "username": ci.username,
-                    "current_room_id": ci.room_id,
-                    "session_ids": [
-                        self.connection_info[ws].session_id
-                        for ws in self.user_connections[user_id]
-                        if ws in self.connection_info
-                    ],
-                }
-        return None
+    # --- Getter methods for additional information
+    def get_user_info(self, user_id: str) -> dict[str, Any] | None:
+        """Get information about a user's connection."""
+        if user_id not in self.user_connections or not self.user_connections[user_id]:
+            return None
 
-    def get_room_users_from_mock(self, room_id: str) -> set[str]:
-        return self.rooms.get(room_id, set()).copy()  # Return a copy
+        first_ws = self.user_connections[user_id][0]
+        connection_info = self.connection_info.get(first_ws)
+        if not connection_info:
+            return None
 
-    def get_user_count_in_room_from_mock(self, room_id: str) -> int:
-        return len(self.rooms.get(room_id, set()))
+        return {
+            "user_id": connection_info.user_id,
+            "username": connection_info.username,
+            "room_id": connection_info.room_id,
+            "connection_count": len(self.user_connections[user_id]),
+            "last_active": connection_info.last_active
+        }
 
-    def get_total_active_connections_from_mock(self) -> int:
+    def get_room_users(self, room_id: str) -> set[str]:
+        """Get set of user IDs in a room."""
+        return self.rooms.get(room_id, set())
+
+    def get_user_count(self, room_id: str) -> int:
+        """Get count of users in a room."""
+        if room_id in self.rooms:
+            return len(self.rooms[room_id])
+        return 0
+
+    def get_connection_count(self) -> int:
+        """Get total connection count."""
         return len(self.active_websockets)
 
     def get_connection_info_for_websocket(
@@ -364,28 +319,25 @@ def mock_test_connection_manager() -> TestConnectionManager:
     return TestConnectionManager()
 
 
-@pytest.fixture
-def app(client: TestClient, mock_test_connection_manager: TestConnectionManager) -> FastAPI:
-    from fastapi import FastAPI
+def create_mock_connection_manager():
+    """Create a stateful mock connection manager for testing."""
+    return TestConnectionManager()
 
+
+@pytest.fixture
+def app(client: TestClient) -> FastAPI:
     from clarity.api.v1.websocket.chat_handler import (
         chat_handler,
-        get_connection_manager,
+        get_connection_manager
     )
 
-    # Mock the get_current_user_websocket to return a dummy user for all token validations
     async def mock_get_current_user_websocket(token: str | None = None) -> User:
         return User(uid="test_user", email="test@example.com", display_name="Test User")
 
     app_instance = client.app
     if hasattr(app_instance, "dependency_overrides"):
-        app_instance.dependency_overrides[get_connection_manager] = (
-            create_mock_connection_manager
-        )
-        app_instance.dependency_overrides[get_current_user_websocket] = (
-            mock_get_current_user_websocket
-        )
-        app_instance.dependency_overrides[chat_handler] = chat_handler
+        app_instance.dependency_overrides[get_connection_manager] = create_mock_connection_manager
+        app_instance.dependency_overrides[get_current_user_websocket] = mock_get_current_user_websocket
     return app_instance
 
 
@@ -857,19 +809,17 @@ class TestWebSocketEndpoints:
 class TestChatHandler:
     """Test chat handler functionality."""
 
-    async def test_health_insight_generation(self) -> None:
-        # Setup mock data
-        user_id = "test_user"
-        room_id = "test_room"
-        message_content = "I feel tired all the time"
+    async def test_health_insight_generation(self, app: FastAPI):
+        from clarity.api.v1.websocket.chat_handler import get_connection_manager
 
-        # Mock the connection manager to return a successful broadcast
-        mock_manager = create_mock_connection_manager()
-        # Directly assign to avoid attribute error
-        if not hasattr(chat_handler, "connection_manager"):
-            chat_handler.connection_manager = mock_manager
+        mock_manager = app.dependency_overrides[get_connection_manager]()
 
-        # Mock the health insight service to return a valid insight
+        test_message = models.ChatMessage(
+            message="I've been feeling tired lately and my sleep has been poor",
+            message_type=models.MessageType.CHAT,
+            timestamp=datetime.now().isoformat(),
+        )
+
         insight_response = {
             "insights": [
                 "You might be experiencing fatigue, consider checking your sleep patterns."

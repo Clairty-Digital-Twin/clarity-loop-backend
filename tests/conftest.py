@@ -54,11 +54,11 @@ class _FakeFS:  # minimal façade
     def document(self, *_a: Any) -> "_FakeFS":  # → Fake doc ref
         return self
 
-    def set(self, *a: Any, **kw: Any) -> None:
+    def set(self, *_a: Any, **_kw: Any) -> None:
         pass
 
     @staticmethod
-    def get(*a: Any, **kw: Any) -> dict[Any, Any]:
+    def get(*_a: Any, **_kw: Any) -> dict[Any, Any]:
         return {}
 
 
@@ -67,7 +67,7 @@ google.cloud.firestore.Client = _FakeFS
 
 # --- 3. Pub/Sub fake -------------------------------------------------
 class _FakePublisher:
-    def __init__(self, *a: Any, **kw: Any) -> None:
+    def __init__(self, *_a: Any, **_kw: Any) -> None:
         pass
 
     @staticmethod

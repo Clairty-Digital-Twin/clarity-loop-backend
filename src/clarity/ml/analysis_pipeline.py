@@ -255,13 +255,14 @@ class HealthAnalysisPipeline:
                 "blood_pressure",
             }:
                 organized["cardio"].append(metric)
-            elif metric_type in {"respiratory_rate", "oxygen_saturation"}:
+            elif metric_type in {"respiratory_rate", "blood_oxygen"}:  # 🚀 FIXED: Updated to use blood_oxygen
                 organized["respiratory"].append(metric)
             elif metric_type in {
                 "step_count",
                 "active_energy",
                 "distance_walking",
                 "exercise_time",
+                "activity_level",  # 🚀 FIXED: Added activity_level for workout routing
             }:
                 organized["activity"].append(metric)
             elif metric_type in {"sleep_analysis", "sleep_duration"}:
@@ -353,7 +354,7 @@ class HealthAnalysisPipeline:
                     rr_values.append(float(metric.biometric_data.respiratory_rate))
 
             elif (
-                metric.metric_type.value.lower() == "oxygen_saturation"
+                metric.metric_type.value.lower() == "blood_oxygen"  # 🚀 FIXED: Updated to use blood_oxygen
                 and metric.biometric_data
             ) and (
                 hasattr(metric.biometric_data, "oxygen_saturation")
@@ -480,7 +481,7 @@ class HealthAnalysisPipeline:
             "data_coverage": self._generate_data_coverage(organized_data),
             "feature_summary": self._generate_feature_summary(modality_features),
             "health_indicators": self._generate_health_indicators(
-                modality_features, activity_features
+                modality_features, activity_features, organized_data
             ),
         }
 
@@ -521,6 +522,7 @@ class HealthAnalysisPipeline:
         self,
         modality_features: dict[str, list[float]],
         activity_features: list[dict[str, Any]] | None = None,
+        organized_data: dict[str, list[HealthMetric]] | None = None,
     ) -> dict[str, Any]:
         """Generate health indicators from features."""
         health_indicators = {}
@@ -543,6 +545,12 @@ class HealthAnalysisPipeline:
         )
         if activity_indicators:
             health_indicators["activity_health"] = activity_indicators
+
+        # 🚀 FIXED: Add sleep health indicators
+        if organized_data and "sleep" in organized_data:
+            sleep_indicators = self.sleep_processor.get_summary_stats(organized_data["sleep"])
+            if sleep_indicators:
+                health_indicators["sleep_health"] = sleep_indicators
 
         return health_indicators
 
@@ -730,9 +738,9 @@ def _get_healthkit_type_mapping() -> dict[str, HealthMetricType]:
         "heartrate": HealthMetricType.HEART_RATE,
         "heart_rate": HealthMetricType.HEART_RATE,
         "heartratevariabilitysdnn": HealthMetricType.HEART_RATE_VARIABILITY,
-        "respiratoryrate": HealthMetricType.HEART_RATE,  # Map to existing type
-        "respiratory_rate": HealthMetricType.HEART_RATE,  # Map to existing type
-        "oxygensaturation": HealthMetricType.ENVIRONMENTAL,  # Map to existing type
+        "respiratoryrate": HealthMetricType.RESPIRATORY_RATE,  # 🚀 FIXED: Proper respiratory routing
+        "respiratory_rate": HealthMetricType.RESPIRATORY_RATE,  # 🚀 FIXED: Proper respiratory routing
+        "oxygensaturation": HealthMetricType.BLOOD_OXYGEN,  # 🚀 FIXED: Proper oxygen routing
         "bloodpressuresystolic": HealthMetricType.BLOOD_PRESSURE,
         "bloodpressurediastolic": HealthMetricType.BLOOD_PRESSURE,
     }

@@ -97,10 +97,10 @@ class SleepFeatures(BaseModel):
 
 class SleepProcessor:
     """Processor for Apple HealthKit sleep analysis data.
-    
+
     Extracts robust sleep features following clinical sleep medicine standards
     and research best practices from AASM guidelines and MESA/NSRR datasets.
-    
+
     Features:
     - Clinical sleep metrics (efficiency, latency, WASO)
     - Sleep architecture analysis (REM%, Deep%)
@@ -117,10 +117,10 @@ class SleepProcessor:
 
     def process(self, metrics: list[HealthMetric]) -> SleepFeatures:
         """Process raw sleep metrics to compute comprehensive sleep features.
-        
+
         Args:
             metrics: List of HealthMetric objects with SLEEP_ANALYSIS type
-            
+
         Returns:
             SleepFeatures: Comprehensive sleep analysis results
         """
@@ -153,28 +153,24 @@ class SleepProcessor:
     @staticmethod
     def _extract_sleep_data(metrics: list[HealthMetric]) -> list[SleepData]:
         """Extract valid sleep data from health metrics.
-        
+
         Args:
             metrics: List of health metrics
-            
+
         Returns:
             List of SleepData objects
         """
-        sleep_data = []
-
-        for metric in metrics:
-            if metric.sleep_data is not None:
-                sleep_data.append(metric.sleep_data)
+        sleep_data = [metric.sleep_data for metric in metrics if metric.sleep_data is not None]
 
         logger.debug("Extracted %d valid sleep data records", len(sleep_data))
         return sleep_data
 
     def _calculate_sleep_features(self, sleep_data_list: list[SleepData]) -> SleepFeatures:
         """Calculate comprehensive sleep features from sleep data.
-        
+
         Args:
             sleep_data_list: List of sleep data records
-            
+
         Returns:
             SleepFeatures: Computed sleep metrics
         """
@@ -217,11 +213,11 @@ class SleepProcessor:
             sleep_start_times.append(sleep_data.sleep_start)
 
         # Calculate averages
-        avg_total_sleep = int(round(np.mean(total_sleep_values)))
+        avg_total_sleep = round(np.mean(total_sleep_values))
         avg_efficiency = float(np.mean(efficiency_values))
         avg_latency = float(np.mean(latency_values))
         avg_waso = float(np.mean(waso_values))
-        avg_awakenings = int(round(np.mean(awakening_values)))
+        avg_awakenings = round(np.mean(awakening_values))
         avg_rem_percentage = float(np.mean(rem_percentage_values))
         avg_deep_percentage = float(np.mean(deep_percentage_values))
 
@@ -242,12 +238,12 @@ class SleepProcessor:
     @staticmethod
     def _calculate_waso(sleep_data: SleepData) -> float:
         """Calculate Wake After Sleep Onset (WASO).
-        
+
         Uses sleep stages if available, otherwise derives from timing.
-        
+
         Args:
             sleep_data: Sleep data record
-            
+
         Returns:
             WASO in minutes
         """
@@ -258,17 +254,15 @@ class SleepProcessor:
         # Fallback: calculate from timing
         time_in_bed = (sleep_data.sleep_end - sleep_data.sleep_start).total_seconds() / 60.0
         latency = sleep_data.time_to_sleep_minutes if sleep_data.time_to_sleep_minutes is not None else 0.0
-        waso = max(0.0, time_in_bed - sleep_data.total_sleep_minutes - latency)
-
-        return waso
+        return max(0.0, time_in_bed - sleep_data.total_sleep_minutes - latency)
 
     @staticmethod
     def _calculate_stage_percentages(sleep_data: SleepData) -> tuple[float, float]:
         """Calculate REM and Deep sleep percentages.
-        
+
         Args:
             sleep_data: Sleep data record
-            
+
         Returns:
             Tuple of (rem_percentage, deep_percentage)
         """
@@ -286,13 +280,13 @@ class SleepProcessor:
     @staticmethod
     def _calculate_consistency_score(sleep_start_times: list[datetime]) -> float:
         """Calculate sleep schedule consistency score.
-        
+
         Based on standard deviation of sleep start times across nights.
         Follows Sleep Regularity Index principles from circadian research.
-        
+
         Args:
             sleep_start_times: List of sleep start timestamps
-            
+
         Returns:
             Consistency score (0=irregular, 1=very regular)
         """
@@ -318,7 +312,7 @@ class SleepProcessor:
     @staticmethod
     def _create_empty_features() -> SleepFeatures:
         """Create empty/zero sleep features for error cases.
-        
+
         Returns:
             SleepFeatures with all zero values
         """
@@ -335,10 +329,10 @@ class SleepProcessor:
 
     def get_summary_stats(self, features: SleepFeatures) -> dict[str, Any]:
         """Generate summary statistics for sleep features.
-        
+
         Args:
             features: Computed sleep features
-            
+
         Returns:
             Dictionary of summary statistics
         """
@@ -360,12 +354,12 @@ class SleepProcessor:
     @staticmethod
     def _calculate_quality_score(features: SleepFeatures) -> float:
         """Calculate overall sleep quality score (0-1).
-        
+
         Combines multiple sleep metrics using clinical guidelines.
-        
+
         Args:
             features: Sleep features
-            
+
         Returns:
             Overall quality score
         """

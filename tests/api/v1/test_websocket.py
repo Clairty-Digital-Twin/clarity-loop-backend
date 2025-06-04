@@ -495,10 +495,12 @@ class TestWebSocketEndpoints:
 
     async def test_websocket_chat_endpoint_anonymous(self, client: TestClient) -> None:
         user_id = "anonymous-user-123"
-        with pytest.raises(WebSocketDisconnect) as excinfo:
-            with client.websocket_connect(f"/api/v1/chat/{user_id}") as websocket:
-                # This connection should be rejected by the auth middleware
-                websocket.send_text("Hello")
+        with (
+            pytest.raises(WebSocketDisconnect) as excinfo,
+            client.websocket_connect(f"/api/v1/chat/{user_id}") as websocket,
+        ):
+            # This connection should be rejected by the auth middleware
+            websocket.send_text("Hello")
         assert excinfo.value.code == 1008  # Policy Violation
 
     async def test_websocket_invalid_message_format(self, client: TestClient) -> None:

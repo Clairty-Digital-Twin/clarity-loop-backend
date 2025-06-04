@@ -637,7 +637,7 @@ class TestInsightSubscriberMessageProcessing:
             "message": {"data": encoded_data}
         }
 
-        def mock_json() -> dict[str, Any]:
+        async def mock_json() -> dict[str, Any]:
             return pubsub_body
 
         mock_request.json = mock_json

@@ -57,7 +57,7 @@ class _TestConnectionManager:
         message_rate_limit_count: int = 100,
         message_rate_limit_period_seconds: int = 1,
         max_message_size: int = 64 * 1024,
-    ):
+    ) -> None:
         self.active_websockets: set[WebSocket] = set()
         self.user_connections: defaultdict[str, list[WebSocket]] = defaultdict(list)
         self.connection_info: dict[WebSocket, _TestConnectionInfo] = {}
@@ -197,7 +197,6 @@ class _TestConnectionManager:
 
     async def send_to_user(self, user_id: str, message: Any) -> None:
         """Send a message to all active connections for a given user."""
-        print(f"🔄 DEBUG TestConnectionManager: send_to_user called for {user_id}")
         logger.info(f"Attempting to send message to user {user_id}: {message}")
 
         message_content = message
@@ -206,14 +205,7 @@ class _TestConnectionManager:
         elif hasattr(message, "dict"):
             message_content = message.dict()
 
-        print(
-            f"🔄 DEBUG TestConnectionManager: Processed message content: {message_content}"
-        )
-
         if user_id in self.user_connections:
-            print(
-                f"🔄 DEBUG TestConnectionManager: Found {len(self.user_connections[user_id])} connections for user {user_id}"
-            )
             for websocket in self.user_connections[user_id]:
                 if websocket in self.active_websockets:
                     self.messages_sent.append(
@@ -226,20 +218,11 @@ class _TestConnectionManager:
                     )
                     # Actually send the message through the WebSocket for TestClient
                     try:
-                        print(
-                            "🔄 DEBUG TestConnectionManager: Attempting to send through websocket..."
-                        )
                         await websocket.send_json(message_content)
-                        print(
-                            "✅ DEBUG TestConnectionManager: Successfully sent message through websocket"
-                        )
                         logger.info(
                             f"Sent message to user {user_id} through websocket: {message_content}"
                         )
                     except Exception as e:
-                        print(
-                            f"❌ DEBUG TestConnectionManager: Failed to send through websocket: {e}"
-                        )
                         logger.warning(
                             f"Failed to send message to user {user_id} through websocket: {e}"
                         )
@@ -248,9 +231,6 @@ class _TestConnectionManager:
                         f"Recorded direct message send to user {user_id} via {websocket}"
                     )
         else:
-            print(
-                f"❌ DEBUG TestConnectionManager: User {user_id} has no active connections"
-            )
             logger.warning(
                 f"User {user_id} has no active connections to send messages to."
             )
@@ -258,9 +238,6 @@ class _TestConnectionManager:
     async def broadcast_to_room(
         self, room_id: str, message: Any, exclude_websocket: WebSocket | None = None
     ) -> None:
-        print(
-            f"🔄 DEBUG TestConnectionManager: broadcast_to_room called for room {room_id}"
-        )
         logger.info(f"Attempting to broadcast message to room {room_id}: {message}")
 
         message_content = message
@@ -280,21 +257,12 @@ class _TestConnectionManager:
 
         target_websockets = []
         for user_id in self.rooms.get(room_id, set()):
-            for ws in self.user_connections.get(user_id, []):
-                if ws != exclude_websocket and ws in self.active_websockets:
-                    target_websockets.append(ws)
-
-        print(
-            f"🔄 DEBUG TestConnectionManager: Found {len(target_websockets)} target websockets for broadcast"
-        )
+            target_websockets.extend(ws for ws in self.user_connections.get(user_id, []) if ws != exclude_websocket and ws in self.active_websockets)
 
         # In tests, send to all connections in room for testing purposes
         for user_id in self.rooms.get(room_id, set()):
             for ws in self.user_connections.get(user_id, []):
                 if ws in self.active_websockets:
-                    print(
-                        "🔄 DEBUG TestConnectionManager: Broadcasting to websocket..."
-                    )
                     try:
                         message_str = (
                             message.model_dump_json()
@@ -302,13 +270,8 @@ class _TestConnectionManager:
                             else json.dumps(message_content)
                         )
                         await ws.send_text(message_str)
-                        print(
-                            "✅ DEBUG TestConnectionManager: Successfully broadcast message"
-                        )
                     except Exception as e:
-                        print(
-                            f"❌ DEBUG TestConnectionManager: Failed to broadcast: {e}"
-                        )
+                        pass
 
         logger.info(
             f"Broadcast sent to {len(target_websockets)} connections in room {room_id}"
@@ -376,9 +339,6 @@ class _TestConnectionManager:
 
     async def handle_message(self, websocket: WebSocket, raw_message: str) -> bool:
         """Handle an incoming WebSocket message - always allow in tests."""
-        print(
-            f"🔄 DEBUG TestConnectionManager: handle_message called with: {raw_message}"
-        )
         # In tests, always return True to allow message processing
         return True
 
@@ -490,11 +450,9 @@ class TestWebSocketEndpoints:
         user_id = "test-user-123"
         test_token = "test-token"
 
-        print(f"\n🔌 DEBUG: Starting WebSocket connection test for user {user_id}")
         with client.websocket_connect(
             f"/api/v1/chat/{user_id}?token={test_token}"
         ) as websocket:
-            print("✅ DEBUG: WebSocket connection established")
 
             # Send a chat message
             chat_message = ChatMessage(
@@ -503,14 +461,10 @@ class TestWebSocketEndpoints:
                 type=MessageType.MESSAGE,
                 content="Hello AI",
             )
-            print(f"📤 DEBUG: Sending message: {chat_message.model_dump(mode='json')}")
             websocket.send_json(chat_message.model_dump(mode="json"))
-            print("✅ DEBUG: Message sent successfully")
 
             # Expecting a response from the AI handler
-            print("⏳ DEBUG: Waiting for response...")
             response_data = websocket.receive_json()
-            print(f"📥 DEBUG: Received response: {response_data}")
 
             assert response_data["type"] == MessageType.MESSAGE.value
             assert "AI Response to: Hello AI" in response_data["content"]

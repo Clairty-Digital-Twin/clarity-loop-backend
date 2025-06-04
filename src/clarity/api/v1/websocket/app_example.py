@@ -9,8 +9,8 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 
-from .chat_handler import router as chat_router
-from .lifespan import websocket_lifespan
+from clarity.api.v1.websocket.chat_handler import router as chat_router
+from clarity.api.v1.websocket.lifespan import websocket_lifespan
 
 
 @asynccontextmanager
@@ -21,14 +21,10 @@ async def full_app_lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     application startup/shutdown logic.
     """
     # You can add other startup logic here
-    print("Starting additional application services...")
 
     # Use websocket_lifespan as a nested context manager
     async with websocket_lifespan(app):
-        print("Application fully started")
         yield
-
-    print("Application shutdown complete")
 
 
 def create_websocket_app() -> FastAPI:
@@ -58,7 +54,7 @@ def create_websocket_app() -> FastAPI:
     @app.get("/health")
     async def health_check():
         """Detailed health check with WebSocket status."""
-        from .lifespan import get_connection_manager
+        from clarity.api.v1.websocket.lifespan import get_connection_manager
 
         try:
             connection_manager = get_connection_manager()

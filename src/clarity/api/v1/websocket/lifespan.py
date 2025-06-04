@@ -6,7 +6,7 @@ import logging
 
 from fastapi import FastAPI
 
-from .connection_manager import ConnectionManager
+from clarity.api.v1.websocket.connection_manager import ConnectionManager
 
 logger = logging.getLogger(__name__)
 

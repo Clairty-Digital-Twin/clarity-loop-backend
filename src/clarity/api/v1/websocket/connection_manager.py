@@ -2,6 +2,7 @@
 
 import asyncio
 from collections import defaultdict
+import contextlib
 from datetime import datetime, timedelta
 import json
 import logging
@@ -13,7 +14,7 @@ from weakref import WeakSet
 from fastapi import WebSocket, WebSocketDisconnect
 from starlette.websockets import WebSocketState
 
-from .models import (
+from clarity.api.v1.websocket.models import (
     ConnectionInfo,
     ErrorMessage,
     HeartbeatMessage,
@@ -35,7 +36,7 @@ class ConnectionManager:
         connection_timeout: int = 300,  # 5 minutes
         message_rate_limit: int = 60,  # messages per minute
         max_message_size: int = 64 * 1024,  # 64KB
-    ):
+    ) -> None:
         # Core connection storage
         self.connections: dict[str, WebSocket] = {}  # user_id -> websocket
         self.user_connections: dict[str, list[WebSocket]] = defaultdict(
@@ -65,7 +66,7 @@ class ConnectionManager:
         self._heartbeat_task: asyncio.Task | None = None
         self._started = False
 
-    async def start_background_tasks(self):
+    async def start_background_tasks(self) -> None:
         """Start background maintenance tasks (called during app startup)."""
         if self._started:
             return
@@ -81,7 +82,7 @@ class ConnectionManager:
         self._started = True
         logger.info("WebSocket background tasks started")
 
-    async def _cleanup_loop(self):
+    async def _cleanup_loop(self) -> None:
         """Background task to clean up stale connections and rate limiting data."""
         while True:
             try:
@@ -89,18 +90,18 @@ class ConnectionManager:
                 await self._cleanup_stale_connections()
                 self._cleanup_rate_limiting_data()
             except Exception as e:
-                logger.error(f"Error in cleanup loop: {e}")
+                logger.exception(f"Error in cleanup loop: {e}")
 
-    async def _heartbeat_loop(self):
+    async def _heartbeat_loop(self) -> None:
         """Background task to send heartbeat messages."""
         while True:
             try:
                 await asyncio.sleep(self.heartbeat_interval)
                 await self._send_heartbeats()
             except Exception as e:
-                logger.error(f"Error in heartbeat loop: {e}")
+                logger.exception(f"Error in heartbeat loop: {e}")
 
-    async def _cleanup_stale_connections(self):
+    async def _cleanup_stale_connections(self) -> None:
         """Remove connections that haven't responded to heartbeats."""
         current_time = time.time()
         stale_connections = []
@@ -112,7 +113,7 @@ class ConnectionManager:
         for websocket in stale_connections:
             await self._force_disconnect(websocket, "Connection timeout")
 
-    def _cleanup_rate_limiting_data(self):
+    def _cleanup_rate_limiting_data(self) -> None:
         """Clean up old rate limiting data."""
         current_time = time.time()
         cutoff_time = current_time - 60  # Keep only last minute
@@ -128,7 +129,7 @@ class ConnectionManager:
             if not self.message_counts[user_id]:
                 del self.message_counts[user_id]
 
-    async def _send_heartbeats(self):
+    async def _send_heartbeats(self) -> None:
         """Send heartbeat messages to all connected clients."""
         if not self.connections:
             return
@@ -162,7 +163,7 @@ class ConnectionManager:
 
         return len(recent_messages) < self.message_rate_limit
 
-    def _record_message(self, user_id: str):
+    def _record_message(self, user_id: str) -> None:
         """Record a message for rate limiting."""
         self.message_counts[user_id].append(time.time())
 
@@ -209,7 +210,7 @@ class ConnectionManager:
             )
 
             # Send connection acknowledgment
-            from .models import ConnectionMessage
+            from clarity.api.v1.websocket.models import ConnectionMessage
 
             ack_message = ConnectionMessage(
                 user_id=user_id,
@@ -230,14 +231,12 @@ class ConnectionManager:
             return True
 
         except Exception as e:
-            logger.error(f"Error connecting user {user_id}: {e}")
-            try:
+            logger.exception(f"Error connecting user {user_id}: {e}")
+            with contextlib.suppress(Exception):
                 await websocket.close(code=1011, reason="Server error")
-            except:
-                pass
             return False
 
-    async def disconnect(self, websocket: WebSocket, reason: str = "Normal closure"):
+    async def disconnect(self, websocket: WebSocket, reason: str = "Normal closure") -> None:
         """Handle WebSocket disconnection."""
         if websocket not in self.connection_info:
             return
@@ -268,7 +267,7 @@ class ConnectionManager:
 
         logger.info(f"User {username} ({user_id}) disconnected: {reason}")
 
-    async def _force_disconnect(self, websocket: WebSocket, reason: str):
+    async def _force_disconnect(self, websocket: WebSocket, reason: str) -> None:
         """Force disconnect a WebSocket connection."""
         try:
             if websocket.client_state == WebSocketState.CONNECTED:
@@ -278,7 +277,7 @@ class ConnectionManager:
 
         await self.disconnect(websocket, reason)
 
-    def _remove_connection(self, websocket: WebSocket):
+    def _remove_connection(self, websocket: WebSocket) -> None:
         """Remove a connection from all storage structures."""
         if websocket not in self.connection_info:
             return
@@ -301,7 +300,7 @@ class ConnectionManager:
             except ValueError:
                 pass
 
-    async def send_to_connection(self, websocket: WebSocket, message: WebSocketMessage):
+    async def send_to_connection(self, websocket: WebSocket, message: WebSocketMessage) -> None:
         """Send a message to a specific WebSocket connection."""
         try:
             if websocket.client_state == WebSocketState.CONNECTED:
@@ -320,10 +319,10 @@ class ConnectionManager:
             else:
                 await self._force_disconnect(websocket, "Connection not active")
         except Exception as e:
-            logger.error(f"Error sending message: {e}")
+            logger.exception(f"Error sending message: {e}")
             await self._force_disconnect(websocket, "Send error")
 
-    async def send_to_user(self, user_id: str, message: WebSocketMessage):
+    async def send_to_user(self, user_id: str, message: WebSocketMessage) -> None:
         """Send a message to all connections of a specific user."""
         connections = self.user_connections.get(user_id, [])
 
@@ -334,7 +333,7 @@ class ConnectionManager:
 
     async def broadcast_to_room(
         self, room_id: str, message: WebSocketMessage, exclude_user: str | None = None
-    ):
+    ) -> None:
         """Broadcast a message to all users in a room."""
         users_in_room = self.rooms.get(room_id, set())
 
@@ -346,7 +345,7 @@ class ConnectionManager:
 
     async def broadcast_to_all(
         self, message: WebSocketMessage, exclude_user: str | None = None
-    ):
+    ) -> None:
         """Broadcast a message to all connected users."""
         for user_id in list(self.user_connections.keys()):
             if exclude_user and user_id == exclude_user:
@@ -425,7 +424,7 @@ class ConnectionManager:
 
         return None
 
-    async def stop_background_tasks(self):
+    async def stop_background_tasks(self) -> None:
         """Stop background tasks (called during app shutdown)."""
         if not self._started:
             return
@@ -435,22 +434,18 @@ class ConnectionManager:
         # Cancel background tasks
         if self._cleanup_task and not self._cleanup_task.done():
             self._cleanup_task.cancel()
-            try:
+            with contextlib.suppress(asyncio.CancelledError):
                 await self._cleanup_task
-            except asyncio.CancelledError:
-                pass
 
         if self._heartbeat_task and not self._heartbeat_task.done():
             self._heartbeat_task.cancel()
-            try:
+            with contextlib.suppress(asyncio.CancelledError):
                 await self._heartbeat_task
-            except asyncio.CancelledError:
-                pass
 
         self._started = False
         logger.info("WebSocket background tasks stopped")
 
-    async def shutdown(self):
+    async def shutdown(self) -> None:
         """Gracefully shutdown the connection manager."""
         logger.info("Shutting down WebSocket connection manager...")
 

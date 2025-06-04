@@ -43,7 +43,7 @@ app = create_application()
 
 # Add WebSocket route
 @app.websocket("/ws")
-async def websocket_endpoint(websocket):
+async def websocket_endpoint(websocket) -> None:
     await websocket.accept()
     while True:
         data = await websocket.receive_text()

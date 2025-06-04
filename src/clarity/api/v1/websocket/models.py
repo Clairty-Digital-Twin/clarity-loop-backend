@@ -1,13 +1,13 @@
 """WebSocket data models for structured communication."""
 
 from datetime import datetime
-from enum import Enum
+from enum import Enum, StrEnum
 from typing import Any, Dict, List, Optional, Union
 
 from pydantic import BaseModel, ConfigDict, Field
 
 
-class MessageType(str, Enum):
+class MessageType(StrEnum):
     """Message types for WebSocket communication."""
 
     # Chat messages

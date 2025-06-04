@@ -7,7 +7,9 @@ from typing import Any
 from fastapi import HTTPException, status
 
 
-def require_auth(permissions: list[str] | None = None, roles: list[str] | None = None) -> Callable[..., Any]:
+def require_auth(
+    permissions: list[str] | None = None, roles: list[str] | None = None
+) -> Callable[..., Any]:
     """Decorator to require authentication and optionally check permissions/roles."""
 
     def decorator(func: Callable[..., Any]) -> Callable[..., Any]:

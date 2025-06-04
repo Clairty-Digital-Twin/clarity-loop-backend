@@ -16,7 +16,9 @@ class User(BaseModel):
     firebase_token: str | None = Field(None, description="Firebase ID token")
     created_at: datetime | None = Field(None, description="Account creation timestamp")
     last_login: datetime | None = Field(None, description="Last login timestamp")
-    profile: dict[str, Any] | None = Field(None, description="Additional user profile data")
+    profile: dict[str, Any] | None = Field(
+        None, description="Additional user profile data"
+    )
 
     class Config:
         """Pydantic configuration."""
@@ -41,7 +43,9 @@ class UserProfile(BaseModel):
     notification_settings: dict[str, Any] = Field(
         default_factory=dict, description="Notification preferences"
     )
-    health_goals: dict[str, Any] | None = Field(None, description="User health goals and targets")
+    health_goals: dict[str, Any] | None = Field(
+        None, description="User health goals and targets"
+    )
 
     class Config:
         """Pydantic configuration."""

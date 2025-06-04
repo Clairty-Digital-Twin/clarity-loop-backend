@@ -215,7 +215,9 @@ def verify_admin_user(user: User = Depends(get_current_user_required)) -> User:
         ) from e
 
 
-def create_custom_token(uid: str, additional_claims: dict[str, Any] | None = None) -> str:
+def create_custom_token(
+    uid: str, additional_claims: dict[str, Any] | None = None
+) -> str:
     """Create a custom Firebase token for a user.
 
     This is useful for server-side user creation or testing.

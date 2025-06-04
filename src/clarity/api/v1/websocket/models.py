@@ -152,8 +152,8 @@ class ConnectionInfo(BaseModel):
     user_id: str
     username: str
     session_id: str
-    connected_at: datetime = Field(default_factory=datetime.utcnow)
-    last_seen: datetime = Field(default_factory=datetime.utcnow)
+    connected_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
+    last_seen: datetime = Field(default_factory=lambda: datetime.now(UTC))
     connection_count: int = 1
     metadata: dict[str, Any] | None = None
 
@@ -164,7 +164,7 @@ class RoomInfo(BaseModel):
     room_id: str
     name: str
     description: str | None = None
-    created_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
     max_users: int = 100
     active_users: list[str] = Field(default_factory=list)
     permissions: dict[str, Any] | None = None

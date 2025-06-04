@@ -16,9 +16,10 @@ logger = logging.getLogger(__name__)
 # Constants for feature analysis requirements
 MIN_CARDIO_FEATURES_REQUIRED = 3
 MIN_RESPIRATORY_FEATURES_REQUIRED = 4
+MIN_FEATURE_VECTOR_LENGTH = 8
 
 # Health insight thresholds
-HIGH_CONSISTENCY_THRESHOLD = 0.7
+HIGH_CONSISTENCY_THRESHOLD = 0.8
 MODERATE_CONSISTENCY_THRESHOLD = 0.5
 
 # Create FastAPI app for insight service
@@ -35,7 +36,9 @@ class GeminiInsightGenerator:
     def __init__(self, project_id: str | None = None) -> None:
         """Initialize the Gemini insight generator."""
         self.logger = logger
-        self.firestore_client = FirestoreClient()
+        # Use project_id or default for Firestore
+        firestore_project_id = project_id or "clarity-digital-twin"
+        self.firestore_client = FirestoreClient(project_id=firestore_project_id)
         self.gemini_service = GeminiService(project_id=project_id)
 
         logger.info("✅ Gemini insight generator initialized")
@@ -205,8 +208,8 @@ class InsightSubscriber:
             try:
                 decoded_data = base64.b64decode(message["data"]).decode("utf-8")
                 message_data: dict[str, Any] = json.loads(decoded_data)
-            except (base64.binascii.Error, json.JSONDecodeError) as e:
-                self._raise_invalid_data_error() from e
+            except (ValueError, json.JSONDecodeError):
+                self._raise_invalid_data_error()
 
             # Validate required fields
             for field in ["user_id", "upload_id", "analysis_results"]:
@@ -217,9 +220,9 @@ class InsightSubscriber:
 
         except HTTPException:
             raise
-        except Exception as e:
+        except Exception:
             logger.exception("❌ Failed to extract message data")
-            self._raise_invalid_format_error() from e
+            self._raise_invalid_format_error()
 
     @staticmethod
     def _raise_missing_field_error(field: str) -> NoReturn:
@@ -243,16 +246,26 @@ class InsightSubscriber:
         raise HTTPException(status_code=500, detail="Failed to process insight request")
 
 
+class InsightSubscriberSingleton:
+    """Singleton pattern for InsightSubscriber."""
+    
+    _instance: InsightSubscriber | None = None
+    
+    @classmethod
+    def get_instance(cls) -> InsightSubscriber:
+        """Get or create the singleton instance."""
+        if cls._instance is None:
+            cls._instance = InsightSubscriber()
+        return cls._instance
+
+
 # Global subscriber instance
 _insight_subscriber: InsightSubscriber | None = None
 
 
 def get_insight_subscriber() -> InsightSubscriber:
     """Get or create the insight subscriber instance."""
-    global _insight_subscriber  # noqa: PLW0603
-    if _insight_subscriber is None:
-        _insight_subscriber = InsightSubscriber()
-    return _insight_subscriber
+    return InsightSubscriberSingleton.get_instance()
 
 
 # FastAPI endpoint handlers

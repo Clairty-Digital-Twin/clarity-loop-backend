@@ -502,7 +502,6 @@ class TestFirestoreStatusAndDeletion:
         assert result is True
         firestore_repository._firestore_client.delete_documents.assert_called()
 
-    @staticmethod
     async def test_delete_health_data_all_user_data(
         self, firestore_repository: FirestoreHealthDataRepository
     ) -> None:
@@ -513,7 +512,6 @@ class TestFirestoreStatusAndDeletion:
         assert result is True
         firestore_repository._firestore_client.delete_documents.assert_called()
 
-    @staticmethod
     async def test_delete_health_data_failure(
         self, firestore_repository: FirestoreHealthDataRepository
     ) -> None:

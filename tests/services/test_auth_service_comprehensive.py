@@ -6,9 +6,13 @@ Tests every method, error case, edge case, and business logic path.
 
 import asyncio
 from datetime import UTC, datetime, timedelta
-from unittest.mock import AsyncMock, Mock, patch
+from typing import Any
+from unittest.mock import AsyncMock, MagicMock, Mock, patch
 import uuid
 
+from firebase_admin import (
+    auth,  # Import the original auth to access UserNotFoundError if needed by mock_auth setup
+)
 from pydantic import ValidationError
 import pytest
 
@@ -46,6 +50,34 @@ class MockInvalidIdTokenError(Exception):
 
 class MockAuthError(Exception):
     """Mock Firebase AuthError that properly inherits from BaseException."""
+
+
+class MockFirebaseUserRecord:  # Ensure this class definition is present
+    """Mock Firebase user record."""
+
+    def __init__(
+        self,
+        uid: str,
+        email: str | None = None,
+        *,
+        disabled: bool = False,
+        email_verified: bool = True,
+        **kwargs: Any,
+    ) -> None:
+        self.uid = uid
+        self.email = email
+        self.disabled = disabled
+        self.email_verified = email_verified
+        # Add other attributes if needed by tests, e.g., display_name, photo_url, etc.
+        self.tokens_valid_after_timestamp: int | None = None
+        self.custom_claims: dict[str, Any] | None = None
+        self.user_metadata = Mock()  # For last_sign_in_timestamp, creation_timestamp
+        if hasattr(self.user_metadata, "last_sign_in_timestamp"):
+            self.user_metadata.last_sign_in_timestamp = (
+                datetime.now(UTC).timestamp() * 1000
+            )
+        if hasattr(self.user_metadata, "creation_timestamp"):
+            self.user_metadata.creation_timestamp = datetime.now(UTC).timestamp() * 1000
 
 
 class TestAuthServiceExceptionHelpers:
@@ -191,35 +223,35 @@ class TestUserRegistration:
     ) -> None:
         """Test successful user registration."""
         user_id = str(uuid.uuid4())
-        email = "newuser@example.com"
-        mock_auth.UserNotFoundError = MockUserNotFoundError
-        mock_auth.get_user_by_email.side_effect = mock_auth.UserNotFoundError("Not found")
-        mock_auth.create_user.return_value = MockFirebaseUserRecord(uid=user_id, email=email)
+        email_for_new_user = "new_user_for_success_test@example.com"
+
+        mock_auth.UserNotFoundError = auth.UserNotFoundError
+        mock_auth.get_user_by_email.side_effect = mock_auth.UserNotFoundError(
+            "User not found for test"
+        )
+
+        mock_auth.create_user.return_value = MockFirebaseUserRecord(
+            uid=user_id, email=email_for_new_user
+        )
         mock_auth.generate_email_verification_link.return_value = "http://verify.link"
+        mock_auth.set_custom_user_claims = Mock()
 
-        # Mock the specific firestore client method
-        mock_create_document = AsyncMock(return_value=user_id)
-        auth_service.firestore_client.create_document = mock_create_document # type: ignore[method-assign]
+        auth_service.firestore_client.create_document.return_value = user_id
 
-        # request_data seems to be a duplicate of sample_registration_request with different email, let's use sample_registration_request
-        # to be consistent with other tests, or ensure request_data uses the correct email for this test case.
-        # For now, I will assume sample_registration_request is intended and its email aligns with what get_user_by_email expects for UserNotFoundError.
-        # If test_register_user_success is for a NEW user, then sample_registration_request.email should be used for create_user call.
-        # The current sample_registration_request has email "test@example.com".
-        # The mock setup for get_user_by_email uses the email from request_data (which was newuser@example.com)
+        request_data_for_test = sample_registration_request.model_copy(
+            update={"email": email_for_new_user}
+        )
 
-        # Let's align the request data with the mocked email for get_user_by_email side effect
-        request_data_for_test = sample_registration_request.model_copy(update={"email": email})
-
-        result = await auth_service.register_user(request_data_for_test, device_info=None)
+        result = await auth_service.register_user(
+            request_data_for_test, device_info=None
+        )
 
         assert isinstance(result.user_id, uuid.UUID)
-        assert result.email == email # Should be newuser@example.com
+        assert result.email == email_for_new_user
 
+        mock_auth.get_user_by_email.assert_called_once_with(email_for_new_user)
         mock_auth.create_user.assert_called_once()
-        # Ensure correct email is used for get_user_by_email assertion if needed
-        mock_auth.get_user_by_email.assert_called_once_with(email)
-        mock_create_document.assert_called_once()
+        auth_service.firestore_client.create_document.assert_called_once()
 
     @staticmethod
     @patch("clarity.services.auth_service.auth")
@@ -229,17 +261,17 @@ class TestUserRegistration:
         sample_registration_request: UserRegistrationRequest,
     ) -> None:
         """Test registration when user already exists."""
-        # Setup mock - user exists
-        mock_existing_user = Mock()
-        mock_auth.UserNotFoundError = MockUserNotFoundError
-        mock_auth.get_user_by_email.return_value = mock_existing_user
+        mock_auth.UserNotFoundError = (
+            auth.UserNotFoundError
+        )  # Use actual for consistency if checking type
+        mock_auth.get_user_by_email.return_value = MockFirebaseUserRecord(
+            uid="existing_id", email=sample_registration_request.email
+        )
 
-        # Execute & verify
         with pytest.raises(UserAlreadyExistsError) as exc_info:
             await auth_service.register_user(
                 sample_registration_request, device_info={}
             )
-
         assert "already exists" in str(exc_info.value)
         mock_auth.create_user.assert_not_called()
 
@@ -282,16 +314,19 @@ class TestUserRegistration:
         sample_registration_request: UserRegistrationRequest,
     ) -> None:
         """Test registration when Firebase throws an error."""
-        # Setup mock - Firebase error
-        mock_auth.UserNotFoundError = MockUserNotFoundError
-        mock_auth.get_user_by_email.side_effect = MockUserNotFoundError(
+        mock_auth.UserNotFoundError = (
+            auth.UserNotFoundError
+        )  # Use actual firebase_admin.auth exception for this part
+        mock_auth.get_user_by_email.side_effect = mock_auth.UserNotFoundError(
             "User not found"
         )
-        mock_auth.create_user.side_effect = ValueError("Firebase error")
+        # Simulate a general error from Firebase create_user, using our custom mock error
+        mock_auth.create_user.side_effect = MockAuthError("Firebase create_user error")
 
-        # Execute & verify
         with pytest.raises(AuthenticationError, match="Registration failed"):
-            await auth_service.register_user(sample_registration_request)
+            await auth_service.register_user(
+                sample_registration_request, device_info=None
+            )
 
 
 class TestUserLogin:
@@ -377,27 +412,25 @@ class TestUserLogin:
         auth_service: AuthenticationService,
         sample_login_request: UserLoginRequest,
     ) -> None:
-        """Test login with invalid token."""
-        # Mock the user exists in Firebase but we'll simulate an authentication error
+        """Test login with invalid token scenario (e.g., token generation fails)."""
         test_uuid = uuid.uuid4()
-        mock_user_record = Mock()
-        mock_user_record.uid = str(test_uuid)
-        mock_user_record.email = "test@example.com"
-        mock_user_record.email_verified = True
-        mock_user_record.disabled = False
+        mock_user_record_instance = MockFirebaseUserRecord(
+            uid=str(test_uuid),
+            email=sample_login_request.email,
+            disabled=False,
+            email_verified=True,
+        )
 
-        mock_auth.UserNotFoundError = MockUserNotFoundError
-        mock_auth.InvalidIdTokenError = MockInvalidIdTokenError
-        mock_auth.get_user_by_email.return_value = mock_user_record
+        mock_auth.UserNotFoundError = auth.UserNotFoundError
+        mock_auth.get_user_by_email.return_value = mock_user_record_instance
 
-        # Mock valid user data but simulate the failure during token generation
         user_data = {
             "user_id": str(test_uuid),
-            "email": "test@example.com",
+            "email": sample_login_request.email,
             "first_name": "John",
             "last_name": "Doe",
-            "status": "ACTIVE",
-            "role": "PATIENT",
+            "status": UserStatus.ACTIVE.value,
+            "role": UserRole.PATIENT.value,
             "email_verified": True,
             "mfa_enabled": False,
             "login_count": 0,
@@ -405,13 +438,16 @@ class TestUserLogin:
         }
         auth_service.firestore_client.get_document.return_value = user_data
 
-        # Make the token generation fail to simulate invalid credentials
-        auth_service.auth_provider.create_custom_token = Mock(
-            side_effect=ValueError("Invalid credentials")
+        # Simulate failure in token generation via the auth_provider mock (which is a MagicMock from auth_service fixture)
+        # IAuthProvider.create_custom_token raises an AuthenticationError or its subclass on failure.
+        auth_service.auth_provider.create_custom_token = AsyncMock(
+            side_effect=AuthenticationError("Token creation failed by provider")
         )
 
-        with pytest.raises(AuthenticationError):
-            await auth_service.login_user(sample_login_request)
+        with pytest.raises(
+            AuthenticationError, match="Login failed: Token creation failed by provider"
+        ):
+            await auth_service.login_user(sample_login_request, device_info=None)
 
     @staticmethod
     @patch("clarity.services.auth_service.auth")
@@ -421,13 +457,13 @@ class TestUserLogin:
         sample_login_request: UserLoginRequest,
     ) -> None:
         """Test login when user not found."""
-        mock_auth.UserNotFoundError = MockUserNotFoundError
-        mock_auth.get_user_by_email.side_effect = MockUserNotFoundError(
+        mock_auth.UserNotFoundError = auth.UserNotFoundError  # Use actual exception
+        mock_auth.get_user_by_email.side_effect = mock_auth.UserNotFoundError(
             "User not found"
         )
 
         with pytest.raises(UserNotFoundError):
-            await auth_service.login_user(sample_login_request)
+            await auth_service.login_user(sample_login_request, device_info=None)
 
     @staticmethod
     @patch("clarity.services.auth_service.auth")
@@ -437,15 +473,14 @@ class TestUserLogin:
         sample_login_request: UserLoginRequest,
     ) -> None:
         """Test login when account is disabled."""
-        mock_user_record = Mock()
-        mock_user_record.uid = str(uuid.uuid4())
-        mock_user_record.disabled = True
-
-        mock_auth.UserNotFoundError = MockUserNotFoundError
+        mock_user_record = MockFirebaseUserRecord(
+            uid=str(uuid.uuid4()), email=sample_login_request.email, disabled=True
+        )
+        mock_auth.UserNotFoundError = auth.UserNotFoundError  # Use actual exception
         mock_auth.get_user_by_email.return_value = mock_user_record
 
         with pytest.raises(AccountDisabledError):
-            await auth_service.login_user(sample_login_request)
+            await auth_service.login_user(sample_login_request, device_info=None)
 
     @staticmethod
     @patch("clarity.services.auth_service.auth")
@@ -457,58 +492,61 @@ class TestUserLogin:
     ) -> None:
         """Test login when email is not verified."""
         test_uuid = uuid.uuid4()
-        mock_user_record = Mock()
-        mock_user_record.uid = str(test_uuid)
-        mock_user_record.email_verified = False
-        mock_user_record.disabled = False
-
-        mock_auth.UserNotFoundError = MockUserNotFoundError
+        mock_user_record = MockFirebaseUserRecord(
+            uid=str(test_uuid),
+            email=sample_login_request.email,
+            email_verified=False,
+            disabled=False,
+        )
+        mock_auth.UserNotFoundError = auth.UserNotFoundError  # Use actual exception
         mock_auth.get_user_by_email.return_value = mock_user_record
 
-        # Mock Firestore response for unverified user
         user_data = {
             "user_id": str(test_uuid),
-            "email": "test@example.com",
-            "status": UserStatus.PENDING_VERIFICATION.value,
+            "email": sample_login_request.email,
+            "status": UserStatus.PENDING_VERIFICATION.value,  # Important for this test case
             "mfa_enabled": False,
             "login_count": 0,
+            "created_at": datetime.now(UTC),
         }
         auth_service.firestore_client.get_document.return_value = user_data
 
-        # The login should still succeed but with appropriate status
         with patch.object(auth_service, "_generate_tokens") as mock_gen_tokens:
             mock_tokens = TokenResponse(
                 access_token=test_env_credentials["mock_access_token"],
                 refresh_token=test_env_credentials["mock_refresh_token"],
-                token_type="bearer",  # noqa: S106 # Test value
+                token_type="bearer",
                 expires_in=3600,
             )
             mock_gen_tokens.return_value = mock_tokens
-
             with patch.object(
                 auth_service, "_create_user_session"
             ) as mock_create_session:
                 mock_create_session.return_value = "session-id-123"
-
                 with patch.object(
                     auth_service, "_create_user_session_response"
                 ) as mock_session_response:
                     mock_user_session = UserSessionResponse(
                         user_id=test_uuid,
-                        email="test@example.com",
+                        email=sample_login_request.email,
                         first_name="John",
                         last_name="Doe",
                         role=UserRole.PATIENT.value,
                         permissions=["read_own_data"],
                         status=UserStatus.PENDING_VERIFICATION,
                         mfa_enabled=False,
-                        email_verified=False,
+                        email_verified=False,  # Reflects unverified status
                         created_at=datetime.now(UTC),
+                        last_login=None,  # Typically None for first login before verification path
                     )
                     mock_session_response.return_value = mock_user_session
-
-                    result = await auth_service.login_user(sample_login_request)
+                    result = await auth_service.login_user(
+                        sample_login_request, device_info=None
+                    )
                     assert isinstance(result, LoginResponse)
+                    # Depending on service logic, this might still succeed or raise EmailNotVerifiedError
+                    # Current service logic allows login with unverified email (logs warning)
+                    assert result.user.status == UserStatus.PENDING_VERIFICATION
 
 
 class TestTokenManagement:

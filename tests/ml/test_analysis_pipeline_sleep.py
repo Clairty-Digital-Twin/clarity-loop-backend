@@ -5,11 +5,12 @@ ensuring proper data flow and feature fusion.
 """
 
 from datetime import UTC, datetime
-from unittest.mock import AsyncMock, Mock
+import os
+from unittest.mock import AsyncMock, MagicMock, Mock, patch
 
 import pytest
 
-from clarity.ml.analysis_pipeline import HealthAnalysisPipeline
+from clarity.ml.analysis_pipeline import AnalysisResults, HealthAnalysisPipeline
 from clarity.ml.processors.sleep_processor import SleepFeatures
 from clarity.models.health_data import (
     BiometricData,
@@ -18,6 +19,7 @@ from clarity.models.health_data import (
     SleepData,
     SleepStage,
 )
+from clarity.storage.firestore_client import FirestoreClient
 
 
 class TestAnalysisPipelineSleepIntegration:
@@ -233,10 +235,10 @@ class TestAnalysisPipelineSleepIntegration:
         assert 0 <= vector[2] <= 1  # latency normalized by 1 hour
 
     async def test_save_results_to_firestore_success(
-        self, mock_firestore: MagicMock, sample_analysis_results: AnalysisResults
+        self, mock_firestore: MagicMock
     ) -> None:
         """Test successful saving of analysis results to Firestore."""
-        self.pipeline.firestore_client = mock_firestore  # Use public attribute
+        self.pipeline.firestore_client = mock_firestore
         processing_id = "test_processing_id_save_success"
 
         await self.pipeline.process_health_data(
@@ -244,24 +246,29 @@ class TestAnalysisPipelineSleepIntegration:
             health_metrics=[MagicMock(spec=HealthMetric)],
             processing_id=processing_id,
         )
+        mock_firestore.save_analysis_result.assert_called_once()
 
     async def test_save_results_to_firestore_failure(
-        self, mock_firestore: MagicMock, sample_analysis_results: AnalysisResults
+        self, mock_firestore: MagicMock
     ) -> None:
         """Test failure when saving analysis results to Firestore."""
-        self.pipeline.firestore_client = mock_firestore  # Use public attribute
+        self.pipeline.firestore_client = mock_firestore
         mock_firestore.save_analysis_result.side_effect = Exception(
             "Firestore Save Error"
         )
         processing_id = "test_processing_id_save_failure"
 
-        # We expect the pipeline to log the error but not fail itself
+        # We expect the pipeline to log the error but not fail itself,
+        # and save_analysis_result (mocked) should have been called.
+        await self.pipeline.process_health_data(
+            user_id="test_user_failure",
+            health_metrics=[MagicMock(spec=HealthMetric)],
+            processing_id="test_processing_id_save_failure_in_call",
+        )
+        mock_firestore.save_analysis_result.assert_called_once()
 
-    async def test_firestore_client_initialization(
-        self, sample_analysis_results: AnalysisResults
-    ) -> None:
+    async def test_firestore_client_initialization(self) -> None:
         """Test that Firestore client is initialized when needed."""
-        # Ensure client is None initially
         self.pipeline.firestore_client = None
         processing_id = "test_processing_id_init"
 
@@ -273,9 +280,7 @@ class TestAnalysisPipelineSleepIntegration:
                 health_metrics=[MagicMock(spec=HealthMetric)],
                 processing_id=processing_id,
             )
-            assert (
-                self.pipeline.firestore_client is not None
-            )  # Client should be initialized
+            assert self.pipeline.firestore_client is not None
             mock_save.assert_called_once()
 
     @patch.dict(os.environ, {"GOOGLE_CLOUD_PROJECT": "test-gcp-project"})

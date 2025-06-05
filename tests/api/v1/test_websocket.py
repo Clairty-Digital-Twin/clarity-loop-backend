@@ -6,7 +6,7 @@ import functools
 import json
 import logging
 import time
-from typing import Any
+from typing import Any, Union
 from unittest.mock import (
     AsyncMock,
     MagicMock,
@@ -16,7 +16,7 @@ import uuid
 
 from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
 from fastapi.testclient import TestClient
-from pydantic import Field
+from pydantic import BaseModel, Field
 import pytest
 
 from clarity.api.v1.websocket import chat_handler
@@ -25,6 +25,7 @@ from clarity.api.v1.websocket.lifespan import get_connection_manager
 from clarity.api.v1.websocket.models import (
     ChatMessage,
     ConnectionInfo,
+    HealthInsightRequest,
     HeartbeatMessage,
     MessageType,
     TypingMessage,
@@ -183,7 +184,9 @@ class _TestConnectionManager:
             len(self.active_websockets),
         )
 
-    async def send_to_connection(self, websocket: WebSocket, message: Any) -> None:
+    async def send_to_connection(
+        self, websocket: WebSocket, message: BaseModel | dict[str, Any]
+    ) -> None:
         logger.info("Attempting to send message to connection: %s", message)
 
         if websocket not in self.connection_info:
@@ -213,7 +216,9 @@ class _TestConnectionManager:
 
         logger.info("Recorded direct message send to %s", websocket)
 
-    async def send_to_user(self, user_id: str, message: Any) -> None:
+    async def send_to_user(
+        self, user_id: str, message: BaseModel | dict[str, Any]
+    ) -> None:
         """Send a message to all active connections for a given user."""
         logger.info("Attempting to send message to user %s: %s", user_id, message)
 
@@ -262,7 +267,7 @@ class _TestConnectionManager:
     async def broadcast_to_room(
         self,
         room_id: str,
-        message: Any,
+        message: BaseModel | dict[str, Any],
         exclude_websocket: WebSocket | None = None,
     ) -> None:
         logger.info("Attempting to broadcast message to room %s: %s", room_id, message)
@@ -426,7 +431,7 @@ def app(test_env_credentials: dict[str, str]) -> FastAPI:
 
     # Create a proper mock response
     async def mock_generate_insights(  # noqa: RUF029
-        request: Any,
+        request: HealthInsightRequest,
     ) -> object:
         response = MagicMock()
         response.narrative = f"AI Response to: {request.context}"
@@ -608,7 +613,7 @@ class TestWebSocketEndpoints:
 
         # Create a proper mock response
         async def mock_generate_insights_test(  # noqa: RUF029 # Renamed to avoid conflict
-            request: Any,  # MODIFIED from object
+            request: HealthInsightRequest,  # MODIFIED from object
         ) -> object:
             response = MagicMock()
             response.narrative = f"AI Response to: {request.context}"
@@ -926,7 +931,7 @@ class TestWebSocketEndpoints:
                     pytest.fail(
                         f"Disconnected during initial receive: {e_initial_recv.code} - {e_initial_recv.reason}"
                     )
-                except Exception as e_initial_other:  # noqa: BLE001 - Catching general exceptions to fail test explicitly
+                except Exception as e_initial_other:
                     logger.exception(
                         "Error receiving initial message: %s", e_initial_other
                     )
@@ -978,7 +983,7 @@ class TestWebSocketEndpoints:
             pytest.fail(
                 f"Failed to connect or disconnected early: {e_connect.code} - {e_connect.reason}"
             )
-        except Exception as e_outer:  # noqa: BLE001 - Catching general exceptions to fail test explicitly
+        except Exception as e_outer:
             logger.exception("Outer exception during WebSocket test: %s", e_outer)
             pytest.fail(f"Outer exception: {e_outer}")
 

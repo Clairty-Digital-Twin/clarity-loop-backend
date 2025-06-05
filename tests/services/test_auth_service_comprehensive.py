@@ -192,34 +192,34 @@ class TestUserRegistration:
         """Test successful user registration."""
         user_id = str(uuid.uuid4())
         email = "newuser@example.com"
-        mock_auth.get_user_by_email.side_effect = auth.UserNotFoundError("Not found")
-        mock_auth.create_user.return_value = MockFirebaseUserRecord(
-            uid=user_id, email=email
-        )
+        mock_auth.UserNotFoundError = MockUserNotFoundError
+        mock_auth.get_user_by_email.side_effect = mock_auth.UserNotFoundError("Not found")
+        mock_auth.create_user.return_value = MockFirebaseUserRecord(uid=user_id, email=email)
         mock_auth.generate_email_verification_link.return_value = "http://verify.link"
 
         # Mock the specific firestore client method
-        mock_create_document = AsyncMock(
-            return_value=user_id
-        )  # Simulate returning the user_id as document_id
-        auth_service.firestore_client.create_document = mock_create_document  # type: ignore[method-assign]
+        mock_create_document = AsyncMock(return_value=user_id)
+        auth_service.firestore_client.create_document = mock_create_document # type: ignore[method-assign]
 
-        request_data = UserRegistrationRequest(
-            email="test@example.com",
-            password="password",
-            first_name="John",
-            last_name="Doe",
-            phone_number="+1234567890",
-            terms_accepted=True,
-            privacy_policy_accepted=True,
-        )
+        # request_data seems to be a duplicate of sample_registration_request with different email, let's use sample_registration_request
+        # to be consistent with other tests, or ensure request_data uses the correct email for this test case.
+        # For now, I will assume sample_registration_request is intended and its email aligns with what get_user_by_email expects for UserNotFoundError.
+        # If test_register_user_success is for a NEW user, then sample_registration_request.email should be used for create_user call.
+        # The current sample_registration_request has email "test@example.com".
+        # The mock setup for get_user_by_email uses the email from request_data (which was newuser@example.com)
 
-        result = await auth_service.register_user(request_data)
+        # Let's align the request data with the mocked email for get_user_by_email side effect
+        request_data_for_test = sample_registration_request.model_copy(update={"email": email})
+
+        result = await auth_service.register_user(request_data_for_test, device_info=None)
 
         assert isinstance(result.user_id, uuid.UUID)
+        assert result.email == email # Should be newuser@example.com
 
         mock_auth.create_user.assert_called_once()
-        mock_create_document.assert_called_once()  # Assert on the mock object
+        # Ensure correct email is used for get_user_by_email assertion if needed
+        mock_auth.get_user_by_email.assert_called_once_with(email)
+        mock_create_document.assert_called_once()
 
     @staticmethod
     @patch("clarity.services.auth_service.auth")

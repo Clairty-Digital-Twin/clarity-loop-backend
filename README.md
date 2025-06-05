@@ -15,10 +15,68 @@ This document details the system's current functionality—what the codebase act
 
 **Disclaimer:** CLARITY is currently research software and is not an FDA-cleared medical device. Its outputs are intended for informational and research purposes only and should not be used for self-diagnosis or as a substitute for professional medical advice.
 
+## Architecture
+
+The platform is built on Clean Architecture principles, promoting a separation of concerns and maintainability.
+
+```mermaid
+graph TD
+    A[End User/Wearable] -->|Data Input| B(FastAPI Backend);
+    B --> C{Data Processing & Validation};
+    C --> D[PAT Model];
+    C --> E[Sleep Processor];
+    C --> F[Cardio Processor];
+    C --> G[Respiratory Processor];
+    C --> H[Activity Processor];
+    subgraph Core Analytics
+        D; E; F; G; H;
+    end
+    I[Fusion Transformer] --> J[Unified Health Vector];
+    D & E & F & G & H --> K((Firestore Database));
+    K --> L[Insights Generation / Gemini];
+    L -->|Insights| B;
+    style B fill:#00a393,stroke:#333,stroke-width:2px,color:#fff;
+    style K fill:#c2185b,stroke:#333,stroke-width:2px;
+```
+
+For a more detailed diagram or if the above does not render, please see: [Detailed Architecture PNG](docs/images/architecture_diagram.png)
+
+```
+┌─────────────────────────────────────────────────────────┐
+│ Frameworks & Drivers (FastAPI, GCP, Firebase)           │
+├─────────────────────────────────────────────────────────┤
+│ Interface Adapters (Controllers, DTOs, Gateways)        │
+├─────────────────────────────────────────────────────────┤
+│ Application Services (Use Cases, Business Rules)        │
+├─────────────────────────────────────────────────────────┤
+│ Domain Entities (Health Data, User, Analysis)           │
+└─────────────────────────────────────────────────────────┘
+```
+
+### Technology Stack
+
+**Backend Core**
+
+- FastAPI, Pydantic, PyTorch
+
+**AI/ML**
+
+- PAT, Google Gemini, scikit-learn, pandas
+
+**Infrastructure**
+
+- Google Cloud Platform (GCP), Firestore, Firebase Auth, Pub/Sub, Cloud Storage
+
+**Development & Monitoring**
+
+- pytest, Black, Ruff, Prometheus, Grafana
+
 ## Table of Contents
 
 - [CLARITY Digital Twin Platform Backend](#clarity-digital-twin-platform-backend)
   - [Overview](#overview)
+  - [Architecture](#architecture)
+    - [Technology Stack](#technology-stack)
   - [Table of Contents](#table-of-contents)
   - [Current Capabilities](#current-capabilities)
     - [At-a-Glance: Platform Components](#at-a-glance-platform-components)
@@ -30,8 +88,6 @@ This document details the system's current functionality—what the codebase act
     - [6. Fusion Transformer – Multi-Modal Health State Integration](#6-fusion-transformer--multi-modal-health-state-integration)
     - [7. Summary Statistics and Insights Generation](#7-summary-statistics-and-insights-generation)
   - [AI/ML Pipeline Highlights](#aiml-pipeline-highlights)
-  - [Architecture](#architecture)
-    - [Technology Stack](#technology-stack)
   - [Roadmap – Towards a Mental Health Digital Twin](#roadmap--towards-a-mental-health-digital-twin)
   - [Quick Start](#quick-start)
     - [Prerequisites](#prerequisites)
@@ -139,62 +195,6 @@ A PyTorch-based model that fuses feature vectors from multiple modalities (e.g.,
 - **Dedicated Processors:** For detailed analysis of logged sleep, cardiovascular, respiratory, and activity data.
 - **Fusion Transformer:** To create a unified, multi-modal representation of health.
 - **Google Gemini Integration:** For generating natural language health insights from the processed metrics.
-
-## Architecture
-
-The platform is built on Clean Architecture principles, promoting a separation of concerns and maintainability.
-
-```mermaid
-graph TD
-    A[End User/Wearable] -->|Data Input| B(FastAPI Backend);
-    B --> C{Data Processing & Validation};
-    C --> D[PAT Model];
-    C --> E[Sleep Processor];
-    C --> F[Cardio Processor];
-    C --> G[Respiratory Processor];
-    C --> H[Activity Processor];
-    subgraph Core Analytics
-        D; E; F; G; H;
-    end
-    I[Fusion Transformer] --> J[Unified Health Vector];
-    D & E & F & G & H --> K((Firestore Database));
-    K --> L[Insights Generation / Gemini];
-    L -->|Insights| B;
-    style B fill:#00a393,stroke:#333,stroke-width:2px,color:#fff;
-    style K fill:#c2185b,stroke:#333,stroke-width:2px;
-```
-
-For a more detailed diagram or if the above does not render, please see: [Detailed Architecture PNG](docs/images/architecture_diagram.png)
-
-```
-┌─────────────────────────────────────────────────────────┐
-│ Frameworks & Drivers (FastAPI, GCP, Firebase)           │
-├─────────────────────────────────────────────────────────┤
-│ Interface Adapters (Controllers, DTOs, Gateways)        │
-├─────────────────────────────────────────────────────────┤
-│ Application Services (Use Cases, Business Rules)        │
-├─────────────────────────────────────────────────────────┤
-│ Domain Entities (Health Data, User, Analysis)           │
-└─────────────────────────────────────────────────────────┘
-```
-
-### Technology Stack
-
-**Backend Core**
-
-- FastAPI, Pydantic, PyTorch
-
-**AI/ML**
-
-- PAT, Google Gemini, scikit-learn, pandas
-
-**Infrastructure**
-
-- Google Cloud Platform (GCP), Firestore, Firebase Auth, Pub/Sub, Cloud Storage
-
-**Development & Monitoring**
-
-- pytest, Black, Ruff, Prometheus, Grafana
 
 ## Roadmap – Towards a Mental Health Digital Twin
 

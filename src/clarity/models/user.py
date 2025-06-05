@@ -1,7 +1,7 @@
 """User models for the CLARITY Digital Twin Platform."""
 
 from datetime import datetime
-from typing import Any, ClassVar
+from typing import Any, ClassVar, Dict
 
 from pydantic import BaseModel, EmailStr, Field
 
@@ -14,6 +14,9 @@ class User(BaseModel):
     display_name: str | None = Field(None, description="User display name")
     email_verified: bool = Field(default=False, description="Whether email is verified")
     firebase_token: str | None = Field(None, description="Firebase ID token")
+    firebase_token_exp: float | None = Field(
+        None, description="Firebase ID token expiration timestamp (Unix)"
+    )
     created_at: datetime | None = Field(None, description="Account creation timestamp")
     last_login: datetime | None = Field(None, description="Last login timestamp")
     profile: dict[str, Any] | None = Field(
@@ -119,7 +122,7 @@ class UserSession(BaseModel):
     session_id: str = Field(..., description="Session identifier")
     created_at: datetime = Field(default_factory=datetime.utcnow)
     expires_at: datetime | None = Field(None)
-    device_info: dict | None = Field(None, description="Device information")
+    device_info: dict[str, Any] | None = Field(None, description="Device information")
     ip_address: str | None = Field(None, description="Client IP address")
     user_agent: str | None = Field(None, description="Client user agent")
 

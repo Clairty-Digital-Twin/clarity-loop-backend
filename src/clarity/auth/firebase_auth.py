@@ -236,7 +236,8 @@ def create_custom_token(
         Custom Firebase token
     """
     try:
-        return auth.create_custom_token(uid, additional_claims)
+        custom_token_bytes = auth.create_custom_token(uid, additional_claims)
+        return custom_token_bytes.decode("utf-8")
     except Exception:
         logger.exception("Error creating custom token")
         raise

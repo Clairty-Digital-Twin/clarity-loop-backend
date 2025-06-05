@@ -2,7 +2,7 @@
 
 from collections.abc import Awaitable, Callable
 from functools import wraps
-from typing import TYPE_CHECKING, ParamSpec, TypeVar
+from typing import TYPE_CHECKING, ParamSpec, TypeVar, cast
 
 from fastapi import HTTPException, status
 
@@ -22,7 +22,7 @@ def require_auth(
         @wraps(func)
         async def wrapper(*args: P.args, **kwargs: P.kwargs) -> T:
             # Extract user from kwargs (injected by dependency)
-            user: User | None = kwargs.get("current_user")  # type: ignore[misc]
+            user = cast("User | None", kwargs.get("current_user"))
             if not user:
                 raise HTTPException(
                     status_code=status.HTTP_401_UNAUTHORIZED,
@@ -57,7 +57,7 @@ def require_permission(
         @wraps(func)
         async def wrapper(*args: P.args, **kwargs: P.kwargs) -> T:
             # Extract user from kwargs (injected by dependency)
-            user: User | None = kwargs.get("current_user")  # type: ignore[misc]
+            user = cast("User | None", kwargs.get("current_user"))
             if not user:
                 raise HTTPException(
                     status_code=status.HTTP_401_UNAUTHORIZED,
@@ -82,7 +82,7 @@ def require_role(
         @wraps(func)
         async def wrapper(*args: P.args, **kwargs: P.kwargs) -> T:
             # Extract user from kwargs (injected by dependency)
-            user: User | None = kwargs.get("current_user")  # type: ignore[misc]
+            user = cast("User | None", kwargs.get("current_user"))
             if not user:
                 raise HTTPException(
                     status_code=status.HTTP_401_UNAUTHORIZED,

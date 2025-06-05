@@ -14,6 +14,7 @@ from starlette.responses import JSONResponse
 
 from clarity.models.auth import AuthError, Permission, UserContext, UserRole
 from clarity.models.user import User
+from clarity.ports.auth_ports import IAuthProvider
 
 logger = logging.getLogger(__name__)
 
@@ -255,8 +256,11 @@ class FirebaseAuthMiddleware(BaseHTTPMiddleware):
         return self._create_user_context(user_info_dict)
 
 
-class FirebaseAuthProvider:
-    """Firebase authentication provider for dependency injection."""
+class FirebaseAuthProvider(IAuthProvider):
+    """Firebase authentication provider.
+
+    Handles token verification and user information retrieval using Firebase Admin SDK.
+    """
 
     def __init__(
         self,
@@ -291,18 +295,14 @@ class FirebaseAuthProvider:
         self._cache_ttl = config_dict.get("cache_ttl_seconds", 300)  # 5 minutes
         self._cache_max_size = config_dict.get("cache_max_size", 1000)
 
-        logger.info("Firebase authentication provider created")
+        logger.info("Firebase Authentication Provider initialized.")
         if credentials_path:
             logger.info("Using credentials from: %s", credentials_path)
         if project_id:
             logger.info("Firebase project ID: %s", project_id)
 
     async def initialize(self) -> None:
-        """Initialize the Firebase authentication provider.
-
-        This method can be called during application startup to perform
-        any necessary initialization that might take time or fail.
-        """
+        """Initialize Firebase Admin SDK if not already initialized."""
         if self._initialized:
             return
 
@@ -310,130 +310,124 @@ class FirebaseAuthProvider:
             # Perform any async initialization here
             await asyncio.sleep(0.1)  # Placeholder for actual initialization
             self._initialized = True
-            logger.info("Firebase authentication provider initialized successfully")
+            logger.info("Firebase Admin SDK initialized successfully.")
         except Exception:
             logger.exception("Failed to initialize Firebase auth provider")
             raise
 
-    async def verify_token(self, token: str) -> User | None:
-        """Verify a Firebase ID token and return user information.
+    async def verify_token(self, token: str) -> dict[str, Any] | None:
+        """Verify Firebase ID token and return user information.
 
         Args:
-            token: Firebase ID token to verify
+            token: Firebase ID token
 
         Returns:
             User object if token is valid, None otherwise
         """
         if not self._initialized:
-            logger.warning(
-                "Auth provider not initialized, attempting lazy initialization"
-            )
             await self.initialize()
-
-        # Check cache first if caching is enabled
-        cache_enabled = self.middleware_config.get("cache_enabled", True)
-        current_time = time.time()
-
-        if cache_enabled and token in self._token_cache:
+        # Check cache first if enabled
+        if self.cache_enabled and token in self._token_cache:
             cached_data = self._token_cache[token]
-            if current_time - cached_data["timestamp"] <= self._cache_ttl:
+            if cached_data["timestamp"] + self._cache_ttl > time.time():
                 # Cache hit - return cached user
-                cached_user: User = cached_data["user"]
+                cached_user = cached_data["user"]
                 return cached_user
             # Cache expired - remove entry
             del self._token_cache[token]
 
         try:
-            decoded_token = firebase_auth.verify_id_token(token)
-
-            # Create user object from Firebase token data
+            decoded_token = firebase_auth.verify_id_token(token, check_revoked=True)
             user = User(
                 uid=decoded_token["uid"],
                 email=decoded_token.get("email"),
                 display_name=decoded_token.get("name"),
                 email_verified=decoded_token.get("email_verified", False),
                 firebase_token=token,
-                created_at=None,
-                last_login=None,
-                profile=None,
+                firebase_token_exp=decoded_token.get("exp"),  # Store expiration
+                # Timestamps might not be directly in ID token, fetch if needed or leave None
+                created_at=datetime.fromtimestamp(decoded_token.get("auth_time")) if decoded_token.get("auth_time") else None,  # type: ignore
+                last_login=None,  # This would typically be updated on actual login events
+                profile=None,  # Profile data usually fetched separately
             )
-
-            # Cache the user data with timestamp if caching is enabled
-            if cache_enabled:
-                self._token_cache[token] = {"user": user, "timestamp": current_time}
+            if self.cache_enabled:
+                self._token_cache[token] = {"user": user, "timestamp": time.time()}
                 # Clean up expired cache entries
                 self._cleanup_expired_cache()
-        except Exception as e:  # noqa: BLE001
-            logger.debug("Token verification failed: %s", e)
+            return user.model_dump()
+        except firebase_auth.RevokedIdTokenError:
+            logger.warning("Revoked Firebase ID token received: %s", token[:20] + "...")
             return None
-        else:
-            return user
+        except firebase_auth.UserDisabledError:
+            logger.warning(
+                "Disabled user tried to authenticate: %s", token[:20] + "..."
+            )
+            return None
+        except firebase_auth.InvalidIdTokenError:
+            logger.warning("Invalid Firebase ID token: %s", token[:20] + "...")
+            return None
+        except Exception as e:
+            logger.exception("Error verifying Firebase token: %s", e)
+            return None
 
     async def create_user(self, user_data: dict[str, Any]) -> User:
-        """Create a new user account.
+        """Create a new Firebase user.
 
         Args:
-            user_data: User information for account creation
+            user_data: Dictionary containing user creation data (email, password, etc.)
 
         Returns:
-            Created user object
+            Created User object
         """
         if not self._initialized:
             await self.initialize()
-
         try:
-            # Create user in Firebase
-            user_record = firebase_auth.create_user(
-                email=user_data.get("email"),
-                display_name=user_data.get("display_name"),
-                email_verified=False,
-            )
-
-            user = User(
+            user_record = firebase_auth.create_user(**user_data)
+            # Convert UserRecord to your User model
+            return User(
                 uid=user_record.uid,
                 email=user_record.email,
                 display_name=user_record.display_name,
                 email_verified=user_record.email_verified,
-                firebase_token=None,
-                created_at=None,
-                last_login=None,
-                profile=None,
+                # Timestamps
+                created_at=datetime.fromtimestamp(user_record.user_metadata.creation_timestamp / 1000) if user_record.user_metadata else None,  # type: ignore
+                last_login=datetime.fromtimestamp(user_record.user_metadata.last_sign_in_timestamp / 1000) if user_record.user_metadata and user_record.user_metadata.last_sign_in_timestamp else None,  # type: ignore
             )
+        except Exception as e:
+            logger.exception("Error creating Firebase user: %s", e)
+            raise AuthError(
+                message=f"Failed to create user: {e}",
+                status_code=500,
+                error_code="user_creation_failed",
+            ) from e
 
-            logger.info("Created new user: %s", user.uid)
-        except Exception:
-            logger.exception("Failed to create user")
-            raise
-        else:
-            return user
-
-    async def get_user_info(self, user_id: str) -> User | None:
-        """Get user information by user ID.
+    async def get_user_info(self, user_id: str) -> dict[str, Any] | None:
+        """Get user information by Firebase UID.
 
         Args:
-            user_id: Firebase user ID
+            user_id: Firebase User ID (UID)
 
         Returns:
             User object if found, None otherwise
         """
         if not self._initialized:
             await self.initialize()
-
         try:
             user_record = firebase_auth.get_user(user_id)
-
-            return User(
+            user = User(
                 uid=user_record.uid,
                 email=user_record.email,
                 display_name=user_record.display_name,
                 email_verified=user_record.email_verified,
-                firebase_token=None,
-                created_at=None,
-                last_login=None,
-                profile=None,
+                created_at=datetime.fromtimestamp(user_record.user_metadata.creation_timestamp / 1000) if user_record.user_metadata else None,  # type: ignore
+                last_login=datetime.fromtimestamp(user_record.user_metadata.last_sign_in_timestamp / 1000) if user_record.user_metadata and user_record.user_metadata.last_sign_in_timestamp else None,  # type: ignore
             )
-        except Exception as e:  # noqa: BLE001
-            logger.debug("Failed to get user info: %s", e)
+            return user.model_dump()
+        except firebase_auth.UserNotFoundError:
+            logger.debug("User not found with UID: %s", user_id)
+            return None
+        except Exception as e:
+            logger.exception("Error fetching user info for UID %s: %s", user_id, e)
             return None
 
     def _cleanup_expired_cache(self) -> None:

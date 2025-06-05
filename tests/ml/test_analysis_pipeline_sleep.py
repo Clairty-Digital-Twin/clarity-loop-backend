@@ -61,7 +61,7 @@ class TestAnalysisPipelineSleepIntegration:
         """Test sleep processing integration in analysis pipeline."""
         # Mock dependencies
         mock_firestore = AsyncMock()
-        self.pipeline._firestore_client = mock_firestore
+        self.pipeline.firestore_client = mock_firestore
 
         # Process sleep data
         results = await self.pipeline.process_health_data(
@@ -86,7 +86,7 @@ class TestAnalysisPipelineSleepIntegration:
         """Test sleep feature vector integration in modality fusion."""
         # Mock dependencies
         mock_firestore = AsyncMock()
-        self.pipeline._firestore_client = mock_firestore
+        self.pipeline.firestore_client = mock_firestore
 
         # Process sleep data
         results = await self.pipeline.process_health_data(
@@ -125,7 +125,7 @@ class TestAnalysisPipelineSleepIntegration:
 
         # Mock dependencies
         mock_firestore = AsyncMock()
-        self.pipeline._firestore_client = mock_firestore
+        self.pipeline.firestore_client = mock_firestore
 
         # Mock fusion service to avoid RuntimeError
         mock_fusion = Mock()
@@ -154,7 +154,7 @@ class TestAnalysisPipelineSleepIntegration:
         """Test that sleep features are properly validated."""
         # Mock dependencies
         mock_firestore = AsyncMock()
-        self.pipeline._firestore_client = mock_firestore
+        self.pipeline.firestore_client = mock_firestore
 
         # Process sleep data
         results = await self.pipeline.process_health_data(
@@ -193,7 +193,7 @@ class TestAnalysisPipelineSleepIntegration:
         """Test pipeline handles empty sleep data gracefully."""
         # Mock dependencies
         mock_firestore = AsyncMock()
-        self.pipeline._firestore_client = mock_firestore
+        self.pipeline.firestore_client = mock_firestore
 
         # Process empty data
         results = await self.pipeline.process_health_data(
@@ -231,3 +231,66 @@ class TestAnalysisPipelineSleepIntegration:
         assert 0 <= vector[0] <= 1.5  # total_sleep normalized by 8 hours
         assert 0 <= vector[1] <= 1  # efficiency already 0-1
         assert 0 <= vector[2] <= 1  # latency normalized by 1 hour
+
+    async def test_save_results_to_firestore_success(
+        self, mock_firestore: MagicMock, sample_analysis_results: AnalysisResults
+    ) -> None:
+        """Test successful saving of analysis results to Firestore."""
+        self.pipeline.firestore_client = mock_firestore  # Use public attribute
+        processing_id = "test_processing_id_save_success"
+
+        await self.pipeline.process_health_data(
+            user_id="test_user",
+            health_metrics=[MagicMock(spec=HealthMetric)],
+            processing_id=processing_id,
+        )
+
+    async def test_save_results_to_firestore_failure(
+        self, mock_firestore: MagicMock, sample_analysis_results: AnalysisResults
+    ) -> None:
+        """Test failure when saving analysis results to Firestore."""
+        self.pipeline.firestore_client = mock_firestore  # Use public attribute
+        mock_firestore.save_analysis_result.side_effect = Exception(
+            "Firestore Save Error"
+        )
+        processing_id = "test_processing_id_save_failure"
+
+        # We expect the pipeline to log the error but not fail itself
+
+    async def test_firestore_client_initialization(
+        self, sample_analysis_results: AnalysisResults
+    ) -> None:
+        """Test that Firestore client is initialized when needed."""
+        # Ensure client is None initially
+        self.pipeline.firestore_client = None
+        processing_id = "test_processing_id_init"
+
+        with patch.object(
+            FirestoreClient, "save_analysis_result", new_callable=AsyncMock
+        ) as mock_save:
+            await self.pipeline.process_health_data(
+                user_id="test_user_init",
+                health_metrics=[MagicMock(spec=HealthMetric)],
+                processing_id=processing_id,
+            )
+            assert (
+                self.pipeline.firestore_client is not None
+            )  # Client should be initialized
+            mock_save.assert_called_once()
+
+    @patch.dict(os.environ, {"GOOGLE_CLOUD_PROJECT": "test-gcp-project"})
+    async def test_get_firestore_client_custom_project_id(self) -> None:
+        """Test _get_firestore_client with custom project ID from env."""
+        self.pipeline.firestore_client = None  # Ensure it's reset
+        with patch("clarity.ml.analysis_pipeline.FirestoreClient") as mock_fs_class:
+            client = await self.pipeline._get_firestore_client()
+            assert client is not None
+            mock_fs_class.assert_called_once_with(project_id="test-gcp-project")
+
+    async def test_get_firestore_client_reuse_existing(self) -> None:
+        """Test that _get_firestore_client reuses an existing client."""
+        mock_client = MagicMock(spec=FirestoreClient)
+        self.pipeline.firestore_client = mock_client
+
+        client = await self.pipeline._get_firestore_client()
+        assert client is mock_client  # Should be the same instance

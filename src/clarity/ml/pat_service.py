@@ -516,7 +516,9 @@ class PATModelService(IMLModelService):
                     if "kernel:0" in dense_group:  # type: ignore[operator]
                         # TF: [patch_size, embed_dim] -> PyTorch: [patch_size, embed_dim]
                         tf_weight_data = dense_group["kernel:0"][:]  # type: ignore[index]
-                        tf_weight_np = np.array(tf_weight_data)  # Ensure it's a numpy array
+                        tf_weight_np = np.array(
+                            tf_weight_data
+                        )  # Ensure it's a numpy array
                         state_dict["encoder.patch_embedding.weight"] = torch.from_numpy(
                             tf_weight_np.T  # MODIFIED: use tf_weight_np
                         )  # type: ignore[attr-defined]
@@ -886,11 +888,11 @@ class PATModelService(IMLModelService):
         except Exception as e:
             logger.critical(
                 f"PAT model inference failed for user {input_data.user_id}: {e}",
-                exc_info=True
+                exc_info=True,
             )
             raise MLPredictionError(
                 message=f"Error during PAT model prediction: {e!s}",
-                model_name=f"PAT-{self.model_size}"
+                model_name=f"PAT-{self.model_size}",
             ) from e
 
         # Post-process outputs
@@ -969,7 +971,28 @@ async def get_pat_service() -> PATModelService:
     global _pat_service  # noqa: PLW0603
 
     if _pat_service is None:
-        _pat_service = PATModelService()
-        await _pat_service.load_model()
+        # Instantiate first, then load, then assign to global
+        # This ensures that if __init__ or load_model fails,
+        # _pat_service remains None or its previous valid state (if any).
+        try:
+            new_service_instance = PATModelService()  # Default model_size="medium"
+            await new_service_instance.load_model()
+            _pat_service = new_service_instance
+            logger.info("Global PATModelService initialized and model loaded.")
+        except Exception as e:
+            logger.critical(
+                f"Failed to initialize global PATModelService: {e}", exc_info=True
+            )
+            # Depending on desired behavior, could re-raise or return a dummy/fallback service
+            # For now, if it fails, _pat_service remains None, and subsequent calls will retry.
+            # Or, re-raise to make the failure explicit:
+            raise RuntimeError(f"Failed to initialize PATModelService: {e}") from e
+
+    if (
+        _pat_service is None
+    ):  # Check again in case initialization failed above and we didn't re-raise
+        # This path should ideally not be hit if the above try-except re-raises.
+        # Adding an explicit raise here to make it clear that the service is unavailable.
+        raise RuntimeError("PATModelService could not be initialized.")
 
     return _pat_service

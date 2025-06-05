@@ -895,6 +895,69 @@ class TestWebSocketEndpoints:
         else:
             del app.dependency_overrides[get_connection_manager]
 
+    @staticmethod
+    @pytest.mark.asyncio
+    async def test_websocket_health_data_invalid_payload(
+        client: TestClient, app: FastAPI, test_env_credentials: dict[str, str]
+    ) -> None:
+        """Test WebSocket handling of invalid health_data payload for health-analysis endpoint."""
+        user_id = "test-user-123"  # Must match UID from mock_get_current_user_websocket
+        test_token = test_env_credentials["mock_access_token"]
+
+        endpoint_url = f"/api/v1/health-analysis/{user_id}?token={test_token}"
+
+        with client.websocket_connect(endpoint_url) as websocket:
+            # Connection successful if this point is reached without WebSocketDisconnect
+            logger.info(f"Successfully connected to {endpoint_url}")
+
+            # Try to receive initial system message if one is sent by this endpoint.
+            # This endpoint sends a welcome message on connect.
+            try:
+                initial_message = websocket.receive_json()
+                assert initial_message["type"] == MessageType.SYSTEM.value
+                logger.info(f"Received initial system message: {initial_message}")
+            except Exception as e:
+                logger.error(
+                    f"Error receiving initial message or unexpected message: {e}"
+                )
+                # Depending on behavior, this might be an assertion failure or indicate an issue
+                # For now, let it proceed to the main test part if no message is critical here.
+                # However, if a welcome message is GUARANTEED, this should be an assert.
+
+            # Scenario: data_points is not a list (which is invalid for WebSocketHealthDataPayload)
+            invalid_health_data_content = {
+                "data_points": "this_is_not_a_list",
+                "steps": 12345,
+            }
+            message_to_send = {
+                "type": "health_data",  # This is the specific type handled by _handle_health_analysis_message
+                # user_id is implicit from the authenticated connection for this handler
+                "data": invalid_health_data_content,
+            }
+
+            websocket.send_json(message_to_send)
+
+            error_response = websocket.receive_json()
+
+            assert error_response["type"] == MessageType.ERROR.value
+            assert error_response["error_code"] == "INVALID_HEALTH_DATA_PAYLOAD"
+            assert "details" in error_response
+            assert "validation_errors" in error_response["details"]
+            validation_details = json.loads(
+                error_response["details"]["validation_errors"]
+            )
+            assert isinstance(validation_details, list)
+            found_error = False
+            for err in validation_details:
+                if err.get("loc") == [
+                    "data_points"
+                ] and "Input should be a valid list" in err.get("msg", ""):
+                    found_error = True
+                    break
+            assert (
+                found_error
+            ), "Expected validation error for data_points not being a list was not found."
+
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

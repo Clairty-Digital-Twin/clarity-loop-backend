@@ -31,12 +31,12 @@ from clarity.api.v1.websocket.lifespan import get_connection_manager
 from clarity.api.v1.websocket.models import (
     ChatMessage,
     ErrorMessage,
-    HeartbeatMessage,
+    HeartbeatAckMessage,
+    InvalidWebSocketDataError,
     MessageType,
     SystemMessage,
     TypingMessage,
     WebSocketHealthDataPayload,
-    InvalidWebSocketDataError,
 )
 from clarity.ml.pat_service import ActigraphyInput, PATModelService
 from clarity.ml.preprocessing import ActigraphyDataPoint
@@ -103,8 +103,8 @@ class WebSocketChatHandler:
         )
         await connection_manager.send_to_user(chat_message.user_id, response_message)
 
-    @staticmethod
     async def process_typing_message(
+        self,
         typing_message: TypingMessage,
         connection_manager: ConnectionManager,
         room_id: str,
@@ -121,19 +121,29 @@ class WebSocketChatHandler:
             typing_message,
         )
 
-    @staticmethod
     async def process_heartbeat(
+        self,
         websocket: WebSocket,
         message: dict[str, Any],
         connection_manager: ConnectionManager,
     ) -> None:
-        user_id = message.get("user_id", "unknown")
-        logger.info("Processing heartbeat for user %s", user_id)
+        client_ts_iso = message.get("client_timestamp")
+        client_timestamp_dt: datetime | None = None
+        if client_ts_iso:
+            try:
+                client_timestamp_dt = datetime.fromisoformat(
+                    client_ts_iso.replace("Z", "+00:00")
+                )
+            except ValueError:
+                logger.warning(
+                    "Invalid client_timestamp format in heartbeat: %s", client_ts_iso
+                )
+
+        logger.info("Processing heartbeat for websocket %s", websocket)
         # The ConnectionManager handles last active time internally
         # Acknowledge heartbeat
-        heartbeat_ack_message = HeartbeatMessage(
-            timestamp=datetime.now(UTC),
-            type=MessageType.HEARTBEAT_ACK,
+        heartbeat_ack_message = HeartbeatAckMessage(
+            type=MessageType.HEARTBEAT_ACK, client_timestamp=client_timestamp_dt
         )
         await connection_manager.send_to_connection(websocket, heartbeat_ack_message)
 
@@ -144,7 +154,9 @@ class WebSocketChatHandler:
         connection_manager: ConnectionManager,
     ) -> None:
         logger.info(
-            "Triggering health analysis for user %s with validated data: %s", user_id, health_data_payload.model_dump_json()
+            "Triggering health analysis for user %s with validated data: %s",
+            user_id,
+            health_data_payload.model_dump_json(),
         )
         try:
             duration_hours = 24
@@ -165,7 +177,7 @@ class WebSocketChatHandler:
                 ActigraphyDataPoint(timestamp=dp.timestamp, value=dp.value)
                 for dp in data_points_from_payload
             ]
-            
+
             actigraphy_input = ActigraphyInput(
                 user_id=user_id,
                 data_points=actigraphy_data_points,
@@ -283,24 +295,43 @@ async def websocket_chat_endpoint(
                         user_id_from_message = message_data.get("user_id", "")
                         if user_id_from_message:
                             try:
-                                validated_payload = WebSocketHealthDataPayload.model_validate(health_data_content)
+                                validated_payload = (
+                                    WebSocketHealthDataPayload.model_validate(
+                                        health_data_content
+                                    )
+                                )
                                 await handler.trigger_health_analysis(
                                     user_id_from_message,
                                     validated_payload,
                                     connection_manager,
                                 )
                             except ValidationError as e:
-                                logger.warning("Invalid HEALTH_INSIGHT content payload: %s. Errors: %s", health_data_content, e.errors())
-                                error_msg = ErrorMessage(
-                                    error_code="INVALID_HEALTH_INSIGHT_CONTENT", 
-                                    message="Health insight content validation failed.",
-                                    details=e.errors()
+                                logger.warning(
+                                    "Invalid HEALTH_INSIGHT content payload: %s. Errors: %s",
+                                    health_data_content,
+                                    e.errors(),
                                 )
-                                await connection_manager.send_to_connection(websocket, error_msg)
+                                error_msg = ErrorMessage(
+                                    error_code="INVALID_HEALTH_INSIGHT_CONTENT",
+                                    message="Health insight content validation failed.",
+                                    details={
+                                        "validation_errors": json.dumps(e.errors())
+                                    },
+                                )
+                                await connection_manager.send_to_connection(
+                                    websocket, error_msg
+                                )
                             except InvalidWebSocketDataError as e:
-                                logger.warning("Invalid WebSocket health data for insight: %s", e)
-                                error_msg = ErrorMessage(error_code="INVALID_HEALTH_INSIGHT_DATA", message=str(e))
-                                await connection_manager.send_to_connection(websocket, error_msg)
+                                logger.warning(
+                                    "Invalid WebSocket health data for insight: %s", e
+                                )
+                                error_msg = ErrorMessage(
+                                    error_code="INVALID_HEALTH_INSIGHT_DATA",
+                                    message=str(e),
+                                )
+                                await connection_manager.send_to_connection(
+                                    websocket, error_msg
+                                )
                         else:
                             logger.warning("User ID not found in health data message.")
 
@@ -399,21 +430,29 @@ async def _handle_health_analysis_message(
         if msg_type == "health_data":
             health_data_content = message_data.get("data", {})
             try:
-                validated_payload = WebSocketHealthDataPayload.model_validate(health_data_content)
+                validated_payload = WebSocketHealthDataPayload.model_validate(
+                    health_data_content
+                )
                 await handler.trigger_health_analysis(
                     user_id, validated_payload, connection_manager
                 )
             except ValidationError as e:
-                logger.warning("Invalid health_data payload: %s. Errors: %s", health_data_content, e.errors())
+                logger.warning(
+                    "Invalid health_data payload: %s. Errors: %s",
+                    health_data_content,
+                    e.errors(),
+                )
                 error_msg = ErrorMessage(
-                    error_code="INVALID_HEALTH_DATA_PAYLOAD", 
+                    error_code="INVALID_HEALTH_DATA_PAYLOAD",
                     message="Health data payload validation failed.",
-                    details=e.errors()
+                    details={"validation_errors": json.dumps(e.errors())},
                 )
                 await connection_manager.send_to_connection(websocket, error_msg)
             except InvalidWebSocketDataError as e:
                 logger.warning("Invalid WebSocket health data: %s", e)
-                error_msg = ErrorMessage(error_code="INVALID_HEALTH_DATA", message=str(e))
+                error_msg = ErrorMessage(
+                    error_code="INVALID_HEALTH_DATA", message=str(e)
+                )
                 await connection_manager.send_to_connection(websocket, error_msg)
 
         elif msg_type == MessageType.HEARTBEAT.value:

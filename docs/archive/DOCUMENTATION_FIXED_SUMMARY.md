@@ -80,7 +80,7 @@ GET /api/v1/pat/analyze
 
 **AFTER (Facts):**
 
-- PAT model uses real Dartmouth weights (models/pat/PAT-M_29k_weights.h5)
+- PAT model uses real Dartmouth weights (models/PAT/PAT-M_29k_weights.h5)
 - 89% test coverage on PAT model integration
 - 729 tests passing, production ready
 

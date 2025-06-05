@@ -517,7 +517,7 @@ class PATModelService(IMLModelService):
             return state_dict
 
         # At this point, Mypy knows h5py is not None due to the _has_h5py check
-        assert h5py is not None  # Make it explicit for Mypy
+        assert h5py is not None  # noqa: S101 # nosec B101
 
         try:
             with h5py.File(h5_path, "r") as h5_file:
@@ -876,6 +876,10 @@ class PATModelService(IMLModelService):
         if not self.is_loaded or not self.model:
             self._raise_model_not_loaded_error()
 
+        assert (  # noqa: S101 # nosec B101
+            self.model is not None
+        ), "Model must be loaded at this point"
+
         logger.info(
             "Analyzing actigraphy data for user %s (%d data points)",
             input_data.user_id,
@@ -887,10 +891,6 @@ class PATModelService(IMLModelService):
 
         # Add batch dimension
         input_tensor = input_tensor.unsqueeze(0)
-
-        # Ensure model is not None for type checker
-        if not self.model:
-            self._raise_model_not_loaded_error()
 
         model = self.model
 

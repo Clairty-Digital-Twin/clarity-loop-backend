@@ -5,7 +5,7 @@
 
 ## 🎯 VERIFIED ENDPOINTS
 
-These endpoints are **actually implemented** and tested in the codebase (unlike the outdated docs/api/ directory).
+These endpoints are **actually implemented** and tested in the codebase (unlike the outdated docs/API/ directory).
 
 ### Base URL
 
@@ -255,7 +255,7 @@ Authorization: Bearer <firebase-jwt-token>
 
 ---
 
-## 🧠 GEMINI INSIGHTS ENDPOINTS
+## 🧠 Gemini INSIGHTS ENDPOINTS
 
 ### Generate Insights
 

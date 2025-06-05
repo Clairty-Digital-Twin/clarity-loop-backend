@@ -58,17 +58,17 @@ Another potential mismatch is the path usage. If the route is `/api/v1/chat/{use
 
 **4. Analysis of Test Failures and Root Causes:** Let’s break down the specific errors observed:
 
-* **`RuntimeError: Expected WebSocket upgrade`** – **Root cause:** The test made a regular HTTP request to a WebSocket endpoint. This happens when using the wrong client or method (e.g. httpx AsyncClient GET) for an endpoint defined with `@websocket`. FastAPI/Starlette raises this error when a client hits a websocket route without upgrading protocols. In our case, the combination of `async_client` misconfiguration and not using a websocket-aware client triggered this. **Fix:** Use the correct testing approach (TestClient) or at least configure httpx with the ASGI app and a websocket tool. The simplest fix is adopting TestClient’s `websocket_connect`, as described above, so that the handshake occurs and the endpoint is actually invoked.
+- **`RuntimeError: Expected WebSocket upgrade`** – **Root cause:** The test made a regular HTTP request to a WebSocket endpoint. This happens when using the wrong client or method (e.g. httpx AsyncClient GET) for an endpoint defined with `@websocket`. FastAPI/Starlette raises this error when a client hits a websocket route without upgrading protocols. In our case, the combination of `async_client` misconfiguration and not using a websocket-aware client triggered this. **Fix:** Use the correct testing approach (TestClient) or at least configure httpx with the ASGI app and a websocket tool. The simplest fix is adopting TestClient’s `websocket_connect`, as described above, so that the handshake occurs and the endpoint is actually invoked.
 
-* **`WebSocketDisconnect` exceptions:** These likely arose from the server side when tests did manage to connect or during teardown. If the test client disconnected (or failed to connect fully) and the server code didn’t handle it, FastAPI may log an exception of type `WebSocketDisconnect`. This can fail a test if not caught. **Root cause:** Not catching disconnects in the endpoint (as discussed in section 1) or a test closing a connection abruptly. **Fix:** Implement a try/except in the endpoint around the receive/send loop to catch `WebSocketDisconnect`. In tests, if using the context manager, the disconnect is handled gracefully on exit; just ensure the server doesn’t treat a normal close as an error. After adding a disconnect handler, rerun tests to confirm the absence of this error.
+- **`WebSocketDisconnect` exceptions:** These likely arose from the server side when tests did manage to connect or during teardown. If the test client disconnected (or failed to connect fully) and the server code didn’t handle it, FastAPI may log an exception of type `WebSocketDisconnect`. This can fail a test if not caught. **Root cause:** Not catching disconnects in the endpoint (as discussed in section 1) or a test closing a connection abruptly. **Fix:** Implement a try/except in the endpoint around the receive/send loop to catch `WebSocketDisconnect`. In tests, if using the context manager, the disconnect is handled gracefully on exit; just ensure the server doesn’t treat a normal close as an error. After adding a disconnect handler, rerun tests to confirm the absence of this error.
 
-* **`AttributeError` related to mocks (e.g. missing `MagicMock`):** This refers to test code issues with mocking. One example could be using `MagicMock` in a test without importing it. For instance, a test might do `some_function.return_value = MagicMock()` but only imported `Mock` from `unittest.mock`. This would raise an AttributeError or NameError. We see that `tests/conftest.py` imports `MagicMock` for its own use, but that doesn’t automatically import it in every test module’s namespace. Any test module that wants to use `MagicMock` must import it or use `Mock` (which was imported). **Fix:** Audit the test files for any usage of `MagicMock` or `AsyncMock` where they aren’t imported. Add the appropriate import at the top (`from unittest.mock import MagicMock, AsyncMock`). For example, if an integration test tries to stub out a dependency with `MagicMock()` without import, add that import or change it to use `Mock()` which is already imported in that file. Ensuring all mock classes are imported will resolve those AttributeError failures.
+- **`AttributeError` related to mocks (e.g. missing `MagicMock`):** This refers to test code issues with mocking. One example could be using `MagicMock` in a test without importing it. For instance, a test might do `some_function.return_value = MagicMock()` but only imported `Mock` from `unittest.mock`. This would raise an AttributeError or NameError. We see that `tests/conftest.py` imports `MagicMock` for its own use, but that doesn’t automatically import it in every test module’s namespace. Any test module that wants to use `MagicMock` must import it or use `Mock` (which was imported). **Fix:** Audit the test files for any usage of `MagicMock` or `AsyncMock` where they aren’t imported. Add the appropriate import at the top (`from unittest.mock import MagicMock, AsyncMock`). For example, if an integration test tries to stub out a dependency with `MagicMock()` without import, add that import or change it to use `Mock()` which is already imported in that file. Ensuring all mock classes are imported will resolve those AttributeError failures.
 
-* **Other potential AttributeErrors in WS tests:** As mentioned, calling `async_client.websocket_connect` would be an AttributeError. After switching to `TestClient`, this is resolved. If the tests attempted to call methods on the result of `websocket_connect` incorrectly (for example, treating it like an `httpx.Response` and calling `.json()`), that would also cause attribute errors. The correct usage is to use `ws.send_text()`, `ws.receive_text()`, etc., on the WebSocket session object. Double-check the test assertions – if they assumed a JSON response from a websocket, that’s incorrect (websocket messages are not accessed via `.json()` or `.text` on a Response). They should use the WebSocket interface. Adjust any such misuses in the tests.
+- **Other potential AttributeErrors in WS tests:** As mentioned, calling `async_client.websocket_connect` would be an AttributeError. After switching to `TestClient`, this is resolved. If the tests attempted to call methods on the result of `websocket_connect` incorrectly (for example, treating it like an `httpx.Response` and calling `.json()`), that would also cause attribute errors. The correct usage is to use `ws.send_text()`, `ws.receive_text()`, etc., on the WebSocket session object. Double-check the test assertions – if they assumed a JSON response from a websocket, that’s incorrect (websocket messages are not accessed via `.json()` or `.text` on a Response). They should use the WebSocket interface. Adjust any such misuses in the tests.
 
 **5. Proposed Code-Level Fixes:** Below is a summary of precise changes to apply:
 
-* **Integrate the WebSocket Route:** In `clarity/api/v1/__init__.py`, include the chat router. For example:
+- **Integrate the WebSocket Route:** In `clarity/api/v1/__init__.py`, include the chat router. For example:
 
   ```python
   from clarity.api.v1 import chat  # import the module if exists
@@ -77,7 +77,7 @@ Another potential mismatch is the path usage. If the route is `/api/v1/chat/{use
 
   This ensures the endpoint is reachable at `/api/v1/chat/{user_id}`.
 
-* **WebSocket Endpoint Improvements:** In the chat endpoint function, add `await websocket.accept()` at the top. Implement the message loop and send replies accordingly. Catch `WebSocketDisconnect` to handle client departure gracefully. For example:
+- **WebSocket Endpoint Improvements:** In the chat endpoint function, add `await websocket.accept()` at the top. Implement the message loop and send replies accordingly. Catch `WebSocketDisconnect` to handle client departure gracefully. For example:
 
   ```python
   from fastapi import WebSocketDisconnect
@@ -95,16 +95,16 @@ Another potential mismatch is the path usage. If the route is `/api/v1/chat/{use
 
   If conversation context and streaming are requirements, integrate those as per design (using the `ConversationContext` to store history and streaming chunked responses). This not only fixes test errors but aligns the behavior with expected use (real-time streaming chat).
 
-* **Async Auth in WebSocket:** If needed, verify the JWT on connect. One pattern is to parse a query param or header manually inside the endpoint (since `Depends` can’t easily be used on `websocket`). For example, you could read a token query like `token = websocket.query_params.get("token")` or check headers via `websocket.headers`. However, since the FirebaseAuthMiddleware is already applied globally, you may rely on it (it should abort unauthorized connections before calling your endpoint). In tests, just ensure to provide the header so the middleware permits the connection.
+- **Async Auth in WebSocket:** If needed, verify the JWT on connect. One pattern is to parse a query param or header manually inside the endpoint (since `Depends` can’t easily be used on `websocket`). For example, you could read a token query like `token = websocket.query_params.get("token")` or check headers via `websocket.headers`. However, since the FirebaseAuthMiddleware is already applied globally, you may rely on it (it should abort unauthorized connections before calling your endpoint). In tests, just ensure to provide the header so the middleware permits the connection.
 
-* **Fix `async_client` Fixture:** Change it to use the ASGI app. In `tests/conftest.py`, modify:
+- **Fix `async_client` Fixture:** Change it to use the ASGI app. In `tests/conftest.py`, modify:
 
   ```diff
   ```
 
-* async with AsyncClient(transport=None, base\_url="[http://test](http://test)") as ac:
+- async with AsyncClient(transport=None, base\_URL="[http://test](http://test)") as ac:
 
-* async with AsyncClient(app=app, base\_url="[http://test](http://test)") as ac:
+- async with AsyncClient(app=app, base\_URL="[http://test](http://test)") as ac:
   yield ac
 
   ```
@@ -112,7 +112,7 @@ Another potential mismatch is the path usage. If the route is `/api/v1/chat/{use
 
   ```
 
-* **Refactor WebSocket Tests to Use TestClient:** For each test that involves WebSocket communication, use the synchronous TestClient. Example refactor for a failing test:
+- **Refactor WebSocket Tests to Use TestClient:** For each test that involves WebSocket communication, use the synchronous TestClient. Example refactor for a failing test:
 
   ```python
   def test_chat_endpoint_flow(app: FastAPI, auth_headers):
@@ -126,7 +126,7 @@ Another potential mismatch is the path usage. If the route is `/api/v1/chat/{use
 
   Remove any `await async_client.get("/chat…")` calls – those should be replaced with the above approach. This ensures a true WebSocket upgrade takes place and allows two-way communication in the test. If the test must run in an async context (due to other async fixtures), you can either isolate the WS test as a purely sync test, or use `anyio.from_thread` utilities to run TestClient calls in a thread. Simpler is to keep WS tests synchronous.
 
-* **Import MagicMock in Tests:** Find tests where `MagicMock` or `AsyncMock` is used without import. Add `from unittest.mock import MagicMock` at the top of those files. For instance, if a test does `patch(..., return_value=MagicMock(...))`, include the import. This prevents `NameError`/`AttributeError`. In many cases, using `Mock()` might suffice, but if the test specifically needs MagicMock (which auto-creates attributes on-the-fly), include it. Example:
+- **Import MagicMock in Tests:** Find tests where `MagicMock` or `AsyncMock` is used without import. Add `from unittest.mock import MagicMock` at the top of those files. For instance, if a test does `patch(..., return_value=MagicMock(...))`, include the import. This prevents `NameError`/`AttributeError`. In many cases, using `Mock()` might suffice, but if the test specifically needs MagicMock (which auto-creates attributes on-the-fly), include it. Example:
 
   ```python
   # At top of test module
@@ -139,6 +139,6 @@ After applying these fixes, rerun the test suite. The WebSocket tests should est
 
 **Sources:**
 
-* Project API router setup (missing chat route)
-* Testing fixture misconfiguration (AsyncClient without app) vs. intended usage
-* Planned WebSocket streaming logic for chat (documentation snippet)
+- Project API router setup (missing chat route)
+- Testing fixture misconfiguration (AsyncClient without app) vs. intended usage
+- Planned WebSocket streaming logic for chat (documentation snippet)

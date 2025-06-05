@@ -55,7 +55,7 @@ Successfully completed a **comprehensive documentation audit** that revealed and
 
 ### Needs Verification Before Use
 
-- ⚠️ **docs/api/** - Most endpoints don't exist or have wrong URLs
+- ⚠️ **docs/API/** - Most endpoints don't exist or have wrong URLs
 - ⚠️ **docs/architecture/** - Overstates complexity
 - ⚠️ **docs/development/** - References non-existent tools
 - ⚠️ **docs/integrations/** - Mix of accurate and outdated information

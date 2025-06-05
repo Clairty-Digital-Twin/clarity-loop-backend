@@ -14,9 +14,9 @@ CopyInsert
 gitleaks detect --source . -v --exclude="tests/"
 [✓] No leaks found
 Files Confirmed:
-tests/api/v1/test_authentication.py
+tests/API/v1/test_authentication.py
 tests/services/test_auth_service.py
-tests/ml/test_pat_integration.py
+tests/ML/test_PAT_integration.py
 2. Data Validation (⚠️ Partially Implemented)
 Implemented:
 HealthDataSchema created
@@ -28,9 +28,9 @@ CopyInsert
 
 # src/clarity/services/health_data_service.py
 
-# Still using direct json.loads()
+# Still using direct JSON.loads()
 
-health_data = json.loads(raw_input)  # Not validated
+health_data = JSON.loads(raw_input)  # Not validated
 3. WebSocket Performance (✅ Fully Implemented)
 Verification:
 python
@@ -43,7 +43,7 @@ Registry Confirmed:
 python
 CopyInsert
 
-# src/clarity/api/v1/websocket/registry.py
+# src/clarity/API/v1/websocket/registry.py
 
 class ConnectionRegistry:  # Implemented as per spec
     def __init__(self):
@@ -73,9 +73,9 @@ File: src/clarity/core/config.py
 python
 CopyInsert
 class Settings(BaseSettings):
-    FIREBASE_CREDENTIALS_PATH: str = "firebase-dev.json"  # Risk: Default dev config
+    Firebase_CREDENTIALS_PATH: str = "Firebase-dev.JSON"  # Risk: Default dev config
 7. Missing Shutdown Handlers
-File: src/clarity/api/v1/websocket/lifespan.py
+File: src/clarity/API/v1/websocket/lifespan.py
 
 python
 CopyInsert
@@ -85,7 +85,7 @@ async def lifespan(app: FastAPI):
 8. Test Coverage Gaps
 Coverage Report:
 
-| Service | Coverage | Status | |---------|----------|--------| | health_data_service | 62% | ⚠️ Below target | | pat_service | 58% | ⚠️ Below target | | websocket_manager | 72% | ✅ Acceptable |
+| Service | Coverage | Status | |---------|----------|--------| | health_data_service | 62% | ⚠️ Below target | | PAT_service | 58% | ⚠️ Below target | | websocket_manager | 72% | ✅ Acceptable |
 
 Actionable Remediation Plan
 Critical Fixes (Immediate):
@@ -103,7 +103,7 @@ Implement Error Handling:
 python
 CopyInsert
 
-# ml/pat_service.py
+# ML/PAT_service.py
 
 from ..utils.decorators import resilient_prediction
 
@@ -116,9 +116,9 @@ Fix Default Configuration:
 python
 CopyInsert
 class Settings(BaseSettings):
-    FIREBASE_CREDENTIALS_PATH: str = Field(
+    Firebase_CREDENTIALS_PATH: str = Field(
         ...,  # Require explicit value
-        env="FIREBASE_CREDS_PATH"
+        env="Firebase_CREDS_PATH"
     )
 Add Graceful Shutdown:
 python
@@ -160,7 +160,7 @@ Compliance requirement mapping
 Critical Security Findings
 
 1. Authentication Bypass Risk
-File: src/clarity/auth/firebase_middleware.py
+File: src/clarity/auth/Firebase_middleware.py
 
 python
 CopyInsert
@@ -210,20 +210,20 @@ CopyInsert
 
 # Line 32: Dev credentials in production path
 
-FIREBASE_CREDENTIALS_PATH = "firebase-dev.json"
+Firebase_CREDENTIALS_PATH = "Firebase-dev.JSON"
 Fix:
 
 python
 CopyInsert
-FIREBASE_CREDENTIALS_PATH: str = Field(
+Firebase_CREDENTIALS_PATH: str = Field(
     ...,
     description="Path to Firebase credentials",
-    regex=r"^/secrets/.*\.json$"  # Enforce production pattern
+    regex=r"^/secrets/.*\.JSON$"  # Enforce production pattern
 )
 Performance Deficiencies
 
 1. PAT Model Loading Bottleneck
-File: src/clarity/ml/pat_service.py
+File: src/clarity/ML/PAT_service.py
 
 python
 CopyInsert
@@ -231,7 +231,7 @@ CopyInsert
 # Line 56: Loading model on every request
 
 def predict(self, input_data):
-    model = load_pat_model()  # 2.7s load time
+    model = load_PAT_model()  # 2.7s load time
     return model.predict(input_data)
 Fix:
 
@@ -245,10 +245,10 @@ _MODEL = None
 def predict(self, input_data):
     global_MODEL
     if _MODEL is None:
-        _MODEL = load_pat_model()
+        _MODEL = load_PAT_model()
     return _MODEL.predict(input_data)
 2. WebSocket Broadcast Inefficiency
-File: src/clarity/api/v1/websocket/manager.py
+File: src/clarity/API/v1/websocket/manager.py
 
 python
 CopyInsert
@@ -269,7 +269,7 @@ async def broadcast(message):
 Reliability Gaps
 
 1. Missing Circuit Breakers
-File: src/clarity/services/gemini_service.py
+File: src/clarity/services/Gemini_service.py
 
 python
 CopyInsert
@@ -305,7 +305,7 @@ class ServiceUnavailableError(ClarityAPIError):
 Compliance Violations
 
 1. Audit Trail Incompleteness
-File: src/clarity/api/v1/health_data.py
+File: src/clarity/API/v1/health_data.py
 
 python
 CopyInsert
@@ -363,12 +363,12 @@ File: requirements.txt
 
 text
 CopyInsert
-fastapi>=0.89.0  # Should be pinned to fastapi==0.95.2
+FastAPI>=0.89.0  # Should be pinned to FastAPI==0.95.2
 Fix:
 
 text
 CopyInsert
-fastapi==0.95.2 # Pinned with hash
+FastAPI==0.95.2 # Pinned with hash
 pydantic==1.10.7
 Final Hardening Checklist
 Security

@@ -8,18 +8,18 @@ Pretrained Actigraphy Transformer (PAT) for movement data), and generates user-f
 Language Model (LLM). The design emphasizes modularity, scalability, and future-proofing by separating concerns
 into distinct layers and services. Key components include:
 
-* Data Ingestion Service (FastAPI) to securely receive HealthKit data from iOS/watchOS, persist raw time-series
+- Data Ingestion Service (FastAPI) to securely receive HealthKit data from iOS/watchOS, persist raw time-series
   data (e.g. to cloud storage), and enqueue processing tasks asynchronously.
-* Analysis Microservices for each major data modality (e.g. an Actigraphy Service running PAT for activity/sleep,
+- Analysis Microservices for each major data modality (e.g. an Actigraphy Service running PAT for activity/sleep,
   a Cardio Service for heart-related metrics). These services perform preprocessing, feature extraction, and ML
   inference on their respective signals.
-* An Integration/Fusion Layer (which can be a dedicated service or part of the main analysis service) that combines
+- An Integration/Fusion Layer (which can be a dedicated service or part of the main analysis service) that combines
   multi-modal features (e.g. correlating heart rate trends with sleep patterns) into a unified health insight
   representation.
-* Narrative Generation (LLM) Module using an advanced model (e.g. Google Vertex AI's Gemini) to convert analytical
+- Narrative Generation (LLM) Module using an advanced model (e.g. Google Vertex AI's Gemini) to convert analytical
   outputs into natural-language explanations. This can be invoked as an external service (per-model microservice)
   or within the analysis pipeline, with enterprise safety features applied.
-* A Real-Time Results Store (e.g. Firestore DB) to deliver insights to client applications. The mobile app
+- A Real-Time Results Store (e.g. Firestore DB) to deliver insights to client applications. The mobile app
   (chat interface) either receives pushed summaries or queries an endpoint that leverages LLMs in real-time to
   answer user questions using the stored data.
 
@@ -41,30 +41,30 @@ them via an IHealthDataRepository abstraction.
 
 However, there are several gaps to address for the full "Chat with your data" feature:
 
-* Asynchronous Processing & ML Pipeline: The current implementation accepts data and returns a processing ID with
+- Asynchronous Processing & ML Pipeline: The current implementation accepts data and returns a processing ID with
   status="PROCESSING", but the actual background processing (ML analysis) is not yet implemented. The design
   suggests using Google Cloud Pub/Sub and a separate analysis service, but in the code, save_health_data likely
   just stores data (e.g. in Firestore) without kicking off an ML job. We need to implement the Pub/Sub
   orchestration: after saving data, publish a message so an analysis worker can pick it up.
-* Microservice Separation: Currently, all logic resides in one FastAPI app. For scalability and clean separation,
+- Microservice Separation: Currently, all logic resides in one FastAPI app. For scalability and clean separation,
   we should introduce dedicated microservices for heavy ML tasks. The docs blueprint indeed envisions a "dedicated
   microservice running the PAT model for analytics" separate from the ingestion API. We need to extend this pattern
   for other metrics (HR, HRV, etc.), either as separate services per model or a single service that handles
   multi-modal fusion.
-* Data Storage and Volume: The repo uses Firestore (and a MockHealthDataRepository for dev) as the data store.
+- Data Storage and Volume: The repo uses Firestore (and a MockHealthDataRepository for dev) as the data store.
   Storing large time-series (e.g. minute-level data for days) purely in Firestore may be inefficient. The blueprint
   recommends using Google Cloud Storage (GCS) for raw data files. We should confirm how much data is uploaded per
   request (for full HealthKit sync it could be substantial) and adjust storage strategy. A likely enhancement is to
   save raw JSON/CSV files to GCS (for durability and cost efficiency) and store only metadata or small summaries in
   Firestore (e.g. references to the file, status, results). This decoupling is not fully implemented yet.
-* LLM Integration & Chat Interface: The current code does not yet integrate any LLM or natural language component.
+- LLM Integration & Chat Interface: The current code does not yet integrate any LLM or natural language component.
   The design needs an LLM narrative generation step (using Vertex AI's GPT/Gemini or OpenAI) to provide the "chat"
   experience. This involves formulating prompts from the data and either pre-generating insights (which are stored
   for the app to display) or handling user queries on the fly. The architecture must accommodate an LLM either as a
   synchronous call during analysis or as a separate service that subscribes to analysis outputs. Additionally, the
   frontend chat UI needs an API to fetch these insights or ask questions; this is outside the current backend's
   implemented endpoints.
-* Real-Time Updates: The blueprint suggests using Firestore's real-time capabilities (and optional FCM push
+- Real-Time Updates: The blueprint suggests using Firestore's real-time capabilities (and optional FCM push
   notifications) to deliver results to the app. The backend code has endpoints to poll status (GET /processing/{id})
   and retrieve data (GET /health-data), but an event-driven push to the client is not yet in place. We will
   incorporate the Firestore update approach so that as soon as analysis/narrative is ready, the app can be notified
@@ -83,21 +83,21 @@ interact:
 
 1. Health Data Ingestion Layer – FastAPI Service
 
-Role: This service (the existing FastAPI app) handles incoming data from clients. It runs in Cloud Run (or similar) and exposes REST endpoints under /api/v1/health-data for uploading metrics. Key responsibilities and improvements:
+Role: This service (the existing FastAPI app) handles incoming data from clients. It runs in Cloud Run (or similar) and exposes REST endpoints under /API/v1/health-data for uploading metrics. Key responsibilities and improvements:
 
-* Authentication & Security: Continue using Firebase Auth (Identity Platform) to verify JWTs on requests.
+- Authentication & Security: Continue using Firebase Auth (Identity Platform) to verify JWTs on requests.
   Each request is tied to a user UID for multi-tenant data isolation. Ensure HIPAA-level security
   (encryption, no PHI in logs, etc.). The existing @require_auth and get_current_user dependency
   already enforce that only a user can write/read their own data (the code checks health_data.user_id
   matches the token's UID). These checks remain vital.
-* Data Reception: The client (iOS app) will batch HealthKit records and send them (likely as JSON).
+- Data Reception: The client (iOS app) will batch HealthKit records and send them (likely as JSON).
   For MVP, daily or on-demand batch uploads are fine. The payload structure can reuse the current
   HealthDataUpload model: it contains a user_id, a list of metrics, an upload_source ("apple_health"),
   and a timestamp. Each metric in the list includes a metric_type and the corresponding data object
   (e.g. biometric_data for heart metrics, activity_data for steps, sleep_data for sleep).
   This design already supports multiple metric types in one upload, which is ideal for fusion
   (e.g. one upload can contain heart rate and sleep for the same period).
-* Validation & Acknowledgment:
+- Validation & Acknowledgment:
   The ingestion service uses the domain HealthDataService to validate metrics
   (ensuring all required fields present and values in realistic ranges).
   If validation fails, a 400 error is raised with details.
@@ -105,24 +105,24 @@ Role: This service (the existing FastAPI app) handles incoming data from clients
   The service then persists the data and returns an immediate response to the client
   with status "PROCESSING" and the processing_id.
   This acknowledges receipt within seconds, letting the app know analysis is underway.
-* Data Persistence (Raw Data): To handle large time-series efficiently, we introduce storing raw
+- Data Persistence (Raw Data): To handle large time-series efficiently, we introduce storing raw
   payloads in Google Cloud Storage (GCS) as the blueprint prescribes. Upon receiving data, the
   FastAPI service will:
   1. Serialize the health_data metrics list to JSON (or a compressed format) – possibly already given
      as JSON in request.
-  2. Write the file to a GCS bucket, e.g. at path gs://health-data/{user_id}/{processing_id}.json.
+  2. Write the file to a GCS bucket, e.g. at path gs://health-data/{user_id}/{processing_id}.JSON.
      We use the Google Cloud Storage Python SDK (bucket.blob.upload_from_string) to upload. Each file
      is namespaced by user and job, making it easy to retrieve later. This offloads storage of
      potentially large datasets from the database to a durable, scalable store (GCS is highly
      available and can handle large files).
-* Task Queuing: After saving to GCS, the ingestion service will enqueue a message in Cloud Pub/Sub
+- Task Queuing: After saving to GCS, the ingestion service will enqueue a message in Cloud Pub/Sub
   to trigger processing. We'll publish a JSON message to an "analysis-tasks" topic containing at
   least the user_id and the gs:// file path (and possibly metadata like upload timestamp or metric
   types included). This decouples the upload from processing – the API call returns immediately once
   the message is published (which is very fast). The client gets an HTTP 200 with the processing_id,
   and does not wait for analysis in this call. This achieves an "upload-and-forget" pattern,
   enhancing UX since the user isn't stuck waiting on a long request.
-* Immediate Response & Status Tracking: The returned HealthDataResponse (already defined in code) will
+- Immediate Response & Status Tracking: The returned HealthDataResponse (already defined in code) will
   indicate status: PROCESSING and an estimated processing time. The backend should also record an
   initial status entry (e.g. in Firestore or an in-memory cache) so that GET /processing/{id} can
   report "processing" status. The current implementation likely uses the repository to save a status
@@ -252,7 +252,7 @@ This example (based on our tests) shows multiple metric types together ￼ ￼. 
 
  • Pub/Sub Message: A lightweight JSON, e.g.
 
-{ "user_id": "<uid>", "processing_id": "<id>", "file_uri": "gs://.../uid/xyz.json" }
+{ "user_id": "<uid>", "processing_id": "<id>", "file_URI": "gs://.../uid/xyz.JSON" }
 
 Optionally include a list of metric_types included, for the consumers to know quickly what to parse (though they could inspect the file). Keep this minimal to avoid large messages.
 
@@ -303,7 +303,7 @@ This can be stored in Firestore or returned by an API. For example, features.sle
 
 This format (or something similar) was illustrated in docs ￼ ￼. It includes a high-level summary and detailed insights per category, plus recommendations. We would store this JSON in Firestore (users/{uid}/insights/{id}), or at least store the text fields.
 
- • Chat Query Interface: We will design an API such as POST /api/v1/chat with a request: { "user_id": "...", "question": "What was my average HR last week?" }. The backend will then retrieve the relevant data (we could fetch the latest InsightResult or narrative from Firestore) and call the LLM. The response might be {"answer": "Your average heart rate was about 60 bpm last week, which is within normal range for you."}. This keeps the chat interaction stateless on the server side (the state – user data – is in Firestore). We also consider using conversation context (history) if needed, but since this is “chat with your data”, each query can be relatively independent, focusing on the data.
+ • Chat Query Interface: We will design an API such as POST /API/v1/chat with a request: { "user_id": "...", "question": "What was my average HR last week?" }. The backend will then retrieve the relevant data (we could fetch the latest InsightResult or narrative from Firestore) and call the LLM. The response might be {"answer": "Your average heart rate was about 60 bpm last week, which is within normal range for you."}. This keeps the chat interaction stateless on the server side (the state – user data – is in Firestore). We also consider using conversation context (history) if needed, but since this is “chat with your data”, each query can be relatively independent, focusing on the data.
 
 By using these data contracts (with possible Protobuf definitions for internal services if performance demands), we ensure each component works against a clear interface. This makes it easier to test (e.g. we can unit test the PAT service by feeding it a fake JSON of steps and checking it returns expected features) and to replace implementations (e.g. swap out Vertex AI for another model by just changing the InsightGenerator component).
 
@@ -311,7 +311,7 @@ By using these data contracts (with possible Protobuf definitions for internal s
 
 Finally, the architecture supports a chat interface where the user can query their data conversationally. The heavy lifting for this is actually in the LLM integration we discussed, but from a system perspective:
  • The mobile app (iOS) will have a chat UI. Initially, it might simply display the narrative summary as a chat message from an “AI Health Assistant”. The user can then type questions.
- • When the user asks a question, the app sends it to our backend (with the user’s auth token). We may create a new endpoint (e.g. GET /api/v1/insights/latest to retrieve the latest summary, or POST /api/v1/insights/query for questions).
+ • When the user asks a question, the app sends it to our backend (with the user’s auth token). We may create a new endpoint (e.g. GET /API/v1/insights/latest to retrieve the latest summary, or POST /API/v1/insights/query for questions).
  • The backend (which might reuse the same FastAPI app or a separate function) will retrieve the necessary data for answering. Likely, it will load the latest insights from Firestore (or if the question references a specific date range, it might load those specific records).
  • It will then compose a prompt for the LLM. We can use a system prompt like: “You are a health assistant with access to the user’s recent health metrics. Answer the user’s question using the data provided, and offer advice if appropriate.” Then provide the data context (either the summary or raw stats) and the user’s question. Using LangChain, we could treat the Firestore data as a knowledge base (we could even vectorize time-series or textual summaries and do similarity search, but given the small scope, probably not needed – we can inject directly relevant data).
  • The LLM returns an answer, which we send back to the app.
@@ -416,9 +416,9 @@ clarity_loop_backend/
 │  └─ services/
 │      └─ ingestion_service.py # orchestrates adapters
 ├─ tests/
-│  └─ e2e_healthkit_stub_test.py
+│  └─ e2e_HealthKit_stub_test.py
 └─ samples/
-    └─ healthkit_stub_batch.json
+    └─ HealthKit_stub_batch.JSON
 
 ⸻
 
@@ -437,7 +437,7 @@ Why: any future adapter (real HealthKit SDK, Garmin, Oura, CSV, etc.) just imple
 
 3 . Implement the stub adapter (clarity/adapters/apple_health_stub.py)
 
-import json, uuid, random, datetime as dt
+import JSON, UUID, random, datetime as dt
 from typing import List
 from clarity.domain.models import MetricPayload, HealthDataUpload
 from clarity.adapters.base import IMetricIngestAdapter
@@ -497,9 +497,9 @@ class AppleHealthStubAdapter(IMetricIngestAdapter):
 
 ### Notes
 
-* Deterministic with a fixed seed for repeatable CI.
-* Uses domain Pydantic models so validation still runs.
-* Returns one HealthDataUpload; real adapter may split large exports into multiple.
+- Deterministic with a fixed seed for repeatable CI.
+- Uses domain Pydantic models so validation still runs.
+- Returns one HealthDataUpload; real adapter may split large exports into multiple.
 
 ⸻
 
@@ -532,7 +532,7 @@ async def ingest_stub(service: IngestionService = Depends(get_service)):
 
 ⸻
 
-## 5. End-to-End CI test (tests/e2e_healthkit_stub_test.py)
+## 5. End-to-End CI test (tests/e2e_HealthKit_stub_test.py)
 
     import httpx, asyncio, pytest
 
@@ -559,7 +559,7 @@ async def ingest_stub(service: IngestionService = Depends(get_service)):
             assert insight.status_code == 200
             assert "summary" in insight.json()
 
-* Add this test to your GitHub Actions workflow so every push validates the pipeline.
+- Add this test to your GitHub Actions workflow so every push validates the pipeline.
 
 ## 6. How to swap in real HealthKit adapter later
 
@@ -578,9 +578,9 @@ Because every downstream stage—Pub/Sub, analysis, PAT, Gemini—already consum
 
 If you need day-level sequences for PAT:
 
-* Add a helper generate_activity_sequence(days:int=7) -> list[int] that returns 10 080 step counts (minute-resolution).
-* Store it in payload["activity_sequence"] so the PAT service can test patch embeddings, etc.
-* Keep sequence lengths realistic (0 – 300 steps/min).
+- Add a helper generate_activity_sequence(days:int=7) -> list[int] that returns 10 080 step counts (minute-resolution).
+- Store it in payload["activity_sequence"] so the PAT service can test patch embeddings, etc.
+- Keep sequence lengths realistic (0 – 300 steps/min).
 
 ⸻
 
@@ -594,24 +594,24 @@ Enable end-to-end pipeline validation without real HealthKit exports.
 
 #### How it works
 
-* FastAPI route __POST /health-data/stub__ triggers `AppleHealthStubAdapter`.
-* Adapter synthesizes realistic metrics (HR, steps, sleep) and returns a `HealthDataUpload`.
-* Upload is persisted (GCS) and `analysis-tasks` Pub/Sub message is published.
-* Analysis service runs PAT + statistic rules → Fusion JSON → Gemini narrative.
-* Narrative stored in Firestore; mobile app listener displays “stub” insight.
+- FastAPI route __POST /health-data/stub__ triggers `AppleHealthStubAdapter`.
+- Adapter synthesizes realistic metrics (HR, steps, sleep) and returns a `HealthDataUpload`.
+- Upload is persisted (GCS) and `analysis-tasks` Pub/Sub message is published.
+- Analysis service runs PAT + statistic rules → Fusion JSON → Gemini narrative.
+- Narrative stored in Firestore; mobile app listener displays “stub” insight.
 
 #### Key files
 
-* `clarity/adapters/apple_health_stub.py` – data generator
-* `samples/healthkit_stub_batch.json`     – example output
-* `tests/e2e_healthkit_stub_test.py`      – CI smoke test
+- `clarity/adapters/apple_health_stub.py` – data generator
+- `samples/healthkit_stub_batch.json`     – example output
+- `tests/e2e_healthkit_stub_test.py`      – CI smoke test
 
 #### Replacing with real adapter
 
 Swap `"apple_health_stub"` with `"apple_health"` once `RealHealthKitAdapter` implements parsing of:
 
-* `export.xml` (manual user export) __or__
-* HK background deliveries via App Extension (future).
+- `export.xml` (manual user export) __or__
+- HK background deliveries via App Extension (future).
 
 __No other backend service requires modification.__
 
@@ -639,9 +639,9 @@ __No other backend service requires modification.__
 
 ### Deliverable checklist
 
-* Copy folder layout & code snippets into repo.
-* Add the new FastAPI route and register the adapter.
-* Ensure Cloud Run analysis worker detects stub uploads (same Pub/Sub).
-* Push; verify GitHub Action passes (e2e_healthkit_stub_test.py).
+- Copy folder layout & code snippets into repo.
+- Add the new FastAPI route and register the adapter.
+- Ensure Cloud Run analysis worker detects stub uploads (same Pub/Sub).
+- Push; verify GitHub Action passes (e2e_HealthKit_stub_test.py).
 
 Once those green-checks light up, you can develop PAT analytics and Gemini prompts with confidence—knowing real HealthKit data can drop in later by swapping adapters, no pipeline surgery required.

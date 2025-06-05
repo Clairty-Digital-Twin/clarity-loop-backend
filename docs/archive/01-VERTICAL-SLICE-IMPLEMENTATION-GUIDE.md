@@ -67,7 +67,7 @@
 - [ ] Create `src/services/health_data_service.py` - Business logic
 - [ ] Create `src/storage/firestore_client.py` - Database operations
 - [ ] Create `tests/integration/test_health_data_flow.py` - E2E test
-- [ ] Verify: POST /api/v1/health-data/upload returns 202 with processing_id
+- [ ] Verify: POST /API/v1/health-data/upload returns 202 with processing_id
 
 #### Files Created
 
@@ -145,7 +145,7 @@ async def test_health_data_upload_flow():
 - [ ] Create `src/api/v1/insights.py` - Insights endpoints
 - [ ] Create `src/models/insights.py` - Insight models
 - [ ] Create background processing with Pub/Sub
-- [ ] Verify: GET /api/v1/insights/daily returns AI-generated analysis
+- [ ] Verify: GET /API/v1/insights/daily returns AI-generated analysis
 
 #### Implementation Pattern
 

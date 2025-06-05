@@ -11,7 +11,7 @@ The `docs/` directory contains **SEVERELY OUTDATED DOCUMENTATION** that doesn't 
 
 ### 1. API ENDPOINTS - MAJOR MISMATCH
 
-#### **DOCUMENTED CLAIMS (docs/api/)**
+#### **DOCUMENTED CLAIMS (docs/API/)**
 
 Documentation claims these endpoints exist:
 
@@ -27,7 +27,7 @@ Documentation claims these endpoints exist:
 - `POST /v1/user/data-export`
 - `DELETE /v1/user/account`
 
-#### **ACTUAL IMPLEMENTATION (src/clarity/api/v1/)**
+#### **ACTUAL IMPLEMENTATION (src/clarity/API/v1/)**
 
 Real endpoints that exist:
 

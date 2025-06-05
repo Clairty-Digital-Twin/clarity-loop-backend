@@ -36,7 +36,7 @@ def test_process_metric():
 
 ## Our Type Checking Configuration
 
-### pyrightconfig.json Strategy
+### pyrightconfig.JSON Strategy
 
 We've configured Pylance/Pyright to:
 

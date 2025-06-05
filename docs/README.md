@@ -17,7 +17,7 @@ This directory contains comprehensive documentation for the Clarity Loop Backend
 
 ## Documentation Structure
 
-- **api/** - API specifications, endpoints documentation, and data schemas
+- **API/** - API specifications, endpoints documentation, and data schemas
 - **architecture/** - System architecture diagrams, component interactions, and design decisions
 - **development/** - Development guides, setup instructions, and best practices
 - **integrations/** - Third-party service integrations (Firebase, HealthKit, etc.)

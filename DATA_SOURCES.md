@@ -2,11 +2,11 @@ Got it. I’ll compile a high-value dataset scan focused on large-scale, publicl
 
 I’ll deliver:
 
-* A dataset scan table (with license, cadence, Apple HealthKit compatibility)
-* A modality-specific fit/gap analysis
-* Integration blueprints for ingestion, mapping, and pretraining use
-* Risk/compliance summary
-* A one-page executive summary with a transformer training recommendation
+- A dataset scan table (with license, cadence, Apple HealthKit compatibility)
+- A modality-specific fit/gap analysis
+- Integration blueprints for ingestion, mapping, and pretraining use
+- Risk/compliance summary
+- A one-page executive summary with a transformer training recommendation
 
 I’ll update you once the Markdown file is ready for review.
 
@@ -45,8 +45,8 @@ We compare each modality’s data needs to the above datasets, evaluating schema
 
 **Quick-Win Datasets – Sleep:**
 
-* **DREAMT (2025)** – High-fidelity smartwatch vs PSG sleep dataset for model validation. Its schema (stages, duration, efficiency) matches Clarity’s sleep model well. We can rapidly ingest it to improve sleep stage classification and efficiency predictions.
-* **GLOBEM (2018–2021)** – Large-scale semi-wild sleep data (Fitbit) with diverse US participants. Provides real-world variability in sleep patterns and easy mapping of total sleep and wake events to our model. It’s immediately usable for improving sleep quality insights (with proper credentialed access).
+- **DREAMT (2025)** – High-fidelity smartwatch vs PSG sleep dataset for model validation. Its schema (stages, duration, efficiency) matches Clarity’s sleep model well. We can rapidly ingest it to improve sleep stage classification and efficiency predictions.
+- **GLOBEM (2018–2021)** – Large-scale semi-wild sleep data (Fitbit) with diverse US participants. Provides real-world variability in sleep patterns and easy mapping of total sleep and wake events to our model. It’s immediately usable for improving sleep quality insights (with proper credentialed access).
 
 *(All of Us is a strong future candidate once procedural hurdles are cleared, given its scale in sleep data.)*
 
@@ -60,8 +60,8 @@ We compare each modality’s data needs to the above datasets, evaluating schema
 
 **Quick-Win Datasets – HR/HRV:**
 
-* **GalaxyPPG (2025)** – A dual wearable dataset (Galaxy Watch vs. Polar ECG) explicitly designed for HR/HRV analysis. Use it to train and validate our heart rate processing pipeline (e.g., improve PPG-to-HRV estimation). It maps well to `biometric_data.heart_rate_variability` and helps calibrate our resting vs active HR detection.
-* **WildPPG (2024)** – Long, real-world PPG recordings with ground-truth ECG under motion. Ideal to stress-test our HR algorithms and train noise-robust models. We can incorporate its accelerometer and HR signals to improve our filtering of motion artifacts (fitting well with Clarity’s goal of clinical-grade vitals).
+- **GalaxyPPG (2025)** – A dual wearable dataset (Galaxy Watch vs. Polar ECG) explicitly designed for HR/HRV analysis. Use it to train and validate our heart rate processing pipeline (e.g., improve PPG-to-HRV estimation). It maps well to `biometric_data.heart_rate_variability` and helps calibrate our resting vs active HR detection.
+- **WildPPG (2024)** – Long, real-world PPG recordings with ground-truth ECG under motion. Ideal to stress-test our HR algorithms and train noise-robust models. We can incorporate its accelerometer and HR signals to improve our filtering of motion artifacts (fitting well with Clarity’s goal of clinical-grade vitals).
 
 *(Additionally, **Stress\&Exercise E4 (2025)** contributes HR and IBI data during exertion, indirectly aiding HRV-under-stress modeling. It can be a tertiary input for HR calibration under stress conditions.)*
 
@@ -75,8 +75,8 @@ We compare each modality’s data needs to the above datasets, evaluating schema
 
 **Quick-Win Datasets – Resp. & SpO₂:**
 
-* **WEEE (2022)** – While primarily an energy expenditure dataset, it contains high-quality respiratory metrics via calorimetry for various activities. We can use its data to create and validate a model for `respiratory_rate` during exercise (e.g., correlate wearable motion/HR to actual breaths per minute). This helps fill our respiration model with realistic lab-calibrated data.
-* **EmoWear (2024)** – Provides a respiration waveform alongside ECG and PPG in an emotion context. This can be used to train our system to derive breathing rate from physiological signals (like subtle HRV fluctuations or chest IMU), improving our ability to populate `respiratory_rate`.
+- **WEEE (2022)** – While primarily an energy expenditure dataset, it contains high-quality respiratory metrics via calorimetry for various activities. We can use its data to create and validate a model for `respiratory_rate` during exercise (e.g., correlate wearable motion/HR to actual breaths per minute). This helps fill our respiration model with realistic lab-calibrated data.
+- **EmoWear (2024)** – Provides a respiration waveform alongside ECG and PPG in an emotion context. This can be used to train our system to derive breathing rate from physiological signals (like subtle HRV fluctuations or chest IMU), improving our ability to populate `respiratory_rate`.
 
 *(Gap:* **No open wearable SpO₂ datasets** – we may simulate this by adding noise to clinical SpO₂ traces or using **synthetic data** generation for model pretraining, ensuring our pipeline handles SpO₂ input when available.\*)
 
@@ -90,8 +90,8 @@ We compare each modality’s data needs to the above datasets, evaluating schema
 
 **Quick-Win Datasets – Activity:**
 
-* **WEEE (2022)** – A goldmine for mapping wearable sensor readings to actual energy expenditure. Use it to train our calorie burn models: e.g., we can feed multi-sensor data into a model to predict MET and verify against WEEE’s ground truth, then plug that into our `active_energy` and intensity zone calculations. It also provides VO₂ max related info (via indirect calorimetry) that can refine our VO₂ max estimation logic.
-* **GLOBEM (2018–21)** – Real-world daily activity data (steps, active vs sedentary bouts) across hundreds of diverse individuals. This is immediately useful to validate our step counting and activity classification at scale. By ingesting GLOBEM, we can ensure our system’s step/energy metrics align with broad population patterns and feed its weekly activity summaries into our analytics and coaching features.
+- **WEEE (2022)** – A goldmine for mapping wearable sensor readings to actual energy expenditure. Use it to train our calorie burn models: e.g., we can feed multi-sensor data into a model to predict MET and verify against WEEE’s ground truth, then plug that into our `active_energy` and intensity zone calculations. It also provides VO₂ max related info (via indirect calorimetry) that can refine our VO₂ max estimation logic.
+- **GLOBEM (2018–21)** – Real-world daily activity data (steps, active vs sedentary bouts) across hundreds of diverse individuals. This is immediately useful to validate our step counting and activity classification at scale. By ingesting GLOBEM, we can ensure our system’s step/energy metrics align with broad population patterns and feed its weekly activity summaries into our analytics and coaching features.
 
 *(All of Us Fitbit data, once accessible, could further enhance our models with unparalleled scale – e.g., refining how activity relates to demographics or health outcomes. For now, GLOBEM serves as a proxy for a diverse US cohort with fewer access hurdles.)*
 
@@ -105,8 +105,8 @@ We compare each modality’s data needs to the above datasets, evaluating schema
 
 **Quick-Win Datasets – Composite Health:**
 
-* **K-EmoPhone (2023)** – High-frequency in-situ mood/stress dataset. This is ideal to pretrain our mood prediction model: by ingesting its sensor + label streams, we can learn patterns (e.g., HRV or activity level correlating with “stress=high”) and validate how we map raw data to `MentalHealthIndicator.mood_score` or `stress_level`. It’s a quick win for improving personalization of mood and fatigue insights in Clarity.
-* **GLOBEM (2018–21)** – Rich longitudinal well-being data (weekly mental health surveys and daily behavior) across a diverse sample. We can use it to establish baseline ranges for mood and stress (PHQ-4 scores mapped to our mood/stress scales) and to explore composite indicators (like linking low activity + high stress to higher risk flags). Its breadth helps ensure our models generalize across demographics, and its use of standard scales (PHQ, PSS) anchors our own scoring to clinical benchmarks.
+- **K-EmoPhone (2023)** – High-frequency in-situ mood/stress dataset. This is ideal to pretrain our mood prediction model: by ingesting its sensor + label streams, we can learn patterns (e.g., HRV or activity level correlating with “stress=high”) and validate how we map raw data to `MentalHealthIndicator.mood_score` or `stress_level`. It’s a quick win for improving personalization of mood and fatigue insights in Clarity.
+- **GLOBEM (2018–21)** – Rich longitudinal well-being data (weekly mental health surveys and daily behavior) across a diverse sample. We can use it to establish baseline ranges for mood and stress (PHQ-4 scores mapped to our mood/stress scales) and to explore composite indicators (like linking low activity + high stress to higher risk flags). Its breadth helps ensure our models generalize across demographics, and its use of standard scales (PHQ, PSS) anchors our own scoring to clinical benchmarks.
 
 *(These two combined cover both high-resolution short-term mood dynamics and broader long-term well-being trends. For **fatigue**, besides K-EmoPhone’s attention data, the Shoulder Fatigue dataset can be a specialized add-on to calibrate our `energy_level` and fatigue alerts in exercise contexts.)*
 
@@ -116,10 +116,10 @@ We compare each modality’s data needs to the above datasets, evaluating schema
 
 **2. Map to Pydantic Models:** Use Clarity-Loop’s Pydantic schemas to validate and structure the ingested data. For each dataset, define a mapper that fills our `HealthMetric` container with the appropriate submodel:
 
-* Sleep datasets -> create a `HealthMetric(metric_type=SLEEP_ANALYSIS, sleep_data=SleepData(...))` with fields like `total_sleep_minutes` and per-stage durations from the source. For example, DREAMT’s “light/deep/REM” minutes go into `sleep_data.sleep_stages` (mapping to our enum SleepStage).
-* HR datasets -> produce `HealthMetric(metric_type=HEART_RATE, biometric_data=BiometricData(...))`, setting `heart_rate` and if available `heart_rate_variability` (e.g., compute SDNN or RMSSD from ECG R-R intervals in GalaxyPPG before assignment).
-* Activity datasets -> fill `activity_data` with steps, active\_minutes, etc. from sources like GLOBEM and WEEE. For WEEE, MET values can be converted to kcal (MET \* 3.5 \* weight(kg)/200 \~= kcal/min) and summed for `active_energy`, while its activity labels (e.g., “run”, “walk”) can help infer `intensity` zones or populate `exercise_minutes`.
-* Mood/stress labels -> map to `mental_health_data`: e.g., K-EmoPhone’s self-reported mood on a 5-point scale could be translated to our `MoodScale` enum (1=very\_low up to 5=excellent) for `mood_score`, and stress ratings 1–10 to our 1–10 `stress_level`. Each EMA entry becomes a `HealthMetric(metric_type=MOOD_ASSESSMENT, mental_health_data=MentalHealthIndicator(...))`.
+- Sleep datasets -> create a `HealthMetric(metric_type=SLEEP_ANALYSIS, sleep_data=SleepData(...))` with fields like `total_sleep_minutes` and per-stage durations from the source. For example, DREAMT’s “light/deep/REM” minutes go into `sleep_data.sleep_stages` (mapping to our enum SleepStage).
+- HR datasets -> produce `HealthMetric(metric_type=HEART_RATE, biometric_data=BiometricData(...))`, setting `heart_rate` and if available `heart_rate_variability` (e.g., compute SDNN or RMSSD from ECG R-R intervals in GalaxyPPG before assignment).
+- Activity datasets -> fill `activity_data` with steps, active\_minutes, etc. from sources like GLOBEM and WEEE. For WEEE, MET values can be converted to kcal (MET \* 3.5 \* weight(kg)/200 \~= kcal/min) and summed for `active_energy`, while its activity labels (e.g., “run”, “walk”) can help infer `intensity` zones or populate `exercise_minutes`.
+- Mood/stress labels -> map to `mental_health_data`: e.g., K-EmoPhone’s self-reported mood on a 5-point scale could be translated to our `MoodScale` enum (1=very\_low up to 5=excellent) for `mood_score`, and stress ratings 1–10 to our 1–10 `stress_level`. Each EMA entry becomes a `HealthMetric(metric_type=MOOD_ASSESSMENT, mental_health_data=MentalHealthIndicator(...))`.
 
 Each mapper will perform unit transformations and value validation (leveraging Pydantic’s built-in validators to catch out-of-range values). This step essentially creates a **unified data lake** of `HealthMetric` objects from all sources, ready for model training.
 
@@ -127,19 +127,19 @@ Each mapper will perform unit transformations and value validation (leveraging P
 
 **4. Model Pre-training Pipeline:** Develop a multi-modal transformer-based model (or utilize an existing time-series transformer) to learn a generalized representation from these diverse datasets. The pipeline will use the unified data lake to perform self-supervised pretraining and supervised multi-task learning:
 
-* **Model architecture:** A transformer or LSTM-based time series encoder that can take in sequences of health metrics. For instance, a sequence might include a day’s worth of hourly metrics or a multi-sensor time window. We may incorporate multiple input channels (HR, HRV, steps, etc.) via either concatenation or a multi-branch encoder that later fuses. The question “Do we need another transformer?” will be answered here by possibly fine-tuning an existing transformer (like HuggingFace’s `TSFuse` or similar) or training from scratch on our data – we will evaluate both. The likely approach is to initialize a transformer on one modality and extend it (given transformers excel at multi-modal with proper tokenization).
-* **Pretraining tasks:** e.g., **masking** (Mask and reconstruct certain values – like 15% of heart rate values – to make the model learn contextual fill-in, à la BERT), or **next-sequence prediction** (predict tomorrow’s metrics from past days), and **contrastive objectives** (e.g., distinguish aligned vs misaligned sensor streams from the same day). These tasks force the model to learn latent representations of sleep, activity, HR, etc.
-* **Supervised fine-tuning:** concurrently, we use known labels (sleep stages from DREAMT, mood from K-EmoPhone, MET from WEEE) to train specific heads of the model. For example, a classification head on the transformer outputs to predict sleep stage at each epoch (using DREAMT labels), or a regression head to predict stress level given physiological signals (using K-EmoPhone EMA). This multi-task learning will help the model not only fill in data but also align with actual health outcomes – effectively a “digital health foundation model.”
-* The pipeline will be orchestrated with PyTorch Lightning or similar, allowing us to easily add new datasets as they come. We’ll monitor validation performance on each task (e.g., sleep stage accuracy, HR estimation error, mood classification F1) to ensure the pretraining is effective.
+- **Model architecture:** A transformer or LSTM-based time series encoder that can take in sequences of health metrics. For instance, a sequence might include a day’s worth of hourly metrics or a multi-sensor time window. We may incorporate multiple input channels (HR, HRV, steps, etc.) via either concatenation or a multi-branch encoder that later fuses. The question “Do we need another transformer?” will be answered here by possibly fine-tuning an existing transformer (like HuggingFace’s `TSFuse` or similar) or training from scratch on our data – we will evaluate both. The likely approach is to initialize a transformer on one modality and extend it (given transformers excel at multi-modal with proper tokenization).
+- **Pretraining tasks:** e.g., **masking** (Mask and reconstruct certain values – like 15% of heart rate values – to make the model learn contextual fill-in, à la BERT), or **next-sequence prediction** (predict tomorrow’s metrics from past days), and **contrastive objectives** (e.g., distinguish aligned vs misaligned sensor streams from the same day). These tasks force the model to learn latent representations of sleep, activity, HR, etc.
+- **Supervised fine-tuning:** concurrently, we use known labels (sleep stages from DREAMT, mood from K-EmoPhone, MET from WEEE) to train specific heads of the model. For example, a classification head on the transformer outputs to predict sleep stage at each epoch (using DREAMT labels), or a regression head to predict stress level given physiological signals (using K-EmoPhone EMA). This multi-task learning will help the model not only fill in data but also align with actual health outcomes – effectively a “digital health foundation model.”
+- The pipeline will be orchestrated with PyTorch Lightning or similar, allowing us to easily add new datasets as they come. We’ll monitor validation performance on each task (e.g., sleep stage accuracy, HR estimation error, mood classification F1) to ensure the pretraining is effective.
 
 **5. Integration into Clarity Backend:** Once pretraining is done, the resulting model (or models) will be integrated as a service in our backend (e.g., a module that takes new user data and produces predictions/insights). We will write integration tests to confirm that a sample `HealthDataUpload` run through the model yields outputs within expected ranges (for instance, feeding a known pattern of high activity and seeing that the model raises `energy_level` and lowers `mood_score` appropriately if that pattern was learned). Pydantic models will be used to validate inputs/outputs at this stage too – ensuring the model’s output can be serialized back into our Firestore schema (e.g., an insight like “elevated fatigue risk” maps to a certain field).
 
 **6. Unit Tests & Coverage:** We will create comprehensive unit tests for each step above:
 
-* **Mapper tests:** e.g., take a small sample file from DREAMT and run `map_to_sleep_data()`, then assert that `SleepData.total_sleep_minutes` equals the expected sum and that invalid values raise errors.
-* **Preprocessing tests:** feed synthetic signals through filters and ensure no shape distortion and that known transformations (like a test PPG with known HR) yields correct computed HRV.
-* **Model tests:** use a tiny subset to run one training epoch and verify the loss decreases, and that the model can overfit a single batch (a sanity check). Also, after training, freeze the model and test deterministic output on known inputs.
-* **Integration tests:** simulate an end-to-end flow: ingest data -> produce Pydantic object -> run through model -> get an “insight” JSON. Verify the JSON conforms to our API schema (using Pydantic validation in tests) and values are within realistic bounds (no negative sleep minutes, etc.).
+- **Mapper tests:** e.g., take a small sample file from DREAMT and run `map_to_sleep_data()`, then assert that `SleepData.total_sleep_minutes` equals the expected sum and that invalid values raise errors.
+- **Preprocessing tests:** feed synthetic signals through filters and ensure no shape distortion and that known transformations (like a test PPG with known HR) yields correct computed HRV.
+- **Model tests:** use a tiny subset to run one training epoch and verify the loss decreases, and that the model can overfit a single batch (a sanity check). Also, after training, freeze the model and test deterministic output on known inputs.
+- **Integration tests:** simulate an end-to-end flow: ingest data -> produce Pydantic object -> run through model -> get an “insight” JSON. Verify the JSON conforms to our API schema (using Pydantic validation in tests) and values are within realistic bounds (no negative sleep minutes, etc.).
 
 By following this blueprint, each dataset enhances a part of our system: we maintain modular ingestion, a unified schema, and a robust training pipeline. This ensures new data can be added in the future with minimal changes (just new mapper + config entry for training), and our codebase remains maintainable with high test coverage (aiming for >70% on core data logic).
 
@@ -199,7 +199,7 @@ How to actually leverage them
  1. Start with #1 (All of Us):
 Spin up their Workbench, query Fitbit tables, export daily HR/sleep → feed straight into your existing ActivityProcessor & upcoming SleepProcessor.
  2. Layer in #2 (PAT raw):
-Fine-tune PAT on your own clinical labels (e.g., PHQ-9 buckets) — one mid-tier GPU, overnight. Drop the new weights in pat_service.py.
+Fine-tune PAT on your own clinical labels (e.g., PHQ-9 buckets) — one mid-tier GPU, overnight. Drop the new weights in PAT_service.py.
  3. Use #3 for external validity:
 Run the same inference pipeline on Biobank data; publish “wearable-only depression risk AUROC = X”. Gives you academic cred & investor buzz.
  4. Prototype stress/HRV features with #5, then #4:

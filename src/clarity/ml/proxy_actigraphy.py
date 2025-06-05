@@ -528,8 +528,8 @@ class ProxyActigraphyTransformer:
             completeness_score * QUALITY_WEIGHT_COMPLETENESS
             + variability_score * QUALITY_WEIGHT_VARIABILITY
             + realistic_score * QUALITY_WEIGHT_REALISTIC
-            + proxy_quality_score * QUALITY_WEIGHT_PROXY_SIGNAL
-            + padding_penalty * QUALITY_WEIGHT_PADDING
+            + float(proxy_quality_score) * QUALITY_WEIGHT_PROXY_SIGNAL
+            + float(padding_penalty) * QUALITY_WEIGHT_PADDING
         )
 
         return float(np.clip(quality_score, 0.0, 1.0))

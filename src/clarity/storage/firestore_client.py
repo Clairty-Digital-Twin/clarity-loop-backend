@@ -847,8 +847,8 @@ class FirestoreClient:
             if self._db:
                 try:
                     await self._db.close()  # type: ignore[no-untyped-call]
-                except Exception as e:
-                    logger.error("Error closing Firestore client: %s", e)
+                except Exception:
+                    logger.exception("Error closing Firestore client")
                 self._db = None
                 logger.info("Firestore client closed")
         except Exception:

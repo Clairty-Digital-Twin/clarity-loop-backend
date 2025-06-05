@@ -85,7 +85,9 @@ class MockCloudStorage(CloudStoragePort):
         }
         return f"gs://{bucket_name}/{blob_path}"
 
-    def get_raw_data_bucket_name(self) -> str:  # noqa: PLR6301 - Must be instance method to match CloudStoragePort
+    def get_raw_data_bucket_name(
+        self,
+    ) -> str:
         """Get the name of the raw data bucket."""
         return "clarity-raw-data-test"
 

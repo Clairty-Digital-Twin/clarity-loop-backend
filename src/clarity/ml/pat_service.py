@@ -975,9 +975,11 @@ _pat_service: PATModelService | None = None
 # Constants for error messages
 _INVALID_PAT_INSTANCE_MSG = "PATModelService() did not return a valid instance."
 
+
 def _raise_invalid_pat_instance_error() -> None:
     """Helper function to raise TypeError for invalid PATModelService instance."""
     raise TypeError(_INVALID_PAT_INSTANCE_MSG)
+
 
 async def get_pat_service() -> PATModelService:
     """Get or create the global PAT service instance."""
@@ -988,13 +990,15 @@ async def get_pat_service() -> PATModelService:
 
     logger.info("Initializing global PATModelService for the first time...")
     # Create a local instance first, then load, then assign to global
-    service_instance: PATModelService | None = None  # Ensure service_instance is defined before try
+    service_instance: PATModelService | None = (
+        None  # Ensure service_instance is defined before try
+    )
     try:
         service_instance = PATModelService()  # Default model_size="medium"
         # Ensure it's an instance before calling methods, for type checker's sake
         if not isinstance(service_instance, PATModelService):
             # This should ideally not happen if PATModelService constructor is typical
-            _raise_invalid_pat_instance_error() # Call helper function
+            _raise_invalid_pat_instance_error()  # Call helper function
 
         await service_instance.load_model()  # type: ignore[misc] # MyPy struggles with this line
 
@@ -1003,7 +1007,9 @@ async def get_pat_service() -> PATModelService:
             "Failed to initialize global PATModelService: %s", e, exc_info=True
         )
         # Critical failure, service cannot be provided. Re-raise to make it clear.
-        error_message = f"PATModelService could not be initialized and is unavailable: {e}"
+        error_message = (
+            f"PATModelService could not be initialized and is unavailable: {e}"
+        )
         raise RuntimeError(error_message) from e
     else:
         # This block executes if the try was successful (no exception)

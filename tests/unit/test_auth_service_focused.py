@@ -15,8 +15,8 @@ Each test is focused and targeted.
 
 from datetime import UTC, datetime, timedelta
 import logging
-from typing import Any, cast
-from unittest.mock import AsyncMock, MagicMock, Mock, patch
+from typing import Any
+from unittest.mock import Mock, patch
 import uuid
 from uuid import uuid4
 
@@ -95,6 +95,13 @@ class MockFirebaseUserRecord:
         self.email_verified = email_verified
 
 
+_MOCK_FIRESTORE_ERROR_MSG = "Mock Firestore error"
+_MOCK_AUTH_TOKEN_VERIFICATION_FAILED_MSG = "Token verification failed (mock error)"
+_MOCK_AUTH_INVALID_TOKEN_MSG = "Invalid token"
+_MOCK_AUTH_REVOKE_FAILED_MSG = "Failed to revoke refresh tokens (mock)"
+_MOCK_AUTH_TOKEN_CREATION_FAILED_MSG = "mock_token_creation_failed"
+
+
 class MockFirestoreClient:
     """Simplified mock Firestore client for focused auth tests."""
 
@@ -120,7 +127,7 @@ class MockFirestoreClient:
     ) -> dict[str, Any] | None:
         """Mock get document."""
         if self.error_on_next_call:
-            raise Exception("Mock Firestore error")
+            raise Exception(_MOCK_FIRESTORE_ERROR_MSG)
         return self.documents.get(f"{collection}/{doc_id}")
 
     async def update_document(
@@ -148,7 +155,7 @@ class MockFirestoreClient:
     ) -> list[dict[str, Any]]:
         """Mock query documents."""
         if self.error_on_next_call:
-            raise Exception("Mock Firestore error")
+            raise Exception(_MOCK_FIRESTORE_ERROR_MSG)
         return self.query_results
 
 
@@ -167,16 +174,15 @@ class MockAuthProvider(IAuthProvider):
         self.error_on_next_call: bool = False
 
     async def verify_token(self, token: str) -> dict[str, Any] | None:  # noqa: ARG002
-        """Mock verify token."""
+        """Mock verify token. IAuthProvider expects dict[str, str] but mock uses Any for flexibility."""
         if self.error_on_next_call:
-            raise AuthenticationError("Token verification failed (mock error)")
+            raise AuthenticationError(_MOCK_AUTH_TOKEN_VERIFICATION_FAILED_MSG)
         if self.should_fail:
-            msg = "Invalid token"
-            raise InvalidCredentialsError(msg)
+            raise InvalidCredentialsError(_MOCK_AUTH_INVALID_TOKEN_MSG)
         return {"uid": "test_user_id", "email": "test@example.com", "custom_claims": {}}
 
     async def get_user_info(self, user_id: str) -> dict[str, Any] | None:
-        """Mock get user info."""
+        """Mock get user info. IAuthProvider expects dict[str, str] but mock uses Any for flexibility."""
         if self.should_fail or self.error_on_next_call:
             return None
         return {
@@ -188,17 +194,17 @@ class MockAuthProvider(IAuthProvider):
         }
 
     async def create_custom_token(
-        self, uid: str, custom_claims: dict[str, Any] | None = None
+        self, uid: str, _custom_claims: dict[str, Any] | None = None
     ) -> str:
         """Mock create custom token."""
         if self.should_fail or self.error_on_next_call:
-            return "mock_token_creation_failed"
+            return _MOCK_AUTH_TOKEN_CREATION_FAILED_MSG
         return f"mock_custom_token_for_{uid}"
 
     async def revoke_refresh_tokens(self, user_id: str) -> None:
         """Mock revoke refresh tokens."""
         if self.should_fail or self.error_on_next_call:
-            raise AuthenticationError("Failed to revoke refresh tokens (mock)")
+            raise AuthenticationError(_MOCK_AUTH_REVOKE_FAILED_MSG)
         logger.info("Mock: Revoked refresh tokens for user %s", user_id)
 
 
@@ -210,10 +216,11 @@ class TestAuthenticationServiceRegistration(BaseServiceTestCase):
         super().setUp()
         self.mock_firestore = MockFirestoreClient()
         self.mock_auth_provider = MockAuthProvider()
-        self.service = AuthenticationService(
+        self.service: AuthenticationService = AuthenticationService(
             auth_provider=self.mock_auth_provider,
             firestore_client=self.mock_firestore,
         )
+        assert self.service is not None
 
     @patch("clarity.services.auth_service.auth")
     async def test_register_user_success(self, mock_auth: Mock) -> None:
@@ -311,10 +318,11 @@ class TestAuthenticationServiceLogin(BaseServiceTestCase):
         super().setUp()
         self.mock_firestore = MockFirestoreClient()
         self.mock_auth_provider = MockAuthProvider()
-        self.service = AuthenticationService(
+        self.service: AuthenticationService = AuthenticationService(
             auth_provider=self.mock_auth_provider,
             firestore_client=self.mock_firestore,
         )
+        assert self.service is not None
 
     @patch("clarity.services.auth_service.auth")
     async def test_login_user_success(self, mock_auth: Mock) -> None:
@@ -424,10 +432,11 @@ class TestAuthenticationServiceTokens(BaseServiceTestCase):
         super().setUp()
         self.mock_firestore = MockFirestoreClient()
         self.mock_auth_provider = MockAuthProvider()
-        self.service = AuthenticationService(
+        self.service: AuthenticationService = AuthenticationService(
             auth_provider=self.mock_auth_provider,
             firestore_client=self.mock_firestore,
         )
+        assert self.service is not None
 
     async def test_generate_tokens_regular(self) -> None:
         """Test token generation with regular expiry."""
@@ -526,10 +535,11 @@ class TestAuthenticationServiceLogout(BaseServiceTestCase):
         super().setUp()
         self.mock_firestore = MockFirestoreClient()
         self.mock_auth_provider = MockAuthProvider()
-        self.service = AuthenticationService(
+        self.service: AuthenticationService = AuthenticationService(
             auth_provider=self.mock_auth_provider,
             firestore_client=self.mock_firestore,
         )
+        assert self.service is not None
 
     async def test_logout_user_success(self) -> None:
         """Test successful user logout."""
@@ -585,10 +595,11 @@ class TestAuthenticationServiceUtilities(BaseServiceTestCase):
         super().setUp()
         self.mock_firestore = MockFirestoreClient()
         self.mock_auth_provider = MockAuthProvider()
-        self.service = AuthenticationService(
+        self.service: AuthenticationService = AuthenticationService(
             auth_provider=self.mock_auth_provider,
             firestore_client=self.mock_firestore,
         )
+        assert self.service is not None
 
     @patch("clarity.services.auth_service.auth")
     async def test_get_user_by_id_success(self, mock_auth: Mock) -> None:

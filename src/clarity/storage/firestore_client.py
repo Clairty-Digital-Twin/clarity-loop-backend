@@ -24,10 +24,10 @@ from typing import Any
 import uuid
 from uuid import UUID
 
-import firebase_admin  # type: ignore[import-untyped]
-from firebase_admin import credentials  # type: ignore[import-untyped]
-from google.cloud import firestore_v1 as firestore  # type: ignore[import-untyped]
-from google.cloud.exceptions import NotFound  # type: ignore[import-untyped]
+import firebase_admin
+from firebase_admin import credentials
+from google.cloud import firestore_v1 as firestore
+from google.cloud.exceptions import NotFound
 
 from clarity.core.interfaces import IHealthDataRepository
 from clarity.models.health_data import HealthDataUpload, ProcessingStatus
@@ -115,13 +115,13 @@ class FirestoreClient:
     def _init_firebase(self, credentials_path: str | None = None) -> None:
         """Initialize Firebase Admin SDK with error handling."""
         try:
-            if not firebase_admin._apps:  # type: ignore[misc]  # noqa: SLF001
+            if not firebase_admin._apps:  # noqa: SLF001
                 if credentials_path:
-                    cred = credentials.Certificate(credentials_path)  # type: ignore[misc]
-                    firebase_admin.initialize_app(cred, {"projectId": self.project_id})  # type: ignore[misc]
+                    cred = credentials.Certificate(credentials_path)
+                    firebase_admin.initialize_app(cred, {"projectId": self.project_id})
                 else:
                     # Use default credentials (ADC)
-                    firebase_admin.initialize_app()  # type: ignore[misc]
+                    firebase_admin.initialize_app()
                 logger.info("Firebase Admin SDK initialized successfully")
             else:
                 logger.info("Firebase Admin SDK already initialized")
@@ -137,7 +137,7 @@ class FirestoreClient:
             async with self._connection_lock:
                 if self._db is None:
                     try:
-                        self._db = firestore.AsyncClient(  # type: ignore[misc]
+                        self._db = firestore.AsyncClient(
                             project=self.project_id, database=self.database_name
                         )
                         logger.info("Async Firestore client created")
@@ -206,7 +206,7 @@ class FirestoreClient:
                 "source": "firestore_client",
             }
 
-            await db.collection(self.collections["audit_logs"]).add(audit_entry)  # type: ignore[misc,unknown-member]
+            await db.collection(self.collections["audit_logs"]).add(audit_entry)
             logger.debug(
                 "Audit log created: %s on %s/%s", operation, collection, document_id
             )
@@ -251,11 +251,11 @@ class FirestoreClient:
 
             if document_id:
                 doc_ref = db.collection(collection).document(document_id)
-                await doc_ref.set(data)  # type: ignore[misc]
+                await doc_ref.set(data)
                 created_id = document_id
             else:
                 doc_ref = db.collection(collection).document()
-                await doc_ref.set(data)  # type: ignore[misc]
+                await doc_ref.set(data)
                 created_id = doc_ref.id
 
             # Cache the document
@@ -310,7 +310,7 @@ class FirestoreClient:
 
             db = await self._get_db()
             doc_ref = db.collection(collection).document(document_id)
-            doc = await doc_ref.get()  # type: ignore[misc]
+            doc = await doc_ref.get()
 
             if not doc.exists:
                 logger.warning("Document not found: %s/%s", collection, document_id)
@@ -364,9 +364,9 @@ class FirestoreClient:
             doc_ref = db.collection(collection).document(document_id)
 
             if merge:
-                await doc_ref.update(data)  # type: ignore[misc]
+                await doc_ref.update(data)
             else:
-                await doc_ref.set(data)  # type: ignore[misc]
+                await doc_ref.set(data)
 
             # Clear cache
             cache_key = self._cache_key(collection, document_id)
@@ -642,7 +642,7 @@ class FirestoreClient:
         """
         try:
             db = await self._get_db()
-            query: Any = db.collection(
+            query = db.collection(
                 collection
             )  # Start as collection reference, becomes AsyncQuery after filters
 
@@ -708,7 +708,7 @@ class FirestoreClient:
         """
         try:
             db = await self._get_db()
-            query: Any = db.collection(collection)
+            query = db.collection(collection)
 
             # Apply filters
             if filters:
@@ -748,7 +748,7 @@ class FirestoreClient:
         """
         try:
             db = await self._get_db()
-            query: Any = db.collection(collection)
+            query = db.collection(collection)
 
             # Apply filters
             for filter_dict in filters:
@@ -759,19 +759,18 @@ class FirestoreClient:
                     query = query.where(field, op, value)
 
             # Get documents to delete
-            # type: ignore[misc]
-            batch_docs = [doc async for doc in query.stream()]  # type: ignore[misc]
+            batch_docs = [doc async for doc in query.stream()]
 
-            if len(batch_docs) == 0:  # type: ignore[arg-type]
+            if len(batch_docs) == 0:
                 return 0
 
             batch = db.batch()
-            for doc in batch_docs:  # type: ignore[misc]
-                doc_ref = doc.reference  # type: ignore[misc]
-                batch.delete(doc_ref)  # type: ignore[misc,arg-type]
+            for doc in batch_docs:
+                doc_ref = doc.reference
+                batch.delete(doc_ref)
 
-            await batch.commit()  # type: ignore[misc]
-            deleted_count = len(batch_docs)  # type: ignore[arg-type]
+            await batch.commit()
+            deleted_count = len(batch_docs)
 
             await self._audit_log(
                 operation="delete_documents",
@@ -812,9 +811,9 @@ class FirestoreClient:
                     data = {k: v for k, v in doc_data.items() if k != "id"}
 
                     doc_ref = db.collection(collection).document(doc_id)
-                    batch.set(doc_ref, data)  # type: ignore[misc]
+                    batch.set(doc_ref, data)
 
-                await batch.commit()  # type: ignore[misc]
+                await batch.commit()
 
             await self._audit_log(
                 operation="batch_create_documents",
@@ -838,7 +837,7 @@ class FirestoreClient:
         try:
             yield batch
         finally:
-            await batch.commit()  # type: ignore[misc]
+            await batch.commit()
 
     # Cleanup and Resource Management
 
@@ -846,7 +845,7 @@ class FirestoreClient:
         """Close the Firestore client and clean up resources."""
         try:
             if self._db:
-                await self._db.close()  # type: ignore[no-untyped-call]
+                await self._db.close()
                 self._db = None
                 logger.info("Firestore client closed")
         except Exception:
@@ -863,7 +862,7 @@ class FirestoreClient:
 
             # Test connection with a simple read
             test_doc = db.collection("__health_check__").document("test")
-            await test_doc.get()  # type: ignore[misc]
+            await test_doc.get()
 
             return {
                 "status": "healthy",

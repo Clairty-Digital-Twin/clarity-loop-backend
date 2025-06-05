@@ -438,16 +438,16 @@ class TestUserLogin:
         }
         auth_service.firestore_client.get_document.return_value = user_data
 
-        # Simulate failure in token generation via the auth_provider mock (which is a MagicMock from auth_service fixture)
-        # IAuthProvider.create_custom_token raises an AuthenticationError or its subclass on failure.
-        auth_service.auth_provider.create_custom_token = AsyncMock(
-            side_effect=AuthenticationError("Token creation failed by provider")
-        )
+        # Simulate failure in token generation by patching secrets.token_urlsafe
+        # The original attempt to mock auth_service.auth_provider.create_custom_token was ineffective
+        # as _generate_tokens does not call it.
+        with patch("clarity.services.auth_service.secrets.token_urlsafe") as mock_token_urlsafe:
+            mock_token_urlsafe.side_effect = Exception("Token creation failed by provider")
 
-        with pytest.raises(
-            AuthenticationError, match="Login failed: Token creation failed by provider"
-        ):
-            await auth_service.login_user(sample_login_request, device_info=None)
+            with pytest.raises(
+                AuthenticationError, match="Login failed: Token creation failed by provider"
+            ):
+                await auth_service.login_user(sample_login_request, device_info=None)
 
     @staticmethod
     @patch("clarity.services.auth_service.auth")

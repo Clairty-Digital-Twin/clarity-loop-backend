@@ -2,6 +2,7 @@
 
 from collections import defaultdict
 from datetime import UTC, datetime, timedelta
+import functools
 import json
 import logging
 import time
@@ -182,7 +183,7 @@ class _TestConnectionManager:
             len(self.active_websockets),
         )
 
-    async def send_to_connection(self, websocket: WebSocket, message: object) -> None:
+    async def send_to_connection(self, websocket: WebSocket, message: Any) -> None:
         logger.info("Attempting to send message to connection: %s", message)
 
         if websocket not in self.connection_info:
@@ -208,7 +209,7 @@ class _TestConnectionManager:
 
         logger.info("Recorded direct message send to %s", websocket)
 
-    async def send_to_user(self, user_id: str, message: object) -> None:
+    async def send_to_user(self, user_id: str, message: Any) -> None:
         """Send a message to all active connections for a given user."""
         logger.info("Attempting to send message to user %s: %s", user_id, message)
 
@@ -257,7 +258,7 @@ class _TestConnectionManager:
     async def broadcast_to_room(
         self,
         room_id: str,
-        message: object,
+        message: Any,
         exclude_websocket: WebSocket | None = None,
     ) -> None:
         logger.info("Attempting to broadcast message to room %s: %s", room_id, message)
@@ -382,23 +383,28 @@ def create_mock_connection_manager() -> _TestConnectionManager:
     return _TestConnectionManager()
 
 
-def mock_get_current_user_websocket(token: str) -> User:
+def mock_get_current_user_websocket(
+    token: str, test_env_credentials: dict[str, str]
+) -> User:
     """Mock for get_current_user_websocket dependency."""
-    if token == "test-token":  # noqa: S105
+    if token == test_env_credentials["mock_access_token"]:
         return User(
             uid="test-user-123",
             email="test@example.com",
             display_name="Test User",
-            firebase_token="mock-firebase-token",  # noqa: S106
+            firebase_token=test_env_credentials["mock_firebase_token"],
             created_at=datetime.now(UTC),
             last_login=datetime.now(UTC),
+            firebase_token_exp=(datetime.now(UTC) + timedelta(hours=1)).timestamp(),
             profile={},
         )
     raise HTTPException(status_code=401, detail="Could not validate credentials")
 
 
 @pytest.fixture
-def app(monkeypatch: pytest.MonkeyPatch) -> FastAPI:  # noqa: ARG001
+def app(
+    monkeypatch: pytest.MonkeyPatch, test_env_credentials: dict[str, str]
+) -> FastAPI:
     # This fixture should return a FastAPI app instance configured for testing.
     # It needs to override dependencies to use our mocks.
     app = FastAPI()
@@ -407,15 +413,18 @@ def app(monkeypatch: pytest.MonkeyPatch) -> FastAPI:  # noqa: ARG001
     app.include_router(chat_handler.router, prefix="/api/v1")
 
     # Override dependencies for testing
-    app.dependency_overrides[get_current_user_websocket] = (
-        mock_get_current_user_websocket
+    # Create a partial function with test_env_credentials pre-filled
+    mock_auth_dependency = functools.partial(
+        mock_get_current_user_websocket, test_env_credentials=test_env_credentials
     )
+    app.dependency_overrides[get_current_user_websocket] = mock_auth_dependency
+
     # Create properly mocked GeminiService
     mock_gemini = Mock(spec=GeminiService)
 
     # Create a proper mock response
     async def mock_generate_insights(  # noqa: RUF029
-        request: object,
+        request: Any,
     ) -> object:
         response = MagicMock()
         response.narrative = f"AI Response to: {request.context}"
@@ -472,10 +481,10 @@ class MockWebSocket:
 @pytest.mark.asyncio
 class TestWebSocketEndpoints:
     async def test_websocket_chat_endpoint_authenticated(  # noqa: PLR6301
-        self, client: TestClient
+        self, client: TestClient, test_env_credentials: dict[str, str]
     ) -> None:
         user_id = "test-user-123"
-        test_token = "test-token"  # noqa: S105
+        test_token = test_env_credentials["mock_access_token"]
 
         with client.websocket_connect(
             f"/api/v1/chat/{user_id}?token={test_token}"
@@ -503,7 +512,7 @@ class TestWebSocketEndpoints:
                 timestamp=datetime.now(UTC),
                 is_typing=True,
                 type=MessageType.TYPING,
-                username="test-user",
+                username=test_env_credentials["default_username"],
             )
             websocket.send_json(typing_indicator.model_dump(mode="json"))
 
@@ -534,9 +543,11 @@ class TestWebSocketEndpoints:
         assert excinfo.value.code == 1008  # Policy Violation
 
     @staticmethod
-    async def test_websocket_invalid_message_format(client: TestClient) -> None:
+    async def test_websocket_invalid_message_format(
+        client: TestClient, test_env_credentials: dict[str, str]
+    ) -> None:
         user_id = "test-user-123"
-        test_token = "test-token"  # noqa: S105
+        test_token = test_env_credentials["mock_access_token"]
 
         with client.websocket_connect(
             f"/api/v1/chat/{user_id}?token={test_token}"
@@ -549,9 +560,11 @@ class TestWebSocketEndpoints:
             assert "Invalid JSON format" in response_data["message"]
 
     @staticmethod
-    async def test_websocket_typing_indicator(client: TestClient) -> None:
+    async def test_websocket_typing_indicator(
+        client: TestClient, test_env_credentials: dict[str, str]
+    ) -> None:
         user_id = "test-user-123"
-        test_token = "test-token"  # noqa: S105
+        test_token = test_env_credentials["mock_access_token"]
 
         with client.websocket_connect(
             f"/api/v1/chat/{user_id}?token={test_token}"
@@ -559,7 +572,7 @@ class TestWebSocketEndpoints:
             # Send a typing indicator message
             typing_message = TypingMessage(
                 user_id=user_id,
-                username="test-user",
+                username=test_env_credentials["default_username"],
                 timestamp=datetime.now(UTC),
                 is_typing=True,
                 type=MessageType.TYPING,
@@ -583,23 +596,25 @@ class TestWebSocketEndpoints:
             assert response_data["is_typing"] is False
 
     @staticmethod
-    async def test_health_insight_generation(client: TestClient, app: FastAPI) -> None:
+    async def test_health_insight_generation(
+        client: TestClient, app: FastAPI, test_env_credentials: dict[str, str]
+    ) -> None:
         user_id = "test-user-123"  # Must match the user ID from mock_get_current_user_websocket
-        test_token = "test-token"  # noqa: S105
+        test_token = test_env_credentials["mock_access_token"]
 
         # Mock the external services for this specific test
         mock_gemini_service = Mock(spec=GeminiService)
 
         # Create a proper mock response
-        async def mock_generate_insights(  # noqa: RUF029
-            request: object,
+        async def mock_generate_insights_test(  # noqa: RUF029 # Renamed to avoid conflict
+            request: Any,  # MODIFIED from object
         ) -> object:
             response = MagicMock()
             response.narrative = f"AI Response to: {request.context}"
             return response
 
         mock_gemini_service.generate_health_insights = AsyncMock(
-            side_effect=mock_generate_insights
+            side_effect=mock_generate_insights_test  # MODIFIED
         )
         mock_pat_model_service = Mock(spec=PATModelService)
         # Mock the actual method used by the chat handler
@@ -699,10 +714,10 @@ class TestWebSocketEndpoints:
 
     @staticmethod
     async def test_typing_indicator_processing(
-        client: TestClient, app: FastAPI
+        client: TestClient, app: FastAPI, test_env_credentials: dict[str, str]
     ) -> None:
         user_id = "test-user-123"  # Must match the user ID from mock_get_current_user_websocket
-        test_token = "test-token"  # noqa: S105
+        test_token = test_env_credentials["mock_access_token"]
 
         # Mock the external services for this specific test
         mock_gemini_service = Mock(spec=GeminiService)
@@ -744,7 +759,7 @@ class TestWebSocketEndpoints:
             # Send a typing indicator message
             typing_message = TypingMessage(
                 user_id=user_id,
-                username="test-user",
+                username=test_env_credentials["default_username"],
                 timestamp=datetime.now(UTC),
                 is_typing=True,
                 type=MessageType.TYPING,
@@ -795,9 +810,11 @@ class TestWebSocketEndpoints:
             del app.dependency_overrides[get_connection_manager]
 
     @staticmethod
-    async def test_heartbeat_processing(client: TestClient, app: FastAPI) -> None:
+    async def test_heartbeat_processing(
+        client: TestClient, app: FastAPI, test_env_credentials: dict[str, str]
+    ) -> None:
         user_id = "test-user-123"  # Must match the user ID from mock_get_current_user_websocket
-        test_token = "test-token"  # noqa: S105
+        test_token = test_env_credentials["mock_access_token"]
 
         # Mock the external services for this specific test
         mock_gemini_service = Mock(spec=GeminiService)

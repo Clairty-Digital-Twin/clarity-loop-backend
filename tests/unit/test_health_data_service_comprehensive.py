@@ -32,7 +32,9 @@ from clarity.models.health_data import (
     HealthMetric,
     HealthMetricType,
     MentalHealthIndicator,
+    MoodScale,
     SleepData,
+    SleepStage,
 )
 from clarity.ports.data_ports import IHealthDataRepository
 from clarity.ports.storage import CloudStoragePort
@@ -83,8 +85,7 @@ class MockCloudStorage(CloudStoragePort):
         }
         return f"gs://{bucket_name}/{blob_path}"
 
-    @staticmethod
-    def get_raw_data_bucket_name() -> str:
+    def get_raw_data_bucket_name(self) -> str:
         """Get the name of the raw data bucket."""
         return "clarity-raw-data-test"
 
@@ -259,7 +260,9 @@ class TestHealthDataServiceGCSIntegration(BaseServiceTestCase):
         )
 
     @staticmethod
-    def _create_comprehensive_health_upload() -> HealthDataUpload:
+    def _create_comprehensive_health_upload(
+        test_env_credentials: dict[str, str],
+    ) -> HealthDataUpload:
         """Create health upload with multiple data types."""
         user_id = uuid4()
 
@@ -284,6 +287,7 @@ class TestHealthDataServiceGCSIntegration(BaseServiceTestCase):
             flights_climbed=10,
             active_minutes=60,
             resting_heart_rate=65.0,
+            vo2_max=35.5,
         )
 
         # Sleep metric
@@ -299,6 +303,12 @@ class TestHealthDataServiceGCSIntegration(BaseServiceTestCase):
             wake_count=3,
             sleep_start=sleep_start,
             sleep_end=sleep_end,
+            sleep_stages={
+                SleepStage.DEEP: 120,
+                SleepStage.LIGHT: 240,
+                SleepStage.REM: 90,
+                SleepStage.AWAKE: 30,
+            },
         )
 
         # Mental health metric
@@ -307,28 +317,49 @@ class TestHealthDataServiceGCSIntegration(BaseServiceTestCase):
             anxiety_level=2.0,
             energy_level=8.0,
             focus_rating=7.0,
+            mood_score=MoodScale.GOOD,
+            social_interaction_minutes=60,
+            meditation_minutes=15,
+            notes="Feeling positive.",
+            timestamp=datetime.now(UTC),
         )
 
         metrics = [
             HealthMetric(
+                metric_id=uuid4(),
                 metric_type=HealthMetricType.HEART_RATE,
                 biometric_data=biometric_data,
                 device_id="apple_watch_series_8",
+                raw_data={"source": "test_hr"},
+                metadata={"accuracy": "high"},
+                created_at=datetime.now(UTC),
             ),
             HealthMetric(
+                metric_id=uuid4(),
                 metric_type=HealthMetricType.ACTIVITY_LEVEL,
                 activity_data=activity_data,
                 device_id="apple_watch_series_8",
+                raw_data={"source": "test_activity"},
+                metadata={"collection_method": "automatic"},
+                created_at=datetime.now(UTC),
             ),
             HealthMetric(
+                metric_id=uuid4(),
                 metric_type=HealthMetricType.SLEEP_ANALYSIS,
                 sleep_data=sleep_data,
                 device_id="apple_watch_series_8",
+                raw_data={"source": "test_sleep"},
+                metadata={"algorithm_version": "v2"},
+                created_at=datetime.now(UTC),
             ),
             HealthMetric(
+                metric_id=uuid4(),
                 metric_type=HealthMetricType.MOOD_ASSESSMENT,
                 mental_health_data=mental_health_data,
                 device_id="iphone_14_pro",
+                raw_data={"source": "test_mood"},
+                metadata={"survey_name": "daily_check_in"},
+                created_at=datetime.now(UTC),
             ),
         ]
 
@@ -337,17 +368,19 @@ class TestHealthDataServiceGCSIntegration(BaseServiceTestCase):
             metrics=metrics,
             upload_source="apple_health",
             client_timestamp=datetime.now(UTC),
-            sync_token="test_token_12345",  # noqa: S106
+            sync_token=test_env_credentials["mock_sync_token"],
         )
 
     @patch.dict(os.environ, {"HEALTHKIT_RAW_BUCKET": "test-bucket"})
     @pytest.mark.asyncio
-    async def test_upload_raw_data_to_gcs_success(self) -> None:
+    async def test_upload_raw_data_to_gcs_success(
+        self, test_env_credentials: dict[str, str]
+    ) -> None:
         """Test successful GCS upload of raw health data."""
         # Arrange
         user_id = str(uuid4())
         processing_id = str(uuid4())
-        health_data = self._create_comprehensive_health_upload()
+        health_data = self._create_comprehensive_health_upload(test_env_credentials)
 
         # Act
         gcs_path = await self.service._upload_raw_data_to_gcs(
@@ -371,7 +404,7 @@ class TestHealthDataServiceGCSIntegration(BaseServiceTestCase):
         assert data["user_id"] == str(health_data.user_id)
         assert data["processing_id"] == processing_id
         assert data["upload_source"] == "apple_health"
-        assert data["sync_token"] == "test_token_12345"  # noqa: S105
+        assert data["sync_token"] == test_env_credentials["mock_sync_token"]
         assert data["metrics_count"] == 4
         assert len(data["metrics"]) == 4
 
@@ -382,12 +415,14 @@ class TestHealthDataServiceGCSIntegration(BaseServiceTestCase):
         assert heart_rate_metric["biometric_data"]["heart_rate"] == 72
 
     @pytest.mark.asyncio
-    async def test_upload_raw_data_to_gcs_failure(self) -> None:
+    async def test_upload_raw_data_to_gcs_failure(
+        self, test_env_credentials: dict[str, str]
+    ) -> None:
         """Test GCS upload failure handling."""
         # Arrange
         user_id = str(uuid4())
         processing_id = str(uuid4())
-        health_data = self._create_comprehensive_health_upload()
+        health_data = self._create_comprehensive_health_upload(test_env_credentials)
         self.mock_cloud_storage.should_fail = True
 
         # Act & Assert
@@ -410,16 +445,22 @@ class TestHealthDataServiceValidation(BaseServiceTestCase):
         )
 
     @pytest.mark.asyncio
-    async def test_process_health_data_validation_errors(self) -> None:
+    async def test_process_health_data_validation_errors(
+        self, test_env_credentials: dict[str, str]
+    ) -> None:
         """Test health data processing with validation errors."""
         # Arrange - Create invalid health metric
         user_id = uuid4()
 
         # Create metric with missing required fields
         invalid_metric = HealthMetric(
-            metric_type=None,  # Invalid: missing metric type
+            metric_id=uuid4(),
+            metric_type=HealthMetricType.HEART_RATE,
             biometric_data=None,
             device_id=None,
+            raw_data=None,
+            metadata=None,
+            created_at=datetime.now(UTC),
         )
 
         health_upload = HealthDataUpload(
@@ -427,6 +468,7 @@ class TestHealthDataServiceValidation(BaseServiceTestCase):
             metrics=[invalid_metric],
             upload_source="test_source",
             client_timestamp=datetime.now(UTC),
+            sync_token=test_env_credentials["mock_sync_token"],
         )
 
         # Act & Assert
@@ -448,9 +490,13 @@ class TestHealthDataServiceValidation(BaseServiceTestCase):
         )
 
         metric = HealthMetric(
+            metric_id=uuid4(),
             metric_type=HealthMetricType.HEART_RATE,
             biometric_data=biometric_data,
             device_id="test_device",
+            raw_data={"test": "data"},
+            metadata={"test": "meta"},
+            created_at=datetime.now(UTC),
         )
 
         # Act
@@ -474,9 +520,13 @@ class TestHealthDataServiceValidation(BaseServiceTestCase):
         )
 
         metric = HealthMetric(
+            metric_id=uuid4(),
             metric_type=HealthMetricType.BLOOD_PRESSURE,
             biometric_data=biometric_data,
             device_id="test_device",
+            raw_data={"test": "data"},
+            metadata={"test": "meta"},
+            created_at=datetime.now(UTC),
         )
 
         # Act
@@ -500,12 +550,22 @@ class TestHealthDataServiceValidation(BaseServiceTestCase):
             wake_count=3,
             sleep_start=sleep_start,
             sleep_end=sleep_end,
+            sleep_stages={
+                SleepStage.DEEP: 120,
+                SleepStage.LIGHT: 240,
+                SleepStage.REM: 90,
+                SleepStage.AWAKE: 30,
+            },
         )
 
         metric = HealthMetric(
+            metric_id=uuid4(),
             metric_type=HealthMetricType.SLEEP_ANALYSIS,
             sleep_data=sleep_data,
             device_id="test_device",
+            raw_data={"test": "data"},
+            metadata={"test": "meta"},
+            created_at=datetime.now(UTC),
         )
 
         # Act
@@ -525,12 +585,17 @@ class TestHealthDataServiceValidation(BaseServiceTestCase):
             flights_climbed=10,
             active_minutes=60,
             resting_heart_rate=65.0,
+            vo2_max=35.5,
         )
 
         metric = HealthMetric(
+            metric_id=uuid4(),
             metric_type=HealthMetricType.ACTIVITY_LEVEL,
             activity_data=activity_data,
             device_id="test_device",
+            raw_data={"test": "data"},
+            metadata={"test": "meta"},
+            created_at=datetime.now(UTC),
         )
 
         # Act
@@ -547,12 +612,21 @@ class TestHealthDataServiceValidation(BaseServiceTestCase):
             anxiety_level=2.0,
             energy_level=8.0,
             focus_rating=7.0,
+            mood_score=MoodScale.GOOD,
+            social_interaction_minutes=60,
+            meditation_minutes=15,
+            notes="Feeling positive.",
+            timestamp=datetime.now(UTC),
         )
 
         metric = HealthMetric(
+            metric_id=uuid4(),
             metric_type=HealthMetricType.MOOD_ASSESSMENT,
             mental_health_data=mental_health_data,
             device_id="test_device",
+            raw_data={"test": "data"},
+            metadata={"test": "meta"},
+            created_at=datetime.now(UTC),
         )
 
         # Act
@@ -568,9 +642,13 @@ class TestHealthDataServiceValidation(BaseServiceTestCase):
         try:
             # This should fail at creation due to pydantic validation
             metric = HealthMetric(
+                metric_id=uuid4(),
                 metric_type=HealthMetricType.HEART_RATE,
                 biometric_data=None,  # Missing required data
                 device_id="test_device",
+                raw_data={"test": "data"},
+                metadata={"test": "meta"},
+                created_at=datetime.now(UTC),
             )
             # If it somehow gets created, validation should still fail
             result = self.service._validate_metric_business_rules(metric)
@@ -684,7 +762,9 @@ class TestHealthDataServiceEdgeCases(BaseServiceTestCase):
         )
 
     @pytest.mark.asyncio
-    async def test_process_health_data_empty_metrics(self) -> None:
+    async def test_process_health_data_empty_metrics(
+        self, test_env_credentials: dict[str, str]
+    ) -> None:
         """Test processing health data with empty metrics list."""
         # Arrange
         user_id = uuid4()
@@ -693,6 +773,7 @@ class TestHealthDataServiceEdgeCases(BaseServiceTestCase):
             metrics=[],  # Empty metrics
             upload_source="test_source",
             client_timestamp=datetime.now(UTC),
+            sync_token=test_env_credentials["mock_sync_token"],
         )
 
         # Act

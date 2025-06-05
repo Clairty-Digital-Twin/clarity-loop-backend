@@ -971,28 +971,36 @@ async def get_pat_service() -> PATModelService:
     global _pat_service  # noqa: PLW0603
 
     if _pat_service is None:
-        # Instantiate first, then load, then assign to global
-        # This ensures that if __init__ or load_model fails,
-        # _pat_service remains None or its previous valid state (if any).
+        logger.info("Attempting to initialize global PATModelService...")
         try:
-            new_service_instance = PATModelService()  # Default model_size="medium"
-            await new_service_instance.load_model()
-            _pat_service = new_service_instance
-            logger.info("Global PATModelService initialized and model loaded.")
+            # Create a local instance first
+            service_instance = PATModelService()  # Default model_size="medium"
+            await service_instance.load_model()  # Load model for the instance
+            _pat_service = (
+                service_instance  # Assign to global only after successful init and load
+            )
+            logger.info(
+                "Global PATModelService initialized and model loaded successfully."
+            )
         except Exception as e:
             logger.critical(
                 f"Failed to initialize global PATModelService: {e}", exc_info=True
             )
-            # Depending on desired behavior, could re-raise or return a dummy/fallback service
-            # For now, if it fails, _pat_service remains None, and subsequent calls will retry.
-            # Or, re-raise to make the failure explicit:
-            raise RuntimeError(f"Failed to initialize PATModelService: {e}") from e
+            # Re-raise as a clear RuntimeError indicating service unavailability
+            raise RuntimeError(f"PATModelService could not be initialized: {e}") from e
 
-    if (
-        _pat_service is None
-    ):  # Check again in case initialization failed above and we didn't re-raise
-        # This path should ideally not be hit if the above try-except re-raises.
-        # Adding an explicit raise here to make it clear that the service is unavailable.
-        raise RuntimeError("PATModelService could not be initialized.")
+    # At this point, if _pat_service was None, initialization was attempted.
+    # If it's still None here, it means initialization failed and an error should have been raised.
+    # So, we can assert/type-check that _pat_service is now a PATModelService instance.
+    # However, for robust return, directly returning _pat_service relies on the above logic ensuring it's valid.
+    if _pat_service is None:
+        # This should theoretically not be reached if the above exception is always raised on failure.
+        # Adding for safety / to make MyPy potentially happier about a definite return type path.
+        logger.error(
+            "Critical state: _pat_service is None after initialization attempt and no exception was propagated."
+        )
+        raise RuntimeError(
+            "PATModelService is unexpectedly None after initialization logic."
+        )
 
     return _pat_service

@@ -406,9 +406,7 @@ def mock_get_current_user_websocket(
 
 
 @pytest.fixture
-def app(
-    test_env_credentials: dict[str, str]
-) -> FastAPI:
+def app(test_env_credentials: dict[str, str]) -> FastAPI:
     # This fixture should return a FastAPI app instance configured for testing.
     # It needs to override dependencies to use our mocks.
     app = FastAPI()

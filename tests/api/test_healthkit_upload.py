@@ -57,7 +57,7 @@ class TestHealthKitModels:
 
     @staticmethod
     def test_upload_request_creation(
-        test_env_credentials: dict[str, str]
+        test_env_credentials: dict[str, str],
     ) -> None:  # MODIFIED, noqa: PLR6301
         """Test HealthKitUploadRequest model creation."""
         request = HealthKitUploadRequest(
@@ -104,7 +104,7 @@ class TestHealthKitUploadEndpoint:
     @pytest.fixture
     @staticmethod
     def sample_upload_request(
-        test_env_credentials: dict[str, str]
+        test_env_credentials: dict[str, str],
     ) -> HealthKitUploadRequest:  # MODIFIED, noqa: PLR6301
         """Create a sample upload request for testing."""
         return HealthKitUploadRequest(
@@ -309,7 +309,7 @@ class TestHealthKitUploadIntegration:
 
     def test_router_endpoints(self) -> None:  # noqa: PLR6301
         """Test that router has expected endpoints."""
-        routes = [getattr(route, "path") for route in router.routes]
+        routes = [route.path for route in router.routes]
         # Routes include the full prefix path
         assert any("upload" in route for route in routes)
         assert any("status" in route for route in routes)

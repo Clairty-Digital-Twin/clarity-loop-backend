@@ -362,14 +362,11 @@ class FirebaseAuthProvider(IAuthProvider):
         if not self._initialized:
             await self.initialize()
 
-        self._remove_expired_tokens()  # Always try to remove expired tokens first
+        self._remove_expired_tokens() # Always try to remove expired tokens first
 
         # Check cache first if enabled
         if self.cache_is_enabled and token in self._token_cache:
             # Item is in cache and not expired (since _remove_expired_tokens was called)
-            # Update its timestamp to mark it as recently used if implementing LRU behavior on top.
-            # For now, just return it.
-            # self._token_cache[token]["timestamp"] = time.time() # Optional: Update timestamp for LRU
             return self._token_cache[token]["user_data"]
 
         try:
@@ -382,7 +379,7 @@ class FirebaseAuthProvider(IAuthProvider):
                 firebase_token=token,
                 firebase_token_exp=decoded_token.get("exp"),
                 created_at=(
-                    datetime.fromtimestamp(decoded_token.get("auth_time"))
+                    datetime.fromtimestamp(decoded_token.get("auth_time"), tz=datetime.UTC)
                     if decoded_token.get("auth_time")
                     else None
                 ),
@@ -392,17 +389,9 @@ class FirebaseAuthProvider(IAuthProvider):
             user_data_dict = user_model_instance.model_dump()
 
             if self.cache_is_enabled:
-                # Ensure there's space if the cache is at or over its limit
                 if len(self._token_cache) >= self._token_cache_max_size:
-                    # Need to make space for 1 new item, so target max_size - 1 before adding
-                    self._evict_oldest_to_target_count(
-                        target_count=self._token_cache_max_size - 1
-                    )
-
-                self._token_cache[token] = {
-                    "user_data": user_data_dict,
-                    "timestamp": time.time(),
-                }
+                    self._evict_oldest_to_target_count(target_count=self._token_cache_max_size - 1)
+                self._token_cache[token] = {"user_data": user_data_dict, "timestamp": time.time()}
             return user_data_dict
         except firebase_auth.RevokedIdTokenError:
             logger.warning("Revoked Firebase ID token received: %s", token[:20] + "...")
@@ -415,8 +404,8 @@ class FirebaseAuthProvider(IAuthProvider):
         except firebase_auth.InvalidIdTokenError:
             logger.warning("Invalid Firebase ID token: %s", token[:20] + "...")
             return None
-        except Exception as e:
-            logger.exception("Error verifying Firebase token: %s", e)
+        except Exception: # Keep broad for unknown Firebase/network issues, but log with exc_info
+            logger.exception("Error verifying Firebase token")
             return None
 
     async def create_user(self, user_data: dict[str, Any]) -> User:
@@ -432,20 +421,18 @@ class FirebaseAuthProvider(IAuthProvider):
             await self.initialize()
         try:
             user_record = firebase_auth.create_user(**user_data)
-            # Convert UserRecord to your User model
             return User(
                 uid=user_record.uid,
                 email=user_record.email,
                 display_name=user_record.display_name,
                 email_verified=user_record.email_verified,
-                # Timestamps
-                created_at=datetime.fromtimestamp(user_record.user_metadata.creation_timestamp / 1000) if user_record.user_metadata else None,  # type: ignore
-                last_login=datetime.fromtimestamp(user_record.user_metadata.last_sign_in_timestamp / 1000) if user_record.user_metadata and user_record.user_metadata.last_sign_in_timestamp else None,  # type: ignore
+                created_at=datetime.fromtimestamp(user_record.user_metadata.creation_timestamp / 1000, tz=datetime.UTC) if user_record.user_metadata else None,  # type: ignore[union-attr]
+                last_login=datetime.fromtimestamp(user_record.user_metadata.last_sign_in_timestamp / 1000, tz=datetime.UTC) if user_record.user_metadata and user_record.user_metadata.last_sign_in_timestamp else None,  # type: ignore[union-attr]
             )
-        except Exception as e:
-            logger.exception("Error creating Firebase user: %s", e)
+        except Exception: # Keep broad for unknown Firebase/network issues
+            logger.exception("Error creating Firebase user")
             raise AuthError(
-                message=f"Failed to create user: {e}",
+                message="Failed to create user",
                 status_code=500,
                 error_code="user_creation_failed",
             ) from e
@@ -457,7 +444,7 @@ class FirebaseAuthProvider(IAuthProvider):
             user_id: Firebase User ID (UID)
 
         Returns:
-            User object if found, None otherwise
+            User information dictionary if found, None otherwise
         """
         if not self._initialized:
             await self.initialize()
@@ -468,15 +455,15 @@ class FirebaseAuthProvider(IAuthProvider):
                 email=user_record.email,
                 display_name=user_record.display_name,
                 email_verified=user_record.email_verified,
-                created_at=datetime.fromtimestamp(user_record.user_metadata.creation_timestamp / 1000) if user_record.user_metadata else None,  # type: ignore
-                last_login=datetime.fromtimestamp(user_record.user_metadata.last_sign_in_timestamp / 1000) if user_record.user_metadata and user_record.user_metadata.last_sign_in_timestamp else None,  # type: ignore
+                created_at=datetime.fromtimestamp(user_record.user_metadata.creation_timestamp / 1000, tz=datetime.UTC) if user_record.user_metadata else None,  # type: ignore[union-attr]
+                last_login=datetime.fromtimestamp(user_record.user_metadata.last_sign_in_timestamp / 1000, tz=datetime.UTC) if user_record.user_metadata and user_record.user_metadata.last_sign_in_timestamp else None,  # type: ignore[union-attr]
             )
             return user.model_dump()
         except firebase_auth.UserNotFoundError:
             logger.debug("User not found with UID: %s", user_id)
             return None
-        except Exception as e:
-            logger.exception("Error fetching user info for UID %s: %s", user_id, e)
+        except Exception: # Keep broad for unknown Firebase/network issues
+            logger.exception("Error fetching user info for UID %s", user_id)
             return None
 
     async def cleanup(self) -> None:

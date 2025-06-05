@@ -183,9 +183,7 @@ class _TestConnectionManager:
             len(self.active_websockets),
         )
 
-    async def send_to_connection(
-        self, websocket: WebSocket, message: Any
-    ) -> None:
+    async def send_to_connection(self, websocket: WebSocket, message: Any) -> None:
         logger.info("Attempting to send message to connection: %s", message)
 
         if websocket not in self.connection_info:
@@ -215,9 +213,7 @@ class _TestConnectionManager:
 
         logger.info("Recorded direct message send to %s", websocket)
 
-    async def send_to_user(
-        self, user_id: str, message: Any
-    ) -> None:
+    async def send_to_user(self, user_id: str, message: Any) -> None:
         """Send a message to all active connections for a given user."""
         logger.info("Attempting to send message to user %s: %s", user_id, message)
 

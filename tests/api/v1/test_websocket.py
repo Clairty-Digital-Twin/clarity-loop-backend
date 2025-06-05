@@ -912,23 +912,31 @@ class TestWebSocketEndpoints:
 
         try:
             with client.websocket_connect(endpoint_url) as websocket:
-                logger.info(f"Successfully connected to {endpoint_url}")
+                logger.info("Successfully connected to %s", endpoint_url)
 
                 try:
                     initial_message = websocket.receive_json()
                     assert initial_message["type"] == MessageType.SYSTEM.value
-                    logger.info(f"Received initial system message: {initial_message}")
+                    logger.info("Received initial system message: %s", initial_message)
                     initial_message_received = True
                 except WebSocketDisconnect as e_initial_recv:
-                    logger.error(
-                        f"WebSocketDisconnect during initial receive: code={e_initial_recv.code}, reason='{e_initial_recv.reason}'"
+                    logger.exception(
+                        "WebSocketDisconnect during initial receive: code=%s, reason='%s'",
+                        e_initial_recv.code,
+                        e_initial_recv.reason,
                     )
                     pytest.fail(
                         f"Disconnected during initial receive: {e_initial_recv.code} - {e_initial_recv.reason}"
                     )
                 except Exception as e_initial_other:
-                    logger.error(f"Error receiving initial message: {e_initial_other}")
+                    logger.exception(
+                        "Error receiving initial message: %s", e_initial_other
+                    )
                     pytest.fail(f"Error receiving initial message: {e_initial_other}")
+
+                assert (
+                    initial_message_received  # Ensure we got the initial system message
+                )
 
                 # If initial message was received, proceed to send invalid data
                 if initial_message_received:
@@ -964,14 +972,16 @@ class TestWebSocketEndpoints:
                     ), "Expected validation error for data_points not being a list was not found."
 
         except WebSocketDisconnect as e_connect:
-            logger.error(
-                f"WebSocketDisconnect during connect: code={e_connect.code}, reason='{e_connect.reason}'"
+            logger.exception(
+                "WebSocketDisconnect during connect: code=%s, reason='%s'",
+                e_connect.code,
+                e_connect.reason,
             )
             pytest.fail(
                 f"Failed to connect or disconnected early: {e_connect.code} - {e_connect.reason}"
             )
         except Exception as e_outer:
-            logger.error(f"Outer exception during WebSocket test: {e_outer}")
+            logger.exception("Outer exception during WebSocket test: %s", e_outer)
             pytest.fail(f"Outer exception: {e_outer}")
 
 

@@ -235,25 +235,9 @@ class FirebaseAuthMiddleware(BaseHTTPMiddleware):
                 error_code="invalid_token",
             )
 
-        # Convert user to expected format for _create_user_context
-        # Handle both User objects and dict objects (for tests)
-        if hasattr(user_info, "uid"):
-            # It's a User object
-            user_info_dict: dict[str, Any] = {
-                "user_id": user_info.uid,
-                "email": user_info.email,
-                "name": user_info.display_name,
-                "verified": user_info.email_verified,
-                "roles": ["patient"],  # Default role from user info
-                "custom_claims": {},
-                "created_at": user_info.created_at,
-                "last_login": user_info.last_login,
-            }
-        else:
-            # It's already a dict (test case)
-            user_info_dict = user_info  # type: ignore[assignment]
-
-        return self._create_user_context(user_info_dict)
+        # At this point, user_info is guaranteed to be a dict[str, Any]
+        # The previous block trying to handle User object or dict was causing issues.
+        return self._create_user_context(user_info)
 
 
 class FirebaseAuthProvider(IAuthProvider):
@@ -278,22 +262,30 @@ class FirebaseAuthProvider(IAuthProvider):
         self.credentials_path = credentials_path
         self.project_id = project_id
 
-        # Handle both dict and MiddlewareConfig objects
-        config_dict: dict[str, Any] = {}
+        config_dict: dict[str, Any]
         if middleware_config is None:
             config_dict = {}
-        elif hasattr(middleware_config, "__dict__"):
-            # It's a MiddlewareConfig object, convert to dict
+        elif hasattr(middleware_config, "__dict__") and not isinstance(middleware_config, dict):
+            # It's likely a Pydantic model or similar object, access its dict representation
             config_dict = middleware_config.__dict__
-        else:
+        elif isinstance(middleware_config, dict):
             # It's already a dict
             config_dict = middleware_config
+        else:
+            # Fallback if it's some other type, though a dict is expected
+            config_dict = {}
 
-        self.middleware_config = config_dict
+
+        self.middleware_config = config_dict # Store the resolved config_dict
         self._initialized = False
-        self._token_cache: dict[str, dict[str, Any]] = {}  # token -> {data, timestamp}
-        self._cache_ttl = config_dict.get("cache_ttl_seconds", 300)  # 5 minutes
-        self._cache_max_size = config_dict.get("cache_max_size", 1000)
+        
+        # Caching attributes for FirebaseAuthProvider itself
+        auth_provider_specific_config = self.middleware_config.get("auth_provider_config", {})
+        self.cache_is_enabled = auth_provider_specific_config.get("cache_enabled", True)
+        self._token_cache_ttl_seconds = auth_provider_specific_config.get("cache_ttl_seconds", 300)  # 5 minutes
+        self._token_cache_max_size = auth_provider_specific_config.get("cache_max_size", 1000)
+        self._token_cache: dict[str, dict[str, Any]] = {}  # token -> {"user_data": dict, "timestamp": float}
+
 
         logger.info("Firebase Authentication Provider initialized.")
         if credentials_path:
@@ -316,45 +308,50 @@ class FirebaseAuthProvider(IAuthProvider):
             raise
 
     async def verify_token(self, token: str) -> dict[str, Any] | None:
-        """Verify Firebase ID token and return user information.
+        """Verify Firebase ID token and return user information as a dictionary.
 
         Args:
             token: Firebase ID token
 
         Returns:
-            User object if token is valid, None otherwise
+            User information dictionary if token is valid, None otherwise
         """
         if not self._initialized:
             await self.initialize()
+
         # Check cache first if enabled
-        if self.cache_enabled and token in self._token_cache:
-            cached_data = self._token_cache[token]
-            if cached_data["timestamp"] + self._cache_ttl > time.time():
-                # Cache hit - return cached user
-                cached_user = cached_data["user"]
-                return cached_user
+        if self.cache_is_enabled and token in self._token_cache:
+            cached_entry = self._token_cache[token]
+            # Check if cache entry is still valid
+            if time.time() - cached_entry["timestamp"] < self._token_cache_ttl_seconds:
+                return cached_entry["user_data"]  # Return cached user data (dict)
             # Cache expired - remove entry
             del self._token_cache[token]
 
         try:
             decoded_token = firebase_auth.verify_id_token(token, check_revoked=True)
-            user = User(
+            # Create User model instance first for structure and validation
+            user_model_instance = User(
                 uid=decoded_token["uid"],
                 email=decoded_token.get("email"),
                 display_name=decoded_token.get("name"),
                 email_verified=decoded_token.get("email_verified", False),
                 firebase_token=token,
-                firebase_token_exp=decoded_token.get("exp"),  # Store expiration
-                # Timestamps might not be directly in ID token, fetch if needed or leave None
-                created_at=datetime.fromtimestamp(decoded_token.get("auth_time")) if decoded_token.get("auth_time") else None,  # type: ignore
-                last_login=None,  # This would typically be updated on actual login events
-                profile=None,  # Profile data usually fetched separately
+                firebase_token_exp=decoded_token.get("exp"),
+                created_at=datetime.fromtimestamp(decoded_token.get("auth_time")) if decoded_token.get("auth_time") else None,
+                last_login=None, 
+                profile=None,
             )
-            if self.cache_enabled:
-                self._token_cache[token] = {"user": user, "timestamp": time.time()}
-                # Clean up expired cache entries
-                self._cleanup_expired_cache()
-            return user.model_dump()
+            user_data_dict = user_model_instance.model_dump()
+
+            if self.cache_is_enabled:
+                # Ensure cache does not exceed max size
+                if len(self._token_cache) >= self._token_cache_max_size:
+                    self._cleanup_expired_cache(force_evict_oldest=True) # Evict oldest if still full
+                
+                self._token_cache[token] = {"user_data": user_data_dict, "timestamp": time.time()}
+                self._cleanup_expired_cache() # Regular cleanup
+            return user_data_dict
         except firebase_auth.RevokedIdTokenError:
             logger.warning("Revoked Firebase ID token received: %s", token[:20] + "...")
             return None
@@ -430,27 +427,36 @@ class FirebaseAuthProvider(IAuthProvider):
             logger.exception("Error fetching user info for UID %s: %s", user_id, e)
             return None
 
-    def _cleanup_expired_cache(self) -> None:
-        """Remove expired entries from token cache."""
+    def _cleanup_expired_cache(self, force_evict_oldest: bool = False) -> None:
+        """Remove expired entries from token cache. 
+        If force_evict_oldest is True and cache is still full, remove the oldest entry.
+        """
         current_time = time.time()
         expired_tokens = [
-            token
-            for token, data in self._token_cache.items()
-            if current_time - data["timestamp"] > self._cache_ttl
+            t
+            for t, data in self._token_cache.items()
+            if current_time - data["timestamp"] > self._token_cache_ttl_seconds
         ]
 
-        for token in expired_tokens:
-            del self._token_cache[token]
+        for t in expired_tokens:
+            if t in self._token_cache: # Check if still exists, might be removed by size limit
+                 del self._token_cache[t]
 
-        # Also enforce cache size limit
-        if len(self._token_cache) > self._cache_max_size:
-            # Remove oldest entries
-            sorted_cache = sorted(
-                self._token_cache.items(), key=lambda x: x[1]["timestamp"]
-            )
-            excess_count = len(self._token_cache) - self._cache_max_size
-            for token, _ in sorted_cache[:excess_count]:
-                del self._token_cache[token]
+        # Enforce cache size limit
+        while len(self._token_cache) >= self._token_cache_max_size:
+            if not self._token_cache: # Should not happen if len >= max_size > 0
+                break
+            # Remove oldest entries if still over size limit
+            # Sort by timestamp to find the oldest
+            try:
+                oldest_token = min(self._token_cache.items(), key=lambda x: x[1]["timestamp"])[0]
+                del self._token_cache[oldest_token]
+                if not force_evict_oldest and not expired_tokens: # if we are not forced and didn't remove any expired, break to avoid infinite loop if all fresh
+                    break
+            except ValueError: # Cache is empty
+                break
+            if not force_evict_oldest: # if not forced, only one pass of cleanup by size
+                break
 
     async def cleanup(self) -> None:
         """Cleanup resources when shutting down."""

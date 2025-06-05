@@ -76,7 +76,7 @@ class DependencyContainer:
         ):
             from clarity.auth.firebase_middleware import (
                 FirebaseAuthProvider,
-            )  # Conditional import to avoid circular dependency
+            )
 
             firebase_config = config_provider.get_firebase_config()
             # Convert MiddlewareConfig object to dict before passing

@@ -2,7 +2,7 @@
 
 import asyncio
 from collections.abc import Awaitable, Callable
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timezone
 import logging
 import time
 from typing import Any
@@ -362,7 +362,7 @@ class FirebaseAuthProvider(IAuthProvider):
         if not self._initialized:
             await self.initialize()
 
-        self._remove_expired_tokens() # Always try to remove expired tokens first
+        self._remove_expired_tokens()  # Always try to remove expired tokens first
 
         # Check cache first if enabled
         if self.cache_is_enabled and token in self._token_cache:
@@ -379,7 +379,7 @@ class FirebaseAuthProvider(IAuthProvider):
                 firebase_token=token,
                 firebase_token_exp=decoded_token.get("exp"),
                 created_at=(
-                    datetime.fromtimestamp(decoded_token.get("auth_time"), tz=datetime.UTC)
+                    datetime.fromtimestamp(decoded_token.get("auth_time"), tz=UTC)
                     if decoded_token.get("auth_time")
                     else None
                 ),
@@ -390,8 +390,13 @@ class FirebaseAuthProvider(IAuthProvider):
 
             if self.cache_is_enabled:
                 if len(self._token_cache) >= self._token_cache_max_size:
-                    self._evict_oldest_to_target_count(target_count=self._token_cache_max_size - 1)
-                self._token_cache[token] = {"user_data": user_data_dict, "timestamp": time.time()}
+                    self._evict_oldest_to_target_count(
+                        target_count=self._token_cache_max_size - 1
+                    )
+                self._token_cache[token] = {
+                    "user_data": user_data_dict,
+                    "timestamp": time.time(),
+                }
             return user_data_dict
         except firebase_auth.RevokedIdTokenError:
             logger.warning("Revoked Firebase ID token received: %s", token[:20] + "...")
@@ -404,7 +409,9 @@ class FirebaseAuthProvider(IAuthProvider):
         except firebase_auth.InvalidIdTokenError:
             logger.warning("Invalid Firebase ID token: %s", token[:20] + "...")
             return None
-        except Exception: # Keep broad for unknown Firebase/network issues, but log with exc_info
+        except (
+            Exception
+        ):  # Keep broad for unknown Firebase/network issues, but log with exc_info
             logger.exception("Error verifying Firebase token")
             return None
 
@@ -426,16 +433,18 @@ class FirebaseAuthProvider(IAuthProvider):
                 email=user_record.email,
                 display_name=user_record.display_name,
                 email_verified=user_record.email_verified,
-                created_at=datetime.fromtimestamp(user_record.user_metadata.creation_timestamp / 1000, tz=datetime.UTC) if user_record.user_metadata else None,  # type: ignore[union-attr]
-                last_login=datetime.fromtimestamp(user_record.user_metadata.last_sign_in_timestamp / 1000, tz=datetime.UTC) if user_record.user_metadata and user_record.user_metadata.last_sign_in_timestamp else None,  # type: ignore[union-attr]
+                created_at=datetime.fromtimestamp(user_record.user_metadata.creation_timestamp / 1000, tz=UTC) if user_record.user_metadata else None,  # type: ignore[union-attr]
+                last_login=datetime.fromtimestamp(user_record.user_metadata.last_sign_in_timestamp / 1000, tz=UTC) if user_record.user_metadata and user_record.user_metadata.last_sign_in_timestamp else None,  # type: ignore[union-attr]
             )
-        except Exception: # Keep broad for unknown Firebase/network issues
-            logger.exception("Error creating Firebase user")
+        except (
+            Exception
+        ) as e:  # Keep broad for unknown Firebase/network issues, ensure 'e' is available for chaining
+            logger.exception("Error creating Firebase user")  # Removed e from log call
             raise AuthError(
-                message="Failed to create user",
+                message="Failed to create user",  # Simplified message, actual exception is chained
                 status_code=500,
                 error_code="user_creation_failed",
-            ) from e
+            ) from e  # Reinstated 'from e'
 
     async def get_user_info(self, user_id: str) -> dict[str, Any] | None:
         """Get user information by Firebase UID.
@@ -455,14 +464,14 @@ class FirebaseAuthProvider(IAuthProvider):
                 email=user_record.email,
                 display_name=user_record.display_name,
                 email_verified=user_record.email_verified,
-                created_at=datetime.fromtimestamp(user_record.user_metadata.creation_timestamp / 1000, tz=datetime.UTC) if user_record.user_metadata else None,  # type: ignore[union-attr]
-                last_login=datetime.fromtimestamp(user_record.user_metadata.last_sign_in_timestamp / 1000, tz=datetime.UTC) if user_record.user_metadata and user_record.user_metadata.last_sign_in_timestamp else None,  # type: ignore[union-attr]
+                created_at=datetime.fromtimestamp(user_record.user_metadata.creation_timestamp / 1000, tz=UTC) if user_record.user_metadata else None,  # type: ignore[union-attr]
+                last_login=datetime.fromtimestamp(user_record.user_metadata.last_sign_in_timestamp / 1000, tz=UTC) if user_record.user_metadata and user_record.user_metadata.last_sign_in_timestamp else None,  # type: ignore[union-attr]
             )
             return user.model_dump()
         except firebase_auth.UserNotFoundError:
             logger.debug("User not found with UID: %s", user_id)
             return None
-        except Exception: # Keep broad for unknown Firebase/network issues
+        except Exception:  # Keep broad for unknown Firebase/network issues
             logger.exception("Error fetching user info for UID %s", user_id)
             return None
 

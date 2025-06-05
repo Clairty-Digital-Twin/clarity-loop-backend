@@ -841,7 +841,6 @@ class TestPerformanceFirebaseAuth:
     @staticmethod
     async def test_token_verification_performance_with_cache() -> None:
         """Test token verification performance with caching enabled."""
-        config = MiddlewareConfig(cache_enabled=True, cache_ttl_seconds=300)
         # Ensure middleware_config is passed as a dictionary
         auth_provider_config_dict = {
             "auth_provider_config": {

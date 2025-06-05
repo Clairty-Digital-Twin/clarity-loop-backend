@@ -36,7 +36,7 @@ def log_execution(
 
     def decorator(func: F) -> F:
         @functools.wraps(func)
-        def sync_wrapper(*args: Any, **kwargs: Any) -> Any:  # type: ignore[no-untyped-def, misc]
+        def sync_wrapper(*args: Any, **kwargs: Any) -> Any:
             func_name = f"{func.__module__}.{func.__qualname__}"
 
             # Log function entry
@@ -64,7 +64,7 @@ def log_execution(
                 return result
 
         @functools.wraps(func)
-        async def async_wrapper(*args: Any, **kwargs: Any) -> Any:  # type: ignore[no-untyped-def, misc]
+        async def async_wrapper(*args: Any, **kwargs: Any) -> Any:
             func_name = f"{func.__module__}.{func.__qualname__}"
 
             # Log function entry
@@ -115,7 +115,7 @@ def measure_execution_time(
 
     def decorator(func: F) -> F:
         @functools.wraps(func)
-        def sync_wrapper(*args: Any, **kwargs: Any) -> Any:  # type: ignore[no-untyped-def, misc]
+        def sync_wrapper(*args: Any, **kwargs: Any) -> Any:
             func_name = f"{func.__module__}.{func.__qualname__}"
             start_time = time.perf_counter()
 
@@ -138,7 +138,7 @@ def measure_execution_time(
                 return result
 
         @functools.wraps(func)
-        async def async_wrapper(*args: Any, **kwargs: Any) -> Any:  # type: ignore[no-untyped-def, misc]
+        async def async_wrapper(*args: Any, **kwargs: Any) -> Any:
             func_name = f"{func.__module__}.{func.__qualname__}"
             start_time = time.perf_counter()
 
@@ -189,7 +189,7 @@ def retry_on_failure(
 
     def decorator(func: F) -> F:
         @functools.wraps(func)
-        def sync_wrapper(*args: Any, **kwargs: Any) -> Any:  # type: ignore[no-untyped-def, misc]
+        def sync_wrapper(*args: Any, **kwargs: Any) -> Any:
             func_name = f"{func.__module__}.{func.__qualname__}"
             last_exception = None
 
@@ -227,7 +227,7 @@ def retry_on_failure(
             return None
 
         @functools.wraps(func)
-        async def async_wrapper(*args: Any, **kwargs: Any) -> Any:  # type: ignore[no-untyped-def, misc]
+        async def async_wrapper(*args: Any, **kwargs: Any) -> Any:
             func_name = f"{func.__module__}.{func.__qualname__}"
             last_exception = None
 
@@ -287,7 +287,7 @@ def validate_input(
 
     def decorator(func: F) -> F:
         @functools.wraps(func)
-        def wrapper(*args: Any, **kwargs: Any) -> Any:  # type: ignore[no-untyped-def, misc]
+        def wrapper(*args: Any, **kwargs: Any) -> Any:
             if not validator((args, kwargs)):
                 raise ValueError(error_message)
             return func(*args, **kwargs)
@@ -315,7 +315,7 @@ def audit_trail(
 
     def decorator(func: F) -> F:
         @functools.wraps(func)
-        def sync_wrapper(*args: Any, **kwargs: Any) -> Any:  # type: ignore[no-untyped-def, misc]
+        def sync_wrapper(*args: Any, **kwargs: Any) -> Any:
             # Extract audit information
             audit_info = {
                 "operation": operation,
@@ -342,7 +342,7 @@ def audit_trail(
                 return result
 
         @functools.wraps(func)
-        async def async_wrapper(*args: Any, **kwargs: Any) -> Any:  # type: ignore[no-untyped-def, misc]
+        async def async_wrapper(*args: Any, **kwargs: Any) -> Any:
             # Extract audit information
             audit_info = {
                 "operation": operation,

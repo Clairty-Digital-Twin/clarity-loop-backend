@@ -522,19 +522,19 @@ class PATModelService(IMLModelService):
                 logger.info("Converting TensorFlow weights to PyTorch format")
 
                 # Convert patch embedding layer (dense -> patch_embedding)
-                if "dense" in h5_file and "dense" in h5_file["dense"]:
-                    dense_group = h5_file["dense"]["dense"]
-                    if "kernel:0" in dense_group:
+                if "dense" in h5_file and "dense" in h5_file["dense"]:  # type: ignore[operator,index]
+                    dense_group = h5_file["dense"]["dense"]  # type: ignore[index]
+                    if "kernel:0" in dense_group:  # type: ignore[operator]
                         # TF: [patch_size, embed_dim] -> PyTorch: [patch_size, embed_dim]
-                        tf_weight_data = dense_group["kernel:0"][:]
+                        tf_weight_data = dense_group["kernel:0"][:]  # type: ignore[index]
                         tf_weight_np = np.array(
                             tf_weight_data
                         )  # Ensure it's a numpy array
                         state_dict["encoder.patch_embedding.weight"] = torch.from_numpy(
                             tf_weight_np.T  # MODIFIED: use tf_weight_np
-                        )
-                    if "bias:0" in dense_group:
-                        tf_bias_data = dense_group["bias:0"][:]
+                        )  # type: ignore[attr-defined]
+                    if "bias:0" in dense_group:  # type: ignore[operator]
+                        tf_bias_data = dense_group["bias:0"][:]  # type: ignore[index]
                         tf_bias_np = np.array(tf_bias_data)  # Ensure it's a numpy array
                         state_dict["encoder.patch_embedding.bias"] = torch.from_numpy(
                             tf_bias_np  # MODIFIED: use tf_bias_np (bias is 1D, no .T needed)
@@ -594,12 +594,12 @@ class PATModelService(IMLModelService):
 
         # Convert Q, K, V weights for each head separately
         for qkv_name in ["query", "key", "value"]:
-            if qkv_name in attn_group:
-                qkv_group = attn_group[qkv_name]
+            if qkv_name in attn_group:  # type: ignore[operator]
+                qkv_group = attn_group[qkv_name]  # type: ignore[index]
 
-                if "kernel:0" in qkv_group:
+                if "kernel:0" in qkv_group:  # type: ignore[operator]
                     # TF shape: [embed_dim, num_heads, head_dim] = (96, 12, 96)
-                    tf_weight_data = qkv_group["kernel:0"][:]
+                    tf_weight_data = qkv_group["kernel:0"][:]  # type: ignore[index]
                     tf_weight_np = np.array(tf_weight_data)
 
                     # Split into separate heads

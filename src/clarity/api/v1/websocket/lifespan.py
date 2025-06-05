@@ -65,6 +65,7 @@ def get_connection_manager() -> ConnectionManager:
         from tests.api.v1.test_websocket_helper import (  # noqa: PLC0415
             get_test_connection_manager,
         )
+
         # Ensure test manager is assigned to global if it's the one being used
         test_manager = get_test_connection_manager()
         if connection_manager is None:  # Assign if global is still None

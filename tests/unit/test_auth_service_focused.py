@@ -14,7 +14,8 @@ Each test is focused and targeted.
 """
 
 from datetime import UTC, datetime, timedelta
-from unittest.mock import Mock, patch
+from typing import Any, cast
+from unittest.mock import AsyncMock, MagicMock, Mock, patch
 import uuid
 from uuid import uuid4
 
@@ -27,6 +28,7 @@ from clarity.models.auth import (
     UserRole,
     UserStatus,
 )
+from clarity.ports.auth_ports import IAuthProvider
 from clarity.services.auth_service import (
     AccountDisabledError,
     AuthenticationError,
@@ -91,19 +93,19 @@ class MockFirebaseUserRecord:
 
 
 class MockFirestoreClient:
-    """Mock Firestore client for testing."""
+    """Simplified mock Firestore client for focused auth tests."""
 
     def __init__(self) -> None:
-        """Initialize mock client."""
-        self.documents: dict[str, dict[str, any]] = {}
-        self.query_results: list[dict[str, any]] = []
+        self.documents: dict[str, dict[str, Any]] = {}
+        self.query_results: list[dict[str, Any]] = []
+        self.error_on_next_call: bool = False
 
     async def create_document(
         self,
         collection: str,
-        data: dict[str, any],
+        data: dict[str, Any],
         document_id: str | None = None,
-        user_id: str | None = None,  # noqa: ARG002
+        parent_path: str | None = None,  # noqa: ARG002
     ) -> str:
         """Mock create document."""
         doc_id = document_id or str(uuid4())
@@ -111,41 +113,54 @@ class MockFirestoreClient:
         return doc_id
 
     async def get_document(
-        self, collection: str, document_id: str
-    ) -> dict[str, any] | None:
+        self, collection: str, doc_id: str, use_cache: bool = True  # noqa: ARG002
+    ) -> dict[str, Any] | None:
         """Mock get document."""
-        return self.documents.get(f"{collection}/{document_id}")
+        if self.error_on_next_call:
+            raise Exception("Mock Firestore error")
+        return self.documents.get(f"{collection}/{doc_id}")
 
     async def update_document(
         self,
         collection: str,
-        document_id: str,
-        data: dict[str, any],
-        user_id: str | None = None,  # noqa: ARG002
-    ) -> None:
+        doc_id: str,
+        data: dict[str, Any],
+        parent_path: str | None = None,  # noqa: ARG002
+        merge: bool = True,  # noqa: ARG002
+    ) -> bool:
         """Mock update document."""
-        key = f"{collection}/{document_id}"
+        key = f"{collection}/{doc_id}"
         if key in self.documents:
             self.documents[key].update(data)
+        return True
 
     async def query_documents(
         self,
         collection: str,  # noqa: ARG002
-        filters: list[dict[str, any]],  # noqa: ARG002
-    ) -> list[dict[str, any]]:
+        filters: list[dict[str, Any]],  # noqa: ARG002
+        limit: int | None = None,  # noqa: ARG002
+        offset: int | None = None,  # noqa: ARG002
+        order_by: str | None = None,  # noqa: ARG002
+        parent_path: str | None = None,  # noqa: ARG002
+    ) -> list[dict[str, Any]]:
         """Mock query documents."""
+        if self.error_on_next_call:
+            raise Exception("Mock Firestore error")
         return self.query_results
 
 
 class MockAuthProvider:
-    """Mock auth provider."""
+    """Simplified mock AuthProvider for focused tests."""
 
     def __init__(self) -> None:
         """Initialize mock provider."""
         self.should_fail = False
+        self.error_on_next_call: bool = False
 
-    async def verify_token(self, token: str) -> dict[str, any]:  # noqa: ARG002
+    async def verify_token(self, token: str) -> dict[str, Any]:  # noqa: ARG002
         """Mock verify token."""
+        if self.error_on_next_call:
+            raise Exception("Token verification failed")
         if self.should_fail:
             msg = "Invalid token"
             raise InvalidCredentialsError(msg)

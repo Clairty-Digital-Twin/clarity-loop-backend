@@ -15,12 +15,12 @@ from typing import TYPE_CHECKING, Any
 
 # Dynamic imports - packages installed at runtime if needed
 if TYPE_CHECKING:
-    import aiohttp  # type: ignore[import-untyped]
+    import aiohttp  # type: ignore[import-not-found, import-untyped]
     import colorama  # type: ignore[import-untyped]
     from colorama import Fore, Style  # type: ignore[import-untyped]
 else:
     try:
-        import aiohttp  # type: ignore[import-untyped]
+        import aiohttp  # type: ignore[import-not-found, import-untyped]
         import colorama  # type: ignore[import-untyped]
         from colorama import Fore, Style  # type: ignore[import-untyped]
 
@@ -36,7 +36,7 @@ else:
         subprocess.check_call(  # noqa: S603
             [sys.executable, "-m", "pip", "install", "aiohttp", "colorama"]
         )
-        import aiohttp  # type: ignore[import-untyped]
+        import aiohttp  # type: ignore[import-not-found, import-untyped]
         import colorama  # type: ignore[import-untyped]
         from colorama import Fore, Style  # type: ignore[import-untyped]
 
@@ -398,20 +398,15 @@ class APITester:
 
 async def main() -> None:
     """Main function to run the comprehensive API test."""
-    try:
-        async with APITester() as tester:
-            await tester.run_comprehensive_test()
-    except KeyboardInterrupt:
-        print(f"\n{Fore.YELLOW}Test interrupted by user{Style.RESET_ALL}")
-    except (aiohttp.ClientError, OSError, RuntimeError) as e:
-        print(f"\n{Fore.RED}Test failed with error: {e}{Style.RESET_ALL}")
+    async with APITester() as tester:
+        await tester.run_comprehensive_test()
 
 
 if __name__ == "__main__":
     # Install required packages if not available
     try:
-        import aiohttp
-        import colorama
+        import aiohttp  # type: ignore[import-not-found, import-untyped]
+        import colorama  # type: ignore[import-untyped]
     except ImportError:
         print("Installing required packages...")
         import subprocess  # noqa: S404
@@ -420,7 +415,7 @@ if __name__ == "__main__":
         subprocess.check_call(  # noqa: S603
             [sys.executable, "-m", "pip", "install", "aiohttp", "colorama"]
         )
-        import aiohttp
-        import colorama
+        import aiohttp  # type: ignore[import-not-found, import-untyped]
+        import colorama  # type: ignore[import-untyped]
 
     asyncio.run(main())

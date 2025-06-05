@@ -8,7 +8,7 @@ from datetime import datetime
 import logging
 
 import numpy as np
-import pandas as pd
+import pandas as pd  # type: ignore[import-untyped]
 from pydantic import BaseModel, Field
 
 logger = logging.getLogger(__name__)

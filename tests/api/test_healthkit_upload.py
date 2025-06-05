@@ -311,8 +311,8 @@ class TestHealthKitUploadIntegration:
         """Test that router has expected endpoints."""
         routes = [route.path for route in router.routes]
         # Routes include the full prefix path
-        assert any("upload" in route for route in routes)
-        assert any("status" in route for route in routes)
+        assert any("upload" in route_path for route_path in routes)
+        assert any("status" in route_path for route_path in routes)
 
     def test_router_with_test_client(self) -> None:  # noqa: PLR6301
         """Test router with FastAPI test client."""

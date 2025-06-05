@@ -282,17 +282,17 @@ class _TestConnectionManager:
             }
         )
 
-        target_websockets = []
-        for user_id in self.rooms.get(room_id, set()):
+        target_websockets: list[WebSocket] = []
+        for user_id_in_room in self.rooms.get(room_id, set()):
             target_websockets.extend(
                 ws
-                for ws in self.user_connections.get(user_id, [])
+                for ws in self.user_connections.get(user_id_in_room, [])
                 if ws != exclude_websocket and ws in self.active_websockets
             )
 
         # In tests, send to all connections in room for testing purposes
-        for user_id in self.rooms.get(room_id, set()):
-            for ws in self.user_connections.get(user_id, []):
+        for user_id_in_room in self.rooms.get(room_id, set()):
+            for ws in self.user_connections.get(user_id_in_room, []):
                 if ws in self.active_websockets:
                     try:
                         message_str = (

@@ -973,12 +973,7 @@ class PATModelService(IMLModelService):
 _pat_service: PATModelService | None = None
 
 # Constants for error messages
-_INVALID_PAT_INSTANCE_MSG = "PATModelService() did not return a valid instance."
-
-
-def _raise_invalid_pat_instance_error() -> None:
-    """Helper function to raise TypeError for invalid PATModelService instance."""
-    raise TypeError(_INVALID_PAT_INSTANCE_MSG)
+# _INVALID_PAT_INSTANCE_MSG = "PATModelService() did not return a valid instance." # Remove constant
 
 
 async def get_pat_service() -> PATModelService:
@@ -989,33 +984,23 @@ async def get_pat_service() -> PATModelService:
         return _pat_service
 
     logger.info("Initializing global PATModelService for the first time...")
-    # Create a local instance first, then load, then assign to global
-    service_instance: PATModelService | None = (
-        None  # Ensure service_instance is defined before try
-    )
+    service_instance: PATModelService | None = None
     try:
         service_instance = PATModelService()  # Default model_size="medium"
-        # Ensure it's an instance before calling methods, for type checker's sake
-        if not isinstance(service_instance, PATModelService):
-            # This should ideally not happen if PATModelService constructor is typical
-            _raise_invalid_pat_instance_error()  # Call helper function
+        # Removed: if not isinstance(service_instance, PATModelService): block
 
-        await service_instance.load_model()  # type: ignore[misc] # MyPy struggles with this line
+        await service_instance.load_model()
 
     except Exception as e:
         logger.critical(
             "Failed to initialize global PATModelService: %s", e, exc_info=True
         )
-        # Critical failure, service cannot be provided. Re-raise to make it clear.
         error_message = (
             f"PATModelService could not be initialized and is unavailable: {e}"
         )
         raise RuntimeError(error_message) from e
     else:
-        # This block executes if the try was successful (no exception)
-        # The isinstance check and successful load_model ensure service_instance is not None here.
-        # Removed: if service_instance is None: ... as it's logically unreachable.
-
-        _pat_service = service_instance  # Assign to global only after all successful
+        # service_instance is guaranteed to be PATModelService if no exception was raised
+        _pat_service = service_instance
         logger.info("Global PATModelService initialized and model loaded successfully.")
         return _pat_service

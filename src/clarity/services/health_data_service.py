@@ -163,7 +163,9 @@ class HealthDataService:
             }
 
             # Upload to GCS
-            bucket: Bucket = cast(Bucket, self.cloud_storage.bucket(self.raw_data_bucket))
+            bucket: Bucket = cast(
+                "Bucket", self.cloud_storage.bucket(self.raw_data_bucket)
+            )
             blob = bucket.blob(blob_path)
 
             # Set content type and metadata

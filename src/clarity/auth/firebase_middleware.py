@@ -424,13 +424,15 @@ class FirebaseAuthProvider(IAuthProvider):
                 email=user_record.email,
                 display_name=user_record.display_name,
                 email_verified=user_record.email_verified,
+                firebase_token=None,
+                firebase_token_exp=None,
                 created_at=(
                     datetime.fromtimestamp(
                         user_record.user_metadata.creation_timestamp / 1000, tz=UTC
                     )
                     if user_record.user_metadata
                     else None
-                ),  # type: ignore[union-attr]
+                ),
                 last_login=(
                     datetime.fromtimestamp(
                         user_record.user_metadata.last_sign_in_timestamp / 1000, tz=UTC
@@ -438,7 +440,8 @@ class FirebaseAuthProvider(IAuthProvider):
                     if user_record.user_metadata
                     and user_record.user_metadata.last_sign_in_timestamp
                     else None
-                ),  # type: ignore[union-attr]
+                ),
+                profile=None,
             )
         except (
             Exception
@@ -468,13 +471,15 @@ class FirebaseAuthProvider(IAuthProvider):
                 email=user_record.email,
                 display_name=user_record.display_name,
                 email_verified=user_record.email_verified,
+                firebase_token=None,
+                firebase_token_exp=None,
                 created_at=(
                     datetime.fromtimestamp(
                         user_record.user_metadata.creation_timestamp / 1000, tz=UTC
                     )
                     if user_record.user_metadata
                     else None
-                ),  # type: ignore[union-attr]
+                ),
                 last_login=(
                     datetime.fromtimestamp(
                         user_record.user_metadata.last_sign_in_timestamp / 1000, tz=UTC
@@ -482,7 +487,8 @@ class FirebaseAuthProvider(IAuthProvider):
                     if user_record.user_metadata
                     and user_record.user_metadata.last_sign_in_timestamp
                     else None
-                ),  # type: ignore[union-attr]
+                ),
+                profile=None,
             )
             return user.model_dump()
         except firebase_auth.UserNotFoundError:

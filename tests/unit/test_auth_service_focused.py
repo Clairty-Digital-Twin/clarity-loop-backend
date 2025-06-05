@@ -170,20 +170,27 @@ class MockAuthProvider(IAuthProvider):
         """Mock get user info."""
         if self.should_fail or self.error_on_next_call:
             return None
-        return {"uid": uid, "email": f"{uid}@example.com", "disabled": False, "email_verified": True, "display_name": "Mock User"}
+        return {
+            "uid": uid,
+            "email": f"{uid}@example.com",
+            "disabled": False,
+            "email_verified": True,
+            "display_name": "Mock User",
+        }
 
-    async def create_custom_token(self, uid: str, custom_claims: dict[str, Any] | None = None) -> str:
+    async def create_custom_token(
+        self, uid: str, custom_claims: dict[str, Any] | None = None
+    ) -> str:
         """Mock create custom token."""
         if self.should_fail or self.error_on_next_call:
             return "mock_token_creation_failed"
         return f"mock_custom_token_for_{uid}"
-    
+
     async def revoke_refresh_tokens(self, uid: str) -> None:
         """Mock revoke refresh tokens."""
         if self.should_fail or self.error_on_next_call:
             raise AuthenticationError("Failed to revoke refresh tokens (mock)")
         logger.info("Mock: Revoked refresh tokens for user %s", uid)
-        return
 
 
 class TestAuthenticationServiceRegistration(BaseServiceTestCase):

@@ -149,7 +149,7 @@ class MockFirestoreClient:
         return self.query_results
 
 
-class MockAuthProvider:
+class MockAuthProvider(IAuthProvider):
     """Simplified mock AuthProvider for focused tests."""
 
     def __init__(self) -> None:
@@ -160,11 +160,30 @@ class MockAuthProvider:
     async def verify_token(self, token: str) -> dict[str, Any]:  # noqa: ARG002
         """Mock verify token."""
         if self.error_on_next_call:
-            raise Exception("Token verification failed")
+            raise AuthenticationError("Token verification failed (mock error)")
         if self.should_fail:
             msg = "Invalid token"
             raise InvalidCredentialsError(msg)
-        return {"sub": "test_user_id", "email": "test@example.com"}
+        return {"uid": "test_user_id", "email": "test@example.com", "custom_claims": {}}
+
+    async def get_user_info(self, uid: str) -> dict[str, Any] | None:
+        """Mock get user info."""
+        if self.should_fail or self.error_on_next_call:
+            return None
+        return {"uid": uid, "email": f"{uid}@example.com", "disabled": False, "email_verified": True, "display_name": "Mock User"}
+
+    async def create_custom_token(self, uid: str, custom_claims: dict[str, Any] | None = None) -> str:
+        """Mock create custom token."""
+        if self.should_fail or self.error_on_next_call:
+            return "mock_token_creation_failed"
+        return f"mock_custom_token_for_{uid}"
+    
+    async def revoke_refresh_tokens(self, uid: str) -> None:
+        """Mock revoke refresh tokens."""
+        if self.should_fail or self.error_on_next_call:
+            raise AuthenticationError("Failed to revoke refresh tokens (mock)")
+        logger.info("Mock: Revoked refresh tokens for user %s", uid)
+        return
 
 
 class TestAuthenticationServiceRegistration(BaseServiceTestCase):

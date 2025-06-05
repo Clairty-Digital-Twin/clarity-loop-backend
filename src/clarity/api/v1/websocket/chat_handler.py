@@ -373,7 +373,7 @@ async def _authenticate_websocket_user(
             # This exception is raised by get_current_user_websocket for invalid tokens
             await websocket.close(code=1008, reason="Invalid authentication token")
             return None
-        except Exception as e:
+        except Exception:  # noqa: BLE001 - Catching general exception for websocket resilience
             # For TRY401, the best is just the message, as stack trace is auto-added.
             logger.exception("Unexpected error during WebSocket user authentication")
             await websocket.close(code=1011, reason="Internal server error during authentication")

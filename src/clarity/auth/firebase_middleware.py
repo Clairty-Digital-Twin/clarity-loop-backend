@@ -397,7 +397,7 @@ class FirebaseAuthProvider(IAuthProvider):
                     "user_data": user_data_dict,
                     "timestamp": time.time(),
                 }
-            return user_data_dict
+            return user_data_dict  # noqa: TRY300 - Return happens regardless of caching, if block is for side-effect
         except firebase_auth.RevokedIdTokenError:
             logger.warning("Revoked Firebase ID token received: %s", token[:20] + "...")
             return None

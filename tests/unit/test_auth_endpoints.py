@@ -19,10 +19,10 @@ from clarity.services.auth_service import (
 )
 
 # Test constants (not actual security tokens - used for testing only)
-TEST_ACCESS_TOKEN = "test_access_token_for_testing"  # noqa: S105 - Test token
-TEST_REFRESH_TOKEN = "test_refresh_token_for_testing"  # noqa: S105 - Test token
-TEST_NEW_ACCESS_TOKEN = "test_new_access_token_for_testing"  # noqa: S105 - Test token
-TEST_NEW_REFRESH_TOKEN = "test_new_refresh_token_for_testing"  # noqa: S105 - Test token
+# TEST_ACCESS_TOKEN = "test_access_token_for_testing"
+# TEST_REFRESH_TOKEN = "test_refresh_token_for_testing"
+# TEST_NEW_ACCESS_TOKEN = "test_new_access_token_for_testing"
+# TEST_NEW_REFRESH_TOKEN = "test_new_refresh_token_for_testing"
 TEST_TOKEN_TYPE = "bearer"  # noqa: S105 - Standard OAuth token type
 
 
@@ -161,6 +161,7 @@ class TestAuthenticationEndpoints:
         client: TestClient,
         mock_auth_service: AsyncMock,
         sample_login_data: dict[str, Any],
+        test_env_credentials: dict[str, str | None],
     ) -> None:
         """Test user login endpoint."""
         # Mock the get_auth_service function to return our mock service
@@ -183,8 +184,8 @@ class TestAuthenticationEndpoints:
         )
         # Create mock tokens (not actual security tokens - for testing only)
         mock_tokens = Mock()
-        mock_tokens.access_token = TEST_ACCESS_TOKEN
-        mock_tokens.refresh_token = TEST_REFRESH_TOKEN
+        mock_tokens.access_token = test_env_credentials["mock_access_token"]
+        mock_tokens.refresh_token = test_env_credentials["mock_refresh_token"]
         mock_tokens.token_type = TEST_TOKEN_TYPE
         mock_tokens.expires_in = 3600
         mock_tokens.scope = "read:profile write:profile"
@@ -228,6 +229,7 @@ class TestAuthenticationEndpoints:
         mock_get_auth_service: Mock,
         client: TestClient,
         mock_auth_service: AsyncMock,
+        test_env_credentials: dict[str, str | None],
     ) -> None:
         """Test token refresh endpoint."""
         # Mock the get_auth_service function to return our mock service
@@ -235,14 +237,14 @@ class TestAuthenticationEndpoints:
 
         # Mock successful token refresh (not actual security tokens - for testing only)
         mock_token_response = Mock()
-        mock_token_response.access_token = TEST_NEW_ACCESS_TOKEN
-        mock_token_response.refresh_token = TEST_NEW_REFRESH_TOKEN
+        mock_token_response.access_token = test_env_credentials["mock_new_access_token"]
+        mock_token_response.refresh_token = test_env_credentials["mock_new_refresh_token"]
         mock_token_response.token_type = TEST_TOKEN_TYPE
         mock_token_response.expires_in = 3600
         mock_token_response.scope = "read:profile write:profile"
         mock_auth_service.refresh_access_token.return_value = mock_token_response
 
-        refresh_data = {"refresh_token": TEST_REFRESH_TOKEN}
+        refresh_data = {"refresh_token": test_env_credentials["mock_refresh_token"]}
         response = client.post("/api/v1/auth/refresh", json=refresh_data)
 
         # Should return success
@@ -254,6 +256,7 @@ class TestAuthenticationEndpoints:
         mock_get_auth_service: Mock,
         client: TestClient,
         mock_auth_service: AsyncMock,
+        test_env_credentials: dict[str, str | None],
     ) -> None:
         """Test user logout endpoint."""
         # Mock the get_auth_service function to return our mock service
@@ -262,7 +265,7 @@ class TestAuthenticationEndpoints:
         # Mock successful logout
         mock_auth_service.logout_user.return_value = True
 
-        logout_data = {"refresh_token": TEST_REFRESH_TOKEN}
+        logout_data = {"refresh_token": test_env_credentials["mock_refresh_token"]}
         response = client.post("/api/v1/auth/logout", json=logout_data)
 
         # Should return success

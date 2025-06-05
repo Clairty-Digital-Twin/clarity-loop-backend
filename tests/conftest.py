@@ -9,6 +9,7 @@ import os
 from typing import Any
 from unittest.mock import AsyncMock, MagicMock
 
+from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 import google.auth
@@ -22,6 +23,11 @@ import redis
 import torch
 
 from clarity.main import create_app  # type: ignore[import-untyped]
+
+# Load test environment variables from .env.test
+# This file should be created locally by developers and not version controlled.
+# It's loaded early to ensure variables are available for other module-level setups if needed.
+load_dotenv(".env.test")
 
 # Set testing environment
 os.environ["TESTING"] = "1"
@@ -93,6 +99,21 @@ class _FakePublisher:
 
 
 google.cloud.pubsub_v1.PublisherClient = _FakePublisher
+
+
+@pytest.fixture(scope="session")
+def test_env_credentials() -> dict[str, str | None]:
+    """Provides test credentials loaded from the .env.test file or defaults."""
+    return {
+        "default_username": os.getenv("TEST_DEFAULT_USERNAME", "test_user@example.com"),
+        "default_password": os.getenv("TEST_DEFAULT_PASSWORD", "SecurePassword123!"),
+        "mock_access_token": os.getenv("TEST_MOCK_ACCESS_TOKEN", "mock-access-token-value"),
+        "mock_refresh_token": os.getenv("TEST_MOCK_REFRESH_TOKEN", "mock-refresh-token-value"),
+        "mock_new_access_token": os.getenv("TEST_MOCK_NEW_ACCESS_TOKEN", "mock-new-access-token-value"),
+        "mock_new_refresh_token": os.getenv("TEST_MOCK_NEW_REFRESH_TOKEN", "mock-new-refresh-token-value"),
+        "mock_firebase_token": os.getenv("TEST_MOCK_FIREBASE_TOKEN", "mock-firebase-token-value"),
+        "mock_sync_token": os.getenv("TEST_MOCK_SYNC_TOKEN", "mock-sync-token-value"),
+    }
 
 
 @pytest.fixture(scope="session")

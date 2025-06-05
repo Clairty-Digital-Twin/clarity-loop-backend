@@ -56,6 +56,7 @@ These respiratory features are computed whenever wearable devices provide breath
 Activity Processor – Daily Activity & Fitness Summary
 
 While PAT provides deep analysis of movement patterns, CLARITY also calculates straightforward activity statistics for transparency. The ActivityProcessor ingests raw activity metrics from Apple Health (steps, distance, exercise minutes, etc.) and produces user-friendly summaries ￼. It yields 12 key activity metrics:
+
  1. Total Steps over the period ￼ (e.g. total steps in a week).
  2. Average Daily Steps ￼.
  3. Peak Daily Steps (the highest single-day step count) – indicates the maximum activity level achieved.

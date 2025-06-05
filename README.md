@@ -16,6 +16,7 @@ This document details the system's current functionality—what the codebase act
 **Disclaimer:** CLARITY is currently research software and is not an FDA-cleared medical device. Its outputs are intended for informational and research purposes only and should not be used for self-diagnosis or as a substitute for professional medical advice.
 
 ## Table of Contents
+
 - [Overview](#overview)
 - [Current Capabilities](#current-capabilities)
   - [At-a-Glance: Platform Components](#at-a-glance-platform-components)
@@ -269,6 +270,7 @@ The platform provides a comprehensive API for user management, health data uploa
 | `POST /api/v1/insights/generate` | Generate AI health insights | Firebase JWT |
 
 **Example `curl` Request (PAT Analysis):**
+
 ```bash
 # Ensure you have a sample_pat_request.json file with your step data
 # Example sample_pat_request.json:

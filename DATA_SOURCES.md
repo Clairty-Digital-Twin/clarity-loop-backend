@@ -195,6 +195,7 @@ Rank Dataset (link) Why it’s #1, #2… in plain English What signals you get H
 ⸻
 
 How to actually leverage them
+
  1. Start with #1 (All of Us):
 Spin up their Workbench, query Fitbit tables, export daily HR/sleep → feed straight into your existing ActivityProcessor & upcoming SleepProcessor.
  2. Layer in #2 (PAT raw):
@@ -214,6 +215,7 @@ Clinician-level take-home
 ⸻
 
 Next 3 steps
+
  1. Apply for All of Us access (takes ~2 hours of paperwork).
  2. Schedule a weekend sprint to pull PAT raw files and test one fine-tune run.
  3. Add an ingest/biobank_loader.py stub so your pipeline architecture stays modular.

@@ -7,24 +7,31 @@ Security Scanning: Credential/secret detection
 Dependency Analysis: Vulnerability scanning
 Performance Profiling: Identify bottlenecks
 Critical Issues Found (Ordered by Severity):
+
 1. Security: Hardcoded Test Credentials
 
 python
 CopyInsert
+
 # Line 42: Hardcoded credentials
+
 TEST_CREDENTIALS = "test_admin:password123"  # Security risk
 Risk: Accidental commit exposes secrets
 Fix:
 python
 CopyInsert
+
 # Replace with environment variables
+
 TEST_USER = os.getenv("TEST_FIREBASE_UID", "test_user")
 TEST_API_KEY = os.getenv("TEST_API_KEY", "mock_key")
 2. Data Flow: Unsafe Health Data Parsing
 
 python
 CopyInsert
+
 # Line 127: Unsafe data loading
+
 health_data = json.loads(raw_input)  # No validation
 Risk: Malformed data causes service crashes
 Fix:
@@ -39,14 +46,18 @@ except ValidationError as e:
 
 python
 CopyInsert
+
 # Line 89: Inefficient connection lookup
+
 def get_connections(user_id: UUID) -> list[WebSocket]:
     return [conn for conn in active_connections if conn.user_id == user_id]
 Impact: Degrades under load (1000+ users)
 Fix:
 python
 CopyInsert
+
 # Maintain lookup dictionary
+
 user_connections: dict[UUID, list] = defaultdict(list)
 
 def register_connection(user_id: UUID, ws: WebSocket):
@@ -55,7 +66,9 @@ def register_connection(user_id: UUID, ws: WebSocket):
 
 python
 CopyInsert
+
 # Line 156: Silent failure
+
 try:
     prediction = model.predict(input_data)
 except PredictionError:
@@ -71,7 +84,9 @@ except PredictionError as e:
 
 python
 CopyInsert
+
 # Line 32: Missing production defaults
+
 class Settings(BaseSettings):
     FIREBASE_CREDENTIALS_PATH: str  # No default
 Risk: Deployment failures
@@ -81,6 +96,7 @@ CopyInsert
 class Settings(BaseSettings):
     FIREBASE_CREDENTIALS_PATH: str = "/secrets/firebase.json"
 Ultimate Implementation Priority List
+
 1. Security Hardening (Critical)
 
 [ ] Replace all hardcoded credentials with env vars
@@ -144,6 +160,7 @@ Press Enter again to interrupt and send a new message
 Start with History ⌘⏎
 
 Comprehensive Code Remediation Guide
+
 1. Security: Hardcoded Credentials Elimination
 Problem Analysis:
 
@@ -155,13 +172,17 @@ Step-by-Step Remediation:
 Create Environment Management:
 bash
 CopyInsert
+
 # Create secure environment template
+
 echo "TEST_FIREBASE_UID=test_user" > .env.test.template
 echo "TEST_API_KEY=mock_key" >> .env.test.template
 Implement Secret Loading:
 python
 CopyInsert
+
 # tests/conftest.py
+
 import os
 from dotenv import load_dotenv
 
@@ -176,7 +197,9 @@ def test_credentials():
 Update Test Files:
 python
 CopyInsert
+
 # tests/api/v1/test_authentication.py
+
 def test_admin_login(test_credentials):
     response = client.post("/login", json={
         "username": test_credentials["uid"],
@@ -186,15 +209,20 @@ def test_admin_login(test_credentials):
 Add Git Protection:
 bash
 CopyInsert
+
 # .gitignore
+
 .env.*
 *.secret
 Implement Pre-commit Hook:
 yaml
 CopyInsert
+
 # .pre-commit-config.yaml
+
 repos:
-- repo: https://github.com/pre-commit/pre-commit-hooks
+
+- repo: <https://github.com/pre-commit/pre-commit-hooks>
   rev: v4.4.0
   hooks:
   - id: detect-aws-credentials
@@ -215,7 +243,9 @@ Implementation Guide:
 Create Validation Schema:
 python
 CopyInsert
+
 # src/clarity/schemas/health_data.py
+
 from pydantic import BaseModel, conlist
 from datetime import datetime
 
@@ -227,7 +257,9 @@ class HealthDataSchema(BaseModel):
 Update Service Layer:
 python
 CopyInsert
+
 # src/clarity/services/health_data_service.py
+
 from .schemas.health_data import HealthDataSchema
 
 def parse_health_data(raw_input: str) -> HealthDataSchema:
@@ -239,7 +271,9 @@ def parse_health_data(raw_input: str) -> HealthDataSchema:
 Add Boundary Tests:
 python
 CopyInsert
+
 # tests/services/test_health_data.py
+
 @pytest.mark.parametrize("invalid_input", [
     '{"user_id": "invalid"}',
     '{"metrics": [1,2]}',  # Too few metrics
@@ -264,7 +298,9 @@ Optimization Implementation:
 Implement Connection Registry:
 python
 CopyInsert
+
 # src/clarity/api/v1/websocket/registry.py
+
 from collections import defaultdict
 from uuid import UUID
 
@@ -272,7 +308,7 @@ class ConnectionRegistry:
     def __init__(self):
         self.user_connections = defaultdict(list)
         self.connection_ids = {}
-    
+
     def register(self, user_id: UUID, connection_id: str, ws: WebSocket):
         self.user_connections[user_id].append(ws)
         self.connection_ids[connection_id] = user_id
@@ -287,7 +323,9 @@ class ConnectionRegistry:
 Integrate with Manager:
 python
 CopyInsert
+
 # src/clarity/api/v1/websocket/manager.py
+
 from .registry import ConnectionRegistry
 
 registry = ConnectionRegistry()
@@ -302,12 +340,14 @@ def get_connections(user_id: UUID) -> list[WebSocket]:
 Add Load Testing:
 python
 CopyInsert
+
 # tests/load/test_websocket.py
+
 @pytest.mark.asyncio
 async def test_connection_scaling():
     user_id = uuid4()
     connections = []
-    
+
     # Create 1000 connections
     for _ in range(1000):
         mock_ws = AsyncMock(spec=WebSocket)
@@ -335,7 +375,9 @@ Resilience Implementation:
 Add Decorator with Retry Logic:
 python
 CopyInsert
+
 # src/clarity/utils/decorators.py
+
 from tenacity import retry, stop_after_attempt, wait_exponential
 
 def resilient_prediction(func):
@@ -345,12 +387,14 @@ def resilient_prediction(func):
         reraise=True
     )
     def wrapper(*args, **kwargs):
-        return func(*args, **kwargs)
+        return func(*args,**kwargs)
     return wrapper
 Apply to Prediction Method:
 python
 CopyInsert
+
 # src/clarity/ml/pat_service.py
+
 from ..utils.decorators import resilient_prediction
 
 class PATService:
@@ -360,7 +404,9 @@ class PATService:
 Implement Circuit Breaker:
 python
 CopyInsert
+
 # src/clarity/core/circuit_breaker.py
+
 from circuitbreaker import circuit
 
 @circuit(failure_threshold=5, recovery_timeout=60)
@@ -369,7 +415,9 @@ async def pat_prediction(input_data):
 Add Monitoring:
 python
 CopyInsert
+
 # src/clarity/core/monitoring.py
+
 from prometheus_client import Counter
 
 PREDICTION_FAILURES = Counter(
@@ -378,7 +426,8 @@ PREDICTION_FAILURES = Counter(
     ['error_type']
 )
 
-# In prediction method:
+# In prediction method
+
 try:
     return await pat_prediction(input_data)
 except PredictionError as e:

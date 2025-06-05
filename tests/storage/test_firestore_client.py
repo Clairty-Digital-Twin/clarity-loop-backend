@@ -95,7 +95,7 @@ def sample_health_data() -> dict[str, Any]:
 
 
 @pytest.fixture
-def sample_health_upload() -> HealthDataUpload:
+def sample_health_upload(test_env_credentials: dict[str, str]) -> HealthDataUpload:
     """Sample HealthDataUpload for testing."""
     user_id = uuid4()
     return HealthDataUpload(
@@ -119,7 +119,7 @@ def sample_health_upload() -> HealthDataUpload:
         ],
         upload_source="apple_health",
         client_timestamp=datetime.now(UTC),
-        sync_token="sync_12345",  # noqa: S106
+        sync_token=test_env_credentials["mock_sync_token"],
     )
 
 

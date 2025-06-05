@@ -102,7 +102,7 @@ google.cloud.pubsub_v1.PublisherClient = _FakePublisher
 
 
 @pytest.fixture(scope="session")
-def test_env_credentials() -> dict[str, str | None]:
+def test_env_credentials() -> dict[str, str]:
     """Provides test credentials loaded from the .env.test file or defaults."""
     return {
         "default_username": os.getenv("TEST_DEFAULT_USERNAME", "test_user@example.com"),

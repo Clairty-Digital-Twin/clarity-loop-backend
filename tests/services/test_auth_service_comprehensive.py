@@ -158,9 +158,7 @@ def sample_registration_request(
     """Sample user registration request."""
     return UserRegistrationRequest(
         email="test@example.com",
-        password=test_env_credentials[
-            "default_password"
-        ],  # This is a test
+        password=test_env_credentials["default_password"],  # This is a test
         first_name="John",
         last_name="Doe",
         phone_number="+1234567890",
@@ -176,9 +174,7 @@ def sample_login_request(
     """Sample user login request."""
     return UserLoginRequest(
         email="test@example.com",
-        password=test_env_credentials[
-            "default_password"
-        ],  # This is a test
+        password=test_env_credentials["default_password"],  # This is a test
         remember_me=False,
     )
 
@@ -328,12 +324,8 @@ class TestUserLogin:
 
         with patch.object(auth_service, "_generate_tokens") as mock_gen_tokens:
             mock_tokens = TokenResponse(
-                access_token=test_env_credentials[
-                    "mock_access_token"
-                ],  # Test value
-                refresh_token=test_env_credentials[
-                    "mock_refresh_token"
-                ],  # Test value
+                access_token=test_env_credentials["mock_access_token"],  # Test value
+                refresh_token=test_env_credentials["mock_refresh_token"],  # Test value
                 token_type="bearer",  # noqa: S106 # Test value
                 expires_in=3600,
             )
@@ -534,12 +526,10 @@ class TestTokenManagement:
 
             assert isinstance(result, TokenResponse)
             assert (
-                result.access_token
-                == test_env_credentials["mock_access_token"]
+                result.access_token == test_env_credentials["mock_access_token"]
             )  # Test assertion
             assert (
-                result.refresh_token
-                == test_env_credentials["mock_refresh_token"]
+                result.refresh_token == test_env_credentials["mock_refresh_token"]
             )  # Test assertion
             assert result.token_type == "bearer"  # noqa: S105 # Test assertion
             assert result.expires_in == 3600  # default expiry
@@ -572,9 +562,7 @@ class TestTokenManagement:
         test_env_credentials: dict[str, str | None],
     ) -> None:
         """Test successful token refresh."""
-        refresh_token = test_env_credentials[
-            "mock_refresh_token"
-        ]  # Test value
+        refresh_token = test_env_credentials["mock_refresh_token"]  # Test value
 
         # Mock refresh token query results - not get_document, but query_documents
         token_data = {
@@ -598,8 +586,7 @@ class TestTokenManagement:
 
             assert isinstance(result, TokenResponse)
             assert (
-                result.access_token
-                == test_env_credentials["mock_new_access_token"]
+                result.access_token == test_env_credentials["mock_new_access_token"]
             )  # Test assertion
 
     @staticmethod
@@ -656,9 +643,7 @@ class TestSessionManagement:
     ) -> None:
         """Test user session creation."""
         user_id = "test-uid-123"
-        refresh_token = test_env_credentials[
-            "mock_refresh_token"
-        ]  # Test value
+        refresh_token = test_env_credentials["mock_refresh_token"]  # Test value
         device_info = {"device_type": "iPhone"}
         ip_address = "192.168.1.1"
 
@@ -716,9 +701,7 @@ class TestSessionManagement:
         auth_service: AuthenticationService, test_env_credentials: dict[str, str | None]
     ) -> None:
         """Test successful user logout."""
-        refresh_token = test_env_credentials[
-            "mock_refresh_token"
-        ]  # Test value
+        refresh_token = test_env_credentials["mock_refresh_token"]  # Test value
 
         # Mock token data returned by query_documents
         token_data = {
@@ -978,9 +961,7 @@ class TestDataValidation:
         # Test valid registration
         valid_request = UserRegistrationRequest(
             email="test@example.com",
-            password=test_env_credentials[
-                "default_password"
-            ],  # Test value
+            password=test_env_credentials["default_password"],  # Test value
             first_name="John",
             last_name="Doe",
             terms_accepted=True,
@@ -992,9 +973,7 @@ class TestDataValidation:
         with pytest.raises(ValidationError, match="value is not a valid email address"):
             UserRegistrationRequest(
                 email="invalid-email",
-                password=test_env_credentials[
-                    "default_password"
-                ],  # Test value
+                password=test_env_credentials["default_password"],  # Test value
                 first_name="John",
                 last_name="Doe",
                 terms_accepted=True,
@@ -1009,9 +988,7 @@ class TestDataValidation:
         # Test valid login
         valid_request = UserLoginRequest(
             email="test@example.com",
-            password=test_env_credentials[
-                "default_password"
-            ],  # Test value
+            password=test_env_credentials["default_password"],  # Test value
         )
         assert valid_request.email == "test@example.com"
 
@@ -1019,7 +996,5 @@ class TestDataValidation:
         with pytest.raises(ValidationError, match="value is not a valid email address"):
             UserLoginRequest(
                 email="invalid-email",
-                password=test_env_credentials[
-                    "default_password"
-                ],  # Test value
+                password=test_env_credentials["default_password"],  # Test value
             )

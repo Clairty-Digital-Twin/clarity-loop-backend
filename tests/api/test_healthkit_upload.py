@@ -55,7 +55,9 @@ class TestHealthKitModels:
         assert sample.value["stage"] == "deep"
         assert sample.metadata["confidence"] == 0.95
 
-    def test_upload_request_creation(self) -> None:  # noqa: PLR6301
+    def test_upload_request_creation(
+        self, test_env_credentials: dict[str, str]
+    ) -> None:  # MODIFIED, noqa: PLR6301
         """Test HealthKitUploadRequest model creation."""
         request = HealthKitUploadRequest(
             user_id="test-user-123",
@@ -69,12 +71,14 @@ class TestHealthKitModels:
                     end_date="2023-01-01T12:01:00Z",
                 )
             ],
-            sync_token="token-123",  # noqa: S106
+            sync_token=test_env_credentials["mock_sync_token"],  # MODIFIED, noqa: S106
         )
 
         assert request.user_id == "test-user-123"
         assert len(request.quantity_samples) == 1
-        assert request.sync_token == "token-123"  # noqa: S105
+        assert (
+            request.sync_token == test_env_credentials["mock_sync_token"]
+        )  # MODIFIED, noqa: S105
         assert request.category_samples == []
         assert request.workouts == []
 
@@ -97,7 +101,9 @@ class TestHealthKitUploadEndpoint:
     """Test the main HealthKit upload endpoint."""
 
     @pytest.fixture
-    def sample_upload_request(self) -> HealthKitUploadRequest:  # noqa: PLR6301
+    def sample_upload_request(
+        self, test_env_credentials: dict[str, str]
+    ) -> HealthKitUploadRequest:  # MODIFIED, noqa: PLR6301
         """Create a sample upload request for testing."""
         return HealthKitUploadRequest(
             user_id="test-user-123",
@@ -120,7 +126,7 @@ class TestHealthKitUploadEndpoint:
                     "distance": 2.5,
                 }
             ],
-            sync_token="sync-token-123",  # noqa: S106
+            sync_token=test_env_credentials["mock_sync_token"],  # MODIFIED, noqa: S106
         )
 
     @pytest.fixture

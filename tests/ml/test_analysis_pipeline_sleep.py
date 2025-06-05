@@ -6,7 +6,8 @@ ensuring proper data flow and feature fusion.
 
 from datetime import UTC, datetime
 import os
-from unittest.mock import AsyncMock, MagicMock, Mock, patch
+from unittest.mock import AsyncMock, MagicMock, Mock, patch, create_autospec
+from uuid import uuid4
 
 import pytest
 
@@ -241,16 +242,23 @@ class TestAnalysisPipelineSleepIntegration:
         self.pipeline.firestore_client = mock_firestore
         processing_id = "test_processing_id_save_success"
 
-        mock_metric = MagicMock(spec=HealthMetric)
-        mock_metric.metric_type = MagicMock(spec=HealthMetricType)
-        mock_metric.metric_type.value = (
-            HealthMetricType.HEART_RATE.value
-        )  # Example type
-        # Add other necessary attributes to mock_metric if _organize_metrics_by_modality accesses them
-        mock_metric.created_at = datetime.now(
-            UTC
-        )  # required by _calculate_time_span if metrics list > 1
-        mock_metric.biometric_data = None  # Or a mock BiometricData if needed
+        mock_metric = create_autospec(HealthMetric, instance=True)
+        mock_metric.metric_type = HealthMetricType.HEART_RATE
+        mock_metric.created_at = datetime.now(UTC)
+        mock_metric.metric_id = uuid4()
+
+        # Configure biometric_data as it will be accessed for HEART_RATE
+        mock_bio_data = create_autospec(BiometricData, instance=True)
+        mock_bio_data.heart_rate = 70.0
+        mock_bio_data.heart_rate_variability = None
+        mock_bio_data.blood_pressure_systolic = None
+        mock_bio_data.blood_pressure_diastolic = None
+        mock_bio_data.oxygen_saturation = None
+        mock_bio_data.respiratory_rate = None
+        mock_bio_data.body_temperature = None
+        mock_bio_data.blood_glucose = None
+        mock_metric.biometric_data = mock_bio_data
+
         mock_metric.sleep_data = None
         mock_metric.activity_data = None
         mock_metric.mental_health_data = None
@@ -271,11 +279,22 @@ class TestAnalysisPipelineSleepIntegration:
             "Firestore Save Error"
         )
 
-        mock_metric = MagicMock(spec=HealthMetric)
-        mock_metric.metric_type = MagicMock(spec=HealthMetricType)
-        mock_metric.metric_type.value = HealthMetricType.HEART_RATE.value
+        mock_metric = create_autospec(HealthMetric, instance=True)
+        mock_metric.metric_type = HealthMetricType.HEART_RATE
         mock_metric.created_at = datetime.now(UTC)
-        mock_metric.biometric_data = None
+        mock_metric.metric_id = uuid4()
+
+        mock_bio_data = create_autospec(BiometricData, instance=True)
+        mock_bio_data.heart_rate = 70.0
+        mock_bio_data.heart_rate_variability = None
+        mock_bio_data.blood_pressure_systolic = None
+        mock_bio_data.blood_pressure_diastolic = None
+        mock_bio_data.oxygen_saturation = None
+        mock_bio_data.respiratory_rate = None
+        mock_bio_data.body_temperature = None
+        mock_bio_data.blood_glucose = None
+        mock_metric.biometric_data = mock_bio_data
+        
         mock_metric.sleep_data = None
         mock_metric.activity_data = None
         mock_metric.mental_health_data = None
@@ -292,11 +311,22 @@ class TestAnalysisPipelineSleepIntegration:
         self.pipeline.firestore_client = None
         processing_id = "test_processing_id_init"
 
-        mock_metric = MagicMock(spec=HealthMetric)
-        mock_metric.metric_type = MagicMock(spec=HealthMetricType)
-        mock_metric.metric_type.value = HealthMetricType.HEART_RATE.value
+        mock_metric = create_autospec(HealthMetric, instance=True)
+        mock_metric.metric_type = HealthMetricType.HEART_RATE
         mock_metric.created_at = datetime.now(UTC)
-        mock_metric.biometric_data = None
+        mock_metric.metric_id = uuid4()
+
+        mock_bio_data = create_autospec(BiometricData, instance=True)
+        mock_bio_data.heart_rate = 70.0
+        mock_bio_data.heart_rate_variability = None
+        mock_bio_data.blood_pressure_systolic = None
+        mock_bio_data.blood_pressure_diastolic = None
+        mock_bio_data.oxygen_saturation = None
+        mock_bio_data.respiratory_rate = None
+        mock_bio_data.body_temperature = None
+        mock_bio_data.blood_glucose = None
+        mock_metric.biometric_data = mock_bio_data
+
         mock_metric.sleep_data = None
         mock_metric.activity_data = None
         mock_metric.mental_health_data = None

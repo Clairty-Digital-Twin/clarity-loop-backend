@@ -1,7 +1,5 @@
 # CLARITY Digital Twin Platform Backend
 
-A digital twin platform for psychiatric care and mental health monitoring that processes health data from Apple HealthKit and generates AI-powered insights using machine learning models.
-
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.115+-00a393.svg)](https://fastapi.tiangolo.com/)
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
@@ -9,28 +7,126 @@ A digital twin platform for psychiatric care and mental health monitoring that p
 
 ## Overview
 
-CLARITY processes real-world health data from Apple HealthKit and generates AI-powered insights using state-of-the-art machine learning models. The platform integrates the Pretrained Actigraphy Transformer (PAT) for sleep pattern analysis and Google Gemini for natural language health insights generation.
+CLARITY is a backend platform designed to create a **mental health digital twin**, transforming raw wearable data (e.g., from Apple Watch) into clinically meaningful insights. While the ultimate vision focuses on comprehensive mental health assessment, the current platform provides a robust foundation by processing a wide array of physiological data. It combines multi-sensor data processing with machine learning to model an individual's health, with initial strengths in sleep patterns, daily activity, cardiovascular status, and circadian rhythms.
 
-### Key Features
+This document details the system's current functionality—what the codebase actually does today—and outlines a roadmap of features under development, ensuring transparency about which analytical components are fully implemented versus those that are experimental or planned.
 
-**AI/ML Pipeline**
+## Current Capabilities
 
-- PAT (Pretrained Actigraphy Transformer) for sleep pattern analysis and circadian rhythm detection
-- Google Gemini integration for natural language health insights generation
-- Proxy actigraphy conversion from Apple Watch step data to clinical-grade actigraphy
+CLARITY's backend can ingest and process wearable data to output a rich set of health metrics. These components are active in the codebase and form an asynchronous pipeline to produce an integrated health report.
 
-**Health Data Integration**
+### 1. Pretrained Actigraphy Transformer (PAT) – Actigraphy-Based Sleep & Behavioral Analysis
 
-- Apple HealthKit integration (Heart Rate, HRV, Steps, Sleep, Respiratory Rate)
-- Real-time data validation and processing
-- HIPAA-compliant secure storage with encryption
+The PAT model analyzes wrist motion (actigraphy) data, often derived from step counts, to infer sleep-related metrics and behavioral patterns.
+- **Sleep Quality Metrics:** An 8-element vector estimating key sleep characteristics (e.g., efficiency, latency, fragmentation) from one week of actigraphy.
+- **Circadian Rhythm Regularity Score:** A single score indicating the consistency of the user's daily activity/sleep cycle.
+- **Depression Risk Indicator:** A scalar output reflecting activity patterns correlated with elevated depression risk (based on the Dartmouth-trained model).
+- **Activity Embedding:** A 96-dimensional latent vector (padded to 128 dimensions) representing the user's weekly activity profile.
+*Note: PAT currently provides aggregate sleep metrics and does not perform minute-by-minute sleep stage labeling (which is a placeholder in the current code).*
 
-**Architecture**
+### 2. Sleep Processor – Clinical Sleep Metrics from Logged Data
 
-- Clean Architecture with SOLID principles
-- Async-first design with FastAPI
-- Microservices-ready with Google Cloud Platform
-- Production monitoring and observability
+This module analyzes structured sleep records (e.g., from Apple HealthKit sleep tracking) to compute research-grade sleep features:
+- Sleep efficiency, sleep latency, Wake After Sleep Onset (WASO).
+- Sleep stage percentages (REM, deep sleep, if stage data is provided).
+- Awakenings count, sleep consistency score.
+- Overall sleep quality score (0-5).
+These metrics are computed using accepted formulas and thresholds from clinical sleep medicine.
+
+### 3. Cardiovascular Processor – Heart Rate & HRV Feature Extraction
+
+Derives cardiovascular health indicators from heart rate (HR) and heart rate variability (HRV) time series:
+- Average and Max Heart Rate.
+- Resting Heart Rate estimate.
+- Heart Rate Variability (HRV) as SDNN, if available.
+- HRV Variability (standard deviation of the HRV signal).
+- Heart Rate Recovery Score (0-1 index).
+- Circadian Rhythm Score (Cardio) (0-1 score for day-night HR variation).
+*Note: Currently focuses on summary statistics and regularity; arrhythmia detection is on the roadmap.*
+
+### 4. Respiratory Processor – Breathing Rate and Oxygen Saturation Analysis
+
+Handles breathing rate and blood oxygen saturation (SpO₂) data to compute an 8-feature vector:
+- Average and Resting Respiratory Rate.
+- Respiratory Variability.
+- Average and Minimum SpO₂.
+- SpO₂ Variability.
+- Respiratory Stability Score (0-1 index).
+- Oxygenation Efficiency Score (0-1 index).
+
+### 5. Activity Processor – Daily Activity & Fitness Summary
+
+Ingests raw activity metrics (steps, distance, exercise minutes) and produces user-friendly summaries (12 key metrics):
+- Total and Average Daily Steps, Peak Daily Steps.
+- Total and Average Daily Distance.
+- Total and Average Daily Active Energy burned.
+- Total and Average Daily Exercise Minutes.
+- Total Flights Climbed, Total Active Minutes.
+- Activity Consistency Score (0-1).
+This complements PAT by providing transparent, easily explainable activity numbers.
+
+### 6. Fusion Transformer – Multi-Modal Health State Integration
+
+A PyTorch-based model that fuses feature vectors from multiple modalities (e.g., sleep + cardio + activity) into a single 64-dimensional vector.
+- This fused vector represents an encoded snapshot of the person's overall physiological state.
+- Currently, this vector is primarily used for research and future development (e.g., for advanced multi-modal analyses) and is not directly exposed as a standalone insight to end-users.
+
+### 7. Summary Statistics and Insights Generation
+
+- The pipeline produces summary statistics, data coverage information, and preliminary interpretations (e.g., health indicator flags like "good/fair/poor" for cardiovascular fitness).
+- Results are saved to Firestore.
+- Integrates with a natural language model (Google's Gemini) to translate metrics into human-readable advice via an API, bridging the gap between raw data and understanding.
+
+## AI/ML Pipeline Highlights
+
+- **PAT (Pretrained Actigraphy Transformer):** For nuanced analysis of movement data to infer sleep and behavioral patterns.
+- **Dedicated Processors:** For detailed analysis of logged sleep, cardiovascular, respiratory, and activity data.
+- **Fusion Transformer:** To create a unified, multi-modal representation of health.
+- **Google Gemini Integration:** For generating natural language health insights from the processed metrics.
+
+## Architecture
+
+The platform is built on Clean Architecture principles, promoting a separation of concerns and maintainability.
+```
+┌─────────────────────────────────────────────────────────┐
+│ Frameworks & Drivers (FastAPI, GCP, Firebase)           │
+├─────────────────────────────────────────────────────────┤
+│ Interface Adapters (Controllers, DTOs, Gateways)        │
+├─────────────────────────────────────────────────────────┤
+│ Application Services (Use Cases, Business Rules)        │
+├─────────────────────────────────────────────────────────┤
+│ Domain Entities (Health Data, User, Analysis)           │
+└─────────────────────────────────────────────────────────┘
+```
+
+### Technology Stack
+
+**Backend Core**
+- FastAPI, Pydantic, PyTorch
+
+**AI/ML**
+- PAT, Google Gemini, scikit-learn, pandas
+
+**Infrastructure**
+- Google Cloud Platform (GCP), Firestore, Firebase Auth, Pub/Sub, Cloud Storage
+
+**Development & Monitoring**
+- pytest, Black, Ruff, Prometheus, Grafana
+
+## Roadmap – Towards a Mental Health Digital Twin
+
+While the current platform provides robust physiological monitoring, future development is focused on leveraging these capabilities to build a comprehensive mental health digital twin.
+
+- **Fine-Grained Sleep Stage & Apnea Detection:** Enhancing PAT or related algorithms for detailed sleep staging (light, deep, REM) from actigraphy and other signals. This will be crucial for linking sleep architecture to mood regulation and cognitive function.
+- **Arrhythmia and Cardiac Anomaly Detection:** Adding detection of irregular heart rhythms. Understanding cardiac patterns can provide insights into stress, anxiety, and autonomic nervous system dysregulation relevant to mental health.
+- **Multi-Modal Mental Health Risk Prediction & Alerts:** Leveraging the FusionTransformer's output to train models that predict risks for mental health episodes (e.g., depressive episodes, anxiety spikes) or track overall mental well-being.
+- **Circadian Rhythm Optimization for Mental Well-being:** Offering personalized guidance to improve circadian regularity, a key factor in mood disorders, energy levels, and overall mental health.
+- **Longitudinal Trend Analysis for Mental Health Trajectories:** Implementing views and metrics to track changes in health patterns over months or years, identifying subtle shifts that may indicate an emerging mental health concern or response to treatment.
+- **Personalized Intervention & Psychiatric Coaching:** Using insights to provide tailored health coaching with a strong psychiatric and psychological component, potentially suggesting behavioral changes or flagging when professional consultation is advisable.
+- **Expanded Data Source Integration for Holistic View:**
+    - **Patient-Reported Outcomes (PROs):** Integrating mood logs, validated mental health questionnaires (e.g., PHQ-9, GAD-7), and contextual life-event data.
+    - **Other Biometric Data:** Incorporating data from new sensors (e.g., EDA for stress, CGM for metabolic health's impact on mood) as they become relevant and available.
+- **Clinical Validation & Explainability:** Rigorous validation of algorithms against clinical standards (e.g., PAT against polysomnography) and improving model explainability to build trust and clinical utility.
 
 ## Quick Start
 
@@ -49,7 +145,7 @@ cd clarity-loop-backend
 
 # Create virtual environment
 python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
+source venv/bin/activate  # On Windows: venv\\Scripts\\activate
 
 # Install dependencies
 pip install -e ".[dev]"
@@ -61,11 +157,9 @@ cp .env.example .env
 # Run the development server
 make dev
 ```
-
-The API will be available at <http://localhost:8000> with interactive docs at <http://localhost:8000/docs>
+The API will be available at <http://localhost:8000> with interactive docs at <http://localhost:8000/docs>.
 
 ### Docker Development
-
 ```bash
 # Start all services (API + emulators)
 make dev-docker
@@ -78,33 +172,10 @@ make lint
 ```
 
 ### Quick Demo
-
-```bash
-# Start the full platform with monitoring
-bash quick_demo.sh
-
-# Test the API
-curl http://localhost:8000/health
-
-# Run API test suite
-python scripts/api_test_suite.py
-```
-
-This will start the following services:
-
-| Service | URL | Purpose |
-|---------|-----|---------|
-| Main API | [localhost:8000](http://localhost:8000) | FastAPI backend |
-| API Docs | [localhost:8000/docs](http://localhost:8000/docs) | Interactive OpenAPI documentation |
-| Grafana | [localhost:3000](http://localhost:3000) | Monitoring dashboards (admin/admin) |
-| Prometheus | [localhost:9090](http://localhost:9090) | Metrics collection |
-| Jupyter Lab | [localhost:8888](http://localhost:8888) | ML model exploration |
-| Firestore UI | [localhost:4000](http://localhost:4000) | Database administration |
+A quick demo setup is available via `quick_demo.sh`. Refer to `README-DEMO.md` for more details on the demo environment.
 
 ## API Overview
-
-### Core Endpoints
-
+The platform provides a comprehensive API for user management, health data upload, analysis, and insights retrieval.
 | Endpoint | Description | Authentication |
 |----------|-------------|----------------|
 | `POST /api/v1/auth/register` | User registration | Public |
@@ -114,248 +185,65 @@ This will start the following services:
 | `POST /api/v1/pat/analyze-step-data` | PAT actigraphy analysis | Firebase JWT |
 | `POST /api/v1/insights/generate` | Generate AI health insights | Firebase JWT |
 
-### Example Usage
-
-```python
-import httpx
-
-# Upload Apple HealthKit data
-async with httpx.AsyncClient() as client:
-    response = await client.post(
-        "http://localhost:8000/api/v1/health-data/upload",
-        headers={"Authorization": f"Bearer {firebase_token}"},
-        json={
-            "user_id": "user_123",
-            "data_type": "heart_rate",
-            "measurements": [
-                {
-                    "timestamp": "2025-01-15T10:30:00Z",
-                    "value": 72.5,
-                    "unit": "bpm"
-                }
-            ],
-            "source": "apple_watch"
-        }
-    )
-```
-
-## AI/ML Pipeline
-
-### PAT Model Integration
-
-The platform integrates the Pretrained Actigraphy Transformer (PAT) for sleep analysis:
-
-```python
-# Analyze step data with PAT transformer
-POST /api/v1/pat/analyze-step-data
-{
-    "user_id": "user_123",
-    "step_data": [
-        {"timestamp": "2025-01-15T00:00:00Z", "step_count": 0},
-        {"timestamp": "2025-01-15T00:01:00Z", "step_count": 5}
-    ]
-}
-```
-
-### Gemini Insights Generation
-
-```python
-# Generate natural language health insights
-POST /api/v1/insights/generate
-{
-    "user_id": "user_123",
-    "analysis_results": {
-        "sleep_efficiency": 0.85,
-        "circadian_score": 0.72,
-        "heart_rate_avg": 68.5
-    },
-    "question": "How is my overall health this week?"
-}
-```
-
-## Architecture
-
-### Clean Architecture Layers
-
-```
-┌─────────────────────────────────────────────────────────┐
-│ Frameworks & Drivers (FastAPI, GCP, Firebase)           │
-├─────────────────────────────────────────────────────────┤
-│ Interface Adapters (Controllers, DTOs, Gateways)        │
-├─────────────────────────────────────────────────────────┤
-│ Application Services (Use Cases, Business Rules)        │
-├─────────────────────────────────────────────────────────┤
-│ Domain Entities (Health Data, User, Analysis)           │
-└─────────────────────────────────────────────────────────┘
-```
-
-### Technology Stack
-
-**Backend Core**
-
-- FastAPI - Modern, async Python web framework
-- Pydantic - Data validation and serialization
-- PyTorch - ML model inference engine
-
-**AI/ML**
-
-- PAT (Pretrained Actigraphy Transformer) - Sleep analysis
-- Google Gemini - Health insights generation
-- scikit-learn, pandas - Data processing
-
-**Infrastructure**
-
-- Google Cloud Platform - Cloud hosting and services
-- Firestore - NoSQL database with real-time sync
-- Firebase Auth - User authentication and authorization
-- Pub/Sub - Asynchronous message processing
-- Cloud Storage - Secure file storage
-
-**Development & Monitoring**
-
-- pytest - Testing framework
-- Black, Ruff - Code formatting and linting
-- Prometheus - Metrics collection
-- Grafana - Monitoring dashboards
+For detailed API documentation, refer to the interactive docs at <http://localhost:8000/docs> when the server is running.
 
 ## Security & Compliance
-
-### HIPAA Compliance
-
-- End-to-end encryption for health data
-- Audit logging for all data access
-- User data isolation and access controls
-- Secure cloud infrastructure with Google Cloud BAA
-
-### Authentication
-
-- Firebase Authentication with JWT tokens
-- Role-based access control (RBAC)
-- Rate limiting and request validation
-- Secure API key management
+- End-to-end encryption for health data (at rest and in transit).
+- HIPAA considerations in data handling and storage.
+- Firebase Authentication with JWT tokens.
+- Role-based access control (RBAC) planned.
+- Secure API key management.
 
 ## Testing
-
 ```bash
 # Run all tests
 make test
 
-# Run specific test categories
-pytest tests/unit/          # Unit tests
-pytest tests/integration/   # Integration tests
-pytest tests/api/          # API endpoint tests
-
 # Test coverage report
 make coverage
 ```
-
-**Test Categories**
-
-- Unit Tests - Business logic and entities
-- Integration Tests - Service layer interactions
-- API Tests - HTTP endpoint functionality
-- ML Tests - Model inference and data processing
-
-## Performance & Monitoring
-
-### Health Checks
-
-```bash
-# Application health
-curl http://localhost:8000/health
-
-# Service-specific health
-curl http://localhost:8000/api/v1/health-data/health
-curl http://localhost:8000/api/v1/pat/health
-```
-
-### Monitoring Features
-
-- Prometheus metrics collection
-- Grafana dashboards for visualization
-- Structured logging with correlation IDs
-- Performance profiling and bottleneck detection
-
-## Deployment
-
-### Local Development
-
-```bash
-make dev-docker  # Full stack with emulators
-```
-
-### Production (Google Cloud Run)
-
-```bash
-# Build and deploy
-make docker-build
-make deploy-production
-```
-
-### Environment Configuration
-
-```bash
-# Required environment variables
-GOOGLE_CLOUD_PROJECT=your-project-id
-FIREBASE_PROJECT_ID=your-firebase-project
-FIRESTORE_DATABASE_ID=(default)
-
-# Optional for development
-FIRESTORE_EMULATOR_HOST=localhost:8080
-PUBSUB_EMULATOR_HOST=localhost:8085
-```
+The project aims for high test coverage across unit, integration, API, and ML tests.
 
 ## Documentation
-
-- [API Documentation](http://localhost:8000/docs) - Interactive OpenAPI docs
-- [Architecture Guide](docs/architecture/) - Detailed system design
-- [Apple HealthKit Integration](docs/integrations/healthkit.md) - Mobile app integration
-- [Development Guide](docs/development/) - Local development setup
-- [Deployment Guide](docs/operations/) - Production deployment
+- **API Documentation:** Interactive OpenAPI docs available at `/docs` when the server is running.
+- **Further Documentation:** Detailed guides on architecture, integrations, and development can be found in the `docs/` directory. ([View Docs Folder](docs/))
 
 ## Contributing
-
-1. Fork the repository
-2. Create a feature branch: `git checkout -b feature/amazing-feature`
-3. Make your changes following our coding standards
-4. Run tests: `make test`
-5. Run linting: `make lint`
-6. Commit your changes: `git commit -m 'Add amazing feature'`
-7. Push to the branch: `git push origin feature/amazing-feature`
-8. Open a Pull Request
+1. Fork the repository.
+2. Create a feature branch: `git checkout -b feature/your-amazing-feature`.
+3. Make your changes following coding standards.
+4. Ensure tests pass: `make test`.
+5. Ensure linting passes: `make lint`.
+6. Commit your changes: `git commit -m 'Add some amazing feature'`.
+7. Push to the branch: `git push origin feature/your-amazing-feature`.
+8. Open a Pull Request.
 
 ### Code Standards
-
-- Follow Clean Architecture principles
-- Maintain test coverage above 80%
-- Use type hints and docstrings
-- Follow Black code formatting
-- Pass all linting checks
+- Adhere to Clean Architecture principles.
+- Aim for high test coverage (target >80%).
+- Use type hints and clear docstrings.
+- Follow Black code formatting.
 
 ## License
-
 This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENSE) file for details.
 
 ## Acknowledgments
 
 ### AI Foundation Models for Wearable Movement Data
-
 This platform integrates the Pretrained Actigraphy Transformer (PAT), an open-source foundation model for time-series wearable movement data developed by the Jacobson Lab at Dartmouth College.
 
 **Citation:**
-
 ```
-Ruan, Franklin Y., Zhang, Aiwei, Oh, Jenny, Jin, SouYoung, and Jacobson, Nicholas C. 
-"AI Foundation Models for Wearable Movement Data in Mental Health Research." 
+Ruan, Franklin Y., Zhang, Aiwei, Oh, Jenny, Jin, SouYoung, and Jacobson, Nicholas C.
+"AI Foundation Models for Wearable Movement Data in Mental Health Research."
 arXiv:2411.15240 (2024). https://doi.org/10.48550/arXiv.2411.15240
 ```
-
-**Repository:** [njacobsonlab/Pretrained-Actigraphy-Transformer](https://github.com/njacobsonlab/Pretrained-Actigraphy-Transformer)  
-**License:** CC-BY-4.0  
+**Repository:** [njacobsonlab/Pretrained-Actigraphy-Transformer](https://github.com/njacobsonlab/Pretrained-Actigraphy-Transformer)
+**License:** CC-BY-4.0
 **Corresponding Author:** Franklin Ruan (<franklin.y.ruan.24@dartmouth.edu>)
 
 ### Additional Acknowledgments
-
-- Google Gemini - Advanced language model for health insights
-- Apple HealthKit - Comprehensive health data platform
-- Clean Architecture - Robert C. Martin's architectural principles
+- Google Gemini - For advanced language model capabilities.
+- Apple HealthKit - As a primary source of health data.
+- The principles of Clean Architecture by Robert C. Martin.
+- The open-source community.

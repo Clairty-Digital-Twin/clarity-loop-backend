@@ -970,37 +970,17 @@ async def get_pat_service() -> PATModelService:
     """Get or create the global PAT service instance."""
     global _pat_service  # noqa: PLW0603
 
-    if _pat_service is None:
-        logger.info("Attempting to initialize global PATModelService...")
-        try:
-            # Create a local instance first
-            service_instance = PATModelService()  # Default model_size="medium"
-            await service_instance.load_model()  # Load model for the instance
-            _pat_service = (
-                service_instance  # Assign to global only after successful init and load
-            )
-            logger.info(
-                "Global PATModelService initialized and model loaded successfully."
-            )
-        except Exception as e:
-            logger.critical(
-                f"Failed to initialize global PATModelService: {e}", exc_info=True
-            )
-            # Re-raise as a clear RuntimeError indicating service unavailability
-            raise RuntimeError(f"PATModelService could not be initialized: {e}") from e
+    if _pat_service is not None:
+        return _pat_service
 
-    # At this point, if _pat_service was None, initialization was attempted.
-    # If it's still None here, it means initialization failed and an error should have been raised.
-    # So, we can assert/type-check that _pat_service is now a PATModelService instance.
-    # However, for robust return, directly returning _pat_service relies on the above logic ensuring it's valid.
-    if _pat_service is None:
-        # This should theoretically not be reached if the above exception is always raised on failure.
-        # Adding for safety / to make MyPy potentially happier about a definite return type path.
-        logger.error(
-            "Critical state: _pat_service is None after initialization attempt and no exception was propagated."
-        )
-        raise RuntimeError(
-            "PATModelService is unexpectedly None after initialization logic."
-        )
-
-    return _pat_service
+    logger.info("Initializing global PATModelService for the first time...")
+    try:
+        new_service_instance = PATModelService() # Default model_size="medium"
+        await new_service_instance.load_model()
+        _pat_service = new_service_instance      # Assign to global only after all successful
+        logger.info("Global PATModelService initialized and model loaded successfully.")
+        return _pat_service
+    except Exception as e:
+        logger.critical(f"Failed to initialize global PATModelService: {e}", exc_info=True)
+        # Critical failure, service cannot be provided. Re-raise to make it clear.
+        raise RuntimeError(f"PATModelService could not be initialized and is unavailable: {e}") from e

@@ -18,7 +18,7 @@ from datetime import UTC, datetime
 import logging
 import math
 from pathlib import Path
-from typing import Any, cast
+from typing import Any, NoReturn, cast
 
 import numpy as np
 from pydantic import BaseModel, Field
@@ -844,7 +844,7 @@ class PATModelService(IMLModelService):
         return insights
 
     @staticmethod
-    def _raise_model_not_loaded_error() -> None:
+    def _raise_model_not_loaded_error() -> NoReturn:
         """Raise error when model is not loaded."""
         msg = "PAT model not loaded. Call load_model() first."
         raise RuntimeError(msg)

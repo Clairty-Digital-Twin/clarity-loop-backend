@@ -280,7 +280,7 @@ class ProxyActigraphyTransformer:
             # Create random number generator for reproducible results
             rng = np.random.default_rng()
             normalized[padding_mask] = rest_value + rng.normal(
-                0, CIRCADIAN_PADDING_VARIATION_STD, np.sum(padding_mask)
+                0, CIRCADIAN_PADDING_VARIATION_STD, int(np.sum(padding_mask))
             )
 
         # Apply temporal smoothing to reduce unrealistic step changes
@@ -513,12 +513,12 @@ class ProxyActigraphyTransformer:
         extreme_mask = (real_proxy < EXTREME_VALUE_LOWER_THRESHOLD) | (
             real_proxy > EXTREME_VALUE_UPPER_THRESHOLD
         )
-        extreme_percentage = np.sum(extreme_mask) / len(real_proxy)
+        extreme_percentage = float(np.sum(extreme_mask) / len(real_proxy))
         proxy_quality_score = max(0.0, 1.0 - (extreme_percentage * 2.0))
 
         # Padding penalty (reduce quality if too much data is padded)
         if padding_mask is not None:
-            padding_percentage = np.sum(padding_mask) / len(padding_mask)
+            padding_percentage = float(np.sum(padding_mask) / len(padding_mask))
             padding_penalty = max(0.0, 1.0 - (padding_percentage * MIN_ACTIVITY_LEVEL))
         else:
             padding_penalty = 1.0

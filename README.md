@@ -17,33 +17,37 @@ This document details the system's current functionality—what the codebase act
 
 ## Table of Contents
 
-- [Overview](#overview)
-- [Current Capabilities](#current-capabilities)
-  - [At-a-Glance: Platform Components](#at-a-glance-platform-components)
-  - [1. Pretrained Actigraphy Transformer (PAT)](#1-pretrained-actigraphy-transformer-pat--actigraphy-based-sleep--behavioral-analysis)
-  - [2. Sleep Processor](#2-sleep-processor--clinical-sleep-metrics-from-logged-data)
-  - [3. Cardiovascular Processor](#3-cardiovascular-processor--heart-rate--hrv-feature-extraction)
-  - [4. Respiratory Processor](#4-respiratory-processor--breathing-rate-and-oxygen-saturation-analysis)
-  - [5. Activity Processor](#5-activity-processor--daily-activity--fitness-summary)
-  - [6. Fusion Transformer](#6-fusion-transformer--multi-modal-health-state-integration)
-  - [7. Summary Statistics and Insights Generation](#7-summary-statistics-and-insights-generation)
-- [AI/ML Pipeline Highlights](#aiml-pipeline-highlights)
-- [Architecture](#architecture)
-  - [Technology Stack](#technology-stack)
-- [Roadmap – Towards a Mental Health Digital Twin](#roadmap--towards-a-mental-health-digital-twin)
-- [Quick Start](#quick-start)
-  - [Prerequisites](#prerequisites)
-  - [Development Setup](#development-setup)
-  - [Docker Development](#docker-development)
-  - [Quick Demo](#quick-demo)
-- [API Overview](#api-overview)
-- [Security & Compliance](#security--compliance)
-- [Testing](#testing)
-- [Documentation](#documentation)
-- [Contributing](#contributing)
-  - [Code Standards](#code-standards)
-- [License](#license)
-- [Acknowledgments](#acknowledgments)
+- [CLARITY Digital Twin Platform Backend](#clarity-digital-twin-platform-backend)
+  - [Overview](#overview)
+  - [Table of Contents](#table-of-contents)
+  - [Current Capabilities](#current-capabilities)
+    - [At-a-Glance: Platform Components](#at-a-glance-platform-components)
+    - [1. Pretrained Actigraphy Transformer (PAT) – Actigraphy-Based Sleep \& Behavioral Analysis](#1-pretrained-actigraphy-transformer-pat--actigraphy-based-sleep--behavioral-analysis)
+    - [2. Sleep Processor – Clinical Sleep Metrics from Logged Data](#2-sleep-processor--clinical-sleep-metrics-from-logged-data)
+    - [3. Cardiovascular Processor – Heart Rate \& HRV Feature Extraction](#3-cardiovascular-processor--heart-rate--hrv-feature-extraction)
+    - [4. Respiratory Processor – Breathing Rate and Oxygen Saturation Analysis](#4-respiratory-processor--breathing-rate-and-oxygen-saturation-analysis)
+    - [5. Activity Processor – Daily Activity \& Fitness Summary](#5-activity-processor--daily-activity--fitness-summary)
+    - [6. Fusion Transformer – Multi-Modal Health State Integration](#6-fusion-transformer--multi-modal-health-state-integration)
+    - [7. Summary Statistics and Insights Generation](#7-summary-statistics-and-insights-generation)
+  - [AI/ML Pipeline Highlights](#aiml-pipeline-highlights)
+  - [Architecture](#architecture)
+    - [Technology Stack](#technology-stack)
+  - [Roadmap – Towards a Mental Health Digital Twin](#roadmap--towards-a-mental-health-digital-twin)
+  - [Quick Start](#quick-start)
+    - [Prerequisites](#prerequisites)
+    - [Development Setup](#development-setup)
+    - [Docker Development](#docker-development)
+    - [Quick Demo](#quick-demo)
+  - [API Overview](#api-overview)
+  - [Security \& Compliance](#security--compliance)
+  - [Testing](#testing)
+  - [Documentation](#documentation)
+  - [Contributing](#contributing)
+    - [Code Standards](#code-standards)
+  - [License](#license)
+  - [Acknowledgments](#acknowledgments)
+    - [AI Foundation Models for Wearable Movement Data](#ai-foundation-models-for-wearable-movement-data)
+    - [Additional Acknowledgments](#additional-acknowledgments)
 
 ## Current Capabilities
 
@@ -157,7 +161,7 @@ graph TD
     K --> L[Insights Generation / Gemini];
     L -->|Insights| B;
     style B fill:#00a393,stroke:#333,stroke-width:2px,color:#fff;
-    style K fill:#f9f,stroke:#333,stroke-width:2px;
+    style K fill:#c2185b,stroke:#333,stroke-width:2px;
 ```
 
 For a more detailed diagram or if the above does not render, please see: [Detailed Architecture PNG](docs/images/architecture_diagram.png)

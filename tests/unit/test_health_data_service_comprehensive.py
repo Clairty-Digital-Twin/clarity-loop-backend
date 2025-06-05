@@ -414,21 +414,40 @@ class TestHealthDataServiceGCSIntegration(BaseServiceTestCase):
         assert heart_rate_metric["device_id"] == "apple_watch_series_8"
         assert heart_rate_metric["biometric_data"]["heart_rate"] == 72
 
+    @patch.dict(os.environ, {"HEALTHKIT_RAW_BUCKET": "test-bucket"})
     @pytest.mark.asyncio
-    async def test_upload_raw_data_to_gcs_failure(
-        self, test_env_credentials: dict[str, str]
-    ) -> None:
+    async def test_upload_raw_data_to_gcs_failure(self) -> None:
         """Test GCS upload failure handling."""
         # Arrange
-        user_id = str(uuid4())
+        mock_sync_token = os.getenv("TEST_MOCK_SYNC_TOKEN", "mock-sync-token-value")
+
+        user_id_uuid = uuid4()
         processing_id = str(uuid4())
-        health_data = self._create_comprehensive_health_upload(test_env_credentials)
+
+        minimal_metrics = [
+            HealthMetric(
+                metric_id=uuid4(),
+                metric_type=HealthMetricType.HEART_RATE,
+                raw_data={},
+                metadata={},
+                created_at=datetime.now(UTC),
+                device_id="test_device",
+            )
+        ]
+        health_data = HealthDataUpload(
+            user_id=user_id_uuid,
+            metrics=minimal_metrics,
+            upload_source="test_failure_source",
+            client_timestamp=datetime.now(UTC),
+            sync_token=mock_sync_token,
+        )
+
         self.mock_cloud_storage.should_fail = True
 
         # Act & Assert
         with pytest.raises(HealthDataServiceError, match="GCS upload failed"):
             await self.service._upload_raw_data_to_gcs(
-                user_id, processing_id, health_data
+                str(user_id_uuid), processing_id, health_data
             )
 
 
@@ -445,11 +464,12 @@ class TestHealthDataServiceValidation(BaseServiceTestCase):
         )
 
     @pytest.mark.asyncio
-    async def test_process_health_data_validation_errors(
-        self, test_env_credentials: dict[str, str]
-    ) -> None:
+    async def test_process_health_data_validation_errors(self) -> None:
         """Test health data processing with validation errors."""
         # Arrange - Create invalid health metric
+        # Manually get needed env vars
+        mock_sync_token = os.getenv("TEST_MOCK_SYNC_TOKEN", "mock-sync-token-value")
+
         user_id = uuid4()
 
         # Create metric with missing required fields
@@ -468,7 +488,7 @@ class TestHealthDataServiceValidation(BaseServiceTestCase):
             metrics=[invalid_metric],
             upload_source="test_source",
             client_timestamp=datetime.now(UTC),
-            sync_token=test_env_credentials["mock_sync_token"],
+            sync_token=mock_sync_token,
         )
 
         # Act & Assert
@@ -762,18 +782,19 @@ class TestHealthDataServiceEdgeCases(BaseServiceTestCase):
         )
 
     @pytest.mark.asyncio
-    async def test_process_health_data_empty_metrics(
-        self, test_env_credentials: dict[str, str]
-    ) -> None:
+    async def test_process_health_data_empty_metrics(self) -> None:
         """Test processing health data with empty metrics list."""
         # Arrange
+        # Manually get needed env vars
+        mock_sync_token = os.getenv("TEST_MOCK_SYNC_TOKEN", "mock-sync-token-value")
+
         user_id = uuid4()
         health_upload = HealthDataUpload(
             user_id=user_id,
             metrics=[],  # Empty metrics
             upload_source="test_source",
             client_timestamp=datetime.now(UTC),
-            sync_token=test_env_credentials["mock_sync_token"],
+            sync_token=mock_sync_token,
         )
 
         # Act

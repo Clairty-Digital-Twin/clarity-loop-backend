@@ -195,34 +195,34 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.9'
-          
+
       - name: Install dependencies
         run: |
           pip install -r requirements-dev.txt
-          
+
       - name: Run tests
         run: |
           pytest --cov=src --cov-report=xml
-          
+
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v3
-        
+
   security-scan:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Run security scan
         run: |
           pip install safety bandit
           safety check -r requirements.txt
           bandit -r src/
-          
+
   build:
     needs: [test, security-scan]
     runs-on: ubuntu-latest
@@ -230,16 +230,16 @@ jobs:
       image: ${{ steps.build.outputs.image }}
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v1
         with:
           service_account_key: ${{ secrets.GCP_SA_KEY }}
           project_id: ${{ env.PROJECT_ID_DEV }}
-          
+
       - name: Configure Docker
         run: gcloud auth configure-docker
-        
+
       - name: Build and push image
         id: build
         run: |
@@ -247,7 +247,7 @@ jobs:
           docker build -t $IMAGE .
           docker push $IMAGE
           echo "image=$IMAGE" >> $GITHUB_OUTPUT
-          
+
   deploy-dev:
     if: github.ref == 'refs/heads/develop'
     needs: build
@@ -264,7 +264,7 @@ jobs:
           env_vars: |
             ENVIRONMENT=development
             DEBUG=true
-            
+
   deploy-staging:
     if: github.ref == 'refs/heads/develop'
     needs: [build, deploy-dev]
@@ -281,7 +281,7 @@ jobs:
           env_vars: |
             ENVIRONMENT=staging
             DEBUG=false
-            
+
   deploy-prod:
     if: github.ref == 'refs/heads/main'
     needs: build
@@ -415,7 +415,7 @@ terraform {
       version = "~> 4.0"
     }
   }
-  
+
   backend "gcs" {
     bucket = "clarity-terraform-state"
     prefix = "backend/state"
@@ -436,28 +436,28 @@ resource "google_cloud_run_service" "clarity_backend" {
     spec {
       containers {
         image = var.container_image
-        
+
         ports {
           container_port = 8000
         }
-        
+
         resources {
           limits = {
             cpu    = var.cpu_limit
             memory = var.memory_limit
           }
         }
-        
+
         env {
           name  = "ENVIRONMENT"
           value = var.environment
         }
-        
+
         env {
           name  = "GOOGLE_CLOUD_PROJECT"
           value = var.project_id
         }
-        
+
         dynamic "env" {
           for_each = var.env_vars
           content {
@@ -466,12 +466,12 @@ resource "google_cloud_run_service" "clarity_backend" {
           }
         }
       }
-      
+
       container_concurrency = var.concurrency
-      
+
       service_account_name = google_service_account.clarity_backend.email
     }
-    
+
     metadata {
       annotations = {
         "autoscaling.knative.dev/maxScale" = var.max_instances
@@ -484,7 +484,7 @@ resource "google_cloud_run_service" "clarity_backend" {
     percent         = 100
     latest_revision = true
   }
-  
+
   autogenerate_revision_name = true
 }
 
@@ -507,13 +507,13 @@ resource "google_firestore_database" "clarity_database" {
 # Pub/Sub Topics
 resource "google_pubsub_topic" "health_data_processing" {
   name = "health-data-processing"
-  
+
   message_retention_duration = "86400s"
 }
 
 resource "google_pubsub_topic" "insights_generation" {
   name = "insights-generation"
-  
+
   message_retention_duration = "86400s"
 }
 
@@ -522,11 +522,11 @@ resource "google_storage_bucket" "app_storage" {
   name          = "${var.project_id}-storage"
   location      = var.region
   force_destroy = false
-  
+
   versioning {
     enabled = true
   }
-  
+
   encryption {
     default_kms_key_name = google_kms_crypto_key.storage_key.id
   }
@@ -541,7 +541,7 @@ resource "google_kms_key_ring" "clarity_keyring" {
 resource "google_kms_crypto_key" "storage_key" {
   name     = "storage-key"
   key_ring = google_kms_key_ring.clarity_keyring.id
-  
+
   rotation_period = "7776000s" # 90 days
 }
 ```
@@ -581,11 +581,11 @@ class FirestoreMigration:
     def __init__(self, project_id: str):
         self.db = firestore.AsyncClient(project=project_id)
         self.logger = logging.getLogger(__name__)
-    
+
     async def apply_migration(self, migration_name: str):
         """Apply a specific migration."""
         migration_func = getattr(self, f"migration_{migration_name}")
-        
+
         try:
             await migration_func()
             await self._record_migration(migration_name)
@@ -593,7 +593,7 @@ class FirestoreMigration:
         except Exception as e:
             self.logger.error(f"Migration {migration_name} failed: {e}")
             raise
-    
+
     async def migration_001_create_indexes(self):
         """Create initial indexes for collections."""
         # User data indexes
@@ -601,29 +601,29 @@ class FirestoreMigration:
             ('created_at', firestore.Query.DESCENDING),
             ('email', firestore.Query.ASCENDING)
         ])
-        
+
         # Health data indexes
         await self.db.collection('health_data').create_index([
             ('user_id', firestore.Query.ASCENDING),
             ('timestamp', firestore.Query.DESCENDING),
             ('data_type', firestore.Query.ASCENDING)
         ])
-        
+
         # Insights indexes
         await self.db.collection('insights').create_index([
             ('user_id', firestore.Query.ASCENDING),
             ('created_at', firestore.Query.DESCENDING),
             ('insight_type', firestore.Query.ASCENDING)
         ])
-    
+
     async def migration_002_add_data_quality_fields(self):
         """Add data quality fields to existing health data."""
         query = self.db.collection('health_data').where('quality_score', '==', None)
         docs = query.stream()
-        
+
         batch = self.db.batch()
         count = 0
-        
+
         async for doc in docs:
             doc_ref = self.db.collection('health_data').document(doc.id)
             batch.update(doc_ref, {
@@ -631,15 +631,15 @@ class FirestoreMigration:
                 'validation_status': 'validated',
                 'processing_version': '2.1.0'
             })
-            
+
             count += 1
             if count % 500 == 0:  # Batch size limit
                 await batch.commit()
                 batch = self.db.batch()
-        
+
         if count % 500 != 0:
             await batch.commit()
-    
+
     async def _record_migration(self, migration_name: str):
         """Record applied migration in the database."""
         await self.db.collection('_migrations').document(migration_name).set({
@@ -725,14 +725,14 @@ if [ "$ENVIRONMENT" = "production" ]; then
     --concurrency 200 \
     --max-instances 100 \
     --no-traffic
-    
+
   echo "🔄 Starting canary deployment..."
   gcloud run services update-traffic $SERVICE_NAME \
     --to-revisions=LATEST=10,PREVIOUS=90
-    
+
   echo "⏳ Monitoring for 5 minutes..."
   sleep 300
-  
+
   echo "✅ Promoting to 100% traffic..."
   gcloud run services update-traffic $SERVICE_NAME \
     --to-revisions=LATEST=100
@@ -790,7 +790,7 @@ router = APIRouter()
 async def health_check():
     """Comprehensive health check endpoint."""
     start_time = time.time()
-    
+
     checks = {
         "status": "healthy",
         "timestamp": int(start_time),
@@ -798,7 +798,7 @@ async def health_check():
         "environment": os.getenv("ENVIRONMENT", "unknown"),
         "checks": {}
     }
-    
+
     # Database connectivity
     try:
         db = firestore.AsyncClient()
@@ -807,7 +807,7 @@ async def health_check():
     except Exception as e:
         checks["checks"]["database"] = {"status": "unhealthy", "error": str(e)}
         checks["status"] = "unhealthy"
-    
+
     # Pub/Sub connectivity
     try:
         publisher = pubsub_v1.PublisherClient()
@@ -817,7 +817,7 @@ async def health_check():
     except Exception as e:
         checks["checks"]["pubsub"] = {"status": "unhealthy", "error": str(e)}
         checks["status"] = "unhealthy"
-    
+
     # ML service connectivity
     try:
         # Add ML service health check
@@ -825,12 +825,12 @@ async def health_check():
     except Exception as e:
         checks["checks"]["ml_service"] = {"status": "unhealthy", "error": str(e)}
         checks["status"] = "unhealthy"
-    
+
     checks["response_time_ms"] = int((time.time() - start_time) * 1000)
-    
+
     if checks["status"] != "healthy":
         raise HTTPException(status_code=503, detail=checks)
-    
+
     return checks
 
 @router.get("/readiness")

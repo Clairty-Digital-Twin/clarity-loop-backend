@@ -107,7 +107,9 @@ class BaseServiceTestCase(BaseTestCase):
         self.service: Any | None = None
 
     def create_service_with_dependencies(
-        self, service_class: type, **kwargs: Any  # noqa: ANN401
+        self,
+        service_class: type,
+        **kwargs: Any,  # noqa: ANN401
     ) -> Any:  # noqa: ANN401
         """Factory method to create services with injected dependencies.
 

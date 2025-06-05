@@ -46,9 +46,9 @@ services:
       - "8080:8080"
       - "4000:4000"
     command: >
-      sh -c "gcloud emulators firestore start 
-             --host-port=0.0.0.0:8080 
-             --rules=/workspace/firestore.rules 
+      sh -c "gcloud emulators firestore start
+             --host-port=0.0.0.0:8080
+             --rules=/workspace/firestore.rules
              --project=clarity-dev"
     volumes:
       - ./firestore.rules:/workspace/firestore.rules:ro
@@ -63,8 +63,8 @@ services:
     ports:
       - "9099:9099"
     command: >
-      sh -c "gcloud emulators auth start 
-             --host-port=0.0.0.0:9099 
+      sh -c "gcloud emulators auth start
+             --host-port=0.0.0.0:9099
              --project=clarity-dev"
     networks:
       - clarity-network
@@ -76,8 +76,8 @@ services:
     ports:
       - "8085:8085"
     command: >
-      sh -c "gcloud emulators pubsub start 
-             --host-port=0.0.0.0:8085 
+      sh -c "gcloud emulators pubsub start
+             --host-port=0.0.0.0:8085
              --project=clarity-dev"
     networks:
       - clarity-network
@@ -130,8 +130,8 @@ services:
       - ./data:/app/data
       - jupyter_data:/home/jovyan/.jupyter
     command: >
-      sh -c "pip install jupyterlab && 
-             jupyter lab --ip=0.0.0.0 --port=8888 --no-browser --allow-root 
+      sh -c "pip install jupyterlab &&
+             jupyter lab --ip=0.0.0.0 --port=8888 --no-browser --allow-root
              --NotebookApp.token='' --NotebookApp.password=''"
     networks:
       - clarity-network

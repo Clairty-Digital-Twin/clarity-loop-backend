@@ -2,8 +2,8 @@
 
 ## **Status: REFERENCE METHODOLOGY**
 
-**Document Type**: Development methodology and best practices reference  
-**Current Use**: Informational - not actively used in current build process  
+**Document Type**: Development methodology and best practices reference
+**Current Use**: Informational - not actively used in current build process
 **Value**: Contains comprehensive healthcare AI build practices
 
 ### **For Current Build Process**
@@ -204,16 +204,16 @@ def test_environment_variables():
         'GEMINI_MODEL_ID',
         'ENCRYPTION_KEY'
     ]
-    
+
     missing_vars = []
     for var in required_vars:
         if not os.getenv(var):
             missing_vars.append(var)
-    
+
     if missing_vars:
         print(f"❌ Missing environment variables: {', '.join(missing_vars)}")
         return False
-    
+
     print("✅ All required environment variables present")
     return True
 
@@ -224,12 +224,12 @@ def test_google_cloud_connectivity():
         db = firestore.Client()
         collections = list(db.collections())
         print("✅ Firestore connection successful")
-        
+
         # Test Cloud Storage
         storage_client = storage.Client()
         buckets = list(storage_client.list_buckets())
         print("✅ Cloud Storage connection successful")
-        
+
         return True
     except Exception as e:
         print(f"❌ Google Cloud connection failed: {e}")
@@ -250,12 +250,12 @@ def test_redis_connectivity():
 def main():
     print("🔍 Configuration Validation")
     print("==========================")
-    
+
     success = True
     success &= test_environment_variables()
     success &= test_google_cloud_connectivity()
     success &= test_redis_connectivity()
-    
+
     if success:
         print("\n🎯 Configuration validation successful!")
         sys.exit(0)
@@ -354,43 +354,43 @@ def test_pytorch_installation():
     """Test PyTorch installation and CUDA availability"""
     print(f"PyTorch version: {torch.__version__}")
     print(f"CUDA available: {torch.cuda.is_available()}")
-    
+
     if torch.cuda.is_available():
         print(f"CUDA device count: {torch.cuda.device_count()}")
         print(f"CUDA device name: {torch.cuda.get_device_name(0)}")
         print(f"CUDA memory: {torch.cuda.get_device_properties(0).total_memory / 1e9:.1f} GB")
-    
+
     # Test basic tensor operations
     x = torch.randn(5, 3)
     y = torch.randn(3, 4)
     z = torch.mm(x, y)
     assert z.shape == (5, 4)
     print("✅ PyTorch tensor operations working")
-    
+
     if torch.cuda.is_available():
         x_gpu = x.cuda()
         y_gpu = y.cuda()
         z_gpu = torch.mm(x_gpu, y_gpu)
         assert z_gpu.device.type == 'cuda'
         print("✅ PyTorch CUDA operations working")
-    
+
     return True
 
 def test_onnx_runtime():
     """Test ONNX Runtime installation"""
     print(f"ONNX Runtime version: {ort.__version__}")
-    
+
     # Test basic ONNX session creation
     providers = ort.get_available_providers()
     print(f"Available providers: {providers}")
-    
+
     # Test with a dummy model (this would normally be your actual model)
     # For now, just verify the providers are available
     if 'CUDAExecutionProvider' in providers:
         print("✅ CUDA provider available for ONNX")
     else:
         print("⚠️ CUDA provider not available for ONNX (CPU only)")
-    
+
     print("✅ ONNX Runtime installation verified")
     return True
 
@@ -399,15 +399,15 @@ def test_transformers_library():
     try:
         # Test tokenizer loading (lightweight test)
         tokenizer = AutoTokenizer.from_pretrained("bert-base-uncased")
-        
+
         # Test basic tokenization
         text = "This is a test sentence for healthcare AI processing."
         tokens = tokenizer.encode(text)
         decoded = tokenizer.decode(tokens)
-        
+
         assert len(tokens) > 0
         assert isinstance(decoded, str)
-        
+
         print("✅ Transformers library working correctly")
         return True
     except Exception as e:
@@ -417,7 +417,7 @@ def test_transformers_library():
 def main():
     print("🧠 ML Dependencies Verification")
     print("==============================")
-    
+
     success = True
     try:
         success &= test_pytorch_installation()
@@ -426,7 +426,7 @@ def main():
     except Exception as e:
         print(f"❌ ML dependencies test failed: {e}")
         success = False
-    
+
     if success:
         print("\n🎯 ML dependencies verified successfully!")
         return 0
@@ -718,50 +718,50 @@ from clarity.services import HealthDataService, AuditService
 from clarity.security import EncryptionService
 
 class TestHIPAACompliance:
-    
+
     @pytest.mark.asyncio
     async def test_data_encryption_at_rest(self):
         """Verify patient data is encrypted when stored"""
         service = HealthDataService()
-        
+
         patient_data = PatientHealthData(
             patient_id="test_patient_123",
             heart_rate=72,
             timestamp="2024-01-01T12:00:00Z"
         )
-        
+
         # Store data
         doc_id = await service.store_patient_data(patient_data)
-        
+
         # Verify raw storage is encrypted
         raw_storage = await service.get_raw_storage(doc_id)
         raw_content = str(raw_storage)
-        
+
         # Patient ID should not appear in plaintext
         assert "test_patient_123" not in raw_content
         assert "heart_rate" not in raw_content
-        
+
         # But encrypted data should be retrievable
         retrieved_data = await service.retrieve_patient_data(doc_id)
         assert retrieved_data.patient_id == "test_patient_123"
         assert retrieved_data.heart_rate == 72
-    
+
     @pytest.mark.asyncio
     async def test_access_logging(self):
         """Verify all data access is logged for audit"""
         audit_service = AuditService()
         health_service = HealthDataService()
-        
+
         patient_id = "test_patient_audit"
         user_id = "test_doctor_123"
-        
+
         # Access patient data with user context
         with health_service.audit_context(user_id=user_id):
             await health_service.get_patient_data(patient_id)
-        
+
         # Verify audit log entry
         audit_logs = await audit_service.get_logs(patient_id)
-        
+
         assert len(audit_logs) > 0
         latest_log = audit_logs[-1]
         assert latest_log["user_id"] == user_id
@@ -769,36 +769,36 @@ class TestHIPAACompliance:
         assert latest_log["action"] == "data_access"
         assert latest_log["timestamp"] is not None
         assert latest_log["ip_address"] is not None
-    
+
     @pytest.mark.asyncio
     async def test_access_control(self):
         """Verify users can only access authorized data"""
         health_service = HealthDataService()
-        
+
         # User should access their own data
         with health_service.auth_context(user_id="patient_123"):
             data = await health_service.get_patient_data("patient_123")
             assert data is not None
-        
+
         # User should NOT access other patient data
         with pytest.raises(PermissionError):
             with health_service.auth_context(user_id="patient_123"):
                 await health_service.get_patient_data("patient_456")
-    
+
     def test_encryption_strength(self):
         """Verify encryption meets HIPAA requirements"""
         encryption_service = EncryptionService()
-        
+
         test_data = "sensitive patient information"
         encrypted = encryption_service.encrypt(test_data)
-        
+
         # Encrypted data should be different from original
         assert encrypted != test_data
-        
+
         # Should be able to decrypt
         decrypted = encryption_service.decrypt(encrypted)
         assert decrypted == test_data
-        
+
         # Verify encryption algorithm strength
         assert encryption_service.algorithm == "AES-256-GCM"
         assert len(encryption_service.key) >= 256 // 8  # 256-bit key
@@ -830,10 +830,10 @@ from clarity.models import ActigraphyData
 async def test_pat_model_loading():
     """Test PAT model loading and basic functionality"""
     print("Testing PAT model loading...")
-    
+
     model = PATModel()
     await model.load_model()
-    
+
     assert model.model is not None
     assert model.is_loaded
     print("✅ PAT model loaded successfully")
@@ -841,24 +841,24 @@ async def test_pat_model_loading():
 async def test_pat_model_inference():
     """Test PAT model inference with sample data"""
     print("Testing PAT model inference...")
-    
+
     model = PATModel()
     await model.load_model()
-    
+
     # Generate sample actigraphy data (24 hours, 1-minute intervals)
     sample_data = np.random.randint(0, 2, size=1440)  # Binary activity data
-    
+
     # Test preprocessing
     preprocessor = ActigraphyPreprocessor()
     processed_data = preprocessor.preprocess(sample_data)
-    
+
     assert processed_data.shape == (1440,)
     assert abs(processed_data.mean()) < 0.1  # Should be normalized
     print("✅ Actigraphy preprocessing working")
-    
+
     # Test model inference
     prediction = await model.predict_depression_risk(sample_data)
-    
+
     assert isinstance(prediction, float)
     assert 0.0 <= prediction <= 1.0
     print(f"✅ PAT model inference working (prediction: {prediction:.3f})")
@@ -866,19 +866,19 @@ async def test_pat_model_inference():
 async def test_model_performance():
     """Test model performance with benchmark data"""
     print("Testing model performance...")
-    
+
     model = PATModel()
     await model.load_model()
-    
+
     # Test inference speed
     import time
     sample_data = np.random.randint(0, 2, size=1440)
-    
+
     start_time = time.time()
     for _ in range(10):
         prediction = await model.predict_depression_risk(sample_data)
     end_time = time.time()
-    
+
     avg_inference_time = (end_time - start_time) / 10
     assert avg_inference_time < 1.0  # Should be under 1 second
     print(f"✅ Model inference speed acceptable ({avg_inference_time:.3f}s avg)")
@@ -886,32 +886,32 @@ async def test_model_performance():
 async def test_model_memory_usage():
     """Test model memory usage"""
     print("Testing model memory usage...")
-    
+
     import psutil
     import os
-    
+
     process = psutil.Process(os.getpid())
     initial_memory = process.memory_info().rss / 1024 / 1024  # MB
-    
+
     model = PATModel()
     await model.load_model()
-    
+
     loaded_memory = process.memory_info().rss / 1024 / 1024  # MB
     memory_increase = loaded_memory - initial_memory
-    
+
     assert memory_increase < 500  # Should use less than 500MB
     print(f"✅ Model memory usage acceptable ({memory_increase:.1f}MB)")
 
 async def main():
     print("🧠 ML Model Validation")
     print("=====================")
-    
+
     try:
         await test_pat_model_loading()
         await test_pat_model_inference()
         await test_model_performance()
         await test_model_memory_usage()
-        
+
         print("\n🎯 ML model validation completed successfully!")
         return 0
     except Exception as e:
@@ -1262,12 +1262,12 @@ import json
 from typing import Dict, Any
 
 class PostDeploymentTester:
-    
+
     def __init__(self, base_url: str):
         self.base_url = base_url.rstrip('/')
         self.session = requests.Session()
         self.session.timeout = 30
-    
+
     def test_health_endpoint(self) -> bool:
         """Test basic health endpoint"""
         try:
@@ -1283,7 +1283,7 @@ class PostDeploymentTester:
         except Exception as e:
             print(f"❌ Health endpoint error: {e}")
             return False
-    
+
     def test_api_endpoints(self) -> bool:
         """Test critical API endpoints"""
         endpoints = [
@@ -1291,7 +1291,7 @@ class PostDeploymentTester:
             "/api/v1/auth/verify",
             "/api/v1/ml/pat/status"
         ]
-        
+
         for endpoint in endpoints:
             try:
                 response = self.session.options(f"{self.base_url}{endpoint}")
@@ -1303,9 +1303,9 @@ class PostDeploymentTester:
             except Exception as e:
                 print(f"❌ Endpoint {endpoint} error: {e}")
                 return False
-        
+
         return True
-    
+
     def test_database_connectivity(self) -> bool:
         """Test database connectivity through API"""
         try:
@@ -1324,7 +1324,7 @@ class PostDeploymentTester:
         except Exception as e:
             print(f"❌ Database connectivity error: {e}")
             return False
-    
+
     def test_ml_model_status(self) -> bool:
         """Test ML model loading status"""
         try:
@@ -1332,7 +1332,7 @@ class PostDeploymentTester:
             if response.status_code == 200:
                 data = response.json()
                 models_status = data.get("models", {})
-                
+
                 if models_status.get("pat_model") == "loaded":
                     print("✅ PAT model loaded successfully")
                     return True
@@ -1345,7 +1345,7 @@ class PostDeploymentTester:
         except Exception as e:
             print(f"❌ ML model status error: {e}")
             return False
-    
+
     def test_authentication_system(self) -> bool:
         """Test authentication system"""
         try:
@@ -1360,12 +1360,12 @@ class PostDeploymentTester:
         except Exception as e:
             print(f"❌ Authentication test error: {e}")
             return False
-    
+
     def run_all_tests(self) -> bool:
         """Run all post-deployment tests"""
         print("🧪 Post-Deployment Verification")
         print("==============================")
-        
+
         tests = [
             self.test_health_endpoint,
             self.test_api_endpoints,
@@ -1373,7 +1373,7 @@ class PostDeploymentTester:
             self.test_ml_model_status,
             self.test_authentication_system
         ]
-        
+
         success = True
         for test in tests:
             try:
@@ -1382,19 +1382,19 @@ class PostDeploymentTester:
             except Exception as e:
                 print(f"❌ Test {test.__name__} failed with exception: {e}")
                 success = False
-        
+
         return success
 
 def main():
     if len(sys.argv) != 2:
         print("Usage: python post_deployment_tests.py <service_url>")
         sys.exit(1)
-    
+
     service_url = sys.argv[1]
     tester = PostDeploymentTester(service_url)
-    
+
     success = tester.run_all_tests()
-    
+
     if success:
         print("\n🎯 All post-deployment tests passed!")
         print("🌟 Production deployment verified successfully!")
@@ -1441,42 +1441,42 @@ env:
 jobs:
   test:
     runs-on: ubuntu-latest
-    
+
     steps:
     - uses: actions/checkout@v4
-    
+
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
         python-version: '3.11'
-    
+
     - name: Install UV
       run: pip install uv
-    
+
     - name: Install dependencies
       run: uv pip install -r requirements.txt -r requirements-dev.txt
-    
+
     - name: Run environment verification
       run: ./scripts/verify-environment.sh
-    
+
     - name: Run security scan
       run: ./scripts/security-scan.sh
-    
+
     - name: Run quality checks
       run: ./scripts/quality-check.sh
-    
+
     - name: Run unit tests
       run: ./scripts/run-unit-tests.sh
-    
+
     - name: Run integration tests
       run: ./scripts/run-integration-tests.sh
-    
+
     - name: Run HIPAA compliance tests
       run: ./scripts/hipaa-compliance-check.sh
-    
+
     - name: Test ML models
       run: python scripts/test_ml_models.py
-    
+
     - name: Upload coverage reports
       uses: codecov/codecov-action@v3
       with:
@@ -1486,22 +1486,22 @@ jobs:
     needs: test
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'
-    
+
     steps:
     - uses: actions/checkout@v4
-    
+
     - name: Set up Google Cloud CLI
       uses: google-github-actions/setup-gcloud@v1
       with:
         service_account_key: ${{ secrets.GCP_SA_KEY }}
         project_id: ${{ secrets.GCP_PROJECT_ID }}
-    
+
     - name: Configure Docker for GCR
       run: gcloud auth configure-docker
-    
+
     - name: Build Docker image
       run: ./scripts/build-docker.sh
-    
+
     - name: Push to Container Registry
       run: |
         docker tag clarity-backend:latest gcr.io/$PROJECT_ID/clarity-backend:$GITHUB_SHA
@@ -1511,22 +1511,22 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'
-    
+
     steps:
     - uses: actions/checkout@v4
-    
+
     - name: Set up Google Cloud CLI
       uses: google-github-actions/setup-gcloud@v1
       with:
         service_account_key: ${{ secrets.GCP_SA_KEY }}
         project_id: ${{ secrets.GCP_PROJECT_ID }}
-    
+
     - name: Run deployment readiness check
       run: ./scripts/deployment-readiness.sh
-    
+
     - name: Deploy to production
       run: ./scripts/deploy-production.sh $GITHUB_SHA
-    
+
     - name: Run post-deployment tests
       run: |
         SERVICE_URL=$(gcloud run services describe $SERVICE_NAME --region=$REGION --format="value(status.url)")
@@ -1556,10 +1556,10 @@ from datetime import datetime, timedelta
 from typing import Dict, List, Any
 
 class BuildMetrics:
-    
+
     def __init__(self):
         self.metrics = {}
-    
+
     def calculate_build_success_rate(self, days: int = 30) -> float:
         """Calculate build success rate over specified period"""
         # Implementation would query CI/CD logs
@@ -1567,12 +1567,12 @@ class BuildMetrics:
         total_builds = 150
         successful_builds = 143
         return (successful_builds / total_builds) * 100
-    
+
     def get_average_build_time(self, days: int = 30) -> float:
         """Get average build time in minutes"""
         # Implementation would analyze build logs
         return 42.5  # minutes
-    
+
     def get_test_coverage_trend(self, days: int = 30) -> List[Dict]:
         """Get test coverage trend over time"""
         # Mock trend data
@@ -1581,7 +1581,7 @@ class BuildMetrics:
             {"date": "2024-01-02", "coverage": 90.1},
             {"date": "2024-01-03", "coverage": 91.5},
         ]
-    
+
     def get_security_issues_count(self, days: int = 30) -> Dict[str, int]:
         """Get security issues count by severity"""
         return {
@@ -1590,7 +1590,7 @@ class BuildMetrics:
             "medium": 2,
             "low": 5
         }
-    
+
     def generate_dashboard_data(self) -> Dict[str, Any]:
         """Generate complete dashboard data"""
         return {
@@ -1604,7 +1604,7 @@ class BuildMetrics:
 def main():
     metrics = BuildMetrics()
     dashboard_data = metrics.generate_dashboard_data()
-    
+
     print("📊 Build Metrics Dashboard")
     print("==========================")
     print(f"Build Success Rate: {dashboard_data['build_success_rate']:.1f}%")

@@ -106,7 +106,7 @@ class UserProfile(BaseModel):
     preferred_units: str = "metric"
     privacy_settings: PrivacySettings = PrivacySettings()
     health_profile: HealthProfile = HealthProfile()
-    
+
     @validator('date_of_birth')
     def validate_age(cls, v):
         if v and v.year < 1900:
@@ -228,7 +228,7 @@ class HealthSession(BaseModel):
     heart_rate: Optional[HeartRateData] = None
     activity: Optional[ActivitySample] = None
     sleep: Optional[SleepData] = None
-    
+
     class Config:
         json_encoders = {
             datetime: lambda v: v.isoformat()
@@ -343,7 +343,7 @@ class DailyInsight(BaseModel):
     narrative: Optional[NarrativeInsight] = None
     confidence: float = Field(..., ge=0.0, le=1.0)
     generated_at: datetime
-    
+
     class Config:
         json_encoders = {
             datetime: lambda v: v.isoformat(),
@@ -449,7 +449,7 @@ class DailyInsight(BaseModel):
 ### Standardization Rules
 
 - **Per-year z-scaling**: Compute standardization statistics per NHANES year before patching (pp 22-24)
-- **Training Split Safety**: During fine-tuning, compute μ/σ on **train split only** to prevent data leakage (pp 22-24)  
+- **Training Split Safety**: During fine-tuning, compute μ/σ on **train split only** to prevent data leakage (pp 22-24)
 - **Patch Processing**: Apply z-score normalization before 18-minute patch embedding
 - **Zero-mean Property**: Left-pad shorter sequences with value `0` (already zero-mean after normalization)
 
@@ -467,12 +467,12 @@ class DailyInsight(BaseModel):
 def normalize_actigraphy_data(data: np.ndarray, year: int, split: str = 'train') -> np.ndarray:
     """
     Apply PAT-compliant normalization to actigraphy data
-    
+
     Args:
-        data: Raw accelerometer magnitude data [N, 10080] 
+        data: Raw accelerometer magnitude data [N, 10080]
         year: NHANES year for per-year standardization
         split: 'train', 'val', or 'test' - use train stats for val/test
-    
+
     Returns:
         Normalized data with zero mean, unit variance per year
     """
@@ -485,29 +485,29 @@ def normalize_actigraphy_data(data: np.ndarray, year: int, split: str = 'train')
     else:
         # Load pre-computed training statistics
         mu, sigma = load_normalization_stats(year)
-    
+
     return (data - mu) / (sigma + 1e-8)
 
 def derive_binary_labels(questionnaire_data: Dict) -> Dict[str, bool]:
     """
     Derive binary labels according to PAT paper definitions
-    
+
     Returns:
         Dictionary with binary labels for each condition
     """
     labels = {}
-    
+
     # Depression from PHQ-9 score
     phq9_score = questionnaire_data.get('phq9_total', 0)
     labels['depression'] = phq9_score >= 10
-    
+
     # Sleep abnormality from total sleep duration
     daily_sleep_hours = questionnaire_data.get('daily_sleep_hours', 8.0)
     labels['sleep_abnormality'] = daily_sleep_hours > 12.0 or daily_sleep_hours < 5.0
-    
+
     # Sleep disorder from self-report
     labels['sleep_disorder'] = questionnaire_data.get('sleep_disorder_diagnosis', False)
-    
+
     return labels
 ```
 
@@ -584,30 +584,30 @@ CREATE TABLE user_analytics (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id VARCHAR(255) NOT NULL,
     date DATE NOT NULL,
-    
+
     -- Sleep metrics
     total_sleep_hours DECIMAL(4,2),
     sleep_efficiency DECIMAL(3,2),
     deep_sleep_hours DECIMAL(4,2),
     light_sleep_hours DECIMAL(4,2),
     rem_sleep_hours DECIMAL(4,2),
-    
+
     -- Activity metrics
     total_steps INTEGER,
     active_minutes INTEGER,
     calories_burned INTEGER,
     distance_meters DECIMAL(8,2),
-    
+
     -- Heart rate metrics
     resting_heart_rate INTEGER,
     average_heart_rate INTEGER,
     max_heart_rate INTEGER,
     heart_rate_variability INTEGER,
-    
+
     -- Metadata
     data_quality_score DECIMAL(3,2),
     processing_timestamp TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    
+
     UNIQUE(user_id, date)
 );
 
@@ -626,18 +626,18 @@ CREATE TABLE user_trends (
     trend_type VARCHAR(50) NOT NULL, -- 'weekly', 'monthly', 'quarterly'
     period_start DATE NOT NULL,
     period_end DATE NOT NULL,
-    
+
     -- Trend metrics (JSON for flexibility)
     trend_data JSONB NOT NULL,
-    
+
     -- Trend indicators
     improvement_score DECIMAL(3,2),
     trend_direction VARCHAR(20), -- 'improving', 'stable', 'declining'
     confidence_level DECIMAL(3,2),
-    
+
     -- Metadata
     calculated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    
+
     UNIQUE(user_id, trend_type, period_start)
 );
 
@@ -657,7 +657,7 @@ from datetime import datetime, timedelta
 
 class HealthDataValidation(BaseModel):
     """Comprehensive validation for health data inputs"""
-    
+
     @validator('heart_rate')
     def validate_heart_rate(cls, v):
         if v is not None:
@@ -670,7 +670,7 @@ class HealthDataValidation(BaseModel):
                     if max_change > 50:
                         raise ValueError('Heart rate changes too rapid, possible invalid data')
         return v
-    
+
     @validator('sleep_stages')
     def validate_sleep_stages(cls, v):
         if v:
@@ -678,38 +678,38 @@ class HealthDataValidation(BaseModel):
             for stage in v:
                 if stage.get('stage') not in valid_stages:
                     raise ValueError(f'Invalid sleep stage: {stage.get("stage")}')
-            
+
             # Validate stage transitions
             transitions = [(v[i]['stage'], v[i+1]['stage']) for i in range(len(v)-1)]
             invalid_transitions = [
                 ('deep', 'awake'),  # Unlikely direct transition
                 ('rem', 'deep')     # REM typically follows light sleep
             ]
-            
+
             for transition in transitions:
                 if transition in invalid_transitions:
                     raise ValueError(f'Unlikely sleep stage transition: {transition[0]} -> {transition[1]}')
-        
+
         return v
-    
+
     @root_validator
     def validate_temporal_consistency(cls, values):
         """Ensure timestamps are consistent and logical"""
         start_time = values.get('start_time')
         end_time = values.get('end_time')
-        
+
         if start_time and end_time:
             if end_time <= start_time:
                 raise ValueError('End time must be after start time')
-            
+
             duration = end_time - start_time
             if duration > timedelta(hours=24):
                 raise ValueError('Session duration cannot exceed 24 hours')
-            
+
             # Validate against future timestamps
             if start_time > datetime.utcnow():
                 raise ValueError('Start time cannot be in the future')
-        
+
         return values
 ```
 
@@ -723,25 +723,25 @@ data_retention_policies:
     retention_period: indefinite
     deletion_trigger: user_account_deletion
     backup_frequency: daily
-    
+
   raw_health_data:
     retention_period: 2_years
     archival_period: 5_years
     deletion_trigger: retention_expiry
     backup_frequency: daily
-    
+
   processed_insights:
     retention_period: 5_years
     archival_period: 10_years
     deletion_trigger: user_request_or_expiry
     backup_frequency: weekly
-    
+
   system_logs:
     retention_period: 1_year
     archival_period: 3_years
     deletion_trigger: automatic
     backup_frequency: daily
-    
+
   audit_logs:
     retention_period: 7_years
     archival_period: indefinite
@@ -758,29 +758,29 @@ import asyncio
 
 class DataLifecycleManager:
     """Manage automated data retention and archival"""
-    
+
     def __init__(self):
         self.db = firestore.AsyncClient()
-    
+
     async def archive_old_data(self):
         """Archive data older than retention period"""
         cutoff_date = datetime.utcnow() - timedelta(days=365*2)  # 2 years
-        
+
         # Query old health sessions
         old_sessions = self.db.collection_group('healthSessions').where(
             'startTime', '<', cutoff_date
         ).limit(1000)
-        
+
         async for session in old_sessions.stream():
             await self._archive_session(session)
-    
+
     async def _archive_session(self, session):
         """Archive individual session to cold storage"""
         # Move to Cloud Storage for long-term archival
         # Update Firestore with archival metadata
         # Remove from active database
         pass
-    
+
     async def cleanup_expired_data(self):
         """Remove data that has exceeded all retention periods"""
         # Implement secure data deletion

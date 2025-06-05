@@ -18,11 +18,11 @@
    ```bash
    git clone <repository-url>
    cd clarity-loop-backend
-   
+
    # Create virtual environment
    python -m venv venv
    source venv/bin/activate  # On Windows: venv\Scripts\activate
-   
+
    # Install dependencies
    pip install -r requirements.txt
    ```
@@ -32,7 +32,7 @@
    ```bash
    # Copy environment template
    cp .env.example .env
-   
+
    # Edit .env with your configuration:
    # - Firebase credentials
    # - Google Cloud project settings
@@ -44,7 +44,7 @@
    ```bash
    # Start with Docker Compose (recommended)
    docker-compose up -d
-   
+
    # OR run locally
    python main.py
    ```
@@ -54,7 +54,7 @@
    ```bash
    # Check health endpoint
    curl http://localhost:8000/health
-   
+
    # View API docs
    open http://localhost:8000/docs
    ```
@@ -197,9 +197,9 @@ docker run -p 9199:9199 google/cloud-sdk:alpine gcloud beta emulators storage st
    # src/clarity/api/v1/new_feature.py
    from fastapi import APIRouter, Depends
    from src.clarity.auth import verify_firebase_token
-   
+
    router = APIRouter(prefix="/new-feature", tags=["new-feature"])
-   
+
    @router.get("/")
    async def get_feature_data(
        current_user: dict = Depends(verify_firebase_token)
@@ -214,7 +214,7 @@ docker run -p 9199:9199 google/cloud-sdk:alpine gcloud beta emulators storage st
    ```python
    # src/clarity/api/v1/__init__.py
    from .new_feature import router as new_feature_router
-   
+
    # Add to router list
    ```
 
@@ -224,7 +224,7 @@ docker run -p 9199:9199 google/cloud-sdk:alpine gcloud beta emulators storage st
    # tests/api/v1/test_new_feature.py
    import pytest
    from httpx import AsyncClient
-   
+
    @pytest.mark.asyncio
    async def test_get_feature_data(client: AsyncClient, auth_headers):
        response = await client.get("/api/v1/new-feature/", headers=auth_headers)
@@ -269,7 +269,7 @@ async def protected_endpoint(
        def __init__(self):
            # Load model
            pass
-       
+
        async def process(self, data):
            # Model inference
            pass
@@ -280,7 +280,7 @@ async def protected_endpoint(
    ```python
    # src/clarity/services/ai/your_model_service.py
    from src.clarity.ml.processors.your_model import YourModelProcessor
-   
+
    class YourModelService:
        def __init__(self):
            self.processor = YourModelProcessor()

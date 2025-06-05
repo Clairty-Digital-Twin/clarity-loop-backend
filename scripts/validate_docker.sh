@@ -61,4 +61,4 @@ fi
 
 echo ""
 echo "🏆 Docker validation complete!"
-echo "Ready for technical co-founder demo! 🔥" 
+echo "Ready for technical co-founder demo! 🔥"

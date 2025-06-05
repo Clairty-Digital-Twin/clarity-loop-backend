@@ -8,28 +8,28 @@
       "tables": false,
       "headings": false
     },
-    
+
     // Headings style
     "MD003": {
       "style": "atx"
     },
-    
+
     // Unordered list style
     "MD004": {
       "style": "dash"
     },
-    
+
     // Ordered list item prefix
     "MD029": {
       "style": "ordered"
     },
-    
+
     // Fenced code blocks should have a language
     "MD040": true,
-    
+
     // First line in file should be a top level heading
     "MD041": false,
-    
+
     // Proper names should have the correct capitalization
     "MD044": {
       "names": [
@@ -65,19 +65,19 @@
       ],
       "code_blocks": false
     },
-    
+
     // Multiple headings with the same content
     "MD024": {
       "allow_different_nesting": true
     }
   },
-  
+
   // Files to include/exclude
   "globs": [
     "docs/**/*.md",
     "*.md"
   ],
-  
+
   "ignores": [
     "node_modules",
     ".venv",
@@ -85,10 +85,10 @@
     "build",
     "dist"
   ],
-  
+
   // Fix mode settings
   "fix": true,
-  
+
   // Output format
   "outputFormatters": [
     [

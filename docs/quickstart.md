@@ -7,7 +7,7 @@ Get the CLARITY Digital Twin Platform running locally in under 10 minutes.
 ## 🚀 Prerequisites
 
 - **Python 3.12+** installed
-- **Docker & Docker Compose** installed  
+- **Docker & Docker Compose** installed
 - **Git** installed
 - **Google Cloud account** (free tier works)
 - **Firebase project** (free tier works)
@@ -40,7 +40,7 @@ cp .env.example .env
 
 # Edit .env file with your settings:
 # FIREBASE_PROJECT_ID=your-firebase-project
-# GOOGLE_CLOUD_PROJECT=your-gcp-project  
+# GOOGLE_CLOUD_PROJECT=your-gcp-project
 # GOOGLE_AI_API_KEY=your-gemini-api-key
 ```
 
@@ -83,7 +83,7 @@ curl -X POST "http://localhost:8000/api/v1/auth/register" \
 curl -X POST "http://localhost:8000/api/v1/auth/login" \
   -H "Content-Type: application/json" \
   -d '{
-    "email": "test@example.com", 
+    "email": "test@example.com",
     "password": "securepassword123"
   }'
 ```
@@ -175,7 +175,7 @@ pytest tests/ml/test_pat_processor.py
 # Linting
 ruff check .
 
-# Type checking  
+# Type checking
 mypy src/
 
 # Auto-formatting
@@ -223,7 +223,7 @@ python main.py
 ### For Development
 
 1. **Increase test coverage** - focus on API error scenarios
-2. **Add monitoring** - enhance metrics and alerting  
+2. **Add monitoring** - enhance metrics and alerting
 3. **Performance tuning** - optimize ML inference times
 4. **New features** - sleep processor module
 

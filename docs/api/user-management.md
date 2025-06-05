@@ -42,7 +42,7 @@ User profiles are automatically managed by the system:
 ```json
 {
   "user_id": "firebase-uid-123",
-  "email": "user@example.com", 
+  "email": "user@example.com",
   "created_at": "2025-01-15T10:30:00Z",
   "last_login": "2025-01-15T10:30:00Z",
   "preferences": {
@@ -200,7 +200,7 @@ User management is thoroughly tested:
 ## Future Enhancements
 
 1. **OAuth Integration**: Google, Apple Sign-In
-2. **Advanced Profiles**: Detailed health questionnaires  
+2. **Advanced Profiles**: Detailed health questionnaires
 3. **Data Export**: GDPR compliance features
 4. **Team Sharing**: Controlled data sharing (healthcare providers)
 5. **Multi-factor Auth**: Enhanced security options

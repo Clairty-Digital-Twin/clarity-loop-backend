@@ -196,9 +196,11 @@ class _TestConnectionManager:
         elif hasattr(message, "dict"):
             message_content = message.dict()
 
-        self.messages_sent.append(
-            {"type": "direct", "target_ws": websocket, "message": message_content}
-        )
+        self.messages_sent.append({
+            "type": "direct",
+            "target_ws": websocket,
+            "message": message_content,
+        })
 
         # Actually send the message through the WebSocket for TestClient
         try:
@@ -222,14 +224,12 @@ class _TestConnectionManager:
         if user_id in self.user_connections:
             for websocket in self.user_connections[user_id]:
                 if websocket in self.active_websockets:
-                    self.messages_sent.append(
-                        {
-                            "type": "direct_to_user",
-                            "target_user": user_id,
-                            "target_ws": websocket,
-                            "message": message_content,
-                        }
-                    )
+                    self.messages_sent.append({
+                        "type": "direct_to_user",
+                        "target_user": user_id,
+                        "target_ws": websocket,
+                        "message": message_content,
+                    })
                     # Actually send the message through the WebSocket for TestClient
                     try:
                         await websocket.send_json(message_content)
@@ -269,14 +269,12 @@ class _TestConnectionManager:
         elif hasattr(message, "dict"):
             message_content = message.dict()
 
-        self.messages_sent.append(
-            {
-                "type": "broadcast",
-                "room_id": room_id,
-                "message": message_content,
-                "excluded": exclude_websocket,
-            }
-        )
+        self.messages_sent.append({
+            "type": "broadcast",
+            "room_id": room_id,
+            "message": message_content,
+            "excluded": exclude_websocket,
+        })
 
         target_websockets = []
         for user_id in self.rooms.get(room_id, set()):
@@ -489,7 +487,6 @@ class TestWebSocketEndpoints:
         with client.websocket_connect(
             f"/api/v1/chat/{user_id}?token={test_token}"
         ) as websocket:
-
             # Send a chat message
             chat_message = ChatMessage(
                 user_id=user_id,

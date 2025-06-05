@@ -59,7 +59,7 @@ from clarity.auth.firebase_auth import FirebaseAuthProvider
 
 class Container(containers.DeclarativeContainer):
     config = providers.Configuration()
-    
+
     auth_provider = providers.Singleton(
         FirebaseAuthProvider,
         credentials_path=config.firebase.credentials_path,
@@ -147,7 +147,7 @@ name = "Layer dependencies"
 type = "layers"
 layers = [
     "clarity.api",
-    "clarity.services", 
+    "clarity.services",
     "clarity.models",
     "clarity.core",
 ]
@@ -160,23 +160,23 @@ layers = [
 def create_application() -> FastAPI:
     # 1. Create core components
     settings = get_settings()
-    
+
     # 2. Create infrastructure
     auth_provider = create_auth_provider(settings)
     db_client = create_db_client(settings)
-    
+
     # 3. Create services
     services = create_services(db_client, auth_provider)
-    
+
     # 4. Create FastAPI app
     app = FastAPI(title="CLARITY Digital Twin Platform")
-    
+
     # 5. Configure middleware
     configure_middleware(app, auth_provider, settings)
-    
+
     # 6. Include routers
     configure_routes(app, services)
-    
+
     return app
 ```
 

@@ -108,7 +108,7 @@ async with httpx.AsyncClient() as client:
     response = await client.post(
         "http://localhost:8000/api/v1/auth/login",
         json={
-            "email": "user@example.com", 
+            "email": "user@example.com",
             "password": "securepassword123"
         }
     )

@@ -28,7 +28,7 @@ make load-test-fixtures
 ### Required Services
 
 - **API Gateway**: `localhost:8000`
-- **ML Service**: `localhost:8001`  
+- **ML Service**: `localhost:8001`
 - **Firestore Emulator**: `localhost:8080`
 - **Pub/Sub Emulator**: `localhost:8085`
 - **Redis Cache**: `localhost:6379`
@@ -217,7 +217,7 @@ FORMAT: Natural language, avoid medical diagnosis
 
 ### Scenario 1: Complete Happy Path
 
-**Test ID**: `E2E-001`  
+**Test ID**: `E2E-001`
 **Description**: Full pipeline from HealthKit upload to insight delivery
 
 #### Test Steps
@@ -283,7 +283,7 @@ curl http://localhost:8080/v1/projects/test-project/databases/(default)/document
 #### Success Criteria
 
 - ✅ **Upload Success**: 201 status, valid upload_id returned
-- ✅ **Processing Speed**: <500ms for PAT analysis  
+- ✅ **Processing Speed**: <500ms for PAT analysis
 - ✅ **Feature Accuracy**: ±5% variance from expected values
 - ✅ **Insight Quality**: Contains required sections, appropriate length
 - ✅ **Data Persistence**: All data correctly stored in Firestore
@@ -291,7 +291,7 @@ curl http://localhost:8080/v1/projects/test-project/databases/(default)/document
 
 ### Scenario 2: Error Handling & Recovery
 
-**Test ID**: `E2E-002`  
+**Test ID**: `E2E-002`
 **Description**: Validate graceful error handling and system recovery
 
 #### Test Cases
@@ -323,7 +323,7 @@ curl -X POST http://localhost:8000/api/v1/healthkit/upload \
 
 ### Scenario 3: Performance & Scale
 
-**Test ID**: `E2E-003`  
+**Test ID**: `E2E-003`
 **Description**: Validate system performance under load
 
 ```bash
@@ -348,7 +348,7 @@ curl -X POST http://localhost:8000/api/v1/healthkit/upload \
 
 ### Scenario 4: Security & Authentication
 
-**Test ID**: `E2E-004`  
+**Test ID**: `E2E-004`
 **Description**: Validate security controls and authentication
 
 ```bash
@@ -485,11 +485,11 @@ def generate_realistic_actigraphy(duration_hours=24):
     """Generate realistic actigraphy data with circadian patterns"""
     samples = []
     base_time = datetime(2024, 1, 15, 0, 0, 0)
-    
+
     for minute in range(duration_hours * 60):
         timestamp = base_time + timedelta(minutes=minute)
         hour = timestamp.hour + timestamp.minute / 60
-        
+
         # Circadian activity pattern
         if 0 <= hour < 7:  # Sleep period
             activity = np.random.poisson(2)
@@ -512,13 +512,13 @@ def generate_realistic_actigraphy(duration_hours=24):
         else:  # Pre-sleep
             activity = np.random.poisson(20)
             heart_rate = 65 + np.random.normal(0, 4)
-        
+
         samples.append({
             "timestamp": timestamp.isoformat() + "Z",
             "activity_count": max(0, int(activity)),
             "heart_rate": max(45, min(180, int(heart_rate)))
         })
-    
+
     return samples
 ```
 
@@ -529,19 +529,19 @@ def generate_realistic_actigraphy(duration_hours=24):
 def validate_pat_features(actual, expected, tolerance=0.05):
     """Validate PAT feature extraction results"""
     errors = []
-    
+
     for category, metrics in expected["features"].items():
         if category not in actual["features"]:
             errors.append(f"Missing feature category: {category}")
             continue
-            
+
         for metric, expected_value in metrics.items():
             actual_value = actual["features"][category].get(metric)
-            
+
             if actual_value is None:
                 errors.append(f"Missing metric: {category}.{metric}")
                 continue
-                
+
             if isinstance(expected_value, (int, float)):
                 diff = abs(actual_value - expected_value) / expected_value
                 if diff > tolerance:
@@ -551,33 +551,33 @@ def validate_pat_features(actual, expected, tolerance=0.05):
                         f"got {actual_value} "
                         f"(diff: {diff:.2%})"
                     )
-    
+
     return errors
 
 def validate_gemini_insights(response, expected_structure):
     """Validate Gemini-generated insights"""
     errors = []
-    
+
     required_sections = [
         "sleep_assessment",
-        "activity_recommendations", 
+        "activity_recommendations",
         "circadian_tips",
         "tomorrow_focus"
     ]
-    
+
     for section in required_sections:
         if section not in response.get("insights", {}):
             errors.append(f"Missing insight section: {section}")
-    
+
     # Validate content quality
     insights = response.get("insights", {})
     total_length = sum(len(str(v)) for v in insights.values())
-    
+
     if total_length < 100:
         errors.append("Insights too short")
     elif total_length > 300:
         errors.append("Insights too long")
-    
+
     return errors
 ```
 
@@ -608,7 +608,7 @@ ab -n 100 -c 10 -H "Authorization: Bearer ${TEST_TOKEN}" \
 
 ---
 
-**Goal**: Deterministic, automated validation of complete system functionality  
-**Coverage**: Happy path, error cases, performance, security  
-**Automation**: CI/CD integrated, continuous monitoring  
+**Goal**: Deterministic, automated validation of complete system functionality
+**Coverage**: Happy path, error cases, performance, security
+**Automation**: CI/CD integrated, continuous monitoring
 **Reliability**: <1% false positive rate, reproducible results

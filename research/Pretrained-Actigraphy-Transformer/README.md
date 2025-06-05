@@ -24,7 +24,7 @@ This notebook will guide you through:
 5. Evaluating Model
 6. Model Explainability
 
-> **Note:** You need to connect to GPU, or this notebook will be **very** slow.  
+> **Note:** You need to connect to GPU, or this notebook will be **very** slow.
 > In Google Colab, go to `runtime -> change runtime type`, then select a GPU. A GPU should already be the default when you open the link.
 
 ### 🎓 How to: Self-Supervised Pretraining
@@ -41,7 +41,7 @@ This notebook will guide you through:
 6. Saving the Model Encoder
 7. Inspecting the Autoencoder
 
-> **Note:** You need to connect to TPU, or this notebook will **not** work.  
+> **Note:** You need to connect to TPU, or this notebook will **not** work.
 > In Google Colab, go to `runtime -> change runtime type`, then select TPUv2. This should already be the default when you open the link.<br>
 > It is possible to easily adapt this notebook so that you can run with GPUs instead if you choose
 
@@ -71,24 +71,24 @@ These are the H5 files that store the pre-trained transformer encoder weights. D
 
 <details>
 <summary><strong>Can PAT handle any input length?</strong></summary>
-Yes, it can!  
-Our model can handle inputs of any length (both longer and shorter than 1 week).  
+Yes, it can!
+Our model can handle inputs of any length (both longer and shorter than 1 week).
 Check out the `How to: Fine-tune PAT + Built-in Model Explainability` notebook above for a demo.
 </details>
 
 <details>
 <summary><strong>Can I use GPUs / can I locally fine-tune PAT?</strong></summary>
-Absolutely!  
+Absolutely!
 
  ---
 
 #### ⚠️ **ANNOUNCEMENT (as of 13 January 2025 Colab Update): GPUs are recommended over TPUs for fine-tuning PAT**
 
-- **GPUs:**  
-  - Fully compatible with PAT.  
+- **GPUs:**
+  - Fully compatible with PAT.
   - On Colab, GPUs may be slower than TPUs but are more reliable.
-- **TPUs:**  
-  - Fine-tuning and evaluation may be unstable.  
+- **TPUs:**
+  - Fine-tuning and evaluation may be unstable.
   - ⚠️ Model explainability is **not supported** on TPUs.
 
 ---

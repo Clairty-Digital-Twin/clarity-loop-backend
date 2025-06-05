@@ -87,7 +87,7 @@ class HealthKitDataType(str, Enum):
 
 class HealthKitUnit(BaseModel):
     unit_string: str = Field(..., description="HKUnit string representation")
-    
+
     @validator('unit_string')
     def validate_unit(cls, v):
         # Common HealthKit units validation
@@ -111,21 +111,21 @@ class HealthKitQuantitySample(BaseModel):
     source: str = Field(..., description="Data source (Apple Watch, iPhone, etc.)")
     device: Optional[Dict[str, Any]] = Field(None, description="Device metadata")
     metadata: Optional[Dict[str, Any]] = Field(None, description="Additional metadata")
-    
+
     @validator('value')
     def validate_value_range(cls, v, values):
         """Validate reasonable ranges for different data types"""
         type_id = values.get('type_identifier', '')
-        
+
         if 'HeartRate' in type_id and (v < 30 or v > 220):
             raise ValueError('Heart rate value out of physiological range')
         elif 'StepCount' in type_id and (v < 0 or v > 50000):
             raise ValueError('Step count value out of reasonable range')
         elif 'ActiveEnergyBurned' in type_id and (v < 0 or v > 10000):
             raise ValueError('Active energy value out of reasonable range')
-            
+
         return v
-    
+
     @validator('start_date', 'end_date')
     def validate_dates(cls, v):
         """Ensure dates are not in the future and within reasonable past range"""
@@ -165,14 +165,14 @@ class HealthKitUploadRequest(BaseModel):
     quantity_samples: List[HealthKitQuantitySample] = Field(default_factory=list)
     category_samples: List[HealthKitCategorySample] = Field(default_factory=list)
     workouts: List[HealthKitWorkout] = Field(default_factory=list)
-    
+
     @validator('quantity_samples', 'category_samples', 'workouts')
     def validate_sample_limits(cls, v):
         """Prevent oversized uploads"""
         if len(v) > 10000:
             raise ValueError('Too many samples in single upload (max 10,000)')
         return v
-    
+
     class Config:
         json_encoders = {
             datetime: lambda v: v.isoformat()
@@ -207,7 +207,7 @@ async def upload_healthkit_data(
 ):
     """
     Upload HealthKit data for processing
-    
+
     - Validates data format and ranges
     - Publishes to Pub/Sub for async processing
     - Returns upload tracking ID
@@ -215,17 +215,17 @@ async def upload_healthkit_data(
     try:
         # Verify Firebase authentication
         user_claims = await verify_firebase_token(token.credentials)
-        
+
         # Ensure user can only upload their own data
         if user_claims.get('uid') != request.user_id:
             raise HTTPException(
                 status_code=403,
                 detail="Cannot upload data for different user"
             )
-        
+
         # Generate upload ID
         upload_id = f"upload-{request.user_id}-{int(datetime.utcnow().timestamp())}"
-        
+
         # Enrich request with upload metadata
         enriched_request = {
             "upload_id": upload_id,
@@ -238,15 +238,15 @@ async def upload_healthkit_data(
                 "priority": "normal"
             }
         }
-        
+
         # Publish to Pub/Sub for async processing
         await publish_message(
             topic="healthkit-ingestion",
             message=enriched_request
         )
-        
+
         logger.info(f"HealthKit upload queued: {upload_id}")
-        
+
         return {
             "upload_id": upload_id,
             "status": "queued",
@@ -257,7 +257,7 @@ async def upload_healthkit_data(
                 "workouts": len(request.workouts)
             }
         }
-        
+
     except ValueError as e:
         logger.warning(f"HealthKit upload validation error: {e}")
         raise HTTPException(status_code=400, detail=str(e))
@@ -272,7 +272,7 @@ async def get_upload_status(
 ):
     """Check status of HealthKit data upload and processing"""
     user_claims = await verify_firebase_token(token.credentials)
-    
+
     # Extract user_id from upload_id and verify ownership
     try:
         parts = upload_id.split('-')
@@ -281,13 +281,13 @@ async def get_upload_status(
             raise HTTPException(status_code=403, detail="Access denied")
     except (IndexError, ValueError):
         raise HTTPException(status_code=400, detail="Invalid upload ID format")
-    
+
     # Query processing status from Firestore
     status_doc = await get_upload_status_from_firestore(upload_id)
-    
+
     if not status_doc:
         raise HTTPException(status_code=404, detail="Upload not found")
-    
+
     return status_doc
 
 @router.get("/data/latest")
@@ -298,7 +298,7 @@ async def get_latest_data(
     """Retrieve user's latest processed HealthKit data"""
     user_claims = await verify_firebase_token(token.credentials)
     user_id = user_claims.get('uid')
-    
+
     latest_data = await get_user_latest_healthkit_data(user_id, limit)
     return latest_data
 ```
@@ -317,35 +317,35 @@ logger = logging.getLogger(__name__)
 
 class HealthKitProcessor:
     """Processes raw HealthKit data into PAT-compatible format"""
-    
+
     def __init__(self):
         self.pat_sampling_rate = 60  # PAT expects 1-minute intervals
         self.required_duration_hours = 24  # Minimum data for reliable analysis
-    
+
     async def process_upload(self, upload_data: Dict[str, Any]) -> Dict[str, Any]:
         """
         Main processing pipeline for HealthKit uploads
-        
+
         Returns processed data ready for PAT model
         """
         try:
             user_id = upload_data['user_id']
             raw_samples = upload_data['data']
-            
+
             logger.info(f"Processing HealthKit upload for user {user_id}")
-            
+
             # 1. Data validation and cleaning
             validated_data = await self._validate_and_clean(raw_samples)
-            
+
             # 2. Temporal alignment and resampling
             aligned_data = await self._align_temporal_data(validated_data)
-            
+
             # 3. Feature extraction for PAT model
             pat_features = await self._extract_pat_features(aligned_data)
-            
+
             # 4. Data quality assessment
             quality_metrics = await self._assess_data_quality(aligned_data)
-            
+
             # 5. Generate processing summary
             processing_summary = {
                 "user_id": user_id,
@@ -357,42 +357,42 @@ class HealthKitProcessor:
                 "pat_ready": quality_metrics['sufficient_data'],
                 "processing_time_ms": self._get_processing_time()
             }
-            
+
             return {
                 "processing_summary": processing_summary,
                 "pat_features": pat_features,
                 "quality_metrics": quality_metrics,
                 "aligned_data": aligned_data
             }
-            
+
         except Exception as e:
             logger.error(f"HealthKit processing failed: {e}")
             raise
-    
+
     async def _validate_and_clean(self, raw_samples: Dict[str, Any]) -> Dict[str, Any]:
         """Validate HealthKit data and remove outliers"""
         cleaned_data = {'quantity_samples': [], 'category_samples': []}
-        
+
         # Process quantity samples
         for sample in raw_samples.get('quantity_samples', []):
             if self._is_valid_quantity_sample(sample):
                 cleaned_sample = self._clean_quantity_sample(sample)
                 cleaned_data['quantity_samples'].append(cleaned_sample)
-        
+
         # Process category samples (sleep, workouts)
         for sample in raw_samples.get('category_samples', []):
             if self._is_valid_category_sample(sample):
                 cleaned_data['category_samples'].append(sample)
-        
+
         logger.info(f"Cleaned data: {len(cleaned_data['quantity_samples'])} quantity, "
                    f"{len(cleaned_data['category_samples'])} category samples")
-        
+
         return cleaned_data
-    
+
     async def _align_temporal_data(self, validated_data: Dict[str, Any]) -> Dict[str, Any]:
         """
         Align all data to consistent 1-minute intervals for PAT compatibility
-        
+
         PAT model expects:
         - 1-minute sampling rate
         - 24+ hours of continuous data
@@ -402,24 +402,24 @@ class HealthKitProcessor:
         all_timestamps = []
         for sample in validated_data['quantity_samples']:
             all_timestamps.append(sample['start_date'])
-        
+
         if not all_timestamps:
             raise ValueError("No valid timestamp data found")
-        
+
         start_time = min(all_timestamps)
         end_time = max(all_timestamps)
         duration_hours = (end_time - start_time).total_seconds() / 3600
-        
+
         logger.info(f"Data spans {duration_hours:.1f} hours from {start_time} to {end_time}")
-        
+
         # Generate minute-by-minute timeline
         timeline = []
         current_time = start_time.replace(second=0, microsecond=0)
-        
+
         while current_time <= end_time:
             timeline.append(current_time)
             current_time += timedelta(minutes=1)
-        
+
         # Create aligned data structure
         aligned_data = {
             'timeline': timeline,
@@ -435,25 +435,25 @@ class HealthKitProcessor:
                 'sample_count': len(timeline)
             }
         }
-        
+
         # Map HealthKit samples to timeline
         await self._map_samples_to_timeline(validated_data, aligned_data)
-        
+
         return aligned_data
-    
+
     async def _extract_pat_features(self, aligned_data: Dict[str, Any]) -> Dict[str, Any]:
         """
         Extract features specifically for PAT (Pretrained Actigraphy Transformer)
-        
+
         PAT expects a 10,080-length vector (7 days × 24 hours × 60 minutes)
         """
         activity_vector = aligned_data['activity_counts']
         heart_rate_vector = aligned_data['heart_rate']
-        
+
         # Ensure minimum length for PAT
         if len(activity_vector) < 1440:  # Less than 24 hours
             logger.warning("Insufficient data for robust PAT analysis")
-        
+
         # Normalize and prepare features
         features = {
             'actigraphy_sequence': activity_vector.tolist(),
@@ -463,7 +463,7 @@ class HealthKitProcessor:
             'normalization_applied': True,
             'feature_version': 'v1.0'
         }
-        
+
         # Add statistical features for model context
         features['statistics'] = {
             'activity_mean': float(np.mean(activity_vector)),
@@ -473,29 +473,29 @@ class HealthKitProcessor:
             'heart_rate_std': float(np.std(heart_rate_vector[heart_rate_vector > 0])),
             'zero_activity_percentage': float(np.sum(activity_vector == 0) / len(activity_vector))
         }
-        
+
         return features
-    
+
     async def _assess_data_quality(self, aligned_data: Dict[str, Any]) -> Dict[str, Any]:
         """Assess quality and completeness of HealthKit data"""
         timeline = aligned_data['timeline']
         activity = aligned_data['activity_counts']
         heart_rate = aligned_data['heart_rate']
-        
+
         # Calculate completeness metrics
         total_minutes = len(timeline)
         non_zero_activity = np.sum(activity > 0)
         non_zero_hr = np.sum(heart_rate > 0)
-        
+
         # Assess data gaps
         max_gap_minutes = self._calculate_max_gap(timeline)
-        
+
         # Determine if sufficient for analysis
         sufficient_duration = total_minutes >= 1440  # At least 24 hours
         sufficient_activity = (non_zero_activity / total_minutes) >= 0.1  # At least 10% active periods
         sufficient_hr = (non_zero_hr / total_minutes) >= 0.5  # At least 50% HR coverage
         reasonable_gaps = max_gap_minutes <= 120  # No gaps longer than 2 hours
-        
+
         quality_metrics = {
             'total_duration_minutes': total_minutes,
             'activity_coverage_percentage': float(non_zero_activity / total_minutes * 100),
@@ -509,9 +509,9 @@ class HealthKitProcessor:
                 sufficient_duration, sufficient_activity, sufficient_hr, reasonable_gaps
             )
         }
-        
+
         return quality_metrics
-    
+
     def _calculate_quality_score(self, duration: bool, activity: bool, hr: bool, gaps: bool) -> float:
         """Calculate overall data quality score (0-1)"""
         score = 0.0
@@ -520,11 +520,11 @@ class HealthKitProcessor:
         if hr: score += 0.2
         if gaps: score += 0.1
         return score
-    
+
     def _generate_quality_recommendations(self, duration: bool, activity: bool, hr: bool, gaps: bool) -> List[str]:
         """Generate recommendations for improving data quality"""
         recommendations = []
-        
+
         if not duration:
             recommendations.append("Collect at least 24 hours of continuous data for optimal analysis")
         if not activity:
@@ -533,7 +533,7 @@ class HealthKitProcessor:
             recommendations.append("Enable continuous heart rate monitoring for better insights")
         if not gaps:
             recommendations.append("Minimize data gaps by keeping devices charged and connected")
-        
+
         return recommendations
 ```
 
@@ -569,10 +569,10 @@ async def assess_permission_completeness(uploaded_data: Dict[str, Any]) -> Dict[
     available_types = set()
     for sample in uploaded_data.get('quantity_samples', []):
         available_types.add(sample['type_identifier'])
-    
+
     missing_critical = set(REQUIRED_PERMISSIONS['critical']) - available_types
     missing_recommended = set(REQUIRED_PERMISSIONS['recommended']) - available_types
-    
+
     return {
         'has_critical_data': len(missing_critical) == 0,
         'missing_critical': list(missing_critical),
@@ -593,22 +593,22 @@ async def assess_permission_completeness(uploaded_data: Dict[str, Any]) -> Dict[
 async def check_data_freshness(uploaded_data: Dict[str, Any]) -> Dict[str, Any]:
     """Check if uploaded data is recent and complete"""
     latest_timestamp = None
-    
+
     for sample in uploaded_data.get('quantity_samples', []):
         sample_time = datetime.fromisoformat(sample['end_date'])
         if latest_timestamp is None or sample_time > latest_timestamp:
             latest_timestamp = sample_time
-    
+
     if latest_timestamp:
         freshness_hours = (datetime.utcnow() - latest_timestamp).total_seconds() / 3600
-        
+
         return {
             'latest_data_timestamp': latest_timestamp.isoformat(),
             'freshness_hours': freshness_hours,
             'is_stale': freshness_hours > 24,
             'recommendation': 'Consider syncing HealthKit data more frequently' if freshness_hours > 6 else None
         }
-    
+
     return {'freshness_hours': float('inf'), 'is_stale': True}
 ```
 
@@ -630,17 +630,17 @@ async def deduplicate_samples(samples: List[Dict[str, Any]]) -> List[Dict[str, A
     """Remove duplicate samples, prioritizing higher-quality sources"""
     # Group by type and time window
     grouped_samples = {}
-    
+
     for sample in samples:
         key = (
             sample['type_identifier'],
             sample['start_date'][:16]  # Group by hour:minute
         )
-        
+
         if key not in grouped_samples:
             grouped_samples[key] = []
         grouped_samples[key].append(sample)
-    
+
     # Keep highest priority sample for each group
     deduplicated = []
     for sample_group in grouped_samples.values():
@@ -649,7 +649,7 @@ async def deduplicate_samples(samples: List[Dict[str, Any]]) -> List[Dict[str, A
         else:
             best_sample = max(sample_group, key=lambda s: get_source_priority(s['source']))
             deduplicated.append(best_sample)
-    
+
     return deduplicated
 
 def get_source_priority(source: str) -> int:
@@ -674,20 +674,20 @@ from datetime import datetime
 async def normalize_timestamps(samples: List[Dict[str, Any]], user_timezone: str = 'UTC') -> List[Dict[str, Any]]:
     """Convert all timestamps to UTC for consistent processing"""
     user_tz = timezone(user_timezone)
-    
+
     for sample in samples:
         # Assume HealthKit timestamps are in user's local time
         start_local = datetime.fromisoformat(sample['start_date'])
         end_local = datetime.fromisoformat(sample['end_date'])
-        
+
         # Convert to UTC
         start_utc = user_tz.localize(start_local).astimezone(timezone('UTC'))
         end_utc = user_tz.localize(end_local).astimezone(timezone('UTC'))
-        
+
         sample['start_date'] = start_utc.isoformat()
         sample['end_date'] = end_utc.isoformat()
         sample['original_timezone'] = user_timezone
-    
+
     return samples
 ```
 
@@ -724,16 +724,16 @@ SAMPLE_HEALTHKIT_UPLOAD = {
 async def test_healthkit_upload_validation():
     """Test HealthKit data validation"""
     from app.models.healthkit import HealthKitUploadRequest
-    
+
     # Valid data should pass
     request = HealthKitUploadRequest(**SAMPLE_HEALTHKIT_UPLOAD)
     assert request.user_id == "test-user-123"
-    
+
     # Invalid heart rate should fail
     invalid_data = SAMPLE_HEALTHKIT_UPLOAD.copy()
     invalid_data["quantity_samples"][0]["value"] = 500  # Invalid HR
     invalid_data["quantity_samples"][0]["type_identifier"] = "HKQuantityTypeIdentifierHeartRate"
-    
+
     with pytest.raises(ValueError):
         HealthKitUploadRequest(**invalid_data)
 ```
@@ -751,14 +751,14 @@ from app.services.healthkit_processor import HealthKitProcessor
 async def test_processing_performance():
     """Test HealthKit processing performance benchmarks"""
     processor = HealthKitProcessor()
-    
+
     # Generate 24 hours of test data (1440 samples)
     test_data = generate_24h_test_data()
-    
+
     start_time = time.time()
     result = await processor.process_upload(test_data)
     processing_time = time.time() - start_time
-    
+
     # Performance assertions
     assert processing_time < 2.0  # Should process in under 2 seconds
     assert result['processing_summary']['pat_ready'] is True
@@ -767,6 +767,6 @@ async def test_processing_performance():
 
 ---
 
-**Goal**: Frictionless HealthKit integration with robust error handling  
-**Standard**: 99.9% data processing success rate  
+**Goal**: Frictionless HealthKit integration with robust error handling
+**Standard**: 99.9% data processing success rate
 **Performance**: <500ms processing time for 24h data uploads

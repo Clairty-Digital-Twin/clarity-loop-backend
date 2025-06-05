@@ -47,35 +47,35 @@ from pathlib import Path
 
 class PATModelLoader:
     """Production-ready PAT model loader with error handling"""
-    
+
     def __init__(self, model_size: str = "medium", models_dir: str = "models"):
         self.model_size = model_size
         self.models_dir = Path(models_dir)
         self.model_path = self.models_dir / "pat" / f"PAT-{model_size[0].upper()}_29k_weights.h5"
         self.model = None
-        
+
     def load_model(self) -> tf.keras.Model:
         """Load PAT model with comprehensive error handling"""
         try:
             # Verify weights file exists
             if not self.model_path.exists():
                 raise FileNotFoundError(f"Model weights not found: {self.model_path}")
-            
+
             # Load model architecture first
             model = self._create_pat_architecture()
-            
+
             # Load pre-trained weights
             model.load_weights(str(self.model_path))
-            
+
             # Verify model loaded correctly
             self._validate_model(model)
-            
+
             self.model = model
             return model
-            
+
         except Exception as e:
             raise RuntimeError(f"Failed to load PAT model: {e}")
-    
+
     def _create_pat_architecture(self) -> tf.keras.Model:
         """Create PAT model architecture matching the weights"""
         # Model architecture specifications from PAT paper
@@ -93,36 +93,36 @@ class PATModelLoader:
                 "ff_dim": 256, "num_layers": 4, "dropout": 0.1
             }
         }
-        
+
         config = configs[self.model_size]
-        
+
         # Build transformer encoder as per PAT specification
         input_size = 10080  # 1 week in minutes
         num_patches = input_size // config["patch_size"]
-        
+
         inputs = tf.keras.layers.Input(shape=(input_size,), name="actigraphy_input")
-        
+
         # Patch embedding layer
         patches = tf.keras.layers.Reshape((num_patches, config["patch_size"]))(inputs)
         patch_embeddings = tf.keras.layers.Dense(config["embed_dim"])(patches)
-        
+
         # Positional encoding
         positions = tf.range(start=0, limit=num_patches, delta=1)
         position_embeddings = tf.keras.layers.Embedding(
             input_dim=num_patches, output_dim=config["embed_dim"]
         )(positions)
-        
+
         x = patch_embeddings + position_embeddings
-        
+
         # Transformer blocks
         for i in range(config["num_layers"]):
             x = self._transformer_block(x, config)
-        
+
         # Global pooling for feature extraction
         features = tf.keras.layers.GlobalAveragePooling1D()(x)
-        
+
         return tf.keras.Model(inputs=inputs, outputs=features, name=f"PAT_{self.model_size}")
-    
+
     def _transformer_block(self, x, config):
         """Single transformer encoder block"""
         # Multi-head attention
@@ -130,27 +130,27 @@ class PATModelLoader:
             num_heads=config["num_heads"],
             key_dim=config["embed_dim"] // config["num_heads"]
         )(x, x)
-        
+
         # Skip connection + layer norm
         x = tf.keras.layers.LayerNormalization()(x + attention)
-        
+
         # Feed-forward network
         ff = tf.keras.layers.Dense(config["ff_dim"], activation="relu")(x)
         ff = tf.keras.layers.Dense(config["embed_dim"])(ff)
         ff = tf.keras.layers.Dropout(config["dropout"])(ff)
-        
+
         # Skip connection + layer norm
         return tf.keras.layers.LayerNormalization()(x + ff)
-    
+
     def _validate_model(self, model: tf.keras.Model):
         """Validate model loaded correctly with test input"""
         test_input = tf.random.normal((1, 10080))  # 1 week of data
-        
+
         try:
             output = model(test_input, training=False)
             assert output.shape[0] == 1  # Batch size
             assert len(output.shape) == 2  # [batch, features]
-            
+
         except Exception as e:
             raise ValueError(f"Model validation failed: {e}")
 ```
@@ -164,52 +164,52 @@ import numpy as np
 
 class ActigraphyMLService:
     """Production ML service for actigraphy analysis"""
-    
+
     def __init__(self, model_size: str = "medium"):
         self.loader = PATModelLoader(model_size)
         self.model = None
         self.is_initialized = False
-    
+
     async def initialize(self):
         """Initialize ML service asynchronously"""
         loop = asyncio.get_event_loop()
-        
+
         # Load model in thread pool to avoid blocking
         self.model = await loop.run_in_executor(
             None, self.loader.load_model
         )
-        
+
         self.is_initialized = True
         logger.info(f"PAT service initialized with {self.loader.model_size} model")
-    
+
     async def extract_features(self, actigraphy_data: np.ndarray) -> dict:
         """Extract features from 1-week actigraphy data"""
         if not self.is_initialized:
             raise RuntimeError("Service not initialized")
-        
+
         # Preprocess data (z-score normalization)
         normalized_data = self._normalize_data(actigraphy_data)
-        
+
         # Run inference
         loop = asyncio.get_event_loop()
         features = await loop.run_in_executor(
             None, self._run_inference, normalized_data
         )
-        
+
         # Convert to interpretable metrics
         return self._interpret_features(features, actigraphy_data)
-    
+
     def _normalize_data(self, data: np.ndarray) -> np.ndarray:
         """Apply PAT-compatible normalization (per-year z-score)"""
         # Per-year standardization as per PAT methodology
         mean = np.mean(data)
         std = np.std(data)
         return (data - mean) / (std + 1e-8)
-    
+
     def _run_inference(self, data: np.ndarray) -> np.ndarray:
         """Run model inference"""
         return self.model.predict(data.reshape(1, -1), verbose=0)[0]
-    
+
     def _interpret_features(self, features: np.ndarray, raw_data: np.ndarray) -> dict:
         """Convert features to clinical metrics"""
         return {
@@ -285,31 +285,31 @@ endpoint = model.deploy(
 ```python
 class ModelPerformanceMonitor:
     """Monitor PAT model performance in production"""
-    
+
     def __init__(self):
         self.latency_history = []
         self.error_count = 0
         self.prediction_count = 0
-    
+
     def log_prediction(self, latency_ms: float, success: bool):
         """Log prediction performance"""
         self.latency_history.append(latency_ms)
         self.prediction_count += 1
-        
+
         if not success:
             self.error_count += 1
-        
+
         # Alert if performance degrades
         if len(self.latency_history) > 100:
             avg_latency = np.mean(self.latency_history[-100:])
             if avg_latency > 1000:  # 1 second threshold
                 logger.warning(f"High latency detected: {avg_latency:.2f}ms")
-    
+
     def get_stats(self) -> dict:
         """Get performance statistics"""
         if not self.latency_history:
             return {"status": "no_data"}
-        
+
         return {
             "avg_latency_ms": np.mean(self.latency_history),
             "p95_latency_ms": np.percentile(self.latency_history, 95),
@@ -347,10 +347,10 @@ def verify_model_integrity():
         "pat/PAT-M_29k_weights.h5": "sha256:e5f6g7h8...",
         "pat/PAT-S_29k_weights.h5": "sha256:i9j0k1l2..."
     }
-    
+
     for filename, expected_hash in expected_hashes.items():
         filepath = Path("models") / filename
-        
+
         if filepath.exists():
             actual_hash = hashlib.sha256(filepath.read_bytes()).hexdigest()
             if f"sha256:{actual_hash}" != expected_hash:
@@ -387,18 +387,18 @@ async def model_health_check():
         # Test model loading
         service = ActigraphyMLService()
         await service.initialize()
-        
+
         # Test inference
         test_data = np.random.randn(10080)  # 1 week
         features = await service.extract_features(test_data)
-        
+
         return {
             "status": "healthy",
             "model_loaded": True,
             "inference_working": True,
             "feature_count": len(features["raw_features"])
         }
-        
+
     except Exception as e:
         return {
             "status": "unhealthy",

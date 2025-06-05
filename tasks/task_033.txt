@@ -165,7 +165,7 @@ Created production-ready `src/clarity/ml/inference_engine.py` with comprehensive
 #### **Architecture Highlights:**
 - **Producer-Consumer Pattern** with async queues for efficient batching
 - **Cache Key Generation** using SHA256 hashing of input data
-- **Performance Decorators** for automatic timing monitoring  
+- **Performance Decorators** for automatic timing monitoring
 - **Global Instance Management** for singleton pattern implementation
 - **Graceful Shutdown** with proper cleanup of async resources
 
@@ -344,7 +344,7 @@ Created production-ready `src/clarity/ml/nhanes_stats.py` with comprehensive nor
 
 #### **Key Features Implemented:**
 1. **Multi-year Reference Data** (2023-2025) with NHANES-based statistics
-2. **Age-stratified Stats** (18-29, 30-39, 40-49, 50-59, 60-69, 70-85)  
+2. **Age-stratified Stats** (18-29, 30-39, 40-49, 50-59, 60-69, 70-85)
 3. **Sex-stratified Stats** (male, female, other)
 4. **Smart Blending Algorithm** (weighted combination of population + demographic stats)
 5. **Validation Functions** for data quality assessment
@@ -373,4 +373,3 @@ The module is now ready for integration with the proxy actigraphy transformer. T
 ### Description: Update service documentation to clearly explain the proxy actigraphy approach and its implications for analysis.
 ### Details:
 Update documentation to include: 1) Explanation of the proxy actigraphy approach and its scientific basis, 2) Data requirements for step count input (10,080 minute-by-minute values), 3) Limitations and considerations when using proxy actigraphy, 4) Examples of API usage with step count data, 5) Interpretation guidelines for results based on proxy actigraphy, 6) Comparison with raw accelerometer-based actigraphy, 7) Troubleshooting guide for common issues.
-

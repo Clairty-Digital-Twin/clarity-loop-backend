@@ -60,7 +60,7 @@ class TestHealthDataPoint:
         )
         assert data.value == 72.5
         assert data.data_type == "heart_rate"
-    
+
     def test_invalid_heart_rate_range(self):
         """Test validation of heart rate ranges."""
         with pytest.raises(ValueError, match="Heart rate must be between"):
@@ -71,7 +71,7 @@ class TestHealthDataPoint:
                 timestamp="2024-01-01T12:00:00Z",
                 source="apple_watch"
             )
-    
+
     @pytest.mark.asyncio
     async def test_data_quality_assessment(self):
         """Test data quality scoring algorithm."""
@@ -116,7 +116,7 @@ class TestHealthDataAPI:
         )
         assert response.status_code == 202
         assert "processing_id" in response.json()
-    
+
     @pytest.mark.asyncio
     async def test_upload_health_data_unauthenticated(
         self, client: AsyncClient, sample_health_data
@@ -128,7 +128,7 @@ class TestHealthDataAPI:
         )
         assert response.status_code == 401
         assert response.json()["detail"] == "Authentication required"
-    
+
     @pytest.mark.asyncio
     @pytest.mark.requires_gcp
     async def test_data_processing_pipeline(
@@ -141,10 +141,10 @@ class TestHealthDataAPI:
             json={"data_type": "heart_rate", "values": [72, 74, 76]}
         )
         processing_id = upload_response.json()["processing_id"]
-        
+
         # Wait for processing (or mock async processing)
         await asyncio.sleep(1)
-        
+
         # Verify data was processed and stored
         insights_response = await authenticated_client.get(
             f"/api/v1/insights/daily?processing_id={processing_id}"
@@ -179,24 +179,24 @@ class TestCompleteUserJourney:
         async with async_playwright() as p:
             browser = await p.chromium.launch()
             page = await browser.new_page()
-            
+
             # 1. User registration (mocked iOS app flow)
             registration_data = {
                 "email": "test@example.com",
                 "firebase_token": "mock_firebase_token"
             }
-            
+
             # 2. Health data sync simulation
             health_data = generate_sample_week_data()
-            
+
             # 3. Verify insights generation
             insights_response = await simulate_insights_request(
                 page, health_data
             )
-            
+
             assert "weekly_summary" in insights_response
             assert "recommendations" in insights_response
-            
+
             await browser.close()
 ```
 
@@ -276,11 +276,11 @@ from typing import List, Dict
 
 class HealthDataGenerator:
     """Generate realistic but fake health data for testing."""
-    
+
     def __init__(self):
         self.fake = faker.Faker()
         faker.Faker.seed(42)  # Deterministic test data
-    
+
     def generate_user_profile(self) -> Dict:
         """Generate a fake user profile."""
         return {
@@ -292,53 +292,53 @@ class HealthDataGenerator:
             "weight_kg": self.fake.random_int(50, 120),
             "activity_level": self.fake.random_element(["low", "moderate", "high"])
         }
-    
+
     def generate_heart_rate_series(
-        self, 
-        days: int = 7, 
+        self,
+        days: int = 7,
         user_profile: Dict = None
     ) -> List[Dict]:
         """Generate realistic heart rate data series."""
         data = []
         base_hr = 70 if not user_profile else self._calculate_base_hr(user_profile)
-        
+
         for day in range(days):
             date = datetime.now() - timedelta(days=days-day)
-            
+
             # Generate 24 hours of heart rate data
             for hour in range(24):
                 # Simulate circadian rhythm
                 time_factor = self._circadian_factor(hour)
                 hr_value = base_hr * time_factor + self.fake.random_int(-5, 5)
-                
+
                 data.append({
                     "value": max(50, min(180, hr_value)),  # Realistic bounds
                     "timestamp": date.replace(hour=hour).isoformat(),
                     "data_type": "heart_rate",
                     "source": "test_device"
                 })
-        
+
         return data
-    
+
     def _circadian_factor(self, hour: int) -> float:
         """Calculate heart rate factor based on time of day."""
         if 6 <= hour <= 22:  # Awake hours
             return 1.0 + 0.1 * np.sin((hour - 6) * np.pi / 16)
         else:  # Sleep hours
             return 0.7
-    
+
     def _calculate_base_hr(self, profile: Dict) -> int:
         """Calculate baseline heart rate based on user profile."""
         base = 70
-        
+
         # Age factor
         age = (datetime.now().date() - profile["date_of_birth"]).days // 365
         base += (age - 30) * 0.2
-        
+
         # Activity level factor
         activity_factors = {"low": 5, "moderate": 0, "high": -10}
         base += activity_factors.get(profile["activity_level"], 0)
-        
+
         return int(max(50, min(100, base)))
 ```
 
@@ -352,35 +352,35 @@ from clarity.config import get_settings
 
 class TestDatabase:
     """Manage test database state and cleanup."""
-    
+
     def __init__(self):
         self.db = firestore.AsyncClient(project="test-project")
         self.created_documents = []
-    
+
     async def create_test_user(self, user_data: Dict) -> str:
         """Create a test user and track for cleanup."""
         doc_ref = self.db.collection("users").document()
         await doc_ref.set(user_data)
         self.created_documents.append(doc_ref)
         return doc_ref.id
-    
+
     async def create_test_health_data(
-        self, 
-        user_id: str, 
+        self,
+        user_id: str,
         health_data: List[Dict]
     ) -> List[str]:
         """Create test health data and track for cleanup."""
         doc_ids = []
-        
+
         for data_point in health_data:
             doc_ref = self.db.collection("health_data").document()
             data_point["user_id"] = user_id
             await doc_ref.set(data_point)
             self.created_documents.append(doc_ref)
             doc_ids.append(doc_ref.id)
-        
+
         return doc_ids
-    
+
     async def cleanup(self):
         """Clean up all test data."""
         cleanup_tasks = [
@@ -407,18 +407,18 @@ class TestActigraphyTransformer:
     def model(self):
         """Load test model or create mock."""
         return ActigraphyTransformer.load_test_model()
-    
+
     @pytest.fixture
     def sample_actigraphy_data(self):
         """Generate sample actigraphy data."""
         # 7 days of minute-by-minute data
         return np.random.rand(7 * 24 * 60, 3)  # 3 axes
-    
+
     @pytest.mark.ml
     def test_model_input_validation(self, model, sample_actigraphy_data):
         """Test model input validation and preprocessing."""
         preprocessor = HealthDataPreprocessor()
-        
+
         # Test valid input
         processed_data = preprocessor.prepare_actigraphy_input(
             sample_actigraphy_data
@@ -426,7 +426,7 @@ class TestActigraphyTransformer:
         assert processed_data.shape[0] == 7  # 7 days
         assert processed_data.shape[1] == 1440  # minutes per day
         assert processed_data.shape[2] == 3  # 3 axes
-    
+
     @pytest.mark.ml
     def test_model_inference(self, model, sample_actigraphy_data):
         """Test model inference pipeline."""
@@ -434,41 +434,41 @@ class TestActigraphyTransformer:
         processed_data = preprocessor.prepare_actigraphy_input(
             sample_actigraphy_data
         )
-        
+
         with torch.no_grad():
             output = model(torch.tensor(processed_data, dtype=torch.float32))
-        
+
         # Verify output structure
         assert "sleep_stages" in output
         assert "activity_patterns" in output
         assert "circadian_rhythm" in output
-        
+
         # Verify output ranges
         sleep_stages = output["sleep_stages"]
         assert torch.all(sleep_stages >= 0) and torch.all(sleep_stages <= 4)
-    
+
     @pytest.mark.ml
     @pytest.mark.slow
     def test_model_performance_benchmark(self, model):
         """Test model performance against benchmarks."""
         benchmark_data = load_benchmark_dataset()
-        
+
         total_inference_time = 0
         correct_predictions = 0
-        
+
         for sample, expected in benchmark_data:
             start_time = time.time()
             prediction = model.predict(sample)
             inference_time = time.time() - start_time
-            
+
             total_inference_time += inference_time
             if self._predictions_match(prediction, expected):
                 correct_predictions += 1
-        
+
         # Performance assertions
         avg_inference_time = total_inference_time / len(benchmark_data)
         accuracy = correct_predictions / len(benchmark_data)
-        
+
         assert avg_inference_time < 2.0  # Max 2 seconds per inference
         assert accuracy > 0.85  # Min 85% accuracy
 ```
@@ -489,7 +489,7 @@ class TestGeminiIntegration:
             api_key="test_key",
             model_name="gemini-2.0-flash-exp"
         )
-    
+
     @pytest.mark.asyncio
     @pytest.mark.integration
     async def test_health_insights_generation(
@@ -500,17 +500,17 @@ class TestGeminiIntegration:
             mock_generate.return_value = AsyncMock(
                 text="Based on your heart rate data, you show excellent cardiovascular health..."
             )
-            
+
             insights = await gemini_client.generate_insights(
                 user_profile={"age": 30, "activity_level": "moderate"},
                 health_analysis=sample_health_analysis,
                 insight_type="daily_summary"
             )
-            
+
             assert "cardiovascular" in insights.text.lower()
             assert insights.confidence > 0.7
             assert insights.recommendations is not None
-    
+
     @pytest.mark.asyncio
     async def test_insights_rate_limiting(self, gemini_client):
         """Test rate limiting and retry logic."""
@@ -520,13 +520,13 @@ class TestGeminiIntegration:
                 Exception("Rate limit exceeded"),
                 AsyncMock(text="Retry successful")
             ]
-            
+
             insights = await gemini_client.generate_insights(
                 user_profile={},
                 health_analysis={},
                 insight_type="daily_summary"
             )
-            
+
             assert insights.text == "Retry successful"
             assert mock_generate.call_count == 2
 ```
@@ -550,24 +550,24 @@ class TestAPIPerformance:
         async def upload_data(client, data):
             response = await client.post("/api/v1/health-data/upload", json=data)
             return response.status_code, response.elapsed.total_seconds()
-        
+
         # Simulate 100 concurrent uploads
         clients = [AsyncClient(app=app, base_url="http://test") for _ in range(100)]
         test_data = generate_sample_health_data()
-        
+
         start_time = time.time()
         tasks = [upload_data(client, test_data) for client in clients]
         results = await asyncio.gather(*tasks)
         total_time = time.time() - start_time
-        
+
         # Performance assertions
         success_count = sum(1 for status, _ in results if status == 202)
         avg_response_time = sum(elapsed for _, elapsed in results) / len(results)
-        
+
         assert success_count >= 95  # 95% success rate
         assert avg_response_time < 1.0  # Average response time under 1 second
         assert total_time < 30.0  # Total time under 30 seconds
-        
+
         # Cleanup
         for client in clients:
             await client.aclose()
@@ -590,39 +590,39 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
-    
+
     services:
       firestore-emulator:
         image: google/cloud-sdk:latest
         ports:
           - 8080:8080
         options: --entrypoint gcloud beta emulators firestore start --host-port=0.0.0.0:8080
-    
+
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.11'
-          
+
       - name: Install uv
         run: curl -LsSf https://astral.sh/uv/install.sh | sh
-        
+
       - name: Install dependencies
         run: uv sync --extra dev
-        
+
       - name: Run unit tests
         run: uv run pytest tests/unit -v --cov=src/clarity --cov-report=xml
-        
+
       - name: Run integration tests
         run: uv run pytest tests/integration -v -m "not slow"
         env:
           FIRESTORE_EMULATOR_HOST: localhost:8080
-          
+
       - name: Run ML tests
         run: uv run pytest tests/ml -v -m "not slow"
-        
+
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v3
         with:
@@ -641,20 +641,20 @@ repos:
       - id: end-of-file-fixer
       - id: check-yaml
       - id: check-added-large-files
-      
+
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.1.6
     hooks:
       - id: ruff
         args: [--fix, --exit-non-zero-on-fix]
       - id: ruff-format
-        
+
   - repo: https://github.com/pre-commit/mirrors-mypy
     rev: v1.7.1
     hooks:
       - id: mypy
         additional_dependencies: [types-all]
-        
+
   - repo: local
     hooks:
       - id: pytest-unit
@@ -702,7 +702,7 @@ def with_test_user(user_type: str = "standard"):
             test_db = TestDatabase()
             user_data = generate_test_user(user_type)
             user_id = await test_db.create_test_user(user_data)
-            
+
             try:
                 return await func(*args, user_id=user_id, **kwargs)
             finally:
@@ -731,7 +731,7 @@ def generate_test_report():
     """Generate comprehensive test metrics report."""
     coverage_data = load_coverage_data()
     performance_data = load_performance_data()
-    
+
     report = {
         "timestamp": datetime.now().isoformat(),
         "coverage": {
@@ -751,10 +751,10 @@ def generate_test_report():
             "ml": count_tests("tests/ml")
         }
     }
-    
+
     # Save report
     Path("reports/test_metrics.json").write_text(json.dumps(report, indent=2))
-    
+
     return report
 ```
 

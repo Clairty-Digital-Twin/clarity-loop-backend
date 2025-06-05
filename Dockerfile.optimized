@@ -16,7 +16,8 @@ ENV PYTHONUNBUFFERED=1 \
     KEEP_ALIVE=5
 
 # Install system dependencies
-RUN apt-get update && apt-get install -y \
+# Note: Pinning exact versions for apt packages (DL3008) can be beneficial.
+RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates \
     curl \
     && rm -rf /var/lib/apt/lists/* \
@@ -33,13 +34,14 @@ RUN mkdir -p logs
 
 # Copy requirements and install Python dependencies
 COPY pyproject.toml README.md LICENSE ./
-RUN pip install --upgrade pip setuptools wheel
+# Pinning pip, setuptools, and wheel to recent stable versions
+RUN pip install --upgrade pip==24.0 setuptools==69.5.1 wheel==0.43.0
 
 # Copy source code
 COPY src/ ./src/
 COPY main.py ./
 
-# Install dependencies - simplified approach
+# Install dependencies - simplified approach (dependencies are pinned in pyproject.toml)
 RUN pip install -e .
 
 # Change ownership to non-root user
@@ -56,4 +58,4 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
 EXPOSE ${PORT}
 
 # Production startup command
-CMD ["sh", "-c", "exec uvicorn main:app --host 0.0.0.0 --port ${PORT} --workers ${WORKERS} --loop uvloop --http httptools --access-log --log-level info --timeout-keep-alive ${KEEP_ALIVE} --timeout-graceful-shutdown ${TIMEOUT}"] 
+CMD ["sh", "-c", "exec uvicorn main:app --host 0.0.0.0 --port ${PORT} --workers ${WORKERS} --loop uvloop --http httptools --access-log --log-level info --timeout-keep-alive ${KEEP_ALIVE} --timeout-graceful-shutdown ${TIMEOUT}"]

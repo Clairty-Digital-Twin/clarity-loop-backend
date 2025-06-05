@@ -45,7 +45,7 @@ def test_heart_rate_validation():
     """Test heart rate data validation"""
     with pytest.raises(ValidationError):
         HeartRateData(bpm=300)  # Invalid heart rate
-    
+
     # This test will fail initially
     valid_data = HeartRateData(bpm=72)
     assert valid_data.bpm == 72
@@ -53,7 +53,7 @@ def test_heart_rate_validation():
 # 2. Write minimal implementation to pass
 class HeartRateData(BaseModel):
     bpm: int
-    
+
     @validator('bpm')
     def validate_bpm(cls, v):
         if v < 30 or v > 250:  # Reasonable human heart rate range
@@ -65,7 +65,7 @@ class HeartRateData(BaseModel):
     bpm: int
     timestamp: datetime
     source: str = "apple_watch"
-    
+
     @validator('bpm')
     def validate_bpm(cls, v):
         if not 30 <= v <= 250:
@@ -90,14 +90,14 @@ async def test_patient_data_encryption_at_rest():
         heart_rate=72,
         timestamp=datetime.utcnow()
     )
-    
+
     # Store the data
     doc_id = await health_repository.store(patient_data)
-    
+
     # Retrieve raw storage to verify encryption
     raw_doc = await firestore_client.collection("health_data").document(doc_id).get()
     raw_data = raw_doc.to_dict()
-    
+
     # HIPAA requires encryption - this should NOT be readable
     assert "patient_123" not in str(raw_data)  # Should fail initially
     assert "heart_rate" not in str(raw_data)  # Should fail initially
@@ -110,7 +110,7 @@ class HealthDataRepository:
             "encrypted_payload": encrypt_patient_data(patient_data.dict()),
             "created_at": datetime.utcnow().isoformat()
         }
-        
+
         doc_ref = await self.firestore.collection("health_data").add(encrypted_data)
         return doc_ref.id
 
@@ -118,7 +118,7 @@ class HealthDataRepository:
 class HealthDataRepository:
     def __init__(self, encryption_service: EncryptionService):
         self.encryption = encryption_service
-        
+
     async def store(self, patient_data: PatientHealthData) -> str:
         # Structured approach to encryption
         sensitive_fields = patient_data.get_sensitive_fields()
@@ -126,7 +126,7 @@ class HealthDataRepository:
             data=patient_data.dict(),
             sensitive_fields=sensitive_fields
         )
-        
+
         document = {
             "encrypted_payload": encrypted_payload,
             "metadata": {
@@ -136,7 +136,7 @@ class HealthDataRepository:
                 "encryption_version": "v2"
             }
         }
-        
+
         doc_ref = await self.firestore.collection("health_data").add(document)
         return doc_ref.id
 ```
@@ -167,26 +167,26 @@ async def test_complete_health_data_workflow():
         "device_id": "apple_watch_series_9",
         "user_id": "patient_123"
     }
-    
+
     # Act: Upload data through API
     response = await authenticated_client.post(
         "/api/v1/health-data/upload",
         json=apple_watch_data
     )
-    
+
     # Assert: Verify complete workflow
     assert response.status_code == 202
     upload_id = response.json()["upload_id"]
-    
+
     # Verify data is stored securely
     stored_data = await health_repository.get_upload(upload_id)
     assert stored_data.user_id == "patient_123"
     assert len(stored_data.readings) == 2
-    
+
     # Verify AI processing is triggered
     processing_job = await get_processing_job(upload_id)
     assert processing_job.status == "queued"
-    
+
     # Verify audit trail for HIPAA compliance
     audit_logs = await get_audit_logs("patient_123", "data_upload")
     assert len(audit_logs) > 0
@@ -197,7 +197,7 @@ class TestHealthDataUploadAPI:
     async def test_validates_required_fields(self):
         # This test will drive the validation logic
         pass
-        
+
     async def test_handles_authentication(self):
         # This test will drive the auth integration
         pass
@@ -206,7 +206,7 @@ class TestHealthDataRepository:
     async def test_encrypts_patient_data(self):
         # This test will drive the encryption implementation
         pass
-        
+
 class TestHealthDataProcessor:
     async def test_triggers_ml_analysis(self):
         # This test will drive the ML pipeline integration
@@ -228,29 +228,29 @@ class TestHealthDataProcessor:
 ```python
 # Test-first approach for security-critical features
 class TestAuthenticationTDD:
-    
+
     def test_jwt_token_validation_rejects_expired_tokens(self):
         """Security requirement: Expired tokens must be rejected"""
         # RED: This test will fail until we implement token validation
         expired_token = create_expired_jwt_token()
-        
+
         with pytest.raises(TokenExpiredError):
             validate_jwt_token(expired_token)
-    
+
     def test_jwt_token_validation_rejects_malformed_tokens(self):
         """Security requirement: Malformed tokens must be rejected"""
         malformed_token = "not.a.valid.jwt"
-        
+
         with pytest.raises(InvalidTokenError):
             validate_jwt_token(malformed_token)
-    
+
     def test_user_permissions_prevent_cross_patient_access(self):
         """HIPAA requirement: Users can only access their own data"""
         user_token = create_valid_token(user_id="patient_123")
-        
+
         # Should allow access to own data
         assert can_access_patient_data(user_token, "patient_123") == True
-        
+
         # Should deny access to other patient data
         assert can_access_patient_data(user_token, "patient_456") == False
 
@@ -258,8 +258,8 @@ class TestAuthenticationTDD:
 def validate_jwt_token(token: str) -> TokenPayload:
     try:
         payload = jwt.decode(
-            token, 
-            JWT_SECRET_KEY, 
+            token,
+            JWT_SECRET_KEY,
             algorithms=["HS256"],
             options={"verify_exp": True}  # Driven by expired token test
         )
@@ -274,33 +274,33 @@ def validate_jwt_token(token: str) -> TokenPayload:
 
 ```python
 class TestHealthDataValidationTDD:
-    
+
     def test_heart_rate_validation_accepts_normal_range(self):
         """Clinical requirement: Normal heart rates 60-100 bpm"""
         # GREEN path test
         for bpm in [60, 72, 80, 100]:
             data = HeartRateReading(bpm=bpm)
             assert data.bpm == bpm
-    
+
     def test_heart_rate_validation_flags_bradycardia(self):
         """Clinical requirement: Heart rate < 60 should be flagged"""
         reading = HeartRateReading(bpm=45)
-        
+
         assert reading.is_bradycardia == True
         assert "bradycardia" in reading.clinical_flags
-    
+
     def test_heart_rate_validation_flags_tachycardia(self):
         """Clinical requirement: Heart rate > 100 should be flagged"""
         reading = HeartRateReading(bpm=120)
-        
+
         assert reading.is_tachycardia == True
         assert "tachycardia" in reading.clinical_flags
-    
+
     def test_heart_rate_validation_rejects_impossible_values(self):
         """Safety requirement: Reject physiologically impossible values"""
         with pytest.raises(ValidationError, match="physiologically impossible"):
             HeartRateReading(bpm=500)
-        
+
         with pytest.raises(ValidationError, match="physiologically impossible"):
             HeartRateReading(bpm=0)
 
@@ -309,21 +309,21 @@ class HeartRateReading(BaseModel):
     bpm: int
     timestamp: datetime
     clinical_flags: List[str] = Field(default_factory=list)
-    
+
     @validator('bpm')
     def validate_bpm_range(cls, v):
         if v < 20 or v > 300:  # Driven by impossible values test
             raise ValueError("Heart rate physiologically impossible")
         return v
-    
+
     @property
     def is_bradycardia(self) -> bool:
         return self.bpm < 60  # Driven by bradycardia test
-    
+
     @property
     def is_tachycardia(self) -> bool:
         return self.bpm > 100  # Driven by tachycardia test
-    
+
     def __post_init__(self):
         # Driven by clinical flags tests
         if self.is_bradycardia:
@@ -338,43 +338,43 @@ class HeartRateReading(BaseModel):
 
 ```python
 class TestPATModelTDD:
-    
+
     def test_actigraphy_preprocessing_normalizes_data(self):
         """ML requirement: Data must be z-score normalized"""
         raw_data = np.array([1, 0, 1, 1, 0, 0, 1] * 200)  # 24h of data
-        
+
         processed = preprocess_actigraphy_for_pat(raw_data)
-        
+
         # Should be z-score normalized
         assert abs(processed.mean()) < 0.1  # Approximately zero mean
         assert abs(processed.std() - 1.0) < 0.1  # Approximately unit variance
-        
+
     def test_pat_model_returns_valid_depression_probability(self):
         """ML requirement: Model output must be valid probability"""
         sample_data = generate_sample_actigraphy_data()
-        
+
         prediction = pat_model.predict_depression_risk(sample_data)
-        
+
         assert isinstance(prediction, float)
         assert 0.0 <= prediction <= 1.0  # Valid probability range
-        
+
     def test_pat_model_handles_missing_data_gracefully(self):
         """Robustness requirement: Handle incomplete data"""
         incomplete_data = generate_incomplete_actigraphy_data()  # Missing hours
-        
+
         # Should not crash
         prediction = pat_model.predict_depression_risk(incomplete_data)
-        
+
         # Should return valid prediction or None
         assert prediction is None or (0.0 <= prediction <= 1.0)
-        
+
     def test_pat_model_prediction_consistency(self):
         """Reliability requirement: Same input -> same output"""
         test_data = generate_deterministic_actigraphy_data()
-        
+
         prediction1 = pat_model.predict_depression_risk(test_data)
         prediction2 = pat_model.predict_depression_risk(test_data)
-        
+
         assert abs(prediction1 - prediction2) < 1e-6  # Deterministic
 
 # Implementation driven by tests
@@ -382,25 +382,25 @@ class PATModel:
     def __init__(self, model_path: str):
         self.model = torch.load(model_path)
         self.model.eval()
-    
+
     def predict_depression_risk(self, actigraphy_data: np.ndarray) -> Optional[float]:
         try:
             # Driven by missing data test
             if self._has_insufficient_data(actigraphy_data):
                 return None
-            
+
             # Driven by preprocessing test
             processed = preprocess_actigraphy_for_pat(actigraphy_data)
-            
+
             # Driven by consistency test
             with torch.no_grad():
                 torch.manual_seed(42)  # Ensure deterministic output
                 tensor_input = torch.FloatTensor(processed).unsqueeze(0)
                 output = self.model(tensor_input)
                 probability = torch.sigmoid(output).item()  # Driven by probability test
-                
+
             return probability
-            
+
         except Exception as e:
             logger.error(f"PAT model prediction failed: {e}")
             return None  # Driven by robustness test
@@ -410,7 +410,7 @@ def preprocess_actigraphy_for_pat(data: np.ndarray) -> np.ndarray:
     # Z-score normalization as required by test
     if data.std() == 0:
         return np.zeros_like(data)
-    
+
     return (data - data.mean()) / data.std()
 ```
 
@@ -418,7 +418,7 @@ def preprocess_actigraphy_for_pat(data: np.ndarray) -> np.ndarray:
 
 ```python
 class TestHealthDataRepositoryTDD:
-    
+
     async def test_store_encrypts_sensitive_patient_data(self):
         """HIPAA requirement: PII must be encrypted at rest"""
         patient_data = PatientHealthData(
@@ -426,42 +426,42 @@ class TestHealthDataRepositoryTDD:
             ssn="123-45-6789",  # Sensitive PII
             heart_rate=72
         )
-        
+
         doc_id = await repository.store(patient_data)
-        
+
         # Verify encryption by checking raw storage
         raw_doc = await firestore_client.collection("health_data").document(doc_id).get()
         raw_content = str(raw_doc.to_dict())
-        
+
         # PII should not appear in plaintext
         assert "patient_123" not in raw_content
         assert "123-45-6789" not in raw_content
-        
+
     async def test_retrieve_decrypts_patient_data_correctly(self):
         """Functional requirement: Encrypted data must be retrievable"""
         original_data = PatientHealthData(
             patient_id="patient_456",
             heart_rate=85
         )
-        
+
         # Store then retrieve
         doc_id = await repository.store(original_data)
         retrieved_data = await repository.retrieve(doc_id)
-        
+
         # Should match original
         assert retrieved_data.patient_id == "patient_456"
         assert retrieved_data.heart_rate == 85
-        
+
     async def test_audit_logging_records_all_data_access(self):
         """HIPAA requirement: All data access must be audited"""
         patient_id = "patient_789"
-        
+
         # Access patient data
         await repository.get_patient_data(patient_id)
-        
+
         # Verify audit log entry
         audit_logs = await audit_service.get_logs(patient_id)
-        
+
         assert len(audit_logs) > 0
         latest_log = audit_logs[-1]
         assert latest_log["action"] == "data_access"
@@ -474,39 +474,39 @@ class HealthDataRepository:
         self.firestore = firestore_client
         self.encryption = encryption_service
         self.audit = audit_service
-    
+
     async def store(self, patient_data: PatientHealthData) -> str:
         # Driven by encryption test
         encrypted_payload = await self.encryption.encrypt(
             patient_data.dict()
         )
-        
+
         document = {
             "encrypted_data": encrypted_payload,
             "created_at": datetime.utcnow().isoformat()
         }
-        
+
         doc_ref = await self.firestore.collection("health_data").add(document)
-        
+
         # Driven by audit test
         await self.audit.log_action(
             action="data_store",
             patient_id=patient_data.patient_id,
             document_id=doc_ref.id
         )
-        
+
         return doc_ref.id
-    
+
     async def retrieve(self, doc_id: str) -> PatientHealthData:
         doc = await self.firestore.collection("health_data").document(doc_id).get()
-        
+
         if not doc.exists:
             raise DocumentNotFoundError(f"Document {doc_id} not found")
-        
+
         # Driven by decryption test
         encrypted_data = doc.to_dict()["encrypted_data"]
         decrypted_data = await self.encryption.decrypt(encrypted_data)
-        
+
         return PatientHealthData(**decrypted_data)
 ```
 
@@ -614,7 +614,7 @@ addopts = [
 # TDD-specific markers
 markers = [
     "unit: Unit tests for TDD",
-    "integration: Integration tests for outside-in TDD", 
+    "integration: Integration tests for outside-in TDD",
     "acceptance: Acceptance tests for user stories",
     "contract: Contract tests for external dependencies",
     "performance: Performance tests for non-functional requirements",
@@ -699,10 +699,10 @@ fi
         "-v"
     ],
     "python.testing.autoTestDiscoverOnSaveEnabled": true,
-    
+
     // TDD workflow shortcuts
     "python.testing.debugPort": 3000,
-    
+
     // Auto-run tests on save for TDD
     "saveAndRun": {
         "commands": [
@@ -714,7 +714,7 @@ fi
             }
         ]
     },
-    
+
     // TDD snippets
     "python.defaultInterpreterPath": "./venv/bin/python"
 }
@@ -731,11 +731,11 @@ from clarity.models import PatientHealthData, HeartRateReading
 class PatientHealthDataFactory(factory.Factory):
     class Meta:
         model = PatientHealthData
-    
+
     patient_id = factory.Sequence(lambda n: f"patient_{n:04d}")
     timestamp = factory.LazyFunction(datetime.utcnow)
     source = "apple_watch"
-    
+
     @factory.post_generation
     def add_clinical_context(obj, create, extracted, **kwargs):
         """Add realistic clinical context for testing"""
@@ -745,7 +745,7 @@ class PatientHealthDataFactory(factory.Factory):
 class HeartRateReadingFactory(factory.Factory):
     class Meta:
         model = HeartRateReading
-    
+
     bpm = factory.Faker('random_int', min=60, max=100)  # Normal range
     timestamp = factory.LazyFunction(datetime.utcnow)
     confidence = factory.Faker('random_element', elements=[0.95, 0.98, 0.99])
@@ -762,10 +762,10 @@ class TachycardiaReadingFactory(HeartRateReadingFactory):
 def test_detect_bradycardia():
     # Arrange
     bradycardia_reading = BradycardiaReadingFactory()
-    
+
     # Act
     analysis = analyze_heart_rate(bradycardia_reading)
-    
+
     # Assert
     assert analysis.is_bradycardia == True
     assert "bradycardia" in analysis.clinical_flags
@@ -779,7 +779,7 @@ def test_detect_bradycardia():
 # scripts/tdd_metrics.py - Track TDD adoption success
 def calculate_tdd_metrics():
     """Calculate metrics to track TDD adoption success"""
-    
+
     metrics = {
         "test_first_percentage": calculate_test_first_percentage(),
         "test_coverage": get_test_coverage(),
@@ -788,7 +788,7 @@ def calculate_tdd_metrics():
         "defect_density": calculate_defect_density(),
         "time_to_feedback": measure_test_execution_time()
     }
-    
+
     return metrics
 
 def calculate_test_first_percentage():
@@ -812,25 +812,25 @@ def count_proper_tdd_cycles():
 ```python
 class HealthcareTDDMetrics:
     """TDD metrics specific to healthcare system requirements"""
-    
+
     def hipaa_compliance_test_coverage(self):
         """Percentage of HIPAA requirements covered by tests"""
         hipaa_requirements = [
             "data_encryption_at_rest",
-            "data_encryption_in_transit", 
+            "data_encryption_in_transit",
             "access_logging",
             "user_authentication",
             "authorization_controls",
             "audit_trail_completeness"
         ]
-        
+
         covered_requirements = []
         for requirement in hipaa_requirements:
             if self.has_test_coverage(requirement):
                 covered_requirements.append(requirement)
-        
+
         return len(covered_requirements) / len(hipaa_requirements)
-    
+
     def clinical_safety_test_coverage(self):
         """Coverage of clinical safety requirements"""
         safety_requirements = [
@@ -839,20 +839,20 @@ class HealthcareTDDMetrics:
             "emergency_value_alerts",
             "ml_model_confidence_thresholds"
         ]
-        
+
         return self.calculate_requirement_coverage(safety_requirements)
-    
+
     def ml_model_test_robustness(self):
         """Measure ML model testing comprehensiveness"""
         ml_test_categories = [
             "input_validation",
-            "output_range_validation", 
+            "output_range_validation",
             "edge_case_handling",
             "performance_benchmarks",
             "bias_detection",
             "reproducibility"
         ]
-        
+
         return self.calculate_ml_test_coverage(ml_test_categories)
 ```
 
@@ -867,31 +867,31 @@ class HealthcareTDDMetrics:
 ```python
 # Instead of testing the ML model directly, test the interface
 class TestMLModelInterface:
-    
+
     def test_model_input_validation(self):
         """Test input validation without model complexity"""
         with pytest.raises(ValidationError):
             MLModelInterface.validate_input([])  # Empty input
-        
+
         with pytest.raises(ValidationError):
             MLModelInterface.validate_input(None)  # None input
-    
+
     def test_model_output_format(self):
         """Test output format consistency"""
         mock_model_response = {"prediction": 0.75, "confidence": 0.92}
-        
+
         formatted_output = MLModelInterface.format_output(mock_model_response)
-        
+
         assert "depression_risk" in formatted_output
         assert 0 <= formatted_output["depression_risk"] <= 1
-        
+
     def test_model_error_handling(self):
         """Test graceful error handling"""
         with patch('model.predict') as mock_predict:
             mock_predict.side_effect = ModelInferenceError("GPU memory error")
-            
+
             result = MLModelInterface.predict_safely(valid_input)
-            
+
             assert result["status"] == "error"
             assert result["fallback_used"] == True
 ```
@@ -904,27 +904,27 @@ class TestMLModelInterface:
 
 ```python
 class TestAsyncHealthDataWorkflow:
-    
+
     @pytest.mark.asyncio
     async def test_health_data_processing_pipeline(self):
         """Test complete async processing pipeline"""
         # Arrange
         health_data = create_test_health_data()
-        
+
         # Act
         upload_result = await health_api.upload_data(health_data)
-        
+
         # Assert - Test each stage
         assert upload_result["status"] == "accepted"
-        
+
         # Verify async processing was triggered
         await asyncio.sleep(0.1)  # Allow async tasks to start
-        
+
         processing_status = await health_api.get_processing_status(
             upload_result["upload_id"]
         )
         assert processing_status["status"] in ["processing", "completed"]
-        
+
     @pytest.mark.asyncio
     async def test_concurrent_health_data_uploads(self):
         """Test system handles concurrent uploads correctly"""
@@ -933,12 +933,12 @@ class TestAsyncHealthDataWorkflow:
             health_api.upload_data(create_test_health_data())
             for _ in range(10)
         ]
-        
+
         results = await asyncio.gather(*upload_tasks)
-        
+
         # All uploads should succeed
         assert all(r["status"] == "accepted" for r in results)
-        
+
         # All should have unique IDs
         upload_ids = [r["upload_id"] for r in results]
         assert len(set(upload_ids)) == len(upload_ids)
@@ -952,33 +952,33 @@ class TestAsyncHealthDataWorkflow:
 
 ```python
 class TestHIPAAComplianceTDD:
-    
+
     def test_data_encryption_requirement(self):
         """HIPAA 164.312(a)(2)(iv) - Encryption at rest"""
         patient_data = {"ssn": "123-45-6789", "name": "John Doe"}
-        
+
         # Store data
         storage_service.store(patient_data)
-        
+
         # Verify encryption by checking raw storage
         raw_storage = storage_service.get_raw_storage()
-        
+
         # PII should not be readable in storage
         assert "123-45-6789" not in str(raw_storage)
         assert "John Doe" not in str(raw_storage)
-        
+
     def test_access_logging_requirement(self):
         """HIPAA 164.312(b) - Audit controls"""
         patient_id = "patient_123"
         user_id = "doctor_456"
-        
+
         # Access patient data
         with audit_context(user_id=user_id):
             patient_service.get_patient_data(patient_id)
-        
+
         # Verify access was logged
         audit_logs = audit_service.get_logs(patient_id)
-        
+
         assert len(audit_logs) > 0
         assert audit_logs[-1]["user_id"] == user_id
         assert audit_logs[-1]["action"] == "data_access"

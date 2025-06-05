@@ -26,7 +26,7 @@ Created `src/clarity/ports/` with dedicated interface files:
 src/clarity/ports/
 ├── __init__.py              # Centralized exports
 ├── auth_ports.py           # Authentication interfaces
-├── config_ports.py         # Configuration interfaces  
+├── config_ports.py         # Configuration interfaces
 ├── data_ports.py           # Data repository interfaces
 ├── middleware_ports.py     # Middleware interfaces
 └── ml_ports.py             # ML model service interfaces
@@ -167,7 +167,7 @@ python scripts/model_integrity_cli.py list --models-dir models/pat
 #### Removed Build Artifacts
 
 - `htmlcov/` - HTML coverage reports
-- `node_modules/` - Node.js dependencies  
+- `node_modules/` - Node.js dependencies
 - `.mypy_cache/`, `.pytest_cache/`, `.ruff_cache/` - Tool caches
 - `coverage.xml`, `.coverage` - Coverage data files
 
@@ -208,7 +208,7 @@ class EnhancedHealthDataService:
         # Includes model integrity verification
         if not await self._verify_processing_models():
             raise HealthDataServiceError("Model integrity verification failed")
-        
+
         # Enhanced business logic
         return await self._process_data(health_data)
 ```
@@ -238,7 +238,7 @@ class EnhancedHealthDataService:
 # Before (DEPRECATED)
 from clarity.core.interfaces import IHealthDataRepository
 
-# After  
+# After
 from clarity.ports.data_ports import IHealthDataRepository
 ```
 
@@ -266,7 +266,7 @@ async def ml_operation(self, data):
     # Add integrity check before ML operations
     if not verify_startup_models():
         raise ServiceError("Model integrity verification failed")
-    
+
     # ... existing ML logic
 ```
 
@@ -294,7 +294,7 @@ class TestDecorators:
     async def test_service_method_logging(self):
         # Verify logging behavior
         pass
-    
+
     async def test_retry_mechanism(self):
         # Verify retry logic
         pass
@@ -308,7 +308,7 @@ class TestModelIntegrity:
     def test_checksum_generation(self):
         # Test checksum calculation
         pass
-    
+
     def test_integrity_verification(self):
         # Test verification logic
         pass
@@ -319,7 +319,7 @@ class TestModelIntegrity:
 ### Decorator Overhead
 
 - **Logging Decorators**: ~0.1ms overhead per call
-- **Timing Decorators**: ~0.05ms overhead per call  
+- **Timing Decorators**: ~0.05ms overhead per call
 - **Audit Decorators**: ~0.2ms overhead per call
 - **Composite Decorators**: ~0.3ms total overhead
 

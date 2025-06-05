@@ -62,7 +62,7 @@ ci-cd/
    - Minimal resource allocation
    - Short retention policies
 
-2. **Staging** (`staging`)  
+2. **Staging** (`staging`)
    - Auto-deploys from `main` branch
    - Production-like environment
    - Full Google Cloud services
@@ -98,16 +98,16 @@ jobs:
     - ruff check
     - mypy type checking
     - bandit security scan
-    
+
   unit-tests:
     - pytest with coverage
     - Coverage must be > 90%
-    
+
   integration-tests:
     - Docker Compose test environment
     - API integration tests
     - ML service validation
-    
+
   security:
     - SAST with CodeQL
     - Dependency vulnerability scan
@@ -126,17 +126,17 @@ jobs:
     - Build Docker images
     - Push to Artifact Registry
     - Scan images for vulnerabilities
-    
+
   deploy-dev:
     - Deploy to development environment
     - Run smoke tests
     - Update deployment status
-    
+
   deploy-staging:
     - Deploy to staging (main branch only)
     - Run E2E test suite
     - Performance benchmarks
-    
+
   deploy-production:
     - Manual approval required
     - Blue-green deployment
@@ -151,7 +151,7 @@ Triggered on: Schedule (daily) and security events
 **Security Checks:**
 
 - SAST (Static Application Security Testing)
-- DAST (Dynamic Application Security Testing)  
+- DAST (Dynamic Application Security Testing)
 - Dependency vulnerability scanning
 - Infrastructure security validation
 - HIPAA compliance checks
@@ -176,17 +176,17 @@ Triggered on: Schedule (daily) and security events
 ```hcl
 module "api_gateway" {
   source = "./modules/cloud-run"
-  
+
   service_name = "clarity-api-gateway"
   image        = var.api_gateway_image
   port         = 8000
-  
+
   cpu_limit    = "2000m"
   memory_limit = "4Gi"
-  
+
   min_instances = 0
   max_instances = 100
-  
+
   environment_variables = {
     GOOGLE_CLOUD_PROJECT = var.project_id
     ENVIRONMENT         = var.environment
@@ -199,13 +199,13 @@ module "api_gateway" {
 ```hcl
 module "messaging" {
   source = "./modules/pubsub"
-  
+
   topics = [
     "healthkit-data-ingestion",
     "ml-processing-requests",
     "insight-generation"
   ]
-  
+
   dead_letter_policy = {
     max_delivery_attempts = 5
     dead_letter_topic    = "dead-letter-queue"
@@ -218,10 +218,10 @@ module "messaging" {
 ```hcl
 module "databases" {
   source = "./modules/firestore"
-  
+
   database_id = "clarity-${var.environment}"
   location    = var.region
-  
+
   # Firestore indexes
   indexes = [
     {
@@ -241,7 +241,7 @@ module "databases" {
 ```hcl
 module "security" {
   source = "./modules/iam"
-  
+
   service_accounts = {
     api_gateway = {
       roles = [
@@ -280,7 +280,7 @@ api_gateway_config = {
 use_emulators = true
 ```
 
-#### Production Environment  
+#### Production Environment
 
 ```hcl
 # terraform/environments/prod/terraform.tfvars
@@ -516,7 +516,7 @@ gcloud run services update-traffic clarity-api-gateway \
 ### Automated Alerts
 
 - Deployment failures
-- Health check failures  
+- Health check failures
 - Performance degradation
 - Security vulnerabilities
 
@@ -557,6 +557,6 @@ gcloud run services update-traffic clarity-api-gateway \
 
 ---
 
-**Goal**: Zero-downtime deployments with full automation  
-**Standard**: Deploy 10+ times per day safely  
+**Goal**: Zero-downtime deployments with full automation
+**Standard**: Deploy 10+ times per day safely
 **Recovery**: Sub-2-minute rollback capability

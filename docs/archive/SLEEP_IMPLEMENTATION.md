@@ -55,7 +55,7 @@ class SleepFeatures(BaseModel):
 
 - ✅ **Sleep Architecture Analysis**: REM%, Deep%, Light% extraction
 - ✅ **WASO Calculation**: Wake After Sleep Onset analysis
-- ✅ **Consistency Scoring**: Sleep schedule regularity assessment  
+- ✅ **Consistency Scoring**: Sleep schedule regularity assessment
 - ✅ **Quality Scoring**: Comprehensive sleep quality ratings
 - ✅ **Multi-Night Analysis**: Aggregation across multiple sleep sessions
 - ✅ **Clinical Thresholds**: Research-based rating thresholds
@@ -68,7 +68,7 @@ class SleepFeatures(BaseModel):
 
 ```bash
 ✅ 7 tests PASSING
-✅ 72% code coverage  
+✅ 72% code coverage
 ✅ All test scenarios covered:
   - Single night analysis
   - Multiple nights consistency
@@ -129,15 +129,15 @@ def _extract_stage_percentages(sleep_data: SleepData) -> tuple[float, float, flo
     """Extract REM, deep, and light sleep percentages."""
     if not sleep_data.sleep_stages or sleep_data.total_sleep_minutes <= 0:
         return 0.0, 0.0, 0.0
-    
+
     rem_minutes = sleep_data.sleep_stages.get(SleepStage.REM, 0)
     deep_minutes = sleep_data.sleep_stages.get(SleepStage.DEEP, 0)
     light_minutes = sleep_data.sleep_stages.get(SleepStage.LIGHT, 0)
-    
+
     total_sleep = sleep_data.total_sleep_minutes
     return (
         rem_minutes / total_sleep,
-        deep_minutes / total_sleep, 
+        deep_minutes / total_sleep,
         light_minutes / total_sleep
     )
 ```
@@ -149,9 +149,9 @@ def _calculate_consistency_score(start_times: list[float]) -> float:
     """Calculate sleep schedule consistency from start times."""
     if len(start_times) < MIN_VALUES_FOR_CONSISTENCY:
         return 0.0
-    
+
     std_minutes = float(np.std(start_times))
-    
+
     if std_minutes <= CONSISTENCY_PERFECT_THRESHOLD:
         return 1.0
     elif std_minutes >= CONSISTENCY_STD_THRESHOLD:
@@ -169,7 +169,7 @@ def _calculate_consistency_score(start_times: list[float]) -> float:
 def _calculate_overall_quality_score(features: SleepFeatures) -> float:
     """Calculate comprehensive sleep quality score."""
     scores = []
-    
+
     # Sleep efficiency scoring
     if features.sleep_efficiency >= EFFICIENCY_EXCELLENT:
         scores.append(5.0)
@@ -179,10 +179,10 @@ def _calculate_overall_quality_score(features: SleepFeatures) -> float:
         scores.append(3.0)
     else:
         scores.append(2.0)
-        
+
     # Additional metrics: latency, WASO, REM%, deep%, consistency
     # ... comprehensive clinical scoring
-    
+
     return float(np.mean(scores))
 ```
 
@@ -231,8 +231,8 @@ While the SleepProcessor is **fully functional**, potential improvements include
 
 ---
 
-*Updated: Based on actual code inspection*  
-*Previous Status: Incorrectly marked as "NOT IMPLEMENTED"*  
+*Updated: Based on actual code inspection*
+*Previous Status: Incorrectly marked as "NOT IMPLEMENTED"*
 *Actual Status: FULLY IMPLEMENTED since initial development*
 
 ---
@@ -285,16 +285,16 @@ class SleepFeatures(BaseModel):
 ```python
 class SleepProcessor:
     """Processor for Apple HealthKit sleep analysis data.
-    
+
     Extracts robust sleep features (REM%, WASO, latency, awakenings, consistency, etc.)
     from sleep stage records following best practices:contentReference[oaicite:4]{index=4}:contentReference[oaicite:5]{index=5}.
     """
     def __init__(self) -> None:
         self.logger = logging.getLogger(__name__)
-    
+
     def process(self, sleep_metrics: list["HealthMetric"]) -> SleepFeatures:
         """Process raw sleep metrics to compute sleep feature vector.
-        
+
         Args:
             sleep_metrics: List of HealthMetric objects of type SLEEP_ANALYSIS.
         Returns:
@@ -350,10 +350,10 @@ class SleepProcessor:
         # Aggregate across nights (if multiple nights are provided)
         if not total_sleep_list:
             # No data to process, return zeros
-            return SleepFeatures(**{ 
+            return SleepFeatures(**{
                 "total_sleep_minutes": 0, "sleep_efficiency": 0.0, "sleep_latency": 0.0,
                 "waso_minutes": 0.0, "awakenings_count": 0, "rem_percentage": 0.0,
-                "deep_percentage": 0.0, "consistency_score": 0.0 
+                "deep_percentage": 0.0, "consistency_score": 0.0
             })
         avg_total_sleep = float(np.mean(total_sleep_list))
         avg_efficiency = float(np.mean(efficiency_list))
@@ -599,8 +599,8 @@ This indicates the LLM expects keys named exactly `sleep_efficiency`, `total_sle
       analysis_results["deep_sleep_percent"] = sf.get("deep_percentage", 0) * 100
       # Provide consistency in a user-friendly way (e.g., good/moderate/irregular):
       cons_score = sf.get("consistency_score", 0)
-      analysis_results["sleep_consistency_rating"] = ("high" if cons_score > 0.8 
-                                                      else "moderate" if cons_score > 0.5 
+      analysis_results["sleep_consistency_rating"] = ("high" if cons_score > 0.8
+                                                      else "moderate" if cons_score > 0.5
                                                       else "low")
   ```
 
@@ -644,7 +644,7 @@ This indicates the LLM expects keys named exactly `sleep_efficiency`, `total_sle
           deep_pct = analysis_data.get("deep_sleep_percent", None)
           consistency_label = analysis_data.get("sleep_consistency_rating", "")
           prompt = f"""You are a clinical AI assistant specializing in sleep health and wellness analysis.
-          
+
   ```
 
 - Sleep Efficiency: {sleep\_eff:.1f}%
@@ -679,17 +679,17 @@ This indicates the LLM expects keys named exactly `sleep_efficiency`, `total_sle
 These changes ensure the LLM receives all relevant sleep info. For example, the prompt might become:
 
 ```
-- Sleep Efficiency: 87.5%  
-- Total Sleep Time: 7.0 hours  
-- Wake After Sleep Onset: 30.0 minutes  
-- Sleep Onset Latency: 15.0 minutes  
-- REM Sleep: 21.4%  
-- Deep Sleep: 21.4%  
-- Sleep Schedule Consistency: Moderate  
-- Circadian Rhythm Score: 0.75  
+- Sleep Efficiency: 87.5%
+- Total Sleep Time: 7.0 hours
+- Wake After Sleep Onset: 30.0 minutes
+- Sleep Onset Latency: 15.0 minutes
+- REM Sleep: 21.4%
+- Deep Sleep: 21.4%
+- Sleep Schedule Consistency: Moderate
+- Circadian Rhythm Score: 0.75
 
-- Sleep Efficiency >85% = Excellent, 75-85% = Good, <75% = Needs attention  
-- Consistency: High = very regular schedule, Low = highly irregular bedtimes  
+- Sleep Efficiency >85% = Excellent, 75-85% = Good, <75% = Needs attention
+- Consistency: High = very regular schedule, Low = highly irregular bedtimes
 - Circadian Score >0.8 = Strong, 0.6-0.8 = Moderate, <0.6 = Irregular
 ```
 
@@ -839,7 +839,7 @@ def test_gemini_prompt_includes_sleep_metrics():
         # Directly use the request to build the system prompt string for inspection
         return service._construct_system_prompt(request.analysis_results, request.context)
     service.generate_health_insights = fake_generate  # replace method with fake
-    
+
     # Prepare analysis_results with sleep fields
     analysis_data = {
         "sleep_efficiency": 80.0,            # %

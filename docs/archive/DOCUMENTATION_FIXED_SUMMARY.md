@@ -45,7 +45,7 @@ Successfully **REPLACED** all outdated documentation with accurate content based
 
 ```
 POST /v1/auth/token/verify
-POST /v1/ml/analyze/actigraphy  
+POST /v1/ml/analyze/actigraphy
 GET /v1/user/statistics
 ```
 

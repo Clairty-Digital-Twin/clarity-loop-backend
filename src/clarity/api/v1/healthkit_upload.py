@@ -185,7 +185,8 @@ async def upload_healthkit_data(
 
 @router.get("/status/{upload_id}")
 async def get_upload_status(
-    upload_id: str, current_user: UserContext = Depends(get_current_user)  # noqa: B008
+    upload_id: str,
+    current_user: UserContext = Depends(get_current_user),  # noqa: B008
 ) -> dict[str, Any]:
     """Get status of a HealthKit upload.
 

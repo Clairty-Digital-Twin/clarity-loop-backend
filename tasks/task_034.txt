@@ -152,5 +152,3 @@
 ### Dependencies: None
 ### Description: Add comprehensive error handling and retry mechanisms for API failures, network issues, and other potential problems when interacting with Vertex AI.
 ### Details:
-
-

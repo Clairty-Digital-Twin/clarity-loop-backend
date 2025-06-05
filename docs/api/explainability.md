@@ -30,7 +30,7 @@ Every AI-generated insight includes source attribution:
   },
   "sources": [
     "apple_healthkit_sleep_data",
-    "pat_model_sleep_analysis", 
+    "pat_model_sleep_analysis",
     "gemini_ai_processing",
     "historical_trend_analysis"
   ],
@@ -60,7 +60,7 @@ All ML predictions include confidence scores:
     "sleep_stages": [
       {
         "stage": "deep_sleep",
-        "start_time": "2025-01-15T00:00:00Z", 
+        "start_time": "2025-01-15T00:00:00Z",
         "duration": 90,
         "confidence": 0.87
       }
@@ -98,7 +98,7 @@ Every analysis includes data quality assessment:
 {
   "data_quality": {
     "completeness": 0.94,
-    "reliability": 0.89, 
+    "reliability": 0.89,
     "data_points": 1247,
     "time_coverage": 0.96,
     "sensor_accuracy": 0.92,
@@ -146,7 +146,7 @@ Every analysis includes data quality assessment:
       "confidence": 0.91
     },
     {
-      "step": 2, 
+      "step": 2,
       "condition": "Sleep efficiency improved by 12%",
       "action": "Maintain current sleep habits",
       "confidence": 0.87
@@ -236,12 +236,12 @@ async with httpx.AsyncClient() as client:
             "explanation_level": "detailed"
         }
     )
-    
+
     insight = response.json()
-    
+
     # Access explanation data
     sources = insight["sources"]
-    confidence = insight["data_quality"]["confidence"] 
+    confidence = insight["data_quality"]["confidence"]
     processing_info = insight["processing_metadata"]
 ```
 

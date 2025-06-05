@@ -115,13 +115,13 @@ import HealthKit
 class HealthKitManager {
     static let shared = HealthKitManager()
     let healthStore = HKHealthStore()
-    
+
     private init() {}
-    
+
     func isHealthKitAvailable() -> Bool {
         return HKHealthStore.isHealthDataAvailable()
     }
-    
+
     func requestAuthorization(completion: @escaping (Bool, Error?) -> Void) {
         // Define the types of data your app needs to read
         let readTypes: Set<HKObjectType> = [
@@ -130,11 +130,11 @@ class HealthKitManager {
             HKObjectType.quantityType(forIdentifier: .heartRate)!
             // Add other required metrics
         ]
-        
+
         // Request authorization
         healthStore.requestAuthorization(toShare: [], read: readTypes, completion: completion)
     }
-    
+
     func fetchHealthData(completion: @escaping (Result<[String: Any], Error>) -> Void) {
         // Implementation for fetching required metrics
         // This will collect data from HealthKit and prepare it for the endpoint
@@ -168,4 +168,3 @@ Connect to the WebSocket chat interface, implement message routing for user quer
 ### Description: Create a simple web interface to showcase the complete vertical slice and orchestrate the data flow between all components.
 ### Details:
 Develop a demo UI with real-time updates, visualize health data and AI insights, and implement orchestration logic to manage the pipeline from data ingestion to chat delivery.
-

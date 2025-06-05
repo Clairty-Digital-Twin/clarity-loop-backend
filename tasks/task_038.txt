@@ -17,17 +17,17 @@
      - Call GeminiService.generate_insights() method
      - Return HealthInsightResponse with generated insights
      - Implement proper error handling for API limits and timeouts
-   
+
    - `GET /api/v1/insights/{insight_id}`: Retrieve cached insights
      - Fetch previously generated insights by ID
      - Include proper caching headers
      - Implement conditional responses (304 Not Modified)
-   
+
    - `GET /api/v1/insights/history/{patient_id}`: Get insight history
      - Retrieve all insights generated for a specific patient
      - Implement pagination for large result sets
      - Add filtering options (date range, insight types)
-   
+
    - `GET /api/v1/insights/status`: Health status monitoring
      - Check Gemini service availability
      - Report API usage metrics and quotas

@@ -202,7 +202,9 @@ class RespirationProcessor:
         return spo2_interpolated.ffill().bfill()
 
     def _extract_features(
-        self, rr_series: pd.Series | None, spo2_series: pd.Series | None  # type: ignore[type-arg]
+        self,
+        rr_series: pd.Series | None,
+        spo2_series: pd.Series | None,  # type: ignore[type-arg]
     ) -> RespirationFeatures:
         """Extract respiratory features from cleaned time series."""
         # Respiratory rate statistics

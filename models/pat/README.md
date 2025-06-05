@@ -7,13 +7,15 @@ This directory contains the pre-trained model weights from the **Pretrained Acti
 These model weights are licensed under **Creative Commons Attribution 4.0 International (CC BY-4.0)**.
 
 **Original Authors:**
+
 - Franklin Y. Ruan
-- Aiwei Zhang  
+- Aiwei Zhang
 - Jenny Oh
 - SouYoung Jin
 - Nicholas C. Jacobson (Corresponding Author)
 
 **Citation:**
+
 ```bibtex
 @article{ruan2024ai,
   title={AI Foundation Models for Wearable Movement Data in Mental Health Research},
@@ -24,14 +26,14 @@ These model weights are licensed under **Creative Commons Attribution 4.0 Intern
 }
 ```
 
-**Original Repository:** https://github.com/njacobsonlab/Pretrained-Actigraphy-Transformer
+**Original Repository:** <https://github.com/njacobsonlab/Pretrained-Actigraphy-Transformer>
 
 ## 🔧 **Usage in CLARITY Platform**
 
 We use these pre-trained weights **unmodified** for inference only in our Apache 2.0 licensed platform:
 
 - **PAT-S_29k_weights.h5** - Small model (1.1MB)
-- **PAT-M_29k_weights.h5** - Medium model (3.8MB)  
+- **PAT-M_29k_weights.h5** - Medium model (3.8MB)
 - **PAT-L_29k_weights.h5** - Large model (7.6MB)
 
 ## ⚖️ **License Compliance**
@@ -50,4 +52,4 @@ We use these pre-trained weights **unmodified** for inference only in our Apache
 
 ---
 
-**For the full Creative Commons Attribution 4.0 International license text, see `LICENSE` in this directory.** 
+**For the full Creative Commons Attribution 4.0 International license text, see `LICENSE` in this directory.**

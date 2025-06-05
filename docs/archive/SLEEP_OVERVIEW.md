@@ -37,7 +37,7 @@ Inside `SleepProcessor`, we implement logic to compute **nightly summary feature
 For example, if three nights of data are provided, `SleepProcessor` might compute each night’s metrics and then an overall average or consistency metric. The output could be a list like:
 
 ```json
-[ 
+[
   {"feature_name": "average_sleep_duration", "value": 7.2},
   {"feature_name": "sleep_efficiency", "value": 0.88},
   {"feature_name": "average_wake_episodes", "value": 2},

@@ -234,7 +234,9 @@ class MockHealthDataRepository(IHealthDataRepository):
         )
 
     async def delete_health_data(
-        self, user_id: str, processing_id: str | None = None  # noqa: ARG002
+        self,
+        user_id: str,
+        processing_id: str | None = None,
     ) -> bool:
         """Mock delete with conditional failure."""
         if self.should_fail or self.fail_on_method == "delete_health_data":

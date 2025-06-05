@@ -83,7 +83,7 @@ CLARITY Digital Twin Platform uses a **clean architecture** approach with a sing
 ### 2. Separation of Concerns
 
 - **API Layer**: HTTP handling, request validation, response formatting
-- **Service Layer**: Business logic, orchestration, use cases  
+- **Service Layer**: Business logic, orchestration, use cases
 - **Core Layer**: Domain models, entities, business rules
 - **Infrastructure**: External integrations, databases, AI models
 

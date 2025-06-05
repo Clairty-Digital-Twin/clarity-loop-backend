@@ -38,7 +38,7 @@ Authorization: Bearer <firebase-jwt-token>
     "message": "PAT model analysis endpoint is ready for processing",
     "capabilities": [
       "sleep_phase_detection",
-      "circadian_rhythm_analysis", 
+      "circadian_rhythm_analysis",
       "activity_pattern_recognition",
       "sleep_quality_scoring"
     ],
@@ -77,7 +77,7 @@ Authorization: Bearer <firebase-jwt-token>
     {
       "data_source": "apple_watch_activity",
       "date_range": {
-        "start": "2025-01-10T00:00:00Z", 
+        "start": "2025-01-10T00:00:00Z",
         "end": "2025-01-15T23:59:59Z"
       },
       "analysis_type": "circadian_rhythm"
@@ -118,7 +118,7 @@ Authorization: Bearer <firebase-jwt-token>
 
 ```json
 {
-  "batch_id": "batch-uuid-ghi789", 
+  "batch_id": "batch-uuid-ghi789",
   "status": "completed",
   "total_requests": 2,
   "completed": 2,
@@ -147,7 +147,7 @@ Authorization: Bearer <firebase-jwt-token>
             "confidence": 0.92
           },
           {
-            "stage": "deep_sleep", 
+            "stage": "deep_sleep",
             "start_time": "2025-01-15T00:00:00Z",
             "duration": 90,
             "confidence": 0.87
@@ -168,7 +168,7 @@ Authorization: Bearer <firebase-jwt-token>
     {
       "request_id": "req-2",
       "analysis_type": "circadian_rhythm",
-      "status": "completed", 
+      "status": "completed",
       "results": {
         "circadian_metrics": {
           "chronotype": "moderate_evening",
@@ -183,7 +183,7 @@ Authorization: Bearer <firebase-jwt-token>
             "duration": 120
           },
           {
-            "time": "15:45:00", 
+            "time": "15:45:00",
             "intensity": "moderate",
             "duration": 90
           }

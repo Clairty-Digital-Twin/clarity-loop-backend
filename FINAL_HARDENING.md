@@ -312,7 +312,7 @@ class ConnectionRegistry:
     def register(self, user_id: UUID, connection_id: str, ws: WebSocket):
         self.user_connections[user_id].append(ws)
         self.connection_ids[connection_id] = user_id
-    
+
     def unregister(self, connection_id: str):
         if connection_id in self.connection_ids:
             user_id = self.connection_ids.pop(connection_id)
@@ -353,7 +353,7 @@ async def test_connection_scaling():
         mock_ws = AsyncMock(spec=WebSocket)
         await connect_user(user_id, mock_ws)
         connections.append(mock_ws)
-    
+
     # Verify connection lookup speed
     start = time.perf_counter()
     connections = get_connections(user_id)

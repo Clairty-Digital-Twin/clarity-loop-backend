@@ -24,7 +24,7 @@ repos:
     hooks:
       - id: mypy
         name: 🔍 MyPy Type Checker
-        additional_dependencies: [types-all]
+        additional_dependencies: [types-setuptools]
         args: [--strict, --ignore-missing-imports]
         files: ^clarity/
 

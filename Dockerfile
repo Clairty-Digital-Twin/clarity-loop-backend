@@ -4,6 +4,8 @@
 # Build stage for dependencies
 FROM python:3.11-slim AS builder
 
+WORKDIR /app
+
 # Set environment variables for build
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
@@ -11,7 +13,9 @@ ENV PYTHONUNBUFFERED=1 \
     PIP_DISABLE_PIP_VERSION_CHECK=1
 
 # Install system dependencies for building
-RUN apt-get update && apt-get install -y \
+# Note: Pinning exact versions for apt packages (DL3008) can be beneficial 
+# but requires finding versions compatible with the base image. Adding --no-install-recommends.
+RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     curl \
     git \
@@ -25,12 +29,13 @@ ENV PATH="/opt/venv/bin:$PATH"
 COPY pyproject.toml README.md LICENSE ./
 
 # Install Python dependencies first (without source code for better caching)
-RUN pip install --upgrade pip setuptools wheel
+# Pinning pip, setuptools, and wheel to recent stable versions
+RUN pip install --upgrade pip==24.0 setuptools==69.5.1 wheel==0.43.0
 
 # Copy source code for installation
 COPY src/ ./src/
 
-# Install the package in development mode
+# Install the package in development mode (dependencies are pinned in pyproject.toml)
 RUN pip install -e .
 
 # Production stage
@@ -48,7 +53,8 @@ ENV PYTHONUNBUFFERED=1 \
     KEEP_ALIVE=5
 
 # Install runtime system dependencies
-RUN apt-get update && apt-get install -y \
+# Note: Pinning exact versions for apt packages (DL3008) can be beneficial.
+RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates \
     curl \
     && rm -rf /var/lib/apt/lists/* \

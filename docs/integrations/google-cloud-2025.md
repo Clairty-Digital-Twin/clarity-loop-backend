@@ -82,7 +82,7 @@ app = FastAPI(lifespan=lifespan)
       "last_activity": "2024-01-16T07:30:00Z"
     }
   },
-  
+
   "health_data/{userId}/daily/{date}": {
     "date": "2024-01-15",
     "summary": {
@@ -105,14 +105,14 @@ async def get_user_insights_optimized(user_id: str, days: int = 7):
     """Optimized insight retrieval with proper indexing"""
     end_date = datetime.utcnow()
     start_date = end_date - timedelta(days=days)
-    
+
     # Composite index: user_id + created_at (descending)
     query = (db.collection('insights')
              .where('user_id', '==', user_id)
              .where('created_at', '>=', start_date)
              .order_by('created_at', direction=firestore.Query.DESCENDING)
              .limit(days))
-    
+
     return [doc.to_dict() async for doc in query.stream()]
 ```
 
@@ -142,25 +142,25 @@ async def process_healthkit_message(request: Request):
     """Cloud Pub/Sub push endpoint with proper error handling"""
     try:
         envelope = await request.json()
-        
+
         # Verify Pub/Sub token
         token = request.headers.get('authorization', '').replace('Bearer ', '')
         await verify_pubsub_token(token)
-        
+
         # Decode message
         message_data = base64.b64decode(envelope['message']['data'])
         message = json.loads(message_data)
-        
+
         # Process with idempotency
         message_id = envelope['message']['messageId']
         if await is_message_processed(message_id):
             return {"status": "already_processed"}
-        
+
         result = await process_healthkit_data(message)
         await mark_message_processed(message_id)
-        
+
         return {"status": "success", "result": result}
-        
+
     except Exception as e:
         logger.error(f"Pub/Sub processing failed: {e}")
         # Return 4xx for permanent failures, 5xx for retries
@@ -223,13 +223,13 @@ processing_duration = meter.create_histogram(
 async def metrics_middleware(request: Request, call_next):
     start_time = time.time()
     response = await call_next(request)
-    
+
     # Record metrics
     processing_duration.record(
         time.time() - start_time,
         {"endpoint": request.url.path, "status": response.status_code}
     )
-    
+
     return response
 ```
 
@@ -260,25 +260,25 @@ from google.cloud.aiplatform.gapic.schema import predict
 async def get_pat_predictions(features: Dict[str, Any]) -> Dict[str, Any]:
     """Get PAT model predictions with proper error handling"""
     client = aiplatform.gapic.PredictionServiceClient()
-    
+
     endpoint = f"projects/{PROJECT_ID}/locations/us-central1/endpoints/{ENDPOINT_ID}"
-    
+
     instances = [predict.instance.to_value(features)]
     parameters = predict.params.to_value({})
-    
+
     try:
         response = await client.predict(
             endpoint=endpoint,
             instances=instances,
             parameters=parameters
         )
-        
+
         return {
             "predictions": response.predictions,
             "model_version": response.model_version_id,
             "deployed_model_id": response.deployed_model_id
         }
-        
+
     except Exception as e:
         logger.error(f"Vertex AI prediction failed: {e}")
         # Fallback to cached predictions if available
@@ -294,13 +294,13 @@ async def get_pat_predictions(features: Dict[str, Any]) -> Dict[str, Any]:
 @app.on_event("startup")
 async def configure_scaling():
     """Configure intelligent scaling policies"""
-    
+
     # Scale down during low usage hours
     if is_low_traffic_period():
         await set_min_instances(0)
     else:
         await set_min_instances(2)
-    
+
     # Monitor queue depth for ML service scaling
     queue_depth = await get_pubsub_queue_depth()
     if queue_depth > 100:
@@ -340,32 +340,32 @@ EOF
 resource "google_cloud_run_v2_service" "api_gateway" {
   name     = "clarity-api-gateway"
   location = var.region
-  
+
   template {
     scaling {
       min_instance_count = 1
       max_instance_count = 100
     }
-    
+
     containers {
       image = var.api_image
-      
+
       resources {
         limits = {
           cpu    = "2000m"
           memory = "2Gi"
         }
       }
-      
+
       env {
         name  = "PROJECT_ID"
         value = var.project_id
       }
     }
-    
+
     service_account = google_service_account.api_gateway.email
   }
-  
+
   traffic {
     percent = 100
     type    = "TRAFFIC_TARGET_ALLOCATION_TYPE_LATEST"
@@ -378,7 +378,7 @@ resource "google_firestore_database" "clarity" {
   name        = "clarity-prod"
   location_id = "us-central"
   type        = "FIRESTORE_NATIVE"
-  
+
   point_in_time_recovery_enablement = "POINT_IN_TIME_RECOVERY_ENABLED"
   delete_protection_state           = "DELETE_PROTECTION_ENABLED"
 }

@@ -50,7 +50,7 @@ Content-Type: application/json
 }
 ```
 
-### Login User  
+### Login User
 
 ```http
 POST /api/v1/auth/login
@@ -61,7 +61,7 @@ Content-Type: application/json
 
 ```json
 {
-  "email": "user@example.com", 
+  "email": "user@example.com",
   "password": "securepassword"
 }
 ```
@@ -82,7 +82,7 @@ Content-Type: application/json
 
 ### Upload Health Data
 
-```http  
+```http
 POST /api/v1/health-data/upload
 Content-Type: application/json
 Authorization: Bearer <firebase-jwt-token>
@@ -97,7 +97,7 @@ Authorization: Bearer <firebase-jwt-token>
     {
       "type": "heart_rate",
       "value": 72,
-      "unit": "bpm", 
+      "unit": "bpm",
       "timestamp": "2025-01-15T10:30:00Z",
       "source": "apple_watch"
     },
@@ -105,7 +105,7 @@ Authorization: Bearer <firebase-jwt-token>
       "type": "step_count",
       "value": 1500,
       "unit": "steps",
-      "timestamp": "2025-01-15T10:30:00Z", 
+      "timestamp": "2025-01-15T10:30:00Z",
       "source": "iphone"
     }
   ],
@@ -136,7 +136,7 @@ Authorization: Bearer <firebase-jwt-token>
 ```json
 {
   "processing_id": "proc-uuid-12345",
-  "status": "completed", 
+  "status": "completed",
   "progress": 100,
   "results": {
     "insights_generated": true,
@@ -167,7 +167,7 @@ Authorization: Bearer <firebase-jwt-token>
   "data": [
     {
       "id": "metric-123",
-      "type": "heart_rate", 
+      "type": "heart_rate",
       "value": 72,
       "unit": "bpm",
       "timestamp": "2025-01-15T10:30:00Z"
@@ -229,7 +229,7 @@ Authorization: Bearer <firebase-jwt-token>
 }
 ```
 
-### Batch Analyze  
+### Batch Analyze
 
 ```http
 POST /api/v1/pat/batch-analyze
@@ -246,7 +246,7 @@ Authorization: Bearer <firebase-jwt-token>
       "data_type": "actigraphy",
       "date_range": {
         "start": "2025-01-01",
-        "end": "2025-01-07" 
+        "end": "2025-01-07"
       }
     }
   ]
@@ -348,7 +348,7 @@ GET /health
 ```json
 {
   "status": "healthy",
-  "service": "clarity-digital-twin", 
+  "service": "clarity-digital-twin",
   "timestamp": "2025-01-15T10:30:00Z",
   "version": "1.0.0"
 }

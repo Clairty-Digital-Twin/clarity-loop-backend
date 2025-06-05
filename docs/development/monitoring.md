@@ -70,30 +70,30 @@ class MetricsMiddleware:
     def __init__(self, app: FastAPI):
         self.app = app
         self.logger = structlog.get_logger("metrics")
-    
+
     async def __call__(self, request: Request, call_next):
         start_time = time.time()
-        
+
         # Process request
         response = await call_next(request)
-        
+
         # Record metrics
         duration = time.time() - start_time
         endpoint = request.url.path
         method = request.method
         status_code = response.status_code
-        
+
         REQUEST_COUNT.labels(
             method=method,
             endpoint=endpoint,
             status_code=status_code
         ).inc()
-        
+
         REQUEST_DURATION.labels(
             method=method,
             endpoint=endpoint
         ).observe(duration)
-        
+
         # Log slow requests
         if duration > 2.0:
             await self.logger.awarning(
@@ -103,7 +103,7 @@ class MetricsMiddleware:
                 duration=duration,
                 status_code=status_code
             )
-        
+
         return response
 
 # Metrics endpoint
@@ -128,44 +128,44 @@ class BusinessMetrics:
     def __init__(self):
         self.client = monitoring_v3.MetricServiceClient()
         self.project_name = f"projects/clarity-loop-backend"
-    
+
     async def track_user_engagement(self, user_id: str, action: str):
         """Track user engagement metrics."""
         series = monitoring_v3.TimeSeries()
         series.metric.type = "custom.googleapis.com/user/engagement"
         series.metric.labels["action"] = action
         series.metric.labels["user_id"] = user_id
-        
+
         point = monitoring_v3.Point()
         point.value.int64_value = 1
         point.interval.end_time.seconds = int(time.time())
         series.points = [point]
-        
+
         await asyncio.to_thread(
             self.client.create_time_series,
             name=self.project_name,
             time_series=[series]
         )
-    
+
     async def track_health_data_quality(self, quality_score: float, data_type: str):
         """Track health data quality metrics."""
         series = monitoring_v3.TimeSeries()
         series.metric.type = "custom.googleapis.com/health_data/quality"
         series.metric.labels["data_type"] = data_type
-        
+
         point = monitoring_v3.Point()
         point.value.double_value = quality_score
         point.interval.end_time.seconds = int(time.time())
         series.points = [point]
-        
+
         await asyncio.to_thread(
             self.client.create_time_series,
             name=self.project_name,
             time_series=[series]
         )
-    
+
     async def track_ai_insights_generation(
-        self, 
+        self,
         processing_time: float,
         model_name: str,
         success: bool
@@ -176,12 +176,12 @@ class BusinessMetrics:
         series.metric.type = "custom.googleapis.com/ai/processing_time"
         series.metric.labels["model"] = model_name
         series.metric.labels["success"] = str(success)
-        
+
         point = monitoring_v3.Point()
         point.value.double_value = processing_time
         point.interval.end_time.seconds = int(time.time())
         series.points = [point]
-        
+
         await asyncio.to_thread(
             self.client.create_time_series,
             name=self.project_name,
@@ -203,11 +203,11 @@ from pythonjsonlogger import jsonlogger
 # Configure structured logging
 def configure_logging():
     """Configure structured logging for production."""
-    
+
     # Google Cloud Logging client
     cloud_client = cloud_logging.Client()
     cloud_client.setup_logging()
-    
+
     # Configure structlog
     structlog.configure(
         processors=[
@@ -232,14 +232,14 @@ class LoggingMiddleware:
     def __init__(self, app: FastAPI):
         self.app = app
         self.logger = structlog.get_logger("api")
-    
+
     async def __call__(self, request: Request, call_next):
         # Generate correlation ID
         correlation_id = str(uuid.uuid4())
-        
+
         # Add to request state
         request.state.correlation_id = correlation_id
-        
+
         # Log request
         await self.logger.ainfo(
             "Request started",
@@ -249,13 +249,13 @@ class LoggingMiddleware:
             user_agent=request.headers.get("user-agent"),
             ip_address=request.client.host
         )
-        
+
         start_time = time.time()
-        
+
         try:
             response = await call_next(request)
             duration = time.time() - start_time
-            
+
             # Log response
             await self.logger.ainfo(
                 "Request completed",
@@ -263,12 +263,12 @@ class LoggingMiddleware:
                 status_code=response.status_code,
                 duration=duration
             )
-            
+
             return response
-            
+
         except Exception as e:
             duration = time.time() - start_time
-            
+
             # Log error
             await self.logger.aerror(
                 "Request failed",
@@ -290,7 +290,7 @@ from typing import Dict, Any
 class HealthDataLogger:
     def __init__(self):
         self.logger = structlog.get_logger("health_data")
-    
+
     async def log_data_ingestion(
         self,
         user_id: str,
@@ -309,7 +309,7 @@ class HealthDataLogger:
             quality_score=quality_score,
             event_type="data_ingestion"
         )
-    
+
     async def log_ml_processing(
         self,
         user_id: str,
@@ -328,13 +328,13 @@ class HealthDataLogger:
             "processing_time": processing_time,
             "success": success
         }
-        
+
         if error:
             log_data["error"] = error
             await self.logger.aerror("ML processing failed", **log_data)
         else:
             await self.logger.ainfo("ML processing completed", **log_data)
-    
+
     async def log_insights_generation(
         self,
         user_id: str,
@@ -369,23 +369,23 @@ from opentelemetry.instrumentation.httpx import HTTPXClientInstrumentor
 
 def configure_tracing(app: FastAPI):
     """Configure distributed tracing."""
-    
+
     # Set up tracer provider
     trace.set_tracer_provider(TracerProvider())
     tracer = trace.get_tracer(__name__)
-    
+
     # Configure Cloud Trace exporter
     cloud_trace_exporter = CloudTraceSpanExporter()
     span_processor = BatchSpanProcessor(cloud_trace_exporter)
     trace.get_tracer_provider().add_span_processor(span_processor)
-    
+
     # Instrument FastAPI
     FastAPIInstrumentor.instrument_app(app)
-    
+
     # Instrument HTTP clients
     RequestsInstrumentor().instrument()
     HTTPXClientInstrumentor().instrument()
-    
+
     return tracer
 
 # Custom tracing decorators
@@ -396,23 +396,23 @@ def trace_function(span_name: str = None):
         async def wrapper(*args, **kwargs):
             tracer = trace.get_tracer(__name__)
             name = span_name or f"{func.__module__}.{func.__name__}"
-            
+
             with tracer.start_as_current_span(name) as span:
                 try:
                     # Add function metadata
                     span.set_attribute("function.name", func.__name__)
                     span.set_attribute("function.module", func.__module__)
-                    
+
                     result = await func(*args, **kwargs)
                     span.set_attribute("function.success", True)
                     return result
-                    
+
                 except Exception as e:
                     span.set_attribute("function.success", False)
                     span.set_attribute("function.error", str(e))
                     span.record_exception(e)
                     raise
-                    
+
         return wrapper
     return decorator
 
@@ -420,24 +420,24 @@ def trace_function(span_name: str = None):
 class HealthDataProcessor:
     def __init__(self):
         self.tracer = trace.get_tracer(__name__)
-    
+
     @trace_function("health_data.process_batch")
     async def process_batch(self, user_id: str, data_batch: List[Dict]):
         """Process batch of health data with tracing."""
-        
+
         with self.tracer.start_as_current_span("validate_data") as span:
             span.set_attribute("batch.size", len(data_batch))
             span.set_attribute("user.id", user_id)
-            
+
             # Validation logic
             validated_data = await self._validate_batch(data_batch)
-        
+
         with self.tracer.start_as_current_span("store_data") as span:
             span.set_attribute("validated.count", len(validated_data))
-            
+
             # Storage logic
             await self._store_batch(user_id, validated_data)
-        
+
         return len(validated_data)
 ```
 
@@ -458,18 +458,18 @@ class HealthChecker:
     def __init__(self):
         self.firestore_client = firestore.AsyncClient()
         self.storage_client = storage.Client()
-    
+
     async def check_database(self) -> Dict[str, Any]:
         """Check Firestore connectivity and performance."""
         try:
             start_time = time.time()
-            
+
             # Simple read operation
             doc_ref = self.firestore_client.collection("health_check").document("test")
             await doc_ref.get()
-            
+
             duration = time.time() - start_time
-            
+
             return {
                 "status": "healthy",
                 "response_time": duration,
@@ -481,17 +481,17 @@ class HealthChecker:
                 "error": str(e),
                 "service": "firestore"
             }
-    
+
     async def check_storage(self) -> Dict[str, Any]:
         """Check Cloud Storage connectivity."""
         try:
             start_time = time.time()
-            
+
             # List buckets operation
             buckets = list(self.storage_client.list_buckets())
-            
+
             duration = time.time() - start_time
-            
+
             return {
                 "status": "healthy",
                 "response_time": duration,
@@ -504,19 +504,19 @@ class HealthChecker:
                 "error": str(e),
                 "service": "cloud_storage"
             }
-    
+
     async def check_ml_models(self) -> Dict[str, Any]:
         """Check ML model availability."""
         try:
             # Mock health check for ML models
             # In production, this would call actual model endpoints
             start_time = time.time()
-            
+
             # Simulate model health check
             await asyncio.sleep(0.1)
-            
+
             duration = time.time() - start_time
-            
+
             return {
                 "status": "healthy",
                 "response_time": duration,
@@ -543,7 +543,7 @@ async def health_check():
 async def detailed_health_check():
     """Detailed health check with dependency status."""
     checker = HealthChecker()
-    
+
     # Run all health checks concurrently
     checks = await asyncio.gather(
         checker.check_database(),
@@ -551,14 +551,14 @@ async def detailed_health_check():
         checker.check_ml_models(),
         return_exceptions=True
     )
-    
+
     # Process results
     results = {
         "timestamp": datetime.utcnow().isoformat(),
         "overall_status": "healthy",
         "services": {}
     }
-    
+
     for check in checks:
         if isinstance(check, Exception):
             results["overall_status"] = "degraded"
@@ -569,14 +569,14 @@ async def detailed_health_check():
         else:
             service_name = check["service"]
             results["services"][service_name] = check
-            
+
             if check["status"] != "healthy":
                 results["overall_status"] = "degraded"
-    
+
     # Return appropriate status code
     if results["overall_status"] != "healthy":
         raise HTTPException(status_code=503, detail=results)
-    
+
     return results
 
 @router.get("/health/ready")
@@ -605,11 +605,11 @@ class AlertManager:
     def __init__(self):
         self.client = monitoring_v3.AlertPolicyServiceClient()
         self.project_name = f"projects/clarity-loop-backend"
-    
+
     def create_sla_alerts(self) -> List[str]:
         """Create SLA-based alert policies."""
         policies = []
-        
+
         # API Response Time Alert
         response_time_policy = monitoring_v3.AlertPolicy(
             display_name="API Response Time SLA",
@@ -636,12 +636,12 @@ class AlertManager:
                 "projects/clarity-loop-backend/notificationChannels/CHANNEL_ID"
             ]
         )
-        
+
         policies.append(self.client.create_alert_policy(
             name=self.project_name,
             alert_policy=response_time_policy
         ))
-        
+
         # Error Rate Alert
         error_rate_policy = monitoring_v3.AlertPolicy(
             display_name="High Error Rate",
@@ -658,19 +658,19 @@ class AlertManager:
                 )
             ]
         )
-        
+
         policies.append(self.client.create_alert_policy(
             name=self.project_name,
             alert_policy=error_rate_policy
         ))
-        
+
         return [policy.name for policy in policies]
 
 # Incident response automation
 class IncidentResponder:
     def __init__(self):
         self.logger = structlog.get_logger("incident_response")
-    
+
     async def handle_high_error_rate(self, alert_data: Dict):
         """Handle high error rate incidents."""
         await self.logger.acritical(
@@ -679,13 +679,13 @@ class IncidentResponder:
             affected_endpoints=alert_data.get("endpoints"),
             incident_id=alert_data.get("incident_id")
         )
-        
+
         # Auto-scaling logic
         await self._trigger_auto_scaling()
-        
+
         # Circuit breaker activation
         await self._activate_circuit_breakers()
-    
+
     async def handle_service_down(self, service_name: str):
         """Handle service outage incidents."""
         await self.logger.acritical(
@@ -693,7 +693,7 @@ class IncidentResponder:
             service=service_name,
             timestamp=datetime.utcnow().isoformat()
         )
-        
+
         # Failover logic
         await self._initiate_failover(service_name)
 ```
@@ -708,15 +708,15 @@ service_level_objectives:
   api_availability:
     target: 99.9%
     measurement_window: "30d"
-    
+
   api_latency:
     target: "95% < 500ms"
     measurement_window: "24h"
-    
+
   data_processing_latency:
     target: "90% < 30s"
     measurement_window: "1h"
-    
+
   ml_inference_latency:
     target: "95% < 2s"
     measurement_window: "1h"

@@ -24,7 +24,7 @@ Authorization: Bearer <firebase-jwt-token>
 - `POST /api/v1/auth/register` - User registration
 - `POST /api/v1/auth/login` - User login
 
-### Health Data  
+### Health Data
 
 - `POST /api/v1/health-data/upload` - Upload health metrics
 - `GET /api/v1/health-data/` - List health data (paginated)

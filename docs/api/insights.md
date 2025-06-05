@@ -31,7 +31,7 @@ Authorization: Bearer <firebase-jwt-token>
   "user_id": "firebase-uid-123",
   "data_sources": [
     "recent_health_data",
-    "pat_analysis", 
+    "pat_analysis",
     "sleep_patterns"
   ],
   "analysis_type": "comprehensive",
@@ -103,7 +103,7 @@ Authorization: Bearer <firebase-jwt-token>
         "trend": "improving"
       },
       {
-        "category": "activity", 
+        "category": "activity",
         "finding": "Daily step count 15% above personal average",
         "significance": "moderate",
         "trend": "stable"

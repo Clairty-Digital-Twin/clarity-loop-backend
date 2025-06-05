@@ -35,7 +35,7 @@ The authentication endpoints have been fully implemented in `src/clarity/api/v1/
 - `POST /register` - User registration with comprehensive error handling
 - `POST /login` - User authentication with session management
 - `POST /refresh` - Token refresh mechanism
-- `POST /logout` - User logout and token revocation  
+- `POST /logout` - User logout and token revocation
 - `GET /me` - Current user information retrieval
 - `POST /verify-email` - Email verification
 - `GET /health` - Authentication service health check
@@ -103,4 +103,3 @@ Implement endpoints for initiating password reset (sending emails), validating r
 ### Description: Develop a role-based access control (RBAC) system that integrates with Firebase Authentication custom claims to manage user permissions.
 ### Details:
 Create a permission model with roles (admin, user, moderator, etc.) and granular permissions. Implement endpoints to assign and manage roles, store role definitions in the database, and synchronize role information with Firebase custom claims. Create middleware to verify permissions for protected routes based on the user's roles. Implement an admin interface for role management.
-

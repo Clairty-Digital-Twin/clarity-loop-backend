@@ -26,8 +26,8 @@ This document contains licenses and notices for third-party software components 
 **Citation:**
 
 ```
-Ruan, Franklin Y., Zhang, Aiwei, Oh, Jenny, Jin, SouYoung, and Jacobson, Nicholas C. 
-"AI Foundation Models for Wearable Movement Data in Mental Health Research." 
+Ruan, Franklin Y., Zhang, Aiwei, Oh, Jenny, Jin, SouYoung, and Jacobson, Nicholas C.
+"AI Foundation Models for Wearable Movement Data in Mental Health Research."
 arXiv:2411.15240 (2024). https://doi.org/10.48550/arXiv.2411.15240
 ```
 
@@ -36,7 +36,7 @@ arXiv:2411.15240 (2024). https://doi.org/10.48550/arXiv.2411.15240
 **Files:**
 
 - `models/pat/PAT-S_29k_weights.h5` (1.1MB)
-- `models/pat/PAT-M_29k_weights.h5` (3.8MB)  
+- `models/pat/PAT-M_29k_weights.h5` (3.8MB)
 - `models/pat/PAT-L_29k_weights.h5` (7.6MB)
 - `models/pat/LICENSE` (Full CC BY-4.0 text)
 - `models/pat/README.md` (Attribution details)
@@ -60,7 +60,7 @@ The combination of Apache 2.0 (our code) and CC BY-4.0 (PAT models) is legally c
 
 The full Apache 2.0 license text for our platform code can be found in `LICENSE` at the root directory.
 
-### CC BY-4.0 License  
+### CC BY-4.0 License
 
 The full Creative Commons Attribution 4.0 International license text for PAT components can be found in `models/pat/LICENSE`.
 

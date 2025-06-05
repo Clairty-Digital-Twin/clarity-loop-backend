@@ -178,7 +178,9 @@ class CardioProcessor:
         return hrv_interpolated.ffill().bfill()
 
     def _extract_features(
-        self, hr_series: pd.Series, hrv_series: pd.Series | None  # type: ignore[type-arg]
+        self,
+        hr_series: pd.Series,
+        hrv_series: pd.Series | None,  # type: ignore[type-arg]
     ) -> CardioFeatures:
         """Extract cardiovascular features from cleaned time series."""
         # Basic HR statistics

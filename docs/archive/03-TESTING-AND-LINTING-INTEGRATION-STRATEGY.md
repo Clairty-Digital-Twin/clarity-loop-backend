@@ -198,28 +198,28 @@ repos:
         language: system
         types: [python]
         require_serial: true
-        
+
       - id: ruff-check
         name: ruff-check
         entry: ruff check
         language: system
         types: [python]
         require_serial: true
-        
+
       - id: ruff-format
         name: ruff-format
         entry: ruff format
         language: system
         types: [python]
         require_serial: true
-        
+
       - id: bandit
         name: bandit
         entry: bandit
         language: system
         args: ['-r', 'clarity/', '-f', 'json']
         types: [python]
-        
+
       - id: pytest-fast
         name: pytest-fast
         entry: pytest
@@ -323,7 +323,7 @@ from clarity.models.health_data import HealthDataUpload
 
 class TestHealthDataAPI:
     """Comprehensive API layer testing"""
-    
+
     @pytest.mark.asyncio
     async def test_upload_valid_health_data(self, authenticated_client: AsyncClient):
         """Test successful health data upload"""
@@ -334,16 +334,16 @@ class TestHealthDataAPI:
             ],
             "source": "apple_watch"
         }
-        
+
         response = await authenticated_client.post(
             "/api/v1/health-data/upload",
             json=health_data
         )
-        
+
         assert response.status_code == 202
         assert response.json()["status"] == "accepted"
-        
-    @pytest.mark.asyncio 
+
+    @pytest.mark.asyncio
     async def test_upload_invalid_data_type(self, authenticated_client: AsyncClient):
         """Test rejection of invalid data types"""
         invalid_data = {
@@ -351,15 +351,15 @@ class TestHealthDataAPI:
             "values": [],
             "source": "apple_watch"
         }
-        
+
         response = await authenticated_client.post(
             "/api/v1/health-data/upload",
             json=invalid_data
         )
-        
+
         assert response.status_code == 422
         assert "data_type" in response.json()["detail"][0]["loc"]
-        
+
     @pytest.mark.security
     async def test_unauthorized_access_blocked(self, client: AsyncClient):
         """Ensure unauthorized requests are blocked"""
@@ -367,9 +367,9 @@ class TestHealthDataAPI:
             "/api/v1/health-data/upload",
             json={}
         )
-        
+
         assert response.status_code == 401
-        
+
     @pytest.mark.slow
     async def test_large_batch_upload_performance(self, authenticated_client: AsyncClient):
         """Test performance with large data batches"""
@@ -381,17 +381,17 @@ class TestHealthDataAPI:
             ],
             "source": "apple_watch"
         }
-        
+
         import time
         start_time = time.time()
-        
+
         response = await authenticated_client.post(
             "/api/v1/health-data/upload",
             json=large_batch
         )
-        
+
         duration = time.time() - start_time
-        
+
         assert response.status_code == 202
         assert duration < 5.0  # Should process within 5 seconds
 ```
@@ -406,11 +406,11 @@ from clarity.models.health_data import HealthDataPoint
 
 class TestHealthAnalyzer:
     """Business logic testing for health analysis"""
-    
+
     @pytest.fixture
     def analyzer(self):
         return HealthAnalyzer()
-        
+
     @pytest.fixture
     def sample_heart_rate_data(self):
         return [
@@ -418,12 +418,12 @@ class TestHealthAnalyzer:
             HealthDataPoint(timestamp="2024-01-01T12:01:00Z", value=75.0),
             HealthDataPoint(timestamp="2024-01-01T12:02:00Z", value=78.0),
         ]
-        
+
     def test_calculate_average_heart_rate(self, analyzer, sample_heart_rate_data):
         """Test average heart rate calculation"""
         average = analyzer.calculate_average_heart_rate(sample_heart_rate_data)
         assert average == 75.0
-        
+
     def test_detect_heart_rate_anomalies(self, analyzer):
         """Test anomaly detection in heart rate data"""
         anomalous_data = [
@@ -431,27 +431,27 @@ class TestHealthAnalyzer:
             HealthDataPoint(timestamp="2024-01-01T12:01:00Z", value=180.0),  # Anomaly
             HealthDataPoint(timestamp="2024-01-01T12:02:00Z", value=74.0),
         ]
-        
+
         anomalies = analyzer.detect_anomalies(anomalous_data)
         assert len(anomalies) == 1
         assert anomalies[0].value == 180.0
-        
+
     @pytest.mark.healthcare
     def test_phq9_score_calculation(self, analyzer):
         """Test PHQ-9 depression screening score calculation"""
         responses = [2, 1, 3, 2, 1, 0, 2, 1, 0]  # Sample PHQ-9 responses
         score = analyzer.calculate_phq9_score(responses)
-        
+
         assert score == 12
         assert analyzer.classify_depression_severity(score) == "moderate"
-        
+
     @pytest.mark.ml
     def test_actigraphy_preprocessing(self, analyzer):
         """Test actigraphy data preprocessing for ML model"""
         raw_actigraphy = [1, 0, 1, 1, 0, 0, 1] * 100  # Sample activity data
-        
+
         processed = analyzer.preprocess_actigraphy(raw_actigraphy)
-        
+
         assert len(processed) == len(raw_actigraphy)
         assert all(isinstance(x, float) for x in processed)
         assert -3 <= min(processed) <= max(processed) <= 3  # Z-score normalized
@@ -467,11 +467,11 @@ from clarity.models.health_data import HealthDataUpload
 
 class TestHealthDataRepository:
     """Data layer testing for health data persistence"""
-    
+
     @pytest.fixture
     async def repository(self, test_firestore_client):
         return HealthDataRepository(test_firestore_client)
-        
+
     @pytest.mark.asyncio
     async def test_store_health_data(self, repository):
         """Test storing health data in Firestore"""
@@ -481,17 +481,17 @@ class TestHealthDataRepository:
             values=[{"timestamp": "2024-01-01T12:00:00Z", "value": 72.0}],
             source="apple_watch"
         )
-        
+
         document_id = await repository.store(health_data)
-        
+
         assert document_id is not None
         assert len(document_id) > 0
-        
+
     @pytest.mark.asyncio
     async def test_retrieve_user_health_data(self, repository):
         """Test retrieving health data for a specific user"""
         user_id = "test_user_123"
-        
+
         # Store some test data first
         test_data = HealthDataUpload(
             user_id=user_id,
@@ -500,7 +500,7 @@ class TestHealthDataRepository:
             source="apple_watch"
         )
         await repository.store(test_data)
-        
+
         # Retrieve the data
         retrieved_data = await repository.get_user_data(
             user_id=user_id,
@@ -508,21 +508,21 @@ class TestHealthDataRepository:
             start_date="2024-01-01",
             end_date="2024-01-02"
         )
-        
+
         assert len(retrieved_data) >= 1
         assert retrieved_data[0].user_id == user_id
-        
+
     @pytest.mark.security
     async def test_user_data_isolation(self, repository):
         """Ensure users can only access their own data"""
         # This test verifies proper user isolation in data access
         user1_data = await repository.get_user_data("user1", "heart_rate")
         user2_data = await repository.get_user_data("user2", "heart_rate")
-        
+
         # Verify no cross-contamination
         user1_ids = {item.user_id for item in user1_data}
         user2_ids = {item.user_id for item in user2_data}
-        
+
         assert "user2" not in user1_ids
         assert "user1" not in user2_ids
 ```
@@ -538,52 +538,52 @@ from clarity.ml.pat_model import PATModel, preprocess_actigraphy
 
 class TestPATModel:
     """Machine learning model testing for PAT (Pre-trained Actigraphy Transformer)"""
-    
+
     @pytest.fixture
     def sample_actigraphy_data(self):
         """Generate sample actigraphy data for testing"""
         return np.random.randint(0, 2, size=(1440,))  # 24 hours of minute-level data
-        
+
     @pytest.fixture
     def pat_model(self):
         """Load test PAT model"""
         return PATModel.load_test_model()
-        
+
     @pytest.mark.ml
     def test_actigraphy_preprocessing(self, sample_actigraphy_data):
         """Test actigraphy data preprocessing"""
         processed = preprocess_actigraphy(sample_actigraphy_data)
-        
+
         # Verify output shape and normalization
         assert processed.shape == sample_actigraphy_data.shape
         assert -3 <= processed.min() <= processed.max() <= 3  # Z-score bounds
         assert abs(processed.mean()) < 0.1  # Approximately zero mean
-        
+
     @pytest.mark.ml
     def test_depression_prediction(self, pat_model, sample_actigraphy_data):
         """Test depression risk prediction from actigraphy"""
         processed_data = preprocess_actigraphy(sample_actigraphy_data)
-        
+
         with torch.no_grad():
             prediction = pat_model.predict_depression_risk(processed_data)
-            
+
         assert 0 <= prediction <= 1  # Valid probability
         assert isinstance(prediction, float)
-        
+
     @pytest.mark.ml
     def test_model_reproducibility(self, pat_model, sample_actigraphy_data):
         """Test that model predictions are reproducible"""
         processed_data = preprocess_actigraphy(sample_actigraphy_data)
-        
+
         # Set random seed for reproducibility
         torch.manual_seed(42)
         prediction1 = pat_model.predict_depression_risk(processed_data)
-        
+
         torch.manual_seed(42)
         prediction2 = pat_model.predict_depression_risk(processed_data)
-        
+
         assert abs(prediction1 - prediction2) < 1e-6
-        
+
     @pytest.mark.slow
     def test_batch_processing_performance(self, pat_model):
         """Test model performance with batch processing"""
@@ -592,14 +592,14 @@ class TestPATModel:
             preprocess_actigraphy(np.random.randint(0, 2, size=(1440,)))
             for _ in range(batch_size)
         ]
-        
+
         import time
         start_time = time.time()
-        
+
         predictions = pat_model.predict_batch(batch_data)
-        
+
         duration = time.time() - start_time
-        
+
         assert len(predictions) == batch_size
         assert duration < 10.0  # Should process batch within 10 seconds
         assert all(0 <= p <= 1 for p in predictions)
@@ -624,19 +624,19 @@ COVERAGE_REQUIREMENTS = {
 def check_coverage_requirements():
     """Verify coverage meets module-specific requirements"""
     import coverage
-    
+
     cov = coverage.Coverage()
     cov.load()
-    
+
     for module, required_coverage in COVERAGE_REQUIREMENTS.items():
         actual_coverage = cov.report(show_missing=False, include=f"{module}/*")
-        
+
         if actual_coverage < required_coverage:
             raise AssertionError(
                 f"Coverage for {module} is {actual_coverage}%, "
                 f"required {required_coverage}%"
             )
-    
+
     print("✅ All coverage requirements met!")
 ```
 
@@ -654,7 +654,7 @@ def generate_quality_report():
         "timestamp": datetime.utcnow().isoformat(),
         "metrics": {}
     }
-    
+
     # Test coverage
     coverage_result = subprocess.run(
         ["pytest", "--cov=clarity", "--cov-report=json"],
@@ -668,7 +668,7 @@ def generate_quality_report():
             for file, data in coverage_data["files"].items()
         }
     }
-    
+
     # Type checking
     mypy_result = subprocess.run(
         ["mypy", ".", "--json-report", "mypy-report"],
@@ -678,7 +678,7 @@ def generate_quality_report():
         "errors": mypy_result.returncode == 0,
         "error_count": mypy_result.stderr.count("error:")
     }
-    
+
     # Security scanning
     bandit_result = subprocess.run(
         ["bandit", "-r", "clarity/", "-f", "json"],
@@ -695,7 +695,7 @@ def generate_quality_report():
             if issue["issue_severity"] == "MEDIUM"
         ])
     }
-    
+
     # Code quality
     ruff_result = subprocess.run(
         ["ruff", "check", "--output-format=json", "."],
@@ -714,7 +714,7 @@ def generate_quality_report():
             )
     else:
         report["metrics"]["code_quality"] = {"violations": 0}
-    
+
     return report
 ```
 
@@ -738,43 +738,43 @@ jobs:
     strategy:
       matrix:
         python-version: ["3.11", "3.12"]
-    
+
     steps:
     - uses: actions/checkout@v4
-    
+
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v4
       with:
         python-version: ${{ matrix.python-version }}
-    
+
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
         pip install -e .[dev,test]
-    
+
     - name: Type checking with MyPy
       run: mypy .
-    
+
     - name: Linting with Ruff
       run: ruff check .
-    
+
     - name: Security scan with Bandit
       run: bandit -r clarity/ -f json -o bandit-report.json
-    
+
     - name: Run tests with coverage
       run: |
         pytest --cov=clarity --cov-report=xml --cov-fail-under=90
-    
+
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v3
       with:
         file: ./coverage.xml
         flags: unittests
         name: codecov-umbrella
-    
+
     - name: Generate quality report
       run: python scripts/quality_dashboard.py
-    
+
     - name: Archive quality artifacts
       uses: actions/upload-artifact@v3
       with:
@@ -864,11 +864,11 @@ def check_type_safety() -> bool:
     """Verify type safety with MyPy"""
     print("🏷️  Checking type safety...")
     exit_code, stdout, stderr = run_command(["mypy", "."])
-    
+
     if exit_code != 0:
         print(f"❌ Type checking failed:\n{stderr}")
         return False
-    
+
     print("✅ Type checking passed")
     return True
 
@@ -878,7 +878,7 @@ def check_security() -> bool:
     exit_code, stdout, stderr = run_command([
         "bandit", "-r", "clarity/", "-f", "json"
     ])
-    
+
     if exit_code != 0:
         import json
         try:
@@ -893,7 +893,7 @@ def check_security() -> bool:
         except json.JSONDecodeError:
             print(f"❌ Security scan failed:\n{stderr}")
             return False
-    
+
     print("✅ Security check passed")
     return True
 
@@ -903,29 +903,29 @@ def check_test_coverage() -> bool:
     exit_code, stdout, stderr = run_command([
         "pytest", "--cov=clarity", "--cov-fail-under=90", "-q"
     ])
-    
+
     if exit_code != 0:
         print(f"❌ Test coverage below 90% or tests failed:\n{stderr}")
         return False
-    
+
     print("✅ Test coverage check passed")
     return True
 
 def main():
     """Run all quality gates"""
     print("🛡️  Running pre-push quality gates...")
-    
+
     checks = [
         check_type_safety,
         check_security,
         check_test_coverage,
     ]
-    
+
     for check in checks:
         if not check():
             print("❌ Quality gate failed. Push blocked.")
             sys.exit(1)
-    
+
     print("✅ All quality gates passed. Push allowed.")
     sys.exit(0)
 
@@ -980,7 +980,7 @@ from httpx import AsyncClient
 
 class TestAPIPerformance:
     """Performance testing for API endpoints"""
-    
+
     @pytest.mark.slow
     async def test_health_data_upload_throughput(self, authenticated_client: AsyncClient):
         """Test API throughput under load"""
@@ -989,54 +989,54 @@ class TestAPIPerformance:
             "values": [{"timestamp": "2024-01-01T12:00:00Z", "value": 72.0}],
             "source": "apple_watch"
         }
-        
+
         # Concurrent requests
         concurrent_requests = 50
         start_time = time.time()
-        
+
         tasks = [
             authenticated_client.post("/api/v1/health-data/upload", json=sample_data)
             for _ in range(concurrent_requests)
         ]
-        
+
         responses = await asyncio.gather(*tasks)
         duration = time.time() - start_time
-        
+
         # Verify all requests succeeded
         successful_requests = sum(1 for r in responses if r.status_code == 202)
-        
+
         assert successful_requests == concurrent_requests
         assert duration < 10.0  # Should handle 50 requests in under 10 seconds
-        
+
         # Calculate throughput
         throughput = concurrent_requests / duration
         assert throughput > 5.0  # Should handle at least 5 requests per second
-        
+
     @pytest.mark.benchmark
     def test_ml_model_inference_speed(self, pat_model):
         """Benchmark ML model inference speed"""
         import numpy as np
-        
+
         test_data = np.random.randint(0, 2, size=(1440,))
         processed_data = preprocess_actigraphy(test_data)
-        
+
         # Warm up the model
         for _ in range(5):
             pat_model.predict_depression_risk(processed_data)
-        
+
         # Benchmark inference
         iterations = 100
         start_time = time.time()
-        
+
         for _ in range(iterations):
             prediction = pat_model.predict_depression_risk(processed_data)
-        
+
         duration = time.time() - start_time
         avg_inference_time = duration / iterations
-        
+
         # Should process each sample in under 50ms
         assert avg_inference_time < 0.05
-        
+
         print(f"Average inference time: {avg_inference_time*1000:.2f}ms")
 ```
 
@@ -1052,40 +1052,40 @@ from clarity.security.encryption import encrypt_pii, decrypt_pii
 
 class TestHIPAACompliance:
     """HIPAA compliance testing for healthcare data handling"""
-    
+
     @pytest.mark.security
     def test_pii_encryption_at_rest(self):
         """Verify PII is encrypted when stored"""
         sensitive_data = "John Doe - DOB: 1990-01-01 - SSN: 123-45-6789"
-        
+
         encrypted = encrypt_pii(sensitive_data)
         decrypted = decrypt_pii(encrypted)
-        
+
         # Verify encryption worked
         assert encrypted != sensitive_data
         assert decrypted == sensitive_data
-        
+
         # Verify no plaintext PII in encrypted data
         assert "John Doe" not in encrypted
         assert "123-45-6789" not in encrypted
-        
+
     @pytest.mark.security
     async def test_data_access_logging(self, health_data_repository):
         """Verify all data access is logged for audit trails"""
         user_id = "test_user_audit"
-        
+
         # Access should be logged
         data = await health_data_repository.get_user_data(user_id, "heart_rate")
-        
+
         # Verify audit log entry was created
         audit_logs = await health_data_repository.get_audit_logs(user_id)
-        
+
         assert len(audit_logs) > 0
         latest_log = audit_logs[-1]
         assert latest_log["action"] == "data_access"
         assert latest_log["user_id"] == user_id
         assert latest_log["data_type"] == "heart_rate"
-        
+
     @pytest.mark.security
     def test_data_minimization(self):
         """Verify only necessary data is collected and processed"""
@@ -1095,10 +1095,10 @@ class TestHIPAACompliance:
             values=[{"timestamp": "2024-01-01T12:00:00Z", "value": 72.0}],
             source="apple_watch"
         )
-        
+
         # Verify no unnecessary fields are included
         serialized = health_upload.dict()
-        
+
         # Should not include any identifying information beyond necessary
         forbidden_fields = ["ssn", "full_name", "address", "phone_number"]
         for field in forbidden_fields:

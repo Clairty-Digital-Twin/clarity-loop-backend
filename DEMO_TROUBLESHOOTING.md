@@ -131,7 +131,7 @@ docker-compose ps
 Once running, test these URLs:
 
 - ✅ **Main API**: <http://localhost:8000>
-- ✅ **API Docs**: <http://localhost:8000/docs>  
+- ✅ **API Docs**: <http://localhost:8000/docs>
 - ✅ **Health Check**: <http://localhost:8000/health>
 - ✅ **Grafana**: <http://localhost:3000> (admin/admin)
 - ✅ **Prometheus**: <http://localhost:9090>
@@ -180,9 +180,9 @@ bash quick_demo.sh
 
 ## Success Indicators
 
-✅ **Script completes without errors**  
-✅ **All services show as "Up" in `docker-compose ps`**  
-✅ **HTTP requests to localhost:8000 return responses**  
+✅ **Script completes without errors**
+✅ **All services show as "Up" in `docker-compose ps`**
+✅ **HTTP requests to localhost:8000 return responses**
 ✅ **Grafana dashboard loads at localhost:3000**
 
 ## Still Having Issues?

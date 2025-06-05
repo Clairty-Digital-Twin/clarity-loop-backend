@@ -1,6 +1,6 @@
 #!/bin/bash
 # 🚀 CLARITY Digital Twin Platform - SHOCK & AWE Demo Deployment
-# 
+#
 # This script demonstrates the full-stack deployment of a production-ready
 # psychiatric AI platform built in just 2 days with 112 days of programming experience.
 #
@@ -59,9 +59,9 @@ wait_for_service() {
     local port="$2"
     local timeout="${3:-60}"
     local count=0
-    
+
     echo -e "${YELLOW}${LIGHTNING} Waiting for ${service_name} on port ${port}...${NC}"
-    
+
     while ! nc -z localhost "$port" 2>/dev/null; do
         if [ $count -ge $timeout ]; then
             echo -e "${RED}❌ Timeout waiting for ${service_name}${NC}"
@@ -79,12 +79,12 @@ test_endpoint() {
     local endpoint="$1"
     local description="$2"
     local expected_status="${3:-200}"
-    
+
     echo -e "${CYAN}Testing: ${description}${NC}"
     if response=$(curl -s -w "HTTPSTATUS:%{http_code}" "http://localhost:8000${endpoint}"); then
         http_code=$(echo "$response" | tr -d '\n' | sed -e 's/.*HTTPSTATUS://')
         body=$(echo "$response" | sed -e 's/HTTPSTATUS\:.*//g')
-        
+
         if [ "$http_code" -eq "$expected_status" ]; then
             echo -e "${GREEN}✅ ${endpoint} - Status: ${http_code}${NC}"
             echo -e "${BLUE}   Response: ${body:0:100}...${NC}"
@@ -287,7 +287,7 @@ cat << 'EOF'
 # Core API endpoints for demonstration:
 
 curl http://localhost:8000/health          # System health check
-curl http://localhost:8000/docs            # Interactive API documentation  
+curl http://localhost:8000/docs            # Interactive API documentation
 curl http://localhost:9090/metrics         # Prometheus metrics
 curl http://localhost:3000                 # Grafana dashboards (admin/admin)
 
@@ -322,4 +322,4 @@ echo -e "${CYAN}  2. Check logs: $DOCKER_COMPOSE logs${NC}"
 echo -e "${CYAN}  3. Restart: $DOCKER_COMPOSE restart${NC}"
 echo -e "${CYAN}  4. Full reset: $DOCKER_COMPOSE down && $DOCKER_COMPOSE up -d${NC}"
 echo ""
-echo -e "${GREEN}Platform operational. Ready for demonstration.${NC}" 
+echo -e "${GREEN}Platform operational. Ready for demonstration.${NC}"

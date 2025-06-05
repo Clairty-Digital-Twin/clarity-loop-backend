@@ -535,16 +535,16 @@ async def ingest_stub(service: IngestionService = Depends(get_service)):
 ## 5. End-to-End CI test (tests/e2e_healthkit_stub_test.py)
 
     import httpx, asyncio, pytest
-    
+
     pytestmark = pytest.mark.asyncio
     BASE = "http://localhost:8000"   # or live staging URL
-    
+
     async def test_stub_flow():
         async with httpx.AsyncClient(base_url=BASE) as client:
             r = await client.post("/health-data/stub")        # new route
             assert r.status_code == 200
             pid = r.json()["processing_id"]
-    
+
             # poll status up to 60 s
             for _ in range(30):
                 s = await client.get(f"/processing/{pid}")
@@ -553,7 +553,7 @@ async def ingest_stub(service: IngestionService = Depends(get_service)):
                 await asyncio.sleep(2)
             else:
                 raise AssertionError("Processing never completed")
-    
+
             # fetch final insight
             insight = await client.get(f"/insights/{pid}")
             assert insight.status_code == 200

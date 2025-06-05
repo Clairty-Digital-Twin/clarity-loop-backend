@@ -224,7 +224,7 @@ class DependencyContainer:
         logger.info("🏁 Shutdown complete in %.2fs", cleanup_elapsed)
 
     @asynccontextmanager
-    async def app_lifespan(self, _app: FastAPI) -> AsyncGenerator[None, None]:
+    async def app_lifespan(self, _app: FastAPI) -> AsyncGenerator[None]:
         """Application lifespan with timeout protection and graceful degradation."""
         startup_timeout = 15.0
         startup_start = time.perf_counter()

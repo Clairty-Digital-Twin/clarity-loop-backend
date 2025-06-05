@@ -17,7 +17,7 @@ mask_ratio = 0.90
 # eg. [True, False]
 smoothing = False
 
-## Loss Function (from pretraining) 
+## Loss Function (from pretraining)
 # eg. [True, False], meaning MSE on only the masked portion or everything in the reconstruction
 mse_only_masked = False
 ```

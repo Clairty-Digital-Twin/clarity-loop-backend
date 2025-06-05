@@ -44,7 +44,7 @@ class HealthDataUpload(BaseModel):
     values: List[HealthDataPoint]
     timestamp: datetime
     source: str = "apple_watch"
-    
+
     class Config:
         extra = "forbid"  # Reject unknown fields
 
@@ -55,7 +55,7 @@ async def get_database():
         get_database._client = firestore.AsyncClient()
     return get_database._client
 
-# Error: User not authenticated  
+# Error: User not authenticated
 # Response: Add auth dependency
 async def get_current_user(token: str = Depends(get_token)):
     try:
@@ -159,14 +159,14 @@ async def test_health_data_upload_errors():
     # Test missing authentication
     response = await client.post("/health-data/upload", json={})
     assert response.status_code == 401
-    
+
     # Test invalid data
-    response = await client.post("/health-data/upload", 
+    response = await client.post("/health-data/upload",
         json={"invalid": "data"},
         headers=auth_headers
     )
     assert response.status_code == 422
-    
+
     # Test valid data (only after errors are handled)
     response = await client.post("/health-data/upload",
         json=valid_health_data,
@@ -199,7 +199,7 @@ class ErrorDrivenMiddleware:
                 user_agent=request.headers.get("user-agent"),
                 body_size=len(await request.body()) if request.body else 0
             )
-            
+
             # Convert error to appropriate HTTP response
             if isinstance(e, ValidationError):
                 return JSONResponse(
@@ -231,7 +231,7 @@ async def generate_insights(request: dict):
 
 # Error progression:
 # 1. 422 → Add request validation
-# 2. 401 → Add authentication  
+# 2. 401 → Add authentication
 # 3. 500 → Add business logic
 # 4. 503 → Add external service handling
 # 5. 429 → Add rate limiting
@@ -306,7 +306,7 @@ Maintain a living document of error patterns:
 **Time to Fix**: ~10 minutes
 **Prevention**: Start with auth dependency from day 1
 
-# Error Pattern: Database Connection Pool Exhaustion  
+# Error Pattern: Database Connection Pool Exhaustion
 **Symptoms**: "too many connections" errors during load testing
 **Root Cause**: Not using connection pooling properly
 **Solution Pattern**: Configure asyncpg pool with max_size=20
@@ -325,7 +325,7 @@ Intentionally inject failures to discover edge cases:
 class ChaosMiddleware:
     def __init__(self, failure_rate: float = 0.1):
         self.failure_rate = failure_rate
-    
+
     async def __call__(self, request: Request, call_next):
         # Randomly fail requests to discover error handling gaps
         if random.random() < self.failure_rate:
@@ -335,7 +335,7 @@ class ChaosMiddleware:
                 ValueError("Simulated data corruption")
             ])
             raise failure_type
-        
+
         return await call_next(request)
 ```
 
@@ -352,13 +352,13 @@ async def load_test_health_upload():
             upload_health_data(sample_data)
         )
         tasks.append(task)
-    
+
     results = await asyncio.gather(*tasks, return_exceptions=True)
-    
+
     # Analyze failure patterns
     errors = [r for r in results if isinstance(r, Exception)]
     error_types = Counter(type(e).__name__ for e in errors)
-    
+
     print(f"Error distribution: {error_types}")
     # Use this to prioritize optimizations
 ```
@@ -377,7 +377,7 @@ async def vulnerable_upload(data: str):  # Raw string - will break
 
 # Test with malicious inputs to discover security needs:
 # - SQL injection attempts
-# - Script injection attempts  
+# - Script injection attempts
 # - Oversized payloads
 # - Malformed JSON
 ```
@@ -472,7 +472,7 @@ except SpecificError as e:
 ## Next Steps
 
 1. **Start Small**: Pick one endpoint and intentionally break it
-2. **Document Errors**: Keep a log of every error encountered  
+2. **Document Errors**: Keep a log of every error encountered
 3. **Build Error Library**: Create reusable error handling patterns
 4. **Share Learning**: Teach the team about error patterns discovered
 5. **Iterate**: Apply EDD to progressively larger features

@@ -140,11 +140,11 @@ description: "ML model accuracy below SLO threshold"
 primary_oncall:
   - rotation: weekly
   - escalation_delay: 5_minutes
-  
+
 secondary_oncall:
   - rotation: weekly
   - escalation_delay: 15_minutes
-  
+
 manager_escalation:
   - escalation_delay: 30_minutes
 ```
@@ -528,7 +528,7 @@ Incident Commander: [NAME]
 
 ## Summary
 - **Date**: [DATE]
-- **Duration**: [TOTAL_DURATION]  
+- **Duration**: [TOTAL_DURATION]
 - **Severity**: [P0/P1/P2]
 - **Services Affected**: [LIST]
 - **Users Impacted**: [PERCENTAGE]
@@ -561,7 +561,7 @@ Incident Commander: [NAME]
 ### On-Call Escalation
 
 1. **Primary On-Call**: [PHONE/SLACK]
-2. **Secondary On-Call**: [PHONE/SLACK]  
+2. **Secondary On-Call**: [PHONE/SLACK]
 3. **Engineering Manager**: [PHONE/SLACK]
 4. **VP Engineering**: [PHONE/SLACK]
 
@@ -574,6 +574,6 @@ Incident Commander: [NAME]
 
 ---
 
-**Goal**: Sub-5-minute incident detection and response  
-**Standard**: 99.9% uptime with graceful degradation  
+**Goal**: Sub-5-minute incident detection and response
+**Standard**: 99.9% uptime with graceful degradation
 **Recovery**: Automated rollback within 2 minutes for critical issues

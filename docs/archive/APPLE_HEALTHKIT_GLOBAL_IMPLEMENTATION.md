@@ -211,16 +211,16 @@ We will leverage templates from research and prior work. In fact, the project do
 **Example Prompt Template (pseudocode):**
 
 ```python
-system_prompt = """You are a health insights assistant. 
+system_prompt = """You are a health insights assistant.
 Follow these rules:
 - Output JSON only, with keys: summary, details, recommendations.
 - Use simple language, explain what each metric means for health.
 - If data seems off or not provided, say "not enough data".
 - Do NOT include any personal names or identifiers.
 - Tone should be positive and encouraging, but honest.
-"""  
+"""
 
-user_prompt = f"""The user is a {age}-year-old {gender}. 
+user_prompt = f"""The user is a {age}-year-old {gender}.
 Weekly health summary:
 Heart: Resting HR {resting_hr} bpm, HRV SDNN {hrv} ms, BP {bp_s}/{bp_d} mmHg.
 Activity: {steps_per_day} steps/day, {workouts} workouts.
@@ -296,7 +296,7 @@ To deploy this solution, we provision the required GCP resources with Terraform 
   ```hcl
   resource "google_storage_bucket" "healthkit_raw" {
     name          = "healthkit-raw-data"
-    location      = "US"  
+    location      = "US"
     force_destroy = false
     uniform_bucket_level_access = true
     lifecycle_rule {

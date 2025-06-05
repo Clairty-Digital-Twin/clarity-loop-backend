@@ -42,7 +42,7 @@ Authorization: Bearer <firebase-jwt-token>
       }
     },
     {
-      "type": "step_count", 
+      "type": "step_count",
       "value": 1500,
       "unit": "steps",
       "timestamp": "2025-01-15T10:30:00Z",
@@ -103,7 +103,7 @@ Authorization: Bearer <firebase-jwt-token>
 **Status Values:**
 
 - `pending` - Upload received, processing queued
-- `processing` - Data currently being analyzed  
+- `processing` - Data currently being analyzed
 - `completed` - Processing finished successfully
 - `failed` - Processing encountered an error
 - `cancelled` - Processing was cancelled
@@ -134,7 +134,7 @@ Authorization: Bearer <firebase-jwt-token>
       "id": "metric-uuid-456",
       "type": "heart_rate",
       "value": 72.5,
-      "unit": "bpm", 
+      "unit": "bpm",
       "timestamp": "2025-01-15T10:30:00Z",
       "source": "apple_watch",
       "quality_score": 0.95

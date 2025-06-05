@@ -36,6 +36,7 @@ except ImportError:
 
 from clarity.ml.preprocessing import ActigraphyDataPoint, HealthDataPreprocessor
 from clarity.ports.ml_ports import IMLModelService
+from clarity.services.health_data_service import MLPredictionError
 
 logger = logging.getLogger(__name__)
 
@@ -514,14 +515,16 @@ class PATModelService(IMLModelService):
                     dense_group = h5_file["dense"]["dense"]  # type: ignore[index]
                     if "kernel:0" in dense_group:  # type: ignore[operator]
                         # TF: [patch_size, embed_dim] -> PyTorch: [patch_size, embed_dim]
-                        tf_weight = dense_group["kernel:0"][:]  # type: ignore[index]
+                        tf_weight_data = dense_group["kernel:0"][:]  # type: ignore[index]
+                        tf_weight_np = np.array(tf_weight_data)  # Ensure it's a numpy array
                         state_dict["encoder.patch_embedding.weight"] = torch.from_numpy(
-                            tf_weight.T
+                            tf_weight_np.T  # MODIFIED: use tf_weight_np
                         )  # type: ignore[attr-defined]
                     if "bias:0" in dense_group:  # type: ignore[operator]
-                        tf_bias = dense_group["bias:0"][:]  # type: ignore[index]
+                        tf_bias_data = dense_group["bias:0"][:]  # type: ignore[index]
+                        tf_bias_np = np.array(tf_bias_data)  # Ensure it's a numpy array
                         state_dict["encoder.patch_embedding.bias"] = torch.from_numpy(
-                            tf_bias
+                            tf_bias_np  # MODIFIED: use tf_bias_np (bias is 1D, no .T needed)
                         )
 
                 # Convert transformer layers
@@ -583,12 +586,13 @@ class PATModelService(IMLModelService):
 
                 if "kernel:0" in qkv_group:  # type: ignore[operator]
                     # TF shape: [embed_dim, num_heads, head_dim] = (96, 12, 96)
-                    tf_weight = qkv_group["kernel:0"][:]  # type: ignore[index]
+                    tf_weight_data = qkv_group["kernel:0"][:]  # type: ignore[index]
+                    tf_weight_np = np.array(tf_weight_data)
 
                     # Split into separate heads
                     for head_idx in range(num_heads):
                         # Extract weight for this head: [embed_dim, head_dim]
-                        head_weight = tf_weight[:, head_idx, :]  # (96, 96)
+                        head_weight = tf_weight_np[:, head_idx, :]  # (96, 96)
 
                         # PyTorch Linear expects [output_dim, input_dim] = [head_dim, embed_dim]
                         pytorch_weight = head_weight.T  # (96, 96) → (96, 96)
@@ -599,12 +603,13 @@ class PATModelService(IMLModelService):
 
                 if "bias:0" in qkv_group:  # type: ignore[operator]
                     # TF shape: [num_heads, head_dim] = (12, 96)
-                    tf_bias = qkv_group["bias:0"][:]  # type: ignore[index]
+                    tf_bias_data = qkv_group["bias:0"][:]  # type: ignore[index]
+                    tf_bias_np = np.array(tf_bias_data)
 
                     # Split into separate heads
                     for head_idx in range(num_heads):
                         # Extract bias for this head: [head_dim]
-                        head_bias = tf_bias[head_idx, :]  # (96,)
+                        head_bias = tf_bias_np[head_idx, :]  # (96,)
 
                         # Store in state dict
                         param_name = f"encoder.transformer_layers.{layer_idx}.attention.{qkv_name}_projections.{head_idx}.bias"
@@ -615,16 +620,17 @@ class PATModelService(IMLModelService):
             output_group = attn_group["attention_output"]  # type: ignore[index]
 
             if "kernel:0" in output_group:  # type: ignore[operator]
-                tf_weight = output_group["kernel:0"][:]  # type: ignore[index]
+                tf_weight_data = output_group["kernel:0"][:]  # type: ignore[index]
+                tf_weight_np = np.array(tf_weight_data)
                 # TF shape: [num_heads, head_dim, embed_dim] = (12, 96, 96)
                 # PyTorch wants: [embed_dim, num_heads * head_dim] = (96, 1152)
 
                 # Reshape to [embed_dim, num_heads * head_dim]
                 input_dim = num_heads * head_dim  # 12 * 96 = 1152
-                output_dim = tf_weight.shape[2]  # 96
+                output_dim = tf_weight_np.shape[2]  # 96
 
                 # Permute dimensions and reshape
-                pytorch_weight = tf_weight.transpose(2, 0, 1).reshape(
+                pytorch_weight = tf_weight_np.transpose(2, 0, 1).reshape(
                     output_dim, input_dim
                 )  # (96, 1152)
 
@@ -632,9 +638,10 @@ class PATModelService(IMLModelService):
                 state_dict[pytorch_name] = torch.from_numpy(pytorch_weight)
 
             if "bias:0" in output_group:  # type: ignore[operator]
-                tf_bias = output_group["bias:0"][:]  # type: ignore[index]
+                tf_bias_data = output_group["bias:0"][:]  # type: ignore[index]
+                tf_bias_np = np.array(tf_bias_data)
                 pytorch_name = f"encoder.transformer_layers.{layer_idx}.attention.output_projection.bias"
-                state_dict[pytorch_name] = torch.from_numpy(tf_bias)
+                state_dict[pytorch_name] = torch.from_numpy(tf_bias_np)
 
     @staticmethod
     def _convert_ff_weights(
@@ -649,14 +656,16 @@ class PATModelService(IMLModelService):
             ff1_group = layer_group[ff1_key]  # type: ignore[index]
 
             if "kernel:0" in ff1_group:  # type: ignore[operator]
-                tf_weight = ff1_group["kernel:0"][:]  # type: ignore[index]
+                tf_weight_data = ff1_group["kernel:0"][:]  # type: ignore[index]
+                tf_weight_np = np.array(tf_weight_data)
                 pytorch_name = f"encoder.transformer_layers.{layer_idx}.ff1.weight"
-                state_dict[pytorch_name] = torch.from_numpy(tf_weight.T)  # type: ignore[attr-defined]
+                state_dict[pytorch_name] = torch.from_numpy(tf_weight_np.T)
 
             if "bias:0" in ff1_group:  # type: ignore[operator]
-                tf_bias = ff1_group["bias:0"][:]  # type: ignore[index]
+                tf_bias_data = ff1_group["bias:0"][:]  # type: ignore[index]
+                tf_bias_np = np.array(tf_bias_data)
                 pytorch_name = f"encoder.transformer_layers.{layer_idx}.ff1.bias"
-                state_dict[pytorch_name] = torch.from_numpy(tf_bias)
+                state_dict[pytorch_name] = torch.from_numpy(tf_bias_np)
 
         # FF2 layer
         ff2_key = f"encoder_layer_{layer_idx + 1}_ff2"
@@ -664,14 +673,16 @@ class PATModelService(IMLModelService):
             ff2_group = layer_group[ff2_key]  # type: ignore[index]
 
             if "kernel:0" in ff2_group:  # type: ignore[operator]
-                tf_weight = ff2_group["kernel:0"][:]  # type: ignore[index]
+                tf_weight_data = ff2_group["kernel:0"][:]  # type: ignore[index]
+                tf_weight_np = np.array(tf_weight_data)
                 pytorch_name = f"encoder.transformer_layers.{layer_idx}.ff2.weight"
-                state_dict[pytorch_name] = torch.from_numpy(tf_weight.T)  # type: ignore[attr-defined]
+                state_dict[pytorch_name] = torch.from_numpy(tf_weight_np.T)
 
             if "bias:0" in ff2_group:  # type: ignore[operator]
-                tf_bias = ff2_group["bias:0"][:]  # type: ignore[index]
+                tf_bias_data = ff2_group["bias:0"][:]  # type: ignore[index]
+                tf_bias_np = np.array(tf_bias_data)
                 pytorch_name = f"encoder.transformer_layers.{layer_idx}.ff2.bias"
-                state_dict[pytorch_name] = torch.from_numpy(tf_bias)
+                state_dict[pytorch_name] = torch.from_numpy(tf_bias_np)
 
     @staticmethod
     def _convert_layernorm_weights(
@@ -686,14 +697,16 @@ class PATModelService(IMLModelService):
             norm1_group = layer_group[norm1_key]  # type: ignore[index]
 
             if "gamma:0" in norm1_group:  # type: ignore[operator]
-                gamma = norm1_group["gamma:0"][:]  # type: ignore[index]
+                gamma_data = norm1_group["gamma:0"][:]  # type: ignore[index]
+                gamma_np = np.array(gamma_data)
                 pytorch_name = f"encoder.transformer_layers.{layer_idx}.norm1.weight"
-                state_dict[pytorch_name] = torch.from_numpy(gamma)
+                state_dict[pytorch_name] = torch.from_numpy(gamma_np)
 
             if "beta:0" in norm1_group:  # type: ignore[operator]
-                beta = norm1_group["beta:0"][:]  # type: ignore[index]
+                beta_data = norm1_group["beta:0"][:]  # type: ignore[index]
+                beta_np = np.array(beta_data)
                 pytorch_name = f"encoder.transformer_layers.{layer_idx}.norm1.bias"
-                state_dict[pytorch_name] = torch.from_numpy(beta)
+                state_dict[pytorch_name] = torch.from_numpy(beta_np)
 
         # Norm2 (after feed-forward)
         norm2_key = f"encoder_layer_{layer_idx + 1}_norm2"
@@ -701,14 +714,16 @@ class PATModelService(IMLModelService):
             norm2_group = layer_group[norm2_key]  # type: ignore[index]
 
             if "gamma:0" in norm2_group:  # type: ignore[operator]
-                gamma = norm2_group["gamma:0"][:]  # type: ignore[index]
+                gamma_data = norm2_group["gamma:0"][:]  # type: ignore[index]
+                gamma_np = np.array(gamma_data)
                 pytorch_name = f"encoder.transformer_layers.{layer_idx}.norm2.weight"
-                state_dict[pytorch_name] = torch.from_numpy(gamma)
+                state_dict[pytorch_name] = torch.from_numpy(gamma_np)
 
             if "beta:0" in norm2_group:  # type: ignore[operator]
-                beta = norm2_group["beta:0"][:]  # type: ignore[index]
+                beta_data = norm2_group["beta:0"][:]  # type: ignore[index]
+                beta_np = np.array(beta_data)
                 pytorch_name = f"encoder.transformer_layers.{layer_idx}.norm2.bias"
-                state_dict[pytorch_name] = torch.from_numpy(beta)
+                state_dict[pytorch_name] = torch.from_numpy(beta_np)
 
     def _preprocess_actigraphy_data(
         self,
@@ -841,6 +856,7 @@ class PATModelService(IMLModelService):
 
         Raises:
             RuntimeError: If model is not loaded
+            MLPredictionError: If model inference fails
         """
         if not self.is_loaded or not self.model:
             self._raise_model_not_loaded_error()
@@ -861,14 +877,21 @@ class PATModelService(IMLModelService):
         if not self.model:
             self._raise_model_not_loaded_error()
 
-        # Model is guaranteed to be not None after the check above
         model = self.model
-        if model is None:
-            self._raise_model_not_loaded_error()
 
         # Run inference
-        with torch.no_grad():
-            outputs = cast("dict[str, torch.Tensor]", model(input_tensor))  # type: ignore[misc]
+        try:
+            with torch.no_grad():
+                outputs = cast("dict[str, torch.Tensor]", model(input_tensor))
+        except Exception as e:
+            logger.critical(
+                f"PAT model inference failed for user {input_data.user_id}: {e}",
+                exc_info=True
+            )
+            raise MLPredictionError(
+                message=f"Error during PAT model prediction: {e!s}",
+                model_name=f"PAT-{self.model_size}"
+            ) from e
 
         # Post-process outputs
         analysis = self._postprocess_predictions(outputs, input_data.user_id)

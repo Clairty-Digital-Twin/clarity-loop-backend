@@ -45,6 +45,16 @@ class DataNotFoundError(HealthDataServiceError):
         super().__init__(message, status_code=404)
 
 
+class MLPredictionError(HealthDataServiceError):
+    """Exception raised when an ML model prediction fails."""
+
+    def __init__(self, message: str, model_name: str | None = None) -> None:
+        full_message = f"ML Prediction Error: {message}"
+        if model_name:
+            full_message = f"ML Prediction Error in {model_name}: {message}"
+        super().__init__(full_message, status_code=503)
+
+
 def _raise_validation_error(error_summary: str) -> None:
     """Raise validation error exception."""
     msg = f"Health data validation failed: {error_summary}"

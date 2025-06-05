@@ -386,12 +386,8 @@ class TestUserLogin:
         with patch.object(auth_service, "_generate_tokens") as mock_gen_tokens_patch:
             mock_gen_tokens: Mock = mock_gen_tokens_patch
             mock_tokens = TokenResponse(
-                access_token=cast(
-                    "str", test_env_credentials["mock_access_token"]
-                ), 
-                refresh_token=cast(
-                    "str", test_env_credentials["mock_refresh_token"]
-                ), 
+                access_token=cast("str", test_env_credentials["mock_access_token"]),
+                refresh_token=cast("str", test_env_credentials["mock_refresh_token"]),
                 token_type="bearer",  # noqa: S106
                 expires_in=3600,
                 scope="full_access",
@@ -547,7 +543,7 @@ class TestUserLogin:
             mock_tokens = TokenResponse(
                 access_token=cast("str", test_env_credentials["mock_access_token"]),
                 refresh_token=cast("str", test_env_credentials["mock_refresh_token"]),
-                token_type="bearer",
+                token_type="bearer",  # noqa: S106
                 expires_in=3600,
                 scope="full_access",
             )
@@ -610,7 +606,7 @@ class TestTokenManagement:
             assert result.refresh_token == cast(
                 "str", test_env_credentials["mock_refresh_token"]
             )
-            assert result.token_type == "bearer"
+            assert result.token_type == "bearer"  # noqa: S105
             assert result.expires_in == 3600
 
     @staticmethod

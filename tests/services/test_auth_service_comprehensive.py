@@ -38,11 +38,11 @@ from clarity.services.auth_service import (
 from clarity.storage.firestore_client import FirestoreClient
 
 # Constants for exception messages
-REGISTRATION_PASSWORD_ERROR_MSG = (  # noqa: S105
-    "Test setup error: default_password for registration must be a string."
+REGISTRATION_PASSWORD_ERROR_MSG = (
+    "Test setup error: default_password for registration must be a string."  # noqa: S105
 )
-LOGIN_PASSWORD_ERROR_MSG = (  # noqa: S105
-    "Test setup error: default_password for login must be a string."
+LOGIN_PASSWORD_ERROR_MSG = (
+    "Test setup error: default_password for login must be a string."  # noqa: S105
 )
 
 

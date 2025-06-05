@@ -284,8 +284,8 @@ class TestFirebaseAuthProvider:
         mock_decoded_token: dict[str, Any],
     ) -> None:
         """Test cache size limit enforcement."""
-        # Set small cache size - using type ignore for test access
-        auth_provider._cache_max_size = 2  # type: ignore[attr-defined]
+        # Set small cache size - use the correct internal attribute
+        auth_provider._token_cache_max_size = 2  # Changed from _cache_max_size
 
         with (
             patch("clarity.auth.firebase_auth.auth.verify_id_token") as mock_verify,
@@ -847,12 +847,12 @@ class TestPerformanceFirebaseAuth:
             "auth_provider_config": {
                 "cache_enabled": True,
                 "cache_ttl_seconds": 300,
-                "cache_max_size": 1000 # Default or test-specific
+                "cache_max_size": 1000  # Default or test-specific
             }
         }
         auth_provider = FirebaseAuthProvider(
             project_id="test-project",
-            middleware_config=auth_provider_config_dict, # Pass the correctly structured dict
+            middleware_config=auth_provider_config_dict,  # Pass the correctly structured dict
         )
 
         mock_user_record = Mock()
@@ -894,14 +894,14 @@ class TestPerformanceFirebaseAuth:
         # Ensure middleware_config is passed as a dictionary
         auth_provider_config_dict = {
             "auth_provider_config": {
-                "cache_enabled": True, # Assuming caching should be tested here
+                "cache_enabled": True,  # Assuming caching should be tested here
                 "cache_ttl_seconds": 300,
                 "cache_max_size": 1000
             }
         }
         auth_provider = FirebaseAuthProvider(
             project_id="test-project",
-            middleware_config=auth_provider_config_dict, # Pass the correctly structured dict
+            middleware_config=auth_provider_config_dict,  # Pass the correctly structured dict
         )
 
         mock_user_record = Mock()

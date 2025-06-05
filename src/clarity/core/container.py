@@ -9,6 +9,7 @@ from __future__ import annotations
 import asyncio
 from collections.abc import Callable
 from contextlib import asynccontextmanager
+from dataclasses import asdict
 import logging
 import time
 from typing import TYPE_CHECKING, Any, TypeVar, cast
@@ -68,20 +69,22 @@ class DependencyContainer:
     def _create_auth_provider(self) -> IAuthProvider:
         """Factory method for creating authentication provider."""
         config_provider = self.get_config_provider()
-        middleware_config = config_provider.get_middleware_config()
+        middleware_config_obj = config_provider.get_middleware_config()
 
-        if middleware_config.enabled and config_provider.get_setting(
+        if middleware_config_obj.enabled and config_provider.get_setting(
             "enable_auth", default=False
         ):
-            from clarity.auth.firebase_middleware import (  # noqa: PLC0415
+            from clarity.auth.firebase_middleware import (
                 FirebaseAuthProvider,
             )  # Conditional import to avoid circular dependency
 
             firebase_config = config_provider.get_firebase_config()
+            # Convert MiddlewareConfig object to dict before passing
+            middleware_config_dict = asdict(middleware_config_obj)
             return FirebaseAuthProvider(
                 credentials_path=firebase_config.get("credentials_path"),
                 project_id=firebase_config.get("project_id"),
-                middleware_config=middleware_config,
+                middleware_config=middleware_config_dict,  # Pass the dict
             )
 
         return MockAuthProvider()

@@ -25,7 +25,7 @@ class FirebaseAuthMiddleware(BaseHTTPMiddleware):
     def __init__(
         self,
         app: FastAPI,
-        auth_provider: "FirebaseAuthProvider",
+        auth_provider: IAuthProvider,
         exempt_paths: list[str] | None = None,
         *,
         cache_enabled: bool = True,
@@ -334,7 +334,7 @@ class FirebaseAuthProvider(IAuthProvider):
         if not self.cache_is_enabled:
             return
         while len(self._token_cache) > target_count:
-            if not self._token_cache: # Should not happen if len > target_count
+            if not self._token_cache:  # Should not happen if len > target_count
                 break
             try:
                 # Find and remove the oldest entry (smallest timestamp)
@@ -343,7 +343,7 @@ class FirebaseAuthProvider(IAuthProvider):
                 logger.debug("Evicted oldest token %s to meet cache size limits.", oldest_token[:10])
             except ValueError:  # Cache became empty during removal
                 break
-                
+
     async def verify_token(self, token: str) -> dict[str, Any] | None:
         """Verify Firebase ID token and return user information as a dictionary.
 
@@ -356,7 +356,7 @@ class FirebaseAuthProvider(IAuthProvider):
         if not self._initialized:
             await self.initialize()
 
-        self._remove_expired_tokens() # Always try to remove expired tokens first
+        self._remove_expired_tokens()  # Always try to remove expired tokens first
 
         # Check cache first if enabled
         if self.cache_is_enabled and token in self._token_cache:
@@ -390,7 +390,7 @@ class FirebaseAuthProvider(IAuthProvider):
                 if len(self._token_cache) >= self._token_cache_max_size:
                     # Need to make space for 1 new item, so target max_size - 1 before adding
                     self._evict_oldest_to_target_count(target_count=self._token_cache_max_size - 1)
-                
+
                 self._token_cache[token] = {"user_data": user_data_dict, "timestamp": time.time()}
             return user_data_dict
         except firebase_auth.RevokedIdTokenError:

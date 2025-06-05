@@ -1,9 +1,7 @@
 # ruff: noqa: PLR0912, PLR0915, PLR1702, TRY300
 """WebSocket chat handler for real-time health insights and communication."""
 
-import asyncio
 from datetime import UTC, datetime
-import inspect
 import json
 import logging
 from typing import TYPE_CHECKING, Any
@@ -363,18 +361,25 @@ async def _authenticate_websocket_user(
 ) -> User | None:
     if token:
         try:
-            auth_result = get_current_user_websocket(token)
-            if asyncio.iscoroutine(auth_result) or inspect.isawaitable(auth_result):
-                user = await auth_result
-            else:
-                user = auth_result
-            if user and getattr(user, "uid", None) != user_id:
+            # get_current_user_websocket is synchronous and returns User or raises HTTPException
+            user: User = get_current_user_websocket(token)
+
+            # Original check for coroutine was not necessary as get_current_user_websocket is sync.
+            # Directly use the user object.
+
+            if user.uid != user_id:
                 await websocket.close(code=1008, reason="User ID mismatch")
                 return None
             return user
         except HTTPException:
+            # This exception is raised by get_current_user_websocket for invalid tokens
             await websocket.close(code=1008, reason="Invalid authentication token")
             return None
+        except Exception as e:  # Catch any other unexpected errors during auth
+            logger.error("Unexpected error during WebSocket user authentication: %s", e)
+            await websocket.close(code=1011, reason="Internal server error during authentication")
+            return None
+    # If no token is provided, authentication is not attempted, return None
     return None
 
 

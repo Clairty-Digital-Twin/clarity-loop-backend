@@ -238,7 +238,9 @@ class TestAuthenticationEndpoints:
         # Mock successful token refresh (not actual security tokens - for testing only)
         mock_token_response = Mock()
         mock_token_response.access_token = test_env_credentials["mock_new_access_token"]
-        mock_token_response.refresh_token = test_env_credentials["mock_new_refresh_token"]
+        mock_token_response.refresh_token = test_env_credentials[
+            "mock_new_refresh_token"
+        ]
         mock_token_response.token_type = TEST_TOKEN_TYPE
         mock_token_response.expires_in = 3600
         mock_token_response.scope = "read:profile write:profile"

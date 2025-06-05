@@ -107,11 +107,21 @@ def test_env_credentials() -> dict[str, str | None]:
     return {
         "default_username": os.getenv("TEST_DEFAULT_USERNAME", "test_user@example.com"),
         "default_password": os.getenv("TEST_DEFAULT_PASSWORD", "SecurePassword123!"),
-        "mock_access_token": os.getenv("TEST_MOCK_ACCESS_TOKEN", "mock-access-token-value"),
-        "mock_refresh_token": os.getenv("TEST_MOCK_REFRESH_TOKEN", "mock-refresh-token-value"),
-        "mock_new_access_token": os.getenv("TEST_MOCK_NEW_ACCESS_TOKEN", "mock-new-access-token-value"),
-        "mock_new_refresh_token": os.getenv("TEST_MOCK_NEW_REFRESH_TOKEN", "mock-new-refresh-token-value"),
-        "mock_firebase_token": os.getenv("TEST_MOCK_FIREBASE_TOKEN", "mock-firebase-token-value"),
+        "mock_access_token": os.getenv(
+            "TEST_MOCK_ACCESS_TOKEN", "mock-access-token-value"
+        ),
+        "mock_refresh_token": os.getenv(
+            "TEST_MOCK_REFRESH_TOKEN", "mock-refresh-token-value"
+        ),
+        "mock_new_access_token": os.getenv(
+            "TEST_MOCK_NEW_ACCESS_TOKEN", "mock-new-access-token-value"
+        ),
+        "mock_new_refresh_token": os.getenv(
+            "TEST_MOCK_NEW_REFRESH_TOKEN", "mock-new-refresh-token-value"
+        ),
+        "mock_firebase_token": os.getenv(
+            "TEST_MOCK_FIREBASE_TOKEN", "mock-firebase-token-value"
+        ),
         "mock_sync_token": os.getenv("TEST_MOCK_SYNC_TOKEN", "mock-sync-token-value"),
     }
 

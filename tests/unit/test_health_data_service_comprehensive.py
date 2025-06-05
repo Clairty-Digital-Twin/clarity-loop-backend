@@ -85,7 +85,7 @@ class MockCloudStorage(CloudStoragePort):
         }
         return f"gs://{bucket_name}/{blob_path}"
 
-    def get_raw_data_bucket_name(self) -> str:
+    def get_raw_data_bucket_name(self) -> str:  # noqa: PLR6301 - Must be instance method to match CloudStoragePort
         """Get the name of the raw data bucket."""
         return "clarity-raw-data-test"
 
@@ -245,6 +245,14 @@ class MockHealthDataRepository(IHealthDataRepository):
 
         if processing_id:
             self.saved_data.pop(processing_id, None)
+        else:
+            # If no processing_id, delete all data for the user_id
+            keys_to_delete = [
+                key for key, value in self.saved_data.items()
+                if isinstance(value, dict) and value.get("user_id") == user_id
+            ]
+            for key in keys_to_delete:
+                self.saved_data.pop(key, None)
         return True
 
 

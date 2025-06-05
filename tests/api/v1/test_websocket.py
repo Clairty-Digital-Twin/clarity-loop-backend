@@ -407,7 +407,7 @@ def mock_get_current_user_websocket(
 
 @pytest.fixture
 def app(
-    monkeypatch: pytest.MonkeyPatch, test_env_credentials: dict[str, str]
+    test_env_credentials: dict[str, str]
 ) -> FastAPI:
     # This fixture should return a FastAPI app instance configured for testing.
     # It needs to override dependencies to use our mocks.
@@ -901,7 +901,7 @@ class TestWebSocketEndpoints:
     )
     @pytest.mark.asyncio
     async def test_websocket_health_data_invalid_payload(
-        client: TestClient, app: FastAPI, test_env_credentials: dict[str, str]
+        client: TestClient, test_env_credentials: dict[str, str]
     ) -> None:
         """Test WebSocket handling of invalid health_data payload for health-analysis endpoint."""
         user_id = "test-user-123"

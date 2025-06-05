@@ -303,12 +303,10 @@ class _TestConnectionManager:
                         "message.dict() did not return a dict for broadcast: %s",
                         type(content),
                     )
-                    message_content = {
-                        "error": "Failed to serialize message via dict()"
-                    }
+                    message_content = {"error": "Failed to serialize message via dict()"}
             except Exception as e:
-                logger.error(
-                    "Error calling message.dict() for broadcast: %s", e, exc_info=True
+                logger.exception(
+                    "Error calling message.dict() for broadcast"
                 )
                 message_content = {"error": "Error serializing message via dict()"}
         else:

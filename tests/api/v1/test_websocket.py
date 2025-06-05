@@ -306,7 +306,7 @@ class _TestConnectionManager:
                     message_content = {
                         "error": "Failed to serialize message via dict()"
                     }
-            except Exception as e:
+            except Exception:
                 logger.exception("Error calling message.dict() for broadcast")
                 message_content = {"error": "Error serializing message via dict()"}
         else:

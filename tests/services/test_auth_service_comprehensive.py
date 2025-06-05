@@ -664,6 +664,11 @@ class TestTokenManagement:
             assert result.access_token == cast(
                 "str", test_env_credentials["mock_new_access_token"]
             )
+            assert result.refresh_token == cast(
+                "str", test_env_credentials["mock_new_refresh_token"]
+            )
+            assert result.token_type == "bearer"  # noqa: S105
+            assert result.expires_in == 3600
 
     @staticmethod
     async def test_refresh_access_token_not_found(

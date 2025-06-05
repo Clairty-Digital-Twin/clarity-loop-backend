@@ -72,6 +72,10 @@ repos:
       - id: name-tests-test
         name: 🧪 Check Test Naming
         args: [--pytest-test-first]
+      - id: detect-aws-credentials
+        name: 🔑 Detect AWS Credentials
+      - id: detect-private-key
+        name: 🔑 Detect Private Keys
 
   # ===== DOCUMENTATION =====
   - repo: https://github.com/igorshubovych/markdownlint-cli

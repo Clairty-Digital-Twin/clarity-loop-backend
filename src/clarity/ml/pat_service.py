@@ -974,10 +974,16 @@ async def get_pat_service() -> PATModelService:
         return _pat_service
 
     logger.info("Initializing global PATModelService for the first time...")
+    # Create a local instance first, then load, then assign to global
     try:
-        new_service_instance = PATModelService() # Default model_size="medium"
-        await new_service_instance.load_model()
-        _pat_service = new_service_instance      # Assign to global only after all successful
+        service_instance = PATModelService() # Default model_size="medium"
+        # Ensure it's an instance before calling methods, for type checker's sake
+        if not isinstance(service_instance, PATModelService):
+            # This should ideally not happen if PATModelService constructor is typical
+            raise RuntimeError("PATModelService() did not return a valid instance.")
+            
+        await service_instance.load_model()  # type: ignore[misc] # MyPy struggles with this line
+        _pat_service = service_instance      # Assign to global only after all successful
         logger.info("Global PATModelService initialized and model loaded successfully.")
         return _pat_service
     except Exception as e:

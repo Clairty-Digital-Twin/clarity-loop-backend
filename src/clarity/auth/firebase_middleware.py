@@ -315,6 +315,35 @@ class FirebaseAuthProvider(IAuthProvider):
             logger.exception("Failed to initialize Firebase auth provider")
             raise
 
+    def _remove_expired_tokens(self) -> None:
+        """Remove expired tokens from the cache based on TTL."""
+        if not self.cache_is_enabled:
+            return
+        current_time = time.time()
+        expired_tokens = [
+            t for t, data in self._token_cache.items()
+            if current_time - data["timestamp"] > self._token_cache_ttl_seconds
+        ]
+        for t in expired_tokens:
+            if t in self._token_cache:
+                del self._token_cache[t]
+                logger.debug("Removed expired token %s from cache.", t[:10])
+
+    def _evict_oldest_to_target_count(self, target_count: int) -> None:
+        """Evict the oldest items until the cache size is at or below target_count."""
+        if not self.cache_is_enabled:
+            return
+        while len(self._token_cache) > target_count:
+            if not self._token_cache: # Should not happen if len > target_count
+                break
+            try:
+                # Find and remove the oldest entry (smallest timestamp)
+                oldest_token = min(self._token_cache.items(), key=lambda item: item[1]["timestamp"])[0]
+                del self._token_cache[oldest_token]
+                logger.debug("Evicted oldest token %s to meet cache size limits.", oldest_token[:10])
+            except ValueError:  # Cache became empty during removal
+                break
+                
     async def verify_token(self, token: str) -> dict[str, Any] | None:
         """Verify Firebase ID token and return user information as a dictionary.
 
@@ -327,18 +356,18 @@ class FirebaseAuthProvider(IAuthProvider):
         if not self._initialized:
             await self.initialize()
 
+        self._remove_expired_tokens() # Always try to remove expired tokens first
+
         # Check cache first if enabled
         if self.cache_is_enabled and token in self._token_cache:
-            cached_entry = self._token_cache[token]
-            # Check if cache entry is still valid
-            if time.time() - cached_entry["timestamp"] < self._token_cache_ttl_seconds:
-                return cached_entry["user_data"]  # Return cached user data (dict)
-            # Cache expired - remove entry
-            del self._token_cache[token]
+            # Item is in cache and not expired (since _remove_expired_tokens was called)
+            # Update its timestamp to mark it as recently used if implementing LRU behavior on top.
+            # For now, just return it.
+            # self._token_cache[token]["timestamp"] = time.time() # Optional: Update timestamp for LRU
+            return self._token_cache[token]["user_data"]
 
         try:
             decoded_token = firebase_auth.verify_id_token(token, check_revoked=True)
-            # Create User model instance first for structure and validation
             user_model_instance = User(
                 uid=decoded_token["uid"],
                 email=decoded_token.get("email"),
@@ -357,17 +386,12 @@ class FirebaseAuthProvider(IAuthProvider):
             user_data_dict = user_model_instance.model_dump()
 
             if self.cache_is_enabled:
-                # Ensure cache does not exceed max size
+                # Ensure there's space if the cache is at or over its limit
                 if len(self._token_cache) >= self._token_cache_max_size:
-                    self._cleanup_expired_cache(
-                        force_evict_oldest=True
-                    )  # Evict oldest if still full
-
-                self._token_cache[token] = {
-                    "user_data": user_data_dict,
-                    "timestamp": time.time(),
-                }
-                self._cleanup_expired_cache()  # Regular cleanup
+                    # Need to make space for 1 new item, so target max_size - 1 before adding
+                    self._evict_oldest_to_target_count(target_count=self._token_cache_max_size - 1)
+                
+                self._token_cache[token] = {"user_data": user_data_dict, "timestamp": time.time()}
             return user_data_dict
         except firebase_auth.RevokedIdTokenError:
             logger.warning("Revoked Firebase ID token received: %s", token[:20] + "...")
@@ -443,36 +467,6 @@ class FirebaseAuthProvider(IAuthProvider):
         except Exception as e:
             logger.exception("Error fetching user info for UID %s: %s", user_id, e)
             return None
-
-    def _cleanup_expired_cache(self, force_evict_oldest: bool = False) -> None:
-        """Remove expired entries from token cache.
-        If force_evict_oldest is True and cache is still full, remove the oldest entry.
-        """
-        current_time = time.time()
-        expired_tokens = [
-            t
-            for t, data in self._token_cache.items()
-            if current_time - data["timestamp"] > self._token_cache_ttl_seconds
-        ]
-
-        for t in expired_tokens:
-            if (
-                t in self._token_cache
-            ):  # Check if still exists, might be removed by size limit
-                del self._token_cache[t]
-
-        # Enforce cache size limit after removing expired items
-        # This loop ensures the cache size is brought down to the max_size limit
-        # by removing the oldest items if necessary.
-        while len(self._token_cache) > self._token_cache_max_size:
-            if not self._token_cache: # Should not happen if len > max_size, but good guard
-                break
-            try:
-                # Find and remove the oldest entry (smallest timestamp)
-                oldest_token = min(self._token_cache.items(), key=lambda item: item[1]["timestamp"])[0]
-                del self._token_cache[oldest_token]
-            except ValueError: # Cache became empty during removal, should not happen if len > 0
-                break
 
     async def cleanup(self) -> None:
         """Cleanup resources when shutting down."""

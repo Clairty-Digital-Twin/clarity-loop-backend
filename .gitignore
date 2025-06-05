@@ -92,6 +92,8 @@ docs/_build/
 .env.local
 .env.production
 .env.staging
+.env.*
+*.secret
 credentials/
 *.pem
 *.key

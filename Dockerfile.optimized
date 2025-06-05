@@ -16,10 +16,9 @@ ENV PYTHONUNBUFFERED=1 \
     KEEP_ALIVE=5
 
 # Install system dependencies
-# Note: Pinning exact versions for apt packages (DL3008) can be beneficial.
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    ca-certificates \
-    curl \
+    ca-certificates=20230311 \
+    curl=7.88.1-10+deb12u12 \
     && rm -rf /var/lib/apt/lists/* \
     && apt-get clean
 

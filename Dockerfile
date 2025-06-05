@@ -13,12 +13,10 @@ ENV PYTHONUNBUFFERED=1 \
     PIP_DISABLE_PIP_VERSION_CHECK=1
 
 # Install system dependencies for building
-# Note: Pinning exact versions for apt packages (DL3008) can be beneficial
-# but requires finding versions compatible with the base image. Adding --no-install-recommends.
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    build-essential \
-    curl \
-    git \
+    build-essential=12.9 \
+    curl=7.88.1-10+deb12u12 \
+    git=1:2.39.5-0+deb12u2 \
     && rm -rf /var/lib/apt/lists/*
 
 # Create virtual environment
@@ -53,10 +51,9 @@ ENV PYTHONUNBUFFERED=1 \
     KEEP_ALIVE=5
 
 # Install runtime system dependencies
-# Note: Pinning exact versions for apt packages (DL3008) can be beneficial.
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    ca-certificates \
-    curl \
+    ca-certificates=20230311 \
+    curl=7.88.1-10+deb12u12 \
     && rm -rf /var/lib/apt/lists/* \
     && apt-get clean
 

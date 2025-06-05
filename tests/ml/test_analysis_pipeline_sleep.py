@@ -243,10 +243,14 @@ class TestAnalysisPipelineSleepIntegration:
 
         mock_metric = MagicMock(spec=HealthMetric)
         mock_metric.metric_type = MagicMock(spec=HealthMetricType)
-        mock_metric.metric_type.value = HealthMetricType.HEART_RATE.value # Example type
+        mock_metric.metric_type.value = (
+            HealthMetricType.HEART_RATE.value
+        )  # Example type
         # Add other necessary attributes to mock_metric if _organize_metrics_by_modality accesses them
-        mock_metric.created_at = datetime.now(UTC) # required by _calculate_time_span if metrics list > 1
-        mock_metric.biometric_data = None # Or a mock BiometricData if needed
+        mock_metric.created_at = datetime.now(
+            UTC
+        )  # required by _calculate_time_span if metrics list > 1
+        mock_metric.biometric_data = None  # Or a mock BiometricData if needed
         mock_metric.sleep_data = None
         mock_metric.activity_data = None
         mock_metric.mental_health_data = None
@@ -263,12 +267,14 @@ class TestAnalysisPipelineSleepIntegration:
     ) -> None:
         """Test failure when saving analysis results to Firestore."""
         self.pipeline.firestore_client = mock_firestore
-        mock_firestore.save_analysis_result.side_effect = Exception("Firestore Save Error")
-        
+        mock_firestore.save_analysis_result.side_effect = Exception(
+            "Firestore Save Error"
+        )
+
         mock_metric = MagicMock(spec=HealthMetric)
         mock_metric.metric_type = MagicMock(spec=HealthMetricType)
         mock_metric.metric_type.value = HealthMetricType.HEART_RATE.value
-        mock_metric.created_at = datetime.now(UTC) 
+        mock_metric.created_at = datetime.now(UTC)
         mock_metric.biometric_data = None
         mock_metric.sleep_data = None
         mock_metric.activity_data = None
@@ -281,9 +287,7 @@ class TestAnalysisPipelineSleepIntegration:
         )
         mock_firestore.save_analysis_result.assert_called_once()
 
-    async def test_firestore_client_initialization(
-        self
-    ) -> None:
+    async def test_firestore_client_initialization(self) -> None:
         """Test that Firestore client is initialized when needed."""
         self.pipeline.firestore_client = None
         processing_id = "test_processing_id_init"
@@ -297,7 +301,9 @@ class TestAnalysisPipelineSleepIntegration:
         mock_metric.activity_data = None
         mock_metric.mental_health_data = None
 
-        with patch.object(FirestoreClient, "save_analysis_result", new_callable=AsyncMock) as mock_save:
+        with patch.object(
+            FirestoreClient, "save_analysis_result", new_callable=AsyncMock
+        ) as mock_save:
             await self.pipeline.process_health_data(
                 user_id="test_user_init",
                 health_metrics=[mock_metric],

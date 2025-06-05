@@ -116,12 +116,12 @@ class TestFirebaseAuthProvider:
             result = await auth_provider.verify_token("valid_token")
 
             assert result is not None
-            assert result.uid == "test_user_123"
-            assert result.email == "test@example.com"
+            assert result["uid"] == "test_user_123"
+            assert result["email"] == "test@example.com"
             # display_name can be None in test mocks
-            assert result.display_name is None
-            assert result.email_verified is True
-            assert result.firebase_token == "valid_token"  # noqa: S105
+            assert result["display_name"] is None
+            assert result["email_verified"] is True
+            assert result["firebase_token"] == "valid_token"  # noqa: S105
 
     @pytest.mark.asyncio
     @staticmethod
@@ -206,10 +206,18 @@ class TestFirebaseAuthProvider:
     @staticmethod
     async def test_token_caching_disabled() -> None:
         """Test behavior when token caching is disabled."""
-        config = MiddlewareConfig(cache_enabled=False)
+        # Pass middleware_config as a dict with the expected nested structure
+        # for the provider's own cache_is_enabled setting.
+        config_dict = {
+            "auth_provider_config": {
+                "cache_enabled": False,
+                "cache_ttl_seconds": 300,  # Default or test-specific
+                "cache_max_size": 100,  # Default or test-specific
+            }
+        }
         auth_provider = FirebaseAuthProvider(
             project_id="test-project",
-            middleware_config=config,
+            middleware_config=config_dict,  # Pass the dict here
         )
 
         mock_user_record = Mock()
@@ -311,8 +319,8 @@ class TestFirebaseAuthProvider:
             result = await auth_provider.get_user_info("test_user_123")
 
             assert result is not None
-            assert result.uid == "test_user_123"
-            assert result.email == "test@example.com"
+            assert result["uid"] == "test_user_123"
+            assert result["email"] == "test@example.com"
 
     @pytest.mark.asyncio
     @staticmethod

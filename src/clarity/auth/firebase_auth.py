@@ -23,12 +23,10 @@ try:
         # In production, use service account key
         # In development, you can use default credentials
         if (
-            hasattr(settings, "FIREBASE_SERVICE_ACCOUNT_KEY")
-            and settings.FIREBASE_SERVICE_ACCOUNT_KEY
+            hasattr(settings, "firebase_credentials_path")
+            and settings.firebase_credentials_path
         ):
-            cred = credentials.Certificate(
-                getattr(settings, "FIREBASE_SERVICE_ACCOUNT_KEY", None)
-            )
+            cred = credentials.Certificate(settings.firebase_credentials_path)
         else:
             # Use default credentials (useful for local development)
             cred = credentials.ApplicationDefault()
@@ -73,6 +71,7 @@ def get_current_user(
             display_name=decoded_token.get("name"),
             email_verified=decoded_token.get("email_verified", False),
             firebase_token=credentials.credentials,
+            firebase_token_exp=decoded_token.get("exp"),
             created_at=None,
             last_login=None,
             profile=None,
@@ -133,6 +132,7 @@ def get_current_user_websocket(token: str) -> User:
             display_name=decoded_token.get("name"),
             email_verified=decoded_token.get("email_verified", False),
             firebase_token=token,
+            firebase_token_exp=decoded_token.get("exp"),
             created_at=None,
             last_login=None,
             profile=None,
@@ -178,6 +178,7 @@ def get_user_from_request(request: Request) -> User | None:
             display_name=decoded_token.get("name"),
             email_verified=decoded_token.get("email_verified", False),
             firebase_token=token,
+            firebase_token_exp=decoded_token.get("exp"),
             created_at=None,
             last_login=None,
             profile=None,
@@ -236,7 +237,7 @@ def create_custom_token(
         Custom Firebase token
     """
     try:
-        custom_token_bytes = auth.create_custom_token(uid, additional_claims)
+        custom_token_bytes: bytes = auth.create_custom_token(uid, additional_claims)
         return custom_token_bytes.decode("utf-8")
     except Exception:
         logger.exception("Error creating custom token")

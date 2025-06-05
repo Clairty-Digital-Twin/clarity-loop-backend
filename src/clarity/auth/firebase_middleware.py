@@ -5,7 +5,7 @@ from collections.abc import Awaitable, Callable
 from datetime import UTC, datetime
 import logging
 import time
-from typing import Any
+from typing import Any, cast
 
 from fastapi import FastAPI, Request, Response
 from firebase_admin import auth as firebase_auth
@@ -257,30 +257,21 @@ class FirebaseAuthProvider(IAuthProvider):
         Args:
             credentials_path: Path to Firebase service account credentials
             project_id: Firebase project ID
-            middleware_config: Middleware configuration options (dict or MiddlewareConfig)
+            middleware_config: Middleware configuration options (already a dict or None)
         """
         self.credentials_path = credentials_path
         self.project_id = project_id
 
-        config_dict: dict[str, Any]
-        if middleware_config is None:
-            config_dict = {}
-        elif hasattr(middleware_config, "__dict__") and not isinstance(
-            middleware_config, dict
-        ):
-            # It's likely a Pydantic model or similar object, access its dict representation
-            config_dict = middleware_config.__dict__
-        elif isinstance(middleware_config, dict):
-            # It's already a dict
-            config_dict = middleware_config
-        else:
-            # Fallback if it's some other type, though a dict is expected
-            config_dict = {}
+        # middleware_config is now expected to be a dict or None from the container
+        config_dict: dict[str, Any] = (
+            middleware_config if middleware_config is not None else {}
+        )
 
         self.middleware_config = config_dict  # Store the resolved config_dict
         self._initialized = False
 
         # Caching attributes for FirebaseAuthProvider itself
+        # Get auth_provider_config from the passed config_dict, or default to empty dict
         auth_provider_specific_config = self.middleware_config.get(
             "auth_provider_config", {}
         )
@@ -367,7 +358,7 @@ class FirebaseAuthProvider(IAuthProvider):
         # Check cache first if enabled
         if self.cache_is_enabled and token in self._token_cache:
             # Item is in cache and not expired (since _remove_expired_tokens was called)
-            return self._token_cache[token]["user_data"]
+            return cast("dict[str, Any]", self._token_cache[token]["user_data"])
 
         try:
             decoded_token = firebase_auth.verify_id_token(token, check_revoked=True)

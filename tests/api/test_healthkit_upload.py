@@ -55,8 +55,9 @@ class TestHealthKitModels:
         assert sample.value["stage"] == "deep"
         assert sample.metadata["confidence"] == 0.95
 
+    @staticmethod
     def test_upload_request_creation(
-        self, test_env_credentials: dict[str, str]
+        test_env_credentials: dict[str, str]
     ) -> None:  # MODIFIED, noqa: PLR6301
         """Test HealthKitUploadRequest model creation."""
         request = HealthKitUploadRequest(
@@ -101,8 +102,9 @@ class TestHealthKitUploadEndpoint:
     """Test the main HealthKit upload endpoint."""
 
     @pytest.fixture
+    @staticmethod
     def sample_upload_request(
-        self, test_env_credentials: dict[str, str]
+        test_env_credentials: dict[str, str]
     ) -> HealthKitUploadRequest:  # MODIFIED, noqa: PLR6301
         """Create a sample upload request for testing."""
         return HealthKitUploadRequest(

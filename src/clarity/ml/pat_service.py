@@ -508,7 +508,7 @@ class PATModelService(IMLModelService):
 
     def _load_tensorflow_weights(self, h5_path: str) -> dict[str, torch.Tensor]:
         """Load and convert TensorFlow H5 weights to PyTorch format."""
-        state_dict = {}
+        state_dict: dict[str, torch.Tensor] = {}
 
         if not _has_h5py:
             logger.error("h5py is not installed, cannot load H5 weights. Please install with: pip install h5py")

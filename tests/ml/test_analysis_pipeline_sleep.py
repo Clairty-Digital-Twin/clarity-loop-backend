@@ -6,7 +6,7 @@ ensuring proper data flow and feature fusion.
 
 from datetime import UTC, datetime
 import os
-from unittest.mock import AsyncMock, MagicMock, Mock, patch, create_autospec
+from unittest.mock import AsyncMock, MagicMock, Mock, create_autospec, patch
 from uuid import uuid4
 
 import pytest
@@ -294,7 +294,7 @@ class TestAnalysisPipelineSleepIntegration:
         mock_bio_data.body_temperature = None
         mock_bio_data.blood_glucose = None
         mock_metric.biometric_data = mock_bio_data
-        
+
         mock_metric.sleep_data = None
         mock_metric.activity_data = None
         mock_metric.mental_health_data = None

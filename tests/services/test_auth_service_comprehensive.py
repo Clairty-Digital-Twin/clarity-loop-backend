@@ -441,11 +441,16 @@ class TestUserLogin:
         # Simulate failure in token generation by patching secrets.token_urlsafe
         # The original attempt to mock auth_service.auth_provider.create_custom_token was ineffective
         # as _generate_tokens does not call it.
-        with patch("clarity.services.auth_service.secrets.token_urlsafe") as mock_token_urlsafe:
-            mock_token_urlsafe.side_effect = Exception("Token creation failed by provider")
+        with patch(
+            "clarity.services.auth_service.secrets.token_urlsafe"
+        ) as mock_token_urlsafe:
+            mock_token_urlsafe.side_effect = Exception(
+                "Token creation failed by provider"
+            )
 
             with pytest.raises(
-                AuthenticationError, match="Login failed: Token creation failed by provider"
+                AuthenticationError,
+                match="Login failed: Token creation failed by provider",
             ):
                 await auth_service.login_user(sample_login_request, device_info=None)
 

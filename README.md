@@ -139,8 +139,6 @@ A PyTorch-based model that fuses feature vectors from multiple modalities (e.g.,
 
 The platform is built on Clean Architecture principles, promoting a separation of concerns and maintainability.
 
-![Architecture Diagram PNG](docs/images/architecture_diagram.png)
-
 ```mermaid
 graph TD
     A[End User/Wearable] -->|Data Input| B(FastAPI Backend);
@@ -160,6 +158,8 @@ graph TD
     style B fill:#00a393,stroke:#333,stroke-width:2px,color:#fff;
     style K fill:#f9f,stroke:#333,stroke-width:2px;
 ```
+
+For a more detailed diagram or if the above does not render, please see: [Detailed Architecture PNG](docs/images/architecture_diagram.png)
 
 ```
 ┌─────────────────────────────────────────────────────────┐

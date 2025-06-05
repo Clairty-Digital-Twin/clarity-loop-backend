@@ -926,7 +926,7 @@ class TestWebSocketEndpoints:
                     pytest.fail(
                         f"Disconnected during initial receive: {e_initial_recv.code} - {e_initial_recv.reason}"
                     )
-                except Exception as e_initial_other:
+                except Exception as e_initial_other:  # noqa: BLE001 - Catching general exceptions to fail test explicitly
                     logger.exception(
                         "Error receiving initial message: %s", e_initial_other
                     )
@@ -978,7 +978,7 @@ class TestWebSocketEndpoints:
             pytest.fail(
                 f"Failed to connect or disconnected early: {e_connect.code} - {e_connect.reason}"
             )
-        except Exception as e_outer:
+        except Exception as e_outer:  # noqa: BLE001 - Catching general exceptions to fail test explicitly
             logger.exception("Outer exception during WebSocket test: %s", e_outer)
             pytest.fail(f"Outer exception: {e_outer}")
 

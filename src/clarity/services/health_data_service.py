@@ -10,10 +10,11 @@ from datetime import UTC, datetime
 import json
 import logging
 import os
-from typing import Any
+from typing import Any, cast
 import uuid
 
 from google.cloud import storage  # type: ignore[attr-defined]
+from google.cloud.storage.bucket import Bucket
 
 from clarity.models.health_data import (
     HealthDataResponse,
@@ -162,8 +163,8 @@ class HealthDataService:
             }
 
             # Upload to GCS
-            bucket = self.cloud_storage.bucket(self.raw_data_bucket)  # type: ignore[union-attr]
-            blob = bucket.blob(blob_path)  # type: ignore[union-attr]
+            bucket: Bucket = cast(Bucket, self.cloud_storage.bucket(self.raw_data_bucket))
+            blob = bucket.blob(blob_path)
 
             # Set content type and metadata
             blob.content_type = "application/json"
@@ -337,7 +338,7 @@ class HealthDataService:
 
             self.logger.info(
                 "Retrieved %s health records for user: %s",
-                len(health_data.get("metrics", [])),  # type: ignore[arg-type]
+                len(health_data.get("metrics", [])),
                 user_id,
             )
 

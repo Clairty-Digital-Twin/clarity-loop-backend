@@ -72,10 +72,10 @@ class MockHealthDataRepository(IHealthDataRepository):
                         metric.mental_health_data.model_dump()
                     )
 
-                metrics_data.append(metric_dict)  # type: ignore[misc,unknown-member]
+                metrics_data.append(metric_dict)
 
             # Store the health data entry
-            entry: dict[str, Any] = {  # type: ignore[misc]
+            entry: dict[str, Any] = {
                 "processing_id": processing_id,
                 "metrics": metrics_data,
                 "upload_source": upload_source,
@@ -83,7 +83,7 @@ class MockHealthDataRepository(IHealthDataRepository):
                 "server_timestamp": datetime.now(UTC).isoformat(),
             }
 
-            self._health_data[user_id].append(entry)  # type: ignore[misc,arg-type]
+            self._health_data[user_id].append(entry)
 
             # Update processing status
             self._processing_status[processing_id] = {
@@ -129,9 +129,9 @@ class MockHealthDataRepository(IHealthDataRepository):
         all_entries = self._health_data[user_id]
 
         # Flatten metrics and apply filters
-        all_metrics: list[dict[str, Any]] = []  # type: ignore[misc]
+        all_metrics: list[dict[str, Any]] = []
         for entry in all_entries:
-            for metric in entry["metrics"]:  # type: ignore[misc]
+            for metric in entry["metrics"]:
                 # Add entry metadata to metric
                 metric_with_context = {
                     **metric,
@@ -153,7 +153,7 @@ class MockHealthDataRepository(IHealthDataRepository):
                 all_metrics.append(metric_with_context)
 
         # Sort by timestamp (newest first)
-        all_metrics.sort(key=itemgetter("created_at"), reverse=True)  # type: ignore[misc]
+        all_metrics.sort(key=itemgetter("created_at"), reverse=True)
 
         # Apply pagination
         total_count = len(all_metrics)
@@ -165,7 +165,7 @@ class MockHealthDataRepository(IHealthDataRepository):
             "page_info": {
                 "limit": limit,
                 "offset": offset,
-                "has_more": offset + len(paginated_metrics) < total_count,  # type: ignore[arg-type]
+                "has_more": offset + len(paginated_metrics) < total_count,
             },
         }
 
@@ -232,7 +232,7 @@ class MockHealthDataRepository(IHealthDataRepository):
             "timestamp": datetime.now(UTC).isoformat(),
         }
 
-        self._health_data[user_id].append(entry)  # type: ignore[misc]
+        self._health_data[user_id].append(entry)
         logger.info("Saved legacy health data for user %s", user_id)
 
         return processing_id

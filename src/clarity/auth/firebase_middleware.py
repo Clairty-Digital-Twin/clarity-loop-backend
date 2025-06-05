@@ -461,26 +461,17 @@ class FirebaseAuthProvider(IAuthProvider):
             ):  # Check if still exists, might be removed by size limit
                 del self._token_cache[t]
 
-        # Enforce cache size limit
-        while len(self._token_cache) >= self._token_cache_max_size:
-            if not self._token_cache:  # Should not happen if len >= max_size > 0
+        # Enforce cache size limit after removing expired items
+        # This loop ensures the cache size is brought down to the max_size limit
+        # by removing the oldest items if necessary.
+        while len(self._token_cache) > self._token_cache_max_size:
+            if not self._token_cache: # Should not happen if len > max_size, but good guard
                 break
-            # Remove oldest entries if still over size limit
-            # Sort by timestamp to find the oldest
             try:
-                oldest_token = min(
-                    self._token_cache.items(), key=lambda x: x[1]["timestamp"]
-                )[0]
+                # Find and remove the oldest entry (smallest timestamp)
+                oldest_token = min(self._token_cache.items(), key=lambda item: item[1]["timestamp"])[0]
                 del self._token_cache[oldest_token]
-                if (
-                    not force_evict_oldest and not expired_tokens
-                ):  # if we are not forced and didn't remove any expired, break to avoid infinite loop if all fresh
-                    break
-            except ValueError:  # Cache is empty
-                break
-            if (
-                not force_evict_oldest
-            ):  # if not forced, only one pass of cleanup by size
+            except ValueError: # Cache became empty during removal, should not happen if len > 0
                 break
 
     async def cleanup(self) -> None:

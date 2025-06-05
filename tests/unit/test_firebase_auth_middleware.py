@@ -842,9 +842,17 @@ class TestPerformanceFirebaseAuth:
     async def test_token_verification_performance_with_cache() -> None:
         """Test token verification performance with caching enabled."""
         config = MiddlewareConfig(cache_enabled=True, cache_ttl_seconds=300)
+        # Ensure middleware_config is passed as a dictionary
+        auth_provider_config_dict = {
+            "auth_provider_config": {
+                "cache_enabled": True,
+                "cache_ttl_seconds": 300,
+                "cache_max_size": 1000 # Default or test-specific
+            }
+        }
         auth_provider = FirebaseAuthProvider(
             project_id="test-project",
-            middleware_config=config,
+            middleware_config=auth_provider_config_dict, # Pass the correctly structured dict
         )
 
         mock_user_record = Mock()
@@ -883,10 +891,17 @@ class TestPerformanceFirebaseAuth:
     @staticmethod
     async def test_concurrent_token_verification() -> None:
         """Test concurrent token verification requests."""
-        config = MiddlewareConfig(cache_enabled=True)
+        # Ensure middleware_config is passed as a dictionary
+        auth_provider_config_dict = {
+            "auth_provider_config": {
+                "cache_enabled": True, # Assuming caching should be tested here
+                "cache_ttl_seconds": 300,
+                "cache_max_size": 1000
+            }
+        }
         auth_provider = FirebaseAuthProvider(
             project_id="test-project",
-            middleware_config=config,
+            middleware_config=auth_provider_config_dict, # Pass the correctly structured dict
         )
 
         mock_user_record = Mock()

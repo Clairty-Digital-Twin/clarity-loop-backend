@@ -321,7 +321,8 @@ class FirebaseAuthProvider(IAuthProvider):
             return
         current_time = time.time()
         expired_tokens = [
-            t for t, data in self._token_cache.items()
+            t
+            for t, data in self._token_cache.items()
             if current_time - data["timestamp"] > self._token_cache_ttl_seconds
         ]
         for t in expired_tokens:
@@ -338,9 +339,14 @@ class FirebaseAuthProvider(IAuthProvider):
                 break
             try:
                 # Find and remove the oldest entry (smallest timestamp)
-                oldest_token = min(self._token_cache.items(), key=lambda item: item[1]["timestamp"])[0]
+                oldest_token = min(
+                    self._token_cache.items(), key=lambda item: item[1]["timestamp"]
+                )[0]
                 del self._token_cache[oldest_token]
-                logger.debug("Evicted oldest token %s to meet cache size limits.", oldest_token[:10])
+                logger.debug(
+                    "Evicted oldest token %s to meet cache size limits.",
+                    oldest_token[:10],
+                )
             except ValueError:  # Cache became empty during removal
                 break
 
@@ -389,9 +395,14 @@ class FirebaseAuthProvider(IAuthProvider):
                 # Ensure there's space if the cache is at or over its limit
                 if len(self._token_cache) >= self._token_cache_max_size:
                     # Need to make space for 1 new item, so target max_size - 1 before adding
-                    self._evict_oldest_to_target_count(target_count=self._token_cache_max_size - 1)
+                    self._evict_oldest_to_target_count(
+                        target_count=self._token_cache_max_size - 1
+                    )
 
-                self._token_cache[token] = {"user_data": user_data_dict, "timestamp": time.time()}
+                self._token_cache[token] = {
+                    "user_data": user_data_dict,
+                    "timestamp": time.time(),
+                }
             return user_data_dict
         except firebase_auth.RevokedIdTokenError:
             logger.warning("Revoked Firebase ID token received: %s", token[:20] + "...")

@@ -33,16 +33,27 @@ def get_connection_manager() -> ConnectionManager:
 
     if endpoint_frame and "request" in endpoint_frame.f_locals:
         request_obj = endpoint_frame.f_locals["request"]
-    elif caller_frame and "request" in caller_frame.f_locals:  # Check caller frame as well
+    elif (
+        caller_frame and "request" in caller_frame.f_locals
+    ):  # Check caller frame as well
         request_obj = caller_frame.f_locals["request"]
-    elif current_frame and "request" in current_frame.f_locals:  # Check current frame (less likely for typical use)
+    elif (
+        current_frame and "request" in current_frame.f_locals
+    ):  # Check current frame (less likely for typical use)
         request_obj = current_frame.f_locals["request"]
 
-    if request_obj and hasattr(request_obj, "app") and hasattr(request_obj.app.state, "connection_manager"):
+    if (
+        request_obj
+        and hasattr(request_obj, "app")
+        and hasattr(request_obj.app.state, "connection_manager")
+    ):
         manager = request_obj.app.state.connection_manager
         if isinstance(manager, ConnectionManager):
             return manager
-        logger.warning("app.state.connection_manager is not a ConnectionManager instance. Type: %s", type(manager))
+        logger.warning(
+            "app.state.connection_manager is not a ConnectionManager instance. Type: %s",
+            type(manager),
+        )
 
     # Fallback to module-level singleton
     global connection_manager  # Ensure we are referring to the global
@@ -54,16 +65,19 @@ def get_connection_manager() -> ConnectionManager:
         from tests.api.v1.test_websocket_helper import (  # noqa: PLC0415
             get_test_connection_manager,
         )
+
         # Ensure test manager is assigned to global if it's the one being used
         test_manager = get_test_connection_manager()
         if connection_manager is None:  # Assign if global is still None
-             connection_manager = test_manager
+            connection_manager = test_manager
         return test_manager
     except (ImportError, RuntimeError):
         pass
 
     # Last resort: create and assign to global
-    logger.warning("ConnectionManager not found in app.state or test helper, creating a new global instance.")
+    logger.warning(
+        "ConnectionManager not found in app.state or test helper, creating a new global instance."
+    )
     # Note: background tasks won't be started in this fallback automatically
     new_manager = ConnectionManager(
         heartbeat_interval=5,
@@ -119,7 +133,9 @@ async def websocket_lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
         logger.info("Shutting down WebSocket services...")
 
         # Use the manager from app.state if available, otherwise the global one
-        manager_to_shutdown = getattr(app.state, 'connection_manager', connection_manager)
+        manager_to_shutdown = getattr(
+            app.state, "connection_manager", connection_manager
+        )
 
         if manager_to_shutdown is not None:
             await manager_to_shutdown.stop_background_tasks()

@@ -847,7 +847,7 @@ class TestPerformanceFirebaseAuth:
             "auth_provider_config": {
                 "cache_enabled": True,
                 "cache_ttl_seconds": 300,
-                "cache_max_size": 1000  # Default or test-specific
+                "cache_max_size": 1000,  # Default or test-specific
             }
         }
         auth_provider = FirebaseAuthProvider(
@@ -896,7 +896,7 @@ class TestPerformanceFirebaseAuth:
             "auth_provider_config": {
                 "cache_enabled": True,  # Assuming caching should be tested here
                 "cache_ttl_seconds": 300,
-                "cache_max_size": 1000
+                "cache_max_size": 1000,
             }
         }
         auth_provider = FirebaseAuthProvider(

@@ -363,7 +363,7 @@ async def _authenticate_websocket_user(
         try:
             # get_current_user_websocket is synchronous and returns User or raises HTTPException
             user: User = get_current_user_websocket(token)
-            
+
             # Original check for coroutine was not necessary as get_current_user_websocket is sync.
             if user.uid != user_id:
                 await websocket.close(code=1008, reason="User ID mismatch")
@@ -373,9 +373,13 @@ async def _authenticate_websocket_user(
             # This exception is raised by get_current_user_websocket for invalid tokens
             await websocket.close(code=1008, reason="Invalid authentication token")
             return None
-        except Exception as e:  # noqa: BLE001 - Catching general exception for websocket resilience
-            logger.exception("Unexpected error during WebSocket user authentication: %s", e)
-            await websocket.close(code=1011, reason="Internal server error during authentication")
+        except Exception as e:
+            logger.exception(
+                "Unexpected error during WebSocket user authentication: %s", e
+            )
+            await websocket.close(
+                code=1011, reason="Internal server error during authentication"
+            )
             return None
     # If no token is provided, authentication is not attempted, return None
     return None

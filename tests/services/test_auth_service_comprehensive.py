@@ -6,8 +6,8 @@ Tests every method, error case, edge case, and business logic path.
 
 import asyncio
 from datetime import UTC, datetime, timedelta
-from typing import Any
-from unittest.mock import AsyncMock, MagicMock, Mock, patch
+from typing import Any, cast
+from unittest.mock import AsyncMock, Mock, patch
 import uuid
 
 from firebase_admin import (
@@ -18,7 +18,6 @@ import pytest
 
 from clarity.models.auth import (
     LoginResponse,
-    RegistrationResponse,
     TokenResponse,
     UserLoginRequest,
     UserRegistrationRequest,
@@ -62,7 +61,6 @@ class MockFirebaseUserRecord:  # Ensure this class definition is present
         *,
         disabled: bool = False,
         email_verified: bool = True,
-        **kwargs: Any,
     ) -> None:
         self.uid = uid
         self.email = email
@@ -188,9 +186,17 @@ def sample_registration_request(
     test_env_credentials: dict[str, str | None],
 ) -> UserRegistrationRequest:
     """Sample user registration request."""
+    password = test_env_credentials.get("default_password")
+    if not isinstance(password, str):
+        # This case should ideally not happen in a well-configured test environment
+        # Or, if None is a valid test case for password, the model needs to allow Optional[str]
+        # For now, assuming password must be a string for valid registration request.
+        raise TypeError(
+            "Test setup error: default_password for registration must be a string."
+        )
     return UserRegistrationRequest(
         email="test@example.com",
-        password=test_env_credentials["default_password"],  # This is a test
+        password=password,  # Now definitely a str
         first_name="John",
         last_name="Doe",
         phone_number="+1234567890",
@@ -204,10 +210,16 @@ def sample_login_request(
     test_env_credentials: dict[str, str | None],
 ) -> UserLoginRequest:
     """Sample user login request."""
+    password = test_env_credentials.get("default_password")
+    if not isinstance(password, str):
+        raise TypeError(
+            "Test setup error: default_password for login must be a string."
+        )
     return UserLoginRequest(
         email="test@example.com",
-        password=test_env_credentials["default_password"],  # This is a test
+        password=password,  # Now definitely a str
         remember_me=False,
+        device_info=None,  # Explicitly set optional field
     )
 
 
@@ -369,10 +381,15 @@ class TestUserLogin:
 
         with patch.object(auth_service, "_generate_tokens") as mock_gen_tokens:
             mock_tokens = TokenResponse(
-                access_token=test_env_credentials["mock_access_token"],  # Test value
-                refresh_token=test_env_credentials["mock_refresh_token"],  # Test value
+                access_token=cast(
+                    "str", test_env_credentials["mock_access_token"]
+                ),  # Test value
+                refresh_token=cast(
+                    "str", test_env_credentials["mock_refresh_token"]
+                ),  # Test value
                 token_type="bearer",  # noqa: S106 # Test value
                 expires_in=3600,
+                scope="full_access",  # Added scope
             )
             mock_gen_tokens.return_value = mock_tokens
 
@@ -396,6 +413,7 @@ class TestUserLogin:
                         mfa_enabled=False,
                         email_verified=True,
                         created_at=datetime.now(UTC),
+                        last_login=datetime.now(UTC),  # Added last_login
                     )
                     mock_session_response.return_value = mock_user_session
 
@@ -518,10 +536,11 @@ class TestUserLogin:
 
         with patch.object(auth_service, "_generate_tokens") as mock_gen_tokens:
             mock_tokens = TokenResponse(
-                access_token=test_env_credentials["mock_access_token"],
-                refresh_token=test_env_credentials["mock_refresh_token"],
+                access_token=cast("str", test_env_credentials["mock_access_token"]),
+                refresh_token=cast("str", test_env_credentials["mock_refresh_token"]),
                 token_type="bearer",
                 expires_in=3600,
+                scope="full_access",  # Added scope
             )
             mock_gen_tokens.return_value = mock_tokens
             with patch.object(
@@ -542,7 +561,7 @@ class TestUserLogin:
                         mfa_enabled=False,
                         email_verified=False,  # Reflects unverified status
                         created_at=datetime.now(UTC),
-                        last_login=None,  # Typically None for first login before verification path
+                        last_login=None,  # Explicitly set for this case
                     )
                     mock_session_response.return_value = mock_user_session
                     result = await auth_service.login_user(
@@ -571,18 +590,18 @@ class TestTokenManagement:
         ) as mock_token_safe:
             # Return different values on consecutive calls
             mock_token_safe.side_effect = [
-                test_env_credentials["mock_access_token"],
-                test_env_credentials["mock_refresh_token"],
+                cast("str", test_env_credentials["mock_access_token"]),
+                cast("str", test_env_credentials["mock_refresh_token"]),
             ]
 
             result = await auth_service._generate_tokens(user_id)
 
             assert isinstance(result, TokenResponse)
-            assert (
-                result.access_token == test_env_credentials["mock_access_token"]
+            assert result.access_token == cast(
+                "str", test_env_credentials["mock_access_token"]
             )  # Test assertion
-            assert (
-                result.refresh_token == test_env_credentials["mock_refresh_token"]
+            assert result.refresh_token == cast(
+                "str", test_env_credentials["mock_refresh_token"]
             )  # Test assertion
             assert result.token_type == "bearer"  # noqa: S105 # Test assertion
             assert result.expires_in == 3600  # default expiry
@@ -600,8 +619,8 @@ class TestTokenManagement:
             "clarity.services.auth_service.secrets.token_urlsafe"
         ) as mock_token_safe:
             mock_token_safe.side_effect = [
-                test_env_credentials["mock_access_token"],
-                test_env_credentials["mock_refresh_token"],
+                cast("str", test_env_credentials["mock_access_token"]),
+                cast("str", test_env_credentials["mock_refresh_token"]),
             ]
 
             result = await auth_service._generate_tokens(user_id, remember_me=True)
@@ -615,7 +634,9 @@ class TestTokenManagement:
         test_env_credentials: dict[str, str | None],
     ) -> None:
         """Test successful token refresh."""
-        refresh_token = test_env_credentials["mock_refresh_token"]  # Test value
+        refresh_token = cast(
+            "str", test_env_credentials["mock_refresh_token"]
+        )  # Test value
 
         # Mock refresh token query results - not get_document, but query_documents
         token_data = {
@@ -631,15 +652,15 @@ class TestTokenManagement:
             "clarity.services.auth_service.secrets.token_urlsafe"
         ) as mock_token_safe:
             mock_token_safe.side_effect = [
-                test_env_credentials["mock_new_access_token"],
-                test_env_credentials["mock_new_refresh_token"],
+                cast("str", test_env_credentials["mock_new_access_token"]),
+                cast("str", test_env_credentials["mock_new_refresh_token"]),
             ]
 
             result = await auth_service.refresh_access_token(refresh_token)
 
             assert isinstance(result, TokenResponse)
-            assert (
-                result.access_token == test_env_credentials["mock_new_access_token"]
+            assert result.access_token == cast(
+                "str", test_env_credentials["mock_new_access_token"]
             )  # Test assertion
 
     @staticmethod
@@ -696,7 +717,9 @@ class TestSessionManagement:
     ) -> None:
         """Test user session creation."""
         user_id = "test-uid-123"
-        refresh_token = test_env_credentials["mock_refresh_token"]  # Test value
+        refresh_token = cast(
+            "str", test_env_credentials["mock_refresh_token"]
+        )  # Test value
         device_info = {"device_type": "iPhone"}
         ip_address = "192.168.1.1"
 
@@ -754,7 +777,9 @@ class TestSessionManagement:
         auth_service: AuthenticationService, test_env_credentials: dict[str, str | None]
     ) -> None:
         """Test successful user logout."""
-        refresh_token = test_env_credentials["mock_refresh_token"]  # Test value
+        refresh_token = cast(
+            "str", test_env_credentials["mock_refresh_token"]
+        )  # Test value
 
         # Mock token data returned by query_documents
         token_data = {
@@ -1014,7 +1039,9 @@ class TestDataValidation:
         # Test valid registration
         valid_request = UserRegistrationRequest(
             email="test@example.com",
-            password=test_env_credentials["default_password"],  # Test value
+            password=cast(
+                "str", test_env_credentials["default_password"]
+            ),  # Test value
             first_name="John",
             last_name="Doe",
             terms_accepted=True,
@@ -1026,7 +1053,9 @@ class TestDataValidation:
         with pytest.raises(ValidationError, match="value is not a valid email address"):
             UserRegistrationRequest(
                 email="invalid-email",
-                password=test_env_credentials["default_password"],  # Test value
+                password=cast(
+                    "str", test_env_credentials["default_password"]
+                ),  # Test value
                 first_name="John",
                 last_name="Doe",
                 terms_accepted=True,
@@ -1041,7 +1070,10 @@ class TestDataValidation:
         # Test valid login
         valid_request = UserLoginRequest(
             email="test@example.com",
-            password=test_env_credentials["default_password"],  # Test value
+            password=cast(
+                "str", test_env_credentials["default_password"]
+            ),  # Test value
+            device_info=None,  # Explicitly set
         )
         assert valid_request.email == "test@example.com"
 
@@ -1049,5 +1081,8 @@ class TestDataValidation:
         with pytest.raises(ValidationError, match="value is not a valid email address"):
             UserLoginRequest(
                 email="invalid-email",
-                password=test_env_credentials["default_password"],  # Test value
+                password=cast(
+                    "str", test_env_credentials["default_password"]
+                ),  # Test value
+                device_info=None,  # Explicitly set
             )

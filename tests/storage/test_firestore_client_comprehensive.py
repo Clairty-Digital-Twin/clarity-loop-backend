@@ -502,7 +502,7 @@ class TestFirestoreStatusAndDeletion:
         assert result is True
         firestore_repository._firestore_client.delete_documents.assert_called()
 
-    async def test_delete_health_data_all_user_data(
+    async def test_delete_health_data_all_user_data( # noqa: PLR6301
         self, firestore_repository: FirestoreHealthDataRepository
     ) -> None:
         """Test deleting all user data."""
@@ -512,7 +512,7 @@ class TestFirestoreStatusAndDeletion:
         assert result is True
         firestore_repository._firestore_client.delete_documents.assert_called()
 
-    async def test_delete_health_data_failure(
+    async def test_delete_health_data_failure( # noqa: PLR6301
         self, firestore_repository: FirestoreHealthDataRepository
     ) -> None:
         """Test health data deletion failure."""

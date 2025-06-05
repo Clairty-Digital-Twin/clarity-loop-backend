@@ -43,6 +43,11 @@ from tests.base import BaseServiceTestCase
 logger = logging.getLogger(__name__)
 
 
+# Define custom mock exception
+class MockFirestoreError(Exception):
+    """Custom exception for mock Firestore errors."""
+
+
 # Test constants - these are safe test values, not real secrets
 # Using dynamic generation to avoid linter warnings
 class TestConstants:
@@ -133,9 +138,9 @@ class MockFirestoreClient:
     ) -> dict[str, Any] | None:
         """Mock get document."""
         if self.error_on_next_call:
-            raise Exception(
+            raise MockFirestoreError(
                 _MOCK_FIRESTORE_ERROR_MSG
-            )  # TODO: Define custom MockFirestoreError
+            ) 
         return self.documents.get(f"{collection}/{doc_id}")
 
     async def update_document(
@@ -164,9 +169,9 @@ class MockFirestoreClient:
     ) -> list[dict[str, Any]]:
         """Mock query documents."""
         if self.error_on_next_call:
-            raise Exception(
+            raise MockFirestoreError(
                 _MOCK_FIRESTORE_ERROR_MSG
-            )  # TODO: Define custom MockFirestoreError
+            ) 
         return self.query_results
 
 

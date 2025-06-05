@@ -973,7 +973,6 @@ class PATModelService(IMLModelService):
 _pat_service: PATModelService | None = None
 
 # Constants for error messages
-# _INVALID_PAT_INSTANCE_MSG = "PATModelService() did not return a valid instance." # Remove constant
 
 
 async def get_pat_service() -> PATModelService:

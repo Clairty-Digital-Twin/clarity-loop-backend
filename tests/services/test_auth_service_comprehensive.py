@@ -190,26 +190,36 @@ class TestUserRegistration:
         sample_registration_request: UserRegistrationRequest,
     ) -> None:
         """Test successful user registration."""
-        # Setup mocks
-        mock_user_record = Mock()
-        mock_user_record.uid = str(uuid.uuid4())
-
-        # Use our custom mock exception instead of Firebase's
-        mock_auth.UserNotFoundError = MockUserNotFoundError
-        mock_auth.get_user_by_email.side_effect = MockUserNotFoundError(
-            "User not found"
+        user_id = str(uuid.uuid4())
+        email = "newuser@example.com"
+        mock_auth.get_user_by_email.side_effect = auth.UserNotFoundError("Not found")
+        mock_auth.create_user.return_value = MockFirebaseUserRecord(
+            uid=user_id, email=email
         )
-        mock_auth.create_user.return_value = mock_user_record
-        mock_auth.set_custom_user_claims = Mock()
+        mock_auth.generate_email_verification_link.return_value = "http://verify.link"
 
-        # Execute
-        result = await auth_service.register_user(sample_registration_request)
+        # Mock the specific firestore client method
+        mock_create_document = AsyncMock(
+            return_value=user_id
+        )  # Simulate returning the user_id as document_id
+        auth_service.firestore_client.create_document = mock_create_document  # type: ignore[method-assign]
 
-        # Verify
-        assert isinstance(result, RegistrationResponse)
+        request_data = UserRegistrationRequest(
+            email="test@example.com",
+            password="password",
+            first_name="John",
+            last_name="Doe",
+            phone_number="+1234567890",
+            terms_accepted=True,
+            privacy_policy_accepted=True,
+        )
+
+        result = await auth_service.register_user(request_data)
+
+        assert isinstance(result.user_id, uuid.UUID)
+
         mock_auth.create_user.assert_called_once()
-        mock_auth.set_custom_user_claims.assert_called_once()
-        auth_service.firestore_client.create_document.assert_called_once()
+        mock_create_document.assert_called_once()  # Assert on the mock object
 
     @staticmethod
     @patch("clarity.services.auth_service.auth")

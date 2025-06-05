@@ -96,10 +96,12 @@ class MockFirebaseUserRecord:
 
 
 _MOCK_FIRESTORE_ERROR_MSG = "Mock Firestore error"
-_MOCK_AUTH_TOKEN_VERIFICATION_FAILED_MSG = "Token verification failed (mock error)"
-_MOCK_AUTH_INVALID_TOKEN_MSG = "Invalid token"
+_MOCK_AUTH_TOKEN_VERIFICATION_FAILED_MSG = (
+    "Token verification failed (mock error)"  # noqa: S105
+)
+_MOCK_AUTH_INVALID_TOKEN_MSG = "Invalid token"  # noqa: S105
 _MOCK_AUTH_REVOKE_FAILED_MSG = "Failed to revoke refresh tokens (mock)"
-_MOCK_AUTH_TOKEN_CREATION_FAILED_MSG = "mock_token_creation_failed"
+_MOCK_AUTH_TOKEN_CREATION_FAILED_MSG = "mock_token_creation_failed"  # noqa: S105
 
 
 class MockFirestoreClient:
@@ -123,11 +125,17 @@ class MockFirestoreClient:
         return doc_id
 
     async def get_document(
-        self, collection: str, doc_id: str, use_cache: bool = True  # noqa: ARG002
+        self,
+        collection: str,
+        doc_id: str,
+        *,
+        use_cache: bool = True,  # noqa: ARG002
     ) -> dict[str, Any] | None:
         """Mock get document."""
         if self.error_on_next_call:
-            raise Exception(_MOCK_FIRESTORE_ERROR_MSG)
+            raise Exception(
+                _MOCK_FIRESTORE_ERROR_MSG
+            )  # TODO: Define custom MockFirestoreError
         return self.documents.get(f"{collection}/{doc_id}")
 
     async def update_document(
@@ -136,6 +144,7 @@ class MockFirestoreClient:
         doc_id: str,
         data: dict[str, Any],
         parent_path: str | None = None,  # noqa: ARG002
+        *,
         merge: bool = True,  # noqa: ARG002
     ) -> bool:
         """Mock update document."""
@@ -155,7 +164,9 @@ class MockFirestoreClient:
     ) -> list[dict[str, Any]]:
         """Mock query documents."""
         if self.error_on_next_call:
-            raise Exception(_MOCK_FIRESTORE_ERROR_MSG)
+            raise Exception(
+                _MOCK_FIRESTORE_ERROR_MSG
+            )  # TODO: Define custom MockFirestoreError
         return self.query_results
 
 
@@ -218,7 +229,7 @@ class TestAuthenticationServiceRegistration(BaseServiceTestCase):
         self.mock_auth_provider = MockAuthProvider()
         self.service: AuthenticationService = AuthenticationService(
             auth_provider=self.mock_auth_provider,
-            firestore_client=self.mock_firestore,
+            firestore_client=self.mock_firestore,  # type: ignore[arg-type]
         )
         assert self.service is not None
 
@@ -247,7 +258,7 @@ class TestAuthenticationServiceRegistration(BaseServiceTestCase):
         )
 
         # Act
-        result = await self.service.register_user(request)
+        result = await self.service.register_user(request, device_info=None)
 
         # Assert
         assert result.email == email
@@ -281,7 +292,7 @@ class TestAuthenticationServiceRegistration(BaseServiceTestCase):
 
         # Act & Assert
         with pytest.raises(UserAlreadyExistsError) as exc_info:
-            await self.service.register_user(request)
+            await self.service.register_user(request, device_info=None)
 
         assert email in str(exc_info.value)
 
@@ -305,7 +316,7 @@ class TestAuthenticationServiceRegistration(BaseServiceTestCase):
 
         # Act & Assert
         with pytest.raises(AuthenticationError) as exc_info:
-            await self.service.register_user(request)
+            await self.service.register_user(request, device_info=None)
 
         assert "Registration failed" in str(exc_info.value)
 
@@ -320,7 +331,7 @@ class TestAuthenticationServiceLogin(BaseServiceTestCase):
         self.mock_auth_provider = MockAuthProvider()
         self.service: AuthenticationService = AuthenticationService(
             auth_provider=self.mock_auth_provider,
-            firestore_client=self.mock_firestore,
+            firestore_client=self.mock_firestore,  # type: ignore[arg-type]
         )
         assert self.service is not None
 
@@ -353,11 +364,14 @@ class TestAuthenticationServiceLogin(BaseServiceTestCase):
         )
 
         request = UserLoginRequest(
-            email=email, password=TestConstants.password(), remember_me=False
+            email=email,
+            password=TestConstants.password(),
+            remember_me=False,
+            device_info=None,
         )
 
         # Act
-        result = await self.service.login_user(request)
+        result = await self.service.login_user(request, device_info=None)
 
         # Assert
         assert result.user.email == email
@@ -374,12 +388,15 @@ class TestAuthenticationServiceLogin(BaseServiceTestCase):
         mock_auth.get_user_by_email.side_effect = auth.UserNotFoundError("Not found")
 
         request = UserLoginRequest(
-            email=email, password=TestConstants.password(), remember_me=False
+            email=email,
+            password=TestConstants.password(),
+            remember_me=False,
+            device_info=None,
         )
 
         # Act & Assert
         with pytest.raises(UserNotFoundError) as exc_info:
-            await self.service.login_user(request)
+            await self.service.login_user(request, device_info=None)
 
         assert email in str(exc_info.value)
 
@@ -396,12 +413,15 @@ class TestAuthenticationServiceLogin(BaseServiceTestCase):
         mock_auth.get_user_by_email.return_value = mock_user_record
 
         request = UserLoginRequest(
-            email=email, password=TestConstants.password(), remember_me=False
+            email=email,
+            password=TestConstants.password(),
+            remember_me=False,
+            device_info=None,
         )
 
         # Act & Assert
         with pytest.raises(AccountDisabledError):
-            await self.service.login_user(request)
+            await self.service.login_user(request, device_info=None)
 
     @patch("clarity.services.auth_service.auth")
     async def test_login_user_missing_firestore_data(self, mock_auth: Mock) -> None:
@@ -416,12 +436,15 @@ class TestAuthenticationServiceLogin(BaseServiceTestCase):
         mock_auth.get_user_by_email.return_value = mock_user_record
 
         request = UserLoginRequest(
-            email=email, password=TestConstants.password(), remember_me=False
+            email=email,
+            password=TestConstants.password(),
+            remember_me=False,
+            device_info=None,
         )
 
         # Act & Assert
         with pytest.raises(UserNotFoundError):
-            await self.service.login_user(request)
+            await self.service.login_user(request, device_info=None)
 
 
 class TestAuthenticationServiceTokens(BaseServiceTestCase):
@@ -434,7 +457,7 @@ class TestAuthenticationServiceTokens(BaseServiceTestCase):
         self.mock_auth_provider = MockAuthProvider()
         self.service: AuthenticationService = AuthenticationService(
             auth_provider=self.mock_auth_provider,
-            firestore_client=self.mock_firestore,
+            firestore_client=self.mock_firestore,  # type: ignore[arg-type]
         )
         assert self.service is not None
 
@@ -537,7 +560,7 @@ class TestAuthenticationServiceLogout(BaseServiceTestCase):
         self.mock_auth_provider = MockAuthProvider()
         self.service: AuthenticationService = AuthenticationService(
             auth_provider=self.mock_auth_provider,
-            firestore_client=self.mock_firestore,
+            firestore_client=self.mock_firestore,  # type: ignore[arg-type]
         )
         assert self.service is not None
 
@@ -597,7 +620,7 @@ class TestAuthenticationServiceUtilities(BaseServiceTestCase):
         self.mock_auth_provider = MockAuthProvider()
         self.service: AuthenticationService = AuthenticationService(
             auth_provider=self.mock_auth_provider,
-            firestore_client=self.mock_firestore,
+            firestore_client=self.mock_firestore,  # type: ignore[arg-type]
         )
         assert self.service is not None
 

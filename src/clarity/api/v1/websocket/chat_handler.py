@@ -376,7 +376,9 @@ async def _authenticate_websocket_user(
         except Exception:
             # For TRY401, the best is just the message, as stack trace is auto-added.
             logger.exception("Unexpected error during WebSocket user authentication")
-            await websocket.close(code=1011, reason="Internal server error during authentication")
+            await websocket.close(
+                code=1011, reason="Internal server error during authentication"
+            )
             return None
     # If no token is provided, authentication is not attempted, return None
     return None

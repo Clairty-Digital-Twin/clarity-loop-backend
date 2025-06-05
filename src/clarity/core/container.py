@@ -74,7 +74,7 @@ class DependencyContainer:
         if middleware_config_obj.enabled and config_provider.get_setting(
             "enable_auth", default=False
         ):
-            from clarity.auth.firebase_middleware import (
+            from clarity.auth.firebase_middleware import (  # noqa: PLC0415 - Local import to avoid circular dependency
                 FirebaseAuthProvider,
             )
 

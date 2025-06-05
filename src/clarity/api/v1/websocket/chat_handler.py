@@ -377,6 +377,7 @@ async def _authenticate_websocket_user(
             logger.exception(
                 "Unexpected error during WebSocket user authentication: %s", e
             )
+            logger.exception("Unexpected error during WebSocket user authentication")
             await websocket.close(
                 code=1011, reason="Internal server error during authentication"
             )

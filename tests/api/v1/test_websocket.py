@@ -16,7 +16,7 @@ import uuid
 
 from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
 from fastapi.testclient import TestClient
-from pydantic import Field
+from pydantic import BaseModel, Field
 import pytest
 
 from clarity.api.v1.websocket import chat_handler
@@ -183,18 +183,29 @@ class _TestConnectionManager:
             len(self.active_websockets),
         )
 
-    async def send_to_connection(self, websocket: WebSocket, message: Any) -> None:
+    async def send_to_connection(
+        self, websocket: WebSocket, message: dict[str, Any] | BaseModel
+    ) -> None:
         logger.info("Attempting to send message to connection: %s", message)
 
         if websocket not in self.connection_info:
             logger.warning("Cannot send to unknown websocket connection")
             return
 
-        message_content = message
-        if hasattr(message, "model_dump_json"):
+        message_content: dict[str, Any]
+        if isinstance(message, BaseModel):
             message_content = json.loads(message.model_dump_json())
-        elif hasattr(message, "dict"):
-            message_content = message.dict()
+        elif isinstance(message, dict):
+            message_content = message
+        else:
+            # Fallback or error for unexpected types, though type hint should prevent this.
+            # For testing, this path might not be hit if inputs adhere to the hint.
+            logger.error(
+                "Unsupported message type: %s for send_to_connection", type(message)
+            )
+            # Defaulting to an empty dict or raising an error might be appropriate
+            # depending on desired strictness for this mock.
+            message_content = {"error": "Unsupported message type"}
 
         self.messages_sent.append(
             {
@@ -213,30 +224,39 @@ class _TestConnectionManager:
 
         logger.info("Recorded direct message send to %s", websocket)
 
-    async def send_to_user(self, user_id: str, message: Any) -> None:
+    async def send_to_user(
+        self, user_id: str, message: dict[str, Any] | BaseModel
+    ) -> None:
         """Send a message to all active connections for a given user."""
         logger.info("Attempting to send message to user %s: %s", user_id, message)
 
-        message_content = message
-        if hasattr(message, "model_dump_json"):
+        message_content: dict[str, Any]
+        if isinstance(message, BaseModel):
             message_content = json.loads(message.model_dump_json())
-        elif hasattr(message, "dict"):
-            message_content = message.dict()
+        elif isinstance(message, dict):
+            message_content = message
+        else:
+            logger.error("Unsupported message type: %s for send_to_user", type(message))
+            message_content = {"error": "Unsupported message type"}
 
         if user_id in self.user_connections:
-            for websocket in self.user_connections[user_id]:
-                if websocket in self.active_websockets:
+            for websocket_conn in self.user_connections[
+                user_id
+            ]:  # Renamed websocket to websocket_conn to avoid conflict
+                if websocket_conn in self.active_websockets:
                     self.messages_sent.append(
                         {
                             "type": "direct_to_user",
                             "target_user": user_id,
-                            "target_ws": websocket,
+                            "target_ws": websocket_conn,  # Use renamed variable
                             "message": message_content,
                         }
                     )
                     # Actually send the message through the WebSocket for TestClient
                     try:
-                        await websocket.send_json(message_content)
+                        await websocket_conn.send_json(
+                            message_content
+                        )  # Use renamed variable
                         logger.info(
                             "Sent message to user %s through websocket: %s",
                             user_id,
@@ -252,7 +272,7 @@ class _TestConnectionManager:
                     logger.info(
                         "Recorded direct message send to user %s via %s",
                         user_id,
-                        websocket,
+                        websocket_conn,  # Use renamed variable
                     )
         else:
             logger.warning(
@@ -267,11 +287,37 @@ class _TestConnectionManager:
     ) -> None:
         logger.info("Attempting to broadcast message to room %s: %s", room_id, message)
 
-        message_content = message
-        if hasattr(message, "model_dump_json"):
+        message_content: dict[str, Any]
+        if isinstance(message, BaseModel):
             message_content = json.loads(message.model_dump_json())
-        elif hasattr(message, "dict"):
-            message_content = message.dict()
+        elif isinstance(message, dict):
+            message_content = message
+        elif hasattr(message, "dict") and callable(message.dict):
+            # This handles Pydantic v1 models or other objects with a dict() method
+            try:
+                content = message.dict()
+                if isinstance(content, dict):
+                    message_content = content
+                else:
+                    logger.error(
+                        "message.dict() did not return a dict for broadcast: %s",
+                        type(content),
+                    )
+                    message_content = {
+                        "error": "Failed to serialize message via dict()"
+                    }
+            except Exception as e:
+                logger.error(
+                    "Error calling message.dict() for broadcast: %s", e, exc_info=True
+                )
+                message_content = {"error": "Error serializing message via dict()"}
+        else:
+            logger.error(
+                "Unsupported message type: %s for broadcast_to_room", type(message)
+            )
+            # If it's not a BaseModel, not a dict, and doesn't have a .dict() method,
+            # we are in trouble for JSON serialization. Default to an error dict.
+            message_content = {"error": "Unsupported message type for broadcast"}
 
         self.messages_sent.append(
             {
@@ -295,11 +341,8 @@ class _TestConnectionManager:
             for ws in self.user_connections.get(user_id_in_room, []):
                 if ws in self.active_websockets:
                     try:
-                        message_str = (
-                            message.model_dump_json()
-                            if hasattr(message, "model_dump_json")
-                            else json.dumps(message_content)
-                        )
+                        # Always use json.dumps on message_content which is reliably a dict
+                        message_str = json.dumps(message_content)
                         await ws.send_text(message_str)
                     except (RuntimeError, ConnectionError, OSError):
                         pass

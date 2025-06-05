@@ -14,6 +14,7 @@ Each test is focused and targeted.
 """
 
 from datetime import UTC, datetime, timedelta
+import logging
 from typing import Any, cast
 from unittest.mock import AsyncMock, MagicMock, Mock, patch
 import uuid
@@ -38,6 +39,8 @@ from clarity.services.auth_service import (
     UserNotFoundError,
 )
 from tests.base import BaseServiceTestCase
+
+logger = logging.getLogger(__name__)
 
 
 # Test constants - these are safe test values, not real secrets
@@ -152,12 +155,18 @@ class MockFirestoreClient:
 class MockAuthProvider(IAuthProvider):
     """Simplified mock AuthProvider for focused tests."""
 
+    async def initialize(self) -> None:
+        """Initialize the authentication provider (mock implementation)."""
+
+    async def cleanup(self) -> None:
+        """Clean up authentication provider resources (mock implementation)."""
+
     def __init__(self) -> None:
         """Initialize mock provider."""
         self.should_fail = False
         self.error_on_next_call: bool = False
 
-    async def verify_token(self, token: str) -> dict[str, Any]:  # noqa: ARG002
+    async def verify_token(self, token: str) -> dict[str, Any] | None:  # noqa: ARG002
         """Mock verify token."""
         if self.error_on_next_call:
             raise AuthenticationError("Token verification failed (mock error)")
@@ -166,13 +175,13 @@ class MockAuthProvider(IAuthProvider):
             raise InvalidCredentialsError(msg)
         return {"uid": "test_user_id", "email": "test@example.com", "custom_claims": {}}
 
-    async def get_user_info(self, uid: str) -> dict[str, Any] | None:
+    async def get_user_info(self, user_id: str) -> dict[str, Any] | None:
         """Mock get user info."""
         if self.should_fail or self.error_on_next_call:
             return None
         return {
-            "uid": uid,
-            "email": f"{uid}@example.com",
+            "uid": user_id,
+            "email": f"{user_id}@example.com",
             "disabled": False,
             "email_verified": True,
             "display_name": "Mock User",
@@ -186,11 +195,11 @@ class MockAuthProvider(IAuthProvider):
             return "mock_token_creation_failed"
         return f"mock_custom_token_for_{uid}"
 
-    async def revoke_refresh_tokens(self, uid: str) -> None:
+    async def revoke_refresh_tokens(self, user_id: str) -> None:
         """Mock revoke refresh tokens."""
         if self.should_fail or self.error_on_next_call:
             raise AuthenticationError("Failed to revoke refresh tokens (mock)")
-        logger.info("Mock: Revoked refresh tokens for user %s", uid)
+        logger.info("Mock: Revoked refresh tokens for user %s", user_id)
 
 
 class TestAuthenticationServiceRegistration(BaseServiceTestCase):

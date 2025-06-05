@@ -13,7 +13,7 @@ ENV PYTHONUNBUFFERED=1 \
     PIP_DISABLE_PIP_VERSION_CHECK=1
 
 # Install system dependencies for building
-# Note: Pinning exact versions for apt packages (DL3008) can be beneficial 
+# Note: Pinning exact versions for apt packages (DL3008) can be beneficial
 # but requires finding versions compatible with the base image. Adding --no-install-recommends.
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \

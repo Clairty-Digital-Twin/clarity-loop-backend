@@ -282,9 +282,9 @@ class FirebaseAuthProvider(IAuthProvider):
         self._token_cache_max_size = auth_provider_specific_config.get(
             "cache_max_size", 1000
         )
-        self._token_cache: dict[
-            str, dict[str, Any]
-        ] = {}  # token -> {"user_data": dict, "timestamp": float}
+        self._token_cache: dict[str, dict[str, Any]] = (
+            {}
+        )  # token -> {"user_data": dict, "timestamp": float}
 
         logger.info("Firebase Authentication Provider initialized.")
         if credentials_path:
@@ -440,7 +440,9 @@ class FirebaseAuthProvider(IAuthProvider):
                     else None
                 ),  # type: ignore[union-attr]
             )
-        except Exception as e:  # Keep broad for unknown Firebase/network issues, ensure 'e' is available for chaining
+        except (
+            Exception
+        ) as e:  # Keep broad for unknown Firebase/network issues, ensure 'e' is available for chaining
             logger.exception("Error creating Firebase user")  # Removed e from log call
             raise AuthError(
                 message="Failed to create user",  # Simplified message, actual exception is chained

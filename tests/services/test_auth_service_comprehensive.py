@@ -45,6 +45,7 @@ LOGIN_PASSWORD_ERROR_MSG = (
     "Test setup error: default_password for login must be a string."
 )
 
+
 # Create proper mock exceptions that inherit from BaseException
 class MockUserNotFoundError(Exception):
     """Mock Firebase UserNotFoundError that properly inherits from BaseException."""
@@ -197,7 +198,7 @@ def sample_registration_request(
         raise TypeError(REGISTRATION_PASSWORD_ERROR_MSG)
     return UserRegistrationRequest(
         email="test@example.com",
-        password=password, 
+        password=password,
         first_name="John",
         last_name="Doe",
         phone_number="+1234567890",
@@ -216,9 +217,9 @@ def sample_login_request(
         raise TypeError(LOGIN_PASSWORD_ERROR_MSG)
     return UserLoginRequest(
         email="test@example.com",
-        password=password, 
+        password=password,
         remember_me=False,
-        device_info=None, 
+        device_info=None,
     )
 
 
@@ -237,17 +238,21 @@ class TestUserRegistration:
         email_for_new_user = "new_user_for_success_test@example.com"
 
         mock_auth.UserNotFoundError = auth.UserNotFoundError
-        cast(Mock, mock_auth.get_user_by_email).side_effect = mock_auth.UserNotFoundError(
-            "User not found for test"
+        cast("Mock", mock_auth.get_user_by_email).side_effect = (
+            mock_auth.UserNotFoundError("User not found for test")
         )
 
-        cast(Mock, mock_auth.create_user).return_value = MockFirebaseUserRecord(
+        cast("Mock", mock_auth.create_user).return_value = MockFirebaseUserRecord(
             uid=user_id, email=email_for_new_user
         )
-        cast(Mock, mock_auth.generate_email_verification_link).return_value = "http://verify.link"
+        cast("Mock", mock_auth.generate_email_verification_link).return_value = (
+            "http://verify.link"
+        )
         mock_auth.set_custom_user_claims = Mock()
 
-        cast(AsyncMock, auth_service.firestore_client.create_document).return_value = user_id
+        cast(
+            "AsyncMock", auth_service.firestore_client.create_document
+        ).return_value = user_id
 
         request_data_for_test = sample_registration_request.model_copy(
             update={"email": email_for_new_user}
@@ -260,9 +265,13 @@ class TestUserRegistration:
         assert isinstance(result.user_id, uuid.UUID)
         assert result.email == email_for_new_user
 
-        cast(Mock, mock_auth.get_user_by_email).assert_called_once_with(email_for_new_user)
-        cast(Mock, mock_auth.create_user).assert_called_once()
-        cast(AsyncMock, auth_service.firestore_client.create_document).assert_called_once()
+        cast("Mock", mock_auth.get_user_by_email).assert_called_once_with(
+            email_for_new_user
+        )
+        cast("Mock", mock_auth.create_user).assert_called_once()
+        cast(
+            "AsyncMock", auth_service.firestore_client.create_document
+        ).assert_called_once()
 
     @staticmethod
     @patch("clarity.services.auth_service.auth")
@@ -272,10 +281,8 @@ class TestUserRegistration:
         sample_registration_request: UserRegistrationRequest,
     ) -> None:
         """Test registration when user already exists."""
-        mock_auth.UserNotFoundError = (
-            auth.UserNotFoundError
-        )  
-        cast(Mock, mock_auth.get_user_by_email).return_value = MockFirebaseUserRecord(
+        mock_auth.UserNotFoundError = auth.UserNotFoundError
+        cast("Mock", mock_auth.get_user_by_email).return_value = MockFirebaseUserRecord(
             uid="existing_id", email=sample_registration_request.email
         )
 
@@ -284,7 +291,7 @@ class TestUserRegistration:
                 sample_registration_request, device_info={}
             )
         assert "already exists" in str(exc_info.value)
-        cast(Mock, mock_auth.create_user).assert_not_called()
+        cast("Mock", mock_auth.create_user).assert_not_called()
 
     @staticmethod
     @patch("clarity.services.auth_service.auth")
@@ -298,10 +305,10 @@ class TestUserRegistration:
         mock_user_record.uid = str(uuid.uuid4())
 
         mock_auth.UserNotFoundError = MockUserNotFoundError
-        cast(Mock, mock_auth.get_user_by_email).side_effect = MockUserNotFoundError(
+        cast("Mock", mock_auth.get_user_by_email).side_effect = MockUserNotFoundError(
             "User not found"
         )
-        cast(Mock, mock_auth.create_user).return_value = mock_user_record
+        cast("Mock", mock_auth.create_user).return_value = mock_user_record
         mock_auth.set_custom_user_claims = Mock()
 
         device_info = {"device_type": "iPhone", "os_version": "iOS 17"}
@@ -310,7 +317,9 @@ class TestUserRegistration:
             sample_registration_request, device_info=device_info
         )
 
-        call_args = cast(AsyncMock, auth_service.firestore_client.create_document).call_args
+        call_args = cast(
+            "AsyncMock", auth_service.firestore_client.create_document
+        ).call_args
         user_data = call_args[1]["data"]
         assert user_data["device_info"] == device_info
 
@@ -322,13 +331,13 @@ class TestUserRegistration:
         sample_registration_request: UserRegistrationRequest,
     ) -> None:
         """Test registration when Firebase throws an error."""
-        mock_auth.UserNotFoundError = (
-            auth.UserNotFoundError
-        )  
-        cast(Mock, mock_auth.get_user_by_email).side_effect = mock_auth.UserNotFoundError(
-            "User not found"
+        mock_auth.UserNotFoundError = auth.UserNotFoundError
+        cast("Mock", mock_auth.get_user_by_email).side_effect = (
+            mock_auth.UserNotFoundError("User not found")
         )
-        cast(Mock, mock_auth.create_user).side_effect = MockAuthError("Firebase create_user error")
+        cast("Mock", mock_auth.create_user).side_effect = MockAuthError(
+            "Firebase create_user error"
+        )
 
         with pytest.raises(AuthenticationError, match="Registration failed"):
             await auth_service.register_user(
@@ -356,7 +365,7 @@ class TestUserLogin:
         mock_user_record.disabled = False
 
         mock_auth.UserNotFoundError = MockUserNotFoundError
-        cast(Mock, mock_auth.get_user_by_email).return_value = mock_user_record
+        cast("Mock", mock_auth.get_user_by_email).return_value = mock_user_record
 
         user_data = {
             "user_id": str(test_uuid),
@@ -370,17 +379,15 @@ class TestUserLogin:
             "login_count": 0,
             "created_at": datetime.now(UTC),
         }
-        cast(AsyncMock, auth_service.firestore_client.get_document).return_value = user_data
+        cast("AsyncMock", auth_service.firestore_client.get_document).return_value = (
+            user_data
+        )
 
         with patch.object(auth_service, "_generate_tokens") as mock_gen_tokens_patch:
-            mock_gen_tokens: Mock = mock_gen_tokens_patch 
+            mock_gen_tokens: Mock = mock_gen_tokens_patch
             mock_tokens = TokenResponse(
-                access_token=cast(
-                    "str", test_env_credentials["mock_access_token"]
-                ), 
-                refresh_token=cast(
-                    "str", test_env_credentials["mock_refresh_token"]
-                ), 
+                access_token=cast("str", test_env_credentials["mock_access_token"]),
+                refresh_token=cast("str", test_env_credentials["mock_refresh_token"]),
                 token_type="bearer",  # noqa: S106
                 expires_in=3600,
                 scope="full_access",
@@ -433,7 +440,9 @@ class TestUserLogin:
         )
 
         mock_auth.UserNotFoundError = auth.UserNotFoundError
-        cast(Mock, mock_auth.get_user_by_email).return_value = mock_user_record_instance
+        cast("Mock", mock_auth.get_user_by_email).return_value = (
+            mock_user_record_instance
+        )
 
         user_data = {
             "user_id": str(test_uuid),
@@ -447,7 +456,9 @@ class TestUserLogin:
             "login_count": 0,
             "created_at": datetime.now(UTC),
         }
-        cast(AsyncMock, auth_service.firestore_client.get_document).return_value = user_data
+        cast("AsyncMock", auth_service.firestore_client.get_document).return_value = (
+            user_data
+        )
 
         with patch(
             "clarity.services.auth_service.secrets.token_urlsafe"
@@ -471,9 +482,9 @@ class TestUserLogin:
         sample_login_request: UserLoginRequest,
     ) -> None:
         """Test login when user not found."""
-        mock_auth.UserNotFoundError = auth.UserNotFoundError  
-        cast(Mock, mock_auth.get_user_by_email).side_effect = mock_auth.UserNotFoundError(
-            "User not found"
+        mock_auth.UserNotFoundError = auth.UserNotFoundError
+        cast("Mock", mock_auth.get_user_by_email).side_effect = (
+            mock_auth.UserNotFoundError("User not found")
         )
 
         with pytest.raises(UserNotFoundError):
@@ -490,8 +501,8 @@ class TestUserLogin:
         mock_user_record = MockFirebaseUserRecord(
             uid=str(uuid.uuid4()), email=sample_login_request.email, disabled=True
         )
-        mock_auth.UserNotFoundError = auth.UserNotFoundError 
-        cast(Mock, mock_auth.get_user_by_email).return_value = mock_user_record
+        mock_auth.UserNotFoundError = auth.UserNotFoundError
+        cast("Mock", mock_auth.get_user_by_email).return_value = mock_user_record
 
         with pytest.raises(AccountDisabledError):
             await auth_service.login_user(sample_login_request, device_info=None)
@@ -512,18 +523,20 @@ class TestUserLogin:
             email_verified=False,
             disabled=False,
         )
-        mock_auth.UserNotFoundError = auth.UserNotFoundError 
-        cast(Mock, mock_auth.get_user_by_email).return_value = mock_user_record
+        mock_auth.UserNotFoundError = auth.UserNotFoundError
+        cast("Mock", mock_auth.get_user_by_email).return_value = mock_user_record
 
         user_data = {
             "user_id": str(test_uuid),
             "email": sample_login_request.email,
-            "status": UserStatus.PENDING_VERIFICATION.value, 
+            "status": UserStatus.PENDING_VERIFICATION.value,
             "mfa_enabled": False,
             "login_count": 0,
             "created_at": datetime.now(UTC),
         }
-        cast(AsyncMock, auth_service.firestore_client.get_document).return_value = user_data
+        cast("AsyncMock", auth_service.firestore_client.get_document).return_value = (
+            user_data
+        )
 
         with patch.object(auth_service, "_generate_tokens") as mock_gen_tokens_patch:
             mock_gen_tokens: Mock = mock_gen_tokens_patch
@@ -553,9 +566,9 @@ class TestUserLogin:
                         permissions=["read_own_data"],
                         status=UserStatus.PENDING_VERIFICATION,
                         mfa_enabled=False,
-                        email_verified=False,  
+                        email_verified=False,
                         created_at=datetime.now(UTC),
-                        last_login=None,  
+                        last_login=None,
                     )
                     mock_session_response.return_value = mock_user_session
                     result = await auth_service.login_user(
@@ -589,12 +602,12 @@ class TestTokenManagement:
             assert isinstance(result, TokenResponse)
             assert result.access_token == cast(
                 "str", test_env_credentials["mock_access_token"]
-            ) 
+            )
             assert result.refresh_token == cast(
                 "str", test_env_credentials["mock_refresh_token"]
-            ) 
-            assert result.token_type == "bearer"  # noqa: S106
-            assert result.expires_in == 3600  
+            )
+            assert result.token_type == "bearer"
+            assert result.expires_in == 3600
 
     @staticmethod
     async def test_generate_tokens_remember_me(
@@ -616,7 +629,7 @@ class TestTokenManagement:
             result = await auth_service._generate_tokens(user_id, remember_me=True)
 
             assert isinstance(result, TokenResponse)
-            assert result.expires_in == 86400 * 30  
+            assert result.expires_in == 86400 * 30
 
     @staticmethod
     async def test_refresh_access_token_success(
@@ -624,17 +637,17 @@ class TestTokenManagement:
         test_env_credentials: dict[str, str | None],
     ) -> None:
         """Test successful token refresh."""
-        refresh_token = cast(
-            "str", test_env_credentials["mock_refresh_token"]
-        ) 
+        refresh_token = cast("str", test_env_credentials["mock_refresh_token"])
 
         token_data = {
             "id": "token-doc-id",
             "user_id": "test-uid-123",
-            "expires_at": datetime.now(UTC) + timedelta(days=1),  
+            "expires_at": datetime.now(UTC) + timedelta(days=1),
             "is_revoked": False,
         }
-        cast(AsyncMock, auth_service.firestore_client.query_documents).return_value = [token_data]
+        cast(
+            "AsyncMock", auth_service.firestore_client.query_documents
+        ).return_value = [token_data]
 
         with patch(
             "clarity.services.auth_service.secrets.token_urlsafe"
@@ -650,16 +663,18 @@ class TestTokenManagement:
             assert isinstance(result, TokenResponse)
             assert result.access_token == cast(
                 "str", test_env_credentials["mock_new_access_token"]
-            ) 
+            )
 
     @staticmethod
     async def test_refresh_access_token_not_found(
         auth_service: AuthenticationService,
     ) -> None:
         """Test token refresh with invalid token."""
-        refresh_token = "invalid-refresh-token"  # noqa: S105 
+        refresh_token = "invalid-refresh-token"  # noqa: S105
 
-        cast(AsyncMock, auth_service.firestore_client.query_documents).return_value = []
+        cast(
+            "AsyncMock", auth_service.firestore_client.query_documents
+        ).return_value = []
 
         with pytest.raises(InvalidCredentialsError):
             await auth_service.refresh_access_token(refresh_token)
@@ -669,15 +684,17 @@ class TestTokenManagement:
         auth_service: AuthenticationService,
     ) -> None:
         """Test token refresh with expired token."""
-        refresh_token = "expired-refresh-token"  # noqa: S105 
+        refresh_token = "expired-refresh-token"  # noqa: S105
 
         token_data = {
             "id": "token-doc-id",
             "user_id": "test-uid-123",
-            "expires_at": datetime.now(UTC) - timedelta(days=1),  
+            "expires_at": datetime.now(UTC) - timedelta(days=1),
             "is_revoked": False,
         }
-        cast(AsyncMock, auth_service.firestore_client.query_documents).return_value = [token_data]
+        cast(
+            "AsyncMock", auth_service.firestore_client.query_documents
+        ).return_value = [token_data]
 
         with pytest.raises(InvalidCredentialsError):
             await auth_service.refresh_access_token(refresh_token)
@@ -689,7 +706,9 @@ class TestTokenManagement:
         """Test token refresh with revoked token."""
         refresh_token = "revoked-refresh-token"  # noqa: S105
 
-        cast(AsyncMock, auth_service.firestore_client.query_documents).return_value = []
+        cast(
+            "AsyncMock", auth_service.firestore_client.query_documents
+        ).return_value = []
 
         with pytest.raises(InvalidCredentialsError):
             await auth_service.refresh_access_token(refresh_token)
@@ -704,9 +723,7 @@ class TestSessionManagement:
     ) -> None:
         """Test user session creation."""
         user_id = "test-uid-123"
-        refresh_token = cast(
-            "str", test_env_credentials["mock_refresh_token"]
-        ) 
+        refresh_token = cast("str", test_env_credentials["mock_refresh_token"])
         device_info = {"device_type": "iPhone"}
         ip_address = "192.168.1.1"
 
@@ -717,8 +734,10 @@ class TestSessionManagement:
         assert isinstance(session_id, str)
         assert len(session_id) > 0
 
-        cast(AsyncMock, auth_service.firestore_client.create_document).assert_called()
-        call_args = cast(AsyncMock, auth_service.firestore_client.create_document).call_args
+        cast("AsyncMock", auth_service.firestore_client.create_document).assert_called()
+        call_args = cast(
+            "AsyncMock", auth_service.firestore_client.create_document
+        ).call_args
         session_data = call_args[1]["data"]
 
         assert session_data["user_id"] == user_id
@@ -763,9 +782,7 @@ class TestSessionManagement:
         auth_service: AuthenticationService, test_env_credentials: dict[str, str | None]
     ) -> None:
         """Test successful user logout."""
-        refresh_token = cast(
-            "str", test_env_credentials["mock_refresh_token"]
-        ) 
+        refresh_token = cast("str", test_env_credentials["mock_refresh_token"])
 
         token_data = {
             "id": "token-doc-id",
@@ -782,27 +799,34 @@ class TestSessionManagement:
             "is_active": True,
         }
 
-        cast(AsyncMock, auth_service.firestore_client.query_documents).side_effect = [
-            [token_data],  
-            [session_data], 
+        cast("AsyncMock", auth_service.firestore_client.query_documents).side_effect = [
+            [token_data],
+            [session_data],
         ]
 
         result = await auth_service.logout_user(refresh_token)
 
         assert result is True
-        assert cast(AsyncMock, auth_service.firestore_client.update_document).call_count == 2
+        assert (
+            cast("AsyncMock", auth_service.firestore_client.update_document).call_count
+            == 2
+        )
 
     @staticmethod
     async def test_logout_user_failure(auth_service: AuthenticationService) -> None:
         """Test user logout with error."""
-        refresh_token = "invalid-refresh-token"  # noqa: S105 
+        refresh_token = "invalid-refresh-token"  # noqa: S105
 
-        cast(AsyncMock, auth_service.firestore_client.query_documents).return_value = []
+        cast(
+            "AsyncMock", auth_service.firestore_client.query_documents
+        ).return_value = []
 
         result = await auth_service.logout_user(refresh_token)
 
-        assert result is True  
-        cast(AsyncMock, auth_service.firestore_client.update_document).assert_not_called()
+        assert result is True
+        cast(
+            "AsyncMock", auth_service.firestore_client.update_document
+        ).assert_not_called()
 
 
 class TestUserRetrieval:
@@ -822,7 +846,7 @@ class TestUserRetrieval:
         mock_user_record.uid = user_id
         mock_user_record.email = "test@example.com"
         mock_user_record.email_verified = True
-        cast(Mock, mock_auth.get_user).return_value = mock_user_record
+        cast("Mock", mock_auth.get_user).return_value = mock_user_record
         mock_auth.UserNotFoundError = MockUserNotFoundError
 
         user_data = {
@@ -835,7 +859,9 @@ class TestUserRetrieval:
             "created_at": datetime.now(UTC),
             "last_login": datetime.now(UTC),
         }
-        cast(AsyncMock, auth_service.firestore_client.get_document).return_value = user_data
+        cast("AsyncMock", auth_service.firestore_client.get_document).return_value = (
+            user_data
+        )
 
         result = await auth_service.get_user_by_id(user_id)
 
@@ -853,7 +879,9 @@ class TestUserRetrieval:
         user_id = str(uuid.uuid4())
 
         mock_auth.UserNotFoundError = MockUserNotFoundError
-        cast(Mock, mock_auth.get_user).side_effect = MockUserNotFoundError("User not found")
+        cast("Mock", mock_auth.get_user).side_effect = MockUserNotFoundError(
+            "User not found"
+        )
 
         result = await auth_service.get_user_by_id(user_id)
 
@@ -871,9 +899,11 @@ class TestUserRetrieval:
         mock_user_record = Mock()
         mock_user_record.uid = user_id
         mock_user_record.email = "test@example.com"
-        cast(Mock, mock_auth.get_user).return_value = mock_user_record
+        cast("Mock", mock_auth.get_user).return_value = mock_user_record
 
-        cast(AsyncMock, auth_service.firestore_client.get_document).return_value = None
+        cast("AsyncMock", auth_service.firestore_client.get_document).return_value = (
+            None
+        )
 
         result = await auth_service.get_user_by_id(user_id)
 
@@ -933,17 +963,19 @@ class TestEdgeCases:
             mock_user_record.uid = str(uuid.uuid4())
 
             mock_auth.UserNotFoundError = MockUserNotFoundError
-            cast(Mock, mock_auth.get_user_by_email).side_effect = MockUserNotFoundError(
-                "User not found"
+            cast("Mock", mock_auth.get_user_by_email).side_effect = (
+                MockUserNotFoundError("User not found")
             )
-            cast(Mock, mock_auth.create_user).return_value = mock_user_record
+            cast("Mock", mock_auth.create_user).return_value = mock_user_record
             mock_auth.set_custom_user_claims = Mock()
 
             await auth_service.register_user(
                 sample_registration_request, device_info={}
             )
 
-            call_args = cast(AsyncMock, auth_service.firestore_client.create_document).call_args
+            call_args = cast(
+                "AsyncMock", auth_service.firestore_client.create_document
+            ).call_args
             user_data = call_args[1]["data"]
             assert user_data["device_info"] == {}
 
@@ -955,12 +987,12 @@ class TestEdgeCases:
         custom_service = AuthenticationService(
             auth_provider=auth_service.auth_provider,
             firestore_client=auth_service.firestore_client,
-            default_token_expiry=7200,  
+            default_token_expiry=7200,
         )
 
         user_id = "test-uid-123"
 
-        cast(Mock, custom_service.auth_provider).create_custom_token = Mock(
+        cast("Mock", custom_service.auth_provider).create_custom_token = Mock(
             return_value=b"mock-token"
         )
 
@@ -981,7 +1013,7 @@ class TestEdgeCases:
 
         async def mock_token_op(user_id: str) -> TokenResponse:
             """Mock token operation."""
-            cast(Mock, auth_service.auth_provider).create_custom_token = Mock(
+            cast("Mock", auth_service.auth_provider).create_custom_token = Mock(
                 return_value=b"mock-token"
             )
 
@@ -1011,9 +1043,7 @@ class TestDataValidation:
         """Test registration request validation."""
         valid_request = UserRegistrationRequest(
             email="test@example.com",
-            password=cast(
-                "str", test_env_credentials["default_password"]
-            ), 
+            password=cast("str", test_env_credentials["default_password"]),
             first_name="John",
             last_name="Doe",
             phone_number=None,
@@ -1025,9 +1055,7 @@ class TestDataValidation:
         with pytest.raises(ValidationError, match="value is not a valid email address"):
             UserRegistrationRequest(
                 email="invalid-email",
-                password=cast(
-                    "str", test_env_credentials["default_password"]
-                ), 
+                password=cast("str", test_env_credentials["default_password"]),
                 first_name="John",
                 last_name="Doe",
                 phone_number=None,
@@ -1042,18 +1070,14 @@ class TestDataValidation:
         """Test login request validation."""
         valid_request = UserLoginRequest(
             email="test@example.com",
-            password=cast(
-                "str", test_env_credentials["default_password"]
-            ), 
-            device_info=None, 
+            password=cast("str", test_env_credentials["default_password"]),
+            device_info=None,
         )
         assert valid_request.email == "test@example.com"
 
         with pytest.raises(ValidationError, match="value is not a valid email address"):
             UserLoginRequest(
                 email="invalid-email",
-                password=cast(
-                    "str", test_env_credentials["default_password"]
-                ), 
-                device_info=None, 
+                password=cast("str", test_env_credentials["default_password"]),
+                device_info=None,
             )

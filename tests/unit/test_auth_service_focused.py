@@ -138,9 +138,7 @@ class MockFirestoreClient:
     ) -> dict[str, Any] | None:
         """Mock get document."""
         if self.error_on_next_call:
-            raise MockFirestoreError(
-                _MOCK_FIRESTORE_ERROR_MSG
-            ) 
+            raise MockFirestoreError(_MOCK_FIRESTORE_ERROR_MSG)
         return self.documents.get(f"{collection}/{doc_id}")
 
     async def update_document(
@@ -169,9 +167,7 @@ class MockFirestoreClient:
     ) -> list[dict[str, Any]]:
         """Mock query documents."""
         if self.error_on_next_call:
-            raise MockFirestoreError(
-                _MOCK_FIRESTORE_ERROR_MSG
-            ) 
+            raise MockFirestoreError(_MOCK_FIRESTORE_ERROR_MSG)
         return self.query_results
 
 

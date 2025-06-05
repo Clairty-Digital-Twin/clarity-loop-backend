@@ -6,7 +6,7 @@ import functools
 import json
 import logging
 import time
-from typing import Any, Union
+from typing import Any
 from unittest.mock import (
     AsyncMock,
     MagicMock,
@@ -16,7 +16,7 @@ import uuid
 
 from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
 from fastapi.testclient import TestClient
-from pydantic import BaseModel, Field
+from pydantic import Field
 import pytest
 
 from clarity.api.v1.websocket import chat_handler
@@ -25,13 +25,12 @@ from clarity.api.v1.websocket.lifespan import get_connection_manager
 from clarity.api.v1.websocket.models import (
     ChatMessage,
     ConnectionInfo,
-    HealthInsightRequest,
     HeartbeatMessage,
     MessageType,
     TypingMessage,
 )
 from clarity.auth.firebase_auth import get_current_user_websocket
-from clarity.ml.gemini_service import GeminiService
+from clarity.ml.gemini_service import GeminiService, HealthInsightRequest
 from clarity.ml.pat_service import PATModelService
 from clarity.models.user import User
 
@@ -184,9 +183,7 @@ class _TestConnectionManager:
             len(self.active_websockets),
         )
 
-    async def send_to_connection(
-        self, websocket: WebSocket, message: BaseModel | dict[str, Any]
-    ) -> None:
+    async def send_to_connection(self, websocket: WebSocket, message: Any) -> None:
         logger.info("Attempting to send message to connection: %s", message)
 
         if websocket not in self.connection_info:
@@ -216,9 +213,7 @@ class _TestConnectionManager:
 
         logger.info("Recorded direct message send to %s", websocket)
 
-    async def send_to_user(
-        self, user_id: str, message: BaseModel | dict[str, Any]
-    ) -> None:
+    async def send_to_user(self, user_id: str, message: Any) -> None:
         """Send a message to all active connections for a given user."""
         logger.info("Attempting to send message to user %s: %s", user_id, message)
 
@@ -267,7 +262,7 @@ class _TestConnectionManager:
     async def broadcast_to_room(
         self,
         room_id: str,
-        message: BaseModel | dict[str, Any],
+        message: Any,
         exclude_websocket: WebSocket | None = None,
     ) -> None:
         logger.info("Attempting to broadcast message to room %s: %s", room_id, message)

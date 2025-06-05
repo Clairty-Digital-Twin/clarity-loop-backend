@@ -27,6 +27,7 @@ from clarity.ml.pat_service import (
     get_pat_service,
 )
 from clarity.ml.preprocessing import ActigraphyDataPoint
+from clarity.services.health_data_service import MLPredictionError
 
 
 class TestPATEncoder:
@@ -451,7 +452,10 @@ class TestPATModelServiceAnalysis:
                 "_preprocess_actigraphy_data",
                 return_value=torch.randn(1, 1440, 1),
             ),
-            pytest.raises(RuntimeError, match="Model inference failed"),
+            pytest.raises(
+                MLPredictionError,
+                match="ML Prediction Error in PAT-medium: Error during PAT model prediction: Model inference failed",
+            ),
         ):
             await service.analyze_actigraphy(sample_actigraphy_input)
 

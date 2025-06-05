@@ -447,8 +447,12 @@ class PATModelService(IMLModelService):
             self.is_loaded = True
             logger.info("PAT model loaded successfully")
 
-        except Exception:
-            logger.exception("Failed to load PAT model")
+        except Exception as e:
+            logger.critical(
+                "Failed to load PAT model: %s",
+                e,
+                exc_info=True,
+            )
             raise
 
     def _load_pretrained_weights(self) -> None:
@@ -558,7 +562,7 @@ class PATModelService(IMLModelService):
 
                 logger.info("Successfully converted %d tensors", len(state_dict))
 
-        except Exception:
+        except Exception as e:
             logger.exception("Failed to convert TensorFlow weights")
             return {}
 
@@ -887,9 +891,12 @@ class PATModelService(IMLModelService):
                 outputs = cast("dict[str, torch.Tensor]", model(input_tensor))
         except Exception as e:
             logger.critical(
-                f"PAT model inference failed for user {input_data.user_id}: {e}",
+                "PAT model inference failed for user %s: %s",
+                input_data.user_id,
+                e,
                 exc_info=True,
             )
+            # Re-raise as a service-specific ML error with context
             raise MLPredictionError(
                 message=f"Error during PAT model prediction: {e!s}",
                 model_name=f"PAT-{self.model_size}",
@@ -976,17 +983,21 @@ async def get_pat_service() -> PATModelService:
     logger.info("Initializing global PATModelService for the first time...")
     # Create a local instance first, then load, then assign to global
     try:
-        service_instance = PATModelService() # Default model_size="medium"
+        service_instance = PATModelService()  # Default model_size="medium"
         # Ensure it's an instance before calling methods, for type checker's sake
         if not isinstance(service_instance, PATModelService):
             # This should ideally not happen if PATModelService constructor is typical
             raise RuntimeError("PATModelService() did not return a valid instance.")
-            
+
         await service_instance.load_model()  # type: ignore[misc] # MyPy struggles with this line
-        _pat_service = service_instance      # Assign to global only after all successful
+        _pat_service = service_instance  # Assign to global only after all successful
         logger.info("Global PATModelService initialized and model loaded successfully.")
         return _pat_service
     except Exception as e:
-        logger.critical(f"Failed to initialize global PATModelService: {e}", exc_info=True)
+        logger.critical(
+            "Failed to initialize global PATModelService: %s", e, exc_info=True
+        )
         # Critical failure, service cannot be provided. Re-raise to make it clear.
-        raise RuntimeError(f"PATModelService could not be initialized and is unavailable: {e}") from e
+        raise RuntimeError(
+            f"PATModelService could not be initialized and is unavailable: {e}"
+        ) from e

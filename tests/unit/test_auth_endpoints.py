@@ -19,11 +19,9 @@ from clarity.services.auth_service import (
 )
 
 # Test constants (not actual security tokens - used for testing only)
-# TEST_ACCESS_TOKEN = "test_access_token_for_testing"
-# TEST_REFRESH_TOKEN = "test_refresh_token_for_testing"
-# TEST_NEW_ACCESS_TOKEN = "test_new_access_token_for_testing"
-# TEST_NEW_REFRESH_TOKEN = "test_new_refresh_token_for_testing"
 TEST_TOKEN_TYPE = "bearer"  # noqa: S105 - Standard OAuth token type
+
+MOCK_USER_ID = "mock_user_123"
 
 
 class TestAuthenticationEndpoints:

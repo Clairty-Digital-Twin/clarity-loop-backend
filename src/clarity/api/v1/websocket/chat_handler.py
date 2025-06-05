@@ -128,12 +128,11 @@ class WebSocketChatHandler:
         connection_manager: ConnectionManager,
     ) -> None:
         client_ts_iso = message.get("client_timestamp")
+        current_time_utc = datetime.now(UTC)
         client_timestamp_dt: datetime | None = None
         if client_ts_iso:
             try:
-                client_timestamp_dt = datetime.fromisoformat(
-                    client_ts_iso.replace("Z", "+00:00")
-                )
+                client_timestamp_dt = datetime.fromisoformat(client_ts_iso)
             except ValueError:
                 logger.warning(
                     "Invalid client_timestamp format in heartbeat: %s", client_ts_iso

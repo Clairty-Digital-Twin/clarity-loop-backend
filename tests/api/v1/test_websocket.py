@@ -183,7 +183,7 @@ class _TestConnectionManager:
             len(self.active_websockets),
         )
 
-    async def send_to_connection(self, websocket: WebSocket, message: Any) -> None:
+    async def send_to_connection(self, websocket: WebSocket, message: Any) -> None:  # noqa: ANN401 - Mock allows Pydantic model or dict
         logger.info("Attempting to send message to connection: %s", message)
 
         if websocket not in self.connection_info:
@@ -211,9 +211,11 @@ class _TestConnectionManager:
         except (RuntimeError, ConnectionError, OSError) as e:
             logger.warning("Failed to send message through websocket: %s", e)
 
-        logger.info("Recorded direct message send to %s", websocket)
+        logger.info(
+            "Recorded direct message send to %s", websocket
+        )
 
-    async def send_to_user(self, user_id: str, message: Any) -> None:
+    async def send_to_user(self, user_id: str, message: Any) -> None:  # noqa: ANN401 - Mock allows Pydantic model or dict
         """Send a message to all active connections for a given user."""
         logger.info("Attempting to send message to user %s: %s", user_id, message)
 
@@ -262,7 +264,7 @@ class _TestConnectionManager:
     async def broadcast_to_room(
         self,
         room_id: str,
-        message: Any,
+        message: Any,  # noqa: ANN401 - Mock allows Pydantic model or dict
         exclude_websocket: WebSocket | None = None,
     ) -> None:
         logger.info("Attempting to broadcast message to room %s: %s", room_id, message)
@@ -928,7 +930,7 @@ class TestWebSocketEndpoints:
                     )
                 except Exception as e_initial_other:
                     logger.exception(
-                        "Error receiving initial message: %s", e_initial_other
+                        "Error receiving initial message: %s"  # TRY401: Removed e_initial_other
                     )
                     pytest.fail(f"Error receiving initial message: {e_initial_other}")
 
@@ -979,7 +981,7 @@ class TestWebSocketEndpoints:
                 f"Failed to connect or disconnected early: {e_connect.code} - {e_connect.reason}"
             )
         except Exception as e_outer:
-            logger.exception("Outer exception during WebSocket test: %s", e_outer)
+            logger.exception("Outer exception during WebSocket test: %s")  # TRY401: Removed e_outer
             pytest.fail(f"Outer exception: {e_outer}")
 
 

@@ -128,7 +128,6 @@ class WebSocketChatHandler:
         connection_manager: ConnectionManager,
     ) -> None:
         client_ts_iso = message.get("client_timestamp")
-        current_time_utc = datetime.now(UTC)
         client_timestamp_dt: datetime | None = None
         if client_ts_iso:
             try:

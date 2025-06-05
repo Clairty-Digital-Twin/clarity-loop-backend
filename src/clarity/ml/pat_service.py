@@ -31,7 +31,7 @@ try:
 
     _has_h5py = True
 except ImportError:
-    h5py = None  # type: ignore[assignment]
+    h5py = None
     _has_h5py = False
 
 from clarity.ml.preprocessing import ActigraphyDataPoint, HealthDataPreprocessor
@@ -510,24 +510,31 @@ class PATModelService(IMLModelService):
         """Load and convert TensorFlow H5 weights to PyTorch format."""
         state_dict = {}
 
+        if not _has_h5py:
+            logger.error("h5py is not installed, cannot load H5 weights. Please install with: pip install h5py")
+            return state_dict
+
+        # At this point, Mypy knows h5py is not None due to the _has_h5py check
+        assert h5py is not None  # Make it explicit for Mypy
+
         try:
-            with h5py.File(h5_path, "r") as h5_file:  # type: ignore[union-attr]
+            with h5py.File(h5_path, "r") as h5_file:
                 logger.info("Converting TensorFlow weights to PyTorch format")
 
                 # Convert patch embedding layer (dense -> patch_embedding)
-                if "dense" in h5_file and "dense" in h5_file["dense"]:  # type: ignore[operator,index]
-                    dense_group = h5_file["dense"]["dense"]  # type: ignore[index]
-                    if "kernel:0" in dense_group:  # type: ignore[operator]
+                if "dense" in h5_file and "dense" in h5_file["dense"]:
+                    dense_group = h5_file["dense"]["dense"]
+                    if "kernel:0" in dense_group:
                         # TF: [patch_size, embed_dim] -> PyTorch: [patch_size, embed_dim]
-                        tf_weight_data = dense_group["kernel:0"][:]  # type: ignore[index]
+                        tf_weight_data = dense_group["kernel:0"][:]
                         tf_weight_np = np.array(
                             tf_weight_data
                         )  # Ensure it's a numpy array
                         state_dict["encoder.patch_embedding.weight"] = torch.from_numpy(
                             tf_weight_np.T  # MODIFIED: use tf_weight_np
-                        )  # type: ignore[attr-defined]
-                    if "bias:0" in dense_group:  # type: ignore[operator]
-                        tf_bias_data = dense_group["bias:0"][:]  # type: ignore[index]
+                        )
+                    if "bias:0" in dense_group:
+                        tf_bias_data = dense_group["bias:0"][:]
                         tf_bias_np = np.array(tf_bias_data)  # Ensure it's a numpy array
                         state_dict["encoder.patch_embedding.bias"] = torch.from_numpy(
                             tf_bias_np  # MODIFIED: use tf_bias_np (bias is 1D, no .T needed)
@@ -587,12 +594,12 @@ class PATModelService(IMLModelService):
 
         # Convert Q, K, V weights for each head separately
         for qkv_name in ["query", "key", "value"]:
-            if qkv_name in attn_group:  # type: ignore[operator]
-                qkv_group = attn_group[qkv_name]  # type: ignore[index]
+            if qkv_name in attn_group:
+                qkv_group = attn_group[qkv_name]
 
-                if "kernel:0" in qkv_group:  # type: ignore[operator]
+                if "kernel:0" in qkv_group:
                     # TF shape: [embed_dim, num_heads, head_dim] = (96, 12, 96)
-                    tf_weight_data = qkv_group["kernel:0"][:]  # type: ignore[index]
+                    tf_weight_data = qkv_group["kernel:0"][:]
                     tf_weight_np = np.array(tf_weight_data)
 
                     # Split into separate heads

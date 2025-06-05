@@ -103,8 +103,8 @@ class WebSocketChatHandler:
         )
         await connection_manager.send_to_user(chat_message.user_id, response_message)
 
+    @staticmethod
     async def process_typing_message(
-        self,
         typing_message: TypingMessage,
         connection_manager: ConnectionManager,
         room_id: str,
@@ -121,8 +121,8 @@ class WebSocketChatHandler:
             typing_message,
         )
 
+    @staticmethod
     async def process_heartbeat(
-        self,
         websocket: WebSocket,
         message: dict[str, Any],
         connection_manager: ConnectionManager,
@@ -280,12 +280,12 @@ async def websocket_chat_endpoint(
                     elif message_type == MessageType.TYPING.value:
                         typing_msg: TypingMessage = TypingMessage(**message_data)
                         # Pass the room_id from the endpoint directly
-                        await handler.process_typing_message(
+                        await WebSocketChatHandler.process_typing_message(
                             typing_msg, connection_manager, room_id
                         )
 
                     elif message_type == MessageType.HEARTBEAT.value:
-                        await handler.process_heartbeat(
+                        await WebSocketChatHandler.process_heartbeat(
                             websocket, message_data, connection_manager
                         )
 
@@ -455,7 +455,9 @@ async def _handle_health_analysis_message(
                 await connection_manager.send_to_connection(websocket, error_msg)
 
         elif msg_type == MessageType.HEARTBEAT.value:
-            await handler.process_heartbeat(websocket, message_data, connection_manager)
+            await WebSocketChatHandler.process_heartbeat(
+                websocket, message_data, connection_manager
+            )
         else:
             logger.warning("Unknown message type: %s", msg_type)
             error_msg = ErrorMessage(

@@ -10,7 +10,7 @@ from unittest.mock import AsyncMock, MagicMock, Mock, patch
 
 import pytest
 
-from clarity.ml.analysis_pipeline import AnalysisResults, HealthAnalysisPipeline
+from clarity.ml.analysis_pipeline import HealthAnalysisPipeline
 from clarity.ml.processors.sleep_processor import SleepFeatures
 from clarity.models.health_data import (
     BiometricData,

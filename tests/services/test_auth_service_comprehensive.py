@@ -38,9 +38,7 @@ from clarity.services.auth_service import (
 from clarity.storage.firestore_client import FirestoreClient
 
 # Constants for exception messages
-REGISTRATION_PASSWORD_ERROR_MSG = (
-    "Test setup error: default_password for registration must be a string."  # noqa: S105
-)
+REGISTRATION_PASSWORD_ERROR_MSG = "Test setup error: default_password for registration must be a string."  # noqa: S105
 LOGIN_PASSWORD_ERROR_MSG = (
     "Test setup error: default_password for login must be a string."  # noqa: S105
 )
@@ -386,12 +384,8 @@ class TestUserLogin:
         with patch.object(auth_service, "_generate_tokens") as mock_gen_tokens_patch:
             mock_gen_tokens: Mock = mock_gen_tokens_patch
             mock_tokens = TokenResponse(
-                access_token=cast(
-                    "str", test_env_credentials["mock_access_token"]
-                ),
-                refresh_token=cast(
-                    "str", test_env_credentials["mock_refresh_token"]
-                ),
+                access_token=cast("str", test_env_credentials["mock_access_token"]),
+                refresh_token=cast("str", test_env_credentials["mock_refresh_token"]),
                 token_type="bearer",  # noqa: S106
                 expires_in=3600,
                 scope="full_access",
@@ -545,12 +539,8 @@ class TestUserLogin:
         with patch.object(auth_service, "_generate_tokens") as mock_gen_tokens_patch:
             mock_gen_tokens: Mock = mock_gen_tokens_patch
             mock_tokens = TokenResponse(
-                access_token=cast(
-                    "str", test_env_credentials["mock_access_token"]
-                ),
-                refresh_token=cast(
-                    "str", test_env_credentials["mock_refresh_token"]
-                ),
+                access_token=cast("str", test_env_credentials["mock_access_token"]),
+                refresh_token=cast("str", test_env_credentials["mock_refresh_token"]),
                 token_type="bearer",  # noqa: S106
                 expires_in=3600,
                 scope="full_access",

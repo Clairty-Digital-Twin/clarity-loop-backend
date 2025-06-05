@@ -265,7 +265,9 @@ class FirebaseAuthProvider(IAuthProvider):
         config_dict: dict[str, Any]
         if middleware_config is None:
             config_dict = {}
-        elif hasattr(middleware_config, "__dict__") and not isinstance(middleware_config, dict):
+        elif hasattr(middleware_config, "__dict__") and not isinstance(
+            middleware_config, dict
+        ):
             # It's likely a Pydantic model or similar object, access its dict representation
             config_dict = middleware_config.__dict__
         elif isinstance(middleware_config, dict):
@@ -275,17 +277,23 @@ class FirebaseAuthProvider(IAuthProvider):
             # Fallback if it's some other type, though a dict is expected
             config_dict = {}
 
-
-        self.middleware_config = config_dict # Store the resolved config_dict
+        self.middleware_config = config_dict  # Store the resolved config_dict
         self._initialized = False
-        
-        # Caching attributes for FirebaseAuthProvider itself
-        auth_provider_specific_config = self.middleware_config.get("auth_provider_config", {})
-        self.cache_is_enabled = auth_provider_specific_config.get("cache_enabled", True)
-        self._token_cache_ttl_seconds = auth_provider_specific_config.get("cache_ttl_seconds", 300)  # 5 minutes
-        self._token_cache_max_size = auth_provider_specific_config.get("cache_max_size", 1000)
-        self._token_cache: dict[str, dict[str, Any]] = {}  # token -> {"user_data": dict, "timestamp": float}
 
+        # Caching attributes for FirebaseAuthProvider itself
+        auth_provider_specific_config = self.middleware_config.get(
+            "auth_provider_config", {}
+        )
+        self.cache_is_enabled = auth_provider_specific_config.get("cache_enabled", True)
+        self._token_cache_ttl_seconds = auth_provider_specific_config.get(
+            "cache_ttl_seconds", 300
+        )  # 5 minutes
+        self._token_cache_max_size = auth_provider_specific_config.get(
+            "cache_max_size", 1000
+        )
+        self._token_cache: dict[str, dict[str, Any]] = (
+            {}
+        )  # token -> {"user_data": dict, "timestamp": float}
 
         logger.info("Firebase Authentication Provider initialized.")
         if credentials_path:
@@ -338,8 +346,12 @@ class FirebaseAuthProvider(IAuthProvider):
                 email_verified=decoded_token.get("email_verified", False),
                 firebase_token=token,
                 firebase_token_exp=decoded_token.get("exp"),
-                created_at=datetime.fromtimestamp(decoded_token.get("auth_time")) if decoded_token.get("auth_time") else None,
-                last_login=None, 
+                created_at=(
+                    datetime.fromtimestamp(decoded_token.get("auth_time"))
+                    if decoded_token.get("auth_time")
+                    else None
+                ),
+                last_login=None,
                 profile=None,
             )
             user_data_dict = user_model_instance.model_dump()
@@ -347,10 +359,15 @@ class FirebaseAuthProvider(IAuthProvider):
             if self.cache_is_enabled:
                 # Ensure cache does not exceed max size
                 if len(self._token_cache) >= self._token_cache_max_size:
-                    self._cleanup_expired_cache(force_evict_oldest=True) # Evict oldest if still full
-                
-                self._token_cache[token] = {"user_data": user_data_dict, "timestamp": time.time()}
-                self._cleanup_expired_cache() # Regular cleanup
+                    self._cleanup_expired_cache(
+                        force_evict_oldest=True
+                    )  # Evict oldest if still full
+
+                self._token_cache[token] = {
+                    "user_data": user_data_dict,
+                    "timestamp": time.time(),
+                }
+                self._cleanup_expired_cache()  # Regular cleanup
             return user_data_dict
         except firebase_auth.RevokedIdTokenError:
             logger.warning("Revoked Firebase ID token received: %s", token[:20] + "...")
@@ -428,7 +445,7 @@ class FirebaseAuthProvider(IAuthProvider):
             return None
 
     def _cleanup_expired_cache(self, force_evict_oldest: bool = False) -> None:
-        """Remove expired entries from token cache. 
+        """Remove expired entries from token cache.
         If force_evict_oldest is True and cache is still full, remove the oldest entry.
         """
         current_time = time.time()
@@ -439,23 +456,31 @@ class FirebaseAuthProvider(IAuthProvider):
         ]
 
         for t in expired_tokens:
-            if t in self._token_cache: # Check if still exists, might be removed by size limit
-                 del self._token_cache[t]
+            if (
+                t in self._token_cache
+            ):  # Check if still exists, might be removed by size limit
+                del self._token_cache[t]
 
         # Enforce cache size limit
         while len(self._token_cache) >= self._token_cache_max_size:
-            if not self._token_cache: # Should not happen if len >= max_size > 0
+            if not self._token_cache:  # Should not happen if len >= max_size > 0
                 break
             # Remove oldest entries if still over size limit
             # Sort by timestamp to find the oldest
             try:
-                oldest_token = min(self._token_cache.items(), key=lambda x: x[1]["timestamp"])[0]
+                oldest_token = min(
+                    self._token_cache.items(), key=lambda x: x[1]["timestamp"]
+                )[0]
                 del self._token_cache[oldest_token]
-                if not force_evict_oldest and not expired_tokens: # if we are not forced and didn't remove any expired, break to avoid infinite loop if all fresh
+                if (
+                    not force_evict_oldest and not expired_tokens
+                ):  # if we are not forced and didn't remove any expired, break to avoid infinite loop if all fresh
                     break
-            except ValueError: # Cache is empty
+            except ValueError:  # Cache is empty
                 break
-            if not force_evict_oldest: # if not forced, only one pass of cleanup by size
+            if (
+                not force_evict_oldest
+            ):  # if not forced, only one pass of cleanup by size
                 break
 
     async def cleanup(self) -> None:

@@ -168,3 +168,23 @@ class RoomInfo(BaseModel):
     max_users: int = 100
     active_users: list[str] = Field(default_factory=list)
     permissions: dict[str, Any] | None = None
+
+
+# Added for health data validation from WebSocket messages
+class InvalidWebSocketDataError(ValueError):
+    """Custom exception for invalid WebSocket data payloads."""
+    pass
+
+
+class ActigraphyDataPointSchema(BaseModel):
+    """Schema for individual actigraphy data points received via WebSocket."""
+    timestamp: datetime
+    value: float = Field(..., description="Activity count or acceleration value")
+
+
+class WebSocketHealthDataPayload(BaseModel):
+    """Schema for the 'data' or 'content' field of a health_data WebSocket message."""
+    data_points: list[ActigraphyDataPointSchema] = Field(default_factory=list)
+    steps: float | None = None # Optional steps, can be derived or primary
+    # Add other fields if the client might send them and trigger_health_analysis might use them
+    # e.g., sampling_rate, duration_hours, if not to be determined server-side primarily

@@ -14,6 +14,7 @@ from fastapi import (
     WebSocket,
     WebSocketDisconnect,
 )
+from pydantic import ValidationError
 
 from clarity.auth.firebase_auth import get_current_user_websocket
 from clarity.core.config import get_settings
@@ -34,6 +35,8 @@ from clarity.api.v1.websocket.models import (
     MessageType,
     SystemMessage,
     TypingMessage,
+    WebSocketHealthDataPayload,
+    InvalidWebSocketDataError,
 )
 from clarity.ml.pat_service import ActigraphyInput, PATModelService
 from clarity.ml.preprocessing import ActigraphyDataPoint
@@ -137,51 +140,35 @@ class WebSocketChatHandler:
     async def trigger_health_analysis(
         self,
         user_id: str,
-        health_data: dict[str, Any],
+        health_data_payload: WebSocketHealthDataPayload,
         connection_manager: ConnectionManager,
     ) -> None:
         logger.info(
-            "Triggering health analysis for user %s with data: %s", user_id, health_data
+            "Triggering health analysis for user %s with validated data: %s", user_id, health_data_payload.model_dump_json()
         )
         try:
             duration_hours = 24
-            if (
-                "data_points" in health_data
-                and isinstance(health_data["data_points"], list)
-                and len(health_data["data_points"]) > 1
-            ):
-                timestamps = []
-                for dp in health_data["data_points"]:
-                    try:
-                        if isinstance(dp, dict) and "timestamp" in dp:
-                            ts = dp["timestamp"]
-                            if isinstance(ts, str):
-                                timestamps.append(datetime.fromisoformat(ts))
-                    except (ValueError, TypeError) as ts_e:
-                        logger.warning(
-                            "Invalid timestamp format in health data point: %s. Error: %s",
-                            dp,
-                            ts_e,
-                        )
-                        continue
+            data_points_from_payload = health_data_payload.data_points
 
-                if len(timestamps) > 1:
+            if data_points_from_payload and len(data_points_from_payload) > 1:
+                timestamps = [dp.timestamp for dp in data_points_from_payload]
+                if timestamps:
                     min_ts = min(timestamps)
                     max_ts = max(timestamps)
                     duration_seconds = (max_ts - min_ts).total_seconds()
                     if duration_seconds > 0:
                         duration_hours = max(1, int(duration_seconds / 3600))
-                elif len(timestamps) == 1:
-                    duration_hours = 1
+            elif data_points_from_payload and len(data_points_from_payload) == 1:
+                duration_hours = 1
 
+            actigraphy_data_points = [
+                ActigraphyDataPoint(timestamp=dp.timestamp, value=dp.value)
+                for dp in data_points_from_payload
+            ]
+            
             actigraphy_input = ActigraphyInput(
                 user_id=user_id,
-                data_points=[
-                    ActigraphyDataPoint(
-                        timestamp=datetime.now(UTC),
-                        value=float(health_data.get("steps", 0)),
-                    )
-                ],
+                data_points=actigraphy_data_points,
                 sampling_rate=1.0,
                 duration_hours=duration_hours,
             )
@@ -295,11 +282,25 @@ async def websocket_chat_endpoint(
                         health_data_content = message_data.get("content", {})
                         user_id_from_message = message_data.get("user_id", "")
                         if user_id_from_message:
-                            await handler.trigger_health_analysis(
-                                user_id_from_message,
-                                health_data_content,
-                                connection_manager,
-                            )
+                            try:
+                                validated_payload = WebSocketHealthDataPayload.model_validate(health_data_content)
+                                await handler.trigger_health_analysis(
+                                    user_id_from_message,
+                                    validated_payload,
+                                    connection_manager,
+                                )
+                            except ValidationError as e:
+                                logger.warning("Invalid HEALTH_INSIGHT content payload: %s. Errors: %s", health_data_content, e.errors())
+                                error_msg = ErrorMessage(
+                                    error_code="INVALID_HEALTH_INSIGHT_CONTENT", 
+                                    message="Health insight content validation failed.",
+                                    details=e.errors()
+                                )
+                                await connection_manager.send_to_connection(websocket, error_msg)
+                            except InvalidWebSocketDataError as e:
+                                logger.warning("Invalid WebSocket health data for insight: %s", e)
+                                error_msg = ErrorMessage(error_code="INVALID_HEALTH_INSIGHT_DATA", message=str(e))
+                                await connection_manager.send_to_connection(websocket, error_msg)
                         else:
                             logger.warning("User ID not found in health data message.")
 
@@ -394,11 +395,27 @@ async def _handle_health_analysis_message(
     try:
         message_data = json.loads(raw_message)
         msg_type = message_data.get("type")
+
         if msg_type == "health_data":
-            health_data = message_data.get("data", {})
-            await handler.trigger_health_analysis(
-                user_id, health_data, connection_manager
-            )
+            health_data_content = message_data.get("data", {})
+            try:
+                validated_payload = WebSocketHealthDataPayload.model_validate(health_data_content)
+                await handler.trigger_health_analysis(
+                    user_id, validated_payload, connection_manager
+                )
+            except ValidationError as e:
+                logger.warning("Invalid health_data payload: %s. Errors: %s", health_data_content, e.errors())
+                error_msg = ErrorMessage(
+                    error_code="INVALID_HEALTH_DATA_PAYLOAD", 
+                    message="Health data payload validation failed.",
+                    details=e.errors()
+                )
+                await connection_manager.send_to_connection(websocket, error_msg)
+            except InvalidWebSocketDataError as e:
+                logger.warning("Invalid WebSocket health data: %s", e)
+                error_msg = ErrorMessage(error_code="INVALID_HEALTH_DATA", message=str(e))
+                await connection_manager.send_to_connection(websocket, error_msg)
+
         elif msg_type == MessageType.HEARTBEAT.value:
             await handler.process_heartbeat(websocket, message_data, connection_manager)
         else:

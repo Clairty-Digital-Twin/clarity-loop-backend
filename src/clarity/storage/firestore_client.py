@@ -642,7 +642,7 @@ class FirestoreClient:
         """
         try:
             db = await self._get_db()
-            query = db.collection(
+            query: Any = db.collection(
                 collection
             )  # Start as collection reference, becomes AsyncQuery after filters
 
@@ -708,7 +708,7 @@ class FirestoreClient:
         """
         try:
             db = await self._get_db()
-            query = db.collection(collection)
+            query: Any = db.collection(collection)
 
             # Apply filters
             if filters:
@@ -748,7 +748,7 @@ class FirestoreClient:
         """
         try:
             db = await self._get_db()
-            query = db.collection(collection)
+            query: Any = db.collection(collection)
 
             # Apply filters
             for filter_dict in filters:
@@ -848,9 +848,7 @@ class FirestoreClient:
                 try:
                     await self._db.close()  # type: ignore[no-untyped-call]
                 except Exception as e:
-                    logger.error(
-                        "Error closing Firestore client: %s", e
-                    )
+                    logger.error("Error closing Firestore client: %s", e)
                 self._db = None
                 logger.info("Firestore client closed")
         except Exception:

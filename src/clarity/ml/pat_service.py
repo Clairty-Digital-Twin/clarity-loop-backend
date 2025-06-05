@@ -511,7 +511,9 @@ class PATModelService(IMLModelService):
         state_dict: dict[str, torch.Tensor] = {}
 
         if not _has_h5py:
-            logger.error("h5py is not installed, cannot load H5 weights. Please install with: pip install h5py")
+            logger.error(
+                "h5py is not installed, cannot load H5 weights. Please install with: pip install h5py"
+            )
             return state_dict
 
         # At this point, Mypy knows h5py is not None due to the _has_h5py check

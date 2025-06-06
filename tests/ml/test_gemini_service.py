@@ -197,13 +197,14 @@ class TestGeminiServiceHealthInsights:
         sample_insight_request: HealthInsightRequest,
     ) -> None:
         """Test health insight generation when model is not initialized after init."""
+        from clarity.core.exceptions import ServiceUnavailableProblem
         service = GeminiService(project_id="test-project")
 
         with patch.object(service, "initialize"):
             service.is_initialized = True
             service.model = None  # Model remains None after initialization
 
-            with pytest.raises(RuntimeError, match="Gemini model not initialized"):
+            with pytest.raises(ServiceUnavailableProblem, match="temporarily unavailable"):
                 await service.generate_health_insights(sample_insight_request)
 
     @staticmethod
@@ -212,6 +213,7 @@ class TestGeminiServiceHealthInsights:
         sample_insight_request: HealthInsightRequest,
     ) -> None:
         """Test health insight generation with generation error."""
+        from clarity.core.exceptions import ServiceUnavailableProblem
         service = GeminiService(project_id="test-project")
 
         mock_model = MagicMock()
@@ -220,7 +222,7 @@ class TestGeminiServiceHealthInsights:
         service.is_initialized = True
         service.model = mock_model
 
-        with pytest.raises(Exception, match="Generation failed"):
+        with pytest.raises(ServiceUnavailableProblem, match="temporarily unavailable"):
             await service.generate_health_insights(sample_insight_request)
 
     @staticmethod

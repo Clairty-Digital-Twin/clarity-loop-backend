@@ -463,9 +463,9 @@ class TestInferenceEngineErrorHandling:
                 timeout_seconds=1.0,  # Short timeout for faster test
             )
 
-            # Due to the batching mechanism, the error gets caught as a timeout error
-            # when the batch processor fails
-            with pytest.raises(InferenceTimeoutError, match="timed out after"):
+            # Due to the resilient prediction decorator, errors are wrapped in ServiceUnavailableProblem
+            from clarity.core.exceptions import ServiceUnavailableProblem
+            with pytest.raises(ServiceUnavailableProblem, match="temporarily unavailable"):
                 await engine.predict_async(request)
 
     @staticmethod
@@ -498,7 +498,8 @@ class TestInferenceEngineErrorHandling:
                 timeout_seconds=0.1,  # Very short timeout
             )
 
-            with pytest.raises(InferenceTimeoutError):
+            from clarity.core.exceptions import ServiceUnavailableProblem
+            with pytest.raises(ServiceUnavailableProblem, match="temporarily unavailable"):
                 await engine.predict_async(request)
 
     @staticmethod

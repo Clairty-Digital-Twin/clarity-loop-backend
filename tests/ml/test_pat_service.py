@@ -138,7 +138,8 @@ class TestPATModelServiceInitialization:
 
     @staticmethod
     def test_service_initialization_custom_parameters() -> None:
-        """Test service initialization with custom parameters."""
+        """Test service initialization with custom parameters - path sanitization."""
+        from pathlib import Path
         custom_path = "custom/path/to/model.h5"
         service = PATModelService(
             model_size="large", device="cpu", model_path=custom_path
@@ -146,7 +147,10 @@ class TestPATModelServiceInitialization:
 
         assert service.model_size == "large"
         assert service.device == "cpu"
-        assert service.model_path == custom_path
+        # Path sanitization security feature - unsafe paths are replaced with safe default
+        # The actual path should match what PATModelService._sanitize_model_path returns
+        assert service.model_path.endswith("models/pat/default_model.h5")
+        assert "clarity-loop-backend" in service.model_path
 
     @staticmethod
     def test_service_initialization_model_paths() -> None:

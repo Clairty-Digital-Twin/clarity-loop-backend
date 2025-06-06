@@ -16,6 +16,7 @@ from clarity.core.exceptions import ServiceUnavailableProblem
 # Import health data service error at module level to avoid circular imports
 try:
     from clarity.services.health_data_service import HealthDataServiceError
+
     _HEALTH_DATA_SERVICE_ERROR: type[Exception] | None = HealthDataServiceError
 except ImportError:
     _HEALTH_DATA_SERVICE_ERROR = None
@@ -69,7 +70,9 @@ def resilient_prediction(
                 raise ServiceUnavailableProblem(msg) from e
             except Exception as e:
                 # Allow domain-specific exceptions to pass through unchanged
-                if _HEALTH_DATA_SERVICE_ERROR and isinstance(e, _HEALTH_DATA_SERVICE_ERROR):
+                if _HEALTH_DATA_SERVICE_ERROR and isinstance(
+                    e, _HEALTH_DATA_SERVICE_ERROR
+                ):
                     PREDICTION_FAILURE.labels(model_name=model_name).inc()
                     raise
 

@@ -144,11 +144,9 @@ class MockHealthDataRepository(IHealthDataRepository):
 
     async def initialize(self) -> None:
         """Mock initialize."""
-        pass
 
     async def cleanup(self) -> None:
         """Mock cleanup."""
-        pass
 
 
 class TestHealthDataServiceCleanArchitecture(BaseServiceTestCase):

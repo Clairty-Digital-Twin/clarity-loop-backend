@@ -914,9 +914,7 @@ class PATModelService(IMLModelService):
                 input_data.user_id,
             )
             error_msg = f"PAT model analysis failed: {e!s}"
-            raise MLPredictionError(
-                error_msg, model_name="PAT"
-            ) from e
+            raise MLPredictionError(error_msg, model_name="PAT") from e
         else:
             return analysis
 

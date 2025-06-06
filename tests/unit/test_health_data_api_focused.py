@@ -23,18 +23,18 @@ import pytest
 from starlette.datastructures import Headers
 
 from clarity.api.v1.health_data import (
-    upload_health_data,
     list_health_data,
     query_health_data_legacy,
+    upload_health_data,
 )
 from clarity.auth import UserContext
 from clarity.core.exceptions import DataValidationError
 from clarity.models.health_data import (
     ActivityData,
+    HealthDataResponse,
     HealthDataUpload,
     HealthMetric,
     HealthMetricType,
-    HealthDataResponse,
     ProcessingStatus,
 )
 from clarity.services.health_data_service import HealthDataServiceError
@@ -49,7 +49,7 @@ def create_test_health_data_upload(
     """Create a valid HealthDataUpload instance for testing."""
     if user_id is None:
         user_id = str(uuid4())
-    
+
     if activity_data is None:
         activity_data = ActivityData(
             steps=1000,
@@ -60,13 +60,13 @@ def create_test_health_data_upload(
             active_minutes=30,
             resting_heart_rate=65.0,
         )
-    
+
     # Create a HealthMetric with the activity data
     metric = HealthMetric(
         metric_type=HealthMetricType.ACTIVITY_LEVEL,
         activity_data=activity_data,
     )
-    
+
     return HealthDataUpload(
         user_id=user_id,
         metrics=[metric],
@@ -78,7 +78,9 @@ def create_test_health_data_upload(
 class MockRequest:
     """Mock request object."""
 
-    def __init__(self, user_id: str | None = None, headers: dict[str, str] | None = None) -> None:
+    def __init__(
+        self, user_id: str | None = None, headers: dict[str, str] | None = None
+    ) -> None:
         """Initialize mock request."""
         self.state = Mock()
         self.state.user_id = user_id
@@ -100,7 +102,7 @@ class MockHealthDataService:
 
     async def process_health_data(
         self,
-        upload: HealthDataUpload,  # noqa: ARG002
+        upload: HealthDataUpload,
     ) -> HealthDataResponse:
         """Mock process health data."""
         if self.should_fail:

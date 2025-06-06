@@ -50,9 +50,10 @@ def resilient_prediction(
         async def wrapper(*args: P.args, **kwargs: P.kwargs) -> T:
             """Wrapper that adds error handling and logging around the circuit breaker."""
             try:
-                # Use the circuit breaker as an async context manager
-                async with circuit_breaker:
-                    return await func(*args, **kwargs)
+                # Use the circuit breaker decorator approach
+                result = await circuit_breaker(func)(*args, **kwargs)
+                PREDICTION_SUCCESS.labels(model_name=model_name).inc()
+                return result
 
             except CircuitBreakerError as e:
                 msg = f"{model_name} is currently unavailable. Please try again later."

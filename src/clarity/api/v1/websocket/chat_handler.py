@@ -1,4 +1,4 @@
-# ruff: noqa: PLR0912, PLR0915, PLR1702, TRY300
+# ruff: noqa: PLR0912, PLR0914, PLR0915, PLR1702, TRY300
 """WebSocket chat handler for real-time health insights and communication."""
 
 from datetime import UTC, datetime

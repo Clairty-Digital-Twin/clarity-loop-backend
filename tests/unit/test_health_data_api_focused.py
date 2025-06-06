@@ -282,6 +282,7 @@ class TestHealthDataMetricsEndpoint(BaseServiceTestCase):
         """Test metrics with missing user ID."""
         # Arrange
         mock_get_service.return_value = self.mock_service
+        request = MockRequest(user_id=None)
 
         # Create mock user context (will be None to trigger error)
         user_context = UserContext(user_id=None, permissions=[])
@@ -301,7 +302,7 @@ class TestHealthDataMetricsEndpoint(BaseServiceTestCase):
         self.mock_service.should_fail = True
         self.mock_service.fail_with = HealthDataServiceError("Failed to fetch metrics")
         mock_get_service.return_value = self.mock_service
-
+        request = MockRequest(user_id=str(uuid4()))
 
         # Create mock user context
         user_context = UserContext(user_id=str(uuid4()), permissions=[])
@@ -319,6 +320,7 @@ class TestHealthDataMetricsEndpoint(BaseServiceTestCase):
         """Test metrics with date filters."""
         # Arrange
         mock_get_service.return_value = self.mock_service
+        request = MockRequest(user_id=str(uuid4()))
 
         start_date = datetime.now(UTC).replace(day=1)
         end_date = datetime.now(UTC)
@@ -344,6 +346,7 @@ class TestHealthDataMetricsEndpoint(BaseServiceTestCase):
         """Test metrics with invalid date range."""
         # Arrange
         mock_get_service.return_value = self.mock_service
+        request = MockRequest(user_id=str(uuid4()))
 
         # Invalid: end date before start date
         start_date = datetime.now(UTC)
@@ -395,7 +398,6 @@ class TestHealthDataQueryEndpoint(BaseServiceTestCase):
         # Arrange
         self.mock_service.query_result = {"data": [], "total": 0}
         mock_get_service.return_value = self.mock_service
-
 
         # Create mock user context
         user_context = UserContext(user_id=str(uuid4()), permissions=[])

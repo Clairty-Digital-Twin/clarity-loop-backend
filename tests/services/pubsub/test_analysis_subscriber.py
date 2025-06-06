@@ -12,7 +12,9 @@ from clarity.services.pubsub.analysis_subscriber import AnalysisSubscriber
 def subscriber() -> AnalysisSubscriber:
     with (
         patch("google.cloud.storage.Client"),
-        patch("clarity.services.pubsub.publisher.get_publisher"),
+        patch(
+            "clarity.services.pubsub.publisher.get_publisher", return_value=MagicMock()
+        ),
     ):
         return AnalysisSubscriber()
 
@@ -81,6 +83,8 @@ async def test_process_health_data_message(subscriber: AnalysisSubscriber):
             ).decode("utf-8")
         }
     }
+    subscriber.publisher = MagicMock()
+    subscriber.environment = "production"
 
     with (
         patch.object(subscriber, "_download_health_data", return_value=health_data),
@@ -89,7 +93,6 @@ async def test_process_health_data_message(subscriber: AnalysisSubscriber):
             return_value=analysis_results,
         ) as mock_run_pipeline,
         patch.object(subscriber, "_verify_pubsub_token") as mock_verify_token,
-        patch.dict("os.environ", {"ENVIRONMENT": "production"}),
     ):
         result = await subscriber.process_health_data_message(mock_request)
 

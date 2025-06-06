@@ -341,9 +341,14 @@ class DependencyContainer:
     @staticmethod
     def _configure_request_limits(app: FastAPI) -> None:
         """Configure request size limits to prevent DoS attacks."""
-        from collections.abc import Awaitable, Callable  # noqa: PLC0415
+        from typing import TYPE_CHECKING
 
-        from fastapi import Request, Response  # noqa: PLC0415
+        if TYPE_CHECKING:
+            from collections.abc import Awaitable
+
+            from fastapi import Request, Response
+        else:
+            from fastapi import Request, Response  # noqa: PLC0415
 
         from clarity.core.exceptions import ClarityAPIException  # noqa: PLC0415
 

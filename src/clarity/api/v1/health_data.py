@@ -75,6 +75,24 @@ def _raise_not_found_error(resource_type: str, resource_id: str) -> NoReturn:
     raise ResourceNotFoundProblem(resource_type=resource_type, resource_id=resource_id)
 
 
+def _raise_too_many_metrics_error(metrics_count: int, max_allowed: int) -> NoReturn:
+    """Raise validation error for too many metrics in upload."""
+    error_detail = (
+        f"Too many metrics in upload: {metrics_count} exceeds maximum {max_allowed}"
+    )
+    raise ValidationProblem(
+        detail=error_detail,
+        errors=[
+            {
+                "field": "metrics",
+                "error": "too_many_items",
+                "received": metrics_count,
+                "max_allowed": max_allowed,
+            }
+        ],
+    )
+
+
 # Dependency injection container - using class-based approach instead of globals
 class DependencyContainer:
     """Container for dependency injection to avoid global variables."""
@@ -202,17 +220,8 @@ async def upload_health_data(
         # SECURITY: Validate metrics count to prevent DoS through large uploads
         max_metrics_per_upload = 10000  # Reasonable limit for health data batches
         if len(health_data.metrics) > max_metrics_per_upload:
-            error_detail = f"Too many metrics in upload: {len(health_data.metrics)} exceeds maximum {max_metrics_per_upload}"
-            raise ValidationProblem(
-                detail=error_detail,
-                errors=[
-                    {
-                        "field": "metrics",
-                        "error": "too_many_items",
-                        "received": len(health_data.metrics),
-                        "max_allowed": max_metrics_per_upload,
-                    }
-                ],
+            _raise_too_many_metrics_error(
+                len(health_data.metrics), max_metrics_per_upload
             )
 
         # Validate user owns the data

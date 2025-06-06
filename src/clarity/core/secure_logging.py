@@ -5,12 +5,15 @@ to prevent accidental PHI exposure in logs.
 """
 
 import logging
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from clarity.models.health_data import HealthDataUpload, HealthMetric
 else:
     from clarity.models.health_data import HealthDataUpload, HealthMetric
+
+# Constants for sanitization
+MAX_COMPLEX_VALUE_LENGTH = 100
 
 
 def log_health_data_received(
@@ -77,7 +80,8 @@ def sanitize_for_logging(data: object) -> str:
             if key.lower() in {"email", "phone", "address", "ssn", "dob"}:
                 safe_dict[key] = "[MASKED]"
             elif (
-                isinstance(value, (dict, list)) and len(str(value)) > 100
+                isinstance(value, (dict, list))
+                and len(str(value)) > MAX_COMPLEX_VALUE_LENGTH
             ):
                 safe_dict[key] = (
                     f"[{type(value).__name__}:{len(value) if hasattr(value, '__len__') else 'N/A'}]"

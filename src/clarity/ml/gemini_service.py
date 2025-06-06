@@ -7,6 +7,7 @@ to generate human-like health insights and narratives from ML analysis results.
 from datetime import UTC, datetime
 import json
 import logging
+import re
 from typing import Any, NoReturn
 
 from pydantic import BaseModel, Field

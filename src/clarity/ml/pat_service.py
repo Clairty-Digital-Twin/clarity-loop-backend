@@ -817,34 +817,34 @@ class PATModelService(IMLModelService):
         """Convert feed-forward network weights."""
         # FF1 layer
         ff1_key = f"encoder_layer_{layer_idx + 1}_ff1"
-        if ff1_key in layer_group:  # type: ignore[operator]
-            ff1_group = layer_group[ff1_key]  # type: ignore[index]
+        if ff1_key in layer_group:
+            ff1_group = layer_group[ff1_key]
 
-            if "kernel:0" in ff1_group:  # type: ignore[operator]
-                tf_weight_data = ff1_group["kernel:0"][:]  # type: ignore[index]
+            if "kernel:0" in ff1_group:
+                tf_weight_data = ff1_group["kernel:0"][:]
                 tf_weight_np = np.array(tf_weight_data)
                 pytorch_name = f"encoder.transformer_layers.{layer_idx}.ff1.weight"
                 state_dict[pytorch_name] = torch.from_numpy(tf_weight_np.T)
 
-            if "bias:0" in ff1_group:  # type: ignore[operator]
-                tf_bias_data = ff1_group["bias:0"][:]  # type: ignore[index]
+            if "bias:0" in ff1_group:
+                tf_bias_data = ff1_group["bias:0"][:]
                 tf_bias_np = np.array(tf_bias_data)
                 pytorch_name = f"encoder.transformer_layers.{layer_idx}.ff1.bias"
                 state_dict[pytorch_name] = torch.from_numpy(tf_bias_np)
 
         # FF2 layer
         ff2_key = f"encoder_layer_{layer_idx + 1}_ff2"
-        if ff2_key in layer_group:  # type: ignore[operator]
-            ff2_group = layer_group[ff2_key]  # type: ignore[index]
+        if ff2_key in layer_group:
+            ff2_group = layer_group[ff2_key]
 
-            if "kernel:0" in ff2_group:  # type: ignore[operator]
-                tf_weight_data = ff2_group["kernel:0"][:]  # type: ignore[index]
+            if "kernel:0" in ff2_group:
+                tf_weight_data = ff2_group["kernel:0"][:]
                 tf_weight_np = np.array(tf_weight_data)
                 pytorch_name = f"encoder.transformer_layers.{layer_idx}.ff2.weight"
                 state_dict[pytorch_name] = torch.from_numpy(tf_weight_np.T)
 
-            if "bias:0" in ff2_group:  # type: ignore[operator]
-                tf_bias_data = ff2_group["bias:0"][:]  # type: ignore[index]
+            if "bias:0" in ff2_group:
+                tf_bias_data = ff2_group["bias:0"][:]
                 tf_bias_np = np.array(tf_bias_data)
                 pytorch_name = f"encoder.transformer_layers.{layer_idx}.ff2.bias"
                 state_dict[pytorch_name] = torch.from_numpy(tf_bias_np)
@@ -858,34 +858,34 @@ class PATModelService(IMLModelService):
         """Convert layer normalization weights (gamma/beta -> weight/bias)."""
         # Norm1 (after attention)
         norm1_key = f"encoder_layer_{layer_idx + 1}_norm1"
-        if norm1_key in layer_group:  # type: ignore[operator]
-            norm1_group = layer_group[norm1_key]  # type: ignore[index]
+        if norm1_key in layer_group:
+            norm1_group = layer_group[norm1_key]
 
-            if "gamma:0" in norm1_group:  # type: ignore[operator]
-                gamma_data = norm1_group["gamma:0"][:]  # type: ignore[index]
+            if "gamma:0" in norm1_group:
+                gamma_data = norm1_group["gamma:0"][:]
                 gamma_np = np.array(gamma_data)
                 pytorch_name = f"encoder.transformer_layers.{layer_idx}.norm1.weight"
                 state_dict[pytorch_name] = torch.from_numpy(gamma_np)
 
-            if "beta:0" in norm1_group:  # type: ignore[operator]
-                beta_data = norm1_group["beta:0"][:]  # type: ignore[index]
+            if "beta:0" in norm1_group:
+                beta_data = norm1_group["beta:0"][:]
                 beta_np = np.array(beta_data)
                 pytorch_name = f"encoder.transformer_layers.{layer_idx}.norm1.bias"
                 state_dict[pytorch_name] = torch.from_numpy(beta_np)
 
         # Norm2 (after feed-forward)
         norm2_key = f"encoder_layer_{layer_idx + 1}_norm2"
-        if norm2_key in layer_group:  # type: ignore[operator]
-            norm2_group = layer_group[norm2_key]  # type: ignore[index]
+        if norm2_key in layer_group:
+            norm2_group = layer_group[norm2_key]
 
-            if "gamma:0" in norm2_group:  # type: ignore[operator]
-                gamma_data = norm2_group["gamma:0"][:]  # type: ignore[index]
+            if "gamma:0" in norm2_group:
+                gamma_data = norm2_group["gamma:0"][:]
                 gamma_np = np.array(gamma_data)
                 pytorch_name = f"encoder.transformer_layers.{layer_idx}.norm2.weight"
                 state_dict[pytorch_name] = torch.from_numpy(gamma_np)
 
-            if "beta:0" in norm2_group:  # type: ignore[operator]
-                beta_data = norm2_group["beta:0"][:]  # type: ignore[index]
+            if "beta:0" in norm2_group:
+                beta_data = norm2_group["beta:0"][:]
                 beta_np = np.array(beta_data)
                 pytorch_name = f"encoder.transformer_layers.{layer_idx}.norm2.bias"
                 state_dict[pytorch_name] = torch.from_numpy(beta_np)

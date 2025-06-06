@@ -5,7 +5,7 @@ import functools
 import logging
 from typing import ParamSpec, TypeVar
 
-from circuitbreaker import CircuitBreakerError
+from circuitbreaker import CircuitBreaker, CircuitBreakerError
 from prometheus_client import Counter
 
 from clarity.core.exceptions import ServiceUnavailableProblem
@@ -42,7 +42,7 @@ def resilient_prediction(
 
     def decorator(func: Callable[P, Awaitable[T]]) -> Callable[P, Awaitable[T]]:
         """Decorator that adds a circuit breaker to an async function."""
-        circuit_breaker = CircuitBreakerError(
+        circuit_breaker = CircuitBreaker(
             failure_threshold=failure_threshold, recovery_timeout=recovery_timeout
         )
 

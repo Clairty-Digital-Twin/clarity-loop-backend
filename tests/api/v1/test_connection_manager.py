@@ -38,17 +38,12 @@ async def test_connect_and_disconnect():
 def test_cleanup_rate_limiting_data():
     manager = ConnectionManager(message_rate_limit=2)
     user_id = "test_user"
+    # Simulate some message history
+    manager.message_counts[user_id] = [time.time() - 70, time.time() - 5, time.time()]
 
-    # Add some old and new message timestamps
-    manager.message_counts[user_id] = [
-        time.time() - 70,
-        time.time() - 80,
-        time.time() - 10,
-        time.time() - 5,
-    ]
+    manager._cleanup_rate_limiting_data()
 
-    manager.cleanup_rate_limiting_data()
-
+    # The entry older than 60s should be removed
     assert len(manager.message_counts[user_id]) == 2
 
 

@@ -101,19 +101,9 @@ class TestHealthDataUploadEndpoint(BaseServiceTestCase):
         mock_get_service.return_value = self.mock_service
         request = MockRequest(user_id=None)
 
-        upload_data = HealthDataUpload(
-            source="test_app",
-            activity_data=[
-                ActivityData(
-                    steps=1000,
-                    distance=1.0,
-                    active_energy=100.0,
-                    exercise_minutes=30,
-                    flights_climbed=5,
-                    active_minutes=30,
-                    resting_heart_rate=65.0,
-                )
-            ],
+        upload_data = create_test_health_data_upload(
+            user_id=str(uuid4()),
+            upload_source="test_app",
         )
 
         # Act & Assert
@@ -131,19 +121,9 @@ class TestHealthDataUploadEndpoint(BaseServiceTestCase):
         mock_get_service.return_value = self.mock_service
 
         request = MockRequest(user_id=str(uuid4()))
-        upload_data = HealthDataUpload(
-            source="test_app",
-            activity_data=[
-                ActivityData(
-                    steps=1000,
-                    distance=1.0,
-                    active_energy=100.0,
-                    exercise_minutes=30,
-                    flights_climbed=5,
-                    active_minutes=30,
-                    resting_heart_rate=65.0,
-                )
-            ],
+        upload_data = create_test_health_data_upload(
+            user_id=str(uuid4()),
+            upload_source="test_app",
         )
 
         # Act & Assert
@@ -163,19 +143,9 @@ class TestHealthDataUploadEndpoint(BaseServiceTestCase):
         mock_get_service.return_value = self.mock_service
 
         request = MockRequest(user_id=str(uuid4()))
-        upload_data = HealthDataUpload(
-            source="test_app",
-            activity_data=[
-                ActivityData(
-                    steps=1000,
-                    distance=1.0,
-                    active_energy=100.0,
-                    exercise_minutes=30,
-                    flights_climbed=5,
-                    active_minutes=30,
-                    resting_heart_rate=65.0,
-                )
-            ],
+        upload_data = create_test_health_data_upload(
+            user_id=str(uuid4()),
+            upload_source="test_app",
         )
 
         # Act & Assert
@@ -193,19 +163,9 @@ class TestHealthDataUploadEndpoint(BaseServiceTestCase):
         mock_get_service.return_value = self.mock_service
 
         request = MockRequest(user_id=str(uuid4()))
-        upload_data = HealthDataUpload(
-            source="test_app",
-            activity_data=[
-                ActivityData(
-                    steps=1000,
-                    distance=1.0,
-                    active_energy=100.0,
-                    exercise_minutes=30,
-                    flights_climbed=5,
-                    active_minutes=30,
-                    resting_heart_rate=65.0,
-                )
-            ],
+        upload_data = create_test_health_data_upload(
+            user_id=str(uuid4()),
+            upload_source="test_app",
         )
 
         # Act & Assert

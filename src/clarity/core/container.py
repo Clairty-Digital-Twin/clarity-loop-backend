@@ -309,6 +309,9 @@ class DependencyContainer:
         # Configure RFC 7807 Problem Details exception handling
         self._configure_exception_handlers(app)
 
+        # Configure request size limits for DoS protection
+        self._configure_request_limits(app)
+
         # Wire middleware (Decorator Pattern)
         self._configure_middleware(app)
 
@@ -334,6 +337,36 @@ class DependencyContainer:
         app.add_exception_handler(Exception, generic_exception_handler)  # type: ignore[arg-type]
 
         logger.info("✅ RFC 7807 Problem Details exception handling configured")
+
+    def _configure_request_limits(self, app: FastAPI) -> None:
+        """Configure request size limits to prevent DoS attacks."""
+        from fastapi import Request  # noqa: PLC0415
+        from fastapi.exceptions import RequestValidationError  # noqa: PLC0415
+
+        # Maximum request size: 10MB for health data uploads
+        MAX_REQUEST_SIZE = 10 * 1024 * 1024  # 10MB
+
+        @app.middleware("http")
+        async def limit_upload_size(request: Request, call_next):
+            """Middleware to limit request size and prevent DoS attacks."""
+            if request.method in ("POST", "PUT", "PATCH"):
+                content_length = request.headers.get("content-length")
+                if content_length:
+                    if int(content_length) > MAX_REQUEST_SIZE:
+                        from clarity.core.exceptions import (
+                            ClarityAPIException,
+                        )
+                        raise ClarityAPIException(
+                            status_code=413,
+                            error_code="request_too_large",
+                            detail=f"Request size {content_length} exceeds maximum {MAX_REQUEST_SIZE} bytes",
+                            title="Request Too Large"
+                        )
+
+            response = await call_next(request)
+            return response
+
+        logger.info("✅ Request size limits configured (max: %d MB)", MAX_REQUEST_SIZE // (1024 * 1024))
 
     def _configure_middleware(self, app: FastAPI) -> None:
         """Configure middleware with dependency injection."""

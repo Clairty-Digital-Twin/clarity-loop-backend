@@ -86,15 +86,11 @@ def set_dependencies(
         if isinstance(repository, FirestoreHealthDataRepository):
             # Extract FirestoreClient from repository
             extracted_client = repository.client  # type: ignore[attr-defined]
-            if extracted_client is not None:  # Additional safety check
-                _auth_service = AuthenticationService(
-                    auth_provider=auth_provider,
-                    firestore_client=extracted_client,  # type: ignore[arg-type]
-                )
-            else:
-                logger.warning(
-                    "Authentication service not available - repository client is None"
-                )
+            # Safety check is no longer needed since client property always returns valid client
+            _auth_service = AuthenticationService(
+                auth_provider=auth_provider,
+                firestore_client=extracted_client,  # type: ignore[arg-type]
+            )
         else:
             logger.warning(
                 "Authentication service not available - using mock implementation"

@@ -17,7 +17,7 @@ Security Features:
 import asyncio
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 import logging
 import time
 from typing import Any
@@ -948,6 +948,7 @@ class FirestoreHealthDataRepository(IHealthDataRepository):
                 "status": "processing",
                 "total_metrics": len(metrics),
                 "processed_metrics": 0,
+                "expires_at": (datetime.now(UTC) + timedelta(days=30)).isoformat(),
             }
 
             # Store processing document
@@ -972,6 +973,7 @@ class FirestoreHealthDataRepository(IHealthDataRepository):
                     "metric_index": i,
                     "metric_data": metric_data,
                     "created_at": datetime.now(UTC).isoformat(),
+                    "expires_at": (datetime.now(UTC) + timedelta(days=30)).isoformat(),
                 }
 
                 await self._firestore_client.create_document(

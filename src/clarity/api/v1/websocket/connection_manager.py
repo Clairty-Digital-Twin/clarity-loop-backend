@@ -329,33 +329,39 @@ class ConnectionManager:
     async def send_to_user(self, user_id: str, message: WebSocketMessage) -> None:
         """Send a message to all connections of a specific user."""
         connections = self.user_connections.get(user_id, [])
+        if not connections:
+            return
 
-        for (
-            websocket
-        ) in connections.copy():  # Copy to avoid modification during iteration
-            await self.send_to_connection(websocket, message)
+        tasks = [
+            self.send_to_connection(websocket, message)
+            for websocket in connections
+        ]
+        await asyncio.gather(*tasks, return_exceptions=True)
 
     async def broadcast_to_room(
         self, room_id: str, message: WebSocketMessage, exclude_user: str | None = None
     ) -> None:
         """Broadcast a message to all users in a room."""
         users_in_room = self.rooms.get(room_id, set())
-
-        for user_id in users_in_room:
-            if exclude_user and user_id == exclude_user:
-                continue
-
-            await self.send_to_user(user_id, message)
+        tasks = [
+            self.send_to_user(user_id, message)
+            for user_id in users_in_room
+            if user_id != exclude_user
+        ]
+        if tasks:
+            await asyncio.gather(*tasks, return_exceptions=True)
 
     async def broadcast_to_all(
         self, message: WebSocketMessage, exclude_user: str | None = None
     ) -> None:
         """Broadcast a message to all connected users."""
-        for user_id in list(self.user_connections.keys()):
-            if exclude_user and user_id == exclude_user:
-                continue
-
-            await self.send_to_user(user_id, message)
+        tasks = [
+            self.send_to_user(user_id, message)
+            for user_id in self.user_connections
+            if user_id != exclude_user
+        ]
+        if tasks:
+            await asyncio.gather(*tasks, return_exceptions=True)
 
     async def handle_message(self, websocket: WebSocket, raw_message: str) -> bool:
         """Handle an incoming WebSocket message with validation and rate limiting.

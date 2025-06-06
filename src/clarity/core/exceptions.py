@@ -243,8 +243,11 @@ class ServiceUnavailableProblem(ClarityAPIException):
         service_name: str,
         retry_after: int | None = None,
         trace_id: str | None = None,
+        diagnostics: str | None = None,
     ) -> None:
         detail = f"{service_name} is temporarily unavailable"
+        if diagnostics:
+            detail += f" | Diagnostics: {diagnostics}"
         headers = {"Retry-After": str(retry_after)} if retry_after else None
 
         super().__init__(

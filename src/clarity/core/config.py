@@ -97,7 +97,7 @@ class Settings(BaseSettings):
         ...,
         alias="FIREBASE_CREDENTIALS_PATH",
         description="Path to Firebase credentials JSON file.",
-        regex=r"^(/secrets/|gs://).*\.json$",
+        pattern=r"^(/secrets/|gs://).*\.json$",
     )
 
     # Google Cloud settings

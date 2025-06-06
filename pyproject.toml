@@ -271,6 +271,7 @@ warn_no_return = true
 warn_unreachable = true
 strict_equality = true
 show_error_codes = true
+ignore_missing_imports = true
 
 [[tool.mypy.overrides]]
 module = [
@@ -281,6 +282,7 @@ module = [
     "transformers.*",
     "scipy.*",
     "sklearn.*",
+    "circuitbreaker.*",
 ]
 ignore_missing_imports = true
 

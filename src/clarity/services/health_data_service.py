@@ -29,6 +29,8 @@ from clarity.ports.storage import CloudStoragePort
 
 # Configure logger
 logger = logging.getLogger(__name__)
+audit_logger = logging.getLogger("audit")
+
 
 
 # Custom exceptions
@@ -246,6 +248,13 @@ class HealthDataService:
                 metrics=health_data.metrics,
                 upload_source=health_data.upload_source,
                 client_timestamp=health_data.client_timestamp,
+            )
+
+            # Add audit log for compliance
+            audit_logger.info(
+                "Stored health data for user %s (%d metrics)",
+                health_data.user_id,
+                len(health_data.metrics),
             )
 
             # Log operation

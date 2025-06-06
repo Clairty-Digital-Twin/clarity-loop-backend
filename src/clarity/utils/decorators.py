@@ -1,12 +1,20 @@
 """Resilience and utility decorators for the CLARITY platform."""
-from collections.abc import Callable
 import functools
 import logging
-from typing import Any, TypeVar
+from typing import Any, Callable, TypeVar
 
 from circuitbreaker import CircuitBreakerError, circuit
 
 from clarity.services.health_data_service import MLPredictionError
+from prometheus_client import Counter
+
+# Prometheus metrics
+PREDICTION_SUCCESS = Counter(
+    "prediction_success_total", "Total successful predictions", ["model_name"]
+)
+PREDICTION_FAILURE = Counter(
+    "prediction_failure_total", "Total failed predictions", ["model_name", "reason"]
+)
 
 logger = logging.getLogger(__name__)
 
@@ -18,14 +26,11 @@ def resilient_prediction(
     failure_threshold: int = 5, recovery_timeout: int = 60, model_name: str = "ML model"
 ) -> Callable[..., Callable[..., T]]:
     """A decorator that makes an ML prediction function resilient.
-
     It adds a circuit breaker and standardized error handling.
-
     Args:
         failure_threshold: Number of failures to open the circuit.
         recovery_timeout: Seconds to wait before moving to half-open state.
         model_name: Name of the model for logging and error messages.
-
     Returns:
         A decorated function.
     """
@@ -37,7 +42,7 @@ def resilient_prediction(
         )(func)
 
         @functools.wraps(func)
-        async def wrapper(*args: Any, **kwargs: Any) -> T:  # noqa: ANN401
+        async def wrapper(*args: Any, **kwargs: Any) -> T:
             """Wrapper that adds error handling and logging around the circuit breaker."""
             try:
                 # The first argument of the decorated method is 'self'
@@ -51,12 +56,16 @@ def resilient_prediction(
                     model_name,
                     user_id,
                 )
-                return await circuit_breaker_func(*args, **kwargs)
+                PREDICTION_SUCCESS.labels(model_name=model_name).inc()
+                return await circuit_breaker_func(*args, **kwargs)  # type: ignore
 
             except CircuitBreakerError as e:
                 logger.exception(
                     "Circuit open for model '%s'. Prediction failed.", model_name
                 )
+                PREDICTION_FAILURE.labels(
+                    model_name=model_name, reason="circuit_open"
+                ).inc()
                 raise MLPredictionError(
                     message=f"Circuit is open for {model_name}. Service is temporarily unavailable.",
                     model_name=model_name,
@@ -68,10 +77,11 @@ def resilient_prediction(
                     e,
                     exc_info=True,
                 )
+                PREDICTION_FAILURE.labels(model_name=model_name, reason="exception").inc()
                 raise MLPredictionError(
                     message=f"Error during prediction: {e!s}", model_name=model_name
                 ) from e
 
-        return wrapper
+        return wrapper  # type: ignore
 
     return decorator

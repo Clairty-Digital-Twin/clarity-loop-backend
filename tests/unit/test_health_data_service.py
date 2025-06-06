@@ -25,6 +25,7 @@ from clarity.models.health_data import (
     HealthMetricType,
     ProcessingStatus,
 )
+from clarity.ports.data_ports import IHealthDataRepository
 from clarity.services.health_data_service import (
     HealthDataService,
     HealthDataServiceError,
@@ -36,7 +37,7 @@ class MockRepositoryError(Exception):
     """Custom exception for mock repository failures."""
 
 
-class MockHealthDataRepository:
+class MockHealthDataRepository(IHealthDataRepository):
     """Mock repository that implements IHealthDataRepository interface.
 
     This provides a controlled fake that's more realistic than AsyncMock
@@ -73,7 +74,7 @@ class MockHealthDataRepository:
 
     async def get_processing_status(
         self, processing_id: str, user_id: str
-    ) -> dict[str, Any] | None:
+    ) -> dict[str, str] | None:
         """Mock get processing status operation."""
         if self.should_fail:
             error_msg = "Database connection failed"
@@ -90,7 +91,7 @@ class MockHealthDataRepository:
         metric_type: str | None = None,
         start_date: datetime | None = None,
         end_date: datetime | None = None,
-    ) -> dict[str, Any]:
+    ) -> dict[str, str]:
         """Mock get user health data operation."""
         # Mark unused parameters to avoid lint warnings
         _ = metric_type, start_date, end_date
@@ -128,6 +129,27 @@ class MockHealthDataRepository:
                 del self.saved_data[key]
         return True
 
+    async def save_data(self, user_id: str, data: dict[str, str]) -> str:
+        """Mock save data (legacy method)."""
+        record_id = f"record_{len(self.saved_data) + 1}"
+        self.saved_data[record_id] = {"user_id": user_id, "data": data}
+        return record_id
+
+    async def get_data(
+        self, user_id: str, filters: dict[str, str] | None = None
+    ) -> dict[str, str]:
+        """Mock get data (legacy method)."""
+        _ = filters  # Mark as unused
+        return self.user_health_data.get(user_id, {})
+
+    async def initialize(self) -> None:
+        """Mock initialize."""
+        pass
+
+    async def cleanup(self) -> None:
+        """Mock cleanup."""
+        pass
+
 
 class TestHealthDataServiceCleanArchitecture(BaseServiceTestCase):
     """Test Health Data Service following Clean Architecture principles.
@@ -147,7 +169,7 @@ class TestHealthDataServiceCleanArchitecture(BaseServiceTestCase):
         self.mock_repository = MockHealthDataRepository()
 
         # Inject ALL dependencies cleanly (no more @patch!)
-        self.service = HealthDataService(
+        self.service: HealthDataService = HealthDataService(
             repository=self.mock_repository, cloud_storage=self.cloud_storage
         )
 

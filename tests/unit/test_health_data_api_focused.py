@@ -22,7 +22,12 @@ from uuid import uuid4
 import pytest
 from starlette.datastructures import Headers
 
-from clarity.api.v1.health_data import router as health_data_router
+from clarity.api.v1.health_data import (
+    upload_health_data,
+    list_health_data,
+    query_health_data_legacy,
+)
+from clarity.auth import UserContext
 from clarity.core.exceptions import DataValidationError
 from clarity.models.health_data import (
     ActivityData,
@@ -34,6 +39,40 @@ from clarity.models.health_data import (
 )
 from clarity.services.health_data_service import HealthDataServiceError
 from tests.base import BaseServiceTestCase
+
+
+def create_test_health_data_upload(
+    user_id: str | None = None,
+    upload_source: str = "test_app",
+    activity_data: ActivityData | None = None,
+) -> HealthDataUpload:
+    """Create a valid HealthDataUpload instance for testing."""
+    if user_id is None:
+        user_id = str(uuid4())
+    
+    if activity_data is None:
+        activity_data = ActivityData(
+            steps=1000,
+            distance=1.0,
+            active_energy=100.0,
+            exercise_minutes=30,
+            flights_climbed=5,
+            active_minutes=30,
+            resting_heart_rate=65.0,
+        )
+    
+    # Create a HealthMetric with the activity data
+    metric = HealthMetric(
+        metric_type=HealthMetricType.ACTIVITY_LEVEL,
+        activity_data=activity_data,
+    )
+    
+    return HealthDataUpload(
+        user_id=user_id,
+        metrics=[metric],
+        upload_source=upload_source,
+        client_timestamp=datetime.now(UTC),
+    )
 
 
 class MockRequest:
@@ -140,9 +179,16 @@ class TestHealthDataUploadEndpoint(BaseServiceTestCase):
             upload_source="test_app",
         )
 
+        # Create mock user context (will be None to trigger error)
+        user_context = UserContext(user_id=None, permissions=[])
+
         # Act & Assert
         with pytest.raises((ValueError, RuntimeError, AttributeError)):
-            await health_data_router.upload_health_data(request, upload_data)
+            await upload_health_data(
+                health_data=upload_data,
+                current_user=user_context,
+                service=self.mock_service,
+            )
 
     @patch("clarity.api.v1.health_data.get_health_data_service")
     async def test_upload_health_data_service_validation_error(

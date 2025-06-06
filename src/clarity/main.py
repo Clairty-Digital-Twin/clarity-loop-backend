@@ -1,14 +1,11 @@
 """CLARITY Digital Twin Platform - Main Application Entry Point.
 
-
-
-from dotenv import load_dotenv
-load_dotenv()
-
-
 FastAPI application setup with Clean Architecture dependency injection.
 This module serves as the composition root for the entire application.
 """
+
+from dotenv import load_dotenv
+load_dotenv()
 
 import logging
 

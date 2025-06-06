@@ -36,6 +36,7 @@ except ImportError:
 
 from clarity.ml.preprocessing import ActigraphyDataPoint, HealthDataPreprocessor
 from clarity.ports.ml_ports import IMLModelService
+from clarity.services.health_data_service import MLPredictionError
 from clarity.utils.decorators import resilient_prediction
 
 logger = logging.getLogger(__name__)

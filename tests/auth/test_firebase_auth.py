@@ -11,10 +11,11 @@ def test_initialize_firebase_with_credentials_path():
     mock_settings = MagicMock()
     mock_settings.firebase_credentials_path = "fake/path/to/creds.json"
 
-    with patch.object(firebase_auth, "settings", mock_settings), \
-         patch.object(firebase_auth.credentials, "Certificate") as mock_creds, \
-         patch.object(firebase_auth.firebase_admin, "initialize_app") as mock_init, \
-         patch.object(firebase_auth.firebase_admin, "get_app", side_effect=ValueError):
+    # Mock the credentials Certificate class before reloading
+    with patch("firebase_admin.credentials.Certificate") as mock_creds, \
+         patch("firebase_admin.initialize_app") as mock_init, \
+         patch("firebase_admin.get_app", side_effect=ValueError), \
+         patch("clarity.core.config.get_settings", return_value=mock_settings):
 
         # Reload the module to trigger initialization
         import importlib

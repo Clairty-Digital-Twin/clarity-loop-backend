@@ -5,7 +5,10 @@ import functools
 import logging
 from typing import ParamSpec, TypeVar
 
-from circuitbreaker import CircuitBreaker, CircuitBreakerError
+from circuitbreaker import (  # type: ignore[import-untyped]
+    CircuitBreaker,
+    CircuitBreakerError,
+)
 from prometheus_client import Counter
 
 from clarity.core.exceptions import ServiceUnavailableProblem
@@ -51,10 +54,7 @@ def resilient_prediction(
             """Wrapper that adds error handling and logging around the circuit breaker."""
             try:
                 # Use the circuit breaker decorator approach
-                result = await circuit_breaker(func)(*args, **kwargs)
-                PREDICTION_SUCCESS.labels(model_name=model_name).inc()
-                return result
-
+                result: T = await circuit_breaker(func)(*args, **kwargs)
             except CircuitBreakerError as e:
                 msg = f"{model_name} is currently unavailable. Please try again later."
                 logger.exception(
@@ -62,12 +62,14 @@ def resilient_prediction(
                 )
                 PREDICTION_FAILURE.labels(model_name=model_name).inc()
                 raise ServiceUnavailableProblem(msg) from e
-
             except Exception as e:
                 msg = f"An unexpected error occurred in {model_name}."
                 logger.exception("An unexpected error occurred during prediction")
                 PREDICTION_FAILURE.labels(model_name=model_name).inc()
                 raise ServiceUnavailableProblem(msg) from e
+            else:
+                PREDICTION_SUCCESS.labels(model_name=model_name).inc()
+                return result
 
         return wrapper
 

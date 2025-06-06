@@ -270,12 +270,12 @@ async def websocket_chat_endpoint(
                 max_message_size = 64 * 1024  # 64KB limit
                 if len(raw_message.encode("utf-8")) > max_message_size:
                     error_detail = f"Message size exceeds {max_message_size} bytes"
-                    error_msg = {
-                        "type": "error",
-                        "error": "message_too_large",
-                        "detail": error_detail
-                    }
-                    await websocket.send_text(json.dumps(error_msg))
+                    error_msg = ErrorMessage(
+                        error_code="MESSAGE_TOO_LARGE",
+                        message=error_detail,
+                        details={"max_size": max_message_size}
+                    )
+                    await websocket.send_text(error_msg.model_dump_json())
                     continue
 
                 if not await connection_manager.handle_message(websocket, raw_message):

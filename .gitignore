@@ -98,10 +98,11 @@ credentials/
 *.pem
 *.key
 *.p12
-*.json
+# *.json (Removed - too broad, using specific patterns or directory ignores like secrets/)
 service-account*.json
 firebase-admin*.json
 gcp-credentials*.json
+secrets/
 .gcp/
 .firebase/
 

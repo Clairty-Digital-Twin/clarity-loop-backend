@@ -17,7 +17,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field
 
 from clarity.auth import UserContext
-from clarity.auth.firebase_auth import get_current_user
+from clarity.auth.firebase_auth import get_current_user_required_required
 from clarity.ml.gemini_service import (
     GeminiService,
     HealthInsightRequest,
@@ -241,7 +241,7 @@ def create_error_response(
 )
 async def generate_insights(
     insight_request: InsightGenerationRequest,
-    current_user: UserContext = Depends(get_current_user),  # noqa: B008
+    current_user: UserContext = Depends(get_current_user_required),  # noqa: B008
     gemini_service: GeminiService = Depends(get_gemini_service),  # noqa: B008
 ) -> InsightGenerationResponse:
     """Generate new health insights from analysis data.
@@ -329,7 +329,7 @@ async def generate_insights(
 )
 async def get_insight(
     insight_id: str,
-    current_user: UserContext = Depends(get_current_user),  # noqa: B008
+    current_user: UserContext = Depends(get_current_user_required),  # noqa: B008
 ) -> InsightGenerationResponse:
     """🔥 FIXED: Retrieve cached insights by ID from Firestore.
 
@@ -412,7 +412,7 @@ async def get_insight_history(
     user_id: str,
     limit: int = 10,
     offset: int = 0,
-    current_user: UserContext = Depends(get_current_user),  # noqa: B008
+    current_user: UserContext = Depends(get_current_user_required),  # noqa: B008
 ) -> InsightHistoryResponse:
     """🔥 FIXED: Get insight history for a user from Firestore.
 

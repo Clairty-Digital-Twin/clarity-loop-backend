@@ -22,7 +22,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, Query, Request, status
 from google.cloud import storage  # type: ignore[attr-defined]
 
-from clarity.auth import Permission, UserContext, get_current_user, require_auth
+from clarity.auth import Permission, UserContext, get_current_user_required_required, require_auth
 from clarity.core.exceptions import (
     AuthorizationProblem,
     InternalServerProblem,
@@ -187,7 +187,7 @@ def get_config_provider() -> IConfigProvider:
 @require_auth(permissions=[Permission.WRITE_OWN_DATA])
 async def upload_health_data(
     health_data: HealthDataUpload,
-    current_user: UserContext = Depends(get_current_user),  # noqa: B008
+    current_user: UserContext = Depends(get_current_user_required),  # noqa: B008
     service: HealthDataService = Depends(get_health_data_service),  # noqa: B008
 ) -> HealthDataResponse:
     """🔥 Upload health data with enterprise-grade processing."""
@@ -298,7 +298,7 @@ async def upload_health_data(
 @require_auth(permissions=[Permission.READ_OWN_DATA])
 async def get_processing_status(
     processing_id: UUID,
-    current_user: UserContext = Depends(get_current_user),  # noqa: B008
+    current_user: UserContext = Depends(get_current_user_required),  # noqa: B008
     service: HealthDataService = Depends(get_health_data_service),  # noqa: B008
 ) -> dict[str, Any]:
     """🔥 Get processing status with detailed progress information."""
@@ -386,7 +386,7 @@ async def get_processing_status(
 @require_auth(permissions=[Permission.READ_OWN_DATA])
 async def list_health_data(  # noqa: PLR0913, PLR0917
     request: Request,
-    current_user: UserContext = Depends(get_current_user),  # noqa: B008
+    current_user: UserContext = Depends(get_current_user_required),  # noqa: B008
     limit: int = Query(50, ge=1, le=1000, description="Number of items per page"),
     cursor: str | None = Query(None, description="Pagination cursor"),
     offset: int | None = Query(
@@ -505,7 +505,7 @@ async def list_health_data(  # noqa: PLR0913, PLR0917
 )
 @require_auth(permissions=[Permission.READ_OWN_DATA])
 async def query_health_data_legacy(
-    current_user: UserContext = Depends(get_current_user),  # noqa: B008
+    current_user: UserContext = Depends(get_current_user_required),  # noqa: B008
     limit: int = Query(100, ge=1, le=1000, description="Maximum number of records"),
     offset: int = Query(0, ge=0, description="Number of records to skip"),
     metric_type: str | None = Query(None, description="Filter by metric type"),
@@ -571,7 +571,7 @@ async def query_health_data_legacy(
 @require_auth(permissions=[Permission.WRITE_OWN_DATA])
 async def delete_health_data(
     processing_id: UUID,
-    current_user: UserContext = Depends(get_current_user),  # noqa: B008
+    current_user: UserContext = Depends(get_current_user_required),  # noqa: B008
     service: HealthDataService = Depends(get_health_data_service),  # noqa: B008
 ) -> dict[str, str]:
     """🔥 Delete health data with proper authorization and audit trail."""

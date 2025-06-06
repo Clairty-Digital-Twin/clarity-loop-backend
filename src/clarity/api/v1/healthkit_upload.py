@@ -15,7 +15,7 @@ from google.cloud import storage  # type: ignore[attr-defined]
 from pydantic import BaseModel, Field
 
 from clarity.auth import UserContext
-from clarity.auth.firebase_auth import get_current_user
+from clarity.auth.firebase_auth import get_current_user_required
 from clarity.services.pubsub.publisher import get_publisher
 
 # Configure logger
@@ -92,7 +92,7 @@ class HealthKitUploadResponse(BaseModel):
 )
 async def upload_healthkit_data(
     request: HealthKitUploadRequest,
-    current_user: UserContext = Depends(get_current_user),  # noqa: B008
+    current_user: UserContext = Depends(get_current_user_required),  # noqa: B008
 ) -> HealthKitUploadResponse:
     """Upload HealthKit data for asynchronous processing.
 
@@ -186,7 +186,7 @@ async def upload_healthkit_data(
 @router.get("/status/{upload_id}")
 async def get_upload_status(
     upload_id: str,
-    current_user: UserContext = Depends(get_current_user),  # noqa: B008
+    current_user: UserContext = Depends(get_current_user_required),  # noqa: B008
 ) -> dict[str, Any]:
     """Get status of a HealthKit upload.
 

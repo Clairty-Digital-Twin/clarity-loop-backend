@@ -200,10 +200,58 @@ class GeminiService:
             raise
 
     @staticmethod
+    def _sanitize_user_input(user_input: str, max_length: int = MAX_USER_INPUT_LENGTH) -> str:
+        """Sanitize user input to prevent prompt injection attacks.
+        
+        SECURITY: Critical protection against prompt injection vulnerabilities.
+        
+        Args:
+            user_input: Raw user input string
+            max_length: Maximum allowed length
+            
+        Returns:
+            Sanitized and safe user input
+        """
+        if not user_input:
+            return ""
+            
+        # Truncate to maximum length
+        sanitized = user_input[:max_length]
+        
+        # Check for dangerous prompt injection patterns
+        for pattern in DANGEROUS_PROMPT_PATTERNS:
+            if re.search(pattern, sanitized, re.IGNORECASE):
+                logger.warning(
+                    "Detected potential prompt injection attempt. Input blocked for safety."
+                )
+                # Replace with safe placeholder instead of original content
+                return "[Content filtered for safety]"
+        
+        # Remove or escape potentially dangerous characters
+        # Remove markdown code blocks and other formatting
+        sanitized = re.sub(r'```.*?```', '[code block removed]', sanitized, flags=re.DOTALL)
+        sanitized = re.sub(r'`([^`]*)`', r'"\1"', sanitized)  # Convert inline code to quotes
+        
+        # Remove HTML-like tags
+        sanitized = re.sub(r'<[^>]*>', '', sanitized)
+        
+        # Escape JSON special characters to prevent injection
+        sanitized = sanitized.replace('"', "'").replace('\n', ' ').replace('\r', ' ')
+        
+        # Remove excessive whitespace
+        sanitized = re.sub(r'\s+', ' ', sanitized).strip()
+        
+        logger.debug("User input sanitized successfully")
+        return sanitized
+
+    @staticmethod
     def _create_health_insight_prompt(request: HealthInsightRequest) -> str:
         """Create a comprehensive prompt for health insight generation."""
         analysis_data = request.analysis_results
-        context = request.context or ""
+        
+        # SECURITY: Sanitize user context to prevent prompt injection
+        raw_context = request.context or ""
+        sanitized_context = GeminiService._sanitize_user_input(raw_context, MAX_CONTEXT_LENGTH)
 
         # Extract key metrics for the prompt
         sleep_efficiency = analysis_data.get("sleep_efficiency", 0)
@@ -224,7 +272,7 @@ PATIENT DATA:
 - Total Sleep Time: {total_sleep_time:.1f} hours
 - Wake After Sleep Onset: {wake_after_sleep_onset:.1f} minutes
 - Sleep Onset Latency: {sleep_onset_latency:.1f} minutes
-- Additional Context: {context}
+- Additional Context: {sanitized_context}
 
 CLINICAL GUIDELINES:
 - Sleep Efficiency >85% = Excellent, 75-85% = Good, <75% = Needs attention

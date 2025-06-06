@@ -350,7 +350,8 @@ class InsightSubscriber:
 
             # Get request body
             pubsub_body = await request.json()
-            logger.debug("📨 Received Pub/Sub body: %s", pubsub_body)
+            # HIPAA-compliant logging - no PHI data
+            logger.debug("📨 Received Pub/Sub message with %d keys", len(pubsub_body))
 
             # Extract and validate message data
             message_data = self._extract_message_data(pubsub_body)

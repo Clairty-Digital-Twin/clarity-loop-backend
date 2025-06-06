@@ -151,10 +151,11 @@ class WebSocketChatHandler:
         health_data_payload: WebSocketHealthDataPayload,
         connection_manager: ConnectionManager,
     ) -> None:
+        # HIPAA-compliant logging - no PHI data
         logger.info(
-            "Triggering health analysis for user %s with validated data: %s",
+            "Triggering health analysis for user %s with %d data points",
             user_id,
-            health_data_payload.model_dump_json(),
+            len(health_data_payload.data_points),
         )
         try:
             duration_hours = 24

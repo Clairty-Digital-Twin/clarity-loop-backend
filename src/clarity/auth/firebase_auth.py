@@ -126,8 +126,8 @@ def get_current_user_websocket(token: str) -> User:
         HTTPException: If token is invalid
     """
     try:
-        # Verify the Firebase ID token
-        decoded_token = auth.verify_id_token(token)
+        # Verify the Firebase ID token with revocation check for security
+        decoded_token = auth.verify_id_token(token, check_revoked=True)
 
         # Create user object from token
         return User(
@@ -142,10 +142,10 @@ def get_current_user_websocket(token: str) -> User:
             profile=None,
         )
 
-    except (auth.InvalidIdTokenError, auth.ExpiredIdTokenError) as e:
+    except (auth.InvalidIdTokenError, auth.ExpiredIdTokenError, auth.RevokedIdTokenError) as e:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid or expired authentication token",
+            detail="Invalid, expired, or revoked authentication token",
         ) from e
     except Exception as e:
         logger.exception("Error verifying WebSocket Firebase token")
@@ -172,8 +172,8 @@ def get_user_from_request(request: Request) -> User | None:
         if scheme.lower() != "bearer":
             return None
 
-        # Verify the Firebase ID token
-        decoded_token = auth.verify_id_token(token)
+        # Verify the Firebase ID token with revocation check for security
+        decoded_token = auth.verify_id_token(token, check_revoked=True)
 
         # Create user object from token
         return User(

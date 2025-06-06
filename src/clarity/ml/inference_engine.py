@@ -39,6 +39,7 @@ from clarity.ml.pat_service import (
     PATModelService,
     get_pat_service,
 )
+from clarity.utils.decorators import resilient_prediction
 
 if TYPE_CHECKING:
     from clarity.core.types import CacheStorage
@@ -482,6 +483,7 @@ class AsyncInferenceEngine:
                     except TimeoutError:
                         break  # Shutdown timeout reached
 
+    @resilient_prediction(model_name="InferenceEngine")
     async def predict_async(self, request: InferenceRequest) -> InferenceResponse:
         """Process inference request asynchronously with batching.
 

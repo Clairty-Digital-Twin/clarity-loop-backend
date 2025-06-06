@@ -94,7 +94,9 @@ class Settings(BaseSettings):
     # Firebase settings
     firebase_project_id: str = Field(default="", alias="FIREBASE_PROJECT_ID")
     firebase_credentials_path: str | None = Field(
-        default=None, alias="FIREBASE_CREDENTIALS_PATH"
+        default=None,
+        alias="FIREBASE_CREDENTIALS_PATH",
+        description="Path to Firebase service account credentials JSON file"
     )
 
     # Google Cloud settings
@@ -170,6 +172,15 @@ class Settings(BaseSettings):
             ):
                 required_for_production.append(
                     "FIREBASE_CREDENTIALS_PATH or GOOGLE_APPLICATION_CREDENTIALS (auth enabled)"
+                )
+
+            # SECURITY: Prevent insecure credential paths in production
+            if self.firebase_credentials_path and any(
+                insecure_path in self.firebase_credentials_path.lower()
+                for insecure_path in ["dev", "test", "mock", "fake", "demo"]
+            ):
+                required_for_production.append(
+                    f"FIREBASE_CREDENTIALS_PATH contains insecure path: {self.firebase_credentials_path}"
                 )
 
             if not self.skip_external_services and not self.gcp_project_id:

@@ -18,6 +18,7 @@ from google.cloud import storage  # type: ignore[attr-defined]
 if TYPE_CHECKING:
     from google.cloud.storage.bucket import Bucket
 
+from clarity.core.secure_logging import log_health_data_received
 from clarity.models.health_data import (
     HealthDataResponse,
     HealthDataUpload,
@@ -232,7 +233,8 @@ class HealthDataService:
             HealthDataServiceError: If processing fails
         """
         try:
-            self.logger.info("Processing health data for user: %s", health_data.user_id)
+            # HIPAA-compliant logging - no PHI exposed
+            log_health_data_received(self.logger, health_data)
 
             # Generate unique processing ID
             processing_id = str(uuid.uuid4())

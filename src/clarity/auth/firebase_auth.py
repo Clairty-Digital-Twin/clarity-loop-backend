@@ -61,8 +61,12 @@ def get_current_user(
         return None
 
     try:
-        # Verify the Firebase ID token
-        decoded_token = auth.verify_id_token(credentials.credentials)
+        # Verify the Firebase ID token with revocation check (CRITICAL SECURITY FIX)
+        decoded_token = auth.verify_id_token(
+            credentials.credentials,
+            check_revoked=True,  # Prevent authentication bypass with stolen tokens
+            clock_skew_seconds=30  # Allow for minor clock drift
+        )
 
         # Create user object from token
         return User(

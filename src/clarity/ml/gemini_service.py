@@ -20,6 +20,7 @@ from vertexai.generative_models import (  # type: ignore[import-untyped]
 )
 
 from clarity.core.config import get_settings
+from clarity.utils.decorators import resilient_prediction
 
 logger = logging.getLogger(__name__)
 
@@ -114,6 +115,7 @@ class GeminiService:
             logger.exception("Failed to initialize Gemini service")
             raise
 
+    @resilient_prediction(model_name="Gemini")
     async def generate_health_insights(
         self, request: HealthInsightRequest
     ) -> HealthInsightResponse:

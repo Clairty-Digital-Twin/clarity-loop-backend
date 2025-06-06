@@ -12,8 +12,8 @@ async def test_require_auth_no_user() -> None:
     """Test that require_auth raises 401 if no user is present."""
 
     @require_auth()
-    async def dummy_endpoint(
-        current_user: User | None = None,
+    def dummy_endpoint(
+        current_user: User | None = None,  # noqa: ARG001
     ) -> str:
         return "OK"
 
@@ -30,8 +30,8 @@ async def test_require_auth_with_user() -> None:
     mock_user = MagicMock(spec=User)
 
     @require_auth()
-    async def dummy_endpoint(
-        current_user: User | None = None,
+    def dummy_endpoint(
+        current_user: User | None = None,  # noqa: ARG001
     ) -> str:
         return "OK"
 
@@ -44,8 +44,8 @@ async def test_require_permission_no_user() -> None:
     """Test that require_permission raises 401 if no user is present."""
 
     @require_permission("some_permission")
-    async def dummy_endpoint(
-        current_user: User | None = None,
+    def dummy_endpoint(
+        current_user: User | None = None,  # noqa: ARG001
     ) -> str:
         return "OK"
 
@@ -62,8 +62,8 @@ async def test_require_permission_with_user() -> None:
     mock_user = MagicMock(spec=User)
 
     @require_permission("some_permission")
-    async def dummy_endpoint(
-        current_user: User | None = None,
+    def dummy_endpoint(
+        current_user: User | None = None,  # noqa: ARG001
     ) -> str:
         return "OK"
 
@@ -76,8 +76,8 @@ async def test_require_role_no_user() -> None:
     """Test that require_role raises 401 if no user is present."""
 
     @require_role("some_role")
-    async def dummy_endpoint(
-        current_user: User | None = None,
+    def dummy_endpoint(
+        current_user: User | None = None,  # noqa: ARG001
     ) -> str:
         return "OK"
 
@@ -94,8 +94,8 @@ async def test_require_role_with_user() -> None:
     mock_user = MagicMock(spec=User)
 
     @require_role("some_role")
-    async def dummy_endpoint(
-        current_user: User | None = None,
+    def dummy_endpoint(
+        current_user: User | None = None,  # noqa: ARG001
     ) -> str:
         return "OK"
 

@@ -139,7 +139,6 @@ class TestPATModelServiceInitialization:
     @staticmethod
     def test_service_initialization_custom_parameters() -> None:
         """Test service initialization with custom parameters - path sanitization."""
-        from pathlib import Path
         custom_path = "custom/path/to/model.h5"
         service = PATModelService(
             model_size="large", device="cpu", model_path=custom_path

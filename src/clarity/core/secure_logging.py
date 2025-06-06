@@ -5,7 +5,7 @@ to prevent accidental PHI exposure in logs.
 """
 
 import logging
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from clarity.models.health_data import HealthDataUpload, HealthMetric

@@ -14,6 +14,7 @@ from uuid import uuid4
 
 import pytest
 
+from clarity.core.exceptions import ServiceUnavailableProblem
 from clarity.ml.gemini_service import (
     GeminiService,
     HealthInsightRequest,
@@ -197,7 +198,6 @@ class TestGeminiServiceHealthInsights:
         sample_insight_request: HealthInsightRequest,
     ) -> None:
         """Test health insight generation when model is not initialized after init."""
-        from clarity.core.exceptions import ServiceUnavailableProblem
         service = GeminiService(project_id="test-project")
 
         with patch.object(service, "initialize"):
@@ -213,7 +213,6 @@ class TestGeminiServiceHealthInsights:
         sample_insight_request: HealthInsightRequest,
     ) -> None:
         """Test health insight generation with generation error."""
-        from clarity.core.exceptions import ServiceUnavailableProblem
         service = GeminiService(project_id="test-project")
 
         mock_model = MagicMock()

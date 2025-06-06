@@ -341,13 +341,16 @@ class DependencyContainer:
     @staticmethod
     def _configure_request_limits(app: FastAPI) -> None:
         """Configure request size limits to prevent DoS attacks."""
-        from typing import TYPE_CHECKING
-        from fastapi import Request, Response  # noqa: PLC0415
-        
+        from typing import TYPE_CHECKING  # noqa: PLC0415
+
         from clarity.core.exceptions import ClarityAPIException  # noqa: PLC0415
-        
+
         if TYPE_CHECKING:
-            from collections.abc import Awaitable
+            from collections.abc import Awaitable  # noqa: PLC0415
+
+            from fastapi import Request, Response  # noqa: PLC0415
+        else:
+            from fastapi import Request, Response  # noqa: PLC0415
 
         # Maximum request size: 10MB for health data uploads
         max_request_size = 10 * 1024 * 1024  # 10MB

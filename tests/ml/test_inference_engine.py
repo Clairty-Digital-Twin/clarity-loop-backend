@@ -16,12 +16,12 @@ from uuid import uuid4
 
 import pytest
 
+from clarity.core.exceptions import ServiceUnavailableProblem
 from clarity.ml.inference_engine import (  # type: ignore[attr-defined]
     AsyncInferenceEngine,
     InferenceCache,
     InferenceRequest,
     InferenceResponse,
-    InferenceTimeoutError,
 )
 from clarity.ml.pat_service import ActigraphyAnalysis, ActigraphyInput, PATModelService
 from clarity.ml.preprocessing import ActigraphyDataPoint
@@ -464,7 +464,6 @@ class TestInferenceEngineErrorHandling:
             )
 
             # Due to the resilient prediction decorator, errors are wrapped in ServiceUnavailableProblem
-            from clarity.core.exceptions import ServiceUnavailableProblem
             with pytest.raises(ServiceUnavailableProblem, match="temporarily unavailable"):
                 await engine.predict_async(request)
 
@@ -498,7 +497,6 @@ class TestInferenceEngineErrorHandling:
                 timeout_seconds=0.1,  # Very short timeout
             )
 
-            from clarity.core.exceptions import ServiceUnavailableProblem
             with pytest.raises(ServiceUnavailableProblem, match="temporarily unavailable"):
                 await engine.predict_async(request)
 

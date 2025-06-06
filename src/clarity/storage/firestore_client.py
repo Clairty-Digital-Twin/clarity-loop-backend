@@ -864,7 +864,8 @@ class FirestoreClient:
             db = await self._get_db()
 
             # Test connection with a simple read
-            test_doc = db.collection("__health_check__").document("test")
+            # Don't use double underscores as they're reserved in Firestore
+            test_doc = db.collection("health_check").document("test")
             await test_doc.get()
 
             return {

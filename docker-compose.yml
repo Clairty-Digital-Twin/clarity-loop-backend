@@ -8,16 +8,22 @@ services:
     ports:
       - "8000:8080"
     environment:
-      - ENVIRONMENT=development
-      - LOG_LEVEL=debug
-      - FIRESTORE_EMULATOR_HOST=firestore:8080
-      - FIREBASE_AUTH_EMULATOR_HOST=firebase-auth:9099
-      - PUBSUB_EMULATOR_HOST=pubsub:8085
+      - ENVIRONMENT=production
+      - LOG_LEVEL=INFO
+      # Remove emulator host settings to use real cloud services
+      # - FIRESTORE_EMULATOR_HOST=firestore:8080
+      # - FIREBASE_AUTH_EMULATOR_HOST=firebase-auth:9099
+      # - PUBSUB_EMULATOR_HOST=pubsub:8085
       - REDIS_URL=redis://redis:6379
+      - GOOGLE_APPLICATION_CREDENTIALS=/app/secrets/credentials.json
+      - FIREBASE_PROJECT_ID=clarity-loop-backend
+      - GCP_PROJECT_ID=clarity-loop-backend
+      - FIRESTORE_DATABASE_ID=(default)
     volumes:
       - .:/app
       - /app/.venv
       - clarity_logs:/app/logs
+      - /Users/ray/Desktop/CLARITY-DIGITAL-TWIN/secrets/clarity-loop-backend-firebase-adminsdk-fbsvc-bc9e472539.json:/app/secrets/credentials.json:ro
     depends_on:
       - redis
       - firestore

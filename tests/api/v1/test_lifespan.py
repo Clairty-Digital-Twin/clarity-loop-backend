@@ -1,8 +1,10 @@
+import importlib
 from unittest.mock import AsyncMock, MagicMock, patch
 
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
+import clarity.api.v1.websocket.lifespan as lifespan_module
 from clarity.api.v1.websocket.connection_manager import ConnectionManager
 from clarity.api.v1.websocket.lifespan import get_connection_manager, websocket_lifespan
 
@@ -14,12 +16,13 @@ def test_lifespan_startup_and_shutdown():
     mock_manager.shutdown = AsyncMock()
 
     # Patch the global variable to None initially
-    with patch("clarity.api.v1.websocket.lifespan.connection_manager", None):
-        # Patch the ConnectionManager class to return our mock
-        with patch(
+    with (
+        patch("clarity.api.v1.websocket.lifespan.connection_manager", None),
+        patch(
             "clarity.api.v1.websocket.lifespan.ConnectionManager",
             return_value=mock_manager,
-        ):
+        ),
+    ):
             app = FastAPI(lifespan=websocket_lifespan)
             with TestClient(app) as client:
                 # Startup should be called
@@ -33,8 +36,6 @@ def test_lifespan_startup_and_shutdown():
 def test_get_connection_manager_singleton():
     """Test that get_connection_manager returns a singleton instance."""
     # Reset the global variable and patch ConnectionManager
-    import clarity.api.v1.websocket.lifespan as lifespan_module
-
     original_manager = lifespan_module.connection_manager
 
     try:

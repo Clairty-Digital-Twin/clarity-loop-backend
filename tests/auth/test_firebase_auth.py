@@ -1,6 +1,5 @@
+import importlib
 from unittest.mock import MagicMock, patch
-
-import pytest
 
 from clarity.auth import firebase_auth
 
@@ -19,8 +18,6 @@ def test_initialize_firebase_with_credentials_path():
     ):
 
         # Reload the module to trigger initialization
-        import importlib
-
         importlib.reload(firebase_auth)
 
         mock_creds.assert_called_once_with("fake/path/to/creds.json")

@@ -13,6 +13,13 @@ from prometheus_client import Counter
 
 from clarity.core.exceptions import ServiceUnavailableProblem
 
+# Import health data service error at module level to avoid circular imports
+try:
+    from clarity.services.health_data_service import HealthDataServiceError
+    _HEALTH_DATA_SERVICE_ERROR = HealthDataServiceError
+except ImportError:
+    _HEALTH_DATA_SERVICE_ERROR = None
+
 logger = logging.getLogger(__name__)
 
 # Prometheus metrics for predictions
@@ -62,17 +69,9 @@ def resilient_prediction(
                 raise ServiceUnavailableProblem(msg) from e
             except Exception as e:
                 # Allow domain-specific exceptions to pass through unchanged
-                # Import here to avoid circular imports
-                try:
-                    from clarity.services.health_data_service import (
-                        HealthDataServiceError,
-                    )
-
-                    if isinstance(e, HealthDataServiceError):
-                        PREDICTION_FAILURE.labels(model_name=model_name).inc()
-                        raise
-                except ImportError:
-                    pass
+                if _HEALTH_DATA_SERVICE_ERROR and isinstance(e, _HEALTH_DATA_SERVICE_ERROR):
+                    PREDICTION_FAILURE.labels(model_name=model_name).inc()
+                    raise
 
                 # For all other exceptions, wrap in ServiceUnavailableProblem
                 msg = f"An unexpected error occurred in {model_name}."

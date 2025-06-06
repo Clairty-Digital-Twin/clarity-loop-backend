@@ -908,17 +908,17 @@ class PATModelService(IMLModelService):
                 input_data.user_id,
             )
 
-            return analysis
-
         except Exception as e:
-            logger.error(
-                "PAT model analysis failed for user %s: %s",
+            logger.exception(
+                "PAT model analysis failed for user %s",
                 input_data.user_id,
-                str(e),
             )
+            error_msg = f"PAT model analysis failed: {e!s}"
             raise MLPredictionError(
-                f"PAT model analysis failed: {e!s}", model_name="PAT"
+                error_msg, model_name="PAT"
             ) from e
+        else:
+            return analysis
 
     async def verify_weights_loaded(self) -> bool:
         """Verify that real weights are loaded (not random initialization).

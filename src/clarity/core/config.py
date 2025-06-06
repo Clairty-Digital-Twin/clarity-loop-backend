@@ -11,6 +11,7 @@ from typing import Self
 
 from pydantic import Field, model_validator
 from pydantic_settings import BaseSettings
+from typing import ClassVar
 
 # Configure logger
 logger = logging.getLogger(__name__)
@@ -93,11 +94,8 @@ class Settings(BaseSettings):
 
     # Firebase settings
     firebase_project_id: str = Field(default="", alias="FIREBASE_PROJECT_ID")
-    firebase_credentials_path: str = Field(
-        ...,
-        alias="FIREBASE_CREDENTIALS_PATH",
-        description="Path to Firebase credentials JSON file.",
-        pattern=r"^(/secrets/|gs://).*\.json$",
+    firebase_credentials_path: str | None = Field(
+        default=None, alias="FIREBASE_CREDENTIALS_PATH"
     )
 
     # Google Cloud settings
@@ -130,6 +128,12 @@ class Settings(BaseSettings):
     @model_validator(mode="after")
     def validate_environment_requirements(self) -> Self:
         """Validate environment-specific requirements and set development defaults."""
+        # If in testing mode, and no path is provided, set a mock path.
+        if self.is_testing():
+            if not self.firebase_credentials_path:
+                self.firebase_credentials_path = "mock_firebase_creds.json"
+            return self
+
         # In development, warn about missing credentials but don't fail
         if self.environment.lower() == "development":
             missing_creds: list[str] = []

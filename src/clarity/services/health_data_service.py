@@ -58,6 +58,7 @@ class MLPredictionError(HealthDataServiceError):
         if model_name:
             full_message = f"ML Prediction Error in {model_name}: {message}"
         super().__init__(full_message, status_code=503)
+        self.model_name = model_name
 
 
 def _raise_validation_error(error_summary: str) -> None:
@@ -199,6 +200,24 @@ class HealthDataService:
         else:
             return gcs_path
 
+    def _validate_health_metrics(self, metrics: list[HealthMetric]) -> list[str]:
+        """Validate a list of health metrics."""
+        validation_errors: list[str] = []
+        for metric in metrics:
+            try:
+                # Basic validation - check if metric_type and created_at exist
+                if not metric.metric_type or not metric.created_at:
+                    validation_errors.append(
+                        f"Metric {metric.metric_id} missing required fields"
+                    )
+                elif not self._validate_metric_business_rules(metric):
+                    validation_errors.append(
+                        f"Metric {metric.metric_id} failed business validation"
+                    )
+            except ValueError as e:
+                validation_errors.append(f"Metric {metric.metric_id}: {e!s}")
+        return validation_errors
+
     async def process_health_data(
         self, health_data: HealthDataUpload
     ) -> HealthDataResponse:
@@ -220,20 +239,7 @@ class HealthDataService:
             processing_id = str(uuid.uuid4())
 
             # Validate health metrics
-            validation_errors: list[str] = []
-            for metric in health_data.metrics:
-                try:
-                    # Basic validation - check if metric_type and created_at exist
-                    if not metric.metric_type or not metric.created_at:
-                        validation_errors.append(
-                            f"Metric {metric.metric_id} missing required fields"
-                        )
-                    elif not self._validate_metric_business_rules(metric):
-                        validation_errors.append(
-                            f"Metric {metric.metric_id} failed business validation"
-                        )
-                except ValueError as e:
-                    validation_errors.append(f"Metric {metric.metric_id}: {e!s}")
+            validation_errors = self._validate_health_metrics(health_data.metrics)
 
             # Check if validation passed
             if validation_errors:

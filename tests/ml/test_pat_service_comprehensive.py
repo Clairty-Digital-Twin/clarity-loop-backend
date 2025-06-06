@@ -23,6 +23,8 @@ from clarity.ml.pat_service import (
     get_pat_service,
 )
 from clarity.ml.preprocessing import ActigraphyDataPoint
+from clarity.services.health_data_service import MLPredictionError
+
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
@@ -292,8 +294,12 @@ class TestPATModelService:
             duration_hours=24,
         )
 
-        with pytest.raises(RuntimeError, match="PAT model not loaded"):
+        with pytest.raises(MLPredictionError) as excinfo:
             await service.analyze_actigraphy(sample_data)
+
+        assert "PAT model not loaded" in str(excinfo.value)
+        assert excinfo.value.model_name == "PAT"
+        assert isinstance(excinfo.value.__cause__, RuntimeError)
 
     @staticmethod
     async def test_singleton_service() -> None:

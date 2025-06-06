@@ -431,9 +431,11 @@ class TestPATModelServiceAnalysis:
                 "_preprocess_actigraphy_data",
                 side_effect=ValueError("Preprocessing failed"),
             ),
-            pytest.raises(ValueError, match="Preprocessing failed"),
+            pytest.raises(MLPredictionError) as excinfo,
         ):
             await service.analyze_actigraphy(sample_actigraphy_input)
+        assert "Preprocessing failed" in str(excinfo.value)
+        assert isinstance(excinfo.value.__cause__, ValueError)
 
     @pytest.mark.asyncio
     @staticmethod
@@ -443,8 +445,7 @@ class TestPATModelServiceAnalysis:
         """Test analysis with model inference error."""
         service = PATModelService(model_size="medium")
         service.is_loaded = True
-        service.model = MagicMock()
-        service.model.side_effect = RuntimeError("Model inference failed")
+        service.model = MagicMock(side_effect=RuntimeError("Model inference failed"))
 
         with (
             patch.object(
@@ -452,12 +453,13 @@ class TestPATModelServiceAnalysis:
                 "_preprocess_actigraphy_data",
                 return_value=torch.randn(1, 1440, 1),
             ),
-            pytest.raises(
-                MLPredictionError,
-                match="ML Prediction Error in PAT-medium: Error during PAT model prediction: Model inference failed",
-            ),
+            pytest.raises(MLPredictionError) as excinfo,
         ):
             await service.analyze_actigraphy(sample_actigraphy_input)
+
+        assert "Model inference failed" in str(excinfo.value)
+        assert excinfo.value.model_name == "PAT"
+        assert isinstance(excinfo.value.__cause__, RuntimeError)
 
 
 class TestPATModelServicePostprocessing:

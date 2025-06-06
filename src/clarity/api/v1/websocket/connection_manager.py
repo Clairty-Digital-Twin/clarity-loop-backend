@@ -253,11 +253,10 @@ class ConnectionManager:
         # Find rooms user was in and notify
         rooms_to_notify = []
         for room_id, users in self.rooms.items():
-            if user_id in users:
+            if user_id in users and user_id not in self.user_connections:
                 # If the user has no more connections, they have left the room.
-                if user_id not in self.user_connections:
-                    users.discard(user_id)
-                    rooms_to_notify.append(room_id)
+                users.discard(user_id)
+                rooms_to_notify.append(room_id)
 
         # Notify rooms about user leaving
         for room_id in rooms_to_notify:

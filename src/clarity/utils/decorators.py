@@ -1,33 +1,34 @@
 """Resilience and utility decorators for the CLARITY platform."""
 
-from collections.abc import Callable
+from collections.abc import Awaitable, Callable
 import functools
 import logging
-from typing import Any, TypeVar
+from typing import ParamSpec, TypeVar
 
-from circuitbreaker import CircuitBreakerError, circuit
+from circuitbreaker import CircuitBreakerError
 from prometheus_client import Counter
 
-from clarity.services.health_data_service import MLPredictionError
-
-# Prometheus metrics
-PREDICTION_SUCCESS = Counter(
-    "prediction_success_total", "Total successful predictions", ["model_name"]
-)
-PREDICTION_FAILURE = Counter(
-    "prediction_failure_total", "Total failed predictions", ["model_name", "reason"]
-)
+from clarity.core.exceptions import ServiceUnavailableProblem
 
 logger = logging.getLogger(__name__)
 
-# Type variable for decorated function's return value
+# Prometheus metrics for predictions
+PREDICTION_SUCCESS = Counter(
+    "prediction_success_total", "Total number of successful predictions", ["model_name"]
+)
+PREDICTION_FAILURE = Counter(
+    "prediction_failure_total", "Total number of failed predictions", ["model_name"]
+)
+
 T = TypeVar("T")
+P = ParamSpec("P")
 
 
 def resilient_prediction(
     failure_threshold: int = 5, recovery_timeout: int = 60, model_name: str = "ML model"
-) -> Callable[..., Callable[..., T]]:
+) -> Callable[[Callable[P, Awaitable[T]]], Callable[P, Awaitable[T]]]:
     """A decorator that makes an ML prediction function resilient.
+
     It adds a circuit breaker and standardized error handling.
 
     Args:
@@ -39,55 +40,34 @@ def resilient_prediction(
         A decorated function.
     """
 
-    def decorator(func: Callable[..., T]) -> Callable[..., T]:
-        # Apply the circuit breaker decorator to the original function
-        circuit_breaker_func = circuit(
+    def decorator(func: Callable[P, Awaitable[T]]) -> Callable[P, Awaitable[T]]:
+        """Decorator that adds a circuit breaker to an async function."""
+        circuit_breaker = CircuitBreakerError(
             failure_threshold=failure_threshold, recovery_timeout=recovery_timeout
-        )(func)
+        )
 
         @functools.wraps(func)
-        async def wrapper(*args: Any, **kwargs: Any) -> T:
+        async def wrapper(*args: P.args, **kwargs: P.kwargs) -> T:
             """Wrapper that adds error handling and logging around the circuit breaker."""
             try:
-                # The first argument of the decorated method is 'self'
-                # The second is typically the input data.
-                user_id = "unknown"
-                if args and hasattr(args[1], "user_id"):
-                    user_id = args[1].user_id
-
-                logger.debug(
-                    "Calling resilient prediction for model '%s' for user '%s'",
-                    model_name,
-                    user_id,
-                )
-                PREDICTION_SUCCESS.labels(model_name=model_name).inc()
-                return await circuit_breaker_func(*args, **kwargs)  # type: ignore
+                # Use the circuit breaker as an async context manager
+                async with circuit_breaker:
+                    return await func(*args, **kwargs)
 
             except CircuitBreakerError as e:
+                msg = f"{model_name} is currently unavailable. Please try again later."
                 logger.exception(
-                    "Circuit open for model '%s'. Prediction failed.", model_name
+                    "Circuit breaker is open for %s", model_name
                 )
-                PREDICTION_FAILURE.labels(
-                    model_name=model_name, reason="circuit_open"
-                ).inc()
-                raise MLPredictionError(
-                    message=f"Circuit is open for {model_name}. Service is temporarily unavailable.",
-                    model_name=model_name,
-                ) from e
-            except Exception as e:
-                logger.critical(
-                    "Prediction failed for model '%s': %s",
-                    model_name,
-                    e,
-                    exc_info=True,
-                )
-                PREDICTION_FAILURE.labels(
-                    model_name=model_name, reason="exception"
-                ).inc()
-                raise MLPredictionError(
-                    message=f"Error during prediction: {e!s}", model_name=model_name
-                ) from e
+                PREDICTION_FAILURE.labels(model_name=model_name).inc()
+                raise ServiceUnavailableProblem(msg) from e
 
-        return wrapper  # type: ignore
+            except Exception as e:
+                msg = f"An unexpected error occurred in {model_name}."
+                logger.exception("An unexpected error occurred during prediction")
+                PREDICTION_FAILURE.labels(model_name=model_name).inc()
+                raise ServiceUnavailableProblem(msg) from e
+
+        return wrapper
 
     return decorator

@@ -1,7 +1,6 @@
 import asyncio
-import json
 import time
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 from fastapi import WebSocket
 import pytest
@@ -10,10 +9,7 @@ from starlette.websockets import WebSocketState
 from clarity.api.v1.websocket.connection_manager import ConnectionManager
 from clarity.api.v1.websocket.models import (
     ChatMessage,
-    HeartbeatMessage,
     MessageType,
-    SystemMessage,
-    WebSocketMessage,
 )
 
 
@@ -39,8 +35,7 @@ async def test_connect_and_disconnect():
     assert user_id not in manager.user_connections
 
 
-@pytest.mark.asyncio
-async def test_cleanup_rate_limiting_data():
+def test_cleanup_rate_limiting_data():
     manager = ConnectionManager(message_rate_limit=2)
     user_id = "test_user"
 
@@ -52,7 +47,7 @@ async def test_cleanup_rate_limiting_data():
         time.time() - 5,
     ]
 
-    manager._cleanup_rate_limiting_data()
+    manager.cleanup_rate_limiting_data()
 
     assert len(manager.message_counts[user_id]) == 2
 
@@ -126,7 +121,7 @@ async def test_rate_limiting():
 
 @pytest.mark.asyncio
 @patch("time.time", return_value=1622995200.0)
-async def test_background_tasks(mock_time):
+async def test_background_tasks(mock_time: MagicMock):
     manager = ConnectionManager(heartbeat_interval=0.1, connection_timeout=0.1)
     await manager.start_background_tasks()
 

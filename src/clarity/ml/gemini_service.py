@@ -305,21 +305,56 @@ Generate insights that are:
 Respond only with valid JSON."""
 
     @staticmethod
+    def _sanitize_ai_response(text: str) -> str:
+        """Sanitize AI response to prevent malicious content.
+        
+        SECURITY: Ensures AI responses don't contain harmful content.
+        
+        Args:
+            text: Raw AI response text
+            
+        Returns:
+            Sanitized response text
+        """
+        if not text:
+            return ""
+            
+        # Remove any potential HTML/script content
+        sanitized = re.sub(r'<[^>]*>', '', text)
+        
+        # Remove excessive newlines and whitespace
+        sanitized = re.sub(r'\n\s*\n', '\n', sanitized)
+        sanitized = re.sub(r'\s+', ' ', sanitized).strip()
+        
+        # Limit response length for safety
+        max_response_length = 5000  # Reasonable limit for health insights
+        if len(sanitized) > max_response_length:
+            sanitized = sanitized[:max_response_length] + "... [Response truncated for safety]"
+            
+        return sanitized
+
+    @staticmethod
     def _parse_gemini_response(response: object, user_id: str) -> HealthInsightResponse:
         """Parse and validate Gemini response."""
         try:
             # Extract text from response
             response_text = response.text.strip()  # type: ignore[attr-defined]
 
+            # SECURITY: Sanitize the AI response
+            sanitized_response_text = GeminiService._sanitize_ai_response(response_text)
+
             # Parse JSON response
-            parsed_response = json.loads(response_text)
+            parsed_response = json.loads(sanitized_response_text)
 
             # Validate required fields and provide defaults
-            narrative = parsed_response.get(
-                "narrative", "Analysis completed successfully."
-            )
-            key_insights = parsed_response.get("key_insights", [])
-            recommendations = parsed_response.get("recommendations", [])
+            raw_narrative = parsed_response.get("narrative", "Analysis completed successfully.")
+            narrative = GeminiService._sanitize_ai_response(raw_narrative)
+            
+            raw_insights = parsed_response.get("key_insights", [])
+            key_insights = [GeminiService._sanitize_ai_response(str(insight)) for insight in raw_insights]
+            
+            raw_recommendations = parsed_response.get("recommendations", [])
+            recommendations = [GeminiService._sanitize_ai_response(str(rec)) for rec in raw_recommendations]
             confidence_score = parsed_response.get("confidence_score", 0.8)
 
             return HealthInsightResponse(

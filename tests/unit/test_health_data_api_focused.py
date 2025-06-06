@@ -23,7 +23,7 @@ from starlette.datastructures import Headers
 
 from clarity.api.v1.health_data import router as health_data_router
 from clarity.core.exceptions import DataValidationError
-from clarity.models.health_data import ActivityData, HealthDataUpload
+from clarity.models.health_data import ActivityData, HealthDataUpload, HealthMetric, HealthMetricType
 from clarity.services.health_data_service import HealthDataServiceError
 from tests.base import BaseServiceTestCase
 
@@ -46,6 +46,7 @@ class MockHealthDataService:
         self.should_fail = False
         self.fail_with = Exception("Service error")
         self.upload_result = "test_processing_id"
+        self.query_result: dict[str, Any] = {"data": [], "total": 0}
 
     async def upload_health_data(
         self,
@@ -62,7 +63,7 @@ class MockHealthDataService:
         user_id: str,
         start_date: datetime | None = None,
         end_date: datetime | None = None,
-    ) -> dict:
+    ) -> dict[str, Any]:
         """Mock get user metrics."""
         if self.should_fail:
             raise self.fail_with
@@ -71,6 +72,16 @@ class MockHealthDataService:
             "metrics": [],
             "period": {"start": start_date, "end": end_date},
         }
+
+    async def query_health_data(
+        self,
+        user_id: str,  # noqa: ARG002
+        **kwargs: Any,  # noqa: ARG002
+    ) -> dict[str, Any]:
+        """Mock query health data."""
+        if self.should_fail:
+            raise self.fail_with
+        return self.query_result
 
 
 class TestHealthDataUploadEndpoint(BaseServiceTestCase):

@@ -338,35 +338,35 @@ class DependencyContainer:
 
         logger.info("✅ RFC 7807 Problem Details exception handling configured")
 
-    def _configure_request_limits(self, app: FastAPI) -> None:
+    @staticmethod
+    def _configure_request_limits(app: FastAPI) -> None:
         """Configure request size limits to prevent DoS attacks."""
-        from fastapi import Request  # noqa: PLC0415
-        from fastapi.exceptions import RequestValidationError  # noqa: PLC0415
+        from collections.abc import Awaitable, Callable  # noqa: PLC0415
+        from fastapi import Request, Response  # noqa: PLC0415
+        from clarity.core.exceptions import ClarityAPIException  # noqa: PLC0415
 
         # Maximum request size: 10MB for health data uploads
-        MAX_REQUEST_SIZE = 10 * 1024 * 1024  # 10MB
+        max_request_size = 10 * 1024 * 1024  # 10MB
 
         @app.middleware("http")
-        async def limit_upload_size(request: Request, call_next):
+        async def limit_upload_size(
+            request: Request,
+            call_next: Callable[[Request], Awaitable[Response]]
+        ) -> Response:
             """Middleware to limit request size and prevent DoS attacks."""
-            if request.method in ("POST", "PUT", "PATCH"):
+            if request.method in {"POST", "PUT", "PATCH"}:
                 content_length = request.headers.get("content-length")
-                if content_length:
-                    if int(content_length) > MAX_REQUEST_SIZE:
-                        from clarity.core.exceptions import (
-                            ClarityAPIException,
-                        )
-                        raise ClarityAPIException(
-                            status_code=413,
-                            error_code="request_too_large",
-                            detail=f"Request size {content_length} exceeds maximum {MAX_REQUEST_SIZE} bytes",
-                            title="Request Too Large"
-                        )
+                if content_length and int(content_length) > max_request_size:
+                    raise ClarityAPIException(
+                        status_code=413,
+                        problem_type="request_too_large",
+                        title="Request Too Large",
+                        detail=f"Request size {content_length} exceeds maximum {max_request_size} bytes"
+                    )
 
-            response = await call_next(request)
-            return response
+            return await call_next(request)
 
-        logger.info("✅ Request size limits configured (max: %d MB)", MAX_REQUEST_SIZE // (1024 * 1024))
+        logger.info("✅ Request size limits configured (max: %d MB)", max_request_size // (1024 * 1024))
 
     def _configure_middleware(self, app: FastAPI) -> None:
         """Configure middleware with dependency injection."""

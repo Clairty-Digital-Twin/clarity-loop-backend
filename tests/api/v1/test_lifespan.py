@@ -1,11 +1,10 @@
-import importlib
 from unittest.mock import AsyncMock, MagicMock, patch
 
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-import clarity.api.v1.websocket.lifespan as lifespan_module
 from clarity.api.v1.websocket.connection_manager import ConnectionManager
+import clarity.api.v1.websocket.lifespan as lifespan_module
 from clarity.api.v1.websocket.lifespan import get_connection_manager, websocket_lifespan
 
 
@@ -23,14 +22,14 @@ def test_lifespan_startup_and_shutdown():
             return_value=mock_manager,
         ),
     ):
-            app = FastAPI(lifespan=websocket_lifespan)
-            with TestClient(app) as client:
-                # Startup should be called
-                assert client
-                mock_manager.start_background_tasks.assert_called_once()
+        app = FastAPI(lifespan=websocket_lifespan)
+        with TestClient(app) as client:
+            # Startup should be called
+            assert client
+            mock_manager.start_background_tasks.assert_called_once()
 
-            # Shutdown should be called
-            mock_manager.shutdown.assert_called_once()
+        # Shutdown should be called
+        mock_manager.shutdown.assert_called_once()
 
 
 def test_get_connection_manager_singleton():

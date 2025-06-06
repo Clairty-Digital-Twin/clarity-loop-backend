@@ -16,7 +16,7 @@ from clarity.core.exceptions import ServiceUnavailableProblem
 # Import health data service error at module level to avoid circular imports
 try:
     from clarity.services.health_data_service import HealthDataServiceError
-    _HEALTH_DATA_SERVICE_ERROR = HealthDataServiceError
+    _HEALTH_DATA_SERVICE_ERROR: type[Exception] | None = HealthDataServiceError
 except ImportError:
     _HEALTH_DATA_SERVICE_ERROR = None
 

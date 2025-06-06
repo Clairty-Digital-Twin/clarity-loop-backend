@@ -875,13 +875,6 @@ class PATModelService(IMLModelService):
             RuntimeError: If model is not loaded
             MLPredictionError: If model inference fails
         """
-        if not self.is_loaded or not self.model:
-            self._raise_model_not_loaded_error()
-
-        assert (  # noqa: S101 # nosec B101
-            self.model is not None
-        ), "Model must be loaded at this point"
-
         logger.info(
             "Analyzing actigraphy data for user %s (%d data points)",
             input_data.user_id,
@@ -889,6 +882,12 @@ class PATModelService(IMLModelService):
         )
 
         try:
+            if not self.is_loaded or not self.model:
+                self._raise_model_not_loaded_error()
+
+            assert (  # noqa: S101 # nosec B101
+                self.model is not None
+            ), "Model must be loaded at this point"
             # Preprocess input data
             input_tensor = self._preprocess_actigraphy_data(input_data.data_points)
 
@@ -918,7 +917,7 @@ class PATModelService(IMLModelService):
                 str(e),
             )
             raise MLPredictionError(
-                f"PAT model analysis failed: {str(e)}", model_name="PAT"
+                f"PAT model analysis failed: {e!s}", model_name="PAT"
             ) from e
 
     async def verify_weights_loaded(self) -> bool:

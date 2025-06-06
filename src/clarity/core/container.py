@@ -342,7 +342,9 @@ class DependencyContainer:
     def _configure_request_limits(app: FastAPI) -> None:
         """Configure request size limits to prevent DoS attacks."""
         from collections.abc import Awaitable, Callable  # noqa: PLC0415
+
         from fastapi import Request, Response  # noqa: PLC0415
+
         from clarity.core.exceptions import ClarityAPIException  # noqa: PLC0415
 
         # Maximum request size: 10MB for health data uploads
@@ -350,8 +352,7 @@ class DependencyContainer:
 
         @app.middleware("http")
         async def limit_upload_size(
-            request: Request,
-            call_next: Callable[[Request], Awaitable[Response]]
+            request: Request, call_next: Callable[[Request], Awaitable[Response]]
         ) -> Response:
             """Middleware to limit request size and prevent DoS attacks."""
             if request.method in {"POST", "PUT", "PATCH"}:
@@ -361,12 +362,15 @@ class DependencyContainer:
                         status_code=413,
                         problem_type="request_too_large",
                         title="Request Too Large",
-                        detail=f"Request size {content_length} exceeds maximum {max_request_size} bytes"
+                        detail=f"Request size {content_length} exceeds maximum {max_request_size} bytes",
                     )
 
             return await call_next(request)
 
-        logger.info("✅ Request size limits configured (max: %d MB)", max_request_size // (1024 * 1024))
+        logger.info(
+            "✅ Request size limits configured (max: %d MB)",
+            max_request_size // (1024 * 1024),
+        )
 
     def _configure_middleware(self, app: FastAPI) -> None:
         """Configure middleware with dependency injection."""

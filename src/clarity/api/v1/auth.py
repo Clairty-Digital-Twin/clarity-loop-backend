@@ -154,7 +154,10 @@ async def register_user(
         )
 
     except UserAlreadyExistsError as e:
-        logger.warning("Registration attempt for existing user: %s", sanitize_for_logging({"email": request_data.email}))
+        logger.warning(
+            "Registration attempt for existing user: %s",
+            sanitize_for_logging({"email": request_data.email}),
+        )
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail={
@@ -192,7 +195,10 @@ async def register_user(
         ) from e
 
     except AuthenticationError as e:
-        logger.exception("Registration failed for %s", sanitize_for_logging({"email": request_data.email}))
+        logger.exception(
+            "Registration failed for %s",
+            sanitize_for_logging({"email": request_data.email}),
+        )
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail={
@@ -240,7 +246,10 @@ async def login_user(
         )
 
     except UserNotFoundError as e:
-        logger.warning("Login attempt for non-existent user: %s", sanitize_for_logging({"email": request_data.email}))
+        logger.warning(
+            "Login attempt for non-existent user: %s",
+            sanitize_for_logging({"email": request_data.email}),
+        )
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail={
@@ -250,7 +259,10 @@ async def login_user(
         ) from e
 
     except InvalidCredentialsError as e:
-        logger.warning("Invalid credentials for user: %s", sanitize_for_logging({"email": request_data.email}))
+        logger.warning(
+            "Invalid credentials for user: %s",
+            sanitize_for_logging({"email": request_data.email}),
+        )
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail={
@@ -260,7 +272,10 @@ async def login_user(
         ) from e
 
     except EmailNotVerifiedError as e:
-        logger.warning("Login attempt with unverified email: %s", sanitize_for_logging({"email": request_data.email}))
+        logger.warning(
+            "Login attempt with unverified email: %s",
+            sanitize_for_logging({"email": request_data.email}),
+        )
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail={
@@ -270,7 +285,10 @@ async def login_user(
         ) from e
 
     except AccountDisabledError as e:
-        logger.warning("Login attempt for disabled account: %s", sanitize_for_logging({"email": request_data.email}))
+        logger.warning(
+            "Login attempt for disabled account: %s",
+            sanitize_for_logging({"email": request_data.email}),
+        )
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail={
@@ -280,7 +298,9 @@ async def login_user(
         ) from e
 
     except AuthenticationError as e:
-        logger.exception("Login failed for %s", sanitize_for_logging({"email": request_data.email}))
+        logger.exception(
+            "Login failed for %s", sanitize_for_logging({"email": request_data.email})
+        )
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail={
@@ -289,7 +309,9 @@ async def login_user(
             },
         ) from e
     else:
-        logger.info("User logged in: %s", sanitize_for_logging({"email": request_data.email}))
+        logger.info(
+            "User logged in: %s", sanitize_for_logging({"email": request_data.email})
+        )
         return result
 
 

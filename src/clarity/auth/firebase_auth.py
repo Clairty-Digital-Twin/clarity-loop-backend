@@ -65,7 +65,7 @@ def get_current_user(
         decoded_token = auth.verify_id_token(
             credentials.credentials,
             check_revoked=True,  # Prevent authentication bypass with stolen tokens
-            clock_skew_seconds=30  # Allow for minor clock drift
+            clock_skew_seconds=30,  # Allow for minor clock drift
         )
 
         # Create user object from token
@@ -142,7 +142,11 @@ def get_current_user_websocket(token: str) -> User:
             profile=None,
         )
 
-    except (auth.InvalidIdTokenError, auth.ExpiredIdTokenError, auth.RevokedIdTokenError) as e:
+    except (
+        auth.InvalidIdTokenError,
+        auth.ExpiredIdTokenError,
+        auth.RevokedIdTokenError,
+    ) as e:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid, expired, or revoked authentication token",

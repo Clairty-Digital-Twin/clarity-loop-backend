@@ -96,7 +96,7 @@ class Settings(BaseSettings):
     firebase_credentials_path: str | None = Field(
         default=None,
         alias="FIREBASE_CREDENTIALS_PATH",
-        description="Path to Firebase service account credentials JSON file"
+        description="Path to Firebase service account credentials JSON file",
     )
 
     # Google Cloud settings

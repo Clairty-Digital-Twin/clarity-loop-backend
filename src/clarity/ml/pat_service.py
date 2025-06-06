@@ -53,7 +53,7 @@ MODEL_SIGNATURE_KEY = "pat_model_integrity_key_2025"  # In production, use env v
 EXPECTED_MODEL_CHECKSUMS = {
     "small": "a1b2c3d4e5f6789012345678901234567890abcdef",  # SHA-256 of authentic PAT-S
     "medium": "b2c3d4e5f6789012345678901234567890abcdef12",  # SHA-256 of authentic PAT-M
-    "large": "c3d4e5f6789012345678901234567890abcdef1234",   # SHA-256 of authentic PAT-L
+    "large": "c3d4e5f6789012345678901234567890abcdef1234",  # SHA-256 of authentic PAT-L
 }
 
 # Model configurations matching Dartmouth specs exactly
@@ -559,12 +559,14 @@ class PATModelService(IMLModelService):
 
             # Compare checksums
             if file_checksum == expected_checksum:
-                logger.info("✅ Model integrity verification PASSED for %s", self.model_size)
+                logger.info(
+                    "✅ Model integrity verification PASSED for %s", self.model_size
+                )
                 return True
             logger.error(
                 "❌ Model integrity verification FAILED: Expected %s, got %s",
                 expected_checksum,
-                file_checksum
+                file_checksum,
             )
             return False
 
@@ -593,9 +595,9 @@ class PATModelService(IMLModelService):
             # Create HMAC signature for additional security
             file_digest = sha256_hash.hexdigest()
             signature = hmac.new(
-                MODEL_SIGNATURE_KEY.encode('utf-8'),
-                file_digest.encode('utf-8'),
-                hashlib.sha256
+                MODEL_SIGNATURE_KEY.encode("utf-8"),
+                file_digest.encode("utf-8"),
+                hashlib.sha256,
             ).hexdigest()
 
             logger.debug("Calculated model checksum: %s", signature)
@@ -642,7 +644,7 @@ class PATModelService(IMLModelService):
             # If we get here, path is not in any allowed directory
             logger.warning(
                 "Model path '%s' is outside allowed directories. Using default safe path.",
-                path
+                path,
             )
 
             # Fallback to default safe path
@@ -1007,7 +1009,9 @@ class PATModelService(IMLModelService):
         raise RuntimeError(msg)
 
     @staticmethod
-    def _raise_data_too_large_error(data_point_count: int, max_data_points: int) -> NoReturn:
+    def _raise_data_too_large_error(
+        data_point_count: int, max_data_points: int
+    ) -> NoReturn:
         """Raise error when input data is too large."""
         error_msg = (
             f"Input data too large: {data_point_count} points exceeds "

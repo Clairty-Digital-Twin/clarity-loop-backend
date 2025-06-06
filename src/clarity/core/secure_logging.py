@@ -13,7 +13,9 @@ else:
     from clarity.models.health_data import HealthDataUpload, HealthMetric
 
 
-def log_health_data_received(logger: logging.Logger, health_data: HealthDataUpload) -> None:
+def log_health_data_received(
+    logger: logging.Logger, health_data: HealthDataUpload
+) -> None:
     """Log health data reception without exposing PHI.
 
     HIPAA-compliant logging that only includes non-sensitive metadata.
@@ -26,11 +28,13 @@ def log_health_data_received(logger: logging.Logger, health_data: HealthDataUplo
         "Received health data for user %s (%d metrics, source: %s)",
         health_data.user_id,
         len(health_data.metrics),
-        health_data.upload_source
+        health_data.upload_source,
     )
 
 
-def log_health_metrics_processed(logger: logging.Logger, user_id: str, metrics: list[HealthMetric]) -> None:
+def log_health_metrics_processed(
+    logger: logging.Logger, user_id: str, metrics: list[HealthMetric]
+) -> None:
     """Log health metrics processing without exposing PHI.
 
     Args:
@@ -43,7 +47,7 @@ def log_health_metrics_processed(logger: logging.Logger, user_id: str, metrics: 
         "Processed %d health metrics for user %s (types: %s)",
         len(metrics),
         user_id,
-        ", ".join(set(metric_types))
+        ", ".join(set(metric_types)),
     )
 
 
@@ -58,24 +62,29 @@ def sanitize_for_logging(data: object) -> str:
     Returns:
         Safe string representation for logging
     """
-    if hasattr(data, 'user_id'):
+    if hasattr(data, "user_id"):
         # For health data objects, only log metadata
-        if hasattr(data, 'metrics'):
-            return f"HealthData(user_id={data.user_id}, metrics_count={len(data.metrics)})"
+        if hasattr(data, "metrics"):
+            return (
+                f"HealthData(user_id={data.user_id}, metrics_count={len(data.metrics)})"
+            )
         return f"Data(user_id={data.user_id})"
 
     if isinstance(data, dict):
         # For dictionaries, mask sensitive keys
         safe_dict = {}
         for key, value in data.items():
-            if key.lower() in {'email', 'phone', 'address', 'ssn', 'dob'}:
+            if key.lower() in {"email", "phone", "address", "ssn", "dob"}:
                 safe_dict[key] = "[MASKED]"
-            elif isinstance(value, (dict, list)) and len(str(value)) > 100:  # noqa: PLR2004
-                safe_dict[key] = f"[{type(value).__name__}:{len(value) if hasattr(value, '__len__') else 'N/A'}]"
+            elif (
+                isinstance(value, (dict, list)) and len(str(value)) > 100
+            ):
+                safe_dict[key] = (
+                    f"[{type(value).__name__}:{len(value) if hasattr(value, '__len__') else 'N/A'}]"
+                )
             else:
                 safe_dict[key] = value
         return str(safe_dict)
 
     # For other types, just return string representation
     return str(data)
-

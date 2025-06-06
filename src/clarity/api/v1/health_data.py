@@ -210,9 +210,9 @@ async def upload_health_data(
                         "field": "metrics",
                         "error": "too_many_items",
                         "received": len(health_data.metrics),
-                        "max_allowed": max_metrics_per_upload
+                        "max_allowed": max_metrics_per_upload,
                     }
-                ]
+                ],
             )
 
         # Validate user owns the data

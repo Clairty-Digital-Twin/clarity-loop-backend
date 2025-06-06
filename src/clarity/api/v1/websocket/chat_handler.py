@@ -273,7 +273,7 @@ async def websocket_chat_endpoint(
                     error_msg = ErrorMessage(
                         error_code="MESSAGE_TOO_LARGE",
                         message=error_detail,
-                        details={"max_size": max_message_size}
+                        details={"max_size": max_message_size},
                     )
                     await websocket.send_text(error_msg.model_dump_json())
                     continue
@@ -315,9 +315,14 @@ async def websocket_chat_endpoint(
                                     error_msg = ErrorMessage(
                                         error_code="TOO_MANY_DATA_POINTS",
                                         message=error_message,
-                                        details={"received": len(data_points), "max_allowed": max_data_points}
+                                        details={
+                                            "received": len(data_points),
+                                            "max_allowed": max_data_points,
+                                        },
                                     )
-                                    await websocket.send_text(error_msg.model_dump_json())
+                                    await websocket.send_text(
+                                        error_msg.model_dump_json()
+                                    )
                                     continue
 
                                 validated_payload = (

@@ -200,24 +200,26 @@ class GeminiService:
             raise
 
     @staticmethod
-    def _sanitize_user_input(user_input: str, max_length: int = MAX_USER_INPUT_LENGTH) -> str:
+    def _sanitize_user_input(
+        user_input: str, max_length: int = MAX_USER_INPUT_LENGTH
+    ) -> str:
         """Sanitize user input to prevent prompt injection attacks.
-        
+
         SECURITY: Critical protection against prompt injection vulnerabilities.
-        
+
         Args:
             user_input: Raw user input string
             max_length: Maximum allowed length
-            
+
         Returns:
             Sanitized and safe user input
         """
         if not user_input:
             return ""
-            
+
         # Truncate to maximum length
         sanitized = user_input[:max_length]
-        
+
         # Check for dangerous prompt injection patterns
         for pattern in DANGEROUS_PROMPT_PATTERNS:
             if re.search(pattern, sanitized, re.IGNORECASE):
@@ -226,21 +228,25 @@ class GeminiService:
                 )
                 # Replace with safe placeholder instead of original content
                 return "[Content filtered for safety]"
-        
+
         # Remove or escape potentially dangerous characters
         # Remove markdown code blocks and other formatting
-        sanitized = re.sub(r'```.*?```', '[code block removed]', sanitized, flags=re.DOTALL)
-        sanitized = re.sub(r'`([^`]*)`', r'"\1"', sanitized)  # Convert inline code to quotes
-        
+        sanitized = re.sub(
+            r"```.*?```", "[code block removed]", sanitized, flags=re.DOTALL
+        )
+        sanitized = re.sub(
+            r"`([^`]*)`", r'"\1"', sanitized
+        )  # Convert inline code to quotes
+
         # Remove HTML-like tags
-        sanitized = re.sub(r'<[^>]*>', '', sanitized)
-        
+        sanitized = re.sub(r"<[^>]*>", "", sanitized)
+
         # Escape JSON special characters to prevent injection
-        sanitized = sanitized.replace('"', "'").replace('\n', ' ').replace('\r', ' ')
-        
+        sanitized = sanitized.replace('"', "'").replace("\n", " ").replace("\r", " ")
+
         # Remove excessive whitespace
-        sanitized = re.sub(r'\s+', ' ', sanitized).strip()
-        
+        sanitized = re.sub(r"\s+", " ", sanitized).strip()
+
         logger.debug("User input sanitized successfully")
         return sanitized
 
@@ -248,10 +254,12 @@ class GeminiService:
     def _create_health_insight_prompt(request: HealthInsightRequest) -> str:
         """Create a comprehensive prompt for health insight generation."""
         analysis_data = request.analysis_results
-        
+
         # SECURITY: Sanitize user context to prevent prompt injection
         raw_context = request.context or ""
-        sanitized_context = GeminiService._sanitize_user_input(raw_context, MAX_CONTEXT_LENGTH)
+        sanitized_context = GeminiService._sanitize_user_input(
+            raw_context, MAX_CONTEXT_LENGTH
+        )
 
         # Extract key metrics for the prompt
         sleep_efficiency = analysis_data.get("sleep_efficiency", 0)
@@ -307,30 +315,32 @@ Respond only with valid JSON."""
     @staticmethod
     def _sanitize_ai_response(text: str) -> str:
         """Sanitize AI response to prevent malicious content.
-        
+
         SECURITY: Ensures AI responses don't contain harmful content.
-        
+
         Args:
             text: Raw AI response text
-            
+
         Returns:
             Sanitized response text
         """
         if not text:
             return ""
-            
+
         # Remove any potential HTML/script content
-        sanitized = re.sub(r'<[^>]*>', '', text)
-        
+        sanitized = re.sub(r"<[^>]*>", "", text)
+
         # Remove excessive newlines and whitespace
-        sanitized = re.sub(r'\n\s*\n', '\n', sanitized)
-        sanitized = re.sub(r'\s+', ' ', sanitized).strip()
-        
+        sanitized = re.sub(r"\n\s*\n", "\n", sanitized)
+        sanitized = re.sub(r"\s+", " ", sanitized).strip()
+
         # Limit response length for safety
         max_response_length = 5000  # Reasonable limit for health insights
         if len(sanitized) > max_response_length:
-            sanitized = sanitized[:max_response_length] + "... [Response truncated for safety]"
-            
+            sanitized = (
+                sanitized[:max_response_length] + "... [Response truncated for safety]"
+            )
+
         return sanitized
 
     @staticmethod
@@ -347,14 +357,22 @@ Respond only with valid JSON."""
             parsed_response = json.loads(sanitized_response_text)
 
             # Validate required fields and provide defaults
-            raw_narrative = parsed_response.get("narrative", "Analysis completed successfully.")
+            raw_narrative = parsed_response.get(
+                "narrative", "Analysis completed successfully."
+            )
             narrative = GeminiService._sanitize_ai_response(raw_narrative)
-            
+
             raw_insights = parsed_response.get("key_insights", [])
-            key_insights = [GeminiService._sanitize_ai_response(str(insight)) for insight in raw_insights]
-            
+            key_insights = [
+                GeminiService._sanitize_ai_response(str(insight))
+                for insight in raw_insights
+            ]
+
             raw_recommendations = parsed_response.get("recommendations", [])
-            recommendations = [GeminiService._sanitize_ai_response(str(rec)) for rec in raw_recommendations]
+            recommendations = [
+                GeminiService._sanitize_ai_response(str(rec))
+                for rec in raw_recommendations
+            ]
             confidence_score = parsed_response.get("confidence_score", 0.8)
 
             return HealthInsightResponse(

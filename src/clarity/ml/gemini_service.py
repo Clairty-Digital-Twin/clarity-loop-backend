@@ -35,6 +35,30 @@ MAX_NARRATIVE_PREVIEW_LENGTH = 300
 # Error messages
 GEMINI_NOT_INITIALIZED_MSG = "Gemini model not initialized"
 
+# SECURITY: Prompt injection protection patterns
+DANGEROUS_PROMPT_PATTERNS = [
+    r"ignore\s+previous\s+instructions",
+    r"forget\s+everything",
+    r"act\s+as\s+.*",
+    r"roleplay\s+as\s+.*",
+    r"pretend\s+to\s+be\s+.*",
+    r"you\s+are\s+now\s+.*",
+    r"system\s*:\s*.*",
+    r"assistant\s*:\s*.*",
+    r"user\s*:\s*.*",
+    r"<\s*script\s*>.*</\s*script\s*>",
+    r"```.*```",
+    r"respond\s+with\s+.*",
+    r"output\s+.*",
+    r"print\s+.*",
+    r"echo\s+.*",
+    r"execute\s+.*",
+]
+
+# Maximum safe lengths for user inputs
+MAX_CONTEXT_LENGTH = 500
+MAX_USER_INPUT_LENGTH = 1000
+
 
 class HealthInsightRequest(BaseModel):
     """Request for generating health insights."""

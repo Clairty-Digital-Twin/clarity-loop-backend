@@ -127,7 +127,7 @@ class Settings(BaseSettings):
     }
 
     @model_validator(mode="after")
-    def validate_environment_requirements(self) -> Self:
+    def validate_environment_requirements(self) -> Self:  # noqa: PLR0912
         """Validate environment-specific requirements and set development defaults."""
         # If in testing mode, and no path is provided, set a mock path.
         if self.is_testing():

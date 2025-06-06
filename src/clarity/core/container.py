@@ -350,7 +350,7 @@ class DependencyContainer:
 
             from fastapi import Request, Response  # noqa: PLC0415
         else:
-            from fastapi import Request, Response  # noqa: PLC0415
+            from fastapi import Request, Response  # noqa: PLC0415, TC002
 
         # Maximum request size: 10MB for health data uploads
         max_request_size = 10 * 1024 * 1024  # 10MB

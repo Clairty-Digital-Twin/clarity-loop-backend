@@ -1,13 +1,12 @@
 import asyncio
 from unittest.mock import AsyncMock, MagicMock, patch
 
-import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
+import pytest
 
-from clarity.api.v1.websocket.lifespan import websocket_lifespan, get_connection_manager
 from clarity.api.v1.websocket.connection_manager import ConnectionManager
-
+from clarity.api.v1.websocket.lifespan import get_connection_manager, websocket_lifespan
 
 
 def test_websocket_lifespan():
@@ -35,6 +34,8 @@ def test_get_connection_manager():
     manager = ConnectionManager()
     with patch("clarity.api.v1.websocket.lifespan.connection_manager", manager):
         retrieved_manager = get_connection_manager()
+
+
 def test_get_connection_manager_fallback():
     # Test that the dependency creates a new instance if none exists
     with patch("clarity.api.v1.websocket.lifespan.connection_manager", None):

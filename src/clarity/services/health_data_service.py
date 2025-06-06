@@ -32,7 +32,6 @@ logger = logging.getLogger(__name__)
 audit_logger = logging.getLogger("audit")
 
 
-
 # Custom exceptions
 class HealthDataServiceError(Exception):
     """Base exception for health data service operations."""

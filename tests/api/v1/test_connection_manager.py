@@ -3,8 +3,8 @@ import json
 import time
 from unittest.mock import AsyncMock, patch
 
-import pytest
 from fastapi import WebSocket
+import pytest
 from starlette.websockets import WebSocketState
 
 from clarity.api.v1.websocket.connection_manager import ConnectionManager
@@ -77,8 +77,6 @@ async def test_send_heartbeats():
     ws2.send_text.assert_called_once()
 
 
-
-
 @pytest.mark.asyncio
 async def test_get_room_users():
     manager = ConnectionManager()
@@ -118,11 +116,12 @@ async def test_rate_limiting():
 
     await manager.connect(websocket, user_id, "testuser")
 
-    raw_message = '{"type": "message", "content": "test message", "user_id": "test_user"}'
+    raw_message = (
+        '{"type": "message", "content": "test message", "user_id": "test_user"}'
+    )
     assert await manager.handle_message(websocket, raw_message) is True
     assert await manager.handle_message(websocket, raw_message) is True
     assert await manager.handle_message(websocket, raw_message) is False
-
 
 
 @pytest.mark.asyncio
@@ -188,7 +187,9 @@ async def test_broadcast_to_room():
     ws2.send_text.reset_mock()
     ws3.send_text.reset_mock()
 
-    message = ChatMessage(type=MessageType.MESSAGE, content="hello room1", user_id="test")
+    message = ChatMessage(
+        type=MessageType.MESSAGE, content="hello room1", user_id="test"
+    )
     await manager.broadcast_to_room("room1", message)
 
     ws1.send_text.assert_called_with(message.model_dump_json())
@@ -211,7 +212,9 @@ async def test_send_to_user():
     ws1.send_text.reset_mock()
     ws2.send_text.reset_mock()
 
-    message = ChatMessage(type=MessageType.MESSAGE, content="hello user", user_id="test")
+    message = ChatMessage(
+        type=MessageType.MESSAGE, content="hello user", user_id="test"
+    )
     await manager.send_to_user(user_id, message)
 
     ws1.send_text.assert_called_with(message.model_dump_json())
@@ -227,7 +230,9 @@ async def test_handle_message():
 
     await manager.connect(websocket, user_id, "testuser")
 
-    raw_message = '{"type": "message", "content": "test message", "user_id": "test_user"}'
+    raw_message = (
+        '{"type": "message", "content": "test message", "user_id": "test_user"}'
+    )
     processed = await manager.handle_message(websocket, raw_message)
 
     assert processed is True

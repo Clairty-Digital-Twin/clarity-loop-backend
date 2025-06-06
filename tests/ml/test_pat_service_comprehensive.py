@@ -25,7 +25,6 @@ from clarity.ml.pat_service import (
 from clarity.ml.preprocessing import ActigraphyDataPoint
 from clarity.services.health_data_service import MLPredictionError
 
-
 # Set up logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)

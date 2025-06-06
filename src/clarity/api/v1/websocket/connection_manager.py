@@ -332,8 +332,7 @@ class ConnectionManager:
             return
 
         tasks = [
-            self.send_to_connection(websocket, message)
-            for websocket in connections
+            self.send_to_connection(websocket, message) for websocket in connections
         ]
         await asyncio.gather(*tasks, return_exceptions=True)
 

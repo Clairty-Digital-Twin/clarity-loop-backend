@@ -1,12 +1,14 @@
 """Resilience and utility decorators for the CLARITY platform."""
+
+from collections.abc import Callable
 import functools
 import logging
-from typing import Any, Callable, TypeVar
+from typing import Any, TypeVar
 
 from circuitbreaker import CircuitBreakerError, circuit
+from prometheus_client import Counter
 
 from clarity.services.health_data_service import MLPredictionError
-from prometheus_client import Counter
 
 # Prometheus metrics
 PREDICTION_SUCCESS = Counter(
@@ -27,10 +29,12 @@ def resilient_prediction(
 ) -> Callable[..., Callable[..., T]]:
     """A decorator that makes an ML prediction function resilient.
     It adds a circuit breaker and standardized error handling.
+
     Args:
         failure_threshold: Number of failures to open the circuit.
         recovery_timeout: Seconds to wait before moving to half-open state.
         model_name: Name of the model for logging and error messages.
+
     Returns:
         A decorated function.
     """
@@ -77,7 +81,9 @@ def resilient_prediction(
                     e,
                     exc_info=True,
                 )
-                PREDICTION_FAILURE.labels(model_name=model_name, reason="exception").inc()
+                PREDICTION_FAILURE.labels(
+                    model_name=model_name, reason="exception"
+                ).inc()
                 raise MLPredictionError(
                     message=f"Error during prediction: {e!s}", model_name=model_name
                 ) from e

@@ -2,16 +2,17 @@ import base64
 import json
 from unittest.mock import AsyncMock, MagicMock, patch
 
-import pytest
 from fastapi import HTTPException, Request
+import pytest
 
 from clarity.services.pubsub.analysis_subscriber import AnalysisSubscriber
 
 
 @pytest.fixture
 def subscriber() -> AnalysisSubscriber:
-    with patch("google.cloud.storage.Client"), patch(
-        "clarity.services.pubsub.publisher.get_publisher"
+    with (
+        patch("google.cloud.storage.Client"),
+        patch("clarity.services.pubsub.publisher.get_publisher"),
     ):
         return AnalysisSubscriber()
 
@@ -81,27 +82,23 @@ async def test_process_health_data_message(subscriber: AnalysisSubscriber):
         }
     }
 
-    with patch.object(
-        subscriber, "_download_health_data", return_value=health_data
-    ), patch(
-        "clarity.services.pubsub.analysis_subscriber.run_analysis_pipeline",
-        return_value=analysis_results,
-    ) as mock_run_pipeline, patch.object(
-        subscriber, "_verify_pubsub_token"
-    ) as mock_verify_token, patch.dict(
-        "os.environ", {"ENVIRONMENT": "production"}
+    with (
+        patch.object(subscriber, "_download_health_data", return_value=health_data),
+        patch(
+            "clarity.services.pubsub.analysis_subscriber.run_analysis_pipeline",
+            return_value=analysis_results,
+        ) as mock_run_pipeline,
+        patch.object(subscriber, "_verify_pubsub_token") as mock_verify_token,
+        patch.dict("os.environ", {"ENVIRONMENT": "production"}),
     ):
         result = await subscriber.process_health_data_message(mock_request)
 
     assert result["status"] == "success"
     assert result["user_id"] == user_id
-    mock_run_pipeline.assert_called_once_with(
-        user_id=user_id, health_data=health_data
-    )
+    mock_run_pipeline.assert_called_once_with(user_id=user_id, health_data=health_data)
     subscriber.publisher.publish_insight_request.assert_called_once_with(
         user_id=user_id,
         upload_id=upload_id,
         analysis_results=analysis_results,
     )
     mock_verify_token.assert_called_once()
-

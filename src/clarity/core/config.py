@@ -7,11 +7,10 @@ production-ready deployment across development, staging, and production.
 from dataclasses import dataclass
 from functools import lru_cache
 import logging
-from typing import Self
+from typing import ClassVar, Self
 
 from pydantic import Field, model_validator
 from pydantic_settings import BaseSettings
-from typing import ClassVar
 
 # Configure logger
 logger = logging.getLogger(__name__)

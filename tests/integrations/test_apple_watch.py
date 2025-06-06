@@ -1,11 +1,13 @@
-from datetime import datetime, timedelta, UTC
+from datetime import UTC, datetime, timedelta
 from unittest.mock import AsyncMock, MagicMock
-
 
 import numpy as np
 import pytest
 
-from clarity.integrations.apple_watch import AppleWatchDataProcessor, ProcessedHealthData
+from clarity.integrations.apple_watch import (
+    AppleWatchDataProcessor,
+    ProcessedHealthData,
+)
 from clarity.integrations.healthkit import HealthDataPoint
 
 
@@ -86,7 +88,9 @@ async def test_process_steps():
 
     samples = [
         HealthDataPoint(
-            timestamp=start_time + timedelta(minutes=i), value=float(i % 100), unit="count"
+            timestamp=start_time + timedelta(minutes=i),
+            value=float(i % 100),
+            unit="count",
         )
         for i in range(10080)
     ]
@@ -153,9 +157,7 @@ async def test_process_vo2_max():
             value=42.0,
             unit="mL/min·kg",
         ),
-        HealthDataPoint(
-            timestamp=datetime.now(UTC), value=45.0, unit="mL/min·kg"
-        ),
+        HealthDataPoint(timestamp=datetime.now(UTC), value=45.0, unit="mL/min·kg"),
     ]
 
     await processor._process_vo2_max(samples, result)
@@ -211,6 +213,3 @@ def test_calculate_completeness():
     completeness = processor._calculate_completeness(result)
     # Expected: (0.75 + 1.0 + 0.5 + 0.0) / 4 = 0.5625 * 100 = 56.25
     assert completeness == pytest.approx(56.25)
-
-
-

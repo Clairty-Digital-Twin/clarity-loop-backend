@@ -10,7 +10,7 @@ import secrets
 from typing import Any, cast
 import uuid
 
-from firebase_admin import auth  # type: ignore[import-untyped]
+from firebase_admin import auth
 
 from clarity.models.auth import (
     AuthProvider,
@@ -136,16 +136,16 @@ class AuthenticationService:
         try:
             # Check if user already exists
             try:
-                existing_user = auth.get_user_by_email(request.email)  # type: ignore[misc]
+                existing_user = auth.get_user_by_email(request.email)
                 if existing_user:
                     error_msg = f"User with email {request.email} already exists"
                     raise UserAlreadyExistsError(error_msg)
-            except auth.UserNotFoundError:  # type: ignore[misc]
+            except auth.UserNotFoundError:
                 # User doesn't exist, which is what we want
                 pass
 
             # Create Firebase user
-            user_record = auth.create_user(  # type: ignore[misc]
+            user_record = auth.create_user(
                 email=request.email,
                 password=request.password,
                 display_name=f"{request.first_name} {request.last_name}",
@@ -154,7 +154,7 @@ class AuthenticationService:
             )
 
             # Generate user ID
-            user_id = uuid.UUID(user_record.uid)  # type: ignore[misc,arg-type]
+            user_id = uuid.UUID(user_record.uid)
 
             # Set custom claims for role-based access control
             custom_claims = {
@@ -163,11 +163,11 @@ class AuthenticationService:
                 "created_at": datetime.now(UTC).isoformat(),
             }
 
-            auth.set_custom_user_claims(user_record.uid, custom_claims)  # type: ignore[misc,arg-type]
+            auth.set_custom_user_claims(user_record.uid, custom_claims)
 
             # Store additional user data in Firestore
-            user_data: dict[str, Any] = {  # type: ignore[misc]
-                "user_id": user_record.uid,  # type: ignore[misc]
+            user_data: dict[str, Any] = {
+                "user_id": user_record.uid,
                 "email": request.email,
                 "first_name": request.first_name,
                 "last_name": request.last_name,
@@ -189,23 +189,23 @@ class AuthenticationService:
 
             await self.firestore_client.create_document(
                 collection=self.users_collection,
-                data=user_data,  # type: ignore[arg-type]
-                document_id=user_record.uid,  # type: ignore[misc,arg-type]
-                user_id=user_record.uid,  # type: ignore[misc,arg-type]
+                data=user_data,
+                document_id=user_record.uid,
+                user_id=user_record.uid,
             )
 
             # Send email verification
             verification_email_sent = False
             try:
                 # Generate email verification link (unused for now)
-                _ = auth.generate_email_verification_link(request.email)  # type: ignore[misc]
+                _ = auth.generate_email_verification_link(request.email)
                 # TODO: Send email using email service
                 verification_email_sent = True
                 logger.info("Email verification link generated for %s", request.email)
-            except (auth.AuthError, ConnectionError, TimeoutError, OSError) as e:  # type: ignore[misc]
-                logger.warning("Failed to send verification email: %s", e)  # type: ignore[misc]
+            except (auth.AuthError, ConnectionError, TimeoutError, OSError) as e:
+                logger.warning("Failed to send verification email: %s", e)
 
-            logger.info("User registered successfully: %s", user_record.uid)  # type: ignore[misc]
+            logger.info("User registered successfully: %s", user_record.uid)
 
             return RegistrationResponse(
                 user_id=user_id,
@@ -263,7 +263,7 @@ class AuthenticationService:
             # Get user data from Firestore
             user_data: dict[str, Any] | None = await self.firestore_client.get_document(
                 collection=self.users_collection,
-                document_id=user_record.uid,  # type: ignore[misc,arg-type]
+                document_id=user_record.uid,
             )
 
             if user_data is None:
@@ -288,9 +288,9 @@ class AuthenticationService:
 
             await self.firestore_client.update_document(
                 collection=self.users_collection,
-                document_id=user_record.uid,  # type: ignore[misc,arg-type]
+                document_id=user_record.uid,
                 data=update_data,
-                user_id=user_record.uid,  # type: ignore[misc,arg-type]
+                user_id=user_record.uid,
             )
 
             # Check if MFA is enabled
@@ -301,7 +301,7 @@ class AuthenticationService:
 
                 # Store temporary session
                 temp_session_data: dict[str, Any] = {
-                    "user_id": user_record.uid,  # type: ignore[misc]
+                    "user_id": user_record.uid,
                     "mfa_session_token": mfa_session_token,
                     "created_at": login_time,
                     "expires_at": login_time
@@ -314,7 +314,7 @@ class AuthenticationService:
                 await self.firestore_client.create_document(
                     collection="mfa_sessions",
                     data=temp_session_data,  # type: ignore[arg-type]
-                    user_id=user_record.uid,  # type: ignore[misc,arg-type]
+                    user_id=user_record.uid,
                 )
 
                 # Return partial response requiring MFA

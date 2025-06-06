@@ -464,7 +464,9 @@ class TestInferenceEngineErrorHandling:
             )
 
             # Due to the resilient prediction decorator, errors are wrapped in ServiceUnavailableProblem
-            with pytest.raises(ServiceUnavailableProblem, match="temporarily unavailable"):
+            with pytest.raises(
+                ServiceUnavailableProblem, match="temporarily unavailable"
+            ):
                 await engine.predict_async(request)
 
     @staticmethod
@@ -497,7 +499,9 @@ class TestInferenceEngineErrorHandling:
                 timeout_seconds=0.1,  # Very short timeout
             )
 
-            with pytest.raises(ServiceUnavailableProblem, match="temporarily unavailable"):
+            with pytest.raises(
+                ServiceUnavailableProblem, match="temporarily unavailable"
+            ):
                 await engine.predict_async(request)
 
     @staticmethod

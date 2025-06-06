@@ -204,7 +204,9 @@ class TestGeminiServiceHealthInsights:
             service.is_initialized = True
             service.model = None  # Model remains None after initialization
 
-            with pytest.raises(ServiceUnavailableProblem, match="temporarily unavailable"):
+            with pytest.raises(
+                ServiceUnavailableProblem, match="temporarily unavailable"
+            ):
                 await service.generate_health_insights(sample_insight_request)
 
     @staticmethod

@@ -684,7 +684,7 @@ class PATModelService(IMLModelService):
                         )  # Ensure it's a numpy array
                         state_dict["encoder.patch_embedding.weight"] = torch.from_numpy(
                             tf_weight_np.T  # MODIFIED: use tf_weight_np
-                        )  # type: ignore[attr-defined]
+                        )
                     if "bias:0" in dense_group:
                         tf_bias_data = dense_group["bias:0"][:]
                         tf_bias_np = np.array(tf_bias_data)  # Ensure it's a numpy array
@@ -746,12 +746,12 @@ class PATModelService(IMLModelService):
 
         # Convert Q, K, V weights for each head separately
         for qkv_name in ["query", "key", "value"]:
-            if qkv_name in attn_group:  # type: ignore[operator]
-                qkv_group = attn_group[qkv_name]  # type: ignore[index]
+            if qkv_name in attn_group:
+                qkv_group = attn_group[qkv_name]
 
-                if "kernel:0" in qkv_group:  # type: ignore[operator]
+                if "kernel:0" in qkv_group:
                     # TF shape: [embed_dim, num_heads, head_dim] = (96, 12, 96)
-                    tf_weight_data = qkv_group["kernel:0"][:]  # type: ignore[index]
+                    tf_weight_data = qkv_group["kernel:0"][:]
                     tf_weight_np = np.array(tf_weight_data)
 
                     # Split into separate heads
@@ -766,9 +766,9 @@ class PATModelService(IMLModelService):
                         param_name = f"encoder.transformer_layers.{layer_idx}.attention.{qkv_name}_projections.{head_idx}.weight"
                         state_dict[param_name] = torch.from_numpy(pytorch_weight)
 
-                if "bias:0" in qkv_group:  # type: ignore[operator]
+                if "bias:0" in qkv_group:
                     # TF shape: [num_heads, head_dim] = (12, 96)
-                    tf_bias_data = qkv_group["bias:0"][:]  # type: ignore[index]
+                    tf_bias_data = qkv_group["bias:0"][:]
                     tf_bias_np = np.array(tf_bias_data)
 
                     # Split into separate heads
@@ -781,11 +781,11 @@ class PATModelService(IMLModelService):
                         state_dict[param_name] = torch.from_numpy(head_bias)
 
         # Convert attention output projection
-        if "attention_output" in attn_group:  # type: ignore[operator]
-            output_group = attn_group["attention_output"]  # type: ignore[index]
+        if "attention_output" in attn_group:
+            output_group = attn_group["attention_output"]
 
-            if "kernel:0" in output_group:  # type: ignore[operator]
-                tf_weight_data = output_group["kernel:0"][:]  # type: ignore[index]
+            if "kernel:0" in output_group:
+                tf_weight_data = output_group["kernel:0"][:]
                 tf_weight_np = np.array(tf_weight_data)
                 # TF shape: [num_heads, head_dim, embed_dim] = (12, 96, 96)
                 # PyTorch wants: [embed_dim, num_heads * head_dim] = (96, 1152)
@@ -802,8 +802,8 @@ class PATModelService(IMLModelService):
                 pytorch_name = f"encoder.transformer_layers.{layer_idx}.attention.output_projection.weight"
                 state_dict[pytorch_name] = torch.from_numpy(pytorch_weight)
 
-            if "bias:0" in output_group:  # type: ignore[operator]
-                tf_bias_data = output_group["bias:0"][:]  # type: ignore[index]
+            if "bias:0" in output_group:
+                tf_bias_data = output_group["bias:0"][:]
                 tf_bias_np = np.array(tf_bias_data)
                 pytorch_name = f"encoder.transformer_layers.{layer_idx}.attention.output_projection.bias"
                 state_dict[pytorch_name] = torch.from_numpy(tf_bias_np)

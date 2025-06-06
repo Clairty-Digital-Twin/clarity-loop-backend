@@ -1,10 +1,11 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+This file provides guidance to Claude Code (claude.AI/code) when working with code in this repository.
 
 ## Development Commands
 
 ### Core Development Tasks
+
 ```bash
 # Install all dependencies (Python + Node.js)
 make install
@@ -35,6 +36,7 @@ make clean
 ```
 
 ### Key Build Commands
+
 - **Install**: `pip install -e ".[dev]"` for editable development install
 - **Test**: `pytest -v --cov=clarity --cov-report=term-missing --cov-report=html`
 - **Lint**: `ruff check . && black --check . && mypy src/clarity/`
@@ -42,6 +44,7 @@ make clean
 - **Type Check**: `mypy src/clarity/ --strict`
 
 ### Single Test Execution
+
 ```bash
 # Run specific test file
 pytest tests/unit/test_health_data_service.py -v
@@ -60,12 +63,14 @@ pytest -m "ml" -v
 CLARITY is a **FastAPI-based health AI platform** built using **Clean Architecture principles** with dependency injection. The system processes wearable health data through machine learning pipelines to generate clinical insights.
 
 ### Core Architecture Patterns
+
 - **Clean Architecture**: Domain entities at center, dependencies flow inward
 - **Dependency Injection**: IoC container manages all service dependencies  
 - **Factory Pattern**: Services created through container factories
 - **Repository Pattern**: Data access abstracted through ports/adapters
 
 ### Application Structure
+
 ```
 src/clarity/
 ├── main.py                 # FastAPI app entry point
@@ -85,12 +90,14 @@ src/clarity/
 ### Key Components
 
 **ML Pipeline:**
+
 - **PAT (Pretrained Actigraphy Transformer)**: Sleep/behavioral analysis from movement data
 - **Fusion Transformer**: Multi-modal health data integration  
 - **Specialized Processors**: Sleep, cardiovascular, respiratory, activity analysis
 - **Gemini Integration**: Natural language health insights
 
 **Infrastructure:**
+
 - **Firebase Auth**: JWT-based authentication with graceful mock fallback
 - **Firestore**: Health data persistence with mock repository for development
 - **Google Cloud**: Vertex AI, Secret Manager, Storage integration
@@ -106,6 +113,7 @@ The `DependencyContainer` in `src/clarity/core/container.py` is the composition 
 4. **Service Dependencies**: Automatically injected into API routes
 
 **Environment Behaviors:**
+
 - **Development**: Uses mock services, graceful degradation enabled
 - **Testing**: Mock authentication, minimal logging  
 - **Production**: Strict validation, real services required
@@ -113,6 +121,7 @@ The `DependencyContainer` in `src/clarity/core/container.py` is the composition 
 ### Service Initialization
 
 The application uses **graceful degradation** with timeout protection:
+
 - Auth provider initialization: 8s timeout with mock fallback
 - Repository initialization: 8s timeout with mock fallback  
 - Startup failure: Falls back to minimal mock functionality
@@ -120,6 +129,7 @@ The application uses **graceful degradation** with timeout protection:
 ### API Route Structure
 
 Routes are configured with dependency injection in `container.py`:
+
 - `/health` - Application health check (no auth)
 - `/api/v1/auth/*` - User authentication endpoints
 - `/api/v1/health-data/*` - Health data upload/retrieval (Firebase JWT required)
@@ -130,12 +140,14 @@ Routes are configured with dependency injection in `container.py`:
 ### Testing Strategy
 
 The codebase uses **pytest** with comprehensive test categories:
+
 - **Unit tests** (`tests/unit/`): Fast, isolated component tests
 - **Integration tests** (`tests/integration/`): Cross-component functionality  
 - **API tests** (`tests/api/`): End-to-end API endpoint testing
 - **ML tests** (`tests/ml/`): Machine learning pipeline validation
 
 Test markers help organize execution:
+
 ```bash
 pytest -m "unit"         # Fast unit tests only
 pytest -m "integration"  # Integration tests  
@@ -146,11 +158,13 @@ pytest -m "requires_gcp" # Tests needing Google Cloud
 ### Environment Configuration
 
 The system uses **Pydantic Settings** with environment-specific validation:
+
 - Development: Permissive, detailed logging, mock fallbacks enabled
 - Testing: Mock services, minimal logging, authentication disabled
 - Production: Strict validation, real services required, optimized performance
 
 Critical environment variables:
+
 - `ENVIRONMENT` - Sets behavior mode (development/testing/production)
 - `FIREBASE_PROJECT_ID` - Firebase project for authentication
 - `GCP_PROJECT_ID` - Google Cloud project for services
@@ -165,6 +179,7 @@ Critical environment variables:
 - **Clean Architecture**: Dependencies flow inward, ports/adapters pattern
 
 When modifying code, always run the quality gates:
+
 ```bash
 make lint      # Code quality checks
 make test      # Full test suite  

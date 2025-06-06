@@ -309,12 +309,13 @@ async def websocket_chat_endpoint(
                             try:
                                 # SECURITY: Validate data points count before processing
                                 data_points = health_data_content.get("data_points", [])
-                                MAX_DATA_POINTS = 10080  # 1 week of minute-level data
-                                if len(data_points) > MAX_DATA_POINTS:
+                                max_data_points = 10080  # 1 week of minute-level data
+                                if len(data_points) > max_data_points:
+                                    error_message = f"Exceeded maximum data points limit of {max_data_points}"
                                     error_msg = ErrorMessage(
                                         error_code="TOO_MANY_DATA_POINTS",
-                                        message=f"Exceeded maximum data points limit of {MAX_DATA_POINTS}",
-                                        details={"received": len(data_points), "max_allowed": MAX_DATA_POINTS}
+                                        message=error_message,
+                                        details={"received": len(data_points), "max_allowed": max_data_points}
                                     )
                                     await websocket.send_text(error_msg.model_dump_json())
                                     continue

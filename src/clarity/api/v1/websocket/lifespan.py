@@ -138,7 +138,7 @@ async def websocket_lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
         )
 
         if manager_to_shutdown is not None:
-            await manager_to_shutdown.stop_background_tasks()
+            await manager_to_shutdown.shutdown()
 
         if hasattr(app.state, "connection_manager"):
             app.state.connection_manager = None

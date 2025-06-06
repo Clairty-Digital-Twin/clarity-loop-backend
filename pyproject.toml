@@ -92,6 +92,7 @@ dependencies = [
     "prometheus-client>=0.21.0,<1.0.0",
     "structlog>=24.4.0,<25.0.0",
     "rich>=13.9.0,<14.0.0",
+    "circuitbreaker>=2.0.0,<3.0.0",
 
     # Configuration and environment
     "python-dotenv>=1.0.0,<2.0.0",

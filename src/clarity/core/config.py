@@ -94,7 +94,10 @@ class Settings(BaseSettings):
     # Firebase settings
     firebase_project_id: str = Field(default="", alias="FIREBASE_PROJECT_ID")
     firebase_credentials_path: str = Field(
-        default="", alias="FIREBASE_CREDENTIALS_PATH"
+        ...,
+        alias="FIREBASE_CREDENTIALS_PATH",
+        description="Path to Firebase credentials JSON file.",
+        regex=r"^(/secrets/|gs://).*\.json$",
     )
 
     # Google Cloud settings

@@ -36,7 +36,7 @@ except ImportError:
 
 from clarity.ml.preprocessing import ActigraphyDataPoint, HealthDataPreprocessor
 from clarity.ports.ml_ports import IMLModelService
-from clarity.services.health_data_service import MLPredictionError
+from clarity.utils.decorators import resilient_prediction
 
 logger = logging.getLogger(__name__)
 
@@ -858,6 +858,7 @@ class PATModelService(IMLModelService):
         msg = "PAT model not loaded. Call load_model() first."
         raise RuntimeError(msg)
 
+    @resilient_prediction(model_name="PAT")
     async def analyze_actigraphy(
         self, input_data: ActigraphyInput
     ) -> ActigraphyAnalysis:
@@ -894,22 +895,9 @@ class PATModelService(IMLModelService):
 
         model = self.model
 
-        # Run inference
-        try:
-            with torch.no_grad():
-                outputs = cast("dict[str, torch.Tensor]", model(input_tensor))
-        except Exception as e:
-            logger.critical(
-                "PAT model inference failed for user %s: %s",
-                input_data.user_id,
-                e,
-                exc_info=True,
-            )
-            # Re-raise as a service-specific ML error with context
-            raise MLPredictionError(
-                message=f"Error during PAT model prediction: {e!s}",
-                model_name=f"PAT-{self.model_size}",
-            ) from e
+        # Run inference - resilience is handled by the decorator
+        with torch.no_grad():
+            outputs = cast("dict[str, torch.Tensor]", model(input_tensor))
 
         # Post-process outputs
         analysis = self._postprocess_predictions(outputs, input_data.user_id)

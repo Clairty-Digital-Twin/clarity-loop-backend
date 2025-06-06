@@ -65,7 +65,8 @@ class StepDataRequest(BaseModel):
     )
     user_metadata: dict[str, Any] | None = Field(
         default_factory=dict,
-        description="Optional user demographics (age_group, sex, etc.)",
+        description="Optional user demographics (age_group, sex, etc.) - limited size",
+        max_length=50,  # Prevent oversized metadata dictionaries
     )
 
     @validator("timestamps")

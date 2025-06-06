@@ -25,7 +25,7 @@ from google.cloud import storage  # type: ignore[attr-defined]
 from clarity.auth import (
     Permission,
     UserContext,
-    get_current_user_required_required,
+    get_current_user_required,
     require_auth,
 )
 from clarity.core.exceptions import (
@@ -198,6 +198,23 @@ async def upload_health_data(
     """🔥 Upload health data with enterprise-grade processing."""
     try:
         logger.info("Health data upload requested by user: %s", current_user.user_id)
+
+        # SECURITY: Validate metrics count to prevent DoS through large uploads
+        max_metrics_per_upload = 10000  # Reasonable limit for health data batches
+        if len(health_data.metrics) > max_metrics_per_upload:
+            error_detail = f"Too many metrics in upload: {len(health_data.metrics)} exceeds maximum {max_metrics_per_upload}"
+            raise ValidationProblem(
+                detail=error_detail,
+                instance=f"/health-data/{health_data.user_id}",
+                errors=[
+                    {
+                        "field": "metrics",
+                        "error": "too_many_items",
+                        "received": len(health_data.metrics),
+                        "max_allowed": max_metrics_per_upload
+                    }
+                ]
+            )
 
         # Validate user owns the data
         if str(health_data.user_id) != current_user.user_id:

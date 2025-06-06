@@ -34,6 +34,7 @@ except ImportError:
     h5py = None
     _has_h5py = False
 
+from clarity.core.exceptions import DataValidationError
 from clarity.ml.preprocessing import ActigraphyDataPoint, HealthDataPreprocessor
 from clarity.ports.ml_ports import IMLModelService
 from clarity.services.health_data_service import MLPredictionError
@@ -888,6 +889,18 @@ class PATModelService(IMLModelService):
             assert (  # noqa: S101 # nosec B101
                 self.model is not None
             ), "Model must be loaded at this point"
+
+            # SECURITY: Validate input data bounds to prevent memory exhaustion
+            MAX_DATA_POINTS = 20160  # 2 weeks max for safety
+            if len(input_data.data_points) > MAX_DATA_POINTS:
+                raise DataValidationError(
+                    f"Input data too large: {len(input_data.data_points)} points exceeds "
+                    f"maximum allowed {MAX_DATA_POINTS} points"
+                )
+
+            if len(input_data.data_points) == 0:
+                raise DataValidationError("Input data cannot be empty")
+
             # Preprocess input data
             input_tensor = self._preprocess_actigraphy_data(input_data.data_points)
 

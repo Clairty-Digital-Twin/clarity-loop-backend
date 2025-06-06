@@ -17,7 +17,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field
 
 from clarity.auth import UserContext
-from clarity.auth.firebase_auth import get_current_user_required_required
+from clarity.auth.firebase_auth import get_current_user_required
 from clarity.ml.gemini_service import (
     GeminiService,
     HealthInsightRequest,

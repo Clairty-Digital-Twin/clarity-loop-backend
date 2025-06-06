@@ -266,10 +266,23 @@ async def websocket_chat_endpoint(
             try:
                 raw_message = await websocket.receive_text()
 
+                # SECURITY: Pre-parse message size validation to prevent DoS
+                max_message_size = 64 * 1024  # 64KB limit
+                if len(raw_message.encode("utf-8")) > max_message_size:
+                    error_detail = f"Message size exceeds {max_message_size} bytes"
+                    error_msg = {
+                        "type": "error",
+                        "error": "message_too_large",
+                        "detail": error_detail
+                    }
+                    await websocket.send_text(json.dumps(error_msg))
+                    continue
+
                 if not await connection_manager.handle_message(websocket, raw_message):
                     continue
 
                 try:
+                    # SECURITY: Safe JSON parsing with try-catch for malformed data
                     message_data = json.loads(raw_message)
                     message_type = message_data.get("type")
 
@@ -294,6 +307,18 @@ async def websocket_chat_endpoint(
                         user_id_from_message = message_data.get("user_id", "")
                         if user_id_from_message:
                             try:
+                                # SECURITY: Validate data points count before processing
+                                data_points = health_data_content.get("data_points", [])
+                                MAX_DATA_POINTS = 10080  # 1 week of minute-level data
+                                if len(data_points) > MAX_DATA_POINTS:
+                                    error_msg = ErrorMessage(
+                                        error_code="TOO_MANY_DATA_POINTS",
+                                        message=f"Exceeded maximum data points limit of {MAX_DATA_POINTS}",
+                                        details={"received": len(data_points), "max_allowed": MAX_DATA_POINTS}
+                                    )
+                                    await websocket.send_text(error_msg.model_dump_json())
+                                    continue
+
                                 validated_payload = (
                                     WebSocketHealthDataPayload.model_validate(
                                         health_data_content

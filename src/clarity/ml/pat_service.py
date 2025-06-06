@@ -888,27 +888,38 @@ class PATModelService(IMLModelService):
             len(input_data.data_points),
         )
 
-        # Preprocess input data
-        input_tensor = self._preprocess_actigraphy_data(input_data.data_points)
+        try:
+            # Preprocess input data
+            input_tensor = self._preprocess_actigraphy_data(input_data.data_points)
 
-        # Add batch dimension
-        input_tensor = input_tensor.unsqueeze(0)
+            # Add batch dimension
+            input_tensor = input_tensor.unsqueeze(0)
 
-        model = self.model
+            model = self.model
 
-        # Run inference - resilience is handled by the decorator
-        with torch.no_grad():
-            outputs = cast("dict[str, torch.Tensor]", model(input_tensor))
+            # Run inference - resilience is handled by the decorator
+            with torch.no_grad():
+                outputs = cast("dict[str, torch.Tensor]", model(input_tensor))
 
-        # Post-process outputs
-        analysis = self._postprocess_predictions(outputs, input_data.user_id)
+            # Post-process outputs
+            analysis = self._postprocess_predictions(outputs, input_data.user_id)
 
-        logger.info(
-            "Actigraphy analysis complete for user %s",
-            input_data.user_id,
-        )
+            logger.info(
+                "Actigraphy analysis complete for user %s",
+                input_data.user_id,
+            )
 
-        return analysis
+            return analysis
+
+        except Exception as e:
+            logger.error(
+                "PAT model analysis failed for user %s: %s",
+                input_data.user_id,
+                str(e),
+            )
+            raise MLPredictionError(
+                f"PAT model analysis failed: {str(e)}", model_name="PAT"
+            ) from e
 
     async def verify_weights_loaded(self) -> bool:
         """Verify that real weights are loaded (not random initialization).

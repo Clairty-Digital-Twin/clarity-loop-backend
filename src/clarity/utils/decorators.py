@@ -63,6 +63,17 @@ def resilient_prediction(
                 PREDICTION_FAILURE.labels(model_name=model_name).inc()
                 raise ServiceUnavailableProblem(msg) from e
             except Exception as e:
+                # Allow domain-specific exceptions to pass through unchanged
+                # Import here to avoid circular imports
+                try:
+                    from clarity.services.health_data_service import HealthDataServiceError
+                    if isinstance(e, HealthDataServiceError):
+                        PREDICTION_FAILURE.labels(model_name=model_name).inc()
+                        raise
+                except ImportError:
+                    pass
+                
+                # For all other exceptions, wrap in ServiceUnavailableProblem
                 msg = f"An unexpected error occurred in {model_name}."
                 logger.exception("An unexpected error occurred during prediction")
                 PREDICTION_FAILURE.labels(model_name=model_name).inc()

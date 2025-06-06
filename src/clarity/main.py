@@ -4,17 +4,18 @@ FastAPI application setup with Clean Architecture dependency injection.
 This module serves as the composition root for the entire application.
 """
 
-from dotenv import load_dotenv
-load_dotenv()
-
 import logging
 
+from dotenv import load_dotenv
 from fastapi import FastAPI, WebSocket
 import uvicorn
 
 from clarity.core.config import get_settings
 from clarity.core.container import create_application
 from clarity.core.logging_config import setup_logging
+
+# Load environment variables at the beginning
+load_dotenv()
 
 # Configure logging
 logger = logging.getLogger(__name__)

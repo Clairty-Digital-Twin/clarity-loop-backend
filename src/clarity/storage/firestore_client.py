@@ -907,6 +907,15 @@ class FirestoreHealthDataRepository(IHealthDataRepository):
         self._firestore_client = FirestoreClient(
             project_id=project_id, credentials_path=credentials_path
         )
+        
+    @property
+    def client(self) -> FirestoreClient:
+        """Get the underlying Firestore client.
+        
+        Returns:
+            The Firestore client instance
+        """
+        return self._firestore_client
 
     async def save_health_data(
         self,

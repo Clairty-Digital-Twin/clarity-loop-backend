@@ -22,7 +22,12 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, Query, Request, status
 from google.cloud import storage  # type: ignore[attr-defined]
 
-from clarity.auth import Permission, UserContext, get_current_user_required_required, require_auth
+from clarity.auth import (
+    Permission,
+    UserContext,
+    get_current_user_required_required,
+    require_auth,
+)
 from clarity.core.exceptions import (
     AuthorizationProblem,
     InternalServerProblem,

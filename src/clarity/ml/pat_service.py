@@ -891,15 +891,19 @@ class PATModelService(IMLModelService):
             ), "Model must be loaded at this point"
 
             # SECURITY: Validate input data bounds to prevent memory exhaustion
-            MAX_DATA_POINTS = 20160  # 2 weeks max for safety
-            if len(input_data.data_points) > MAX_DATA_POINTS:
-                raise DataValidationError(
-                    f"Input data too large: {len(input_data.data_points)} points exceeds "
-                    f"maximum allowed {MAX_DATA_POINTS} points"
-                )
+            max_data_points = 20160  # 2 weeks max for safety
+            data_point_count = len(input_data.data_points)
 
-            if len(input_data.data_points) == 0:
-                raise DataValidationError("Input data cannot be empty")
+            if data_point_count > max_data_points:
+                error_msg = (
+                    f"Input data too large: {data_point_count} points exceeds "
+                    f"maximum allowed {max_data_points} points"
+                )
+                raise DataValidationError(error_msg)
+
+            if data_point_count == 0:
+                empty_data_msg = "Input data cannot be empty"
+                raise DataValidationError(empty_data_msg)
 
             # Preprocess input data
             input_tensor = self._preprocess_actigraphy_data(input_data.data_points)

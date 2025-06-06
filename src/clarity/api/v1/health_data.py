@@ -205,7 +205,6 @@ async def upload_health_data(
             error_detail = f"Too many metrics in upload: {len(health_data.metrics)} exceeds maximum {max_metrics_per_upload}"
             raise ValidationProblem(
                 detail=error_detail,
-                instance=f"/health-data/{health_data.user_id}",
                 errors=[
                     {
                         "field": "metrics",

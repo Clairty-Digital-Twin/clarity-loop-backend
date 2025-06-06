@@ -151,7 +151,7 @@ class MockHealthDataService:
     async def query_health_data(
         self,
         user_id: str,  # noqa: ARG002
-        **kwargs: Any,  # noqa: ARG002
+        **kwargs: dict[str, Any],  # noqa: ARG002
     ) -> dict[str, Any]:
         """Mock query health data."""
         if self.should_fail:
@@ -174,7 +174,6 @@ class TestHealthDataUploadEndpoint(BaseServiceTestCase):
         """Test upload with missing user ID in request state."""
         # Arrange
         mock_get_service.return_value = self.mock_service
-        request = MockRequest(user_id=None)
 
         upload_data = create_test_health_data_upload(
             user_id=str(uuid4()),
@@ -201,8 +200,6 @@ class TestHealthDataUploadEndpoint(BaseServiceTestCase):
         self.mock_service.should_fail = True
         self.mock_service.fail_with = DataValidationError("Invalid data format")
         mock_get_service.return_value = self.mock_service
-
-        request = MockRequest(user_id=str(uuid4()))
         upload_data = create_test_health_data_upload(
             user_id=str(uuid4()),
             upload_source="test_app",
@@ -230,8 +227,6 @@ class TestHealthDataUploadEndpoint(BaseServiceTestCase):
             "Database connection failed"
         )
         mock_get_service.return_value = self.mock_service
-
-        request = MockRequest(user_id=str(uuid4()))
         upload_data = create_test_health_data_upload(
             user_id=str(uuid4()),
             upload_source="test_app",
@@ -257,8 +252,6 @@ class TestHealthDataUploadEndpoint(BaseServiceTestCase):
         self.mock_service.should_fail = True
         self.mock_service.fail_with = RuntimeError("Unexpected system error")
         mock_get_service.return_value = self.mock_service
-
-        request = MockRequest(user_id=str(uuid4()))
         upload_data = create_test_health_data_upload(
             user_id=str(uuid4()),
             upload_source="test_app",

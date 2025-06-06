@@ -282,7 +282,6 @@ class TestHealthDataMetricsEndpoint(BaseServiceTestCase):
         """Test metrics with missing user ID."""
         # Arrange
         mock_get_service.return_value = self.mock_service
-        request = MockRequest(user_id=None)
 
         # Create mock user context (will be None to trigger error)
         user_context = UserContext(user_id=None, permissions=[])
@@ -303,7 +302,6 @@ class TestHealthDataMetricsEndpoint(BaseServiceTestCase):
         self.mock_service.fail_with = HealthDataServiceError("Failed to fetch metrics")
         mock_get_service.return_value = self.mock_service
 
-        request = MockRequest(user_id=str(uuid4()))
 
         # Create mock user context
         user_context = UserContext(user_id=str(uuid4()), permissions=[])
@@ -321,7 +319,6 @@ class TestHealthDataMetricsEndpoint(BaseServiceTestCase):
         """Test metrics with date filters."""
         # Arrange
         mock_get_service.return_value = self.mock_service
-        request = MockRequest(user_id=str(uuid4()))
 
         start_date = datetime.now(UTC).replace(day=1)
         end_date = datetime.now(UTC)
@@ -347,7 +344,6 @@ class TestHealthDataMetricsEndpoint(BaseServiceTestCase):
         """Test metrics with invalid date range."""
         # Arrange
         mock_get_service.return_value = self.mock_service
-        request = MockRequest(user_id=str(uuid4()))
 
         # Invalid: end date before start date
         start_date = datetime.now(UTC)
@@ -382,7 +378,6 @@ class TestHealthDataQueryEndpoint(BaseServiceTestCase):
         """Test query with missing user ID."""
         # Arrange
         mock_get_service.return_value = self.mock_service
-        request = MockRequest(user_id=None)
 
         # Create mock user context (will be None to trigger error)
         user_context = UserContext(user_id=None, permissions=[])
@@ -401,7 +396,6 @@ class TestHealthDataQueryEndpoint(BaseServiceTestCase):
         self.mock_service.query_result = {"data": [], "total": 0}
         mock_get_service.return_value = self.mock_service
 
-        request = MockRequest(user_id=str(uuid4()))
 
         # Create mock user context
         user_context = UserContext(user_id=str(uuid4()), permissions=[])
@@ -435,7 +429,6 @@ class TestHealthDataErrorHandling(BaseServiceTestCase):
         """Test upload with empty data."""
         # Arrange
         mock_get_service.return_value = self.mock_service
-        request = MockRequest(user_id=str(uuid4()))
 
         # Empty upload data (will fail validation)
         upload_data = create_test_health_data_upload(
@@ -459,7 +452,6 @@ class TestHealthDataErrorHandling(BaseServiceTestCase):
         """Test upload with invalid source format."""
         # Arrange
         mock_get_service.return_value = self.mock_service
-        request = MockRequest(user_id=str(uuid4()))
 
         # Invalid source (empty string)
         upload_data = create_test_health_data_upload(

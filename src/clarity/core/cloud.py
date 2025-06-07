@@ -15,7 +15,7 @@ def firebase_credentials():
     Returns:
         google.oauth2.service_account.Credentials: The service account credentials
     """
-    sa_info = json.loads(os.environ["SERVICE_ACCOUNT_JSON"])
+    sa_info = json.loads(os.environ["GOOGLE_APPLICATION_CREDENTIALS_JSON"])
     return service_account.Credentials.from_service_account_info(sa_info)
 
 def gemini_api_key():

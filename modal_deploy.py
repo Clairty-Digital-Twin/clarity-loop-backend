@@ -25,7 +25,6 @@ image = modal.Image.debian_slim().pip_install(
     "google-cloud-storage",
     "google-cloud-aiplatform",
     "google-auth",
-    "google-http",
     "google-api-python-client",
     "python-dotenv",
     "pydantic",

@@ -50,20 +50,11 @@ def setup_logging() -> None:
                 "formatter": "detailed" if settings.debug else "simple",
                 "stream": sys.stdout,
             },
-            "file": {
-                "class": "logging.handlers.RotatingFileHandler",
-                "level": settings.log_level,
-                "formatter": "json",
-                "filename": "logs/app.log",
-                "maxBytes": 10485760,  # 10MB
-                "backupCount": 5,
-                "encoding": "utf8",
-            },
         },
         "loggers": {
             "clarity": {
                 "level": settings.log_level,
-                "handlers": ["console", "file"],
+                "handlers": ["console"],
                 "propagate": False,
             },
             "uvicorn": {
@@ -73,7 +64,7 @@ def setup_logging() -> None:
             },
             "uvicorn.access": {
                 "level": "INFO",
-                "handlers": ["file"],
+                "handlers": ["console"],
                 "propagate": False,
             },
         },

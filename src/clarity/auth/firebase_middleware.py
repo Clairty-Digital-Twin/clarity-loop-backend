@@ -637,7 +637,7 @@ class FirebaseAuthProvider(IAuthProvider):
         
         Args:
             user_data: User data from Firestore
-            firebase_info: Original Firebase token info
+            _firebase_info: Original Firebase token info (unused, kept for interface compatibility)
             
         Returns:
             Complete UserContext

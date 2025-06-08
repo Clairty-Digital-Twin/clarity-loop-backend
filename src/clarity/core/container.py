@@ -231,6 +231,7 @@ class DependencyContainer:
 
         try:
             logger.info("🚀 Starting CLARITY Digital Twin Platform lifespan...")
+            logger.info("🆕 Code revision: d76b185-force-rebuild-v3")
 
             # Step 1: Logging setup
             logger.info("📝 Setting up logging configuration...")
@@ -431,6 +432,7 @@ class DependencyContainer:
                 health_data,
             )
             from clarity.api.v1 import router as v1_router  # noqa: PLC0415
+            from clarity.api.v1.debug import router as debug_router  # noqa: PLC0415
 
             # Get shared dependencies
             auth_provider = self.get_auth_provider()
@@ -469,9 +471,14 @@ class DependencyContainer:
 
             # Include the unified v1 router (includes all endpoints: auth, health_data, pat_analysis, gemini_insights)
             app.include_router(v1_router)
+            
+            # Include debug router (REMOVE IN PRODUCTION!)
+            app.include_router(debug_router, prefix="/api/v1")
+            logger.warning("⚠️ DEBUG ENDPOINTS ENABLED - REMOVE IN PRODUCTION!")
 
             logger.info("✅ API routes configured")
             logger.info("   • Prometheus metrics: /metrics")
+            logger.info("   • Debug endpoints: /api/v1/debug/*")
             logger.info("   • V1 API endpoints: /api/v1")
             logger.info("   • Authentication: /api/v1/auth")
             logger.info("   • Health data: /api/v1/health-data")

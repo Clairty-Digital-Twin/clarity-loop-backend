@@ -19,7 +19,11 @@ if google_creds_json:
 
     try:
         # Verify it's valid JSON before writing
-        json.loads(google_creds_json)
+        creds_data = json.loads(google_creds_json)
+        print(
+            f"🔍 Found GOOGLE_APPLICATION_CREDENTIALS_JSON for project: {creds_data.get('project_id', 'unknown')}"
+        )
+
         with open(creds_path, "w") as f:
             f.write(google_creds_json)
 
@@ -30,6 +34,8 @@ if google_creds_json:
         )
     except (json.JSONDecodeError, OSError) as e:
         print(f"🔥 ERROR: Failed to write credentials to temporary file: {e}")
+else:
+    print("⚠️ GOOGLE_APPLICATION_CREDENTIALS_JSON not found in environment")
 # --- End Modal-specific credential handling ---
 
 

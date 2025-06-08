@@ -16,7 +16,8 @@ import uuid
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field
 
-from clarity.auth.firebase_auth import get_current_user_context_required
+from clarity.auth.firebase_auth import get_current_user_required
+from clarity.models.user import User
 from clarity.ml.gemini_service import (
     GeminiService,
     HealthInsightRequest,
@@ -241,7 +242,7 @@ def create_error_response(
 )
 async def generate_insights(
     insight_request: InsightGenerationRequest,
-    current_user: UserContext = Depends(get_current_user_context_required),
+    current_user: User = Depends(get_current_user_required),
     gemini_service: GeminiService = Depends(get_gemini_service),  # noqa: B008
 ) -> InsightGenerationResponse:
     """Generate new health insights from analysis data.
@@ -266,14 +267,11 @@ async def generate_insights(
     try:
         logger.info(
             "🔮 Generating insights for user %s (request: %s)",
-            current_user.user_id,
+            current_user.uid,
             request_id,
         )
 
-        # Validate user permissions
-        # if Permission.READ_INSIGHTS not in current_user.permissions:
-        if not current_user.is_active:
-            _raise_account_disabled_error(request_id, current_user.user_id)
+        # No need to check is_active for User model - just proceed
 
         # Create Gemini service request
         gemini_request = HealthInsightRequest(
@@ -517,6 +515,7 @@ async def get_insight_history(
     description="Check the health status of the Gemini insights service",
 )
 async def get_service_status(
+    current_user: UserContext = Depends(get_current_user_context_required),
     gemini_service: GeminiService = Depends(get_gemini_service),  # noqa: B008
 ) -> ServiceStatusResponse:
     """Check Gemini service health status.

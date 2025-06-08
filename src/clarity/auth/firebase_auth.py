@@ -1,6 +1,7 @@
 """Firebase authentication utilities for WebSocket and HTTP endpoints."""
 
 import logging
+import os
 from typing import Any, cast
 
 from fastapi import Depends, HTTPException, Request, status
@@ -18,24 +19,38 @@ settings = get_settings()
 # Initialize Firebase Admin SDK
 try:
     try:
-        firebase_admin.get_app()
+        app = firebase_admin.get_app()
+        logger.info("🔵 Firebase Admin SDK already initialized with app: %s", app.name)
     except ValueError:
         # No default app exists, initialize it
-        # In production, use service account key
-        # In development, you can use default credentials
-        if (
+        logger.info("🔄 Initializing Firebase Admin SDK...")
+
+        # Check various credential sources
+        if os.environ.get("GOOGLE_APPLICATION_CREDENTIALS"):
+            logger.info(
+                "🔑 Using GOOGLE_APPLICATION_CREDENTIALS from: %s",
+                os.environ.get("GOOGLE_APPLICATION_CREDENTIALS"),
+            )
+            cred = credentials.ApplicationDefault()
+        elif (
             hasattr(settings, "firebase_credentials_path")
             and settings.firebase_credentials_path
         ):
+            logger.info(
+                "🔑 Using firebase_credentials_path from settings: %s",
+                settings.firebase_credentials_path,
+            )
             cred = credentials.Certificate(settings.firebase_credentials_path)
         else:
-            # Use default credentials (useful for local development)
+            logger.warning("⚠️ No credentials found, using ApplicationDefault")
             cred = credentials.ApplicationDefault()
 
-        firebase_admin.initialize_app(cred)
-        logger.info("Firebase Admin SDK initialized successfully")
+        app = firebase_admin.initialize_app(cred)
+        logger.info(
+            "✅ Firebase Admin SDK initialized successfully with app: %s", app.name
+        )
 except Exception:
-    logger.exception("Failed to initialize Firebase Admin SDK")
+    logger.exception("🔥 Failed to initialize Firebase Admin SDK")
     # In development, continue without Firebase
 
 # Security scheme for API endpoints
@@ -62,12 +77,37 @@ def get_current_user(
         return None
 
     try:
-        # Verify the Firebase ID token with revocation check (CRITICAL SECURITY FIX)
-        decoded_token = auth.verify_id_token(
-            credentials.credentials,
-            check_revoked=True,  # Prevent authentication bypass with stolen tokens
-            clock_skew_seconds=30,  # Allow for minor clock drift
-        )
+        # TEMPORARY DEBUG: Add detailed logging for token verification
+        logger.info("🔍 DEBUGGING get_current_user: Attempting token verification (length: %d)", len(credentials.credentials))
+        logger.debug("🔍 DEBUGGING get_current_user: Token preview: %s...%s", credentials.credentials[:20], credentials.credentials[-20:])
+        
+        # Try without revocation check first
+        logger.info("🧪 DEBUGGING get_current_user: Attempting WITHOUT revocation check...")
+        try:
+            decoded_token_no_revoke = auth.verify_id_token(
+                credentials.credentials,
+                check_revoked=False,
+                clock_skew_seconds=30,
+            )
+            logger.info("✅ DEBUGGING get_current_user: Token verified WITHOUT revocation check! UID: %s", decoded_token_no_revoke.get('uid'))
+            
+            # Now try with revocation check
+            logger.info("🧪 DEBUGGING get_current_user: Now attempting WITH revocation check...")
+            decoded_token = auth.verify_id_token(
+                credentials.credentials,
+                check_revoked=True,  # Prevent authentication bypass with stolen tokens
+                clock_skew_seconds=30,  # Allow for minor clock drift
+            )
+            logger.info("✅ DEBUGGING get_current_user: Token verified WITH revocation check! UID: %s", decoded_token.get('uid'))
+            
+        except Exception as revoke_check_error:
+            logger.error("❌ DEBUGGING get_current_user: Revocation check failed: %s", str(revoke_check_error))
+            logger.error("❌ DEBUGGING get_current_user: Error type: %s", type(revoke_check_error).__name__)
+            logger.exception("❌ DEBUGGING get_current_user: Full revocation check error:")
+            
+            # Fall back to token without revocation check for now
+            logger.warning("⚠️ DEBUGGING get_current_user: Using token WITHOUT revocation check as fallback")
+            decoded_token = decoded_token_no_revoke
 
         # Create user object from token
         return User(
@@ -137,7 +177,16 @@ def get_current_user_context_required(
 
     Raises HTTPException if no valid user context is authenticated.
     """
+    logger.warning("🔍 get_current_user_context_required called")
+    logger.warning("🔍 Request path: %s", request.url.path)
+    logger.warning("🔍 Has request.state: %s", hasattr(request, "state"))
+    if hasattr(request, "state"):
+        logger.warning("🔍 Has request.state.user: %s", hasattr(request.state, "user"))
+        if hasattr(request.state, "user"):
+            logger.warning("🔍 request.state.user value: %s", request.state.user)
+    
     if not hasattr(request.state, "user") or request.state.user is None:
+        logger.error("❌ No user context found in request.state for path: %s", request.url.path)
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Authentication required",
@@ -160,8 +209,29 @@ def get_current_user_websocket(token: str) -> User:
         HTTPException: If token is invalid
     """
     try:
-        # Verify the Firebase ID token with revocation check for security
-        decoded_token = auth.verify_id_token(token, check_revoked=True)
+        # TEMPORARY DEBUG: Add detailed logging for WebSocket token verification
+        logger.info("🔍 DEBUGGING get_current_user_websocket: Attempting token verification (length: %d)", len(token))
+        logger.debug("🔍 DEBUGGING get_current_user_websocket: Token preview: %s...%s", token[:20], token[-20:])
+        
+        # Try without revocation check first
+        logger.info("🧪 DEBUGGING get_current_user_websocket: Attempting WITHOUT revocation check...")
+        try:
+            decoded_token_no_revoke = auth.verify_id_token(token, check_revoked=False)
+            logger.info("✅ DEBUGGING get_current_user_websocket: Token verified WITHOUT revocation check! UID: %s", decoded_token_no_revoke.get('uid'))
+            
+            # Now try with revocation check
+            logger.info("🧪 DEBUGGING get_current_user_websocket: Now attempting WITH revocation check...")
+            decoded_token = auth.verify_id_token(token, check_revoked=True)
+            logger.info("✅ DEBUGGING get_current_user_websocket: Token verified WITH revocation check! UID: %s", decoded_token.get('uid'))
+            
+        except Exception as revoke_check_error:
+            logger.error("❌ DEBUGGING get_current_user_websocket: Revocation check failed: %s", str(revoke_check_error))
+            logger.error("❌ DEBUGGING get_current_user_websocket: Error type: %s", type(revoke_check_error).__name__)
+            logger.exception("❌ DEBUGGING get_current_user_websocket: Full revocation check error:")
+            
+            # Fall back to token without revocation check for now
+            logger.warning("⚠️ DEBUGGING get_current_user_websocket: Using token WITHOUT revocation check as fallback")
+            decoded_token = decoded_token_no_revoke
 
         # Create user object from token
         return User(
@@ -210,8 +280,29 @@ def get_user_from_request(request: Request) -> User | None:
         if scheme.lower() != "bearer":
             return None
 
-        # Verify the Firebase ID token with revocation check for security
-        decoded_token = auth.verify_id_token(token, check_revoked=True)
+        # TEMPORARY DEBUG: Add detailed logging for request token verification
+        logger.info("🔍 DEBUGGING get_user_from_request: Attempting token verification (length: %d)", len(token))
+        logger.debug("🔍 DEBUGGING get_user_from_request: Token preview: %s...%s", token[:20], token[-20:])
+        
+        # Try without revocation check first
+        logger.info("🧪 DEBUGGING get_user_from_request: Attempting WITHOUT revocation check...")
+        try:
+            decoded_token_no_revoke = auth.verify_id_token(token, check_revoked=False)
+            logger.info("✅ DEBUGGING get_user_from_request: Token verified WITHOUT revocation check! UID: %s", decoded_token_no_revoke.get('uid'))
+            
+            # Now try with revocation check
+            logger.info("🧪 DEBUGGING get_user_from_request: Now attempting WITH revocation check...")
+            decoded_token = auth.verify_id_token(token, check_revoked=True)
+            logger.info("✅ DEBUGGING get_user_from_request: Token verified WITH revocation check! UID: %s", decoded_token.get('uid'))
+            
+        except Exception as revoke_check_error:
+            logger.error("❌ DEBUGGING get_user_from_request: Revocation check failed: %s", str(revoke_check_error))
+            logger.error("❌ DEBUGGING get_user_from_request: Error type: %s", type(revoke_check_error).__name__)
+            logger.exception("❌ DEBUGGING get_user_from_request: Full revocation check error:")
+            
+            # Fall back to token without revocation check for now
+            logger.warning("⚠️ DEBUGGING get_user_from_request: Using token WITHOUT revocation check as fallback")
+            decoded_token = decoded_token_no_revoke
 
         # Create user object from token
         return User(

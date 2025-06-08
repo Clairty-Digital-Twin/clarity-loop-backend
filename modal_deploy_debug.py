@@ -117,7 +117,7 @@ ml_image = gcp_image.pip_install(
 )
 
 # Final layer: Mount the source code (this changes most frequently)
-# FORCE COPY to ensure latest code is in the image (fixes Modal caching issues)
+# FORCE COPY to ensure latest code is in the image
 final_image = ml_image.add_local_dir(REPO_ROOT, "/app", copy=True)
 
 # Detect Modal environment (dev/prod)
@@ -125,14 +125,10 @@ modal_environment = os.getenv("MODAL_ENVIRONMENT", "main")
 environment_name = "production" if modal_environment == "prod" else "development"
 
 app = modal.App(
-    "clarity-backend",
+    "clarity-backend-debug-auth",  # NEW APP NAME TO FORCE FRESH DEPLOY
     secrets=[
         modal.Secret.from_name("googlecloud-secret"),
-        modal.Secret.from_dict({
-            "ENVIRONMENT": "production",
-            "FIREBASE_PROJECT_ID": "clarity-loop-backend",
-            "GCP_PROJECT_ID": "clarity-loop-backend"
-        }),
+        modal.Secret.from_dict({"ENVIRONMENT": "production"}),
     ],
 )
 
@@ -154,6 +150,14 @@ def _set_environment():
 @modal.asgi_app()
 def fastapi_app() -> Any:
     """Deploy the optimized FastAPI application with layered caching."""
+    import logging
+    import uuid
+    
+    # IMMEDIATE DEBUG LOG - THIS MUST APPEAR
+    logging.basicConfig(level=logging.INFO)
+    logger = logging.getLogger(__name__)
+    logger.info("🆕🆕🆕 CONTAINER STARTED WITH UUID: %s 🆕🆕🆕", uuid.uuid4().hex[:6])
+    
     _set_environment()
 
     # Create logs directory if needed

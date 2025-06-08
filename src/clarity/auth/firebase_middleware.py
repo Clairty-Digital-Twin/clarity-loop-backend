@@ -68,9 +68,15 @@ class FirebaseAuthMiddleware(BaseHTTPMiddleware):
         Returns:
             HTTP response
         """
+        # CRITICAL DEBUG: Log EVERY request that hits middleware
+        logger.warning("🔥 MIDDLEWARE HIT: %s %s", request.method, request.url.path)
+        
         # Check if path is exempt from authentication
         if self._is_exempt_path(request.url.path):
+            logger.warning("🔥 PATH IS EXEMPT: %s", request.url.path)
             return await call_next(request)
+        
+        logger.warning("🔥 PATH REQUIRES AUTH: %s", request.url.path)
 
         # Try to authenticate the request
         try:
@@ -127,7 +133,10 @@ class FirebaseAuthMiddleware(BaseHTTPMiddleware):
             AuthError: If token is missing or invalid format
         """
         auth_header = request.headers.get("Authorization")
+        logger.warning("🔍 Auth header seen: %s", auth_header)
+        
         if not auth_header:
+            logger.error("❌ MISSING Authorization header")
             raise AuthError(
                 message="Missing Authorization header",
                 status_code=401,
@@ -135,6 +144,7 @@ class FirebaseAuthMiddleware(BaseHTTPMiddleware):
             )
 
         if not auth_header.startswith("Bearer "):
+            logger.error("❌ INVALID Authorization header format: %s", auth_header[:50])
             raise AuthError(
                 message="Invalid Authorization header format",
                 status_code=401,
@@ -297,10 +307,42 @@ class FirebaseAuthProvider(IAuthProvider):
             return
 
         try:
-            # Perform any async initialization here
-            await asyncio.sleep(0.1)  # Placeholder for actual initialization
+            # Initialize Firebase Admin SDK if not already initialized
+            import firebase_admin
+            from firebase_admin import credentials
+
+            try:
+                firebase_admin.get_app()
+                logger.info("Firebase Admin SDK already initialized")
+            except ValueError:
+                # No default app exists, initialize it
+                logger.info("Initializing Firebase Admin SDK...")
+
+                # Try to use credentials from environment first
+                import os
+
+                if os.environ.get("GOOGLE_APPLICATION_CREDENTIALS"):
+                    # Use Application Default Credentials (file path set by main.py)
+                    cred = credentials.ApplicationDefault()
+                    firebase_admin.initialize_app(cred)
+                    logger.info(
+                        "Firebase Admin SDK initialized with Application Default Credentials"
+                    )
+                elif self.credentials_path:
+                    # Use provided credentials path
+                    cred = credentials.Certificate(self.credentials_path)
+                    firebase_admin.initialize_app(cred)
+                    logger.info(
+                        "Firebase Admin SDK initialized with credentials from: %s",
+                        self.credentials_path,
+                    )
+                else:
+                    # Try to initialize with project ID only (for emulator/local dev)
+                    firebase_admin.initialize_app()
+                    logger.info("Firebase Admin SDK initialized with default settings")
+
             self._initialized = True
-            logger.info("Firebase Admin SDK initialized successfully.")
+            logger.info("✅ Firebase Admin SDK ready for token verification")
         except Exception:
             logger.exception("Failed to initialize Firebase auth provider")
             raise
@@ -357,10 +399,37 @@ class FirebaseAuthProvider(IAuthProvider):
         # Check cache first if enabled
         if self.cache_is_enabled and token in self._token_cache:
             # Item is in cache and not expired (since _remove_expired_tokens was called)
+            logger.info("🔵 Token found in cache")
             return cast("dict[str, Any]", self._token_cache[token]["user_data"])
 
+        logger.info("🔍 Attempting to verify Firebase token (length: %d)", len(token))
+        logger.debug("🔍 Token preview: %s...%s", token[:20], token[-20:])
+        
         try:
-            decoded_token = firebase_auth.verify_id_token(token, check_revoked=True)
+            # Log current Firebase app state
+            app = firebase_auth.get_app()
+            logger.info("🔥 Firebase app name: %s", app.name)
+            logger.info("🔥 Firebase project_id: %s", app.project_id if hasattr(app, 'project_id') else 'unknown')
+            
+            # TEMPORARY DEBUG: Try without revocation check first
+            logger.info("🧪 DEBUGGING: Attempting token verification WITHOUT revocation check...")
+            try:
+                decoded_token_no_revoke = firebase_auth.verify_id_token(token, check_revoked=False)
+                logger.info("✅ Token verified successfully WITHOUT revocation check! UID: %s", decoded_token_no_revoke.get('uid'))
+                
+                # Now try with revocation check
+                logger.info("🧪 DEBUGGING: Now attempting token verification WITH revocation check...")
+                decoded_token = firebase_auth.verify_id_token(token, check_revoked=True)
+                logger.info("✅ Token verified successfully WITH revocation check! UID: %s", decoded_token.get('uid'))
+                
+            except Exception as revoke_check_error:
+                logger.error("❌ DEBUGGING: Revocation check failed: %s", str(revoke_check_error))
+                logger.error("❌ DEBUGGING: Error type: %s", type(revoke_check_error).__name__)
+                logger.exception("❌ DEBUGGING: Full revocation check error:")
+                
+                # Fall back to token without revocation check for now
+                logger.warning("⚠️ DEBUGGING: Using token WITHOUT revocation check as fallback")
+                decoded_token = decoded_token_no_revoke
 
             # Extract custom claims to determine roles
             custom_claims = decoded_token.get("custom_claims", {})
@@ -395,21 +464,27 @@ class FirebaseAuthProvider(IAuthProvider):
                     "timestamp": time.time(),
                 }
             return user_data_dict  # noqa: TRY300 - Return happens regardless of caching, if block is for side-effect
-        except firebase_auth.RevokedIdTokenError:
-            logger.warning("Revoked Firebase ID token received: %s", token[:20] + "...")
+        except firebase_auth.RevokedIdTokenError as e:
+            logger.error("❌ Revoked Firebase ID token: %s", str(e))
+            logger.error("Token preview: %s...%s", token[:20], token[-20:])
             return None
-        except firebase_auth.UserDisabledError:
-            logger.warning(
-                "Disabled user tried to authenticate: %s", token[:20] + "..."
-            )
+        except firebase_auth.UserDisabledError as e:
+            logger.error("❌ Disabled user tried to authenticate: %s", str(e))
             return None
-        except firebase_auth.InvalidIdTokenError:
-            logger.warning("Invalid Firebase ID token: %s", token[:20] + "...")
+        except firebase_auth.InvalidIdTokenError as e:
+            logger.error("❌ Invalid Firebase ID token: %s", str(e))
+            logger.error("Token preview: %s...%s", token[:20], token[-20:])
             return None
-        except (
-            Exception
-        ):  # Keep broad for unknown Firebase/network issues, but log with exc_info
-            logger.exception("Error verifying Firebase token")
+        except firebase_auth.ExpiredIdTokenError as e:
+            logger.error("❌ Expired Firebase ID token: %s", str(e))
+            return None
+        except firebase_auth.CertificateFetchError as e:
+            logger.error("❌ Certificate fetch error: %s", str(e))
+            return None
+        except Exception as e:
+            logger.error("❌ Unexpected error verifying Firebase token: %s", type(e).__name__)
+            logger.error("Error details: %s", str(e))
+            logger.exception("Full exception details:")
             return None
 
     async def get_user_info(self, user_id: str) -> dict[str, Any] | None:

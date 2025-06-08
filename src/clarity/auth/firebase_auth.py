@@ -1,7 +1,7 @@
 """Firebase authentication utilities for WebSocket and HTTP endpoints."""
 
 import logging
-from typing import Any
+from typing import Any, cast
 
 from fastapi import Depends, HTTPException, Request, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
@@ -9,6 +9,7 @@ import firebase_admin
 from firebase_admin import auth, credentials
 
 from clarity.core.config import get_settings
+from clarity.models.auth import UserContext
 from clarity.models.user import User
 
 logger = logging.getLogger(__name__)
@@ -111,6 +112,39 @@ def get_current_user_required(
         )
 
     return user
+
+
+def get_current_user_context(
+    request: Request,
+) -> UserContext | None:
+    """Get current authenticated user context from middleware.
+
+    Returns None if no valid user context is available (for optional authentication).
+    """
+    if not hasattr(request.state, "user"):
+        return None
+
+    return cast("UserContext | None", request.state.user)
+
+
+def get_current_user_context_required(
+    request: Request,
+) -> UserContext:
+    """Get current authenticated user context (required).
+
+    This function works with the FirebaseAuthMiddleware which sets
+    request.state.user to a UserContext object.
+
+    Raises HTTPException if no valid user context is authenticated.
+    """
+    if not hasattr(request.state, "user") or request.state.user is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Authentication required",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    return cast("UserContext", request.state.user)
 
 
 def get_current_user_websocket(token: str) -> User:

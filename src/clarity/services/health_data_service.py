@@ -13,7 +13,7 @@ import os
 from typing import TYPE_CHECKING, Any, cast
 import uuid
 
-from google.cloud import storage  # type: ignore[attr-defined]
+from google.cloud import storage
 
 if TYPE_CHECKING:
     from google.cloud.storage.bucket import Bucket

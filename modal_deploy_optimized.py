@@ -1,5 +1,4 @@
-"""
-Optimized Modal deployment with layered dependency installation for fast caching.
+"""Optimized Modal deployment with layered dependency installation for fast caching.
 
 This approach uses Modal's image layering to cache dependencies separately,
 making deployments much faster when only code changes.
@@ -7,8 +6,8 @@ making deployments much faster when only code changes.
 
 import json
 import os
-import sys
 from pathlib import Path
+import sys
 from typing import Any, Dict
 
 import modal
@@ -19,26 +18,22 @@ REPO_ROOT = Path(__file__).parent
 base_image = modal.Image.debian_slim().pip_install(
     # Core FastAPI and async framework
     "fastapi>=0.115.0,<0.116.0",
-    "uvicorn[standard]>=0.32.0,<0.35.0", 
+    "uvicorn[standard]>=0.32.0,<0.35.0",
     "pydantic>=2.9.0,<3.0.0",
     "pydantic-settings>=2.6.0,<3.0.0",
-    
     # Basic HTTP and networking
     "httpx>=0.27.0,<0.28.0",
     "aiofiles>=24.1.0,<25.0.0",
     "websockets>=13.1,<14.0.0",
-    
     # Security and validation basics
     "python-multipart>=0.0.18,<1.0.0",
     "email-validator>=2.2.0,<3.0.0",
     "cryptography>=44.0.1,<45.0.0",
     "bcrypt>=4.2.0,<5.0.0",
-    
     # Configuration and environment
     "python-dotenv>=1.0.0,<2.0.0",
     "click>=8.1.0,<9.0.0",
     "typer>=0.12.0,<1.0.0",
-    
     # Basic monitoring
     "prometheus-client>=0.21.0,<1.0.0",
     "structlog>=24.4.0,<25.0.0",
@@ -49,18 +44,16 @@ base_image = modal.Image.debian_slim().pip_install(
 gcp_image = base_image.pip_install(
     # Google Cloud Platform
     "google-cloud-firestore>=2.19.0,<3.0.0",
-    "google-cloud-storage>=2.18.0,<3.0.0", 
+    "google-cloud-storage>=2.18.0,<3.0.0",
     "google-cloud-pubsub>=2.25.0,<3.0.0",
     "google-cloud-secret-manager>=2.21.1,<3.0.0",
     "google-cloud-aiplatform>=1.70.0,<2.0.0",
     "google-cloud-run>=0.10.7,<1.0.0",
     "google-cloud-logging>=3.11.3,<4.0.0",
     "google-cloud-monitoring>=2.22.2,<3.0.0",
-    
     # Firebase Authentication
     "firebase-admin>=6.5.0,<7.0.0",
     "PyJWT[crypto]>=2.10.0,<3.0.0",
-    
     # Google AI/Gemini
     "google-generativeai>=0.8.3,<1.0.0",
     "langchain>=0.3.0,<0.4.0",
@@ -78,16 +71,14 @@ ml_image = gcp_image.pip_install(
     "seaborn>=0.13.0,<0.14.0",
     "plotly>=5.24.0,<6.0.0",
     "h5py>=3.11.0,<4.0.0",
-    
     # Data processing
     "pandas>=2.2.0,<3.0.0",
     "scipy>=1.14.0,<2.0.0",
     "pytz>=2024.2,<2025.0",
     "python-dateutil>=2.9.0,<3.0.0",
-    
     # Additional utilities
     "redis[hiredis]>=5.1.0,<6.0.0",
-    "asyncpg>=0.29.0,<0.30.0", 
+    "asyncpg>=0.29.0,<0.30.0",
     "alembic>=1.13.0,<2.0.0",
     "circuitbreaker>=2.0.0,<3.0.0",
 )
@@ -107,11 +98,13 @@ app = modal.App(
     ],
 )
 
+
 def _set_environment():
     """Sets the application environment based on the Modal environment."""
     modal_env = os.getenv("MODAL_ENVIRONMENT", "main")
     app_env = "production" if modal_env == "prod" else "development"
     os.environ["ENVIRONMENT"] = app_env
+
 
 @app.function(
     image=final_image,
@@ -126,34 +119,32 @@ def fastapi_app() -> Any:
     _set_environment()
     # Create logs directory if needed
     Path("/tmp/logs").mkdir(parents=True, exist_ok=True)
-    
+
     # Add source path
     sys.path.append("/app/src")
-    
+
     # Import and return the app
-    from clarity.main import get_app  # noqa: E402
+    from clarity.main import get_app
+
     return get_app()
 
 
-@app.function(
-    image=final_image,
-    secrets=[modal.Secret.from_name("googlecloud-secret")]
-)
-def health_check() -> Dict[str, Any]:
+@app.function(image=final_image, secrets=[modal.Secret.from_name("googlecloud-secret")])
+def health_check() -> dict[str, Any]:
     """Health check endpoint to verify deployment."""
     _set_environment()
     sys.path.append("/app/src")
-    
+
     try:
-        from clarity.main import get_app  # noqa: E402
-        from clarity.core.config import get_settings  # noqa: E402
-        
+        from clarity.core.config import get_settings
+        from clarity.main import get_app
+
         app = get_app()
         settings = get_settings()
-        
+
         result = {
             "status": "healthy",
-            "app_title": getattr(app, 'title', 'CLARITY Backend'),
+            "app_title": getattr(app, "title", "CLARITY Backend"),
             "application_environment": settings.environment,
             "modal_environment": os.getenv("MODAL_ENVIRONMENT", "main"),
         }
@@ -161,7 +152,7 @@ def health_check() -> Dict[str, Any]:
         result = {
             "status": "unhealthy",
             "error": str(e),
-            "error_type": type(e).__name__
+            "error_type": type(e).__name__,
         }
     print(json.dumps(result, indent=2))
     return result
@@ -169,22 +160,22 @@ def health_check() -> Dict[str, Any]:
 
 @app.function(
     image=gcp_image,  # Only needs GCP layer, not ML layer
-    secrets=[modal.Secret.from_name("googlecloud-secret")]
+    secrets=[modal.Secret.from_name("googlecloud-secret")],
 )
-def credentials_test() -> Dict[str, Any]:
+def credentials_test() -> dict[str, Any]:
     """Test credentials without heavy ML dependencies."""
     # Check for credentials
     has_service_account = "GOOGLE_APPLICATION_CREDENTIALS_JSON" in os.environ
     has_gemini_key = "GEMINI_API_KEY" in os.environ
-    
+
     result = {
         "status": "success",
         "credentials": {
             "service_account": has_service_account,
-            "gemini_api_key": has_gemini_key
-        }
+            "gemini_api_key": has_gemini_key,
+        },
     }
-    
+
     if has_service_account:
         try:
             sa_info = json.loads(os.environ["GOOGLE_APPLICATION_CREDENTIALS_JSON"])
@@ -192,7 +183,7 @@ def credentials_test() -> Dict[str, Any]:
             result["service_account_email"] = sa_info.get("client_email", "unknown")
         except json.JSONDecodeError:
             result["credentials_error"] = "Failed to parse service account JSON"
-    
+
     print(json.dumps(result, indent=2))
     return result
 
@@ -201,24 +192,21 @@ def credentials_test() -> Dict[str, Any]:
 @app.function(
     image=base_image,  # Only base layer - fastest
 )
-def base_test() -> Dict[str, Any]:
+def base_test() -> dict[str, Any]:
     """Test that base dependencies are working."""
     try:
         import fastapi
         import pydantic
         from pydantic_settings import BaseSettings  # This was the missing import!
-        
+
         return {
             "status": "success",
             "fastapi_version": fastapi.__version__,
             "pydantic_version": pydantic.__version__,
-            "pydantic_settings": "available"
+            "pydantic_settings": "available",
         }
     except ImportError as e:
-        return {
-            "status": "error",
-            "missing_module": str(e)
-        }
+        return {"status": "error", "missing_module": str(e)}
 
 
 @app.local_entrypoint()
@@ -228,6 +216,7 @@ def main():
     credentials_test.remote()
     print("\n--- Running health_check ---")
     health_check.remote()
+
 
 if __name__ == "__main__":
     print("🚀 Optimized Modal deployment script.")

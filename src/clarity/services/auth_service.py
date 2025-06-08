@@ -247,13 +247,13 @@ class AuthenticationService:
         try:
             # Get user by email
             try:
-                user_record = auth.get_user_by_email(request.email)  # type: ignore[misc]
-            except auth.UserNotFoundError as e:  # type: ignore[misc]
+                user_record = auth.get_user_by_email(request.email)
+            except auth.UserNotFoundError as e:
                 error_msg = f"User with email {request.email} not found"
                 raise UserNotFoundError(error_msg) from e
 
             # Check if account is disabled
-            if user_record.disabled:  # type: ignore[misc]
+            if user_record.disabled:
                 _raise_account_disabled()
 
             # For Firebase, password verification happens client-side
@@ -272,7 +272,7 @@ class AuthenticationService:
             # user_data is guaranteed to be non-None after exception check above
             # Check email verification requirement
             if (
-                not user_record.email_verified  # type: ignore[misc]
+                not user_record.email_verified
                 and user_data.get("status") != UserStatus.ACTIVE.value  # type: ignore[union-attr]
             ):
                 logger.warning("Login attempt with unverified email: %s", request.email)
@@ -313,7 +313,7 @@ class AuthenticationService:
 
                 await self.firestore_client.create_document(
                     collection="mfa_sessions",
-                    data=temp_session_data,  # type: ignore[arg-type]
+                    data=temp_session_data,
                     user_id=user_record.uid,
                 )
 
@@ -338,12 +338,12 @@ class AuthenticationService:
             # Generate tokens (in real implementation, this would be done by Firebase client SDK)
             tokens = await self._generate_tokens(
                 user_record.uid,
-                remember_me=request.remember_me,  # type: ignore[misc,arg-type]
+                remember_me=request.remember_me,
             )
 
             # Create session (store session_id for potential future use)
             _ = await self._create_user_session(
-                user_record.uid,  # type: ignore[misc,arg-type]
+                user_record.uid,
                 tokens.refresh_token,
                 device_info,
                 ip_address,
@@ -356,7 +356,7 @@ class AuthenticationService:
                 user_data,  # type: ignore[arg-type]
             )
 
-            logger.info("User logged in successfully: %s", user_record.uid)  # type: ignore[misc,arg-type]
+            logger.info("User logged in successfully: %s", user_record.uid)
 
             return LoginResponse(
                 user=user_session,
@@ -471,7 +471,7 @@ class AuthenticationService:
     @staticmethod
     async def _create_user_session_response(
         user_record: auth.UserRecord,
-        user_data: dict[str, Any],  # type: ignore[name-defined]
+        user_data: dict[str, Any],
     ) -> UserSessionResponse:
         """Create user session response from user data.
 
@@ -483,13 +483,13 @@ class AuthenticationService:
             UserSessionResponse: User session information
         """
         # Validate email from Firebase user record
-        email_value = user_record.email  # type: ignore[misc]
+        email_value = user_record.email
         if not email_value or not isinstance(email_value, str):
             error_msg = "Invalid email from Firebase user record"
             raise ValueError(error_msg)
 
         return UserSessionResponse(
-            user_id=uuid.UUID(user_record.uid),  # type: ignore[misc]
+            user_id=uuid.UUID(user_record.uid),
             email=email_value,
             first_name=user_data.get("first_name", ""),
             last_name=user_data.get("last_name", ""),
@@ -648,7 +648,7 @@ class AuthenticationService:
         """
         try:
             # Get Firebase user record
-            user_record = auth.get_user(user_id)  # type: ignore[misc]
+            user_record = auth.get_user(user_id)
 
             # Get user data from Firestore
             user_data = await self.firestore_client.get_document(

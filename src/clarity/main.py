@@ -7,8 +7,8 @@ This module serves as the composition root for the entire application.
 # --- Modal-specific credential handling ---
 # This block MUST run before any other application imports to ensure the
 # environment is correctly configured before any settings are loaded.
-import os
 import json
+import os
 from pathlib import Path
 
 google_creds_json = os.environ.get("GOOGLE_APPLICATION_CREDENTIALS_JSON")
@@ -16,16 +16,18 @@ if google_creds_json:
     temp_dir = Path("/tmp/clarity_creds")
     temp_dir.mkdir(parents=True, exist_ok=True)
     creds_path = temp_dir / "gcp_creds.json"
-    
+
     try:
         # Verify it's valid JSON before writing
         json.loads(google_creds_json)
         with open(creds_path, "w") as f:
             f.write(google_creds_json)
-        
+
         # Set the environment variable to the path of the new file
         os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = str(creds_path)
-        print(f"✅ Successfully created and set GOOGLE_APPLICATION_CREDENTIALS to {creds_path}")
+        print(
+            f"✅ Successfully created and set GOOGLE_APPLICATION_CREDENTIALS to {creds_path}"
+        )
     except (json.JSONDecodeError, OSError) as e:
         print(f"🔥 ERROR: Failed to write credentials to temporary file: {e}")
 # --- End Modal-specific credential handling ---

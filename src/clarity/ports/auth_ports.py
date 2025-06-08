@@ -5,6 +5,7 @@ Business logic layer depends on this abstraction, not concrete implementations.
 """
 
 from abc import ABC, abstractmethod
+from typing import Any
 
 
 class IAuthProvider(ABC):
@@ -16,7 +17,7 @@ class IAuthProvider(ABC):
     """
 
     @abstractmethod
-    async def verify_token(self, token: str) -> dict[str, str] | None:
+    async def verify_token(self, token: str) -> dict[str, Any] | None:
         """Verify an authentication token.
 
         Args:
@@ -27,7 +28,7 @@ class IAuthProvider(ABC):
         """
 
     @abstractmethod
-    async def get_user_info(self, user_id: str) -> dict[str, str] | None:
+    async def get_user_info(self, user_id: str) -> dict[str, Any] | None:
         """Get user information by ID.
 
         Args:

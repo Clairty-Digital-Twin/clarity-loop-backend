@@ -19,7 +19,7 @@ import uuid
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
 from pydantic import BaseModel, Field, validator
 
-from clarity.auth.firebase_auth import get_current_user
+from clarity.auth.firebase_auth import get_current_user_context_required
 from clarity.ml.inference_engine import AsyncInferenceEngine, get_inference_engine
 from clarity.ml.pat_service import ActigraphyAnalysis, ActigraphyInput
 from clarity.ml.preprocessing import ActigraphyDataPoint
@@ -27,6 +27,7 @@ from clarity.ml.proxy_actigraphy import (
     StepCountData,
     create_proxy_actigraphy_transformer,
 )
+from clarity.models.auth import UserContext
 from clarity.storage.firestore_client import FirestoreClient
 
 logger = logging.getLogger(__name__)
@@ -140,7 +141,7 @@ async def get_pat_inference_engine() -> AsyncInferenceEngine:
 async def analyze_step_data(
     request: StepDataRequest,
     background_tasks: BackgroundTasks,  # noqa: ARG001
-    user_id: str = Depends(get_current_user),
+    current_user: UserContext = Depends(get_current_user_context_required),
     inference_engine: AsyncInferenceEngine = Depends(  # noqa: B008
         get_pat_inference_engine
     ),
@@ -158,7 +159,7 @@ async def analyze_step_data(
     try:
         logger.info(
             "Starting step data analysis for user %s, analysis_id %s",
-            user_id,
+            current_user.user_id,
             analysis_id,
         )
 
@@ -166,7 +167,7 @@ async def analyze_step_data(
         transformer = create_proxy_actigraphy_transformer()
 
         step_data = StepCountData(
-            user_id=user_id,
+            user_id=current_user.user_id,
             upload_id=analysis_id,
             step_counts=[
                 float(count) for count in request.step_counts
@@ -191,7 +192,7 @@ async def analyze_step_data(
 
         # Create PAT input
         pat_input = ActigraphyInput(
-            user_id=user_id,
+            user_id=current_user.user_id,
             data_points=actigraphy_points,
             sampling_rate=1.0,  # 1 sample per minute
             duration_hours=len(proxy_result.vector) // 60,
@@ -240,7 +241,7 @@ async def analyze_step_data(
 )
 async def analyze_actigraphy_data(
     request: DirectActigraphyRequest,
-    user_id: str = Depends(get_current_user),
+    current_user: UserContext = Depends(get_current_user_context_required),
     inference_engine: AsyncInferenceEngine = Depends(  # noqa: B008
         get_pat_inference_engine
     ),
@@ -255,7 +256,7 @@ async def analyze_actigraphy_data(
     try:
         logger.info(
             "Starting direct actigraphy analysis for user %s, analysis_id %s",
-            user_id,
+            current_user.user_id,
             analysis_id,
         )
 
@@ -274,7 +275,7 @@ async def analyze_actigraphy_data(
 
         # Create PAT input
         pat_input = ActigraphyInput(
-            user_id=user_id,
+            user_id=current_user.user_id,
             data_points=actigraphy_points,
             sampling_rate=request.sampling_rate,
             duration_hours=request.duration_hours,
@@ -342,12 +343,15 @@ async def analyze_actigraphy_data(
     },
 )
 async def get_pat_analysis(
-    processing_id: str, user_id: str = Depends(get_current_user)
+    processing_id: str,
+    current_user: UserContext = Depends(get_current_user_context_required),
 ) -> PATAnalysisResponse:
     """Retrieve actual PAT analysis results from Firestore."""
     try:
         logger.info(
-            "Retrieving PAT analysis results: %s for user %s", processing_id, user_id
+            "Retrieving PAT analysis results: %s for user %s",
+            processing_id,
+            current_user.user_id,
         )
 
         # Get Firestore client
@@ -355,7 +359,7 @@ async def get_pat_analysis(
 
         # Try to get analysis results from the analysis_results collection
         analysis_result = await firestore_client.get_analysis_result(
-            processing_id=processing_id, user_id=user_id
+            processing_id=processing_id, user_id=current_user.user_id
         )
 
         if analysis_result:
@@ -389,10 +393,10 @@ async def get_pat_analysis(
 
         if processing_status:
             # Check if user owns this processing job
-            if processing_status.get("user_id") != user_id:
+            if processing_status.get("user_id") != current_user.user_id:
                 logger.warning(
                     "User %s attempted to access processing job %s",
-                    user_id,
+                    current_user.user_id,
                     processing_id,
                 )
                 return PATAnalysisResponse(
@@ -505,7 +509,7 @@ async def health_check(
     description="Get information about the available PAT models and current configuration",
 )
 async def get_model_info(
-    user_id: str = Depends(get_current_user),  # noqa: ARG001
+    current_user: UserContext = Depends(get_current_user_context_required),
     inference_engine: AsyncInferenceEngine = Depends(  # noqa: B008
         get_pat_inference_engine
     ),

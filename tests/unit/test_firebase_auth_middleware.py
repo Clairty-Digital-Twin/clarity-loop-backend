@@ -116,12 +116,11 @@ class TestFirebaseAuthProvider:
             result = await auth_provider.verify_token("valid_token")
 
             assert result is not None
-            assert result["uid"] == "test_user_123"
+            assert result["user_id"] == "test_user_123"
             assert result["email"] == "test@example.com"
-            # display_name can be None in test mocks
-            assert result["display_name"] is None
-            assert result["email_verified"] is True
-            assert result["firebase_token"] == "valid_token"  # noqa: S105
+            assert result["verified"] is True
+            assert "roles" in result
+            assert "custom_claims" in result
 
     @pytest.mark.asyncio
     @staticmethod
@@ -319,8 +318,10 @@ class TestFirebaseAuthProvider:
             result = await auth_provider.get_user_info("test_user_123")
 
             assert result is not None
-            assert result["uid"] == "test_user_123"
+            assert result["user_id"] == "test_user_123"
             assert result["email"] == "test@example.com"
+            assert "verified" in result
+            assert "roles" in result
 
     @pytest.mark.asyncio
     @staticmethod

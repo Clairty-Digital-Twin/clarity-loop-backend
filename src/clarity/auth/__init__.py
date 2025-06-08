@@ -10,6 +10,8 @@ from clarity.auth.decorators import (
 )
 from clarity.auth.firebase_auth import (
     get_current_user,
+    get_current_user_context,
+    get_current_user_context_required,
     get_current_user_required,
     get_current_user_websocket,
 )
@@ -34,6 +36,8 @@ __all__ = [
     "UserContext",
     "UserRole",
     "get_current_user",
+    "get_current_user_context",
+    "get_current_user_context_required",
     "get_current_user_required",
     "get_current_user_websocket",
     "require_auth",

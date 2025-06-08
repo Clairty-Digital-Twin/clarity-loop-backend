@@ -13,7 +13,6 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.responses import JSONResponse
 
 from clarity.models.auth import AuthError, Permission, UserContext, UserRole
-from clarity.models.user import User
 from clarity.ports.auth_ports import IAuthProvider
 
 logger = logging.getLogger(__name__)
@@ -52,7 +51,7 @@ class FirebaseAuthMiddleware(BaseHTTPMiddleware):
         ]
         self.cache_enabled = cache_enabled
         self.graceful_degradation = graceful_degradation
-        self._user_cache: dict[str, User] = {}
+        self._user_cache: dict[str, UserContext] = {}
 
         logger.info("Firebase authentication middleware initialized")
         logger.info("Exempt paths: %s", self.exempt_paths)
@@ -362,22 +361,29 @@ class FirebaseAuthProvider(IAuthProvider):
 
         try:
             decoded_token = firebase_auth.verify_id_token(token, check_revoked=True)
-            user_model_instance = User(
-                uid=decoded_token["uid"],
-                email=decoded_token.get("email"),
-                display_name=decoded_token.get("name"),
-                email_verified=decoded_token.get("email_verified", False),
-                firebase_token=token,
-                firebase_token_exp=decoded_token.get("exp"),
-                created_at=(
+
+            # Extract custom claims to determine roles
+            custom_claims = decoded_token.get("custom_claims", {})
+            roles = []
+            if custom_claims.get("admin"):
+                roles.append("admin")
+            if custom_claims.get("clinician"):
+                roles.append("clinician")
+
+            # Create user data dict in the format expected by _create_user_context
+            user_data_dict = {
+                "user_id": decoded_token["uid"],
+                "email": decoded_token.get("email"),
+                "verified": decoded_token.get("email_verified", False),
+                "roles": roles,
+                "custom_claims": custom_claims,
+                "created_at": (
                     datetime.fromtimestamp(decoded_token.get("auth_time"), tz=UTC)
                     if decoded_token.get("auth_time")
                     else None
                 ),
-                last_login=None,
-                profile=None,
-            )
-            user_data_dict = user_model_instance.model_dump()
+                "last_login": None,
+            }
 
             if self.cache_is_enabled:
                 if len(self._token_cache) >= self._token_cache_max_size:
@@ -406,53 +412,6 @@ class FirebaseAuthProvider(IAuthProvider):
             logger.exception("Error verifying Firebase token")
             return None
 
-    async def create_user(self, user_data: dict[str, Any]) -> User:
-        """Create a new Firebase user.
-
-        Args:
-            user_data: Dictionary containing user creation data (email, password, etc.)
-
-        Returns:
-            Created User object
-        """
-        if not self._initialized:
-            await self.initialize()
-        try:
-            user_record = firebase_auth.create_user(**user_data)
-            return User(
-                uid=user_record.uid,
-                email=user_record.email,
-                display_name=user_record.display_name,
-                email_verified=user_record.email_verified,
-                firebase_token=None,
-                firebase_token_exp=None,
-                created_at=(
-                    datetime.fromtimestamp(
-                        user_record.user_metadata.creation_timestamp / 1000, tz=UTC
-                    )
-                    if user_record.user_metadata
-                    else None
-                ),
-                last_login=(
-                    datetime.fromtimestamp(
-                        user_record.user_metadata.last_sign_in_timestamp / 1000, tz=UTC
-                    )
-                    if user_record.user_metadata
-                    and user_record.user_metadata.last_sign_in_timestamp
-                    else None
-                ),
-                profile=None,
-            )
-        except (
-            Exception
-        ) as e:  # Keep broad for unknown Firebase/network issues, ensure 'e' is available for chaining
-            logger.exception("Error creating Firebase user")  # Removed e from log call
-            raise AuthError(
-                message="Failed to create user",  # Simplified message, actual exception is chained
-                status_code=500,
-                error_code="user_creation_failed",
-            ) from e  # Reinstated 'from e'
-
     async def get_user_info(self, user_id: str) -> dict[str, Any] | None:
         """Get user information by Firebase UID.
 
@@ -466,21 +425,30 @@ class FirebaseAuthProvider(IAuthProvider):
             await self.initialize()
         try:
             user_record = firebase_auth.get_user(user_id)
-            user = User(
-                uid=user_record.uid,
-                email=user_record.email,
-                display_name=user_record.display_name,
-                email_verified=user_record.email_verified,
-                firebase_token=None,
-                firebase_token_exp=None,
-                created_at=(
+
+            # Extract custom claims to determine roles
+            custom_claims = user_record.custom_claims or {}
+            roles = []
+            if custom_claims.get("admin"):
+                roles.append("admin")
+            if custom_claims.get("clinician"):
+                roles.append("clinician")
+
+            # Return user data in the format expected by _create_user_context
+            return {
+                "user_id": user_record.uid,
+                "email": user_record.email,
+                "verified": user_record.email_verified,
+                "roles": roles,
+                "custom_claims": custom_claims,
+                "created_at": (
                     datetime.fromtimestamp(
                         user_record.user_metadata.creation_timestamp / 1000, tz=UTC
                     )
                     if user_record.user_metadata
                     else None
                 ),
-                last_login=(
+                "last_login": (
                     datetime.fromtimestamp(
                         user_record.user_metadata.last_sign_in_timestamp / 1000, tz=UTC
                     )
@@ -488,9 +456,7 @@ class FirebaseAuthProvider(IAuthProvider):
                     and user_record.user_metadata.last_sign_in_timestamp
                     else None
                 ),
-                profile=None,
-            )
-            return user.model_dump()
+            }
         except firebase_auth.UserNotFoundError:
             logger.debug("User not found with UID: %s", user_id)
             return None

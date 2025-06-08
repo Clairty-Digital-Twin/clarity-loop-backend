@@ -116,9 +116,6 @@ class FirebaseAuthMiddleware(BaseHTTPMiddleware):
             request.scope["user"] = None
 
         response = await call_next(request)
-        logger.warning("🔥 AFTER CALL_NEXT: request.state still has user: %s", hasattr(request.state, "user"))
-        if hasattr(request.state, "user") and request.state.user:
-            logger.warning("🔥 User still in state after handler: %s", request.state.user.user_id if hasattr(request.state.user, 'user_id') else request.state.user)
         return response
 
     def _is_exempt_path(self, path: str) -> bool:

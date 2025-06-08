@@ -46,38 +46,16 @@ def get_authenticated_user(
     Raises:
         HTTPException: 401 if not authenticated
     """
-    # Debug logging to understand the auth flow
-    logger.info("🔍 get_authenticated_user called for path: %s", request.url.path)
-    logger.info("🔍 Request headers: %s", dict(request.headers))
-    logger.info("🔍 Request state attributes: %s", dir(request.state))
-    logger.info("🔍 Request scope keys: %s", list(request.scope.keys()))
-    
-    # Check if middleware has set user context - try multiple locations due to BaseHTTPMiddleware issues
-    user_context = None
-    
-    # First try request.state (preferred)
-    if hasattr(request.state, "user") and request.state.user is not None:
-        user_context = request.state.user
-        logger.info("🔍 Found user in request.state")
-    # Then try request.scope (fallback for BaseHTTPMiddleware issues)
-    elif "user" in request.scope and request.scope["user"] is not None:
-        user_context = request.scope["user"]
-        logger.info("🔍 Found user in request.scope (BaseHTTPMiddleware workaround)")
-    # Try request attribute as last resort
-    elif hasattr(request, "_auth_user") and request._auth_user is not None:
-        user_context = request._auth_user
-        logger.info("🔍 Found user in request._auth_user (BaseHTTPMiddleware workaround #2)")
-    else:
-        logger.warning("No user context in request.state, request.scope, or request._auth_user for path: %s", request.url.path)
-        logger.warning("🔍 Auth header present: %s", "Authorization" in request.headers)
-        logger.warning("🔍 request.state has attributes: %s", [attr for attr in dir(request.state) if not attr.startswith('_')])
+    # Check if middleware has set user context
+    if not hasattr(request.state, "user") or request.state.user is None:
+        logger.warning("No user context in request.state for path: %s", request.url.path)
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Authentication required",
             headers={"WWW-Authenticate": "Bearer"},
         )
 
-    logger.info("🔍 User context found: %s (type: %s)", user_context, type(user_context))
+    user_context = request.state.user
     
     if not isinstance(user_context, UserContext):
         logger.error("Invalid user context type: %s", type(user_context))

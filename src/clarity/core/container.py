@@ -357,16 +357,11 @@ class DependencyContainer:
     @staticmethod
     def _configure_request_limits(app: FastAPI) -> None:
         """Configure request size limits to prevent DoS attacks."""
+        from collections.abc import Awaitable  # noqa: PLC0415
         from typing import TYPE_CHECKING  # noqa: PLC0415
 
+        from fastapi import Request, Response  # noqa: PLC0415
         from clarity.core.exceptions import ClarityAPIException  # noqa: PLC0415
-
-        if TYPE_CHECKING:
-            from collections.abc import Awaitable  # noqa: PLC0415
-
-            from fastapi import Request, Response  # noqa: PLC0415
-        else:
-            from fastapi import Request, Response  # noqa: PLC0415, TC002
 
         # Maximum request size: 10MB for health data uploads
         max_request_size = 10 * 1024 * 1024  # 10MB
@@ -400,18 +395,95 @@ class DependencyContainer:
 
         # Add authentication middleware if enabled
         if middleware_config.enabled:
-            from clarity.auth.firebase_middleware import (  # noqa: PLC0415
-                FirebaseAuthMiddleware,
-            )
-
             auth_provider = self.get_auth_provider()
+            exempt_paths = middleware_config.exempt_paths or [
+                "/",
+                "/health",
+                "/docs",
+                "/openapi.json",
+                "/redoc",
+                "/api/docs",
+                "/api/health",
+            ]
 
-            # Add the middleware to the app - this is required for BaseHTTPMiddleware
-            app.add_middleware(
-                FirebaseAuthMiddleware,
-                auth_provider=auth_provider,
-                exempt_paths=middleware_config.exempt_paths,
-            )
+            # Use function-based middleware to avoid BaseHTTPMiddleware issues
+            @app.middleware("http")
+            async def firebase_auth_middleware(
+                request: Request, call_next: Callable[[Request], Awaitable[Response]]
+            ) -> Response:
+                """Firebase authentication middleware using function-based approach."""
+                from datetime import UTC, datetime  # noqa: PLC0415
+                from clarity.models.auth import AuthError  # noqa: PLC0415
+                from clarity.auth.firebase_middleware import FirebaseAuthMiddleware  # noqa: PLC0415
+                from starlette.responses import JSONResponse  # noqa: PLC0415
+                
+                path = request.url.path
+                
+                # Check if path is exempt
+                is_exempt = any(path.startswith(p) for p in exempt_paths)
+                if is_exempt:
+                    return await call_next(request)
+                
+                # Extract token
+                auth_header = request.headers.get("authorization")
+                if not auth_header or not auth_header.startswith("Bearer "):
+                    return JSONResponse(
+                        status_code=401,
+                        content={
+                            "error": "missing_token",
+                            "message": "Missing or invalid Authorization header",
+                            "timestamp": datetime.now(UTC).isoformat(),
+                        },
+                    )
+                
+                token = auth_header[7:]  # Remove "Bearer " prefix
+                
+                try:
+                    # Verify token
+                    user_info = await auth_provider.verify_token(token)
+                    if not user_info:
+                        return JSONResponse(
+                            status_code=401,
+                            content={
+                                "error": "invalid_token",
+                                "message": "Invalid or expired token",
+                                "timestamp": datetime.now(UTC).isoformat(),
+                            },
+                        )
+                    
+                    # Create user context
+                    if hasattr(auth_provider, 'get_or_create_user_context'):
+                        user_context = await auth_provider.get_or_create_user_context(user_info)
+                    else:
+                        user_context = FirebaseAuthMiddleware._create_user_context(user_info)
+                    
+                    # Store user in request state
+                    request.state.user = user_context
+                    
+                except AuthError as e:
+                    return JSONResponse(
+                        status_code=e.status_code,
+                        content={
+                            "error": e.error_code,
+                            "message": e.message,
+                            "timestamp": datetime.now(UTC).isoformat(),
+                        },
+                    )
+                except Exception as e:
+                    logger.exception("Authentication failed: %s", e)
+                    if not middleware_config.graceful_degradation:
+                        return JSONResponse(
+                            status_code=401,
+                            content={
+                                "error": "authentication_failed",
+                                "message": "Authentication required",
+                                "timestamp": datetime.now(UTC).isoformat(),
+                            },
+                        )
+                    # For graceful degradation, set user as None
+                    request.state.user = None
+                
+                return await call_next(request)
 
             logger.info("✅ Firebase authentication middleware enabled")
             logger.info("   • Exempt paths: %s", middleware_config.exempt_paths)

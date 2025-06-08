@@ -64,7 +64,6 @@ def get_authenticated_user(
             detail="Invalid authentication state",
         )
 
-    logger.info("✅ Returning user context for user: %s", user_context.user_id)
     return user_context
 
 

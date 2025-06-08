@@ -14,8 +14,8 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from google.cloud import storage
 from pydantic import BaseModel, Field
 
-from clarity.auth.firebase_auth import get_current_user_context_required
-from clarity.models.auth import UserContext
+from clarity.auth.firebase_auth import get_current_user_required
+from clarity.models.user import User
 from clarity.services.pubsub.publisher import get_publisher
 
 # Configure logger
@@ -92,7 +92,7 @@ class HealthKitUploadResponse(BaseModel):
 )
 async def upload_healthkit_data(
     request: HealthKitUploadRequest,
-    current_user: UserContext = Depends(get_current_user_context_required),
+    current_user: User = Depends(get_current_user_required),
 ) -> HealthKitUploadResponse:
     """Upload HealthKit data for asynchronous processing.
 
@@ -115,7 +115,7 @@ async def upload_healthkit_data(
     """
     try:
         # 1. Authorize user access
-        if current_user.user_id != request.user_id:
+        if current_user.uid != request.user_id:
             _raise_user_mismatch_error()
 
         # 2. Generate unique upload ID
@@ -186,7 +186,7 @@ async def upload_healthkit_data(
 @router.get("/status/{upload_id}")
 async def get_upload_status(
     upload_id: str,
-    current_user: UserContext = Depends(get_current_user_context_required),
+    current_user: User = Depends(get_current_user_required),
 ) -> dict[str, Any]:
     """Get status of a HealthKit upload.
 
@@ -217,7 +217,7 @@ async def get_upload_status(
         ) from None
 
     # Verify user access
-    if current_user.user_id != user_id:
+    if current_user.uid != user_id:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN, detail="Access denied to this upload"
         )

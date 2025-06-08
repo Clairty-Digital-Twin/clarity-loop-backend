@@ -76,14 +76,7 @@ class FirebaseAuthMiddleware(BaseHTTPMiddleware):
         # Try to authenticate the request
         try:
             user_context = await self._authenticate_request(request)
-            # Store in multiple places to work around BaseHTTPMiddleware issues
             request.state.user = user_context
-            request.scope["user"] = user_context
-            # Also try storing in request itself
-            setattr(request, "_auth_user", user_context)
-            logger.warning("🔥 SET request.state.user: %s (type: %s)", user_context.user_id, type(user_context))
-            logger.warning("🔥 ALSO SET request.scope['user']: %s", user_context.user_id)
-            logger.warning("🔥 ALSO SET request._auth_user: %s", user_context.user_id)
         except AuthError as e:
             # Handle authentication errors
             return JSONResponse(
@@ -107,10 +100,8 @@ class FirebaseAuthMiddleware(BaseHTTPMiddleware):
                 )
             # For graceful degradation, set user as None
             request.state.user = None
-            request.scope["user"] = None
 
-        response = await call_next(request)
-        return response
+        return await call_next(request)
 
     def _is_exempt_path(self, path: str) -> bool:
         """Check if a path is exempt from authentication.

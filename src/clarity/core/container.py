@@ -485,8 +485,8 @@ class DependencyContainer:
                 
                 return await call_next(request)
 
-            logger.info("✅ Firebase authentication middleware enabled")
-            logger.info("   • Exempt paths: %s", middleware_config.exempt_paths)
+            logger.info("Firebase authentication middleware enabled")
+            logger.info("   • Exempt paths: %s", exempt_paths)
             logger.info("   • Cache enabled: %s", middleware_config.cache_enabled)
             logger.info(
                 "   • Graceful degradation: %s", middleware_config.graceful_degradation

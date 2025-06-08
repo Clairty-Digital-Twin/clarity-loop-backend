@@ -1,6 +1,5 @@
 """Firebase authentication middleware and provider classes."""
 
-import asyncio
 from collections.abc import Awaitable, Callable
 from datetime import UTC, datetime
 import logging
@@ -240,11 +239,11 @@ class FirebaseAuthMiddleware(BaseHTTPMiddleware):
         if hasattr(self.auth_provider, 'get_or_create_user_context'):
             # Use enhanced provider that handles Firestore
             try:
-                logger.info("🔄 Using enhanced auth provider for user context creation")
+                logger.info("Using enhanced auth provider for user context creation")
                 user_context = await self.auth_provider.get_or_create_user_context(user_info)
                 return cast(UserContext, user_context)
             except Exception as e:
-                logger.error("❌ Enhanced user context creation failed: %s", e)
+                logger.error("Enhanced user context creation failed: %s", e)
                 # Fall back to basic user context creation
                 return self._create_user_context(user_info)
         else:
@@ -351,7 +350,7 @@ class FirebaseAuthProvider(IAuthProvider):
                     logger.info("Firebase Admin SDK initialized with default settings")
 
             self._initialized = True
-            logger.info("✅ Firebase Admin SDK ready for token verification")
+            logger.info("Firebase Admin SDK ready for token verification")
         except Exception:
             logger.exception("Failed to initialize Firebase auth provider")
             raise
@@ -408,37 +407,14 @@ class FirebaseAuthProvider(IAuthProvider):
         # Check cache first if enabled
         if self.cache_is_enabled and token in self._token_cache:
             # Item is in cache and not expired (since _remove_expired_tokens was called)
-            logger.info("🔵 Token found in cache")
+            logger.debug("Token found in cache")
             return cast("dict[str, Any]", self._token_cache[token]["user_data"])
 
-        logger.info("🔍 Attempting to verify Firebase token (length: %d)", len(token))
-        logger.debug("🔍 Token preview: %s...%s", token[:20], token[-20:])
+        logger.debug("Attempting to verify Firebase token (length: %d)", len(token))
 
         try:
-            # Log current Firebase app state
-            app = firebase_auth.get_app()
-            logger.info("🔥 Firebase app name: %s", app.name)
-            logger.info("🔥 Firebase project_id: %s", app.project_id if hasattr(app, 'project_id') else 'unknown')
-
-            # TEMPORARY DEBUG: Try without revocation check first
-            logger.info("🧪 DEBUGGING: Attempting token verification WITHOUT revocation check...")
-            try:
-                decoded_token_no_revoke = firebase_auth.verify_id_token(token, check_revoked=False)
-                logger.info("✅ Token verified successfully WITHOUT revocation check! UID: %s", decoded_token_no_revoke.get('uid'))
-
-                # Now try with revocation check
-                logger.info("🧪 DEBUGGING: Now attempting token verification WITH revocation check...")
-                decoded_token = firebase_auth.verify_id_token(token, check_revoked=True)
-                logger.info("✅ Token verified successfully WITH revocation check! UID: %s", decoded_token.get('uid'))
-
-            except Exception as revoke_check_error:
-                logger.error("❌ DEBUGGING: Revocation check failed: %s", str(revoke_check_error))
-                logger.error("❌ DEBUGGING: Error type: %s", type(revoke_check_error).__name__)
-                logger.exception("❌ DEBUGGING: Full revocation check error:")
-
-                # Fall back to token without revocation check for now
-                logger.warning("⚠️ DEBUGGING: Using token WITHOUT revocation check as fallback")
-                decoded_token = decoded_token_no_revoke
+            # Verify token with Firebase
+            decoded_token = firebase_auth.verify_id_token(token, check_revoked=True)
 
             # Extract custom claims to determine roles
             custom_claims = decoded_token.get("custom_claims", {})
@@ -474,26 +450,23 @@ class FirebaseAuthProvider(IAuthProvider):
                 }
             return user_data_dict  # noqa: TRY300 - Return happens regardless of caching, if block is for side-effect
         except firebase_auth.RevokedIdTokenError as e:
-            logger.error("❌ Revoked Firebase ID token: %s", str(e))
-            logger.error("Token preview: %s...%s", token[:20], token[-20:])
+            logger.error("Revoked Firebase ID token: %s", str(e))
             return None
         except firebase_auth.UserDisabledError as e:
-            logger.error("❌ Disabled user tried to authenticate: %s", str(e))
+            logger.error("Disabled user tried to authenticate: %s", str(e))
             return None
         except firebase_auth.InvalidIdTokenError as e:
-            logger.error("❌ Invalid Firebase ID token: %s", str(e))
-            logger.error("Token preview: %s...%s", token[:20], token[-20:])
+            logger.error("Invalid Firebase ID token: %s", str(e))
             return None
         except firebase_auth.ExpiredIdTokenError as e:
-            logger.error("❌ Expired Firebase ID token: %s", str(e))
+            logger.error("Expired Firebase ID token: %s", str(e))
             return None
         except firebase_auth.CertificateFetchError as e:
-            logger.error("❌ Certificate fetch error: %s", str(e))
+            logger.error("Certificate fetch error: %s", str(e))
             return None
         except Exception as e:
-            logger.error("❌ Unexpected error verifying Firebase token: %s", type(e).__name__)
+            logger.error("Unexpected error verifying Firebase token: %s", type(e).__name__)
             logger.error("Error details: %s", str(e))
-            logger.exception("Full exception details:")
             return None
 
     async def get_user_info(self, user_id: str) -> dict[str, Any] | None:
@@ -658,7 +631,7 @@ class FirebaseAuthProvider(IAuthProvider):
     def _create_user_context_from_db(
         self,
         user_data: dict[str, Any],
-        firebase_info: dict[str, Any]
+        firebase_info: dict[str, Any]  # noqa: ARG002
     ) -> UserContext:
         """Create UserContext from database record.
         

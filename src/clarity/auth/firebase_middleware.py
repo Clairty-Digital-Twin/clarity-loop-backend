@@ -631,7 +631,7 @@ class FirebaseAuthProvider(IAuthProvider):
     def _create_user_context_from_db(
         self,
         user_data: dict[str, Any],
-        firebase_info: dict[str, Any]  # noqa: ARG002
+        _firebase_info: dict[str, Any]  # noqa: ARG002
     ) -> UserContext:
         """Create UserContext from database record.
         

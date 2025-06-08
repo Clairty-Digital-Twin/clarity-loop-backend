@@ -15,29 +15,41 @@ import modal
 REPO_ROOT = Path(__file__).parent
 
 # Layer 1: Base Python dependencies (fast install, cache-friendly)
-base_image = modal.Image.debian_slim().pip_install(
-    # Core FastAPI and async framework
-    "fastapi>=0.115.0,<0.116.0",
-    "uvicorn[standard]>=0.32.0,<0.35.0",
-    "pydantic>=2.9.0,<3.0.0",
-    "pydantic-settings>=2.6.0,<3.0.0",
-    # Basic HTTP and networking
-    "httpx>=0.27.0,<0.28.0",
-    "aiofiles>=24.1.0,<25.0.0",
-    "websockets>=13.1,<14.0.0",
-    # Security and validation basics
-    "python-multipart>=0.0.18,<1.0.0",
-    "email-validator>=2.2.0,<3.0.0",
-    "cryptography>=44.0.1,<45.0.0",
-    "bcrypt>=4.2.0,<5.0.0",
-    # Configuration and environment
-    "python-dotenv>=1.0.0,<2.0.0",
-    "click>=8.1.0,<9.0.0",
-    "typer>=0.12.0,<1.0.0",
-    # Basic monitoring
-    "prometheus-client>=0.21.0,<1.0.0",
-    "structlog>=24.4.0,<25.0.0",
-    "rich>=13.9.0,<14.0.0",
+base_image = (
+    modal.Image.debian_slim()
+    .pip_install(
+        # Core FastAPI and async framework
+        "fastapi>=0.115.0,<0.116.0",
+        "uvicorn[standard]>=0.32.0,<0.35.0",
+        "pydantic>=2.9.0,<3.0.0",
+        "pydantic-settings>=2.6.0,<3.0.0",
+        # Basic HTTP and networking
+        "httpx>=0.27.0,<0.28.0",
+        "aiofiles>=24.1.0,<25.0.0",
+        "websockets>=13.1,<14.0.0",
+        # Security and validation basics
+        "python-multipart>=0.0.18,<1.0.0",
+        "email-validator>=2.2.0,<3.0.0",
+        "cryptography>=44.0.1,<45.0.0",
+        "bcrypt>=4.2.0,<5.0.0",
+        # Configuration and environment
+        "python-dotenv>=1.0.0,<2.0.0",
+        "click>=8.1.0,<9.0.0",
+        "typer>=0.12.0,<1.0.0",
+        # Basic monitoring
+        "prometheus-client>=0.21.0,<1.0.0",
+        "structlog>=24.4.0,<25.0.0",
+        "rich>=13.9.0,<14.0.0",
+    )
+    .mount_secret(
+        modal.Secret.from_name("googlecloud-secret"),
+        mount_path="/workspace/creds",
+    )
+    .env(
+        {
+            "GOOGLE_APPLICATION_CREDENTIALS": "/workspace/creds/GOOGLE_APPLICATION_CREDENTIALS_JSON"
+        }
+    )
 )
 
 # Layer 2: Google Cloud and Firebase dependencies (medium weight)
@@ -117,6 +129,7 @@ def _set_environment():
 def fastapi_app() -> Any:
     """Deploy the optimized FastAPI application with layered caching."""
     _set_environment()
+
     # Create logs directory if needed
     Path("/tmp/logs").mkdir(parents=True, exist_ok=True)
 

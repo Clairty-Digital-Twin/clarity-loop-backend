@@ -16,14 +16,13 @@ import uuid
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field
 
-from clarity.auth.firebase_auth import get_current_user_required
-from clarity.models.user import User
+from clarity.auth.dependencies import AuthenticatedUser
 from clarity.ml.gemini_service import (
     GeminiService,
     HealthInsightRequest,
     HealthInsightResponse,
 )
-# UserContext import removed - using User from firebase_auth instead
+from clarity.models.auth import UserContext
 from clarity.ports.auth_ports import IAuthProvider
 from clarity.ports.config_ports import IConfigProvider
 from clarity.storage.firestore_client import FirestoreClient
@@ -159,7 +158,7 @@ def create_metadata(
     return metadata
 
 
-def _raise_account_disabled_error(request_id: str, uid: str) -> None:
+def _raise_account_disabled_error(request_id: str, user_id: str) -> None:
     """Raise account disabled error."""
     raise create_error_response(
         error_code="ACCOUNT_DISABLED",
@@ -242,7 +241,7 @@ def create_error_response(
 )
 async def generate_insights(
     insight_request: InsightGenerationRequest,
-    current_user: User = Depends(get_current_user_required),
+    current_user: AuthenticatedUser,
     gemini_service: GeminiService = Depends(get_gemini_service),  # noqa: B008
 ) -> InsightGenerationResponse:
     """Generate new health insights from analysis data.
@@ -267,7 +266,7 @@ async def generate_insights(
     try:
         logger.info(
             "🔮 Generating insights for user %s (request: %s)",
-            current_user.uid,
+            current_user.user_id,
             request_id,
         )
 
@@ -275,7 +274,7 @@ async def generate_insights(
 
         # Create Gemini service request
         gemini_request = HealthInsightRequest(
-            user_id=current_user.uid,
+            user_id=current_user.user_id,
             analysis_results=insight_request.analysis_results,
             context=insight_request.context,
             insight_type=insight_request.insight_type,
@@ -304,7 +303,7 @@ async def generate_insights(
         processing_time = (datetime.now(UTC) - start_time).total_seconds() * 1000
         logger.exception(
             "💥 Insight generation failed for user %s (request: %s, time: %.2fms)",
-            current_user.uid,
+            current_user.user_id,
             request_id,
             processing_time,
         )
@@ -327,7 +326,7 @@ async def generate_insights(
 )
 async def get_insight(
     insight_id: str,
-    current_user: User = Depends(get_current_user_required),
+    current_user: AuthenticatedUser,
 ) -> InsightGenerationResponse:
     """🔥 FIXED: Retrieve cached insights by ID from Firestore.
 
@@ -361,7 +360,7 @@ async def get_insight(
             _raise_insight_not_found_error(insight_id, request_id)
 
         # Verify user owns the insight
-        if insight_doc.get("user_id") != current_user.uid:  # type: ignore[union-attr]
+        if insight_doc.get("user_id") != current_user.user_id:  # type: ignore[union-attr]
             _raise_insight_access_denied_error(insight_id, request_id)
 
         # Convert Firestore document to HealthInsightResponse
@@ -386,7 +385,7 @@ async def get_insight(
         logger.exception(
             "💥 Failed to retrieve insight %s for user %s (request: %s)",
             insight_id,
-            current_user.uid,
+            current_user.user_id,
             request_id,
         )
 
@@ -410,7 +409,7 @@ async def get_insight_history(
     user_id: str,
     limit: int = 10,
     offset: int = 0,
-    current_user: User = Depends(get_current_user_required),
+    current_user: AuthenticatedUser,
 ) -> InsightHistoryResponse:
     """🔥 FIXED: Get insight history for a user from Firestore.
 
@@ -436,8 +435,8 @@ async def get_insight_history(
         )
 
         # Validate user can access this history
-        if current_user.uid != user_id:
-            _raise_access_denied_error(user_id, current_user.uid, request_id)
+        if current_user.user_id != user_id:
+            _raise_access_denied_error(user_id, current_user.user_id, request_id)
 
         # Get insights from Firestore
         firestore_client = _get_firestore_client()
@@ -515,7 +514,7 @@ async def get_insight_history(
     description="Check the health status of the Gemini insights service",
 )
 async def get_service_status(
-    current_user: User = Depends(get_current_user_required),
+    current_user: AuthenticatedUser,
     gemini_service: GeminiService = Depends(get_gemini_service),  # noqa: B008
 ) -> ServiceStatusResponse:
     """Check Gemini service health status.

@@ -22,10 +22,8 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, Query, Request, status
 from google.cloud import storage
 
-from clarity.auth.firebase_auth import get_current_user_required
-from clarity.auth.decorators import require_auth
-from clarity.models.user import User
-from clarity.models.auth import Permission
+from clarity.auth.dependencies import AuthenticatedUser
+from clarity.models.auth import Permission, UserContext
 from clarity.core.exceptions import (
     AuthorizationProblem,
     InternalServerProblem,
@@ -205,15 +203,14 @@ def get_config_provider() -> IConfigProvider:
         503: {"description": "Service temporarily unavailable"},
     },
 )
-@require_auth(permissions=[Permission.WRITE_OWN_DATA])
 async def upload_health_data(
     health_data: HealthDataUpload,
-    current_user: User = Depends(get_current_user_required),
+    current_user: AuthenticatedUser,
     service: HealthDataService = Depends(get_health_data_service),  # noqa: B008
 ) -> HealthDataResponse:
     """🔥 Upload health data with enterprise-grade processing."""
     try:
-        logger.info("Health data upload requested by user: %s", current_user.uid)
+        logger.info("Health data upload requested by user: %s", current_user.user_id)
 
         # SECURITY: Validate metrics count to prevent DoS through large uploads
         max_metrics_per_upload = 10000  # Reasonable limit for health data batches
@@ -223,7 +220,7 @@ async def upload_health_data(
             )
 
         # Validate user owns the data
-        if str(health_data.user_id) != current_user.uid:
+        if str(health_data.user_id) != current_user.user_id:
             _raise_authorization_error(str(health_data.user_id))
 
         # Process health data
@@ -234,7 +231,7 @@ async def upload_health_data(
         try:
             # Save raw health data to GCS
             bucket_name = os.getenv("HEALTHKIT_RAW_BUCKET", "healthkit-raw-data")
-            blob_path = f"{current_user.uid}/{response.processing_id}.json"
+            blob_path = f"{current_user.user_id}/{response.processing_id}.json"
             gcs_path = f"gs://{bucket_name}/{blob_path}"
 
             # Save to GCS
@@ -264,7 +261,7 @@ async def upload_health_data(
             # Publish to Pub/Sub
             publisher = get_publisher()
             publisher.publish_health_data_upload(
-                user_id=current_user.uid,
+                user_id=current_user.user_id,
                 upload_id=str(response.processing_id),
                 gcs_path=gcs_path,
                 metadata={
@@ -323,10 +320,9 @@ async def upload_health_data(
         503: {"description": "Service temporarily unavailable"},
     },
 )
-@require_auth(permissions=[Permission.READ_OWN_DATA])
 async def get_processing_status(
     processing_id: UUID,
-    current_user: User = Depends(get_current_user_required),
+    current_user: AuthenticatedUser,
     service: HealthDataService = Depends(get_health_data_service),  # noqa: B008
 ) -> dict[str, Any]:
     """🔥 Get processing status with detailed progress information."""
@@ -334,11 +330,11 @@ async def get_processing_status(
         logger.debug(
             "Processing status requested: %s by user: %s",
             processing_id,
-            current_user.uid,
+            current_user.user_id,
         )
 
         status_info = await service.get_processing_status(
-            processing_id=str(processing_id), user_id=current_user.uid
+            processing_id=str(processing_id), user_id=current_user.user_id
         )
 
         if not status_info:
@@ -411,10 +407,9 @@ async def get_processing_status(
         503: {"description": "Service temporarily unavailable"},
     },
 )
-@require_auth(permissions=[Permission.READ_OWN_DATA])
 async def list_health_data(  # noqa: PLR0913, PLR0917
     request: Request,
-    current_user: User = Depends(get_current_user_required),
+    current_user: AuthenticatedUser,
     limit: int = Query(50, ge=1, le=1000, description="Number of items per page"),
     cursor: str | None = Query(None, description="Pagination cursor"),
     offset: int | None = Query(
@@ -433,7 +428,7 @@ async def list_health_data(  # noqa: PLR0913, PLR0917
     """🔥 Retrieve paginated health data with professional pagination."""
     try:
         logger.debug(
-            "Health data retrieval requested by user: %s", current_user.uid
+            "Health data retrieval requested by user: %s", current_user.user_id
         )
 
         # Validate pagination parameters
@@ -455,7 +450,7 @@ async def list_health_data(  # noqa: PLR0913, PLR0917
         # Get health data from service (fallback to legacy method for now)
         # TODO: Implement get_user_health_data_paginated in HealthDataService
         legacy_data = await service.get_user_health_data(
-            user_id=current_user.uid,
+            user_id=current_user.user_id,
             limit=pagination_params.limit,
             offset=pagination_params.offset or 0,
             metric_type=filters.get("data_type"),
@@ -496,7 +491,7 @@ async def list_health_data(  # noqa: PLR0913, PLR0917
             additional_params=filters,
         )
 
-        logger.debug("Retrieved health data for user: %s", current_user.uid)
+        logger.debug("Retrieved health data for user: %s", current_user.user_id)
         return paginated_response  # noqa: TRY300
 
     except ValueError as e:
@@ -531,9 +526,8 @@ async def list_health_data(  # noqa: PLR0913, PLR0917
         410: {"description": "Endpoint deprecated - use GET /health-data/ instead"},
     },
 )
-@require_auth(permissions=[Permission.READ_OWN_DATA])
 async def query_health_data_legacy(
-    current_user: User = Depends(get_current_user_required),
+    current_user: AuthenticatedUser,
     limit: int = Query(100, ge=1, le=1000, description="Maximum number of records"),
     offset: int = Query(0, ge=0, description="Number of records to skip"),
     metric_type: str | None = Query(None, description="Filter by metric type"),
@@ -544,11 +538,11 @@ async def query_health_data_legacy(
     """🔄 Legacy health data query endpoint (deprecated)."""
     try:
         logger.warning(
-            "Legacy health data endpoint used by user: %s", current_user.uid
+            "Legacy health data endpoint used by user: %s", current_user.user_id
         )
 
         health_data = await service.get_user_health_data(
-            user_id=current_user.uid,
+            user_id=current_user.user_id,
             limit=limit,
             offset=offset,
             metric_type=metric_type,
@@ -563,7 +557,7 @@ async def query_health_data_legacy(
             "removal_date": "2025-12-31",
         }
 
-        logger.debug("Retrieved legacy health data for user: %s", current_user.uid)
+        logger.debug("Retrieved legacy health data for user: %s", current_user.user_id)
         return health_data  # noqa: TRY300
 
     except HealthDataServiceError as e:
@@ -596,10 +590,9 @@ async def query_health_data_legacy(
         503: {"description": "Service temporarily unavailable"},
     },
 )
-@require_auth(permissions=[Permission.WRITE_OWN_DATA])
 async def delete_health_data(
     processing_id: UUID,
-    current_user: User = Depends(get_current_user_required),
+    current_user: AuthenticatedUser,
     service: HealthDataService = Depends(get_health_data_service),  # noqa: B008
 ) -> dict[str, str]:
     """🔥 Delete health data with proper authorization and audit trail."""
@@ -607,11 +600,11 @@ async def delete_health_data(
         logger.info(
             "Health data deletion requested: %s by user: %s",
             processing_id,
-            current_user.uid,
+            current_user.user_id,
         )
 
         success = await service.delete_health_data(
-            user_id=current_user.uid, processing_id=str(processing_id)
+            user_id=current_user.user_id, processing_id=str(processing_id)
         )
 
         if not success:

@@ -244,9 +244,20 @@ class FirebaseAuthMiddleware(BaseHTTPMiddleware):
                 error_code="invalid_token",
             )
 
-        # At this point, user_info is guaranteed to be a dict[str, Any]
-        # The previous block trying to handle User object or dict was causing issues.
-        return self._create_user_context(user_info)
+        # Check if auth provider supports enhanced user context creation
+        if hasattr(self.auth_provider, 'get_or_create_user_context'):
+            # Use enhanced provider that handles Firestore
+            try:
+                logger.info("🔄 Using enhanced auth provider for user context creation")
+                user_context = await self.auth_provider.get_or_create_user_context(user_info)
+                return user_context
+            except Exception as e:
+                logger.error("❌ Enhanced user context creation failed: %s", e)
+                # Fall back to basic user context creation
+                return self._create_user_context(user_info)
+        else:
+            # Use basic user context creation
+            return self._create_user_context(user_info)
 
 
 class FirebaseAuthProvider(IAuthProvider):
@@ -260,6 +271,7 @@ class FirebaseAuthProvider(IAuthProvider):
         credentials_path: str | None = None,
         project_id: str | None = None,
         middleware_config: dict[str, Any] | None = None,
+        firestore_client: Any = None,  # Optional Firestore client for enhanced functionality
     ) -> None:
         """Initialize Firebase authentication provider.
 
@@ -267,9 +279,12 @@ class FirebaseAuthProvider(IAuthProvider):
             credentials_path: Path to Firebase service account credentials
             project_id: Firebase project ID
             middleware_config: Middleware configuration options (already a dict or None)
+            firestore_client: Optional Firestore client for user record management
         """
         self.credentials_path = credentials_path
         self.project_id = project_id
+        self.firestore_client = firestore_client  # Store Firestore client
+        self.users_collection = "users"
 
         # middleware_config is now expected to be a dict or None from the container
         config_dict: dict[str, Any] = (
@@ -300,6 +315,8 @@ class FirebaseAuthProvider(IAuthProvider):
             logger.info("Using credentials from: %s", credentials_path)
         if project_id:
             logger.info("Firebase project ID: %s", project_id)
+        if firestore_client:
+            logger.info("Enhanced mode: Firestore client available for user management")
 
     async def initialize(self) -> None:
         """Initialize Firebase Admin SDK if not already initialized."""
@@ -538,6 +555,176 @@ class FirebaseAuthProvider(IAuthProvider):
         except Exception:  # Keep broad for unknown Firebase/network issues
             logger.exception("Error fetching user info for UID %s", user_id)
             return None
+
+    async def get_or_create_user_context(self, firebase_user_info: dict[str, Any]) -> UserContext:
+        """Get user context, creating Firestore record if needed.
+        
+        Args:
+            firebase_user_info: User info from Firebase token verification
+            
+        Returns:
+            UserContext with complete user information
+        """
+        if not self.firestore_client:
+            # If no Firestore client, fall back to basic context creation
+            return FirebaseAuthMiddleware._create_user_context(firebase_user_info)
+        
+        user_id = firebase_user_info["user_id"]
+        
+        try:
+            # Try to get existing user record
+            user_data = await self.firestore_client.get_document(
+                collection=self.users_collection,
+                document_id=user_id
+            )
+            
+            if user_data is None:
+                # User doesn't exist in Firestore, create it
+                logger.info(f"Creating new Firestore user record for {user_id}")
+                user_data = await self._create_user_record(firebase_user_info)
+            else:
+                # Update last login
+                await self.firestore_client.update_document(
+                    collection=self.users_collection,
+                    document_id=user_id,
+                    data={
+                        "last_login": datetime.now(UTC),
+                        "login_count": user_data.get("login_count", 0) + 1,
+                    },
+                    user_id=user_id
+                )
+            
+            # Create UserContext from database record
+            return self._create_user_context_from_db(user_data, firebase_user_info)
+        
+        except Exception as e:
+            logger.error(f"Error creating/fetching user context: {e}")
+            # Fall back to basic context creation
+            return FirebaseAuthMiddleware._create_user_context(firebase_user_info)
+    
+    async def _create_user_record(self, firebase_user_info: dict[str, Any]) -> dict[str, Any]:
+        """Create a new user record in Firestore.
+        
+        Args:
+            firebase_user_info: User info from Firebase
+            
+        Returns:
+            Created user data
+        """
+        user_id = firebase_user_info["user_id"]
+        email = firebase_user_info.get("email", "")
+        
+        # Extract name from Firebase if available
+        display_name = firebase_user_info.get("display_name", "")
+        name_parts = display_name.split(" ", 1) if display_name else ["", ""]
+        first_name = name_parts[0] if len(name_parts) > 0 else ""
+        last_name = name_parts[1] if len(name_parts) > 1 else ""
+        
+        # Determine role from custom claims or roles list
+        custom_claims = firebase_user_info.get("custom_claims", {})
+        roles = firebase_user_info.get("roles", [])
+        
+        # Check both custom_claims and roles list
+        if custom_claims.get("admin") or "admin" in roles:
+            role = UserRole.ADMIN
+        elif custom_claims.get("clinician") or "clinician" in roles:
+            role = UserRole.CLINICIAN
+        else:
+            role = UserRole.PATIENT
+        
+        from clarity.models.user import UserStatus, AuthProvider
+        
+        user_data = {
+            "user_id": user_id,
+            "email": email,
+            "first_name": first_name,
+            "last_name": last_name,
+            "display_name": display_name,
+            "status": UserStatus.ACTIVE.value,  # Auto-activate Firebase users
+            "role": role.value,
+            "auth_provider": AuthProvider.FIREBASE.value,
+            "email_verified": firebase_user_info.get("verified", False),
+            "created_at": datetime.now(UTC),
+            "updated_at": datetime.now(UTC),
+            "last_login": datetime.now(UTC),
+            "login_count": 1,
+            "mfa_enabled": False,
+            "mfa_methods": [],
+            "custom_claims": custom_claims,
+            "terms_accepted": True,  # Assume accepted if using Firebase
+            "privacy_policy_accepted": True,
+        }
+        
+        await self.firestore_client.create_document(
+            collection=self.users_collection,
+            data=user_data,
+            document_id=user_id,
+            user_id=user_id
+        )
+        
+        logger.info(f"Created Firestore user record for {user_id}")
+        return user_data
+    
+    def _create_user_context_from_db(
+        self, 
+        user_data: dict[str, Any], 
+        firebase_info: dict[str, Any]
+    ) -> UserContext:
+        """Create UserContext from database record.
+        
+        Args:
+            user_data: User data from Firestore
+            firebase_info: Original Firebase token info
+            
+        Returns:
+            Complete UserContext
+        """
+        from clarity.models.user import UserStatus
+        
+        # Determine role
+        role_str = user_data.get("role", UserRole.PATIENT.value)
+        role = UserRole(role_str) if role_str in [r.value for r in UserRole] else UserRole.PATIENT
+        
+        # Set permissions based on role
+        permissions = set()
+        if role == UserRole.ADMIN:
+            permissions = {
+                Permission.SYSTEM_ADMIN,
+                Permission.MANAGE_USERS,
+                Permission.READ_OWN_DATA,
+                Permission.WRITE_OWN_DATA,
+                Permission.READ_PATIENT_DATA,
+                Permission.WRITE_PATIENT_DATA,
+                Permission.READ_ANONYMIZED_DATA,
+            }
+        elif role == UserRole.CLINICIAN:
+            permissions = {
+                Permission.READ_OWN_DATA,
+                Permission.WRITE_OWN_DATA,
+                Permission.READ_PATIENT_DATA,
+                Permission.WRITE_PATIENT_DATA,
+            }
+        else:  # PATIENT
+            permissions = {Permission.READ_OWN_DATA, Permission.WRITE_OWN_DATA}
+        
+        # Check if user is active
+        is_active = user_data.get("status") == UserStatus.ACTIVE.value
+        
+        return UserContext(
+            user_id=user_data["user_id"],
+            email=user_data["email"],
+            role=role,
+            permissions=list(permissions),
+            is_verified=user_data.get("email_verified", False),
+            is_active=is_active,
+            custom_claims=user_data.get("custom_claims", {}),
+            created_at=user_data.get("created_at"),
+            last_login=user_data.get("last_login"),
+            # Include database fields (not in standard UserContext but useful)
+            first_name=user_data.get("first_name"),  # type: ignore[call-arg]
+            last_name=user_data.get("last_name"),  # type: ignore[call-arg]
+            display_name=user_data.get("display_name"),  # type: ignore[call-arg]
+        )
 
     async def cleanup(self) -> None:
         """Cleanup resources when shutting down."""

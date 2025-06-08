@@ -81,10 +81,25 @@ class DependencyContainer:
             firebase_config = config_provider.get_firebase_config()
             # Convert MiddlewareConfig object to dict before passing
             middleware_config_dict = asdict(middleware_config_obj)
+            
+            # Get Firestore client for enhanced auth functionality
+            firestore_client = None
+            try:
+                # Try to get Firestore client from repository
+                repository = self.get_health_data_repository()
+                if hasattr(repository, "client"):
+                    firestore_client = repository.client  # type: ignore[attr-defined]
+                    logger.info("✅ Firestore client available for enhanced auth")
+                else:
+                    logger.warning("⚠️ Repository doesn't have Firestore client")
+            except Exception as e:
+                logger.warning("⚠️ Could not get Firestore client for auth: %s", e)
+            
             return FirebaseAuthProvider(
                 credentials_path=firebase_config.get("credentials_path"),
                 project_id=firebase_config.get("project_id"),
                 middleware_config=middleware_config_dict,  # Pass the dict
+                firestore_client=firestore_client,  # Pass Firestore client
             )
 
         return MockAuthProvider()

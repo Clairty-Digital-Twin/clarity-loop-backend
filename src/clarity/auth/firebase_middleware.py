@@ -68,16 +68,10 @@ class FirebaseAuthMiddleware(BaseHTTPMiddleware):
         Returns:
             HTTP response
         """
-        # CRITICAL DEBUG: Log EVERY request that hits middleware
-        logger.warning("🔥 MIDDLEWARE HIT: %s %s", request.method, request.url.path)
-        logger.warning("🔥 HEADERS: %s", dict(request.headers))
 
         # Check if path is exempt from authentication
         if self._is_exempt_path(request.url.path):
-            logger.warning("🔥 PATH IS EXEMPT: %s", request.url.path)
             return await call_next(request)
-
-        logger.warning("🔥 PATH REQUIRES AUTH: %s", request.url.path)
 
         # Try to authenticate the request
         try:

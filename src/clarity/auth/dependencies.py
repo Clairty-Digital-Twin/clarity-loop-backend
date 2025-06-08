@@ -81,19 +81,14 @@ def get_optional_user(
     Returns:
         UserContext if authenticated, None otherwise
     """
-    # Try request.state first
-    if hasattr(request.state, "user") and request.state.user is not None:
-        user_context = request.state.user
-        if isinstance(user_context, UserContext):
-            return user_context
-    
-    # Try request.scope as fallback
-    if "user" in request.scope and request.scope["user"] is not None:
-        user_context = request.scope["user"]
-        if isinstance(user_context, UserContext):
-            return user_context
-    
-    return None
+    if not hasattr(request.state, "user") or request.state.user is None:
+        return None
+
+    user_context = request.state.user
+    if not isinstance(user_context, UserContext):
+        return None
+
+    return user_context
 
 
 # Type aliases for cleaner function signatures

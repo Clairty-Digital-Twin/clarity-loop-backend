@@ -130,7 +130,6 @@ class FirebaseAuthMiddleware(BaseHTTPMiddleware):
         auth_header = request.headers.get("Authorization")
 
         if not auth_header:
-            logger.error("❌ MISSING Authorization header")
             raise AuthError(
                 message="Missing Authorization header",
                 status_code=401,
@@ -138,7 +137,6 @@ class FirebaseAuthMiddleware(BaseHTTPMiddleware):
             )
 
         if not auth_header.startswith("Bearer "):
-            logger.error("❌ INVALID Authorization header format: %s", auth_header[:50])
             raise AuthError(
                 message="Invalid Authorization header format",
                 status_code=401,

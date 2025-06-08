@@ -3,14 +3,71 @@
 from datetime import datetime
 from typing import Any, ClassVar
 
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, EmailStr, Field, ConfigDict
 
 
-class User(BaseModel):
+class UserBase(BaseModel):
+    """Base user model for common user fields."""
+
+    email: EmailStr = Field(..., description="User's email address")
+    full_name: str | None = Field(None, description="User's full name", max_length=100)
+    is_active: bool = Field(True, description="Flag for active user accounts")
+
+    model_config = ConfigDict(
+        use_enum_values=True,
+        json_schema_extra={
+            "example": {
+                "email": "jane.doe@example.com",
+                "full_name": "Jane Doe",
+                "is_active": True,
+            }
+        },
+    )
+
+
+class UserCreate(UserBase):
+    """User creation model with password field."""
+
+    password: str = Field(..., description="User's password")
+
+    model_config = ConfigDict(
+        use_enum_values=True,
+        json_schema_extra={
+            "example": {
+                "email": "jane.doe@example.com",
+                "full_name": "Jane Doe",
+                "is_active": True,
+                "password": "a_secure_password",
+            }
+        },
+    )
+
+
+class UserUpdate(BaseModel):
+    """User update model."""
+
+    email: EmailStr | None = None
+    full_name: str | None = None
+    password: str | None = None
+    is_active: bool | None = None
+
+    model_config = ConfigDict(
+        use_enum_values=True,
+        json_schema_extra={
+            "example": {
+                "email": "new.email@example.com",
+                "full_name": "Jane Updated Doe",
+                "password": "a_new_secure_password",
+                "is_active": False,
+            }
+        },
+    )
+
+
+class User(UserBase):
     """User model for authenticated users."""
 
     uid: str = Field(..., description="Firebase user ID")
-    email: EmailStr | None = Field(None, description="User email address")
     display_name: str | None = Field(None, description="User display name")
     email_verified: bool = Field(default=False, description="Whether email is verified")
     firebase_token: str | None = Field(None, description="Firebase ID token")
@@ -23,12 +80,9 @@ class User(BaseModel):
         None, description="Additional user profile data"
     )
 
-    class Config:
-        """Pydantic configuration."""
-
-        json_encoders: ClassVar[dict[type, Any]] = {
-            datetime: lambda v: v.isoformat() if v else None
-        }
+    model_config = ConfigDict(
+        json_encoders={datetime: lambda v: v.isoformat() if v else None}
+    )
 
 
 class UserProfile(BaseModel):
@@ -50,10 +104,8 @@ class UserProfile(BaseModel):
         None, description="User health goals and targets"
     )
 
-    class Config:
-        """Pydantic configuration."""
-
-        schema_extra: ClassVar[dict[str, Any]] = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "uid": "firebase_user_id_123",
                 "display_name": "John Doe",
@@ -68,6 +120,7 @@ class UserProfile(BaseModel):
                 "health_goals": {"target_sleep_hours": 8, "target_steps": 10000},
             }
         }
+    )
 
 
 class UserRegistration(BaseModel):
@@ -78,10 +131,8 @@ class UserRegistration(BaseModel):
     timezone: str | None = Field(None, description="User timezone")
     language: str = Field(default="en", description="Preferred language")
 
-    class Config:
-        """Pydantic configuration."""
-
-        schema_extra: ClassVar[dict[str, Any]] = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "email": "user@example.com",
                 "display_name": "John Doe",
@@ -89,30 +140,7 @@ class UserRegistration(BaseModel):
                 "language": "en",
             }
         }
-
-
-class UserUpdate(BaseModel):
-    """Model for updating user information."""
-
-    display_name: str | None = Field(None, min_length=1, max_length=100)
-    bio: str | None = Field(None, max_length=500)
-    timezone: str | None = Field(None)
-    language: str | None = Field(None)
-    privacy_settings: dict[str, Any] | None = Field(None)
-    notification_settings: dict[str, Any] | None = Field(None)
-    health_goals: dict[str, Any] | None = Field(None)
-
-    class Config:
-        """Pydantic configuration."""
-
-        schema_extra: ClassVar[dict[str, Any]] = {
-            "example": {
-                "display_name": "John Smith",
-                "bio": "Updated bio information",
-                "timezone": "America/Los_Angeles",
-                "health_goals": {"target_sleep_hours": 7.5, "target_steps": 12000},
-            }
-        }
+    )
 
 
 class UserSession(BaseModel):
@@ -126,9 +154,6 @@ class UserSession(BaseModel):
     ip_address: str | None = Field(None, description="Client IP address")
     user_agent: str | None = Field(None, description="Client user agent")
 
-    class Config:
-        """Pydantic configuration."""
-
-        json_encoders: ClassVar[dict[type, Any]] = {
-            datetime: lambda v: v.isoformat() if v else None
-        }
+    model_config = ConfigDict(
+        json_encoders={datetime: lambda v: v.isoformat() if v else None}
+    )

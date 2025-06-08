@@ -14,14 +14,19 @@ This project includes optimized Modal deployment scripts for different use cases
 - **Comprehensive health checks**
 
 ```bash
-# Deploy to production
-modal deploy modal_deploy_optimized.py
+# Deploy to production environment
+modal deploy --env prod modal_deploy_optimized.py
+
+# Deploy to development environment  
+modal deploy --env dev modal_deploy_optimized.py
 
 # Test health check
-modal run modal_deploy_optimized.py::health_check
+modal run --env prod modal_deploy_optimized.py::health_check
+modal run --env dev modal_deploy_optimized.py::health_check
 
 # Test credentials
-modal run modal_deploy_optimized.py::credentials_test
+modal run --env prod modal_deploy_optimized.py::credentials_test
+modal run --env dev modal_deploy_optimized.py::credentials_test
 ```
 
 **First deploy**: ~90 seconds (installs all dependencies)  
@@ -71,9 +76,15 @@ Production deployment includes:
 
 ## Live Endpoints
 
-Your deployed application is available at:
-- **Production**: `https://crave-trinity--clarity-backend-optimized-fastapi-app.modal.run`
-- **Health Check**: `https://crave-trinity--clarity-backend-optimized-fastapi-app.modal.run/health`
+Your deployed applications are available at:
+
+### Development Environment
+- **Base URL**: `https://crave-trinity-dev--clarity-backend-fastapi-app.modal.run`
+- **Health Check**: `https://crave-trinity-dev--clarity-backend-fastapi-app.modal.run/health`
+
+### Production Environment  
+- **Base URL**: `https://crave-trinity-prod--clarity-backend-fastapi-app.modal.run`
+- **Health Check**: `https://crave-trinity-prod--clarity-backend-fastapi-app.modal.run/health`
 
 ## Environment Setup
 

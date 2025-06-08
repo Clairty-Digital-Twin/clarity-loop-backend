@@ -836,26 +836,25 @@ class FirestoreClient:
         batch = db.batch()
         try:
             yield batch
-        finally:
+        except Exception:
+            logger.exception("Error during batch operation")
             await batch.commit()
+            raise
 
     # Cleanup and Resource Management
 
     async def close(self) -> None:
-        """Close the Firestore client and clean up resources."""
-        try:
-            if self._db:
-                try:
-                    await self._db.close()  # type: ignore[no-untyped-call]
-                except Exception:
-                    logger.exception("Error closing Firestore client")
-                self._db = None
+        """Close the Firestore client connection."""
+        if self._db:
+            try:
+                await self._db.close()  # type: ignore[no-untyped-call]
                 logger.info("Firestore client closed")
-        except Exception:
-            logger.exception("Error closing Firestore client")
+            except Exception as e:
+                logger.error(f"Error closing Firestore client: {e}")
+        self._db = None
 
     async def health_check(self) -> dict[str, Any]:
-        """Perform health check on Firestore connection.
+        """Perform a health check on the Firestore connection.
 
         Returns:
             Dict with health status information

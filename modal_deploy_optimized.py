@@ -95,8 +95,23 @@ ml_image = gcp_image.pip_install(
 # Final layer: Mount the source code (this changes most frequently)
 final_image = ml_image.add_local_dir(REPO_ROOT, "/app")
 
-app = modal.App("clarity-backend-optimized")
+# Detect Modal environment (dev/prod)
+modal_environment = os.getenv("MODAL_ENVIRONMENT", "main")
+environment_name = "production" if modal_environment == "prod" else "development"
 
+app = modal.App(
+    "clarity-backend",
+    secrets=[
+        modal.Secret.from_name("googlecloud-secret"),
+        modal.Secret.from_dict({"ENVIRONMENT": "production"}),
+    ],
+)
+
+def _set_environment():
+    """Sets the application environment based on the Modal environment."""
+    modal_env = os.getenv("MODAL_ENVIRONMENT", "main")
+    app_env = "production" if modal_env == "prod" else "development"
+    os.environ["ENVIRONMENT"] = app_env
 
 @app.function(
     image=final_image,
@@ -108,6 +123,7 @@ app = modal.App("clarity-backend-optimized")
 @modal.asgi_app()
 def fastapi_app() -> Any:
     """Deploy the optimized FastAPI application with layered caching."""
+    _set_environment()
     # Create logs directory if needed
     Path("/tmp/logs").mkdir(parents=True, exist_ok=True)
     
@@ -125,6 +141,7 @@ def fastapi_app() -> Any:
 )
 def health_check() -> Dict[str, Any]:
     """Health check endpoint to verify deployment."""
+    _set_environment()
     sys.path.append("/app/src")
     
     try:
@@ -134,19 +151,20 @@ def health_check() -> Dict[str, Any]:
         app = get_app()
         settings = get_settings()
         
-        return {
+        result = {
             "status": "healthy",
             "app_title": getattr(app, 'title', 'CLARITY Backend'),
-            "environment": settings.environment,
-            "timestamp": "2025-01-07",
-            "deployment": "optimized_layered"
+            "application_environment": settings.environment,
+            "modal_environment": os.getenv("MODAL_ENVIRONMENT", "main"),
         }
     except Exception as e:
-        return {
-            "status": "unhealthy", 
+        result = {
+            "status": "unhealthy",
             "error": str(e),
             "error_type": type(e).__name__
         }
+    print(json.dumps(result, indent=2))
+    return result
 
 
 @app.function(
@@ -161,7 +179,6 @@ def credentials_test() -> Dict[str, Any]:
     
     result = {
         "status": "success",
-        "timestamp": "2025-01-07",
         "credentials": {
             "service_account": has_service_account,
             "gemini_api_key": has_gemini_key
@@ -176,6 +193,7 @@ def credentials_test() -> Dict[str, Any]:
         except json.JSONDecodeError:
             result["credentials_error"] = "Failed to parse service account JSON"
     
+    print(json.dumps(result, indent=2))
     return result
 
 
@@ -203,10 +221,16 @@ def base_test() -> Dict[str, Any]:
         }
 
 
+@app.local_entrypoint()
+def main():
+    """Local entrypoint for testing functions."""
+    print("--- Running credentials_test ---")
+    credentials_test.remote()
+    print("\n--- Running health_check ---")
+    health_check.remote()
+
 if __name__ == "__main__":
-    print("🚀 Optimized Modal deployment with layered caching")
-    print("📦 Layer 1: Base dependencies (FastAPI, Pydantic)")
-    print("☁️  Layer 2: Google Cloud dependencies")
-    print("🤖 Layer 3: ML dependencies (PyTorch, transformers)")
-    print("📁 Layer 4: Source code mount")
-    print("\nTo deploy: modal deploy modal_deploy_optimized.py")
+    print("🚀 Optimized Modal deployment script.")
+    print("\nUse the following commands from your terminal to deploy:")
+    print("  modal deploy --env main modal_deploy_optimized.py")
+    print("  modal deploy --env prod modal_deploy_optimized.py")

@@ -128,7 +128,6 @@ class FirebaseAuthMiddleware(BaseHTTPMiddleware):
             AuthError: If token is missing or invalid format
         """
         auth_header = request.headers.get("Authorization")
-        logger.warning("🔍 Auth header seen: %s", auth_header)
 
         if not auth_header:
             logger.error("❌ MISSING Authorization header")

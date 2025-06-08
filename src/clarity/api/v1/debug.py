@@ -8,8 +8,8 @@ from typing import Any
 
 from fastapi import APIRouter, Depends, Header, HTTPException, Request, status
 
-from clarity.auth.firebase_auth import get_current_user_required
-from clarity.models.user import User
+from clarity.auth.dependencies import AuthenticatedUser
+from clarity.models.auth import UserContext
 
 logger = logging.getLogger(__name__)
 
@@ -23,14 +23,14 @@ async def debug_token_info(
 ) -> dict[str, Any]:
     """Debug endpoint to check token parsing and middleware state."""
     logger.info("🔍 Debug token info requested")
-    
+
     # Check if authorization header exists
     if not authorization:
         return {
             "error": "No Authorization header",
             "headers": dict(request.headers),
         }
-    
+
     # Parse Bearer token
     parts = authorization.split(" ")
     if len(parts) != 2 or parts[0].lower() != "bearer":
@@ -39,12 +39,12 @@ async def debug_token_info(
             "authorization": authorization,
             "expected": "Bearer <token>",
         }
-    
+
     token = parts[1]
-    
+
     # Basic token info
     token_parts = token.split(".")
-    
+
     return {
         "token_format": "Valid JWT" if len(token_parts) == 3 else "Invalid JWT format",
         "token_length": len(token),
@@ -59,18 +59,18 @@ async def debug_token_info(
 
 @router.get("/auth-check")
 async def debug_auth_check(
-    current_user: User = Depends(get_current_user_required),
+    current_user: AuthenticatedUser,
 ) -> dict[str, Any]:
     """Debug endpoint that requires authentication."""
-    logger.info("✅ Auth check passed for user: %s", current_user.uid)
-    
+    logger.info("✅ Auth check passed for user: %s", current_user.user_id)
+
     return {
         "authenticated": True,
-        "user_id": current_user.uid,
+        "user_id": current_user.user_id,
         "email": current_user.email,
-        "display_name": current_user.display_name,
-        "email_verified": current_user.email_verified,
-        "firebase_token_exp": current_user.firebase_token_exp,
+        "display_name": current_user.custom_claims.get('display_name', 'N/A'),
+        "email_verified": current_user.is_verified,
+        "firebase_token_exp": getattr(current_user, 'firebase_token_exp', 'N/A'),
     }
 
 

@@ -23,7 +23,6 @@ from fastapi import APIRouter, Depends, Query, Request, status
 from google.cloud import storage
 
 from clarity.auth.dependencies import AuthenticatedUser
-from clarity.models.auth import Permission, UserContext
 from clarity.core.exceptions import (
     AuthorizationProblem,
     InternalServerProblem,
@@ -36,6 +35,7 @@ from clarity.core.pagination import (
     PaginationBuilder,
     validate_pagination_params,
 )
+from clarity.models.auth import Permission, UserContext
 from clarity.models.health_data import HealthDataResponse, HealthDataUpload
 from clarity.ports.auth_ports import IAuthProvider
 from clarity.ports.config_ports import IConfigProvider

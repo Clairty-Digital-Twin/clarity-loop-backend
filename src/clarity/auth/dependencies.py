@@ -19,9 +19,8 @@ logger = logging.getLogger(__name__)
 security = HTTPBearer(auto_error=False)
 
 
-async def get_authenticated_user(
+def get_authenticated_user(
     request: Request,
-    credentials: HTTPAuthorizationCredentials | None = Depends(security),
 ) -> UserContext:
     """Get authenticated user with full context from middleware.
     
@@ -55,7 +54,7 @@ async def get_authenticated_user(
             detail="Authentication required",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    
+
     user_context = request.state.user
     if not isinstance(user_context, UserContext):
         logger.error("Invalid user context type: %s", type(user_context))
@@ -63,13 +62,12 @@ async def get_authenticated_user(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Invalid authentication state",
         )
-    
+
     return user_context
 
 
-async def get_optional_user(
+def get_optional_user(
     request: Request,
-    credentials: HTTPAuthorizationCredentials | None = Depends(security),
 ) -> UserContext | None:
     """Get authenticated user if available, None otherwise.
     
@@ -84,11 +82,11 @@ async def get_optional_user(
     """
     if not hasattr(request.state, "user") or request.state.user is None:
         return None
-    
+
     user_context = request.state.user
     if not isinstance(user_context, UserContext):
         return None
-    
+
     return user_context
 
 
@@ -165,3 +163,34 @@ def user_context_to_simple_user(context: UserContext) -> User:
         last_login=context.last_login,
         profile=None,
     )
+
+
+def get_websocket_user(token: str, request: Request) -> UserContext:
+    """Get authenticated user for WebSocket connections.
+    
+    WebSocket connections pass the token as a query parameter rather than
+    in headers, so we need special handling.
+    
+    Args:
+        token: Firebase ID token from query parameter
+        request: FastAPI request object (for state access)
+        
+    Returns:
+        UserContext with complete user information
+        
+    Raises:
+        HTTPException: 401 if token is invalid
+    """
+    # Set a fake authorization header for the middleware
+    request.headers._list.append((b"authorization", f"Bearer {token}".encode()))
+
+    # The middleware will process this and set request.state.user
+    # We can then retrieve it
+    if not hasattr(request.state, "user") or request.state.user is None:
+        logger.warning("WebSocket authentication failed")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid authentication token",
+        )
+
+    return cast(UserContext, request.state.user)

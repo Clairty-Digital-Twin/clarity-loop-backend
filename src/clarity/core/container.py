@@ -81,7 +81,7 @@ class DependencyContainer:
             firebase_config = config_provider.get_firebase_config()
             # Convert MiddlewareConfig object to dict before passing
             middleware_config_dict = asdict(middleware_config_obj)
-            
+
             # Get Firestore client for enhanced auth functionality
             firestore_client = None
             try:
@@ -94,7 +94,7 @@ class DependencyContainer:
                     logger.warning("⚠️ Repository doesn't have Firestore client")
             except Exception as e:
                 logger.warning("⚠️ Could not get Firestore client for auth: %s", e)
-            
+
             return FirebaseAuthProvider(
                 credentials_path=firebase_config.get("credentials_path"),
                 project_id=firebase_config.get("project_id"),
@@ -486,7 +486,7 @@ class DependencyContainer:
 
             # Include the unified v1 router (includes all endpoints: auth, health_data, pat_analysis, gemini_insights)
             app.include_router(v1_router)
-            
+
             # Include debug router (REMOVE IN PRODUCTION!)
             app.include_router(debug_router, prefix="/api/v1")
             logger.warning("⚠️ DEBUG ENDPOINTS ENABLED - REMOVE IN PRODUCTION!")

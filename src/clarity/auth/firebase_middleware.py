@@ -12,7 +12,7 @@ from firebase_admin import auth as firebase_auth
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.responses import JSONResponse
 
-from clarity.models.auth import AuthError, Permission, UserContext, UserRole
+from clarity.models.auth import AuthError, AuthProvider, Permission, UserContext, UserRole, UserStatus
 from clarity.ports.auth_ports import IAuthProvider
 
 logger = logging.getLogger(__name__)
@@ -70,12 +70,12 @@ class FirebaseAuthMiddleware(BaseHTTPMiddleware):
         """
         # CRITICAL DEBUG: Log EVERY request that hits middleware
         logger.warning("🔥 MIDDLEWARE HIT: %s %s", request.method, request.url.path)
-        
+
         # Check if path is exempt from authentication
         if self._is_exempt_path(request.url.path):
             logger.warning("🔥 PATH IS EXEMPT: %s", request.url.path)
             return await call_next(request)
-        
+
         logger.warning("🔥 PATH REQUIRES AUTH: %s", request.url.path)
 
         # Try to authenticate the request
@@ -134,7 +134,7 @@ class FirebaseAuthMiddleware(BaseHTTPMiddleware):
         """
         auth_header = request.headers.get("Authorization")
         logger.warning("🔍 Auth header seen: %s", auth_header)
-        
+
         if not auth_header:
             logger.error("❌ MISSING Authorization header")
             raise AuthError(
@@ -250,7 +250,7 @@ class FirebaseAuthMiddleware(BaseHTTPMiddleware):
             try:
                 logger.info("🔄 Using enhanced auth provider for user context creation")
                 user_context = await self.auth_provider.get_or_create_user_context(user_info)
-                return user_context
+                return cast(UserContext, user_context)
             except Exception as e:
                 logger.error("❌ Enhanced user context creation failed: %s", e)
                 # Fall back to basic user context creation
@@ -421,29 +421,29 @@ class FirebaseAuthProvider(IAuthProvider):
 
         logger.info("🔍 Attempting to verify Firebase token (length: %d)", len(token))
         logger.debug("🔍 Token preview: %s...%s", token[:20], token[-20:])
-        
+
         try:
             # Log current Firebase app state
             app = firebase_auth.get_app()
             logger.info("🔥 Firebase app name: %s", app.name)
             logger.info("🔥 Firebase project_id: %s", app.project_id if hasattr(app, 'project_id') else 'unknown')
-            
+
             # TEMPORARY DEBUG: Try without revocation check first
             logger.info("🧪 DEBUGGING: Attempting token verification WITHOUT revocation check...")
             try:
                 decoded_token_no_revoke = firebase_auth.verify_id_token(token, check_revoked=False)
                 logger.info("✅ Token verified successfully WITHOUT revocation check! UID: %s", decoded_token_no_revoke.get('uid'))
-                
+
                 # Now try with revocation check
                 logger.info("🧪 DEBUGGING: Now attempting token verification WITH revocation check...")
                 decoded_token = firebase_auth.verify_id_token(token, check_revoked=True)
                 logger.info("✅ Token verified successfully WITH revocation check! UID: %s", decoded_token.get('uid'))
-                
+
             except Exception as revoke_check_error:
                 logger.error("❌ DEBUGGING: Revocation check failed: %s", str(revoke_check_error))
                 logger.error("❌ DEBUGGING: Error type: %s", type(revoke_check_error).__name__)
                 logger.exception("❌ DEBUGGING: Full revocation check error:")
-                
+
                 # Fall back to token without revocation check for now
                 logger.warning("⚠️ DEBUGGING: Using token WITHOUT revocation check as fallback")
                 decoded_token = decoded_token_no_revoke
@@ -568,19 +568,19 @@ class FirebaseAuthProvider(IAuthProvider):
         if not self.firestore_client:
             # If no Firestore client, fall back to basic context creation
             return FirebaseAuthMiddleware._create_user_context(firebase_user_info)
-        
+
         user_id = firebase_user_info["user_id"]
-        
+
         try:
             # Try to get existing user record
             user_data = await self.firestore_client.get_document(
                 collection=self.users_collection,
                 document_id=user_id
             )
-            
+
             if user_data is None:
                 # User doesn't exist in Firestore, create it
-                logger.info(f"Creating new Firestore user record for {user_id}")
+                logger.info("Creating new Firestore user record for %s", user_id)
                 user_data = await self._create_user_record(firebase_user_info)
             else:
                 # Update last login
@@ -593,15 +593,15 @@ class FirebaseAuthProvider(IAuthProvider):
                     },
                     user_id=user_id
                 )
-            
+
             # Create UserContext from database record
             return self._create_user_context_from_db(user_data, firebase_user_info)
-        
+
         except Exception as e:
-            logger.error(f"Error creating/fetching user context: {e}")
+            logger.exception("Error creating/fetching user context: %s", e)
             # Fall back to basic context creation
             return FirebaseAuthMiddleware._create_user_context(firebase_user_info)
-    
+
     async def _create_user_record(self, firebase_user_info: dict[str, Any]) -> dict[str, Any]:
         """Create a new user record in Firestore.
         
@@ -613,17 +613,17 @@ class FirebaseAuthProvider(IAuthProvider):
         """
         user_id = firebase_user_info["user_id"]
         email = firebase_user_info.get("email", "")
-        
+
         # Extract name from Firebase if available
         display_name = firebase_user_info.get("display_name", "")
         name_parts = display_name.split(" ", 1) if display_name else ["", ""]
         first_name = name_parts[0] if len(name_parts) > 0 else ""
         last_name = name_parts[1] if len(name_parts) > 1 else ""
-        
+
         # Determine role from custom claims or roles list
         custom_claims = firebase_user_info.get("custom_claims", {})
         roles = firebase_user_info.get("roles", [])
-        
+
         # Check both custom_claims and roles list
         if custom_claims.get("admin") or "admin" in roles:
             role = UserRole.ADMIN
@@ -631,9 +631,7 @@ class FirebaseAuthProvider(IAuthProvider):
             role = UserRole.CLINICIAN
         else:
             role = UserRole.PATIENT
-        
-        from clarity.models.user import UserStatus, AuthProvider
-        
+
         user_data = {
             "user_id": user_id,
             "email": email,
@@ -654,20 +652,20 @@ class FirebaseAuthProvider(IAuthProvider):
             "terms_accepted": True,  # Assume accepted if using Firebase
             "privacy_policy_accepted": True,
         }
-        
+
         await self.firestore_client.create_document(
             collection=self.users_collection,
             data=user_data,
             document_id=user_id,
             user_id=user_id
         )
-        
-        logger.info(f"Created Firestore user record for {user_id}")
+
+        logger.info("Created Firestore user record for %s", user_id)
         return user_data
-    
+
     def _create_user_context_from_db(
-        self, 
-        user_data: dict[str, Any], 
+        self,
+        user_data: dict[str, Any],
         firebase_info: dict[str, Any]
     ) -> UserContext:
         """Create UserContext from database record.
@@ -679,12 +677,10 @@ class FirebaseAuthProvider(IAuthProvider):
         Returns:
             Complete UserContext
         """
-        from clarity.models.user import UserStatus
-        
         # Determine role
         role_str = user_data.get("role", UserRole.PATIENT.value)
         role = UserRole(role_str) if role_str in [r.value for r in UserRole] else UserRole.PATIENT
-        
+
         # Set permissions based on role
         permissions = set()
         if role == UserRole.ADMIN:
@@ -706,9 +702,17 @@ class FirebaseAuthProvider(IAuthProvider):
             }
         else:  # PATIENT
             permissions = {Permission.READ_OWN_DATA, Permission.WRITE_OWN_DATA}
-        
+
         # Check if user is active
         is_active = user_data.get("status") == UserStatus.ACTIVE.value
+
+        # Store extra fields in custom_claims for access later
+        enriched_claims = user_data.get("custom_claims", {}).copy()
+        enriched_claims.update({
+            "first_name": user_data.get("first_name"),
+            "last_name": user_data.get("last_name"),
+            "display_name": user_data.get("display_name"),
+        })
         
         return UserContext(
             user_id=user_data["user_id"],
@@ -717,13 +721,9 @@ class FirebaseAuthProvider(IAuthProvider):
             permissions=list(permissions),
             is_verified=user_data.get("email_verified", False),
             is_active=is_active,
-            custom_claims=user_data.get("custom_claims", {}),
+            custom_claims=enriched_claims,
             created_at=user_data.get("created_at"),
             last_login=user_data.get("last_login"),
-            # Include database fields (not in standard UserContext but useful)
-            first_name=user_data.get("first_name"),  # type: ignore[call-arg]
-            last_name=user_data.get("last_name"),  # type: ignore[call-arg]
-            display_name=user_data.get("display_name"),  # type: ignore[call-arg]
         )
 
     async def cleanup(self) -> None:

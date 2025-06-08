@@ -2,9 +2,9 @@
 """Decode and inspect JWT tokens for debugging."""
 
 import base64
+from datetime import datetime
 import json
 import sys
-from datetime import datetime
 
 
 def decode_jwt(token: str) -> dict:
@@ -12,13 +12,13 @@ def decode_jwt(token: str) -> dict:
     parts = token.split('.')
     if len(parts) != 3:
         return {"error": "Invalid JWT format - expected 3 parts"}
-    
+
     # Decode header
     header = json.loads(base64.urlsafe_b64decode(parts[0] + '=='))
-    
+
     # Decode payload
     payload = json.loads(base64.urlsafe_b64decode(parts[1] + '=='))
-    
+
     # Convert timestamps to readable format
     if 'exp' in payload:
         payload['exp_readable'] = datetime.fromtimestamp(payload['exp']).isoformat()
@@ -26,7 +26,7 @@ def decode_jwt(token: str) -> dict:
         payload['iat_readable'] = datetime.fromtimestamp(payload['iat']).isoformat()
     if 'auth_time' in payload:
         payload['auth_time_readable'] = datetime.fromtimestamp(payload['auth_time']).isoformat()
-    
+
     return {
         "header": header,
         "payload": payload,
@@ -40,12 +40,12 @@ if __name__ == "__main__":
     else:
         # Read from stdin
         token = sys.stdin.read().strip()
-    
+
     if not token:
         print("Usage: python decode_jwt.py <token>")
         print("   or: echo $TOKEN | python decode_jwt.py")
         sys.exit(1)
-    
+
     try:
         decoded = decode_jwt(token)
         print(json.dumps(decoded, indent=2))

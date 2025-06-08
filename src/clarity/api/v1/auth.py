@@ -14,7 +14,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.security import HTTPBearer
 from pydantic import ValidationError
 
-from clarity.auth.firebase_auth import get_current_user
+from clarity.auth.dependencies import AuthenticatedUser, get_authenticated_user
 from clarity.core.secure_logging import sanitize_for_logging
 from clarity.models.auth import (
     AuthErrorDetail,
@@ -409,10 +409,6 @@ async def logout_user(
         ) from e
 
 
-# Create dependency instance to avoid B008 lint error
-current_user_dependency = Depends(get_current_user)
-
-
 @router.get(
     "/me",
     response_model=UserSessionResponse,
@@ -426,7 +422,7 @@ current_user_dependency = Depends(get_current_user)
     },
 )
 async def get_current_user_info(
-    current_user: UserContext = current_user_dependency,
+    current_user: AuthenticatedUser,
 ) -> UserSessionResponse:
     """Get current user information.
 

@@ -407,9 +407,9 @@ async def get_insight(
 )
 async def get_insight_history(
     user_id: str,
+    current_user: AuthenticatedUser,
     limit: int = 10,
     offset: int = 0,
-    current_user: AuthenticatedUser,
 ) -> InsightHistoryResponse:
     """🔥 FIXED: Get insight history for a user from Firestore.
 

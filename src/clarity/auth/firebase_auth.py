@@ -80,7 +80,7 @@ def get_current_user(
         # TEMPORARY DEBUG: Add detailed logging for token verification
         logger.info("🔍 DEBUGGING get_current_user: Attempting token verification (length: %d)", len(credentials.credentials))
         logger.debug("🔍 DEBUGGING get_current_user: Token preview: %s...%s", credentials.credentials[:20], credentials.credentials[-20:])
-        
+
         # Try without revocation check first
         logger.info("🧪 DEBUGGING get_current_user: Attempting WITHOUT revocation check...")
         try:
@@ -90,7 +90,7 @@ def get_current_user(
                 clock_skew_seconds=30,
             )
             logger.info("✅ DEBUGGING get_current_user: Token verified WITHOUT revocation check! UID: %s", decoded_token_no_revoke.get('uid'))
-            
+
             # Now try with revocation check
             logger.info("🧪 DEBUGGING get_current_user: Now attempting WITH revocation check...")
             decoded_token = auth.verify_id_token(
@@ -99,12 +99,12 @@ def get_current_user(
                 clock_skew_seconds=30,  # Allow for minor clock drift
             )
             logger.info("✅ DEBUGGING get_current_user: Token verified WITH revocation check! UID: %s", decoded_token.get('uid'))
-            
+
         except Exception as revoke_check_error:
             logger.error("❌ DEBUGGING get_current_user: Revocation check failed: %s", str(revoke_check_error))
             logger.error("❌ DEBUGGING get_current_user: Error type: %s", type(revoke_check_error).__name__)
             logger.exception("❌ DEBUGGING get_current_user: Full revocation check error:")
-            
+
             # Fall back to token without revocation check for now
             logger.warning("⚠️ DEBUGGING get_current_user: Using token WITHOUT revocation check as fallback")
             decoded_token = decoded_token_no_revoke
@@ -184,7 +184,7 @@ def get_current_user_context_required(
         logger.warning("🔍 Has request.state.user: %s", hasattr(request.state, "user"))
         if hasattr(request.state, "user"):
             logger.warning("🔍 request.state.user value: %s", request.state.user)
-    
+
     if not hasattr(request.state, "user") or request.state.user is None:
         logger.error("❌ No user context found in request.state for path: %s", request.url.path)
         raise HTTPException(
@@ -212,23 +212,23 @@ def get_current_user_websocket(token: str) -> User:
         # TEMPORARY DEBUG: Add detailed logging for WebSocket token verification
         logger.info("🔍 DEBUGGING get_current_user_websocket: Attempting token verification (length: %d)", len(token))
         logger.debug("🔍 DEBUGGING get_current_user_websocket: Token preview: %s...%s", token[:20], token[-20:])
-        
+
         # Try without revocation check first
         logger.info("🧪 DEBUGGING get_current_user_websocket: Attempting WITHOUT revocation check...")
         try:
             decoded_token_no_revoke = auth.verify_id_token(token, check_revoked=False)
             logger.info("✅ DEBUGGING get_current_user_websocket: Token verified WITHOUT revocation check! UID: %s", decoded_token_no_revoke.get('uid'))
-            
+
             # Now try with revocation check
             logger.info("🧪 DEBUGGING get_current_user_websocket: Now attempting WITH revocation check...")
             decoded_token = auth.verify_id_token(token, check_revoked=True)
             logger.info("✅ DEBUGGING get_current_user_websocket: Token verified WITH revocation check! UID: %s", decoded_token.get('uid'))
-            
+
         except Exception as revoke_check_error:
             logger.error("❌ DEBUGGING get_current_user_websocket: Revocation check failed: %s", str(revoke_check_error))
             logger.error("❌ DEBUGGING get_current_user_websocket: Error type: %s", type(revoke_check_error).__name__)
             logger.exception("❌ DEBUGGING get_current_user_websocket: Full revocation check error:")
-            
+
             # Fall back to token without revocation check for now
             logger.warning("⚠️ DEBUGGING get_current_user_websocket: Using token WITHOUT revocation check as fallback")
             decoded_token = decoded_token_no_revoke
@@ -283,23 +283,23 @@ def get_user_from_request(request: Request) -> User | None:
         # TEMPORARY DEBUG: Add detailed logging for request token verification
         logger.info("🔍 DEBUGGING get_user_from_request: Attempting token verification (length: %d)", len(token))
         logger.debug("🔍 DEBUGGING get_user_from_request: Token preview: %s...%s", token[:20], token[-20:])
-        
+
         # Try without revocation check first
         logger.info("🧪 DEBUGGING get_user_from_request: Attempting WITHOUT revocation check...")
         try:
             decoded_token_no_revoke = auth.verify_id_token(token, check_revoked=False)
             logger.info("✅ DEBUGGING get_user_from_request: Token verified WITHOUT revocation check! UID: %s", decoded_token_no_revoke.get('uid'))
-            
+
             # Now try with revocation check
             logger.info("🧪 DEBUGGING get_user_from_request: Now attempting WITH revocation check...")
             decoded_token = auth.verify_id_token(token, check_revoked=True)
             logger.info("✅ DEBUGGING get_user_from_request: Token verified WITH revocation check! UID: %s", decoded_token.get('uid'))
-            
+
         except Exception as revoke_check_error:
             logger.error("❌ DEBUGGING get_user_from_request: Revocation check failed: %s", str(revoke_check_error))
             logger.error("❌ DEBUGGING get_user_from_request: Error type: %s", type(revoke_check_error).__name__)
             logger.exception("❌ DEBUGGING get_user_from_request: Full revocation check error:")
-            
+
             # Fall back to token without revocation check for now
             logger.warning("⚠️ DEBUGGING get_user_from_request: Using token WITHOUT revocation check as fallback")
             decoded_token = decoded_token_no_revoke

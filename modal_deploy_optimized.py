@@ -16,15 +16,16 @@ REPO_ROOT = Path(__file__).parent
 
 google_secret = modal.Secret.from_name("googlecloud-secret")
 
+
 def setup_firebase_credentials():
     """Write Firebase credentials from environment to file during image build"""
-    import os
     import json
+    import os
     from pathlib import Path
-    
+
     creds_dir = Path("/workspace/creds")
     creds_dir.mkdir(parents=True, exist_ok=True)
-    
+
     creds_json = os.environ.get("GOOGLE_APPLICATION_CREDENTIALS_JSON")
     if creds_json:
         with open(creds_dir / "firebase.json", "w") as f:
@@ -34,6 +35,7 @@ def setup_firebase_credentials():
         print("✅ Firebase credentials written to /workspace/creds/firebase.json")
     else:
         print("⚠️ No GOOGLE_APPLICATION_CREDENTIALS_JSON found")
+
 
 # Layer 1: Base Python dependencies (fast install, cache-friendly)
 base_image = (

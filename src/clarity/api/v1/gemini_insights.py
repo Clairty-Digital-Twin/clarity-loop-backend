@@ -165,7 +165,7 @@ def _raise_account_disabled_error(request_id: str, user_id: str) -> None:
         message="User account is disabled",
         request_id=request_id,
         status_code=status.HTTP_403_FORBIDDEN,
-        details={"user_id": uid},
+        details={"user_id": user_id},
         suggested_action="contact_support",
     )
 

@@ -5,7 +5,7 @@ following Robert C. Martin's principles and security best practices.
 """
 
 import logging
-from typing import Annotated
+from typing import Annotated, cast
 
 from fastapi import Depends, HTTPException, Request, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
@@ -50,10 +50,21 @@ def get_authenticated_user(
     logger.info("🔍 get_authenticated_user called for path: %s", request.url.path)
     logger.info("🔍 Request headers: %s", dict(request.headers))
     logger.info("🔍 Request state attributes: %s", dir(request.state))
+    logger.info("🔍 Request scope keys: %s", list(request.scope.keys()))
     
-    # Check if middleware has set user context
-    if not hasattr(request.state, "user") or request.state.user is None:
-        logger.warning("No user context in request.state for path: %s", request.url.path)
+    # Check if middleware has set user context - try both locations due to BaseHTTPMiddleware issues
+    user_context = None
+    
+    # First try request.state (preferred)
+    if hasattr(request.state, "user") and request.state.user is not None:
+        user_context = request.state.user
+        logger.info("🔍 Found user in request.state")
+    # Then try request.scope (fallback for BaseHTTPMiddleware issues)
+    elif "user" in request.scope and request.scope["user"] is not None:
+        user_context = request.scope["user"]
+        logger.info("🔍 Found user in request.scope (BaseHTTPMiddleware workaround)")
+    else:
+        logger.warning("No user context in request.state or request.scope for path: %s", request.url.path)
         logger.warning("🔍 Auth header present: %s", "Authorization" in request.headers)
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -61,7 +72,6 @@ def get_authenticated_user(
             headers={"WWW-Authenticate": "Bearer"},
         )
 
-    user_context = request.state.user
     logger.info("🔍 User context found: %s (type: %s)", user_context, type(user_context))
     
     if not isinstance(user_context, UserContext):
@@ -89,14 +99,19 @@ def get_optional_user(
     Returns:
         UserContext if authenticated, None otherwise
     """
-    if not hasattr(request.state, "user") or request.state.user is None:
-        return None
-
-    user_context = request.state.user
-    if not isinstance(user_context, UserContext):
-        return None
-
-    return user_context
+    # Try request.state first
+    if hasattr(request.state, "user") and request.state.user is not None:
+        user_context = request.state.user
+        if isinstance(user_context, UserContext):
+            return user_context
+    
+    # Try request.scope as fallback
+    if "user" in request.scope and request.scope["user"] is not None:
+        user_context = request.scope["user"]
+        if isinstance(user_context, UserContext):
+            return user_context
+    
+    return None
 
 
 # Type aliases for cleaner function signatures

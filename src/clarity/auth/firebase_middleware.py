@@ -70,6 +70,7 @@ class FirebaseAuthMiddleware(BaseHTTPMiddleware):
         """
         # CRITICAL DEBUG: Log EVERY request that hits middleware
         logger.warning("🔥 MIDDLEWARE HIT: %s %s", request.method, request.url.path)
+        logger.warning("🔥 HEADERS: %s", dict(request.headers))
 
         # Check if path is exempt from authentication
         if self._is_exempt_path(request.url.path):

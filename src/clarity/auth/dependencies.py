@@ -46,9 +46,15 @@ def get_authenticated_user(
     Raises:
         HTTPException: 401 if not authenticated
     """
+    # Debug logging to understand the auth flow
+    logger.info("🔍 get_authenticated_user called for path: %s", request.url.path)
+    logger.info("🔍 Request headers: %s", dict(request.headers))
+    logger.info("🔍 Request state attributes: %s", dir(request.state))
+    
     # Check if middleware has set user context
     if not hasattr(request.state, "user") or request.state.user is None:
         logger.warning("No user context in request.state for path: %s", request.url.path)
+        logger.warning("🔍 Auth header present: %s", "Authorization" in request.headers)
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Authentication required",
@@ -56,6 +62,8 @@ def get_authenticated_user(
         )
 
     user_context = request.state.user
+    logger.info("🔍 User context found: %s (type: %s)", user_context, type(user_context))
+    
     if not isinstance(user_context, UserContext):
         logger.error("Invalid user context type: %s", type(user_context))
         raise HTTPException(
@@ -63,6 +71,7 @@ def get_authenticated_user(
             detail="Invalid authentication state",
         )
 
+    logger.info("✅ Returning user context for user: %s", user_context.user_id)
     return user_context
 
 

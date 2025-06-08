@@ -406,9 +406,9 @@ class DependencyContainer:
 
             auth_provider = self.get_auth_provider()
 
-            # Instantiate the middleware with the app - this is the correct pattern for BaseHTTPMiddleware
-            FirebaseAuthMiddleware(
-                app=app,
+            # Add the middleware to the app - this is required for BaseHTTPMiddleware
+            app.add_middleware(
+                FirebaseAuthMiddleware,
                 auth_provider=auth_provider,
                 exempt_paths=middleware_config.exempt_paths,
             )

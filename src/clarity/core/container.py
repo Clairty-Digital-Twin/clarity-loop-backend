@@ -392,6 +392,8 @@ class DependencyContainer:
         """Configure middleware with dependency injection."""
         config_provider = self.get_config_provider()
         middleware_config = config_provider.get_middleware_config()
+        
+        logger.warning("🔍 MIDDLEWARE CONFIG: enabled=%s", middleware_config.enabled)
 
         # Add authentication middleware if enabled
         if middleware_config.enabled:
@@ -418,6 +420,7 @@ class DependencyContainer:
                 from starlette.responses import JSONResponse  # noqa: PLC0415
                 
                 path = request.url.path
+                logger.warning("🔥🔥 MIDDLEWARE ACTUALLY RUNNING: %s %s", request.method, path)
                 
                 # Check if path is exempt
                 is_exempt = any(path.startswith(p) for p in exempt_paths)

@@ -171,12 +171,15 @@ def fastapi_app() -> Any:
     # Add source path
     sys.path.append("/app/src")
 
-    # Import and return the global app instance
-    # CRITICAL: Use the global app instance to ensure middleware is properly configured
-    from clarity.main import app
+    # Import and create the app using the factory method instead of global instance
+    # CRITICAL: Use the factory method to ensure middleware is properly configured
+    from clarity.core.container import create_application
+
+    # Create fresh app instance with proper middleware
+    app = create_application()
 
     # Log app info for debugging
-    print(f"🔥🔥 MODAL: Returning app with ID: {id(app)}")
+    print(f"🔥🔥 MODAL: Created app with ID: {id(app)}")
     print(f"🔥🔥 MODAL: App title: {app.title}")
     print(f"🔥🔥 MODAL: App middleware attributes: {[attr for attr in dir(app) if 'middleware' in attr.lower()]}")
 

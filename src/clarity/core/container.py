@@ -449,9 +449,23 @@ class DependencyContainer:
                 if is_exempt:
                     return await call_next(request)
 
+                # Debug: Log all headers
+                logger.warning("🔍 REQUEST HEADERS:")
+                for header_name, header_value in request.headers.items():
+                    if header_name.lower() == "authorization":
+                        logger.warning("   • %s: Bearer %s...%s", header_name, header_value[7:27] if len(header_value) > 27 else header_value[7:], header_value[-20:] if len(header_value) > 27 else "")
+                    else:
+                        logger.warning("   • %s: %s", header_name, header_value[:50])
+
                 # Extract token
                 auth_header = request.headers.get("authorization") or request.headers.get("Authorization")
+                logger.warning("🔍 AUTH HEADER EXTRACTED: %s", "Present" if auth_header else "None")
+                if auth_header:
+                    logger.warning("   • Starts with Bearer: %s", auth_header.startswith("Bearer "))
+                    logger.warning("   • Length: %d", len(auth_header))
+                
                 if not auth_header or not auth_header.startswith("Bearer "):
+                    logger.warning("❌ RETURNING 401 - Missing or invalid Authorization header")
                     return JSONResponse(
                         status_code=401,
                         content={
@@ -499,6 +513,11 @@ class DependencyContainer:
 
                     # Store user in request state
                     request.state.user = user_context
+                    
+                    # MODAL FIX: Also store user ID in headers for dependency access
+                    # Modal doesn't properly propagate request.state, so we use headers
+                    request.headers._list.append((b"x-authenticated-user-id", user_context.user_id.encode()))
+                    request.headers._list.append((b"x-authenticated-user-email", user_context.email.encode()))
 
                 except AuthError as e:
                     return JSONResponse(

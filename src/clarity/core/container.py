@@ -285,7 +285,7 @@ class DependencyContainer:
                 request: Request, call_next: Callable[[Request], Awaitable[Response]]
             ) -> Response:
                 is_public = False
-                for public_path in middleware_config.public_paths:
+                for public_path in middleware_config.exempt_paths or []:
                     if request.url.path == public_path or request.url.path.startswith(f"{public_path}/"):
                         is_public = True
                         break

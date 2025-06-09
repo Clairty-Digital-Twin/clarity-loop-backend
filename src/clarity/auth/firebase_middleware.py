@@ -321,80 +321,41 @@ class FirebaseAuthProvider(IAuthProvider):
         if self._initialized:
             return
 
-        logger.warning("🔐🔐 FIREBASE AUTH PROVIDER INITIALIZATION STARTING")
-        logger.warning("   • Project ID from init: %s", self.project_id)
-        logger.warning("   • Credentials path: %s", self.credentials_path)
-        cred_path = os.getenv("GOOGLE_APPLICATION_CREDENTIALS", "NOT SET")
-        logger.warning("🔍 init: loading Firebase creds from %s", cred_path)
-        logger.warning("   • GOOGLE_APPLICATION_CREDENTIALS env: %s", os.environ.get("GOOGLE_APPLICATION_CREDENTIALS", "NOT SET"))
-        logger.warning("   • FIREBASE_PROJECT_ID env: %s", os.environ.get("FIREBASE_PROJECT_ID", "NOT SET"))
+        logger.info("🔐 Initializing Firebase Authentication Provider...")
 
         try:
-            # Initialize Firebase Admin SDK if not already initialized
+            # Using a try/except block is the canonical way to check for an existing app
             import firebase_admin
             from firebase_admin import credentials
 
             try:
-                existing_app = firebase_admin.get_app()
-                logger.warning("🔐 Firebase Admin SDK already initialized")
-                logger.warning("   • App name: %s", existing_app.name)
-                project_id = getattr(existing_app, 'project_id', 'UNKNOWN')
-                logger.warning("🔍 Firebase app initialised, project_id=%s", project_id)
-                logger.warning("   • Project ID: %s", project_id)
+                firebase_admin.get_app()
+                logger.info("   -> Firebase Admin SDK already initialized.")
             except ValueError:
-                # No default app exists, initialize it
-                logger.info("Initializing Firebase Admin SDK...")
+                logger.info("   -> No default Firebase app found. Initializing...")
+                options = {"projectId": self.project_id} if self.project_id else {}
 
-                # Try to use credentials from environment first
-
-                if os.environ.get("GOOGLE_APPLICATION_CREDENTIALS"):
-                    # Use Application Default Credentials (file path set by main.py)
-                    cred = credentials.ApplicationDefault()
-
-                    # CRITICAL: Must specify project ID for token verification to work!
-                    project_id = os.environ.get("FIREBASE_PROJECT_ID", self.project_id)
-                    if not project_id:
-                        logger.error("❌ No Firebase project ID found! Token verification will fail!")
-                        project_id = "clarity-loop-backend"  # Fallback to known project
-
-                    logger.warning("🔐 Initializing Firebase Admin SDK with project: %s", project_id)
-                    app = firebase_admin.initialize_app(cred, {
-                        'projectId': project_id
-                    })
-                    logger.warning("🔍 Firebase app initialised, project_id=%s", app.project_id)
-                    logger.info(
-                        "Firebase Admin SDK initialized with Application Default Credentials for project: %s",
-                        project_id
-                    )
-                elif self.credentials_path:
-                    # Use provided credentials path
+                if self.credentials_path:
+                    # Explicit credentials file provided
+                    logger.info("   -> Using credentials from path: %s", self.credentials_path)
                     cred = credentials.Certificate(self.credentials_path)
-
-                    # Also need project ID here
-                    project_id = os.environ.get("FIREBASE_PROJECT_ID", self.project_id)
-                    if not project_id:
-                        project_id = "clarity-loop-backend"
-
-                    app = firebase_admin.initialize_app(cred, {
-                        'projectId': project_id
-                    })
-                    logger.warning("🔍 Firebase app initialised, project_id=%s", app.project_id)
-                    logger.info(
-                        "Firebase Admin SDK initialized with credentials from: %s for project: %s",
-                        self.credentials_path,
-                        project_id
-                    )
+                    firebase_admin.initialize_app(cred, options)
                 else:
-                    # Try to initialize with project ID only (for emulator/local dev)
-                    app = firebase_admin.initialize_app()
-                    logger.warning("🔍 Firebase app initialised, project_id=%s", app.project_id)
-                    logger.info("Firebase Admin SDK initialized with default settings")
+                    # No credentials path provided, rely on Application Default Credentials (ADC)
+                    # This is the standard for GCP environments like Cloud Run.
+                    logger.info("   -> Using Application Default Credentials (ADC).")
+                    cred = credentials.ApplicationDefault()
+                    firebase_admin.initialize_app(cred, options)
+
+                logger.info("   -> Firebase Admin SDK initialized successfully for project: %s", self.project_id)
 
             self._initialized = True
-            logger.info("Firebase Admin SDK ready for token verification")
-        except Exception:
-            logger.exception("Failed to initialize Firebase auth provider")
-            raise
+            logger.info("✅ Firebase Authentication Provider is ready.")
+
+        except Exception as e:
+            logger.exception("💥 Failed to initialize Firebase Authentication Provider")
+            # Re-raise to ensure startup fails if authentication is critical
+            raise RuntimeError("Could not initialize Firebase Auth Provider") from e
 
     def _remove_expired_tokens(self) -> None:
         """Remove expired tokens from the cache based on TTL."""

@@ -167,13 +167,6 @@ class Settings(BaseSettings):
             if self.enable_auth and not self.firebase_project_id:
                 required_for_production.append("FIREBASE_PROJECT_ID (auth enabled)")
 
-            if self.enable_auth and not (
-                self.firebase_credentials_path or self.google_application_credentials
-            ):
-                required_for_production.append(
-                    "FIREBASE_CREDENTIALS_PATH or GOOGLE_APPLICATION_CREDENTIALS (auth enabled)"
-                )
-
             # SECURITY: Prevent insecure credential paths in production
             if self.firebase_credentials_path and any(
                 insecure_path in self.firebase_credentials_path.lower()

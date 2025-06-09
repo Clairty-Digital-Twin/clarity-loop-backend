@@ -36,16 +36,17 @@ WORKDIR /app
 COPY --from=base /usr/local/bin /usr/local/bin
 COPY --from=base /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
 
-# Copy the entire src directory to maintain package structure
+# Copy application files
+COPY pyproject.toml LICENSE README.md /app/
 COPY src /app/src
 
-# Copy the pyproject.toml and LICENSE (required by pyproject.toml)
-COPY pyproject.toml LICENSE /app/
+# Install the package in non-editable mode to ensure proper package registration
+RUN pip install --no-cache-dir --no-deps .
 
 # Set environment variables
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
-ENV PYTHONPATH=/app/src:$PYTHONPATH
+ENV PYTHONPATH=/app:$PYTHONPATH
 
 # Expose the port the app runs on
 EXPOSE 8000

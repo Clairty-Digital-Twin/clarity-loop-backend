@@ -49,11 +49,11 @@ def get_authenticated_user(
     # MODAL FIX: Check contextvars first (Modal doesn't propagate request.state properly)
     from clarity.auth.modal_auth_fix import get_user_context
     user_context = get_user_context()
-    
+
     if user_context:
         logger.info("✅ User authenticated via contextvars: %s", user_context.user_id)
         return user_context
-    
+
     # Fallback to checking request.state (for local development)
     if not hasattr(request.state, "user") or request.state.user is None:
         logger.warning("No user context in contextvars or request.state for path: %s", request.url.path)

@@ -19,6 +19,7 @@ if not TYPE_CHECKING:
     from collections.abc import AsyncGenerator
 
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 from starlette.responses import JSONResponse, Response
@@ -182,7 +183,7 @@ class DependencyContainer:
                     )
                 )
         results = await asyncio.gather(*tasks, return_exceptions=True)
-        for result, (service_type, _) in zip(results, self._instances.items()):
+        for result, (service_type, _) in zip(results, self._instances.items(), strict=False):
             if isinstance(result, Exception):
                 logger.warning(
                     "⚠️ Cleanup error for %s: %s",
@@ -211,9 +212,9 @@ class DependencyContainer:
 
         app = FastAPI(
             lifespan=self.app_lifespan,
-            title=settings.project_name,
-            description=settings.description,
-            version=settings.version,
+            title=settings.app_name,
+            description="CLARITY Digital Twin Platform - Health AI Backend",
+            version=settings.app_version,
         )
 
         self._configure_request_limits(app)
@@ -232,7 +233,7 @@ class DependencyContainer:
     def _configure_request_limits(app: FastAPI) -> None:
         """Configure request limits, e.g., for upload sizes."""
         MAX_BODY_SIZE = 10 * 1024 * 1024  # 10 MB
-        
+
         class LimitUploadSizeMiddleware:
             def __init__(self, app: ASGIApp, max_size: int):
                 self.app = app
@@ -259,6 +260,23 @@ class DependencyContainer:
         """Configure all application middleware."""
         config_provider = self.get_config_provider()
         middleware_config = config_provider.get_middleware_config()
+
+        # Configure CORS - allow all origins in development, restrict in production
+        allowed_origins = ["*"] if config_provider.is_development() else [
+            "https://clarity-backend-282877548076.us-central1.run.app",
+            "https://your-frontend-domain.com",  # Replace with actual frontend domain
+            "http://localhost:3000",  # For local development
+            "http://localhost:5173",  # Vite default port
+        ]
+
+        app.add_middleware(
+            CORSMiddleware,
+            allow_origins=allowed_origins,
+            allow_credentials=True,
+            allow_methods=["*"],
+            allow_headers=["*"],
+        )
+        logger.info("CORS middleware configured for origins: %s", allowed_origins)
 
         if middleware_config.enabled and config_provider.is_auth_enabled():
             auth_provider = self.get_auth_provider()
@@ -299,9 +317,9 @@ class DependencyContainer:
                     user_info = await auth_provider.verify_token(token)
                     if user_info:
                         user_context = UserContext(**user_info)
-                        set_user_context(.user_context)
+                        set_user_context(user_context)
                         return await call_next(request)
-                    
+
                     return JSONResponse(
                         status_code=401,
                         content={"detail": "Token verification failed.", "error_code": "VERIFICATION_UNEXPECTED_NONE"},
@@ -328,15 +346,17 @@ class DependencyContainer:
         from clarity.api.v1.router import api_router as api_router_v1
 
         app.include_router(api_router_v1, prefix="/api/v1")
-        
+
         @app.get("/health")
         async def health_endpoint_handler() -> dict[str, Any]:
             return {"status": "ok", "timestamp": time.time()}
-        
+
         logger.info("API routes configured.")
+
 
 # --- Singleton Accessor ---
 _container_instance: DependencyContainer | None = None
+
 
 def get_container() -> DependencyContainer:
     """Get the singleton instance of the dependency container."""
@@ -345,7 +365,8 @@ def get_container() -> DependencyContainer:
         _container_instance = DependencyContainer()
     return _container_instance
 
+
 def create_application() -> FastAPI:
     """Create a FastAPI application using the dependency container."""
     container = get_container()
-    return container.create_fastapi_app() 
+    return container.create_fastapi_app()

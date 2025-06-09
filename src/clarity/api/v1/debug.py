@@ -3,8 +3,8 @@
 THIS SHOULD BE REMOVED OR DISABLED IN PRODUCTION!
 """
 
+from datetime import UTC, datetime
 import logging
-from datetime import datetime, UTC
 from typing import Any
 
 from fastapi import APIRouter, Depends, Header, HTTPException, Request, status

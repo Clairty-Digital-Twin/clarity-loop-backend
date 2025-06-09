@@ -125,6 +125,7 @@ ml_image = gcp_image.pip_install(
 # FORCE COPY to ensure latest code is in the image (fixes Modal caching issues)
 # REBUILD TIMESTAMP: 2025-01-09-14:20:00-contextvars-fix
 import time
+
 final_image = (
     ml_image.add_local_dir(REPO_ROOT, "/app", copy=True)
     .run_commands(

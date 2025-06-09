@@ -1,19 +1,18 @@
 #!/usr/bin/env python3
-"""
-DEFINITIVE Authentication Test Script
+"""DEFINITIVE Authentication Test Script
 =====================================
 
 This script definitively tests the authentication flow between iOS and backend.
 It will establish the source of truth about whether auth is working.
 """
 
-import json
-import requests
-import time
-from datetime import datetime, UTC
 import base64
-import jwt  # PyJWT
+from datetime import UTC, datetime
+import json
+import time
 
+import jwt  # PyJWT
+import requests
 
 # Modal production endpoint
 BASE_URL = "https://crave-trinity-prod--clarity-backend-fastapi-app.modal.run"
@@ -23,11 +22,11 @@ def test_health_endpoint():
     """Test 1: Basic health check - no auth required"""
     print("\n🧪 TEST 1: Health Endpoint")
     print("=" * 50)
-    
+
     response = requests.get(f"{BASE_URL}/health")
     print(f"Status: {response.status_code}")
     print(f"Response: {json.dumps(response.json(), indent=2)}")
-    
+
     assert response.status_code == 200, "Health endpoint should return 200"
     assert response.json()["status"] == "healthy", "Service should be healthy"
     print("✅ PASSED: Health endpoint is working")
@@ -38,11 +37,11 @@ def test_protected_endpoint_without_auth():
     """Test 2: Access protected endpoint without authentication"""
     print("\n🧪 TEST 2: Protected Endpoint Without Auth")
     print("=" * 50)
-    
+
     response = requests.get(f"{BASE_URL}/api/v1/health-data")
     print(f"Status: {response.status_code}")
     print(f"Response: {json.dumps(response.json(), indent=2)}")
-    
+
     assert response.status_code == 401, "Should return 401 without auth"
     json_response = response.json()
     assert "detail" in json_response or "error" in json_response, "Should return error details"
@@ -54,13 +53,13 @@ def test_debug_endpoint():
     """Test 3: Debug endpoint to check token verification"""
     print("\n🧪 TEST 3: Debug Token Verification Endpoint")
     print("=" * 50)
-    
+
     # Test with a dummy token
     headers = {
         "Authorization": "Bearer dummy-token-12345",
         "Content-Type": "application/json"
     }
-    
+
     try:
         response = requests.post(
             f"{BASE_URL}/api/v1/debug/verify-token-directly",
@@ -68,7 +67,7 @@ def test_debug_endpoint():
             timeout=30
         )
         print(f"Status: {response.status_code}")
-        
+
         if response.status_code == 200:
             data = response.json()
             print(f"Response: {json.dumps(data, indent=2)}")
@@ -77,11 +76,11 @@ def test_debug_endpoint():
             print(f"Environment: {data.get('environment', {})}")
         else:
             print(f"Error Response: {response.text}")
-            
+
     except Exception as e:
-        print(f"❌ ERROR: {str(e)}")
+        print(f"❌ ERROR: {e!s}")
         return False
-    
+
     return True
 
 
@@ -100,7 +99,7 @@ def test_with_real_token(token):
     """Test 4: Test with a real Firebase token"""
     print("\n🧪 TEST 4: Test With Real Firebase Token")
     print("=" * 50)
-    
+
     # First decode the token to inspect it
     decoded = decode_jwt_without_verification(token)
     if decoded:
@@ -111,24 +110,24 @@ def test_with_real_token(token):
         print(f"  - Expires: {datetime.fromtimestamp(decoded.get('exp', 0), UTC)}")
         print(f"  - Audience: {decoded.get('aud', 'N/A')}")
         print(f"  - Issuer: {decoded.get('iss', 'N/A')}")
-        
+
         # Check if token is expired
         if decoded.get('exp', 0) < time.time():
             print("⚠️  WARNING: Token is expired!")
-    
+
     # Test the debug endpoint with the real token
     headers = {
         "Authorization": f"Bearer {token}",
         "Content-Type": "application/json"
     }
-    
+
     print("\n🔍 Testing Debug Endpoint...")
     response = requests.post(
         f"{BASE_URL}/api/v1/debug/verify-token-directly",
         headers=headers,
         timeout=30
     )
-    
+
     print(f"Status: {response.status_code}")
     if response.status_code == 200:
         data = response.json()
@@ -141,7 +140,7 @@ def test_with_real_token(token):
             print(f"Note: {data.get('note', 'No additional info')}")
     else:
         print(f"Error: {response.text}")
-    
+
     # Now test a protected endpoint
     print("\n🔍 Testing Protected Endpoint...")
     response = requests.get(
@@ -149,16 +148,15 @@ def test_with_real_token(token):
         headers=headers,
         timeout=30
     )
-    
+
     print(f"Status: {response.status_code}")
     if response.status_code == 200:
         print("✅ AUTHENTICATION SUCCESSFUL! Protected endpoint accessed!")
         print(f"Response: {json.dumps(response.json(), indent=2)}")
         return True
-    else:
-        print("❌ AUTHENTICATION FAILED")
-        print(f"Error: {json.dumps(response.json(), indent=2)}")
-        return False
+    print("❌ AUTHENTICATION FAILED")
+    print(f"Error: {json.dumps(response.json(), indent=2)}")
+    return False
 
 
 def main():
@@ -168,25 +166,25 @@ def main():
     print(f"Target: {BASE_URL}")
     print(f"Time: {datetime.now(UTC).isoformat()}")
     print("=" * 70)
-    
+
     # Run basic tests
     test_health_endpoint()
     test_protected_endpoint_without_auth()
     test_debug_endpoint()
-    
+
     # Test with a real token if provided
     print("\n" + "=" * 70)
     print("📝 To test with a real Firebase token, run:")
     print("python test_auth_definitive.py YOUR_FIREBASE_TOKEN_HERE")
     print("=" * 70)
-    
+
     # Check if token was provided as argument
     import sys
     if len(sys.argv) > 1:
         token = sys.argv[1]
         print(f"\n🔐 Testing with provided token (length: {len(token)})")
         success = test_with_real_token(token)
-        
+
         print("\n" + "=" * 70)
         print("🏁 FINAL RESULT:")
         if success:

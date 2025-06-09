@@ -197,3 +197,11 @@ class ConfigProvider(IConfigProvider):  # noqa: PLR0904
         """
         middleware_config = self.get_middleware_config()
         return middleware_config.cache_ttl_seconds
+
+    def get_settings_model(self) -> "Settings":
+        """Get the settings model instance.
+
+        Returns:
+            Settings: The settings model instance
+        """
+        return self._settings

@@ -5,7 +5,7 @@ Business logic layer depends on this abstraction, not concrete implementations.
 """
 
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from clarity.core.config import MiddlewareConfig
@@ -86,4 +86,12 @@ class IConfigProvider(ABC):
 
         Returns:
             Middleware configuration object
+        """
+
+    @abstractmethod
+    def get_settings_model(self) -> Any:
+        """Get the settings model instance.
+
+        Returns:
+            Settings model instance
         """

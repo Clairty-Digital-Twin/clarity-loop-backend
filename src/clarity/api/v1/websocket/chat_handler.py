@@ -1,4 +1,4 @@
-# ruff: noqa: PLR0912, PLR0914, PLR0915, PLR1702, TRY300
+# ruff: noqa: PLR0912, PLR0914, PLR0915, PLR1702
 """WebSocket chat handler for real-time health insights and communication."""
 
 from datetime import UTC, datetime
@@ -16,7 +16,7 @@ from fastapi import (
 )
 from pydantic import ValidationError
 
-from clarity.auth.dependencies import get_current_user_from_context_required
+from clarity.auth.dependencies import get_authenticated_user
 from clarity.core.config import get_settings
 from clarity.core.container import get_container
 from clarity.ml.gemini_service import (
@@ -434,15 +434,14 @@ async def _authenticate_websocket_user(
         if hasattr(auth_provider, "get_or_create_user_context"):
             user_context = await auth_provider.get_or_create_user_context(user_info)
             return user_context
-        else:
-            # Fallback for providers without the enhanced method
-            # This part might need adjustment based on what verify_token returns
-            # For now, assuming it returns a dict that can be used to build a basic context
-            from clarity.auth.firebase_middleware import (
-                FirebaseAuthMiddleware,
-            )
+        # Fallback for providers without the enhanced method
+        # This part might need adjustment based on what verify_token returns
+        # For now, assuming it returns a dict that can be used to build a basic context
+        from clarity.auth.firebase_middleware import (
+            FirebaseAuthMiddleware,
+        )
 
-            return FirebaseAuthMiddleware._create_user_context(user_info)
+        return FirebaseAuthMiddleware._create_user_context(user_info)
 
     except Exception as e:
         logger.error(f"WebSocket authentication failed: {e}")

@@ -21,14 +21,14 @@ async def check_middleware(request: Request):
     """Check if middleware sets user"""
     has_user = hasattr(request.state, "user")
     user_info = None
-    
+
     if has_user and request.state.user:
         user_info = {
             "exists": True,
             "type": str(type(request.state.user)),
             "user_id": getattr(request.state.user, "user_id", "NO USER ID")
         }
-    
+
     return {
         "middleware_ran": has_user,
         "user_info": user_info,

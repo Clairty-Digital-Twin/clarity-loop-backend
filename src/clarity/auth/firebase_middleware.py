@@ -460,11 +460,11 @@ class FirebaseAuthProvider(IAuthProvider):
             # Verify token with Firebase
             logger.warning("🔐 Calling firebase_auth.verify_id_token()...")
             logger.warning("🔐 Current Firebase app project: %s", firebase_auth.get_app().project_id)
-            
+
             decoded_token = firebase_auth.verify_id_token(
                 token, check_revoked=self.check_revoked
             )
-            
+
             logger.warning("✅ FIREBASE TOKEN VERIFIED SUCCESSFULLY")
             if self.cache_enabled:
                 self._token_cache[token] = {
@@ -474,7 +474,7 @@ class FirebaseAuthProvider(IAuthProvider):
                 self._token_usage[token] = time.time()
                 logger.debug("   • Token cached successfully")
 
-            return cast(dict[str, Any], decoded_token)
+            return cast("dict[str, Any]", decoded_token)
 
         except firebase_auth.InvalidIdTokenError as e:
             logger.error("❌ FIREBASE ERROR: InvalidIdTokenError")

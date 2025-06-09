@@ -120,7 +120,11 @@ ml_image = gcp_image.pip_install(
 
 # Final layer: Mount the source code (this changes most frequently)
 # FORCE COPY to ensure latest code is in the image (fixes Modal caching issues)
-final_image = ml_image.add_local_dir(REPO_ROOT, "/app", copy=True)
+# REBUILD TIMESTAMP: 2025-01-09-14:15:00
+import time
+final_image = ml_image.add_local_dir(REPO_ROOT, "/app", copy=True).run_commands(
+    f"echo 'Build timestamp: {time.time()}' > /app/build_timestamp.txt"
+)
 
 # Detect Modal environment (dev/prod)
 modal_environment = os.getenv("MODAL_ENVIRONMENT", "main")

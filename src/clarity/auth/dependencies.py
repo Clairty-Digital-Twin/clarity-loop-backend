@@ -46,29 +46,17 @@ def get_authenticated_user(
     Raises:
         HTTPException: 401 if not authenticated
     """
-    # MODAL FIX: Check headers first (Modal doesn't propagate request.state properly)
-    user_id = request.headers.get("x-authenticated-user-id")
-    user_email = request.headers.get("x-authenticated-user-email")
+    # MODAL FIX: Check contextvars first (Modal doesn't propagate request.state properly)
+    from clarity.auth.modal_auth_fix import get_user_context
+    user_context = get_user_context()
     
-    if user_id and user_email:
-        # Reconstruct minimal user context from headers
-        from datetime import UTC, datetime
-        user_context = UserContext(
-            user_id=user_id,
-            email=user_email,
-            is_verified=True,  # Middleware only sets headers for verified users
-            is_active=True,
-            role="user",
-            permissions=[],
-            created_at=datetime.now(UTC),
-            last_login=datetime.now(UTC),
-        )
-        logger.info("✅ User authenticated via headers: %s", user_id)
+    if user_context:
+        logger.info("✅ User authenticated via contextvars: %s", user_context.user_id)
         return user_context
     
     # Fallback to checking request.state (for local development)
     if not hasattr(request.state, "user") or request.state.user is None:
-        logger.warning("No user context in request.state or headers for path: %s", request.url.path)
+        logger.warning("No user context in contextvars or request.state for path: %s", request.url.path)
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Authentication required",

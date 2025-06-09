@@ -511,13 +511,15 @@ class DependencyContainer:
                     else:
                         user_context = FirebaseAuthMiddleware._create_user_context(user_info)
 
-                    # Store user in request state
+                    # Store user in request state (for non-Modal environments)
                     request.state.user = user_context
                     
-                    # MODAL FIX: Also store user ID in headers for dependency access
-                    # Modal doesn't properly propagate request.state, so we use headers
-                    request.headers._list.append((b"x-authenticated-user-id", user_context.user_id.encode()))
-                    request.headers._list.append((b"x-authenticated-user-email", user_context.email.encode()))
+                    # MODAL FIX: Use contextvars for Modal deployment
+                    # Modal doesn't properly propagate request.state between middleware and handlers
+                    from clarity.auth.modal_auth_fix import set_user_context
+                    set_user_context(user_context)
+                    
+                    logger.warning("✅ USER AUTHENTICATED: %s", user_context.user_id)
 
                 except AuthError as e:
                     return JSONResponse(

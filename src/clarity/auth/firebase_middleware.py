@@ -324,6 +324,8 @@ class FirebaseAuthProvider(IAuthProvider):
         logger.warning("🔐🔐 FIREBASE AUTH PROVIDER INITIALIZATION STARTING")
         logger.warning("   • Project ID from init: %s", self.project_id)
         logger.warning("   • Credentials path: %s", self.credentials_path)
+        cred_path = os.getenv("GOOGLE_APPLICATION_CREDENTIALS", "NOT SET")
+        logger.warning("🔍 init: loading Firebase creds from %s", cred_path)
         logger.warning("   • GOOGLE_APPLICATION_CREDENTIALS env: %s", os.environ.get("GOOGLE_APPLICATION_CREDENTIALS", "NOT SET"))
         logger.warning("   • FIREBASE_PROJECT_ID env: %s", os.environ.get("FIREBASE_PROJECT_ID", "NOT SET"))
 
@@ -336,7 +338,9 @@ class FirebaseAuthProvider(IAuthProvider):
                 existing_app = firebase_admin.get_app()
                 logger.warning("🔐 Firebase Admin SDK already initialized")
                 logger.warning("   • App name: %s", existing_app.name)
-                logger.warning("   • Project ID: %s", getattr(existing_app, 'project_id', 'UNKNOWN'))
+                project_id = getattr(existing_app, 'project_id', 'UNKNOWN')
+                logger.warning("🔍 Firebase app initialised, project_id=%s", project_id)
+                logger.warning("   • Project ID: %s", project_id)
             except ValueError:
                 # No default app exists, initialize it
                 logger.info("Initializing Firebase Admin SDK...")
@@ -355,9 +359,10 @@ class FirebaseAuthProvider(IAuthProvider):
                         project_id = "clarity-loop-backend"  # Fallback to known project
 
                     logger.warning("🔐 Initializing Firebase Admin SDK with project: %s", project_id)
-                    firebase_admin.initialize_app(cred, {
+                    app = firebase_admin.initialize_app(cred, {
                         'projectId': project_id
                     })
+                    logger.warning("🔍 Firebase app initialised, project_id=%s", app.project_id)
                     logger.info(
                         "Firebase Admin SDK initialized with Application Default Credentials for project: %s",
                         project_id
@@ -371,9 +376,10 @@ class FirebaseAuthProvider(IAuthProvider):
                     if not project_id:
                         project_id = "clarity-loop-backend"
 
-                    firebase_admin.initialize_app(cred, {
+                    app = firebase_admin.initialize_app(cred, {
                         'projectId': project_id
                     })
+                    logger.warning("🔍 Firebase app initialised, project_id=%s", app.project_id)
                     logger.info(
                         "Firebase Admin SDK initialized with credentials from: %s for project: %s",
                         self.credentials_path,
@@ -381,7 +387,8 @@ class FirebaseAuthProvider(IAuthProvider):
                     )
                 else:
                     # Try to initialize with project ID only (for emulator/local dev)
-                    firebase_admin.initialize_app()
+                    app = firebase_admin.initialize_app()
+                    logger.warning("🔍 Firebase app initialised, project_id=%s", app.project_id)
                     logger.info("Firebase Admin SDK initialized with default settings")
 
             self._initialized = True

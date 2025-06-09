@@ -148,7 +148,14 @@ def _set_environment():
 
 @app.function(
     image=final_image,
-    secrets=[modal.Secret.from_name("googlecloud-secret")],
+    secrets=[
+        modal.Secret.from_name("googlecloud-secret"),
+        modal.Secret.from_dict({
+            "ENVIRONMENT": "production",
+            "FIREBASE_PROJECT_ID": "clarity-loop-backend",
+            "GCP_PROJECT_ID": "clarity-loop-backend"
+        }),
+    ],
     cpu=2,  # More CPU for faster cold starts
     memory=2048,  # More memory for ML models
     timeout=300,  # 5 min timeout for ML operations

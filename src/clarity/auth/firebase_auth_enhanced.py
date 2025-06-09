@@ -10,7 +10,13 @@ from typing import Any
 
 from firebase_admin import auth
 
-from clarity.models.auth import AuthProvider, Permission, UserContext, UserRole, UserStatus
+from clarity.models.auth import (
+    AuthProvider,
+    Permission,
+    UserContext,
+    UserRole,
+    UserStatus,
+)
 from clarity.storage.firestore_client import FirestoreClient
 
 logger = logging.getLogger(__name__)
@@ -174,7 +180,7 @@ class EnhancedFirebaseAuthProvider:
             "last_name": user_data.get("last_name"),
             "display_name": user_data.get("display_name"),
         })
-        
+
         return UserContext(
             user_id=user_data["user_id"],
             email=user_data["email"],

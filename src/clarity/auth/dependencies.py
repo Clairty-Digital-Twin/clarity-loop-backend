@@ -56,7 +56,7 @@ def get_authenticated_user(
         )
 
     user_context = request.state.user
-    
+
     if not isinstance(user_context, UserContext):
         logger.error("Invalid user context type: %s", type(user_context))
         raise HTTPException(
@@ -194,4 +194,4 @@ def get_websocket_user(token: str, request: Request) -> UserContext:
             detail="Invalid authentication token",
         )
 
-    return cast(UserContext, request.state.user)
+    return cast("UserContext", request.state.user)

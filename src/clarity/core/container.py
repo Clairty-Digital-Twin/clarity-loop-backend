@@ -74,7 +74,7 @@ class DependencyContainer:
         logger.warning("🔥🔥 AUTH PROVIDER CONFIG CHECK:")
         logger.warning("   • middleware_config_obj.enabled: %s", middleware_config_obj.enabled)
         logger.warning("   • enable_auth setting: %s", config_provider.get_setting("enable_auth", default=False))
-        
+
         if middleware_config_obj.enabled and config_provider.get_setting(
             "enable_auth", default=False
         ):
@@ -343,7 +343,7 @@ class DependencyContainer:
         # Build the app to ensure middleware is properly registered
         # This is critical for Modal deployment
         app.build_middleware_stack()
-        
+
         logger.warning("🔥🔥 FASTAPI APP CONFIGURED, RETURNING APP: %s", id(app))
         logger.warning("🔥🔥 APP MIDDLEWARE STACK BUILT")
         return app
@@ -373,6 +373,7 @@ class DependencyContainer:
         from typing import TYPE_CHECKING  # noqa: PLC0415
 
         from fastapi import Request, Response  # noqa: PLC0415
+
         from clarity.core.exceptions import ClarityAPIException  # noqa: PLC0415
 
         # Maximum request size: 10MB for health data uploads
@@ -403,10 +404,10 @@ class DependencyContainer:
     def _configure_middleware(self, app: FastAPI) -> None:
         """Configure middleware with dependency injection."""
         logger.warning("🔥🔥 _configure_middleware CALLED with app ID: %s", id(app))
-        
+
         config_provider = self.get_config_provider()
         middleware_config = config_provider.get_middleware_config()
-        
+
         logger.warning("🔍 MIDDLEWARE CONFIG: enabled=%s", middleware_config.enabled)
         logger.warning("🔍 AUTH ENABLED: %s", config_provider.is_auth_enabled())
         logger.warning("🔍 ENVIRONMENT: %s", config_provider.get_setting("environment", default="unknown"))
@@ -431,19 +432,23 @@ class DependencyContainer:
             ) -> Response:
                 """Firebase authentication middleware using function-based approach."""
                 from datetime import UTC, datetime  # noqa: PLC0415
-                from clarity.models.auth import AuthError  # noqa: PLC0415
-                from clarity.auth.firebase_middleware import FirebaseAuthMiddleware  # noqa: PLC0415
+
                 from starlette.responses import JSONResponse  # noqa: PLC0415
-                
+
+                from clarity.auth.firebase_middleware import (
+                    FirebaseAuthMiddleware,
+                )
+                from clarity.models.auth import AuthError  # noqa: PLC0415
+
                 path = request.url.path
                 logger.warning("🔥🔥 MIDDLEWARE ACTUALLY RUNNING: %s %s", request.method, path)
                 logger.warning("🔥🔥 APP INSTANCE IN MIDDLEWARE: %s", id(app))
-                
+
                 # Check if path is exempt
                 is_exempt = any(path.startswith(p) for p in exempt_paths)
                 if is_exempt:
                     return await call_next(request)
-                
+
                 # Extract token
                 auth_header = request.headers.get("authorization")
                 if not auth_header or not auth_header.startswith("Bearer "):
@@ -455,24 +460,24 @@ class DependencyContainer:
                             "timestamp": datetime.now(UTC).isoformat(),
                         },
                     )
-                
+
                 token = auth_header[7:]  # Remove "Bearer " prefix
-                
+
                 try:
                     # Verify token
                     logger.warning("🔍 ATTEMPTING TOKEN VERIFICATION")
                     logger.warning("   • Token length: %d", len(token))
                     logger.warning("   • Token preview: %s...%s", token[:20], token[-20:])
                     logger.warning("   • Auth provider type: %s", type(auth_provider).__name__)
-                    
+
                     user_info = await auth_provider.verify_token(token)
-                    
+
                     logger.warning("🔍 TOKEN VERIFICATION RESULT:")
                     logger.warning("   • user_info is None: %s", user_info is None)
                     if user_info:
                         logger.warning("   • user_id: %s", user_info.get("user_id", "MISSING"))
                         logger.warning("   • email: %s", user_info.get("email", "MISSING"))
-                    
+
                     if not user_info:
                         logger.error("❌ TOKEN VERIFICATION FAILED - user_info is None")
                         logger.error("   • This means Firebase Admin SDK rejected the token")
@@ -485,16 +490,16 @@ class DependencyContainer:
                                 "timestamp": datetime.now(UTC).isoformat(),
                             },
                         )
-                    
+
                     # Create user context
                     if hasattr(auth_provider, 'get_or_create_user_context'):
                         user_context = await auth_provider.get_or_create_user_context(user_info)
                     else:
                         user_context = FirebaseAuthMiddleware._create_user_context(user_info)
-                    
+
                     # Store user in request state
                     request.state.user = user_context
-                    
+
                 except AuthError as e:
                     return JSONResponse(
                         status_code=e.status_code,
@@ -517,9 +522,9 @@ class DependencyContainer:
                         )
                     # For graceful degradation, set user as None
                     request.state.user = None
-                
+
                 return await call_next(request)
-            
+
             # Register the middleware with the app
             app.middleware("http")(firebase_auth_middleware)
 

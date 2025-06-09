@@ -88,7 +88,7 @@ async def debug_echo_headers(request: Request) -> dict[str, Any]:
 async def debug_test_middleware(request: Request) -> dict[str, Any]:
     """Test endpoint that should trigger middleware (not in exempt paths)."""
     logger.warning("🔥🔥 TEST-MIDDLEWARE ENDPOINT HIT")
-    
+
     # This endpoint is NOT in the exempt paths, so middleware should run
     return {
         "message": "If you see this without auth, middleware is not running",
@@ -107,37 +107,37 @@ async def debug_test_middleware(request: Request) -> dict[str, Any]:
 async def debug_middleware_stack(request: Request) -> dict[str, Any]:
     """Debug endpoint to check middleware stack."""
     from starlette.middleware import Middleware
-    
+
     # Try to access the app instance
     app = request.app
-    
+
     # Get middleware information
     middleware_info = []
-    
+
     # Check if middleware stack is accessible
     if hasattr(app, "middleware_stack"):
         middleware_info.append({
             "middleware_stack": str(app.middleware_stack)
         })
-    
+
     # Check if user_middleware is accessible
     if hasattr(app, "user_middleware"):
         for idx, mw in enumerate(app.user_middleware):
             middleware_info.append({
                 f"user_middleware_{idx}": str(mw)
             })
-    
+
     # Check built middleware
     if hasattr(app, "middleware") and hasattr(app.middleware, "cls"):
         middleware_info.append({
             "built_middleware_class": str(app.middleware.cls)
         })
-    
+
     # Check if middleware stack was built
     middleware_info.append({
         "middleware_stack_built": hasattr(app, "middleware_stack")
     })
-    
+
     # Check request state
     state_info = {}
     if hasattr(request, "state"):
@@ -145,10 +145,10 @@ async def debug_middleware_stack(request: Request) -> dict[str, Any]:
             "has_user": hasattr(request.state, "user"),
             "user": str(request.state.user) if hasattr(request.state, "user") else None,
         }
-    
+
     # Check app instance ID
     app_id = id(app)
-    
+
     return {
         "app_instance_id": app_id,
         "app_title": getattr(app, "title", "Unknown"),
@@ -165,38 +165,38 @@ async def debug_verify_token_directly(
 ) -> dict[str, Any]:
     """Debug endpoint to test Firebase token verification directly."""
     logger.warning("🔍🔍 DEBUG VERIFY TOKEN DIRECTLY CALLED")
-    
+
     # Get the container to access auth provider
     from clarity.core.container import get_container
-    
+
     container = get_container()
     auth_provider = container.get_auth_provider()
-    
+
     result = {
         "timestamp": datetime.now(UTC).isoformat(),
         "auth_provider_type": type(auth_provider).__name__,
         "auth_provider_initialized": getattr(auth_provider, '_initialized', False),
     }
-    
+
     # Check authorization header
     if not authorization:
         result["error"] = "No Authorization header provided"
         return result
-    
+
     # Parse token
     if not authorization.startswith("Bearer "):
         result["error"] = "Invalid Authorization format (expected 'Bearer <token>')"
         return result
-    
+
     token = authorization[7:]
     result["token_length"] = len(token)
     result["token_preview"] = f"{token[:20]}...{token[-20:]}"
-    
+
     # Try to verify token directly
     try:
         logger.warning("🔍🔍 Calling auth_provider.verify_token() directly")
         user_info = await auth_provider.verify_token(token)
-        
+
         if user_info:
             result["verification_success"] = True
             result["user_info"] = {
@@ -211,17 +211,17 @@ async def debug_verify_token_directly(
             result["user_info"] = None
             result["note"] = "verify_token returned None - check logs for Firebase error"
             logger.warning("❌❌ Direct token verification FAILED - returned None")
-            
+
     except Exception as e:
         result["verification_success"] = False
         result["exception_type"] = type(e).__name__
         result["exception_message"] = str(e)
         logger.exception("❌❌ Direct token verification threw exception")
-    
+
     # Check Firebase Admin SDK status
     try:
         import firebase_admin
-        
+
         try:
             firebase_app = firebase_admin.get_app()
             result["firebase_admin_initialized"] = True
@@ -229,11 +229,11 @@ async def debug_verify_token_directly(
         except ValueError:
             result["firebase_admin_initialized"] = False
             result["firebase_note"] = "Firebase Admin SDK not initialized"
-            
+
     except ImportError:
         result["firebase_admin_initialized"] = False
         result["firebase_note"] = "firebase_admin module not imported"
-    
+
     # Check environment
     import os
     result["environment"] = {
@@ -241,5 +241,5 @@ async def debug_verify_token_directly(
         "FIREBASE_PROJECT_ID": os.environ.get("FIREBASE_PROJECT_ID", "NOT_SET"),
         "ENVIRONMENT": os.environ.get("ENVIRONMENT", "NOT_SET"),
     }
-    
+
     return result

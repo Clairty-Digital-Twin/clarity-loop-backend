@@ -11,7 +11,14 @@ from firebase_admin import auth as firebase_auth
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.responses import JSONResponse
 
-from clarity.models.auth import AuthError, AuthProvider, Permission, UserContext, UserRole, UserStatus
+from clarity.models.auth import (
+    AuthError,
+    AuthProvider,
+    Permission,
+    UserContext,
+    UserRole,
+    UserStatus,
+)
 from clarity.ports.auth_ports import IAuthProvider
 
 logger = logging.getLogger(__name__)
@@ -67,7 +74,6 @@ class FirebaseAuthMiddleware(BaseHTTPMiddleware):
         Returns:
             HTTP response
         """
-
         # Check if path is exempt from authentication
         if self._is_exempt_path(request.url.path):
             return await call_next(request)
@@ -241,7 +247,7 @@ class FirebaseAuthMiddleware(BaseHTTPMiddleware):
             try:
                 logger.info("Using enhanced auth provider for user context creation")
                 user_context = await self.auth_provider.get_or_create_user_context(user_info)
-                return cast(UserContext, user_context)
+                return cast("UserContext", user_context)
             except Exception as e:
                 logger.error("Enhanced user context creation failed: %s", e)
                 # Fall back to basic user context creation
@@ -340,13 +346,13 @@ class FirebaseAuthProvider(IAuthProvider):
                 if os.environ.get("GOOGLE_APPLICATION_CREDENTIALS"):
                     # Use Application Default Credentials (file path set by main.py)
                     cred = credentials.ApplicationDefault()
-                    
+
                     # CRITICAL: Must specify project ID for token verification to work!
                     project_id = os.environ.get("FIREBASE_PROJECT_ID", self.project_id)
                     if not project_id:
                         logger.error("❌ No Firebase project ID found! Token verification will fail!")
                         project_id = "clarity-loop-backend"  # Fallback to known project
-                    
+
                     logger.warning("🔐 Initializing Firebase Admin SDK with project: %s", project_id)
                     firebase_admin.initialize_app(cred, {
                         'projectId': project_id
@@ -358,12 +364,12 @@ class FirebaseAuthProvider(IAuthProvider):
                 elif self.credentials_path:
                     # Use provided credentials path
                     cred = credentials.Certificate(self.credentials_path)
-                    
+
                     # Also need project ID here
                     project_id = os.environ.get("FIREBASE_PROJECT_ID", self.project_id)
                     if not project_id:
                         project_id = "clarity-loop-backend"
-                    
+
                     firebase_admin.initialize_app(cred, {
                         'projectId': project_id
                     })
@@ -446,12 +452,12 @@ class FirebaseAuthProvider(IAuthProvider):
         try:
             # Verify token with Firebase
             logger.warning("🔐 Calling firebase_auth.verify_id_token()...")
-            
+
             # Get current Firebase app to check project
             import firebase_admin
             current_app = firebase_admin.get_app()
             logger.warning("🔐 Current Firebase app project: %s", getattr(current_app, 'project_id', 'UNKNOWN'))
-            
+
             decoded_token = firebase_auth.verify_id_token(token, check_revoked=True)
             logger.warning("✅ TOKEN VERIFIED SUCCESSFULLY")
             logger.warning("   • UID: %s", decoded_token.get("uid", "MISSING"))
@@ -687,7 +693,7 @@ class FirebaseAuthProvider(IAuthProvider):
     def _create_user_context_from_db(
         self,
         user_data: dict[str, Any],
-        _firebase_info: dict[str, Any]  # noqa: ARG002
+        _firebase_info: dict[str, Any]
     ) -> UserContext:
         """Create UserContext from database record.
         
@@ -734,7 +740,7 @@ class FirebaseAuthProvider(IAuthProvider):
             "last_name": user_data.get("last_name"),
             "display_name": user_data.get("display_name"),
         })
-        
+
         return UserContext(
             user_id=user_data["user_id"],
             email=user_data["email"],

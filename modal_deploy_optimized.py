@@ -167,7 +167,7 @@ def fastapi_app() -> Any:
     # Import and return the global app instance
     # CRITICAL: Use the global app instance to ensure middleware is properly configured
     from clarity.main import app
-    
+
     # Log app info for debugging
     print(f"🔥🔥 MODAL: Returning app with ID: {id(app)}")
     print(f"🔥🔥 MODAL: App title: {app.title}")

@@ -450,7 +450,7 @@ class DependencyContainer:
                     return await call_next(request)
 
                 # Extract token
-                auth_header = request.headers.get("authorization")
+                auth_header = request.headers.get("authorization") or request.headers.get("Authorization")
                 if not auth_header or not auth_header.startswith("Bearer "):
                     return JSONResponse(
                         status_code=401,

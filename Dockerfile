@@ -17,7 +17,10 @@ WORKDIR /app
 RUN pip install poetry
 
 # Copy only the dependency definitions to leverage Docker cache
-COPY poetry.lock pyproject.toml /app/
+COPY pyproject.toml /app/
+
+# Generate the lock file
+RUN poetry lock
 
 # Install dependencies
 RUN poetry config virtualenvs.create false && poetry install --no-dev --no-interaction --no-ansi

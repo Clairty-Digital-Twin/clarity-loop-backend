@@ -1,5 +1,7 @@
 steps:
 - name: 'gcr.io/cloud-builders/docker'
   args: ['build', '-t', 'us-central1-docker.pkg.dev/$PROJECT_ID/clarity-loop-backend/clarity-backend:latest', '.']
+- name: 'gcr.io/cloud-builders/docker'
+  args: ['push', 'us-central1-docker.pkg.dev/$PROJECT_ID/clarity-loop-backend/clarity-backend:latest']
 images:
 - 'us-central1-docker.pkg.dev/$PROJECT_ID/clarity-loop-backend/clarity-backend:latest' 

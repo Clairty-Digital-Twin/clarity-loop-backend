@@ -107,5 +107,5 @@ if __name__ == "__main__":
         log_level=settings.log_level.lower(),
     )
 else:
-    # Module import - lazy creation for better testability
-    app = get_app()
+    # Module import - app is already created above at line 80
+    pass  # app already exists from line 80

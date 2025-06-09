@@ -394,6 +394,7 @@ class DependencyContainer:
         middleware_config = config_provider.get_middleware_config()
         
         logger.warning("🔍 MIDDLEWARE CONFIG: enabled=%s", middleware_config.enabled)
+        logger.warning("🔍 APP ID: %s", id(app))  # Track app instance
 
         # Add authentication middleware if enabled
         if middleware_config.enabled:

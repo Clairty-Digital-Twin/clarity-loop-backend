@@ -164,10 +164,11 @@ def fastapi_app() -> Any:
     # Add source path
     sys.path.append("/app/src")
 
-    # Import and return the app
-    from clarity.main import get_app
+    # Import and return the global app instance
+    # CRITICAL: Use the global app instance to ensure middleware is properly configured
+    from clarity.main import app
 
-    return get_app()
+    return app
 
 
 @app.function(image=final_image, secrets=[modal.Secret.from_name("googlecloud-secret")])
@@ -178,14 +179,13 @@ def health_check() -> dict[str, Any]:
 
     try:
         from clarity.core.config import get_settings
-        from clarity.main import get_app
+        from clarity.main import app as fastapi_app
 
-        app = get_app()
         settings = get_settings()
 
         result = {
             "status": "healthy",
-            "app_title": getattr(app, "title", "CLARITY Backend"),
+            "app_title": getattr(fastapi_app, "title", "CLARITY Backend"),
             "application_environment": settings.environment,
             "modal_environment": os.getenv("MODAL_ENVIRONMENT", "main"),
         }

@@ -460,8 +460,23 @@ class DependencyContainer:
                 
                 try:
                     # Verify token
+                    logger.warning("🔍 ATTEMPTING TOKEN VERIFICATION")
+                    logger.warning("   • Token length: %d", len(token))
+                    logger.warning("   • Token preview: %s...%s", token[:20], token[-20:])
+                    logger.warning("   • Auth provider type: %s", type(auth_provider).__name__)
+                    
                     user_info = await auth_provider.verify_token(token)
+                    
+                    logger.warning("🔍 TOKEN VERIFICATION RESULT:")
+                    logger.warning("   • user_info is None: %s", user_info is None)
+                    if user_info:
+                        logger.warning("   • user_id: %s", user_info.get("user_id", "MISSING"))
+                        logger.warning("   • email: %s", user_info.get("email", "MISSING"))
+                    
                     if not user_info:
+                        logger.error("❌ TOKEN VERIFICATION FAILED - user_info is None")
+                        logger.error("   • This means Firebase Admin SDK rejected the token")
+                        logger.error("   • Check logs above for specific Firebase errors")
                         return JSONResponse(
                             status_code=401,
                             content={

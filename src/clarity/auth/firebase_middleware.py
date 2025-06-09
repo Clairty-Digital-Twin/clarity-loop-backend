@@ -410,11 +410,18 @@ class FirebaseAuthProvider(IAuthProvider):
             logger.debug("Token found in cache")
             return cast("dict[str, Any]", self._token_cache[token]["user_data"])
 
-        logger.debug("Attempting to verify Firebase token (length: %d)", len(token))
+        logger.warning("🔐 FIREBASE VERIFY_TOKEN CALLED")
+        logger.warning("   • Token length: %d", len(token))
+        logger.warning("   • Token preview: %s...%s", token[:20], token[-20:])
+        logger.warning("   • Initialized: %s", self._initialized)
 
         try:
             # Verify token with Firebase
+            logger.warning("🔐 Calling firebase_auth.verify_id_token()...")
             decoded_token = firebase_auth.verify_id_token(token, check_revoked=True)
+            logger.warning("✅ TOKEN VERIFIED SUCCESSFULLY")
+            logger.warning("   • UID: %s", decoded_token.get("uid", "MISSING"))
+            logger.warning("   • Email: %s", decoded_token.get("email", "MISSING"))
 
             # Extract custom claims to determine roles
             custom_claims = decoded_token.get("custom_claims", {})
@@ -450,23 +457,36 @@ class FirebaseAuthProvider(IAuthProvider):
                 }
             return user_data_dict  # noqa: TRY300 - Return happens regardless of caching, if block is for side-effect
         except firebase_auth.RevokedIdTokenError as e:
-            logger.error("Revoked Firebase ID token: %s", str(e))
+            logger.error("❌ FIREBASE ERROR: RevokedIdTokenError")
+            logger.error("   • Token has been revoked")
+            logger.error("   • Details: %s", str(e))
             return None
         except firebase_auth.UserDisabledError as e:
-            logger.error("Disabled user tried to authenticate: %s", str(e))
+            logger.error("❌ FIREBASE ERROR: UserDisabledError")
+            logger.error("   • User account is disabled")
+            logger.error("   • Details: %s", str(e))
             return None
         except firebase_auth.InvalidIdTokenError as e:
-            logger.error("Invalid Firebase ID token: %s", str(e))
+            logger.error("❌ FIREBASE ERROR: InvalidIdTokenError")
+            logger.error("   • Token format or signature is invalid")
+            logger.error("   • Details: %s", str(e))
             return None
         except firebase_auth.ExpiredIdTokenError as e:
-            logger.error("Expired Firebase ID token: %s", str(e))
+            logger.error("❌ FIREBASE ERROR: ExpiredIdTokenError")
+            logger.error("   • Token has expired")
+            logger.error("   • Details: %s", str(e))
             return None
         except firebase_auth.CertificateFetchError as e:
-            logger.error("Certificate fetch error: %s", str(e))
+            logger.error("❌ FIREBASE ERROR: CertificateFetchError")
+            logger.error("   • Cannot fetch Google's public certificates")
+            logger.error("   • This usually means network issues or wrong project ID")
+            logger.error("   • Details: %s", str(e))
             return None
         except Exception as e:
-            logger.error("Unexpected error verifying Firebase token: %s", type(e).__name__)
-            logger.error("Error details: %s", str(e))
+            logger.error("❌ FIREBASE ERROR: %s", type(e).__name__)
+            logger.error("   • Unexpected error type")
+            logger.error("   • Details: %s", str(e))
+            logger.error("   • Full exception:", exc_info=True)
             return None
 
     async def get_user_info(self, user_id: str) -> dict[str, Any] | None:

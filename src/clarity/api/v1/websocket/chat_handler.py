@@ -16,7 +16,7 @@ from fastapi import (
 )
 from pydantic import ValidationError
 
-from clarity.auth.firebase_auth import get_current_user_websocket
+from clarity.auth.dependencies import get_current_user_from_context_required
 from clarity.core.config import get_settings
 from clarity.core.container import get_container
 from clarity.ml.gemini_service import (
@@ -40,7 +40,9 @@ from clarity.api.v1.websocket.models import (
 )
 from clarity.ml.pat_service import ActigraphyInput, PATModelService
 from clarity.ml.preprocessing import ActigraphyDataPoint
+from clarity.models.auth import UserContext
 from clarity.models.user import User
+from clarity.ports.auth_ports import IAuthProvider
 
 logger = logging.getLogger(__name__)
 settings = get_settings()
@@ -228,7 +230,6 @@ async def websocket_chat_endpoint(
     connection_manager: ConnectionManager = Depends(get_connection_manager),
     gemini_service: GeminiService = Depends(get_gemini_service),
     pat_service: PATModelService = Depends(get_pat_model_service),
-    current_user: User = Depends(get_current_user_websocket),
 ) -> None:
     """WebSocket endpoint for real-time chat with health insights.
 
@@ -240,28 +241,22 @@ async def websocket_chat_endpoint(
     - Rate limiting
     - Heartbeat monitoring
     """
+    # Authenticate the user first
+    current_user = await _authenticate_websocket_user(token, websocket)
+    if not current_user:
+        # _authenticate_websocket_user already closed the connection
+        return
+
     handler = WebSocketChatHandler(
         gemini_service=gemini_service, pat_service=pat_service
     )
-    user_id = current_user.uid
-    username = str(
-        current_user.display_name or current_user.email
-    )  # Ensure username is string
+    user_id = current_user.user_id
+    username = str(current_user.email)  # Ensure username is string
 
-    logger.info("WebSocket connection attempt: token=%s", token)
+    await connection_manager.connect(user_id, room_id, websocket)
+    logger.info("User %s (%s) connected to room %s", user_id, username, room_id)
 
     try:
-        await websocket.accept()
-        await connection_manager.connect(
-            websocket=websocket, user_id=user_id, username=username, room_id=room_id
-        )
-
-        logger.info(
-            "WebSocket chat connection established for %s in room %s",
-            username,
-            room_id,
-        )
-
         while True:
             try:
                 raw_message = await websocket.receive_text()
@@ -419,31 +414,40 @@ def _extract_username(user: User | None, user_id: str) -> str:
 
 
 async def _authenticate_websocket_user(
-    token: str | None, user_id: str, websocket: WebSocket
-) -> User | None:
-    if token:
-        try:
-            # get_current_user_websocket is synchronous and returns User or raises HTTPException
-            user: User = get_current_user_websocket(token)
+    token: str | None, websocket: WebSocket
+) -> UserContext | None:
+    """Authenticate WebSocket user and handle connection closing."""
+    if not token:
+        await websocket.close(code=4001, reason="Authentication token is required")
+        return None
 
-            # Original check for coroutine was not necessary as get_current_user_websocket is sync.
-            if user.uid != user_id:
-                await websocket.close(code=1008, reason="User ID mismatch")
-                return None
-            return user
-        except HTTPException:
-            # This exception is raised by get_current_user_websocket for invalid tokens
-            await websocket.close(code=1008, reason="Invalid authentication token")
+    try:
+        # Get auth provider from container
+        auth_provider = get_container().get_auth_provider()
+        user_info = await auth_provider.verify_token(token)
+
+        if not user_info:
+            await websocket.close(code=4003, reason="Invalid or expired token")
             return None
-        except Exception:
-            # For TRY401, the best is just the message, as stack trace is auto-added.
-            logger.exception("Unexpected error during WebSocket user authentication")
-            await websocket.close(
-                code=1011, reason="Internal server error during authentication"
+
+        # Use the provider to create the full user context
+        if hasattr(auth_provider, "get_or_create_user_context"):
+            user_context = await auth_provider.get_or_create_user_context(user_info)
+            return user_context
+        else:
+            # Fallback for providers without the enhanced method
+            # This part might need adjustment based on what verify_token returns
+            # For now, assuming it returns a dict that can be used to build a basic context
+            from clarity.auth.firebase_middleware import (
+                FirebaseAuthMiddleware,
             )
-            return None
-    # If no token is provided, authentication is not attempted, return None
-    return None
+
+            return FirebaseAuthMiddleware._create_user_context(user_info)
+
+    except Exception as e:
+        logger.error(f"WebSocket authentication failed: {e}")
+        await websocket.close(code=4003, reason="Authentication failed")
+        return None
 
 
 async def _handle_health_analysis_message(
@@ -524,16 +528,25 @@ async def websocket_health_analysis_endpoint(
     This endpoint provides real-time updates during health data processing,
     including PAT analysis and AI insight generation.
     """
+    # Authenticate the user first
+    current_user = await _authenticate_websocket_user(token, websocket)
+    if not current_user or current_user.user_id != user_id:
+        if current_user:
+            logger.warning(
+                "Authenticated user %s does not match path user %s",
+                current_user.user_id,
+                user_id,
+            )
+        await websocket.close(code=4003, reason="Unauthorized")
+        return
+
     handler = WebSocketChatHandler(
         gemini_service=gemini_service, pat_service=pat_service
     )
     logger.info("WebSocket connection attempt: %s", token)
     try:
         await websocket.accept()
-        user = await _authenticate_websocket_user(token, user_id, websocket)
-        if token and user is None:
-            return
-        username = _extract_username(user, user_id)
+        username = _extract_username(current_user, user_id)
         await connection_manager.connect(
             websocket=websocket,
             user_id=user_id,

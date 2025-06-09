@@ -3,62 +3,22 @@
 Firebase-based authentication and authorization for enterprise healthcare applications.
 """
 
-from clarity.auth.decorators import (
-    require_auth,
-    require_permission,
-    require_role,
-)
+from clarity.auth.decorators import require_auth
 from clarity.auth.dependencies import (
-    AuthenticatedUser,
-    OptionalUser,
-    get_authenticated_user,
-    get_optional_user,
-    require_active_account,
-    require_verified_email,
+    get_current_user_from_context,
+    get_current_user_from_context_required,
 )
-from clarity.auth.firebase_auth import (
-    get_current_user,
-    get_current_user_context,
-    get_current_user_context_required,
-    get_current_user_required,
-    get_current_user_websocket,
-)
-from clarity.auth.firebase_middleware import (
-    FirebaseAuthMiddleware,
-    FirebaseAuthProvider,
-)
-from clarity.models.auth import (
-    AuthError,
-    Permission,
-    TokenInfo,
-    UserContext,
-    UserRole,
-)
+from clarity.auth.firebase_middleware import FirebaseAuthMiddleware, FirebaseAuthProvider
+from clarity.auth.mock_auth import MockAuthProvider
+from clarity.auth.modal_auth_fix import get_user_context, set_user_context
 
 __all__ = [
-    # New clean dependencies
-    "AuthenticatedUser",
-    "OptionalUser",
-    "get_authenticated_user",
-    "get_optional_user",
-    "require_active_account",
-    "require_verified_email",
-    # Legacy dependencies (for backward compatibility)
-    "get_current_user",
-    "get_current_user_context",
-    "get_current_user_context_required",
-    "get_current_user_required",
-    "get_current_user_websocket",
-    # Decorators
     "require_auth",
-    "require_permission",
-    "require_role",
-    # Core classes
-    "AuthError",
+    "get_current_user_from_context",
+    "get_current_user_from_context_required",
     "FirebaseAuthMiddleware",
     "FirebaseAuthProvider",
-    "Permission",
-    "TokenInfo",
-    "UserContext",
-    "UserRole",
+    "MockAuthProvider",
+    "get_user_context",
+    "set_user_context",
 ]

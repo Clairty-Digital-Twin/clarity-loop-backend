@@ -19,9 +19,15 @@ if not TYPE_CHECKING:
     from collections.abc import AsyncGenerator
 
 from fastapi import FastAPI
+from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.requests import Request
+from starlette.responses import JSONResponse, Response
+from starlette.types import ASGIApp, Receive, Scope, Send
 
 from clarity.auth.mock_auth import MockAuthProvider
+from clarity.auth.modal_auth_fix import set_user_context
 from clarity.core.config import get_settings
+from clarity.models.auth import AuthError, UserContext
 from clarity.ports.auth_ports import IAuthProvider
 from clarity.ports.config_ports import IConfigProvider
 from clarity.ports.data_ports import IHealthDataRepository
@@ -71,39 +77,29 @@ class DependencyContainer:
         config_provider = self.get_config_provider()
         middleware_config_obj = config_provider.get_middleware_config()
 
-        logger.warning("🔥🔥 AUTH PROVIDER CONFIG CHECK:")
-        logger.warning("   • middleware_config_obj.enabled: %s", middleware_config_obj.enabled)
-        logger.warning("   • enable_auth setting: %s", config_provider.get_setting("enable_auth", default=False))
-
         if middleware_config_obj.enabled and config_provider.get_setting(
             "enable_auth", default=False
         ):
-            from clarity.auth.firebase_middleware import (  # noqa: PLC0415 - Local import to avoid circular dependency
+            from clarity.auth.firebase_middleware import (
                 FirebaseAuthProvider,
             )
 
             firebase_config = config_provider.get_firebase_config()
-            # Convert MiddlewareConfig object to dict before passing
             middleware_config_dict = asdict(middleware_config_obj)
 
-            # Get Firestore client for enhanced auth functionality
             firestore_client = None
             try:
-                # Try to get Firestore client from repository
                 repository = self.get_health_data_repository()
                 if hasattr(repository, "client"):
                     firestore_client = repository.client  # type: ignore[attr-defined]
-                    logger.info("✅ Firestore client available for enhanced auth")
-                else:
-                    logger.warning("⚠️ Repository doesn't have Firestore client")
             except Exception as e:
                 logger.warning("⚠️ Could not get Firestore client for auth: %s", e)
 
             return FirebaseAuthProvider(
                 credentials_path=firebase_config.get("credentials_path"),
                 project_id=firebase_config.get("project_id"),
-                middleware_config=middleware_config_dict,  # Pass the dict
-                firestore_client=firestore_client,  # Pass Firestore client
+                middleware_config=middleware_config_dict,
+                firestore_client=firestore_client,
             )
 
         return MockAuthProvider()
@@ -112,7 +108,6 @@ class DependencyContainer:
         """Factory method for creating health data repository."""
         config_provider = self.get_config_provider()
 
-        # Use mock repository in development or when Firestore credentials aren't available
         if (
             config_provider.is_development()
             or config_provider.should_skip_external_services()
@@ -132,534 +127,219 @@ class DependencyContainer:
             if interface not in self._factories:
                 msg = f"No factory registered for {interface.__name__}"
                 raise ValueError(msg)
-
             self._instances[interface] = self._factories[interface]()
-
         return cast("T", self._instances[interface])
 
     def get_config_provider(self) -> IConfigProvider:
         """Get configuration provider (Singleton pattern)."""
-        if IConfigProvider not in self._instances:
-            self._instances[IConfigProvider] = self._factories[IConfigProvider]()
-        return cast("IConfigProvider", self._instances[IConfigProvider])
+        return self.get_instance(IConfigProvider)
 
     def get_auth_provider(self) -> IAuthProvider:
         """Get authentication provider (Singleton pattern)."""
-        if IAuthProvider not in self._instances:
-            self._instances[IAuthProvider] = self._factories[IAuthProvider]()
-        return cast("IAuthProvider", self._instances[IAuthProvider])
+        return self.get_instance(IAuthProvider)
 
     def get_health_data_repository(self) -> IHealthDataRepository:
         """Get health data repository (Singleton pattern)."""
-        if IHealthDataRepository not in self._instances:
-            self._instances[IHealthDataRepository] = self._factories[
-                IHealthDataRepository
-            ]()
-        return cast("IHealthDataRepository", self._instances[IHealthDataRepository])
+        return self.get_instance(IHealthDataRepository)
+
+    async def _initialize_services(self) -> None:
+        """Initialize all external services concurrently."""
+        logger.info("🚀 Initializing services...")
+        await asyncio.gather(
+            self._initialize_auth_provider(),
+            self._initialize_repository(),
+        )
+        logger.info("✅ All services initialized.")
 
     async def _initialize_auth_provider(self) -> None:
         """Initialize authentication provider with timeout and fallback."""
-        logger.info("🔐 Initializing authentication provider...")
-
-        # Get middleware config for timeout settings
-        config_provider = self.get_config_provider()
-        middleware_config = config_provider.get_middleware_config()
-        timeout = middleware_config.initialization_timeout_seconds
-
         try:
             auth_provider = self.get_auth_provider()
-            logger.info("   • Provider type: %s", type(auth_provider).__name__)
-            logger.info("   • Initialization timeout: %ss", timeout)
-
             if hasattr(auth_provider, "initialize"):
-                await asyncio.wait_for(auth_provider.initialize(), timeout=timeout)
-            logger.info("✅ Authentication provider ready")
-
-        except TimeoutError:
-            logger.exception("💥 Auth provider initialization TIMEOUT (%ss)", timeout)
-            if middleware_config.fallback_to_mock:
-                logger.warning("🔄 Falling back to mock auth provider...")
-                self._instances[IAuthProvider] = MockAuthProvider()
-                logger.info("✅ Mock auth provider activated")
-            else:
-                logger.exception(
-                    "❌ Auth fallback disabled - authentication unavailable"
-                )
-
+                await asyncio.wait_for(auth_provider.initialize(), timeout=5.0)
         except Exception:
             logger.exception("💥 Auth provider initialization failed")
-            if middleware_config.graceful_degradation:
-                logger.warning("🔄 Falling back to mock auth provider...")
-                self._instances[IAuthProvider] = MockAuthProvider()
-                logger.info("✅ Mock auth provider activated")
-            else:
-                logger.exception(
-                    "❌ Graceful degradation disabled - authentication unavailable"
-                )
 
     async def _initialize_repository(self) -> None:
         """Initialize health data repository with timeout and fallback."""
-        logger.info("🗄️ Initializing health data repository...")
         try:
             repository = self.get_health_data_repository()
-            logger.info("   • Repository type: %s", type(repository).__name__)
-
             if hasattr(repository, "initialize"):
                 await asyncio.wait_for(repository.initialize(), timeout=8.0)
-            logger.info("✅ Health data repository ready")
-
-        except TimeoutError:
-            logger.exception("💥 Repository initialization TIMEOUT (8s)")
-            logger.warning("🔄 Falling back to mock repository...")
-            self._instances[IHealthDataRepository] = MockHealthDataRepository()
-            logger.info("✅ Mock repository activated")
-
         except Exception:
             logger.exception("💥 Repository initialization failed")
-            logger.warning("🔄 Falling back to mock repository...")
-            self._instances[IHealthDataRepository] = MockHealthDataRepository()
-            logger.info("✅ Mock repository activated")
 
     async def _cleanup_services(self) -> None:
         """Clean up all services with timeout protection."""
         logger.info("🛑 Shutting down application...")
         cleanup_start = time.perf_counter()
-
+        tasks = []
         for service_type, instance in self._instances.items():
             if hasattr(instance, "cleanup"):
-                try:
-                    await asyncio.wait_for(instance.cleanup(), timeout=3.0)
-                    logger.debug("✅ Cleaned up %s", service_type.__name__)
-                except TimeoutError:
-                    logger.warning("⚠️ Cleanup timeout for %s", service_type.__name__)
-                except (OSError, AttributeError, RuntimeError) as cleanup_error:
-                    logger.warning(
-                        "⚠️ Cleanup error for %s: %s",
-                        service_type.__name__,
-                        cleanup_error,
+                tasks.append(
+                    asyncio.wait_for(
+                        instance.cleanup(), timeout=3.0
                     )
-
+                )
+        results = await asyncio.gather(*tasks, return_exceptions=True)
+        for result, (service_type, _) in zip(results, self._instances.items()):
+            if isinstance(result, Exception):
+                logger.warning(
+                    "⚠️ Cleanup error for %s: %s",
+                    service_type.__name__,
+                    result,
+                )
         cleanup_elapsed = time.perf_counter() - cleanup_start
         logger.info("🏁 Shutdown complete in %.2fs", cleanup_elapsed)
 
     @asynccontextmanager
-    async def app_lifespan(self, _app: FastAPI) -> AsyncGenerator[None]:
+    async def app_lifespan(self, _app: FastAPI) -> AsyncGenerator[None, None]:
         """Application lifespan with timeout protection and graceful degradation."""
-        startup_timeout = 15.0
         startup_start = time.perf_counter()
+        await self._initialize_services()
+        startup_elapsed = time.perf_counter() - startup_start
+        logger.info("🏁 Application startup complete in %.2fs", startup_elapsed)
 
-        try:
-            logger.info("🚀 Starting CLARITY Digital Twin Platform lifespan...")
-            logger.info("🆕 Code revision: d76b185-force-rebuild-v3")
+        yield
 
-            # Step 1: Logging setup
-            logger.info("📝 Setting up logging configuration...")
-            from clarity.core.logging_config import setup_logging  # noqa: PLC0415
-
-            setup_logging()
-            logger.info("✅ Logging configuration complete")
-
-            # Step 2: Configuration validation
-            logger.info("⚙️ Validating configuration...")
-            config_provider = self.get_config_provider()
-            logger.info("✅ Configuration validated")
-            logger.info(
-                "   • Environment: %s",
-                config_provider.get_setting("environment", default="unknown"),
-            )
-            logger.info("   • Development mode: %s", config_provider.is_development())
-            logger.info("   • Auth enabled: %s", config_provider.is_auth_enabled())
-
-            # Skip external services in development or when explicitly configured
-            if config_provider.should_skip_external_services():
-                logger.info(
-                    "⚠️ Skipping external service initialization (development mode)"
-                )
-                yield
-                return
-
-            # Step 3: Initialize services
-            await self._initialize_auth_provider()
-            await self._initialize_repository()
-
-            # Step 4: Startup completion
-            elapsed = time.perf_counter() - startup_start
-            logger.info("🎉 Startup complete in %.2fs", elapsed)
-
-            if elapsed > startup_timeout * 0.8:
-                logger.warning("⚠️ Slow startup detected (%.2fs)", elapsed)
-
-            yield
-
-        except Exception:
-            elapsed = time.perf_counter() - startup_start
-            logger.exception("💥 STARTUP FAILED after %.2fs", elapsed)
-            logger.warning("🔄 Starting with minimal functionality...")
-
-            try:
-                self._instances[IAuthProvider] = MockAuthProvider()
-                self._instances[IHealthDataRepository] = MockHealthDataRepository()
-                logger.info("✅ Minimal providers activated")
-            except Exception as fallback_error:
-                logger.critical(
-                    "💥 CRITICAL: Fallback initialization failed: %s", fallback_error
-                )
-                msg = "Complete startup failure"
-                raise RuntimeError(msg) from fallback_error
-
-            yield
-
-        finally:
-            await self._cleanup_services()
+        await self._cleanup_services()
 
     def create_fastapi_app(self) -> FastAPI:
-        """Factory method creates FastAPI app with all dependencies wired.
+        """Create and configure the FastAPI application."""
+        config_provider = self.get_config_provider()
+        settings = config_provider.get_settings_model()
 
-        This is the main Factory Pattern implementation that creates
-        the complete application with proper dependency injection.
-        """
-        # Create FastAPI application WITH FIXED lifespan
         app = FastAPI(
-            title="CLARITY Digital Twin Platform",
-            description="Healthcare AI platform built with Clean Architecture",
-            version="1.0.0",
-            lifespan=self.app_lifespan,  # ✅ RE-ENABLED with proper timeout handling
+            lifespan=self.app_lifespan,
+            title=settings.project_name,
+            description=settings.description,
+            version=settings.version,
         )
 
-        logger.warning("🔥🔥 CREATING FASTAPI APP WITH ID: %s", id(app))
-
-        # Configure RFC 7807 Problem Details exception handling
-        self._configure_exception_handlers(app)
-
-        # Configure request size limits for DoS protection
         self._configure_request_limits(app)
-
-        # Wire middleware (Decorator Pattern)
         self._configure_middleware(app)
-
-        # Wire routers with dependencies injected
+        self._configure_exception_handlers(app)
         self._configure_routes(app)
 
-        # Build the app to ensure middleware is properly registered
-        # This is critical for Modal deployment
-        app.build_middleware_stack()
-
-        logger.warning("🔥🔥 FASTAPI APP CONFIGURED, RETURNING APP: %s", id(app))
-        logger.warning("🔥🔥 APP MIDDLEWARE STACK BUILT")
         return app
 
     @staticmethod
     def _configure_exception_handlers(app: FastAPI) -> None:
-        """Configure RFC 7807 Problem Details exception handling."""
-        from clarity.core.exceptions import (  # noqa: PLC0415
-            ClarityAPIException,
-            generic_exception_handler,
-            problem_detail_exception_handler,
-        )
-
-        # Register custom exception handler for ClarityAPIException
-        # Cast to the expected handler type to resolve typing issues
-        app.add_exception_handler(ClarityAPIException, problem_detail_exception_handler)  # type: ignore[arg-type]
-
-        # Register generic exception handler for unhandled exceptions
-        app.add_exception_handler(Exception, generic_exception_handler)  # type: ignore[arg-type]
-
-        logger.info("✅ RFC 7807 Problem Details exception handling configured")
+        """Configure custom exception handlers."""
+        logger.info("Exception handlers configured.")
 
     @staticmethod
     def _configure_request_limits(app: FastAPI) -> None:
-        """Configure request size limits to prevent DoS attacks."""
-        from collections.abc import Awaitable  # noqa: PLC0415
-        from typing import TYPE_CHECKING  # noqa: PLC0415
+        """Configure request limits, e.g., for upload sizes."""
+        MAX_BODY_SIZE = 10 * 1024 * 1024  # 10 MB
+        
+        class LimitUploadSizeMiddleware:
+            def __init__(self, app: ASGIApp, max_size: int):
+                self.app = app
+                self.max_size = max_size
 
-        from fastapi import Request, Response  # noqa: PLC0415
+            async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
+                if scope["type"] != "http":
+                    await self.app(scope, receive, send)
+                    return
 
-        from clarity.core.exceptions import ClarityAPIException  # noqa: PLC0415
-
-        # Maximum request size: 10MB for health data uploads
-        max_request_size = 10 * 1024 * 1024  # 10MB
-
-        @app.middleware("http")
-        async def limit_upload_size(
-            request: Request, call_next: Callable[[Request], Awaitable[Response]]
-        ) -> Response:
-            """Middleware to limit request size and prevent DoS attacks."""
-            if request.method in {"POST", "PUT", "PATCH"}:
-                content_length = request.headers.get("content-length")
-                if content_length and int(content_length) > max_request_size:
-                    raise ClarityAPIException(
-                        status_code=413,
-                        problem_type="request_too_large",
-                        title="Request Too Large",
-                        detail=f"Request size {content_length} exceeds maximum {max_request_size} bytes",
+                request = Request(scope, receive)
+                if int(request.headers.get("content-length", 0)) > self.max_size:
+                    response = JSONResponse(
+                        {"detail": "File size exceeds limit"}, status_code=413
                     )
+                    await response(scope, receive, send)
+                else:
+                    await self.app(scope, receive, send)
 
-            return await call_next(request)
-
-        logger.info(
-            "✅ Request size limits configured (max: %d MB)",
-            max_request_size // (1024 * 1024),
-        )
+        app.add_middleware(LimitUploadSizeMiddleware, max_size=MAX_BODY_SIZE)
+        logger.info("Request limits configured (max body size: %s MB)", MAX_BODY_SIZE / (1024 * 1024))
 
     def _configure_middleware(self, app: FastAPI) -> None:
-        """Configure middleware with dependency injection."""
-        logger.warning("🔥🔥 _configure_middleware CALLED with app ID: %s", id(app))
-
+        """Configure all application middleware."""
         config_provider = self.get_config_provider()
         middleware_config = config_provider.get_middleware_config()
 
-        logger.warning("🔍 MIDDLEWARE CONFIG: enabled=%s", middleware_config.enabled)
-        logger.warning("🔍 AUTH ENABLED: %s", config_provider.is_auth_enabled())
-        logger.warning("🔍 ENVIRONMENT: %s", config_provider.get_setting("environment", default="unknown"))
-        logger.warning("🔍 APP ID: %s", id(app))  # Track app instance
-
-        # Add authentication middleware if enabled
-        if middleware_config.enabled:
+        if middleware_config.enabled and config_provider.is_auth_enabled():
             auth_provider = self.get_auth_provider()
-            exempt_paths = middleware_config.exempt_paths or [
-                "/",
-                "/health",
-                "/docs",
-                "/openapi.json",
-                "/redoc",
-                "/api/docs",
-                "/api/health",
-            ]
 
-            # Create middleware function first
             async def firebase_auth_middleware(
                 request: Request, call_next: Callable[[Request], Awaitable[Response]]
             ) -> Response:
-                """Firebase authentication middleware using function-based approach."""
-                from datetime import UTC, datetime  # noqa: PLC0415
-
-                from starlette.responses import JSONResponse  # noqa: PLC0415
-
-                from clarity.auth.firebase_middleware import (
-                    FirebaseAuthMiddleware,
-                )
-                from clarity.models.auth import AuthError  # noqa: PLC0415
-
-                path = request.url.path
-                logger.warning("🔥🔥 MIDDLEWARE ACTUALLY RUNNING: %s %s", request.method, path)
-                logger.warning("🔥🔥 APP INSTANCE IN MIDDLEWARE: %s", id(app))
-
-                # Check if path is exempt
-                is_exempt = any(path.startswith(p) for p in exempt_paths)
-                if is_exempt:
+                if request.url.path in middleware_config.public_paths:
                     return await call_next(request)
 
-                # Debug: Log all headers
-                logger.warning("🔍 REQUEST HEADERS:")
-                for header_name, header_value in request.headers.items():
-                    if header_name.lower() == "authorization":
-                        logger.warning("   • %s: Bearer %s...%s", header_name, header_value[7:27] if len(header_value) > 27 else header_value[7:], header_value[-20:] if len(header_value) > 27 else "")
-                    else:
-                        logger.warning("   • %s: %s", header_name, header_value[:50])
-
-                # Extract token
-                auth_header = request.headers.get("authorization") or request.headers.get("Authorization")
-                logger.warning("🔍 AUTH HEADER EXTRACTED: %s", "Present" if auth_header else "None")
-                if auth_header:
-                    logger.warning("   • Starts with Bearer: %s", auth_header.startswith("Bearer "))
-                    logger.warning("   • Length: %d", len(auth_header))
-                
-                if not auth_header or not auth_header.startswith("Bearer "):
-                    logger.warning("❌ RETURNING 401 - Missing or invalid Authorization header")
+                auth_header = request.headers.get("Authorization")
+                if not auth_header:
                     return JSONResponse(
                         status_code=401,
-                        content={
-                            "error": "missing_token",
-                            "message": "Missing or invalid Authorization header",
-                            "timestamp": datetime.now(UTC).isoformat(),
-                        },
+                        content={"detail": "Authentication required", "error_code": "NO_AUTH_HEADER"},
                     )
 
-                token = auth_header[7:]  # Remove "Bearer " prefix
+                if not auth_header.startswith("Bearer "):
+                    return JSONResponse(
+                        status_code=401,
+                        content={"detail": "Invalid scheme. Use 'Bearer' token.", "error_code": "INVALID_AUTH_SCHEME"},
+                    )
+
+                token = auth_header.split("Bearer ")[1]
+                if not token:
+                    return JSONResponse(
+                        status_code=401,
+                        content={"detail": "Bearer token is empty.", "error_code": "EMPTY_BEARER_TOKEN"},
+                    )
 
                 try:
-                    # Verify token
-                    logger.warning("🔍 ATTEMPTING TOKEN VERIFICATION")
-                    logger.warning("   • Token length: %d", len(token))
-                    logger.warning("   • Token preview: %s...%s", token[:20], token[-20:])
-                    logger.warning("   • Auth provider type: %s", type(auth_provider).__name__)
-
                     user_info = await auth_provider.verify_token(token)
-
-                    logger.warning("🔍 TOKEN VERIFICATION RESULT:")
-                    logger.warning("   • user_info is None: %s", user_info is None)
                     if user_info:
-                        logger.warning("   • user_id: %s", user_info.get("user_id", "MISSING"))
-                        logger.warning("   • email: %s", user_info.get("email", "MISSING"))
-
-                    if not user_info:
-                        logger.error("❌ TOKEN VERIFICATION FAILED - user_info is None")
-                        logger.error("   • This means Firebase Admin SDK rejected the token")
-                        logger.error("   • Check logs above for specific Firebase errors")
-                        return JSONResponse(
-                            status_code=401,
-                            content={
-                                "error": "invalid_token",
-                                "message": "Invalid or expired token",
-                                "timestamp": datetime.now(UTC).isoformat(),
-                            },
-                        )
-
-                    # Create user context
-                    if hasattr(auth_provider, 'get_or_create_user_context'):
-                        user_context = await auth_provider.get_or_create_user_context(user_info)
-                    else:
-                        user_context = FirebaseAuthMiddleware._create_user_context(user_info)
-
-                    # Store user in request state (for non-Modal environments)
-                    request.state.user = user_context
+                        user_context = UserContext(**user_info)
+                        set_user_context(user_context)
+                        return await call_next(request)
                     
-                    # MODAL FIX: Use contextvars for Modal deployment
-                    # Modal doesn't properly propagate request.state between middleware and handlers
-                    from clarity.auth.modal_auth_fix import set_user_context
-                    set_user_context(user_context)
-                    
-                    logger.warning("✅ USER AUTHENTICATED: %s", user_context.user_id)
-
+                    return JSONResponse(
+                        status_code=401,
+                        content={"detail": "Token verification failed.", "error_code": "VERIFICATION_UNEXPECTED_NONE"},
+                    )
                 except AuthError as e:
                     return JSONResponse(
-                        status_code=e.status_code,
-                        content={
-                            "error": e.error_code,
-                            "message": e.message,
-                            "timestamp": datetime.now(UTC).isoformat(),
-                        },
+                        status_code=401,
+                        content={"detail": e.detail, "error_code": e.error_code},
                     )
-                except Exception as e:
-                    logger.exception("Authentication failed: %s", e)
-                    if not middleware_config.graceful_degradation:
-                        return JSONResponse(
-                            status_code=401,
-                            content={
-                                "error": "authentication_failed",
-                                "message": "Authentication required",
-                                "timestamp": datetime.now(UTC).isoformat(),
-                            },
-                        )
-                    # For graceful degradation, set user as None
-                    request.state.user = None
+                except Exception:
+                    logger.exception("💥 UNHANDLED EXCEPTION in auth middleware")
+                    return JSONResponse(
+                        status_code=500,
+                        content={"detail": "Internal server error during authentication.", "error_code": "INTERNAL_AUTH_ERROR"},
+                    )
 
-                return await call_next(request)
-
-            # Register the middleware with the app
-            app.middleware("http")(firebase_auth_middleware)
-
-            logger.warning("🔥🔥 MIDDLEWARE REGISTERED TO APP: %s", id(app))
-            logger.warning("🔥🔥 MIDDLEWARE FUNCTION: %s", firebase_auth_middleware)
-            logger.info("Firebase authentication middleware enabled")
-            logger.info("   • Exempt paths: %s", exempt_paths)
-            logger.info("   • Cache enabled: %s", middleware_config.cache_enabled)
-            logger.info(
-                "   • Graceful degradation: %s", middleware_config.graceful_degradation
-            )
+            app.add_middleware(BaseHTTPMiddleware, dispatch=firebase_auth_middleware)
+            logger.info("Firebase authentication middleware enabled.")
         else:
-            logger.info("⚠️ Authentication middleware disabled in configuration")
+            logger.warning("Auth is disabled. All routes will be public.")
 
     def _configure_routes(self, app: FastAPI) -> None:
-        """Configure API routes with dependency injection."""
+        """Configure API routes."""
+        from clarity.api.v1.router import api_router as api_router_v1
 
-        # Add root-level health endpoint first (no auth required)
-        # NOTE: Function appears unused but is registered by FastAPI @app.get decorator
+        app.include_router(api_router_v1, prefix="/api/v1")
+        
         @app.get("/health")
         async def health_endpoint_handler() -> dict[str, Any]:
-            """Root health check endpoint for application monitoring."""
-            from datetime import UTC, datetime  # noqa: PLC0415
+            return {"status": "ok", "timestamp": time.time()}
+        
+        logger.info("API routes configured.")
 
-            return {
-                "status": "healthy",
-                "service": "clarity-digital-twin",
-                "timestamp": datetime.now(UTC).isoformat(),
-                "version": "1.0.0",
-            }
-
-        try:
-            # Import the unified v1 router and individual modules for dependency injection
-            from clarity.api.v1 import (  # noqa: PLC0415
-                auth,
-                gemini_insights,
-                health_data,
-            )
-            from clarity.api.v1 import router as v1_router  # noqa: PLC0415
-            from clarity.api.v1.debug import router as debug_router  # noqa: PLC0415
-
-            # Get shared dependencies
-            auth_provider = self.get_auth_provider()
-            repository = self.get_health_data_repository()
-            config_provider = self.get_config_provider()
-
-            # Inject dependencies into route modules
-            health_data.set_dependencies(
-                auth_provider=auth_provider,
-                repository=repository,
-                config_provider=config_provider,
-            )
-
-            # Set up authentication endpoints with Firestore client if available
-            firestore_client = None
-            if hasattr(repository, "client"):  # type: ignore[misc]
-                # Extract FirestoreClient from FirestoreHealthDataRepository
-                firestore_client = repository.client  # type: ignore[attr-defined]
-
-            auth.set_dependencies(
-                auth_provider=auth_provider,
-                repository=repository,
-                firestore_client=firestore_client,  # type: ignore[arg-type]
-            )
-
-            # Inject dependencies into Gemini insights module
-            gemini_insights.set_dependencies(
-                auth_provider=auth_provider,
-                config_provider=config_provider,
-            )
-
-            # 🔥 ADDED: Include metrics router for Prometheus monitoring
-            from clarity.api.v1.metrics import router as metrics_router  # noqa: PLC0415
-
-            app.include_router(metrics_router)
-
-            # Include the unified v1 router (includes all endpoints: auth, health_data, pat_analysis, gemini_insights)
-            app.include_router(v1_router)
-
-            # Include debug router (REMOVE IN PRODUCTION!)
-            app.include_router(debug_router, prefix="/api/v1")
-            logger.warning("⚠️ DEBUG ENDPOINTS ENABLED - REMOVE IN PRODUCTION!")
-
-            logger.info("✅ API routes configured")
-            logger.info("   • Prometheus metrics: /metrics")
-            logger.info("   • Debug endpoints: /api/v1/debug/*")
-            logger.info("   • V1 API endpoints: /api/v1")
-            logger.info("   • Authentication: /api/v1/auth")
-            logger.info("   • Health data: /api/v1/health-data")
-            logger.info("   • PAT analysis: /api/v1/pat")
-            logger.info("   • Gemini insights: /api/v1/insights")
-
-        except Exception:
-            logger.exception("💥 Failed to configure routes")
-            logger.info("🔄 API routes failed but root health endpoint still available")
-
-
-# Global container instance (Singleton)
-_container: DependencyContainer | None = None
-
+# --- Singleton Accessor ---
+_container_instance: DependencyContainer | None = None
 
 def get_container() -> DependencyContainer:
-    """Get global dependency container (Singleton pattern)."""
-    global _container  # noqa: PLW0603
-    if _container is None:
-        _container = DependencyContainer()
-    return _container
-
+    """Get the singleton instance of the dependency container."""
+    global _container_instance
+    if _container_instance is None:
+        _container_instance = DependencyContainer()
+    return _container_instance
 
 def create_application() -> FastAPI:
-    """Factory function creates application using dependency injection.
-
-    This is the main entry point that follows Clean Architecture principles.
-    All dependencies are properly injected and no circular imports exist.
-    """
+    """Create a FastAPI application using the dependency container."""
     container = get_container()
     return container.create_fastapi_app()

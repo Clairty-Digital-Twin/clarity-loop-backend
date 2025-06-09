@@ -71,6 +71,10 @@ class DependencyContainer:
         config_provider = self.get_config_provider()
         middleware_config_obj = config_provider.get_middleware_config()
 
+        logger.warning("🔥🔥 AUTH PROVIDER CONFIG CHECK:")
+        logger.warning("   • middleware_config_obj.enabled: %s", middleware_config_obj.enabled)
+        logger.warning("   • enable_auth setting: %s", config_provider.get_setting("enable_auth", default=False))
+        
         if middleware_config_obj.enabled and config_provider.get_setting(
             "enable_auth", default=False
         ):
@@ -322,6 +326,8 @@ class DependencyContainer:
             lifespan=self.app_lifespan,  # ✅ RE-ENABLED with proper timeout handling
         )
 
+        logger.warning("🔥🔥 CREATING FASTAPI APP WITH ID: %s", id(app))
+
         # Configure RFC 7807 Problem Details exception handling
         self._configure_exception_handlers(app)
 
@@ -334,6 +340,12 @@ class DependencyContainer:
         # Wire routers with dependencies injected
         self._configure_routes(app)
 
+        # Build the app to ensure middleware is properly registered
+        # This is critical for Modal deployment
+        app.build_middleware_stack()
+        
+        logger.warning("🔥🔥 FASTAPI APP CONFIGURED, RETURNING APP: %s", id(app))
+        logger.warning("🔥🔥 APP MIDDLEWARE STACK BUILT")
         return app
 
     @staticmethod
@@ -390,10 +402,14 @@ class DependencyContainer:
 
     def _configure_middleware(self, app: FastAPI) -> None:
         """Configure middleware with dependency injection."""
+        logger.warning("🔥🔥 _configure_middleware CALLED with app ID: %s", id(app))
+        
         config_provider = self.get_config_provider()
         middleware_config = config_provider.get_middleware_config()
         
         logger.warning("🔍 MIDDLEWARE CONFIG: enabled=%s", middleware_config.enabled)
+        logger.warning("🔍 AUTH ENABLED: %s", config_provider.is_auth_enabled())
+        logger.warning("🔍 ENVIRONMENT: %s", config_provider.get_setting("environment", default="unknown"))
         logger.warning("🔍 APP ID: %s", id(app))  # Track app instance
 
         # Add authentication middleware if enabled
@@ -492,6 +508,8 @@ class DependencyContainer:
             # Register the middleware with the app
             app.middleware("http")(firebase_auth_middleware)
 
+            logger.warning("🔥🔥 MIDDLEWARE REGISTERED TO APP: %s", id(app))
+            logger.warning("🔥🔥 MIDDLEWARE FUNCTION: %s", firebase_auth_middleware)
             logger.info("Firebase authentication middleware enabled")
             logger.info("   • Exempt paths: %s", exempt_paths)
             logger.info("   • Cache enabled: %s", middleware_config.cache_enabled)

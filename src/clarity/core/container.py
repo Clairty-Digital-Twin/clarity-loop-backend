@@ -409,8 +409,7 @@ class DependencyContainer:
                 "/api/health",
             ]
 
-            # Use function-based middleware to avoid BaseHTTPMiddleware issues
-            @app.middleware("http")
+            # Create middleware function first
             async def firebase_auth_middleware(
                 request: Request, call_next: Callable[[Request], Awaitable[Response]]
             ) -> Response:
@@ -422,6 +421,7 @@ class DependencyContainer:
                 
                 path = request.url.path
                 logger.warning("🔥🔥 MIDDLEWARE ACTUALLY RUNNING: %s %s", request.method, path)
+                logger.warning("🔥🔥 APP INSTANCE IN MIDDLEWARE: %s", id(app))
                 
                 # Check if path is exempt
                 is_exempt = any(path.startswith(p) for p in exempt_paths)
@@ -488,6 +488,9 @@ class DependencyContainer:
                     request.state.user = None
                 
                 return await call_next(request)
+            
+            # Register the middleware with the app
+            app.middleware("http")(firebase_auth_middleware)
 
             logger.info("Firebase authentication middleware enabled")
             logger.info("   • Exempt paths: %s", exempt_paths)

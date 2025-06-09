@@ -314,14 +314,22 @@ class FirebaseAuthProvider(IAuthProvider):
         if self._initialized:
             return
 
+        logger.warning("🔐🔐 FIREBASE AUTH PROVIDER INITIALIZATION STARTING")
+        logger.warning("   • Project ID from init: %s", self.project_id)
+        logger.warning("   • Credentials path: %s", self.credentials_path)
+        logger.warning("   • GOOGLE_APPLICATION_CREDENTIALS env: %s", os.environ.get("GOOGLE_APPLICATION_CREDENTIALS", "NOT SET"))
+        logger.warning("   • FIREBASE_PROJECT_ID env: %s", os.environ.get("FIREBASE_PROJECT_ID", "NOT SET"))
+
         try:
             # Initialize Firebase Admin SDK if not already initialized
             import firebase_admin
             from firebase_admin import credentials
 
             try:
-                firebase_admin.get_app()
-                logger.info("Firebase Admin SDK already initialized")
+                existing_app = firebase_admin.get_app()
+                logger.warning("🔐 Firebase Admin SDK already initialized")
+                logger.warning("   • App name: %s", existing_app.name)
+                logger.warning("   • Project ID: %s", getattr(existing_app, 'project_id', 'UNKNOWN'))
             except ValueError:
                 # No default app exists, initialize it
                 logger.info("Initializing Firebase Admin SDK...")
@@ -332,17 +340,37 @@ class FirebaseAuthProvider(IAuthProvider):
                 if os.environ.get("GOOGLE_APPLICATION_CREDENTIALS"):
                     # Use Application Default Credentials (file path set by main.py)
                     cred = credentials.ApplicationDefault()
-                    firebase_admin.initialize_app(cred)
+                    
+                    # CRITICAL: Must specify project ID for token verification to work!
+                    project_id = os.environ.get("FIREBASE_PROJECT_ID", self.project_id)
+                    if not project_id:
+                        logger.error("❌ No Firebase project ID found! Token verification will fail!")
+                        project_id = "clarity-loop-backend"  # Fallback to known project
+                    
+                    logger.warning("🔐 Initializing Firebase Admin SDK with project: %s", project_id)
+                    firebase_admin.initialize_app(cred, {
+                        'projectId': project_id
+                    })
                     logger.info(
-                        "Firebase Admin SDK initialized with Application Default Credentials"
+                        "Firebase Admin SDK initialized with Application Default Credentials for project: %s",
+                        project_id
                     )
                 elif self.credentials_path:
                     # Use provided credentials path
                     cred = credentials.Certificate(self.credentials_path)
-                    firebase_admin.initialize_app(cred)
+                    
+                    # Also need project ID here
+                    project_id = os.environ.get("FIREBASE_PROJECT_ID", self.project_id)
+                    if not project_id:
+                        project_id = "clarity-loop-backend"
+                    
+                    firebase_admin.initialize_app(cred, {
+                        'projectId': project_id
+                    })
                     logger.info(
-                        "Firebase Admin SDK initialized with credentials from: %s",
+                        "Firebase Admin SDK initialized with credentials from: %s for project: %s",
                         self.credentials_path,
+                        project_id
                     )
                 else:
                     # Try to initialize with project ID only (for emulator/local dev)
@@ -418,10 +446,18 @@ class FirebaseAuthProvider(IAuthProvider):
         try:
             # Verify token with Firebase
             logger.warning("🔐 Calling firebase_auth.verify_id_token()...")
+            
+            # Get current Firebase app to check project
+            import firebase_admin
+            current_app = firebase_admin.get_app()
+            logger.warning("🔐 Current Firebase app project: %s", getattr(current_app, 'project_id', 'UNKNOWN'))
+            
             decoded_token = firebase_auth.verify_id_token(token, check_revoked=True)
             logger.warning("✅ TOKEN VERIFIED SUCCESSFULLY")
             logger.warning("   • UID: %s", decoded_token.get("uid", "MISSING"))
             logger.warning("   • Email: %s", decoded_token.get("email", "MISSING"))
+            logger.warning("   • Audience: %s", decoded_token.get("aud", "MISSING"))
+            logger.warning("   • Issuer: %s", decoded_token.get("iss", "MISSING"))
 
             # Extract custom claims to determine roles
             custom_claims = decoded_token.get("custom_claims", {})

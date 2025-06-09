@@ -1,6 +1,6 @@
 # Complete Authentication Data Flow Analysis
 
-> **Purpose**: Establish the "social truth" between frontend and backend agents about authentication flows, failure points, and data transformations.
+> **Purpose**: Establish the "source of truth" between frontend and backend agents about authentication flows, failure points, and data transformations.
 
 ## 1. Complete iOS to Backend Authentication Flow
 
@@ -177,21 +177,219 @@ sequenceDiagram
     Note over Client: ❌ Authentication required
 ```
 
+## 7. iOS Token Generation Flow
+
+```mermaid
+sequenceDiagram
+    participant User
+    participant iOS as iOS App
+    participant TMS as TokenManagementService
+    participant FBS as Firebase SDK
+    participant FBAuth as Firebase Auth Server
+
+    User->>iOS: Login with email/password
+    iOS->>FBS: signIn(email, password)
+    FBS->>FBAuth: Authentication request
+    FBAuth-->>FBS: User + initial token
+    FBS-->>iOS: FirebaseUser object
+    
+    Note over iOS: Later, when making API call
+    iOS->>TMS: getValidToken()
+    TMS->>TMS: Check token expiry
+    
+    alt Token expired or near expiry
+        TMS->>FBS: getIDToken(forcingRefresh: true)
+        FBS->>FBAuth: Request fresh token
+        FBAuth-->>FBS: New ID token (JWT)
+        FBS-->>TMS: Fresh token
+    else Token still valid
+        TMS-->>iOS: Cached token
+    end
+    
+    iOS->>Backend: API request with Bearer token
+```
+
+## 8. Backend Token Processing Pipeline
+
+```mermaid
+flowchart TB
+    subgraph "1. Request Entry"
+        A[HTTPS Request] --> B{Modal Proxy}
+        B --> C[FastAPI App]
+    end
+    
+    subgraph "2. Middleware Layer"
+        C --> D[firebase_auth_middleware]
+        D --> E{Path Exempt?}
+        E -->|Yes| F[Skip Auth]
+        E -->|No| G[Extract Bearer Token]
+        G --> H{Token Present?}
+        H -->|No| I[Return 401]
+        H -->|Yes| J[Parse Token]
+    end
+    
+    subgraph "3. Firebase Verification"
+        J --> K[auth_provider.verify_token]
+        K --> L{Provider Initialized?}
+        L -->|No| M[Initialize Firebase Admin]
+        L -->|Yes| N[firebase_auth.verify_id_token]
+        M --> N
+        
+        N --> O{Token Valid?}
+        O -->|Invalid Format| P[InvalidIdTokenError]
+        O -->|Expired| Q[ExpiredIdTokenError]
+        O -->|Revoked| R[RevokedIdTokenError]
+        O -->|User Disabled| S[UserDisabledError]
+        O -->|Cert Error| T[CertificateFetchError]
+        O -->|Valid| U[Return decoded_token]
+        
+        P --> V[Return None]
+        Q --> V
+        R --> V
+        S --> V
+        T --> V
+    end
+    
+    subgraph "4. User Context Creation"
+        U --> W[Extract user info]
+        W --> X{Has Firestore?}
+        X -->|Yes| Y[get_or_create_user_context]
+        X -->|No| Z[_create_user_context]
+        Y --> AA[Check/Create DB record]
+        Z --> AB[Basic UserContext]
+        AA --> AB
+    end
+    
+    subgraph "5. Request State"
+        AB --> AC[request.state.user = context]
+        AC --> AD[Call endpoint]
+        F --> AD
+        I --> AE[401 Response]
+        V --> AE
+    end
+    
+    style N fill:#ff6666
+    style V fill:#ff0000
+```
+
+## 9. Token Data Transformation
+
+```mermaid
+graph LR
+    subgraph "iOS Token (JWT)"
+        A[JWT Header] --> B[Algorithm: RS256]
+        C[JWT Payload] --> D[uid: abc123]
+        C --> E[email: user@example.com]
+        C --> F[exp: 1736611200]
+        C --> G[iat: 1736607600]
+        C --> H[auth_time: 1736607600]
+        I[JWT Signature] --> J[RSA Signature]
+    end
+    
+    subgraph "Firebase Decoded Token"
+        K[decoded_token dict] --> L[uid: abc123]
+        K --> M[email: user@example.com]
+        K --> N[email_verified: true]
+        K --> O[custom_claims: {...}]
+        K --> P[exp: 1736611200]
+    end
+    
+    subgraph "User Info Dict"
+        Q[user_info] --> R[user_id: abc123]
+        Q --> S[email: user@example.com]
+        Q --> T[verified: true]
+        Q --> U[roles: ['patient']]
+        Q --> V[custom_claims: {...}]
+    end
+    
+    subgraph "UserContext Object"
+        W[UserContext] --> X[user_id: abc123]
+        W --> Y[email: user@example.com]
+        W --> Z[role: UserRole.PATIENT]
+        W --> AA[permissions: [READ_OWN_DATA, WRITE_OWN_DATA]]
+        W --> AB[is_verified: true]
+    end
+    
+    A -.-> K
+    K -.-> Q
+    Q -.-> W
+```
+
+## 10. Modal Deployment Environment
+
+```mermaid
+graph TB
+    subgraph "Modal Container"
+        A[modal_deploy_optimized.py] --> B[FastAPI App Instance]
+        C[Environment Variables] --> D[GOOGLE_APPLICATION_CREDENTIALS]
+        C --> E[FIREBASE_PROJECT_ID]
+        C --> F[ENVIRONMENT=production]
+        
+        G[Mounted Secrets] --> H[googlecloud-secret]
+        H --> I[service-account.json]
+        
+        B --> J[Middleware Stack]
+        J --> K[firebase_auth_middleware]
+        K --> L[Firebase Admin SDK]
+        L --> M{Uses credentials}
+        I --> M
+        D --> M
+    end
+    
+    subgraph "External Services"
+        N[Google Certificate Servers]
+        O[Firebase Auth API]
+        P[Firestore Database]
+    end
+    
+    M -.-> N
+    M -.-> O
+    K -.-> P
+    
+    style L fill:#ff6666
+    style M fill:#ff6666
+```
+
 ## Problem Analysis
 
-Based on these flows, the issue is at **Step 10-13** in the first diagram. The Firebase Admin SDK is:
+Based on these comprehensive flows, the issue is at the **Firebase Admin SDK verification** step.
 
-1. **Failing to verify valid tokens**
-2. **Not logging the actual error**
-3. **Returning None instead of user info**
+### Current Evidence
 
-### Root Causes Could Be:
+1. ✅ **iOS generates valid tokens** (confirmed by user)
+2. ✅ **Backend receives the token** (logs show token in middleware)
+3. ✅ **Middleware executes** (logs show "MIDDLEWARE ACTUALLY RUNNING")
+4. ✅ **Token is extracted** (length and preview logged)
+5. ❌ **Firebase Admin SDK verification fails** (returns None)
+6. ❌ **No specific error logged** (need enhanced logging to see why)
 
-1. **Service Account Issue**: The Firebase service account JSON in Modal might be invalid or for wrong project
-2. **Firebase Admin Not Initialized**: The SDK might not be properly initialized
-3. **Certificate Fetch Error**: Can't download Google's public keys to verify JWT
-4. **Project ID Mismatch**: Backend using different Firebase project than iOS
+### Root Causes (In Order of Likelihood)
 
-### The Smoking Gun:
+1. **Certificate Fetch Error**:
+   - Firebase Admin SDK can't download Google's public keys
+   - Usually due to network issues or wrong project configuration
+   - Would explain silent failure
 
-The Modal logs show the middleware runs but `request.state.user` is never set, which means `verify_id_token()` is returning None/failing.
+2. **Project ID Mismatch**:
+   - iOS using different Firebase project than backend
+   - Tokens from project A won't verify in project B
+   - Check Firebase_PROJECT_ID in Modal vs iOS
+
+3. **Service Account Permissions**:
+   - Service account might lack proper permissions
+   - Needs "Firebase Authentication Admin" role
+
+4. **Token Format Issue**:
+   - Token might be malformed or truncated
+   - Check full token is being sent (no length limits)
+
+### Immediate Debugging Steps
+
+1. **Deploy enhanced logging** (already added above)
+2. **Check Modal logs** for specific Firebase error
+3. **Verify environment variables** in Modal deployment
+4. **Test with debug endpoint** (to be created)
+
+### The Smoking Gun
+
+The fact that `verify_id_token()` returns None without throwing means Firebase Admin SDK is catching an exception internally. The enhanced logging will reveal which specific exception.

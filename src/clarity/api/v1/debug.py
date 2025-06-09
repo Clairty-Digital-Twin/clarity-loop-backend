@@ -156,3 +156,90 @@ async def debug_middleware_stack(request: Request) -> dict[str, Any]:
         "request_state": state_info,
         "app_attributes": [attr for attr in dir(app) if "middleware" in attr.lower()],
     }
+
+
+@router.post("/verify-token-directly")
+async def debug_verify_token_directly(
+    request: Request,
+    authorization: str | None = Header(None),
+) -> dict[str, Any]:
+    """Debug endpoint to test Firebase token verification directly."""
+    logger.warning("🔍🔍 DEBUG VERIFY TOKEN DIRECTLY CALLED")
+    
+    # Get the container to access auth provider
+    from clarity.core.container import get_container
+    
+    container = get_container()
+    auth_provider = container.get_auth_provider()
+    
+    result = {
+        "timestamp": datetime.now(UTC).isoformat(),
+        "auth_provider_type": type(auth_provider).__name__,
+        "auth_provider_initialized": getattr(auth_provider, '_initialized', False),
+    }
+    
+    # Check authorization header
+    if not authorization:
+        result["error"] = "No Authorization header provided"
+        return result
+    
+    # Parse token
+    if not authorization.startswith("Bearer "):
+        result["error"] = "Invalid Authorization format (expected 'Bearer <token>')"
+        return result
+    
+    token = authorization[7:]
+    result["token_length"] = len(token)
+    result["token_preview"] = f"{token[:20]}...{token[-20:]}"
+    
+    # Try to verify token directly
+    try:
+        logger.warning("🔍🔍 Calling auth_provider.verify_token() directly")
+        user_info = await auth_provider.verify_token(token)
+        
+        if user_info:
+            result["verification_success"] = True
+            result["user_info"] = {
+                "user_id": user_info.get("user_id"),
+                "email": user_info.get("email"),
+                "verified": user_info.get("verified"),
+                "roles": user_info.get("roles", []),
+            }
+            logger.warning("✅✅ Direct token verification SUCCEEDED")
+        else:
+            result["verification_success"] = False
+            result["user_info"] = None
+            result["note"] = "verify_token returned None - check logs for Firebase error"
+            logger.warning("❌❌ Direct token verification FAILED - returned None")
+            
+    except Exception as e:
+        result["verification_success"] = False
+        result["exception_type"] = type(e).__name__
+        result["exception_message"] = str(e)
+        logger.exception("❌❌ Direct token verification threw exception")
+    
+    # Check Firebase Admin SDK status
+    try:
+        import firebase_admin
+        
+        try:
+            firebase_app = firebase_admin.get_app()
+            result["firebase_admin_initialized"] = True
+            result["firebase_project_id"] = getattr(firebase_app, 'project_id', 'Unknown')
+        except ValueError:
+            result["firebase_admin_initialized"] = False
+            result["firebase_note"] = "Firebase Admin SDK not initialized"
+            
+    except ImportError:
+        result["firebase_admin_initialized"] = False
+        result["firebase_note"] = "firebase_admin module not imported"
+    
+    # Check environment
+    import os
+    result["environment"] = {
+        "GOOGLE_APPLICATION_CREDENTIALS": bool(os.environ.get("GOOGLE_APPLICATION_CREDENTIALS")),
+        "FIREBASE_PROJECT_ID": os.environ.get("FIREBASE_PROJECT_ID", "NOT_SET"),
+        "ENVIRONMENT": os.environ.get("ENVIRONMENT", "NOT_SET"),
+    }
+    
+    return result

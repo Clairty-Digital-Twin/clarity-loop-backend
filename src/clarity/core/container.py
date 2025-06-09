@@ -266,7 +266,13 @@ class DependencyContainer:
             async def firebase_auth_middleware(
                 request: Request, call_next: Callable[[Request], Awaitable[Response]]
             ) -> Response:
-                if request.url.path in middleware_config.public_paths:
+                is_public = False
+                for public_path in middleware_config.public_paths:
+                    if request.url.path == public_path or request.url.path.startswith(f"{public_path}/"):
+                        is_public = True
+                        break
+
+                if is_public:
                     return await call_next(request)
 
                 auth_header = request.headers.get("Authorization")
@@ -293,7 +299,7 @@ class DependencyContainer:
                     user_info = await auth_provider.verify_token(token)
                     if user_info:
                         user_context = UserContext(**user_info)
-                        set_user_context(user_context)
+                        set_user_context(.user_context)
                         return await call_next(request)
                     
                     return JSONResponse(
@@ -342,4 +348,4 @@ def get_container() -> DependencyContainer:
 def create_application() -> FastAPI:
     """Create a FastAPI application using the dependency container."""
     container = get_container()
-    return container.create_fastapi_app()
+    return container.create_fastapi_app() 

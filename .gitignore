@@ -269,3 +269,11 @@ dev-debug.log
 *.sln
 *.sw?
 # OS specific
+
+*.pyc
+__pycache__/
+.venv/
+.env
+ops/terraform/gcp-credentials.json
+ops/terraform/.terraform*
+ops/terraform/*.tfstate*

@@ -63,6 +63,7 @@ base_image = (
         "prometheus-client>=0.21.0,<1.0.0",
         "structlog>=24.4.0,<25.0.0",
         "rich>=13.9.0,<14.0.0",
+        force_build=True,
     )
     .run_function(
         setup_firebase_credentials,
@@ -93,6 +94,7 @@ gcp_image = base_image.pip_install(
     "google-generativeai>=0.8.3,<1.0.0",
     "langchain>=0.3.0,<0.4.0",
     "langchain-google-vertexai>=2.0.0,<3.0.0",
+    force_build=True,
 )
 
 # Layer 3: Heavy ML dependencies (slowest install, cached separately)
@@ -116,14 +118,19 @@ ml_image = gcp_image.pip_install(
     "asyncpg>=0.29.0,<0.30.0",
     "alembic>=1.13.0,<2.0.0",
     "circuitbreaker>=2.0.0,<3.0.0",
+    force_build=True,
 )
 
 # Final layer: Mount the source code (this changes most frequently)
 # FORCE COPY to ensure latest code is in the image (fixes Modal caching issues)
 # REBUILD TIMESTAMP: 2025-01-09-14:20:00-contextvars-fix
 import time
-final_image = ml_image.add_local_dir(REPO_ROOT, "/app", copy=True).run_commands(
-    f"echo 'Build timestamp: {time.time()} - contextvars fix' > /app/build_timestamp.txt"
+final_image = (
+    ml_image.add_local_dir(REPO_ROOT, "/app", copy=True)
+    .run_commands(
+        "echo 'Forcing a rebuild to break cache and apply latest fixes.'",
+        force_build=True
+    )
 )
 
 # Detect Modal environment (dev/prod)

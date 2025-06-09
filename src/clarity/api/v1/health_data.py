@@ -407,6 +407,14 @@ async def get_processing_status(
         503: {"description": "Service temporarily unavailable"},
     },
 )
+# Also define the same endpoint without trailing slash to prevent redirects
+@router.get(
+    "",
+    summary="List Health Data",
+    description="List health data (canonical endpoint without trailing slash)",
+    response_model=PaginatedResponse[dict[str, Any]],
+    include_in_schema=False,  # Don't show duplicate in OpenAPI docs
+)
 async def list_health_data(  # noqa: PLR0913, PLR0917
     request: Request,
     current_user: AuthenticatedUser,

@@ -321,8 +321,6 @@ class FirebaseAuthProvider(IAuthProvider):
         if self._initialized:
             return
 
-        import os  # Import os at the top of the method
-
         logger.warning("🔐🔐 FIREBASE AUTH PROVIDER INITIALIZATION STARTING")
         logger.warning("   • Project ID from init: %s", self.project_id)
         logger.warning("   • Credentials path: %s", self.credentials_path)

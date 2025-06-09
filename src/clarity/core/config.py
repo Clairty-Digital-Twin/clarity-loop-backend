@@ -233,48 +233,40 @@ class Settings(BaseSettings):
         logger.info("   • GCP project: %s", self.gcp_project_id or "Not set")
 
     def get_middleware_config(self) -> MiddlewareConfig:
-        """Get middleware configuration based on current environment.
+        """Get middleware configuration based on environment.
 
-        Returns environment-specific middleware configuration with appropriate
-        settings for development, testing, or production.
+        Returns middleware configuration optimized for the current environment.
+        Development environments use more lenient settings for easier debugging,
+        while production environments use stricter security settings.
         """
-        # Base configuration
         config = MiddlewareConfig()
 
-        # Environment-specific adjustments
         if self.is_development():
-            # Development mode: More permissive, detailed logging
+            # Development environment - lenient settings for debugging
             config.enabled = self.enable_auth
-            config.graceful_degradation = True
+            config.graceful_degradation = False  # <-- DEBUGGING: Show actual auth errors
             config.fallback_to_mock = True
-            config.log_successful_auth = True  # More verbose in dev
             config.cache_enabled = False  # Disable cache for easier debugging
-            config.initialization_timeout_seconds = 10  # Longer timeout for dev
-
-        elif self.is_testing():
-            # Testing mode: Mock auth, minimal logging
-            config.enabled = False  # Usually use mock auth in tests
-            config.graceful_degradation = True
-            config.fallback_to_mock = True
-            config.log_successful_auth = False
-            config.cache_enabled = False  # Disable cache for consistent tests
-            config.audit_logging = False  # Reduce noise in tests
+            config.log_successful_auth = True  # Log all auth attempts
+            config.log_level = "DEBUG"
+            config.initialization_timeout_seconds = 10  # Longer timeout for debugging
 
         elif self.is_production():
-            # Production mode: Strict settings, minimal logging
-            # Middleware capability is ALWAYS available in production
-            config.enabled = True  # Middleware capability - always True in production
-            config.graceful_degradation = False  # Fail fast in production
-            config.fallback_to_mock = False  # No mock fallback in prod
+            # Production environment - strict security settings
+            config.enabled = self.enable_auth
+            config.graceful_degradation = False  # <-- DEBUGGING: Show actual auth errors
+            config.fallback_to_mock = False  # Never fall back in production
+            config.cache_enabled = True
+            config.cache_ttl_seconds = 300  # 5 minutes
+            config.cache_max_size = 1000
             config.log_successful_auth = False  # Only log failures
-            config.cache_enabled = True  # Enable caching for performance
-            config.cache_ttl_seconds = 600  # Longer cache in production
-            config.initialization_timeout_seconds = 5  # Shorter timeout
+            config.log_level = "INFO"
+            config.initialization_timeout_seconds = 5
 
         else:
             # Unknown environment - use conservative defaults
             config.enabled = self.enable_auth
-            config.graceful_degradation = True
+            config.graceful_degradation = False  # <-- DEBUGGING: Show actual auth errors
             config.fallback_to_mock = True
 
         return config

@@ -4,7 +4,7 @@ THIS SHOULD BE REMOVED OR DISABLED IN PRODUCTION!
 """
 
 import logging
-from datetime import UTC, datetime
+from datetime import datetime, UTC
 from typing import Any
 
 from fastapi import APIRouter, Depends, Header, HTTPException, Request, status

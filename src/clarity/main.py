@@ -1,33 +1,65 @@
 #!/usr/bin/env python3
-"""CLARITY Digital Twin Platform - Application Entry Point.
+"""CLARITY Digital Twin Platform - Unified Application Entry Point.
 
-This file creates the FastAPI application instance using the centralized
-factory function from the core container. It is the designated entry point
-for running the application locally, ensuring that all middleware and
-dependencies are correctly configured, consistent with the Modal deployment.
+This module serves as the primary entry point for the CLARITY application.
+It automatically detects the deployment environment and configures the
+appropriate services (AWS, Firebase, or Mock).
 
-Usage (from project root):
+## Environment Detection
+- Production (AWS): Uses AWS services (Cognito, DynamoDB, S3, SQS/SNS)
+- Development: Uses mock services with optional Firebase/AWS
+- Testing: Uses mock services exclusively
+
+## Usage
+Local development:
     uvicorn src.clarity.main:app --reload
+
+Production:
+    gunicorn src.clarity.main:app -c gunicorn.aws.conf.py
 """
+
 import os
+from typing import Callable
 
-from clarity.core.container import create_application
+from fastapi import FastAPI
 
-# Check if we should use AWS implementation for testing
-USE_AWS_IMPL = os.environ.get("USE_AWS_IMPL", "").lower() == "true"
+# Detect deployment environment
+ENVIRONMENT = os.environ.get("ENVIRONMENT", "development").lower()
+IS_AWS = (
+    os.environ.get("AWS_EXECUTION_ENV") is not None
+    or os.environ.get("AWS_REGION") is not None
+    or os.environ.get("USE_AWS_SERVICES", "false").lower() == "true"
+)
 
-if USE_AWS_IMPL:
-    # Import AWS implementation for testing
-    from clarity.main_aws import create_app
-else:
-    # Use original implementation with compatibility wrapper
-    def create_app():
-        """Compatibility wrapper for tests expecting create_app function."""
+
+def create_app() -> FastAPI:
+    """Create FastAPI application with environment-appropriate configuration."""
+    if IS_AWS or ENVIRONMENT == "production":
+        # Use AWS implementation
+        from clarity.main_aws import create_app as create_aws_app
+        return create_aws_app()
+    else:
+        # Use original implementation with Firebase/Mock services
+        from clarity.core.container import create_application
         return create_application()
 
 
-# Create the application instance. This is the single source of truth for the app.
-app = create_application() if not USE_AWS_IMPL else create_app()
+# Create the application instance
+app = create_app()
 
-# Compatibility alias for tests expecting get_app
+# Export for compatibility
 get_app = create_app
+
+
+if __name__ == "__main__":
+    import uvicorn
+    from clarity.core.config import get_settings
+    
+    settings = get_settings()
+    uvicorn.run(
+        "clarity.main:app",
+        host=settings.host,
+        port=settings.port,
+        reload=settings.is_development(),
+        log_level=settings.log_level.lower(),
+    )

@@ -46,39 +46,50 @@ async def lifespan(app: FastAPI):
         logger.info("CLARITY backend shutdown complete")
 
 
-# Create FastAPI application
-app = FastAPI(
-    title="CLARITY Digital Twin Platform",
-    description="Revolutionary AI-powered mental health platform using AWS services",
-    version="1.0.0",
-    lifespan=lifespan,
-)
+def create_app() -> FastAPI:
+    """Factory function to create FastAPI application instance.
+    
+    This function is used by tests and follows the same pattern as the original
+    CLARITY implementation, allowing the test suite to work with the AWS version.
+    """
+    # Create FastAPI application
+    app = FastAPI(
+        title="CLARITY Digital Twin Platform",
+        description="Revolutionary AI-powered mental health platform using AWS services",
+        version="1.0.0",
+        lifespan=lifespan,
+    )
 
-# Configure CORS
-settings = get_settings()
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=settings.get_cors_origins(),
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+    # Configure CORS
+    settings = get_settings()
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=settings.get_cors_origins(),
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
 
-# Add Prometheus metrics endpoint
-metrics_app = make_asgi_app()
-app.mount("/metrics", metrics_app)
+    # Add Prometheus metrics endpoint
+    metrics_app = make_asgi_app()
+    app.mount("/metrics", metrics_app)
+
+    @app.get("/")
+    async def root() -> dict[str, Any]:
+        """Root endpoint."""
+        return {
+            "name": "CLARITY Digital Twin Platform",
+            "version": "1.0.0",
+            "status": "operational",
+            "environment": settings.environment,
+            "deployment": "AWS",
+        }
+    
+    return app
 
 
-@app.get("/")
-async def root() -> dict[str, Any]:
-    """Root endpoint."""
-    return {
-        "name": "CLARITY Digital Twin Platform",
-        "version": "1.0.0",
-        "status": "operational",
-        "environment": settings.environment,
-        "deployment": "AWS",
-    }
+# Create the application instance
+app = create_app()
 
 
 if __name__ == "__main__":

@@ -146,29 +146,10 @@ class DependencyContainer:
     async def _initialize_services(self) -> None:
         """Initialize all external services concurrently."""
         logger.info("🚀 Initializing services...")
-        await asyncio.gather(
-            self._initialize_auth_provider(),
-            self._initialize_repository(),
-        )
+        # Get instances to trigger their creation and initialization
+        self.get_auth_provider()
+        self.get_health_data_repository()
         logger.info("✅ All services initialized.")
-
-    async def _initialize_auth_provider(self) -> None:
-        """Initialize authentication provider with timeout and fallback."""
-        try:
-            auth_provider = self.get_auth_provider()
-            if hasattr(auth_provider, "initialize"):
-                await asyncio.wait_for(auth_provider.initialize(), timeout=5.0)
-        except Exception:
-            logger.exception("💥 Auth provider initialization failed")
-
-    async def _initialize_repository(self) -> None:
-        """Initialize health data repository with timeout and fallback."""
-        try:
-            repository = self.get_health_data_repository()
-            if hasattr(repository, "initialize"):
-                await asyncio.wait_for(repository.initialize(), timeout=8.0)
-        except Exception:
-            logger.exception("💥 Repository initialization failed")
 
     async def _cleanup_services(self) -> None:
         """Clean up all services with timeout protection."""
@@ -282,7 +263,7 @@ class DependencyContainer:
             auth_provider = self.get_auth_provider()
 
             async def firebase_auth_middleware(
-                request: Request, call_next: Callable[[Request], Awaitable[Response]]
+                request: Request, call_next: Callable[[Request], Response]
             ) -> Response:
                 is_public = False
                 for public_path in middleware_config.exempt_paths or []:

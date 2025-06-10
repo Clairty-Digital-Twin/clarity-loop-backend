@@ -4,53 +4,57 @@
 # Optimized for Google Cloud Run deployment
 
 # --- Base Stage ---
+# This stage installs all dependencies, including the project itself in editable mode.
+# This creates a complete environment with all necessary packages in site-packages.
 FROM python:3.11-slim AS base
 
-# Set environment variables
+# Set environment variables for a clean Python environment
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 
-# Set work directory
+# Set the working directory
 WORKDIR /app
 
-# Install system dependencies
+# Install system dependencies required for building some Python packages
 RUN apt-get update && apt-get install -y \
     gcc \
     g++ \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy the entire project (we need pyproject.toml for pip install)
+# Copy the entire project context
 COPY . /app/
 
-# Install the package using pip directly with pyproject.toml
-# This avoids Poetry's dependency resolution issues
+# Install the package and its dependencies. Using -e (editable) ensures
+# that it's correctly registered as a package while being installed from source.
 RUN pip install --no-cache-dir -e .
 
+
 # --- Final Stage ---
+# This stage creates the final, lean image for production.
 FROM python:3.11-slim AS final
 
-# Set work directory
+# Set the working directory
 WORKDIR /app
 
-# Copy Python binaries and packages from base stage
-COPY --from=base /usr/local/bin /usr/local/bin
+# IMPORTANT: Copy the fully installed site-packages from the base stage.
+# This includes our 'clarity' application and all its dependencies, properly installed.
 COPY --from=base /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
 
-# Copy application files
-COPY pyproject.toml LICENSE README.md /app/
-COPY src /app/src
+# Copy the gunicorn config and the entrypoint script.
+# We do NOT copy the 'src' directory here to avoid path conflicts. The code is already
+# in site-packages from the step above.
 COPY gunicorn.conf.py entrypoint.sh /app/
 
-# Make entrypoint executable
+# Make the entrypoint script executable
 RUN chmod +x /app/entrypoint.sh
 
 # Set environment variables
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
-ENV PYTHONPATH=/app/src:$PYTHONPATH
+# PYTHONPATH is no longer needed as everything is in the standard site-packages directory.
 
 # Expose the port the app runs on
 EXPOSE 8000
 
-# Set the entrypoint to our script
+# Set the entrypoint to our script to run the application.
 ENTRYPOINT ["/app/entrypoint.sh"]

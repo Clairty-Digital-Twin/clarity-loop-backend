@@ -16,11 +16,11 @@ from clarity.core.config_aws import Settings, get_settings
 from clarity.core.config_provider import ConfigProvider
 from clarity.core.exceptions import ConfigurationError
 from clarity.core.logging_config import setup_logging
-from clarity.core.types import AuthProviderPort, HealthDataRepositoryPort
+# Port types are imported from their respective modules
 from clarity.ml.gemini_direct_service import GeminiService
 from clarity.ports.auth_ports import IAuthProvider
-from clarity.ports.config_ports import ConfigProviderPort
-from clarity.ports.storage import HealthDataRepositoryPort as StoragePort
+from clarity.ports.config_ports import IConfigProvider
+from clarity.ports.data_ports import IHealthDataRepository
 from clarity.storage.dynamodb_client import DynamoDBHealthDataRepository
 from clarity.storage.mock_repository import MockHealthDataRepository
 
@@ -52,9 +52,9 @@ class DependencyContainer:
         setup_logging(self.settings.log_level)
 
         # Initialize service containers
-        self._config_provider: ConfigProviderPort | None = None
+        self._config_provider: IConfigProvider | None = None
         self._auth_provider: IAuthProvider | None = None
-        self._health_data_repository: StoragePort | None = None
+        self._health_data_repository: IHealthDataRepository | None = None
         self._gemini_service: GeminiService | None = None
         self._initialized = False
 
@@ -270,7 +270,7 @@ class DependencyContainer:
 
     # Property accessors for services
     @property
-    def config_provider(self) -> ConfigProviderPort:
+    def config_provider(self) -> IConfigProvider:
         """Get configuration provider."""
         if not self._config_provider:
             raise RuntimeError("Config provider not initialized")
@@ -284,7 +284,7 @@ class DependencyContainer:
         return self._auth_provider
 
     @property
-    def health_data_repository(self) -> StoragePort:
+    def health_data_repository(self) -> IHealthDataRepository:
         """Get health data repository."""
         if not self._health_data_repository:
             raise RuntimeError("Health data repository not initialized")

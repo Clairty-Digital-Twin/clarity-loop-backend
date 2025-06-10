@@ -11,7 +11,7 @@ import boto3
 from boto3.dynamodb.conditions import Attr, Key
 from botocore.exceptions import ClientError
 
-from clarity.core.exceptions import DatabaseError
+from clarity.core.exceptions import ServiceError
 from clarity.models.health_data import (
     HealthDataResponse,
     HealthDataUpload,
@@ -19,12 +19,12 @@ from clarity.models.health_data import (
     ProcessingStatus,
 )
 from clarity.models.user import User
-from clarity.ports.storage import HealthDataRepositoryPort
+from clarity.ports.data_ports import IHealthDataRepository
 
 logger = logging.getLogger(__name__)
 
 
-class DynamoDBHealthDataRepository(HealthDataRepositoryPort):
+class DynamoDBHealthDataRepository(IHealthDataRepository):
     """DynamoDB implementation of health data repository."""
 
     def __init__(

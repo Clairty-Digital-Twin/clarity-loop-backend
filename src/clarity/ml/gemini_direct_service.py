@@ -7,7 +7,7 @@ from typing import Any, Dict, List, Optional
 import google.generativeai as genai
 from google.generativeai.types import HarmBlockThreshold, HarmCategory
 
-from clarity.core.exceptions import MLServiceError
+from clarity.core.exceptions import ServiceError
 
 logger = logging.getLogger(__name__)
 
@@ -61,13 +61,13 @@ class GeminiService:
             response = await asyncio.to_thread(self.model.generate_content, prompt)
 
             if not response.text:
-                raise MLServiceError("Gemini returned empty response")
+                raise ServiceError("Gemini returned empty response")
 
             return response.text
 
         except Exception as e:
             logger.error(f"Error generating health insights: {e}")
-            raise MLServiceError(f"Failed to generate insights: {e!s}")
+            raise ServiceError(f"Failed to generate insights: {e!s}")
 
     async def analyze_pat_results(
         self,
@@ -81,13 +81,13 @@ class GeminiService:
             response = await asyncio.to_thread(self.model.generate_content, prompt)
 
             if not response.text:
-                raise MLServiceError("Gemini returned empty response")
+                raise ServiceError("Gemini returned empty response")
 
             return response.text
 
         except Exception as e:
             logger.error(f"Error analyzing PAT results: {e}")
-            raise MLServiceError(f"Failed to analyze PAT results: {e!s}")
+            raise ServiceError(f"Failed to analyze PAT results: {e!s}")
 
     async def generate_recommendations(
         self,
@@ -104,7 +104,7 @@ class GeminiService:
             response = await asyncio.to_thread(self.model.generate_content, prompt)
 
             if not response.text:
-                raise MLServiceError("Gemini returned empty response")
+                raise ServiceError("Gemini returned empty response")
 
             # Parse recommendations from response
             recommendations = self._parse_recommendations(response.text)
@@ -112,7 +112,7 @@ class GeminiService:
 
         except Exception as e:
             logger.error(f"Error generating recommendations: {e}")
-            raise MLServiceError(f"Failed to generate recommendations: {e!s}")
+            raise ServiceError(f"Failed to generate recommendations: {e!s}")
 
     def _build_health_insights_prompt(
         self, health_data: dict[str, Any], user_context: dict[str, Any] | None = None

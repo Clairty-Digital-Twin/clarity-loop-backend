@@ -39,9 +39,10 @@ COPY --from=base /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.
 # Copy application files
 COPY pyproject.toml LICENSE README.md /app/
 COPY src /app/src
+COPY gunicorn.conf.py entrypoint.sh /app/
 
-# Install the package in non-editable mode to ensure proper package registration
-RUN pip install --no-cache-dir --no-deps .
+# Make entrypoint executable
+RUN chmod +x /app/entrypoint.sh
 
 # Set environment variables
 ENV PYTHONDONTWRITEBYTECODE=1
@@ -51,5 +52,5 @@ ENV PYTHONPATH=/app/src:$PYTHONPATH
 # Expose the port the app runs on
 EXPOSE 8000
 
-# Command to run the application
-CMD ["python", "-m", "uvicorn", "clarity.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Set the entrypoint to our script
+ENTRYPOINT ["/app/entrypoint.sh"]

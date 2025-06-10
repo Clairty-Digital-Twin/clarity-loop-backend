@@ -33,6 +33,7 @@ classifiers = [
 dependencies = [
     # Core FastAPI and async framework
     "fastapi>=0.115.0,<0.116.0",
+    "gunicorn>=22.0.0,<23.0.0",
     "uvicorn[standard]>=0.32.0,<0.35.0",
     "pydantic>=2.9.0,<3.0.0",
     "pydantic-settings>=2.6.0,<3.0.0",

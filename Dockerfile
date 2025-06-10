@@ -46,7 +46,7 @@ RUN pip install --no-cache-dir --no-deps .
 # Set environment variables
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
-ENV PYTHONPATH=/app:$PYTHONPATH
+ENV PYTHONPATH=/app/src:$PYTHONPATH
 
 # Expose the port the app runs on
 EXPOSE 8000

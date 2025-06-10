@@ -1,45 +1,218 @@
-CLARITY Loop Backend - Vertical Slice 1 PRD
-===========================================
+# CLARITY Digital Twin Platform - Complete AWS Integration & API Deployment
 
-Project Overview:
-Build a production-grade HealthKit wellness platform backend with FastAPI and Google Cloud, focused on getting the first vertical slice working end-to-end.
+## Executive Summary
 
-Core Problem:
-Users need to upload health data from iOS/watchOS devices and receive AI-powered insights. Currently we have incomplete implementation - we need to complete the first vertical slice: Health Data Upload & Storage.
+CLARITY is an enterprise-grade AI-powered mental health platform that processes multi-modal health data through a sophisticated Pretrained Actigraphy Transformer (PAT) model from Dartmouth research. The platform features 96-dimensional health embeddings, real-time circadian analysis, depression risk assessment, and clinical-grade health insights.
 
-Current State:
-- Basic FastAPI models and endpoints are stubbed out
-- No main application file exists
-- No service layer implementation
-- No database integration
-- No actual end-to-end working flow
+**CRITICAL ISSUE**: The live AWS deployment at http://***REMOVED***/docs only exposes 7 basic endpoints from main_aws_full.py, while the codebase contains a sophisticated 38-endpoint enterprise API architecture. This represents a "partial marriage" where the full platform capabilities are not deployed.
 
-Phase 1 Goals (Current Priority):
-1. Complete FastAPI application setup with proper main.py entry point
-2. Implement missing service layer (health_data_service.py)
-3. Implement Firestore storage layer (firestore_client.py)
-4. Add proper authentication middleware
-5. Create working end-to-end test
-6. Deploy to Cloud Run for testing
+## Current State Analysis
 
-Technical Requirements:
-- FastAPI with async/await patterns
-- Google Cloud Firestore for data storage
-- Firebase Authentication for user management
-- Pydantic models for data validation
-- HIPAA-compliant logging and error handling
-- Cloud Run deployment ready
+### Live Deployment (LIMITED - 7 endpoints):
+- GET /health - Health Check
+- POST /api/v1/auth/signup - Signup  
+- POST /api/v1/auth/login - Login
+- POST /api/v1/health-data - Store Health Data
+- GET /api/v1/health-data - Get User Health Data
+- POST /api/v1/insights - Generate Insights
+- GET /api/v1/user/profile - Get User Profile
 
-Success Criteria:
-- POST /api/v1/health-data/upload accepts health data and returns processing_id
-- Data is validated and stored in Firestore
-- Authentication is working
-- End-to-end test passes
-- Application runs locally and can be deployed to Cloud Run
+### Full Codebase Capabilities (38 endpoints across 7 modules):
+1. **Authentication Module** (7 endpoints) - AWS Cognito + API key auth
+2. **Health Data Module** (7 endpoints) - Full CRUD for health data with advanced querying
+3. **PAT Analysis Module** (5 endpoints) - Dartmouth's 29K participant ML model integration
+4. **Gemini Insights Module** (4 endpoints) - AI-powered health insights with context
+5. **HealthKit Integration Module** (2 endpoints) - Apple Watch data ingestion
+6. **WebSocket Chat Module** (4 endpoints) - Real-time health analysis chat
+7. **Metrics Module** (1 endpoint) - Prometheus monitoring
+8. **Debug/Testing Module** (8 endpoints) - Comprehensive debugging tools
 
-Implementation Priority:
-1. Main application setup (main.py, auth middleware)
-2. Service layer implementation
-3. Database integration
-4. End-to-end testing
-5. Deployment configuration
+### Enterprise Infrastructure Available:
+- AWS DynamoDB (health data storage)
+- AWS Cognito (authentication)
+- AWS S3 (file storage with HIPAA compliance)
+- AWS SQS/SNS (messaging)
+- Container-based dependency injection
+- Multi-environment configuration
+- 1,060 automated tests
+- Prometheus metrics integration
+
+## Technical Requirements
+
+### Primary Objective
+Convert the live AWS deployment from the limited main_aws_full.py implementation to the complete enterprise architecture using the full API router system with all 38 endpoints.
+
+### Core Architecture Requirements
+1. **Unified Main Entry Point**: Use main_aws.py with full container-based dependency injection
+2. **Complete API Router Integration**: Wire all 7 API modules through the main router
+3. **Enterprise Service Layer**: Ensure all AWS services (S3, DynamoDB, SQS/SNS, Cognito) are properly integrated
+4. **Authentication & Security**: Implement full authentication middleware across all endpoints
+5. **Health Monitoring**: Integrate Prometheus metrics and comprehensive health checks
+6. **WebSocket Support**: Enable real-time chat and health analysis capabilities
+
+### API Module Integration Requirements
+
+#### 1. Authentication & Security
+- Complete AWS Cognito integration
+- API key authentication fallback
+- JWT token validation middleware
+- User registration, login, logout, profile management
+- Password reset and user verification flows
+
+#### 2. Health Data Management
+- Multi-modal health data ingestion (sleep, cardio, activity, respiratory)
+- Advanced querying with filtering, pagination, aggregation
+- Data export capabilities
+- Historical trend analysis
+- Data validation and sanitization
+
+#### 3. PAT (Pretrained Actigraphy Transformer) Integration
+- Real-time actigraphy analysis using Dartmouth's research model
+- 96-dimensional health embedding generation
+- Circadian rhythm analysis
+- Sleep quality assessment
+- Depression risk prediction
+- Batch processing capabilities
+
+#### 4. AI Insights & Analysis
+- Gemini 2.5 Pro integration for natural language health insights
+- Context-aware health recommendations
+- Personalized analysis based on user history
+- Multi-language support for health explanations
+- Insight caching and optimization
+
+#### 5. HealthKit & Apple Watch Integration
+- Apple HealthKit data import/export
+- Real-time Apple Watch data streaming
+- Data format conversion and normalization
+- Automatic data sync and conflict resolution
+
+#### 6. Real-time Communication
+- WebSocket-based chat for health consultations
+- Real-time health data streaming
+- Live analysis notifications
+- Multi-user chat rooms for group health sessions
+- Connection management and scaling
+
+#### 7. Monitoring & Debugging
+- Comprehensive Prometheus metrics
+- Health check endpoints for all services
+- Debug tools for token validation and middleware testing
+- Request/response logging and analysis
+- Performance monitoring and alerting
+
+### Deployment & Infrastructure Requirements
+
+#### AWS Service Integration
+- **DynamoDB**: Health data storage with proper indexing and querying
+- **S3**: File storage for raw health data, analysis results, and exports
+- **Cognito**: User authentication and identity management
+- **SQS/SNS**: Asynchronous message processing for analysis pipelines
+- **ALB**: Load balancer configuration for high availability
+- **ECS**: Container orchestration with proper scaling
+
+#### Configuration Management
+- Environment-specific configuration (development, staging, production)
+- Secure secrets management for API keys and credentials
+- Container configuration with proper resource allocation
+- Auto-scaling policies based on load and usage patterns
+
+#### Testing & Quality Assurance
+- Integration of existing 1,060 test suite with new deployment
+- End-to-end testing of all API endpoints
+- Load testing for production readiness
+- Security testing for HIPAA compliance
+- Automated deployment pipeline validation
+
+## Success Criteria
+
+### Technical Success Metrics
+1. **Complete API Deployment**: All 38 endpoints accessible via live deployment
+2. **Authentication Integration**: Full Cognito + API key authentication working
+3. **Service Integration**: All AWS services (DynamoDB, S3, SQS/SNS) operational
+4. **WebSocket Functionality**: Real-time chat and health analysis working
+5. **Performance**: Sub-500ms response times for health data queries
+6. **Test Coverage**: All 1,060 tests passing with new deployment
+
+### Business Success Metrics
+1. **Enterprise Readiness**: Platform capable of handling clinical-grade workloads
+2. **Scalability**: Support for 10,000+ concurrent users
+3. **Compliance**: HIPAA-compliant data handling and storage
+4. **Integration**: Apple HealthKit and other health device compatibility
+5. **AI Capabilities**: Real-time health insights and analysis functional
+
+## Implementation Priority
+
+### Phase 1: Core Infrastructure (High Priority)
+1. Replace main_aws_full.py with complete main_aws.py architecture
+2. Wire all 7 API modules through the main router
+3. Ensure AWS service integration (DynamoDB, S3, Cognito, SQS/SNS)
+4. Deploy and validate basic endpoint functionality
+
+### Phase 2: Advanced Features (Medium Priority)
+1. Complete PAT model integration and analysis endpoints
+2. WebSocket real-time communication setup
+3. HealthKit integration and data processing
+4. Advanced health data querying and analytics
+
+### Phase 3: Enterprise Features (Medium Priority)
+1. Comprehensive monitoring and metrics
+2. Debug and testing endpoint integration
+3. Performance optimization and caching
+4. Advanced security and compliance features
+
+### Phase 4: Production Optimization (Low Priority)
+1. Load testing and performance tuning
+2. Auto-scaling configuration
+3. Disaster recovery and backup systems
+4. Advanced logging and alerting
+
+## Technical Constraints
+
+### Infrastructure Constraints
+- Must maintain current AWS ALB setup
+- Existing DynamoDB tables and data must be preserved
+- Container deployment through ECS must continue working
+- Current production environment variables and secrets must be maintained
+
+### Compatibility Constraints
+- Maintain backward compatibility with existing API clients
+- Preserve current authentication token formats
+- Ensure existing health data formats remain supported
+- WebSocket connections must not interfere with REST API performance
+
+### Performance Constraints
+- API response times must remain under 500ms for health data queries
+- WebSocket connections must support 1,000+ concurrent users
+- File uploads must handle 100MB+ health data files
+- Database queries must scale to millions of health data records
+
+## Risk Assessment
+
+### High Risk
+- **Service Integration Failures**: AWS services not properly wired could cause data loss
+- **Authentication Breaking**: Changes to auth could lock out existing users
+- **Data Migration Issues**: Health data could be corrupted during deployment
+
+### Medium Risk
+- **Performance Degradation**: New architecture might impact response times
+- **WebSocket Stability**: Real-time features could affect overall stability
+- **Test Suite Compatibility**: Existing tests might fail with new architecture
+
+### Low Risk
+- **Documentation Updates**: API docs might need minor updates
+- **Monitoring Gaps**: Some metrics might temporarily be unavailable
+- **Debug Tool Access**: Development tools might need reconfiguration
+
+## Conclusion
+
+The CLARITY Digital Twin Platform represents a sophisticated, enterprise-grade health AI system that rivals or exceeds the capabilities of major health technology companies. The current "partial marriage" deployment severely understates the platform's true capabilities.
+
+Full deployment of the complete 38-endpoint architecture will demonstrate:
+- Enterprise-grade health data processing
+- Real-time AI-powered health insights
+- Clinical-grade analysis capabilities
+- Scalable, HIPAA-compliant infrastructure
+- Advanced machine learning integration
+
+This implementation will prove that Y Combinator's rejection was a significant oversight, showcasing a platform that could compete directly with Series A and beyond health technology companies.

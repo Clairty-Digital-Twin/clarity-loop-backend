@@ -10,7 +10,7 @@ from fastapi import APIRouter, FastAPI
 from prometheus_client import Counter, Histogram
 
 from clarity.api.v1.router import api_router
-from clarity.auth.aws_auth_provider import AWSCognitoAuthProvider
+from clarity.auth.aws_auth_provider import CognitoAuthProvider
 from clarity.auth.mock_auth import MockAuthProvider
 from clarity.core.config_aws import Settings, get_settings
 from clarity.core.config_provider import ConfigProvider
@@ -50,7 +50,7 @@ class DependencyContainer:
     def __init__(self, settings: Settings | None = None):
         """Initialize the dependency container with AWS settings."""
         self.settings = settings or get_settings()
-        setup_logging(self.settings.log_level)
+        setup_logging()
 
         # Initialize service containers
         self._config_provider: IConfigProvider | None = None
@@ -120,7 +120,7 @@ class DependencyContainer:
                     )
 
                 # Initialize Cognito auth provider
-                self._auth_provider = AWSCognitoAuthProvider(
+                self._auth_provider = CognitoAuthProvider(
                     region=self.settings.cognito_region or self.settings.aws_region,
                     user_pool_id=self.settings.cognito_user_pool_id,
                     client_id=self.settings.cognito_client_id,
@@ -256,7 +256,7 @@ class DependencyContainer:
                 "services": {
                     "auth": (
                         "cognito"
-                        if isinstance(self._auth_provider, AWSCognitoAuthProvider)
+                        if isinstance(self._auth_provider, CognitoAuthProvider)
                         else "mock"
                     ),
                     "database": (

@@ -9,7 +9,7 @@ import logging.config
 import sys
 from typing import Any
 
-from clarity.core.config import get_settings
+from clarity.core.config_aws import get_settings
 
 # Configure logger
 logger = logging.getLogger(__name__)

@@ -9,7 +9,7 @@
   "containerDefinitions": [
     {
       "name": "clarity-backend-full",
-      "image": "***REMOVED***/clarity-backend-full:v3",
+      "image": "***REMOVED***/clarity-backend-full:v4",
       "essential": true,
       "portMappings": [
         {

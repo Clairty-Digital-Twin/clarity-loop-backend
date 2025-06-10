@@ -1,4 +1,3 @@
-import multiprocessing
 import os
 
 # Gunicorn configuration optimized for AWS ECS/Fargate
@@ -57,31 +56,31 @@ raw_env = [
 
 
 # Worker lifecycle hooks for monitoring
-def worker_int(worker):
+def worker_int(worker) -> None:
     """Called just before a worker is killed."""
     worker.log.info("Worker received INT or QUIT signal")
 
 
-def worker_abort(worker):
+def worker_abort(worker) -> None:
     """Called when a worker is killed by timeout."""
-    worker.log.error(f"Worker timeout, aborting: {worker.pid}")
+    worker.log.error("Worker timeout, aborting: %s", worker.pid)
 
 
-def pre_fork(server, worker):
+def pre_fork(server, worker) -> None:
     """Called just before a worker is forked."""
-    server.log.info(f"Forking worker: {worker}")
+    server.log.info("Forking worker: %s", worker)
 
 
-def post_fork(server, worker):
+def post_fork(server, worker) -> None:
     """Called just after a worker has been forked."""
-    server.log.info(f"Worker spawned: {worker.pid}")
+    server.log.info("Worker spawned: %s", worker.pid)
 
 
-def when_ready(server):
+def when_ready(server) -> None:
     """Called just after the server is started."""
     server.log.info("Server is ready. Spawning workers")
 
 
-def on_exit(server):
+def on_exit(server) -> None:
     """Called just before exiting."""
     server.log.info("Shutting down server")

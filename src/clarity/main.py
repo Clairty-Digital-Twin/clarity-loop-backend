@@ -10,6 +10,7 @@ Usage (from project root):
     uvicorn src.clarity.main:app --reload
 """
 import os
+
 from clarity.core.container import create_application
 
 # Check if we should use AWS implementation for testing
@@ -24,5 +25,9 @@ else:
         """Compatibility wrapper for tests expecting create_app function."""
         return create_application()
 
+
 # Create the application instance. This is the single source of truth for the app.
 app = create_application() if not USE_AWS_IMPL else create_app()
+
+# Compatibility alias for tests expecting get_app
+get_app = create_app

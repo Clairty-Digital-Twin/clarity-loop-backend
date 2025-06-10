@@ -16,6 +16,7 @@ from clarity.core.config_aws import Settings, get_settings
 from clarity.core.config_provider import ConfigProvider
 from clarity.core.exceptions import ConfigurationError
 from clarity.core.logging_config import setup_logging
+
 # Port types are imported from their respective modules
 from clarity.ml.gemini_direct_service import GeminiService
 from clarity.ports.auth_ports import IAuthProvider

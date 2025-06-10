@@ -48,7 +48,7 @@ async def lifespan(app: FastAPI):
 
 def create_app() -> FastAPI:
     """Factory function to create FastAPI application instance.
-    
+
     This function is used by tests and follows the same pattern as the original
     CLARITY implementation, allowing the test suite to work with the AWS version.
     """
@@ -84,7 +84,7 @@ def create_app() -> FastAPI:
             "environment": settings.environment,
             "deployment": "AWS",
         }
-    
+
     return app
 
 

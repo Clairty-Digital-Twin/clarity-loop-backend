@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""Test script for the simplified AWS backend
-"""
+"""Test script for the simplified AWS backend"""
 from datetime import datetime
 import json
 

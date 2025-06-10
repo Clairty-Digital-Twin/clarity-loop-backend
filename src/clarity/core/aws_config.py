@@ -11,9 +11,7 @@ class AWSConfig(BaseSettings):
 
     # AWS Core Settings
     aws_region: str = Field(default="us-east-1", description="AWS region")
-    aws_access_key_id: str | None = Field(
-        default=None, description="AWS access key ID"
-    )
+    aws_access_key_id: str | None = Field(default=None, description="AWS access key ID")
     aws_secret_access_key: str | None = Field(
         default=None, description="AWS secret access key"
     )

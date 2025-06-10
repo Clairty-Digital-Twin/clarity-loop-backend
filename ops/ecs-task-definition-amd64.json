@@ -13,7 +13,7 @@
   "containerDefinitions": [
     {
       "name": "clarity-backend",
-      "image": "***REMOVED***/clarity-backend:amd64-only",
+      "image": "***REMOVED***/clarity-backend:minimal-latest",
       "portMappings": [
         {
           "containerPort": 8000,
@@ -31,19 +31,47 @@
           "value": "8000"
         },
         {
-          "name": "AWS_DEFAULT_REGION",
-          "value": "us-east-1"
+          "name": "AWS_REGION",
+          "value": "us-east-2"
         },
         {
-          "name": "SKIP_EXTERNAL_SERVICES",
+          "name": "AWS_DEFAULT_REGION",
+          "value": "us-east-2"
+        },
+        {
+          "name": "COGNITO_USER_POOL_ID",
+          "value": "us-east-2_iCRM83uVj"
+        },
+        {
+          "name": "COGNITO_CLIENT_ID",
+          "value": "485gn7vn3uev0coc52aefklkjs"
+        },
+        {
+          "name": "COGNITO_REGION",
+          "value": "us-east-2"
+        },
+        {
+          "name": "DYNAMODB_TABLE_NAME",
+          "value": "clarity-health-data"
+        },
+        {
+          "name": "S3_BUCKET_NAME",
+          "value": "clarity-health-uploads"
+        },
+        {
+          "name": "ENABLE_AUTH",
           "value": "true"
+        },
+        {
+          "name": "DEBUG",
+          "value": "false"
         }
       ],
       "logConfiguration": {
         "logDriver": "awslogs",
         "options": {
           "awslogs-group": "/ecs/clarity-backend",
-          "awslogs-region": "us-east-1",
+          "awslogs-region": "us-east-2",
           "awslogs-stream-prefix": "ecs"
         }
       },

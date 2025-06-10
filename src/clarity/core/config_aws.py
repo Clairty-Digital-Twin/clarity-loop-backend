@@ -85,7 +85,7 @@ class Settings(BaseSettings):
     app_version: str = "1.0.0"
 
     # AWS Core Settings
-    aws_region: str = Field(default="us-east-1", alias="AWS_REGION")
+    aws_region: str = Field(default="us-east-2", alias="AWS_REGION")
     aws_access_key_id: str | None = Field(default=None, alias="AWS_ACCESS_KEY_ID")
     aws_secret_access_key: str | None = Field(
         default=None, alias="AWS_SECRET_ACCESS_KEY"
@@ -93,9 +93,9 @@ class Settings(BaseSettings):
     aws_session_token: str | None = Field(default=None, alias="AWS_SESSION_TOKEN")
 
     # AWS Cognito Settings (replacing Firebase Auth)
-    cognito_user_pool_id: str = Field(default="", alias="COGNITO_USER_POOL_ID")
-    cognito_client_id: str = Field(default="", alias="COGNITO_CLIENT_ID")
-    cognito_region: str | None = Field(default=None, alias="COGNITO_REGION")
+    cognito_user_pool_id: str = Field(default="us-east-2_iCRM83uVj", alias="COGNITO_USER_POOL_ID")
+    cognito_client_id: str = Field(default="485gn7vn3uev0coc52aefklkjs", alias="COGNITO_CLIENT_ID")
+    cognito_region: str | None = Field(default="us-east-2", alias="COGNITO_REGION")
 
     # DynamoDB Settings (replacing Firestore)
     dynamodb_table_name: str = Field(

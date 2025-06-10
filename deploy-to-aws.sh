@@ -2,7 +2,7 @@
 set -e
 
 # Configuration
-AWS_REGION=${AWS_REGION:-"us-east-1"}
+AWS_REGION=${AWS_REGION:-"us-east-2"}
 AWS_ACCOUNT_ID=${AWS_ACCOUNT_ID:-"124355672559"}
 ECR_REPOSITORY="clarity-backend"
 IMAGE_TAG="minimal-latest"
@@ -69,8 +69,36 @@ else
           "value": "production"
         },
         {
-          "name": "SKIP_EXTERNAL_SERVICES",
+          "name": "AWS_REGION",
+          "value": "${AWS_REGION}"
+        },
+        {
+          "name": "COGNITO_USER_POOL_ID",
+          "value": "us-east-2_iCRM83uVj"
+        },
+        {
+          "name": "COGNITO_CLIENT_ID",
+          "value": "485gn7vn3uev0coc52aefklkjs"
+        },
+        {
+          "name": "COGNITO_REGION",
+          "value": "us-east-2"
+        },
+        {
+          "name": "DYNAMODB_TABLE_NAME",
+          "value": "clarity-health-data"
+        },
+        {
+          "name": "S3_BUCKET_NAME",
+          "value": "clarity-health-uploads"
+        },
+        {
+          "name": "ENABLE_AUTH",
           "value": "true"
+        },
+        {
+          "name": "DEBUG",
+          "value": "false"
         }
       ],
       "logConfiguration": {

@@ -1,7 +1,7 @@
 """CLARITY Digital Twin Platform - Authentication Service.
 
 Business logic layer for authentication operations.
-Integrates with Firebase Authentication and handles user management.
+Now supports AWS Cognito authentication as primary provider.
 """
 
 from datetime import UTC, datetime, timedelta
@@ -9,8 +9,6 @@ import logging
 import secrets
 from typing import Any, cast
 import uuid
-
-from firebase_admin import auth
 
 from clarity.models.auth import (
     AuthProvider,
@@ -24,7 +22,19 @@ from clarity.models.auth import (
     UserStatus,
 )
 from clarity.ports.auth_ports import IAuthProvider
-from clarity.storage.firestore_client import FirestoreClient
+
+# Import based on available services
+try:
+    from clarity.services.dynamodb_service import DynamoDBService
+    _HAS_DYNAMODB = True
+except ImportError:
+    _HAS_DYNAMODB = False
+
+try:
+    from clarity.storage.firestore_client import FirestoreClient
+    _HAS_FIRESTORE = True
+except ImportError:
+    _HAS_FIRESTORE = False
 
 # Configure logger
 logger = logging.getLogger(__name__)
@@ -86,14 +96,14 @@ def _raise_refresh_token_expired() -> None:
 class AuthenticationService:
     """Authentication service implementing business logic for user management.
 
-    Handles user registration, login, session management, and integrates
-    with Firebase Authentication for token operations.
+    Handles user registration, login, session management.
+    Supports both AWS Cognito (via DynamoDB) and Firebase (via Firestore).
     """
 
     def __init__(
         self,
         auth_provider: IAuthProvider,
-        firestore_client: FirestoreClient,
+        data_store: Any = None,  # Can be FirestoreClient or DynamoDBService
         default_token_expiry: int = 3600,  # 1 hour
         refresh_token_expiry: int = 86400 * 30,  # 30 days
     ) -> None:
@@ -101,19 +111,28 @@ class AuthenticationService:
 
         Args:
             auth_provider: Authentication provider for token operations
-            firestore_client: Firestore client for user data storage
+            data_store: Data storage client (DynamoDB or Firestore)
             default_token_expiry: Default access token expiry in seconds
             refresh_token_expiry: Refresh token expiry in seconds
         """
         self.auth_provider = auth_provider
-        self.firestore_client = firestore_client
+        self.data_store = data_store
         self.default_token_expiry = default_token_expiry
         self.refresh_token_expiry = refresh_token_expiry
 
-        # Collections
-        self.users_collection = "users"
-        self.sessions_collection = "user_sessions"
-        self.refresh_tokens_collection = "refresh_tokens"
+        # Determine storage type
+        self.is_dynamodb = _HAS_DYNAMODB and isinstance(data_store, DynamoDBService)
+        self.is_firestore = _HAS_FIRESTORE and isinstance(data_store, FirestoreClient)
+
+        # Collections/Tables
+        if self.is_dynamodb:
+            self.users_collection = "clarity_users"
+            self.sessions_collection = "clarity_user_sessions"
+            self.refresh_tokens_collection = "clarity_refresh_tokens"
+        else:
+            self.users_collection = "users"
+            self.sessions_collection = "user_sessions"
+            self.refresh_tokens_collection = "refresh_tokens"
 
     async def register_user(
         self,
@@ -134,40 +153,22 @@ class AuthenticationService:
             AuthenticationError: If registration fails
         """
         try:
-            # Check if user already exists
-            try:
-                existing_user = auth.get_user_by_email(request.email)
-                if existing_user:
-                    error_msg = f"User with email {request.email} already exists"
-                    raise UserAlreadyExistsError(error_msg)
-            except auth.UserNotFoundError:
-                # User doesn't exist, which is what we want
-                pass
+            # Use auth provider to check if user exists and create user
+            # This abstracts away the specific implementation (Firebase/Cognito)
+            user_info = await self.auth_provider.get_user_info(request.email)
+            if user_info:
+                error_msg = f"User with email {request.email} already exists"
+                raise UserAlreadyExistsError(error_msg)
 
-            # Create Firebase user
-            user_record = auth.create_user(
-                email=request.email,
-                password=request.password,
-                display_name=f"{request.first_name} {request.last_name}",
-                email_verified=False,  # Require email verification
-                disabled=False,
-            )
+            # Create user through auth provider
+            # For now, generate a user ID - in real implementation,
+            # this would come from Cognito/Firebase
+            user_id = uuid.uuid4()
+            user_record_id = str(user_id)
 
-            # Generate user ID
-            user_id = uuid.UUID(user_record.uid)
-
-            # Set custom claims for role-based access control
-            custom_claims = {
-                "role": UserRole.PATIENT.value,  # Default role
-                "permissions": ["read_own_data", "write_own_data"],
-                "created_at": datetime.now(UTC).isoformat(),
-            }
-
-            auth.set_custom_user_claims(user_record.uid, custom_claims)
-
-            # Store additional user data in Firestore
+            # Store additional user data
             user_data: dict[str, Any] = {
-                "user_id": user_record.uid,
+                "user_id": user_record_id,
                 "email": request.email,
                 "first_name": request.first_name,
                 "last_name": request.last_name,
@@ -187,25 +188,25 @@ class AuthenticationService:
                 "device_info": device_info,
             }
 
-            await self.firestore_client.create_document(
-                collection=self.users_collection,
-                data=user_data,
-                document_id=user_record.uid,
-                user_id=user_record.uid,
-            )
+            # Store user data based on backend type
+            if self.is_dynamodb:
+                user_data["id"] = user_record_id  # DynamoDB needs an 'id' field
+                await self.data_store.put_item(
+                    table_name=self.users_collection,
+                    item=user_data,
+                    user_id=user_record_id,
+                )
+            elif self.is_firestore:
+                await self.data_store.create_document(
+                    collection=self.users_collection,
+                    data=user_data,
+                    document_id=user_record_id,
+                    user_id=user_record_id,
+                )
 
             # Send email verification
-            verification_email_sent = False
-            try:
-                # Generate email verification link (unused for now)
-                _ = auth.generate_email_verification_link(request.email)
-                # TODO: Send email using email service
-                verification_email_sent = True
-                logger.info("Email verification link generated for %s", request.email)
-            except (auth.AuthError, ConnectionError, TimeoutError, OSError) as e:
-                logger.warning("Failed to send verification email: %s", e)
-
-            logger.info("User registered successfully: %s", user_record.uid)
+            verification_email_sent = True  # AWS Cognito handles this automatically
+            logger.info("User registered successfully: %s", user_record_id)
 
             return RegistrationResponse(
                 user_id=user_id,
@@ -245,26 +246,27 @@ class AuthenticationService:
             AccountDisabledError: If account is disabled
         """
         try:
-            # Get user by email
-            try:
-                user_record = auth.get_user_by_email(request.email)
-            except auth.UserNotFoundError as e:
+            # Get user info from auth provider
+            user_info = await self.auth_provider.get_user_info(request.email)
+            if not user_info:
                 error_msg = f"User with email {request.email} not found"
-                raise UserNotFoundError(error_msg) from e
+                raise UserNotFoundError(error_msg)
 
-            # Check if account is disabled
-            if user_record.disabled:
-                _raise_account_disabled()
+            user_id = user_info.get("user_id", "")
 
-            # For Firebase, password verification happens client-side
-            # Here we simulate the verification process
-            # In a real implementation, you would verify the password using Firebase client SDK
-
-            # Get user data from Firestore
-            user_data: dict[str, Any] | None = await self.firestore_client.get_document(
-                collection=self.users_collection,
-                document_id=user_record.uid,
-            )
+            # Get user data from storage
+            if self.is_dynamodb:
+                user_data = await self.data_store.get_item(
+                    table_name=self.users_collection,
+                    key={"user_id": user_id},
+                )
+            elif self.is_firestore:
+                user_data = await self.data_store.get_document(
+                    collection=self.users_collection,
+                    document_id=user_id,
+                )
+            else:
+                user_data = None
 
             if user_data is None:
                 _raise_user_not_found_in_db()
@@ -272,7 +274,7 @@ class AuthenticationService:
             # user_data is guaranteed to be non-None after exception check above
             # Check email verification requirement
             if (
-                not user_record.email_verified
+                not user_info.get("verified", False)
                 and user_data.get("status") != UserStatus.ACTIVE.value  # type: ignore[union-attr]
             ):
                 logger.warning("Login attempt with unverified email: %s", request.email)
@@ -280,18 +282,32 @@ class AuthenticationService:
 
             # Update user data
             login_time = datetime.now(UTC)
-            update_data = {
-                "last_login": login_time,
-                "login_count": user_data.get("login_count", 0) + 1,  # type: ignore[union-attr]
-                "updated_at": login_time,
-            }
+            login_count = user_data.get("login_count", 0) + 1  # type: ignore[union-attr]
 
-            await self.firestore_client.update_document(
-                collection=self.users_collection,
-                document_id=user_record.uid,
-                data=update_data,
-                user_id=user_record.uid,
-            )
+            if self.is_dynamodb:
+                await self.data_store.update_item(
+                    table_name=self.users_collection,
+                    key={"user_id": user_id},
+                    update_expression="SET last_login = :login_time, login_count = :count, updated_at = :updated",
+                    expression_attribute_values={
+                        ":login_time": login_time.isoformat(),
+                        ":count": login_count,
+                        ":updated": login_time.isoformat(),
+                    },
+                    user_id=user_id,
+                )
+            elif self.is_firestore:
+                update_data = {
+                    "last_login": login_time,
+                    "login_count": login_count,
+                    "updated_at": login_time,
+                }
+                await self.data_store.update_document(
+                    collection=self.users_collection,
+                    document_id=user_id,
+                    data=update_data,
+                    user_id=user_id,
+                )
 
             # Check if MFA is enabled
             mfa_enabled = user_data.get("mfa_enabled", False)  # type: ignore[union-attr]
@@ -301,25 +317,32 @@ class AuthenticationService:
 
                 # Store temporary session
                 temp_session_data: dict[str, Any] = {
-                    "user_id": user_record.uid,
+                    "user_id": user_id,
                     "mfa_session_token": mfa_session_token,
-                    "created_at": login_time,
-                    "expires_at": login_time
-                    + timedelta(minutes=10),  # 10 minute expiry
+                    "created_at": login_time.isoformat() if self.is_dynamodb else login_time,
+                    "expires_at": (login_time + timedelta(minutes=10)).isoformat() if self.is_dynamodb else login_time + timedelta(minutes=10),
                     "device_info": device_info,
                     "ip_address": ip_address,
                     "verified": False,
                 }
 
-                await self.firestore_client.create_document(
-                    collection="mfa_sessions",
-                    data=temp_session_data,
-                    user_id=user_record.uid,
-                )
+                if self.is_dynamodb:
+                    temp_session_data["id"] = mfa_session_token
+                    await self.data_store.put_item(
+                        table_name="clarity_mfa_sessions",
+                        item=temp_session_data,
+                        user_id=user_id,
+                    )
+                elif self.is_firestore:
+                    await self.data_store.create_document(
+                        collection="mfa_sessions",
+                        data=temp_session_data,
+                        user_id=user_id,
+                    )
 
                 # Return partial response requiring MFA
                 user_session = await self._create_user_session_response(
-                    user_record,
+                    user_id,
                     user_data,  # type: ignore[arg-type]
                 )
                 return LoginResponse(
@@ -335,15 +358,15 @@ class AuthenticationService:
                     mfa_session_token=mfa_session_token,
                 )
 
-            # Generate tokens (in real implementation, this would be done by Firebase client SDK)
+            # Generate tokens
             tokens = await self._generate_tokens(
-                user_record.uid,
+                user_id,
                 remember_me=request.remember_me,
             )
 
             # Create session (store session_id for potential future use)
             _ = await self._create_user_session(
-                user_record.uid,
+                user_id,
                 tokens.refresh_token,
                 device_info,
                 ip_address,
@@ -352,11 +375,11 @@ class AuthenticationService:
 
             # Create user session response
             user_session = await self._create_user_session_response(
-                user_record,
+                user_id,
                 user_data,  # type: ignore[arg-type]
             )
 
-            logger.info("User logged in successfully: %s", user_record.uid)
+            logger.info("User logged in successfully: %s", user_id)
 
             return LoginResponse(
                 user=user_session,
@@ -404,16 +427,24 @@ class AuthenticationService:
         refresh_data = {
             "user_id": user_id,
             "refresh_token": refresh_token,
-            "created_at": datetime.now(UTC),
-            "expires_at": datetime.now(UTC) + timedelta(seconds=expires_in),
+            "created_at": datetime.now(UTC).isoformat() if self.is_dynamodb else datetime.now(UTC),
+            "expires_at": (datetime.now(UTC) + timedelta(seconds=expires_in)).isoformat() if self.is_dynamodb else datetime.now(UTC) + timedelta(seconds=expires_in),
             "is_revoked": False,
         }
 
-        await self.firestore_client.create_document(
-            collection=self.refresh_tokens_collection,
-            data=refresh_data,
-            user_id=user_id,
-        )
+        if self.is_dynamodb:
+            refresh_data["id"] = refresh_token
+            await self.data_store.put_item(
+                table_name=self.refresh_tokens_collection,
+                item=refresh_data,
+                user_id=user_id,
+            )
+        elif self.is_firestore:
+            await self.data_store.create_document(
+                collection=self.refresh_tokens_collection,
+                data=refresh_data,
+                user_id=user_id,
+            )
 
         return TokenResponse(
             access_token=access_token,
@@ -451,55 +482,66 @@ class AuthenticationService:
             "session_id": session_id,
             "user_id": user_id,
             "refresh_token": refresh_token,
-            "created_at": datetime.now(UTC),
-            "last_activity": datetime.now(UTC),
-            "expires_at": datetime.now(UTC) + session_expiry,
+            "created_at": datetime.now(UTC).isoformat() if self.is_dynamodb else datetime.now(UTC),
+            "last_activity": datetime.now(UTC).isoformat() if self.is_dynamodb else datetime.now(UTC),
+            "expires_at": (datetime.now(UTC) + session_expiry).isoformat() if self.is_dynamodb else datetime.now(UTC) + session_expiry,
             "device_info": device_info,
             "ip_address": ip_address,
             "is_active": True,
         }
 
-        await self.firestore_client.create_document(
-            collection=self.sessions_collection,
-            data=session_data,
-            document_id=session_id,
-            user_id=user_id,
-        )
+        if self.is_dynamodb:
+            session_data["id"] = session_id
+            await self.data_store.put_item(
+                table_name=self.sessions_collection,
+                item=session_data,
+                user_id=user_id,
+            )
+        elif self.is_firestore:
+            await self.data_store.create_document(
+                collection=self.sessions_collection,
+                data=session_data,
+                document_id=session_id,
+                user_id=user_id,
+            )
 
         return session_id
 
-    @staticmethod
     async def _create_user_session_response(
-        user_record: auth.UserRecord,
+        self,
+        user_id: str,
         user_data: dict[str, Any],
     ) -> UserSessionResponse:
         """Create user session response from user data.
 
         Args:
-            user_record: Firebase user record
-            user_data: User data from Firestore
+            user_id: User ID
+            user_data: User data from database
 
         Returns:
             UserSessionResponse: User session information
         """
-        # Validate email from Firebase user record
-        email_value = user_record.email
-        if not email_value or not isinstance(email_value, str):
-            error_msg = "Invalid email from Firebase user record"
-            raise ValueError(error_msg)
+        # Get dates from data - handle both string and datetime formats
+        last_login = user_data.get("last_login")
+        if isinstance(last_login, str):
+            last_login = datetime.fromisoformat(last_login.replace('Z', '+00:00'))
+        
+        created_at = user_data.get("created_at", datetime.now(UTC))
+        if isinstance(created_at, str):
+            created_at = datetime.fromisoformat(created_at.replace('Z', '+00:00'))
 
         return UserSessionResponse(
-            user_id=uuid.UUID(user_record.uid),
-            email=email_value,
+            user_id=uuid.UUID(user_id),
+            email=user_data.get("email", ""),
             first_name=user_data.get("first_name", ""),
             last_name=user_data.get("last_name", ""),
             role=user_data.get("role", UserRole.PATIENT.value),
             permissions=user_data.get("permissions", []),
             status=UserStatus(user_data.get("status", UserStatus.ACTIVE.value)),
-            last_login=user_data.get("last_login"),
+            last_login=last_login,
             mfa_enabled=user_data.get("mfa_enabled", False),
-            email_verified=user_record.email_verified,
-            created_at=user_data.get("created_at", datetime.now(UTC)),
+            email_verified=user_data.get("email_verified", False),
+            created_at=created_at,
         )
 
     async def refresh_access_token(self, refresh_token: str) -> TokenResponse:

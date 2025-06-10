@@ -13,7 +13,7 @@ import jwt
 from clarity.core.exceptions import (
     AuthenticationError,
     AuthorizationError,
-    ValidationError,
+    DataValidationError,
 )
 from clarity.models.auth import UserContext
 from clarity.ports.auth_ports import IAuthProvider

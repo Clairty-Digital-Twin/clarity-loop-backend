@@ -24,9 +24,9 @@ RUN apt-get update && apt-get install -y \
 # Copy the entire project context
 COPY . /app/
 
-# Install the package and its dependencies. Using -e (editable) ensures
-# that it's correctly registered as a package while being installed from source.
-RUN pip install --no-cache-dir -e .
+# Install the package and its dependencies.
+# We install without -e to ensure the package is properly installed in site-packages.
+RUN pip install --no-cache-dir .
 
 
 # --- Final Stage ---

@@ -18,8 +18,8 @@ Production:
     gunicorn src.clarity.main:app -c gunicorn.aws.conf.py
 """
 
+from collections.abc import Callable
 import os
-from typing import Callable
 
 from fastapi import FastAPI
 
@@ -38,10 +38,9 @@ def create_app() -> FastAPI:
         # Use AWS implementation
         from clarity.main_aws import create_app as create_aws_app
         return create_aws_app()
-    else:
-        # Use original implementation with Firebase/Mock services
-        from clarity.core.container import create_application
-        return create_application()
+    # Use original implementation with Firebase/Mock services
+    from clarity.core.container import create_application
+    return create_application()
 
 
 # Create the application instance
@@ -53,8 +52,9 @@ get_app = create_app
 
 if __name__ == "__main__":
     import uvicorn
+
     from clarity.core.config import get_settings
-    
+
     settings = get_settings()
     uvicorn.run(
         "clarity.main:app",

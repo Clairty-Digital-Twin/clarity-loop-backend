@@ -115,7 +115,7 @@ class HealthDataService:
             self.cloud_storage = storage.Client()
         else:
             self.cloud_storage = None
-            
+
         self.raw_data_bucket = os.getenv(
             "HEALTHKIT_RAW_BUCKET", "clarity-healthkit-raw-data"
         )
@@ -140,7 +140,7 @@ class HealthDataService:
             # Skip GCS upload if not available
             self.logger.info("GCS not available, skipping raw data upload")
             return f"local://{user_id}/{processing_id}.json"
-            
+
         try:
             # Create GCS blob path
             blob_path = f"{user_id}/{processing_id}.json"

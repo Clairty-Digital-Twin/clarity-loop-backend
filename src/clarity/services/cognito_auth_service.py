@@ -4,10 +4,10 @@ Business logic layer for authentication operations using AWS Cognito.
 Replaces Firebase Authentication with AWS-native solution.
 """
 
+from datetime import UTC, datetime, timedelta
 import json
 import logging
 import secrets
-from datetime import UTC, datetime, timedelta
 from typing import Any, cast
 import uuid
 
@@ -260,7 +260,7 @@ class CognitoAuthenticationService:
             if "ChallengeName" in response:
                 if response["ChallengeName"] == "NEW_PASSWORD_REQUIRED":
                     raise AuthenticationError("Password change required")
-                elif response["ChallengeName"] == "MFA_SETUP":
+                if response["ChallengeName"] == "MFA_SETUP":
                     # Handle MFA setup
                     return self._handle_mfa_setup(response, request, device_info, ip_address)
 
@@ -283,7 +283,7 @@ class CognitoAuthenticationService:
             )
 
             if not user_data:
-                raise UserNotFoundError(f"User data not found in database")
+                raise UserNotFoundError("User data not found in database")
 
             # Update user data
             login_time = datetime.now(UTC)
@@ -332,9 +332,9 @@ class CognitoAuthenticationService:
             error_code = e.response["Error"]["Code"]
             if error_code == "UserNotFoundException":
                 raise UserNotFoundError(f"User with email {request.email} not found")
-            elif error_code == "NotAuthorizedException":
+            if error_code == "NotAuthorizedException":
                 raise InvalidCredentialsError("Invalid username or password")
-            elif error_code == "UserNotConfirmedException":
+            if error_code == "UserNotConfirmedException":
                 raise EmailNotVerifiedError("Email verification required")
             logger.exception("Login failed for %s", request.email)
             raise AuthenticationError(f"Login failed: {e}") from e
@@ -502,7 +502,7 @@ class CognitoAuthenticationService:
         # This is a placeholder for MFA handling
         # In a real implementation, you would handle the MFA setup flow
         mfa_session_token = secrets.token_urlsafe(32)
-        
+
         # Return partial response requiring MFA
         return LoginResponse(
             user=UserSessionResponse(

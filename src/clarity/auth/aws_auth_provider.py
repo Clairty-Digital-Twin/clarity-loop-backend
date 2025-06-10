@@ -4,15 +4,15 @@ This module provides AWS Cognito integration, replacing Firebase authentication
 with AWS-native solutions.
 """
 
+from datetime import UTC, datetime
 import json
 import logging
 import time
-from datetime import UTC, datetime
 from typing import Any
 
 import boto3
 from botocore.exceptions import ClientError
-from jose import jwt, JWTError
+from jose import JWTError, jwt
 
 from clarity.models.auth import (
     AuthError,
@@ -107,7 +107,7 @@ class CognitoAuthProvider(IAuthProvider):
     async def _get_jwks(self) -> dict[str, Any]:
         """Get JSON Web Key Set from Cognito for token verification."""
         current_time = time.time()
-        
+
         # Check cache
         if self._jwks_cache and (current_time - self._jwks_cache_time) < self._jwks_cache_ttl:
             return self._jwks_cache
@@ -169,7 +169,7 @@ class CognitoAuthProvider(IAuthProvider):
             # Decode and verify the token
             # First, decode without verification to get the header
             unverified_header = jwt.get_unverified_header(token)
-            
+
             # Find the correct key
             rsa_key = None
             for key in jwks["keys"]:
@@ -347,7 +347,7 @@ class CognitoAuthProvider(IAuthProvider):
         # Extract user role from custom claims
         custom_claims = user_info.get("custom_claims", {})
         role_str = custom_claims.get("role", "patient")
-        
+
         if role_str == "admin":
             role = UserRole.ADMIN
         elif role_str == "clinician":
@@ -495,7 +495,7 @@ class CognitoAuthProvider(IAuthProvider):
         created_at = user_data.get("created_at")
         if isinstance(created_at, str):
             created_at = datetime.fromisoformat(created_at.replace('Z', '+00:00'))
-        
+
         last_login = user_data.get("last_login")
         if isinstance(last_login, str):
             last_login = datetime.fromisoformat(last_login.replace('Z', '+00:00'))

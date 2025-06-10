@@ -5,10 +5,10 @@ Replaces Firestore with AWS-native NoSQL solution.
 """
 
 import asyncio
+from datetime import UTC, datetime, timedelta
 import json
 import logging
 import time
-from datetime import UTC, datetime, timedelta
 from typing import Any
 import uuid
 from uuid import UUID
@@ -159,7 +159,7 @@ class DynamoDBService:
             await asyncio.get_event_loop().run_in_executor(
                 None, audit_table.put_item, {"Item": audit_entry}
             )
-            
+
             logger.debug(
                 "Audit log created: %s on %s/%s", operation, table, item_id
             )
@@ -259,7 +259,7 @@ class DynamoDBService:
         try:
             # Get the ID from the key for caching
             item_id = key.get("id") or key.get("user_id") or str(key)
-            
+
             # Check cache first
             cache_key = self._cache_key(table_name, item_id)
             if use_cache and cache_key in self._cache:
@@ -409,13 +409,13 @@ class DynamoDBService:
         """
         try:
             table = self.dynamodb.Table(table_name)
-            
+
             query_params = {
                 "KeyConditionExpression": key_condition_expression,
                 "ExpressionAttributeValues": expression_attribute_values,
                 "ScanIndexForward": scan_index_forward,
             }
-            
+
             if limit:
                 query_params["Limit"] = limit
 
@@ -448,23 +448,23 @@ class DynamoDBService:
         """
         try:
             table = self.dynamodb.Table(table_name)
-            
+
             # DynamoDB batch write limit is 25 items
             batch_size = 25
-            
+
             for i in range(0, len(items), batch_size):
                 batch_items = items[i : i + batch_size]
-                
+
                 with table.batch_writer() as batch:
                     for item in batch_items:
                         # Add timestamps
                         item["created_at"] = datetime.now(UTC).isoformat()
                         item["updated_at"] = datetime.now(UTC).isoformat()
-                        
+
                         # Ensure ID
                         if "id" not in item:
                             item["id"] = str(uuid.uuid4())
-                        
+
                         batch.put_item(Item=item)
 
             await self._audit_log(
@@ -646,20 +646,20 @@ class DynamoDBHealthDataRepository(IHealthDataRepository):
             )
 
             metrics = response.get("Items", [])
-            
+
             # Apply additional filters in memory (DynamoDB doesn't support complex queries)
             if metric_type:
                 metrics = [
                     m for m in metrics
                     if m.get("metric_data", {}).get("metric_type") == metric_type
                 ]
-            
+
             if start_date:
                 metrics = [
                     m for m in metrics
                     if datetime.fromisoformat(m.get("created_at", "")) >= start_date
                 ]
-            
+
             if end_date:
                 metrics = [
                     m for m in metrics
@@ -760,7 +760,7 @@ class DynamoDBHealthDataRepository(IHealthDataRepository):
                         ":processing_id": processing_id,
                     },
                 )
-                
+
                 # Delete each metric
                 for item in response.get("Items", []):
                     await self._dynamodb_service.delete_item(
@@ -782,7 +782,7 @@ class DynamoDBHealthDataRepository(IHealthDataRepository):
                     key_condition_expression="user_id = :user_id",
                     expression_attribute_values={":user_id": user_id},
                 )
-                
+
                 # Delete each item
                 for item in response.get("Items", []):
                     await self._dynamodb_service.delete_item(

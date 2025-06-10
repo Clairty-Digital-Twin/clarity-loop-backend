@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 """Production readiness test for AWS deployed backend."""
 
+from datetime import UTC, datetime
 import json
 import time
-from datetime import datetime, UTC
+
 import requests
 
 BASE_URL = "http://***REMOVED***"
@@ -29,46 +30,44 @@ def test_auth_signup():
         "email": test_email,
         "password": "TestPassword123!"
     }
-    
+
     resp = requests.post(
         f"{BASE_URL}/api/v1/auth/signup",
         headers=HEADERS,
         json=signup_data,
         timeout=10
     )
-    
+
     # Should return 200 even if Cognito is not fully configured
     assert resp.status_code == 200
     data = resp.json()
-    
+
     if data.get("success"):
         print(f"✅ Signup succeeded for {test_email}")
         return test_email, signup_data["password"], data.get("tokens")
-    else:
-        print(f"⚠️  Signup returned error: {data.get('error')}")
-        return test_email, signup_data["password"], None
+    print(f"⚠️  Signup returned error: {data.get('error')}")
+    return test_email, signup_data["password"], None
 
 
 def test_auth_login(email, password):
     """Test user login."""
     login_data = {"email": email, "password": password}
-    
+
     resp = requests.post(
         f"{BASE_URL}/api/v1/auth/login",
         headers=HEADERS,
         json=login_data,
         timeout=10
     )
-    
+
     assert resp.status_code == 200
     data = resp.json()
-    
+
     if data.get("success") and data.get("tokens"):
-        print(f"✅ Login succeeded, got tokens")
+        print("✅ Login succeeded, got tokens")
         return data["tokens"]["id_token"]
-    else:
-        print(f"⚠️  Login returned: {data}")
-        return None
+    print(f"⚠️  Login returned: {data}")
+    return None
 
 
 def test_health_data_with_api_key():
@@ -78,14 +77,14 @@ def test_health_data_with_api_key():
         "value": 72.5,
         "timestamp": datetime.now(UTC).isoformat()
     }
-    
+
     resp = requests.post(
         f"{BASE_URL}/api/v1/health-data",
         headers=HEADERS,
         json=health_data,
         timeout=10
     )
-    
+
     assert resp.status_code == 200
     data = resp.json()
     assert data["success"] is True
@@ -101,7 +100,7 @@ def test_health_data_query():
         headers=HEADERS,
         timeout=10
     )
-    
+
     assert resp.status_code == 200
     data = resp.json()
     assert data["success"] is True
@@ -115,14 +114,14 @@ def test_insights_generation():
         "query": "What are some tips for better sleep?",
         "include_recent_data": False
     }
-    
+
     resp = requests.post(
         f"{BASE_URL}/api/v1/insights",
         headers=HEADERS,
         json=insight_request,
         timeout=30
     )
-    
+
     assert resp.status_code == 200
     data = resp.json()
     assert data["success"] is True
@@ -137,7 +136,7 @@ def test_user_profile_api_key():
         headers=HEADERS,
         timeout=10
     )
-    
+
     assert resp.status_code == 200
     data = resp.json()
     assert data["auth_type"] == "api_key"
@@ -149,7 +148,7 @@ def test_openapi_docs():
     resp = requests.get(f"{BASE_URL}/docs", timeout=5)
     assert resp.status_code == 200
     print("✅ Swagger docs accessible")
-    
+
     resp = requests.get(f"{BASE_URL}/openapi.json", timeout=5)
     assert resp.status_code == 200
     openapi = resp.json()
@@ -164,33 +163,33 @@ def run_all_tests():
     print(f"Target: {BASE_URL}")
     print(f"Time: {datetime.now(UTC).isoformat()}")
     print("=" * 60)
-    
+
     try:
         # Basic health check
         test_health_check()
-        
+
         # API documentation
         test_openapi_docs()
-        
+
         # Authentication flow
         email, password, tokens = test_auth_signup()
         auth_token = test_auth_login(email, password) if not tokens else tokens.get("id_token")
-        
+
         # Data operations with API key
         test_health_data_with_api_key()
         test_health_data_query()
-        
+
         # AI insights
         test_insights_generation()
-        
+
         # User profile
         test_user_profile_api_key()
-        
+
         # If we have auth token, test authenticated endpoints
         if auth_token:
             auth_headers = HEADERS.copy()
             auth_headers["Authorization"] = f"Bearer {auth_token}"
-            
+
             # Test with JWT auth
             resp = requests.get(
                 f"{BASE_URL}/api/v1/user/profile",
@@ -199,18 +198,18 @@ def run_all_tests():
             )
             if resp.status_code == 200:
                 print("✅ JWT authentication working")
-        
+
         print("\n✨ ALL TESTS PASSED! Backend is production ready!")
         print("\n📊 Summary:")
         print("- ✅ Health checks working")
-        print("- ✅ Authentication endpoints functional") 
+        print("- ✅ Authentication endpoints functional")
         print("- ✅ Data storage/retrieval operational")
         print("- ✅ AI insights generation working")
         print("- ✅ API documentation accessible")
         print("\n🎉 YC doesn't know what they're missing!")
-        
+
         return True
-        
+
     except AssertionError as e:
         print(f"\n❌ Test failed: {e}")
         return False

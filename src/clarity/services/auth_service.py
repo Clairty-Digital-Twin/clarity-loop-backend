@@ -525,7 +525,7 @@ class AuthenticationService:
         last_login = user_data.get("last_login")
         if isinstance(last_login, str):
             last_login = datetime.fromisoformat(last_login.replace('Z', '+00:00'))
-        
+
         created_at = user_data.get("created_at", datetime.now(UTC))
         if isinstance(created_at, str):
             created_at = datetime.fromisoformat(created_at.replace('Z', '+00:00'))

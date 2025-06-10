@@ -9,28 +9,30 @@ import sys
 
 def decode_jwt(token: str) -> dict:
     """Decode JWT token without verification."""
-    parts = token.split('.')
+    parts = token.split(".")
     if len(parts) != 3:
         return {"error": "Invalid JWT format - expected 3 parts"}
 
     # Decode header
-    header = json.loads(base64.urlsafe_b64decode(parts[0] + '=='))
+    header = json.loads(base64.urlsafe_b64decode(parts[0] + "=="))
 
     # Decode payload
-    payload = json.loads(base64.urlsafe_b64decode(parts[1] + '=='))
+    payload = json.loads(base64.urlsafe_b64decode(parts[1] + "=="))
 
     # Convert timestamps to readable format
-    if 'exp' in payload:
-        payload['exp_readable'] = datetime.fromtimestamp(payload['exp']).isoformat()
-    if 'iat' in payload:
-        payload['iat_readable'] = datetime.fromtimestamp(payload['iat']).isoformat()
-    if 'auth_time' in payload:
-        payload['auth_time_readable'] = datetime.fromtimestamp(payload['auth_time']).isoformat()
+    if "exp" in payload:
+        payload["exp_readable"] = datetime.fromtimestamp(payload["exp"]).isoformat()
+    if "iat" in payload:
+        payload["iat_readable"] = datetime.fromtimestamp(payload["iat"]).isoformat()
+    if "auth_time" in payload:
+        payload["auth_time_readable"] = datetime.fromtimestamp(
+            payload["auth_time"]
+        ).isoformat()
 
     return {
         "header": header,
         "payload": payload,
-        "signature": parts[2][:20] + "..." if len(parts[2]) > 20 else parts[2]
+        "signature": parts[2][:20] + "..." if len(parts[2]) > 20 else parts[2],
     }
 
 

@@ -1,5 +1,5 @@
-import os
 import multiprocessing
+import os
 
 # Gunicorn configuration optimized for AWS ECS/Fargate
 # Designed for containerized deployment with proper health checks
@@ -44,7 +44,9 @@ loglevel = os.environ.get("LOG_LEVEL", "info").lower()
 
 # StatsD integration for CloudWatch metrics (optional)
 if os.environ.get("STATSD_HOST"):
-    statsd_host = f"{os.environ.get('STATSD_HOST')}:{os.environ.get('STATSD_PORT', '8125')}"
+    statsd_host = (
+        f"{os.environ.get('STATSD_HOST')}:{os.environ.get('STATSD_PORT', '8125')}"
+    )
     statsd_prefix = "clarity.backend"
 
 # Custom settings for the application
@@ -53,26 +55,32 @@ raw_env = [
     f"AWS_REGION={os.environ.get('AWS_DEFAULT_REGION', 'us-east-1')}",
 ]
 
+
 # Worker lifecycle hooks for monitoring
 def worker_int(worker):
     """Called just before a worker is killed."""
     worker.log.info("Worker received INT or QUIT signal")
 
+
 def worker_abort(worker):
     """Called when a worker is killed by timeout."""
     worker.log.error(f"Worker timeout, aborting: {worker.pid}")
+
 
 def pre_fork(server, worker):
     """Called just before a worker is forked."""
     server.log.info(f"Forking worker: {worker}")
 
+
 def post_fork(server, worker):
     """Called just after a worker has been forked."""
     server.log.info(f"Worker spawned: {worker.pid}")
 
+
 def when_ready(server):
     """Called just after the server is started."""
     server.log.info("Server is ready. Spawning workers")
+
 
 def on_exit(server):
     """Called just before exiting."""

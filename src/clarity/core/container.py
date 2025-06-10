@@ -158,13 +158,11 @@ class DependencyContainer:
         tasks = []
         for service_type, instance in self._instances.items():
             if hasattr(instance, "cleanup"):
-                tasks.append(
-                    asyncio.wait_for(
-                        instance.cleanup(), timeout=3.0
-                    )
-                )
+                tasks.append(asyncio.wait_for(instance.cleanup(), timeout=3.0))
         results = await asyncio.gather(*tasks, return_exceptions=True)
-        for result, (service_type, _) in zip(results, self._instances.items(), strict=False):
+        for result, (service_type, _) in zip(
+            results, self._instances.items(), strict=False
+        ):
             if isinstance(result, Exception):
                 logger.warning(
                     "⚠️ Cleanup error for %s: %s",
@@ -220,7 +218,9 @@ class DependencyContainer:
                 self.app = app
                 self.max_size = max_size
 
-            async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
+            async def __call__(
+                self, scope: Scope, receive: Receive, send: Send
+            ) -> None:
                 if scope["type"] != "http":
                     await self.app(scope, receive, send)
                     return
@@ -235,7 +235,10 @@ class DependencyContainer:
                     await self.app(scope, receive, send)
 
         app.add_middleware(LimitUploadSizeMiddleware, max_size=MAX_BODY_SIZE)
-        logger.info("Request limits configured (max body size: %s MB)", MAX_BODY_SIZE / (1024 * 1024))
+        logger.info(
+            "Request limits configured (max body size: %s MB)",
+            MAX_BODY_SIZE / (1024 * 1024),
+        )
 
     def _configure_middleware(self, app: FastAPI) -> None:
         """Configure all application middleware."""
@@ -243,12 +246,16 @@ class DependencyContainer:
         middleware_config = config_provider.get_middleware_config()
 
         # Configure CORS - allow all origins in development, restrict in production
-        allowed_origins = ["*"] if config_provider.is_development() else [
-            "https://clarity-backend-282877548076.us-central1.run.app",
-            "https://your-frontend-domain.com",  # Replace with actual frontend domain
-            "http://localhost:3000",  # For local development
-            "http://localhost:5173",  # Vite default port
-        ]
+        allowed_origins = (
+            ["*"]
+            if config_provider.is_development()
+            else [
+                "https://clarity-backend-282877548076.us-central1.run.app",
+                "https://your-frontend-domain.com",  # Replace with actual frontend domain
+                "http://localhost:3000",  # For local development
+                "http://localhost:5173",  # Vite default port
+            ]
+        )
 
         app.add_middleware(
             CORSMiddleware,
@@ -267,7 +274,9 @@ class DependencyContainer:
             ) -> Response:
                 is_public = False
                 for public_path in middleware_config.exempt_paths or []:
-                    if request.url.path == public_path or request.url.path.startswith(f"{public_path}/"):
+                    if request.url.path == public_path or request.url.path.startswith(
+                        f"{public_path}/"
+                    ):
                         is_public = True
                         break
 
@@ -278,20 +287,29 @@ class DependencyContainer:
                 if not auth_header:
                     return JSONResponse(
                         status_code=401,
-                        content={"detail": "Authentication required", "error_code": "NO_AUTH_HEADER"},
+                        content={
+                            "detail": "Authentication required",
+                            "error_code": "NO_AUTH_HEADER",
+                        },
                     )
 
                 if not auth_header.startswith("Bearer "):
                     return JSONResponse(
                         status_code=401,
-                        content={"detail": "Invalid scheme. Use 'Bearer' token.", "error_code": "INVALID_AUTH_SCHEME"},
+                        content={
+                            "detail": "Invalid scheme. Use 'Bearer' token.",
+                            "error_code": "INVALID_AUTH_SCHEME",
+                        },
                     )
 
                 token = auth_header.split("Bearer ")[1]
                 if not token:
                     return JSONResponse(
                         status_code=401,
-                        content={"detail": "Bearer token is empty.", "error_code": "EMPTY_BEARER_TOKEN"},
+                        content={
+                            "detail": "Bearer token is empty.",
+                            "error_code": "EMPTY_BEARER_TOKEN",
+                        },
                     )
 
                 try:
@@ -303,7 +321,10 @@ class DependencyContainer:
 
                     return JSONResponse(
                         status_code=401,
-                        content={"detail": "Token verification failed.", "error_code": "VERIFICATION_UNEXPECTED_NONE"},
+                        content={
+                            "detail": "Token verification failed.",
+                            "error_code": "VERIFICATION_UNEXPECTED_NONE",
+                        },
                     )
                 except AuthError as e:
                     return JSONResponse(
@@ -314,7 +335,10 @@ class DependencyContainer:
                     logger.exception("💥 UNHANDLED EXCEPTION in auth middleware")
                     return JSONResponse(
                         status_code=500,
-                        content={"detail": "Internal server error during authentication.", "error_code": "INTERNAL_AUTH_ERROR"},
+                        content={
+                            "detail": "Internal server error during authentication.",
+                            "error_code": "INTERNAL_AUTH_ERROR",
+                        },
                     )
 
             app.add_middleware(BaseHTTPMiddleware, dispatch=firebase_auth_middleware)

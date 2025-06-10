@@ -24,52 +24,107 @@ These models establish new standards for clinical data validation and processing
 # Use lazy imports to avoid circular dependencies during package installation
 # This is a common pattern for packages with complex interdependencies
 
+
 def __getattr__(name):
     """Lazy import pattern to avoid circular dependencies."""
     # Auth models
     if name in [
-        "AuthError", "AuthErrorDetail", "AuthProvider", "DeviceInfo",
-        "LoginResponse", "MFAEnrollRequest", "MFAEnrollResponse", "MFAMethod",
-        "MFAVerifyRequest", "MFAVerifyResponse", "PasswordResetConfirmRequest",
-        "PasswordResetRequest", "PasswordResetResponse", "Permission",
-        "RefreshTokenRequest", "RegistrationResponse", "SessionInfo",
-        "TokenInfo", "TokenResponse", "UserContext", "UserLoginRequest",
-        "UserRegistrationRequest", "UserRole", "UserSessionResponse", "UserStatus"
+        "AuthError",
+        "AuthErrorDetail",
+        "AuthProvider",
+        "DeviceInfo",
+        "LoginResponse",
+        "MFAEnrollRequest",
+        "MFAEnrollResponse",
+        "MFAMethod",
+        "MFAVerifyRequest",
+        "MFAVerifyResponse",
+        "PasswordResetConfirmRequest",
+        "PasswordResetRequest",
+        "PasswordResetResponse",
+        "Permission",
+        "RefreshTokenRequest",
+        "RegistrationResponse",
+        "SessionInfo",
+        "TokenInfo",
+        "TokenResponse",
+        "UserContext",
+        "UserLoginRequest",
+        "UserRegistrationRequest",
+        "UserRole",
+        "UserSessionResponse",
+        "UserStatus",
     ]:
         from . import auth
+
         return getattr(auth, name)
-    
+
     # Health data models
-    elif name in [
-        "ActivityData", "BiometricData", "HealthDataResponse", "HealthDataUpload",
-        "HealthMetric", "MentalHealthIndicator", "ProcessingStatus", "SleepData",
-        "ValidationError"
+    if name in [
+        "ActivityData",
+        "BiometricData",
+        "HealthDataResponse",
+        "HealthDataUpload",
+        "HealthMetric",
+        "MentalHealthIndicator",
+        "ProcessingStatus",
+        "SleepData",
+        "ValidationError",
     ]:
         from . import health_data
+
         return getattr(health_data, name)
-    
+
     # User models
-    elif name in ["User", "UserProfile", "UserPreferences"]:
+    if name in ["User", "UserProfile", "UserPreferences"]:
         from . import user
+
         return getattr(user, name)
-    
+
     raise AttributeError(f"module '{__name__}' has no attribute '{name}'")
+
 
 __all__ = [
     # Auth models
-    "AuthError", "AuthErrorDetail", "AuthProvider", "DeviceInfo",
-    "LoginResponse", "MFAEnrollRequest", "MFAEnrollResponse", "MFAMethod",
-    "MFAVerifyRequest", "MFAVerifyResponse", "PasswordResetConfirmRequest",
-    "PasswordResetRequest", "PasswordResetResponse", "Permission",
-    "RefreshTokenRequest", "RegistrationResponse", "SessionInfo",
-    "TokenInfo", "TokenResponse", "UserContext", "UserLoginRequest",
-    "UserRegistrationRequest", "UserRole", "UserSessionResponse", "UserStatus",
+    "AuthError",
+    "AuthErrorDetail",
+    "AuthProvider",
+    "DeviceInfo",
+    "LoginResponse",
+    "MFAEnrollRequest",
+    "MFAEnrollResponse",
+    "MFAMethod",
+    "MFAVerifyRequest",
+    "MFAVerifyResponse",
+    "PasswordResetConfirmRequest",
+    "PasswordResetRequest",
+    "PasswordResetResponse",
+    "Permission",
+    "RefreshTokenRequest",
+    "RegistrationResponse",
+    "SessionInfo",
+    "TokenInfo",
+    "TokenResponse",
+    "UserContext",
+    "UserLoginRequest",
+    "UserRegistrationRequest",
+    "UserRole",
+    "UserSessionResponse",
+    "UserStatus",
     # Health data models
-    "ActivityData", "BiometricData", "HealthDataResponse", "HealthDataUpload",
-    "HealthMetric", "MentalHealthIndicator", "ProcessingStatus", "SleepData",
+    "ActivityData",
+    "BiometricData",
+    "HealthDataResponse",
+    "HealthDataUpload",
+    "HealthMetric",
+    "MentalHealthIndicator",
+    "ProcessingStatus",
+    "SleepData",
     "ValidationError",
     # User models
-    "User", "UserProfile", "UserPreferences"
+    "User",
+    "UserProfile",
+    "UserPreferences",
 ]
 
 # 🔒 ARCHITECTURAL ENFORCEMENT

@@ -44,7 +44,9 @@ def test_protected_endpoint_without_auth():
 
     assert response.status_code == 401, "Should return 401 without auth"
     json_response = response.json()
-    assert "detail" in json_response or "error" in json_response, "Should return error details"
+    assert (
+        "detail" in json_response or "error" in json_response
+    ), "Should return error details"
     print("✅ PASSED: Protected endpoint correctly requires auth")
     return True
 
@@ -57,21 +59,23 @@ def test_debug_endpoint():
     # Test with a dummy token
     headers = {
         "Authorization": "Bearer dummy-token-12345",
-        "Content-Type": "application/json"
+        "Content-Type": "application/json",
     }
 
     try:
         response = requests.post(
             f"{BASE_URL}/api/v1/debug/verify-token-directly",
             headers=headers,
-            timeout=30
+            timeout=30,
         )
         print(f"Status: {response.status_code}")
 
         if response.status_code == 200:
             data = response.json()
             print(f"Response: {json.dumps(data, indent=2)}")
-            print(f"\nFirebase Admin Initialized: {data.get('firebase_admin_initialized', False)}")
+            print(
+                f"\nFirebase Admin Initialized: {data.get('firebase_admin_initialized', False)}"
+            )
             print(f"Auth Provider Type: {data.get('auth_provider_type', 'Unknown')}")
             print(f"Environment: {data.get('environment', {})}")
         else:
@@ -112,27 +116,22 @@ def test_with_real_token(token):
         print(f"  - Issuer: {decoded.get('iss', 'N/A')}")
 
         # Check if token is expired
-        if decoded.get('exp', 0) < time.time():
+        if decoded.get("exp", 0) < time.time():
             print("⚠️  WARNING: Token is expired!")
 
     # Test the debug endpoint with the real token
-    headers = {
-        "Authorization": f"Bearer {token}",
-        "Content-Type": "application/json"
-    }
+    headers = {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
 
     print("\n🔍 Testing Debug Endpoint...")
     response = requests.post(
-        f"{BASE_URL}/api/v1/debug/verify-token-directly",
-        headers=headers,
-        timeout=30
+        f"{BASE_URL}/api/v1/debug/verify-token-directly", headers=headers, timeout=30
     )
 
     print(f"Status: {response.status_code}")
     if response.status_code == 200:
         data = response.json()
         print(f"Verification Success: {data.get('verification_success', False)}")
-        if data.get('verification_success'):
+        if data.get("verification_success"):
             print("✅ TOKEN VERIFIED SUCCESSFULLY!")
             print(f"User Info: {json.dumps(data.get('user_info', {}), indent=2)}")
         else:
@@ -144,9 +143,7 @@ def test_with_real_token(token):
     # Now test a protected endpoint
     print("\n🔍 Testing Protected Endpoint...")
     response = requests.get(
-        f"{BASE_URL}/api/v1/health-data",
-        headers=headers,
-        timeout=30
+        f"{BASE_URL}/api/v1/health-data", headers=headers, timeout=30
     )
 
     print(f"Status: {response.status_code}")
@@ -180,6 +177,7 @@ def main():
 
     # Check if token was provided as argument
     import sys
+
     if len(sys.argv) > 1:
         token = sys.argv[1]
         print(f"\n🔐 Testing with provided token (length: {len(token)})")

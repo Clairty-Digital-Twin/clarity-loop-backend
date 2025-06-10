@@ -42,7 +42,7 @@ service_initialization_duration = Histogram(
 
 class DependencyContainer:
     """AWS Dependency Injection Container.
-    
+
     Manages initialization and lifecycle of all AWS service dependencies.
     """
 
@@ -50,7 +50,7 @@ class DependencyContainer:
         """Initialize the dependency container with AWS settings."""
         self.settings = settings or get_settings()
         setup_logging(self.settings.log_level)
-        
+
         # Initialize service containers
         self._config_provider: ConfigProviderPort | None = None
         self._auth_provider: IAuthProvider | None = None
@@ -64,70 +64,79 @@ class DependencyContainer:
             return
 
         logger.info("Initializing AWS dependency container...")
-        
+
         try:
             # Initialize configuration provider
             self._config_provider = ConfigProvider(self.settings)
-            
+
             # Initialize auth provider (Cognito or Mock)
             await self._initialize_auth_provider()
-            
+
             # Initialize data repository (DynamoDB or Mock)
             await self._initialize_repository()
-            
+
             # Initialize Gemini service (keeping this for AI functionality)
             await self._initialize_gemini_service()
-            
+
             self._initialized = True
             logger.info("AWS dependency container initialized successfully")
-            
+
         except Exception as e:
             logger.error(f"Failed to initialize container: {e}")
-            raise ConfigurationError(f"Container initialization failed: {str(e)}")
+            raise ConfigurationError(f"Container initialization failed: {e!s}")
 
     async def _initialize_auth_provider(self) -> None:
         """Initialize AWS Cognito auth provider with fallback to mock."""
         service_name = "auth_provider"
-        
+
         with service_initialization_duration.labels(service=service_name).time():
             try:
                 if self.settings.should_use_mock_services():
-                    logger.info("Using mock auth provider (skip_external_services=True)")
+                    logger.info(
+                        "Using mock auth provider (skip_external_services=True)"
+                    )
                     self._auth_provider = MockAuthProvider()
                     service_initialization_counter.labels(
                         service=service_name, status="mock"
                     ).inc()
                     return
 
-                if not self.settings.cognito_user_pool_id or not self.settings.cognito_client_id:
+                if (
+                    not self.settings.cognito_user_pool_id
+                    or not self.settings.cognito_client_id
+                ):
                     if self.settings.is_development():
-                        logger.warning("Cognito not configured, using mock auth provider")
+                        logger.warning(
+                            "Cognito not configured, using mock auth provider"
+                        )
                         self._auth_provider = MockAuthProvider()
                         service_initialization_counter.labels(
                             service=service_name, status="mock"
                         ).inc()
                         return
-                    raise ConfigurationError("Cognito configuration missing in production")
+                    raise ConfigurationError(
+                        "Cognito configuration missing in production"
+                    )
 
                 # Initialize Cognito auth provider
                 self._auth_provider = AWSCognitoAuthProvider(
                     region=self.settings.cognito_region or self.settings.aws_region,
                     user_pool_id=self.settings.cognito_user_pool_id,
                     client_id=self.settings.cognito_client_id,
-                    skip_validation=self.settings.is_development()
+                    skip_validation=self.settings.is_development(),
                 )
-                
+
                 logger.info("AWS Cognito auth provider initialized")
                 service_initialization_counter.labels(
                     service=service_name, status="success"
                 ).inc()
-                
+
             except Exception as e:
                 logger.error(f"Failed to initialize Cognito: {e}")
                 service_initialization_counter.labels(
                     service=service_name, status="error"
                 ).inc()
-                
+
                 if self.settings.is_development():
                     logger.warning("Falling back to mock auth provider")
                     self._auth_provider = MockAuthProvider()
@@ -140,7 +149,7 @@ class DependencyContainer:
     async def _initialize_repository(self) -> None:
         """Initialize DynamoDB repository with fallback to mock."""
         service_name = "health_data_repository"
-        
+
         with service_initialization_duration.labels(service=service_name).time():
             try:
                 if self.settings.should_use_mock_services():
@@ -155,20 +164,20 @@ class DependencyContainer:
                 self._health_data_repository = DynamoDBHealthDataRepository(
                     table_name=self.settings.dynamodb_table_name,
                     region=self.settings.aws_region,
-                    endpoint_url=self.settings.dynamodb_endpoint_url  # For local testing
+                    endpoint_url=self.settings.dynamodb_endpoint_url,  # For local testing
                 )
-                
+
                 logger.info("DynamoDB repository initialized")
                 service_initialization_counter.labels(
                     service=service_name, status="success"
                 ).inc()
-                
+
             except Exception as e:
                 logger.error(f"Failed to initialize DynamoDB: {e}")
                 service_initialization_counter.labels(
                     service=service_name, status="error"
                 ).inc()
-                
+
                 if self.settings.is_development():
                     logger.warning("Falling back to mock repository")
                     self._health_data_repository = MockHealthDataRepository()
@@ -181,7 +190,7 @@ class DependencyContainer:
     async def _initialize_gemini_service(self) -> None:
         """Initialize Gemini AI service."""
         service_name = "gemini_service"
-        
+
         with service_initialization_duration.labels(service=service_name).time():
             try:
                 if not self.settings.gemini_api_key:
@@ -195,20 +204,20 @@ class DependencyContainer:
                     api_key=self.settings.gemini_api_key,
                     model_name=self.settings.gemini_model,
                     temperature=self.settings.gemini_temperature,
-                    max_tokens=self.settings.gemini_max_tokens
+                    max_tokens=self.settings.gemini_max_tokens,
                 )
-                
+
                 logger.info("Gemini service initialized")
                 service_initialization_counter.labels(
                     service=service_name, status="success"
                 ).inc()
-                
+
             except Exception as e:
                 logger.error(f"Failed to initialize Gemini service: {e}")
                 service_initialization_counter.labels(
                     service=service_name, status="error"
                 ).inc()
-                
+
                 if not self.settings.is_production():
                     logger.warning("Continuing without Gemini service")
                 else:
@@ -217,21 +226,23 @@ class DependencyContainer:
     async def shutdown(self) -> None:
         """Gracefully shutdown all services."""
         logger.info("Shutting down AWS dependency container...")
-        
+
         # Add any cleanup logic here
         # For example, closing database connections, flushing queues, etc.
-        
+
         self._initialized = False
         logger.info("AWS dependency container shutdown complete")
 
     def configure_routes(self, app: FastAPI) -> None:
         """Configure FastAPI routes with AWS dependencies."""
         if not self._initialized:
-            raise RuntimeError("Container must be initialized before configuring routes")
-        
+            raise RuntimeError(
+                "Container must be initialized before configuring routes"
+            )
+
         # Include API router with dependencies
         app.include_router(api_router)
-        
+
         # Add health check endpoint
         @app.get("/health")
         async def health_check() -> dict[str, Any]:
@@ -241,10 +252,20 @@ class DependencyContainer:
                 "timestamp": self.settings.startup_timeout,
                 "environment": self.settings.environment,
                 "services": {
-                    "auth": "cognito" if isinstance(self._auth_provider, AWSCognitoAuthProvider) else "mock",
-                    "database": "dynamodb" if isinstance(self._health_data_repository, DynamoDBHealthDataRepository) else "mock",
-                    "ai": "gemini" if self._gemini_service else "disabled"
-                }
+                    "auth": (
+                        "cognito"
+                        if isinstance(self._auth_provider, AWSCognitoAuthProvider)
+                        else "mock"
+                    ),
+                    "database": (
+                        "dynamodb"
+                        if isinstance(
+                            self._health_data_repository, DynamoDBHealthDataRepository
+                        )
+                        else "mock"
+                    ),
+                    "ai": "gemini" if self._gemini_service else "disabled",
+                },
             }
 
     # Property accessors for services

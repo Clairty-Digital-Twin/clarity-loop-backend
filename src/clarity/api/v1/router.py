@@ -15,7 +15,9 @@ api_router = APIRouter()
 
 # Include all sub-routers
 api_router.include_router(auth_router, prefix="/auth", tags=["Authentication"])
-api_router.include_router(health_data_router, prefix="/health-data", tags=["Health Data"])
+api_router.include_router(
+    health_data_router, prefix="/health-data", tags=["Health Data"]
+)
 api_router.include_router(healthkit_router, prefix="/healthkit", tags=["HealthKit"])
 api_router.include_router(pat_router, prefix="/pat", tags=["PAT Analysis"])
 api_router.include_router(insights_router, prefix="/insights", tags=["AI Insights"])

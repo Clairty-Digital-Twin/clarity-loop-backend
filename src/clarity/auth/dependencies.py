@@ -23,31 +23,32 @@ def get_authenticated_user(
     request: Request,
 ) -> UserContext:
     """Get authenticated user with full context from middleware.
-    
+
     This is the primary authentication dependency that should be used
     for all protected endpoints. It returns a UserContext which includes:
     - User ID from Firebase
     - Email and verification status
     - Role and permissions from Firestore
     - Additional user metadata
-    
+
     The middleware handles:
     - Token verification
     - Firestore record creation (if needed)
     - User context enrichment
-    
+
     Args:
         request: FastAPI request object
         credentials: Optional bearer token
-        
+
     Returns:
         UserContext with complete user information
-        
+
     Raises:
         HTTPException: 401 if not authenticated
     """
     # MODAL FIX: Check contextvars first (Modal doesn't propagate request.state properly)
     from clarity.auth.modal_auth_fix import get_user_context
+
     user_context = get_user_context()
 
     if user_context:
@@ -56,7 +57,10 @@ def get_authenticated_user(
 
     # Fallback to checking request.state (for local development)
     if not hasattr(request.state, "user") or request.state.user is None:
-        logger.warning("No user context in contextvars or request.state for path: %s", request.url.path)
+        logger.warning(
+            "No user context in contextvars or request.state for path: %s",
+            request.url.path,
+        )
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Authentication required",
@@ -79,13 +83,13 @@ def get_optional_user(
     request: Request,
 ) -> UserContext | None:
     """Get authenticated user if available, None otherwise.
-    
+
     Use this for endpoints that have optional authentication.
-    
+
     Args:
         request: FastAPI request object
         credentials: Optional bearer token
-        
+
     Returns:
         UserContext if authenticated, None otherwise
     """
@@ -109,13 +113,13 @@ async def require_verified_email(
     user: UserContext = Depends(get_authenticated_user),
 ) -> UserContext:
     """Require authenticated user with verified email.
-    
+
     Args:
         user: Authenticated user context
-        
+
     Returns:
         UserContext if email is verified
-        
+
     Raises:
         HTTPException: 403 if email not verified
     """
@@ -131,13 +135,13 @@ async def require_active_account(
     user: UserContext = Depends(get_authenticated_user),
 ) -> UserContext:
     """Require authenticated user with active account.
-    
+
     Args:
         user: Authenticated user context
-        
+
     Returns:
         UserContext if account is active
-        
+
     Raises:
         HTTPException: 403 if account is not active
     """
@@ -152,12 +156,12 @@ async def require_active_account(
 # Convenience function for transitioning from old User model
 def user_context_to_simple_user(context: UserContext) -> User:
     """Convert UserContext to simple User model for backward compatibility.
-    
+
     This is a temporary helper for transitioning endpoints.
-    
+
     Args:
         context: Full user context
-        
+
     Returns:
         Simple User model
     """
@@ -176,17 +180,17 @@ def user_context_to_simple_user(context: UserContext) -> User:
 
 def get_websocket_user(token: str, request: Request) -> UserContext:
     """Get authenticated user for WebSocket connections.
-    
+
     WebSocket connections pass the token as a query parameter rather than
     in headers, so we need special handling.
-    
+
     Args:
         token: Firebase ID token from query parameter
         request: FastAPI request object (for state access)
-        
+
     Returns:
         UserContext with complete user information
-        
+
     Raises:
         HTTPException: 401 if token is invalid
     """

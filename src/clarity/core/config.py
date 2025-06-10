@@ -127,7 +127,7 @@ class Settings(BaseSettings):
     }
 
     @model_validator(mode="after")
-    def validate_environment_requirements(self) -> Self:  # noqa: PLR0912
+    def validate_environment_requirements(self) -> Self:
         """Validate environment-specific requirements and set development defaults."""
         # If in testing mode, and no path is provided, set a mock path.
         if self.is_testing():
@@ -237,7 +237,9 @@ class Settings(BaseSettings):
         if self.is_development():
             # Development environment - lenient settings for debugging
             config.enabled = self.enable_auth
-            config.graceful_degradation = False  # <-- DEBUGGING: Show actual auth errors
+            config.graceful_degradation = (
+                False  # <-- DEBUGGING: Show actual auth errors
+            )
             config.fallback_to_mock = True
             config.cache_enabled = False  # Disable cache for easier debugging
             config.log_successful_auth = True  # Log all auth attempts
@@ -247,7 +249,9 @@ class Settings(BaseSettings):
         elif self.is_production():
             # Production environment - strict security settings
             config.enabled = self.enable_auth
-            config.graceful_degradation = False  # <-- DEBUGGING: Show actual auth errors
+            config.graceful_degradation = (
+                False  # <-- DEBUGGING: Show actual auth errors
+            )
             config.fallback_to_mock = False  # Never fall back in production
             config.cache_enabled = True
             config.cache_ttl_seconds = 300  # 5 minutes
@@ -259,7 +263,9 @@ class Settings(BaseSettings):
         else:
             # Unknown environment - use conservative defaults
             config.enabled = self.enable_auth
-            config.graceful_degradation = False  # <-- DEBUGGING: Show actual auth errors
+            config.graceful_degradation = (
+                False  # <-- DEBUGGING: Show actual auth errors
+            )
             config.fallback_to_mock = True
 
         return config

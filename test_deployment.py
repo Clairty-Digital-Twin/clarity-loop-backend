@@ -63,12 +63,12 @@ def main():
     sample_data = {
         "heart_rate": [
             {"timestamp": "2024-01-01T00:00:00Z", "value": 65},
-            {"timestamp": "2024-01-01T00:05:00Z", "value": 68}
+            {"timestamp": "2024-01-01T00:05:00Z", "value": 68},
         ],
         "steps": [
             {"timestamp": "2024-01-01T00:00:00Z", "value": 100},
-            {"timestamp": "2024-01-01T00:05:00Z", "value": 250}
-        ]
+            {"timestamp": "2024-01-01T00:05:00Z", "value": 250},
+        ],
     }
     test_endpoint("POST", "/api/v1/health-data", auth_required=True, data=sample_data)
 

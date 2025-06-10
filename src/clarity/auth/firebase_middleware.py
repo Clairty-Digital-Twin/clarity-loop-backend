@@ -243,11 +243,13 @@ class FirebaseAuthMiddleware(BaseHTTPMiddleware):
             )
 
         # Check if auth provider supports enhanced user context creation
-        if hasattr(self.auth_provider, 'get_or_create_user_context'):
+        if hasattr(self.auth_provider, "get_or_create_user_context"):
             # Use enhanced provider that handles Firestore
             try:
                 logger.info("Using enhanced auth provider for user context creation")
-                user_context = await self.auth_provider.get_or_create_user_context(user_info)
+                user_context = await self.auth_provider.get_or_create_user_context(
+                    user_info
+                )
                 return cast("UserContext", user_context)
             except Exception as e:
                 logger.error("Enhanced user context creation failed: %s", e)
@@ -337,7 +339,9 @@ class FirebaseAuthProvider(IAuthProvider):
 
                 if self.credentials_path:
                     # Explicit credentials file provided
-                    logger.info("   -> Using credentials from path: %s", self.credentials_path)
+                    logger.info(
+                        "   -> Using credentials from path: %s", self.credentials_path
+                    )
                     cred = credentials.Certificate(self.credentials_path)
                     firebase_admin.initialize_app(cred, options)
                 else:
@@ -347,7 +351,10 @@ class FirebaseAuthProvider(IAuthProvider):
                     cred = credentials.ApplicationDefault()
                     firebase_admin.initialize_app(cred, options)
 
-                logger.info("   -> Firebase Admin SDK initialized successfully for project: %s", self.project_id)
+                logger.info(
+                    "   -> Firebase Admin SDK initialized successfully for project: %s",
+                    self.project_id,
+                )
 
             self._initialized = True
             logger.info("✅ Firebase Authentication Provider is ready.")
@@ -420,7 +427,10 @@ class FirebaseAuthProvider(IAuthProvider):
         try:
             # Verify token with Firebase
             logger.warning("🔐 Calling firebase_auth.verify_id_token()...")
-            logger.warning("🔐 Current Firebase app project: %s", firebase_auth.get_app().project_id)
+            logger.warning(
+                "🔐 Current Firebase app project: %s",
+                firebase_auth.get_app().project_id,
+            )
 
             decoded_token = firebase_auth.verify_id_token(
                 token, check_revoked=self.check_revoked
@@ -533,12 +543,14 @@ class FirebaseAuthProvider(IAuthProvider):
             logger.exception("Error fetching user info for UID %s", user_id)
             return None
 
-    async def get_or_create_user_context(self, firebase_user_info: dict[str, Any]) -> UserContext:
+    async def get_or_create_user_context(
+        self, firebase_user_info: dict[str, Any]
+    ) -> UserContext:
         """Get user context, creating Firestore record if needed.
-        
+
         Args:
             firebase_user_info: User info from Firebase token verification
-            
+
         Returns:
             UserContext with complete user information
         """
@@ -551,8 +563,7 @@ class FirebaseAuthProvider(IAuthProvider):
         try:
             # Try to get existing user record
             user_data = await self.firestore_client.get_document(
-                collection=self.users_collection,
-                document_id=user_id
+                collection=self.users_collection, document_id=user_id
             )
 
             if user_data is None:
@@ -568,7 +579,7 @@ class FirebaseAuthProvider(IAuthProvider):
                         "last_login": datetime.now(UTC),
                         "login_count": user_data.get("login_count", 0) + 1,
                     },
-                    user_id=user_id
+                    user_id=user_id,
                 )
 
             # Create UserContext from database record
@@ -579,12 +590,14 @@ class FirebaseAuthProvider(IAuthProvider):
             # Fall back to basic context creation
             return FirebaseAuthMiddleware._create_user_context(firebase_user_info)
 
-    async def _create_user_record(self, firebase_user_info: dict[str, Any]) -> dict[str, Any]:
+    async def _create_user_record(
+        self, firebase_user_info: dict[str, Any]
+    ) -> dict[str, Any]:
         """Create a new user record in Firestore.
-        
+
         Args:
             firebase_user_info: User info from Firebase
-            
+
         Returns:
             Created user data
         """
@@ -634,29 +647,31 @@ class FirebaseAuthProvider(IAuthProvider):
             collection=self.users_collection,
             data=user_data,
             document_id=user_id,
-            user_id=user_id
+            user_id=user_id,
         )
 
         logger.info("Created Firestore user record for %s", user_id)
         return user_data
 
     def _create_user_context_from_db(
-        self,
-        user_data: dict[str, Any],
-        _firebase_info: dict[str, Any]
+        self, user_data: dict[str, Any], _firebase_info: dict[str, Any]
     ) -> UserContext:
         """Create UserContext from database record.
-        
+
         Args:
             user_data: User data from Firestore
             _firebase_info: Original Firebase token info (unused, kept for interface compatibility)
-            
+
         Returns:
             Complete UserContext
         """
         # Determine role
         role_str = user_data.get("role", UserRole.PATIENT.value)
-        role = UserRole(role_str) if role_str in [r.value for r in UserRole] else UserRole.PATIENT
+        role = (
+            UserRole(role_str)
+            if role_str in [r.value for r in UserRole]
+            else UserRole.PATIENT
+        )
 
         # Set permissions based on role
         permissions = set()
@@ -685,11 +700,13 @@ class FirebaseAuthProvider(IAuthProvider):
 
         # Store extra fields in custom_claims for access later
         enriched_claims = user_data.get("custom_claims", {}).copy()
-        enriched_claims.update({
-            "first_name": user_data.get("first_name"),
-            "last_name": user_data.get("last_name"),
-            "display_name": user_data.get("display_name"),
-        })
+        enriched_claims.update(
+            {
+                "first_name": user_data.get("first_name"),
+                "last_name": user_data.get("last_name"),
+                "display_name": user_data.get("display_name"),
+            }
+        )
 
         return UserContext(
             user_id=user_data["user_id"],

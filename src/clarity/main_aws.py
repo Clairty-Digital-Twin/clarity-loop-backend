@@ -1,7 +1,7 @@
 """CLARITY Digital Twin Platform - AWS Main Application Entry Point."""
 
-import logging
 from contextlib import asynccontextmanager
+import logging
 from typing import Any
 
 from fastapi import FastAPI
@@ -20,23 +20,25 @@ logger = logging.getLogger(__name__)
 async def lifespan(app: FastAPI):
     """Application lifespan management."""
     logger.info("Starting CLARITY backend with AWS services...")
-    
+
     settings = get_settings()
-    
+
     try:
         # Initialize dependency container
         container = await initialize_container(settings)
-        
+
         # Configure routes
         container.configure_routes(app)
-        
-        logger.info(f"CLARITY backend started successfully in {settings.environment} mode")
-        
+
+        logger.info(
+            f"CLARITY backend started successfully in {settings.environment} mode"
+        )
+
         yield
-        
+
     except Exception as e:
         logger.error(f"Failed to start application: {e}")
-        raise ConfigurationError(f"Application startup failed: {str(e)}")
+        raise ConfigurationError(f"Application startup failed: {e!s}")
     finally:
         # Cleanup
         container = get_container()
@@ -81,7 +83,7 @@ async def root() -> dict[str, Any]:
 
 if __name__ == "__main__":
     import uvicorn
-    
+
     # For local development only
     uvicorn.run(
         "clarity.main_aws:app",

@@ -11,8 +11,7 @@ from clarity.models.auth import UserContext
 
 # Thread-local storage for user context
 _user_context: contextvars.ContextVar[UserContext | None] = contextvars.ContextVar(
-    'user_context',
-    default=None
+    "user_context", default=None
 )
 
 

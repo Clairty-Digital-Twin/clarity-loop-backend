@@ -7,6 +7,7 @@ from clarity.auth import firebase_auth
 def test_initialize_firebase_with_credentials_path():
     # Skip this test - Firebase initialization has changed with our new auth pattern
     import pytest
+
     pytest.skip("Firebase initialization pattern has changed")
     """Test that Firebase is initialized with a credentials path if provided."""
     mock_settings = MagicMock()

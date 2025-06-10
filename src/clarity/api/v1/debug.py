@@ -54,7 +54,7 @@ async def debug_token_info(
         "request_state": {
             "has_user": hasattr(request.state, "user"),
             "user": str(request.state.user) if hasattr(request.state, "user") else None,
-        }
+        },
     }
 
 
@@ -69,9 +69,9 @@ async def debug_auth_check(
         "authenticated": True,
         "user_id": current_user.user_id,
         "email": current_user.email,
-        "display_name": current_user.custom_claims.get('display_name', 'N/A'),
+        "display_name": current_user.custom_claims.get("display_name", "N/A"),
         "email_verified": current_user.is_verified,
-        "firebase_token_exp": getattr(current_user, 'firebase_token_exp', 'N/A'),
+        "firebase_token_exp": getattr(current_user, "firebase_token_exp", "N/A"),
     }
 
 
@@ -100,7 +100,7 @@ async def debug_test_middleware(request: Request) -> dict[str, Any]:
         "path": request.url.path,
         "headers": {
             "authorization": request.headers.get("authorization", "NOT_PROVIDED")
-        }
+        },
     }
 
 
@@ -117,27 +117,19 @@ async def debug_middleware_stack(request: Request) -> dict[str, Any]:
 
     # Check if middleware stack is accessible
     if hasattr(app, "middleware_stack"):
-        middleware_info.append({
-            "middleware_stack": str(app.middleware_stack)
-        })
+        middleware_info.append({"middleware_stack": str(app.middleware_stack)})
 
     # Check if user_middleware is accessible
     if hasattr(app, "user_middleware"):
         for idx, mw in enumerate(app.user_middleware):
-            middleware_info.append({
-                f"user_middleware_{idx}": str(mw)
-            })
+            middleware_info.append({f"user_middleware_{idx}": str(mw)})
 
     # Check built middleware
     if hasattr(app, "middleware") and hasattr(app.middleware, "cls"):
-        middleware_info.append({
-            "built_middleware_class": str(app.middleware.cls)
-        })
+        middleware_info.append({"built_middleware_class": str(app.middleware.cls)})
 
     # Check if middleware stack was built
-    middleware_info.append({
-        "middleware_stack_built": hasattr(app, "middleware_stack")
-    })
+    middleware_info.append({"middleware_stack_built": hasattr(app, "middleware_stack")})
 
     # Check request state
     state_info = {}
@@ -176,7 +168,7 @@ async def debug_verify_token_directly(
     result = {
         "timestamp": datetime.now(UTC).isoformat(),
         "auth_provider_type": type(auth_provider).__name__,
-        "auth_provider_initialized": getattr(auth_provider, '_initialized', False),
+        "auth_provider_initialized": getattr(auth_provider, "_initialized", False),
     }
 
     # Check authorization header
@@ -210,7 +202,9 @@ async def debug_verify_token_directly(
         else:
             result["verification_success"] = False
             result["user_info"] = None
-            result["note"] = "verify_token returned None - check logs for Firebase error"
+            result["note"] = (
+                "verify_token returned None - check logs for Firebase error"
+            )
             logger.warning("❌❌ Direct token verification FAILED - returned None")
 
     except Exception as e:
@@ -226,7 +220,9 @@ async def debug_verify_token_directly(
         try:
             firebase_app = firebase_admin.get_app()
             result["firebase_admin_initialized"] = True
-            result["firebase_project_id"] = getattr(firebase_app, 'project_id', 'Unknown')
+            result["firebase_project_id"] = getattr(
+                firebase_app, "project_id", "Unknown"
+            )
         except ValueError:
             result["firebase_admin_initialized"] = False
             result["firebase_note"] = "Firebase Admin SDK not initialized"
@@ -237,8 +233,11 @@ async def debug_verify_token_directly(
 
     # Check environment
     import os
+
     result["environment"] = {
-        "GOOGLE_APPLICATION_CREDENTIALS": bool(os.environ.get("GOOGLE_APPLICATION_CREDENTIALS")),
+        "GOOGLE_APPLICATION_CREDENTIALS": bool(
+            os.environ.get("GOOGLE_APPLICATION_CREDENTIALS")
+        ),
         "FIREBASE_PROJECT_ID": os.environ.get("FIREBASE_PROJECT_ID", "NOT_SET"),
         "ENVIRONMENT": os.environ.get("ENVIRONMENT", "NOT_SET"),
     }

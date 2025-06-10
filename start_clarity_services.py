@@ -21,8 +21,7 @@ import time
 
 # Setup logging
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
@@ -30,37 +29,49 @@ logger = logging.getLogger(__name__)
 SERVICES = {
     "main_api": {
         "command": [
-            sys.executable, "-m", "uvicorn",
+            sys.executable,
+            "-m",
+            "uvicorn",
             "src.clarity.main:app",
-            "--host", "0.0.0.0",
-            "--port", "8000",
-            "--reload"
+            "--host",
+            "0.0.0.0",
+            "--port",
+            "8000",
+            "--reload",
         ],
         "env": {"SERVICE_NAME": "main_api"},
-        "description": "Main CLARITY API Server"
+        "description": "Main CLARITY API Server",
     },
     "analysis_service": {
         "command": [
-            sys.executable, "-m", "uvicorn",
+            sys.executable,
+            "-m",
+            "uvicorn",
             "clarity.entrypoints.analysis_service:app",
-            "--host", "0.0.0.0",
-            "--port", "8001",
-            "--reload"
+            "--host",
+            "0.0.0.0",
+            "--port",
+            "8001",
+            "--reload",
         ],
         "env": {"SERVICE_NAME": "analysis_service"},
-        "description": "Health Data Analysis Service"
+        "description": "Health Data Analysis Service",
     },
     "insight_service": {
         "command": [
-            sys.executable, "-m", "uvicorn",
+            sys.executable,
+            "-m",
+            "uvicorn",
             "clarity.entrypoints.insight_service:app",
-            "--host", "0.0.0.0",
-            "--port", "8002",
-            "--reload"
+            "--host",
+            "0.0.0.0",
+            "--port",
+            "8002",
+            "--reload",
         ],
         "env": {"SERVICE_NAME": "insight_service"},
-        "description": "AI Insight Generation Service"
-    }
+        "description": "AI Insight Generation Service",
+    },
 }
 
 
@@ -75,14 +86,13 @@ def run_service(service_name: str, config: dict) -> None:
     try:
         # Run the service
         process = subprocess.run(
-            config["command"],
-            env=env,
-            cwd=Path(__file__).parent,
-            check=False
+            config["command"], env=env, cwd=Path(__file__).parent, check=False
         )
 
         if process.returncode != 0:
-            logger.error(f"Service {service_name} exited with code {process.returncode}")
+            logger.error(
+                f"Service {service_name} exited with code {process.returncode}"
+            )
 
     except KeyboardInterrupt:
         logger.info(f"Service {service_name} stopped by user")
@@ -101,7 +111,9 @@ def check_prerequisites() -> bool:
 
     # Check if the main application entrypoint exists
     if not Path("src/clarity/main.py").exists():
-        logger.error("src/clarity/main.py not found. The application entrypoint is missing.")
+        logger.error(
+            "src/clarity/main.py not found. The application entrypoint is missing."
+        )
         return False
 
     # Check if src directory exists
@@ -172,7 +184,7 @@ def main() -> None:
             process = multiprocessing.Process(
                 target=run_service,
                 args=(service_name, config),
-                name=f"clarity-{service_name}"
+                name=f"clarity-{service_name}",
             )
             process.start()
             processes.append(process)

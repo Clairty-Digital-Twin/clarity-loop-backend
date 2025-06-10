@@ -39,28 +39,28 @@ class TestFirebaseAuthIntegration:
             "email": "test@example.com",
             "email_verified": True,
             "uid": "test-user-123",
-            "firebase": {
-                "sign_in_provider": "password"
-            }
+            "firebase": {"sign_in_provider": "password"},
         }
 
     @pytest.fixture
     def mock_firebase_admin(self):
         """Mock Firebase Admin SDK."""
-        with patch('firebase_admin.get_app') as mock_get_app, \
-             patch('firebase_admin.initialize_app') as mock_init_app, \
-             patch('firebase_admin.auth.verify_id_token') as mock_verify:
+        with (
+            patch("firebase_admin.get_app") as mock_get_app,
+            patch("firebase_admin.initialize_app") as mock_init_app,
+            patch("firebase_admin.auth.verify_id_token") as mock_verify,
+        ):
 
             # Mock app instance
             mock_app = MagicMock()
-            mock_app.project_id = 'clarity-loop-backend'
+            mock_app.project_id = "clarity-loop-backend"
             mock_get_app.return_value = mock_app
 
             yield {
-                'get_app': mock_get_app,
-                'initialize_app': mock_init_app,
-                'verify_id_token': mock_verify,
-                'app': mock_app
+                "get_app": mock_get_app,
+                "initialize_app": mock_init_app,
+                "verify_id_token": mock_verify,
+                "app": mock_app,
             }
 
     @pytest.mark.asyncio
@@ -68,8 +68,7 @@ class TestFirebaseAuthIntegration:
         """Test that Firebase Admin SDK is initialized with correct project ID."""
         # Setup
         provider = FirebaseAuthProvider(
-            project_id="clarity-loop-backend",
-            credentials_path=None
+            project_id="clarity-loop-backend", credentials_path=None
         )
 
         # Initialize
@@ -77,17 +76,17 @@ class TestFirebaseAuthIntegration:
 
         # Verify
         assert provider._initialized
-        assert mock_firebase_admin['get_app'].called
+        assert mock_firebase_admin["get_app"].called
 
     @pytest.mark.asyncio
-    async def test_token_verification_success(self, mock_firebase_admin, valid_token_payload):
+    async def test_token_verification_success(
+        self, mock_firebase_admin, valid_token_payload
+    ):
         """Test successful token verification flow."""
         # Setup
-        mock_firebase_admin['verify_id_token'].return_value = valid_token_payload
+        mock_firebase_admin["verify_id_token"].return_value = valid_token_payload
 
-        provider = FirebaseAuthProvider(
-            project_id="clarity-loop-backend"
-        )
+        provider = FirebaseAuthProvider(project_id="clarity-loop-backend")
         provider._initialized = True
 
         # Test
@@ -95,14 +94,13 @@ class TestFirebaseAuthIntegration:
 
         # Verify
         assert result is not None
-        assert result['user_id'] == 'test-user-123'
-        assert result['email'] == 'test@example.com'
-        assert result['verified'] is True
+        assert result["user_id"] == "test-user-123"
+        assert result["email"] == "test@example.com"
+        assert result["verified"] is True
 
         # Check that verify_id_token was called correctly
-        mock_firebase_admin['verify_id_token'].assert_called_once_with(
-            "valid-token",
-            check_revoked=True
+        mock_firebase_admin["verify_id_token"].assert_called_once_with(
+            "valid-token", check_revoked=True
         )
 
     @pytest.mark.asyncio
@@ -110,13 +108,12 @@ class TestFirebaseAuthIntegration:
         """Test that expired tokens are rejected."""
         # Setup
         from firebase_admin.auth import ExpiredIdTokenError
-        mock_firebase_admin['verify_id_token'].side_effect = ExpiredIdTokenError(
+
+        mock_firebase_admin["verify_id_token"].side_effect = ExpiredIdTokenError(
             "Token has expired"
         )
 
-        provider = FirebaseAuthProvider(
-            project_id="clarity-loop-backend"
-        )
+        provider = FirebaseAuthProvider(project_id="clarity-loop-backend")
         provider._initialized = True
 
         # Test
@@ -130,13 +127,12 @@ class TestFirebaseAuthIntegration:
         """Test that invalid tokens are rejected."""
         # Setup
         from firebase_admin.auth import InvalidIdTokenError
-        mock_firebase_admin['verify_id_token'].side_effect = InvalidIdTokenError(
+
+        mock_firebase_admin["verify_id_token"].side_effect = InvalidIdTokenError(
             "Token is invalid"
         )
 
-        provider = FirebaseAuthProvider(
-            project_id="clarity-loop-backend"
-        )
+        provider = FirebaseAuthProvider(project_id="clarity-loop-backend")
         provider._initialized = True
 
         # Test
@@ -153,17 +149,16 @@ class TestFirebaseAuthIntegration:
             "aud": "different-project",  # Wrong audience
             "iss": "https://securetoken.google.com/different-project",
             "uid": "test-user-123",
-            "email": "test@example.com"
+            "email": "test@example.com",
         }
 
         from firebase_admin.auth import InvalidIdTokenError
-        mock_firebase_admin['verify_id_token'].side_effect = InvalidIdTokenError(
+
+        mock_firebase_admin["verify_id_token"].side_effect = InvalidIdTokenError(
             "Token was not issued for this project"
         )
 
-        provider = FirebaseAuthProvider(
-            project_id="clarity-loop-backend"
-        )
+        provider = FirebaseAuthProvider(project_id="clarity-loop-backend")
         provider._initialized = True
 
         # Test
@@ -173,14 +168,14 @@ class TestFirebaseAuthIntegration:
         assert result is None
 
     @pytest.mark.asyncio
-    async def test_user_context_creation(self, mock_firebase_admin, valid_token_payload):
+    async def test_user_context_creation(
+        self, mock_firebase_admin, valid_token_payload
+    ):
         """Test that UserContext is created correctly from token."""
         # Setup
-        mock_firebase_admin['verify_id_token'].return_value = valid_token_payload
+        mock_firebase_admin["verify_id_token"].return_value = valid_token_payload
 
-        provider = FirebaseAuthProvider(
-            project_id="clarity-loop-backend"
-        )
+        provider = FirebaseAuthProvider(project_id="clarity-loop-backend")
         provider._initialized = True
 
         # Test token verification
@@ -200,15 +195,15 @@ class TestFirebaseAuthIntegration:
         assert Permission.WRITE_OWN_DATA in user_context.permissions
 
     @pytest.mark.asyncio
-    async def test_middleware_integration(self, mock_firebase_admin, valid_token_payload):
+    async def test_middleware_integration(
+        self, mock_firebase_admin, valid_token_payload
+    ):
         """Test the complete middleware flow."""
         # Setup
-        mock_firebase_admin['verify_id_token'].return_value = valid_token_payload
+        mock_firebase_admin["verify_id_token"].return_value = valid_token_payload
 
         # Create auth provider and middleware
-        auth_provider = FirebaseAuthProvider(
-            project_id="clarity-loop-backend"
-        )
+        auth_provider = FirebaseAuthProvider(project_id="clarity-loop-backend")
         auth_provider._initialized = True
 
         # Create mock app and request
@@ -220,9 +215,7 @@ class TestFirebaseAuthIntegration:
 
         # Create middleware
         middleware = FirebaseAuthMiddleware(
-            app=mock_app,
-            auth_provider=auth_provider,
-            exempt_paths=["/health", "/docs"]
+            app=mock_app, auth_provider=auth_provider, exempt_paths=["/health", "/docs"]
         )
 
         # Test authentication
@@ -239,9 +232,7 @@ class TestFirebaseAuthIntegration:
         IOS_FIREBASE_PROJECT = "clarity-loop-backend"
 
         # Backend should use the same project ID
-        provider = FirebaseAuthProvider(
-            project_id=IOS_FIREBASE_PROJECT
-        )
+        provider = FirebaseAuthProvider(project_id=IOS_FIREBASE_PROJECT)
 
         assert provider.project_id == IOS_FIREBASE_PROJECT
 
@@ -268,16 +259,16 @@ class TestFirebaseTokenValidation:
             "email": "user@example.com",
             "email_verified": True,
             "firebase": {
-                "identities": {
-                    "email": ["user@example.com"]
-                },
-                "sign_in_provider": "password"
-            }
+                "identities": {"email": ["user@example.com"]},
+                "sign_in_provider": "password",
+            },
         }
 
         # Verify required fields
         assert sample_token_payload["aud"] == "clarity-loop-backend"
-        assert "securetoken.google.com/clarity-loop-backend" in sample_token_payload["iss"]
+        assert (
+            "securetoken.google.com/clarity-loop-backend" in sample_token_payload["iss"]
+        )
         assert "email" in sample_token_payload
         assert "user_id" in sample_token_payload or "sub" in sample_token_payload
 

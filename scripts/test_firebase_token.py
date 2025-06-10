@@ -53,11 +53,13 @@ def test_token_verification(token: str):
             print(f"\n❌ Unexpected error: {type(e).__name__}")
             print(f"   Details: {e!s}")
             import traceback
+
             traceback.print_exc()
 
     except Exception as e:
         print(f"❌ Failed to initialize Firebase: {e}")
         import traceback
+
         traceback.print_exc()
 
 

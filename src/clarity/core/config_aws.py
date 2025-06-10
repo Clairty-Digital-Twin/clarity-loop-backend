@@ -87,7 +87,9 @@ class Settings(BaseSettings):
     # AWS Core Settings
     aws_region: str = Field(default="us-east-1", alias="AWS_REGION")
     aws_access_key_id: str | None = Field(default=None, alias="AWS_ACCESS_KEY_ID")
-    aws_secret_access_key: str | None = Field(default=None, alias="AWS_SECRET_ACCESS_KEY")
+    aws_secret_access_key: str | None = Field(
+        default=None, alias="AWS_SECRET_ACCESS_KEY"
+    )
     aws_session_token: str | None = Field(default=None, alias="AWS_SESSION_TOKEN")
 
     # AWS Cognito Settings (replacing Firebase Auth)
@@ -100,17 +102,19 @@ class Settings(BaseSettings):
         default="clarity-health-data", alias="DYNAMODB_TABLE_NAME"
     )
     dynamodb_endpoint_url: str | None = Field(
-        default=None, 
+        default=None,
         alias="DYNAMODB_ENDPOINT_URL",
-        description="DynamoDB endpoint URL (for local testing with DynamoDB Local)"
+        description="DynamoDB endpoint URL (for local testing with DynamoDB Local)",
     )
 
     # S3 Settings (replacing Cloud Storage)
-    s3_bucket_name: str = Field(default="clarity-health-uploads", alias="S3_BUCKET_NAME")
+    s3_bucket_name: str = Field(
+        default="clarity-health-uploads", alias="S3_BUCKET_NAME"
+    )
     s3_endpoint_url: str | None = Field(
         default=None,
-        alias="S3_ENDPOINT_URL", 
-        description="S3 endpoint URL (for local testing with LocalStack)"
+        alias="S3_ENDPOINT_URL",
+        description="S3 endpoint URL (for local testing with LocalStack)",
     )
 
     # SQS/SNS Settings (replacing Pub/Sub)
@@ -119,7 +123,7 @@ class Settings(BaseSettings):
     sqs_endpoint_url: str | None = Field(
         default=None,
         alias="SQS_ENDPOINT_URL",
-        description="SQS endpoint URL (for local testing)"
+        description="SQS endpoint URL (for local testing)",
     )
 
     # Gemini API Settings (keeping this for AI functionality)

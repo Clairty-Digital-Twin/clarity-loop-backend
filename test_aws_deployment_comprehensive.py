@@ -10,10 +10,10 @@ Usage:
 
 import argparse
 import asyncio
+from datetime import UTC, datetime
 import json
 import sys
 import time
-from datetime import UTC, datetime
 from typing import Any, Dict, List, Optional, Tuple
 from uuid import uuid4
 
@@ -36,10 +36,10 @@ class AWSBackendTester:
         """Initialize the tester with base URL and API key."""
         self.base_url = base_url.rstrip("/")
         self.api_key = api_key
-        self.session: Optional[aiohttp.ClientSession] = None
-        self.results: List[Dict[str, Any]] = []
+        self.session: aiohttp.ClientSession | None = None
+        self.results: list[dict[str, Any]] = []
         self.test_user_id = f"test_user_{uuid4().hex[:8]}"
-        self.auth_token: Optional[str] = None
+        self.auth_token: str | None = None
 
     async def __aenter__(self):
         """Enter async context."""
@@ -78,60 +78,64 @@ class AWSBackendTester:
         self,
         method: str,
         endpoint: str,
-        headers: Optional[Dict[str, str]] = None,
-        **kwargs
-    ) -> Tuple[int, Dict[str, Any], float]:
+        headers: dict[str, str] | None = None,
+        **kwargs,
+    ) -> tuple[int, dict[str, Any], float]:
         """Make an HTTP request and return status, response, and time."""
         if not self.session:
             raise RuntimeError("Session not initialized")
 
         url = f"{self.base_url}{endpoint}"
-        
+
         # Set up headers
         request_headers = {
             "X-API-Key": self.api_key,
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
         }
         if headers:
             request_headers.update(headers)
-        
+
         # Add auth token if available
         if self.auth_token and "Authorization" not in request_headers:
             request_headers["Authorization"] = f"Bearer {self.auth_token}"
 
         start_time = time.time()
-        
+
         try:
             async with self.session.request(
                 method, url, headers=request_headers, **kwargs
             ) as response:
                 response_time = time.time() - start_time
-                
+
                 try:
                     data = await response.json()
                 except aiohttp.ContentTypeError:
                     data = {"text": await response.text()}
 
-                self.results.append({
-                    "endpoint": endpoint,
-                    "method": method,
-                    "status": response.status,
-                    "response_time": response_time,
-                    "success": 200 <= response.status < 300
-                })
+                self.results.append(
+                    {
+                        "endpoint": endpoint,
+                        "method": method,
+                        "status": response.status,
+                        "response_time": response_time,
+                        "success": 200 <= response.status < 300,
+                    }
+                )
 
                 return response.status, data, response_time
 
         except Exception as e:
             response_time = time.time() - start_time
-            self.results.append({
-                "endpoint": endpoint,
-                "method": method,
-                "status": 0,
-                "response_time": response_time,
-                "success": False,
-                "error": str(e)
-            })
+            self.results.append(
+                {
+                    "endpoint": endpoint,
+                    "method": method,
+                    "status": 0,
+                    "response_time": response_time,
+                    "success": False,
+                    "error": str(e),
+                }
+            )
             return 0, {"error": str(e)}, response_time
 
     async def test_health_endpoints(self):
@@ -149,13 +153,13 @@ class AWSBackendTester:
         all_healthy = True
         for endpoint, description in health_endpoints:
             status, response, response_time = await self._make_request("GET", endpoint)
-            
+
             if 200 <= status < 300:
                 self._print_success(
                     f"{description}: {response.get('status', 'healthy')} "
                     f"(Response time: {response_time:.2f}s)"
                 )
-                
+
                 # Print additional details if available
                 if "database" in response:
                     self._print_info(f"  Database: {response['database']}")
@@ -179,15 +183,15 @@ class AWSBackendTester:
         # Test user registration
         test_email = f"test_{uuid4().hex[:8]}@clarity.health"
         test_password = "TestPassword123!"
-        
+
         register_data = {
             "email": test_email,
             "password": test_password,
             "profile": {
                 "first_name": "Test",
                 "last_name": "User",
-                "date_of_birth": "1990-01-01"
-            }
+                "date_of_birth": "1990-01-01",
+            },
         }
 
         self._print_info(f"Testing registration with email: {test_email}")
@@ -196,7 +200,9 @@ class AWSBackendTester:
         )
 
         if 200 <= status < 300:
-            self._print_success(f"User registration successful (Response time: {response_time:.2f}s)")
+            self._print_success(
+                f"User registration successful (Response time: {response_time:.2f}s)"
+            )
             if "user_id" in response:
                 self.test_user_id = response["user_id"]
                 self._print_info(f"  User ID: {self.test_user_id}")
@@ -210,14 +216,16 @@ class AWSBackendTester:
 
         # Test login
         login_data = {"email": test_email, "password": test_password}
-        
+
         self._print_info("Testing login...")
         status, response, response_time = await self._make_request(
             "POST", "/api/v1/auth/login", json=login_data
         )
 
         if 200 <= status < 300:
-            self._print_success(f"User login successful (Response time: {response_time:.2f}s)")
+            self._print_success(
+                f"User login successful (Response time: {response_time:.2f}s)"
+            )
             if "access_token" in response:
                 self.auth_token = response["access_token"]
                 self._print_info("  Access token received")
@@ -264,19 +272,16 @@ class AWSBackendTester:
                 {
                     "timestamp": datetime.now(UTC).isoformat(),
                     "value": 72.5,
-                    "unit": "bpm"
+                    "unit": "bpm",
                 },
                 {
                     "timestamp": datetime.now(UTC).isoformat(),
                     "value": 75.0,
-                    "unit": "bpm"
-                }
+                    "unit": "bpm",
+                },
             ],
             "source": "apple_watch",
-            "device_info": {
-                "model": "Apple Watch Series 9",
-                "os_version": "10.0"
-            }
+            "device_info": {"model": "Apple Watch Series 9", "os_version": "10.0"},
         }
 
         self._print_info("Uploading health data...")
@@ -286,7 +291,9 @@ class AWSBackendTester:
 
         processing_id = None
         if 200 <= status < 300:
-            self._print_success(f"Health data uploaded (Response time: {response_time:.2f}s)")
+            self._print_success(
+                f"Health data uploaded (Response time: {response_time:.2f}s)"
+            )
             if "processing_id" in response:
                 processing_id = response["processing_id"]
                 self._print_info(f"  Processing ID: {processing_id}")
@@ -301,7 +308,7 @@ class AWSBackendTester:
         # Check processing status
         if processing_id:
             await asyncio.sleep(1)  # Wait a bit for processing
-            
+
             self._print_info("Checking processing status...")
             status, response, response_time = await self._make_request(
                 "GET", f"/api/v1/health-data/processing/{processing_id}"
@@ -318,21 +325,22 @@ class AWSBackendTester:
 
         # Query health data
         self._print_info("Querying health data...")
-        query_params = {
-            "data_type": "heart_rate",
-            "limit": 10
-        }
-        
+        query_params = {"data_type": "heart_rate", "limit": 10}
+
         status, response, response_time = await self._make_request(
             "GET", "/api/v1/health-data/", params=query_params
         )
 
         if 200 <= status < 300:
-            self._print_success(f"Health data retrieved (Response time: {response_time:.2f}s)")
+            self._print_success(
+                f"Health data retrieved (Response time: {response_time:.2f}s)"
+            )
             if "data" in response:
                 self._print_info(f"  Retrieved {len(response['data'])} records")
             if "pagination" in response:
-                self._print_info(f"  Has next page: {response['pagination'].get('has_next')}")
+                self._print_info(
+                    f"  Has next page: {response['pagination'].get('has_next')}"
+                )
         else:
             self._print_error(f"Health data query failed with status {status}")
 
@@ -357,9 +365,9 @@ class AWSBackendTester:
                 {"timestamp": "2025-01-11T00:00:00Z", "activity_level": 0.0},
                 {"timestamp": "2025-01-11T06:00:00Z", "activity_level": 0.0},
                 {"timestamp": "2025-01-11T06:30:00Z", "activity_level": 0.3},
-                {"timestamp": "2025-01-11T07:00:00Z", "activity_level": 0.8}
+                {"timestamp": "2025-01-11T07:00:00Z", "activity_level": 0.8},
             ],
-            "analysis_type": "sleep_stages"
+            "analysis_type": "sleep_stages",
         }
 
         self._print_info("Requesting PAT sleep analysis...")
@@ -368,13 +376,17 @@ class AWSBackendTester:
         )
 
         if 200 <= status < 300:
-            self._print_success(f"PAT analysis completed (Response time: {response_time:.2f}s)")
+            self._print_success(
+                f"PAT analysis completed (Response time: {response_time:.2f}s)"
+            )
             if "analysis" in response:
                 self._print_info("  Analysis results received")
                 if "sleep_metrics" in response.get("analysis", {}):
                     metrics = response["analysis"]["sleep_metrics"]
                     self._print_info(f"  Sleep quality: {metrics.get('sleep_quality')}")
-                    self._print_info(f"  Total sleep time: {metrics.get('total_sleep_time')}")
+                    self._print_info(
+                        f"  Total sleep time: {metrics.get('total_sleep_time')}"
+                    )
         else:
             self._print_warning(f"PAT analysis returned status {status}")
             if response.get("detail"):
@@ -387,7 +399,9 @@ class AWSBackendTester:
         self._print_header("GEMINI AI INSIGHTS")
 
         if not self.auth_token:
-            self._print_warning("Skipping Gemini insights tests - no auth token available")
+            self._print_warning(
+                "Skipping Gemini insights tests - no auth token available"
+            )
             return False
 
         # Generate insights request
@@ -396,11 +410,11 @@ class AWSBackendTester:
                 "heart_rate_avg": 72,
                 "sleep_quality": 0.85,
                 "activity_level": "moderate",
-                "stress_indicators": ["elevated_hr_variability"]
+                "stress_indicators": ["elevated_hr_variability"],
             },
             "context": "Weekly health summary",
             "insight_type": "comprehensive",
-            "include_recommendations": True
+            "include_recommendations": True,
         }
 
         self._print_info("Generating AI health insights...")
@@ -410,15 +424,23 @@ class AWSBackendTester:
 
         insight_id = None
         if 200 <= status < 300:
-            self._print_success(f"AI insights generated (Response time: {response_time:.2f}s)")
+            self._print_success(
+                f"AI insights generated (Response time: {response_time:.2f}s)"
+            )
             if "data" in response:
                 data = response["data"]
                 if "narrative" in data:
-                    self._print_info(f"  Narrative preview: {data['narrative'][:100]}...")
+                    self._print_info(
+                        f"  Narrative preview: {data['narrative'][:100]}..."
+                    )
                 if "key_insights" in data:
-                    self._print_info(f"  Key insights count: {len(data['key_insights'])}")
+                    self._print_info(
+                        f"  Key insights count: {len(data['key_insights'])}"
+                    )
                 if "recommendations" in data:
-                    self._print_info(f"  Recommendations count: {len(data['recommendations'])}")
+                    self._print_info(
+                        f"  Recommendations count: {len(data['recommendations'])}"
+                    )
                 if "confidence_score" in data:
                     self._print_info(f"  Confidence score: {data['confidence_score']}")
         else:
@@ -433,13 +455,17 @@ class AWSBackendTester:
         )
 
         if 200 <= status < 300:
-            self._print_success(f"Service status retrieved (Response time: {response_time:.2f}s)")
+            self._print_success(
+                f"Service status retrieved (Response time: {response_time:.2f}s)"
+            )
             if "data" in response:
                 data = response["data"]
                 self._print_info(f"  Service status: {data.get('status')}")
                 if "model" in data:
                     self._print_info(f"  Model: {data['model'].get('model_name')}")
-                    self._print_info(f"  Initialized: {data['model'].get('initialized')}")
+                    self._print_info(
+                        f"  Initialized: {data['model'].get('initialized')}"
+                    )
         else:
             self._print_warning(f"Service status check returned {status}")
 
@@ -452,13 +478,13 @@ class AWSBackendTester:
         docs_endpoints = [
             ("/docs", "Swagger UI"),
             ("/redoc", "ReDoc"),
-            ("/openapi.json", "OpenAPI Schema")
+            ("/openapi.json", "OpenAPI Schema"),
         ]
 
         all_accessible = True
         for endpoint, description in docs_endpoints:
             status, _, response_time = await self._make_request("GET", endpoint)
-            
+
             if 200 <= status < 300:
                 self._print_success(
                     f"{description}: Accessible (Response time: {response_time:.2f}s)"
@@ -474,15 +500,18 @@ class AWSBackendTester:
         self._print_header("METRICS ENDPOINT")
 
         status, response, response_time = await self._make_request("GET", "/metrics")
-        
+
         if 200 <= status < 300:
-            self._print_success(f"Metrics endpoint accessible (Response time: {response_time:.2f}s)")
+            self._print_success(
+                f"Metrics endpoint accessible (Response time: {response_time:.2f}s)"
+            )
             # Check if response looks like Prometheus metrics
             if "text" in response and "# HELP" in response["text"]:
                 self._print_info("  Prometheus metrics format confirmed")
                 # Count metric lines
                 metric_lines = [
-                    line for line in response["text"].split("\n") 
+                    line
+                    for line in response["text"].split("\n")
                     if line and not line.startswith("#")
                 ]
                 self._print_info(f"  Total metrics: {len(metric_lines)}")
@@ -501,8 +530,12 @@ class AWSBackendTester:
         success_rate = (successful_tests / total_tests * 100) if total_tests > 0 else 0
 
         # Calculate average response time
-        response_times = [r["response_time"] for r in self.results if r["response_time"] > 0]
-        avg_response_time = sum(response_times) / len(response_times) if response_times else 0
+        response_times = [
+            r["response_time"] for r in self.results if r["response_time"] > 0
+        ]
+        avg_response_time = (
+            sum(response_times) / len(response_times) if response_times else 0
+        )
 
         print(f"\n{Fore.CYAN}📊 Test Results:{Style.RESET_ALL}")
         print(f"  Total Tests: {total_tests}")
@@ -516,16 +549,24 @@ class AWSBackendTester:
             print(f"\n{Fore.RED}Failed Tests:{Style.RESET_ALL}")
             for result in self.results:
                 if not result["success"]:
-                    print(f"  - {result['method']} {result['endpoint']} (Status: {result['status']})")
+                    print(
+                        f"  - {result['method']} {result['endpoint']} (Status: {result['status']})"
+                    )
 
         # Overall status
         print(f"\n{Fore.CYAN}Overall Status:{Style.RESET_ALL}")
         if success_rate >= 90:
-            self._print_success(f"EXCELLENT - Backend is fully operational ({success_rate:.1f}%)")
+            self._print_success(
+                f"EXCELLENT - Backend is fully operational ({success_rate:.1f}%)"
+            )
         elif success_rate >= 70:
-            self._print_warning(f"GOOD - Backend is mostly operational ({success_rate:.1f}%)")
+            self._print_warning(
+                f"GOOD - Backend is mostly operational ({success_rate:.1f}%)"
+            )
         else:
-            self._print_error(f"NEEDS ATTENTION - Backend has issues ({success_rate:.1f}%)")
+            self._print_error(
+                f"NEEDS ATTENTION - Backend has issues ({success_rate:.1f}%)"
+            )
 
     async def run_all_tests(self):
         """Run all test suites."""
@@ -550,20 +591,16 @@ class AWSBackendTester:
 
 async def main():
     """Main function to run the test suite."""
-    parser = argparse.ArgumentParser(
-        description="Test CLARITY backend AWS deployment"
-    )
+    parser = argparse.ArgumentParser(description="Test CLARITY backend AWS deployment")
     parser.add_argument(
         "--base-url",
         default=DEFAULT_BASE_URL,
-        help=f"Base URL of the backend (default: {DEFAULT_BASE_URL})"
+        help=f"Base URL of the backend (default: {DEFAULT_BASE_URL})",
     )
     parser.add_argument(
-        "--api-key",
-        default=DEFAULT_API_KEY,
-        help="API key for authentication"
+        "--api-key", default=DEFAULT_API_KEY, help="API key for authentication"
     )
-    
+
     args = parser.parse_args()
 
     try:
@@ -585,7 +622,10 @@ if __name__ == "__main__":
     except ImportError:
         print("Installing required packages...")
         import subprocess
-        subprocess.check_call([sys.executable, "-m", "pip", "install", "aiohttp", "colorama"])
+
+        subprocess.check_call(
+            [sys.executable, "-m", "pip", "install", "aiohttp", "colorama"]
+        )
         import aiohttp
         import colorama
 

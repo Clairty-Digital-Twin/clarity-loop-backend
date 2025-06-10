@@ -1,7 +1,7 @@
 """Minimal CLARITY backend for AWS deployment - bypasses complex imports."""
 
-import logging
 from contextlib import asynccontextmanager
+import logging
 from typing import Any, Dict
 
 from fastapi import FastAPI
@@ -17,10 +17,10 @@ logger = logging.getLogger(__name__)
 async def lifespan(app: FastAPI):
     """Application lifespan management."""
     logger.info("Starting minimal CLARITY backend...")
-    
+
     # Startup
     yield
-    
+
     # Shutdown
     logger.info("Shutting down minimal CLARITY backend...")
 
@@ -44,36 +44,29 @@ app.add_middleware(
 
 
 @app.get("/")
-async def root() -> Dict[str, str]:
+async def root() -> dict[str, str]:
     """Root endpoint."""
     return {
         "message": "Welcome to CLARITY Digital Twin Platform",
         "version": "0.1.0",
-        "mode": "minimal"
+        "mode": "minimal",
     }
 
 
 @app.get("/health")
-async def health_check() -> Dict[str, Any]:
+async def health_check() -> dict[str, Any]:
     """Health check endpoint."""
     return {
         "status": "ok",
         "environment": "aws-minimal",
-        "services": {
-            "auth": "disabled",
-            "database": "disabled", 
-            "ai": "disabled"
-        }
+        "services": {"auth": "disabled", "database": "disabled", "ai": "disabled"},
     }
 
 
 @app.get("/api/v1/test")
-async def test_endpoint() -> Dict[str, str]:
+async def test_endpoint() -> dict[str, str]:
     """Test API endpoint."""
-    return {
-        "status": "ok",
-        "message": "API is working"
-    }
+    return {"status": "ok", "message": "API is working"}
 
 
 # Prometheus metrics endpoint
@@ -83,4 +76,5 @@ app.mount("/metrics", metrics_app)
 
 if __name__ == "__main__":
     import uvicorn
+
     uvicorn.run(app, host="0.0.0.0", port=8000)

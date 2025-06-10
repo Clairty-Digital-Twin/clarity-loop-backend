@@ -16,6 +16,7 @@ from clarity.auth.firebase_middleware import (
 )
 from clarity.auth.mock_auth import MockAuthProvider
 from clarity.auth.modal_auth_fix import get_user_context, set_user_context
+from clarity.models.auth import UserContext
 
 __all__ = [
     "AuthenticatedUser",
@@ -23,6 +24,7 @@ __all__ = [
     "FirebaseAuthProvider",
     "MockAuthProvider",
     "OptionalUser",
+    "UserContext",
     "get_authenticated_user",
     "get_optional_user",
     "get_user_context",

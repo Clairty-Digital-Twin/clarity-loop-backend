@@ -242,7 +242,8 @@ class DependencyContainer:
             )
 
         # Include API router with dependencies
-        app.include_router(api_router)
+        # This adds ALL endpoints: auth, health-data, healthkit, pat, insights, metrics, websocket
+        app.include_router(api_router, prefix="/api/v1")
 
         # Add health check endpoint
         @app.get("/health")

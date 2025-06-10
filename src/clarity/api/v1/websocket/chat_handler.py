@@ -17,7 +17,7 @@ from fastapi import (
 from pydantic import ValidationError
 
 from clarity.auth.dependencies import get_authenticated_user
-from clarity.core.config import get_settings
+from clarity.core.config_aws import get_settings
 from clarity.core.container import get_container
 from clarity.ml.gemini_service import (
     GeminiService,

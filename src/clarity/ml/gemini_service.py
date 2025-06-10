@@ -20,7 +20,7 @@ from vertexai.generative_models import (  # type: ignore[import-untyped]
     SafetySetting,
 )
 
-from clarity.core.config import get_settings
+from clarity.core.config_aws import get_settings
 from clarity.utils.decorators import resilient_prediction
 
 logger = logging.getLogger(__name__)

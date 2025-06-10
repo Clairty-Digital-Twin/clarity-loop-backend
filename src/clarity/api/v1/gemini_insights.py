@@ -55,9 +55,10 @@ def set_dependencies(
         # In development, we might not have real Vertex AI credentials
         _gemini_service = GeminiService(project_id="dev-project")
     else:
-        # Production setup
-        gcp_project_id = config_provider.get_gcp_project_id()
-        _gemini_service = GeminiService(project_id=gcp_project_id)
+        # Production setup - using AWS region instead of GCP project
+        from clarity.core.config_aws import get_settings
+        aws_settings = get_settings()
+        _gemini_service = GeminiService(project_id=aws_settings.aws_region)
 
 
 def get_gemini_service() -> GeminiService:

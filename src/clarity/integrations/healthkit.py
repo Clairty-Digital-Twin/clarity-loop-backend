@@ -15,7 +15,7 @@ from typing import Any
 import httpx
 from pydantic import BaseModel, Field, validator
 
-from clarity.core.config import get_settings
+from clarity.core.config_aws import get_settings
 from clarity.core.exceptions import (
     AuthorizationError,
     DataValidationError,

@@ -21,81 +21,55 @@ HIPAA-compliant data models for the revolutionary psychiatry digital twin platfo
 These models establish new standards for clinical data validation and processing.
 """
 
-# ⚠️ IMPORT AUTH MODELS HERE - SINGLE SOURCE OF TRUTH
-from clarity.models.auth import (  # Utility Models; Additional Request Models; Additional Response Models; Core Domain Models; API Request/Response Models; Enums and Status Types
-    AuthError,
-    AuthErrorDetail,
-    AuthProvider,
-    DeviceInfo,
-    LoginResponse,
-    MFAEnrollRequest,
-    MFAEnrollResponse,
-    MFAMethod,
-    MFAVerifyRequest,
-    MFAVerifyResponse,
-    PasswordResetConfirmRequest,
-    PasswordResetRequest,
-    PasswordResetResponse,
-    Permission,
-    RefreshTokenRequest,
-    RegistrationResponse,
-    SessionInfo,
-    TokenInfo,
-    TokenResponse,
-    UserContext,
-    UserLoginRequest,
-    UserRegistrationRequest,
-    UserRole,
-    UserSessionResponse,
-    UserStatus,
-)
-from clarity.models.health_data import (
-    ActivityData,
-    BiometricData,
-    HealthDataResponse,
-    HealthDataUpload,
-    HealthMetric,
-    MentalHealthIndicator,
-    ProcessingStatus,
-    SleepData,
-    ValidationError,
-)
+# Use lazy imports to avoid circular dependencies during package installation
+# This is a common pattern for packages with complex interdependencies
+
+def __getattr__(name):
+    """Lazy import pattern to avoid circular dependencies."""
+    # Auth models
+    if name in [
+        "AuthError", "AuthErrorDetail", "AuthProvider", "DeviceInfo",
+        "LoginResponse", "MFAEnrollRequest", "MFAEnrollResponse", "MFAMethod",
+        "MFAVerifyRequest", "MFAVerifyResponse", "PasswordResetConfirmRequest",
+        "PasswordResetRequest", "PasswordResetResponse", "Permission",
+        "RefreshTokenRequest", "RegistrationResponse", "SessionInfo",
+        "TokenInfo", "TokenResponse", "UserContext", "UserLoginRequest",
+        "UserRegistrationRequest", "UserRole", "UserSessionResponse", "UserStatus"
+    ]:
+        from . import auth
+        return getattr(auth, name)
+    
+    # Health data models
+    elif name in [
+        "ActivityData", "BiometricData", "HealthDataResponse", "HealthDataUpload",
+        "HealthMetric", "MentalHealthIndicator", "ProcessingStatus", "SleepData",
+        "ValidationError"
+    ]:
+        from . import health_data
+        return getattr(health_data, name)
+    
+    # User models
+    elif name in ["User", "UserProfile", "UserPreferences"]:
+        from . import user
+        return getattr(user, name)
+    
+    raise AttributeError(f"module '{__name__}' has no attribute '{name}'")
 
 __all__ = [
-    "ActivityData",
-    "AuthError",
-    "AuthErrorDetail",
-    "AuthProvider",
-    "BiometricData",
-    "DeviceInfo",
-    "HealthDataResponse",
-    "HealthDataUpload",
-    "HealthMetric",
-    "LoginResponse",
-    "MFAEnrollRequest",
-    "MFAEnrollResponse",
-    "MFAMethod",
-    "MFAVerifyRequest",
-    "MFAVerifyResponse",
-    "MentalHealthIndicator",
-    "PasswordResetConfirmRequest",
-    "PasswordResetRequest",
-    "PasswordResetResponse",
-    "Permission",
-    "ProcessingStatus",
-    "RefreshTokenRequest",
-    "RegistrationResponse",
-    "SessionInfo",
-    "SleepData",
-    "TokenInfo",
-    "TokenResponse",
-    "UserContext",
-    "UserLoginRequest",
-    "UserRegistrationRequest",
-    "UserRole",
-    "UserSessionResponse",
-    "UserStatus",
+    # Auth models
+    "AuthError", "AuthErrorDetail", "AuthProvider", "DeviceInfo",
+    "LoginResponse", "MFAEnrollRequest", "MFAEnrollResponse", "MFAMethod",
+    "MFAVerifyRequest", "MFAVerifyResponse", "PasswordResetConfirmRequest",
+    "PasswordResetRequest", "PasswordResetResponse", "Permission",
+    "RefreshTokenRequest", "RegistrationResponse", "SessionInfo",
+    "TokenInfo", "TokenResponse", "UserContext", "UserLoginRequest",
+    "UserRegistrationRequest", "UserRole", "UserSessionResponse", "UserStatus",
+    # Health data models
+    "ActivityData", "BiometricData", "HealthDataResponse", "HealthDataUpload",
+    "HealthMetric", "MentalHealthIndicator", "ProcessingStatus", "SleepData",
     "ValidationError",
+    # User models
+    "User", "UserProfile", "UserPreferences"
 ]
 
 # 🔒 ARCHITECTURAL ENFORCEMENT

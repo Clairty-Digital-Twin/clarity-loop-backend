@@ -180,6 +180,12 @@ path = "src/clarity/__init__.py"
 [tool.hatch.build.targets.wheel]
 packages = ["src/clarity"]
 
+[tool.hatch.build]
+include = [
+    "src/clarity/**/*.py",
+    "src/clarity/**/*.typed",
+]
+
 [tool.hatch.build.targets.sdist]
 include = [
     "/src",

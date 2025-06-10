@@ -277,3 +277,13 @@ __pycache__/
 ops/terraform/gcp-credentials.json
 ops/terraform/.terraform*
 ops/terraform/*.tfstate*
+
+# Added by Task Master AI
+logs
+# Task files
+tasks.json
+tasks/ 
+# ===== DOCKER & CONTAINER ARTIFACTS =====
+*.tar.gz
+*.tar
+docker-export/

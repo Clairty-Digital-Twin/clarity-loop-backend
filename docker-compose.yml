@@ -1,164 +1,71 @@
+version: '3.8'
+
 services:
-  # Main application service
   clarity-backend:
     build:
       context: .
       dockerfile: Dockerfile
-      target: production
     ports:
-      - "8000:8080"
+      - "8000:8000"
     environment:
-      - ENVIRONMENT=production
-      - LOG_LEVEL=INFO
-      # Remove emulator host settings to use real cloud services
-      # - FIRESTORE_EMULATOR_HOST=firestore:8080
-      # - FIREBASE_AUTH_EMULATOR_HOST=firebase-auth:9099
-      # - PUBSUB_EMULATOR_HOST=pubsub:8085
-      - REDIS_URL=redis://redis:6379
-      - GOOGLE_APPLICATION_CREDENTIALS=/app/secrets/credentials.json
-      - FIREBASE_PROJECT_ID=clarity-loop-backend
-      - GCP_PROJECT_ID=clarity-loop-backend
-      - FIRESTORE_DATABASE_ID=(default)
+      - ENVIRONMENT=development
+      - PORT=8000
+      - LOG_LEVEL=debug
+      - SKIP_EXTERNAL_SERVICES=true
+      - AWS_DEFAULT_REGION=us-east-1
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID:-dummy}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY:-dummy}
+      # Firebase config (will be replaced with Cognito)
+      - FIREBASE_PROJECT_ID=clarity-test
+      - GCP_PROJECT_ID=clarity-test
     volumes:
-      - .:/app
-      - /app/.venv
-      - clarity_logs:/app/logs
-      - /Users/ray/Desktop/CLARITY-DIGITAL-TWIN/secrets/clarity-loop-backend-firebase-adminsdk-fbsvc-bc9e472539.json:/app/secrets/credentials.json:ro
-    depends_on:
-      - redis
-      - firestore
-      - firebase-auth
-      - pubsub
+      # Mount source for development hot-reload (optional)
+      # - ./src:/app/src:ro
+      - ./logs:/app/logs
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
     networks:
       - clarity-network
-    restart: unless-stopped
 
-  # Redis for caching and session storage
+  # Local DynamoDB for development (replacing Firestore)
+  dynamodb-local:
+    image: amazon/dynamodb-local:latest
+    ports:
+      - "8001:8000"
+    command: "-jar DynamoDBLocal.jar -sharedDb -inMemory"
+    networks:
+      - clarity-network
+
+  # Local S3 (MinIO) for development (replacing Cloud Storage)
+  minio:
+    image: minio/minio:latest
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      - MINIO_ROOT_USER=minioadmin
+      - MINIO_ROOT_PASSWORD=minioadmin
+    command: server /data --console-address ":9001"
+    volumes:
+      - minio-data:/data
+    networks:
+      - clarity-network
+
+  # Redis for caching (unchanged)
   redis:
     image: redis:7-alpine
     ports:
       - "6379:6379"
-    volumes:
-      - redis_data:/data
-    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
     networks:
       - clarity-network
-    restart: unless-stopped
 
-  # Firestore Emulator for development
-  firestore:
-    image: gcr.io/google.com/cloudsdktool/google-cloud-cli:emulators
-    ports:
-      - "8080:8080"
-      - "4000:4000"
-    command: >
-      sh -c "gcloud emulators firestore start
-             --host-port=0.0.0.0:8080
-             --rules=/workspace/firestore.rules
-             --project=clarity-dev"
-    volumes:
-      - ./firestore.rules:/workspace/firestore.rules:ro
-      - firestore_data:/workspace/data
-    networks:
-      - clarity-network
-    restart: unless-stopped
-
-  # Firebase Auth Emulator
-  firebase-auth:
-    image: gcr.io/google.com/cloudsdktool/google-cloud-cli:emulators
-    ports:
-      - "9099:9099"
-    command: >
-      sh -c "gcloud emulators auth start
-             --host-port=0.0.0.0:9099
-             --project=clarity-dev"
-    networks:
-      - clarity-network
-    restart: unless-stopped
-
-  # Pub/Sub Emulator for async messaging
-  pubsub:
-    image: gcr.io/google.com/cloudsdktool/google-cloud-cli:emulators
-    ports:
-      - "8085:8085"
-    command: >
-      sh -c "gcloud emulators pubsub start
-             --host-port=0.0.0.0:8085
-             --project=clarity-dev"
-    networks:
-      - clarity-network
-    restart: unless-stopped
-
-  # Prometheus for metrics monitoring
-  prometheus:
-    image: prom/prometheus:latest
-    ports:
-      - "9090:9090"
-    volumes:
-      - ./ops/prometheus.yml:/etc/prometheus/prometheus.yml:ro
-      - prometheus_data:/prometheus
-    command:
-      - '--config.file=/etc/prometheus/prometheus.yml'
-      - '--storage.tsdb.path=/prometheus'
-      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
-      - '--web.console.templates=/usr/share/prometheus/consoles'
-      - '--web.enable-lifecycle'
-    networks:
-      - clarity-network
-    restart: unless-stopped
-
-  # Grafana for visualization
-  grafana:
-    image: grafana/grafana:latest
-    ports:
-      - "3000:3000"
-    volumes:
-      - grafana_data:/var/lib/grafana
-      - ./ops/grafana/dashboards:/etc/grafana/provisioning/dashboards:ro
-      - ./ops/grafana/datasources:/etc/grafana/provisioning/datasources:ro
-    environment:
-      - GF_SECURITY_ADMIN_PASSWORD=admin
-      - GF_USERS_ALLOW_SIGN_UP=false
-    networks:
-      - clarity-network
-    restart: unless-stopped
-
-  # Jupyter Notebook for ML experimentation
-  jupyter:
-    build:
-      context: .
-      dockerfile: Dockerfile
-      target: builder
-    ports:
-      - "8888:8888"
-    volumes:
-      - ./research:/app/research
-      - ./data:/app/data
-      - jupyter_data:/home/jovyan/.jupyter
-    command: >
-      sh -c "pip install jupyterlab &&
-             jupyter lab --ip=0.0.0.0 --port=8888 --no-browser --allow-root
-             --NotebookApp.token='' --NotebookApp.password=''"
-    networks:
-      - clarity-network
-    restart: unless-stopped
-
-# Volumes for persistent data
-volumes:
-  redis_data:
-    driver: local
-  firestore_data:
-    driver: local
-  prometheus_data:
-    driver: local
-  grafana_data:
-    driver: local
-  jupyter_data:
-    driver: local
-  clarity_logs:
-    driver: local
-
-# Network for service communication
 networks:
   clarity-network:
     driver: bridge
+
+volumes:
+  minio-data:

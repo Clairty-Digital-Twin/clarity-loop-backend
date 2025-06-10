@@ -1,0 +1,23 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": [
+        "ecr:*",
+        "ecs:*",
+        "ec2:*",
+        "elasticloadbalancing:*",
+        "logs:*",
+        "iam:GetRole",
+        "iam:PassRole",
+        "iam:CreateRole",
+        "iam:AttachRolePolicy",
+        "secretsmanager:*",
+        "dynamodb:*",
+        "s3:*"
+      ],
+      "Resource": "*"
+    }
+  ]
+}

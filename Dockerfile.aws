@@ -1,0 +1,40 @@
+# Optimized Dockerfile for AWS ECS deployment
+FROM python:3.11-slim
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Set working directory
+WORKDIR /app
+
+# Copy all necessary files for package installation
+COPY pyproject.toml LICENSE README.md ./
+COPY src ./src
+
+# Install Python dependencies
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir .
+COPY gunicorn.aws.conf.py ./
+COPY entrypoint.aws.sh ./entrypoint.sh
+
+# Make entrypoint executable
+RUN chmod +x entrypoint.sh
+
+# Create non-root user
+RUN useradd -m -u 1000 appuser && \
+    chown -R appuser:appuser /app
+
+USER appuser
+
+# Expose port
+EXPOSE 8000
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
+    CMD curl -f http://localhost:8000/health || exit 1
+
+# Use the AWS-specific entrypoint
+ENTRYPOINT ["./entrypoint.sh"]

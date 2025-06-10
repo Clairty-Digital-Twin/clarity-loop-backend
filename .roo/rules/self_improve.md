@@ -32,7 +32,6 @@ alwaysApply: true
     - Implementation details have changed
 
 - **Example Pattern Recognition:**
-
   ```typescript
   // If you see repeated patterns like:
   const data = await prisma.user.findMany({

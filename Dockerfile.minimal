@@ -1,0 +1,23 @@
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Copy only essential files
+COPY pyproject.toml LICENSE README.md ./
+COPY src ./src
+
+# Install dependencies with no cache to reduce layer size
+RUN pip install --upgrade pip && \
+    pip install --no-cache-dir . && \
+    pip cache purge
+
+# Copy runtime files
+COPY gunicorn.aws.conf.py gunicorn.conf.py
+COPY entrypoint.sh .
+RUN chmod +x entrypoint.sh
+
+# Expose port
+EXPOSE 8000
+
+# Use lightweight entrypoint
+ENTRYPOINT ["./entrypoint.sh"]

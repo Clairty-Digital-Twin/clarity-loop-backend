@@ -643,60 +643,82 @@ class AuthenticationService:
         """
         try:
             # Find and revoke refresh token
-            tokens = await self.firestore_client.query_documents(
-                collection=self.refresh_tokens_collection,
-                filters=[
-                    {
-                        "field": "refresh_token",
-                        "operator": "==",
-                        "value": refresh_token,
-                    },
-                    {"field": "is_revoked", "operator": "==", "value": False},
-                ],
-            )
-
-            if tokens:
-                token_data = tokens[0]
-                user_id = token_data["user_id"]
-
-                # Revoke refresh token
-                token_doc_id = token_data.get("id")
-                if isinstance(token_doc_id, str):
-                    await self.firestore_client.update_document(
-                        collection=self.refresh_tokens_collection,
-                        document_id=token_doc_id,
-                        data={"is_revoked": True, "revoked_at": datetime.now(UTC)},
+            if self.is_dynamodb:
+                # DynamoDB approach
+                token_data = await self.data_store.get_item(
+                    table_name=self.refresh_tokens_collection,
+                    key={"id": refresh_token},
+                )
+                if token_data and not token_data.get("is_revoked"):
+                    user_id = token_data["user_id"]
+                    # Revoke token
+                    await self.data_store.update_item(
+                        table_name=self.refresh_tokens_collection,
+                        key={"id": refresh_token},
+                        update_expression="SET is_revoked = :revoked, revoked_at = :revoked_at",
+                        expression_attribute_values={
+                            ":revoked": True,
+                            ":revoked_at": datetime.now(UTC).isoformat(),
+                        },
                         user_id=user_id,
                     )
-                else:
-                    logger.error("Token document missing or invalid ID field")
-
-                # Deactivate sessions with this refresh token
-                sessions = await self.firestore_client.query_documents(
-                    collection=self.sessions_collection,
+                    # Deactivate sessions
+                    sessions = await self.data_store.query(
+                        table_name=self.sessions_collection,
+                        key_condition_expression="user_id = :user_id",
+                        expression_attribute_values={":user_id": user_id},
+                    )
+                    for session in sessions.get("Items", []):
+                        if session.get("refresh_token") == refresh_token and session.get("is_active"):
+                            await self.data_store.update_item(
+                                table_name=self.sessions_collection,
+                                key={"id": session["session_id"]},
+                                update_expression="SET is_active = :inactive, ended_at = :ended",
+                                expression_attribute_values={
+                                    ":inactive": False,
+                                    ":ended": datetime.now(UTC).isoformat(),
+                                },
+                            )
+                    logger.info("User logged out: %s", user_id)
+            elif self.is_firestore:
+                # Firestore approach
+                tokens = await self.data_store.query_documents(
+                    collection=self.refresh_tokens_collection,
                     filters=[
-                        {
-                            "field": "refresh_token",
-                            "operator": "==",
-                            "value": refresh_token,
-                        },
-                        {"field": "is_active", "operator": "==", "value": True},
+                        {"field": "refresh_token", "operator": "==", "value": refresh_token},
+                        {"field": "is_revoked", "operator": "==", "value": False},
                     ],
                 )
-
-                for session in sessions:
-                    session_id = session.get("session_id")
-                    if isinstance(session_id, str):
-                        await self.firestore_client.update_document(
-                            collection=self.sessions_collection,
-                            document_id=session_id,
-                            data={"is_active": False, "ended_at": datetime.now(UTC)},
+                if tokens:
+                    token_data = tokens[0]
+                    user_id = token_data["user_id"]
+                    # Revoke token
+                    token_doc_id = token_data.get("id")
+                    if isinstance(token_doc_id, str):
+                        await self.data_store.update_document(
+                            collection=self.refresh_tokens_collection,
+                            document_id=token_doc_id,
+                            data={"is_revoked": True, "revoked_at": datetime.now(UTC)},
                             user_id=user_id,
                         )
-                    else:
-                        logger.error("Session document missing or invalid session_id")
-
-                logger.info("User logged out: %s", user_id)
+                    # Deactivate sessions
+                    sessions = await self.data_store.query_documents(
+                        collection=self.sessions_collection,
+                        filters=[
+                            {"field": "refresh_token", "operator": "==", "value": refresh_token},
+                            {"field": "is_active", "operator": "==", "value": True},
+                        ],
+                    )
+                    for session in sessions:
+                        session_id = session.get("session_id")
+                        if isinstance(session_id, str):
+                            await self.data_store.update_document(
+                                collection=self.sessions_collection,
+                                document_id=session_id,
+                                data={"is_active": False, "ended_at": datetime.now(UTC)},
+                                user_id=user_id,
+                            )
+                    logger.info("User logged out: %s", user_id)
 
         except Exception:
             logger.exception("Logout failed")
@@ -714,21 +736,25 @@ class AuthenticationService:
             UserSessionResponse: User information or None if not found
         """
         try:
-            # Get Firebase user record
-            user_record = auth.get_user(user_id)
-
-            # Get user data from Firestore
-            user_data = await self.firestore_client.get_document(
-                collection=self.users_collection, document_id=user_id
-            )
+            # Get user data from storage
+            if self.is_dynamodb:
+                user_data = await self.data_store.get_item(
+                    table_name=self.users_collection,
+                    key={"user_id": user_id},
+                )
+            elif self.is_firestore:
+                user_data = await self.data_store.get_document(
+                    collection=self.users_collection,
+                    document_id=user_id,
+                )
+            else:
+                return None
 
             if not user_data:
                 return None
 
-            return await self._create_user_session_response(user_record, user_data)  # type: ignore[arg-type]
+            return await self._create_user_session_response(user_id, user_data)  # type: ignore[arg-type]
 
-        except auth.UserNotFoundError:  # type: ignore[misc]
-            return None
         except Exception:
             logger.exception("Failed to get user %s", user_id)
             return None

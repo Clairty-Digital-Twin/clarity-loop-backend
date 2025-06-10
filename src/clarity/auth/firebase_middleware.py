@@ -1,4 +1,8 @@
-"""Firebase authentication middleware and provider classes."""
+"""Authentication middleware and provider classes.
+
+This module provides compatibility for both Firebase and AWS Cognito authentication.
+The middleware is designed to work with either backend seamlessly.
+"""
 
 from collections.abc import Awaitable, Callable
 from datetime import UTC, datetime
@@ -8,7 +12,6 @@ import time
 from typing import Any, cast
 
 from fastapi import FastAPI, Request, Response
-from firebase_admin import auth as firebase_auth
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.responses import JSONResponse
 
@@ -22,11 +25,22 @@ from clarity.models.auth import (
 )
 from clarity.ports.auth_ports import IAuthProvider
 
+# Optional Firebase imports
+try:
+    from firebase_admin import auth as firebase_auth
+    _HAS_FIREBASE = True
+except ImportError:
+    _HAS_FIREBASE = False
+    firebase_auth = None
+
 logger = logging.getLogger(__name__)
 
 
-class FirebaseAuthMiddleware(BaseHTTPMiddleware):
-    """Firebase authentication middleware for FastAPI applications."""
+class AuthenticationMiddleware(BaseHTTPMiddleware):
+    """Authentication middleware for FastAPI applications.
+    
+    Supports both Firebase and AWS Cognito authentication providers.
+    """
 
     def __init__(
         self,
@@ -60,7 +74,7 @@ class FirebaseAuthMiddleware(BaseHTTPMiddleware):
         self.graceful_degradation = graceful_degradation
         self._user_cache: dict[str, UserContext] = {}
 
-        logger.info("Firebase authentication middleware initialized")
+        logger.info("Authentication middleware initialized")
         logger.info("Exempt paths: %s", self.exempt_paths)
 
     async def dispatch(
@@ -258,6 +272,10 @@ class FirebaseAuthMiddleware(BaseHTTPMiddleware):
         else:
             # Use basic user context creation
             return self._create_user_context(user_info)
+
+
+# Compatibility alias for existing code
+FirebaseAuthMiddleware = AuthenticationMiddleware
 
 
 class FirebaseAuthProvider(IAuthProvider):

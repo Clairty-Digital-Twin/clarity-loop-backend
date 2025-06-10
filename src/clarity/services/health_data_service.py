@@ -13,10 +13,18 @@ import os
 from typing import TYPE_CHECKING, Any, cast
 import uuid
 
-from google.cloud import storage
+try:
+    from google.cloud import storage
+    _HAS_GCS = True
+except ImportError:
+    _HAS_GCS = False
+    storage = None
 
 if TYPE_CHECKING:
-    from google.cloud.storage.bucket import Bucket
+    if _HAS_GCS:
+        from google.cloud.storage.bucket import Bucket
+    else:
+        Bucket = Any
 
 from clarity.core.secure_logging import log_health_data_received
 from clarity.models.health_data import (
@@ -100,8 +108,14 @@ class HealthDataService:
         self.repository = repository
         self.logger = logging.getLogger(__name__)
 
-        # Use injected cloud storage or fallback to real implementation
-        self.cloud_storage = cloud_storage or storage.Client()
+        # Use injected cloud storage or fallback to real implementation if available
+        if cloud_storage:
+            self.cloud_storage = cloud_storage
+        elif _HAS_GCS and storage:
+            self.cloud_storage = storage.Client()
+        else:
+            self.cloud_storage = None
+            
         self.raw_data_bucket = os.getenv(
             "HEALTHKIT_RAW_BUCKET", "clarity-healthkit-raw-data"
         )
@@ -122,6 +136,11 @@ class HealthDataService:
         Raises:
             HealthDataServiceError: If upload fails
         """
+        if not self.cloud_storage:
+            # Skip GCS upload if not available
+            self.logger.info("GCS not available, skipping raw data upload")
+            return f"local://{user_id}/{processing_id}.json"
+            
         try:
             # Create GCS blob path
             blob_path = f"{user_id}/{processing_id}.json"

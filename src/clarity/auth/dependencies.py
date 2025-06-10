@@ -2,6 +2,7 @@
 
 This module provides the single source of truth for authentication dependencies
 following Robert C. Martin's principles and security best practices.
+Now supports both Firebase and AWS authentication backends.
 """
 
 import logging

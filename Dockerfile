@@ -40,6 +40,9 @@ WORKDIR /app
 # This includes our 'clarity' application and all its dependencies, properly installed.
 COPY --from=base /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
 
+# Copy Python binaries (including gunicorn and other installed scripts)
+COPY --from=base /usr/local/bin /usr/local/bin
+
 # Copy the gunicorn config and the entrypoint script.
 # We do NOT copy the 'src' directory here to avoid path conflicts. The code is already
 # in site-packages from the step above.

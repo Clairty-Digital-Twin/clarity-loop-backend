@@ -6,6 +6,5 @@ set -e
 # Start Gunicorn
 # The -c flag specifies the Gunicorn configuration file.
 # The application is specified as 'module:app_variable'.
-# We set the working directory to /app/src to ensure that all
-# relative imports within the 'clarity' module work correctly.
-exec gunicorn -c /app/gunicorn.conf.py --chdir /app/src clarity.main:app 
+# Since clarity is installed as a package, we don't need to change directories.
+exec gunicorn -c /app/gunicorn.conf.py clarity.main:app 

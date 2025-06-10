@@ -1,6 +1,7 @@
-"""Health Data Publisher Service.
+"""Health Data Publisher Service - AWS SQS/SNS Edition.
 
-Publishes health data processing events to Pub/Sub topics for async processing.
+Publishes health data processing events to AWS SQS/SNS for async processing.
+Replaces Google Pub/Sub with enterprise-grade AWS messaging.
 """
 
 from datetime import UTC, datetime
@@ -9,10 +10,10 @@ import logging
 import os
 from typing import Any
 
-from google.cloud.pubsub_v1 import PublisherClient
 from pydantic import BaseModel
 
 from clarity.core.decorators import log_execution
+from clarity.services.aws_messaging_service import AWSMessagingService
 
 logger = logging.getLogger(__name__)
 
@@ -22,7 +23,7 @@ class HealthDataEvent(BaseModel):
 
     user_id: str
     upload_id: str
-    gcs_path: str
+    s3_path: str  # Changed from gcs_path to s3_path
     event_type: str = "health_data_upload"
     timestamp: str
     metadata: dict[str, Any] = {}
@@ -40,66 +41,53 @@ class InsightRequestEvent(BaseModel):
 
 
 class HealthDataPublisher:
-    """Publisher for health data processing events."""
+    """AWS-powered publisher for health data processing events."""
 
     def __init__(self) -> None:
-        """Initialize the publisher with GCP Pub/Sub client."""
-        self.project_id = os.getenv("GOOGLE_CLOUD_PROJECT")
-        self.publisher = PublisherClient()
+        """Initialize the publisher with AWS SQS/SNS messaging."""
+        self.aws_region = os.getenv("AWS_REGION", "us-east-1")
+        self.sns_topic_arn = os.getenv("CLARITY_SNS_TOPIC_ARN")
+        
+        # Initialize AWS messaging service
+        self.messaging_service = AWSMessagingService(
+            region=self.aws_region,
+            health_data_queue=os.getenv("CLARITY_HEALTH_DATA_QUEUE", "clarity-health-data-processing"),
+            insight_queue=os.getenv("CLARITY_INSIGHT_QUEUE", "clarity-insight-generation"),
+            sns_topic_arn=self.sns_topic_arn,
+        )
+        
         self.logger = logging.getLogger(__name__)
 
-        # Topic names
-        self.health_data_topic = (
-            f"projects/{self.project_id}/topics/health-data-uploads"
-        )
-        self.insight_topic = f"projects/{self.project_id}/topics/insight-requests"
-
         self.logger.info(
-            "Initialized HealthDataPublisher for project: %s", self.project_id
+            "Initialized HealthDataPublisher for AWS region: %s", self.aws_region
         )
 
     @log_execution(level=logging.DEBUG)
-    def publish_health_data_upload(
+    async def publish_health_data_upload(
         self,
         user_id: str,
         upload_id: str,
-        gcs_path: str,
+        s3_path: str,  # Changed from gcs_path to s3_path
         metadata: dict[str, Any] | None = None,
     ) -> str:
-        """Publish health data upload event.
+        """Publish health data upload event to AWS SQS.
 
         Args:
             user_id: User identifier
             upload_id: Upload identifier
-            gcs_path: Path to raw data in GCS
+            s3_path: Path to raw data in S3
             metadata: Optional metadata
 
         Returns:
-            Message ID from Pub/Sub
+            Message ID from SQS
         """
         try:
-            # Create message payload
-            message_data = {
-                "user_id": user_id,
-                "upload_id": upload_id,
-                "gcs_path": gcs_path,
-                "timestamp": datetime.now(UTC).isoformat(),
-                "metadata": metadata or {},
-            }
-
-            # Convert to JSON bytes
-            message_bytes = json.dumps(message_data).encode("utf-8")
-
-            # Publish with retry
-            future = self.publisher.publish(
-                self.health_data_topic,
-                message_bytes,
+            message_id = await self.messaging_service.publish_health_data_upload(
                 user_id=user_id,
                 upload_id=upload_id,
+                s3_path=s3_path,
+                metadata=metadata,
             )
-
-            # Get message ID
-            message_id: str = future.result(timeout=30.0)
 
         except Exception:
             self.logger.exception("Failed to publish health data event")
@@ -114,14 +102,14 @@ class HealthDataPublisher:
             return message_id
 
     @log_execution(level=logging.DEBUG)
-    def publish_insight_request(
+    async def publish_insight_request(
         self,
         user_id: str,
         upload_id: str,
         analysis_results: dict[str, Any],
         metadata: dict[str, Any] | None = None,
     ) -> str:
-        """Publish insight generation request event.
+        """Publish insight generation request event to AWS SQS.
 
         Args:
             user_id: User identifier
@@ -130,31 +118,15 @@ class HealthDataPublisher:
             metadata: Optional metadata
 
         Returns:
-            Message ID from Pub/Sub
+            Message ID from SQS
         """
         try:
-            # Create message payload
-            message_data = {
-                "user_id": user_id,
-                "upload_id": upload_id,
-                "analysis_results": analysis_results,
-                "timestamp": datetime.now(UTC).isoformat(),
-                "metadata": metadata or {},
-            }
-
-            # Convert to JSON bytes
-            message_bytes = json.dumps(message_data).encode("utf-8")
-
-            # Publish with retry
-            future = self.publisher.publish(
-                self.insight_topic,
-                message_bytes,
+            message_id = await self.messaging_service.publish_insight_request(
                 user_id=user_id,
                 upload_id=upload_id,
+                analysis_results=analysis_results,
+                metadata=metadata,
             )
-
-            # Get message ID
-            message_id: str = future.result(timeout=30.0)
 
         except Exception:
             self.logger.exception("Failed to publish insight request event")
@@ -168,17 +140,20 @@ class HealthDataPublisher:
             )
             return message_id
 
+    async def health_check(self) -> dict[str, Any]:
+        """Perform health check on AWS messaging services."""
+        return await self.messaging_service.health_check()
+
     def close(self) -> None:
-        """Close publisher client."""
-        # PublisherClient doesn't have a close method in current version
-        # Client connections are automatically managed
+        """Close publisher connections."""
+        self.messaging_service.close()
 
 
 # Global singleton instance
 _publisher: HealthDataPublisher | None = None
 
 
-def get_publisher() -> HealthDataPublisher:
+async def get_publisher() -> HealthDataPublisher:
     """Get or create global publisher instance."""
     global _publisher  # noqa: PLW0603
 

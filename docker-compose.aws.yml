@@ -5,7 +5,7 @@ services:
   clarity-backend:
     build:
       context: .
-      dockerfile: Dockerfile.aws.simple
+      dockerfile: Dockerfile.aws.full
     ports:
       - "8000:8000"
     environment:

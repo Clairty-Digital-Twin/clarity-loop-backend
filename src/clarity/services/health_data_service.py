@@ -14,17 +14,11 @@ from typing import TYPE_CHECKING, Any, cast
 import uuid
 
 try:
-    from google.cloud import storage
-    _HAS_GCS = True
+    from clarity.services.s3_storage_service import S3StorageService
+    _HAS_S3 = True
 except ImportError:
-    _HAS_GCS = False
-    storage = None
-
-if TYPE_CHECKING:
-    if _HAS_GCS:
-        from google.cloud.storage.bucket import Bucket
-    else:
-        Bucket = Any
+    _HAS_S3 = False
+    S3StorageService = None
 
 from clarity.core.secure_logging import log_health_data_received
 from clarity.models.health_data import (
@@ -108,11 +102,14 @@ class HealthDataService:
         self.repository = repository
         self.logger = logging.getLogger(__name__)
 
-        # Use injected cloud storage or fallback to real implementation if available
+        # Use injected cloud storage or fallback to S3 implementation if available
         if cloud_storage:
             self.cloud_storage = cloud_storage
-        elif _HAS_GCS and storage:
-            self.cloud_storage = storage.Client()
+        elif _HAS_S3 and S3StorageService:
+            self.cloud_storage = S3StorageService(
+                bucket_name=os.getenv("HEALTHKIT_RAW_BUCKET", "clarity-healthkit-raw-data"),
+                region=os.getenv("AWS_REGION", "us-east-1")
+            )
         else:
             self.cloud_storage = None
 
@@ -120,10 +117,10 @@ class HealthDataService:
             "HEALTHKIT_RAW_BUCKET", "clarity-healthkit-raw-data"
         )
 
-    async def _upload_raw_data_to_gcs(
+    async def _upload_raw_data_to_s3(
         self, user_id: str, processing_id: str, health_data: HealthDataUpload
     ) -> str:
-        """Upload raw health data to Google Cloud Storage.
+        """Upload raw health data to AWS S3.
 
         Args:
             user_id: User identifier
@@ -131,93 +128,58 @@ class HealthDataService:
             health_data: Raw health data to upload
 
         Returns:
-            GCS path where data was stored
+            S3 URI where data was stored
 
         Raises:
             HealthDataServiceError: If upload fails
         """
         if not self.cloud_storage:
-            # Skip GCS upload if not available
-            self.logger.info("GCS not available, skipping raw data upload")
+            # Skip S3 upload if not available
+            self.logger.info("S3 not available, skipping raw data upload")
             return f"local://{user_id}/{processing_id}.json"
 
         try:
-            # Create GCS blob path
-            blob_path = f"{user_id}/{processing_id}.json"
-            gcs_path = f"gs://{self.raw_data_bucket}/{blob_path}"
-
-            # Convert health data to JSON for storage
-            raw_data = {
-                "user_id": str(health_data.user_id),
-                "processing_id": processing_id,
-                "upload_source": health_data.upload_source,
-                "client_timestamp": health_data.client_timestamp.isoformat(),
-                "server_timestamp": datetime.now(UTC).isoformat(),
-                "sync_token": health_data.sync_token,
-                "metrics_count": len(health_data.metrics),
-                "metrics": [
-                    {
-                        "metric_id": str(metric.metric_id),
-                        "metric_type": metric.metric_type.value,
-                        "created_at": metric.created_at.isoformat(),
-                        "device_id": metric.device_id,
-                        "biometric_data": (
-                            metric.biometric_data.model_dump()
-                            if metric.biometric_data
-                            else None
-                        ),
-                        "activity_data": (
-                            metric.activity_data.model_dump()
-                            if metric.activity_data
-                            else None
-                        ),
-                        "sleep_data": (
-                            metric.sleep_data.model_dump()
-                            if metric.sleep_data
-                            else None
-                        ),
-                        "mental_health_data": (
-                            metric.mental_health_data.model_dump()
-                            if metric.mental_health_data
-                            else None
-                        ),
+            # Use S3StorageService to upload raw health data
+            if isinstance(self.cloud_storage, S3StorageService):
+                s3_uri = await self.cloud_storage.upload_raw_health_data(
+                    user_id=user_id,
+                    processing_id=processing_id,
+                    health_data=health_data
+                )
+                self.logger.info(
+                    "Raw health data uploaded to S3: %s (%d metrics)",
+                    s3_uri,
+                    len(health_data.metrics),
+                )
+                return s3_uri
+            else:
+                # Fallback for generic storage interface
+                raw_data = {
+                    "user_id": str(health_data.user_id),
+                    "processing_id": processing_id,
+                    "upload_source": health_data.upload_source,
+                    "client_timestamp": health_data.client_timestamp.isoformat(),
+                    "server_timestamp": datetime.now(UTC).isoformat(),
+                    "sync_token": health_data.sync_token,
+                    "metrics_count": len(health_data.metrics),
+                }
+                
+                file_path = f"{user_id}/{processing_id}.json"
+                s3_uri = await self.cloud_storage.upload_file(
+                    file_data=json.dumps(raw_data, indent=2).encode(),
+                    file_path=file_path,
+                    metadata={
+                        "user_id": user_id,
+                        "processing_id": processing_id,
+                        "upload_source": health_data.upload_source,
                     }
-                    for metric in health_data.metrics
-                ],
-            }
+                )
+                return s3_uri
 
-            # Upload to GCS
-            bucket: Bucket = cast(
-                "Bucket", self.cloud_storage.bucket(self.raw_data_bucket)
-            )
-            blob = bucket.blob(blob_path)
-
-            # Set content type and metadata
-            blob.content_type = "application/json"
-            blob.metadata = {
-                "user_id": user_id,
-                "processing_id": processing_id,
-                "upload_source": health_data.upload_source,
-                "metrics_count": str(len(health_data.metrics)),
-                "uploaded_at": datetime.now(UTC).isoformat(),
-            }
-
-            # Upload the JSON data
-            blob.upload_from_string(
-                json.dumps(raw_data, indent=2), content_type="application/json"
-            )
-
-            self.logger.info(
-                "Raw health data uploaded to GCS: %s (%d metrics)",
-                gcs_path,
-                len(health_data.metrics),
-            )
         except Exception as e:
-            self.logger.exception("Failed to upload raw data to GCS")
-            msg = f"GCS upload failed: {e!s}"
+            self.logger.exception("Failed to upload raw data to S3")
+            msg = f"S3 upload failed: {e!s}"
             raise HealthDataServiceError(msg) from e
-        else:
-            return gcs_path
 
     def _validate_health_metrics(self, metrics: list[HealthMetric]) -> list[str]:
         """Validate a list of health metrics."""

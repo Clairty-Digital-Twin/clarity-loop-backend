@@ -1,0 +1,7 @@
+"""CLARITY Digital Twin Platform - AWS Authentication Package.
+
+AWS Cognito-based authentication for healthcare applications.
+"""
+
+# Empty __init__.py for AWS version to avoid Firebase imports
+__all__ = []

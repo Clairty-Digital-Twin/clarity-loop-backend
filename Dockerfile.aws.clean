@@ -11,11 +11,13 @@ WORKDIR /app
 # Copy and install Python dependencies
 COPY pyproject.toml LICENSE README.md ./
 RUN pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir boto3 && \
-    pip install --no-cache-dir .
+    pip install --no-cache-dir boto3
 
-# Copy application code
+# Copy application code first
 COPY src ./src
+
+# Now install the package
+RUN pip install --no-cache-dir .
 
 # Copy AWS-specific files
 COPY gunicorn.aws.conf.py ./
@@ -36,6 +38,6 @@ HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
 
 # Set AWS-specific environment variables
 ENV PYTHONPATH=/app
-ENV CLARITY_MAIN_MODULE=clarity.main_aws:app
+ENV CLARITY_MAIN_MODULE=clarity.main_minimal:app
 
 ENTRYPOINT ["./entrypoint.sh"]

@@ -13,7 +13,7 @@
   "containerDefinitions": [
     {
       "name": "clarity-backend",
-      "image": "***REMOVED***/clarity-backend:v1-amd64",
+      "image": "***REMOVED***/clarity-backend:amd64-only",
       "portMappings": [
         {
           "containerPort": 8000,
@@ -36,7 +36,7 @@
         },
         {
           "name": "SKIP_EXTERNAL_SERVICES",
-          "value": "false"
+          "value": "true"
         }
       ],
       "logConfiguration": {

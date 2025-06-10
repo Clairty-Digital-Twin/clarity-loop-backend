@@ -1,0 +1,52 @@
+# AWS-optimized Dockerfile for Full Clarity backend
+FROM public.ecr.aws/docker/library/python:3.11-slim
+
+# Set working directory
+WORKDIR /app
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    gcc \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Python dependencies
+RUN pip install --no-cache-dir \
+    fastapi \
+    uvicorn[standard] \
+    boto3 \
+    google-generativeai \
+    pydantic[email] \
+    python-jose[cryptography] \
+    requests \
+    httpx \
+    email-validator
+
+# Copy application code
+COPY src/ ./src/
+
+# Override auth __init__.py with AWS version to avoid Firebase imports
+COPY src/clarity/auth/__init__.py.aws ./src/clarity/auth/__init__.py
+
+# Remove any Python cache files that might cause issues
+RUN find /app -name "*.pyc" -delete && \
+    find /app -name "__pycache__" -type d -exec rm -rf {} + || true
+
+# Set Python path
+ENV PYTHONPATH=/app/src
+
+# Create non-root user
+RUN useradd -m -u 1000 clarity && \
+    chown -R clarity:clarity /app
+
+USER clarity
+
+# Expose port
+EXPOSE 8000
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:8000/health || exit 1
+
+# Run the full AWS version
+CMD ["uvicorn", "clarity.main_aws_full:app", "--host", "0.0.0.0", "--port", "8000"]

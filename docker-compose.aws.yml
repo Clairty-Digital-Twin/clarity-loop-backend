@@ -1,0 +1,57 @@
+version: '3.8'
+
+services:
+  # Main application
+  clarity-backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.aws.simple
+    ports:
+      - "8000:8000"
+    environment:
+      - ENVIRONMENT=development
+      - AWS_REGION=us-east-1
+      - DYNAMODB_TABLE=clarity-health-data
+      - CLARITY_API_KEY=development-key
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      # For local DynamoDB
+      - AWS_ACCESS_KEY_ID=test
+      - AWS_SECRET_ACCESS_KEY=test
+      - DYNAMODB_ENDPOINT=http://dynamodb-local:8000
+    depends_on:
+      - dynamodb-local
+    networks:
+      - clarity-network
+
+  # Local DynamoDB for development
+  dynamodb-local:
+    image: amazon/dynamodb-local:latest
+    ports:
+      - "8001:8000"
+    command: "-jar DynamoDBLocal.jar -sharedDb -dbPath ./data"
+    volumes:
+      - dynamodb-data:/home/dynamodblocal/data
+    networks:
+      - clarity-network
+
+  # DynamoDB Admin UI (optional)
+  dynamodb-admin:
+    image: aaronshaf/dynamodb-admin
+    ports:
+      - "8002:8001"
+    environment:
+      - DYNAMO_ENDPOINT=http://dynamodb-local:8000
+      - AWS_REGION=us-east-1
+      - AWS_ACCESS_KEY_ID=test
+      - AWS_SECRET_ACCESS_KEY=test
+    depends_on:
+      - dynamodb-local
+    networks:
+      - clarity-network
+
+networks:
+  clarity-network:
+    driver: bridge
+
+volumes:
+  dynamodb-data:

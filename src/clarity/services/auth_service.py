@@ -558,41 +558,66 @@ class AuthenticationService:
         """
         try:
             # Find refresh token record
-            tokens = await self.firestore_client.query_documents(
-                collection=self.refresh_tokens_collection,
-                filters=[
-                    {
-                        "field": "refresh_token",
-                        "operator": "==",
-                        "value": refresh_token,
-                    },
-                    {"field": "is_revoked", "operator": "==", "value": False},
-                ],
-            )
-
-            if not tokens:
+            if self.is_dynamodb:
+                # DynamoDB approach - direct get by ID
+                token_data = await self.data_store.get_item(
+                    table_name=self.refresh_tokens_collection,
+                    key={"id": refresh_token},
+                )
+                if not token_data or token_data.get("is_revoked"):
+                    _raise_invalid_refresh_token()
+            elif self.is_firestore:
+                # Firestore approach - query
+                tokens = await self.data_store.query_documents(
+                    collection=self.refresh_tokens_collection,
+                    filters=[
+                        {
+                            "field": "refresh_token",
+                            "operator": "==",
+                            "value": refresh_token,
+                        },
+                        {"field": "is_revoked", "operator": "==", "value": False},
+                    ],
+                )
+                if not tokens:
+                    _raise_invalid_refresh_token()
+                token_data = tokens[0]
+            else:
                 _raise_invalid_refresh_token()
-
-            token_data = tokens[0]
 
             # Check if token is expired
             expires_at = token_data.get("expires_at")
-            if expires_at and datetime.now(UTC) > expires_at:
-                _raise_refresh_token_expired()
+            if expires_at:
+                if isinstance(expires_at, str):
+                    expires_at = datetime.fromisoformat(expires_at.replace('Z', '+00:00'))
+                if datetime.now(UTC) > expires_at:
+                    _raise_refresh_token_expired()
 
             user_id = token_data["user_id"]
 
             # Revoke old refresh token
-            token_doc_id = token_data.get("id")
-            if not isinstance(token_doc_id, str):
-                logger.error("Token document missing or invalid ID field")
-                _raise_invalid_refresh_token()
-            await self.firestore_client.update_document(
-                collection=self.refresh_tokens_collection,
-                document_id=cast("str", token_doc_id),  # Safe after isinstance check
-                data={"is_revoked": True, "revoked_at": datetime.now(UTC)},
-                user_id=user_id,
-            )
+            if self.is_dynamodb:
+                await self.data_store.update_item(
+                    table_name=self.refresh_tokens_collection,
+                    key={"id": refresh_token},
+                    update_expression="SET is_revoked = :revoked, revoked_at = :revoked_at",
+                    expression_attribute_values={
+                        ":revoked": True,
+                        ":revoked_at": datetime.now(UTC).isoformat(),
+                    },
+                    user_id=user_id,
+                )
+            elif self.is_firestore:
+                token_doc_id = token_data.get("id")
+                if not isinstance(token_doc_id, str):
+                    logger.error("Token document missing or invalid ID field")
+                    _raise_invalid_refresh_token()
+                await self.data_store.update_document(
+                    collection=self.refresh_tokens_collection,
+                    document_id=cast("str", token_doc_id),
+                    data={"is_revoked": True, "revoked_at": datetime.now(UTC)},
+                    user_id=user_id,
+                )
 
             # Generate new tokens
             new_tokens = await self._generate_tokens(user_id)

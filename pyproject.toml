@@ -38,19 +38,16 @@ dependencies = [
     "pydantic>=2.9.0,<3.0.0",
     "pydantic-settings>=2.6.0,<3.0.0",
 
-    # Google Cloud Platform - constrained for compatibility
-    "google-cloud-firestore>=2.19.0,<3.0.0",
-    "google-cloud-storage>=2.18.0,<3.0.0",
-    "google-cloud-pubsub>=2.25.0,<3.0.0",
-    "google-cloud-secret-manager>=2.21.1,<3.0.0",
-    "google-cloud-aiplatform>=1.70.0,<2.0.0",
-    "google-cloud-run>=0.10.7,<1.0.0",
-    "google-cloud-logging>=3.11.3,<4.0.0",
-    "google-cloud-monitoring>=2.22.2,<3.0.0",
-
-    # Firebase Authentication
-    "firebase-admin>=6.5.0,<7.0.0",
+    # AWS SDK
+    "boto3>=1.34.0,<2.0.0",
+    "botocore>=1.34.0,<2.0.0",
+    
+    # Google Gemini API (keeping only this)
+    "google-generativeai>=0.8.3,<1.0.0",
+    
+    # JWT for authentication
     "PyJWT[crypto]>=2.10.0,<3.0.0",
+    "cryptography>=44.0.1,<45.0.0",
 
     # AI/ML Dependencies (PAT Implementation) - major version constraints
     "torch>=2.7.0,<3.0.0",
@@ -62,10 +59,8 @@ dependencies = [
     "plotly>=5.24.0,<6.0.0",
     "h5py>=3.11.0,<4.0.0",  # Required for PAT model weight loading
 
-    # Google AI/Gemini Integration
-    "google-generativeai>=0.8.3,<1.0.0",
+    # AI Integration
     "langchain>=0.3.0,<0.4.0",
-    "langchain-google-vertexai>=2.0.0,<3.0.0",
 
     # HTTP and networking
     "httpx>=0.27.0,<0.28.0",
@@ -78,7 +73,6 @@ dependencies = [
     "alembic>=1.13.0,<2.0.0",
 
     # Security and validation
-    "cryptography>=44.0.1,<45.0.0",
     "bcrypt>=4.2.0,<5.0.0",
     "python-multipart>=0.0.18,<1.0.0",
     "email-validator>=2.2.0,<3.0.0",

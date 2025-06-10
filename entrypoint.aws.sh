@@ -6,5 +6,8 @@ set -e
 # AWS ECS specific environment setup
 echo "Starting CLARITY backend on AWS ECS..."
 
+# Use the module specified in environment or default to AWS main
+MAIN_MODULE=${CLARITY_MAIN_MODULE:-clarity.main_aws:app}
+
 # Use the AWS-specific Gunicorn configuration
-exec gunicorn -c /app/gunicorn.aws.conf.py clarity.main:app
+exec gunicorn -c /app/gunicorn.aws.conf.py $MAIN_MODULE

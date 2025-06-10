@@ -10,7 +10,8 @@ from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric.rsa import RSAPublicKey
 import httpx
 
-from clarity.ports.auth_ports import AuthProvider, UserContext
+from clarity.ports.auth_ports import IAuthProvider
+from clarity.models.auth import UserContext
 from clarity.core.exceptions import (
     AuthenticationError,
     AuthorizationError,
@@ -20,7 +21,7 @@ from clarity.core.exceptions import (
 logger = logging.getLogger(__name__)
 
 
-class AWSCognitoAuthProvider(AuthProvider):
+class AWSCognitoAuthProvider(IAuthProvider):
     """AWS Cognito authentication provider."""
     
     def __init__(
@@ -80,18 +81,18 @@ class AWSCognitoAuthProvider(AuthProvider):
             logger.error(f"Error extracting public key: {e}")
             raise AuthenticationError("Invalid token format") from e
     
-    async def verify_token(self, token: str) -> UserContext:
+    async def verify_token(self, token: str) -> dict[str, Any] | None:
         """Verify Cognito JWT token and extract user context."""
         if self.skip_validation:
             # For testing/development
-            return UserContext(
-                uid="test-user-123",
-                email="test@example.com",
-                email_verified=True,
-                name="Test User",
-                provider="cognito",
-                custom_claims={}
-            )
+            return {
+                "uid": "test-user-123",
+                "email": "test@example.com",
+                "email_verified": True,
+                "name": "Test User",
+                "provider": "cognito",
+                "custom_claims": {}
+            }
         
         try:
             # Get JWKS
@@ -111,17 +112,17 @@ class AWSCognitoAuthProvider(AuthProvider):
             )
             
             # Extract user context from Cognito claims
-            return UserContext(
-                uid=decoded.get("sub", ""),
-                email=decoded.get("email", ""),
-                email_verified=decoded.get("email_verified", False),
-                name=decoded.get("name") or decoded.get("cognito:username", ""),
-                provider="cognito",
-                custom_claims={
+            return {
+                "uid": decoded.get("sub", ""),
+                "email": decoded.get("email", ""),
+                "email_verified": decoded.get("email_verified", False),
+                "name": decoded.get("name") or decoded.get("cognito:username", ""),
+                "provider": "cognito",
+                "custom_claims": {
                     k: v for k, v in decoded.items() 
                     if k not in ["sub", "email", "email_verified", "name"]
                 }
-            )
+            }
             
         except jwt.ExpiredSignatureError:
             raise AuthenticationError("Token has expired")
@@ -131,7 +132,7 @@ class AWSCognitoAuthProvider(AuthProvider):
             logger.error(f"Token verification failed: {e}")
             raise AuthenticationError("Token verification failed")
     
-    async def get_user(self, uid: str) -> Optional[Dict[str, Any]]:
+    async def get_user_info(self, user_id: str) -> dict[str, Any] | None:
         """Get user details from Cognito.
         
         Note: This would require AWS SDK (boto3) for admin operations.
@@ -139,6 +140,23 @@ class AWSCognitoAuthProvider(AuthProvider):
         """
         # In a full implementation, you would use boto3 to get user attributes
         return None
+    
+    async def initialize(self) -> None:
+        """Initialize the authentication provider."""
+        # Pre-fetch JWKS to validate connection
+        if not self.skip_validation:
+            try:
+                await self._get_jwks()
+                logger.info("AWS Cognito auth provider initialized successfully")
+            except Exception as e:
+                logger.error(f"Failed to initialize Cognito auth provider: {e}")
+                raise
+    
+    async def cleanup(self) -> None:
+        """Cleanup the authentication provider."""
+        # Clear JWKS cache
+        self._jwks_cache = None
+        self._jwks_cache_time = 0
     
     async def create_custom_token(self, uid: str, claims: Optional[Dict[str, Any]] = None) -> str:
         """Create custom token (not typically used with Cognito)."""

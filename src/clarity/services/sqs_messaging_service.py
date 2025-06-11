@@ -84,11 +84,11 @@ class SQSMessagingService:
         except ClientError as e:
             logger.exception("SQS publish error: %s", e)
             msg = f"Failed to publish message: {e!s}"
-            raise MessagingError(msg)
+            raise MessagingError(msg) from e
         except Exception as e:
             logger.exception("Unexpected error publishing message: %s", e)
             msg = f"Failed to publish message: {e!s}"
-            raise MessagingError(msg)
+            raise MessagingError(msg) from e
 
     async def receive_messages(
         self,
@@ -129,7 +129,7 @@ class SQSMessagingService:
         except ClientError as e:
             logger.exception("SQS receive error: %s", e)
             msg = f"Failed to receive messages: {e!s}"
-            raise MessagingError(msg)
+            raise MessagingError(msg) from e
 
     async def delete_message(self, receipt_handle: str) -> None:
         """Delete message from SQS queue."""
@@ -143,7 +143,7 @@ class SQSMessagingService:
         except ClientError as e:
             logger.exception("SQS delete error: %s", e)
             msg = f"Failed to delete message: {e!s}"
-            raise MessagingError(msg)
+            raise MessagingError(msg) from e
 
     async def batch_delete_messages(self, receipt_handles: list[str]) -> dict[str, Any]:
         """Batch delete messages from SQS."""
@@ -165,7 +165,7 @@ class SQSMessagingService:
         except ClientError as e:
             logger.exception("SQS batch delete error: %s", e)
             msg = f"Failed to batch delete messages: {e!s}"
-            raise MessagingError(msg)
+            raise MessagingError(msg) from e
 
     async def publish_to_sns(
         self,
@@ -202,7 +202,7 @@ class SQSMessagingService:
         except ClientError as e:
             logger.exception("SNS publish error: %s", e)
             msg = f"Failed to publish to SNS: {e!s}"
-            raise MessagingError(msg)
+            raise MessagingError(msg) from e
 
     async def get_queue_attributes(self) -> dict[str, Any]:
         """Get queue attributes and statistics."""
@@ -216,7 +216,7 @@ class SQSMessagingService:
         except ClientError as e:
             logger.exception("SQS get attributes error: %s", e)
             msg = f"Failed to get queue attributes: {e!s}"
-            raise MessagingError(msg)
+            raise MessagingError(msg) from e
 
     async def purge_queue(self) -> None:
         """Purge all messages from queue (use with caution)."""
@@ -227,7 +227,7 @@ class SQSMessagingService:
         except ClientError as e:
             logger.exception("SQS purge error: %s", e)
             msg = f"Failed to purge queue: {e!s}"
-            raise MessagingError(msg)
+            raise MessagingError(msg) from e
 
 
 class HealthDataMessageTypes:

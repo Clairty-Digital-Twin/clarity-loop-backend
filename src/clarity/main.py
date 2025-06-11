@@ -178,7 +178,7 @@ async def lifespan(app: FastAPI):
         if e.response["Error"]["Code"] == "ResourceNotFoundException":
             logger.warning("DynamoDB table %s not found", DYNAMODB_TABLE)
         else:
-            logger.exception("DynamoDB error: %s", e)
+            logger.exception("DynamoDB error")
 
     yield
 
@@ -315,8 +315,8 @@ async def register(user_data: UserRegister):
 
     except ClientError as e:
         if e.response["Error"]["Code"] == "UsernameExistsException":
-            raise HTTPException(status_code=409, detail="User already exists")
-        raise HTTPException(status_code=500, detail=str(e))
+            raise HTTPException(status_code=409, detail="User already exists") from e
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @app.post("/api/v1/auth/login", response_model=TokenResponse)
@@ -386,8 +386,8 @@ async def store_health_data(
         )
 
     except Exception as e:
-        logger.exception("Failed to store health data: %s", e)
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.exception("Failed to store health data")
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @app.get("/api/v1/health-data/{user_id}")
@@ -420,8 +420,8 @@ async def get_user_health_data(
         }
 
     except Exception as e:
-        logger.exception("Failed to retrieve data: %s", e)
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.exception("Failed to retrieve data")
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @app.delete("/api/v1/health-data/{data_id}")
@@ -460,8 +460,8 @@ async def upload_healthkit_data(
         }
 
     except Exception as e:
-        logger.exception("Failed to upload HealthKit data: %s", e)
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.exception("Failed to upload HealthKit data")
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @app.get("/api/v1/healthkit/status/{upload_id}")
@@ -538,7 +538,7 @@ async def generate_insights(
         return InsightResponse(success=True, insight=response.text)
 
     except Exception as e:
-        logger.exception("Failed to generate insight: %s", e)
+        logger.exception("Failed to generate insight")
         return InsightResponse(success=False, error=str(e))
 
 
@@ -554,7 +554,7 @@ async def chat_with_ai(
         response = model.generate_content(f"Health assistant response to: {message}")
         return {"response": response.text}
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 # =============================================================================

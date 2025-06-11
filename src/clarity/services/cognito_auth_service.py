@@ -205,7 +205,7 @@ class CognitoAuthenticationService:
             error_code = e.response["Error"]["Code"]
             if error_code == "UsernameExistsException":
                 msg = f"User with email {request.email} already exists"
-                raise UserAlreadyExistsError(msg)
+                raise UserAlreadyExistsError(msg) from e
             logger.exception("Cognito registration failed for %s", request.email)
             msg = f"Registration failed: {e}"
             raise AuthenticationError(msg) from e
@@ -338,13 +338,13 @@ class CognitoAuthenticationService:
             error_code = e.response["Error"]["Code"]
             if error_code == "UserNotFoundException":
                 msg = f"User with email {request.email} not found"
-                raise UserNotFoundError(msg)
+                raise UserNotFoundError(msg) from e
             if error_code == "NotAuthorizedException":
                 msg = "Invalid username or password"
-                raise InvalidCredentialsError(msg)
+                raise InvalidCredentialsError(msg) from e
             if error_code == "UserNotConfirmedException":
                 msg = "Email verification required"
-                raise EmailNotVerifiedError(msg)
+                raise EmailNotVerifiedError(msg) from e
             logger.exception("Login failed for %s", request.email)
             msg = f"Login failed: {e}"
             raise AuthenticationError(msg) from e
@@ -445,7 +445,7 @@ class CognitoAuthenticationService:
             error_code = e.response["Error"]["Code"]
             if error_code == "NotAuthorizedException":
                 msg = "Invalid refresh token"
-                raise InvalidCredentialsError(msg)
+                raise InvalidCredentialsError(msg) from e
             logger.exception("Token refresh failed")
             msg = f"Token refresh failed: {e}"
             raise AuthenticationError(msg) from e

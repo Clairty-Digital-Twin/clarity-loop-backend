@@ -696,7 +696,10 @@ class TestHealthAnalysisPipelineMainWorkflow:
         pipeline.cardio_processor.process = MagicMock(return_value=expected_cardio)
 
         # Mock DynamoDB client
-        mock_dynamodb = AsyncMock()
+        mock_dynamodb = MagicMock()
+        mock_table = MagicMock()
+        mock_table.put_item = MagicMock()
+        mock_dynamodb.table = mock_table
         pipeline.dynamodb_client = mock_dynamodb
 
         cardio_metric = HealthMetric(
@@ -710,10 +713,11 @@ class TestHealthAnalysisPipelineMainWorkflow:
         )
 
         # Verify DynamoDB save was called
-        mock_dynamodb.save_analysis_result.assert_called_once()
-        call_args = mock_dynamodb.save_analysis_result.call_args
-        assert call_args[1]["user_id"] == "user1"
-        assert call_args[1]["processing_id"] == processing_id
+        mock_table.put_item.assert_called_once()
+        call_args = mock_table.put_item.call_args
+        saved_item = call_args[1]["Item"]
+        assert saved_item["user_id"] == "user1"
+        assert saved_item["processing_id"] == processing_id
 
         # Verify processing_id is in metadata
         assert result.processing_metadata["processing_id"] == processing_id

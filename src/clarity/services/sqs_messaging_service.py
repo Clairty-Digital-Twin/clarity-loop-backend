@@ -163,7 +163,7 @@ class SQSMessagingService:
             }
 
         except ClientError as e:
-            logger.exception("SQS batch delete error: %s", e)
+            logger.exception("SQS batch delete error")
             msg = f"Failed to batch delete messages: {e!s}"
             raise MessagingError(msg) from e
 

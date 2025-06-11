@@ -221,7 +221,6 @@ class CognitoAuthProvider(IAuthProvider):
                 }
 
             logger.debug("✅ COGNITO TOKEN VERIFIED SUCCESSFULLY")
-            return user_info
 
         except JWTError as e:
             logger.exception("❌ COGNITO ERROR: JWT verification failed: %s", e)
@@ -237,6 +236,8 @@ class CognitoAuthProvider(IAuthProvider):
                 status_code=500,
                 error_code="unknown_auth_error",
             ) from e
+        else:
+            return user_info
 
     async def get_user_info(self, user_id: str) -> dict[str, Any] | None:
         """Get user information by Cognito username or email.

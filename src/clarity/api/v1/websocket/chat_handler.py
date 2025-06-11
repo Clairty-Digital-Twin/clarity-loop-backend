@@ -458,7 +458,7 @@ async def _authenticate_websocket_user(
             claims=user_info,
         )
 
-    except Exception as e:
+    except Exception:
         logger.exception("WebSocket authentication failed")
         await websocket.close(code=4003, reason="Authentication failed")
         return None

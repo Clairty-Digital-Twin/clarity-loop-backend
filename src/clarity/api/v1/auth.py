@@ -211,48 +211,54 @@ async def logout(
 ) -> dict[str, str]:
     """Logout user (invalidate token if supported)."""
     try:
-        # Try to get current user, but don't require it for validation
+        # Check request format first - get body and auth header
+        auth_header = request.headers.get("Authorization", "")
+
+        # Check if request body is empty
         try:
-            current_user = await get_current_user(request)
+            body = await request.json()
         except Exception:
-            # If no valid auth, check if this is a validation error case
-            try:
-                body = await request.json()
-                if not body and not request.headers.get("Authorization"):
-                    # Empty request with no auth header - validation error
-                    raise HTTPException(
-                        status_code=422,
-                        detail=ProblemDetail(
-                            type="validation_error",
-                            title="Validation Error",
-                            detail="Request body or Authorization header required for logout",
-                            status=422,
-                            instance=f"https://api.clarity.health/requests/{id(request)}",
-                        ).model_dump(),
-                    )
-            except Exception:
-                pass
-            
-            # Re-raise the auth error
+            body = {}
+
+        # If both body is empty and no auth header, this is a validation error
+        if not body and not auth_header:
             raise HTTPException(
-                status_code=401,
+                status_code=422,
                 detail=ProblemDetail(
-                    type="authentication_required", 
-                    title="Authentication Required",
-                    detail="Valid authentication required to logout",
-                    status=401,
+                    type="validation_error",
+                    title="Validation Error",
+                    detail="Request body or Authorization header required for logout",
+                    status=422,
                     instance=f"https://api.clarity.health/requests/{id(request)}",
                 ).model_dump(),
             )
+
+        # Now try to authenticate - if we have auth header
+        current_user = None
+        if auth_header:
+            try:
+                from clarity.auth.dependencies import get_current_user
+                current_user = await get_current_user(request)
+            except Exception:
+                # Auth failed but we have a request, so it's an auth error not validation
+                raise HTTPException(
+                    status_code=401,
+                    detail=ProblemDetail(
+                        type="authentication_required",
+                        title="Authentication Required",
+                        detail="Invalid authentication credentials",
+                        status=401,
+                        instance=f"https://api.clarity.health/requests/{id(request)}",
+                    ).model_dump(),
+                )
 
         # Create authentication service
         auth_service = CognitoAuthenticationService(auth_provider, None)
 
         # Get token from header
-        auth_header = request.headers.get("Authorization", "")
         token = auth_header.replace("Bearer ", "") if auth_header else None
 
-        # Logout user
+        # Logout user if we have a token
         if token:
             await auth_service.logout_user(token)
 
@@ -279,7 +285,7 @@ async def auth_health() -> dict[str, str]:
         }
     except Exception:
         return {
-            "status": "unhealthy", 
+            "status": "unhealthy",
             "service": "authentication",
             "version": "1.0.0"
         }
@@ -294,31 +300,31 @@ async def refresh_token(
     try:
         # Create authentication service
         auth_service = CognitoAuthenticationService(auth_provider, None)
-        
+
         # Get refresh token from request body or header
         auth_header = request.headers.get("Authorization", "")
         refresh_token = auth_header.replace("Bearer ", "") if auth_header else None
-        
+
         if not refresh_token:
             # Try to get from request body
             body = await request.json()
             refresh_token = body.get("refresh_token")
-            
+
         if not refresh_token:
             raise HTTPException(
                 status_code=422,
                 detail=ProblemDetail(
                     type="missing_refresh_token",
-                    title="Missing Refresh Token", 
+                    title="Missing Refresh Token",
                     detail="Refresh token is required",
                     status=422,
                     instance=f"https://api.clarity.health/requests/{id(request)}",
                 ).model_dump(),
             )
-        
+
         # Refresh the token
         return await auth_service.refresh_token(refresh_token)
-        
+
     except Exception as e:
         logger.exception("Token refresh failed")
         raise HTTPException(

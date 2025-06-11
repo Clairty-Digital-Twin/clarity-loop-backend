@@ -116,10 +116,10 @@ class CognitoAuthProvider(IAuthProvider):
             logger.debug("Token verified for user: %s", claims.get("sub"))
             return claims
 
-        except JWTError as e:
+        except JWTError:
             logger.exception("JWT verification failed")
             return None
-        except Exception as e:
+        except Exception:
             logger.exception("Unexpected error during token verification")
             return None
 
@@ -160,7 +160,7 @@ class CognitoAuthProvider(IAuthProvider):
                 return None
             logger.exception("Failed to get user")
             return None
-        except Exception as e:
+        except Exception:
             logger.exception("Unexpected error getting user")
             return None
 

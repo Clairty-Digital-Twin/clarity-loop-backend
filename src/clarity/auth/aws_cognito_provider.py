@@ -286,8 +286,6 @@ class CognitoAuthProvider(IAuthProvider):
                 msg = f"Challenge required: {response['ChallengeName']}"
                 raise AuthenticationError(msg)
 
-            return None
-
         except ClientError as e:
             error_code = e.response["Error"]["Code"]
             if error_code == "NotAuthorizedException":

@@ -19,7 +19,7 @@ from clarity.core.exceptions import ConfigurationError
 from clarity.core.logging_config import setup_logging
 
 # Port types are imported from their respective modules
-from clarity.ml.gemini_direct_service import GeminiService
+from clarity.ml.gemini_service import GeminiService
 from clarity.ports.auth_ports import IAuthProvider
 from clarity.ports.data_ports import IHealthDataRepository
 from clarity.storage.dynamodb_client import DynamoDBHealthDataRepository
@@ -194,21 +194,17 @@ class DependencyContainer:
 
         with service_initialization_duration.labels(service=service_name).time():
             try:
-                if not self.settings.gemini_api_key:
-                    logger.warning("Gemini API key not configured")
-                    service_initialization_counter.labels(
-                        service=service_name, status="skipped"
-                    ).inc()
-                    return
-
+                # Create enterprise Gemini service (Vertex AI)
                 self._gemini_service = GeminiService(
-                    api_key=self.settings.gemini_api_key,
-                    model_name=self.settings.gemini_model,
-                    temperature=self.settings.gemini_temperature,
-                    max_tokens=self.settings.gemini_max_tokens,
+                    project_id=getattr(self.settings, 'gcp_project_id', None),
+                    location=getattr(self.settings, 'vertex_ai_location', 'us-central1'),
+                    testing=self.settings.is_development(),
                 )
 
-                logger.info("Gemini service initialized")
+                # Initialize the service (this handles Vertex AI setup)
+                await self._gemini_service.initialize()
+
+                logger.info("Enterprise Gemini service (Vertex AI) initialized")
                 service_initialization_counter.labels(
                     service=service_name, status="success"
                 ).inc()

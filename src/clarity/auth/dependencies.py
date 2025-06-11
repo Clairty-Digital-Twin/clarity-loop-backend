@@ -6,7 +6,7 @@ Uses AWS Cognito for authentication backend.
 """
 
 import logging
-from typing import Annotated, cast
+from typing import Annotated, Any, cast
 
 from fastapi import Depends, HTTPException, Request, status
 from fastapi.security import HTTPBearer

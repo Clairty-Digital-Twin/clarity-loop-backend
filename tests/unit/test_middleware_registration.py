@@ -1,6 +1,6 @@
 """Test middleware registration functionality.
 
-Tests that the Firebase authentication middleware can be properly
+Tests that the AWS Cognito authentication middleware can be properly
 registered in the FastAPI application without type errors.
 """
 
@@ -68,9 +68,9 @@ class TestMiddlewareRegistration:
             mock_settings.log_level = "INFO"
 
             # Mock the settings to avoid validation errors
-            mock_settings.firebase_project_id = "test-project"
-            mock_settings.gcp_project_id = "test-gcp"
-            mock_settings.firebase_credentials_path = "/test/path"
+            mock_settings.aws_region = "us-east-1"
+            mock_settings.cognito_user_pool_id = "test-pool"
+            mock_settings.cognito_client_id = "test-client"
 
             mock_get_settings.return_value = mock_settings
 

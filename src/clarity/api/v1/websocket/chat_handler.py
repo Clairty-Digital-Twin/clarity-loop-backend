@@ -51,7 +51,7 @@ router = APIRouter()
 
 def get_gemini_service() -> GeminiService:
     # Direct initialization to avoid circular import
-    return GeminiService(project_id=os.getenv("GCP_PROJECT_ID", "clarity-digital-twin"))
+    return GeminiService(project_id=os.getenv("AWS_PROJECT_NAME", "clarity-digital-twin"))
 
 
 def get_pat_model_service() -> PATModelService:

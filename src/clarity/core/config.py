@@ -114,7 +114,7 @@ class Settings(BaseSettings):
     s3_region: str = Field(default="us-east-1", alias="S3_REGION")
 
     # Google Cloud settings (for Gemini AI only)
-    gcp_project_id: str = Field(default="", alias="GCP_PROJECT_ID")
+    # Removed GCP project ID - now using AWS
     google_application_credentials: str = Field(
         default="", alias="GOOGLE_APPLICATION_CREDENTIALS"
     )

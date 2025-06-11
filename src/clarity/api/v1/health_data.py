@@ -43,7 +43,7 @@ from clarity.services.health_data_service import (
     HealthDataService,
     HealthDataServiceError,
 )
-from clarity.services.pubsub.publisher import get_publisher
+from clarity.services.messaging.publisher import get_publisher
 
 # Configure logger
 logger = logging.getLogger(__name__)

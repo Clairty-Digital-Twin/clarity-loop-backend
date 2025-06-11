@@ -13,7 +13,7 @@ from fastapi import FastAPI, HTTPException, Request
 from google.cloud import storage  # type: ignore[attr-defined]
 
 from clarity.ml.analysis_pipeline import run_analysis_pipeline
-from clarity.services.pubsub.publisher import get_publisher
+from clarity.services.messaging.publisher import get_publisher
 
 logger = logging.getLogger(__name__)
 

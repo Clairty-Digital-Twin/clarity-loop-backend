@@ -15,7 +15,7 @@ from google.cloud import storage
 from pydantic import BaseModel, Field
 
 from clarity.auth.dependencies import AuthenticatedUser
-from clarity.services.pubsub.publisher import get_publisher
+from clarity.services.messaging.publisher import get_publisher
 
 # Configure logger
 logger = logging.getLogger(__name__)

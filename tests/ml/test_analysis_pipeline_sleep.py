@@ -131,7 +131,7 @@ class TestAnalysisPipelineSleepIntegration:
         # Mock dependencies
         mock_firestore = AsyncMock()
         mock_firestore.table = MagicMock()
-        self.pipeline.dynamodb_client = mock_firestore
+        self.pipeline.dynamodb_client = mock_dynamodb
 
         # Mock fusion service to avoid RuntimeError
         mock_fusion = Mock()
@@ -161,7 +161,7 @@ class TestAnalysisPipelineSleepIntegration:
         # Mock dependencies
         mock_firestore = AsyncMock()
         mock_firestore.table = MagicMock()
-        self.pipeline.dynamodb_client = mock_firestore
+        self.pipeline.dynamodb_client = mock_dynamodb
 
         # Process sleep data
         results = await self.pipeline.process_health_data(
@@ -201,7 +201,7 @@ class TestAnalysisPipelineSleepIntegration:
         # Mock dependencies
         mock_firestore = AsyncMock()
         mock_firestore.table = MagicMock()
-        self.pipeline.dynamodb_client = mock_firestore
+        self.pipeline.dynamodb_client = mock_dynamodb
 
         # Process empty data
         results = await self.pipeline.process_health_data(
@@ -240,11 +240,11 @@ class TestAnalysisPipelineSleepIntegration:
         assert 0 <= vector[1] <= 1  # efficiency already 0-1
         assert 0 <= vector[2] <= 1  # latency normalized by 1 hour
 
-    async def test_save_results_to_firestore_success(
-        self, mock_firestore: MagicMock
+    async def test_save_results_to_dynamodb_success(
+        self, mock_dynamodb: MagicMock
     ) -> None:
         """Test successful saving of analysis results to DynamoDB."""
-        self.pipeline.dynamodb_client = mock_firestore
+        self.pipeline.dynamodb_client = mock_dynamodb
         processing_id = "test_processing_id_save_success"
 
         mock_metric = create_autospec(HealthMetric, instance=True)
@@ -273,14 +273,14 @@ class TestAnalysisPipelineSleepIntegration:
             health_metrics=[mock_metric],
             processing_id=processing_id,
         )
-        mock_firestore.table.put_item.assert_called_once()
+        mock_dynamodb.table.put_item.assert_called_once()
 
-    async def test_save_results_to_firestore_failure(
-        self, mock_firestore: MagicMock
+    async def test_save_results_to_dynamodb_failure(
+        self, mock_dynamodb: MagicMock
     ) -> None:
-        """Test failure when saving analysis results to Firestore."""
-        self.pipeline.dynamodb_client = mock_firestore
-        mock_firestore.table.put_item.side_effect = Exception("DynamoDB Save Error")
+        """Test failure when saving analysis results to DynamoDB."""
+        self.pipeline.dynamodb_client = mock_dynamodb
+        mock_dynamodb.table.put_item.side_effect = Exception("DynamoDB Save Error")
 
         mock_metric = create_autospec(HealthMetric, instance=True)
         mock_metric.metric_type = HealthMetricType.HEART_RATE
@@ -307,7 +307,7 @@ class TestAnalysisPipelineSleepIntegration:
             health_metrics=[mock_metric],
             processing_id="test_processing_id_save_failure_in_call",
         )
-        mock_firestore.table.put_item.assert_called_once()
+        mock_dynamodb.table.put_item.assert_called_once()
 
     async def test_dynamodb_client_initialization(self) -> None:
         """Test that Firestore client is initialized when needed."""

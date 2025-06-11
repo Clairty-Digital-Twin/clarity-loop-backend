@@ -11,7 +11,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
 
-from clarity.services.pubsub.analysis_subscriber import analysis_app
+from clarity.services.messaging.analysis_subscriber import analysis_app
 
 # Configure logging
 logging.basicConfig(

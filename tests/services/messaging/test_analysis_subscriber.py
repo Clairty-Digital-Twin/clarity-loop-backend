@@ -5,7 +5,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 from fastapi import HTTPException, Request
 import pytest
 
-from clarity.services.pubsub.analysis_subscriber import AnalysisSubscriber
+from clarity.services.messaging.analysis_subscriber import AnalysisSubscriber
 
 
 @pytest.fixture
@@ -13,7 +13,7 @@ def subscriber() -> AnalysisSubscriber:
     with (
         patch("google.cloud.storage.Client"),
         patch(
-            "clarity.services.pubsub.publisher.get_publisher", return_value=MagicMock()
+            "clarity.services.messaging.publisher.get_publisher", return_value=MagicMock()
         ),
     ):
         return AnalysisSubscriber()
@@ -89,7 +89,7 @@ async def test_process_health_data_message(subscriber: AnalysisSubscriber):
     with (
         patch.object(subscriber, "_download_health_data", return_value=health_data),
         patch(
-            "clarity.services.pubsub.analysis_subscriber.run_analysis_pipeline",
+            "clarity.services.messaging.analysis_subscriber.run_analysis_pipeline",
             return_value=analysis_results,
         ) as mock_run_pipeline,
         patch.object(subscriber, "_verify_pubsub_token") as mock_verify_token,

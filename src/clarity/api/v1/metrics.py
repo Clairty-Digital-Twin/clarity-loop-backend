@@ -34,7 +34,7 @@ from prometheus_client import (
 logger = logging.getLogger(__name__)
 
 # Create router
-router = APIRouter(prefix="", tags=["monitoring"])
+router = APIRouter(prefix="", tags=["metrics"])
 
 # 🔥 Prometheus Metrics Definitions
 

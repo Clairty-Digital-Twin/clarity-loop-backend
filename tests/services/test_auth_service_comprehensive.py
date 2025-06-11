@@ -35,7 +35,7 @@ from clarity.services.auth_service import (
     UserAlreadyExistsError,
     UserNotFoundError,
 )
-from clarity.storage.firestore_client import FirestoreClient
+from clarity.services.dynamodb_service import DynamoDBHealthDataRepository
 
 # Constants for exception messages
 REGISTRATION_PASSWORD_ERROR_MSG = "Test setup error: default_password for registration must be a string."  # noqa: S105
@@ -132,7 +132,7 @@ class TestAuthServiceInitialization:
     @staticmethod
     def mock_firestore_client() -> Mock:
         """Mock Firestore client."""
-        return Mock(spec=FirestoreClient)
+        return Mock(spec=DynamoDBHealthDataRepository)
 
     @staticmethod
     def test_service_initialization_defaults(
@@ -174,7 +174,7 @@ class TestAuthServiceInitialization:
 def auth_service() -> AuthenticationService:
     """Create AuthenticationService instance with mocks."""
     mock_auth_provider = Mock(spec=IAuthProvider)
-    mock_firestore_client = Mock(spec=FirestoreClient)
+    mock_firestore_client = Mock(spec=DynamoDBHealthDataRepository)
     mock_firestore_client.create_document = AsyncMock()
     mock_firestore_client.get_document = AsyncMock()
     mock_firestore_client.update_document = AsyncMock()

@@ -64,7 +64,8 @@ class TestAnalysisPipelineSleepIntegration:
         """Test sleep processing integration in analysis pipeline."""
         # Mock dependencies
         mock_firestore = AsyncMock()
-        self.pipeline.firestore_client = mock_firestore
+        mock_firestore.table = MagicMock()
+        self.pipeline.dynamodb_client = mock_firestore
 
         # Process sleep data
         results = await self.pipeline.process_health_data(
@@ -89,7 +90,8 @@ class TestAnalysisPipelineSleepIntegration:
         """Test sleep feature vector integration in modality fusion."""
         # Mock dependencies
         mock_firestore = AsyncMock()
-        self.pipeline.firestore_client = mock_firestore
+        mock_firestore.table = MagicMock()
+        self.pipeline.dynamodb_client = mock_firestore
 
         # Process sleep data
         results = await self.pipeline.process_health_data(
@@ -128,7 +130,8 @@ class TestAnalysisPipelineSleepIntegration:
 
         # Mock dependencies
         mock_firestore = AsyncMock()
-        self.pipeline.firestore_client = mock_firestore
+        mock_firestore.table = MagicMock()
+        self.pipeline.dynamodb_client = mock_firestore
 
         # Mock fusion service to avoid RuntimeError
         mock_fusion = Mock()
@@ -157,7 +160,8 @@ class TestAnalysisPipelineSleepIntegration:
         """Test that sleep features are properly validated."""
         # Mock dependencies
         mock_firestore = AsyncMock()
-        self.pipeline.firestore_client = mock_firestore
+        mock_firestore.table = MagicMock()
+        self.pipeline.dynamodb_client = mock_firestore
 
         # Process sleep data
         results = await self.pipeline.process_health_data(
@@ -196,7 +200,8 @@ class TestAnalysisPipelineSleepIntegration:
         """Test pipeline handles empty sleep data gracefully."""
         # Mock dependencies
         mock_firestore = AsyncMock()
-        self.pipeline.firestore_client = mock_firestore
+        mock_firestore.table = MagicMock()
+        self.pipeline.dynamodb_client = mock_firestore
 
         # Process empty data
         results = await self.pipeline.process_health_data(
@@ -239,7 +244,7 @@ class TestAnalysisPipelineSleepIntegration:
         self, mock_firestore: MagicMock
     ) -> None:
         """Test successful saving of analysis results to Firestore."""
-        self.pipeline.firestore_client = mock_firestore
+        self.pipeline.dynamodb_client = mock_firestore
         processing_id = "test_processing_id_save_success"
 
         mock_metric = create_autospec(HealthMetric, instance=True)
@@ -268,15 +273,15 @@ class TestAnalysisPipelineSleepIntegration:
             health_metrics=[mock_metric],
             processing_id=processing_id,
         )
-        mock_firestore.save_analysis_result.assert_called_once()
+        mock_firestore.table.put_item.assert_called_once()
 
     async def test_save_results_to_firestore_failure(
         self, mock_firestore: MagicMock
     ) -> None:
         """Test failure when saving analysis results to Firestore."""
-        self.pipeline.firestore_client = mock_firestore
-        mock_firestore.save_analysis_result.side_effect = Exception(
-            "Firestore Save Error"
+        self.pipeline.dynamodb_client = mock_firestore
+        mock_firestore.table.put_item.side_effect = Exception(
+            "DynamoDB Save Error"
         )
 
         mock_metric = create_autospec(HealthMetric, instance=True)
@@ -304,11 +309,11 @@ class TestAnalysisPipelineSleepIntegration:
             health_metrics=[mock_metric],
             processing_id="test_processing_id_save_failure_in_call",
         )
-        mock_firestore.save_analysis_result.assert_called_once()
+        mock_firestore.table.put_item.assert_called_once()
 
-    async def test_firestore_client_initialization(self) -> None:
+    async def test_dynamodb_client_initialization(self) -> None:
         """Test that Firestore client is initialized when needed."""
-        self.pipeline.firestore_client = None
+        self.pipeline.dynamodb_client = None
         processing_id = "test_processing_id_init"
 
         mock_metric = create_autospec(HealthMetric, instance=True)
@@ -331,30 +336,37 @@ class TestAnalysisPipelineSleepIntegration:
         mock_metric.activity_data = None
         mock_metric.mental_health_data = None
 
-        with patch.object(
-            FirestoreClient, "save_analysis_result", new_callable=AsyncMock
-        ) as mock_save:
+        # Mock the DynamoDB table.put_item method
+        mock_table = MagicMock()
+        mock_table.put_item = MagicMock()
+        
+        with patch("clarity.ml.analysis_pipeline.DynamoDBHealthDataRepository") as mock_repo:
+            # Set up the mock instance
+            mock_instance = MagicMock()
+            mock_instance.table = mock_table
+            mock_repo.return_value = mock_instance
+            
             await self.pipeline.process_health_data(
                 user_id="test_user_init",
                 health_metrics=[mock_metric],
                 processing_id=processing_id,
             )
-            assert self.pipeline.firestore_client is not None
-            mock_save.assert_called_once()
+            assert self.pipeline.dynamodb_client is not None
+            mock_table.put_item.assert_called_once()
 
-    @patch.dict(os.environ, {"GOOGLE_CLOUD_PROJECT": "test-gcp-project"})
-    async def test_get_firestore_client_custom_project_id(self) -> None:
-        """Test _get_firestore_client with custom project ID from env."""
-        self.pipeline.firestore_client = None  # Ensure it's reset
-        with patch("clarity.ml.analysis_pipeline.FirestoreClient") as mock_fs_class:
-            client = await self.pipeline._get_firestore_client()
+    @patch.dict(os.environ, {"DYNAMODB_TABLE_NAME": "test-table", "AWS_REGION": "us-west-2"})
+    async def test_get_dynamodb_client_custom_project_id(self) -> None:
+        """Test _get_dynamodb_client with custom table and region from env."""
+        self.pipeline.dynamodb_client = None  # Ensure it's reset
+        with patch("clarity.ml.analysis_pipeline.DynamoDBHealthDataRepository") as mock_fs_class:
+            client = await self.pipeline._get_dynamodb_client()
             assert client is not None
-            mock_fs_class.assert_called_once_with(project_id="test-gcp-project")
+            mock_fs_class.assert_called_once_with(table_name="test-table", region="us-west-2")
 
-    async def test_get_firestore_client_reuse_existing(self) -> None:
-        """Test that _get_firestore_client reuses an existing client."""
-        mock_client = MagicMock(spec=FirestoreClient)
-        self.pipeline.firestore_client = mock_client
+    async def test_get_dynamodb_client_reuse_existing(self) -> None:
+        """Test that _get_dynamodb_client reuses an existing client."""
+        mock_client = MagicMock(spec=DynamoDBHealthDataRepository)
+        self.pipeline.dynamodb_client = mock_client
 
-        client = await self.pipeline._get_firestore_client()
+        client = await self.pipeline._get_dynamodb_client()
         assert client is mock_client  # Should be the same instance

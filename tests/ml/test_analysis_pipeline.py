@@ -110,36 +110,36 @@ class TestHealthAnalysisPipelineInitialization:
         assert hasattr(pipeline, "fusion_service")
 
         # Check storage client is initially None
-        assert pipeline.firestore_client is None
+        assert pipeline.dynamodb_client is None
 
         # Check logger is set up
         assert hasattr(pipeline, "logger")
 
     @pytest.mark.asyncio
     @staticmethod
-    async def test_get_firestore_client_creates_client() -> None:
-        """Test that _get_firestore_client creates client on first call."""
+    async def test_get_dynamodb_client_creates_client() -> None:
+        """Test that _get_dynamodb_client creates client on first call."""
         pipeline = HealthAnalysisPipeline()
 
-        with patch("clarity.ml.analysis_pipeline.FirestoreClient") as mock_firestore:
+        with patch("clarity.ml.analysis_pipeline.DynamoDBHealthDataRepository") as mock_firestore:
             mock_client = MagicMock()
             mock_firestore.return_value = mock_client
 
-            client = await pipeline._get_firestore_client()
+            client = await pipeline._get_dynamodb_client()
 
             assert client == mock_client
-            assert pipeline.firestore_client == mock_client
+            assert pipeline.dynamodb_client == mock_client
             mock_firestore.assert_called_once()
 
     @pytest.mark.asyncio
     @staticmethod
-    async def test_get_firestore_client_reuses_existing() -> None:
-        """Test that _get_firestore_client reuses existing client."""
+    async def test_get_dynamodb_client_reuses_existing() -> None:
+        """Test that _get_dynamodb_client reuses existing client."""
         pipeline = HealthAnalysisPipeline()
         existing_client = MagicMock()
-        pipeline.firestore_client = existing_client
+        pipeline.dynamodb_client = existing_client
 
-        client = await pipeline._get_firestore_client()
+        client = await pipeline._get_dynamodb_client()
 
         assert client == existing_client
 
@@ -695,7 +695,7 @@ class TestHealthAnalysisPipelineMainWorkflow:
 
         # Mock Firestore client
         mock_firestore = AsyncMock()
-        pipeline.firestore_client = mock_firestore
+        pipeline.dynamodb_client = mock_firestore
 
         cardio_metric = HealthMetric(
             metric_type=HealthMetricType.HEART_RATE,
@@ -851,7 +851,7 @@ class TestAnalysisPipelineErrorHandling:
         mock_firestore.save_analysis_result.side_effect = RuntimeError(
             "Firestore error"
         )
-        pipeline.firestore_client = mock_firestore
+        pipeline.dynamodb_client = mock_firestore
 
         cardio_metric = HealthMetric(
             metric_type=HealthMetricType.HEART_RATE,

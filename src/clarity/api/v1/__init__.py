@@ -25,16 +25,16 @@ router = APIRouter(prefix="/api/v1", tags=["v1"])
 router.include_router(auth_router, prefix="/auth", tags=["authentication"])
 
 # Include health data routes
-router.include_router(health_data_router)
+router.include_router(health_data_router, prefix="/health", tags=["health-data"])
 
 # Include PAT analysis routes
-router.include_router(pat_analysis_router)
+router.include_router(pat_analysis_router, prefix="/pat", tags=["pat-analysis"])
 
 # Include Gemini insights routes
-router.include_router(gemini_insights_router)
+router.include_router(gemini_insights_router, prefix="/insights", tags=["gemini-insights"])
 
 # Include WebSocket routes
-router.include_router(chat_router)
+router.include_router(chat_router, prefix="/ws", tags=["websocket"])
 
 __all__ = [
     "router",

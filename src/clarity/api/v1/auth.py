@@ -228,3 +228,69 @@ async def logout(
         logger.exception("Logout failed")
         # Return success anyway - client should discard token
         return {"message": "Logout processed"}
+
+
+@router.get("/health")
+async def auth_health() -> dict[str, str]:
+    """Auth service health check."""
+    try:
+        # Simple health check - could be enhanced to check auth provider connectivity
+        return {
+            "status": "healthy",
+            "service": "authentication",
+            "version": "1.0.0"
+        }
+    except Exception:
+        return {
+            "status": "unhealthy", 
+            "service": "authentication",
+            "version": "1.0.0"
+        }
+
+
+@router.post("/refresh")
+async def refresh_token(
+    request: Request,
+    auth_provider: IAuthProvider = Depends(get_auth_provider),
+) -> TokenResponse:
+    """Refresh access token using refresh token."""
+    try:
+        # Create authentication service
+        auth_service = CognitoAuthenticationService(auth_provider, None)
+        
+        # Get refresh token from request body or header
+        auth_header = request.headers.get("Authorization", "")
+        refresh_token = auth_header.replace("Bearer ", "") if auth_header else None
+        
+        if not refresh_token:
+            # Try to get from request body
+            body = await request.json()
+            refresh_token = body.get("refresh_token")
+            
+        if not refresh_token:
+            raise HTTPException(
+                status_code=422,
+                detail=ProblemDetail(
+                    type="missing_refresh_token",
+                    title="Missing Refresh Token", 
+                    detail="Refresh token is required",
+                    status=422,
+                    instance=f"https://api.clarity.health/requests/{id(request)}",
+                ).model_dump(),
+            )
+        
+        # Refresh the token
+        return await auth_service.refresh_token(refresh_token)
+        
+    except Exception as e:
+        logger.exception("Token refresh failed")
+        raise HTTPException(
+            status_code=500,
+            detail=ProblemDetail(
+                type="refresh_error",
+                title="Token Refresh Failed",
+                detail="Failed to refresh access token",
+                status=500,
+                instance=f"https://api.clarity.health/requests/{id(e)}",
+            ).model_dump(),
+        ) from e

@@ -12,6 +12,7 @@ from unittest.mock import AsyncMock, MagicMock
 from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
+
 # Remove all Google Cloud imports - we're using AWS now
 from httpx import AsyncClient
 import numpy as np
@@ -78,7 +79,7 @@ def mock_dynamodb():
     """Mock DynamoDB client for testing."""
     mock_db = MagicMock()
     mock_table = MagicMock()
-    
+
     # Mock basic DynamoDB operations
     mock_table.put_item.return_value = {"ResponseMetadata": {"HTTPStatusCode": 200}}
     mock_table.get_item.return_value = {
@@ -86,7 +87,7 @@ def mock_dynamodb():
     }
     mock_table.scan.return_value = {"Items": [], "Count": 0}
     mock_table.query.return_value = {"Items": [], "Count": 0}
-    
+
     mock_db.Table.return_value = mock_table
     return mock_db
 
@@ -111,12 +112,12 @@ def mock_cognito_auth():
 def mock_s3_client():
     """Mock S3 client for testing."""
     mock_client = MagicMock()
-    
+
     # Mock S3 operations
     mock_client.put_object.return_value = {"ETag": "test-etag"}
     mock_client.get_object.return_value = {"Body": MagicMock()}
     mock_client.list_objects_v2.return_value = {"Contents": []}
-    
+
     return mock_client
 
 

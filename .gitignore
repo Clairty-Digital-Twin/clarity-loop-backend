@@ -287,3 +287,7 @@ tasks/
 *.tar.gz
 *.tar
 docker-export/
+
+# ECS task definitions with account info
+ops/ecs-tasks/
+ops/ecr-images-to-delete.json

@@ -61,6 +61,7 @@ async def health_check() -> dict[str, Any]:
         "timestamp": datetime.now(UTC).isoformat(),
     }
 
+
 # Query parameter constants to fix B008 linting issues
 _START_DATE_QUERY = Query(None, description="Filter from date (ISO 8601)")
 _END_DATE_QUERY = Query(None, description="Filter to date (ISO 8601)")

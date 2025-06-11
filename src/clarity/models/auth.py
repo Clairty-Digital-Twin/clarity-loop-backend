@@ -14,10 +14,6 @@ from uuid import UUID
 
 from pydantic import BaseModel, EmailStr, Field, field_validator
 
-
-if TYPE_CHECKING:
-    pass
-
 # Constants for validation
 MIN_PASSWORD_LENGTH = 8
 

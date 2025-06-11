@@ -339,13 +339,13 @@ class TestAnalysisPipelineSleepIntegration:
         # Mock the DynamoDB table.put_item method
         mock_table = MagicMock()
         mock_table.put_item = MagicMock()
-        
+
         with patch("clarity.ml.analysis_pipeline.DynamoDBHealthDataRepository") as mock_repo:
             # Set up the mock instance
             mock_instance = MagicMock()
             mock_instance.table = mock_table
             mock_repo.return_value = mock_instance
-            
+
             await self.pipeline.process_health_data(
                 user_id="test_user_init",
                 health_metrics=[mock_metric],

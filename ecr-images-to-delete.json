@@ -1,9 +1,0 @@
-[
-  {"imageTag": "amd64-only"},
-  {"imageTag": "latest"},
-  {"imageTag": "minimal-latest"},
-  {"imageTag": "nuclear-final"},
-  {"imageTag": "production-20250611-061748"},
-  {"imageTag": "production-20250611-062641"},
-  {"imageTag": "super-minimal"}
-]

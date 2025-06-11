@@ -269,6 +269,8 @@ async def logout(
         logger.exception("Logout failed")
         # Return success anyway - client should discard token
         return {"message": "Logout processed"}
+    else:
+        return {"message": "Successfully logged out"}
 
 
 @router.get("/health")

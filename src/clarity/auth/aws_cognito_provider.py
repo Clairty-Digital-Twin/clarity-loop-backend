@@ -114,7 +114,6 @@ class CognitoAuthProvider(IAuthProvider):
 
             # Now we can use the claims
             logger.debug("Token verified for user: %s", claims.get("sub"))
-            return claims
 
         except JWTError:
             logger.exception("JWT verification failed")
@@ -122,6 +121,8 @@ class CognitoAuthProvider(IAuthProvider):
         except Exception:
             logger.exception("Unexpected error during token verification")
             return None
+        else:
+            return claims
 
     async def get_user(self, uid: str) -> User | None:
         """Get user details from Cognito."""
@@ -152,7 +153,6 @@ class CognitoAuthProvider(IAuthProvider):
             )
 
             logger.debug("Retrieved user: %s", uid)
-            return user
 
         except ClientError as e:
             if e.response["Error"]["Code"] == "UserNotFoundException":
@@ -163,6 +163,8 @@ class CognitoAuthProvider(IAuthProvider):
         except Exception:
             logger.exception("Unexpected error getting user")
             return None
+        else:
+            return user
 
     async def create_user(
         self, email: str, password: str, display_name: str | None = None
@@ -220,13 +222,14 @@ class CognitoAuthProvider(IAuthProvider):
                 UserPoolId=self.user_pool_id, Username=uid
             )
             logger.info("Deleted user: %s", uid)
-            return True
         except ClientError:
             logger.exception("Failed to delete user")
             return False
         except Exception:
             logger.exception("Unexpected error deleting user")
             return False
+        else:
+            return True
 
     async def update_user(self, uid: str, **kwargs: Any) -> User | None:
         """Update user attributes in Cognito."""

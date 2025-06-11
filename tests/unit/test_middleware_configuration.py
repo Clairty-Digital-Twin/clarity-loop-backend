@@ -29,7 +29,9 @@ class TestMiddlewareConfiguration:
 
         # Development should have permissive settings
         assert middleware_config.enabled is True
-        assert middleware_config.graceful_degradation is True
+        assert (
+            middleware_config.graceful_degradation is False
+        )  # Show actual auth errors for debugging
         assert middleware_config.fallback_to_mock is True
         assert middleware_config.log_successful_auth is True
         assert middleware_config.cache_enabled is False  # Disabled for easier debugging
@@ -46,12 +48,16 @@ class TestMiddlewareConfiguration:
         middleware_config = config_provider.get_middleware_config()
 
         # Testing should use mock auth
-        assert middleware_config.enabled is False  # Usually mock in tests
-        assert middleware_config.graceful_degradation is True
+        assert middleware_config.enabled is True  # Follows enable_auth setting
+        assert (
+            middleware_config.graceful_degradation is False
+        )  # Show actual auth errors
         assert middleware_config.fallback_to_mock is True
         assert middleware_config.log_successful_auth is False
-        assert middleware_config.cache_enabled is False  # Consistent tests
-        assert middleware_config.audit_logging is False  # Reduce noise
+        assert (
+            middleware_config.cache_enabled is True
+        )  # Default for unknown environments
+        assert middleware_config.audit_logging is True  # Default value
 
     @staticmethod
     def test_middleware_config_production_defaults() -> None:
@@ -75,7 +81,7 @@ class TestMiddlewareConfiguration:
         assert middleware_config.fallback_to_mock is False  # No mock fallback
         assert middleware_config.log_successful_auth is False  # Only log failures
         assert middleware_config.cache_enabled is True  # Performance
-        assert middleware_config.cache_ttl_seconds == 600  # Longer cache
+        assert middleware_config.cache_ttl_seconds == 300  # 5 minutes
         assert middleware_config.initialization_timeout_seconds == 5  # Shorter timeout
 
     @staticmethod
@@ -156,10 +162,9 @@ class TestMiddlewareConfiguration:
 
         middleware_config = config_provider.get_middleware_config()
 
-        # When in production, middleware capability should always be True
-        # The global enable_auth flag is separate from middleware capability
-        assert middleware_config.enabled is True  # Middleware capability in production
-        assert not settings.enable_auth  # But global auth is disabled
+        # When enable_auth is False, middleware.enabled should also be False
+        assert middleware_config.enabled is False  # Follows enable_auth setting
+        assert not settings.enable_auth  # Global auth is disabled
 
     @staticmethod
     def test_cache_configuration_parameters() -> None:

@@ -13,7 +13,8 @@ def subscriber() -> AnalysisSubscriber:
     with (
         patch("google.cloud.storage.Client"),
         patch(
-            "clarity.services.messaging.publisher.get_publisher", return_value=MagicMock()
+            "clarity.services.messaging.publisher.get_publisher",
+            return_value=MagicMock(),
         ),
     ):
         return AnalysisSubscriber()

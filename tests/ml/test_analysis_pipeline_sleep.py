@@ -129,8 +129,8 @@ class TestAnalysisPipelineSleepIntegration:
         ]
 
         # Mock dependencies
-        mock_firestore = AsyncMock()
-        mock_firestore.table = MagicMock()
+        mock_dynamodb = AsyncMock()
+        mock_dynamodb.table = MagicMock()
         self.pipeline.dynamodb_client = mock_dynamodb
 
         # Mock fusion service to avoid RuntimeError
@@ -159,8 +159,8 @@ class TestAnalysisPipelineSleepIntegration:
     ) -> None:
         """Test that sleep features are properly validated."""
         # Mock dependencies
-        mock_firestore = AsyncMock()
-        mock_firestore.table = MagicMock()
+        mock_dynamodb = AsyncMock()
+        mock_dynamodb.table = MagicMock()
         self.pipeline.dynamodb_client = mock_dynamodb
 
         # Process sleep data
@@ -199,8 +199,8 @@ class TestAnalysisPipelineSleepIntegration:
     async def test_empty_sleep_data_handling(self) -> None:
         """Test pipeline handles empty sleep data gracefully."""
         # Mock dependencies
-        mock_firestore = AsyncMock()
-        mock_firestore.table = MagicMock()
+        mock_dynamodb = AsyncMock()
+        mock_dynamodb.table = MagicMock()
         self.pipeline.dynamodb_client = mock_dynamodb
 
         # Process empty data

@@ -89,9 +89,9 @@ class TestAnalysisPipelineSleepIntegration:
     ) -> None:
         """Test sleep feature vector integration in modality fusion."""
         # Mock dependencies
-        mock_firestore = AsyncMock()
-        mock_firestore.table = MagicMock()
-        self.pipeline.dynamodb_client = mock_firestore
+        mock_dynamodb = AsyncMock()
+        mock_dynamodb.table = MagicMock()
+        self.pipeline.dynamodb_client = mock_dynamodb
 
         # Process sleep data
         results = await self.pipeline.process_health_data(
@@ -243,7 +243,7 @@ class TestAnalysisPipelineSleepIntegration:
     async def test_save_results_to_firestore_success(
         self, mock_firestore: MagicMock
     ) -> None:
-        """Test successful saving of analysis results to Firestore."""
+        """Test successful saving of analysis results to DynamoDB."""
         self.pipeline.dynamodb_client = mock_firestore
         processing_id = "test_processing_id_save_success"
 

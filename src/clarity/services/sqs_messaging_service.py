@@ -78,15 +78,15 @@ class SQSMessagingService:
                 MessageAttributes=message_attributes,
             )
 
-            logger.info(f"Published message {message_id} to SQS")
+            logger.info("Published message %s to SQS", message_id)
             return response["MessageId"]
 
         except ClientError as e:
-            logger.exception(f"SQS publish error: {e}")
+            logger.exception("SQS publish error: %s", e)
             msg = f"Failed to publish message: {e!s}"
             raise MessagingError(msg)
         except Exception as e:
-            logger.exception(f"Unexpected error publishing message: {e}")
+            logger.exception("Unexpected error publishing message: %s", e)
             msg = f"Failed to publish message: {e!s}"
             raise MessagingError(msg)
 
@@ -121,13 +121,13 @@ class SQSMessagingService:
                         }
                     )
                 except json.JSONDecodeError:
-                    logger.exception(f"Failed to decode message: {msg['MessageId']}")
+                    logger.exception("Failed to decode message: %s", msg['MessageId'])
                     continue
 
             return messages
 
         except ClientError as e:
-            logger.exception(f"SQS receive error: {e}")
+            logger.exception("SQS receive error: %s", e)
             msg = f"Failed to receive messages: {e!s}"
             raise MessagingError(msg)
 
@@ -141,7 +141,7 @@ class SQSMessagingService:
             logger.info("Successfully deleted message from SQS")
 
         except ClientError as e:
-            logger.exception(f"SQS delete error: {e}")
+            logger.exception("SQS delete error: %s", e)
             msg = f"Failed to delete message: {e!s}"
             raise MessagingError(msg)
 
@@ -163,7 +163,7 @@ class SQSMessagingService:
             }
 
         except ClientError as e:
-            logger.exception(f"SQS batch delete error: {e}")
+            logger.exception("SQS batch delete error: %s", e)
             msg = f"Failed to batch delete messages: {e!s}"
             raise MessagingError(msg)
 
@@ -196,11 +196,11 @@ class SQSMessagingService:
                 MessageAttributes=message_attributes,
             )
 
-            logger.info(f"Published message to SNS: {response['MessageId']}")
+            logger.info("Published message to SNS: %s", response['MessageId'])
             return response["MessageId"]
 
         except ClientError as e:
-            logger.exception(f"SNS publish error: {e}")
+            logger.exception("SNS publish error: %s", e)
             msg = f"Failed to publish to SNS: {e!s}"
             raise MessagingError(msg)
 
@@ -214,7 +214,7 @@ class SQSMessagingService:
             return response.get("Attributes", {})
 
         except ClientError as e:
-            logger.exception(f"SQS get attributes error: {e}")
+            logger.exception("SQS get attributes error: %s", e)
             msg = f"Failed to get queue attributes: {e!s}"
             raise MessagingError(msg)
 
@@ -222,10 +222,10 @@ class SQSMessagingService:
         """Purge all messages from queue (use with caution)."""
         try:
             self.sqs_client.purge_queue(QueueUrl=self.queue_url)
-            logger.warning(f"Purged all messages from queue: {self.queue_url}")
+            logger.warning("Purged all messages from queue: %s", self.queue_url)
 
         except ClientError as e:
-            logger.exception(f"SQS purge error: {e}")
+            logger.exception("SQS purge error: %s", e)
             msg = f"Failed to purge queue: {e!s}"
             raise MessagingError(msg)
 

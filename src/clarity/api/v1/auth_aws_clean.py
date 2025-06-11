@@ -70,7 +70,7 @@ async def register(
             ).model_dump(),
         )
     except Exception as e:
-        logger.exception(f"Registration failed: {e}")
+        logger.exception("Registration failed: %s", e)
         raise HTTPException(
             status_code=500,
             detail=ProblemDetails(
@@ -120,7 +120,7 @@ async def login(
             ).model_dump(),
         )
     except Exception as e:
-        logger.exception(f"Login failed: {e}")
+        logger.exception("Login failed: %s", e)
         raise HTTPException(
             status_code=500,
             detail=ProblemDetails(
@@ -185,7 +185,7 @@ async def update_user(
             ).model_dump(),
         )
     except Exception as e:
-        logger.exception(f"User update failed: {e}")
+        logger.exception("User update failed: %s", e)
         raise HTTPException(
             status_code=500,
             detail=ProblemDetails(
@@ -218,6 +218,6 @@ async def logout(
         return {"message": "Successfully logged out"}
 
     except Exception as e:
-        logger.exception(f"Logout failed: {e}")
+        logger.exception("Logout failed: %s", e)
         # Return success anyway - client should discard token
         return {"message": "Logout processed"}

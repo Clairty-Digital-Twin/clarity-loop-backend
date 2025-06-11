@@ -47,7 +47,7 @@ class GeminiService:
             },
         )
 
-        logger.info(f"Initialized Gemini service with model: {model_name}")
+        logger.info("Initialized Gemini service with model: %s", model_name)
 
     async def generate_health_insights(
         self, health_data: dict[str, Any], user_context: dict[str, Any] | None = None
@@ -67,7 +67,7 @@ class GeminiService:
             return response.text
 
         except Exception as e:
-            logger.exception(f"Error generating health insights: {e}")
+            logger.exception("Error generating health insights: %s", e)
             msg = f"Failed to generate insights: {e!s}"
             raise ServiceError(msg)
 
@@ -89,7 +89,7 @@ class GeminiService:
             return response.text
 
         except Exception as e:
-            logger.exception(f"Error analyzing PAT results: {e}")
+            logger.exception("Error analyzing PAT results: %s", e)
             msg = f"Failed to analyze PAT results: {e!s}"
             raise ServiceError(msg)
 
@@ -115,7 +115,7 @@ class GeminiService:
             return self._parse_recommendations(response.text)
 
         except Exception as e:
-            logger.exception(f"Error generating recommendations: {e}")
+            logger.exception("Error generating recommendations: %s", e)
             msg = f"Failed to generate recommendations: {e!s}"
             raise ServiceError(msg)
 

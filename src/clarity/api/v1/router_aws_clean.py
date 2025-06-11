@@ -106,4 +106,4 @@ async def api_info() -> dict[str, Any]:
     }
 
 
-logger.info(f"API router configured with {len(api_router.routes)} routes")
+logger.info("API router configured with %s routes", len(api_router.routes))

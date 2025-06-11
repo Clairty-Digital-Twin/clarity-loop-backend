@@ -164,21 +164,21 @@ async def get_current_user(request: Request) -> dict[str, Any]:
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Application lifespan manager."""
-    logger.info(f"Starting CLARITY Digital Twin backend in {ENVIRONMENT} mode")
-    logger.info(f"AWS Region: {AWS_REGION}")
-    logger.info(f"Cognito Region: {COGNITO_REGION}")
-    logger.info(f"Auth Enabled: {ENABLE_AUTH}")
+    logger.info("Starting CLARITY Digital Twin backend in %s mode", ENVIRONMENT)
+    logger.info("AWS Region: %s", AWS_REGION)
+    logger.info("Cognito Region: %s", COGNITO_REGION)
+    logger.info("Auth Enabled: %s", ENABLE_AUTH)
 
     # Initialize DynamoDB table
     try:
         table = dynamodb.Table(DYNAMODB_TABLE)
         table.load()
-        logger.info(f"Connected to DynamoDB table: {DYNAMODB_TABLE}")
+        logger.info("Connected to DynamoDB table: %s", DYNAMODB_TABLE)
     except ClientError as e:
         if e.response["Error"]["Code"] == "ResourceNotFoundException":
-            logger.warning(f"DynamoDB table {DYNAMODB_TABLE} not found")
+            logger.warning("DynamoDB table %s not found", DYNAMODB_TABLE)
         else:
-            logger.exception(f"DynamoDB error: {e}")
+            logger.exception("DynamoDB error: %s", e)
 
     yield
 
@@ -386,7 +386,7 @@ async def store_health_data(
         )
 
     except Exception as e:
-        logger.exception(f"Failed to store health data: {e}")
+        logger.exception("Failed to store health data: %s", e)
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -420,7 +420,7 @@ async def get_user_health_data(
         }
 
     except Exception as e:
-        logger.exception(f"Failed to retrieve data: {e}")
+        logger.exception("Failed to retrieve data: %s", e)
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -460,7 +460,7 @@ async def upload_healthkit_data(
         }
 
     except Exception as e:
-        logger.exception(f"Failed to upload HealthKit data: {e}")
+        logger.exception("Failed to upload HealthKit data: %s", e)
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -538,7 +538,7 @@ async def generate_insights(
         return InsightResponse(success=True, insight=response.text)
 
     except Exception as e:
-        logger.exception(f"Failed to generate insight: {e}")
+        logger.exception("Failed to generate insight: %s", e)
         return InsightResponse(success=False, error=str(e))
 
 

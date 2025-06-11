@@ -83,7 +83,7 @@ class DependencyContainer:
             logger.info("AWS dependency container initialized successfully")
 
         except Exception as e:
-            logger.exception(f"Failed to initialize container: {e}")
+            logger.exception("Failed to initialize container: %s", e)
             msg = f"Container initialization failed: {e!s}"
             raise ConfigurationError(msg)
 
@@ -133,7 +133,7 @@ class DependencyContainer:
                 ).inc()
 
             except Exception as e:
-                logger.exception(f"Failed to initialize Cognito: {e}")
+                logger.exception("Failed to initialize Cognito: %s", e)
                 service_initialization_counter.labels(
                     service=service_name, status="error"
                 ).inc()
@@ -174,7 +174,7 @@ class DependencyContainer:
                 ).inc()
 
             except Exception as e:
-                logger.exception(f"Failed to initialize DynamoDB: {e}")
+                logger.exception("Failed to initialize DynamoDB: %s", e)
                 service_initialization_counter.labels(
                     service=service_name, status="error"
                 ).inc()
@@ -214,7 +214,7 @@ class DependencyContainer:
                 ).inc()
 
             except Exception as e:
-                logger.exception(f"Failed to initialize Gemini service: {e}")
+                logger.exception("Failed to initialize Gemini service: %s", e)
                 service_initialization_counter.labels(
                     service=service_name, status="error"
                 ).inc()

@@ -132,11 +132,11 @@ class DynamoDBHealthDataRepository(IHealthDataRepository):
             )
 
         except ClientError as e:
-            logger.exception(f"DynamoDB error saving health data: {e}")
+            logger.exception("DynamoDB error saving health data: %s", e)
             msg = f"Failed to save health data: {e!s}"
             raise ServiceError(msg)
         except Exception as e:
-            logger.exception(f"Unexpected error saving health data: {e}")
+            logger.exception("Unexpected error saving health data: %s", e)
             msg = f"Failed to save health data: {e!s}"
             raise ServiceError(msg)
 
@@ -220,11 +220,11 @@ class DynamoDBHealthDataRepository(IHealthDataRepository):
             return results
 
         except ClientError as e:
-            logger.exception(f"DynamoDB error retrieving health data: {e}")
+            logger.exception("DynamoDB error retrieving health data: %s", e)
             msg = f"Failed to retrieve health data: {e!s}"
             raise ServiceError(msg)
         except Exception as e:
-            logger.exception(f"Unexpected error retrieving health data: {e}")
+            logger.exception("Unexpected error retrieving health data: %s", e)
             msg = f"Failed to retrieve health data: {e!s}"
             raise ServiceError(msg)
 
@@ -258,7 +258,7 @@ class DynamoDBHealthDataRepository(IHealthDataRepository):
             )
 
         except ClientError as e:
-            logger.exception(f"DynamoDB error updating status: {e}")
+            logger.exception("DynamoDB error updating status: %s", e)
             msg = f"Failed to update status: {e!s}"
             raise ServiceError(msg)
 
@@ -282,7 +282,7 @@ class DynamoDBHealthDataRepository(IHealthDataRepository):
             return None
 
         except ClientError as e:
-            logger.exception(f"DynamoDB error getting user: {e}")
+            logger.exception("DynamoDB error getting user: %s", e)
             return None
 
     async def create_user(self, user_id: str, email: str, name: str) -> User:
@@ -307,7 +307,7 @@ class DynamoDBHealthDataRepository(IHealthDataRepository):
             )
 
         except ClientError as e:
-            logger.exception(f"DynamoDB error creating user: {e}")
+            logger.exception("DynamoDB error creating user: %s", e)
             msg = f"Failed to create user: {e!s}"
             raise ServiceError(msg)
 
@@ -325,7 +325,7 @@ class DynamoDBHealthDataRepository(IHealthDataRepository):
                     batch.delete_item(Key={"pk": item["pk"], "sk": item["sk"]})
 
         except ClientError as e:
-            logger.exception(f"DynamoDB error deleting user data: {e}")
+            logger.exception("DynamoDB error deleting user data: %s", e)
             msg = f"Failed to delete user data: {e!s}"
             raise ServiceError(msg)
 

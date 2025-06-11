@@ -5,7 +5,7 @@ set -e
 AWS_REGION=${AWS_REGION:-"us-east-2"}
 AWS_ACCOUNT_ID=${AWS_ACCOUNT_ID:-"124355672559"}
 ECR_REPOSITORY="clarity-backend"
-IMAGE_TAG="minimal-latest"
+IMAGE_TAG="nuclear-latest"
 CLUSTER_NAME="clarity-backend-cluster"
 SERVICE_NAME="clarity-backend-service"
 

@@ -13,7 +13,7 @@
   "containerDefinitions": [
     {
       "name": "clarity-backend",
-      "image": "***REMOVED***/clarity-backend:minimal-latest",
+      "image": "***REMOVED***/clarity-backend:nuclear-latest",
       "portMappings": [
         {
           "containerPort": 8000,
@@ -64,6 +64,14 @@
         },
         {
           "name": "DEBUG",
+          "value": "false"
+        },
+        {
+          "name": "CLARITY_MAIN_MODULE",
+          "value": "clarity.main_aws_nuclear_clean:app"
+        },
+        {
+          "name": "SKIP_EXTERNAL_SERVICES",
           "value": "false"
         }
       ],

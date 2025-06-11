@@ -38,6 +38,6 @@ HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
 
 # Set AWS-specific environment variables
 ENV PYTHONPATH=/app
-ENV CLARITY_MAIN_MODULE=clarity.main_aws:app
+ENV CLARITY_MAIN_MODULE=clarity.main_aws_nuclear_clean:app
 
 ENTRYPOINT ["./entrypoint.sh"]

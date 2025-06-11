@@ -416,6 +416,27 @@ Respond only with valid JSON."""
             raise
 
     @staticmethod
+    def _create_fallback_insights_response(
+        request: HealthInsightRequest,
+    ) -> HealthInsightResponse:
+        """Create fallback response when VertexAI is not available."""
+        analysis_results = request.analysis_results
+        
+        # Generate basic insights from the data
+        narrative = GeminiService._generate_placeholder_narrative(analysis_results)
+        key_insights = GeminiService._extract_key_insights(analysis_results)
+        recommendations = GeminiService._generate_recommendations(analysis_results)
+        
+        return HealthInsightResponse(
+            user_id=request.user_id,
+            narrative=narrative,
+            key_insights=key_insights,
+            recommendations=recommendations,
+            confidence_score=0.75,  # Lower confidence for fallback
+            generated_at=datetime.now(UTC).isoformat(),
+        )
+
+    @staticmethod
     def _create_fallback_response(
         response_text: str, user_id: str
     ) -> HealthInsightResponse:

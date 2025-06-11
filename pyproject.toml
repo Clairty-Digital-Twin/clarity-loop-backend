@@ -47,6 +47,7 @@ dependencies = [
     
     # JWT for authentication
     "PyJWT[crypto]>=2.10.0,<3.0.0",
+    "python-jose[cryptography]>=3.3.0,<4.0.0",
     "cryptography>=44.0.1,<45.0.0",
 
     # AI/ML Dependencies (PAT Implementation) - major version constraints

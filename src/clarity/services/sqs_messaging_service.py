@@ -127,7 +127,7 @@ class SQSMessagingService:
             return messages
 
         except ClientError as e:
-            logger.exception("SQS receive error: %s", e)
+            logger.exception("SQS receive error")
             msg = f"Failed to receive messages: {e!s}"
             raise MessagingError(msg) from e
 

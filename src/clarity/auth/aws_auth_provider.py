@@ -7,7 +7,7 @@ from datetime import UTC, datetime
 import json
 import logging
 import time
-from typing import Any
+from typing import Any, cast
 
 import boto3
 from botocore.exceptions import ClientError
@@ -128,7 +128,7 @@ class CognitoAuthProvider(IAuthProvider):
                 jwks = json.loads(response.read())
                 self._jwks_cache = jwks
                 self._jwks_cache_time = current_time
-                return jwks
+                return cast(dict[str, Any], jwks)
         except Exception as e:
             logger.exception("Failed to fetch JWKS: %s", e)
             if self._jwks_cache:
@@ -168,7 +168,7 @@ class CognitoAuthProvider(IAuthProvider):
         # Check cache first if enabled
         if self.cache_is_enabled and token in self._token_cache:
             logger.debug("Token found in cache")
-            return self._token_cache[token]["user_data"]
+            return cast(dict[str, Any], self._token_cache[token]["user_data"])
 
         logger.debug("🔐 COGNITO VERIFY_TOKEN CALLED")
 
@@ -253,8 +253,9 @@ class CognitoAuthProvider(IAuthProvider):
 
         try:
             # Try to get user by username first
+            response: dict[str, Any]
             try:
-                response = self.cognito_client.admin_get_user(
+                response = self.cognito_client.admin_get_user(  # type: ignore[assignment]
                     UserPoolId=self.user_pool_id,
                     Username=user_id,
                 )
@@ -268,7 +269,7 @@ class CognitoAuthProvider(IAuthProvider):
                     )
                     if not users.get("Users"):
                         return None
-                    response = {"UserAttributes": users["Users"][0]["Attributes"]}
+                    response = {"UserAttributes": users["Users"][0]["Attributes"]}  # type: ignore[assignment]
                 else:
                     raise
 

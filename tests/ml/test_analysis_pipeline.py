@@ -121,7 +121,9 @@ class TestHealthAnalysisPipelineInitialization:
         """Test that _get_dynamodb_client creates client on first call."""
         pipeline = HealthAnalysisPipeline()
 
-        with patch("clarity.ml.analysis_pipeline.DynamoDBHealthDataRepository") as mock_dynamodb:
+        with patch(
+            "clarity.ml.analysis_pipeline.DynamoDBHealthDataRepository"
+        ) as mock_dynamodb:
             mock_client = MagicMock()
             mock_dynamodb.return_value = mock_client
 
@@ -848,9 +850,7 @@ class TestAnalysisPipelineErrorHandling:
 
         # Mock DynamoDB client to raise error
         mock_dynamodb = AsyncMock()
-        mock_dynamodb.save_analysis_result.side_effect = RuntimeError(
-            "DynamoDB error"
-        )
+        mock_dynamodb.save_analysis_result.side_effect = RuntimeError("DynamoDB error")
         pipeline.dynamodb_client = mock_dynamodb
 
         cardio_metric = HealthMetric(

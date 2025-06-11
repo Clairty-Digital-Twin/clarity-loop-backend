@@ -253,7 +253,7 @@ class TestControllerDependencyInjection:
         )
 
         app = FastAPI()
-        app.include_router(router, prefix="/api/v1")
+        app.include_router(router, prefix="/api/v1/health-data")
         client = TestClient(app)
 
         # When: Making request with failing dependencies
@@ -274,7 +274,7 @@ class TestControllerAdapterPattern:
     def app_with_mocked_service() -> FastAPI:
         """Create app with mocked service for testing adapter pattern."""
         app = FastAPI()
-        app.include_router(router, prefix="/api/v1")
+        app.include_router(router, prefix="/api/v1/health-data")
 
         # Mock service that returns predictable responses
         mock_auth_provider = Mock(spec=IAuthProvider)
@@ -432,8 +432,16 @@ class TestControllerSingleResponsibility:
             # Safely get path attribute - different route types may have different structures
             path = getattr(route, "path", str(route))
             # Health data endpoints should be in the health-data domain
-            assert any(
-                keyword in path for keyword in ["health", "processing", "upload"]
+            # Root path "/" and empty path "" are valid for listing health data
+            assert path in {"/", ""} or any(
+                keyword in path
+                for keyword in [
+                    "health",
+                    "processing",
+                    "upload",
+                    "query",
+                    "{processing_id}",
+                ]
             )
 
 
@@ -445,7 +453,7 @@ class TestControllerErrorHandling:
     def app_with_failing_service() -> FastAPI:
         """Create app with service that raises errors for testing."""
         app = FastAPI()
-        app.include_router(router, prefix="/api/v1")
+        app.include_router(router, prefix="/api/v1/health-data")
 
         # Mock dependencies that will cause failures
         mock_auth_provider = Mock(spec=IAuthProvider)

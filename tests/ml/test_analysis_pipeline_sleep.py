@@ -280,9 +280,7 @@ class TestAnalysisPipelineSleepIntegration:
     ) -> None:
         """Test failure when saving analysis results to Firestore."""
         self.pipeline.dynamodb_client = mock_firestore
-        mock_firestore.table.put_item.side_effect = Exception(
-            "DynamoDB Save Error"
-        )
+        mock_firestore.table.put_item.side_effect = Exception("DynamoDB Save Error")
 
         mock_metric = create_autospec(HealthMetric, instance=True)
         mock_metric.metric_type = HealthMetricType.HEART_RATE
@@ -340,7 +338,9 @@ class TestAnalysisPipelineSleepIntegration:
         mock_table = MagicMock()
         mock_table.put_item = MagicMock()
 
-        with patch("clarity.ml.analysis_pipeline.DynamoDBHealthDataRepository") as mock_repo:
+        with patch(
+            "clarity.ml.analysis_pipeline.DynamoDBHealthDataRepository"
+        ) as mock_repo:
             # Set up the mock instance
             mock_instance = MagicMock()
             mock_instance.table = mock_table
@@ -354,14 +354,20 @@ class TestAnalysisPipelineSleepIntegration:
             assert self.pipeline.dynamodb_client is not None
             mock_table.put_item.assert_called_once()
 
-    @patch.dict(os.environ, {"DYNAMODB_TABLE_NAME": "test-table", "AWS_REGION": "us-west-2"})
+    @patch.dict(
+        os.environ, {"DYNAMODB_TABLE_NAME": "test-table", "AWS_REGION": "us-west-2"}
+    )
     async def test_get_dynamodb_client_custom_project_id(self) -> None:
         """Test _get_dynamodb_client with custom table and region from env."""
         self.pipeline.dynamodb_client = None  # Ensure it's reset
-        with patch("clarity.ml.analysis_pipeline.DynamoDBHealthDataRepository") as mock_fs_class:
+        with patch(
+            "clarity.ml.analysis_pipeline.DynamoDBHealthDataRepository"
+        ) as mock_fs_class:
             client = await self.pipeline._get_dynamodb_client()
             assert client is not None
-            mock_fs_class.assert_called_once_with(table_name="test-table", region="us-west-2")
+            mock_fs_class.assert_called_once_with(
+                table_name="test-table", region="us-west-2"
+            )
 
     async def test_get_dynamodb_client_reuse_existing(self) -> None:
         """Test that _get_dynamodb_client reuses an existing client."""

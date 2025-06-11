@@ -31,7 +31,9 @@ router.include_router(health_data_router, prefix="/health", tags=["health-data"]
 router.include_router(pat_analysis_router, prefix="/pat", tags=["pat-analysis"])
 
 # Include Gemini insights routes
-router.include_router(gemini_insights_router, prefix="/insights", tags=["gemini-insights"])
+router.include_router(
+    gemini_insights_router, prefix="/insights", tags=["gemini-insights"]
+)
 
 # Include WebSocket routes
 router.include_router(chat_router, prefix="/ws", tags=["websocket"])

@@ -103,7 +103,7 @@ def mock_cognito_auth():
             {"Name": "email_verified", "Value": "true"},
             {"Name": "custom:role", "Value": "patient"},
         ],
-        "Username": "test-user-123"
+        "Username": "test-user-123",
     }
     return mock_auth
 

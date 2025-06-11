@@ -11,10 +11,33 @@ We're using Google Cloud AI services (Vertex AI, Gemini) while deploying to AWS.
 - Using personal Gemini API key stored in AWS Secrets Manager
 - Deployed on AWS ECS but calling Google Cloud services
 
-## TODO (After 60+ endpoints are working)
-1. Decide: Keep Google AI or migrate to AWS Bedrock?
-2. If keeping Google AI: Document clear separation
-3. If migrating: Replace with AWS native AI services
-4. Clean up dependencies
+## Architecture Decision (June 11, 2024)
+After successful AWS migration with all 60+ endpoints working, we've decided to:
+
+### Keep Gemini API (for now)
+- **Rationale**: The Gemini API integration is working well and stable
+- **Performance**: No latency issues with cross-cloud calls
+- **Cost**: Personal API key keeps costs manageable during development
+- **Simplicity**: Avoiding another migration reduces complexity
+
+### Why Not AWS Bedrock?
+- Would require rewriting the entire ML service layer
+- Bedrock's Anthropic Claude models have different API structure
+- Current Gemini integration provides needed functionality
+- Can revisit when scaling becomes an issue
+
+### Future Considerations
+1. **When to migrate**: If latency becomes an issue or costs escalate
+2. **Migration path**: AWS Bedrock with Claude models
+3. **Hybrid approach**: Keep Gemini for development, Bedrock for production
+4. **Clean architecture**: Current separation makes future migration easier
+
+## Migration Completion Report
+- ✅ Firebase Auth → AWS Cognito (fully migrated)
+- ✅ Firestore → DynamoDB (fully migrated)
+- ✅ All 60+ API endpoints working
+- ✅ WebSocket support added
+- ✅ ECS deployment stable
+- ⚠️  Gemini API remains (architectural decision)
 
 ## Don't touch this until deployment is stable!

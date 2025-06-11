@@ -50,7 +50,7 @@ from clarity.services.pubsub.publisher import get_publisher
 logger = logging.getLogger(__name__)
 
 # Initialize router
-router = APIRouter(prefix="/health-data", tags=["Health Data"])
+router = APIRouter(tags=["Health Data"])
 
 # Query parameter constants to fix B008 linting issues
 _START_DATE_QUERY = Query(None, description="Filter from date (ISO 8601)")

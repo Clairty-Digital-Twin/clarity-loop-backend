@@ -48,7 +48,7 @@ from clarity.ports.auth_ports import IAuthProvider
 logger = logging.getLogger(__name__)
 settings = get_settings()
 
-router = APIRouter(prefix="/chat")
+router = APIRouter()
 
 
 def get_gemini_service() -> GeminiService:

@@ -32,7 +32,7 @@ from clarity.storage.dynamodb_client import DynamoDBHealthDataRepository
 logger = logging.getLogger(__name__)
 
 # Create API router
-router = APIRouter(prefix="/pat", tags=["PAT Analysis"])
+router = APIRouter(tags=["PAT Analysis"])
 
 
 # 🔥 FIXED: Response model for PAT analysis results - moved before usage

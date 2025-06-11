@@ -15,7 +15,7 @@ from clarity.models.auth import UserContext
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/debug", tags=["debug"])
+router = APIRouter(tags=["debug"])
 
 
 @router.get("/token-info")

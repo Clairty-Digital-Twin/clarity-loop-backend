@@ -22,7 +22,7 @@ from clarity.services.pubsub.publisher import get_publisher
 logger = logging.getLogger(__name__)
 
 # Configure router
-router = APIRouter(prefix="/api/v1/healthkit", tags=["HealthKit"])
+router = APIRouter(tags=["HealthKit"])
 
 # Constants for upload ID validation
 MIN_UPLOAD_ID_PARTS = 2

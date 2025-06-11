@@ -3,7 +3,7 @@
   "networkMode": "awsvpc",
   "requiresCompatibilities": ["FARGATE"],
   "cpu": "1024",
-  "memory": "2048",
+  "memory": "4096",
   "executionRoleArn": "arn:aws:iam::124355672559:role/ecsTaskExecutionRole",
   "taskRoleArn": "arn:aws:iam::124355672559:role/clarity-backend-task-role",
   "runtimePlatform": {
@@ -13,7 +13,7 @@
   "containerDefinitions": [
     {
       "name": "clarity-backend",
-      "image": "***REMOVED***/clarity-backend:nuclear-latest",
+      "image": "124355672559.dkr.ecr.us-east-1.amazonaws.com/clarity-backend:latest",
       "portMappings": [
         {
           "containerPort": 8000,
@@ -32,23 +32,23 @@
         },
         {
           "name": "AWS_REGION",
-          "value": "us-east-2"
+          "value": "us-east-1"
         },
         {
           "name": "AWS_DEFAULT_REGION",
-          "value": "us-east-2"
+          "value": "us-east-1"
         },
         {
           "name": "COGNITO_USER_POOL_ID",
-          "value": "us-east-2_iCRM83uVj"
+          "value": "us-east-1_1G5jYI8FO"
         },
         {
           "name": "COGNITO_CLIENT_ID",
-          "value": "485gn7vn3uev0coc52aefklkjs"
+          "value": "66qdivmqgs1oqmmo0b5r9d9hjo"
         },
         {
           "name": "COGNITO_REGION",
-          "value": "us-east-2"
+          "value": "us-east-1"
         },
         {
           "name": "DYNAMODB_TABLE_NAME",
@@ -67,10 +67,6 @@
           "value": "false"
         },
         {
-          "name": "CLARITY_MAIN_MODULE",
-          "value": "clarity.main_aws_nuclear_clean:app"
-        },
-        {
           "name": "SKIP_EXTERNAL_SERVICES",
           "value": "false"
         }
@@ -79,7 +75,7 @@
         "logDriver": "awslogs",
         "options": {
           "awslogs-group": "/ecs/clarity-backend",
-          "awslogs-region": "us-east-2",
+          "awslogs-region": "us-east-1",
           "awslogs-stream-prefix": "ecs"
         }
       },
@@ -88,7 +84,7 @@
         "interval": 30,
         "timeout": 10,
         "retries": 3,
-        "startPeriod": 40
+        "startPeriod": 60
       }
     }
   ]

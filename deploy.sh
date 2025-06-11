@@ -7,13 +7,13 @@ set -e
 echo "🚀 CLARITY ENTERPRISE DEPLOYMENT"
 echo "================================"
 
-# Configuration
+# Configuration - STANDARDIZED to us-east-1
 AWS_REGION="us-east-1"
 AWS_ACCOUNT_ID="124355672559"
 ECR_REPOSITORY="clarity-backend"
 CLUSTER_NAME="clarity-backend-cluster"
 SERVICE_NAME="clarity-backend-service"
-IMAGE_TAG="production-$(date +%Y%m%d-%H%M)"
+IMAGE_TAG="clean-$(date +%Y%m%d-%H%M)"
 
 echo "📊 Deployment Info:"
 echo "Region: ${AWS_REGION}"
@@ -42,7 +42,7 @@ docker tag ${ECR_REPOSITORY}:${IMAGE_TAG} \
 echo "📤 Pushing to ECR..."
 docker push ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPOSITORY}:${IMAGE_TAG}
 
-# Create production task definition
+# Create production task definition with FIXED MODULE PATH
 echo "📋 Creating production task definition..."
 cat > task-definition.json << EOF
 {
@@ -52,7 +52,11 @@ cat > task-definition.json << EOF
   "cpu": "1024",
   "memory": "4096",
   "executionRoleArn": "arn:aws:iam::${AWS_ACCOUNT_ID}:role/ecsTaskExecutionRole",
-  "taskRoleArn": "arn:aws:iam::${AWS_ACCOUNT_ID}:role/ecsTaskRole",
+  "taskRoleArn": "arn:aws:iam::${AWS_ACCOUNT_ID}:role/clarity-backend-task-role",
+  "runtimePlatform": {
+    "cpuArchitecture": "X86_64",
+    "operatingSystemFamily": "LINUX"
+  },
   "containerDefinitions": [
     {
       "name": "clarity-backend",
@@ -63,8 +67,10 @@ cat > task-definition.json << EOF
           "protocol": "tcp"
         }
       ],
+      "essential": true,
       "environment": [
         {"name": "ENVIRONMENT", "value": "production"},
+        {"name": "PORT", "value": "8000"},
         {"name": "AWS_REGION", "value": "${AWS_REGION}"},
         {"name": "AWS_DEFAULT_REGION", "value": "${AWS_REGION}"},
         {"name": "COGNITO_USER_POOL_ID", "value": "us-east-1_1G5jYI8FO"},
@@ -72,12 +78,14 @@ cat > task-definition.json << EOF
         {"name": "COGNITO_REGION", "value": "${AWS_REGION}"},
         {"name": "DYNAMODB_TABLE_NAME", "value": "clarity-health-data"},
         {"name": "S3_BUCKET_NAME", "value": "clarity-health-uploads"},
-        {"name": "ENABLE_AUTH", "value": "true"}
+        {"name": "ENABLE_AUTH", "value": "true"},
+        {"name": "DEBUG", "value": "false"},
+        {"name": "SKIP_EXTERNAL_SERVICES", "value": "false"}
       ],
       "healthCheck": {
         "command": ["CMD-SHELL", "curl -f http://localhost:8000/health || exit 1"],
         "interval": 30,
-        "timeout": 5,
+        "timeout": 10,
         "retries": 3,
         "startPeriod": 60
       },
@@ -111,6 +119,13 @@ aws ecs update-service \
     --desired-count 1 \
     --region ${AWS_REGION}
 
+# Wait for deployment to complete
+echo "⏳ Waiting for deployment to complete..."
+aws ecs wait services-stable \
+    --cluster ${CLUSTER_NAME} \
+    --services ${SERVICE_NAME} \
+    --region ${AWS_REGION}
+
 # Clean up
 rm task-definition.json
 
@@ -122,3 +137,12 @@ echo "🏥 Health: http://clarity-alb-1762715656.us-east-1.elb.amazonaws.com/hea
 echo "📖 Docs: http://clarity-alb-1762715656.us-east-1.elb.amazonaws.com/docs"
 echo ""
 echo "🎉 ENTERPRISE ML PLATFORM DEPLOYED!"
+
+# Monitor service
+echo "📊 Monitoring service status..."
+aws ecs describe-services \
+    --cluster ${CLUSTER_NAME} \
+    --services ${SERVICE_NAME} \
+    --region ${AWS_REGION} \
+    --query 'services[0].{Status:status,Running:runningCount,Desired:desiredCount,Platform:platformVersion}' \
+    --output table

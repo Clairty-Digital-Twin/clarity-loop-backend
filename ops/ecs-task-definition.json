@@ -3,13 +3,17 @@
   "networkMode": "awsvpc",
   "requiresCompatibilities": ["FARGATE"],
   "cpu": "1024",
-  "memory": "2048",
+  "memory": "4096",
   "executionRoleArn": "arn:aws:iam::124355672559:role/ecsTaskExecutionRole",
   "taskRoleArn": "arn:aws:iam::124355672559:role/clarity-backend-task-role",
+  "runtimePlatform": {
+    "cpuArchitecture": "X86_64",
+    "operatingSystemFamily": "LINUX"
+  },
   "containerDefinitions": [
     {
       "name": "clarity-backend",
-      "image": "***REMOVED***/clarity-backend:latest",
+      "image": "124355672559.dkr.ecr.us-east-1.amazonaws.com/clarity-backend:latest",
       "portMappings": [
         {
           "containerPort": 8000,
@@ -31,6 +35,34 @@
           "value": "us-east-1"
         },
         {
+          "name": "COGNITO_USER_POOL_ID",
+          "value": "us-east-1_1G5jYI8FO"
+        },
+        {
+          "name": "COGNITO_CLIENT_ID",
+          "value": "66qdivmqgs1oqmmo0b5r9d9hjo"
+        },
+        {
+          "name": "COGNITO_REGION",
+          "value": "us-east-1"
+        },
+        {
+          "name": "DYNAMODB_TABLE_NAME",
+          "value": "clarity-health-data"
+        },
+        {
+          "name": "S3_BUCKET_NAME",
+          "value": "clarity-health-uploads"
+        },
+        {
+          "name": "ENABLE_AUTH",
+          "value": "true"
+        },
+        {
+          "name": "DEBUG",
+          "value": "false"
+        },
+        {
           "name": "SKIP_EXTERNAL_SERVICES",
           "value": "false"
         }
@@ -48,7 +80,7 @@
         "interval": 30,
         "timeout": 10,
         "retries": 3,
-        "startPeriod": 40
+        "startPeriod": 60
       }
     }
   ]

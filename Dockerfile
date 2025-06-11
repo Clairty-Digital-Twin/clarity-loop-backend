@@ -21,6 +21,9 @@ RUN pip install --no-cache-dir --upgrade pip && \
 # Copy source code
 COPY src/ ./src/
 
+# Copy Gunicorn configuration
+COPY gunicorn.aws.conf.py ./
+
 # Create non-root user for security
 RUN groupadd -r clarity && useradd -r -g clarity clarity && \
     chown -R clarity:clarity /app
@@ -35,5 +38,5 @@ HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
 # Expose port
 EXPOSE 8000
 
-# Production command - clean main.py
-CMD ["uvicorn", "clarity.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "2"]
+# Production command - use Gunicorn for enterprise deployment
+CMD ["gunicorn", "-c", "gunicorn.aws.conf.py", "clarity.main:app"]

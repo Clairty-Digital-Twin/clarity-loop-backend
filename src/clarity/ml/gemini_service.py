@@ -12,14 +12,26 @@ from typing import Any, NoReturn
 
 from pydantic import BaseModel, Field
 
-# import vertexai  # type: ignore[import-untyped]  # TODO: Add to dependencies
-# from vertexai.generative_models import (  # type: ignore[import-untyped]
-#     GenerationConfig,
-#     GenerativeModel,
-#     HarmBlockThreshold,
-#     HarmCategory,
-#     SafetySetting,
-# )
+# Conditional imports for vertexai - only used in production mode
+try:
+    import vertexai  # type: ignore[import-untyped]
+    from vertexai.generative_models import (  # type: ignore[import-untyped]
+        GenerationConfig,
+        GenerativeModel,
+        HarmBlockThreshold,
+        HarmCategory,
+        SafetySetting,
+    )
+    VERTEXAI_AVAILABLE = True
+except ImportError:
+    # Fallback types for testing/development without vertexai
+    vertexai = None  # type: ignore[assignment]
+    GenerationConfig = object  # type: ignore[misc]
+    GenerativeModel = object  # type: ignore[misc]
+    HarmBlockThreshold = object  # type: ignore[misc]
+    HarmCategory = object  # type: ignore[misc]
+    SafetySetting = object  # type: ignore[misc]
+    VERTEXAI_AVAILABLE = False
 from clarity.core.config_aws import get_settings
 from clarity.utils.decorators import resilient_prediction
 

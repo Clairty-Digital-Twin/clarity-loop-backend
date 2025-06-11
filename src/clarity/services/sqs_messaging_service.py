@@ -214,7 +214,7 @@ class SQSMessagingService:
             return response.get("Attributes", {})
 
         except ClientError as e:
-            logger.exception("SQS get attributes error: %s", e)
+            logger.exception("SQS get attributes error")
             msg = f"Failed to get queue attributes: {e!s}"
             raise MessagingError(msg) from e
 

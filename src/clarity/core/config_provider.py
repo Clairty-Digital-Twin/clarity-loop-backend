@@ -107,14 +107,14 @@ class ConfigProvider(IConfigProvider):  # noqa: PLR0904
         """
         return getattr(self._settings, "enable_auth", False)
 
-    def get_gcp_project_id(self) -> str:
-        """Get GCP project ID from settings."""
-        project_id = self.get_setting("gcp_project_id")
-        if project_id:
-            return str(project_id)  # Ensure it's a string
+    def get_aws_region(self) -> str:
+        """Get AWS region from settings."""
+        region = self.get_setting("aws_region")
+        if region:
+            return str(region)  # Ensure it's a string
 
         # Fallback to default if not configured
-        return "clarity-digital-twin"
+        return "us-east-1"
 
     def get_log_level(self) -> str:
         """Get logging level.

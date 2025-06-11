@@ -57,11 +57,11 @@ class IConfigProvider(ABC):
         """
 
     @abstractmethod
-    def get_gcp_project_id(self) -> str:
-        """Get Google Cloud Platform project ID.
+    def get_aws_region(self) -> str:
+        """Get AWS region.
 
         Returns:
-            GCP project ID
+            AWS region
         """
 
     @abstractmethod

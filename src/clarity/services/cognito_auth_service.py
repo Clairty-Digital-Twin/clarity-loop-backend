@@ -271,7 +271,7 @@ class CognitoAuthenticationService:
             auth_result = response["AuthenticationResult"]
             access_token = auth_result["AccessToken"]
             refresh_token = auth_result["RefreshToken"]
-            id_token = auth_result["IdToken"]
+            # id_token = auth_result["IdToken"]  # Extracted but not used yet
 
             # Get user info from Cognito
             user_info = self.cognito_client.get_user(AccessToken=access_token)
@@ -305,7 +305,7 @@ class CognitoAuthenticationService:
             )
 
             # Create session
-            session_id = await self._create_user_session(
+            _session_id = await self._create_user_session(
                 user_sub,
                 refresh_token,
                 device_info,

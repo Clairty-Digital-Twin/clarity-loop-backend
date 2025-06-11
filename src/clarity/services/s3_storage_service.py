@@ -627,7 +627,7 @@ class S3StorageService(CloudStoragePort):
             logger.info("File deleted from S3: %s", file_path)
             return True
 
-        except Exception as e:
+        except Exception:
             logger.exception("Failed to delete file %s", file_path)
             return False
 

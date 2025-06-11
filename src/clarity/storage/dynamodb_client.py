@@ -281,7 +281,7 @@ class DynamoDBHealthDataRepository(IHealthDataRepository):
 
             return None
 
-        except ClientError as e:
+        except ClientError:
             logger.exception("DynamoDB error getting user")
             return None
 

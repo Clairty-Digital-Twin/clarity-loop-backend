@@ -1,9 +1,10 @@
 """AWS-compatible Clarity backend - CLEAN version with routers only."""
 
+from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 import logging
 import os
-from typing import Any, AsyncGenerator
+from typing import Any
 
 import boto3
 from botocore.exceptions import ClientError
@@ -191,4 +192,4 @@ app.mount("/metrics", metrics_app)
 if __name__ == "__main__":
     import uvicorn
 
-    uvicorn.run(app, host="127.0.0.1", port=8000)  # noqa: S104
+    uvicorn.run(app, host="127.0.0.1", port=8000)

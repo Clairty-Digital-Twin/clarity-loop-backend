@@ -48,7 +48,7 @@ class DynamoDBHealthDataRepository(IHealthDataRepository):
     def _serialize_item(self, data: dict) -> dict:
         """Convert Python types to DynamoDB-compatible types."""
 
-        def convert_value(v):
+        def convert_value(v: Any) -> Any:
             if isinstance(v, float):
                 return Decimal(str(v))
             if isinstance(v, dict):
@@ -64,7 +64,7 @@ class DynamoDBHealthDataRepository(IHealthDataRepository):
     def _deserialize_item(self, item: dict) -> dict:
         """Convert DynamoDB types back to Python types."""
 
-        def convert_value(v):
+        def convert_value(v: Any) -> Any:
             if isinstance(v, Decimal):
                 return float(v)
             if isinstance(v, dict):

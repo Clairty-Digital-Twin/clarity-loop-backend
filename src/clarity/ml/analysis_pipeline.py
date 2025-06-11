@@ -209,7 +209,7 @@ class HealthAnalysisPipeline:
                     timestamp = datetime.now(UTC)
 
                     # Convert floats to Decimal for DynamoDB
-                    def convert_floats(obj):
+                    def convert_floats(obj: Any) -> Any:
                         if isinstance(obj, float):
                             return Decimal(str(obj))
                         if isinstance(obj, list):

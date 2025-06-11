@@ -545,9 +545,9 @@ async def list_health_data(  # noqa: PLR0913, PLR0917
 async def query_health_data_legacy() -> dict[str, str]:
     """🚫 Legacy endpoint permanently removed."""
     from fastapi import HTTPException
-    
+
     logger.warning("Attempt to access removed legacy health data query endpoint")
-    
+
     raise HTTPException(
         status_code=410,
         detail={

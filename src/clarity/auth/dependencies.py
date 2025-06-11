@@ -111,7 +111,7 @@ def get_current_user(request: Request) -> dict:
     }
 
 
-def get_auth_provider():
+def get_auth_provider() -> Any:
     """Get authentication provider for dependency injection.
 
     This creates a simple auth provider for AWS Cognito.
@@ -156,7 +156,7 @@ OptionalUser = Annotated[UserContext | None, Depends(get_optional_user)]
 
 
 # Specialized dependencies for specific requirements
-async def require_verified_email(
+def require_verified_email(
     user: UserContext = Depends(get_authenticated_user),
 ) -> UserContext:
     """Require authenticated user with verified email.
@@ -178,7 +178,7 @@ async def require_verified_email(
     return user
 
 
-async def require_active_account(
+def require_active_account(
     user: UserContext = Depends(get_authenticated_user),
 ) -> UserContext:
     """Require authenticated user with active account.

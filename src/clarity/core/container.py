@@ -5,7 +5,7 @@ from clarity.core.container_aws import *  # noqa: F403
 
 
 # Add any missing functions for tests
-def create_application():
+def create_application() -> Any:
     """Create application (for tests)."""
     from clarity.main import app
 

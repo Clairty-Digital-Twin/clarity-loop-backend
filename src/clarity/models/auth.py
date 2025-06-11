@@ -15,6 +15,7 @@ from pydantic import BaseModel, Field, field_validator
 
 if TYPE_CHECKING:
     from uuid import UUID
+
     from pydantic import EmailStr
 
 # Constants for validation

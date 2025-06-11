@@ -207,11 +207,11 @@ class CognitoAuthProvider(IAuthProvider):
                 raise AuthenticationError(msg) from e
             logger.exception("Failed to create user")
             msg = f"Failed to create user: {e!s}"
-            raise AuthenticationError(msg)
+            raise AuthenticationError(msg) from e
         except Exception as e:
             logger.exception("Unexpected error creating user")
             msg = f"Unexpected error: {e!s}"
-            raise AuthenticationError(msg)
+            raise AuthenticationError(msg) from e
 
     async def delete_user(self, uid: str) -> bool:
         """Delete a user from Cognito."""
@@ -221,14 +221,14 @@ class CognitoAuthProvider(IAuthProvider):
             )
             logger.info("Deleted user: %s", uid)
             return True
-        except ClientError as e:
+        except ClientError:
             logger.exception("Failed to delete user")
             return False
-        except Exception as e:
+        except Exception:
             logger.exception("Unexpected error deleting user")
             return False
 
-    async def update_user(self, uid: str, **kwargs) -> User | None:
+    async def update_user(self, uid: str, **kwargs: Any) -> User | None:
         """Update user attributes in Cognito."""
         try:
             # Build attributes list
@@ -249,10 +249,10 @@ class CognitoAuthProvider(IAuthProvider):
             # Return updated user
             return await self.get_user(uid)
 
-        except ClientError as e:
+        except ClientError:
             logger.exception("Failed to update user")
             return None
-        except Exception as e:
+        except Exception:
             logger.exception("Unexpected error updating user")
             return None
 
@@ -278,10 +278,10 @@ class CognitoAuthProvider(IAuthProvider):
             # Handle challenges (MFA, etc)
             if "ChallengeName" in response:
                 logger.warning(
-                    f"Authentication challenge required: {response['ChallengeName']}"
+                    "Authentication challenge required: %s", response['ChallengeName']
                 )
                 msg = f"Challenge required: {response['ChallengeName']}"
-                raise AuthenticationError(msg) from e
+                raise AuthenticationError(msg)
 
             return None
 
@@ -293,11 +293,11 @@ class CognitoAuthProvider(IAuthProvider):
                 raise AuthenticationError(msg) from e
             logger.exception("Authentication failed")
             msg = f"Authentication failed: {e!s}"
-            raise AuthenticationError(msg)
+            raise AuthenticationError(msg) from e
         except Exception as e:
             logger.exception("Unexpected authentication error")
             msg = f"Unexpected error: {e!s}"
-            raise AuthenticationError(msg)
+            raise AuthenticationError(msg) from e
 
     async def initialize(self) -> None:
         """Initialize Cognito provider."""
@@ -305,7 +305,7 @@ class CognitoAuthProvider(IAuthProvider):
             # Test connection by fetching JWKS
             _ = self.jwks
             logger.info("Cognito provider initialized successfully")
-        except Exception as e:
+        except Exception:
             logger.exception("Failed to initialize Cognito provider")
             raise
 

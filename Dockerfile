@@ -13,13 +13,13 @@ RUN apt-get update && apt-get install -y \
 # Set working directory
 WORKDIR /app
 
-# Copy requirements and install dependencies
+# Copy the entire project for proper package installation
 COPY pyproject.toml LICENSE README.md ./
+COPY src/ ./src/
+
+# Install dependencies and the package
 RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir -e .
-
-# Copy source code
-COPY src/ ./src/
 
 # Copy Gunicorn configuration
 COPY gunicorn.aws.conf.py ./

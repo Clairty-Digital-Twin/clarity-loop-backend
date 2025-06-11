@@ -10,9 +10,10 @@ The API is organized into versioned modules:
 __version__ = "0.1.0"
 __author__ = "CLARITY Digital Twin Platform"
 
-# Export main API components for easy importing
-from clarity.api.v1 import router as v1_router
+# Clean API - imports are handled directly in main.py
+# Avoiding circular imports and legacy router conflicts
 
 __all__ = [
-    "v1_router",
+    "__version__",
+    "__author__",
 ]

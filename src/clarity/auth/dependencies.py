@@ -79,6 +79,53 @@ def get_authenticated_user(
     return user_context
 
 
+def get_current_user(request: Request) -> dict:
+    """Get current user for backward compatibility.
+    
+    This is an alias for get_authenticated_user but returns a dict format
+    for compatibility with legacy code.
+    
+    Args:
+        request: FastAPI request object
+        
+    Returns:
+        User information as dict
+        
+    Raises:
+        HTTPException: 401 if not authenticated
+    """
+    user_context = get_authenticated_user(request)
+    
+    # Convert UserContext to dict format for backward compatibility
+    return {
+        "uid": user_context.user_id,
+        "user_id": user_context.user_id,
+        "email": user_context.email,
+        "email_verified": user_context.is_verified,
+        "display_name": getattr(user_context, "display_name", None),
+        "auth_provider": "cognito",
+        "role": getattr(user_context, "role", "user"),
+        "is_active": getattr(user_context, "is_active", True),
+        "created_at": user_context.created_at,
+        "last_login": user_context.last_login,
+    }
+
+
+def get_auth_provider():
+    """Get authentication provider for dependency injection.
+    
+    This creates a simple auth provider for AWS Cognito.
+    For more complex setups, this would come from a DI container.
+    
+    Returns:
+        Authentication provider instance
+    """
+    # Import here to avoid circular imports
+    from clarity.services.aws_cognito_auth import CognitoAuthProvider
+    
+    return CognitoAuthProvider()
+
+
 def get_optional_user(
     request: Request,
 ) -> UserContext | None:

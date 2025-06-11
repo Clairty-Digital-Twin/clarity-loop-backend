@@ -3,41 +3,25 @@
 Version 1 of the CLARITY platform API endpoints.
 This module contains all the route definitions for the first version of the API.
 
-Routes:
-- auth: Authentication and user management endpoints
+Routes are now managed through router_aws_clean.py for production deployment.
+Legacy router imports have been removed to avoid conflicts.
+
+Available routers:
+- auth_aws_clean: Authentication and user management endpoints  
 - health_data: Health data upload and management endpoints
 - pat_analysis: PAT (Pretrained Actigraphy Transformer) analysis endpoints
 - gemini_insights: Gemini AI health insights generation endpoints
+- websocket: Real-time WebSocket communication
+- metrics: Health metrics calculation and aggregation
+- simple_test: Basic connectivity and health tests
+- debug: Development and debugging endpoints (dev only)
 """
 
-from fastapi import APIRouter
+__version__ = "1.0.0"
 
-from clarity.api.v1.auth import router as auth_router
-from clarity.api.v1.gemini_insights import router as gemini_insights_router
-from clarity.api.v1.health_data import router as health_data_router
-from clarity.api.v1.pat_analysis import router as pat_analysis_router
-from clarity.api.v1.websocket import chat_router
-
-# Create the main v1 router and include all sub-routers
-router = APIRouter(prefix="/api/v1", tags=["v1"])
-
-# Include authentication routes
-router.include_router(auth_router, prefix="/auth", tags=["authentication"])
-
-# Include health data routes
-router.include_router(health_data_router, prefix="/health", tags=["health-data"])
-
-# Include PAT analysis routes
-router.include_router(pat_analysis_router, prefix="/pat", tags=["pat-analysis"])
-
-# Include Gemini insights routes
-router.include_router(
-    gemini_insights_router, prefix="/insights", tags=["gemini-insights"]
-)
-
-# Include WebSocket routes
-router.include_router(chat_router, prefix="/ws", tags=["websocket"])
+# Clean API - routers are imported directly where needed
+# This avoids circular imports and conflicting legacy router definitions
 
 __all__ = [
-    "router",
+    "__version__",
 ]

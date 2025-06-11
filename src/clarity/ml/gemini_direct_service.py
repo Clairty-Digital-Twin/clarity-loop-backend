@@ -237,9 +237,9 @@ Format each recommendation as a clear action item with brief explanation."""
         recommendations = []
 
         for line in lines:
-            line = line.strip()
+            stripped_line = line.strip()
             # Look for numbered or bulleted items
-            if line and (line[0].isdigit() or line.startswith(("-", "•", "*"))):
+            if stripped_line and (stripped_line[0].isdigit() or stripped_line.startswith(("-", "•", "*"))):
                 # Clean up the line
                 clean_line = line.lstrip("0123456789.-•* ")
                 if clean_line:

@@ -7,7 +7,7 @@ Replaces Google Pub/Sub with AWS-native solution using SQS and SNS.
 from datetime import UTC, datetime
 import json
 import logging
-from typing import Any
+from typing import Any, cast
 
 import boto3
 from botocore.exceptions import ClientError
@@ -110,7 +110,7 @@ class AWSMessagingService:
                     QueueName=queue_name,
                     Attributes={
                         "MessageRetentionPeriod": "1209600",  # 14 days
-                        "VisibilityTimeoutSeconds": "300",  # 5 minutes
+                        "VisibilityTimeout": "300",  # 5 minutes
                         "ReceiveMessageWaitTimeSeconds": "20",  # Long polling
                     },
                 )
@@ -356,7 +356,8 @@ class AWSMessagingService:
             logger.exception("Failed to receive messages from queue %s", queue_name)
             raise
         else:
-            return messages
+            # Cast AWS MessageTypeDef to dict[str, Any] for our interface
+            return [dict(msg) for msg in messages]
 
     async def delete_message(self, queue_name: str, receipt_handle: str) -> None:
         """Delete processed message from SQS queue.
@@ -403,7 +404,8 @@ class AWSMessagingService:
             logger.exception("Failed to get attributes for queue %s", queue_name)
             raise
         else:
-            return attributes
+            # Cast AWS attribute dict to dict[str, Any] for our interface
+            return cast(dict[str, Any], attributes)
 
     async def purge_queue(self, queue_name: str) -> None:
         """Purge all messages from queue (use with caution).

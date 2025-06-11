@@ -299,6 +299,8 @@ class CognitoAuthProvider(IAuthProvider):
             logger.exception("Unexpected authentication error")
             msg = f"Unexpected error: {e!s}"
             raise AuthenticationError(msg) from e
+        else:
+            return None
 
     async def initialize(self) -> None:
         """Initialize Cognito provider."""

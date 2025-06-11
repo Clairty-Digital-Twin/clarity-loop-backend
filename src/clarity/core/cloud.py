@@ -4,8 +4,13 @@ This module provides centralized access to AWS credentials and API keys.
 """
 
 import os
+from typing import TYPE_CHECKING
 
 import boto3
+
+if TYPE_CHECKING:
+    from mypy_boto3_cognito_idp import CognitoIdentityProviderClient
+    from mypy_boto3_dynamodb import DynamoDBServiceResource
 
 
 def get_aws_session(region_name: str = "us-east-1") -> boto3.Session:
@@ -20,7 +25,7 @@ def get_aws_session(region_name: str = "us-east-1") -> boto3.Session:
     return boto3.Session(region_name=region_name)
 
 
-def get_cognito_client(region_name: str = "us-east-1") -> boto3.client:
+def get_cognito_client(region_name: str = "us-east-1") -> "CognitoIdentityProviderClient":
     """Get AWS Cognito client.
 
     Args:
@@ -32,7 +37,7 @@ def get_cognito_client(region_name: str = "us-east-1") -> boto3.client:
     return boto3.client("cognito-idp", region_name=region_name)
 
 
-def get_dynamodb_resource(region_name: str = "us-east-1") -> boto3.resource:
+def get_dynamodb_resource(region_name: str = "us-east-1") -> "DynamoDBServiceResource":
     """Get AWS DynamoDB resource.
 
     Args:

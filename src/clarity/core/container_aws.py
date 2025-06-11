@@ -132,7 +132,7 @@ class DependencyContainer:
                     service=service_name, status="success"
                 ).inc()
 
-            except Exception as e:
+            except Exception:
                 logger.exception("Failed to initialize Cognito")
                 service_initialization_counter.labels(
                     service=service_name, status="error"

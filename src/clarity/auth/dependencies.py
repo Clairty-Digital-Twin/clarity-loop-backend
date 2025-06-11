@@ -81,16 +81,16 @@ def get_authenticated_user(
 
 def get_current_user(request: Request) -> dict:
     """Get current user for backward compatibility.
-    
+
     This is an alias for get_authenticated_user but returns a dict format
     for compatibility with legacy code.
-    
+
     Args:
         request: FastAPI request object
-        
+
     Returns:
         User information as dict
-        
+
     Raises:
         HTTPException: 401 if not authenticated
     """
@@ -113,10 +113,10 @@ def get_current_user(request: Request) -> dict:
 
 def get_auth_provider():
     """Get authentication provider for dependency injection.
-    
+
     This creates a simple auth provider for AWS Cognito.
     For more complex setups, this would come from a DI container.
-    
+
     Returns:
         Authentication provider instance
     """

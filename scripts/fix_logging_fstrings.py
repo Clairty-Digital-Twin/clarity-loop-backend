@@ -34,9 +34,7 @@ def fix_logging_fstring(line: str) -> str:
 
                     # Build the new logging call
                     args = ", ".join(expressions)
-                    return re.sub(
-                        pattern, f'{method}("{format_string}", {args})', line
-                    )
+                    return re.sub(pattern, f'{method}("{format_string}", {args})', line)
 
     return line
 

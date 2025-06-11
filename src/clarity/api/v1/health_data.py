@@ -49,7 +49,7 @@ from clarity.services.messaging.publisher import get_publisher
 logger = logging.getLogger(__name__)
 
 # Initialize router
-router = APIRouter(tags=["Health Data"])
+router = APIRouter(tags=["health-data"])
 
 
 @router.get("/health", summary="Health Check")
@@ -532,60 +532,41 @@ async def list_health_data(  # noqa: PLR0913, PLR0917
 
 @router.get(
     "/query",
-    summary="Query Health Data (Legacy)",
+    summary="Query Health Data (Removed)",
     description="""
-    **DEPRECATED:** Use `GET /health-data/` instead for better pagination and filtering.
-
-    Legacy endpoint for backwards compatibility. Will be removed in v2.0.
+    **REMOVED:** This legacy endpoint has been permanently removed. Use `GET /health-data/` instead.
     """,
-    deprecated=True,
+    status_code=410,
     responses={
-        200: {"description": "Health data retrieved (legacy format)"},
-        410: {"description": "Endpoint deprecated - use GET /health-data/ instead"},
+        410: {"description": "Endpoint permanently removed - use GET /health-data/ instead"},
     },
+    include_in_schema=False,  # Hide from OpenAPI docs
 )
-async def query_health_data_legacy(
-    current_user: AuthenticatedUser,
-    limit: int = Query(100, ge=1, le=1000, description="Maximum number of records"),
-    offset: int = Query(0, ge=0, description="Number of records to skip"),
-    metric_type: str | None = Query(None, description="Filter by metric type"),
-    start_date: datetime | None = _LEGACY_START_DATE_QUERY,
-    end_date: datetime | None = _LEGACY_END_DATE_QUERY,
-    service: HealthDataService = Depends(get_health_data_service),
-) -> dict[str, Any]:
-    """🔄 Legacy health data query endpoint (deprecated)."""
-    try:
-        logger.warning(
-            "Legacy health data endpoint used by user: %s", current_user.user_id
-        )
-
-        health_data = await service.get_user_health_data(
-            user_id=current_user.user_id,
-            limit=limit,
-            offset=offset,
-            metric_type=metric_type,
-            start_date=start_date,
-            end_date=end_date,
-        )
-
-        # Add deprecation warning to response
-        health_data["_deprecated"] = {
-            "message": "This endpoint is deprecated. Use GET /api/v1/health-data/ instead.",
-            "migration_guide": "https://docs.clarity.health/migration/v1-to-v2",
-            "removal_date": "2025-12-31",
+async def query_health_data_legacy() -> dict[str, str]:
+    """🚫 Legacy endpoint permanently removed."""
+    from fastapi import HTTPException
+    
+    logger.warning("Attempt to access removed legacy health data query endpoint")
+    
+    raise HTTPException(
+        status_code=410,
+        detail={
+            "error": "Endpoint Permanently Removed",
+            "message": "The legacy /query endpoint has been permanently removed.",
+            "migration": {
+                "new_endpoint": "GET /api/v1/health-data/",
+                "documentation": "See API documentation for the new paginated endpoint",
+                "benefits": [
+                    "Improved pagination with cursor support",
+                    "Better filtering options",
+                    "Consistent response format",
+                    "Enhanced performance"
+                ]
+            },
+            "removed_date": "2025-06-11",
+            "status_code": 410
         }
-
-        logger.debug("Retrieved legacy health data for user: %s", current_user.user_id)
-        return health_data  # noqa: TRY300
-
-    except HealthDataServiceError as e:
-        logger.exception("Health data service error")
-        raise ValidationProblem(detail=str(e)) from e
-    except Exception as e:
-        logger.exception("Unexpected error retrieving health data")
-        raise InternalServerProblem(
-            detail="An unexpected error occurred while retrieving health data"
-        ) from e
+    )
 
 
 @router.delete(

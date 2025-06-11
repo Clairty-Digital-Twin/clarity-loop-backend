@@ -113,7 +113,7 @@ class CognitoAuthProvider(IAuthProvider):
                 return None
 
             # Now we can use the claims
-            logger.debug("Token verified for user: %s", claims.get('sub'))
+            logger.debug("Token verified for user: %s", claims.get("sub"))
             return claims
 
         except JWTError as e:

@@ -7,7 +7,7 @@ Routes are now managed through router.py for production deployment.
 Legacy router imports have been removed to avoid conflicts.
 
 Available routers:
-- auth: Authentication and user management endpoints  
+- auth: Authentication and user management endpoints
 - health_data: Health data upload and management endpoints
 - pat_analysis: PAT (Pretrained Actigraphy Transformer) analysis endpoints
 - gemini_insights: Gemini AI health insights generation endpoints

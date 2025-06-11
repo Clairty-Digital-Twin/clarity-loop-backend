@@ -1,11 +1,9 @@
 """AWS-compatible Clarity backend - CLEAN version with routers only."""
 
 from contextlib import asynccontextmanager
-from datetime import UTC, datetime
 import logging
 import os
-from typing import Any
-import uuid
+from typing import Any, AsyncGenerator
 
 import boto3
 from botocore.exceptions import ClientError
@@ -37,14 +35,16 @@ dynamodb = None
 cognito_client = None
 s3_client = None
 
-def init_aws_clients():
+
+def init_aws_clients() -> None:
     """Initialize AWS clients when needed."""
-    global session, dynamodb, cognito_client, s3_client
+    global session, dynamodb, cognito_client, s3_client  # noqa: PLW0603
     if session is None:
         session = boto3.Session(region_name=AWS_REGION)
         dynamodb = boto3.resource("dynamodb", region_name=AWS_REGION)
         cognito_client = session.client("cognito-idp", region_name=COGNITO_REGION)
         s3_client = session.client("s3")
+
 
 # Initialize Gemini if available
 if GEMINI_API_KEY:
@@ -54,13 +54,14 @@ else:
     logger.warning("GEMINI_API_KEY not set - AI insights will be limited")
     model = None
 
+
 # =============================================================================
 # Lifespan management
 # =============================================================================
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI):
+async def lifespan(_app: FastAPI) -> AsyncGenerator[None, None]:
     """Application lifespan manager."""
     logger.info("Starting CLARITY Digital Twin backend in %s mode", ENVIRONMENT)
     logger.info("AWS Region: %s", AWS_REGION)
@@ -74,7 +75,7 @@ async def lifespan(app: FastAPI):
         try:
             # Initialize AWS clients first
             init_aws_clients()
-            table = dynamodb.Table(DYNAMODB_TABLE)
+            table = dynamodb.Table(DYNAMODB_TABLE)  # type: ignore[attr-defined]
             table.load()
             logger.info("✅ Connected to DynamoDB table: %s", DYNAMODB_TABLE)
         except ClientError as e:
@@ -120,7 +121,7 @@ app.add_middleware(
 # =============================================================================
 
 # Import the CLEAN AWS router - no duplicates
-from clarity.api.v1.router import api_router as v1_router
+from clarity.api.v1.router import api_router as v1_router  # noqa: E402
 
 # Include ONLY the clean router - professional single source of truth
 app.include_router(v1_router, prefix="/api/v1", tags=["API v1"])
@@ -148,7 +149,7 @@ def get_app() -> FastAPI:
 
 
 @app.get("/")
-async def root():
+async def root() -> dict[str, Any]:
     """Root endpoint."""
     return {
         "name": "CLARITY Digital Twin Platform",
@@ -163,7 +164,7 @@ async def root():
 
 
 @app.get("/health")
-async def health_check():
+async def health_check() -> dict[str, Any]:
     """Health check endpoint."""
     return {
         "status": "healthy",
@@ -190,4 +191,4 @@ app.mount("/metrics", metrics_app)
 if __name__ == "__main__":
     import uvicorn
 
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run(app, host="127.0.0.1", port=8000)  # noqa: S104

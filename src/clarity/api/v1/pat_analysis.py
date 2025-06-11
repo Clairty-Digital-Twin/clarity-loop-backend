@@ -141,9 +141,7 @@ async def analyze_step_data(
     request: StepDataRequest,
     background_tasks: BackgroundTasks,  # noqa: ARG001
     current_user: AuthenticatedUser,
-    inference_engine: AsyncInferenceEngine = Depends(
-        get_pat_inference_engine
-    ),
+    inference_engine: AsyncInferenceEngine = Depends(get_pat_inference_engine),
 ) -> AnalysisResponse:
     """Analyze Apple HealthKit step data using PAT model with proxy actigraphy transformation.
 
@@ -241,9 +239,7 @@ async def analyze_step_data(
 async def analyze_actigraphy_data(
     request: DirectActigraphyRequest,
     current_user: AuthenticatedUser,
-    inference_engine: AsyncInferenceEngine = Depends(
-        get_pat_inference_engine
-    ),
+    inference_engine: AsyncInferenceEngine = Depends(get_pat_inference_engine),
 ) -> AnalysisResponse:
     """Analyze preprocessed actigraphy data using the PAT model.
 
@@ -469,9 +465,7 @@ def _get_analysis_repository() -> DynamoDBHealthDataRepository:
     description="Check the health status of the PAT analysis service",
 )
 async def health_check(
-    inference_engine: AsyncInferenceEngine = Depends(
-        get_pat_inference_engine
-    ),
+    inference_engine: AsyncInferenceEngine = Depends(get_pat_inference_engine),
 ) -> HealthCheckResponse:
     """Comprehensive health check for the PAT analysis service.
 
@@ -518,9 +512,7 @@ async def health_check(
 )
 async def get_model_info(
     current_user: AuthenticatedUser,
-    inference_engine: AsyncInferenceEngine = Depends(
-        get_pat_inference_engine
-    ),
+    inference_engine: AsyncInferenceEngine = Depends(get_pat_inference_engine),
 ) -> dict[str, Any]:
     """Get detailed information about PAT model configuration and capabilities."""
     try:

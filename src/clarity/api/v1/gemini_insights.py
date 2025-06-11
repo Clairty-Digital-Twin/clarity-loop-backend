@@ -134,7 +134,7 @@ class ErrorResponse(BaseModel):
 
 
 # Create router
-router = APIRouter(tags=["gemini-insights"])
+router = APIRouter(tags=["ai-insights"])
 
 
 def generate_request_id() -> str:

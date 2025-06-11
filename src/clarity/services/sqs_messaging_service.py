@@ -121,7 +121,7 @@ class SQSMessagingService:
                         }
                     )
                 except json.JSONDecodeError:
-                    logger.exception("Failed to decode message: %s", msg['MessageId'])
+                    logger.exception("Failed to decode message: %s", msg["MessageId"])
                     continue
 
             return messages
@@ -196,7 +196,7 @@ class SQSMessagingService:
                 MessageAttributes=message_attributes,
             )
 
-            logger.info("Published message to SNS: %s", response['MessageId'])
+            logger.info("Published message to SNS: %s", response["MessageId"])
             return response["MessageId"]
 
         except ClientError as e:

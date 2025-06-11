@@ -92,12 +92,12 @@ class Settings(BaseSettings):
     )
     aws_session_token: str | None = Field(default=None, alias="AWS_SESSION_TOKEN")
 
-    # AWS Cognito Settings (replacing Firebase Auth)
+    # AWS Cognito Settings
     cognito_user_pool_id: str = Field(default="us-east-2_iCRM83uVj", alias="COGNITO_USER_POOL_ID")
     cognito_client_id: str = Field(default="485gn7vn3uev0coc52aefklkjs", alias="COGNITO_CLIENT_ID")
     cognito_region: str | None = Field(default="us-east-2", alias="COGNITO_REGION")
 
-    # DynamoDB Settings (replacing Firestore)
+    # DynamoDB Settings
     dynamodb_table_name: str = Field(
         default="clarity-health-data", alias="DYNAMODB_TABLE_NAME"
     )

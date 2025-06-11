@@ -1,4 +1,4 @@
-"""Authentication endpoints - AWS Cognito version without Firebase dependencies."""
+"""Authentication endpoints - AWS Cognito version."""
 
 import logging
 from typing import Any, Dict
@@ -48,7 +48,7 @@ async def register(
     """Register a new user."""
     try:
         # Create authentication service
-        auth_service = AuthenticationService(auth_provider, None)  # No Firestore needed for AWS
+        auth_service = AuthenticationService(auth_provider, None)  # No document store needed for AWS
         
         # Register user
         token_response = await auth_service.register_user(
@@ -90,7 +90,7 @@ async def login(
     """Authenticate user and return access token."""
     try:
         # Create authentication service
-        auth_service = AuthenticationService(auth_provider, None)  # No Firestore needed for AWS
+        auth_service = AuthenticationService(auth_provider, None)  # No document store needed for AWS
         
         # Authenticate user
         token_response = await auth_service.authenticate_user(

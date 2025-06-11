@@ -90,7 +90,7 @@ class User(BaseModel):
 class UserProfile(BaseModel):
     """Extended user profile information."""
 
-    uid: str = Field(..., description="Firebase user ID")
+    uid: str = Field(..., description="User ID (AWS Cognito sub)")
     display_name: str | None = Field(None, description="Display name")
     bio: str | None = Field(None, max_length=500, description="User biography")
     avatar_url: str | None = Field(None, description="Avatar image URL")
@@ -109,7 +109,7 @@ class UserProfile(BaseModel):
     model_config = ConfigDict(
         json_schema_extra={
             "example": {
-                "uid": "firebase_user_id_123",
+                "uid": "cognito_user_id_123",
                 "display_name": "John Doe",
                 "bio": "Health enthusiast interested in sleep optimization",
                 "timezone": "America/New_York",
@@ -148,7 +148,7 @@ class UserRegistration(BaseModel):
 class UserSession(BaseModel):
     """Model for user session information."""
 
-    uid: str = Field(..., description="Firebase user ID")
+    uid: str = Field(..., description="User ID (AWS Cognito sub)")
     session_id: str = Field(..., description="Session identifier")
     created_at: datetime = Field(default_factory=datetime.utcnow)
     expires_at: datetime | None = Field(None)

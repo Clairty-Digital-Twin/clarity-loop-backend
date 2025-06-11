@@ -4,6 +4,7 @@
 from datetime import UTC, datetime
 import json
 import logging
+import os
 from typing import TYPE_CHECKING, Any
 
 from fastapi import (
@@ -18,7 +19,7 @@ from pydantic import ValidationError
 
 from clarity.auth.dependencies import get_authenticated_user
 from clarity.core.config_aws import get_settings
-from clarity.core.container import get_container
+# Removed circular import - will use direct initialization
 from clarity.ml.gemini_service import (
     GeminiService,
     HealthInsightRequest,
@@ -51,11 +52,14 @@ router = APIRouter(prefix="/chat")
 
 
 def get_gemini_service() -> GeminiService:
-    return get_container().get_instance(GeminiService)
+    # Direct initialization to avoid circular import
+    return GeminiService(project_id=os.getenv("GCP_PROJECT_ID", "clarity-digital-twin"))
 
 
 def get_pat_model_service() -> PATModelService:
-    return get_container().get_instance(PATModelService)
+    # Direct initialization to avoid circular import
+    from clarity.ml.pat_service import get_pat_service
+    return get_pat_service()
 
 
 class WebSocketChatHandler:
@@ -422,8 +426,13 @@ async def _authenticate_websocket_user(
         return None
 
     try:
-        # Get auth provider from container
-        auth_provider = get_container().get_auth_provider()
+        # Get auth provider directly to avoid circular import
+        from clarity.auth.aws_cognito_provider import CognitoAuthProvider
+        auth_provider = CognitoAuthProvider(
+            user_pool_id=os.getenv("COGNITO_USER_POOL_ID", ""),
+            client_id=os.getenv("COGNITO_CLIENT_ID", ""),
+            region=os.getenv("COGNITO_REGION", "us-east-1")
+        )
         user_info = await auth_provider.verify_token(token)
 
         if not user_info:
@@ -437,11 +446,16 @@ async def _authenticate_websocket_user(
         # Fallback for providers without the enhanced method
         # This part might need adjustment based on what verify_token returns
         # For now, assuming it returns a dict that can be used to build a basic context
-        from clarity.auth.firebase_middleware import (
-            FirebaseAuthMiddleware,
+        # Create basic user context from token info
+        return UserContext(
+            user_id=user_info.get("sub", user_info.get("user_id", "unknown")),
+            email=user_info.get("email", ""),
+            display_name=user_info.get("name", ""),
+            roles=user_info.get("roles", []),
+            is_verified=user_info.get("email_verified", False),
+            provider="cognito",
+            claims=user_info
         )
-
-        return FirebaseAuthMiddleware._create_user_context(user_info)
 
     except Exception as e:
         logger.error(f"WebSocket authentication failed: {e}")

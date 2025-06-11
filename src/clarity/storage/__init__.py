@@ -4,7 +4,7 @@ Provides high-performance, HIPAA-compliant data storage services
 for the health data processing pipeline using AWS DynamoDB.
 """
 
-from clarity.storage.dynamodb_client import DynamoDBClient
+from clarity.storage.dynamodb_client import DynamoDBHealthDataRepository
 from clarity.storage.mock_repository import MockHealthDataRepository
 
-__all__ = ["DynamoDBClient", "MockHealthDataRepository"]
+__all__ = ["DynamoDBHealthDataRepository", "MockHealthDataRepository"]

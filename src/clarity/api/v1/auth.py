@@ -8,6 +8,7 @@ RESTful API endpoints for user authentication including:
 """
 
 import logging
+import os
 from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
@@ -29,16 +30,16 @@ from clarity.models.auth import (
 )
 from clarity.ports.auth_ports import IAuthProvider
 from clarity.ports.data_ports import IHealthDataRepository
-from clarity.services.auth_service import (
+from clarity.services.cognito_auth_service import (
     AccountDisabledError,
     AuthenticationError,
-    AuthenticationService,
+    CognitoAuthenticationService,
     EmailNotVerifiedError,
     InvalidCredentialsError,
     UserAlreadyExistsError,
     UserNotFoundError,
 )
-from clarity.storage.firestore_client import FirestoreClient
+from clarity.storage.dynamodb_client import DynamoDBHealthDataRepository
 
 # Configure logger
 logger = logging.getLogger(__name__)
@@ -52,53 +53,45 @@ security = HTTPBearer()
 # Module-level singletons for dependencies (avoiding B008)
 _auth_provider: IAuthProvider | None = None
 _repository: IHealthDataRepository | None = None
-_auth_service: AuthenticationService | None = None
+_auth_service: CognitoAuthenticationService | None = None
 
 
 def set_dependencies(
     auth_provider: IAuthProvider,
     repository: IHealthDataRepository,
-    firestore_client: FirestoreClient | None = None,
+    dynamodb_client: DynamoDBHealthDataRepository | None = None,
 ) -> None:
     """Set dependencies for authentication endpoints.
 
     Args:
         auth_provider: Authentication provider
         repository: Health data repository
-        firestore_client: Firestore client for user data
+        dynamodb_client: DynamoDB client for user data
     """
     global _auth_provider, _repository, _auth_service  # noqa: PLW0603
     _auth_provider = auth_provider
     _repository = repository
 
     # Create authentication service
-    if firestore_client is not None:  # Type narrowing: ensure not None
-        # Type assertion: firestore_client is guaranteed to be FirestoreClient here
-        _auth_service = AuthenticationService(
+    from clarity.services.dynamodb_service import DynamoDBService
+    
+    if dynamodb_client is not None or isinstance(repository, DynamoDBHealthDataRepository):
+        # Create DynamoDB service for user management
+        dynamodb_service = DynamoDBService(
+            table_name=os.getenv("DYNAMODB_TABLE_NAME", "clarity-health-data"),
+            region=os.getenv("AWS_REGION", "us-east-1")
+        )
+        _auth_service = CognitoAuthenticationService(
             auth_provider=auth_provider,
-            firestore_client=firestore_client,  # type: ignore[arg-type]
+            dynamodb_service=dynamodb_service,
         )
     else:
-        # Fallback: create FirestoreClient from repository if available
-        from clarity.storage.firestore_client import (  # noqa: PLC0415
-            FirestoreHealthDataRepository,
+        logger.warning(
+            "Authentication service not available - using mock implementation"
         )
 
-        if isinstance(repository, FirestoreHealthDataRepository):
-            # Extract FirestoreClient from repository
-            extracted_client = repository.client  # type: ignore[attr-defined]
-            # Safety check is no longer needed since client property always returns valid client
-            _auth_service = AuthenticationService(
-                auth_provider=auth_provider,
-                firestore_client=extracted_client,  # type: ignore[arg-type]
-            )
-        else:
-            logger.warning(
-                "Authentication service not available - using mock implementation"
-            )
 
-
-def get_auth_service() -> AuthenticationService:
+def get_auth_service() -> CognitoAuthenticationService:
     """Get authentication service dependency."""
     if _auth_service is None:
         raise HTTPException(
@@ -140,8 +133,8 @@ async def register_user(
 ) -> RegistrationResponse:
     """Register a new user account.
 
-    Creates a new user with Firebase Authentication and stores additional
-    user metadata in Firestore. Sends email verification if configured.
+    Creates a new user with AWS Cognito and stores additional
+    user metadata in DynamoDB. Sends email verification if configured.
     """
     auth_service = get_auth_service()
 
@@ -230,7 +223,7 @@ async def login_user(
 ) -> LoginResponse:
     """Authenticate user and create session.
 
-    Validates credentials with Firebase Authentication and returns
+    Validates credentials with AWS Cognito and returns
     access tokens and user session information.
     """
     auth_service = get_auth_service()

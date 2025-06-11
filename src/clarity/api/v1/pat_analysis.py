@@ -27,7 +27,7 @@ from clarity.ml.proxy_actigraphy import (
     StepCountData,
     create_proxy_actigraphy_transformer,
 )
-from clarity.storage.firestore_client import FirestoreClient
+from clarity.storage.dynamodb_client import DynamoDBHealthDataRepository
 
 logger = logging.getLogger(__name__)
 
@@ -345,7 +345,7 @@ async def get_pat_analysis(
     processing_id: str,
     current_user: AuthenticatedUser,
 ) -> PATAnalysisResponse:
-    """Retrieve actual PAT analysis results from Firestore."""
+    """Retrieve actual PAT analysis results from DynamoDB."""
     try:
         logger.info(
             "Retrieving PAT analysis results: %s for user %s",
@@ -353,13 +353,19 @@ async def get_pat_analysis(
             current_user.user_id,
         )
 
-        # Get Firestore client
-        firestore_client = _get_analysis_repository()
+        # Get DynamoDB client
+        dynamodb_client = _get_analysis_repository()
 
-        # Try to get analysis results from the analysis_results collection
-        analysis_result = await firestore_client.get_analysis_result(
-            processing_id=processing_id, user_id=current_user.user_id
+        # Try to get analysis results from DynamoDB
+        from boto3.dynamodb.conditions import Key
+        
+        # Query for analysis results
+        response = dynamodb_client.table.query(
+            KeyConditionExpression=Key("pk").eq(f"USER#{current_user.user_id}") & Key("sk").eq(f"ANALYSIS#{processing_id}")
         )
+        
+        items = response.get("Items", [])
+        analysis_result = items[0] if items else None
 
         if analysis_result:
             # Found completed analysis results
@@ -385,10 +391,11 @@ async def get_pat_analysis(
                 },
             )
 
-        # If not found in analysis_results, check processing_jobs collection for status
-        processing_status = await firestore_client.get_document(
-            collection="processing_jobs", document_id=processing_id
+        # If not found in analysis_results, check processing_jobs in DynamoDB
+        response = dynamodb_client.table.get_item(
+            Key={"pk": f"JOB#{processing_id}", "sk": f"JOB#{processing_id}"}
         )
+        processing_status = response.get("Item")
 
         if processing_status:
             # Check if user owns this processing job
@@ -446,11 +453,12 @@ async def get_pat_analysis(
         )
 
 
-def _get_analysis_repository() -> FirestoreClient:
+def _get_analysis_repository() -> DynamoDBHealthDataRepository:
     """Get analysis repository for retrieving stored results."""
     # TODO: Replace with proper dependency injection
-    project_id = os.getenv("GOOGLE_CLOUD_PROJECT", "clarity-digital-twin")
-    return FirestoreClient(project_id=project_id)
+    table_name = os.getenv("DYNAMODB_TABLE_NAME", "clarity-health-data")
+    region = os.getenv("AWS_REGION", "us-east-1")
+    return DynamoDBHealthDataRepository(table_name=table_name, region=region)
 
 
 @router.get(

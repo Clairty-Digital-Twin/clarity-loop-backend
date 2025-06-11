@@ -114,15 +114,15 @@ failed_jobs_total = Counter(
 )
 
 # Database metrics
-firestore_operations_total = Counter(
-    "clarity_firestore_operations_total",
-    "Total Firestore operations",
+dynamodb_operations_total = Counter(
+    "clarity_dynamodb_operations_total",
+    "Total DynamoDB operations",
     ["operation", "collection", "status"],
 )
 
-firestore_operation_duration_seconds = Histogram(
-    "clarity_firestore_operation_duration_seconds",
-    "Firestore operation duration in seconds",
+dynamodb_operation_duration_seconds = Histogram(
+    "clarity_dynamodb_operation_duration_seconds",
+    "DynamoDB operation duration in seconds",
     ["operation", "collection"],
 )
 
@@ -303,24 +303,24 @@ def record_failed_job(job_type: str, error_type: str) -> None:
     failed_jobs_total.labels(job_type=job_type, error_type=error_type).inc()
 
 
-def record_firestore_operation(
-    operation: str, collection: str, status: str, duration: float | None = None
+def record_dynamodb_operation(
+    operation: str, table: str, status: str, duration: float | None = None
 ) -> None:
-    """Record Firestore operation metrics.
+    """Record DynamoDB operation metrics.
 
     Args:
         operation: Operation type (create, read, update, delete)
-        collection: Firestore collection name
+        table: DynamoDB table name
         status: Operation status (success, failed, etc.)
         duration: Operation duration in seconds (optional)
     """
-    firestore_operations_total.labels(
-        operation=operation, collection=collection, status=status
+    dynamodb_operations_total.labels(
+        operation=operation, collection=table, status=status
     ).inc()
 
     if duration is not None:
-        firestore_operation_duration_seconds.labels(
-            operation=operation, collection=collection
+        dynamodb_operation_duration_seconds.labels(
+            operation=operation, collection=table
         ).observe(duration)
 
 
@@ -377,17 +377,17 @@ class MetricsContext:
         elif self.operation_type == "health_data_processing":
             stage = self.labels.get("stage", "unknown")
             record_health_data_processing(stage, duration)
-        elif self.operation_type == "firestore_operation":
+        elif self.operation_type == "dynamodb_operation":
             operation = self.labels.get("operation", "unknown")
-            collection = self.labels.get("collection", "unknown")
-            record_firestore_operation(operation, collection, status, duration)
+            table = self.labels.get("table", "unknown")
+            record_dynamodb_operation(operation, table, status, duration)
 
 
 # Export router and helper functions
 __all__ = [
     "MetricsContext",
     "record_failed_job",
-    "record_firestore_operation",
+    "record_dynamodb_operation",
     "record_health_data_processing",
     "record_health_data_upload",
     "record_health_metric_processed",

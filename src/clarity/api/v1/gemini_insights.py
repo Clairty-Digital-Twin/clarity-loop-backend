@@ -4,7 +4,7 @@ This module provides REST API routes that expose the GeminiService functionality
 to enable "chat with your health data" from frontend applications.
 
 Endpoints include generating health insights, retrieving cached results,
-and health status monitoring with proper Firebase authentication.
+and health status monitoring with proper authentication.
 """
 
 from datetime import UTC, datetime
@@ -25,7 +25,7 @@ from clarity.ml.gemini_service import (
 from clarity.models.auth import UserContext
 from clarity.ports.auth_ports import IAuthProvider
 from clarity.ports.config_ports import IConfigProvider
-from clarity.storage.firestore_client import FirestoreClient
+from clarity.storage.dynamodb_client import DynamoDBHealthDataRepository
 
 logger = logging.getLogger(__name__)
 
@@ -284,6 +284,32 @@ async def generate_insights(
         # Generate insights
         insight_response = await gemini_service.generate_health_insights(gemini_request)
 
+        # Save insight to DynamoDB
+        dynamodb_client = _get_dynamodb_client()
+        insight_id = f"insight_{uuid.uuid4().hex[:8]}"
+        timestamp = datetime.now(UTC)
+        
+        insight_item = {
+            "pk": f"USER#{current_user.user_id}",
+            "sk": f"INSIGHT#{timestamp.isoformat()}",
+            "id": insight_id,
+            "user_id": current_user.user_id,
+            "narrative": insight_response.narrative,
+            "key_insights": insight_response.key_insights,
+            "recommendations": insight_response.recommendations,
+            "confidence_score": insight_response.confidence_score,
+            "generated_at": insight_response.generated_at,
+            "created_at": timestamp.isoformat(),
+        }
+        
+        # Also store with direct insight ID access
+        dynamodb_client.table.put_item(Item=insight_item)
+        dynamodb_client.table.put_item(Item={
+            "pk": f"INSIGHT#{insight_id}",
+            "sk": f"INSIGHT#{insight_id}",
+            **insight_item
+        })
+
         # Calculate processing time
         processing_time = (datetime.now(UTC) - start_time).total_seconds() * 1000
 
@@ -329,7 +355,7 @@ async def get_insight(
     insight_id: str,
     current_user: AuthenticatedUser,
 ) -> InsightGenerationResponse:
-    """🔥 FIXED: Retrieve cached insights by ID from Firestore.
+    """Retrieve cached insights by ID from DynamoDB.
 
     Args:
         insight_id: Unique identifier for the insight
@@ -351,11 +377,12 @@ async def get_insight(
             request_id,
         )
 
-        # Get insight from Firestore
-        firestore_client = _get_firestore_client()
-        insight_doc = await firestore_client.get_document(
-            collection="insights", document_id=insight_id
+        # Get insight from DynamoDB
+        dynamodb_client = _get_dynamodb_client()
+        response = dynamodb_client.table.get_item(
+            Key={"pk": f"INSIGHT#{insight_id}", "sk": f"INSIGHT#{insight_id}"}
         )
+        insight_doc = response.get("Item")
 
         if not insight_doc:
             _raise_insight_not_found_error(insight_id, request_id)
@@ -364,7 +391,7 @@ async def get_insight(
         if insight_doc.get("user_id") != current_user.user_id:  # type: ignore[union-attr]
             _raise_insight_access_denied_error(insight_id, request_id)
 
-        # Convert Firestore document to HealthInsightResponse
+        # Convert DynamoDB document to HealthInsightResponse
         insight_response = HealthInsightResponse(
             user_id=insight_doc["user_id"],  # type: ignore[index]
             narrative=insight_doc.get("narrative", ""),  # type: ignore[union-attr]
@@ -412,7 +439,7 @@ async def get_insight_history(
     limit: int = 10,
     offset: int = 0,
 ) -> InsightHistoryResponse:
-    """🔥 FIXED: Get insight history for a user from Firestore.
+    """Get insight history for a user from DynamoDB.
 
     Args:
         user_id: User ID to get history for
@@ -439,22 +466,30 @@ async def get_insight_history(
         if current_user.user_id != user_id:
             _raise_access_denied_error(user_id, current_user.user_id, request_id)
 
-        # Get insights from Firestore
-        firestore_client = _get_firestore_client()
-        insights = await firestore_client.query_documents(
-            collection="insights",
-            filters=[{"field": "user_id", "op": "==", "value": user_id}],
-            limit=limit,
-            offset=offset,
-            order_by="generated_at",
-            order_direction="desc",
+        # Get insights from DynamoDB
+        dynamodb_client = _get_dynamodb_client()
+        from boto3.dynamodb.conditions import Key
+        
+        # Query insights for user
+        response = dynamodb_client.table.query(
+            KeyConditionExpression=Key("pk").eq(f"USER#{user_id}") & Key("sk").begins_with("INSIGHT#"),
+            Limit=limit + offset,
+            ScanIndexForward=False  # Most recent first
         )
-
-        # Get total count for pagination
-        total_count = await firestore_client.count_documents(
-            collection="insights",
-            filters=[{"field": "user_id", "op": "==", "value": user_id}],
-        )
+        
+        all_insights = response.get("Items", [])
+        # Apply offset
+        insights = all_insights[offset:offset + limit] if offset < len(all_insights) else []
+        
+        # Get total count
+        total_count = len(all_insights)
+        while "LastEvaluatedKey" in response:
+            response = dynamodb_client.table.query(
+                KeyConditionExpression=Key("pk").eq(f"USER#{user_id}") & Key("sk").begins_with("INSIGHT#"),
+                ExclusiveStartKey=response["LastEvaluatedKey"],
+                Select="COUNT"
+            )
+            total_count += response.get("Count", 0)
 
         # Format insights for response
         formatted_insights = [
@@ -577,10 +612,11 @@ async def get_service_status(
         ) from e
 
 
-def _get_firestore_client() -> FirestoreClient:
-    """Get Firestore client for storing/retrieving insights."""
-    project_id = os.getenv("GOOGLE_CLOUD_PROJECT", "clarity-digital-twin")
-    return FirestoreClient(project_id=project_id)
+def _get_dynamodb_client() -> DynamoDBHealthDataRepository:
+    """Get DynamoDB client for storing/retrieving insights."""
+    table_name = os.getenv("DYNAMODB_TABLE_NAME", "clarity-health-data")
+    region = os.getenv("AWS_REGION", "us-east-1")
+    return DynamoDBHealthDataRepository(table_name=table_name, region=region)
 
 
 # Export router

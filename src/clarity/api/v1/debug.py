@@ -5,6 +5,7 @@ THIS SHOULD BE REMOVED OR DISABLED IN PRODUCTION!
 
 from datetime import UTC, datetime
 import logging
+import os
 from typing import Any
 
 from fastapi import APIRouter, Depends, Header, HTTPException, Request, status
@@ -71,7 +72,7 @@ async def debug_auth_check(
         "email": current_user.email,
         "display_name": current_user.custom_claims.get("display_name", "N/A"),
         "email_verified": current_user.is_verified,
-        "firebase_token_exp": getattr(current_user, "firebase_token_exp", "N/A"),
+        "token_exp": getattr(current_user, "token_exp", "N/A"),
     }
 
 
@@ -156,7 +157,7 @@ async def debug_verify_token_directly(
     request: Request,
     authorization: str | None = Header(None),
 ) -> dict[str, Any]:
-    """Debug endpoint to test Firebase token verification directly."""
+    """Debug endpoint to test token verification directly."""
     logger.warning("🔍🔍 DEBUG VERIFY TOKEN DIRECTLY CALLED")
 
     # Get the container to access auth provider
@@ -203,7 +204,7 @@ async def debug_verify_token_directly(
             result["verification_success"] = False
             result["user_info"] = None
             result["note"] = (
-                "verify_token returned None - check logs for Firebase error"
+                "verify_token returned None - check logs for authentication error"
             )
             logger.warning("❌❌ Direct token verification FAILED - returned None")
 
@@ -213,32 +214,22 @@ async def debug_verify_token_directly(
         result["exception_message"] = str(e)
         logger.exception("❌❌ Direct token verification threw exception")
 
-    # Check Firebase Admin SDK status
+    # Check AWS Cognito status
     try:
-        import firebase_admin
-
-        try:
-            firebase_app = firebase_admin.get_app()
-            result["firebase_admin_initialized"] = True
-            result["firebase_project_id"] = getattr(
-                firebase_app, "project_id", "Unknown"
-            )
-        except ValueError:
-            result["firebase_admin_initialized"] = False
-            result["firebase_note"] = "Firebase Admin SDK not initialized"
-
-    except ImportError:
-        result["firebase_admin_initialized"] = False
-        result["firebase_note"] = "firebase_admin module not imported"
+        import boto3
+        cognito_client = boto3.client('cognito-idp', region_name=os.getenv("AWS_REGION", "us-east-1"))
+        result["cognito_initialized"] = True
+        result["cognito_user_pool_id"] = os.getenv("COGNITO_USER_POOL_ID", "NOT_SET")
+        result["cognito_region"] = os.getenv("COGNITO_REGION", "us-east-1")
+    except Exception as e:
+        result["cognito_initialized"] = False
+        result["cognito_note"] = f"Cognito client error: {str(e)}"
 
     # Check environment
-    import os
 
     result["environment"] = {
-        "GOOGLE_APPLICATION_CREDENTIALS": bool(
-            os.environ.get("GOOGLE_APPLICATION_CREDENTIALS")
-        ),
-        "FIREBASE_PROJECT_ID": os.environ.get("FIREBASE_PROJECT_ID", "NOT_SET"),
+        "AWS_REGION": os.environ.get("AWS_REGION", "NOT_SET"),
+        "COGNITO_USER_POOL_ID": os.environ.get("COGNITO_USER_POOL_ID", "NOT_SET"),
         "ENVIRONMENT": os.environ.get("ENVIRONMENT", "NOT_SET"),
     }
 

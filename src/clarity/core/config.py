@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class MiddlewareConfig:
-    """Configuration for Firebase authentication middleware.
+    """Configuration for AWS Cognito authentication middleware.
 
     Contains all middleware-specific settings for authentication,
     token caching, and error handling.
@@ -91,17 +91,26 @@ class Settings(BaseSettings):
     app_name: str = "CLARITY Digital Twin Platform"
     app_version: str = "1.0.0"
 
-    # Firebase settings
-    firebase_project_id: str = Field(default="", alias="FIREBASE_PROJECT_ID")
-    firebase_credentials_path: str | None = Field(
-        default=None,
-        alias="FIREBASE_CREDENTIALS_PATH",
-        description="Path to Firebase service account credentials JSON file",
-    )
+    # AWS settings
+    aws_region: str = Field(default="us-east-1", alias="AWS_REGION")
+    aws_access_key_id: str = Field(default="", alias="AWS_ACCESS_KEY_ID")
+    aws_secret_access_key: str = Field(default="", alias="AWS_SECRET_ACCESS_KEY")
+    
+    # AWS Cognito settings
+    cognito_user_pool_id: str = Field(default="", alias="COGNITO_USER_POOL_ID")
+    cognito_client_id: str = Field(default="", alias="COGNITO_CLIENT_ID")
+    cognito_region: str = Field(default="us-east-1", alias="COGNITO_REGION")
+    
+    # AWS DynamoDB settings
+    dynamodb_table_name: str = Field(default="clarity-health-data", alias="DYNAMODB_TABLE_NAME")
+    dynamodb_region: str = Field(default="us-east-1", alias="DYNAMODB_REGION")
+    
+    # AWS S3 settings
+    s3_bucket_name: str = Field(default="clarity-health-uploads", alias="S3_BUCKET_NAME")
+    s3_region: str = Field(default="us-east-1", alias="S3_REGION")
 
-    # Google Cloud settings
+    # Google Cloud settings (for Gemini AI only)
     gcp_project_id: str = Field(default="", alias="GCP_PROJECT_ID")
-    firestore_database: str = Field(default="(default)", alias="FIRESTORE_DATABASE")
     google_application_credentials: str = Field(
         default="", alias="GOOGLE_APPLICATION_CREDENTIALS"
     )
@@ -131,30 +140,25 @@ class Settings(BaseSettings):
         """Validate environment-specific requirements and set development defaults."""
         # If in testing mode, and no path is provided, set a mock path.
         if self.is_testing():
-            if not self.firebase_credentials_path:
-                self.firebase_credentials_path = "mock_firebase_creds.json"
+            if not self.google_application_credentials:
+                self.google_application_credentials = "mock_google_creds.json"
             return self
 
         # In development, warn about missing credentials but don't fail
         if self.environment.lower() == "development":
             missing_creds: list[str] = []
 
-            if not self.firebase_project_id:
-                missing_creds.append("FIREBASE_PROJECT_ID")
-            if (
-                not self.firebase_credentials_path
-                and not self.google_application_credentials
-            ):
-                missing_creds.append(
-                    "FIREBASE_CREDENTIALS_PATH or GOOGLE_APPLICATION_CREDENTIALS"
-                )
-            if not self.gcp_project_id:
-                missing_creds.append("GCP_PROJECT_ID")
+            if self.enable_auth and not self.cognito_user_pool_id:
+                missing_creds.append("COGNITO_USER_POOL_ID")
+            if self.enable_auth and not self.cognito_client_id:
+                missing_creds.append("COGNITO_CLIENT_ID")
+            if not self.aws_region:
+                missing_creds.append("AWS_REGION")
 
             if missing_creds:
                 # Fixed G004: Using % formatting instead of f-strings in logging
                 logger.warning(
-                    "⚠️ Development mode: Missing credentials %s. "
+                    "⚠️ Development mode: Missing AWS credentials %s. "
                     "Using mock services (skip_external_services=%s)",
                     missing_creds,
                     self.skip_external_services,
@@ -164,22 +168,12 @@ class Settings(BaseSettings):
         elif self.environment.lower() == "production":
             required_for_production: list[str] = []
 
-            if self.enable_auth and not self.firebase_project_id:
-                required_for_production.append("FIREBASE_PROJECT_ID (auth enabled)")
-
-            # SECURITY: Prevent insecure credential paths in production
-            if self.firebase_credentials_path and any(
-                insecure_path in self.firebase_credentials_path.lower()
-                for insecure_path in ["dev", "test", "mock", "fake", "demo"]
-            ):
-                required_for_production.append(
-                    f"FIREBASE_CREDENTIALS_PATH contains insecure path: {self.firebase_credentials_path}"
-                )
-
-            if not self.skip_external_services and not self.gcp_project_id:
-                required_for_production.append(
-                    "GCP_PROJECT_ID (external services enabled)"
-                )
+            if self.enable_auth and not self.cognito_user_pool_id:
+                required_for_production.append("COGNITO_USER_POOL_ID (auth enabled)")
+            if self.enable_auth and not self.cognito_client_id:
+                required_for_production.append("COGNITO_CLIENT_ID (auth enabled)")
+            if not self.aws_region:
+                required_for_production.append("AWS_REGION")
 
             if required_for_production:
                 missing_vars = ", ".join(required_for_production)
@@ -222,8 +216,9 @@ class Settings(BaseSettings):
         logger.info("   • Auth enabled: %s", self.enable_auth)
         logger.info("   • Skip external services: %s", self.skip_external_services)
         logger.info("   • Startup timeout: %ss", self.startup_timeout)
-        logger.info("   • Firebase project: %s", self.firebase_project_id or "Not set")
-        logger.info("   • GCP project: %s", self.gcp_project_id or "Not set")
+        logger.info("   • AWS region: %s", self.aws_region or "Not set")
+        logger.info("   • Cognito User Pool: %s", self.cognito_user_pool_id or "Not set")
+        logger.info("   • DynamoDB table: %s", self.dynamodb_table_name or "Not set")
 
     def get_middleware_config(self) -> MiddlewareConfig:
         """Get middleware configuration based on environment.

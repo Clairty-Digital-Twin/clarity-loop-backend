@@ -97,7 +97,7 @@ async def upload_healthkit_data(
     """Upload HealthKit data for asynchronous processing.
 
     This endpoint:
-    1. Authenticates the request via Firebase
+    1. Authenticates the request via AWS Cognito
     2. Validates user authorization
     3. Stores raw data to GCS
     4. Publishes Pub/Sub message for processing
@@ -105,7 +105,7 @@ async def upload_healthkit_data(
 
     Args:
         request: HealthKit upload data
-        current_user: Authenticated user context from Firebase
+        current_user: Authenticated user context from AWS Cognito
 
     Returns:
         Upload acknowledgment with tracking ID
@@ -192,7 +192,7 @@ async def get_upload_status(
 
     Args:
         upload_id: The upload ID to check
-        current_user: Authenticated user context from Firebase
+        current_user: Authenticated user context from AWS Cognito
 
     Returns:
         Upload status information
@@ -222,7 +222,7 @@ async def get_upload_status(
             status_code=status.HTTP_403_FORBIDDEN, detail="Access denied to this upload"
         )
 
-    # TODO: Implement status checking from Firestore
+    # TODO: Implement status checking from DynamoDB
     # For now, return a mock response
     return {
         "upload_id": upload_id,

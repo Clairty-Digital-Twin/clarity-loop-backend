@@ -4,6 +4,7 @@ Following Clean Architecture and SOLID principles, this module provides
 concrete implementation of IConfigProvider interface for dependency injection.
 """
 
+import os
 from typing import TYPE_CHECKING
 
 from clarity.core.config_aws import Settings
@@ -70,7 +71,7 @@ class ConfigProvider(IConfigProvider):  # noqa: PLR0904
         """Check if external services should be skipped.
 
         Skip external services in development mode, testing mode, or when explicitly configured.
-        This prevents startup hangs when Firebase/Firestore credentials are missing.
+        This prevents startup hangs when cloud credentials are missing.
 
         Returns:
             True if external services should be skipped, False otherwise
@@ -83,16 +84,20 @@ class ConfigProvider(IConfigProvider):  # noqa: PLR0904
         Returns:
             Database connection URL
         """
-        # For Firestore, return project-based URL
-        return f"https://{self.get_gcp_project_id()}.firebaseio.com"
+        # Return AWS-based URL
+        return f"https://{self.get_aws_region()}.amazonaws.com"
 
-    def get_firestore_url(self) -> str:
-        """DEPRECATED: Firebase/Firestore is no longer supported."""
-        raise NotImplementedError("Firebase/Firestore has been removed - use DynamoDB")
+    def get_dynamodb_url(self) -> str:
+        """Get DynamoDB service URL."""
+        return f"https://dynamodb.{self.get_aws_region()}.amazonaws.com"
 
-    def get_firebase_config(self) -> dict[str, str]:
-        """DEPRECATED: Firebase configuration is no longer supported."""
-        raise NotImplementedError("Firebase has been removed - use AWS Cognito")
+    def get_aws_config(self) -> dict[str, str]:
+        """Get AWS configuration."""
+        return {
+            "region": self.get_aws_region(),
+            "cognito_user_pool_id": os.getenv("COGNITO_USER_POOL_ID", ""),
+            "dynamodb_table": os.getenv("DYNAMODB_TABLE_NAME", "clarity-health-data"),
+        }
 
     def is_auth_enabled(self) -> bool:
         """Check if authentication is enabled.

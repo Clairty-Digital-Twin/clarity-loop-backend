@@ -1,5 +1,5 @@
 """AWS-compatible Clarity backend - ULTRA CLEAN version with ALL endpoints.
-No Firebase, no Google Cloud dependencies - pure AWS with all 35+ endpoints.
+Pure AWS implementation with all 35+ endpoints.
 """
 
 from contextlib import asynccontextmanager
@@ -191,6 +191,32 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# =============================================================================
+# Include ALL API routers to get 50+ endpoints
+# =============================================================================
+
+# Import the main v1 router that includes ALL sub-routers including WebSocket
+from clarity.api.v1.router import api_router as v1_router
+from clarity.api.v1.debug import router as debug_router
+
+# Include the main v1 router which has all endpoints including WebSocket
+app.include_router(v1_router, prefix="/api/v1", tags=["API v1"])
+app.include_router(debug_router, prefix="/api/v1/debug", tags=["Debug"])  # Keep debug separate
+
+logger.info(f"✅ Included ALL routers - expecting 50+ total endpoints")
+
+# =============================================================================
+# App Factory for Testing
+# =============================================================================
+
+def create_app() -> FastAPI:
+    """Factory function to create the FastAPI app (used by tests)."""
+    return app
+
+def get_app() -> FastAPI:
+    """Get the FastAPI app instance (used by tests)."""
+    return app
 
 # =============================================================================
 # Core Endpoints

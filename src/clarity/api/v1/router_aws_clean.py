@@ -1,4 +1,4 @@
-"""Main API v1 router - AWS Clean version without Firebase dependencies."""
+"""Main API v1 router - AWS Clean version."""
 
 import logging
 from fastapi import APIRouter, Depends

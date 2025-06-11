@@ -28,7 +28,7 @@ from clarity.models.health_data import (
     HealthMetricType,
     SleepData,
 )
-from clarity.storage.firestore_client import FirestoreClient
+from clarity.storage.dynamodb_client import DynamoDBHealthDataRepository
 
 # Constants
 MIN_FEATURE_VECTOR_LENGTH = 8
@@ -80,16 +80,19 @@ class HealthAnalysisPipeline:
         self.fusion_service = get_fusion_service()
 
         # Storage client for saving analysis results
-        self.firestore_client: FirestoreClient | None = None
+        self.dynamodb_client: DynamoDBHealthDataRepository | None = None
 
         self.logger.info("✅ Health Analysis Pipeline initialized")
 
-    async def _get_firestore_client(self) -> FirestoreClient:
-        """Get or create Firestore client for saving results."""
-        if self.firestore_client is None:
-            project_id = os.getenv("GOOGLE_CLOUD_PROJECT", "clarity-digital-twin")
-            self.firestore_client = FirestoreClient(project_id=project_id)
-        return self.firestore_client
+    async def _get_dynamodb_client(self) -> DynamoDBHealthDataRepository:
+        """Get or create DynamoDB client for saving results."""
+        if self.dynamodb_client is None:
+            table_name = os.getenv("DYNAMODB_TABLE_NAME", "clarity-health-data")
+            region = os.getenv("AWS_REGION", "us-east-1")
+            self.dynamodb_client = DynamoDBHealthDataRepository(
+                table_name=table_name, region=region
+            )
+        return self.dynamodb_client
 
     async def process_health_data(
         self,
@@ -196,32 +199,47 @@ class HealthAnalysisPipeline:
                 "processing_id": processing_id,
             }
 
-            # Step 6: Save analysis results to Firestore if processing_id provided
+            # Step 6: Save analysis results to DynamoDB if processing_id provided
             if processing_id:
                 try:
-                    firestore_client = await self._get_firestore_client()
-                    analysis_dict = {
+                    dynamodb_client = await self._get_dynamodb_client()
+                    # Store analysis results in DynamoDB
+                    from decimal import Decimal
+                    timestamp = datetime.now(UTC)
+                    
+                    # Convert floats to Decimal for DynamoDB
+                    def convert_floats(obj):
+                        if isinstance(obj, float):
+                            return Decimal(str(obj))
+                        elif isinstance(obj, list):
+                            return [convert_floats(item) for item in obj]
+                        elif isinstance(obj, dict):
+                            return {k: convert_floats(v) for k, v in obj.items()}
+                        return obj
+                    
+                    analysis_item = {
+                        "pk": f"USER#{user_id}",
+                        "sk": f"ANALYSIS#{timestamp.isoformat()}",
+                        "processing_id": processing_id,
                         "user_id": user_id,
-                        "cardio_features": results.cardio_features,
-                        "respiratory_features": results.respiratory_features,
-                        "activity_features": results.activity_features,
-                        "activity_embedding": results.activity_embedding,
-                        "sleep_features": results.sleep_features,
-                        "fused_vector": results.fused_vector,
-                        "summary_stats": results.summary_stats,
-                        "processing_metadata": results.processing_metadata,
+                        "cardio_features": convert_floats(results.cardio_features),
+                        "respiratory_features": convert_floats(results.respiratory_features),
+                        "activity_features": convert_floats(results.activity_features),
+                        "activity_embedding": convert_floats(results.activity_embedding),
+                        "sleep_features": convert_floats(results.sleep_features),
+                        "fused_vector": convert_floats(results.fused_vector),
+                        "summary_stats": convert_floats(results.summary_stats),
+                        "processing_metadata": convert_floats(results.processing_metadata),
+                        "created_at": timestamp.isoformat(),
                     }
-                    await firestore_client.save_analysis_result(
-                        user_id=user_id,
-                        processing_id=processing_id,
-                        analysis_result=analysis_dict,
-                    )
+                    
+                    dynamodb_client.table.put_item(Item=analysis_item)
                     self.logger.info(
-                        "✅ Analysis results saved to Firestore: %s", processing_id
+                        "✅ Analysis results saved to DynamoDB: %s", processing_id
                     )
                 except Exception:
                     self.logger.exception(
-                        "Failed to save analysis results to Firestore"
+                        "Failed to save analysis results to DynamoDB"
                     )
                     # Don't fail the entire pipeline if saving fails
 

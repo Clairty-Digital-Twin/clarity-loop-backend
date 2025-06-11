@@ -20,7 +20,7 @@ from clarity.models.health_data import (
     SleepData,
     SleepStage,
 )
-from clarity.storage.firestore_client import FirestoreClient
+from clarity.storage.dynamodb_client import DynamoDBHealthDataRepository
 
 
 class TestAnalysisPipelineSleepIntegration:

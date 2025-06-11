@@ -1,7 +1,7 @@
 """CLARITY Digital Twin Platform - DynamoDB Service.
 
 Enterprise-grade AWS DynamoDB client for health data operations.
-Replaces Firestore with AWS-native NoSQL solution.
+Provides AWS-native NoSQL solution.
 """
 
 import asyncio
@@ -47,7 +47,7 @@ class DynamoDBConnectionError(DynamoDBError):
 class DynamoDBService:
     """Enterprise-grade DynamoDB service for health data operations.
 
-    Provides similar functionality to FirestoreClient but using AWS DynamoDB.
+    Provides comprehensive DynamoDB functionality for health data management.
     """
 
     def __init__(
@@ -512,7 +512,7 @@ class DynamoDBService:
 class DynamoDBHealthDataRepository(IHealthDataRepository):
     """Health Data Repository implementation using DynamoDB.
 
-    Replaces FirestoreHealthDataRepository with AWS DynamoDB.
+    Provides AWS DynamoDB-based health data repository.
     """
 
     def __init__(self, region: str = "us-east-1", endpoint_url: str | None = None) -> None:

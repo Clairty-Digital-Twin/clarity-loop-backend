@@ -1,7 +1,6 @@
 """AWS Cognito authentication provider for CLARITY.
 
-This module provides AWS Cognito integration, replacing Firebase authentication
-with AWS-native solutions.
+This module provides AWS Cognito integration with AWS-native solutions.
 """
 
 from datetime import UTC, datetime

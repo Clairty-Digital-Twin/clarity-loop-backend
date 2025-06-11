@@ -1,7 +1,7 @@
 """CLARITY Digital Twin Platform - AWS Cognito Authentication Service.
 
 Business logic layer for authentication operations using AWS Cognito.
-Replaces Firebase Authentication with AWS-native solution.
+Provides AWS-native authentication solution.
 """
 
 from datetime import UTC, datetime, timedelta
@@ -62,8 +62,7 @@ class AccountDisabledError(AuthenticationError):
 class CognitoAuthenticationService:
     """Authentication service using AWS Cognito.
 
-    Replaces Firebase Authentication with AWS Cognito for user management,
-    authentication, and authorization.
+    Provides AWS Cognito for user management, authentication, and authorization.
     """
 
     def __init__(

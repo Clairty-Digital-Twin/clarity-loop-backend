@@ -88,7 +88,6 @@ class IConfigProvider(ABC):
             Settings model instance
         """
 
-    def get_firestore_url(self) -> str:
-        """Get Firestore URL - DEPRECATED."""
-        # This method is deprecated and should not be used
-        raise NotImplementedError("Firebase/Firestore is no longer supported")
+    def get_dynamodb_url(self) -> str:
+        """Get DynamoDB service URL."""
+        raise NotImplementedError

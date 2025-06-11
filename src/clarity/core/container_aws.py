@@ -13,7 +13,7 @@ from clarity.api.v1.router import api_router
 from clarity.auth.aws_auth_provider import CognitoAuthProvider
 from clarity.auth.mock_auth import MockAuthProvider
 from clarity.core.config_aws import Settings, get_settings
-# Firebase-free AWS container - no longer using config_provider
+# AWS container - using settings directly
 from clarity.core.exceptions import ConfigurationError
 from clarity.core.logging_config import setup_logging
 
@@ -53,7 +53,7 @@ class DependencyContainer:
         setup_logging()
 
         # Initialize service containers
-        # Firebase-free: using settings directly instead of config_provider
+        # Using settings directly
         self._auth_provider: IAuthProvider | None = None
         self._health_data_repository: IHealthDataRepository | None = None
         self._gemini_service: GeminiService | None = None
@@ -68,7 +68,7 @@ class DependencyContainer:
 
         try:
             # Initialize configuration provider
-            # Firebase-free: using settings directly
+            # Using settings directly
 
             # Initialize auth provider (Cognito or Mock)
             await self._initialize_auth_provider()
@@ -271,7 +271,7 @@ class DependencyContainer:
             }
 
     # Property accessors for services
-    # Firebase-free: removed config_provider property
+    # AWS-native implementation
 
     @property
     def auth_provider(self) -> IAuthProvider:

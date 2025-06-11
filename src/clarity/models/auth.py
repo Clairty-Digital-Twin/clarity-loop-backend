@@ -87,7 +87,7 @@ class UserContext(BaseModel):
     is_verified: bool = Field(default=False, description="Email verification status")
     is_active: bool = Field(default=True, description="User account status")
     custom_claims: dict[str, Any] = Field(
-        default_factory=dict, description="Custom Firebase claims"
+        default_factory=dict, description="Custom AWS Cognito claims"
     )
     created_at: datetime | None = Field(None, description="Account creation timestamp")
     last_login: datetime | None = Field(None, description="Last login timestamp")
@@ -101,9 +101,7 @@ class TokenInfo:
     expires_at: float = 0.0
     user_id: str = ""
     email: str = ""
-    cognito_claims: dict[str, Any] = field(
-        default_factory=dict, description="AWS Cognito token claims"
-    )
+    cognito_claims: dict[str, Any] = field(default_factory=dict)
 
 
 class AuthError(Exception):

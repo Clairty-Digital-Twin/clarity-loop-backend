@@ -20,9 +20,9 @@ echo "Repository: ${ECR_REPOSITORY}"
 echo "Tag: ${IMAGE_TAG}"
 echo ""
 
-# Build the production image
-echo "📦 Building production image..."
-docker build -f Dockerfile.aws -t ${ECR_REPOSITORY}:${IMAGE_TAG} --platform linux/amd64 .
+# Build the production image - USING FULL DOCKERFILE
+echo "📦 Building production image with FULL APPLICATION..."
+docker build -f Dockerfile.aws.full -t ${ECR_REPOSITORY}:${IMAGE_TAG} --platform linux/amd64 .
 
 echo "🏷️ Tagging for ECR..."
 docker tag ${ECR_REPOSITORY}:${IMAGE_TAG} \

@@ -305,7 +305,7 @@ class TestHealthKitUploadIntegration:
     def test_router_configuration(self) -> None:  # noqa: PLR6301
         """Test that the router is properly configured."""
         # Router prefix is set when included in parent router, not on the router itself
-        assert "HealthKit" in router.tags
+        assert "healthkit" in router.tags
 
     def test_router_endpoints(self) -> None:  # noqa: PLR6301
         """Test that router has expected endpoints."""

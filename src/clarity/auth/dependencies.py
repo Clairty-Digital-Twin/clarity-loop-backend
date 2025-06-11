@@ -121,9 +121,9 @@ def get_auth_provider() -> Any:
         Authentication provider instance
     """
     # Import here to avoid circular imports
-    from clarity.services.aws_cognito_auth import CognitoAuthProvider
+    from clarity.auth.aws_cognito_provider import get_cognito_provider
 
-    return CognitoAuthProvider()
+    return get_cognito_provider()
 
 
 def get_optional_user(

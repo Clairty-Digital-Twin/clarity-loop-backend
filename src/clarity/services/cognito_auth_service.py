@@ -272,7 +272,6 @@ class CognitoAuthenticationService:
             access_token = auth_result["AccessToken"]
             refresh_token = auth_result["RefreshToken"]
 
-
             # Get user info from Cognito
             user_info = self.cognito_client.get_user(AccessToken=access_token)
             user_sub = next(

@@ -262,8 +262,6 @@ async def logout(
         if token:
             await auth_service.logout_user(token)
 
-        return {"message": "Successfully logged out"}
-
     except HTTPException:
         # Re-raise HTTP exceptions (validation errors, auth errors)
         raise

@@ -207,11 +207,44 @@ async def update_user(
 @router.post("/logout")
 async def logout(
     request: Request,
-    current_user: dict[str, Any] = Depends(get_current_user),
     auth_provider: IAuthProvider = Depends(get_auth_provider),
 ) -> dict[str, str]:
     """Logout user (invalidate token if supported)."""
     try:
+        # Try to get current user, but don't require it for validation
+        try:
+            current_user = await get_current_user(request)
+        except Exception:
+            # If no valid auth, check if this is a validation error case
+            try:
+                body = await request.json()
+                if not body and not request.headers.get("Authorization"):
+                    # Empty request with no auth header - validation error
+                    raise HTTPException(
+                        status_code=422,
+                        detail=ProblemDetail(
+                            type="validation_error",
+                            title="Validation Error",
+                            detail="Request body or Authorization header required for logout",
+                            status=422,
+                            instance=f"https://api.clarity.health/requests/{id(request)}",
+                        ).model_dump(),
+                    )
+            except Exception:
+                pass
+            
+            # Re-raise the auth error
+            raise HTTPException(
+                status_code=401,
+                detail=ProblemDetail(
+                    type="authentication_required", 
+                    title="Authentication Required",
+                    detail="Valid authentication required to logout",
+                    status=401,
+                    instance=f"https://api.clarity.health/requests/{id(request)}",
+                ).model_dump(),
+            )
+
         # Create authentication service
         auth_service = CognitoAuthenticationService(auth_provider, None)
 
@@ -220,10 +253,14 @@ async def logout(
         token = auth_header.replace("Bearer ", "") if auth_header else None
 
         # Logout user
-        await auth_service.logout_user(token)
+        if token:
+            await auth_service.logout_user(token)
 
         return {"message": "Successfully logged out"}
 
+    except HTTPException:
+        # Re-raise HTTP exceptions (validation errors, auth errors)
+        raise
     except Exception as e:
         logger.exception("Logout failed")
         # Return success anyway - client should discard token

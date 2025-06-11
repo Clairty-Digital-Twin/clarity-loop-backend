@@ -10,15 +10,14 @@ from typing import TYPE_CHECKING, Any
 from fastapi import (
     APIRouter,
     Depends,
-    HTTPException,
     Query,
     WebSocket,
     WebSocketDisconnect,
 )
 from pydantic import ValidationError
 
-from clarity.auth.dependencies import get_authenticated_user
 from clarity.core.config_aws import get_settings
+
 # Removed circular import - will use direct initialization
 from clarity.ml.gemini_service import (
     GeminiService,
@@ -43,7 +42,6 @@ from clarity.ml.pat_service import ActigraphyInput, PATModelService
 from clarity.ml.preprocessing import ActigraphyDataPoint
 from clarity.models.auth import UserContext
 from clarity.models.user import User
-from clarity.ports.auth_ports import IAuthProvider
 
 logger = logging.getLogger(__name__)
 settings = get_settings()
@@ -59,6 +57,7 @@ def get_gemini_service() -> GeminiService:
 def get_pat_model_service() -> PATModelService:
     # Direct initialization to avoid circular import
     from clarity.ml.pat_service import get_pat_service
+
     return get_pat_service()
 
 
@@ -428,10 +427,11 @@ async def _authenticate_websocket_user(
     try:
         # Get auth provider directly to avoid circular import
         from clarity.auth.aws_cognito_provider import CognitoAuthProvider
+
         auth_provider = CognitoAuthProvider(
             user_pool_id=os.getenv("COGNITO_USER_POOL_ID", ""),
             client_id=os.getenv("COGNITO_CLIENT_ID", ""),
-            region=os.getenv("COGNITO_REGION", "us-east-1")
+            region=os.getenv("COGNITO_REGION", "us-east-1"),
         )
         user_info = await auth_provider.verify_token(token)
 
@@ -441,8 +441,7 @@ async def _authenticate_websocket_user(
 
         # Use the provider to create the full user context
         if hasattr(auth_provider, "get_or_create_user_context"):
-            user_context = await auth_provider.get_or_create_user_context(user_info)
-            return user_context
+            return await auth_provider.get_or_create_user_context(user_info)
         # Fallback for providers without the enhanced method
         # This part might need adjustment based on what verify_token returns
         # For now, assuming it returns a dict that can be used to build a basic context
@@ -454,11 +453,11 @@ async def _authenticate_websocket_user(
             roles=user_info.get("roles", []),
             is_verified=user_info.get("email_verified", False),
             provider="cognito",
-            claims=user_info
+            claims=user_info,
         )
 
     except Exception as e:
-        logger.error(f"WebSocket authentication failed: {e}")
+        logger.exception(f"WebSocket authentication failed: {e}")
         await websocket.close(code=4003, reason="Authentication failed")
         return None
 

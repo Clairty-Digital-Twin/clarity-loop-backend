@@ -16,7 +16,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
-async def test_modal_auth():
+async def test_modal_auth() -> None:
     """Test authentication against Modal deployment."""
     # Modal URL - update this with your actual Modal URL
     base_url = os.getenv("MODAL_URL", "https://your-app--fastapi-app.modal.run")
@@ -59,7 +59,7 @@ async def test_modal_auth():
             response = await client.get(f"{base_url}/health")
             logger.info(f"Health check: {response.status_code} - {response.json()}")
         except Exception as e:
-            logger.error(f"Health check failed: {e}")
+            logger.exception(f"Health check failed: {e}")
 
         # Test authenticated endpoints
         for test in test_cases:
@@ -81,7 +81,7 @@ async def test_modal_auth():
                     logger.info(f"Response text: {response.text[:200]}")
 
             except Exception as e:
-                logger.error(f"Request failed: {e}")
+                logger.exception(f"Request failed: {e}")
 
 
 if __name__ == "__main__":

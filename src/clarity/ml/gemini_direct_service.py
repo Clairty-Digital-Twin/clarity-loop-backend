@@ -2,7 +2,7 @@
 
 import asyncio
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import google.generativeai as genai
 from google.generativeai.types import HarmBlockThreshold, HarmCategory
@@ -21,7 +21,7 @@ class GeminiService:
         model_name: str = "gemini-1.5-flash",
         temperature: float = 0.7,
         max_tokens: int = 1000,
-    ):
+    ) -> None:
         """Initialize Gemini service with API key."""
         self.model_name = model_name
         self.temperature = temperature
@@ -61,13 +61,15 @@ class GeminiService:
             response = await asyncio.to_thread(self.model.generate_content, prompt)
 
             if not response.text:
-                raise ServiceError("Gemini returned empty response")
+                msg = "Gemini returned empty response"
+                raise ServiceError(msg)
 
             return response.text
 
         except Exception as e:
-            logger.error(f"Error generating health insights: {e}")
-            raise ServiceError(f"Failed to generate insights: {e!s}")
+            logger.exception(f"Error generating health insights: {e}")
+            msg = f"Failed to generate insights: {e!s}"
+            raise ServiceError(msg)
 
     async def analyze_pat_results(
         self,
@@ -81,13 +83,15 @@ class GeminiService:
             response = await asyncio.to_thread(self.model.generate_content, prompt)
 
             if not response.text:
-                raise ServiceError("Gemini returned empty response")
+                msg = "Gemini returned empty response"
+                raise ServiceError(msg)
 
             return response.text
 
         except Exception as e:
-            logger.error(f"Error analyzing PAT results: {e}")
-            raise ServiceError(f"Failed to analyze PAT results: {e!s}")
+            logger.exception(f"Error analyzing PAT results: {e}")
+            msg = f"Failed to analyze PAT results: {e!s}"
+            raise ServiceError(msg)
 
     async def generate_recommendations(
         self,
@@ -104,15 +108,16 @@ class GeminiService:
             response = await asyncio.to_thread(self.model.generate_content, prompt)
 
             if not response.text:
-                raise ServiceError("Gemini returned empty response")
+                msg = "Gemini returned empty response"
+                raise ServiceError(msg)
 
             # Parse recommendations from response
-            recommendations = self._parse_recommendations(response.text)
-            return recommendations
+            return self._parse_recommendations(response.text)
 
         except Exception as e:
-            logger.error(f"Error generating recommendations: {e}")
-            raise ServiceError(f"Failed to generate recommendations: {e!s}")
+            logger.exception(f"Error generating recommendations: {e}")
+            msg = f"Failed to generate recommendations: {e!s}"
+            raise ServiceError(msg)
 
     def _build_health_insights_prompt(
         self, health_data: dict[str, Any], user_context: dict[str, Any] | None = None
@@ -234,12 +239,7 @@ Format each recommendation as a clear action item with brief explanation."""
         for line in lines:
             line = line.strip()
             # Look for numbered or bulleted items
-            if line and (
-                line[0].isdigit()
-                or line.startswith("-")
-                or line.startswith("•")
-                or line.startswith("*")
-            ):
+            if line and (line[0].isdigit() or line.startswith(("-", "•", "*"))):
                 # Clean up the line
                 clean_line = line.lstrip("0123456789.-•* ")
                 if clean_line:

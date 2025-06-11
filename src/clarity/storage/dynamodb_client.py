@@ -3,12 +3,11 @@
 from collections.abc import AsyncIterator
 from datetime import datetime
 from decimal import Decimal
-import json
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import boto3
-from boto3.dynamodb.conditions import Attr, Key
+from boto3.dynamodb.conditions import Key
 from botocore.exceptions import ClientError
 
 from clarity.core.exceptions import ServiceError
@@ -32,7 +31,7 @@ class DynamoDBHealthDataRepository(IHealthDataRepository):
         table_name: str,
         region: str = "us-east-1",
         endpoint_url: str | None = None,
-    ):
+    ) -> None:
         self.table_name = table_name
         self.region = region
 
@@ -133,11 +132,13 @@ class DynamoDBHealthDataRepository(IHealthDataRepository):
             )
 
         except ClientError as e:
-            logger.error(f"DynamoDB error saving health data: {e}")
-            raise ServiceError(f"Failed to save health data: {e!s}")
+            logger.exception(f"DynamoDB error saving health data: {e}")
+            msg = f"Failed to save health data: {e!s}"
+            raise ServiceError(msg)
         except Exception as e:
-            logger.error(f"Unexpected error saving health data: {e}")
-            raise ServiceError(f"Failed to save health data: {e!s}")
+            logger.exception(f"Unexpected error saving health data: {e}")
+            msg = f"Failed to save health data: {e!s}"
+            raise ServiceError(msg)
 
     async def get_health_data(
         self,
@@ -219,11 +220,13 @@ class DynamoDBHealthDataRepository(IHealthDataRepository):
             return results
 
         except ClientError as e:
-            logger.error(f"DynamoDB error retrieving health data: {e}")
-            raise ServiceError(f"Failed to retrieve health data: {e!s}")
+            logger.exception(f"DynamoDB error retrieving health data: {e}")
+            msg = f"Failed to retrieve health data: {e!s}"
+            raise ServiceError(msg)
         except Exception as e:
-            logger.error(f"Unexpected error retrieving health data: {e}")
-            raise ServiceError(f"Failed to retrieve health data: {e!s}")
+            logger.exception(f"Unexpected error retrieving health data: {e}")
+            msg = f"Failed to retrieve health data: {e!s}"
+            raise ServiceError(msg)
 
     async def update_processing_status(
         self,
@@ -255,8 +258,9 @@ class DynamoDBHealthDataRepository(IHealthDataRepository):
             )
 
         except ClientError as e:
-            logger.error(f"DynamoDB error updating status: {e}")
-            raise ServiceError(f"Failed to update status: {e!s}")
+            logger.exception(f"DynamoDB error updating status: {e}")
+            msg = f"Failed to update status: {e!s}"
+            raise ServiceError(msg)
 
     async def get_user(self, user_id: str) -> User | None:
         """Get user from DynamoDB."""
@@ -278,7 +282,7 @@ class DynamoDBHealthDataRepository(IHealthDataRepository):
             return None
 
         except ClientError as e:
-            logger.error(f"DynamoDB error getting user: {e}")
+            logger.exception(f"DynamoDB error getting user: {e}")
             return None
 
     async def create_user(self, user_id: str, email: str, name: str) -> User:
@@ -303,8 +307,9 @@ class DynamoDBHealthDataRepository(IHealthDataRepository):
             )
 
         except ClientError as e:
-            logger.error(f"DynamoDB error creating user: {e}")
-            raise ServiceError(f"Failed to create user: {e!s}")
+            logger.exception(f"DynamoDB error creating user: {e}")
+            msg = f"Failed to create user: {e!s}"
+            raise ServiceError(msg)
 
     async def delete_user_data(self, user_id: str) -> None:
         """Delete all user data from DynamoDB."""
@@ -320,8 +325,9 @@ class DynamoDBHealthDataRepository(IHealthDataRepository):
                     batch.delete_item(Key={"pk": item["pk"], "sk": item["sk"]})
 
         except ClientError as e:
-            logger.error(f"DynamoDB error deleting user data: {e}")
-            raise ServiceError(f"Failed to delete user data: {e!s}")
+            logger.exception(f"DynamoDB error deleting user data: {e}")
+            msg = f"Failed to delete user data: {e!s}"
+            raise ServiceError(msg)
 
     async def query_health_data_stream(
         self,

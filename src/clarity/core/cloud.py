@@ -4,7 +4,7 @@ This module provides centralized access to AWS credentials and API keys.
 """
 
 import os
-from typing import Optional
+
 import boto3
 
 
@@ -29,7 +29,7 @@ def get_cognito_client(region_name: str = "us-east-1") -> boto3.client:
     Returns:
         boto3.client: Cognito Identity Provider client
     """
-    return boto3.client('cognito-idp', region_name=region_name)
+    return boto3.client("cognito-idp", region_name=region_name)
 
 
 def get_dynamodb_resource(region_name: str = "us-east-1") -> boto3.resource:
@@ -41,10 +41,10 @@ def get_dynamodb_resource(region_name: str = "us-east-1") -> boto3.resource:
     Returns:
         boto3.resource: DynamoDB resource
     """
-    return boto3.resource('dynamodb', region_name=region_name)
+    return boto3.resource("dynamodb", region_name=region_name)
 
 
-def gemini_api_key() -> Optional[str]:
+def gemini_api_key() -> str | None:
     """Get Gemini API key from environment variables.
 
     Returns:

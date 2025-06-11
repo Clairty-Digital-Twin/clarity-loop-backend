@@ -5,10 +5,9 @@ Provides AWS-native authentication solution.
 """
 
 from datetime import UTC, datetime, timedelta
-import json
 import logging
 import secrets
-from typing import Any, cast
+from typing import Any
 import uuid
 
 import boto3
@@ -116,10 +115,9 @@ class CognitoAuthenticationService:
 
         message = bytes(username + self.client_id, "utf-8")
         key = bytes(self.client_secret, "utf-8")
-        secret_hash = base64.b64encode(
+        return base64.b64encode(
             hmac.new(key, message, digestmod=hashlib.sha256).digest()
         ).decode()
-        return secret_hash
 
     async def register_user(
         self,
@@ -206,12 +204,15 @@ class CognitoAuthenticationService:
         except ClientError as e:
             error_code = e.response["Error"]["Code"]
             if error_code == "UsernameExistsException":
-                raise UserAlreadyExistsError(f"User with email {request.email} already exists")
+                msg = f"User with email {request.email} already exists"
+                raise UserAlreadyExistsError(msg)
             logger.exception("Cognito registration failed for %s", request.email)
-            raise AuthenticationError(f"Registration failed: {e}") from e
+            msg = f"Registration failed: {e}"
+            raise AuthenticationError(msg) from e
         except Exception as e:
             logger.exception("User registration failed for %s", request.email)
-            raise AuthenticationError(f"Registration failed: {e!s}") from e
+            msg = f"Registration failed: {e!s}"
+            raise AuthenticationError(msg) from e
 
     async def login_user(
         self,
@@ -258,10 +259,13 @@ class CognitoAuthenticationService:
             # Handle different authentication challenges
             if "ChallengeName" in response:
                 if response["ChallengeName"] == "NEW_PASSWORD_REQUIRED":
-                    raise AuthenticationError("Password change required")
+                    msg = "Password change required"
+                    raise AuthenticationError(msg)
                 if response["ChallengeName"] == "MFA_SETUP":
                     # Handle MFA setup
-                    return self._handle_mfa_setup(response, request, device_info, ip_address)
+                    return self._handle_mfa_setup(
+                        response, request, device_info, ip_address
+                    )
 
             # Extract tokens
             auth_result = response["AuthenticationResult"]
@@ -272,7 +276,9 @@ class CognitoAuthenticationService:
             # Get user info from Cognito
             user_info = self.cognito_client.get_user(AccessToken=access_token)
             user_sub = next(
-                attr["Value"] for attr in user_info["UserAttributes"] if attr["Name"] == "sub"
+                attr["Value"]
+                for attr in user_info["UserAttributes"]
+                if attr["Name"] == "sub"
             )
 
             # Get user data from DynamoDB
@@ -282,7 +288,8 @@ class CognitoAuthenticationService:
             )
 
             if not user_data:
-                raise UserNotFoundError("User data not found in database")
+                msg = "User data not found in database"
+                raise UserNotFoundError(msg)
 
             # Update user data
             login_time = datetime.now(UTC)
@@ -330,18 +337,23 @@ class CognitoAuthenticationService:
         except ClientError as e:
             error_code = e.response["Error"]["Code"]
             if error_code == "UserNotFoundException":
-                raise UserNotFoundError(f"User with email {request.email} not found")
+                msg = f"User with email {request.email} not found"
+                raise UserNotFoundError(msg)
             if error_code == "NotAuthorizedException":
-                raise InvalidCredentialsError("Invalid username or password")
+                msg = "Invalid username or password"
+                raise InvalidCredentialsError(msg)
             if error_code == "UserNotConfirmedException":
-                raise EmailNotVerifiedError("Email verification required")
+                msg = "Email verification required"
+                raise EmailNotVerifiedError(msg)
             logger.exception("Login failed for %s", request.email)
-            raise AuthenticationError(f"Login failed: {e}") from e
+            msg = f"Login failed: {e}"
+            raise AuthenticationError(msg) from e
         except (UserNotFoundError, InvalidCredentialsError, EmailNotVerifiedError):
             raise
         except Exception as e:
             logger.exception("Login failed for %s", request.email)
-            raise AuthenticationError(f"Login failed: {e!s}") from e
+            msg = f"Login failed: {e!s}"
+            raise AuthenticationError(msg) from e
 
     async def _create_user_session(
         self,
@@ -390,10 +402,18 @@ class CognitoAuthenticationService:
             role=user_data.get("role", UserRole.PATIENT.value),
             permissions=user_data.get("permissions", []),
             status=UserStatus(user_data.get("status", UserStatus.ACTIVE.value)),
-            last_login=datetime.fromisoformat(user_data["last_login"]) if user_data.get("last_login") else None,
+            last_login=(
+                datetime.fromisoformat(user_data["last_login"])
+                if user_data.get("last_login")
+                else None
+            ),
             mfa_enabled=user_data.get("mfa_enabled", False),
             email_verified=user_data.get("email_verified", False),
-            created_at=datetime.fromisoformat(user_data["created_at"]) if user_data.get("created_at") else datetime.now(UTC),
+            created_at=(
+                datetime.fromisoformat(user_data["created_at"])
+                if user_data.get("created_at")
+                else datetime.now(UTC)
+            ),
         )
 
     async def refresh_access_token(self, refresh_token: str) -> TokenResponse:
@@ -424,9 +444,11 @@ class CognitoAuthenticationService:
         except ClientError as e:
             error_code = e.response["Error"]["Code"]
             if error_code == "NotAuthorizedException":
-                raise InvalidCredentialsError("Invalid refresh token")
+                msg = "Invalid refresh token"
+                raise InvalidCredentialsError(msg)
             logger.exception("Token refresh failed")
-            raise AuthenticationError(f"Token refresh failed: {e}") from e
+            msg = f"Token refresh failed: {e}"
+            raise AuthenticationError(msg) from e
 
     async def logout_user(self, refresh_token: str) -> bool:
         """Logout user by revoking tokens and ending session."""
@@ -487,7 +509,9 @@ class CognitoAuthenticationService:
         Note: With Cognito, email verification is handled through the
         confirm_sign_up API call, not through this service method.
         """
-        logger.info("Email verification should be handled through Cognito confirm_sign_up")
+        logger.info(
+            "Email verification should be handled through Cognito confirm_sign_up"
+        )
         return True
 
     def _handle_mfa_setup(

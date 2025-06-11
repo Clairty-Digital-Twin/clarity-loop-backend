@@ -1,4 +1,4 @@
-"""SIMPLE TEST ENDPOINT - NO FANCY IMPORTS"""
+"""SIMPLE TEST ENDPOINT - NO FANCY IMPORTS."""
 
 from fastapi import APIRouter, Request
 
@@ -7,7 +7,7 @@ router = APIRouter(prefix="/test", tags=["test"])
 
 @router.get("/ping")
 async def simple_ping(request: Request):
-    """Dead simple endpoint to test if anything works"""
+    """Dead simple endpoint to test if anything works."""
     return {
         "message": "PONG! Backend is alive!",
         "path": request.url.path,
@@ -22,7 +22,7 @@ async def simple_ping(request: Request):
 
 @router.get("/check-middleware")
 async def check_middleware(request: Request):
-    """Check if middleware sets user"""
+    """Check if middleware sets user."""
     has_user = hasattr(request.state, "user")
     user_info = None
 

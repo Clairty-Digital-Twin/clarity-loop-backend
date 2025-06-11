@@ -1,12 +1,12 @@
 """Authentication endpoints - AWS Cognito version."""
 
 import logging
-from typing import Any, Dict
+from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel, EmailStr, Field
 
-from clarity.auth.dependencies import get_auth_provider, get_current_user  
+from clarity.auth.dependencies import get_auth_provider, get_current_user
 from clarity.core.exceptions import ProblemDetails
 from clarity.models.auth import TokenResponse, UserLogin
 from clarity.ports.auth_ports import AuthenticationProvider
@@ -27,7 +27,7 @@ router = APIRouter()
 
 class UserRegister(BaseModel):
     """User registration request model."""
-    
+
     email: EmailStr = Field(..., description="User email address")
     password: str = Field(..., min_length=8, description="User password")
     display_name: str | None = Field(None, description="Optional display name")
@@ -35,7 +35,7 @@ class UserRegister(BaseModel):
 
 class UserUpdate(BaseModel):
     """User update request model."""
-    
+
     display_name: str | None = Field(None, description="Display name to update")
     email: str | None = Field(None, description="New email address")
 
@@ -48,17 +48,17 @@ async def register(
     """Register a new user."""
     try:
         # Create authentication service
-        auth_service = AuthenticationService(auth_provider, None)  # No document store needed for AWS
-        
+        auth_service = AuthenticationService(
+            auth_provider, None
+        )  # No document store needed for AWS
+
         # Register user
-        token_response = await auth_service.register_user(
+        return await auth_service.register_user(
             email=user_data.email,
             password=user_data.password,
             display_name=user_data.display_name,
         )
-        
-        return token_response
-        
+
     except UserAlreadyExistsError as e:
         raise HTTPException(
             status_code=409,
@@ -70,7 +70,7 @@ async def register(
             ).model_dump(),
         )
     except Exception as e:
-        logger.error(f"Registration failed: {e}")
+        logger.exception(f"Registration failed: {e}")
         raise HTTPException(
             status_code=500,
             detail=ProblemDetails(
@@ -90,15 +90,15 @@ async def login(
     """Authenticate user and return access token."""
     try:
         # Create authentication service
-        auth_service = AuthenticationService(auth_provider, None)  # No document store needed for AWS
-        
+        auth_service = AuthenticationService(
+            auth_provider, None
+        )  # No document store needed for AWS
+
         # Authenticate user
-        token_response = await auth_service.authenticate_user(
+        return await auth_service.authenticate_user(
             email=credentials.email, password=credentials.password
         )
-        
-        return token_response
-        
+
     except InvalidCredentialsError as e:
         raise HTTPException(
             status_code=401,
@@ -120,7 +120,7 @@ async def login(
             ).model_dump(),
         )
     except Exception as e:
-        logger.error(f"Login failed: {e}")
+        logger.exception(f"Login failed: {e}")
         raise HTTPException(
             status_code=500,
             detail=ProblemDetails(
@@ -134,8 +134,8 @@ async def login(
 
 @router.get("/me")
 async def get_current_user_info(
-    current_user: Dict[str, Any] = Depends(get_current_user),
-) -> Dict[str, Any]:
+    current_user: dict[str, Any] = Depends(get_current_user),
+) -> dict[str, Any]:
     """Get current user information."""
     return {
         "user_id": current_user.get("uid", current_user.get("user_id")),
@@ -149,31 +149,31 @@ async def get_current_user_info(
 @router.put("/me")
 async def update_user(
     updates: UserUpdate,
-    current_user: Dict[str, Any] = Depends(get_current_user),
+    current_user: dict[str, Any] = Depends(get_current_user),
     auth_provider: AuthenticationProvider = Depends(get_auth_provider),
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Update current user information."""
     try:
         # Create authentication service
         auth_service = AuthenticationService(auth_provider, None)
-        
+
         # Get user ID
         user_id = current_user.get("uid", current_user.get("user_id"))
-        
+
         # Update user
         updated_user = await auth_service.update_user(
             user_id=user_id,
             display_name=updates.display_name,
             email=updates.email,
         )
-        
+
         return {
             "user_id": updated_user.get("uid", updated_user.get("user_id")),
             "email": updated_user.get("email"),
             "display_name": updated_user.get("display_name"),
             "updated": True,
         }
-        
+
     except UserNotFoundError as e:
         raise HTTPException(
             status_code=404,
@@ -185,7 +185,7 @@ async def update_user(
             ).model_dump(),
         )
     except Exception as e:
-        logger.error(f"User update failed: {e}")
+        logger.exception(f"User update failed: {e}")
         raise HTTPException(
             status_code=500,
             detail=ProblemDetails(
@@ -200,24 +200,24 @@ async def update_user(
 @router.post("/logout")
 async def logout(
     request: Request,
-    current_user: Dict[str, Any] = Depends(get_current_user),
+    current_user: dict[str, Any] = Depends(get_current_user),
     auth_provider: AuthenticationProvider = Depends(get_auth_provider),
-) -> Dict[str, str]:
+) -> dict[str, str]:
     """Logout user (invalidate token if supported)."""
     try:
         # Create authentication service
         auth_service = AuthenticationService(auth_provider, None)
-        
+
         # Get token from header
         auth_header = request.headers.get("Authorization", "")
         token = auth_header.replace("Bearer ", "") if auth_header else None
-        
+
         # Logout user
         await auth_service.logout_user(token)
-        
+
         return {"message": "Successfully logged out"}
-        
+
     except Exception as e:
-        logger.error(f"Logout failed: {e}")
+        logger.exception(f"Logout failed: {e}")
         # Return success anyway - client should discard token
         return {"message": "Logout processed"}

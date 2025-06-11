@@ -10,12 +10,11 @@ import os
 from typing import Any
 import uuid
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, HTTPException, status
 from google.cloud import storage
 from pydantic import BaseModel, Field
 
 from clarity.auth.dependencies import AuthenticatedUser
-from clarity.models.auth import UserContext
 from clarity.services.pubsub.publisher import get_publisher
 
 # Configure logger

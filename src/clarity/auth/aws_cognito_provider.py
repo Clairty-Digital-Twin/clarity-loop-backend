@@ -1,10 +1,10 @@
-"""AWS Cognito Authentication Provider"""
+"""AWS Cognito Authentication Provider."""
 
 from functools import lru_cache
 import logging
 import os
 import time
-from typing import Any, Dict, Optional
+from typing import Any
 
 import boto3
 from botocore.exceptions import ClientError
@@ -20,9 +20,11 @@ logger = logging.getLogger(__name__)
 
 
 class CognitoAuthProvider(IAuthProvider):
-    """AWS Cognito authentication provider"""
+    """AWS Cognito authentication provider."""
 
-    def __init__(self, user_pool_id: str, client_id: str, region: str = "us-east-1"):
+    def __init__(
+        self, user_pool_id: str, client_id: str, region: str = "us-east-1"
+    ) -> None:
         self.user_pool_id = user_pool_id
         self.client_id = client_id
         self.region = region
@@ -41,7 +43,7 @@ class CognitoAuthProvider(IAuthProvider):
 
     @property
     def jwks(self) -> dict[str, Any]:
-        """Get JWKS keys with caching"""
+        """Get JWKS keys with caching."""
         current_time = time.time()
         if (
             self._jwks_cache is None
@@ -54,13 +56,14 @@ class CognitoAuthProvider(IAuthProvider):
                 self._jwks_cache_time = current_time
                 logger.debug("Updated JWKS cache")
             except Exception as e:
-                logger.error(f"Failed to fetch JWKS: {e}")
+                logger.exception(f"Failed to fetch JWKS: {e}")
                 if self._jwks_cache is None:
-                    raise AuthenticationError("Failed to fetch JWKS keys")
+                    msg = "Failed to fetch JWKS keys"
+                    raise AuthenticationError(msg)
         return self._jwks_cache
 
     async def verify_token(self, token: str) -> dict[str, Any] | None:
-        """Verify Cognito JWT token"""
+        """Verify Cognito JWT token."""
         try:
             # Get the kid from the headers prior to verification
             headers = jwt.get_unverified_headers(token)
@@ -114,14 +117,14 @@ class CognitoAuthProvider(IAuthProvider):
             return claims
 
         except JWTError as e:
-            logger.error(f"JWT verification failed: {e}")
+            logger.exception(f"JWT verification failed: {e}")
             return None
         except Exception as e:
-            logger.error(f"Unexpected error during token verification: {e}")
+            logger.exception(f"Unexpected error during token verification: {e}")
             return None
 
     async def get_user(self, uid: str) -> User | None:
-        """Get user details from Cognito"""
+        """Get user details from Cognito."""
         try:
             response = self.cognito_client.admin_get_user(
                 UserPoolId=self.user_pool_id, Username=uid
@@ -155,16 +158,16 @@ class CognitoAuthProvider(IAuthProvider):
             if e.response["Error"]["Code"] == "UserNotFoundException":
                 logger.warning(f"User not found: {uid}")
                 return None
-            logger.error(f"Failed to get user: {e}")
+            logger.exception(f"Failed to get user: {e}")
             return None
         except Exception as e:
-            logger.error(f"Unexpected error getting user: {e}")
+            logger.exception(f"Unexpected error getting user: {e}")
             return None
 
     async def create_user(
         self, email: str, password: str, display_name: str | None = None
     ) -> User | None:
-        """Create a new user in Cognito"""
+        """Create a new user in Cognito."""
         try:
             # Create user
             response = self.cognito_client.sign_up(
@@ -200,15 +203,18 @@ class CognitoAuthProvider(IAuthProvider):
             error_code = e.response["Error"]["Code"]
             if error_code == "UsernameExistsException":
                 logger.warning(f"User already exists: {email}")
-                raise AuthenticationError("User already exists")
-            logger.error(f"Failed to create user: {e}")
-            raise AuthenticationError(f"Failed to create user: {e!s}")
+                msg = "User already exists"
+                raise AuthenticationError(msg)
+            logger.exception(f"Failed to create user: {e}")
+            msg = f"Failed to create user: {e!s}"
+            raise AuthenticationError(msg)
         except Exception as e:
-            logger.error(f"Unexpected error creating user: {e}")
-            raise AuthenticationError(f"Unexpected error: {e!s}")
+            logger.exception(f"Unexpected error creating user: {e}")
+            msg = f"Unexpected error: {e!s}"
+            raise AuthenticationError(msg)
 
     async def delete_user(self, uid: str) -> bool:
-        """Delete a user from Cognito"""
+        """Delete a user from Cognito."""
         try:
             self.cognito_client.admin_delete_user(
                 UserPoolId=self.user_pool_id, Username=uid
@@ -216,14 +222,14 @@ class CognitoAuthProvider(IAuthProvider):
             logger.info(f"Deleted user: {uid}")
             return True
         except ClientError as e:
-            logger.error(f"Failed to delete user: {e}")
+            logger.exception(f"Failed to delete user: {e}")
             return False
         except Exception as e:
-            logger.error(f"Unexpected error deleting user: {e}")
+            logger.exception(f"Unexpected error deleting user: {e}")
             return False
 
     async def update_user(self, uid: str, **kwargs) -> User | None:
-        """Update user attributes in Cognito"""
+        """Update user attributes in Cognito."""
         try:
             # Build attributes list
             attributes = []
@@ -244,14 +250,14 @@ class CognitoAuthProvider(IAuthProvider):
             return await self.get_user(uid)
 
         except ClientError as e:
-            logger.error(f"Failed to update user: {e}")
+            logger.exception(f"Failed to update user: {e}")
             return None
         except Exception as e:
-            logger.error(f"Unexpected error updating user: {e}")
+            logger.exception(f"Unexpected error updating user: {e}")
             return None
 
     async def authenticate(self, email: str, password: str) -> dict[str, str] | None:
-        """Authenticate user and return tokens"""
+        """Authenticate user and return tokens."""
         try:
             response = self.cognito_client.initiate_auth(
                 ClientId=self.client_id,
@@ -274,9 +280,8 @@ class CognitoAuthProvider(IAuthProvider):
                 logger.warning(
                     f"Authentication challenge required: {response['ChallengeName']}"
                 )
-                raise AuthenticationError(
-                    f"Challenge required: {response['ChallengeName']}"
-                )
+                msg = f"Challenge required: {response['ChallengeName']}"
+                raise AuthenticationError(msg)
 
             return None
 
@@ -284,34 +289,37 @@ class CognitoAuthProvider(IAuthProvider):
             error_code = e.response["Error"]["Code"]
             if error_code == "NotAuthorizedException":
                 logger.warning(f"Invalid credentials for: {email}")
-                raise AuthenticationError("Invalid email or password")
-            logger.error(f"Authentication failed: {e}")
-            raise AuthenticationError(f"Authentication failed: {e!s}")
+                msg = "Invalid email or password"
+                raise AuthenticationError(msg)
+            logger.exception(f"Authentication failed: {e}")
+            msg = f"Authentication failed: {e!s}"
+            raise AuthenticationError(msg)
         except Exception as e:
-            logger.error(f"Unexpected authentication error: {e}")
-            raise AuthenticationError(f"Unexpected error: {e!s}")
+            logger.exception(f"Unexpected authentication error: {e}")
+            msg = f"Unexpected error: {e!s}"
+            raise AuthenticationError(msg)
 
     async def initialize(self) -> None:
-        """Initialize Cognito provider"""
+        """Initialize Cognito provider."""
         try:
             # Test connection by fetching JWKS
             _ = self.jwks
             logger.info("Cognito provider initialized successfully")
         except Exception as e:
-            logger.error(f"Failed to initialize Cognito provider: {e}")
+            logger.exception(f"Failed to initialize Cognito provider: {e}")
             raise
 
     async def shutdown(self) -> None:
-        """Cleanup resources"""
+        """Cleanup resources."""
         self._jwks_cache = None
         logger.info("Cognito provider shutdown complete")
 
     async def cleanup(self) -> None:
-        """Cleanup resources - implements IAuthProvider interface"""
+        """Cleanup resources - implements IAuthProvider interface."""
         await self.shutdown()
 
     async def get_user_info(self, user_id: str) -> dict[str, Any] | None:
-        """Get user information by ID - implements IAuthProvider interface"""
+        """Get user information by ID - implements IAuthProvider interface."""
         user = await self.get_user(user_id)
         if user:
             return {
@@ -326,12 +334,13 @@ class CognitoAuthProvider(IAuthProvider):
 
 @lru_cache(maxsize=1)
 def get_cognito_provider() -> CognitoAuthProvider:
-    """Get singleton Cognito provider instance"""
+    """Get singleton Cognito provider instance."""
     user_pool_id = os.getenv("COGNITO_USER_POOL_ID", "")
     client_id = os.getenv("COGNITO_CLIENT_ID", "")
     region = os.getenv("COGNITO_REGION", os.getenv("AWS_REGION", "us-east-1"))
 
     if not user_pool_id or not client_id:
-        raise ValueError("Cognito configuration missing")
+        msg = "Cognito configuration missing"
+        raise ValueError(msg)
 
     return CognitoAuthProvider(user_pool_id, client_id, region)

@@ -11,11 +11,11 @@ import logging
 import os
 from typing import Any
 
-from fastapi import APIRouter, Depends, HTTPException, Request, status
+from fastapi import APIRouter, HTTPException, Request, status
 from fastapi.security import HTTPBearer
 from pydantic import ValidationError
 
-from clarity.auth.dependencies import AuthenticatedUser, get_authenticated_user
+from clarity.auth.dependencies import AuthenticatedUser
 from clarity.core.secure_logging import sanitize_for_logging
 from clarity.models.auth import (
     AuthErrorDetail,
@@ -23,7 +23,6 @@ from clarity.models.auth import (
     RefreshTokenRequest,
     RegistrationResponse,
     TokenResponse,
-    UserContext,
     UserLoginRequest,
     UserRegistrationRequest,
     UserSessionResponse,
@@ -74,12 +73,14 @@ def set_dependencies(
 
     # Create authentication service
     from clarity.services.dynamodb_service import DynamoDBService
-    
-    if dynamodb_client is not None or isinstance(repository, DynamoDBHealthDataRepository):
+
+    if dynamodb_client is not None or isinstance(
+        repository, DynamoDBHealthDataRepository
+    ):
         # Create DynamoDB service for user management
         dynamodb_service = DynamoDBService(
             table_name=os.getenv("DYNAMODB_TABLE_NAME", "clarity-health-data"),
-            region=os.getenv("AWS_REGION", "us-east-1")
+            region=os.getenv("AWS_REGION", "us-east-1"),
         )
         _auth_service = CognitoAuthenticationService(
             auth_provider=auth_provider,

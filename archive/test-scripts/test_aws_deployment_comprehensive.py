@@ -32,7 +32,7 @@ DEFAULT_TIMEOUT = 30
 class AWSBackendTester:
     """Comprehensive test suite for AWS deployed CLARITY backend."""
 
-    def __init__(self, base_url: str, api_key: str):
+    def __init__(self, base_url: str, api_key: str) -> None:
         """Initialize the tester with base URL and API key."""
         self.base_url = base_url.rstrip("/")
         self.api_key = api_key
@@ -52,27 +52,20 @@ class AWSBackendTester:
         if self.session:
             await self.session.close()
 
-    def _print_header(self, title: str):
+    def _print_header(self, title: str) -> None:
         """Print a section header."""
-        print(f"\n{Fore.CYAN}{'=' * 70}{Style.RESET_ALL}")
-        print(f"{Fore.CYAN}🚀 {title}{Style.RESET_ALL}")
-        print(f"{Fore.CYAN}{'=' * 70}{Style.RESET_ALL}")
 
-    def _print_success(self, message: str):
+    def _print_success(self, message: str) -> None:
         """Print success message."""
-        print(f"{Fore.GREEN}✅ {message}{Style.RESET_ALL}")
 
-    def _print_error(self, message: str):
+    def _print_error(self, message: str) -> None:
         """Print error message."""
-        print(f"{Fore.RED}❌ {message}{Style.RESET_ALL}")
 
-    def _print_warning(self, message: str):
+    def _print_warning(self, message: str) -> None:
         """Print warning message."""
-        print(f"{Fore.YELLOW}⚠️  {message}{Style.RESET_ALL}")
 
-    def _print_info(self, message: str):
+    def _print_info(self, message: str) -> None:
         """Print info message."""
-        print(f"{Fore.BLUE}ℹ️  {message}{Style.RESET_ALL}")
 
     async def _make_request(
         self,
@@ -83,7 +76,8 @@ class AWSBackendTester:
     ) -> tuple[int, dict[str, Any], float]:
         """Make an HTTP request and return status, response, and time."""
         if not self.session:
-            raise RuntimeError("Session not initialized")
+            msg = "Session not initialized"
+            raise RuntimeError(msg)
 
         url = f"{self.base_url}{endpoint}"
 
@@ -256,7 +250,7 @@ class AWSBackendTester:
 
         return bool(self.auth_token)
 
-    async def test_health_data_storage(self):
+    async def test_health_data_storage(self) -> bool:
         """Test health data upload and retrieval."""
         self._print_header("HEALTH DATA STORAGE")
 
@@ -394,7 +388,7 @@ class AWSBackendTester:
 
         return 200 <= status < 300
 
-    async def test_gemini_insights(self):
+    async def test_gemini_insights(self) -> bool:
         """Test Gemini AI insights generation."""
         self._print_header("GEMINI AI INSIGHTS")
 
@@ -520,7 +514,7 @@ class AWSBackendTester:
 
         return 200 <= status < 300
 
-    def print_summary(self):
+    def print_summary(self) -> None:
         """Print test summary."""
         self._print_header("TEST SUMMARY")
 
@@ -537,24 +531,13 @@ class AWSBackendTester:
             sum(response_times) / len(response_times) if response_times else 0
         )
 
-        print(f"\n{Fore.CYAN}📊 Test Results:{Style.RESET_ALL}")
-        print(f"  Total Tests: {total_tests}")
-        print(f"  Successful: {Fore.GREEN}{successful_tests}{Style.RESET_ALL}")
-        print(f"  Failed: {Fore.RED}{failed_tests}{Style.RESET_ALL}")
-        print(f"  Success Rate: {success_rate:.1f}%")
-        print(f"  Average Response Time: {avg_response_time:.2f}s")
-
         # List failed tests
         if failed_tests > 0:
-            print(f"\n{Fore.RED}Failed Tests:{Style.RESET_ALL}")
             for result in self.results:
                 if not result["success"]:
-                    print(
-                        f"  - {result['method']} {result['endpoint']} (Status: {result['status']})"
-                    )
+                    pass
 
         # Overall status
-        print(f"\n{Fore.CYAN}Overall Status:{Style.RESET_ALL}")
         if success_rate >= 90:
             self._print_success(
                 f"EXCELLENT - Backend is fully operational ({success_rate:.1f}%)"
@@ -568,14 +551,8 @@ class AWSBackendTester:
                 f"NEEDS ATTENTION - Backend has issues ({success_rate:.1f}%)"
             )
 
-    async def run_all_tests(self):
+    async def run_all_tests(self) -> None:
         """Run all test suites."""
-        print(f"{Fore.MAGENTA}{Style.BRIGHT}")
-        print("🚀 CLARITY BACKEND AWS DEPLOYMENT TEST SUITE 🚀")
-        print(f"Testing backend at: {self.base_url}")
-        print(f"API Key: {'*' * 10}{self.api_key[-10:]}")
-        print(f"{Style.RESET_ALL}")
-
         # Run all test suites
         await self.test_health_endpoints()
         await self.test_api_documentation()
@@ -589,7 +566,7 @@ class AWSBackendTester:
         self.print_summary()
 
 
-async def main():
+async def main() -> None:
     """Main function to run the test suite."""
     parser = argparse.ArgumentParser(description="Test CLARITY backend AWS deployment")
     parser.add_argument(
@@ -607,10 +584,8 @@ async def main():
         async with AWSBackendTester(args.base_url, args.api_key) as tester:
             await tester.run_all_tests()
     except KeyboardInterrupt:
-        print(f"\n{Fore.YELLOW}Test interrupted by user{Style.RESET_ALL}")
         sys.exit(1)
     except Exception as e:
-        print(f"\n{Fore.RED}Test suite failed: {e}{Style.RESET_ALL}")
         sys.exit(1)
 
 
@@ -620,7 +595,6 @@ if __name__ == "__main__":
         import aiohttp
         import colorama
     except ImportError:
-        print("Installing required packages...")
         import subprocess
 
         subprocess.check_call(

@@ -42,7 +42,7 @@ class InsightRequestEvent(BaseModel):
 
 class AWSMessagingService:
     """AWS SQS/SNS messaging service for health data processing events.
-    
+
     Replaces Google Pub/Sub with enterprise-grade AWS messaging.
     """
 
@@ -55,7 +55,7 @@ class AWSMessagingService:
         sns_topic_arn: str | None = None,
     ) -> None:
         """Initialize AWS messaging service.
-        
+
         Args:
             region: AWS region
             endpoint_url: Optional endpoint URL (for local testing)
@@ -68,14 +68,14 @@ class AWSMessagingService:
         self.health_data_queue = health_data_queue
         self.insight_queue = insight_queue
         self.sns_topic_arn = sns_topic_arn
-        
+
         # Initialize AWS clients
         self.sqs_client = boto3.client(
             "sqs",
             region_name=region,
             endpoint_url=endpoint_url,
         )
-        
+
         if sns_topic_arn:
             self.sns_client = boto3.client(
                 "sns",
@@ -84,26 +84,24 @@ class AWSMessagingService:
             )
         else:
             self.sns_client = None
-            
+
         self.logger = logging.getLogger(__name__)
-        
+
         # Get queue URLs (create if they don't exist)
         self._queue_urls: dict[str, str] = {}
-        
-        logger.info(
-            "AWS messaging service initialized for region: %s", region
-        )
+
+        logger.info("AWS messaging service initialized for region: %s", region)
 
     async def _get_queue_url(self, queue_name: str) -> str:
         """Get or create SQS queue URL."""
         if queue_name in self._queue_urls:
             return self._queue_urls[queue_name]
-            
+
         try:
             # Try to get existing queue
             response = self.sqs_client.get_queue_url(QueueName=queue_name)
             queue_url = response["QueueUrl"]
-            
+
         except ClientError as e:
             if e.response["Error"]["Code"] == "AWS.SimpleQueueService.NonExistentQueue":
                 # Create the queue if it doesn't exist
@@ -112,14 +110,14 @@ class AWSMessagingService:
                     QueueName=queue_name,
                     Attributes={
                         "MessageRetentionPeriod": "1209600",  # 14 days
-                        "VisibilityTimeoutSeconds": "300",    # 5 minutes
-                        "ReceiveMessageWaitTimeSeconds": "20", # Long polling
-                    }
+                        "VisibilityTimeoutSeconds": "300",  # 5 minutes
+                        "ReceiveMessageWaitTimeSeconds": "20",  # Long polling
+                    },
                 )
                 queue_url = response["QueueUrl"]
             else:
                 raise
-                
+
         self._queue_urls[queue_name] = queue_url
         logger.info("Using SQS queue: %s -> %s", queue_name, queue_url)
         return queue_url
@@ -186,7 +184,7 @@ class AWSMessagingService:
                     attributes={
                         "event_type": "health_data_upload",
                         "user_id": user_id,
-                    }
+                    },
                 )
 
         except Exception:
@@ -263,7 +261,7 @@ class AWSMessagingService:
                     attributes={
                         "event_type": "insight_request",
                         "user_id": user_id,
-                    }
+                    },
                 )
 
         except Exception:
@@ -285,18 +283,19 @@ class AWSMessagingService:
         attributes: dict[str, str] | None = None,
     ) -> str:
         """Publish message to SNS topic for fan-out.
-        
+
         Args:
             subject: Message subject
             message: Message content
             attributes: Message attributes
-            
+
         Returns:
             SNS message ID
         """
         if not self.sns_client or not self.sns_topic_arn:
-            raise RuntimeError("SNS not configured")
-            
+            msg = "SNS not configured"
+            raise RuntimeError(msg)
+
         try:
             # Prepare SNS attributes
             sns_attributes = {}
@@ -331,77 +330,75 @@ class AWSMessagingService:
         wait_time_seconds: int = 20,
     ) -> list[dict[str, Any]]:
         """Receive messages from SQS queue.
-        
+
         Args:
             queue_name: Queue name to receive from
             max_messages: Maximum messages to receive
             wait_time_seconds: Long polling wait time
-            
+
         Returns:
             List of message dictionaries
         """
         try:
             queue_url = await self._get_queue_url(queue_name)
-            
+
             response = self.sqs_client.receive_message(
                 QueueUrl=queue_url,
                 MaxNumberOfMessages=max_messages,
                 WaitTimeSeconds=wait_time_seconds,
                 MessageAttributeNames=["All"],
             )
-            
+
             messages = response.get("Messages", [])
             logger.info("Received %d messages from queue %s", len(messages), queue_name)
-            
+
         except Exception:
             logger.exception("Failed to receive messages from queue %s", queue_name)
             raise
         else:
             return messages
 
-    async def delete_message(
-        self, queue_name: str, receipt_handle: str
-    ) -> None:
+    async def delete_message(self, queue_name: str, receipt_handle: str) -> None:
         """Delete processed message from SQS queue.
-        
+
         Args:
             queue_name: Queue name
             receipt_handle: Message receipt handle
         """
         try:
             queue_url = await self._get_queue_url(queue_name)
-            
+
             self.sqs_client.delete_message(
                 QueueUrl=queue_url,
                 ReceiptHandle=receipt_handle,
             )
-            
+
             logger.debug("Deleted message from queue %s", queue_name)
-            
+
         except Exception:
             logger.exception("Failed to delete message from queue %s", queue_name)
             raise
 
     async def get_queue_attributes(self, queue_name: str) -> dict[str, Any]:
         """Get queue attributes and metrics.
-        
+
         Args:
             queue_name: Queue name
-            
+
         Returns:
             Dictionary of queue attributes
         """
         try:
             queue_url = await self._get_queue_url(queue_name)
-            
+
             response = self.sqs_client.get_queue_attributes(
                 QueueUrl=queue_url,
                 AttributeNames=["All"],
             )
-            
+
             attributes = response.get("Attributes", {})
             logger.debug("Retrieved attributes for queue %s", queue_name)
-            
+
         except Exception:
             logger.exception("Failed to get attributes for queue %s", queue_name)
             raise
@@ -410,23 +407,23 @@ class AWSMessagingService:
 
     async def purge_queue(self, queue_name: str) -> None:
         """Purge all messages from queue (use with caution).
-        
+
         Args:
             queue_name: Queue name to purge
         """
         try:
             queue_url = await self._get_queue_url(queue_name)
-            
+
             self.sqs_client.purge_queue(QueueUrl=queue_url)
             logger.warning("Purged queue %s", queue_name)
-            
+
         except Exception:
             logger.exception("Failed to purge queue %s", queue_name)
             raise
 
     async def health_check(self) -> dict[str, Any]:
         """Perform health check on AWS messaging services.
-        
+
         Returns:
             Health status information
         """
@@ -434,28 +431,32 @@ class AWSMessagingService:
             # Test SQS connection
             health_data_url = await self._get_queue_url(self.health_data_queue)
             insight_url = await self._get_queue_url(self.insight_queue)
-            
+
             # Get queue attributes to verify connectivity
             health_attrs = await self.get_queue_attributes(self.health_data_queue)
             insight_attrs = await self.get_queue_attributes(self.insight_queue)
-            
+
             return {
                 "status": "healthy",
                 "region": self.region,
                 "queues": {
                     "health_data": {
                         "url": health_data_url,
-                        "messages_available": health_attrs.get("ApproximateNumberOfMessages", "0"),
+                        "messages_available": health_attrs.get(
+                            "ApproximateNumberOfMessages", "0"
+                        ),
                     },
                     "insight": {
                         "url": insight_url,
-                        "messages_available": insight_attrs.get("ApproximateNumberOfMessages", "0"),
+                        "messages_available": insight_attrs.get(
+                            "ApproximateNumberOfMessages", "0"
+                        ),
                     },
                 },
                 "sns_configured": bool(self.sns_topic_arn),
                 "timestamp": datetime.now(UTC).isoformat(),
             }
-            
+
         except Exception as e:
             logger.exception("AWS messaging health check failed")
             return {

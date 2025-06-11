@@ -6,13 +6,14 @@ This module configures all AWS service dependencies and their initialization.
 import logging
 from typing import Any
 
-from fastapi import APIRouter, FastAPI
+from fastapi import FastAPI
 from prometheus_client import Counter, Histogram
 
 from clarity.api.v1.router import api_router
 from clarity.auth.aws_auth_provider import CognitoAuthProvider
 from clarity.auth.mock_auth import MockAuthProvider
 from clarity.core.config_aws import Settings, get_settings
+
 # AWS container - using settings directly
 from clarity.core.exceptions import ConfigurationError
 from clarity.core.logging_config import setup_logging
@@ -20,7 +21,6 @@ from clarity.core.logging_config import setup_logging
 # Port types are imported from their respective modules
 from clarity.ml.gemini_direct_service import GeminiService
 from clarity.ports.auth_ports import IAuthProvider
-from clarity.ports.config_ports import IConfigProvider
 from clarity.ports.data_ports import IHealthDataRepository
 from clarity.storage.dynamodb_client import DynamoDBHealthDataRepository
 from clarity.storage.mock_repository import MockHealthDataRepository
@@ -47,7 +47,7 @@ class DependencyContainer:
     Manages initialization and lifecycle of all AWS service dependencies.
     """
 
-    def __init__(self, settings: Settings | None = None):
+    def __init__(self, settings: Settings | None = None) -> None:
         """Initialize the dependency container with AWS settings."""
         self.settings = settings or get_settings()
         setup_logging()
@@ -83,8 +83,9 @@ class DependencyContainer:
             logger.info("AWS dependency container initialized successfully")
 
         except Exception as e:
-            logger.error(f"Failed to initialize container: {e}")
-            raise ConfigurationError(f"Container initialization failed: {e!s}")
+            logger.exception(f"Failed to initialize container: {e}")
+            msg = f"Container initialization failed: {e!s}"
+            raise ConfigurationError(msg)
 
     async def _initialize_auth_provider(self) -> None:
         """Initialize AWS Cognito auth provider with fallback to mock."""
@@ -115,9 +116,8 @@ class DependencyContainer:
                             service=service_name, status="mock"
                         ).inc()
                         return
-                    raise ConfigurationError(
-                        "Cognito configuration missing in production"
-                    )
+                    msg = "Cognito configuration missing in production"
+                    raise ConfigurationError(msg)
 
                 # Initialize Cognito auth provider
                 self._auth_provider = CognitoAuthProvider(
@@ -133,7 +133,7 @@ class DependencyContainer:
                 ).inc()
 
             except Exception as e:
-                logger.error(f"Failed to initialize Cognito: {e}")
+                logger.exception(f"Failed to initialize Cognito: {e}")
                 service_initialization_counter.labels(
                     service=service_name, status="error"
                 ).inc()
@@ -174,7 +174,7 @@ class DependencyContainer:
                 ).inc()
 
             except Exception as e:
-                logger.error(f"Failed to initialize DynamoDB: {e}")
+                logger.exception(f"Failed to initialize DynamoDB: {e}")
                 service_initialization_counter.labels(
                     service=service_name, status="error"
                 ).inc()
@@ -214,7 +214,7 @@ class DependencyContainer:
                 ).inc()
 
             except Exception as e:
-                logger.error(f"Failed to initialize Gemini service: {e}")
+                logger.exception(f"Failed to initialize Gemini service: {e}")
                 service_initialization_counter.labels(
                     service=service_name, status="error"
                 ).inc()
@@ -237,9 +237,8 @@ class DependencyContainer:
     def configure_routes(self, app: FastAPI) -> None:
         """Configure FastAPI routes with AWS dependencies."""
         if not self._initialized:
-            raise RuntimeError(
-                "Container must be initialized before configuring routes"
-            )
+            msg = "Container must be initialized before configuring routes"
+            raise RuntimeError(msg)
 
         # Include API router with dependencies
         # This adds ALL endpoints: auth, health-data, healthkit, pat, insights, metrics, websocket
@@ -277,14 +276,16 @@ class DependencyContainer:
     def auth_provider(self) -> IAuthProvider:
         """Get auth provider."""
         if not self._auth_provider:
-            raise RuntimeError("Auth provider not initialized")
+            msg = "Auth provider not initialized"
+            raise RuntimeError(msg)
         return self._auth_provider
 
     @property
     def health_data_repository(self) -> IHealthDataRepository:
         """Get health data repository."""
         if not self._health_data_repository:
-            raise RuntimeError("Health data repository not initialized")
+            msg = "Health data repository not initialized"
+            raise RuntimeError(msg)
         return self._health_data_repository
 
     @property

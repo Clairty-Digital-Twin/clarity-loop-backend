@@ -12,7 +12,7 @@ AUTH_TOKEN = "eyJhbGciOiJSUzI1NiIsImtpZCI6ImE0YTEwZGVjZTk4MzY2ZDZmNjNlMTY3Mjg2YW
 BASE_URL = "https://clarity-backend-282877548076.us-central1.run.app"
 
 
-def test_endpoint(method, path, auth_required=True, data=None):
+def test_endpoint(method, path, auth_required=True, data=None) -> None:
     """Test an API endpoint."""
     url = f"{BASE_URL}{path}"
     headers = {}
@@ -23,33 +23,23 @@ def test_endpoint(method, path, auth_required=True, data=None):
     if data:
         headers["Content-Type"] = "application/json"
 
-    print(f"\n{method} {url}")
-    print(f"Auth: {'Yes' if auth_required else 'No'}")
-
     try:
         if method == "GET":
             response = requests.get(url, headers=headers)
         elif method == "POST":
             response = requests.post(url, headers=headers, json=data)
         else:
-            print(f"Unsupported method: {method}")
             return
 
-        print(f"Status: {response.status_code}")
-        print(f"Response: {response.text[:200]}...")
-
         if response.status_code >= 400:
-            print(f"Full response: {response.text}")
+            pass
 
     except Exception as e:
-        print(f"Error: {e}")
+        pass
 
 
-def main():
+def main() -> None:
     """Run deployment tests."""
-    print("=== Testing CLARITY Backend Deployment ===")
-    print(f"Base URL: {BASE_URL}")
-
     # Test health endpoint (no auth)
     test_endpoint("GET", "/health", auth_required=False)
 

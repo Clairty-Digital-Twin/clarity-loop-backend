@@ -22,7 +22,6 @@ from clarity.ml.gemini_service import (
     HealthInsightRequest,
     HealthInsightResponse,
 )
-from clarity.models.auth import UserContext
 from clarity.ports.auth_ports import IAuthProvider
 from clarity.ports.config_ports import IConfigProvider
 from clarity.storage.dynamodb_client import DynamoDBHealthDataRepository
@@ -57,6 +56,7 @@ def set_dependencies(
     else:
         # Production setup - using AWS region instead of GCP project
         from clarity.core.config_aws import get_settings
+
         aws_settings = get_settings()
         _gemini_service = GeminiService(project_id=aws_settings.aws_region)
 
@@ -288,7 +288,7 @@ async def generate_insights(
         dynamodb_client = _get_dynamodb_client()
         insight_id = f"insight_{uuid.uuid4().hex[:8]}"
         timestamp = datetime.now(UTC)
-        
+
         insight_item = {
             "pk": f"USER#{current_user.user_id}",
             "sk": f"INSIGHT#{timestamp.isoformat()}",
@@ -301,14 +301,16 @@ async def generate_insights(
             "generated_at": insight_response.generated_at,
             "created_at": timestamp.isoformat(),
         }
-        
+
         # Also store with direct insight ID access
         dynamodb_client.table.put_item(Item=insight_item)
-        dynamodb_client.table.put_item(Item={
-            "pk": f"INSIGHT#{insight_id}",
-            "sk": f"INSIGHT#{insight_id}",
-            **insight_item
-        })
+        dynamodb_client.table.put_item(
+            Item={
+                "pk": f"INSIGHT#{insight_id}",
+                "sk": f"INSIGHT#{insight_id}",
+                **insight_item,
+            }
+        )
 
         # Calculate processing time
         processing_time = (datetime.now(UTC) - start_time).total_seconds() * 1000
@@ -469,25 +471,29 @@ async def get_insight_history(
         # Get insights from DynamoDB
         dynamodb_client = _get_dynamodb_client()
         from boto3.dynamodb.conditions import Key
-        
+
         # Query insights for user
         response = dynamodb_client.table.query(
-            KeyConditionExpression=Key("pk").eq(f"USER#{user_id}") & Key("sk").begins_with("INSIGHT#"),
+            KeyConditionExpression=Key("pk").eq(f"USER#{user_id}")
+            & Key("sk").begins_with("INSIGHT#"),
             Limit=limit + offset,
-            ScanIndexForward=False  # Most recent first
+            ScanIndexForward=False,  # Most recent first
         )
-        
+
         all_insights = response.get("Items", [])
         # Apply offset
-        insights = all_insights[offset:offset + limit] if offset < len(all_insights) else []
-        
+        insights = (
+            all_insights[offset : offset + limit] if offset < len(all_insights) else []
+        )
+
         # Get total count
         total_count = len(all_insights)
         while "LastEvaluatedKey" in response:
             response = dynamodb_client.table.query(
-                KeyConditionExpression=Key("pk").eq(f"USER#{user_id}") & Key("sk").begins_with("INSIGHT#"),
+                KeyConditionExpression=Key("pk").eq(f"USER#{user_id}")
+                & Key("sk").begins_with("INSIGHT#"),
                 ExclusiveStartKey=response["LastEvaluatedKey"],
-                Select="COUNT"
+                Select="COUNT",
             )
             total_count += response.get("Count", 0)
 

@@ -9,7 +9,7 @@ import logging
 from typing import Annotated, cast
 
 from fastapi import Depends, HTTPException, Request, status
-from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from fastapi.security import HTTPBearer
 
 from clarity.models.auth import UserContext
 from clarity.models.user import User

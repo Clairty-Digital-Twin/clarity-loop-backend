@@ -5,11 +5,10 @@ Replaces Google Cloud Storage with AWS-native solution.
 """
 
 import asyncio
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, datetime
 import json
 import logging
 from typing import Any
-import uuid
 
 import boto3
 from botocore.exceptions import ClientError
@@ -170,7 +169,9 @@ class S3StorageService(CloudStoragePort):
                         "metric_id": str(metric.metric_id),
                         "metric_type": metric.metric_type.value,
                         "created_at": metric.created_at.isoformat(),
-                        "device_id": sanitize_for_logging(metric.device_id or "unknown"),
+                        "device_id": sanitize_for_logging(
+                            metric.device_id or "unknown"
+                        ),
                         "biometric_data": (
                             metric.biometric_data.model_dump()
                             if metric.biometric_data
@@ -245,10 +246,12 @@ class S3StorageService(CloudStoragePort):
         except ClientError as e:
             logger.exception("S3 upload failed")
             error_code = e.response.get("Error", {}).get("Code", "Unknown")
-            raise S3UploadError(f"S3 upload failed ({error_code}): {e}") from e
+            msg = f"S3 upload failed ({error_code}): {e}"
+            raise S3UploadError(msg) from e
         except Exception as e:
             logger.exception("Unexpected error during S3 upload")
-            raise S3UploadError(f"S3 upload failed: {e}") from e
+            msg = f"S3 upload failed: {e}"
+            raise S3UploadError(msg) from e
         else:
             return s3_uri
 
@@ -268,7 +271,9 @@ class S3StorageService(CloudStoragePort):
         try:
             # Create S3 key path
             upload_date = datetime.now(UTC).strftime("%Y/%m/%d")
-            s3_key = f"analysis_results/{upload_date}/{user_id}/{processing_id}_results.json"
+            s3_key = (
+                f"analysis_results/{upload_date}/{user_id}/{processing_id}_results.json"
+            )
             s3_uri = f"s3://{self.bucket_name}/{s3_key}"
 
             # Prepare analysis data
@@ -315,7 +320,8 @@ class S3StorageService(CloudStoragePort):
 
         except Exception as e:
             logger.exception("Failed to upload analysis results")
-            raise S3UploadError(f"Analysis results upload failed: {e}") from e
+            msg = f"Analysis results upload failed: {e}"
+            raise S3UploadError(msg) from e
         else:
             return s3_uri
 
@@ -353,11 +359,14 @@ class S3StorageService(CloudStoragePort):
 
         except ClientError as e:
             if e.response["Error"]["Code"] == "NoSuchKey":
-                raise S3DownloadError(f"File not found: {s3_key}") from e
-            raise S3DownloadError(f"S3 download failed: {e}") from e
+                msg = f"File not found: {s3_key}"
+                raise S3DownloadError(msg) from e
+            msg = f"S3 download failed: {e}"
+            raise S3DownloadError(msg) from e
         except Exception as e:
             logger.exception("Failed to download from S3")
-            raise S3DownloadError(f"Download failed: {e}") from e
+            msg = f"Download failed: {e}"
+            raise S3DownloadError(msg) from e
         else:
             return data
 
@@ -376,7 +385,7 @@ class S3StorageService(CloudStoragePort):
         """
         try:
             # Build prefix for user's files
-            search_prefix = f"raw_data/{prefix}{user_id}/" if prefix else f"raw_data/"
+            search_prefix = f"raw_data/{prefix}{user_id}/" if prefix else "raw_data/"
 
             response = await asyncio.get_event_loop().run_in_executor(
                 None,
@@ -388,25 +397,25 @@ class S3StorageService(CloudStoragePort):
                 },
             )
 
-            files = []
-            for obj in response.get("Contents", []):
-                # Filter for user's files if using broader prefix
-                if user_id in obj["Key"]:
-                    files.append(
-                        {
-                            "key": obj["Key"],
-                            "size": obj["Size"],
-                            "last_modified": obj["LastModified"].isoformat(),
-                            "etag": obj["ETag"],
-                            "storage_class": obj.get("StorageClass", "STANDARD"),
-                        }
-                    )
+            # Filter for user's files if using broader prefix
+            files = [
+                {
+                    "key": obj["Key"],
+                    "size": obj["Size"],
+                    "last_modified": obj["LastModified"].isoformat(),
+                    "etag": obj["ETag"],
+                    "storage_class": obj.get("StorageClass", "STANDARD"),
+                }
+                for obj in response.get("Contents", [])
+                if user_id in obj["Key"]
+            ]
 
             logger.info("Listed %d files for user %s", len(files), user_id)
 
         except Exception as e:
             logger.exception("Failed to list user files")
-            raise S3StorageError(f"File listing failed: {e}") from e
+            msg = f"File listing failed: {e}"
+            raise S3StorageError(msg) from e
         else:
             return files
 
@@ -434,9 +443,7 @@ class S3StorageService(CloudStoragePort):
                     )
                     deleted_count += 1
                 except Exception as e:
-                    logger.warning(
-                        "Failed to delete file %s: %s", file_info["key"], e
-                    )
+                    logger.warning("Failed to delete file %s: %s", file_info["key"], e)
 
             await self._audit_log(
                 operation="delete_user_data",
@@ -449,7 +456,8 @@ class S3StorageService(CloudStoragePort):
 
         except Exception as e:
             logger.exception("Failed to delete user data")
-            raise S3StorageError(f"User data deletion failed: {e}") from e
+            msg = f"User data deletion failed: {e}"
+            raise S3StorageError(msg) from e
         else:
             return deleted_count
 
@@ -584,7 +592,8 @@ class S3StorageService(CloudStoragePort):
             logger.info("File uploaded to S3: %s", s3_uri)
 
         except Exception as e:
-            raise S3UploadError(f"File upload failed: {e}") from e
+            msg = f"File upload failed: {e}"
+            raise S3UploadError(msg) from e
         else:
             return s3_uri
 
@@ -601,7 +610,8 @@ class S3StorageService(CloudStoragePort):
             logger.info("File downloaded from S3: %s", file_path)
 
         except Exception as e:
-            raise S3DownloadError(f"File download failed: {e}") from e
+            msg = f"File download failed: {e}"
+            raise S3DownloadError(msg) from e
         else:
             return file_data
 
@@ -618,7 +628,7 @@ class S3StorageService(CloudStoragePort):
             return True
 
         except Exception as e:
-            logger.error("Failed to delete file %s: %s", file_path, e)
+            logger.exception("Failed to delete file %s: %s", file_path, e)
             return False
 
 

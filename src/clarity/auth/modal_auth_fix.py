@@ -5,7 +5,6 @@ This module provides a workaround using Python's contextvars for thread-local st
 """
 
 import contextvars
-from typing import Optional
 
 from clarity.models.auth import UserContext
 

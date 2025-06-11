@@ -358,12 +358,13 @@ async def get_pat_analysis(
 
         # Try to get analysis results from DynamoDB
         from boto3.dynamodb.conditions import Key
-        
+
         # Query for analysis results
         response = dynamodb_client.table.query(
-            KeyConditionExpression=Key("pk").eq(f"USER#{current_user.user_id}") & Key("sk").eq(f"ANALYSIS#{processing_id}")
+            KeyConditionExpression=Key("pk").eq(f"USER#{current_user.user_id}")
+            & Key("sk").eq(f"ANALYSIS#{processing_id}")
         )
-        
+
         items = response.get("Items", [])
         analysis_result = items[0] if items else None
 

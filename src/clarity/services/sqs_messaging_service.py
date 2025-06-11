@@ -3,7 +3,7 @@
 from datetime import datetime
 import json
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any
 import uuid
 
 import boto3
@@ -23,7 +23,7 @@ class SQSMessagingService:
         region: str = "us-east-1",
         sns_topic_arn: str | None = None,
         endpoint_url: str | None = None,
-    ):
+    ) -> None:
         self.queue_url = queue_url
         self.sns_topic_arn = sns_topic_arn
         self.region = region
@@ -82,11 +82,13 @@ class SQSMessagingService:
             return response["MessageId"]
 
         except ClientError as e:
-            logger.error(f"SQS publish error: {e}")
-            raise MessagingError(f"Failed to publish message: {e!s}")
+            logger.exception(f"SQS publish error: {e}")
+            msg = f"Failed to publish message: {e!s}"
+            raise MessagingError(msg)
         except Exception as e:
-            logger.error(f"Unexpected error publishing message: {e}")
-            raise MessagingError(f"Failed to publish message: {e!s}")
+            logger.exception(f"Unexpected error publishing message: {e}")
+            msg = f"Failed to publish message: {e!s}"
+            raise MessagingError(msg)
 
     async def receive_messages(
         self,
@@ -119,14 +121,15 @@ class SQSMessagingService:
                         }
                     )
                 except json.JSONDecodeError:
-                    logger.error(f"Failed to decode message: {msg['MessageId']}")
+                    logger.exception(f"Failed to decode message: {msg['MessageId']}")
                     continue
 
             return messages
 
         except ClientError as e:
-            logger.error(f"SQS receive error: {e}")
-            raise MessagingError(f"Failed to receive messages: {e!s}")
+            logger.exception(f"SQS receive error: {e}")
+            msg = f"Failed to receive messages: {e!s}"
+            raise MessagingError(msg)
 
     async def delete_message(self, receipt_handle: str) -> None:
         """Delete message from SQS queue."""
@@ -138,8 +141,9 @@ class SQSMessagingService:
             logger.info("Successfully deleted message from SQS")
 
         except ClientError as e:
-            logger.error(f"SQS delete error: {e}")
-            raise MessagingError(f"Failed to delete message: {e!s}")
+            logger.exception(f"SQS delete error: {e}")
+            msg = f"Failed to delete message: {e!s}"
+            raise MessagingError(msg)
 
     async def batch_delete_messages(self, receipt_handles: list[str]) -> dict[str, Any]:
         """Batch delete messages from SQS."""
@@ -159,8 +163,9 @@ class SQSMessagingService:
             }
 
         except ClientError as e:
-            logger.error(f"SQS batch delete error: {e}")
-            raise MessagingError(f"Failed to batch delete messages: {e!s}")
+            logger.exception(f"SQS batch delete error: {e}")
+            msg = f"Failed to batch delete messages: {e!s}"
+            raise MessagingError(msg)
 
     async def publish_to_sns(
         self,
@@ -170,7 +175,8 @@ class SQSMessagingService:
     ) -> str:
         """Publish message to SNS topic for fan-out."""
         if not self.sns_topic_arn:
-            raise MessagingError("SNS topic ARN not configured")
+            msg = "SNS topic ARN not configured"
+            raise MessagingError(msg)
 
         try:
             # Prepare message attributes
@@ -194,8 +200,9 @@ class SQSMessagingService:
             return response["MessageId"]
 
         except ClientError as e:
-            logger.error(f"SNS publish error: {e}")
-            raise MessagingError(f"Failed to publish to SNS: {e!s}")
+            logger.exception(f"SNS publish error: {e}")
+            msg = f"Failed to publish to SNS: {e!s}"
+            raise MessagingError(msg)
 
     async def get_queue_attributes(self) -> dict[str, Any]:
         """Get queue attributes and statistics."""
@@ -207,8 +214,9 @@ class SQSMessagingService:
             return response.get("Attributes", {})
 
         except ClientError as e:
-            logger.error(f"SQS get attributes error: {e}")
-            raise MessagingError(f"Failed to get queue attributes: {e!s}")
+            logger.exception(f"SQS get attributes error: {e}")
+            msg = f"Failed to get queue attributes: {e!s}"
+            raise MessagingError(msg)
 
     async def purge_queue(self) -> None:
         """Purge all messages from queue (use with caution)."""
@@ -217,8 +225,9 @@ class SQSMessagingService:
             logger.warning(f"Purged all messages from queue: {self.queue_url}")
 
         except ClientError as e:
-            logger.error(f"SQS purge error: {e}")
-            raise MessagingError(f"Failed to purge queue: {e!s}")
+            logger.exception(f"SQS purge error: {e}")
+            msg = f"Failed to purge queue: {e!s}"
+            raise MessagingError(msg)
 
 
 class HealthDataMessageTypes:

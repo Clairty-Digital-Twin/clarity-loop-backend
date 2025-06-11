@@ -1,4 +1,4 @@
-"""API v1 Router - Aggregates all v1 endpoints"""
+"""API v1 Router - Aggregates all v1 endpoints."""
 
 from fastapi import APIRouter
 

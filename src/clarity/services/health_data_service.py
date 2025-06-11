@@ -10,11 +10,12 @@ from datetime import UTC, datetime
 import json
 import logging
 import os
-from typing import TYPE_CHECKING, Any, cast
+from typing import Any
 import uuid
 
 try:
     from clarity.services.s3_storage_service import S3StorageService
+
     _HAS_S3 = True
 except ImportError:
     _HAS_S3 = False
@@ -107,8 +108,10 @@ class HealthDataService:
             self.cloud_storage = cloud_storage
         elif _HAS_S3 and S3StorageService:
             self.cloud_storage = S3StorageService(
-                bucket_name=os.getenv("HEALTHKIT_RAW_BUCKET", "clarity-healthkit-raw-data"),
-                region=os.getenv("AWS_REGION", "us-east-1")
+                bucket_name=os.getenv(
+                    "HEALTHKIT_RAW_BUCKET", "clarity-healthkit-raw-data"
+                ),
+                region=os.getenv("AWS_REGION", "us-east-1"),
             )
         else:
             self.cloud_storage = None
@@ -144,7 +147,7 @@ class HealthDataService:
                 s3_uri = await self.cloud_storage.upload_raw_health_data(
                     user_id=user_id,
                     processing_id=processing_id,
-                    health_data=health_data
+                    health_data=health_data,
                 )
                 self.logger.info(
                     "Raw health data uploaded to S3: %s (%d metrics)",
@@ -152,29 +155,27 @@ class HealthDataService:
                     len(health_data.metrics),
                 )
                 return s3_uri
-            else:
-                # Fallback for generic storage interface
-                raw_data = {
-                    "user_id": str(health_data.user_id),
+            # Fallback for generic storage interface
+            raw_data = {
+                "user_id": str(health_data.user_id),
+                "processing_id": processing_id,
+                "upload_source": health_data.upload_source,
+                "client_timestamp": health_data.client_timestamp.isoformat(),
+                "server_timestamp": datetime.now(UTC).isoformat(),
+                "sync_token": health_data.sync_token,
+                "metrics_count": len(health_data.metrics),
+            }
+
+            file_path = f"{user_id}/{processing_id}.json"
+            return await self.cloud_storage.upload_file(
+                file_data=json.dumps(raw_data, indent=2).encode(),
+                file_path=file_path,
+                metadata={
+                    "user_id": user_id,
                     "processing_id": processing_id,
                     "upload_source": health_data.upload_source,
-                    "client_timestamp": health_data.client_timestamp.isoformat(),
-                    "server_timestamp": datetime.now(UTC).isoformat(),
-                    "sync_token": health_data.sync_token,
-                    "metrics_count": len(health_data.metrics),
-                }
-                
-                file_path = f"{user_id}/{processing_id}.json"
-                s3_uri = await self.cloud_storage.upload_file(
-                    file_data=json.dumps(raw_data, indent=2).encode(),
-                    file_path=file_path,
-                    metadata={
-                        "user_id": user_id,
-                        "processing_id": processing_id,
-                        "upload_source": health_data.upload_source,
-                    }
-                )
-                return s3_uri
+                },
+            )
 
         except Exception as e:
             self.logger.exception("Failed to upload raw data to S3")

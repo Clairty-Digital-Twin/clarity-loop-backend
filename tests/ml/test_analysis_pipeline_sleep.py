@@ -332,29 +332,29 @@ class TestAnalysisPipelineSleepIntegration:
         mock_metric.mental_health_data = None
 
         with patch.object(
-            FirestoreClient, "save_analysis_result", new_callable=AsyncMock
+            DynamoDBHealthDataRepository, "save_health_data", new_callable=AsyncMock
         ) as mock_save:
             await self.pipeline.process_health_data(
                 user_id="test_user_init",
                 health_metrics=[mock_metric],
                 processing_id=processing_id,
             )
-            assert self.pipeline.firestore_client is not None
+            assert self.pipeline.dynamodb_client is not None
             mock_save.assert_called_once()
 
-    @patch.dict(os.environ, {"GOOGLE_CLOUD_PROJECT": "test-gcp-project"})
-    async def test_get_firestore_client_custom_project_id(self) -> None:
-        """Test _get_firestore_client with custom project ID from env."""
-        self.pipeline.firestore_client = None  # Ensure it's reset
-        with patch("clarity.ml.analysis_pipeline.FirestoreClient") as mock_fs_class:
-            client = await self.pipeline._get_firestore_client()
+    @patch.dict(os.environ, {"AWS_REGION": "us-east-1"})
+    async def test_get_dynamodb_client_custom_project_id(self) -> None:
+        """Test _get_dynamodb_client with custom project ID from env."""
+        self.pipeline.dynamodb_client = None  # Ensure it's reset
+        with patch("clarity.ml.analysis_pipeline.DynamoDBHealthDataRepository") as mock_db_class:
+            client = await self.pipeline._get_dynamodb_client()
             assert client is not None
-            mock_fs_class.assert_called_once_with(project_id="test-gcp-project")
+            mock_db_class.assert_called_once_with(region="us-east-1")
 
-    async def test_get_firestore_client_reuse_existing(self) -> None:
-        """Test that _get_firestore_client reuses an existing client."""
-        mock_client = MagicMock(spec=FirestoreClient)
-        self.pipeline.firestore_client = mock_client
+    async def test_get_dynamodb_client_reuse_existing(self) -> None:
+        """Test that _get_dynamodb_client reuses an existing client."""
+        mock_client = MagicMock(spec=DynamoDBHealthDataRepository)
+        self.pipeline.dynamodb_client = mock_client
 
-        client = await self.pipeline._get_firestore_client()
+        client = await self.pipeline._get_dynamodb_client()
         assert client is mock_client  # Should be the same instance

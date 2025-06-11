@@ -192,8 +192,8 @@ class UserContext(BaseModel):
     display_name: str | None = Field(None, description="User display name")
     role: str = Field(default="user", description="User role")
     cognito_sub: str | None = Field(None, description="AWS Cognito subject identifier")
-    
+
     class Config:
         """Pydantic configuration."""
-        
+
         json_encoders = {datetime: lambda v: v.isoformat() if v else None}

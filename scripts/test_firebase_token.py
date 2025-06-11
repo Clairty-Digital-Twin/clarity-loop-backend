@@ -8,7 +8,7 @@ import firebase_admin
 from firebase_admin import auth, credentials
 
 
-def test_token_verification(token: str):
+def test_token_verification(token: str) -> None:
     """Test token verification with detailed error reporting."""
     try:
         # Initialize Firebase Admin SDK if needed

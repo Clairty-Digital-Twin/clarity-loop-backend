@@ -1,0 +1,82 @@
+{
+  "family": "clarity-backend",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": ["FARGATE"],
+  "cpu": "1024",
+  "memory": "2048",
+  "executionRoleArn": "arn:aws:iam::124355672559:role/ecsTaskExecutionRole",
+  "taskRoleArn": "arn:aws:iam::124355672559:role/clarity-backend-task-role",
+  "containerDefinitions": [
+    {
+      "name": "clarity-backend",
+      "image": "***REMOVED***/clarity-backend:v20250611-fix",
+      "command": ["/bin/sh", "-c", "cd /app && export PYTHONPATH=/app:/app/src && exec gunicorn -c /app/gunicorn.aws.conf.py src.clarity.main:app"],
+      "portMappings": [
+        {
+          "containerPort": 8000,
+          "protocol": "tcp"
+        }
+      ],
+      "essential": true,
+      "environment": [
+        {
+          "name": "PYTHONPATH",
+          "value": "/app:/app/src"
+        },
+        {
+          "name": "PYTHONUNBUFFERED",
+          "value": "1"
+        },
+        {
+          "name": "ENVIRONMENT",
+          "value": "production"
+        },
+        {
+          "name": "AWS_REGION",
+          "value": "us-east-1"
+        },
+        {
+          "name": "COGNITO_REGION",
+          "value": "us-east-1"
+        },
+        {
+          "name": "COGNITO_USER_POOL_ID",
+          "value": "us-east-1_1G5jYI8FO"
+        },
+        {
+          "name": "COGNITO_CLIENT_ID",
+          "value": "66qdivmqgs1oqmmo0b5r9d9hjo"
+        },
+        {
+          "name": "DYNAMODB_TABLE_NAME",
+          "value": "clarity-health-data"
+        },
+        {
+          "name": "LOG_LEVEL",
+          "value": "INFO"
+        }
+      ],
+      "secrets": [
+        {
+          "name": "GEMINI_API_KEY",
+          "valueFrom": "arn:aws:secretsmanager:us-east-1:124355672559:secret:clarity/gemini-api-key-nGOumD"
+        }
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/clarity-backend",
+          "awslogs-region": "us-east-1",
+          "awslogs-stream-prefix": "ecs"
+        }
+      },
+      "healthCheck": {
+        "command": ["CMD-SHELL", "curl -f http://localhost:8000/health || exit 1"],
+        "interval": 30,
+        "timeout": 5,
+        "retries": 3,
+        "startPeriod": 60
+      }
+    }
+  ]
+}

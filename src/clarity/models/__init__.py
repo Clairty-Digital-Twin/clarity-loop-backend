@@ -25,7 +25,7 @@ These models establish new standards for clinical data validation and processing
 # This is a common pattern for packages with complex interdependencies
 
 
-def __getattr__(name):
+def __getattr__(name: str) -> object:
     """Lazy import pattern to avoid circular dependencies."""
     # Auth models
     if name in {

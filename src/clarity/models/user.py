@@ -11,7 +11,7 @@ class UserBase(BaseModel):
 
     email: EmailStr = Field(..., description="User's email address")
     full_name: str | None = Field(None, description="User's full name", max_length=100)
-    is_active: bool = Field(True, description="Flag for active user accounts")
+    is_active: bool = Field(default=True, description="Flag for active user accounts")
 
     model_config = ConfigDict(
         use_enum_values=True,
@@ -193,7 +193,6 @@ class UserContext(BaseModel):
     role: str = Field(default="user", description="User role")
     cognito_sub: str | None = Field(None, description="AWS Cognito subject identifier")
 
-    class Config:
-        """Pydantic configuration."""
-
-        json_encoders = {datetime: lambda v: v.isoformat() if v else None}
+    model_config = ConfigDict(
+        json_encoders={datetime: lambda v: v.isoformat() if v else None}
+    )

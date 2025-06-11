@@ -14,6 +14,6 @@ __author__ = "CLARITY Digital Twin Platform"
 # Avoiding circular imports and legacy router conflicts
 
 __all__ = [
-    "__version__",
     "__author__",
+    "__version__",
 ]

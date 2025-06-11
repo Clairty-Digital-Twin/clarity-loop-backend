@@ -11,6 +11,7 @@ import re
 from typing import Any, NoReturn
 
 from pydantic import BaseModel, Field
+
 # import vertexai  # type: ignore[import-untyped]  # TODO: Add to dependencies
 # from vertexai.generative_models import (  # type: ignore[import-untyped]
 #     GenerationConfig,
@@ -19,7 +20,6 @@ from pydantic import BaseModel, Field
 #     HarmCategory,
 #     SafetySetting,
 # )
-
 from clarity.core.config_aws import get_settings
 from clarity.utils.decorators import resilient_prediction
 

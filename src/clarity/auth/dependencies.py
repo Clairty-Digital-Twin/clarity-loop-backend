@@ -95,7 +95,7 @@ def get_current_user(request: Request) -> dict:
         HTTPException: 401 if not authenticated
     """
     user_context = get_authenticated_user(request)
-    
+
     # Convert UserContext to dict format for backward compatibility
     return {
         "uid": user_context.user_id,
@@ -122,7 +122,7 @@ def get_auth_provider():
     """
     # Import here to avoid circular imports
     from clarity.services.aws_cognito_auth import CognitoAuthProvider
-    
+
     return CognitoAuthProvider()
 
 

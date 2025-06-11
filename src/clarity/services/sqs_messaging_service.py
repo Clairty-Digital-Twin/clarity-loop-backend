@@ -225,7 +225,7 @@ class SQSMessagingService:
             logger.warning("Purged all messages from queue: %s", self.queue_url)
 
         except ClientError as e:
-            logger.exception("SQS purge error: %s", e)
+            logger.exception("SQS purge error")
             msg = f"Failed to purge queue: {e!s}"
             raise MessagingError(msg) from e
 

@@ -3,17 +3,17 @@
 Version 1 of the CLARITY platform API endpoints.
 This module contains all the route definitions for the first version of the API.
 
-Routes are now managed through router_aws_clean.py for production deployment.
+Routes are now managed through router.py for production deployment.
 Legacy router imports have been removed to avoid conflicts.
 
 Available routers:
-- auth_aws_clean: Authentication and user management endpoints  
+- auth: Authentication and user management endpoints  
 - health_data: Health data upload and management endpoints
 - pat_analysis: PAT (Pretrained Actigraphy Transformer) analysis endpoints
 - gemini_insights: Gemini AI health insights generation endpoints
 - websocket: Real-time WebSocket communication
 - metrics: Health metrics calculation and aggregation
-- simple_test: Basic connectivity and health tests
+- test: Basic connectivity and health tests
 - debug: Development and debugging endpoints (dev only)
 """
 

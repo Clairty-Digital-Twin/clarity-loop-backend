@@ -99,7 +99,7 @@ app.add_middleware(
 # =============================================================================
 
 # Import the CLEAN AWS router - no duplicates
-from clarity.api.v1.router_aws_clean import api_router as v1_router
+from clarity.api.v1.router import api_router as v1_router
 
 # Include ONLY the clean router - professional single source of truth
 app.include_router(v1_router, prefix="/api/v1", tags=["API v1"])

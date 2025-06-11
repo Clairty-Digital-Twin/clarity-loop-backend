@@ -7,11 +7,11 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel, EmailStr, Field
 
 from clarity.auth.dependencies import get_auth_provider, get_current_user
-from clarity.core.exceptions import ProblemDetails
-from clarity.models.auth import TokenResponse, UserLogin
-from clarity.ports.auth_ports import AuthenticationProvider
-from clarity.services.auth_service import (
-    AuthenticationService,
+from clarity.core.exceptions import ProblemDetail
+from clarity.models.auth import TokenResponse, UserLoginRequest
+from clarity.ports.auth_ports import IAuthProvider
+from clarity.services.cognito_auth_service import (
+    CognitoAuthenticationService,
     EmailNotVerifiedError,
     InvalidCredentialsError,
     UserAlreadyExistsError,
@@ -43,16 +43,16 @@ class UserUpdate(BaseModel):
 @router.post("/register", response_model=TokenResponse)
 async def register(
     user_data: UserRegister,
-    auth_provider: AuthenticationProvider = Depends(get_auth_provider),
+    auth_provider: IAuthProvider = Depends(get_auth_provider),
 ) -> TokenResponse:
     """Register a new user."""
     try:
         # Create authentication service
-        auth_service = AuthenticationService(
+        auth_service = CognitoAuthenticationService(
             auth_provider, None
         )  # No document store needed for AWS
 
-        # Register user
+        # Register user - Note: May need to adapt this based on actual service interface
         return await auth_service.register_user(
             email=user_data.email,
             password=user_data.password,
@@ -62,39 +62,41 @@ async def register(
     except UserAlreadyExistsError as e:
         raise HTTPException(
             status_code=409,
-            detail=ProblemDetails(
+            detail=ProblemDetail(
                 type="user_already_exists",
                 title="User Already Exists",
                 detail=str(e),
                 status=409,
+                instance=f"https://api.clarity.health/requests/{id(e)}",
             ).model_dump(),
         ) from e
     except Exception as e:
         logger.exception("Registration failed")
         raise HTTPException(
             status_code=500,
-            detail=ProblemDetails(
+            detail=ProblemDetail(
                 type="registration_error",
                 title="Registration Failed",
                 detail="Failed to register user",
                 status=500,
+                instance=f"https://api.clarity.health/requests/{id(e)}",
             ).model_dump(),
         ) from e
 
 
 @router.post("/login", response_model=TokenResponse)
 async def login(
-    credentials: UserLogin,
-    auth_provider: AuthenticationProvider = Depends(get_auth_provider),
+    credentials: UserLoginRequest,
+    auth_provider: IAuthProvider = Depends(get_auth_provider),
 ) -> TokenResponse:
     """Authenticate user and return access token."""
     try:
         # Create authentication service
-        auth_service = AuthenticationService(
+        auth_service = CognitoAuthenticationService(
             auth_provider, None
         )  # No document store needed for AWS
 
-        # Authenticate user
+        # Authenticate user - Note: May need to adapt this based on actual service interface
         return await auth_service.authenticate_user(
             email=credentials.email, password=credentials.password
         )
@@ -102,32 +104,35 @@ async def login(
     except InvalidCredentialsError as e:
         raise HTTPException(
             status_code=401,
-            detail=ProblemDetails(
+            detail=ProblemDetail(
                 type="invalid_credentials",
                 title="Invalid Credentials",
                 detail=str(e),
                 status=401,
+                instance=f"https://api.clarity.health/requests/{id(e)}",
             ).model_dump(),
         )
     except EmailNotVerifiedError as e:
         raise HTTPException(
             status_code=403,
-            detail=ProblemDetails(
+            detail=ProblemDetail(
                 type="email_not_verified",
                 title="Email Not Verified",
                 detail=str(e),
                 status=403,
+                instance=f"https://api.clarity.health/requests/{id(e)}",
             ).model_dump(),
         )
     except Exception as e:
         logger.exception("Login failed")
         raise HTTPException(
             status_code=500,
-            detail=ProblemDetails(
+            detail=ProblemDetail(
                 type="authentication_error",
                 title="Authentication Failed",
                 detail="Failed to authenticate user",
                 status=500,
+                instance=f"https://api.clarity.health/requests/{id(e)}",
             ).model_dump(),
         ) from e
 
@@ -150,17 +155,17 @@ async def get_current_user_info(
 async def update_user(
     updates: UserUpdate,
     current_user: dict[str, Any] = Depends(get_current_user),
-    auth_provider: AuthenticationProvider = Depends(get_auth_provider),
+    auth_provider: IAuthProvider = Depends(get_auth_provider),
 ) -> dict[str, Any]:
     """Update current user information."""
     try:
         # Create authentication service
-        auth_service = AuthenticationService(auth_provider, None)
+        auth_service = CognitoAuthenticationService(auth_provider, None)
 
         # Get user ID
         user_id = current_user.get("uid", current_user.get("user_id"))
 
-        # Update user
+        # Update user - Note: May need to adapt this based on actual service interface
         updated_user = await auth_service.update_user(
             user_id=user_id,
             display_name=updates.display_name,
@@ -177,22 +182,24 @@ async def update_user(
     except UserNotFoundError as e:
         raise HTTPException(
             status_code=404,
-            detail=ProblemDetails(
+            detail=ProblemDetail(
                 type="user_not_found",
                 title="User Not Found",
                 detail=str(e),
                 status=404,
+                instance=f"https://api.clarity.health/requests/{id(e)}",
             ).model_dump(),
         )
     except Exception as e:
         logger.exception("User update failed")
         raise HTTPException(
             status_code=500,
-            detail=ProblemDetails(
+            detail=ProblemDetail(
                 type="update_error",
                 title="Update Failed",
                 detail="Failed to update user",
                 status=500,
+                instance=f"https://api.clarity.health/requests/{id(e)}",
             ).model_dump(),
         ) from e
 
@@ -201,12 +208,12 @@ async def update_user(
 async def logout(
     request: Request,
     current_user: dict[str, Any] = Depends(get_current_user),
-    auth_provider: AuthenticationProvider = Depends(get_auth_provider),
+    auth_provider: IAuthProvider = Depends(get_auth_provider),
 ) -> dict[str, str]:
     """Logout user (invalidate token if supported)."""
     try:
         # Create authentication service
-        auth_service = AuthenticationService(auth_provider, None)
+        auth_service = CognitoAuthenticationService(auth_provider, None)
 
         # Get token from header
         auth_header = request.headers.get("Authorization", "")

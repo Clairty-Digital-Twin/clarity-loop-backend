@@ -6,7 +6,7 @@ CLARITY is a revolutionary AI-powered mental health platform that uses wearable 
 
 ### ✅ Current Status: **Production Ready on AWS**
 
-- **Backend API**: http://***REMOVED***
+- **Backend API**: `https://your-domain.com/api` (configured via environment)
 - **Architecture**: Clean Architecture with Dependency Injection
 - **Infrastructure**: AWS ECS Fargate with Auto-scaling
 - **AI Integration**: Google Gemini for health insights
@@ -68,7 +68,7 @@ make test
 
 ### Health Check
 ```bash
-curl http://***REMOVED***/health
+curl https://your-domain.com/api/health
 ```
 
 ### Authentication
@@ -156,11 +156,11 @@ The application is deployed on AWS ECS Fargate with:
 ```bash
 # Build and push Docker image
 docker build -t clarity-backend .
-docker tag clarity-backend:latest ***REMOVED***/clarity-backend:latest
-docker push ***REMOVED***/clarity-backend:latest
+docker tag clarity-backend:latest [your-ecr-registry]/clarity-backend:latest
+docker push [your-ecr-registry]/clarity-backend:latest
 
 # Update ECS service
-aws ecs update-service --cluster ***REMOVED*** --service clarity-backend --force-new-deployment
+aws ecs update-service --cluster [your-cluster] --service clarity-backend --force-new-deployment
 ```
 
 ## 📈 Monitoring
@@ -199,4 +199,3 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 ---
 
 **Note**: This is a production system handling sensitive health data. Please ensure all contributions maintain HIPAA compliance and security best practices.
-EOF < /dev/null

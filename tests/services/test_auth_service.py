@@ -6,7 +6,7 @@ Tests cover:
 - Token management (creation, refresh, validation)
 - Password validation and security
 - Error handling and edge cases
-- Integration with Firebase Auth
+- Integration with AWS Cognito Auth
 """
 
 import asyncio
@@ -27,8 +27,8 @@ from clarity.models.auth import (
 
 
 @pytest.fixture
-def mock_firebase_auth() -> AsyncMock:
-    """Mock Firebase Auth provider."""
+def mock_cognito_auth() -> AsyncMock:
+    """Mock AWS Cognito Auth provider."""
     return AsyncMock()
 
 
@@ -36,10 +36,10 @@ class TestAuthServiceBasics:
     """Test basic AuthService functionality."""
 
     @staticmethod
-    def test_auth_service_initialization(mock_firebase_auth: AsyncMock) -> None:
+    def test_auth_service_initialization(mock_cognito_auth: AsyncMock) -> None:
         """Test AuthService initialization."""
         # Basic test that doesn't require actual AuthService import
-        assert mock_firebase_auth is not None
+        assert mock_cognito_auth is not None
 
     @staticmethod
     def test_password_validation() -> None:

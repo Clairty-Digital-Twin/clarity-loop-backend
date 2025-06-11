@@ -7,7 +7,7 @@ This test suite covers all aspects of the analysis pipeline including:
 - Individual modality processing (cardio, respiratory, activity)
 - Multi-modal fusion
 - Summary statistics generation
-- Firestore integration
+- DynamoDB integration
 - Error handling and edge cases
 - Utility functions for HealthKit data conversion
 """
@@ -121,15 +121,15 @@ class TestHealthAnalysisPipelineInitialization:
         """Test that _get_dynamodb_client creates client on first call."""
         pipeline = HealthAnalysisPipeline()
 
-        with patch("clarity.ml.analysis_pipeline.DynamoDBHealthDataRepository") as mock_firestore:
+        with patch("clarity.ml.analysis_pipeline.DynamoDBHealthDataRepository") as mock_dynamodb:
             mock_client = MagicMock()
-            mock_firestore.return_value = mock_client
+            mock_dynamodb.return_value = mock_client
 
             client = await pipeline._get_dynamodb_client()
 
             assert client == mock_client
             assert pipeline.dynamodb_client == mock_client
-            mock_firestore.assert_called_once()
+            mock_dynamodb.assert_called_once()
 
     @pytest.mark.asyncio
     @staticmethod
@@ -685,17 +685,17 @@ class TestHealthAnalysisPipelineMainWorkflow:
 
     @pytest.mark.asyncio
     @staticmethod
-    async def test_process_health_data_with_firestore_save() -> None:
-        """Test processing with Firestore saving when processing_id provided."""
+    async def test_process_health_data_with_dynamodb_save() -> None:
+        """Test processing with DynamoDB saving when processing_id provided."""
         pipeline = HealthAnalysisPipeline()
 
         # Mock processors
         expected_cardio = [1.0, 2.0, 3.0]
         pipeline.cardio_processor.process = MagicMock(return_value=expected_cardio)
 
-        # Mock Firestore client
-        mock_firestore = AsyncMock()
-        pipeline.dynamodb_client = mock_firestore
+        # Mock DynamoDB client
+        mock_dynamodb = AsyncMock()
+        pipeline.dynamodb_client = mock_dynamodb
 
         cardio_metric = HealthMetric(
             metric_type=HealthMetricType.HEART_RATE,
@@ -707,9 +707,9 @@ class TestHealthAnalysisPipelineMainWorkflow:
             "user1", [cardio_metric], processing_id
         )
 
-        # Verify Firestore save was called
-        mock_firestore.save_analysis_result.assert_called_once()
-        call_args = mock_firestore.save_analysis_result.call_args
+        # Verify DynamoDB save was called
+        mock_dynamodb.save_analysis_result.assert_called_once()
+        call_args = mock_dynamodb.save_analysis_result.call_args
         assert call_args[1]["user_id"] == "user1"
         assert call_args[1]["processing_id"] == processing_id
 
@@ -839,26 +839,26 @@ class TestAnalysisPipelineErrorHandling:
 
     @pytest.mark.asyncio
     @staticmethod
-    async def test_process_health_data_firestore_error() -> None:
-        """Test processing when Firestore save fails."""
+    async def test_process_health_data_dynamodb_error() -> None:
+        """Test processing when DynamoDB save fails."""
         pipeline = HealthAnalysisPipeline()
 
         # Mock processors
         pipeline.cardio_processor.process = MagicMock(return_value=[1.0, 2.0, 3.0])
 
-        # Mock Firestore client to raise error
-        mock_firestore = AsyncMock()
-        mock_firestore.save_analysis_result.side_effect = RuntimeError(
-            "Firestore error"
+        # Mock DynamoDB client to raise error
+        mock_dynamodb = AsyncMock()
+        mock_dynamodb.save_analysis_result.side_effect = RuntimeError(
+            "DynamoDB error"
         )
-        pipeline.dynamodb_client = mock_firestore
+        pipeline.dynamodb_client = mock_dynamodb
 
         cardio_metric = HealthMetric(
             metric_type=HealthMetricType.HEART_RATE,
             biometric_data=BiometricData(heart_rate=75.0),
         )
 
-        # Should continue processing despite Firestore error
+        # Should continue processing despite DynamoDB error
         result = await pipeline.process_health_data(
             "user1", [cardio_metric], "processing_123"
         )

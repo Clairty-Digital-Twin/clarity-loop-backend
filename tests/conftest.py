@@ -12,10 +12,7 @@ from unittest.mock import AsyncMock, MagicMock
 from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
-import google.auth
-from google.auth.credentials import AnonymousCredentials
-import google.cloud.firestore
-import google.cloud.pubsub_v1
+# Remove all Google Cloud imports - we're using AWS now
 from httpx import AsyncClient
 import numpy as np
 import pytest
@@ -34,71 +31,13 @@ os.environ["TESTING"] = "1"
 os.environ["ENVIRONMENT"] = "testing"
 
 
-# Apply GCP patch directly at module level to avoid scope mismatch
-# --- 1. ADC ↦ AnonymousCredentials ----------------------------------
-
-
-def mock_auth_default(
-    *args: object, **kwargs: object
-) -> tuple[AnonymousCredentials, str]:
-    """Mock Google auth default function."""
-    # Arguments are unused as this is a mock function
-    del args, kwargs  # Explicitly delete to satisfy linter
-    return (AnonymousCredentials(), "test-project")
-
-
-google.auth.default = mock_auth_default
-os.environ["GOOGLE_CLOUD_PROJECT"] = "test-project"
-
-
-# --- 2. Firestore fake ----------------------------------------------
-class _FakeFS:  # minimal façade
-    def __init__(self, *args: object, **kwargs: object) -> None:
-        """Initialize fake Firestore client."""
-        # Arguments are unused as this is a mock class
-        del args, kwargs  # Explicitly delete to satisfy linter
-
-    def collection(
-        self, _name: str
-    ) -> "_FakeFS":  # returns self so .document() still works
-        return self
-
-    def document(self, *args: str) -> "_FakeFS":  # → Fake doc ref
-        # Arguments are unused in this mock
-        del args  # Explicitly delete to satisfy linter
-        return self
-
-    def set(self, *args: object, **kwargs: object) -> None:  # noqa: PLR6301
-        """Mock set method."""
-        # Arguments are unused as this is a mock method
-        del args, kwargs  # Explicitly delete to satisfy linter
-
-    @staticmethod
-    def get(*args: object, **kwargs: object) -> dict[str, Any]:
-        """Mock get method."""
-        # Arguments are unused as this is a mock method
-        del args, kwargs  # Explicitly delete to satisfy linter
-        return {}
-
-
-google.cloud.firestore.Client = _FakeFS
-
-
-# --- 3. Pub/Sub fake -------------------------------------------------
-class _FakePublisher:
-    def __init__(self, *args: object, **kwargs: object) -> None:
-        """Initialize fake publisher."""
-        # Arguments are unused as this is a mock class
-        del args, kwargs  # Explicitly delete to satisfy linter
-
-    @staticmethod
-    async def publish(*args: object, **kwargs: object) -> None:
-        """Mock publish method."""
-        # Arguments are unused as this is a mock method
-        del args, kwargs  # Explicitly delete to satisfy linter
-
-
-google.cloud.pubsub_v1.PublisherClient = _FakePublisher
+# AWS test environment setup
+os.environ["AWS_DEFAULT_REGION"] = "us-east-1"
+os.environ["AWS_ACCESS_KEY_ID"] = "test-key-id"
+os.environ["AWS_SECRET_ACCESS_KEY"] = "test-secret-key"
+os.environ["COGNITO_USER_POOL_ID"] = "test-pool-id"
+os.environ["COGNITO_CLIENT_ID"] = "test-client-id"
+os.environ["DYNAMODB_TABLE_PREFIX"] = "test"
 
 
 @pytest.fixture(scope="session")
@@ -119,8 +58,8 @@ def test_env_credentials() -> dict[str, str]:
         "mock_new_refresh_token": os.getenv(
             "TEST_MOCK_NEW_REFRESH_TOKEN", "mock-new-refresh-token-value"
         ),
-        "mock_firebase_token": os.getenv(
-            "TEST_MOCK_FIREBASE_TOKEN", "mock-firebase-token-value"
+        "mock_cognito_token": os.getenv(
+            "TEST_MOCK_COGNITO_TOKEN", "mock-cognito-token-value"
         ),
         "mock_sync_token": os.getenv("TEST_MOCK_SYNC_TOKEN", "mock-sync-token-value"),
     }
@@ -135,47 +74,49 @@ def event_loop() -> Generator[asyncio.AbstractEventLoop, None, None]:
 
 
 @pytest.fixture
-def mock_firestore():
-    """Mock Firestore client for testing."""
+def mock_dynamodb():
+    """Mock DynamoDB client for testing."""
     mock_db = MagicMock()
-
-    # Mock collection and document structure
-    mock_collection = MagicMock()
-    mock_document = MagicMock()
-    mock_document.set.return_value = None
-    mock_document.get.return_value.exists = True
-    mock_document.get.return_value.to_dict.return_value = {}
-
-    mock_collection.document.return_value = mock_document
-    mock_db.collection.return_value = mock_collection
-
+    mock_table = MagicMock()
+    
+    # Mock basic DynamoDB operations
+    mock_table.put_item.return_value = {"ResponseMetadata": {"HTTPStatusCode": 200}}
+    mock_table.get_item.return_value = {
+        "Item": {"id": {"S": "test-id"}, "data": {"S": "test-data"}}
+    }
+    mock_table.scan.return_value = {"Items": [], "Count": 0}
+    mock_table.query.return_value = {"Items": [], "Count": 0}
+    
+    mock_db.Table.return_value = mock_table
     return mock_db
 
 
 @pytest.fixture
-def mock_firebase_auth():
-    """Mock Firebase Auth for testing."""
+def mock_cognito_auth():
+    """Mock AWS Cognito Auth for testing."""
     mock_auth = MagicMock()
-    mock_auth.verify_id_token.return_value = {
-        "uid": "test-user-123",
-        "email": "test@example.com",
-        "email_verified": True,
-        "custom_claims": {"role": "patient"},
+    mock_auth.admin_get_user.return_value = {
+        "UserAttributes": [
+            {"Name": "sub", "Value": "test-user-123"},
+            {"Name": "email", "Value": "test@example.com"},
+            {"Name": "email_verified", "Value": "true"},
+            {"Name": "custom:role", "Value": "patient"},
+        ],
+        "Username": "test-user-123"
     }
     return mock_auth
 
 
 @pytest.fixture
-def mock_gcs_client():
-    """Mock Google Cloud Storage client."""
+def mock_s3_client():
+    """Mock S3 client for testing."""
     mock_client = MagicMock()
-    mock_bucket = MagicMock()
-    mock_blob = MagicMock()
-
-    mock_client.bucket.return_value = mock_bucket
-    mock_bucket.blob.return_value = mock_blob
-    mock_blob.upload_from_string.return_value = None
-
+    
+    # Mock S3 operations
+    mock_client.put_object.return_value = {"ETag": "test-etag"}
+    mock_client.get_object.return_value = {"Body": MagicMock()}
+    mock_client.list_objects_v2.return_value = {"Contents": []}
+    
     return mock_client
 
 
@@ -303,12 +244,14 @@ def mock_environment_variables(monkeypatch: pytest.MonkeyPatch):
         "ENVIRONMENT": "test",
         "DEBUG": "true",
         "DATABASE_URL": "sqlite:///test.db",
-        "FIREBASE_PROJECT_ID": "test-project",
-        "FIREBASE_CREDENTIALS": "test-credentials.json",
+        "AWS_REGION": "us-east-1",
+        "COGNITO_USER_POOL_ID": "test-pool",
+        "COGNITO_CLIENT_ID": "test-client",
+        "DYNAMODB_TABLE_PREFIX": "test",
         "JWT_SECRET_KEY": "test-secret-key-for-testing-only",  # This is a test secret
         "LOG_LEVEL": "DEBUG",
         "CORS_ORIGINS": '["http://localhost:3000", "http://localhost:8000"]',  # Fixed: JSON format
-        "SKIP_EXTERNAL_SERVICES": "true",  # Skip Firebase/Firestore in tests
+        "SKIP_EXTERNAL_SERVICES": "true",  # Skip external AWS services in tests
     }
 
     for key, value in test_env.items():

@@ -61,9 +61,9 @@ class TestMiddlewareConfiguration:
         settings.enable_auth = True
         settings.testing = False  # Explicitly disable testing flag
         # Mock required production settings to avoid validation errors
-        settings.firebase_project_id = "test-project"
-        settings.gcp_project_id = "test-gcp-project"
-        settings.firebase_credentials_path = "/test/path"
+        settings.aws_region = "us-east-1"
+        settings.cognito_user_pool_id = "test-pool"
+        settings.cognito_client_id = "test-client"
 
         config_provider = ConfigProvider(settings)
 

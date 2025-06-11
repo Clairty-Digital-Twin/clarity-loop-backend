@@ -10,8 +10,8 @@ on:
 env:
   PYTHON_VERSION: "3.11"
   NODE_VERSION: "18"
-  REGISTRY: gcr.io
-  IMAGE_NAME: clarity-loop-backend
+  AWS_REGION: us-east-1
+  ECR_REPOSITORY: clarity-backend
 
 jobs:
   # 🔍 Code Quality & Linting
@@ -92,6 +92,16 @@ jobs:
           --health-timeout 5s
           --health-retries 5
 
+      dynamodb:
+        image: amazon/dynamodb-local:latest
+        ports:
+          - 8000:8000
+        options: >-
+          --health-cmd "curl -f http://localhost:8000 || exit 1"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
     steps:
       - name: 📦 Checkout code
         uses: actions/checkout@v4
@@ -107,19 +117,17 @@ jobs:
           pip install --upgrade pip
           pip install -e .[test]
 
-      - name: 🔥 Start Firebase Emulators
-        run: |
-          npm install -g firebase-tools
-          firebase emulators:start --only firestore,auth,pubsub --project demo-test &
-          sleep 10
-
       - name: 🧪 Run unit tests
         env:
           TESTING: 1
           REDIS_URL: redis://localhost:6379
-          FIRESTORE_EMULATOR_HOST: localhost:8080
-          FIREBASE_AUTH_EMULATOR_HOST: localhost:9099
-          PUBSUB_EMULATOR_HOST: localhost:8085
+          AWS_REGION: us-east-1
+          AWS_ACCESS_KEY_ID: test
+          AWS_SECRET_ACCESS_KEY: test
+          DYNAMODB_ENDPOINT_URL: http://localhost:8000
+          COGNITO_USER_POOL_ID: test-pool
+          COGNITO_CLIENT_ID: test-client
+          SKIP_EXTERNAL_SERVICES: true
         run: |
           pytest tests/unit/ -v --cov=clarity --cov-report=xml --cov-report=html
 
@@ -127,9 +135,13 @@ jobs:
         env:
           TESTING: 1
           REDIS_URL: redis://localhost:6379
-          FIRESTORE_EMULATOR_HOST: localhost:8080
-          FIREBASE_AUTH_EMULATOR_HOST: localhost:9099
-          PUBSUB_EMULATOR_HOST: localhost:8085
+          AWS_REGION: us-east-1
+          AWS_ACCESS_KEY_ID: test
+          AWS_SECRET_ACCESS_KEY: test
+          DYNAMODB_ENDPOINT_URL: http://localhost:8000
+          COGNITO_USER_POOL_ID: test-pool
+          COGNITO_CLIENT_ID: test-client
+          SKIP_EXTERNAL_SERVICES: true
         run: |
           pytest tests/integration/ -v --maxfail=5
 
@@ -209,15 +221,16 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
+          file: ./Dockerfile.aws
           push: false
-          tags: ${{ env.REGISTRY }}/${{ github.repository }}:${{ github.sha }}
+          tags: ${{ env.ECR_REPOSITORY }}:${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
       - name: 🛡️ Run Trivy security scan
         uses: aquasecurity/trivy-action@master
         with:
-          image-ref: ${{ env.REGISTRY }}/${{ github.repository }}:${{ github.sha }}
+          image-ref: ${{ env.ECR_REPOSITORY }}:${{ github.sha }}
           format: 'sarif'
           output: 'trivy-results.sarif'
 
@@ -255,7 +268,7 @@ jobs:
           name: documentation
           path: site/
 
-  # 🚀 Deploy to Google Cloud Run (Production)
+  # 🚀 Deploy to AWS ECS (Production)
   deploy:
     name: 🚀 Deploy to Production
     runs-on: ubuntu-latest
@@ -265,38 +278,41 @@ jobs:
       - name: 📦 Checkout code
         uses: actions/checkout@v4
 
-      - name: 🔑 Authenticate to Google Cloud
-        uses: google-github-actions/auth@v1
+      - name: 🔑 Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
         with:
-          credentials_json: ${{ secrets.GCP_SA_KEY }}
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
 
-      - name: 🔧 Set up Cloud SDK
-        uses: google-github-actions/setup-gcloud@v1
+      - name: 🔑 Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
 
-      - name: 🔧 Configure Docker to use gcloud
-        run: gcloud auth configure-docker
-
-      - name: 🏗️ Build and push Docker image
+      - name: 🏗️ Build, tag, and push image to Amazon ECR
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
         run: |
-          docker build -t ${{ env.REGISTRY }}/${{ secrets.GCP_PROJECT_ID }}/${{ env.IMAGE_NAME }}:${{ github.sha }} .
-          docker tag ${{ env.REGISTRY }}/${{ secrets.GCP_PROJECT_ID }}/${{ env.IMAGE_NAME }}:${{ github.sha }} ${{ env.REGISTRY }}/${{ secrets.GCP_PROJECT_ID }}/${{ env.IMAGE_NAME }}:latest
-          docker push ${{ env.REGISTRY }}/${{ secrets.GCP_PROJECT_ID }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
-          docker push ${{ env.REGISTRY }}/${{ secrets.GCP_PROJECT_ID }}/${{ env.IMAGE_NAME }}:latest
+          docker build -f Dockerfile.aws -t $ECR_REGISTRY/$ECR_REPOSITORY:${{ github.sha }} .
+          docker tag $ECR_REGISTRY/$ECR_REPOSITORY:${{ github.sha }} $ECR_REGISTRY/$ECR_REPOSITORY:latest
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:${{ github.sha }}
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
 
-      - name: 🚀 Deploy to Cloud Run
-        run: |
-          gcloud run deploy clarity-loop-backend \
-            --image ${{ env.REGISTRY }}/${{ secrets.GCP_PROJECT_ID }}/${{ env.IMAGE_NAME }}:${{ github.sha }} \
-            --platform managed \
-            --region us-central1 \
-            --allow-unauthenticated \
-            --memory 4Gi \
-            --cpu 2 \
-            --concurrency 1000 \
-            --timeout 300 \
-            --max-instances 100 \
-            --set-env-vars="ENVIRONMENT=main" \
-            --project ${{ secrets.GCP_PROJECT_ID }}
+      - name: 📝 Update ECS task definition
+        id: task-def
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+          task-definition: ecs-task-definition.json
+          container-name: clarity-backend
+          image: ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ github.sha }}
+
+      - name: 🚀 Deploy to Amazon ECS
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+        with:
+          task-definition: ${{ steps.task-def.outputs.task-definition }}
+          service: clarity-backend-service
+          cluster: ***REMOVED***
+          wait-for-service-stability: true
 
       - name: 📤 Deploy documentation
         if: success()

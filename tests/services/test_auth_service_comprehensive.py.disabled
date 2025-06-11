@@ -26,10 +26,10 @@ from clarity.models.auth import (
     UserStatus,
 )
 from clarity.ports.auth_ports import IAuthProvider
-from clarity.services.auth_service import (
+from clarity.services.cognito_auth_service import (
     AccountDisabledError,
     AuthenticationError,
-    AuthenticationService,
+    CognitoAuthenticationService as AuthenticationService,
     EmailNotVerifiedError,
     InvalidCredentialsError,
     UserAlreadyExistsError,

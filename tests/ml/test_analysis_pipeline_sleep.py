@@ -63,9 +63,9 @@ class TestAnalysisPipelineSleepIntegration:
     ) -> None:
         """Test sleep processing integration in analysis pipeline."""
         # Mock dependencies
-        mock_firestore = AsyncMock()
-        mock_firestore.table = MagicMock()
-        self.pipeline.dynamodb_client = mock_firestore
+        mock_dynamodb = AsyncMock()
+        mock_dynamodb.table = MagicMock()
+        self.pipeline.dynamodb_client = mock_dynamodb
 
         # Process sleep data
         results = await self.pipeline.process_health_data(

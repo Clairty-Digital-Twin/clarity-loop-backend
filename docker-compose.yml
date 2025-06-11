@@ -15,9 +15,11 @@ services:
       - AWS_DEFAULT_REGION=us-east-1
       - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID:-dummy}
       - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY:-dummy}
-      # Firebase config (will be replaced with Cognito)
-      - FIREBASE_PROJECT_ID=clarity-test
-      - GCP_PROJECT_ID=clarity-test
+      # AWS Cognito config
+      - COGNITO_USER_POOL_ID=${COGNITO_USER_POOL_ID:-dummy}
+      - COGNITO_CLIENT_ID=${COGNITO_CLIENT_ID:-dummy}
+      - DYNAMODB_TABLE_PREFIX=clarity
+      - GEMINI_API_KEY=${GEMINI_API_KEY:-dummy}
     volumes:
       # Mount source for development hot-reload (optional)
       # - ./src:/app/src:ro

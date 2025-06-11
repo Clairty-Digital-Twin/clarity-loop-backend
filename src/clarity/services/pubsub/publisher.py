@@ -4,8 +4,6 @@ Publishes health data processing events to AWS SQS/SNS for async processing.
 Replaces Google Pub/Sub with enterprise-grade AWS messaging.
 """
 
-from datetime import UTC, datetime
-import json
 import logging
 import os
 from typing import Any
@@ -47,15 +45,19 @@ class HealthDataPublisher:
         """Initialize the publisher with AWS SQS/SNS messaging."""
         self.aws_region = os.getenv("AWS_REGION", "us-east-1")
         self.sns_topic_arn = os.getenv("CLARITY_SNS_TOPIC_ARN")
-        
+
         # Initialize AWS messaging service
         self.messaging_service = AWSMessagingService(
             region=self.aws_region,
-            health_data_queue=os.getenv("CLARITY_HEALTH_DATA_QUEUE", "clarity-health-data-processing"),
-            insight_queue=os.getenv("CLARITY_INSIGHT_QUEUE", "clarity-insight-generation"),
+            health_data_queue=os.getenv(
+                "CLARITY_HEALTH_DATA_QUEUE", "clarity-health-data-processing"
+            ),
+            insight_queue=os.getenv(
+                "CLARITY_INSIGHT_QUEUE", "clarity-insight-generation"
+            ),
             sns_topic_arn=self.sns_topic_arn,
         )
-        
+
         self.logger = logging.getLogger(__name__)
 
         self.logger.info(

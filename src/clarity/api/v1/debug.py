@@ -8,10 +8,9 @@ import logging
 import os
 from typing import Any
 
-from fastapi import APIRouter, Depends, Header, HTTPException, Request, status
+from fastapi import APIRouter, Header, Request
 
 from clarity.auth.dependencies import AuthenticatedUser
-from clarity.models.auth import UserContext
 
 logger = logging.getLogger(__name__)
 
@@ -108,8 +107,6 @@ async def debug_test_middleware(request: Request) -> dict[str, Any]:
 @router.get("/middleware-stack")
 async def debug_middleware_stack(request: Request) -> dict[str, Any]:
     """Debug endpoint to check middleware stack."""
-    from starlette.middleware import Middleware
-
     # Try to access the app instance
     app = request.app
 
@@ -217,13 +214,16 @@ async def debug_verify_token_directly(
     # Check AWS Cognito status
     try:
         import boto3
-        cognito_client = boto3.client('cognito-idp', region_name=os.getenv("AWS_REGION", "us-east-1"))
+
+        cognito_client = boto3.client(
+            "cognito-idp", region_name=os.getenv("AWS_REGION", "us-east-1")
+        )
         result["cognito_initialized"] = True
         result["cognito_user_pool_id"] = os.getenv("COGNITO_USER_POOL_ID", "NOT_SET")
         result["cognito_region"] = os.getenv("COGNITO_REGION", "us-east-1")
     except Exception as e:
         result["cognito_initialized"] = False
-        result["cognito_note"] = f"Cognito client error: {str(e)}"
+        result["cognito_note"] = f"Cognito client error: {e!s}"
 
     # Check environment
 

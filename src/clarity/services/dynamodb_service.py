@@ -14,10 +14,8 @@ import uuid
 from uuid import UUID
 
 import boto3
-from boto3.dynamodb.conditions import Key
 from botocore.exceptions import ClientError
 
-from clarity.models.health_data import HealthDataUpload, ProcessingStatus
 from clarity.ports.data_ports import IHealthDataRepository
 
 # Configure logger
@@ -160,9 +158,7 @@ class DynamoDBService:
                 None, audit_table.put_item, {"Item": audit_entry}
             )
 
-            logger.debug(
-                "Audit log created: %s on %s/%s", operation, table, item_id
-            )
+            logger.debug("Audit log created: %s on %s/%s", operation, table, item_id)
 
         except Exception:
             logger.exception("Failed to create audit log")
@@ -488,9 +484,7 @@ class DynamoDBService:
         try:
             # Test connection by describing a table
             table = self.dynamodb.Table(self.tables["health_data"])
-            await asyncio.get_event_loop().run_in_executor(
-                None, table.load
-            )
+            await asyncio.get_event_loop().run_in_executor(None, table.load)
 
             return {
                 "status": "healthy",
@@ -515,7 +509,9 @@ class DynamoDBHealthDataRepository(IHealthDataRepository):
     Provides AWS DynamoDB-based health data repository.
     """
 
-    def __init__(self, region: str = "us-east-1", endpoint_url: str | None = None) -> None:
+    def __init__(
+        self, region: str = "us-east-1", endpoint_url: str | None = None
+    ) -> None:
         """Initialize DynamoDB health data repository.
 
         Args:
@@ -650,19 +646,22 @@ class DynamoDBHealthDataRepository(IHealthDataRepository):
             # Apply additional filters in memory (DynamoDB doesn't support complex queries)
             if metric_type:
                 metrics = [
-                    m for m in metrics
+                    m
+                    for m in metrics
                     if m.get("metric_data", {}).get("metric_type") == metric_type
                 ]
 
             if start_date:
                 metrics = [
-                    m for m in metrics
+                    m
+                    for m in metrics
                     if datetime.fromisoformat(m.get("created_at", "")) >= start_date
                 ]
 
             if end_date:
                 metrics = [
-                    m for m in metrics
+                    m
+                    for m in metrics
                     if datetime.fromisoformat(m.get("created_at", "")) <= end_date
                 ]
 
@@ -875,10 +874,7 @@ class DynamoDBHealthDataRepository(IHealthDataRepository):
             if filters:
                 for key, value in filters.items():
                     if key != "user_id":
-                        documents = [
-                            doc for doc in documents
-                            if doc.get(key) == value
-                        ]
+                        documents = [doc for doc in documents if doc.get(key) == value]
 
             result = {
                 "user_id": user_id,
@@ -903,7 +899,8 @@ class DynamoDBHealthDataRepository(IHealthDataRepository):
             # Test connection
             health_status = await self._dynamodb_service.health_check()
             if health_status["status"] != "healthy":
-                raise ConnectionError("DynamoDB connection unhealthy")
+                msg = "DynamoDB connection unhealthy"
+                raise ConnectionError(msg)
 
             logger.info("DynamoDBHealthDataRepository initialized successfully")
 

@@ -1,7 +1,5 @@
 """AWS-specific configuration for CLARITY backend."""
 
-from typing import Optional
-
 from pydantic import Field
 from pydantic_settings import BaseSettings
 

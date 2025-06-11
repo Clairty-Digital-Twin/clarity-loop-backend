@@ -205,42 +205,47 @@ class HealthAnalysisPipeline:
                     dynamodb_client = await self._get_dynamodb_client()
                     # Store analysis results in DynamoDB
                     from decimal import Decimal
+
                     timestamp = datetime.now(UTC)
-                    
+
                     # Convert floats to Decimal for DynamoDB
                     def convert_floats(obj):
                         if isinstance(obj, float):
                             return Decimal(str(obj))
-                        elif isinstance(obj, list):
+                        if isinstance(obj, list):
                             return [convert_floats(item) for item in obj]
-                        elif isinstance(obj, dict):
+                        if isinstance(obj, dict):
                             return {k: convert_floats(v) for k, v in obj.items()}
                         return obj
-                    
+
                     analysis_item = {
                         "pk": f"USER#{user_id}",
                         "sk": f"ANALYSIS#{timestamp.isoformat()}",
                         "processing_id": processing_id,
                         "user_id": user_id,
                         "cardio_features": convert_floats(results.cardio_features),
-                        "respiratory_features": convert_floats(results.respiratory_features),
+                        "respiratory_features": convert_floats(
+                            results.respiratory_features
+                        ),
                         "activity_features": convert_floats(results.activity_features),
-                        "activity_embedding": convert_floats(results.activity_embedding),
+                        "activity_embedding": convert_floats(
+                            results.activity_embedding
+                        ),
                         "sleep_features": convert_floats(results.sleep_features),
                         "fused_vector": convert_floats(results.fused_vector),
                         "summary_stats": convert_floats(results.summary_stats),
-                        "processing_metadata": convert_floats(results.processing_metadata),
+                        "processing_metadata": convert_floats(
+                            results.processing_metadata
+                        ),
                         "created_at": timestamp.isoformat(),
                     }
-                    
+
                     dynamodb_client.table.put_item(Item=analysis_item)
                     self.logger.info(
                         "✅ Analysis results saved to DynamoDB: %s", processing_id
                     )
                 except Exception:
-                    self.logger.exception(
-                        "Failed to save analysis results to DynamoDB"
-                    )
+                    self.logger.exception("Failed to save analysis results to DynamoDB")
                     # Don't fail the entire pipeline if saving fails
 
         except Exception:

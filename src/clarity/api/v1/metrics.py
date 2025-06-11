@@ -386,8 +386,8 @@ class MetricsContext:
 # Export router and helper functions
 __all__ = [
     "MetricsContext",
-    "record_failed_job",
     "record_dynamodb_operation",
+    "record_failed_job",
     "record_health_data_processing",
     "record_health_data_upload",
     "record_health_metric_processed",

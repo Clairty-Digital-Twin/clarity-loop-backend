@@ -95,18 +95,22 @@ class Settings(BaseSettings):
     aws_region: str = Field(default="us-east-1", alias="AWS_REGION")
     aws_access_key_id: str = Field(default="", alias="AWS_ACCESS_KEY_ID")
     aws_secret_access_key: str = Field(default="", alias="AWS_SECRET_ACCESS_KEY")
-    
+
     # AWS Cognito settings
     cognito_user_pool_id: str = Field(default="", alias="COGNITO_USER_POOL_ID")
     cognito_client_id: str = Field(default="", alias="COGNITO_CLIENT_ID")
     cognito_region: str = Field(default="us-east-1", alias="COGNITO_REGION")
-    
+
     # AWS DynamoDB settings
-    dynamodb_table_name: str = Field(default="clarity-health-data", alias="DYNAMODB_TABLE_NAME")
+    dynamodb_table_name: str = Field(
+        default="clarity-health-data", alias="DYNAMODB_TABLE_NAME"
+    )
     dynamodb_region: str = Field(default="us-east-1", alias="DYNAMODB_REGION")
-    
+
     # AWS S3 settings
-    s3_bucket_name: str = Field(default="clarity-health-uploads", alias="S3_BUCKET_NAME")
+    s3_bucket_name: str = Field(
+        default="clarity-health-uploads", alias="S3_BUCKET_NAME"
+    )
     s3_region: str = Field(default="us-east-1", alias="S3_REGION")
 
     # Google Cloud settings (for Gemini AI only)
@@ -217,7 +221,9 @@ class Settings(BaseSettings):
         logger.info("   • Skip external services: %s", self.skip_external_services)
         logger.info("   • Startup timeout: %ss", self.startup_timeout)
         logger.info("   • AWS region: %s", self.aws_region or "Not set")
-        logger.info("   • Cognito User Pool: %s", self.cognito_user_pool_id or "Not set")
+        logger.info(
+            "   • Cognito User Pool: %s", self.cognito_user_pool_id or "Not set"
+        )
         logger.info("   • DynamoDB table: %s", self.dynamodb_table_name or "Not set")
 
     def get_middleware_config(self) -> MiddlewareConfig:

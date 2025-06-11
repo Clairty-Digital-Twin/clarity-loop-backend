@@ -67,7 +67,9 @@ class CognitoAuthProvider(IAuthProvider):
         # Caching configuration
         auth_provider_config = self.middleware_config.get("auth_provider_config", {})
         self.cache_is_enabled = auth_provider_config.get("cache_enabled", True)
-        self._token_cache_ttl_seconds = auth_provider_config.get("cache_ttl_seconds", 300)
+        self._token_cache_ttl_seconds = auth_provider_config.get(
+            "cache_ttl_seconds", 300
+        )
         self._token_cache_max_size = auth_provider_config.get("cache_max_size", 1000)
         self._token_cache: dict[str, dict[str, Any]] = {}
         self._jwks_cache: dict[str, Any] | None = None
@@ -90,8 +92,12 @@ class CognitoAuthProvider(IAuthProvider):
 
         try:
             # Test connection by describing the user pool
-            response = self.cognito_client.describe_user_pool(UserPoolId=self.user_pool_id)
-            logger.info("   -> Connected to Cognito User Pool: %s", response["UserPool"]["Name"])
+            response = self.cognito_client.describe_user_pool(
+                UserPoolId=self.user_pool_id
+            )
+            logger.info(
+                "   -> Connected to Cognito User Pool: %s", response["UserPool"]["Name"]
+            )
 
             # Pre-fetch JWKS for token verification
             await self._get_jwks()
@@ -101,25 +107,30 @@ class CognitoAuthProvider(IAuthProvider):
 
         except ClientError as e:
             logger.exception("💥 Failed to initialize Cognito Authentication Provider")
-            raise RuntimeError("Could not initialize Cognito Auth Provider") from e
+            msg = "Could not initialize Cognito Auth Provider"
+            raise RuntimeError(msg) from e
 
     async def _get_jwks(self) -> dict[str, Any]:
         """Get JSON Web Key Set from Cognito for token verification."""
         current_time = time.time()
 
         # Check cache
-        if self._jwks_cache and (current_time - self._jwks_cache_time) < self._jwks_cache_ttl:
+        if (
+            self._jwks_cache
+            and (current_time - self._jwks_cache_time) < self._jwks_cache_ttl
+        ):
             return self._jwks_cache
 
         try:
             import urllib.request
+
             with urllib.request.urlopen(self.jwks_url) as response:
                 jwks = json.loads(response.read())
                 self._jwks_cache = jwks
                 self._jwks_cache_time = current_time
                 return jwks
         except Exception as e:
-            logger.error("Failed to fetch JWKS: %s", e)
+            logger.exception("Failed to fetch JWKS: %s", e)
             if self._jwks_cache:
                 # Return stale cache if available
                 return self._jwks_cache
@@ -213,7 +224,7 @@ class CognitoAuthProvider(IAuthProvider):
             return user_info
 
         except JWTError as e:
-            logger.error("❌ COGNITO ERROR: JWT verification failed: %s", e)
+            logger.exception("❌ COGNITO ERROR: JWT verification failed: %s", e)
             raise AuthError(
                 message=f"Invalid Cognito token: {e}",
                 status_code=401,
@@ -261,7 +272,10 @@ class CognitoAuthProvider(IAuthProvider):
                     raise
 
             # Extract attributes
-            attributes = {attr["Name"]: attr["Value"] for attr in response.get("UserAttributes", [])}
+            attributes = {
+                attr["Name"]: attr["Value"]
+                for attr in response.get("UserAttributes", [])
+            }
 
             # Extract custom attributes to determine roles
             roles = []
@@ -281,7 +295,9 @@ class CognitoAuthProvider(IAuthProvider):
                     "family_name": attributes.get("family_name"),
                     "phone_number": attributes.get("phone_number"),
                 },
-                "created_at": datetime.now(UTC),  # Cognito doesn't provide creation time easily
+                "created_at": datetime.now(
+                    UTC
+                ),  # Cognito doesn't provide creation time easily
                 "last_login": datetime.now(UTC),  # Would need to track separately
             }
 
@@ -493,11 +509,11 @@ class CognitoAuthProvider(IAuthProvider):
         # Parse dates
         created_at = user_data.get("created_at")
         if isinstance(created_at, str):
-            created_at = datetime.fromisoformat(created_at.replace('Z', '+00:00'))
+            created_at = datetime.fromisoformat(created_at)
 
         last_login = user_data.get("last_login")
         if isinstance(last_login, str):
-            last_login = datetime.fromisoformat(last_login.replace('Z', '+00:00'))
+            last_login = datetime.fromisoformat(last_login)
 
         # Store extra fields in custom_claims for access later
         enriched_claims = user_data.get("custom_claims", {}).copy()

@@ -21,7 +21,7 @@ from clarity.services.messaging.publisher import get_publisher
 logger = logging.getLogger(__name__)
 
 # Configure router
-router = APIRouter(tags=["HealthKit"])
+router = APIRouter(tags=["healthkit"])
 
 # Constants for upload ID validation
 MIN_UPLOAD_ID_PARTS = 2

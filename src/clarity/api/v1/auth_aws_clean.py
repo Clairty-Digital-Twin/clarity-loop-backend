@@ -68,7 +68,7 @@ async def register(
                 detail=str(e),
                 status=409,
             ).model_dump(),
-        )
+        ) from e
     except Exception as e:
         logger.exception("Registration failed")
         raise HTTPException(
@@ -79,7 +79,7 @@ async def register(
                 detail="Failed to register user",
                 status=500,
             ).model_dump(),
-        )
+        ) from e
 
 
 @router.post("/login", response_model=TokenResponse)
@@ -129,7 +129,7 @@ async def login(
                 detail="Failed to authenticate user",
                 status=500,
             ).model_dump(),
-        )
+        ) from e
 
 
 @router.get("/me")
@@ -194,7 +194,7 @@ async def update_user(
                 detail="Failed to update user",
                 status=500,
             ).model_dump(),
-        )
+        ) from e
 
 
 @router.post("/logout")

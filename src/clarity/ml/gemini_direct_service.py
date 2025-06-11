@@ -67,9 +67,9 @@ class GeminiService:
             return response.text
 
         except Exception as e:
-            logger.exception("Error generating health insights: %s", e)
+            logger.exception("Error generating health insights")
             msg = f"Failed to generate insights: {e!s}"
-            raise ServiceError(msg)
+            raise ServiceError(msg) from e
 
     async def analyze_pat_results(
         self,
@@ -89,9 +89,9 @@ class GeminiService:
             return response.text
 
         except Exception as e:
-            logger.exception("Error analyzing PAT results: %s", e)
+            logger.exception("Error analyzing PAT results")
             msg = f"Failed to analyze PAT results: {e!s}"
-            raise ServiceError(msg)
+            raise ServiceError(msg) from e
 
     async def generate_recommendations(
         self,
@@ -115,9 +115,9 @@ class GeminiService:
             return self._parse_recommendations(response.text)
 
         except Exception as e:
-            logger.exception("Error generating recommendations: %s", e)
+            logger.exception("Error generating recommendations")
             msg = f"Failed to generate recommendations: {e!s}"
-            raise ServiceError(msg)
+            raise ServiceError(msg) from e
 
     def _build_health_insights_prompt(
         self, health_data: dict[str, Any], user_context: dict[str, Any] | None = None

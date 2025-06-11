@@ -83,9 +83,9 @@ class DependencyContainer:
             logger.info("AWS dependency container initialized successfully")
 
         except Exception as e:
-            logger.exception("Failed to initialize container: %s", e)
+            logger.exception("Failed to initialize container")
             msg = f"Container initialization failed: {e!s}"
-            raise ConfigurationError(msg)
+            raise ConfigurationError(msg) from e
 
     async def _initialize_auth_provider(self) -> None:
         """Initialize AWS Cognito auth provider with fallback to mock."""
@@ -133,7 +133,7 @@ class DependencyContainer:
                 ).inc()
 
             except Exception as e:
-                logger.exception("Failed to initialize Cognito: %s", e)
+                logger.exception("Failed to initialize Cognito")
                 service_initialization_counter.labels(
                     service=service_name, status="error"
                 ).inc()
@@ -174,7 +174,7 @@ class DependencyContainer:
                 ).inc()
 
             except Exception as e:
-                logger.exception("Failed to initialize DynamoDB: %s", e)
+                logger.exception("Failed to initialize DynamoDB")
                 service_initialization_counter.labels(
                     service=service_name, status="error"
                 ).inc()
@@ -214,7 +214,7 @@ class DependencyContainer:
                 ).inc()
 
             except Exception as e:
-                logger.exception("Failed to initialize Gemini service: %s", e)
+                logger.exception("Failed to initialize Gemini service")
                 service_initialization_counter.labels(
                     service=service_name, status="error"
                 ).inc()

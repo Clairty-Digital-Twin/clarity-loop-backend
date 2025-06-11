@@ -200,7 +200,7 @@ class SQSMessagingService:
             return response["MessageId"]
 
         except ClientError as e:
-            logger.exception("SNS publish error: %s", e)
+            logger.exception("SNS publish error")
             msg = f"Failed to publish to SNS: {e!s}"
             raise MessagingError(msg) from e
 

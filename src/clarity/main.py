@@ -57,16 +57,22 @@ async def lifespan(app: FastAPI):
     logger.info("Cognito Region: %s", COGNITO_REGION)
     logger.info("Auth Enabled: %s", ENABLE_AUTH)
 
-    # Initialize DynamoDB table
+    # Initialize DynamoDB table (skip in development without credentials)
     try:
         table = dynamodb.Table(DYNAMODB_TABLE)
         table.load()
-        logger.info("Connected to DynamoDB table: %s", DYNAMODB_TABLE)
+        logger.info("✅ Connected to DynamoDB table: %s", DYNAMODB_TABLE)
     except ClientError as e:
         if e.response["Error"]["Code"] == "ResourceNotFoundException":
-            logger.warning("DynamoDB table %s not found", DYNAMODB_TABLE)
+            logger.warning("⚠️  DynamoDB table %s not found", DYNAMODB_TABLE)
         else:
-            logger.exception("DynamoDB error")
+            logger.exception("❌ DynamoDB error")
+    except Exception as e:
+        # Handle credentials errors and other AWS connectivity issues
+        if "NoCredentialsError" in str(e) or "Unable to locate credentials" in str(e):
+            logger.warning("🔧 Development mode: AWS credentials not available - running in local mode")
+        else:
+            logger.warning("⚠️  AWS connection issue (continuing in local mode): %s", str(e))
 
     yield
 

@@ -1,7 +1,7 @@
 """Mock Health Data Repository for Development.
 
 Provides in-memory implementation of IHealthDataRepository for development
-and testing without requiring external dependencies like Firestore.
+and testing without requiring external dependencies.
 
 Following Clean Architecture and SOLID principles.
 """

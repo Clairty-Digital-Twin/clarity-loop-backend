@@ -56,7 +56,7 @@ RUN cat > /app/entrypoint.sh << 'EOF'
 set -e
 echo "🚀 Starting CLARITY Digital Twin Backend - FULL VERSION"
 echo "📊 Total API endpoints available"
-exec gunicorn -c /app/gunicorn.aws.conf.py clarity.main:app
+cd /app && export PYTHONPATH=/app:/app/src && exec gunicorn -c /app/gunicorn.aws.conf.py src.clarity.main:app
 EOF
 
 RUN chmod +x /app/entrypoint.sh

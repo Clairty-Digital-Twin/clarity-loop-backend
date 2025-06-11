@@ -1,0 +1,60 @@
+# CLARITY AWS Production Dockerfile - ALL 38+ ENDPOINTS
+FROM python:3.11-slim
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl \
+    gcc \
+    python3-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+# Copy project files
+COPY pyproject.toml LICENSE README.md ./
+
+# Install Python dependencies from pyproject.toml
+RUN pip install --no-cache-dir --upgrade pip setuptools wheel && \
+    pip install -e .
+
+# Copy source code
+COPY src/ ./src/
+
+# Copy gunicorn config
+COPY gunicorn.aws.conf.py ./
+
+# Create proper entrypoint that ensures all routers are loaded
+RUN cat > /app/entrypoint.sh << 'EOF'
+#!/bin/sh
+set -e
+echo "🚀 Starting CLARITY Digital Twin Backend - PRODUCTION"
+echo "📊 Loading 38+ API endpoints from all modules"
+echo "🔧 Environment: $ENVIRONMENT"
+echo "🔐 Auth Enabled: $ENABLE_AUTH"
+
+# Ensure we're using the main.py with ALL routers included
+cd /app && export PYTHONPATH=/app:/app/src
+
+# Start with gunicorn - this loads src/clarity/main.py which includes ALL routers
+exec gunicorn -c /app/gunicorn.aws.conf.py src.clarity.main:app
+EOF
+
+RUN chmod +x /app/entrypoint.sh
+
+# Create non-root user
+RUN useradd -m -u 1000 appuser && \
+    chown -R appuser:appuser /app
+
+USER appuser
+
+EXPOSE 8000
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
+    CMD curl -f http://localhost:8000/health || exit 1
+
+# Environment
+ENV PYTHONPATH=/app
+ENV PYTHONUNBUFFERED=1
+
+ENTRYPOINT ["/app/entrypoint.sh"]

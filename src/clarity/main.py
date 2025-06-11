@@ -98,15 +98,13 @@ app.add_middleware(
 # Include ALL API routers
 # =============================================================================
 
-# Import the main v1 router that includes ALL sub-routers including WebSocket
-from clarity.api.v1.debug import router as debug_router
-from clarity.api.v1.router import api_router as v1_router
+# Import the CLEAN AWS router - no duplicates
+from clarity.api.v1.router_aws_clean import api_router as v1_router
 
-# Include the main v1 router which has all endpoints including WebSocket
+# Include ONLY the clean router - professional single source of truth
 app.include_router(v1_router, prefix="/api/v1", tags=["API v1"])
-app.include_router(debug_router, prefix="/api/v1/debug", tags=["Debug"])
 
-logger.info("✅ Included ALL routers - expecting 50+ total endpoints")
+logger.info("✅ Included CLEAN router - professional endpoint structure")
 
 # =============================================================================
 # App Factory for Testing

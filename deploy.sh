@@ -1,11 +1,11 @@
 #!/bin/bash
 set -e
 
-# CLARITY Digital Twin Backend - CLEAN PRODUCTION DEPLOYMENT
-# M1 Mac → AWS AMD64 - 34 ENDPOINTS CLEAN
+# CLARITY Digital Twin - Professional AWS Deployment
+# Enterprise ML Health Platform - Single Clean Deployment Script
 
-echo "🚀 CLARITY CLEAN DEPLOYMENT - 34 ENDPOINTS"
-echo "==========================================="
+echo "🚀 CLARITY ENTERPRISE DEPLOYMENT"
+echo "================================"
 
 # Configuration
 AWS_REGION="us-east-1"
@@ -13,7 +13,7 @@ AWS_ACCOUNT_ID="124355672559"
 ECR_REPOSITORY="clarity-backend"
 CLUSTER_NAME="clarity-backend-cluster"
 SERVICE_NAME="clarity-backend-service"
-IMAGE_TAG="clean-$(date +%Y%m%d-%H%M)"
+IMAGE_TAG="production-$(date +%Y%m%d-%H%M)"
 
 echo "📊 Deployment Info:"
 echo "Region: ${AWS_REGION}"
@@ -26,9 +26,12 @@ echo "🔐 Logging into ECR..."
 aws ecr get-login-password --region ${AWS_REGION} | \
     docker login --username AWS --password-stdin ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com
 
-# Use the already built enterprise image and tag it
-echo "🏗️ Using ENTERPRISE ML image (3.52GB with ALL dependencies)..."
-docker tag clarity-loop-backend-clarity-backend:latest ${ECR_REPOSITORY}:${IMAGE_TAG}
+# Build enterprise ML image
+echo "🏗️ Building enterprise ML image..."
+docker build \
+    -t ${ECR_REPOSITORY}:${IMAGE_TAG} \
+    --platform linux/amd64 \
+    .
 
 # Tag for ECR
 echo "🏷️ Tagging for ECR..."
@@ -39,9 +42,9 @@ docker tag ${ECR_REPOSITORY}:${IMAGE_TAG} \
 echo "📤 Pushing to ECR..."
 docker push ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPOSITORY}:${IMAGE_TAG}
 
-# Create new task definition with CLEAN configuration
-echo "📋 Creating clean task definition..."
-cat > task-definition-clean.json << EOF
+# Create production task definition
+echo "📋 Creating production task definition..."
+cat > task-definition.json << EOF
 {
   "family": "clarity-backend",
   "networkMode": "awsvpc",
@@ -69,8 +72,7 @@ cat > task-definition-clean.json << EOF
         {"name": "COGNITO_REGION", "value": "${AWS_REGION}"},
         {"name": "DYNAMODB_TABLE_NAME", "value": "clarity-health-data"},
         {"name": "S3_BUCKET_NAME", "value": "clarity-health-uploads"},
-        {"name": "ENABLE_AUTH", "value": "true"},
-        {"name": "REDIS_URL", "value": "redis://clarity-redis-cluster.redis.use1.cache.amazonaws.com:6379"}
+        {"name": "ENABLE_AUTH", "value": "true"}
       ],
       "healthCheck": {
         "command": ["CMD-SHELL", "curl -f http://localhost:8000/health || exit 1"],
@@ -94,26 +96,29 @@ EOF
 
 # Register task definition
 echo "📝 Registering task definition..."
-aws ecs register-task-definition \
-    --cli-input-json file://task-definition-clean.json \
-    --region ${AWS_REGION}
+TASK_DEFINITION_ARN=$(aws ecs register-task-definition \
+    --cli-input-json file://task-definition.json \
+    --region ${AWS_REGION} \
+    --query 'taskDefinition.taskDefinitionArn' \
+    --output text)
 
-# Update service with new task definition
+# Update service
 echo "🔄 Updating ECS service..."
 aws ecs update-service \
     --cluster ${CLUSTER_NAME} \
     --service ${SERVICE_NAME} \
+    --task-definition ${TASK_DEFINITION_ARN} \
     --desired-count 1 \
     --region ${AWS_REGION}
 
 # Clean up
-rm task-definition-clean.json
+rm task-definition.json
 
 echo ""
-echo "✅ CLEAN DEPLOYMENT COMPLETE!"
+echo "✅ PROFESSIONAL DEPLOYMENT COMPLETE!"
 echo "🌐 Load Balancer: clarity-alb-1762715656.us-east-1.elb.amazonaws.com"
 echo "📊 Image: ${IMAGE_TAG}"
 echo "🏥 Health: http://clarity-alb-1762715656.us-east-1.elb.amazonaws.com/health"
 echo "📖 Docs: http://clarity-alb-1762715656.us-east-1.elb.amazonaws.com/docs"
 echo ""
-echo "🎉 34 CLEAN ENDPOINTS DEPLOYED TO AWS!"
+echo "🎉 ENTERPRISE ML PLATFORM DEPLOYED!"

@@ -1,6 +1,6 @@
 """Tests for HealthKit upload API endpoint."""
 
-from unittest.mock import Mock, patch
+from unittest.mock import AsyncMock, Mock, patch
 
 from fastapi import FastAPI, HTTPException, status
 from fastapi.testclient import TestClient
@@ -166,7 +166,7 @@ class TestHealthKitUploadEndpoint:
         mock_storage_client.return_value.bucket.return_value = mock_bucket
 
         # Mock publisher
-        mock_publisher = Mock()
+        mock_publisher = AsyncMock()
         mock_get_publisher.return_value = mock_publisher
 
         # Call the endpoint
@@ -304,7 +304,7 @@ class TestHealthKitUploadIntegration:
 
     def test_router_configuration(self) -> None:  # noqa: PLR6301
         """Test that the router is properly configured."""
-        assert router.prefix == "/api/v1/healthkit"
+        # Router prefix is set when included in parent router, not on the router itself
         assert "HealthKit" in router.tags
 
     def test_router_endpoints(self) -> None:  # noqa: PLR6301
@@ -317,11 +317,11 @@ class TestHealthKitUploadIntegration:
     def test_router_with_test_client(self) -> None:  # noqa: PLR6301
         """Test router with FastAPI test client."""
         app = FastAPI()
-        app.include_router(router)
+        app.include_router(router, prefix="/healthkit")
 
         with TestClient(app) as client:
             # Test that endpoints are accessible (will fail auth but endpoint should be reachable)
-            response = client.get("/api/v1/healthkit/status/test-upload-id")
+            response = client.get("/healthkit/status/test-upload-id")
             # We expect it to fail auth/validation, but the endpoint should be reachable
             assert response.status_code in {
                 400,  # Bad Request (invalid upload ID format)

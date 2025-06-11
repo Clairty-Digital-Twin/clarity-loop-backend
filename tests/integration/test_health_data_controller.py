@@ -33,7 +33,7 @@ class TestHealthDataController:
         """Create FastAPI test app with mocked dependencies."""
         # Create FastAPI app with router
         app = FastAPI()
-        app.include_router(router, prefix="/api/v1")
+        app.include_router(router, prefix="/api/v1/health-data")
 
         # Mock all dependencies (no real implementations)
         mock_auth_provider = Mock(spec=IAuthProvider)

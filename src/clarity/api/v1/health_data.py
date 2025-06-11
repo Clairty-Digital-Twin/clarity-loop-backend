@@ -51,6 +51,16 @@ logger = logging.getLogger(__name__)
 # Initialize router
 router = APIRouter(tags=["Health Data"])
 
+
+@router.get("/health", summary="Health Check")
+async def health_check() -> dict[str, Any]:
+    """Health check endpoint for the health data API."""
+    return {
+        "status": "healthy",
+        "service": "health-data-api",
+        "timestamp": datetime.now(UTC).isoformat(),
+    }
+
 # Query parameter constants to fix B008 linting issues
 _START_DATE_QUERY = Query(None, description="Filter from date (ISO 8601)")
 _END_DATE_QUERY = Query(None, description="Filter to date (ISO 8601)")

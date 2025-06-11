@@ -140,9 +140,9 @@ async def upload_healthkit_data(
         )
 
         # 4. Publish to Pub/Sub for processing
-        publisher = get_publisher()
+        publisher = await get_publisher()
 
-        publisher.publish_health_data_upload(
+        await publisher.publish_health_data_upload(
             user_id=request.user_id,
             upload_id=upload_id,
             gcs_path=f"gs://{bucket_name}/{blob_path}",

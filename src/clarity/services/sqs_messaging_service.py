@@ -141,7 +141,7 @@ class SQSMessagingService:
             logger.info("Successfully deleted message from SQS")
 
         except ClientError as e:
-            logger.exception("SQS delete error: %s", e)
+            logger.exception("SQS delete error")
             msg = f"Failed to delete message: {e!s}"
             raise MessagingError(msg) from e
 

@@ -78,7 +78,8 @@ class Settings(BaseSettings):
     port: int = Field(default=8080, alias="PORT")
     log_level: str = Field(default="INFO", alias="LOG_LEVEL")
     cors_origins: list[str] = Field(
-        default=["http://localhost:3000", "http://localhost:8080"], alias="CORS_ORIGINS"
+        default_factory=lambda: ["http://localhost:3000", "http://localhost:8080"],
+        alias="CORS_ORIGINS"
     )
 
     # External service flags

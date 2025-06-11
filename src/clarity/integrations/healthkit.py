@@ -328,7 +328,7 @@ class HealthKitClient:
         except AuthorizationError:
             raise
         except Exception as e:
-            logger.exception("Failed to refresh access token", extra={"error": str(e)})
+            logger.exception("Failed to refresh access token")
             error_msg = f"Token refresh failed: {e}"
             raise AuthorizationError(error_msg) from e
         else:

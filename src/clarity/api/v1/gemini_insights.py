@@ -243,7 +243,7 @@ def create_error_response(
 async def generate_insights(
     insight_request: InsightGenerationRequest,
     current_user: AuthenticatedUser,
-    gemini_service: GeminiService = Depends(get_gemini_service),  # noqa: B008
+    gemini_service: GeminiService = Depends(get_gemini_service),
 ) -> InsightGenerationResponse:
     """Generate new health insights from analysis data.
 
@@ -557,7 +557,7 @@ async def get_insight_history(
 )
 async def get_service_status(
     current_user: AuthenticatedUser,
-    gemini_service: GeminiService = Depends(get_gemini_service),  # noqa: B008
+    gemini_service: GeminiService = Depends(get_gemini_service),
 ) -> ServiceStatusResponse:
     """Check Gemini service health status.
 

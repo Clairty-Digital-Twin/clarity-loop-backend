@@ -216,7 +216,7 @@ def get_config_provider() -> IConfigProvider:
 async def upload_health_data(
     health_data: HealthDataUpload,
     current_user: AuthenticatedUser,
-    service: HealthDataService = Depends(get_health_data_service),  # noqa: B008
+    service: HealthDataService = Depends(get_health_data_service),
 ) -> HealthDataResponse:
     """🔥 Upload health data with enterprise-grade processing."""
     try:
@@ -333,7 +333,7 @@ async def upload_health_data(
 async def get_processing_status(
     processing_id: UUID,
     current_user: AuthenticatedUser,
-    service: HealthDataService = Depends(get_health_data_service),  # noqa: B008
+    service: HealthDataService = Depends(get_health_data_service),
 ) -> dict[str, Any]:
     """🔥 Get processing status with detailed progress information."""
     try:
@@ -441,7 +441,7 @@ async def list_health_data(  # noqa: PLR0913, PLR0917
     source: str | None = Query(
         None, description="Filter by data source (apple_watch, fitbit, etc.)"
     ),
-    service: HealthDataService = Depends(get_health_data_service),  # noqa: B008
+    service: HealthDataService = Depends(get_health_data_service),
 ) -> PaginatedResponse[dict[str, Any]]:
     """🔥 Retrieve paginated health data with professional pagination."""
     try:
@@ -551,7 +551,7 @@ async def query_health_data_legacy(
     metric_type: str | None = Query(None, description="Filter by metric type"),
     start_date: datetime | None = _LEGACY_START_DATE_QUERY,
     end_date: datetime | None = _LEGACY_END_DATE_QUERY,
-    service: HealthDataService = Depends(get_health_data_service),  # noqa: B008
+    service: HealthDataService = Depends(get_health_data_service),
 ) -> dict[str, Any]:
     """🔄 Legacy health data query endpoint (deprecated)."""
     try:
@@ -611,7 +611,7 @@ async def query_health_data_legacy(
 async def delete_health_data(
     processing_id: UUID,
     current_user: AuthenticatedUser,
-    service: HealthDataService = Depends(get_health_data_service),  # noqa: B008
+    service: HealthDataService = Depends(get_health_data_service),
 ) -> dict[str, str]:
     """🔥 Delete health data with proper authorization and audit trail."""
     try:

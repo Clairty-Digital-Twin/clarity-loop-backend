@@ -141,7 +141,7 @@ async def analyze_step_data(
     request: StepDataRequest,
     background_tasks: BackgroundTasks,  # noqa: ARG001
     current_user: AuthenticatedUser,
-    inference_engine: AsyncInferenceEngine = Depends(  # noqa: B008
+    inference_engine: AsyncInferenceEngine = Depends(
         get_pat_inference_engine
     ),
 ) -> AnalysisResponse:
@@ -241,7 +241,7 @@ async def analyze_step_data(
 async def analyze_actigraphy_data(
     request: DirectActigraphyRequest,
     current_user: AuthenticatedUser,
-    inference_engine: AsyncInferenceEngine = Depends(  # noqa: B008
+    inference_engine: AsyncInferenceEngine = Depends(
         get_pat_inference_engine
     ),
 ) -> AnalysisResponse:
@@ -469,7 +469,7 @@ def _get_analysis_repository() -> DynamoDBHealthDataRepository:
     description="Check the health status of the PAT analysis service",
 )
 async def health_check(
-    inference_engine: AsyncInferenceEngine = Depends(  # noqa: B008
+    inference_engine: AsyncInferenceEngine = Depends(
         get_pat_inference_engine
     ),
 ) -> HealthCheckResponse:
@@ -518,7 +518,7 @@ async def health_check(
 )
 async def get_model_info(
     current_user: AuthenticatedUser,
-    inference_engine: AsyncInferenceEngine = Depends(  # noqa: B008
+    inference_engine: AsyncInferenceEngine = Depends(
         get_pat_inference_engine
     ),
 ) -> dict[str, Any]:

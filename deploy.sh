@@ -80,7 +80,8 @@ cat > task-definition.json << EOF
         {"name": "S3_BUCKET_NAME", "value": "clarity-health-uploads"},
         {"name": "ENABLE_AUTH", "value": "true"},
         {"name": "DEBUG", "value": "false"},
-        {"name": "SKIP_EXTERNAL_SERVICES", "value": "false"}
+        {"name": "SKIP_EXTERNAL_SERVICES", "value": "false"},
+        {"name": "GEMINI_API_KEY", "value": "${GEMINI_API_KEY:-dummy_key_for_mock_mode}"}
       ],
       "healthCheck": {
         "command": ["CMD-SHELL", "curl -f http://localhost:8000/health || exit 1"],

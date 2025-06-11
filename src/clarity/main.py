@@ -29,6 +29,7 @@ GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
 API_KEY = os.getenv("CLARITY_API_KEY", "development-key")
 ENVIRONMENT = os.getenv("ENVIRONMENT", "development")
 ENABLE_AUTH = os.getenv("ENABLE_AUTH", "true").lower() == "true"
+SKIP_AWS_INIT = os.getenv("SKIP_AWS_INIT", "false").lower() == "true"
 
 # Initialize AWS clients
 session = boto3.Session(region_name=AWS_REGION)
@@ -57,22 +58,25 @@ async def lifespan(app: FastAPI):
     logger.info("Cognito Region: %s", COGNITO_REGION)
     logger.info("Auth Enabled: %s", ENABLE_AUTH)
 
-    # Initialize DynamoDB table (skip in development without credentials)
-    try:
-        table = dynamodb.Table(DYNAMODB_TABLE)
-        table.load()
-        logger.info("✅ Connected to DynamoDB table: %s", DYNAMODB_TABLE)
-    except ClientError as e:
-        if e.response["Error"]["Code"] == "ResourceNotFoundException":
-            logger.warning("⚠️  DynamoDB table %s not found", DYNAMODB_TABLE)
-        else:
-            logger.exception("❌ DynamoDB error")
-    except Exception as e:
-        # Handle credentials errors and other AWS connectivity issues
-        if "NoCredentialsError" in str(e) or "Unable to locate credentials" in str(e):
-            logger.warning("🔧 Development mode: AWS credentials not available - running in local mode")
-        else:
-            logger.warning("⚠️  AWS connection issue (continuing in local mode): %s", str(e))
+    # Initialize DynamoDB table (skip if explicitly disabled or credentials unavailable)
+    if SKIP_AWS_INIT:
+        logger.info("🔧 AWS initialization skipped via SKIP_AWS_INIT flag")
+    else:
+        try:
+            table = dynamodb.Table(DYNAMODB_TABLE)
+            table.load()
+            logger.info("✅ Connected to DynamoDB table: %s", DYNAMODB_TABLE)
+        except ClientError as e:
+            if e.response["Error"]["Code"] == "ResourceNotFoundException":
+                logger.warning("⚠️  DynamoDB table %s not found", DYNAMODB_TABLE)
+            else:
+                logger.exception("❌ DynamoDB error")
+        except Exception as e:
+            # Handle credentials errors and other AWS connectivity issues
+            if "NoCredentialsError" in str(e) or "Unable to locate credentials" in str(e):
+                logger.warning("🔧 Development mode: AWS credentials not available - running in local mode")
+            else:
+                logger.warning("⚠️  AWS connection issue (continuing in local mode): %s", str(e))
 
     yield
 

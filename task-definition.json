@@ -13,7 +13,7 @@
   "containerDefinitions": [
     {
       "name": "clarity-backend",
-      "image": "124355672559.dkr.ecr.us-east-1.amazonaws.com/clarity-backend:clean-20250611-1653",
+      "image": "124355672559.dkr.ecr.us-east-1.amazonaws.com/clarity-backend:clean-20250611-1729",
       "portMappings": [
         {
           "containerPort": 8000,
@@ -33,7 +33,9 @@
         {"name": "S3_BUCKET_NAME", "value": "clarity-health-uploads"},
         {"name": "ENABLE_AUTH", "value": "true"},
         {"name": "DEBUG", "value": "false"},
-        {"name": "SKIP_EXTERNAL_SERVICES", "value": "false"}
+        {"name": "SKIP_EXTERNAL_SERVICES", "value": "true"},
+        {"name": "GEMINI_API_KEY", "value": "dummy_key_for_mock_mode"},
+        {"name": "SKIP_AWS_INIT", "value": "true"}
       ],
       "healthCheck": {
         "command": ["CMD-SHELL", "curl -f http://localhost:8000/health || exit 1"],

@@ -31,11 +31,20 @@ ENVIRONMENT = os.getenv("ENVIRONMENT", "development")
 ENABLE_AUTH = os.getenv("ENABLE_AUTH", "true").lower() == "true"
 SKIP_AWS_INIT = os.getenv("SKIP_AWS_INIT", "false").lower() == "true"
 
-# Initialize AWS clients
-session = boto3.Session(region_name=AWS_REGION)
-dynamodb = boto3.resource("dynamodb", region_name=AWS_REGION)
-cognito_client = session.client("cognito-idp", region_name=COGNITO_REGION)
-s3_client = session.client("s3")
+# Initialize AWS clients (defer until needed to avoid credential errors)
+session = None
+dynamodb = None
+cognito_client = None
+s3_client = None
+
+def init_aws_clients():
+    """Initialize AWS clients when needed."""
+    global session, dynamodb, cognito_client, s3_client
+    if session is None:
+        session = boto3.Session(region_name=AWS_REGION)
+        dynamodb = boto3.resource("dynamodb", region_name=AWS_REGION)
+        cognito_client = session.client("cognito-idp", region_name=COGNITO_REGION)
+        s3_client = session.client("s3")
 
 # Initialize Gemini if available
 if GEMINI_API_KEY:
@@ -63,6 +72,8 @@ async def lifespan(app: FastAPI):
         logger.info("🔧 AWS initialization skipped via SKIP_AWS_INIT flag")
     else:
         try:
+            # Initialize AWS clients first
+            init_aws_clients()
             table = dynamodb.Table(DYNAMODB_TABLE)
             table.load()
             logger.info("✅ Connected to DynamoDB table: %s", DYNAMODB_TABLE)

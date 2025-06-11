@@ -82,11 +82,11 @@ class SQSMessagingService:
             return response["MessageId"]
 
         except ClientError as e:
-            logger.exception("SQS publish error: %s", e)
+            logger.exception("SQS publish error")
             msg = f"Failed to publish message: {e!s}"
             raise MessagingError(msg) from e
         except Exception as e:
-            logger.exception("Unexpected error publishing message: %s", e)
+            logger.exception("Unexpected error publishing message")
             msg = f"Failed to publish message: {e!s}"
             raise MessagingError(msg) from e
 

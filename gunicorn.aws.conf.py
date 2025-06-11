@@ -1,7 +1,6 @@
 """Gunicorn configuration for AWS production deployment."""
 
 import multiprocessing
-import os
 
 # Server socket
 bind = "0.0.0.0:8000"
@@ -41,7 +40,3 @@ preload_app = True
 
 # Enable thread-safety
 threads = 4
-
-# StatsD for monitoring (optional)
-# statsd_host = "localhost:8125"
-# statsd_prefix = "clarity.backend"

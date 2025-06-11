@@ -173,7 +173,7 @@ class DependencyContainer:
                     service=service_name, status="success"
                 ).inc()
 
-            except Exception as e:
+            except Exception:
                 logger.exception("Failed to initialize DynamoDB")
                 service_initialization_counter.labels(
                     service=service_name, status="error"
@@ -213,7 +213,7 @@ class DependencyContainer:
                     service=service_name, status="success"
                 ).inc()
 
-            except Exception as e:
+            except Exception:
                 logger.exception("Failed to initialize Gemini service")
                 service_initialization_counter.labels(
                     service=service_name, status="error"
@@ -300,7 +300,7 @@ _container: DependencyContainer | None = None
 
 def get_container() -> DependencyContainer:
     """Get the global dependency container instance."""
-    global _container
+    global _container  # noqa: PLW0603
     if _container is None:
         _container = DependencyContainer()
     return _container
@@ -308,7 +308,7 @@ def get_container() -> DependencyContainer:
 
 async def initialize_container(settings: Settings | None = None) -> DependencyContainer:
     """Initialize and return the global container."""
-    global _container
+    global _container  # noqa: PLW0603
     _container = DependencyContainer(settings)
     await _container.initialize()
     return _container

@@ -1,6 +1,6 @@
 """AWS SQS messaging service for asynchronous processing."""
 
-from datetime import datetime
+from datetime import UTC, datetime
 import json
 import logging
 from typing import Any
@@ -55,7 +55,7 @@ class SQSMessagingService:
             message_body = {
                 "id": message_id,
                 "type": message_type,
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(UTC).isoformat(),
                 "data": data,
             }
 

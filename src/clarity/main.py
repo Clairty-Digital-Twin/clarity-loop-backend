@@ -3,7 +3,7 @@ Pure AWS implementation with all 35+ endpoints.
 """
 
 from contextlib import asynccontextmanager
-from datetime import datetime
+from datetime import UTC, datetime
 import logging
 import os
 from typing import Any
@@ -361,7 +361,7 @@ async def store_health_data(
     try:
         user_id = current_user.get("user_id")
         data_id = (
-            f"{data.data_type}_{uuid.uuid4().hex[:8]}_{datetime.utcnow().timestamp()}"
+            f"{data.data_type}_{uuid.uuid4().hex[:8]}_{datetime.now(UTC).timestamp()}"
         )
 
         item = {
@@ -371,7 +371,7 @@ async def store_health_data(
             "value": str(data.value),
             "timestamp": data.timestamp,
             "unit": data.unit,
-            "created_at": datetime.utcnow().isoformat(),
+            "created_at": datetime.now(UTC).isoformat(),
             "metadata": data.metadata or {},
         }
 
@@ -447,7 +447,7 @@ async def upload_healthkit_data(
         # Upload to S3
         user_id = current_user.get("user_id")
         file_key = (
-            f"healthkit/{user_id}/{datetime.utcnow().isoformat()}_{file.filename}"
+            f"healthkit/{user_id}/{datetime.now(UTC).isoformat()}_{file.filename}"
         )
 
         s3_client.upload_fileobj(file.file, S3_BUCKET_NAME, file_key)
@@ -598,7 +598,7 @@ async def get_metrics_summary(
 @app.get("/api/v1/test/ping")
 async def test_ping():
     """Simple test endpoint."""
-    return {"pong": True, "timestamp": datetime.utcnow().isoformat()}
+    return {"pong": True, "timestamp": datetime.now(UTC).isoformat()}
 
 
 @app.get("/api/v1/debug/info")

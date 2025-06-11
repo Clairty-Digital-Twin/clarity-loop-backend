@@ -1,7 +1,7 @@
 """AWS DynamoDB implementation for health data storage."""
 
 from collections.abc import AsyncIterator
-from datetime import datetime
+from datetime import UTC, datetime
 from decimal import Decimal
 import logging
 from typing import Any
@@ -81,7 +81,7 @@ class DynamoDBHealthDataRepository(IHealthDataRepository):
         """Save health data to DynamoDB."""
         try:
             # Generate unique ID (timestamp-based)
-            timestamp = datetime.utcnow()
+            timestamp = datetime.now(UTC)
             item_id = f"{user_id}#{timestamp.isoformat()}"
 
             # Prepare item for DynamoDB
@@ -242,7 +242,7 @@ class DynamoDBHealthDataRepository(IHealthDataRepository):
             update_expr = "SET processing_status = :status, updated_at = :updated"
             expr_values = {
                 ":status": status.value,
-                ":updated": datetime.utcnow().isoformat(),
+                ":updated": datetime.now(UTC).isoformat(),
             }
 
             if analysis_results:
@@ -288,7 +288,7 @@ class DynamoDBHealthDataRepository(IHealthDataRepository):
     async def create_user(self, user_id: str, email: str, name: str) -> User:
         """Create user in DynamoDB."""
         try:
-            now = datetime.utcnow()
+            now = datetime.now(UTC)
 
             item = {
                 "pk": f"USER#{user_id}",

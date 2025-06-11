@@ -16,7 +16,7 @@ def fix_logging_fstring(line: str) -> str:
         (r"(logging\.\w+)\(f'([^']+)'\)", r'\1("\2")'),
     ]
 
-    for pattern, replacement in patterns:
+    for pattern, _replacement in patterns:
         if re.search(pattern, line):
             # Extract the f-string content
             match = re.search(pattern, line)
@@ -34,10 +34,9 @@ def fix_logging_fstring(line: str) -> str:
 
                     # Build the new logging call
                     args = ", ".join(expressions)
-                    new_line = re.sub(
+                    return re.sub(
                         pattern, f'{method}("{format_string}", {args})', line
                     )
-                    return new_line
 
     return line
 
@@ -72,7 +71,7 @@ def process_file(filepath: Path) -> int:
     return changes
 
 
-def main():
+def main() -> None:
     """Main function."""
     # Get all Python files
     root = Path.cwd()

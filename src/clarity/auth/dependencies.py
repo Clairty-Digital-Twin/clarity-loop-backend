@@ -2,7 +2,7 @@
 
 This module provides the single source of truth for authentication dependencies
 following Robert C. Martin's principles and security best practices.
-Now supports both Firebase and AWS authentication backends.
+Uses AWS Cognito for authentication backend.
 """
 
 import logging
@@ -27,19 +27,18 @@ def get_authenticated_user(
 
     This is the primary authentication dependency that should be used
     for all protected endpoints. It returns a UserContext which includes:
-    - User ID from Firebase
+    - User ID from AWS Cognito
     - Email and verification status
-    - Role and permissions from Firestore
+    - Role and permissions from DynamoDB
     - Additional user metadata
 
     The middleware handles:
-    - Token verification
-    - Firestore record creation (if needed)
+    - JWT token verification via AWS Cognito
+    - DynamoDB record creation (if needed)
     - User context enrichment
 
     Args:
         request: FastAPI request object
-        credentials: Optional bearer token
 
     Returns:
         UserContext with complete user information
@@ -47,7 +46,7 @@ def get_authenticated_user(
     Raises:
         HTTPException: 401 if not authenticated
     """
-    # MODAL FIX: Check contextvars first (Modal doesn't propagate request.state properly)
+    # Check contextvars first (Modal doesn't propagate request.state properly)
     from clarity.auth.modal_auth_fix import get_user_context
 
     user_context = get_user_context()
@@ -170,12 +169,13 @@ def user_context_to_simple_user(context: UserContext) -> User:
         uid=context.user_id,
         email=context.email,
         display_name=getattr(context, "display_name", None),
-        email_verified=context.is_verified,
-        firebase_token="",  # Not available from context
-        firebase_token_exp=None,
+        cognito_token="",  # Not available from context
+        cognito_token_exp=None,
+        role=getattr(context, "role", "user"),
         created_at=context.created_at,
         last_login=context.last_login,
-        profile=None,
+        is_active=getattr(context, "is_active", True),
+        metadata=getattr(context, "metadata", {}),
     )
 
 
@@ -186,7 +186,7 @@ def get_websocket_user(token: str, request: Request) -> UserContext:
     in headers, so we need special handling.
 
     Args:
-        token: Firebase ID token from query parameter
+        token: AWS Cognito JWT token from query parameter
         request: FastAPI request object (for state access)
 
     Returns:

@@ -4,12 +4,17 @@ Pydantic models for authentication request/response validation.
 Supports user registration, login, token management, and role-based access control.
 """
 
+from __future__ import annotations
+
+from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from enum import StrEnum
-from typing import Any, Literal
+from typing import Any, Dict, List, Literal, Optional, Union
 from uuid import UUID
 
 from pydantic import BaseModel, EmailStr, Field, field_validator
+
+from clarity.models.user import User
 
 # Constants for validation
 MIN_PASSWORD_LENGTH = 8
@@ -88,17 +93,16 @@ class UserContext(BaseModel):
     last_login: datetime | None = Field(None, description="Last login timestamp")
 
 
-class TokenInfo(BaseModel):
-    """Token information from Firebase."""
+@dataclass
+class TokenInfo:
+    """Token information from AWS Cognito."""
 
-    token: str = Field(description="JWT token")
-    user_id: str = Field(description="User ID from token")
-    email: str | None = Field(None, description="Email from token")
-    issued_at: datetime = Field(description="Token issued timestamp")
-    expires_at: datetime = Field(description="Token expiration timestamp")
-    is_admin: bool = Field(default=False, description="Admin status from custom claims")
-    custom_claims: dict[str, Any] = Field(
-        default_factory=dict, description="Custom claims from token"
+    token: str = ""
+    expires_at: float = 0.0
+    user_id: str = ""
+    email: str = ""
+    cognito_claims: dict[str, Any] = field(
+        default_factory=dict, description="AWS Cognito token claims"
     )
 
 

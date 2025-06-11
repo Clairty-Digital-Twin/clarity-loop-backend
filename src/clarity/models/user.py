@@ -64,20 +64,22 @@ class UserUpdate(BaseModel):
     )
 
 
-class User(UserBase):
-    """User model for authenticated users."""
+class User(BaseModel):
+    """User model representing authenticated users."""
 
-    uid: str = Field(..., description="Firebase user ID")
+    uid: str = Field(..., description="User ID")
+    email: str = Field(..., description="User email address")
     display_name: str | None = Field(None, description="User display name")
-    email_verified: bool = Field(default=False, description="Whether email is verified")
-    firebase_token: str | None = Field(None, description="Firebase ID token")
-    firebase_token_exp: float | None = Field(
-        None, description="Firebase ID token expiration timestamp (Unix)"
+    cognito_token: str | None = Field(None, description="AWS Cognito ID token")
+    cognito_token_exp: float | None = Field(
+        None, description="AWS Cognito ID token expiration timestamp (Unix)"
     )
-    created_at: datetime | None = Field(None, description="Account creation timestamp")
+    role: str = Field(default="user", description="User role")
+    created_at: datetime = Field(default_factory=datetime.utcnow)
     last_login: datetime | None = Field(None, description="Last login timestamp")
-    profile: dict[str, Any] | None = Field(
-        None, description="Additional user profile data"
+    is_active: bool = Field(default=True, description="Account active status")
+    metadata: dict[str, Any] = Field(
+        default_factory=dict, description="Additional user metadata"
     )
 
     model_config = ConfigDict(
@@ -157,3 +159,41 @@ class UserSession(BaseModel):
     model_config = ConfigDict(
         json_encoders={datetime: lambda v: v.isoformat() if v else None}
     )
+
+
+class UserWithContext(BaseModel):
+    """User data with request context."""
+
+    uid: str = Field(..., description="User ID")
+    email: str = Field(..., description="User email address")
+    display_name: str | None = Field(None, description="User display name")
+    role: str = Field(default="user", description="User role")
+    request_metadata: dict[str, Any] = Field(
+        default_factory=dict, description="Request-specific metadata"
+    )
+
+    @staticmethod
+    def example() -> dict[str, Any]:
+        """Return an example UserWithContext for API documentation."""
+        return {
+            "uid": "user_123",
+            "email": "john.doe@example.com",
+            "display_name": "John Doe",
+            "role": "user",
+            "request_metadata": {"ip": "192.168.1.1", "user_agent": "Mozilla/5.0"},
+        }
+
+
+class UserContext(BaseModel):
+    """User context for request processing."""
+
+    uid: str = Field(..., description="User ID")
+    email: str = Field(..., description="User email address")
+    display_name: str | None = Field(None, description="User display name")
+    role: str = Field(default="user", description="User role")
+    cognito_sub: str | None = Field(None, description="AWS Cognito subject identifier")
+    
+    class Config:
+        """Pydantic configuration."""
+        
+        json_encoders = {datetime: lambda v: v.isoformat() if v else None}

@@ -86,15 +86,13 @@ class ConfigProvider(IConfigProvider):  # noqa: PLR0904
         # For Firestore, return project-based URL
         return f"https://{self.get_gcp_project_id()}.firebaseio.com"
 
-    def get_firebase_config(self) -> dict[str, str]:
-        """Get Firebase configuration with proper types."""
-        credentials_path = self.get_setting("firebase_credentials_path")
-        project_id = self.get_setting("gcp_project_id")
+    def get_firestore_url(self) -> str:
+        """DEPRECATED: Firebase/Firestore is no longer supported."""
+        raise NotImplementedError("Firebase/Firestore has been removed - use DynamoDB")
 
-        return {
-            "credentials_path": str(credentials_path) if credentials_path else "",
-            "project_id": str(project_id) if project_id else "",
-        }
+    def get_firebase_config(self) -> dict[str, str]:
+        """DEPRECATED: Firebase configuration is no longer supported."""
+        raise NotImplementedError("Firebase has been removed - use AWS Cognito")
 
     def is_auth_enabled(self) -> bool:
         """Check if authentication is enabled.

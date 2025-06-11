@@ -1,29 +1,53 @@
-"""CLARITY Digital Twin Platform - Cloud Credentials Helper.
+"""CLARITY Digital Twin Platform - AWS Cloud Credentials Helper.
 
-This module provides centralized access to cloud credentials and API keys.
+This module provides centralized access to AWS credentials and API keys.
 """
 
-import json
 import os
-from typing import Any
+from typing import Optional
+import boto3
 
-from google.oauth2 import service_account
 
+def get_aws_session(region_name: str = "us-east-1") -> boto3.Session:
+    """Get AWS session with configured credentials.
 
-def firebase_credentials() -> Any:
-    """Get Firebase/GCP credentials from environment variables.
+    Args:
+        region_name: AWS region name
 
     Returns:
-        google.oauth2.service_account.Credentials: The service account credentials
+        boto3.Session: Configured AWS session
     """
-    sa_info = json.loads(os.environ["GOOGLE_APPLICATION_CREDENTIALS_JSON"])
-    return service_account.Credentials.from_service_account_info(sa_info)
+    return boto3.Session(region_name=region_name)
 
 
-def gemini_api_key() -> str:
+def get_cognito_client(region_name: str = "us-east-1") -> boto3.client:
+    """Get AWS Cognito client.
+
+    Args:
+        region_name: AWS region name
+
+    Returns:
+        boto3.client: Cognito Identity Provider client
+    """
+    return boto3.client('cognito-idp', region_name=region_name)
+
+
+def get_dynamodb_resource(region_name: str = "us-east-1") -> boto3.resource:
+    """Get AWS DynamoDB resource.
+
+    Args:
+        region_name: AWS region name
+
+    Returns:
+        boto3.resource: DynamoDB resource
+    """
+    return boto3.resource('dynamodb', region_name=region_name)
+
+
+def gemini_api_key() -> Optional[str]:
     """Get Gemini API key from environment variables.
 
     Returns:
-        str: The Gemini API key
+        str: The Gemini API key, or None if not set
     """
-    return os.environ["GEMINI_API_KEY"]
+    return os.environ.get("GEMINI_API_KEY")

@@ -1,9 +1,10 @@
 """CLARITY Digital Twin Platform - Storage Layer.
 
 Provides high-performance, HIPAA-compliant data storage services
-for the health data processing pipeline.
+for the health data processing pipeline using AWS DynamoDB.
 """
 
-from clarity.storage.firestore_client import FirestoreClient
+from clarity.storage.dynamodb_client import DynamoDBClient
+from clarity.storage.mock_repository import MockHealthDataRepository
 
-__all__ = ["FirestoreClient"]
+__all__ = ["DynamoDBClient", "MockHealthDataRepository"]

@@ -57,14 +57,6 @@ class IConfigProvider(ABC):
         """
 
     @abstractmethod
-    def get_firebase_config(self) -> dict[str, str]:
-        """Get Firebase configuration.
-
-        Returns:
-            Firebase configuration dictionary
-        """
-
-    @abstractmethod
     def get_gcp_project_id(self) -> str:
         """Get Google Cloud Platform project ID.
 
@@ -95,3 +87,8 @@ class IConfigProvider(ABC):
         Returns:
             Settings model instance
         """
+
+    def get_firestore_url(self) -> str:
+        """Get Firestore URL - DEPRECATED."""
+        # This method is deprecated and should not be used
+        raise NotImplementedError("Firebase/Firestore is no longer supported")

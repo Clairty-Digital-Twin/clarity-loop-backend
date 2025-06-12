@@ -14,15 +14,18 @@ import contextlib
 from datetime import UTC, datetime, timedelta
 import hashlib
 import logging
-from pathlib import Path
 import time
-from typing import Any, cast
+from typing import Any, cast, TYPE_CHECKING
 
 import torch
 from torch.nn.utils import prune
 
-from clarity.ml.pat_service import ActigraphyAnalysis, ActigraphyInput, PATModelService
+from clarity.ml.pat_service import ActigraphyInput
 from clarity.ml.preprocessing import ActigraphyDataPoint
+
+if TYPE_CHECKING:
+    from clarity.ml.pat_service import ActigraphyAnalysis, PATModelService
+    from pathlib import Path
 
 logger = logging.getLogger(__name__)
 

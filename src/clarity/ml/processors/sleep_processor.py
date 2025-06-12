@@ -21,7 +21,11 @@ import logging
 import numpy as np
 from pydantic import BaseModel, Field
 
-from clarity.models.health_data import HealthMetric, SleepData, SleepStage
+from clarity.models.health_data import SleepStage
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from clarity.models.health_data import HealthMetric, SleepData
 
 logger = logging.getLogger(__name__)
 

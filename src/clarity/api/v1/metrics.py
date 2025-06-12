@@ -15,14 +15,13 @@ from __future__ import annotations
 
 import logging
 import time
-from typing import Any, Self
+from typing import Any, Self, TYPE_CHECKING
 
 try:
     import psutil  # type: ignore[import-untyped]
 except ImportError:
     psutil = None
 
-import types
 
 from fastapi import APIRouter, Response
 from prometheus_client import (
@@ -32,6 +31,9 @@ from prometheus_client import (
     Histogram,
     generate_latest,
 )
+
+if TYPE_CHECKING:
+    import types
 
 logger = logging.getLogger(__name__)
 

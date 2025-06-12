@@ -11,16 +11,18 @@ from datetime import UTC, datetime, timedelta
 from enum import StrEnum
 import logging
 import operator
-from typing import Any
+from typing import Any, TYPE_CHECKING
 
 import numpy as np
-import numpy.typing as npt
 import pandas as pd  # type: ignore[import-untyped]
 from scipy.interpolate import interp1d
 import scipy.signal
 
 from clarity.core.exceptions import ProcessingError
-from clarity.integrations.healthkit import HealthDataBatch, HealthDataPoint
+
+if TYPE_CHECKING:
+    import numpy.typing as npt
+    from clarity.integrations.healthkit import HealthDataBatch, HealthDataPoint
 
 logger = logging.getLogger(__name__)
 

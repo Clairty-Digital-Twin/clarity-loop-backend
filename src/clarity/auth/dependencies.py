@@ -8,15 +8,18 @@ Uses AWS Cognito for authentication backend.
 from __future__ import annotations
 
 import logging
-from typing import Annotated, Any, cast
+from typing import Annotated, Any, cast, TYPE_CHECKING
 
-from fastapi import Depends, HTTPException, Request, status
+from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer
 
 from clarity.auth.aws_cognito_provider import get_cognito_provider
 from clarity.auth.modal_auth_fix import get_user_context
 from clarity.models.auth import UserContext
 from clarity.models.user import User
+
+if TYPE_CHECKING:
+    from fastapi import Request
 
 logger = logging.getLogger(__name__)
 

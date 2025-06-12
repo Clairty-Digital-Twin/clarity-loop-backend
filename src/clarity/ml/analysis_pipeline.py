@@ -18,12 +18,13 @@ from clarity.ml.fusion_transformer import get_fusion_service
 from clarity.ml.pat_service import ActigraphyInput, get_pat_service
 
 if TYPE_CHECKING:
+    from clarity.ml.processors.sleep_processor import SleepFeatures
     from clarity.ml.pat_service import ActigraphyAnalysis
 from clarity.ml.preprocessing import HealthDataPreprocessor
 from clarity.ml.processors.activity_processor import ActivityProcessor
 from clarity.ml.processors.cardio_processor import CardioProcessor
 from clarity.ml.processors.respiration_processor import RespirationProcessor
-from clarity.ml.processors.sleep_processor import SleepFeatures, SleepProcessor
+from clarity.ml.processors.sleep_processor import SleepProcessor
 from clarity.models.health_data import (
     ActivityData,
     BiometricData,

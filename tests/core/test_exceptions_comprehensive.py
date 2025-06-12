@@ -10,7 +10,6 @@ from uuid import UUID
 
 from fastapi import Request
 from fastapi.responses import JSONResponse
-import pytest
 
 from clarity.core.exceptions import (
     AccessDeniedError,
@@ -66,6 +65,10 @@ from clarity.core.exceptions import (
     # Exception handlers
     problem_detail_exception_handler,
 )
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    import pytest
 
 
 class TestProblemDetail:

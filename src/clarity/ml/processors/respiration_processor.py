@@ -6,12 +6,15 @@ Implements domain-specific preprocessing and feature extraction for respiratory 
 
 from __future__ import annotations
 
-from datetime import datetime
 import logging
 
 import numpy as np
 import pandas as pd  # type: ignore[import-untyped]
 from pydantic import BaseModel, Field
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from datetime import datetime
 
 logger = logging.getLogger(__name__)
 

@@ -9,10 +9,10 @@ from __future__ import annotations
 import os
 from typing import TYPE_CHECKING
 
-from clarity.core.config_aws import MiddlewareConfig
 from clarity.ports.config_ports import IConfigProvider
 
 if TYPE_CHECKING:
+    from clarity.core.config_aws import MiddlewareConfig
     from clarity.core.config_aws import Settings
 
 

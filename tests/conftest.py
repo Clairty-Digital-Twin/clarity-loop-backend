@@ -6,13 +6,11 @@ Provides common test utilities following pytest best practices.
 from __future__ import annotations
 
 import asyncio
-from collections.abc import AsyncGenerator, Generator
 import os
-from typing import Any
+from typing import Any, TYPE_CHECKING
 from unittest.mock import AsyncMock, MagicMock
 
 from dotenv import load_dotenv
-from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 # Remove all Google Cloud imports - we're using AWS now
@@ -24,6 +22,10 @@ import torch
 
 from clarity.api.v1.websocket.connection_manager import ConnectionManager
 from clarity.main import create_app
+
+if TYPE_CHECKING:
+    from fastapi import FastAPI
+    from collections.abc import AsyncGenerator, Generator
 
 # Load test environment variables from .env.test
 # This file should be created locally by developers and not version controlled.

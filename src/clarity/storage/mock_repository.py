@@ -11,11 +11,13 @@ from __future__ import annotations
 from datetime import UTC, datetime
 import logging
 from operator import itemgetter
-from typing import Any
+from typing import Any, TYPE_CHECKING
 import uuid
 
-from clarity.models.health_data import HealthMetric
 from clarity.ports.data_ports import IHealthDataRepository
+
+if TYPE_CHECKING:
+    from clarity.models.health_data import HealthMetric
 
 logger = logging.getLogger(__name__)
 

@@ -2,11 +2,10 @@
 
 from __future__ import annotations
 
-from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 import logging
 import os
-from typing import Any
+from typing import Any, TYPE_CHECKING
 
 import boto3
 from botocore.exceptions import ClientError
@@ -14,6 +13,9 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import google.generativeai as genai
 from prometheus_client import make_asgi_app
+
+if TYPE_CHECKING:
+    from collections.abc import AsyncGenerator
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)

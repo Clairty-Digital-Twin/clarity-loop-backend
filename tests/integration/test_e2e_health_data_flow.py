@@ -8,16 +8,18 @@ from __future__ import annotations
 import concurrent.futures
 from datetime import UTC, datetime
 import time
-from typing import Any
+from typing import Any, TYPE_CHECKING
 from uuid import uuid4
 
-from fastapi import FastAPI
 from fastapi.testclient import TestClient
-from httpx import Response
 import pytest
 
 # Import the complete application (E2E testing)
 from clarity.core.container import create_application
+
+if TYPE_CHECKING:
+    from httpx import Response
+    from fastapi import FastAPI
 
 
 class TestE2EHealthDataFlow:

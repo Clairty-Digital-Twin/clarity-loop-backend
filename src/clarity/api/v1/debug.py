@@ -8,14 +8,17 @@ from __future__ import annotations
 from datetime import UTC, datetime
 import logging
 import os
-from typing import Any
+from typing import Any, TYPE_CHECKING
 
 import boto3
-from fastapi import APIRouter, Header, Request
+from fastapi import APIRouter, Header
 
-from clarity.auth.dependencies import AuthenticatedUser
 from clarity.core.constants import BEARER_TOKEN_PARTS_COUNT, JWT_TOKEN_PARTS_COUNT
 from clarity.core.container import get_container
+
+if TYPE_CHECKING:
+    from clarity.auth.dependencies import AuthenticatedUser
+    from fastapi import Request
 
 logger = logging.getLogger(__name__)
 

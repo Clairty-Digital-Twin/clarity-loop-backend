@@ -6,14 +6,13 @@ This module configures all AWS service dependencies and their initialization.
 from __future__ import annotations
 
 import logging
-from typing import Any
+from typing import Any, TYPE_CHECKING
 
-from fastapi import FastAPI
 from prometheus_client import Counter, Histogram
 
 from clarity.auth.aws_auth_provider import CognitoAuthProvider
 from clarity.auth.mock_auth import MockAuthProvider
-from clarity.core.config_aws import Settings, get_settings
+from clarity.core.config_aws import get_settings
 
 # AWS container - using settings directly
 from clarity.core.exceptions import ConfigurationError
@@ -21,10 +20,14 @@ from clarity.core.logging_config import setup_logging
 
 # Port types are imported from their respective modules
 from clarity.ml.gemini_service import GeminiService
-from clarity.ports.auth_ports import IAuthProvider
-from clarity.ports.data_ports import IHealthDataRepository
 from clarity.storage.dynamodb_client import DynamoDBHealthDataRepository
 from clarity.storage.mock_repository import MockHealthDataRepository
+
+if TYPE_CHECKING:
+    from fastapi import FastAPI
+    from clarity.core.config_aws import Settings
+    from clarity.ports.auth_ports import IAuthProvider
+    from clarity.ports.data_ports import IHealthDataRepository
 
 logger = logging.getLogger(__name__)
 

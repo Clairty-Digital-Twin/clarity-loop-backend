@@ -9,7 +9,6 @@ from __future__ import annotations
 from datetime import UTC, datetime, timedelta
 from uuid import uuid4
 
-from _pytest.monkeypatch import MonkeyPatch
 import pytest
 
 from clarity.models.health_data import (
@@ -22,6 +21,10 @@ from clarity.models.health_data import (
     SleepStage,
 )
 from clarity.storage.mock_repository import MockHealthDataRepository
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from _pytest.monkeypatch import MonkeyPatch
 
 
 class TestMockHealthDataRepositoryBasics:

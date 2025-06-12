@@ -6,13 +6,14 @@ to prevent accidental PHI exposure in logs.
 
 from __future__ import annotations
 
-import logging
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from clarity.models.health_data import HealthDataUpload, HealthMetric
-else:
+    import logging
     from clarity.models.health_data import HealthDataUpload, HealthMetric
+else:
+    pass
 
 # Constants for sanitization
 MAX_COMPLEX_VALUE_LENGTH = 100

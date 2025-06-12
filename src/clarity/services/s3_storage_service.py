@@ -16,10 +16,10 @@ import boto3
 from botocore.exceptions import ClientError
 
 if TYPE_CHECKING:
+    from clarity.models.health_data import HealthDataUpload
     from mypy_boto3_s3 import S3Client
 
 from clarity.core.secure_logging import sanitize_for_logging
-from clarity.models.health_data import HealthDataUpload
 from clarity.ports.storage import CloudStoragePort
 
 # Configure logger

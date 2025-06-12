@@ -17,7 +17,6 @@ dependency injection, and comprehensive error handling.
 from __future__ import annotations
 
 import asyncio
-from collections.abc import Callable
 from functools import wraps
 import logging
 import time
@@ -34,16 +33,19 @@ from clarity.core.constants import (
 )
 from clarity.core.exceptions import InferenceError, InferenceTimeoutError
 from clarity.core.security import create_secure_cache_key
-from clarity.core.types import LoggerProtocol
 from clarity.ml.pat_service import (
     ActigraphyAnalysis,
     ActigraphyInput,
-    PATModelService,
     get_pat_service,
 )
 from clarity.utils.decorators import resilient_prediction
 
 if TYPE_CHECKING:
+    from clarity.core.types import LoggerProtocol
+    from clarity.ml.pat_service import (
+        PATModelService,
+    )
+    from collections.abc import Callable
     from clarity.core.types import CacheStorage
 
 logger: LoggerProtocol = logging.getLogger(__name__)

@@ -150,6 +150,8 @@ ban-relative-imports = "all"
 # flake8-type-checking configuration
 [lint.flake8-type-checking]
 strict = true
+runtime-evaluated-base-classes = ["pydantic.BaseModel", "pydantic.BaseSettings"]
+runtime-evaluated-decorators = ["pydantic.validate_call", "pydantic.field_validator", "pydantic.model_validator"]
 
 # McCabe complexity
 [lint.mccabe]

@@ -8,7 +8,10 @@ from __future__ import annotations
 
 import contextvars
 
-from clarity.models.auth import UserContext
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from clarity.models.auth import UserContext
 
 # Thread-local storage for user context
 _user_context: contextvars.ContextVar[UserContext | None] = contextvars.ContextVar(

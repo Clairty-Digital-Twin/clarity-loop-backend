@@ -13,12 +13,15 @@ The exception hierarchy is designed to be:
 from __future__ import annotations
 
 import logging
-from typing import Any
+from typing import Any, TYPE_CHECKING
 from uuid import uuid4
 
-from fastapi import HTTPException, Request
+from fastapi import HTTPException
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
+
+if TYPE_CHECKING:
+    from fastapi import Request
 
 # Module-level logger for exception handling
 logger = logging.getLogger(__name__)

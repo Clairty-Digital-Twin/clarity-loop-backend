@@ -9,15 +9,17 @@ from __future__ import annotations
 from datetime import UTC, datetime
 import logging
 import os
-from typing import Any
+from typing import Any, TYPE_CHECKING
 import uuid
 
 from fastapi import APIRouter, HTTPException, status
 from google.cloud import storage
 from pydantic import BaseModel, Field
 
-from clarity.auth.dependencies import AuthenticatedUser
 from clarity.services.messaging.publisher import get_publisher
+
+if TYPE_CHECKING:
+    from clarity.auth.dependencies import AuthenticatedUser
 
 # Configure logger
 logger = logging.getLogger(__name__)

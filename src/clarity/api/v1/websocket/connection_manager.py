@@ -8,11 +8,10 @@ import contextlib
 from datetime import UTC, datetime
 import logging
 import time
-from typing import Any
+from typing import Any, TYPE_CHECKING
 import uuid
 from weakref import WeakSet
 
-from fastapi import WebSocket
 from starlette.websockets import WebSocketState
 
 from clarity.api.v1.websocket.models import (
@@ -21,8 +20,13 @@ from clarity.api.v1.websocket.models import (
     ErrorMessage,
     HeartbeatMessage,
     SystemMessage,
-    WebSocketMessage,
 )
+
+if TYPE_CHECKING:
+    from clarity.api.v1.websocket.models import (
+        WebSocketMessage,
+    )
+    from fastapi import WebSocket
 
 logger = logging.getLogger(__name__)
 

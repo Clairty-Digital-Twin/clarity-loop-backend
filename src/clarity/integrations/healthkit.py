@@ -11,8 +11,7 @@ from dataclasses import asdict, dataclass
 from datetime import UTC, datetime, timedelta
 from enum import StrEnum
 import logging
-import types
-from typing import Any, Self
+from typing import Any, Self, TYPE_CHECKING
 
 import httpx
 from pydantic import BaseModel, Field, validator
@@ -23,6 +22,9 @@ from clarity.core.exceptions import (
     DataValidationError,
     IntegrationError,
 )
+
+if TYPE_CHECKING:
+    import types
 
 # Configure logger
 logger = logging.getLogger(__name__)

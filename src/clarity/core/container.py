@@ -2,10 +2,13 @@
 
 from __future__ import annotations
 
-from fastapi import FastAPI
 
 # Import everything from container_aws for compatibility
 from clarity.core.container_aws import *  # noqa: F403
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from fastapi import FastAPI
 
 
 # Add any missing functions for tests

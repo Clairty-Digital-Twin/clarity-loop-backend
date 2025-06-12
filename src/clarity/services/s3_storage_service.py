@@ -635,10 +635,10 @@ class S3StorageService(CloudStoragePort):
     # CloudStoragePort interface methods that need to be implemented
     def bucket(self, bucket_name: str) -> object:
         """Get a bucket reference.
-        
+
         Args:
             bucket_name: Name of the bucket
-            
+
         Returns:
             Bucket reference object
         """
@@ -677,7 +677,7 @@ class S3StorageService(CloudStoragePort):
 
     def get_raw_data_bucket_name(self) -> str:
         """Get the name of the raw data bucket.
-        
+
         Returns:
             Bucket name for raw data storage
         """

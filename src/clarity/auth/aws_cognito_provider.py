@@ -4,7 +4,7 @@ from functools import lru_cache
 import logging
 import os
 import time
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import boto3
 from botocore.exceptions import ClientError
@@ -15,6 +15,9 @@ import requests
 from clarity.core.exceptions import AuthenticationError
 from clarity.models.user import User
 from clarity.ports.auth_ports import IAuthProvider
+
+if TYPE_CHECKING:
+    from mypy_boto3_cognito_idp.type_defs import AttributeTypeTypeDef
 
 logger = logging.getLogger(__name__)
 
@@ -237,7 +240,6 @@ class CognitoAuthProvider(IAuthProvider):
         """Update user attributes in Cognito."""
         try:
             # Build attributes list with proper typing
-            from mypy_boto3_cognito_idp.type_defs import AttributeTypeTypeDef
 
             attributes: list[AttributeTypeTypeDef] = []
             if "display_name" in kwargs:

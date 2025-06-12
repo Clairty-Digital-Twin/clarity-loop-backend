@@ -487,7 +487,7 @@ class DynamoDBService:
         try:
             # Test connection by describing a table
             table = self.dynamodb.Table(self.tables["health_data"])
-            await asyncio.get_event_loop().run_in_executor(None, lambda: table.load())
+            await asyncio.get_event_loop().run_in_executor(None, table.load)
 
             return {
                 "status": "healthy",

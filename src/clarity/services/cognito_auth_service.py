@@ -16,11 +16,14 @@ from botocore.exceptions import ClientError
 if TYPE_CHECKING:
     from mypy_boto3_cognito_idp import CognitoIdentityProviderClient
     from mypy_boto3_cognito_idp.type_defs import (
-        AdminInitiateAuthResponseTypeDef,
         AttributeTypeTypeDef,
         GetUserResponseTypeDef,
         SignUpResponseTypeDef,
     )
+
+from mypy_boto3_cognito_idp.type_defs import (
+    AdminInitiateAuthResponseTypeDef,
+)
 
 from clarity.models.auth import (
     AuthProvider,

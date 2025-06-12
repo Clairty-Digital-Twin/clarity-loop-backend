@@ -4,17 +4,20 @@ from collections.abc import AsyncIterator
 from datetime import UTC, datetime
 from decimal import Decimal
 import logging
-from typing import Any, TypeAlias, cast
+from typing import TYPE_CHECKING, Any, TypeAlias, cast
 
 import boto3
-from boto3.dynamodb.conditions import ConditionBase, Key
+from boto3.dynamodb.conditions import Key
 from botocore.exceptions import ClientError
-from mypy_boto3_dynamodb import DynamoDBServiceResource
-from mypy_boto3_dynamodb.service_resource import Table
 
 from clarity.core.exceptions import ServiceError
 from clarity.models.health_data import HealthMetric, ProcessingStatus
 from clarity.ports.data_ports import IHealthDataRepository
+
+if TYPE_CHECKING:
+    from boto3.dynamodb.conditions import ConditionBase
+    from mypy_boto3_dynamodb import DynamoDBServiceResource
+    from mypy_boto3_dynamodb.service_resource import Table
 
 # Type aliases for clarity
 DynamoDBItem: TypeAlias = dict[str, Any]
@@ -175,15 +178,15 @@ class DynamoDBHealthDataRepository(IHealthDataRepository):
             key_condition: ConditionBase = Key("pk").eq(f"USER#{user_id}")
 
             if start_date and end_date:
-                key_condition = key_condition & Key("sk").between(
+                key_condition &= Key("sk").between(
                     f"HEALTH#{start_date.isoformat()}", f"HEALTH#{end_date.isoformat()}"
                 )
             elif start_date:
-                key_condition = key_condition & Key("sk").gte(f"HEALTH#{start_date.isoformat()}")
+                key_condition &= Key("sk").gte(f"HEALTH#{start_date.isoformat()}")
             elif end_date:
-                key_condition = key_condition & Key("sk").lte(f"HEALTH#{end_date.isoformat()}")
+                key_condition &= Key("sk").lte(f"HEALTH#{end_date.isoformat()}")
             else:
-                key_condition = key_condition & Key("sk").begins_with("HEALTH#")
+                key_condition &= Key("sk").begins_with("HEALTH#")
 
             # Query DynamoDB
             response = self.table.query(

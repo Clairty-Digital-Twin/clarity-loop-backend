@@ -3,15 +3,16 @@
 import logging
 from typing import Any
 
+import boto3
 from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel, EmailStr, Field
 
+from clarity.auth.aws_cognito_provider import CognitoAuthProvider
 from clarity.auth.dependencies import get_auth_provider, get_current_user
 from clarity.core.exceptions import ProblemDetail
 from clarity.models.auth import TokenResponse, UserLoginRequest
 from clarity.ports.auth_ports import IAuthProvider
 from clarity.services.cognito_auth_service import (
-    CognitoAuthenticationService,
     EmailNotVerifiedError,
     InvalidCredentialsError,
     UserAlreadyExistsError,
@@ -82,8 +83,6 @@ async def register(
     try:
         # For AWS Cognito, we'll use the auth provider directly
         # First create the user
-        from clarity.auth.aws_cognito_provider import CognitoAuthProvider
-
         if not isinstance(auth_provider, CognitoAuthProvider):
             raise HTTPException(
                 status_code=500,
@@ -157,8 +156,6 @@ async def login(
     """Authenticate user and return access token."""
     try:
         # For AWS Cognito, we'll use the auth provider directly
-        from clarity.auth.aws_cognito_provider import CognitoAuthProvider
-
         if not isinstance(auth_provider, CognitoAuthProvider):
             raise HTTPException(
                 status_code=500,
@@ -172,7 +169,8 @@ async def login(
         )
 
         if not tokens:
-            raise InvalidCredentialsError("Authentication failed")
+            msg = "Authentication failed"
+            raise InvalidCredentialsError(msg)
 
         # Return token response
         return TokenResponse(
@@ -242,8 +240,6 @@ async def update_user(
     """Update current user information."""
     try:
         # For AWS Cognito, we'll use the auth provider directly
-        from clarity.auth.aws_cognito_provider import CognitoAuthProvider
-
         if not isinstance(auth_provider, CognitoAuthProvider):
             raise HTTPException(
                 status_code=500,
@@ -273,7 +269,8 @@ async def update_user(
         )
 
         if not updated_user:
-            raise UserNotFoundError(f"User {user_id} not found")
+            msg = f"User {user_id} not found"
+            raise UserNotFoundError(msg)
 
         return UserUpdateResponse(
             user_id=updated_user.uid,
@@ -419,8 +416,6 @@ async def refresh_token(
 
         # For AWS Cognito, we need to use the boto3 client directly
         # Since refresh token handling is different
-        from clarity.auth.aws_cognito_provider import CognitoAuthProvider
-
         if not isinstance(auth_provider, CognitoAuthProvider):
             raise HTTPException(
                 status_code=500,
@@ -428,7 +423,6 @@ async def refresh_token(
             )
 
         # Use Cognito's refresh token flow
-        import boto3
         client = auth_provider.cognito_client
 
         try:

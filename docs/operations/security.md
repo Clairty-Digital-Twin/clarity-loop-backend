@@ -180,7 +180,7 @@ aws dynamodb put-item \
   }'
 ```
 
-**S3 Bucket Encryption:**
+#### S3 Bucket Encryption
 
 ```json
 {
@@ -198,7 +198,7 @@ aws dynamodb put-item \
 
 ### **Encryption in Transit**
 
-**TLS Configuration:**
+#### TLS Configuration
 
 ```nginx
 # Application Load Balancer SSL Policy
@@ -212,7 +212,7 @@ ssl_session_timeout 10m;
 add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
 ```
 
-**API Client Configuration:**
+#### API Client Configuration
 
 ```python
 # Enforce TLS 1.3 for all external API calls
@@ -230,7 +230,7 @@ async with httpx.AsyncClient(verify=ssl_context) as client:
 
 ### **Security Event Logging**
 
-**CloudTrail Configuration:**
+#### CloudTrail Configuration
 
 ```json
 {
@@ -257,7 +257,7 @@ async with httpx.AsyncClient(verify=ssl_context) as client:
 }
 ```
 
-**Security Metrics:**
+#### Security Metrics
 
 ```python
 # Custom security metrics

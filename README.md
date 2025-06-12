@@ -1,10 +1,10 @@
-# CLARITY Digital Twin Backend
+# CLARITY-AI Digital Twin Backend
 
 Transform your Apple Health data into actionable insights through cutting-edge AI models trained on population-scale health data.
 
-## What Is CLARITY?
+## What Is CLARITY-AI?
 
-CLARITY is a **research-grade digital health platform** that processes Apple Watch data using state-of-the-art foundation models:
+CLARITY-AI is a **research-grade digital health platform** that processes Apple Watch data using state-of-the-art foundation models:
 
 - **PAT (Pretrained Actigraphy Transformer)**: Foundation model trained on 29,307 participants from NHANES 2003-2014
 - **Multi-modal Health Analysis**: Integrates activity, heart rate, sleep, and respiratory data

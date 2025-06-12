@@ -9,7 +9,7 @@ from unittest.mock import Mock, patch
 
 from fastapi.testclient import TestClient
 
-from clarity.core.config import MiddlewareConfig, Settings
+from clarity.core.config_aws import MiddlewareConfig, Settings
 from clarity.core.config_provider import ConfigProvider
 from clarity.core.container import create_application
 
@@ -26,6 +26,12 @@ class TestMiddlewareConfiguration:
         config_provider = ConfigProvider(settings)
 
         middleware_config = config_provider.get_middleware_config()
+
+        # Print actual values for debugging
+        print(f"Environment: {settings.environment}")
+        print(f"Middleware config: {middleware_config}")
+        print(f"graceful_degradation: {middleware_config.graceful_degradation}")
+        print(f"cache_enabled: {middleware_config.cache_enabled}")
 
         # Development should have permissive settings
         assert middleware_config.enabled is True

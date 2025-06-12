@@ -206,6 +206,32 @@ class Settings(BaseSettings):
         if not self.cognito_region:
             self.cognito_region = self.aws_region
 
+        # Configure middleware settings based on environment
+        if self.environment.lower() == "development":
+            # Development environment: permissive settings for debugging
+            self.middleware_config.graceful_degradation = False  # Show actual auth errors
+            self.middleware_config.fallback_to_mock = True
+            self.middleware_config.log_successful_auth = True
+            self.middleware_config.cache_enabled = False  # Disable cache for easier debugging
+            self.middleware_config.initialization_timeout_seconds = 10  # Longer timeout
+        elif self.environment.lower() == "testing":
+            # Testing environment: use mock auth
+            self.middleware_config.graceful_degradation = False  # Show actual auth errors
+            self.middleware_config.fallback_to_mock = True
+            self.middleware_config.log_successful_auth = False
+            # Keep other defaults
+        elif self.environment.lower() == "production":
+            # Production environment: strict settings
+            self.middleware_config.graceful_degradation = False  # Fail fast
+            self.middleware_config.fallback_to_mock = False  # No mock fallback
+            self.middleware_config.log_successful_auth = False  # Only log failures
+            self.middleware_config.cache_enabled = True  # Enable cache for performance
+            self.middleware_config.cache_ttl_seconds = 300  # 5 minutes
+            self.middleware_config.initialization_timeout_seconds = 5  # Shorter timeout
+
+        # Always follow enable_auth setting for middleware.enabled
+        self.middleware_config.enabled = self.enable_auth
+
         return self
 
     def is_development(self) -> bool:

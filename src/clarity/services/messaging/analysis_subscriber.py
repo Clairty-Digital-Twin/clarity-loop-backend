@@ -25,13 +25,19 @@ class AnalysisSubscriber:
         """Initialize analysis subscriber."""
         self.logger = logging.getLogger(__name__)
         self.storage_client = storage.Client()
-        self.publisher = get_publisher()
+        self.publisher = None  # Will be initialized asynchronously
 
         # Environment settings
         self.environment = os.getenv("ENVIRONMENT", "development")
         self.pubsub_push_audience = os.getenv("PUBSUB_PUSH_AUDIENCE")
 
         self.logger.info("Initialized analysis subscriber (env: %s)", self.environment)
+
+    async def _get_publisher(self) -> Any:
+        """Get or initialize the publisher asynchronously."""
+        if self.publisher is None:
+            self.publisher = await get_publisher()
+        return self.publisher
 
     async def process_health_data_message(self, request: Request) -> dict[str, Any]:
         """Process incoming Pub/Sub message for health data analysis.
@@ -66,7 +72,8 @@ class AnalysisSubscriber:
             )
 
             # Publish insight request event
-            self.publisher.publish_insight_request(
+            publisher = await self._get_publisher()
+            await publisher.publish_insight_request(
                 user_id=message_data["user_id"],
                 upload_id=message_data["upload_id"],
                 analysis_results=analysis_results,

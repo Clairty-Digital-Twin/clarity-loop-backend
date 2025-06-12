@@ -349,21 +349,43 @@ flowchart LR
 ## Current Status
 
 ```mermaid
-gitgraph
-    commit id: "Initial Setup"
-    commit id: "Core API (44 endpoints)"
-    commit id: "AWS Migration"
-    commit id: "PAT Integration"
-    commit id: "Gemini AI"
-    branch testing
-    commit id: "807/810 Tests ✅"
-    commit id: "57% Coverage"
-    checkout main
-    merge testing
-    commit id: "Production Ready 🚀"
-    branch future
-    commit id: "Enhanced ML"
-    commit id: "Real-time Features"
+flowchart TD
+    subgraph Foundation ["🏗️ Foundation (Completed)"]
+        Initial[Initial Setup<br/>Project Structure<br/>Core Framework]
+        API[Core API<br/>44 endpoints<br/>REST + WebSocket]
+        AWS[AWS Migration<br/>ECS Infrastructure<br/>Production Ready]
+    end
+    
+    subgraph Intelligence ["🧠 AI Integration (Completed)"]
+        PAT[PAT Integration<br/>Sleep Analysis<br/>Transformer Model]
+        Gemini[Gemini AI<br/>Natural Language<br/>Insights Generation]
+    end
+    
+    subgraph Quality ["✅ Quality Assurance (In Progress)"]
+        Tests[Testing Suite<br/>807/810 Tests ✅<br/>99.6% Success Rate]
+        Coverage[Test Coverage<br/>57% → 85%<br/>Target Q3 2025]
+    end
+    
+    subgraph Future ["🚀 Future Roadmap"]
+        Enhanced[Enhanced ML<br/>Advanced Models<br/>Q3 2025]
+        Realtime[Real-time Features<br/>Live Analytics<br/>Q4 2025]
+    end
+    
+    Initial --> API --> AWS
+    PAT --> Gemini
+    Foundation --> Intelligence
+    Intelligence --> Quality
+    Quality --> Future
+    
+    classDef foundation fill:#2196f3,stroke:#0d47a1,stroke-width:2px,color:white
+    classDef intelligence fill:#4caf50,stroke:#1b5e20,stroke-width:2px,color:white
+    classDef quality fill:#ff9900,stroke:#e65100,stroke-width:2px,color:white
+    classDef future fill:#9c27b0,stroke:#4a148c,stroke-width:2px,color:white
+    
+    class Initial,API,AWS foundation
+    class PAT,Gemini intelligence
+    class Tests,Coverage quality
+    class Enhanced,Realtime future
 ```
 
 - **Backend**: Production-ready with comprehensive test suite
@@ -378,4 +400,4 @@ Apache License 2.0. PAT models under CC BY-4.0.
 
 ---
 
-*Updated: January 2024* 
+*Updated: June 2025* 

@@ -145,7 +145,7 @@ async def upload_healthkit_data(
         await publisher.publish_health_data_upload(
             user_id=request.user_id,
             upload_id=upload_id,
-            gcs_path=f"gs://{bucket_name}/{blob_path}",
+            s3_path=f"gs://{bucket_name}/{blob_path}",
             metadata={
                 "sample_counts": {
                     "quantity": len(request.quantity_samples),

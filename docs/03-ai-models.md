@@ -190,15 +190,15 @@ graph LR
   "sleep_efficiency": 0.82,           # Time asleep / time in bed
   "predicted_sleep_stages": [
     {
-      "start": "2024-01-01T23:00:00Z",
-      "end": "2024-01-01T23:15:00Z", 
+      "start": "2025-06-01T23:00:00Z",
+      "end": "2025-06-01T23:15:00Z", 
       "stage": "light",
       "confidence": 0.92
     }
   ],
   "anomalies": [
     {
-      "timestamp": "2024-01-02T03:00:00Z",
+      "timestamp": "2025-06-02T03:00:00Z",
       "type": "unusual_activity",
       "severity": "low",
       "description": "Unexpected movement during deep sleep"
@@ -563,20 +563,27 @@ async def continuous_learning_pipeline():
 
 ### Future Roadmap
 
-**Q1 2024**: 
+**Q1 2025**:
 - PAT v3.0 with attention mechanism improvements
 - Real-time anomaly detection
 - Multi-device fusion (Apple Watch + Oura + CGM)
 
-**Q2 2024**:
+**Q2 2025**:
 - Predictive health modeling (7-day forecasts)
 - Integration with electronic health records
 - Clinical trial partnership for validation
 
-**Q3 2024**:
-- Causal inference for intervention recommendations
-- Social determinants of health integration
-- Population-level health insights
+**Q3 2025**:
+- Enhanced sleep disorder detection
+- Multi-device data fusion improvements
+- Advanced circadian rhythm analysis
+
+**Q4 2025**:
+- Real-time health alert system
+- Predictive health modeling
+- Integration with additional wearable devices
+
+**Q1 2026**:
 
 ---
 

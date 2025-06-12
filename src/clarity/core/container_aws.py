@@ -124,7 +124,6 @@ class DependencyContainer:
                     region=self.settings.cognito_region or self.settings.aws_region,
                     user_pool_id=self.settings.cognito_user_pool_id,
                     client_id=self.settings.cognito_client_id,
-                    skip_validation=self.settings.is_development(),
                 )
 
                 logger.info("AWS Cognito auth provider initialized")

@@ -358,8 +358,8 @@ flowchart LR
     end
     
     subgraph Roadmap ["🚀 Future Roadmap"]
-        Enhanced[Enhanced ML<br/>Additional models<br/>Q2 2024]
-        Realtime[Real-time Features<br/>Live streaming<br/>Q2 2024]
+        Enhanced[Enhanced ML<br/>Additional models<br/>Q3 2025]
+        Realtime[Real-time Features<br/>Live streaming<br/>Q4 2025]
     end
     
     Complete --> InProgress

@@ -174,7 +174,7 @@ graph TB
 {
   "heart_rate_samples": [
     {
-      "timestamp": "2024-01-01T12:00:00Z",
+      "timestamp": "2025-06-01T12:00:00Z",
       "value": 72,
       "unit": "bpm",
       "source": "apple_watch"

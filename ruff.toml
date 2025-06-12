@@ -86,6 +86,29 @@ ignore = [
     "Q002",   # Bad quotes (conflicts with formatter)
     "Q003",   # Bad quotes (conflicts with formatter)
     "W191",   # Indentation contains tabs (handled by formatter)
+    
+    # Try/except style preferences - these are opinionated
+    "TRY300", # Consider moving to else block (valid pattern in many cases)
+    "TRY301", # Abstract raise to inner function (not always clearer)
+    "TRY401", # Redundant exception in logging (explicit is fine)
+    
+    # Method design preferences
+    "PLR6301", # Could be static method (not always better)
+    
+    # Argument usage
+    "ARG002", # Unused method argument (often required by interfaces)
+    "ARG004", # Unused static method argument
+    
+    # Type annotations
+    "ANN401", # Any type (sometimes necessary for flexibility)
+    
+    # Complexity metrics that are guidelines, not rules
+    "PLR0911", # Too many return statements
+    "PLR0912", # Too many branches
+    "PLR0913", # Too many arguments
+    "PLR0914", # Too many local variables
+    "PLR0915", # Too many statements
+    "PLR0917", # Too many positional arguments
 ]
 
 # Allow autofix for most rules

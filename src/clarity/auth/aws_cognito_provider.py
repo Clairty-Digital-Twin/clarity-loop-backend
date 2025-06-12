@@ -92,8 +92,7 @@ class CognitoAuthProvider(IAuthProvider):
             # Construct the public key
             public_key = jwk.construct(self.jwks["keys"][key_index])
 
-            # Get the last two sections of the token,
-            # message and signature (encoded in base64)
+            # Get the last two sections of the token (message and signature)
             message, encoded_signature = str(token).rsplit(".", 1)
 
             # Decode the signature

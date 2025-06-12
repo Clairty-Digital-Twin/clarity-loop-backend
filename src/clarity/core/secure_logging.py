@@ -12,8 +12,6 @@ if TYPE_CHECKING:
     import logging
 
     from clarity.models.health_data import HealthDataUpload, HealthMetric
-else:
-    pass
 
 # Constants for sanitization
 MAX_COMPLEX_VALUE_LENGTH = 100

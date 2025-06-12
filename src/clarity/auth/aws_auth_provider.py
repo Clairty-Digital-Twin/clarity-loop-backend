@@ -7,11 +7,15 @@ from datetime import UTC, datetime
 import json
 import logging
 import time
-from typing import Any, cast
+from typing import TYPE_CHECKING, Any, cast
 
 import boto3
 from botocore.exceptions import ClientError
 from jose import JWTError, jwt
+
+if TYPE_CHECKING:
+    from mypy_boto3_cognito_idp import CognitoIdentityProviderClient
+    from mypy_boto3_cognito_idp.type_defs import AdminGetUserResponseTypeDef
 
 from clarity.models.auth import (
     AuthError,
@@ -55,7 +59,7 @@ class CognitoAuthProvider(IAuthProvider):
         self.users_table = "clarity_users"
 
         # Initialize Cognito client
-        self.cognito_client = boto3.client("cognito-idp", region_name=region)
+        self.cognito_client: CognitoIdentityProviderClient = boto3.client("cognito-idp", region_name=region)
 
         # Get JWKS URL for token verification
         self.jwks_url = f"https://cognito-idp.{region}.amazonaws.com/{user_pool_id}/.well-known/jwks.json"
@@ -253,12 +257,17 @@ class CognitoAuthProvider(IAuthProvider):
 
         try:
             # Try to get user by username first
-            response: dict[str, Any]
+            attributes: dict[str, str] = {}
             try:
-                response = self.cognito_client.admin_get_user(  # type: ignore[assignment]
+                cognito_response = self.cognito_client.admin_get_user(
                     UserPoolId=self.user_pool_id,
                     Username=user_id,
                 )
+                # Extract attributes from Cognito response
+                attributes = {
+                    attr["Name"]: attr["Value"]
+                    for attr in cognito_response.get("UserAttributes", [])
+                }
             except ClientError as e:
                 if e.response["Error"]["Code"] == "UserNotFoundException":
                     # Try by email if username lookup failed
@@ -269,15 +278,13 @@ class CognitoAuthProvider(IAuthProvider):
                     )
                     if not users.get("Users"):
                         return None
-                    response = {"UserAttributes": users["Users"][0]["Attributes"]}  # type: ignore[assignment]
+                    # Extract attributes from list users response
+                    attributes = {
+                        attr["Name"]: attr["Value"]
+                        for attr in users["Users"][0].get("Attributes", [])
+                    }
                 else:
                     raise
-
-            # Extract attributes
-            attributes = {
-                attr["Name"]: attr["Value"]
-                for attr in response.get("UserAttributes", [])
-            }
 
             # Extract custom attributes to determine roles
             roles = []

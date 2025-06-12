@@ -8,10 +8,13 @@ import asyncio
 from datetime import UTC, datetime
 import json
 import logging
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import boto3
 from botocore.exceptions import ClientError
+
+if TYPE_CHECKING:
+    from mypy_boto3_s3 import S3Client
 
 from clarity.core.secure_logging import sanitize_for_logging
 from clarity.models.health_data import HealthDataUpload
@@ -74,7 +77,7 @@ class S3StorageService(CloudStoragePort):
         self.storage_class = storage_class
 
         # Initialize S3 client
-        self.s3_client = boto3.client(
+        self.s3_client: S3Client = boto3.client(
             "s3",
             region_name=region,
             endpoint_url=endpoint_url,

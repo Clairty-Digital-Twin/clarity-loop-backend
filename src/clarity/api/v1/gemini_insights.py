@@ -13,10 +13,12 @@ import os
 from typing import Any, NoReturn
 import uuid
 
+from boto3.dynamodb.conditions import Key
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field
 
 from clarity.auth.dependencies import AuthenticatedUser
+from clarity.core.config_aws import get_settings
 from clarity.ml.gemini_service import (
     GeminiService,
     HealthInsightRequest,
@@ -55,8 +57,6 @@ def set_dependencies(
         _gemini_service = GeminiService(project_id="dev-project")
     else:
         # Production setup - using AWS region instead of GCP project
-        from clarity.core.config_aws import get_settings
-
         aws_settings = get_settings()
         _gemini_service = GeminiService(project_id=aws_settings.aws_region)
 
@@ -470,8 +470,6 @@ async def get_insight_history(
 
         # Get insights from DynamoDB
         dynamodb_client = _get_dynamodb_client()
-        from boto3.dynamodb.conditions import Key
-
         # Query insights for user
         response = dynamodb_client.table.query(
             KeyConditionExpression=Key("pk").eq(f"USER#{user_id}")
@@ -560,7 +558,7 @@ async def get_insight_history(
     description="Check the health status of the Gemini insights service",
 )
 async def get_service_status(
-    current_user: AuthenticatedUser,
+    current_user: AuthenticatedUser,  # noqa: ARG001
     gemini_service: GeminiService = Depends(get_gemini_service),
 ) -> ServiceStatusResponse:
     """Check Gemini service health status.

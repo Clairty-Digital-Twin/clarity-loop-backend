@@ -442,7 +442,7 @@ class S3StorageService(CloudStoragePort):
                         ),
                     )
                     deleted_count += 1
-                except Exception as e:
+                except Exception as e:  # noqa: BLE001
                     logger.warning("Failed to delete file %s: %s", file_info["key"], e)
 
             await self._audit_log(
@@ -527,7 +527,7 @@ class S3StorageService(CloudStoragePort):
 
             logger.info("S3 bucket lifecycle policies configured")
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.warning("Failed to set up bucket lifecycle: %s", e)
             # Don't raise - lifecycle is optional
 
@@ -559,7 +559,7 @@ class S3StorageService(CloudStoragePort):
                 "bucket": self.bucket_name,
                 "timestamp": datetime.now(UTC).isoformat(),
             }
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             return {
                 "status": "unhealthy",
                 "error": str(e),

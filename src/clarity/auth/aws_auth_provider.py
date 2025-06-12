@@ -8,6 +8,7 @@ import json
 import logging
 import time
 from typing import TYPE_CHECKING, Any, cast
+import urllib.request
 
 import boto3
 from botocore.exceptions import ClientError
@@ -125,8 +126,6 @@ class CognitoAuthProvider(IAuthProvider):
             return self._jwks_cache
 
         try:
-            import urllib.request
-
             with urllib.request.urlopen(self.jwks_url) as response:
                 jwks = json.loads(response.read())
                 self._jwks_cache = jwks
@@ -361,8 +360,8 @@ class CognitoAuthProvider(IAuthProvider):
             # Create UserContext from database record
             return self._create_user_context_from_db(user_data, cognito_user_info)
 
-        except Exception as e:
-            logger.exception("Error creating/fetching user context: %s", e)
+        except Exception:
+            logger.exception("Error creating/fetching user context")
             # Fall back to basic context creation
             return self._create_basic_user_context(cognito_user_info)
 

@@ -85,7 +85,7 @@ async def test_process_health_data_message(subscriber: AnalysisSubscriber):
             ).decode("utf-8")
         }
     }
-    subscriber.publisher = MagicMock()
+    subscriber.publisher = AsyncMock()
     subscriber.environment = "production"
 
     with (

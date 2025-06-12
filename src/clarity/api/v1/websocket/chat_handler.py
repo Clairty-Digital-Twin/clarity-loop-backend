@@ -16,6 +16,7 @@ from fastapi import (
 )
 from pydantic import ValidationError
 
+from clarity.auth.aws_cognito_provider import CognitoAuthProvider
 from clarity.core.config_aws import get_settings
 
 # Removed circular import - will use direct initialization
@@ -23,6 +24,7 @@ from clarity.ml.gemini_service import (
     GeminiService,
     HealthInsightRequest,
 )
+from clarity.ml.pat_service import get_pat_service
 
 if TYPE_CHECKING:
     from clarity.ml.pat_service import ActigraphyAnalysis
@@ -57,10 +59,9 @@ def get_gemini_service() -> GeminiService:
 
 def get_pat_model_service() -> PATModelService:
     # Direct initialization to avoid circular import
-    from clarity.ml.pat_service import get_pat_service
-
     service = get_pat_service()
-    assert isinstance(service, PATModelService)
+    if not isinstance(service, PATModelService):
+        raise TypeError(f"Expected PATModelService, got {type(service).__name__}")
     return service
 
 
@@ -429,8 +430,6 @@ async def _authenticate_websocket_user(
 
     try:
         # Get auth provider directly to avoid circular import
-        from clarity.auth.aws_cognito_provider import CognitoAuthProvider
-
         auth_provider = CognitoAuthProvider(
             user_pool_id=os.getenv("COGNITO_USER_POOL_ID", ""),
             client_id=os.getenv("COGNITO_CLIENT_ID", ""),
@@ -445,7 +444,8 @@ async def _authenticate_websocket_user(
         # Use the provider to create the full user context
         if hasattr(auth_provider, "get_or_create_user_context"):
             user_context = await auth_provider.get_or_create_user_context(user_info)
-            assert isinstance(user_context, UserContext)
+            if not isinstance(user_context, UserContext):
+                raise TypeError(f"Expected UserContext, got {type(user_context).__name__}")
             return user_context
         # Fallback for providers without the enhanced method
         # This part might need adjustment based on what verify_token returns

@@ -8,9 +8,12 @@ import logging
 import os
 from typing import Any
 
+import boto3
 from fastapi import APIRouter, Header, Request
 
 from clarity.auth.dependencies import AuthenticatedUser
+from clarity.core.constants import BEARER_TOKEN_PARTS_COUNT, JWT_TOKEN_PARTS_COUNT
+from clarity.core.container import get_container
 
 logger = logging.getLogger(__name__)
 
@@ -34,7 +37,7 @@ async def debug_token_info(
 
     # Parse Bearer token
     parts = authorization.split(" ")
-    if len(parts) != 2 or parts[0].lower() != "bearer":
+    if len(parts) != BEARER_TOKEN_PARTS_COUNT or parts[0].lower() != "bearer":
         return {
             "error": "Invalid Authorization format",
             "authorization": authorization,
@@ -47,7 +50,7 @@ async def debug_token_info(
     token_parts = token.split(".")
 
     return {
-        "token_format": "Valid JWT" if len(token_parts) == 3 else "Invalid JWT format",
+        "token_format": "Valid JWT" if len(token_parts) == JWT_TOKEN_PARTS_COUNT else "Invalid JWT format",
         "token_length": len(token),
         "token_preview": f"{token[:20]}...{token[-20:]}",
         "header_parts": len(token_parts),
@@ -151,15 +154,13 @@ async def debug_middleware_stack(request: Request) -> dict[str, Any]:
 
 @router.post("/verify-token-directly")
 async def debug_verify_token_directly(
-    request: Request,
+    request: Request,  # noqa: ARG001
     authorization: str | None = Header(None),
 ) -> dict[str, Any]:
     """Debug endpoint to test token verification directly."""
     logger.warning("🔍🔍 DEBUG VERIFY TOKEN DIRECTLY CALLED")
 
     # Get the container to access auth provider
-    from clarity.core.container import get_container
-
     container = get_container()
     auth_provider = container.auth_provider
 
@@ -213,15 +214,13 @@ async def debug_verify_token_directly(
 
     # Check AWS Cognito status
     try:
-        import boto3
-
-        cognito_client = boto3.client(
+        _ = boto3.client(
             "cognito-idp", region_name=os.getenv("AWS_REGION", "us-east-1")
         )
         result["cognito_initialized"] = True
         result["cognito_user_pool_id"] = os.getenv("COGNITO_USER_POOL_ID", "NOT_SET")
         result["cognito_region"] = os.getenv("COGNITO_REGION", "us-east-1")
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         result["cognito_initialized"] = False
         result["cognito_note"] = f"Cognito client error: {e!s}"
 

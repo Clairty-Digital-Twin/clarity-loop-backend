@@ -16,6 +16,7 @@ import os
 from typing import Any, cast
 import uuid
 
+from boto3.dynamodb.conditions import Key
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
 from pydantic import BaseModel, Field, validator
 
@@ -353,8 +354,6 @@ async def get_pat_analysis(
         dynamodb_client = _get_analysis_repository()
 
         # Try to get analysis results from DynamoDB
-        from boto3.dynamodb.conditions import Key
-
         # Query for analysis results
         response = dynamodb_client.table.query(
             KeyConditionExpression=Key("pk").eq(f"USER#{current_user.user_id}")
@@ -514,7 +513,7 @@ async def health_check(
     description="Get information about the available PAT models and current configuration",
 )
 async def get_model_info(
-    current_user: AuthenticatedUser,
+    current_user: AuthenticatedUser,  # noqa: ARG001
     inference_engine: AsyncInferenceEngine = Depends(get_pat_inference_engine),
 ) -> dict[str, Any]:
     """Get detailed information about PAT model configuration and capabilities."""

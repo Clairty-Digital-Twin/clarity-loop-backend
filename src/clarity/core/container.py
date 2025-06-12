@@ -9,6 +9,6 @@ from clarity.core.container_aws import *  # noqa: F403
 # Add any missing functions for tests
 def create_application() -> FastAPI:
     """Create application (for tests)."""
-    from clarity.main import app
-
-    return app
+    # Import here to avoid circular imports
+    from clarity.main import app as clarity_app
+    return clarity_app

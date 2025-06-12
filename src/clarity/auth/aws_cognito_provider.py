@@ -64,7 +64,9 @@ class CognitoAuthProvider(IAuthProvider):
                     msg = "Failed to fetch JWKS keys"
                     raise AuthenticationError(msg) from e
         # Type narrowing - at this point _jwks_cache cannot be None
-        assert self._jwks_cache is not None
+        if self._jwks_cache is None:
+            msg = "JWKS cache is unexpectedly None after fetch"
+            raise AuthenticationError(msg)
         return self._jwks_cache
 
     async def verify_token(self, token: str) -> dict[str, Any] | None:

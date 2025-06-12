@@ -12,6 +12,7 @@ from fastapi.testclient import TestClient
 
 from clarity.core.config_aws import MiddlewareConfig, Settings
 from clarity.core.config_provider import ConfigProvider
+from clarity.core.container import create_application
 
 
 class TestMiddlewareConfiguration:
@@ -143,9 +144,6 @@ class TestMiddlewareConfiguration:
     @staticmethod
     def test_container_uses_middleware_config() -> None:
         """Test that the container properly uses middleware configuration."""
-        # Import create_application here to avoid early module loading
-        from clarity.core.container import create_application
-
         with patch("clarity.core.container.get_settings") as mock_get_settings:
             # Mock settings to disable auth for simpler testing
             mock_settings = Mock()

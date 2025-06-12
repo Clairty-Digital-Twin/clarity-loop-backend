@@ -24,6 +24,13 @@ These models establish new standards for clinical data validation and processing
 # Use lazy imports to avoid circular dependencies during package installation
 # This is a common pattern for packages with complex interdependencies
 
+# Import modules upfront to avoid import issues in __getattr__
+from clarity.models import (
+    auth,
+    health_data,
+    user,
+)
+
 
 def __getattr__(name: str) -> object:
     """Lazy import pattern to avoid circular dependencies."""
@@ -55,8 +62,6 @@ def __getattr__(name: str) -> object:
         "UserSessionResponse",
         "UserStatus",
     }:
-        from clarity.models import auth
-
         return getattr(auth, name)
 
     # Health data models
@@ -71,14 +76,10 @@ def __getattr__(name: str) -> object:
         "SleepData",
         "ValidationError",
     }:
-        from clarity.models import health_data
-
         return getattr(health_data, name)
 
     # User models
     if name in {"User", "UserProfile", "UserPreferences"}:
-        from clarity.models import user
-
         return getattr(user, name)
 
     msg = f"module '{__name__}' has no attribute '{name}'"

@@ -4,7 +4,10 @@ Business logic layer for authentication operations using AWS Cognito.
 Provides AWS-native authentication solution.
 """
 
+import base64
 from datetime import UTC, datetime, timedelta
+import hashlib
+import hmac
 import logging
 import secrets
 from typing import TYPE_CHECKING, Any
@@ -122,10 +125,6 @@ class CognitoAuthenticationService:
         """Compute secret hash for Cognito API calls if client secret is configured."""
         if not self.client_secret:
             return None
-
-        import base64
-        import hashlib
-        import hmac
 
         message = bytes(username + self.client_id, "utf-8")
         key = bytes(self.client_secret, "utf-8")
@@ -277,9 +276,10 @@ class CognitoAuthenticationService:
             # Handle different authentication challenges
             if "ChallengeName" in response:
                 if response["ChallengeName"] == "NEW_PASSWORD_REQUIRED":
-                    # Return None to indicate auth failed due to password change
+                    # Raise exception for password change requirement
                     logger.warning("User requires password change: %s", request.email)
-                    return None
+                    msg = "Password change required. Please reset your password."
+                    raise AuthenticationError(msg)
                 if response["ChallengeName"] == "MFA_SETUP":
                     # Handle MFA setup
                     return self._handle_mfa_setup(
@@ -313,16 +313,18 @@ class CognitoAuthenticationService:
             if not user_data_exists:
                 # Handle missing user data by creating session without DynamoDB update
                 logger.warning("User data not found in database for user: %s", user_sub)
-                user_session = UserSession(
-                    user_id=user_sub,
+                user_session = UserSessionResponse(
+                    user_id=uuid.UUID(user_sub),
                     email=request.email,
-                    display_name=request.email.split("@")[0],
-                    created_at=datetime.now(UTC),
+                    first_name=request.email.split("@")[0],  # Default to email prefix
+                    last_name="",  # Empty last name as default
+                    role=UserRole.PATIENT.value,  # Default role
+                    permissions=[],  # Default permissions
+                    status=UserStatus.ACTIVE,
                     last_login=datetime.now(UTC),
-                    is_active=True,
-                    roles=["user"],
-                    device_id=device_info.device_id if device_info else None,
-                    session_metadata={"ip_address": ip_address} if ip_address else {},
+                    mfa_enabled=False,
+                    email_verified=True,  # Assume verified if logging in
+                    created_at=datetime.now(UTC),
                 )
             else:
                 # Update user data
@@ -348,7 +350,24 @@ class CognitoAuthenticationService:
                 )
 
                 # Create user session response
-                user_session = await self._create_user_session_response(user_sub, user_data)
+                if user_data:
+                    user_session = await self._create_user_session_response(user_sub, user_data)
+                else:
+                    # This shouldn't happen as we checked user_data_exists above
+                    logger.error("User data is None when it should exist for user: %s", user_sub)
+                    user_session = UserSessionResponse(
+                        user_id=uuid.UUID(user_sub),
+                        email=request.email,
+                        first_name=request.email.split("@")[0],
+                        last_name="",
+                        role=UserRole.PATIENT.value,
+                        permissions=[],
+                        status=UserStatus.ACTIVE,
+                        last_login=datetime.now(UTC),
+                        mfa_enabled=False,
+                        email_verified=True,
+                        created_at=datetime.now(UTC),
+                    )
 
             # Create token response
             tokens = TokenResponse(

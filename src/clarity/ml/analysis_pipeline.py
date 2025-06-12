@@ -5,6 +5,7 @@ Integrates preprocessing, modality processors, fusion, and PAT model.
 """
 
 from datetime import UTC, datetime, timedelta
+from decimal import Decimal
 import logging
 import os
 from typing import TYPE_CHECKING, Any
@@ -204,8 +205,6 @@ class HealthAnalysisPipeline:
                 try:
                     dynamodb_client = await self._get_dynamodb_client()
                     # Store analysis results in DynamoDB
-                    from decimal import Decimal
-
                     timestamp = datetime.now(UTC)
 
                     # Convert floats to Decimal for DynamoDB

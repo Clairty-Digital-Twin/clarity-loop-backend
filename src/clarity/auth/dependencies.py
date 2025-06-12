@@ -11,6 +11,8 @@ from typing import Annotated, Any, cast
 from fastapi import Depends, HTTPException, Request, status
 from fastapi.security import HTTPBearer
 
+from clarity.auth.aws_cognito_provider import get_cognito_provider
+from clarity.auth.modal_auth_fix import get_user_context
 from clarity.models.auth import UserContext
 from clarity.models.user import User
 
@@ -47,8 +49,6 @@ def get_authenticated_user(
         HTTPException: 401 if not authenticated
     """
     # Check contextvars first (Modal doesn't propagate request.state properly)
-    from clarity.auth.modal_auth_fix import get_user_context
-
     user_context = get_user_context()
 
     if user_context:
@@ -120,9 +120,6 @@ def get_auth_provider() -> Any:
     Returns:
         Authentication provider instance
     """
-    # Import here to avoid circular imports
-    from clarity.auth.aws_cognito_provider import get_cognito_provider
-
     return get_cognito_provider()
 
 

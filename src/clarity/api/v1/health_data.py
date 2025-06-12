@@ -19,7 +19,7 @@ import os
 from typing import Any, NoReturn
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Query, Request, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from google.cloud import storage
 
 from clarity.auth.dependencies import AuthenticatedUser
@@ -544,8 +544,6 @@ async def list_health_data(  # noqa: PLR0913, PLR0917
 )
 async def query_health_data_legacy() -> dict[str, str]:
     """🚫 Legacy endpoint permanently removed."""
-    from fastapi import HTTPException
-
     logger.warning("Attempt to access removed legacy health data query endpoint")
 
     raise HTTPException(

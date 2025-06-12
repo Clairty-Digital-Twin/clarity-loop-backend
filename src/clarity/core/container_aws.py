@@ -9,7 +9,6 @@ from typing import Any
 from fastapi import FastAPI
 from prometheus_client import Counter, Histogram
 
-from clarity.api.v1.router import api_router
 from clarity.auth.aws_auth_provider import CognitoAuthProvider
 from clarity.auth.mock_auth import MockAuthProvider
 from clarity.core.config_aws import Settings, get_settings
@@ -232,14 +231,17 @@ class DependencyContainer:
         logger.info("AWS dependency container shutdown complete")
 
     def configure_routes(self, app: FastAPI) -> None:
-        """Configure FastAPI routes with AWS dependencies."""
+        """Configure FastAPI routes with AWS dependencies.
+        
+        Note: This method is currently not used as route configuration
+        is handled directly in main.py to avoid circular imports.
+        """
         if not self._initialized:
             msg = "Container must be initialized before configuring routes"
             raise RuntimeError(msg)
 
-        # Include API router with dependencies
-        # This adds ALL endpoints: auth, health-data, healthkit, pat, insights, metrics, websocket
-        app.include_router(api_router, prefix="/api/v1")
+        # Routes are configured in main.py to avoid circular imports
+        logger.warning("configure_routes called but routes are configured in main.py")
 
         # Add health check endpoint
         @app.get("/health")

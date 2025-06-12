@@ -8,6 +8,12 @@ from pydantic import BaseModel, EmailStr, Field
 
 from clarity.auth.aws_cognito_provider import CognitoAuthProvider
 from clarity.auth.dependencies import get_auth_provider, get_current_user
+from clarity.auth.dependencies import get_current_user as get_user_func
+from clarity.core.constants import (
+    AUTH_SCOPE_FULL_ACCESS,
+    AUTH_TOKEN_DEFAULT_EXPIRY_SECONDS,
+    AUTH_TOKEN_TYPE_BEARER,
+)
 from clarity.core.exceptions import ProblemDetail
 from clarity.models.auth import TokenResponse, UserLoginRequest
 from clarity.ports.auth_ports import IAuthProvider
@@ -132,9 +138,9 @@ async def register(
     return TokenResponse(
         access_token=tokens["access_token"],
         refresh_token=tokens["refresh_token"],
-        token_type="bearer",
-        expires_in=tokens.get("expires_in", 3600),
-        scope="full_access",
+        token_type=AUTH_TOKEN_TYPE_BEARER,
+        expires_in=tokens.get("expires_in", AUTH_TOKEN_DEFAULT_EXPIRY_SECONDS),
+        scope=AUTH_SCOPE_FULL_ACCESS,
     )
 
 
@@ -168,7 +174,7 @@ async def login(
                 status=401,
                 instance=f"https://api.clarity.health/requests/{id(e)}",
             ).model_dump(),
-        )
+        ) from e
     except EmailNotVerifiedError as e:
         raise HTTPException(
             status_code=403,
@@ -179,7 +185,7 @@ async def login(
                 status=403,
                 instance=f"https://api.clarity.health/requests/{id(e)}",
             ).model_dump(),
-        )
+        ) from e
     except Exception as e:
         logger.exception("Login failed")
         raise HTTPException(
@@ -192,6 +198,22 @@ async def login(
                 instance=f"https://api.clarity.health/requests/{id(e)}",
             ).model_dump(),
         ) from e
+
+    # Validate result outside try block
+    if not tokens:
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to authenticate user"
+        )
+
+    # Return token response
+    return TokenResponse(
+        access_token=tokens["access_token"],
+        refresh_token=tokens["refresh_token"],
+        token_type=AUTH_TOKEN_TYPE_BEARER,
+        expires_in=tokens.get("expires_in", AUTH_TOKEN_DEFAULT_EXPIRY_SECONDS),
+        scope=AUTH_SCOPE_FULL_ACCESS,
+    )
 
 
 @router.get("/me", response_model=UserInfoResponse)
@@ -262,7 +284,8 @@ async def update_user(
 
     # Validate result outside try block
     if not updated_user:
-        raise UserNotFoundError(f"User {user_id} not found")
+        msg = f"User {user_id} not found"
+        raise UserNotFoundError(msg)
 
     return UserUpdateResponse(
         user_id=updated_user.uid,
@@ -275,7 +298,7 @@ async def update_user(
 @router.post("/logout", response_model=LogoutResponse)
 async def logout(
     request: Request,
-    auth_provider: IAuthProvider = Depends(get_auth_provider),
+    auth_provider: IAuthProvider = Depends(get_auth_provider),  # noqa: ARG001
 ) -> LogoutResponse:
     """Logout user (invalidate token if supported)."""
     # Check request format first - get body and auth header
@@ -284,7 +307,7 @@ async def logout(
     # Check if request body is empty
     try:
         body = await request.json()
-    except Exception:
+    except Exception:  # noqa: BLE001
         body = {}
 
     # If both body is empty and no auth header, this is a validation error
@@ -303,12 +326,10 @@ async def logout(
     try:
 
         # Now try to authenticate - if we have auth header
-        current_user = None
         if auth_header:
             try:
-                from clarity.auth.dependencies import get_current_user as get_user_func
-                current_user = get_user_func(request)
-            except Exception:
+                _ = get_user_func(request)
+            except Exception as auth_err:
                 # Auth failed but we have a request, so it's an auth error not validation
                 raise HTTPException(
                     status_code=401,
@@ -319,7 +340,7 @@ async def logout(
                         status=401,
                         instance=f"https://api.clarity.health/requests/{id(request)}",
                     ).model_dump(),
-                )
+                ) from auth_err
 
         # For AWS Cognito, logout is typically handled client-side
         # by removing tokens. Server-side we can optionally revoke tokens
@@ -329,7 +350,7 @@ async def logout(
     except HTTPException:
         # Re-raise HTTP exceptions (validation errors, auth errors)
         raise
-    except Exception as e:
+    except Exception:
         logger.exception("Logout failed")
         # Return success anyway - client should discard token
         return LogoutResponse(message="Logout processed")
@@ -347,7 +368,7 @@ async def auth_health() -> HealthResponse:
             service="authentication",
             version="1.0.0"
         )
-    except Exception:
+    except Exception:  # noqa: BLE001
         return HealthResponse(
             status="unhealthy",
             service="authentication",
@@ -370,7 +391,7 @@ async def refresh_token(
         try:
             body = await request.json()
             refresh_token_str = body.get("refresh_token")
-        except Exception:
+        except Exception:  # noqa: BLE001
             refresh_token_str = None
 
     if not refresh_token_str:
@@ -412,19 +433,19 @@ async def refresh_token(
                 return TokenResponse(
                     access_token=result["AccessToken"],
                     refresh_token=refresh_token_str,  # Cognito doesn't rotate refresh tokens
-                    token_type="bearer",
-                    expires_in=result.get("ExpiresIn", 3600),
-                    scope="full_access",
+                    token_type=AUTH_TOKEN_TYPE_BEARER,
+                    expires_in=result.get("ExpiresIn", AUTH_TOKEN_DEFAULT_EXPIRY_SECONDS),
+                    scope=AUTH_SCOPE_FULL_ACCESS,
                 )
             raise HTTPException(
                 status_code=500,
                 detail="Failed to refresh token"
             )
-        except client.exceptions.NotAuthorizedException:
+        except client.exceptions.NotAuthorizedException as auth_err:
             raise HTTPException(
                 status_code=401,
                 detail="Invalid refresh token"
-            )
+            ) from auth_err
 
     except Exception as e:
         logger.exception("Token refresh failed")

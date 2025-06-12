@@ -87,7 +87,7 @@ async def lifespan(_app: FastAPI) -> AsyncGenerator[None, None]:
                 logger.warning("⚠️  DynamoDB table %s not found", DYNAMODB_TABLE)
             else:
                 logger.exception("❌ DynamoDB error")
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             # Handle credentials errors and other AWS connectivity issues
             if "NoCredentialsError" in str(e) or "Unable to locate credentials" in str(e):
                 logger.warning("🔧 Development mode: AWS credentials not available - running in local mode")

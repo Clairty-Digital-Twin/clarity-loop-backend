@@ -1,6 +1,7 @@
 """Main API v1 router - AWS Clean version."""
 
 import logging
+import os
 from typing import Any
 
 from fastapi import APIRouter, Depends
@@ -71,8 +72,6 @@ api_router.include_router(
 )
 
 # Include debug router in development only
-import os
-
 if os.getenv("ENVIRONMENT", "development") == "development":
     api_router.include_router(
         debug_router,

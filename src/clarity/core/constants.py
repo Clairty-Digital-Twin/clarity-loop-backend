@@ -82,6 +82,17 @@ DEFAULT_PAGE_LIMIT: Final[int] = 10
 DEFAULT_PAGE_OFFSET: Final[int] = 0
 MAX_PAGE_LIMIT: Final[int] = 100
 
+# HTTP Status codes for common responses
+HTTP_STATUS_OK: Final[int] = 200
+HTTP_STATUS_CREATED: Final[int] = 201
+HTTP_STATUS_NO_CONTENT: Final[int] = 204
+HTTP_STATUS_BAD_REQUEST: Final[int] = 400
+HTTP_STATUS_UNAUTHORIZED: Final[int] = 401
+HTTP_STATUS_FORBIDDEN: Final[int] = 403
+HTTP_STATUS_NOT_FOUND: Final[int] = 404
+HTTP_STATUS_UNPROCESSABLE_ENTITY: Final[int] = 422
+HTTP_STATUS_INTERNAL_SERVER_ERROR: Final[int] = 500
+
 # ==============================================================================
 # NHANES Statistics Constants
 # ==============================================================================
@@ -101,6 +112,11 @@ Z_SCORE_NORMALIZATION_EPSILON: Final[float] = 1e-6
 # Secure hashing
 HASH_ALGORITHM: Final[str] = "sha256"
 CACHE_KEY_TRUNCATION_LENGTH: Final[int] = 16
+
+# Authentication constants
+AUTH_TOKEN_TYPE_BEARER: Final[str] = "bearer"
+AUTH_TOKEN_DEFAULT_EXPIRY_SECONDS: Final[int] = 3600
+AUTH_SCOPE_FULL_ACCESS: Final[str] = "full_access"
 
 # ==============================================================================
 # Error Handling Constants
@@ -140,6 +156,13 @@ PRODUCTION_MODE_LOG_LEVEL: Final[str] = "INFO"
 SERVICE_VERSION: Final[str] = "1.0.0"
 API_VERSION: Final[str] = "v1"
 
+# AWS Service Limits
+S3_LIFECYCLE_TRANSITION_IA_DAYS: Final[int] = 30
+S3_LIFECYCLE_TRANSITION_GLACIER_DAYS: Final[int] = 90
+S3_LIFECYCLE_EXPIRATION_DAYS: Final[int] = 365
+DYNAMODB_BATCH_WRITE_ITEM_LIMIT: Final[int] = 25
+COGNITO_PASSWORD_MIN_LENGTH: Final[int] = 8
+
 # ==============================================================================
 # Validation Constants
 # ==============================================================================
@@ -153,3 +176,7 @@ MAX_QUALITY_SCORE: Final[float] = 1.0
 MAX_USERNAME_LENGTH: Final[int] = 255
 MAX_REQUEST_ID_LENGTH: Final[int] = 64
 MAX_ERROR_MESSAGE_LENGTH: Final[int] = 1000
+
+# JWT and Bearer token validation
+BEARER_TOKEN_PARTS_COUNT: Final[int] = 2
+JWT_TOKEN_PARTS_COUNT: Final[int] = 3

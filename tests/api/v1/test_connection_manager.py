@@ -1,6 +1,6 @@
 import asyncio
 import time
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, patch
 
 from fastapi import WebSocket
 import pytest
@@ -115,8 +115,7 @@ async def test_rate_limiting():
 
 
 @pytest.mark.asyncio
-@patch("time.time", return_value=1622995200.0)
-async def test_background_tasks(mock_time: MagicMock):
+async def test_background_tasks():
     manager = ConnectionManager(heartbeat_interval=1, connection_timeout=1)  # Use integers instead of floats
     await manager.start_background_tasks()
 
@@ -131,8 +130,16 @@ async def test_background_tasks(mock_time: MagicMock):
     assert ws.send_text.call_count > 0
 
     # Test cleanup
-    manager.last_heartbeat[ws] = mock_time.return_value - 0.2
-    await manager._cleanup_stale_connections()
+    # Set last heartbeat to more than connection_timeout seconds ago
+    with patch("time.time") as mock_time:
+        # First call is in _cleanup_stale_connections to get current_time
+        # We'll set it to a value that makes the connection appear stale
+        current_time = 1622995200.0
+        mock_time.return_value = current_time
+        manager.last_heartbeat[ws] = current_time - 2  # 2 seconds ago (> 1 second timeout)
+
+        await manager._cleanup_stale_connections()
+
     assert manager.get_connection_count() == 0
 
     await manager.stop_background_tasks()

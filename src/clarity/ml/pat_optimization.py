@@ -16,7 +16,7 @@ import hashlib
 import logging
 from pathlib import Path
 import time
-from typing import Any
+from typing import Any, cast
 
 import torch
 from torch.nn.utils import prune
@@ -130,8 +130,8 @@ class PATPerformanceOptimizer:
 
             # Optimize for inference
             if hasattr(torch.jit, "optimize_for_inference"):
-                return torch.jit.optimize_for_inference(traced_model)  # type: ignore[no-any-return]
-            return traced_model  # noqa: TRY300
+                return torch.jit.optimize_for_inference(traced_model)
+            return traced_model  # type: ignore[no-any-return]  # noqa: TRY300
 
         except Exception:
             logger.exception("TorchScript compilation failed")
@@ -376,7 +376,7 @@ class BatchAnalysisProcessor:
                     if isinstance(result, Exception):
                         future.set_exception(result)
                     else:
-                        analysis, _ = result  # type: ignore[misc,assignment]  # Unpack (analysis, was_cached) tuple
+                        analysis, _ = result  # type: ignore[misc]  # Unpack (analysis, was_cached) tuple
                         future.set_result(analysis)
 
                 logger.info("Processed batch of %d requests", len(batch))

@@ -392,17 +392,17 @@ async def get_insight(
             _raise_insight_not_found_error(insight_id, request_id)
 
         # Verify user owns the insight
-        if insight_doc.get("user_id") != current_user.user_id:  # type: ignore[union-attr]
+        if insight_doc.get("user_id") != current_user.user_id:
             _raise_insight_access_denied_error(insight_id, request_id)
 
         # Convert DynamoDB document to HealthInsightResponse
         insight_response = HealthInsightResponse(
-            user_id=insight_doc["user_id"],  # type: ignore[index]
-            narrative=insight_doc.get("narrative", ""),  # type: ignore[union-attr]
-            key_insights=insight_doc.get("key_insights", []),  # type: ignore[union-attr]
-            recommendations=insight_doc.get("recommendations", []),  # type: ignore[union-attr]
-            confidence_score=insight_doc.get("confidence_score", 0.0),  # type: ignore[union-attr]
-            generated_at=insight_doc.get("generated_at", datetime.now(UTC).isoformat()),  # type: ignore[union-attr]
+            user_id=insight_doc["user_id"],
+            narrative=insight_doc.get("narrative", ""),
+            key_insights=insight_doc.get("key_insights", []),
+            recommendations=insight_doc.get("recommendations", []),
+            confidence_score=insight_doc.get("confidence_score", 0.0),
+            generated_at=insight_doc.get("generated_at", datetime.now(UTC).isoformat()),
         )
 
         return InsightGenerationResponse(

@@ -160,7 +160,7 @@ def performance_monitor(func: Callable[..., Any]) -> Callable[..., Any]:
             )
             raise
         else:
-            return result  # type: ignore[no-any-return]  # Wrapper preserves original function's return type
+            return result
 
     return wrapper
 

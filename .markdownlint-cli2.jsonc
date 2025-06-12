@@ -1,9 +1,9 @@
 {
   // Markdownlint configuration for documentation excellence
   "config": {
-    // Line length
+    // Line length - relaxed for modern displays and URLs
     "MD013": {
-      "line_length": 120,
+      "line_length": 350,
       "code_blocks": false,
       "tables": false,
       "headings": false,
@@ -88,15 +88,6 @@
     "dist"
   ],
 
-  // Per-file overrides
-  "overrides": [
-    {
-      "files": ["*.md"],
-      "config": {
-        "MD013": false
-      }
-    }
-  ],
 
   // Fix mode settings
   "fix": true,

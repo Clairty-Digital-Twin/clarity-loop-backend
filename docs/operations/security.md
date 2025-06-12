@@ -484,7 +484,7 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
 
 ### **Network Security**
 
-**Security Groups:**
+#### Security Groups
 
 ```json
 {
@@ -507,7 +507,7 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
 }
 ```
 
-**VPC Configuration:**
+#### VPC Configuration
 
 ```bash
 # Create VPC with private subnets
@@ -519,7 +519,7 @@ aws ec2 create-subnet --vpc-id vpc-xxx --cidr-block 10.0.101.0/24  # Public (NAT
 
 ### **Environment Variables Security**
 
-**Secrets Management:**
+#### Secrets Management
 
 ```python
 # Use AWS Secrets Manager for sensitive configuration
@@ -539,14 +539,14 @@ DATABASE_PASSWORD = get_secret("clarity/database-password")
 
 ### **Vulnerability Scanning**
 
-**Container Image Scanning:**
+#### Container Image Scanning
 
 ```bash
 # Trivy security scan in CI/CD
 trivy image --severity HIGH,CRITICAL clarity-backend:latest
 ```
 
-**Dependency Scanning:**
+#### Dependency Scanning
 
 ```bash
 # Check for known vulnerabilities
@@ -556,14 +556,14 @@ bandit -r src/ -f json -o bandit-report.json
 
 ### **Penetration Testing**
 
-**Annual Penetration Testing:**
+#### Annual Penetration Testing
 
 - External penetration testing by certified firm
 - API security testing
 - Infrastructure vulnerability assessment
 - Social engineering assessment
 
-**Security Code Review:**
+#### Security Code Review
 
 - Static application security testing (SAST)
 - Dynamic application security testing (DAST)

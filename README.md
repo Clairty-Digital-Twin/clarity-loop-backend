@@ -89,50 +89,50 @@ flowchart TD
 **Production Deployment**: AWS ECS with CloudFormation infrastructure
 
 ```mermaid
-flowchart TD
+flowchart LR
     subgraph Clients ["🖥️ Client Applications"]
-        direction LR
         A[iOS App<br/>SwiftUI<br/>HealthKit Integration]
         B[Web Dashboard<br/>React/TypeScript<br/>Real-time Analytics]
     end
     
     subgraph Core ["⚡ FastAPI Backend"]
-        direction LR
         C[Authentication<br/>AWS Cognito<br/>OAuth 2.0]
         D[Data Processing<br/>Multi-modal Pipeline<br/>Quality Validation]
         E[ML Analysis<br/>PAT + Fusion Models<br/>Batch Processing]
         F[Natural Language<br/>Gemini Integration<br/>Insight Generation]
+        
+        C --> D
+        D --> E
+        E --> F
     end
     
-    subgraph Data ["💾 Data Layer"]
-        direction LR
-        G[DynamoDB<br/>Health Metrics<br/>Analysis Results]
-        H[S3 Storage<br/>Model Weights<br/>Processing Cache]
+    subgraph Infrastructure ["🔧 Infrastructure"]
+        subgraph Data ["💾 Data Layer"]
+            G[DynamoDB<br/>Health Metrics<br/>Analysis Results]
+            H[S3 Storage<br/>Model Weights<br/>Processing Cache]
+        end
+        
+        subgraph AI ["🤖 AI Models"]
+            I[PAT Models<br/>S/M/L variants<br/>CC BY-4.0 Licensed]
+            J[Fusion Transformer<br/>Multi-modal Integration<br/>Custom Architecture]
+            K[Google Gemini<br/>Natural Language<br/>Clinical Context]
+        end
     end
     
-    subgraph AI ["🤖 AI Infrastructure"]
-        direction LR
-        I[PAT Models<br/>S/M/L variants<br/>CC BY-4.0 Licensed]
-        J[Fusion Transformer<br/>Multi-modal Integration<br/>Custom Architecture]
-        K[Google Gemini<br/>Natural Language<br/>Clinical Context]
-    end
-    
-    %% Main flow - top to bottom
-    Clients --> Core
-    Core --> Data
-    Core --> AI
-    
-    %% Detailed connections
+    %% Main connections
     A --> C
     B --> C
-    C --> D
-    D --> E
-    E --> F
+    
     D --> G
+    D --> H
+    E --> G
     E --> H
+    
     E --> I
-    I --> J
+    E --> J
     F --> K
+    
+    I --> J
     
     classDef frontend fill:#2196f3,stroke:#0d47a1,stroke-width:3px,color:white
     classDef api fill:#ff9900,stroke:#e65100,stroke-width:3px,color:white

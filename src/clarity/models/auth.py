@@ -10,13 +10,9 @@ from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from enum import StrEnum
 from typing import TYPE_CHECKING, Any, Literal
+from uuid import UUID
 
-from pydantic import BaseModel, Field, field_validator
-
-if TYPE_CHECKING:
-    from uuid import UUID
-
-    from pydantic import EmailStr
+from pydantic import BaseModel, EmailStr, Field, field_validator
 
 # Constants for validation
 MIN_PASSWORD_LENGTH = 8
@@ -259,7 +255,7 @@ class TokenResponse(BaseModel):
 class UserSessionResponse(BaseModel):
     """Response model for user session information."""
 
-    user_id: UUID = Field(..., description="User unique identifier")
+    user_id: "UUID" = Field(..., description="User unique identifier")
     email: EmailStr = Field(..., description="User email address")
     first_name: str = Field(..., description="User first name")
     last_name: str = Field(..., description="User last name")
@@ -288,7 +284,7 @@ class LoginResponse(BaseModel):
 class RegistrationResponse(BaseModel):
     """Response model for user registration."""
 
-    user_id: UUID = Field(..., description="Created user unique identifier")
+    user_id: "UUID" = Field(..., description="Created user unique identifier")
     email: EmailStr = Field(..., description="User email address")
     status: UserStatus = Field(..., description="User account status")
     verification_email_sent: bool = Field(

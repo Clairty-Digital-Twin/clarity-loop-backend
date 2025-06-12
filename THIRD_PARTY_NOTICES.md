@@ -2,6 +2,8 @@
 
 This document contains licenses and notices for third-party software components used in the CLARITY Digital Twin Platform.
 
+**Last reviewed: June 12, 2025**
+
 ## 📋 **Summary**
 
 | Component | License | Location | Notes |

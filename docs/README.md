@@ -315,9 +315,9 @@ flowchart LR
     Retention --> Network
     Audit --> Monitor
     
-    classDef security fill:#ffebee,stroke:#d32f2f
-    classDef privacy fill:#e8f5e8,stroke:#388e3c
-    classDef infra fill:#e3f2fd,stroke:#1976d2
+    classDef security fill:#ff5722,stroke:#bf360c,stroke-width:2px,color:white
+    classDef privacy fill:#4caf50,stroke:#1b5e20,stroke-width:2px,color:white
+    classDef infra fill:#2196f3,stroke:#0d47a1,stroke-width:2px,color:white
     
     class Auth,Encrypt,HIPAA security
     class Control,Retention,Audit privacy

@@ -28,6 +28,15 @@ from clarity.ports.storage import CloudStoragePort
 logger = logging.getLogger(__name__)
 audit_logger = logging.getLogger("audit")
 
+__all__ = [
+    "S3StorageService",
+    "S3StorageError",
+    "S3UploadError",
+    "S3DownloadError",
+    "S3PermissionError",
+    "get_s3_service",
+]
+
 
 class S3StorageError(Exception):
     """Base exception for S3 storage operations."""

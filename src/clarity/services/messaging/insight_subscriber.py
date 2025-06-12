@@ -11,13 +11,13 @@ import logging
 import os
 from typing import TYPE_CHECKING, Any
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from google.cloud import storage
 
 from clarity.ml.gemini_service import GeminiService, HealthInsightRequest
 
 if TYPE_CHECKING:
-    from fastapi import Request
+    pass
 
 logger = logging.getLogger(__name__)
 

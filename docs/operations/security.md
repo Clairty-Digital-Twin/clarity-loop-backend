@@ -1,6 +1,6 @@
 # CLARITY-AI Security & Compliance
 
-**HIPAA-ready infrastructure with enterprise-grade security**
+## HIPAA-ready infrastructure with enterprise-grade security
 
 ## 🛡️ **Security Overview**
 
@@ -74,7 +74,7 @@ flowchart TD
 
 ### **AWS Cognito Integration**
 
-**User Pool Configuration:**
+#### User Pool Configuration
 
 ```json
 {
@@ -102,7 +102,7 @@ flowchart TD
 }
 ```
 
-**JWT Token Validation:**
+#### JWT Token Validation
 
 ```python
 # FastAPI dependency for secure endpoints
@@ -126,14 +126,14 @@ async def verify_token(token: str = Depends(oauth2_scheme)):
 
 ### **Role-Based Access Control (RBAC)**
 
-**User Roles:**
+#### User Roles
 
 - **Patient** - Own health data access only
 - **Clinician** - Patient data with consent
 - **Researcher** - Anonymized aggregate data
 - **Admin** - System configuration access
 
-**Permission Matrix:**
+#### Permission Matrix
 
 ```python
 PERMISSIONS = {
@@ -163,7 +163,7 @@ PERMISSIONS = {
 
 ### **Encryption at Rest**
 
-**DynamoDB Encryption:**
+#### DynamoDB Encryption
 
 ```bash
 # Enable customer-managed KMS encryption

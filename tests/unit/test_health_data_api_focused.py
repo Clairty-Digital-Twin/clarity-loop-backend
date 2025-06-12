@@ -188,7 +188,7 @@ class TestHealthDataUploadEndpoint(BaseServiceTestCase):
             await upload_health_data(
                 health_data=upload_data,
                 current_user=user_context,
-                service=self.mock_service,
+                service=self.mock_service,  # type: ignore[arg-type]
             )
 
     @patch("clarity.api.v1.health_data.get_health_data_service")
@@ -213,7 +213,7 @@ class TestHealthDataUploadEndpoint(BaseServiceTestCase):
             await upload_health_data(
                 health_data=upload_data,
                 current_user=user_context,
-                service=self.mock_service,
+                service=self.mock_service,  # type: ignore[arg-type]
             )
 
     @patch("clarity.api.v1.health_data.get_health_data_service")
@@ -240,7 +240,7 @@ class TestHealthDataUploadEndpoint(BaseServiceTestCase):
             await upload_health_data(
                 health_data=upload_data,
                 current_user=user_context,
-                service=self.mock_service,
+                service=self.mock_service,  # type: ignore[arg-type]
             )
 
     @patch("clarity.api.v1.health_data.get_health_data_service")
@@ -265,7 +265,7 @@ class TestHealthDataUploadEndpoint(BaseServiceTestCase):
             await upload_health_data(
                 health_data=upload_data,
                 current_user=user_context,
-                service=self.mock_service,
+                service=self.mock_service,  # type: ignore[arg-type]
             )
 
 
@@ -290,9 +290,9 @@ class TestHealthDataMetricsEndpoint(BaseServiceTestCase):
         # Act & Assert
         with pytest.raises((ValueError, RuntimeError, AttributeError)):
             await list_health_data(
-                request=request,
+                request=request,  # type: ignore[arg-type]
                 current_user=user_context,
-                service=self.mock_service,
+                service=self.mock_service,  # type: ignore[arg-type]
             )
 
     @patch("clarity.api.v1.health_data.get_health_data_service")
@@ -310,9 +310,9 @@ class TestHealthDataMetricsEndpoint(BaseServiceTestCase):
         # Act & Assert
         with pytest.raises(HealthDataServiceError):
             await list_health_data(
-                request=request,
+                request=request,  # type: ignore[arg-type]
                 current_user=user_context,
-                service=self.mock_service,
+                service=self.mock_service,  # type: ignore[arg-type]
             )
 
     @patch("clarity.api.v1.health_data.get_health_data_service")
@@ -330,11 +330,11 @@ class TestHealthDataMetricsEndpoint(BaseServiceTestCase):
 
         # Act
         result = await list_health_data(
-            request=request,
+            request=request,  # type: ignore[arg-type]
             current_user=user_context,
             start_date=start_date,
             end_date=end_date,
-            service=self.mock_service,
+            service=self.mock_service,  # type: ignore[arg-type]
         )
 
         # Assert
@@ -358,11 +358,11 @@ class TestHealthDataMetricsEndpoint(BaseServiceTestCase):
         # Act & Assert
         with pytest.raises(DataValidationError):
             await list_health_data(
-                request=request,
+                request=request,  # type: ignore[arg-type]
                 current_user=user_context,
                 start_date=start_date,
                 end_date=end_date,
-                service=self.mock_service,
+                service=self.mock_service,  # type: ignore[arg-type]
             )
 
 
@@ -389,7 +389,7 @@ class TestHealthDataQueryEndpoint(BaseServiceTestCase):
         with pytest.raises((ValueError, RuntimeError, AttributeError)):
             await query_health_data_legacy(
                 current_user=user_context,
-                service=self.mock_service,
+                service=self.mock_service,  # type: ignore[arg-type]
             )
 
     @patch("clarity.api.v1.health_data.get_health_data_service")
@@ -410,7 +410,7 @@ class TestHealthDataQueryEndpoint(BaseServiceTestCase):
             end_date=datetime.now(UTC),
             limit=50,
             offset=0,
-            service=self.mock_service,
+            service=self.mock_service,  # type: ignore[arg-type]
         )
 
         # Assert
@@ -446,7 +446,7 @@ class TestHealthDataErrorHandling(BaseServiceTestCase):
             await upload_health_data(
                 health_data=upload_data,
                 current_user=user_context,
-                service=self.mock_service,
+                service=self.mock_service,  # type: ignore[arg-type]
             )
 
     @patch("clarity.api.v1.health_data.get_health_data_service")
@@ -469,7 +469,7 @@ class TestHealthDataErrorHandling(BaseServiceTestCase):
             await upload_health_data(
                 health_data=upload_data,
                 current_user=user_context,
-                service=self.mock_service,
+                service=self.mock_service,  # type: ignore[arg-type]
             )
 
     # Private function tests removed - testing internal implementation details

@@ -4,7 +4,7 @@ from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 import logging
 import os
-from typing import Any
+from typing import Any, Optional
 
 import boto3
 from botocore.exceptions import ClientError
@@ -48,12 +48,12 @@ def init_aws_clients() -> None:
 
 
 # Initialize Gemini if available
+model: Optional[Any] = None
 if GEMINI_API_KEY:
-    genai.configure(api_key=GEMINI_API_KEY)
-    model = genai.GenerativeModel("gemini-1.5-flash")
+    genai.configure(api_key=GEMINI_API_KEY)  # type: ignore[attr-defined]
+    model = genai.GenerativeModel("gemini-1.5-flash")  # type: ignore[attr-defined]
 else:
     logger.warning("GEMINI_API_KEY not set - AI insights will be limited")
-    model = None
 
 
 # =============================================================================
@@ -76,9 +76,12 @@ async def lifespan(_app: FastAPI) -> AsyncGenerator[None, None]:
         try:
             # Initialize AWS clients first
             init_aws_clients()
-            table = dynamodb.Table(DYNAMODB_TABLE)  # type: ignore[attr-defined]
-            table.load()
-            logger.info("✅ Connected to DynamoDB table: %s", DYNAMODB_TABLE)
+            if dynamodb is not None:
+                table = dynamodb.Table(DYNAMODB_TABLE)
+                table.load()
+                logger.info("✅ Connected to DynamoDB table: %s", DYNAMODB_TABLE)
+            else:
+                logger.warning("DynamoDB client not initialized")
         except ClientError as e:
             if e.response["Error"]["Code"] == "ResourceNotFoundException":
                 logger.warning("⚠️  DynamoDB table %s not found", DYNAMODB_TABLE)

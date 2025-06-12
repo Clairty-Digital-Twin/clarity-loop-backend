@@ -10,7 +10,7 @@ import os
 from typing import Any
 
 from fastapi import FastAPI, HTTPException, Request
-from google.cloud import storage  # type: ignore[attr-defined]
+from google.cloud import storage
 
 from clarity.ml.analysis_pipeline import run_analysis_pipeline
 from clarity.services.messaging.publisher import HealthDataPublisher, get_publisher

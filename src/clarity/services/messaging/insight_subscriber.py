@@ -10,7 +10,7 @@ import os
 from typing import Any
 
 from fastapi import FastAPI, HTTPException, Request
-from google.cloud import storage  # type: ignore[attr-defined]
+from google.cloud import storage
 
 from clarity.ml.gemini_service import GeminiService, HealthInsightRequest
 

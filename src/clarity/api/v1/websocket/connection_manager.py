@@ -20,13 +20,12 @@ from clarity.api.v1.websocket.models import (
     ErrorMessage,
     HeartbeatMessage,
     SystemMessage,
+    WebSocketMessage,
 )
+from fastapi import WebSocket
 
 if TYPE_CHECKING:
-    from clarity.api.v1.websocket.models import (
-        WebSocketMessage,
-    )
-    from fastapi import WebSocket
+    pass
 
 logger = logging.getLogger(__name__)
 

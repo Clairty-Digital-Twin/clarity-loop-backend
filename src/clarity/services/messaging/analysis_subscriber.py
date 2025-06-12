@@ -11,15 +11,15 @@ import logging
 import os
 from typing import Any, TYPE_CHECKING
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from google.cloud import storage
 
 from clarity.ml.analysis_pipeline import run_analysis_pipeline
 from clarity.services.messaging.publisher import get_publisher
+from clarity.services.messaging.publisher import HealthDataPublisher
 
 if TYPE_CHECKING:
-    from clarity.services.messaging.publisher import HealthDataPublisher
-    from fastapi import Request
+    pass
 
 logger = logging.getLogger(__name__)
 

@@ -4,10 +4,10 @@ from __future__ import annotations
 
 from typing import Any, TYPE_CHECKING
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Request
 
 if TYPE_CHECKING:
-    from fastapi import Request
+    pass
 
 router = APIRouter(prefix="/test", tags=["test"])
 

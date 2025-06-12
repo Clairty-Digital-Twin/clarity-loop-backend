@@ -9,10 +9,11 @@ from typing import Any, TYPE_CHECKING
 
 
 from clarity.api.v1.websocket.connection_manager import ConnectionManager
+from fastapi import FastAPI
+from collections.abc import AsyncGenerator
 
 if TYPE_CHECKING:
-    from fastapi import FastAPI
-    from collections.abc import AsyncGenerator
+    pass
 
 logger = logging.getLogger(__name__)
 

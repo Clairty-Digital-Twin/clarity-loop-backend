@@ -22,10 +22,11 @@ import torch
 
 from clarity.api.v1.websocket.connection_manager import ConnectionManager
 from clarity.main import create_app
+from fastapi import FastAPI
+from collections.abc import AsyncGenerator, Generator
 
 if TYPE_CHECKING:
-    from fastapi import FastAPI
-    from collections.abc import AsyncGenerator, Generator
+    pass
 
 # Load test environment variables from .env.test
 # This file should be created locally by developers and not version controlled.

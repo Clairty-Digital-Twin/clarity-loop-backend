@@ -22,12 +22,13 @@ from clarity.core.logging_config import setup_logging
 from clarity.ml.gemini_service import GeminiService
 from clarity.storage.dynamodb_client import DynamoDBHealthDataRepository
 from clarity.storage.mock_repository import MockHealthDataRepository
+from fastapi import FastAPI
+from clarity.core.config_aws import Settings
+from clarity.ports.auth_ports import IAuthProvider
+from clarity.ports.data_ports import IHealthDataRepository
 
 if TYPE_CHECKING:
-    from fastapi import FastAPI
-    from clarity.core.config_aws import Settings
-    from clarity.ports.auth_ports import IAuthProvider
-    from clarity.ports.data_ports import IHealthDataRepository
+    pass
 
 logger = logging.getLogger(__name__)
 

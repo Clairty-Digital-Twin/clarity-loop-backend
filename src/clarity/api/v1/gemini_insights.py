@@ -26,11 +26,12 @@ from clarity.ml.gemini_service import (
     HealthInsightResponse,
 )
 from clarity.storage.dynamodb_client import DynamoDBHealthDataRepository
+from clarity.auth.dependencies import AuthenticatedUser
+from clarity.ports.config_ports import IConfigProvider
+from clarity.ports.auth_ports import IAuthProvider
 
 if TYPE_CHECKING:
-    from clarity.auth.dependencies import AuthenticatedUser
-    from clarity.ports.config_ports import IConfigProvider
-    from clarity.ports.auth_ports import IAuthProvider
+    pass
 
 logger = logging.getLogger(__name__)
 

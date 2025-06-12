@@ -11,14 +11,14 @@ import os
 from typing import Any, TYPE_CHECKING
 
 import boto3
-from fastapi import APIRouter, Header
+from fastapi import APIRouter, Header, Request
 
 from clarity.core.constants import BEARER_TOKEN_PARTS_COUNT, JWT_TOKEN_PARTS_COUNT
 from clarity.core.container import get_container
+from clarity.auth.dependencies import AuthenticatedUser
 
 if TYPE_CHECKING:
-    from clarity.auth.dependencies import AuthenticatedUser
-    from fastapi import Request
+    pass
 
 logger = logging.getLogger(__name__)
 

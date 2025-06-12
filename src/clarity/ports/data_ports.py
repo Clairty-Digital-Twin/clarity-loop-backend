@@ -9,10 +9,11 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 
 from typing import TYPE_CHECKING
+from clarity.models.health_data import HealthMetric
+from datetime import datetime
 
 if TYPE_CHECKING:
-    from clarity.models.health_data import HealthMetric
-    from datetime import datetime
+    pass
 
 
 class IHealthDataRepository(ABC):

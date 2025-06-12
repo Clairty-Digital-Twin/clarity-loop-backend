@@ -17,9 +17,10 @@ from google.cloud import storage
 from pydantic import BaseModel, Field
 
 from clarity.services.messaging.publisher import get_publisher
+from clarity.auth.dependencies import AuthenticatedUser
 
 if TYPE_CHECKING:
-    from clarity.auth.dependencies import AuthenticatedUser
+    pass
 
 # Configure logger
 logger = logging.getLogger(__name__)

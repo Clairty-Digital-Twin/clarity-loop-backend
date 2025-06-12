@@ -30,11 +30,12 @@ from clarity.ml.proxy_actigraphy import (
     create_proxy_actigraphy_transformer,
 )
 from clarity.storage.dynamodb_client import DynamoDBHealthDataRepository
+from clarity.auth.dependencies import AuthenticatedUser
+from fastapi import BackgroundTasks
+from clarity.ml.inference_engine import AsyncInferenceEngine
 
 if TYPE_CHECKING:
-    from clarity.auth.dependencies import AuthenticatedUser
-    from fastapi import BackgroundTasks
-    from clarity.ml.inference_engine import AsyncInferenceEngine
+    pass
 
 logger = logging.getLogger(__name__)
 

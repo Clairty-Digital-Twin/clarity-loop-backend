@@ -3,6 +3,8 @@
 Tests all exception classes and utility functions to improve coverage from 42% to 90%+.
 """
 
+from __future__ import annotations
+
 from unittest.mock import MagicMock
 from uuid import UUID
 

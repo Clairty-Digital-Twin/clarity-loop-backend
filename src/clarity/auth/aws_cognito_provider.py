@@ -4,7 +4,7 @@ from functools import lru_cache
 import logging
 import os
 import time
-from typing import Any
+from typing import Any, TypedDict, cast
 
 import boto3
 from botocore.exceptions import ClientError
@@ -35,8 +35,8 @@ class CognitoAuthProvider(IAuthProvider):
         self.jwks_url = f"{self.issuer}/.well-known/jwks.json"
 
         # Cache for JWKS keys
-        self._jwks_cache = None
-        self._jwks_cache_time = 0
+        self._jwks_cache: dict[str, Any] | None = None
+        self._jwks_cache_time: float = 0.0
         self._jwks_cache_ttl = 3600  # 1 hour
 
         logger.info("Initialized Cognito auth provider for pool: %s", user_pool_id)
@@ -60,6 +60,8 @@ class CognitoAuthProvider(IAuthProvider):
                 if self._jwks_cache is None:
                     msg = "Failed to fetch JWKS keys"
                     raise AuthenticationError(msg) from e
+        # Type narrowing - at this point _jwks_cache cannot be None
+        assert self._jwks_cache is not None
         return self._jwks_cache
 
     async def verify_token(self, token: str) -> dict[str, Any] | None:
@@ -234,12 +236,14 @@ class CognitoAuthProvider(IAuthProvider):
     async def update_user(self, uid: str, **kwargs: Any) -> User | None:
         """Update user attributes in Cognito."""
         try:
-            # Build attributes list
-            attributes = []
+            # Build attributes list with proper typing
+            from mypy_boto3_cognito_idp.type_defs import AttributeTypeTypeDef
+            
+            attributes: list[AttributeTypeTypeDef] = []
             if "display_name" in kwargs:
-                attributes.append({"Name": "name", "Value": kwargs["display_name"]})
+                attributes.append({"Name": "name", "Value": str(kwargs["display_name"])})
             if "email" in kwargs:
-                attributes.append({"Name": "email", "Value": kwargs["email"]})
+                attributes.append({"Name": "email", "Value": str(kwargs["email"])})
 
             if attributes:
                 self.cognito_client.admin_update_user_attributes(
@@ -275,16 +279,18 @@ class CognitoAuthProvider(IAuthProvider):
                     "access_token": result["AccessToken"],
                     "id_token": result["IdToken"],
                     "refresh_token": result["RefreshToken"],
-                    "expires_in": result["ExpiresIn"],
+                    "expires_in": str(result["ExpiresIn"]),
                 }
-
-            # Handle challenges (MFA, etc)
-            if "ChallengeName" in response:
+            elif "ChallengeName" in response:
+                # Handle challenges (MFA, etc)
                 logger.warning(
                     "Authentication challenge required: %s", response['ChallengeName']
                 )
                 msg = f"Challenge required: {response['ChallengeName']}"
                 raise AuthenticationError(msg)
+            else:
+                # If we get here without AuthenticationResult, return None
+                return None
 
         except ClientError as e:
             error_code = e.response["Error"]["Code"]
@@ -299,8 +305,6 @@ class CognitoAuthProvider(IAuthProvider):
             logger.exception("Unexpected authentication error")
             msg = f"Unexpected error: {e!s}"
             raise AuthenticationError(msg) from e
-        else:
-            return None
 
     async def initialize(self) -> None:
         """Initialize Cognito provider."""

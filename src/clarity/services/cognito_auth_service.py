@@ -7,11 +7,20 @@ Provides AWS-native authentication solution.
 from datetime import UTC, datetime, timedelta
 import logging
 import secrets
-from typing import Any
+from typing import Any, TYPE_CHECKING
 import uuid
 
 import boto3
 from botocore.exceptions import ClientError
+
+if TYPE_CHECKING:
+    from mypy_boto3_cognito_idp import CognitoIdentityProviderClient
+    from mypy_boto3_cognito_idp.type_defs import (
+        AdminInitiateAuthResponseTypeDef,
+        AttributeTypeTypeDef,
+        GetUserResponseTypeDef,
+        SignUpResponseTypeDef,
+    )
 
 from clarity.models.auth import (
     AuthProvider,
@@ -97,7 +106,9 @@ class CognitoAuthenticationService:
         self.refresh_token_expiry = refresh_token_expiry
 
         # Initialize Cognito client
-        self.cognito_client = boto3.client("cognito-idp", region_name=region)
+        self.cognito_client: CognitoIdentityProviderClient = boto3.client(
+            "cognito-idp", region_name=region
+        )
 
         # Table names
         self.users_table = "clarity_users"
@@ -139,32 +150,36 @@ class CognitoAuthenticationService:
         """
         try:
             # Prepare Cognito parameters
-            params = {
+            user_attributes: list[AttributeTypeTypeDef] = [
+                {"Name": "email", "Value": request.email},
+                {"Name": "given_name", "Value": request.first_name},
+                {"Name": "family_name", "Value": request.last_name},
+            ]
+            
+            if request.phone_number:
+                user_attributes.append({"Name": "phone_number", "Value": request.phone_number})
+
+            # Create user in Cognito
+            sign_up_params: dict[str, Any] = {
                 "ClientId": self.client_id,
                 "Username": request.email,
                 "Password": request.password,
-                "UserAttributes": [
-                    {"Name": "email", "Value": request.email},
-                    {"Name": "given_name", "Value": request.first_name},
-                    {"Name": "family_name", "Value": request.last_name},
-                    {"Name": "phone_number", "Value": request.phone_number or ""},
-                ],
+                "UserAttributes": user_attributes,
             }
 
             # Add secret hash if client secret is configured
             secret_hash = self._compute_secret_hash(request.email)
             if secret_hash:
-                params["SecretHash"] = secret_hash
+                sign_up_params["SecretHash"] = secret_hash
 
-            # Create user in Cognito
-            response = self.cognito_client.sign_up(**params)
+            response: SignUpResponseTypeDef = self.cognito_client.sign_up(**sign_up_params)
             user_sub = response["UserSub"]
 
             # Generate user ID
             user_id = uuid.UUID(user_sub)
 
             # Store additional user data in DynamoDB
-            user_data = {
+            user_data: dict[str, Any] = {
                 "user_id": user_sub,
                 "email": request.email,
                 "first_name": request.first_name,
@@ -238,23 +253,23 @@ class CognitoAuthenticationService:
         """
         try:
             # Prepare authentication parameters
-            params = {
-                "UserPoolId": self.user_pool_id,
-                "ClientId": self.client_id,
-                "AuthFlow": "ADMIN_NO_SRP_AUTH",
-                "AuthParameters": {
-                    "USERNAME": request.email,
-                    "PASSWORD": request.password,
-                },
+            auth_params: dict[str, str] = {
+                "USERNAME": request.email,
+                "PASSWORD": request.password,
             }
 
             # Add secret hash if client secret is configured
             secret_hash = self._compute_secret_hash(request.email)
             if secret_hash:
-                params["AuthParameters"]["SECRET_HASH"] = secret_hash
+                auth_params["SECRET_HASH"] = secret_hash
 
             # Authenticate with Cognito
-            response = self.cognito_client.admin_initiate_auth(**params)
+            response: AdminInitiateAuthResponseTypeDef = self.cognito_client.admin_initiate_auth(
+                UserPoolId=self.user_pool_id,
+                ClientId=self.client_id,
+                AuthFlow="ADMIN_NO_SRP_AUTH",
+                AuthParameters=auth_params,
+            )
 
             # Handle different authentication challenges
             if "ChallengeName" in response:
@@ -273,7 +288,9 @@ class CognitoAuthenticationService:
             refresh_token = auth_result["RefreshToken"]
 
             # Get user info from Cognito
-            user_info = self.cognito_client.get_user(AccessToken=access_token)
+            user_info: GetUserResponseTypeDef = self.cognito_client.get_user(
+                AccessToken=access_token
+            )
             user_sub = next(
                 attr["Value"]
                 for attr in user_info["UserAttributes"]
@@ -418,18 +435,15 @@ class CognitoAuthenticationService:
     async def refresh_access_token(self, refresh_token: str) -> TokenResponse:
         """Refresh access token using refresh token with Cognito."""
         try:
-            params = {
-                "UserPoolId": self.user_pool_id,
-                "ClientId": self.client_id,
-                "AuthFlow": "REFRESH_TOKEN_AUTH",
-                "AuthParameters": {
+            # Note: Refresh token flow doesn't require username, so no secret hash needed
+            response: AdminInitiateAuthResponseTypeDef = self.cognito_client.admin_initiate_auth(
+                UserPoolId=self.user_pool_id,
+                ClientId=self.client_id,
+                AuthFlow="REFRESH_TOKEN_AUTH",
+                AuthParameters={
                     "REFRESH_TOKEN": refresh_token,
                 },
-            }
-
-            # Note: Refresh token flow doesn't require username, so no secret hash needed
-
-            response = self.cognito_client.admin_initiate_auth(**params)
+            )
             auth_result = response["AuthenticationResult"]
 
             return TokenResponse(
@@ -515,7 +529,7 @@ class CognitoAuthenticationService:
 
     def _handle_mfa_setup(
         self,
-        auth_response: dict[str, Any],
+        auth_response: AdminInitiateAuthResponseTypeDef,
         request: UserLoginRequest,
         device_info: dict[str, Any] | None,
         ip_address: str | None,

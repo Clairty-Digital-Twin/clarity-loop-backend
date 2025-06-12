@@ -10,7 +10,7 @@ and health status monitoring with proper authentication.
 from datetime import UTC, datetime
 import logging
 import os
-from typing import Any
+from typing import Any, NoReturn
 import uuid
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -159,7 +159,7 @@ def create_metadata(
     return metadata
 
 
-def _raise_account_disabled_error(request_id: str, user_id: str) -> None:
+def _raise_account_disabled_error(request_id: str, user_id: str) -> NoReturn:
     """Raise account disabled error."""
     raise create_error_response(
         error_code="ACCOUNT_DISABLED",
@@ -173,7 +173,7 @@ def _raise_account_disabled_error(request_id: str, user_id: str) -> None:
 
 def _raise_access_denied_error(
     user_id: str, current_user_id: str, request_id: str
-) -> None:
+) -> NoReturn:
     """Raise access denied error for insight history."""
     raise create_error_response(
         error_code="ACCESS_DENIED",
@@ -188,7 +188,7 @@ def _raise_access_denied_error(
     )
 
 
-def _raise_insight_not_found_error(insight_id: str, request_id: str) -> None:
+def _raise_insight_not_found_error(insight_id: str, request_id: str) -> NoReturn:
     """Raise HTTPException for insight not found."""
     raise create_error_response(
         error_code="INSIGHT_NOT_FOUND",
@@ -200,7 +200,7 @@ def _raise_insight_not_found_error(insight_id: str, request_id: str) -> None:
     )
 
 
-def _raise_insight_access_denied_error(insight_id: str, request_id: str) -> None:
+def _raise_insight_access_denied_error(insight_id: str, request_id: str) -> NoReturn:
     """Raise HTTPException for insight access denied."""
     raise create_error_response(
         error_code="ACCESS_DENIED",
@@ -289,7 +289,7 @@ async def generate_insights(
         insight_id = f"insight_{uuid.uuid4().hex[:8]}"
         timestamp = datetime.now(UTC)
 
-        insight_item = {
+        insight_item: dict[str, Any] = {
             "pk": f"USER#{current_user.user_id}",
             "sk": f"INSIGHT#{timestamp.isoformat()}",
             "id": insight_id,
@@ -498,21 +498,25 @@ async def get_insight_history(
             total_count += response.get("Count", 0)
 
         # Format insights for response
-        formatted_insights = [
-            {
+        formatted_insights = []
+        for insight in insights:
+            narrative = str(insight.get("narrative", ""))
+            key_insights = insight.get("key_insights", [])
+            recommendations = insight.get("recommendations", [])
+            
+            formatted_insight = {
                 "id": insight.get("id"),
                 "narrative": (
-                    insight.get("narrative", "")[:NARRATIVE_PREVIEW_LENGTH] + "..."
-                    if len(insight.get("narrative", "")) > NARRATIVE_PREVIEW_LENGTH
-                    else insight.get("narrative", "")
+                    narrative[:NARRATIVE_PREVIEW_LENGTH] + "..."
+                    if len(narrative) > NARRATIVE_PREVIEW_LENGTH
+                    else narrative
                 ),
                 "generated_at": insight.get("generated_at"),
                 "confidence_score": insight.get("confidence_score", 0.0),
-                "key_insights_count": len(insight.get("key_insights", [])),
-                "recommendations_count": len(insight.get("recommendations", [])),
+                "key_insights_count": len(key_insights) if isinstance(key_insights, list) else 0,
+                "recommendations_count": len(recommendations) if isinstance(recommendations, list) else 0,
             }
-            for insight in insights
-        ]
+            formatted_insights.append(formatted_insight)
 
         history_data = {
             "insights": formatted_insights,
@@ -562,6 +566,7 @@ async def get_service_status(
     """Check Gemini service health status.
 
     Args:
+        current_user: Authenticated user context
         gemini_service: Gemini service instance
 
     Returns:

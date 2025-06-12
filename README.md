@@ -38,9 +38,9 @@ graph LR
     A --> B --> C --> D --> E
     E --> F --> G --> H --> I
     
-    classDef data fill:#e3f2fd,stroke:#1976d2,stroke-width:2px,color:black
-    classDef ai fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px,color:black
-    classDef output fill:#e8f5e8,stroke:#388e3c,stroke-width:2px,color:black
+    classDef data fill:#ff9900,stroke:#e65100,stroke-width:2px,color:white
+    classDef ai fill:#4caf50,stroke:#1b5e20,stroke-width:2px,color:white
+    classDef output fill:#2196f3,stroke:#0d47a1,stroke-width:2px,color:white
     
     class A,B data
     class C,D,E,F,G ai

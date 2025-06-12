@@ -33,7 +33,7 @@ class AnalysisSubscriber:
 
         self.logger.info("Initialized analysis subscriber (env: %s)", self.environment)
 
-    async def _get_publisher(self) -> Any:
+    async def _get_publisher(self) -> HealthDataPublisher:
         """Get or initialize the publisher asynchronously."""
         if self.publisher is None:
             self.publisher = await get_publisher()

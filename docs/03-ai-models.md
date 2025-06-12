@@ -604,21 +604,27 @@ async def continuous_learning_pipeline():
 
 ---
 
-## Model Performance Summary
+## Important Disclaimers
 
-| Model | Accuracy | Latency | Use Case |
-|-------|----------|---------|----------|
-| PAT v2.1 | 92.4% | 15s | Sleep analysis |
-| Gemini Integration | 95%+ relevant | 2s | Conversational insights |
-| Heart Rate Processor | 98.2% | <1s | Vital sign analysis |
-| Activity Classifier | 89.7% | <1s | Exercise recognition |
+⚠️ **RESEARCH PLATFORM ONLY** - Not for medical diagnosis or treatment  
+⚠️ **NO CLINICAL VALIDATION** - Educational and research purposes only  
+⚠️ **NOT FDA APPROVED** - Consult healthcare providers for medical decisions  
+⚠️ **ACADEMIC USE** - Built on open research, not proprietary validation  
 
-**Overall System Performance:**
-- **End-to-end Latency**: <30 seconds from data upload to insights
-- **Availability**: 99.9% uptime
-- **User Satisfaction**: 4.7/5 average rating
-- **Clinical Validation**: Ongoing studies with 5+ healthcare partners
+## System Architecture
+
+**Technical Implementation:**
+- **PAT Model Loading**: Academic weights from Dartmouth research
+- **Data Processing**: NHANES-normalized preprocessing pipeline  
+- **Natural Language**: Google Gemini integration for conversational insights
+- **Storage**: AWS DynamoDB with health data encryption
+
+**Development Status:**
+- **Tests**: 807/810 passing (99.6% success rate)
+- **Coverage**: 57% code coverage (target: 85%)
+- **API**: 44 endpoints for health data processing
+- **Infrastructure**: AWS ECS production deployment ready
 
 ---
 
-**Next**: Read [Deployment Guide](04-deployment.md) for production setup instructions 
+**Next**: Read [Deployment Guide](../operations/deployment.md) for production setup instructions 

@@ -397,6 +397,27 @@ class FakeCloudStorage(CloudStoragePort):
         """Get the configured bucket name."""
         return self._bucket_name
 
+    async def upload_file(
+        self, file_data: bytes, file_path: str, metadata: dict[str, Any] | None = None
+    ) -> str:
+        """Upload a file to fake storage.
+        
+        Args:
+            file_data: Binary data to upload
+            file_path: Path for the file in cloud storage
+            metadata: Optional metadata for the file
+            
+        Returns:
+            Full path/URL of uploaded object
+        """
+        full_path = f"{self._bucket_name}/{file_path}"
+        self._stored_data[full_path] = {
+            "data": file_data,
+            "metadata": metadata or {},
+            "content_type": "application/octet-stream",
+        }
+        return f"gs://{full_path}"
+
 
 class FakeBucket:
     """Fake bucket implementation."""

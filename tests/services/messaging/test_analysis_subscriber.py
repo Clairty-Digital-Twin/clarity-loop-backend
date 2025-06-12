@@ -1,5 +1,6 @@
 import base64
 import json
+from typing import Any
 from unittest.mock import AsyncMock, MagicMock, patch
 
 from fastapi import HTTPException, Request
@@ -43,7 +44,7 @@ def test_extract_message_data_missing_field(subscriber: AnalysisSubscriber):
 @pytest.mark.asyncio
 async def test_download_health_data_success(subscriber: AnalysisSubscriber):
     gcs_path = "gs://bucket/path"
-    expected_data: dict[str, list] = {"metrics": []}
+    expected_data: dict[str, list[Any]] = {"metrics": []}
     mock_blob = MagicMock()
     mock_blob.exists.return_value = True
     mock_blob.download_as_text.return_value = json.dumps(expected_data)

@@ -232,9 +232,15 @@ def mock_redis():
 def mock_test_connection_manager():
     """Stateful mock connection manager for WebSocket testing."""
     # Import here to avoid circular imports - this is necessary for test fixtures
-    from tests.api.v1.test_websocket import _TestConnectionManager  # noqa: PLC0415
+    from clarity.api.v1.websocket.connection_manager import ConnectionManager
 
-    return _TestConnectionManager()
+    return ConnectionManager(
+        heartbeat_interval=5,
+        max_connections_per_user=2,
+        connection_timeout=30,
+        message_rate_limit=10,
+        max_message_size=1024,
+    )
 
 
 @pytest.fixture(autouse=True)

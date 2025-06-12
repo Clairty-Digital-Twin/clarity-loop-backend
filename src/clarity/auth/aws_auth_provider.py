@@ -10,6 +10,7 @@ import json
 import logging
 import time
 from typing import TYPE_CHECKING, Any, cast
+import urllib.parse
 import urllib.request
 
 import boto3
@@ -130,6 +131,12 @@ class CognitoAuthProvider(IAuthProvider):
             return self._jwks_cache
 
         try:
+            # Validate URL scheme before opening
+            parsed_url = urllib.parse.urlparse(self.jwks_url)
+            if parsed_url.scheme not in ('https',):
+                msg = f"Invalid URL scheme: {parsed_url.scheme}. Only HTTPS is allowed."
+                raise ValueError(msg)
+            
             with urllib.request.urlopen(self.jwks_url) as response:
                 jwks = json.loads(response.read())
                 self._jwks_cache = jwks

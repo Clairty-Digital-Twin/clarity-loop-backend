@@ -12,9 +12,9 @@ from clarity.auth.aws_cognito_provider import CognitoAuthProvider
 from clarity.auth.dependencies import get_auth_provider, get_current_user
 from clarity.auth.dependencies import get_current_user as get_user_func
 from clarity.core.constants import (
+    AUTH_HEADER_TYPE_BEARER,
     AUTH_SCOPE_FULL_ACCESS,
     AUTH_TOKEN_DEFAULT_EXPIRY_SECONDS,
-    AUTH_TOKEN_TYPE_BEARER,
 )
 from clarity.core.exceptions import ProblemDetail
 from clarity.models.auth import TokenResponse, UserLoginRequest
@@ -135,7 +135,7 @@ async def register(
     return TokenResponse(
         access_token=tokens["access_token"],
         refresh_token=tokens["refresh_token"],
-        token_type=AUTH_TOKEN_TYPE_BEARER,
+        token_type=AUTH_HEADER_TYPE_BEARER,
         expires_in=tokens.get("expires_in", AUTH_TOKEN_DEFAULT_EXPIRY_SECONDS),
         scope=AUTH_SCOPE_FULL_ACCESS,
     )
@@ -203,7 +203,7 @@ async def login(
     return TokenResponse(
         access_token=tokens["access_token"],
         refresh_token=tokens["refresh_token"],
-        token_type=AUTH_TOKEN_TYPE_BEARER,
+        token_type=AUTH_HEADER_TYPE_BEARER,
         expires_in=tokens.get("expires_in", AUTH_TOKEN_DEFAULT_EXPIRY_SECONDS),
         scope=AUTH_SCOPE_FULL_ACCESS,
     )
@@ -414,7 +414,7 @@ async def refresh_token(
                 return TokenResponse(
                     access_token=result["AccessToken"],
                     refresh_token=refresh_token_str,  # Cognito doesn't rotate refresh tokens
-                    token_type=AUTH_TOKEN_TYPE_BEARER,
+                    token_type=AUTH_HEADER_TYPE_BEARER,
                     expires_in=result.get(
                         "ExpiresIn", AUTH_TOKEN_DEFAULT_EXPIRY_SECONDS
                     ),

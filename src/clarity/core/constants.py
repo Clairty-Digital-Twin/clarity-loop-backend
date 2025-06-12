@@ -116,7 +116,7 @@ HASH_ALGORITHM: Final[str] = "sha256"
 CACHE_KEY_TRUNCATION_LENGTH: Final[int] = 16
 
 # Authentication constants
-AUTH_TOKEN_TYPE_BEARER: Final[str] = "bearer"
+AUTH_HEADER_TYPE_BEARER: Final[str] = "bearer"  # nosec B105 - not a password, just a token type
 AUTH_TOKEN_DEFAULT_EXPIRY_SECONDS: Final[int] = 3600
 AUTH_SCOPE_FULL_ACCESS: Final[str] = "full_access"
 

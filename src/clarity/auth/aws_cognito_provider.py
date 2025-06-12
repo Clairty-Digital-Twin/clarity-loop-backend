@@ -55,7 +55,7 @@ class CognitoAuthProvider(IAuthProvider):
             or current_time - self._jwks_cache_time > self._jwks_cache_ttl
         ):
             try:
-                response = requests.get(self.jwks_url)
+                response = requests.get(self.jwks_url, timeout=30)
                 response.raise_for_status()
                 self._jwks_cache = response.json()
                 self._jwks_cache_time = current_time

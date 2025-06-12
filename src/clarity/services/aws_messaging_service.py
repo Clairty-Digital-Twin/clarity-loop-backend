@@ -100,22 +100,28 @@ class AWSMessagingService:
         if queue_name in self._queue_urls:
             return self._queue_urls[queue_name]
 
+        loop = asyncio.get_event_loop()
         try:
             # Try to get existing queue
-            response = self.sqs_client.get_queue_url(QueueName=queue_name)
+            response = await loop.run_in_executor(
+                None, lambda: self.sqs_client.get_queue_url(QueueName=queue_name)
+            )
             queue_url = response["QueueUrl"]
 
         except ClientError as e:
             if e.response["Error"]["Code"] == "AWS.SimpleQueueService.NonExistentQueue":
                 # Create the queue if it doesn't exist
                 logger.info("Creating SQS queue: %s", queue_name)
-                response = self.sqs_client.create_queue(
-                    QueueName=queue_name,
-                    Attributes={
-                        "MessageRetentionPeriod": "1209600",  # 14 days
-                        "VisibilityTimeout": "300",  # 5 minutes
-                        "ReceiveMessageWaitTimeSeconds": "20",  # Long polling
-                    },
+                response = await loop.run_in_executor(
+                    None,
+                    lambda: self.sqs_client.create_queue(
+                        QueueName=queue_name,
+                        Attributes={
+                            "MessageRetentionPeriod": "1209600",  # 14 days
+                            "VisibilityTimeout": "300",  # 5 minutes
+                            "ReceiveMessageWaitTimeSeconds": "20",  # Long polling
+                        },
+                    )
                 )
                 queue_url = response["QueueUrl"]
             else:

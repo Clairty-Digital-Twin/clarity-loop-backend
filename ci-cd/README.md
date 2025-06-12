@@ -17,16 +17,39 @@ Our CI/CD pipeline follows **modern 2025 best practices** with:
 ## Pipeline Architecture
 
 ```mermaid
-graph LR
-    A[Developer Push] --> B[GitHub Actions]
-    B --> C[Code Quality Gates]
-    C --> D[Build & Test]
-    D --> E[Build Images]
-    E --> F[Deploy to Dev]
-    F --> G[Integration Tests]
-    G --> H[Deploy to Staging]
-    H --> I[E2E Tests]
-    I --> J[Deploy to Production]
+flowchart TD
+    subgraph Development ["🧑‍💻 DEVELOPMENT"]
+        A[DEVELOPER PUSH<br/>Feature branch<br/>Code changes]
+        B[GITHUB ACTIONS<br/>Automated triggers<br/>Pipeline start]
+    end
+    
+    subgraph QualityGates ["🔍 QUALITY GATES"]
+        C[CODE QUALITY<br/>Linting • Formatting<br/>Security scan]
+        D[BUILD & TEST<br/>Unit tests<br/>Integration tests]
+    end
+    
+    subgraph Deployment ["🚀 DEPLOYMENT"]
+        E[BUILD IMAGES<br/>Docker containers<br/>Registry push]
+        F[DEPLOY TO DEV<br/>Development env<br/>Smoke tests]
+        G[DEPLOY TO STAGING<br/>Production-like<br/>E2E tests]
+        H[DEPLOY TO PRODUCTION<br/>Manual approval<br/>Blue-green deploy]
+    end
+    
+    A --> B
+    B --> C
+    C --> D
+    D --> E
+    E --> F
+    F --> G
+    G --> H
+    
+    classDef dev fill:#ff9900,stroke:#e65100,stroke-width:3px,color:white
+    classDef quality fill:#4caf50,stroke:#1b5e20,stroke-width:3px,color:white
+    classDef deploy fill:#2196f3,stroke:#0d47a1,stroke-width:3px,color:white
+    
+    class A,B dev
+    class C,D quality
+    class E,F,G,H deploy
 ```
 
 ## Repository Structure

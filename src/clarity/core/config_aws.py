@@ -207,33 +207,54 @@ class Settings(BaseSettings):
             self.cognito_region = self.aws_region
 
         # Configure middleware settings based on environment
-        print(f"DEBUG: Configuring middleware for environment: {self.environment}")
         if self.environment.lower() == "development":
             # Development environment: permissive settings for debugging
-            print(f"DEBUG: Before update - graceful_degradation: {self.middleware_config.graceful_degradation}")
-            self.middleware_config.graceful_degradation = False  # Show actual auth errors
-            self.middleware_config.fallback_to_mock = True
-            self.middleware_config.log_successful_auth = True
-            self.middleware_config.cache_enabled = False  # Disable cache for easier debugging
-            self.middleware_config.initialization_timeout_seconds = 10  # Longer timeout
-            print(f"DEBUG: After update - graceful_degradation: {self.middleware_config.graceful_degradation}")
+            self.middleware_config = MiddlewareConfig(
+                enabled=self.enable_auth,
+                graceful_degradation=False,  # Show actual auth errors
+                fallback_to_mock=True,
+                log_successful_auth=True,
+                cache_enabled=False,  # Disable cache for easier debugging
+                initialization_timeout_seconds=10,  # Longer timeout
+                exempt_paths=self.middleware_config.exempt_paths,  # Preserve exempt paths
+                cache_ttl_seconds=self.middleware_config.cache_ttl_seconds,
+                cache_max_size=self.middleware_config.cache_max_size,
+                audit_logging=self.middleware_config.audit_logging,
+                log_level=self.middleware_config.log_level,
+            )
         elif self.environment.lower() == "testing":
             # Testing environment: use mock auth
-            self.middleware_config.graceful_degradation = False  # Show actual auth errors
-            self.middleware_config.fallback_to_mock = True
-            self.middleware_config.log_successful_auth = False
-            # Keep other defaults
+            self.middleware_config = MiddlewareConfig(
+                enabled=self.enable_auth,
+                graceful_degradation=False,  # Show actual auth errors
+                fallback_to_mock=True,
+                log_successful_auth=False,
+                cache_enabled=True,  # Keep default
+                initialization_timeout_seconds=self.middleware_config.initialization_timeout_seconds,
+                exempt_paths=self.middleware_config.exempt_paths,
+                cache_ttl_seconds=self.middleware_config.cache_ttl_seconds,
+                cache_max_size=self.middleware_config.cache_max_size,
+                audit_logging=self.middleware_config.audit_logging,
+                log_level=self.middleware_config.log_level,
+            )
         elif self.environment.lower() == "production":
             # Production environment: strict settings
-            self.middleware_config.graceful_degradation = False  # Fail fast
-            self.middleware_config.fallback_to_mock = False  # No mock fallback
-            self.middleware_config.log_successful_auth = False  # Only log failures
-            self.middleware_config.cache_enabled = True  # Enable cache for performance
-            self.middleware_config.cache_ttl_seconds = 300  # 5 minutes
-            self.middleware_config.initialization_timeout_seconds = 5  # Shorter timeout
-
-        # Always follow enable_auth setting for middleware.enabled
-        self.middleware_config.enabled = self.enable_auth
+            self.middleware_config = MiddlewareConfig(
+                enabled=self.enable_auth,
+                graceful_degradation=False,  # Fail fast
+                fallback_to_mock=False,  # No mock fallback
+                log_successful_auth=False,  # Only log failures
+                cache_enabled=True,  # Enable cache for performance
+                cache_ttl_seconds=300,  # 5 minutes
+                initialization_timeout_seconds=5,  # Shorter timeout
+                exempt_paths=self.middleware_config.exempt_paths,
+                cache_max_size=self.middleware_config.cache_max_size,
+                audit_logging=self.middleware_config.audit_logging,
+                log_level=self.middleware_config.log_level,
+            )
+        else:
+            # For other environments, just update enabled status
+            self.middleware_config.enabled = self.enable_auth
 
         return self
 

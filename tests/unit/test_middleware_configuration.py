@@ -12,7 +12,6 @@ from fastapi.testclient import TestClient
 
 from clarity.core.config_aws import MiddlewareConfig, Settings
 from clarity.core.config_provider import ConfigProvider
-from clarity.core.container import create_application
 
 
 class TestMiddlewareConfiguration:
@@ -22,15 +21,16 @@ class TestMiddlewareConfiguration:
     def test_middleware_config_development_defaults() -> None:
         """Test middleware configuration defaults for development environment."""
         # Use environment variable to ensure proper setting
-        with patch.dict(os.environ, {"ENVIRONMENT": "development", "ENABLE_AUTH": "true"}):
+        # Clear any existing environment variables that might interfere
+        with patch.dict(os.environ, {}, clear=True):
+            # Set only the variables we need
+            os.environ["ENVIRONMENT"] = "development"
+            os.environ["ENABLE_AUTH"] = "true"
+            
             settings = Settings()
             config_provider = ConfigProvider(settings)
 
             middleware_config = config_provider.get_middleware_config()
-
-            # Debug print
-            print(f"Environment: {settings.environment}")
-            print(f"Middleware config: {middleware_config}")
 
             # Development should have permissive settings
             assert middleware_config.enabled is True
@@ -139,6 +139,9 @@ class TestMiddlewareConfiguration:
     @staticmethod
     def test_container_uses_middleware_config() -> None:
         """Test that the container properly uses middleware configuration."""
+        # Import create_application here to avoid early module loading
+        from clarity.core.container import create_application
+        
         with patch("clarity.core.container.get_settings") as mock_get_settings:
             # Mock settings to disable auth for simpler testing
             mock_settings = Mock()

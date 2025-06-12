@@ -27,30 +27,35 @@ CLARITY-AI isn't just another health app – it's a **research platform** built 
 ## Real-World Data Pipeline
 
 ```mermaid
-graph TB
-    subgraph DataCollection ["📱 Data Collection"]
-        A[Apple Watch<br/>Step counts, HR, Sleep<br/>HRV, Respiratory rate]
-        B[HealthKit Export<br/>JSON validation<br/>Quality assessment]
+flowchart TD
+    subgraph Collection ["📱 APPLE WATCH DATA"]
+        A[RAW SENSORS<br/>Steps • Heart Rate<br/>Sleep • HRV]
+        B[HEALTHKIT EXPORT<br/>JSON validation<br/>Quality control]
     end
     
-    subgraph Processing ["🧠 AI Processing"]
-        C[Data Normalization<br/>NHANES population stats<br/>Z-score standardization]
-        D[PAT Foundation Model<br/>7-day windows<br/>10,080 time points]
-        E[Multi-Modal Fusion<br/>Cross-signal integration<br/>Holistic health state]
+    subgraph Processing ["🧠 AI PROCESSING ENGINE"]
+        C[DATA NORMALIZATION<br/>NHANES population stats<br/>Z-score standardization]
+        D[PAT TRANSFORMER<br/>7-day analysis window<br/>10,080 time points]
+        E[MULTI-MODAL FUSION<br/>Cross-signal integration<br/>Holistic health analysis]
     end
     
-    subgraph Intelligence ["💡 Intelligence Layer"]
-        F[Clinical Metrics<br/>Sleep efficiency<br/>Circadian rhythm score]
-        G[Natural Language<br/>Conversational insights<br/>Personalized recommendations]
-        H[Risk Indicators<br/>Pattern anomalies<br/>Trend warnings]
+    subgraph Intelligence ["💡 HEALTH INTELLIGENCE"]
+        F[CLINICAL METRICS<br/>Sleep efficiency<br/>Circadian rhythm score]
+        G[NATURAL LANGUAGE<br/>Conversational insights<br/>Personalized recommendations]
+        H[RISK INDICATORS<br/>Pattern anomalies<br/>Trend warnings]
     end
     
-    A --> B --> C --> D --> E
-    E --> F --> G --> H
+    A --> B
+    B --> C
+    C --> D
+    D --> E
+    E --> F
+    E --> G
+    E --> H
     
-    classDef collection fill:#ff9900,stroke:#e65100,stroke-width:2px,color:white
-    classDef processing fill:#4caf50,stroke:#1b5e20,stroke-width:2px,color:white
-    classDef intelligence fill:#2196f3,stroke:#0d47a1,stroke-width:2px,color:white
+    classDef collection fill:#ff9900,stroke:#e65100,stroke-width:3px,color:white
+    classDef processing fill:#4caf50,stroke:#1b5e20,stroke-width:3px,color:white
+    classDef intelligence fill:#2196f3,stroke:#0d47a1,stroke-width:3px,color:white
     
     class A,B collection
     class C,D,E processing
@@ -81,30 +86,37 @@ CLARITY-AI is built on **peer-reviewed academic research**, not proprietary algo
 **Primary Research**: ["AI Foundation Models for Wearable Movement Data in Mental Health Research"](https://doi.org/10.48550/arXiv.2411.15240)
 
 ```mermaid
-graph LR
-    subgraph Research ["📚 Academic Foundation"]
-        A[Dartmouth College<br/>Jacobson Lab<br/>Mental Health Research]
+flowchart TD
+    subgraph Research ["📚 ACADEMIC FOUNDATION"]
+        A[DARTMOUTH COLLEGE<br/>Jacobson Lab<br/>Mental Health Research]
         B[NHANES 2003-2014<br/>29,307 participants<br/>National health survey]
-        C[Actigraphy Data<br/>Movement patterns<br/>Sleep-wake cycles]
+        C[ACTIGRAPHY DATA<br/>Movement patterns<br/>Sleep-wake cycles]
     end
     
-    subgraph Model ["🧠 PAT Foundation Model"]
-        D[Transformer Architecture<br/>Patch embeddings<br/>Temporal attention]
-        E[Self-Supervised Learning<br/>Masked autoencoding<br/>Population patterns]
-        F[Transfer Learning<br/>Fine-tuning capability<br/>Individual adaptation]
+    subgraph Model ["🧠 PAT FOUNDATION MODEL"]
+        D[TRANSFORMER ARCHITECTURE<br/>Patch embeddings<br/>Temporal attention]
+        E[SELF-SUPERVISED LEARNING<br/>Masked autoencoding<br/>Population patterns]
+        F[TRANSFER LEARNING<br/>Fine-tuning capability<br/>Individual adaptation]
     end
     
-    subgraph Application ["💡 CLARITY-AI Platform"]
-        G[Sleep Quality Analysis<br/>Circadian assessment<br/>Activity fragmentation]
-        H[Population Comparisons<br/>Peer group metrics<br/>Percentile rankings]
-        I[Clinical Context<br/>Health significance<br/>Actionable insights]
+    subgraph Application ["💡 CLARITY-AI PLATFORM"]
+        G[SLEEP QUALITY ANALYSIS<br/>Circadian assessment<br/>Activity fragmentation]
+        H[POPULATION COMPARISONS<br/>Peer group metrics<br/>Percentile rankings]
+        I[CLINICAL CONTEXT<br/>Health significance<br/>Actionable insights]
     end
     
-    A --> B --> C --> D --> E --> F --> G --> H --> I
+    A --> B
+    B --> C
+    C --> D
+    D --> E
+    E --> F
+    F --> G
+    G --> H
+    H --> I
     
-    classDef research fill:#ff9900,stroke:#e65100,stroke-width:2px,color:white
-    classDef model fill:#2196f3,stroke:#0d47a1,stroke-width:2px,color:white
-    classDef application fill:#4caf50,stroke:#1b5e20,stroke-width:2px,color:white
+    classDef research fill:#ff9900,stroke:#e65100,stroke-width:3px,color:white
+    classDef model fill:#2196f3,stroke:#0d47a1,stroke-width:3px,color:white
+    classDef application fill:#4caf50,stroke:#1b5e20,stroke-width:3px,color:white
     
     class A,B,C research
     class D,E,F model

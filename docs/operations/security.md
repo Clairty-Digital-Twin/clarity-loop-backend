@@ -361,7 +361,7 @@ async def security_middleware(request: Request, call_next):
 
 ### **Physical Safeguards**
 
-**AWS Data Center Security:**
+#### AWS Data Center Security
 
 - 24/7 physical security monitoring
 - Biometric access controls
@@ -372,21 +372,21 @@ async def security_middleware(request: Request, call_next):
 
 ### **Security Incident Classification**
 
-**Critical (SEV-1):**
+#### Critical (SEV-1)
 
 - Data breach or unauthorized access
 - Malware/ransomware detection
 - System compromise
 - **Response Time**: Immediate (15 minutes)
 
-**High (SEV-2):**
+#### High (SEV-2)
 
 - Failed authentication spikes
 - Suspicious API activity
 - DDoS attacks
 - **Response Time**: 1 hour
 
-**Medium (SEV-3):**
+#### Medium (SEV-3)
 
 - Security configuration changes
 - Failed security scans
@@ -394,9 +394,9 @@ async def security_middleware(request: Request, call_next):
 
 ### **Incident Response Process**
 
-**Detection → Assessment → Containment → Eradication → Recovery → Lessons Learned**
+#### Detection → Assessment → Containment → Eradication → Recovery → Lessons Learned
 
-**Security Incident Response Team:**
+#### Security Incident Response Team
 
 - **Incident Commander** - Platform Engineering Lead
 - **Security Lead** - CISO or Security Engineer
@@ -405,13 +405,13 @@ async def security_middleware(request: Request, call_next):
 
 ### **Breach Notification Procedures**
 
-**HIPAA Breach Notification Timeline:**
+#### HIPAA Breach Notification Timeline
 
 - **60 days** - Notification to affected individuals
 - **60 days** - Notification to HHS Office for Civil Rights
 - **Next business day** - Media notification (if >500 individuals affected)
 
-**Notification Template:**
+#### Notification Template
 
 ```
 Subject: Important Security Notification - CLARITY-AI Platform
@@ -439,7 +439,7 @@ Contact Information:
 
 ### **Container Security**
 
-**Dockerfile Security Best Practices:**
+#### Dockerfile Security Best Practices
 
 ```dockerfile
 # Use minimal base image
@@ -465,7 +465,7 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
     CMD curl -f http://localhost:8000/health || exit 1
 ```
 
-**Security Context:**
+#### Security Context
 
 ```json
 {

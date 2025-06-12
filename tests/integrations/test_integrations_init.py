@@ -1,5 +1,7 @@
 """Tests for integrations module initialization."""
 
+from __future__ import annotations
+
 import clarity.integrations
 from clarity.integrations import AppleWatchDataProcessor, HealthKitClient
 

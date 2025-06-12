@@ -11,6 +11,8 @@ Breaking down into TINY pieces:
 ONE FUNCTION AT A TIME!
 """
 
+from __future__ import annotations
+
 import math
 from unittest.mock import Mock
 

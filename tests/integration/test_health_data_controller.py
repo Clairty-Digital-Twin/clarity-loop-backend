@@ -3,6 +3,8 @@
 Tests the controller layer's adaptation patterns and Clean Architecture compliance.
 """
 
+from __future__ import annotations
+
 from datetime import UTC, datetime
 from typing import Any
 from unittest.mock import Mock

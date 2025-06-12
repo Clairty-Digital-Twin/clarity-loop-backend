@@ -187,6 +187,20 @@ class TestAuditLog:
                 s3_key="test/key.json",
             )
 
+    @pytest.mark.asyncio
+    async def test_audit_log_no_metadata(self, s3_service):
+        """Test audit log with no metadata."""
+        with patch("clarity.services.s3_storage_service.audit_logger") as mock_logger:
+            await s3_service._audit_log(
+                operation="test_operation",
+                s3_key="test/key.json",
+                user_id="test-user",
+            )
+
+            mock_logger.info.assert_called_once()
+            extra_data = mock_logger.info.call_args[1]["extra"]["audit_data"]
+            assert extra_data["metadata"] == {}  # Should be empty dict
+
 
 class TestUploadRawHealthData:
     """Test raw health data upload functionality."""
@@ -483,6 +497,45 @@ class TestListUserFiles:
         assert files == []
 
     @pytest.mark.asyncio
+    async def test_list_user_files_filters_others(self, s3_service, mock_s3_client):
+        """Test file listing filters out other users' files."""
+        user_id = "user-123"
+        mock_response = {
+            "Contents": [
+                {
+                    "Key": f"raw_data/2024/01/15/{user_id}/file1.json",
+                    "Size": 1024,
+                    "LastModified": datetime.now(UTC),
+                    "ETag": '"abc123"',
+                    "StorageClass": "STANDARD",
+                },
+                {
+                    "Key": "raw_data/2024/01/15/other-user/file2.json",  # Different user
+                    "Size": 2048,
+                    "LastModified": datetime.now(UTC),
+                    "ETag": '"def456"',
+                    "StorageClass": "STANDARD",
+                },
+                {
+                    "Key": f"raw_data/2024/01/14/{user_id}/file3.json",
+                    "Size": 512,
+                    "LastModified": datetime.now(UTC),
+                    "ETag": '"ghi789"',
+                    "StorageClass": "STANDARD",
+                },
+            ]
+        }
+        mock_s3_client.list_objects_v2.return_value = mock_response
+
+        files = await s3_service.list_user_files(user_id)
+
+        # Should only return files for user-123, not other-user
+        assert len(files) == 2
+        assert all(user_id in f["key"] for f in files)
+        assert files[0]["key"] == f"raw_data/2024/01/15/{user_id}/file1.json"
+        assert files[1]["key"] == f"raw_data/2024/01/14/{user_id}/file3.json"
+
+    @pytest.mark.asyncio
     async def test_list_user_files_error(self, s3_service, mock_s3_client):
         """Test file listing with error."""
         mock_s3_client.list_objects_v2.side_effect = Exception("List error")
@@ -649,6 +702,16 @@ class TestCloudStoragePortMethods:
         assert call_kwargs["Metadata"] == metadata
 
     @pytest.mark.asyncio
+    async def test_upload_file_error(self, s3_service, mock_s3_client):
+        """Test file upload with error."""
+        mock_s3_client.put_object.side_effect = Exception("Simulated upload error")
+
+        with pytest.raises(S3UploadError) as exc_info:
+            await s3_service.upload_file(b"data", "test/file.txt")
+
+        assert "File upload failed" in str(exc_info.value)
+
+    @pytest.mark.asyncio
     async def test_download_file(self, s3_service, mock_s3_client):
         """Test generic file download."""
         file_data = b"test file content"
@@ -660,6 +723,16 @@ class TestCloudStoragePortMethods:
 
         assert result == file_data
 
+    @pytest.mark.asyncio
+    async def test_download_file_error(self, s3_service, mock_s3_client):
+        """Test file download with error."""
+        mock_s3_client.get_object.side_effect = Exception("Simulated download error")
+
+        with pytest.raises(S3DownloadError) as exc_info:
+            await s3_service.download_file("test/file.txt")
+
+        assert "File download failed" in str(exc_info.value)
+
     def test_bucket_method(self, s3_service):
         """Test bucket method."""
         result = s3_service.bucket("test-bucket")
@@ -668,6 +741,23 @@ class TestCloudStoragePortMethods:
     def test_get_raw_data_bucket_name(self, s3_service):
         """Test get_raw_data_bucket_name method."""
         assert s3_service.get_raw_data_bucket_name() == "test-health-bucket"
+
+    def test_upload_json(self, s3_service):
+        """Test JSON upload method."""
+        # This is a synchronous method that needs special handling
+        with patch.object(s3_service, 'upload_file') as mock_upload:
+            mock_upload.return_value = asyncio.Future()
+            mock_upload.return_value.set_result("s3://test-bucket/test.json")
+            
+            data = {"test": "data", "number": 123}
+            result = s3_service.upload_json(
+                "test-bucket",
+                "test.json",
+                data,
+                metadata={"type": "test"}
+            )
+            
+            assert result == "s3://test-bucket/test.json"
 
 
 class TestGlobalFunctions:
@@ -681,6 +771,14 @@ class TestGlobalFunctions:
                 service2 = get_s3_service("test-bucket")
 
                 assert service1 is service2  # Same instance
+
+    def test_get_s3_service_default_bucket(self):
+        """Test get_s3_service with default bucket name."""
+        with patch("clarity.services.s3_storage_service._s3_service", None):
+            with patch("boto3.client"):
+                service = get_s3_service()  # No bucket name provided
+                
+                assert service.bucket_name == "clarity-health-data-storage"
 
 
 class TestExceptionClasses:

@@ -31,7 +31,7 @@ flowchart TD
     end
     
     subgraph Output ["💬 YOUR INSIGHTS"]
-        H[PERSONALIZED REPORT<br/>\"Sleep efficiency 89%<br/>Excellent recovery<br/>Strong circadian rhythm\"]
+        H[PERSONALIZED REPORT<br/>Sleep efficiency 89%<br/>Excellent recovery<br/>Strong circadian rhythm]
     end
     
     A --> B

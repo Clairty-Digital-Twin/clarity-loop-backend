@@ -207,13 +207,16 @@ class Settings(BaseSettings):
             self.cognito_region = self.aws_region
 
         # Configure middleware settings based on environment
+        print(f"DEBUG: Configuring middleware for environment: {self.environment}")
         if self.environment.lower() == "development":
             # Development environment: permissive settings for debugging
+            print(f"DEBUG: Before update - graceful_degradation: {self.middleware_config.graceful_degradation}")
             self.middleware_config.graceful_degradation = False  # Show actual auth errors
             self.middleware_config.fallback_to_mock = True
             self.middleware_config.log_successful_auth = True
             self.middleware_config.cache_enabled = False  # Disable cache for easier debugging
             self.middleware_config.initialization_timeout_seconds = 10  # Longer timeout
+            print(f"DEBUG: After update - graceful_degradation: {self.middleware_config.graceful_degradation}")
         elif self.environment.lower() == "testing":
             # Testing environment: use mock auth
             self.middleware_config.graceful_degradation = False  # Show actual auth errors

@@ -128,7 +128,7 @@ class TestPATModelService:
 
         # Test encoder architecture
         if pat_service.model is not None:
-            encoder = pat_service.model.encoder  # type: ignore[union-attr]
+            encoder = pat_service.model.encoder
             assert isinstance(encoder, PATEncoder)
             assert encoder.embed_dim == 96
             assert encoder.input_size == 10080

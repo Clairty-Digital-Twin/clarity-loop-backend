@@ -413,7 +413,7 @@ Respond only with valid JSON."""
         except json.JSONDecodeError:
             logger.warning("Failed to parse Gemini JSON response, using fallback")
             # Fallback to extracting insights from text response
-            return GeminiService._create_fallback_response(response.text, user_id)  # type: ignore[attr-defined]
+            return GeminiService._create_fallback_response(response.text, user_id)
         except Exception:
             logger.exception("Error parsing Gemini response")
             raise

@@ -519,7 +519,7 @@ class HealthKitClient:
         """Clean up HTTP client."""
         await self._http_client.aclose()
 
-    async def __aenter__(self) -> "HealthKitClient":
+    async def __aenter__(self) -> HealthKitClient:
         """Async context manager entry."""
         return self
 

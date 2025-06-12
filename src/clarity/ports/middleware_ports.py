@@ -26,8 +26,8 @@ class IMiddleware(ABC):
 
     @abstractmethod
     async def __call__(
-        self, request: "Request", call_next: "Awaitable[Response]"
-    ) -> "Response":
+        self, request: Request, call_next: Awaitable[Response]
+    ) -> Response:
         """Process request through middleware.
 
         Args:

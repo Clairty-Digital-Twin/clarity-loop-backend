@@ -61,7 +61,9 @@ class CognitoAuthProvider(IAuthProvider):
         self.users_table = "clarity_users"
 
         # Initialize Cognito client
-        self.cognito_client: CognitoIdentityProviderClient = boto3.client("cognito-idp", region_name=region)
+        self.cognito_client: CognitoIdentityProviderClient = boto3.client(
+            "cognito-idp", region_name=region
+        )
 
         # Get JWKS URL for token verification
         self.jwks_url = f"https://cognito-idp.{region}.amazonaws.com/{user_pool_id}/.well-known/jwks.json"

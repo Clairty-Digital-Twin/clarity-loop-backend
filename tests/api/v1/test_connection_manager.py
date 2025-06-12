@@ -120,7 +120,9 @@ async def test_rate_limiting():
 
 @pytest.mark.asyncio
 async def test_background_tasks():
-    manager = ConnectionManager(heartbeat_interval=1, connection_timeout=1)  # Use integers instead of floats
+    manager = ConnectionManager(
+        heartbeat_interval=1, connection_timeout=1
+    )  # Use integers instead of floats
     await manager.start_background_tasks()
 
     # Test heartbeat
@@ -140,7 +142,9 @@ async def test_background_tasks():
         # We'll set it to a value that makes the connection appear stale
         current_time = 1622995200.0
         mock_time.return_value = current_time
-        manager.last_heartbeat[ws] = current_time - 2  # 2 seconds ago (> 1 second timeout)
+        manager.last_heartbeat[ws] = (
+            current_time - 2
+        )  # 2 seconds ago (> 1 second timeout)
 
         await manager._cleanup_stale_connections()
 

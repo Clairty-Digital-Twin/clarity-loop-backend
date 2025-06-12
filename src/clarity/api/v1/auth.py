@@ -90,8 +90,7 @@ async def register(
     # Validate auth provider before try block
     if not isinstance(auth_provider, CognitoAuthProvider):
         raise HTTPException(
-            status_code=500,
-            detail="Invalid authentication provider configuration"
+            status_code=500, detail="Invalid authentication provider configuration"
         )
 
     try:
@@ -125,15 +124,11 @@ async def register(
 
     # Validate results outside try block
     if not user:
-        raise HTTPException(
-            status_code=500,
-            detail="Failed to create user"
-        )
+        raise HTTPException(status_code=500, detail="Failed to create user")
 
     if not tokens:
         raise HTTPException(
-            status_code=500,
-            detail="Failed to authenticate after registration"
+            status_code=500, detail="Failed to authenticate after registration"
         )
 
     # Return token response
@@ -155,8 +150,7 @@ async def login(
     # Validate auth provider before try block
     if not isinstance(auth_provider, CognitoAuthProvider):
         raise HTTPException(
-            status_code=500,
-            detail="Invalid authentication provider configuration"
+            status_code=500, detail="Invalid authentication provider configuration"
         )
 
     try:
@@ -203,10 +197,7 @@ async def login(
 
     # Validate result outside try block
     if not tokens:
-        raise HTTPException(
-            status_code=500,
-            detail="Failed to authenticate user"
-        )
+        raise HTTPException(status_code=500, detail="Failed to authenticate user")
 
     # Return token response
     return TokenResponse(
@@ -242,17 +233,13 @@ async def update_user(
     # Validate auth provider before try block
     if not isinstance(auth_provider, CognitoAuthProvider):
         raise HTTPException(
-            status_code=500,
-            detail="Invalid authentication provider configuration"
+            status_code=500, detail="Invalid authentication provider configuration"
         )
 
     # Get user ID and validate
     user_id = current_user.get("uid", current_user.get("user_id", ""))
     if not user_id:
-        raise HTTPException(
-            status_code=400,
-            detail="User ID not found in token"
-        )
+        raise HTTPException(status_code=400, detail="User ID not found in token")
 
     try:
 
@@ -264,10 +251,7 @@ async def update_user(
             update_kwargs["email"] = updates.email
 
         # Update user
-        updated_user = await auth_provider.update_user(
-            uid=user_id,
-            **update_kwargs
-        )
+        updated_user = await auth_provider.update_user(uid=user_id, **update_kwargs)
 
     except UserNotFoundError:
         raise
@@ -366,15 +350,11 @@ async def auth_health() -> HealthResponse:
     try:
         # Simple health check - could be enhanced to check auth provider connectivity
         return HealthResponse(
-            status="healthy",
-            service="authentication",
-            version="1.0.0"
+            status="healthy", service="authentication", version="1.0.0"
         )
     except Exception:  # noqa: BLE001
         return HealthResponse(
-            status="unhealthy",
-            service="authentication",
-            version="1.0.0"
+            status="unhealthy", service="authentication", version="1.0.0"
         )
 
 
@@ -412,8 +392,7 @@ async def refresh_token(
     # Since refresh token handling is different
     if not isinstance(auth_provider, CognitoAuthProvider):
         raise HTTPException(
-            status_code=500,
-            detail="Invalid authentication provider configuration"
+            status_code=500, detail="Invalid authentication provider configuration"
         )
 
     try:
@@ -436,17 +415,15 @@ async def refresh_token(
                     access_token=result["AccessToken"],
                     refresh_token=refresh_token_str,  # Cognito doesn't rotate refresh tokens
                     token_type=AUTH_TOKEN_TYPE_BEARER,
-                    expires_in=result.get("ExpiresIn", AUTH_TOKEN_DEFAULT_EXPIRY_SECONDS),
+                    expires_in=result.get(
+                        "ExpiresIn", AUTH_TOKEN_DEFAULT_EXPIRY_SECONDS
+                    ),
                     scope=AUTH_SCOPE_FULL_ACCESS,
                 )
-            raise HTTPException(
-                status_code=500,
-                detail="Failed to refresh token"
-            )
+            raise HTTPException(status_code=500, detail="Failed to refresh token")
         except client.exceptions.NotAuthorizedException as auth_err:
             raise HTTPException(
-                status_code=401,
-                detail="Invalid refresh token"
+                status_code=401, detail="Invalid refresh token"
             ) from auth_err
 
     except Exception as e:

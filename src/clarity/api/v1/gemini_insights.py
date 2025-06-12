@@ -513,8 +513,12 @@ async def get_insight_history(
                 ),
                 "generated_at": insight.get("generated_at"),
                 "confidence_score": insight.get("confidence_score", 0.0),
-                "key_insights_count": len(key_insights) if isinstance(key_insights, list) else 0,
-                "recommendations_count": len(recommendations) if isinstance(recommendations, list) else 0,
+                "key_insights_count": (
+                    len(key_insights) if isinstance(key_insights, list) else 0
+                ),
+                "recommendations_count": (
+                    len(recommendations) if isinstance(recommendations, list) else 0
+                ),
             }
             formatted_insights.append(formatted_insight)
 

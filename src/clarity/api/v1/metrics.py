@@ -357,7 +357,7 @@ class MetricsContext:
         self.labels = labels or {}
         self.start_time = time.time()
 
-    def __enter__(self) -> "MetricsContext":
+    def __enter__(self) -> MetricsContext:
         return self
 
     def __exit__(

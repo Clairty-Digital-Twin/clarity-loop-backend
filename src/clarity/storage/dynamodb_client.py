@@ -119,10 +119,26 @@ class DynamoDBHealthDataRepository(IHealthDataRepository):
                 "metrics": {
                     metric.metric_type.value: {
                         "metric_id": str(metric.metric_id),
-                        "biometric_data": metric.biometric_data.model_dump() if metric.biometric_data else None,
-                        "sleep_data": metric.sleep_data.model_dump() if metric.sleep_data else None,
-                        "activity_data": metric.activity_data.model_dump() if metric.activity_data else None,
-                        "mental_health_data": metric.mental_health_data.model_dump() if metric.mental_health_data else None,
+                        "biometric_data": (
+                            metric.biometric_data.model_dump()
+                            if metric.biometric_data
+                            else None
+                        ),
+                        "sleep_data": (
+                            metric.sleep_data.model_dump()
+                            if metric.sleep_data
+                            else None
+                        ),
+                        "activity_data": (
+                            metric.activity_data.model_dump()
+                            if metric.activity_data
+                            else None
+                        ),
+                        "mental_health_data": (
+                            metric.mental_health_data.model_dump()
+                            if metric.mental_health_data
+                            else None
+                        ),
                         "device_id": metric.device_id,
                         "raw_data": metric.raw_data or {},
                         "metadata": metric.metadata or {},

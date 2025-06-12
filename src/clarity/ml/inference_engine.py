@@ -49,7 +49,7 @@ if TYPE_CHECKING:
 logger: LoggerProtocol = logging.getLogger(__name__)
 
 # Global inference engine instance
-_inference_engine: "AsyncInferenceEngine | None" = None
+_inference_engine: AsyncInferenceEngine | None = None
 
 
 class InferenceRequest(BaseModel):
@@ -216,7 +216,7 @@ class AsyncInferenceEngine:
             batch_timeout_ms,
         )
 
-    async def __aenter__(self) -> "AsyncInferenceEngine":
+    async def __aenter__(self) -> AsyncInferenceEngine:
         """Async context manager entry."""
         await self.start()
         return self

@@ -540,7 +540,9 @@ async def list_health_data(  # noqa: PLR0913, PLR0917
     """,
     status_code=410,
     responses={
-        410: {"description": "Endpoint permanently removed - use GET /health-data/ instead"},
+        410: {
+            "description": "Endpoint permanently removed - use GET /health-data/ instead"
+        },
     },
     include_in_schema=False,  # Hide from OpenAPI docs
 )
@@ -560,12 +562,12 @@ async def query_health_data_legacy() -> dict[str, str]:
                     "Improved pagination with cursor support",
                     "Better filtering options",
                     "Consistent response format",
-                    "Enhanced performance"
-                ]
+                    "Enhanced performance",
+                ],
             },
             "removed_date": "2025-06-11",
-            "status_code": 410
-        }
+            "status_code": 410,
+        },
     )
 
 

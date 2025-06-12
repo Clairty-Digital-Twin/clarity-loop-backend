@@ -52,7 +52,11 @@ async def debug_token_info(
     token_parts = token.split(".")
 
     return {
-        "token_format": "Valid JWT" if len(token_parts) == JWT_TOKEN_PARTS_COUNT else "Invalid JWT format",
+        "token_format": (
+            "Valid JWT"
+            if len(token_parts) == JWT_TOKEN_PARTS_COUNT
+            else "Invalid JWT format"
+        ),
         "token_length": len(token),
         "token_preview": f"{token[:20]}...{token[-20:]}",
         "header_parts": len(token_parts),
@@ -132,7 +136,9 @@ async def debug_middleware_stack(request: Request) -> dict[str, Any]:
         middleware_info.append({"built_middleware_class": str(app.middleware.cls)})
 
     # Check if middleware stack was built
-    middleware_info.append({"middleware_stack_built": str(hasattr(app, "middleware_stack"))})
+    middleware_info.append(
+        {"middleware_stack_built": str(hasattr(app, "middleware_stack"))}
+    )
 
     # Check request state
     state_info = {}

@@ -95,9 +95,7 @@ class DependencyContainer:
         with service_initialization_duration.labels(service=service_name).time():
             # Check configuration before try block
             if self.settings.should_use_mock_services():
-                logger.info(
-                    "Using mock auth provider (skip_external_services=True)"
-                )
+                logger.info("Using mock auth provider (skip_external_services=True)")
                 self._auth_provider = MockAuthProvider()
                 service_initialization_counter.labels(
                     service=service_name, status="mock"
@@ -109,9 +107,7 @@ class DependencyContainer:
                 or not self.settings.cognito_client_id
             ):
                 if self.settings.is_development():
-                    logger.warning(
-                        "Cognito not configured, using mock auth provider"
-                    )
+                    logger.warning("Cognito not configured, using mock auth provider")
                     self._auth_provider = MockAuthProvider()
                     service_initialization_counter.labels(
                         service=service_name, status="mock"
@@ -198,8 +194,10 @@ class DependencyContainer:
             try:
                 # Create enterprise Gemini service (Vertex AI)
                 self._gemini_service = GeminiService(
-                    project_id=getattr(self.settings, 'gcp_project_id', None),
-                    location=getattr(self.settings, 'vertex_ai_location', 'us-central1'),
+                    project_id=getattr(self.settings, "gcp_project_id", None),
+                    location=getattr(
+                        self.settings, "vertex_ai_location", "us-central1"
+                    ),
                     testing=self.settings.is_development(),
                 )
 

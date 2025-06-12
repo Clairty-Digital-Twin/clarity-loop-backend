@@ -426,7 +426,9 @@ class TestActivityProcessorEdgeCases:
             data.resting_heart_rate = None
             activity_data.append(data)
 
-        result = processor._calculate_activity_features(cast("list[ActivityData]", activity_data))
+        result = processor._calculate_activity_features(
+            cast("list[ActivityData]", activity_data)
+        )
 
         # Should have step and flights features only
         feature_names = [f.get("feature_name") for f in result]

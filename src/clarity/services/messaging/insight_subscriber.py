@@ -64,7 +64,9 @@ class InsightSubscriber:
                 analysis_results=message_data["analysis_results"],
                 context=message_data.get("context"),
             )
-            insights = await self.gemini_service.generate_health_insights(insight_request)
+            insights = await self.gemini_service.generate_health_insights(
+                insight_request
+            )
 
             # Store insights (implementation depends on your storage solution)
             await self._store_insights(
@@ -160,9 +162,7 @@ class InsightSubscriber:
         # - Store in GCS/S3
         # - Store in database
         # - Send to another service
-        self.logger.info(
-            "Storing insights for user %s, upload %s", user_id, upload_id
-        )
+        self.logger.info("Storing insights for user %s, upload %s", user_id, upload_id)
 
     @staticmethod
     def _raise_invalid_token_error() -> None:

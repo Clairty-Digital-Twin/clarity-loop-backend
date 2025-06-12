@@ -1,3 +1,7 @@
+"""Tests for WebSocket lifespan management."""
+
+from __future__ import annotations
+
 from unittest.mock import AsyncMock, MagicMock, patch
 
 from fastapi import FastAPI

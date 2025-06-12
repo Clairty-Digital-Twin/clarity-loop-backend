@@ -47,7 +47,7 @@ class FakeCollection(CollectionPort):
         self.data[doc_id] = data.copy()
         return doc_id
 
-    def document(self, doc_id: str) -> "FakeDocument":
+    def document(self, doc_id: str) -> FakeDocument:
         """Get a document reference.
 
         Args:
@@ -58,7 +58,7 @@ class FakeCollection(CollectionPort):
         """
         return FakeDocument(self.data, doc_id)
 
-    def where(self, field: str, operator: str, value: object) -> "FakeQuery":
+    def where(self, field: str, operator: str, value: object) -> FakeQuery:
         """Create a query with a filter condition.
 
         Args:
@@ -85,7 +85,7 @@ class FakeDocument:
         self.data = data
         self.doc_id = doc_id
 
-    def get(self) -> "FakeDocumentSnapshot":
+    def get(self) -> FakeDocumentSnapshot:
         """Get document snapshot.
 
         Returns:
@@ -160,7 +160,7 @@ class FakeQuery:
         self.filters = filters
         self._limit: int | None = None
 
-    def limit(self, count: int) -> "FakeQuery":
+    def limit(self, count: int) -> FakeQuery:
         """Add limit to query.
 
         Args:
@@ -375,7 +375,7 @@ class FakeCloudStorage(CloudStoragePort):
         self._bucket_name = bucket_name
         self._stored_data: dict[str, dict[str, Any]] = {}
 
-    def bucket(self, bucket_name: str) -> "FakeBucket":
+    def bucket(self, bucket_name: str) -> FakeBucket:
         """Get a fake bucket reference."""
         return FakeBucket(bucket_name, self._stored_data)
 
@@ -428,7 +428,7 @@ class FakeBucket:
         self.name = name
         self._storage = storage
 
-    def blob(self, blob_path: str) -> "FakeBlob":
+    def blob(self, blob_path: str) -> FakeBlob:
         """Get a fake blob reference."""
         return FakeBlob(f"{self.name}/{blob_path}", self._storage)
 

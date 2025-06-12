@@ -23,7 +23,7 @@ class ConfigProvider(IConfigProvider):  # noqa: PLR0904
     Implements Dependency Inversion Principle by depending on Settings abstraction.
     """
 
-    def __init__(self, settings: "Settings") -> None:
+    def __init__(self, settings: Settings) -> None:
         """Initialize configuration provider with settings.
 
         Args:
@@ -203,7 +203,7 @@ class ConfigProvider(IConfigProvider):  # noqa: PLR0904
         middleware_config = self.get_middleware_config()
         return middleware_config.cache_ttl_seconds
 
-    def get_settings_model(self) -> "Settings":
+    def get_settings_model(self) -> Settings:
         """Get the settings model instance.
 
         Returns:

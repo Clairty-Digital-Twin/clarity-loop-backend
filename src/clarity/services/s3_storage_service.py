@@ -670,7 +670,7 @@ class S3StorageService(CloudStoragePort):
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
         try:
-            json_data = json.dumps(data, indent=2).encode('utf-8')
+            json_data = json.dumps(data, indent=2).encode("utf-8")
             return loop.run_until_complete(
                 self.upload_file(json_data, blob_path, metadata)
             )

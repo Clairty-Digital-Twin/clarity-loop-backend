@@ -846,9 +846,7 @@ class TestAnalysisPipelineErrorHandling:
 
         # Mock cardio processor to raise error
         mock_processor = Mock()
-        mock_processor.process = MagicMock(
-            side_effect=RuntimeError("Processor error")
-        )
+        mock_processor.process = MagicMock(side_effect=RuntimeError("Processor error"))
         pipeline.cardio_processor = mock_processor
 
         cardio_metric = HealthMetric(

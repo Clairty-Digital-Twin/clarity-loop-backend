@@ -429,7 +429,7 @@ class HealthAnalysisPipeline:
 
     @staticmethod
     def _create_activity_embedding_from_analysis(
-        analysis_result: "ActigraphyAnalysis",
+        analysis_result: ActigraphyAnalysis,
     ) -> list[float]:
         """Create activity embedding from PAT analysis results."""
         # Extract the actual PAT embedding if available

@@ -169,7 +169,7 @@ class PaginationBuilder:
         next_cursor: str | None = None,
         previous_cursor: str | None = None,
         additional_params: dict[str, Any] | None = None,
-    ) -> "PaginatedResponse[T]":
+    ) -> PaginatedResponse[T]:
         """Build complete paginated response with links and metadata.
 
         Args:

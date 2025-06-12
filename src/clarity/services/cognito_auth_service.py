@@ -161,7 +161,9 @@ class CognitoAuthenticationService:
             ]
 
             if request.phone_number:
-                user_attributes.append({"Name": "phone_number", "Value": request.phone_number})
+                user_attributes.append(
+                    {"Name": "phone_number", "Value": request.phone_number}
+                )
 
             # Create user in Cognito
             sign_up_params: dict[str, Any] = {
@@ -176,7 +178,9 @@ class CognitoAuthenticationService:
             if secret_hash:
                 sign_up_params["SecretHash"] = secret_hash
 
-            response: SignUpResponseTypeDef = self.cognito_client.sign_up(**sign_up_params)
+            response: SignUpResponseTypeDef = self.cognito_client.sign_up(
+                **sign_up_params
+            )
             user_sub = response["UserSub"]
 
             # Generate user ID
@@ -268,11 +272,13 @@ class CognitoAuthenticationService:
                 auth_params["SECRET_HASH"] = secret_hash
 
             # Authenticate with Cognito
-            response: AdminInitiateAuthResponseTypeDef = self.cognito_client.admin_initiate_auth(
-                UserPoolId=self.user_pool_id,
-                ClientId=self.client_id,
-                AuthFlow="ADMIN_NO_SRP_AUTH",
-                AuthParameters=auth_params,
+            response: AdminInitiateAuthResponseTypeDef = (
+                self.cognito_client.admin_initiate_auth(
+                    UserPoolId=self.user_pool_id,
+                    ClientId=self.client_id,
+                    AuthFlow="ADMIN_NO_SRP_AUTH",
+                    AuthParameters=auth_params,
+                )
             )
 
             # Handle different authentication challenges
@@ -332,15 +338,15 @@ class CognitoAuthenticationService:
                 # Update user data
                 login_time = datetime.now(UTC)
                 await self.dynamodb_service.update_item(
-                table_name=self.users_table,
-                key={"user_id": user_sub},
-                update_expression="SET last_login = :login_time, login_count = login_count + :inc",
-                expression_attribute_values={
-                    ":login_time": login_time.isoformat(),
-                    ":inc": 1,
-                },
-                user_id=user_sub,
-            )
+                    table_name=self.users_table,
+                    key={"user_id": user_sub},
+                    update_expression="SET last_login = :login_time, login_count = login_count + :inc",
+                    expression_attribute_values={
+                        ":login_time": login_time.isoformat(),
+                        ":inc": 1,
+                    },
+                    user_id=user_sub,
+                )
 
                 # Create session
                 _session_id = await self._create_user_session(
@@ -353,10 +359,14 @@ class CognitoAuthenticationService:
 
                 # Create user session response
                 if user_data:
-                    user_session = await self._create_user_session_response(user_sub, user_data)
+                    user_session = await self._create_user_session_response(
+                        user_sub, user_data
+                    )
                 else:
                     # This shouldn't happen as we checked user_data_exists above
-                    logger.error("User data is None when it should exist for user: %s", user_sub)
+                    logger.error(
+                        "User data is None when it should exist for user: %s", user_sub
+                    )
                     user_session = UserSessionResponse(
                         user_id=uuid.UUID(user_sub),
                         email=request.email,
@@ -475,13 +485,15 @@ class CognitoAuthenticationService:
         """Refresh access token using refresh token with Cognito."""
         try:
             # Note: Refresh token flow doesn't require username, so no secret hash needed
-            response: AdminInitiateAuthResponseTypeDef = self.cognito_client.admin_initiate_auth(
-                UserPoolId=self.user_pool_id,
-                ClientId=self.client_id,
-                AuthFlow="REFRESH_TOKEN_AUTH",
-                AuthParameters={
-                    "REFRESH_TOKEN": refresh_token,
-                },
+            response: AdminInitiateAuthResponseTypeDef = (
+                self.cognito_client.admin_initiate_auth(
+                    UserPoolId=self.user_pool_id,
+                    ClientId=self.client_id,
+                    AuthFlow="REFRESH_TOKEN_AUTH",
+                    AuthParameters={
+                        "REFRESH_TOKEN": refresh_token,
+                    },
+                )
             )
             auth_result = response["AuthenticationResult"]
 

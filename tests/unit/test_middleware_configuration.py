@@ -40,8 +40,12 @@ class TestMiddlewareConfiguration:
             )  # Show actual auth errors for debugging
             assert middleware_config.fallback_to_mock is True
             assert middleware_config.log_successful_auth is True
-            assert middleware_config.cache_enabled is False  # Disabled for easier debugging
-            assert middleware_config.initialization_timeout_seconds == 10  # Longer timeout
+            assert (
+                middleware_config.cache_enabled is False
+            )  # Disabled for easier debugging
+            assert (
+                middleware_config.initialization_timeout_seconds == 10
+            )  # Longer timeout
 
     @staticmethod
     def test_middleware_config_testing_defaults() -> None:
@@ -73,14 +77,17 @@ class TestMiddlewareConfiguration:
     def test_middleware_config_production_defaults() -> None:
         """Test middleware configuration defaults for production environment."""
         # Use environment variables for production settings
-        with patch.dict(os.environ, {
-            "ENVIRONMENT": "production",
-            "ENABLE_AUTH": "true",
-            "TESTING": "false",
-            "AWS_REGION": "us-east-1",
-            "COGNITO_USER_POOL_ID": "test-pool",
-            "COGNITO_CLIENT_ID": "test-client",
-        }):
+        with patch.dict(
+            os.environ,
+            {
+                "ENVIRONMENT": "production",
+                "ENABLE_AUTH": "true",
+                "TESTING": "false",
+                "AWS_REGION": "us-east-1",
+                "COGNITO_USER_POOL_ID": "test-pool",
+                "COGNITO_CLIENT_ID": "test-client",
+            },
+        ):
             settings = Settings()
             config_provider = ConfigProvider(settings)
 
@@ -93,7 +100,9 @@ class TestMiddlewareConfiguration:
             assert middleware_config.log_successful_auth is False  # Only log failures
             assert middleware_config.cache_enabled is True  # Performance
             assert middleware_config.cache_ttl_seconds == 300  # 5 minutes
-            assert middleware_config.initialization_timeout_seconds == 5  # Shorter timeout
+            assert (
+                middleware_config.initialization_timeout_seconds == 5
+            )  # Shorter timeout
 
     @staticmethod
     def test_middleware_config_exempt_paths_default() -> None:
@@ -165,11 +174,14 @@ class TestMiddlewareConfiguration:
     @staticmethod
     def test_middleware_config_with_auth_disabled() -> None:
         """Test middleware configuration when auth is disabled."""
-        with patch.dict(os.environ, {
-            "ENVIRONMENT": "production",
-            "ENABLE_AUTH": "false",
-            "TESTING": "false",
-        }):
+        with patch.dict(
+            os.environ,
+            {
+                "ENVIRONMENT": "production",
+                "ENABLE_AUTH": "false",
+                "TESTING": "false",
+            },
+        ):
             settings = Settings()
             config_provider = ConfigProvider(settings)
 

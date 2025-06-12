@@ -247,7 +247,9 @@ class CognitoAuthProvider(IAuthProvider):
 
             attributes: list[AttributeTypeTypeDef] = []
             if "display_name" in kwargs:
-                attributes.append({"Name": "name", "Value": str(kwargs["display_name"])})
+                attributes.append(
+                    {"Name": "name", "Value": str(kwargs["display_name"])}
+                )
             if "email" in kwargs:
                 attributes.append({"Name": "email", "Value": str(kwargs["email"])})
 
@@ -292,9 +294,7 @@ class CognitoAuthProvider(IAuthProvider):
             # Handle challenges (MFA, etc)
             challenge = response.get("ChallengeName")
             if challenge:
-                logger.warning(
-                    "Authentication challenge required: %s", challenge
-                )
+                logger.warning("Authentication challenge required: %s", challenge)
                 # Return None to indicate authentication failed due to challenge
                 return None
 

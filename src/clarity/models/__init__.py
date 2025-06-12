@@ -25,7 +25,6 @@ from __future__ import annotations
 
 # Use lazy imports to avoid circular dependencies during package installation
 # This is a common pattern for packages with complex interdependencies
-
 # Import modules upfront to avoid import issues in __getattr__
 from clarity.models import (
     auth,

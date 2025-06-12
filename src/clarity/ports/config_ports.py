@@ -75,7 +75,7 @@ class IConfigProvider(ABC):
         """
 
     @abstractmethod
-    def get_middleware_config(self) -> "MiddlewareConfig":
+    def get_middleware_config(self) -> MiddlewareConfig:
         """Get environment-specific middleware configuration.
 
         Returns:

@@ -122,12 +122,12 @@ class MockHealthDataService:
 
     async def get_user_health_data(
         self,
-        user_id: str,  # noqa: ARG002
-        limit: int = 100,  # noqa: ARG002
-        offset: int = 0,  # noqa: ARG002
-        metric_type: str | None = None,  # noqa: ARG002
-        start_date: datetime | None = None,  # noqa: ARG002
-        end_date: datetime | None = None,  # noqa: ARG002
+        user_id: str,
+        limit: int = 100,
+        offset: int = 0,
+        metric_type: str | None = None,
+        start_date: datetime | None = None,
+        end_date: datetime | None = None,
     ) -> dict[str, Any]:
         """Mock get user health data."""
         if self.should_fail:
@@ -151,8 +151,8 @@ class MockHealthDataService:
 
     async def query_health_data(
         self,
-        user_id: str,  # noqa: ARG002
-        **kwargs: dict[str, Any],  # noqa: ARG002
+        user_id: str,
+        **kwargs: dict[str, Any],
     ) -> dict[str, Any]:
         """Mock query health data."""
         if self.should_fail:

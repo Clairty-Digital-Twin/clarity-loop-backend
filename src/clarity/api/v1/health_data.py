@@ -353,7 +353,7 @@ async def get_processing_status(
             _raise_not_found_error("Processing Job", str(processing_id))
 
         logger.debug("Retrieved processing status: %s", processing_id)
-        return status_info  # noqa: TRY300
+        return status_info
 
     except HealthDataServiceError as e:
         logger.exception("Health data service error")
@@ -427,7 +427,7 @@ async def get_processing_status(
     response_model=PaginatedResponse[dict[str, Any]],
     include_in_schema=False,  # Don't show duplicate in OpenAPI docs
 )
-async def list_health_data(  # noqa: PLR0913, PLR0917
+async def list_health_data(
     request: Request,
     current_user: AuthenticatedUser,
     limit: int = Query(50, ge=1, le=1000, description="Number of items per page"),
@@ -512,7 +512,7 @@ async def list_health_data(  # noqa: PLR0913, PLR0917
         )
 
         logger.debug("Retrieved health data for user: %s", current_user.user_id)
-        return paginated_response  # noqa: TRY300
+        return paginated_response
 
     except ValueError as e:
         logger.warning("Invalid pagination parameters: %s", e)
@@ -696,7 +696,7 @@ async def health_check_detailed() -> dict[str, Any]:
         health_status["metrics"] = metrics
 
         logger.debug("Health check completed successfully")
-        return health_status  # noqa: TRY300
+        return health_status
 
     except Exception as e:
         logger.exception("Health check failed")

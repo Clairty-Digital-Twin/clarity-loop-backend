@@ -242,7 +242,10 @@ def get_websocket_user(token: str, request: Request) -> UserContext:
         HTTPException: 401 if token is invalid
     """
     # Set a fake authorization header for the middleware
-    request.headers._list.append((b"authorization", f"Bearer {token}".encode()))
+    # Note: Using private _list attribute is necessary for WebSocket auth
+    request.headers._list.append(  # noqa: SLF001
+        (b"authorization", f"Bearer {token}".encode())
+    )
 
     # The middleware will process this and set request.state.user
     # We can then retrieve it

@@ -87,7 +87,7 @@ class MockCloudStorage(CloudStoragePort):
         }
         return f"gs://{bucket_name}/{blob_path}"
 
-    def get_raw_data_bucket_name(  # noqa: PLR6301
+    def get_raw_data_bucket_name(
         self,  # Re-added self
     ) -> str:
         """Get the name of the raw data bucket."""
@@ -233,9 +233,9 @@ class MockHealthDataRepository(IHealthDataRepository):
         user_id: str,
         limit: int = 100,
         offset: int = 0,
-        metric_type: str | None = None,  # noqa: ARG002
-        start_date: datetime | None = None,  # noqa: ARG002
-        end_date: datetime | None = None,  # noqa: ARG002
+        metric_type: str | None = None,
+        start_date: datetime | None = None,
+        end_date: datetime | None = None,
     ) -> dict[str, Any]:
         """Mock get user health data with conditional failure."""
         if self.should_fail or self.fail_on_method == "get_user_health_data":

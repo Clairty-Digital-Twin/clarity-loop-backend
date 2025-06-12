@@ -72,7 +72,7 @@ def get_connection_manager() -> ConnectionManager:
         test_manager = get_test_connection_manager()
         if connection_manager is None:  # Assign if global is still None
             connection_manager = test_manager
-        return test_manager  # noqa: TRY300 - This return is intentional regardless of the if-block
+        return test_manager
     except (ImportError, RuntimeError):
         pass
 

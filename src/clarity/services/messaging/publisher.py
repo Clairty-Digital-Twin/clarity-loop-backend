@@ -157,9 +157,9 @@ class HealthDataPublisher:
 _publisher: HealthDataPublisher | None = None
 
 
-async def get_publisher() -> HealthDataPublisher:
+async def get_publisher() -> HealthDataPublisher:  # noqa: RUF029
     """Get or create global publisher instance."""
-    global _publisher  # noqa: PLW0603
+    global _publisher  # noqa: PLW0603  # Singleton pattern
 
     if _publisher is None:
         _publisher = HealthDataPublisher()

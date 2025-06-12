@@ -111,7 +111,7 @@ class APITester:
         self,
         method: str,
         endpoint: str,
-        **kwargs: Any,  # noqa: ANN401
+        **kwargs: Any,
     ) -> "tuple[int, dict[str, Any]]":
         """Make an HTTP request and return status code and response."""
         if not self.session:

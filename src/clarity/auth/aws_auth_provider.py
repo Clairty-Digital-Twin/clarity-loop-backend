@@ -133,7 +133,7 @@ class CognitoAuthProvider(IAuthProvider):
         try:
             # Validate URL scheme before opening
             parsed_url = urllib.parse.urlparse(self.jwks_url)
-            if parsed_url.scheme != 'https':
+            if parsed_url.scheme != "https":
                 msg = f"Invalid URL scheme: {parsed_url.scheme}. Only HTTPS is allowed."
                 raise ValueError(msg)
 

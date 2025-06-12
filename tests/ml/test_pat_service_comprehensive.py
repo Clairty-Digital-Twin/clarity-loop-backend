@@ -39,14 +39,14 @@ class TestPATModelService:
     """Test the core PAT model service functionality."""
 
     @pytest.fixture
-    async def pat_service(self) -> PATModelService:  # noqa: PLR6301
+    async def pat_service(self) -> PATModelService:
         """Create a PAT service instance for testing."""
         service = PATModelService(model_size="medium")
         await service.load_model()
         return service
 
     @pytest.fixture
-    def sample_actigraphy_data(self) -> list[ActigraphyDataPoint]:  # noqa: PLR6301
+    def sample_actigraphy_data(self) -> list[ActigraphyDataPoint]:
         """Generate sample actigraphy data for testing."""
         data_points = []
         base_time = datetime.now(UTC)
@@ -73,7 +73,7 @@ class TestPATModelService:
         return data_points
 
     @pytest.fixture
-    def week_actigraphy_data(self) -> list[ActigraphyDataPoint]:  # noqa: PLR6301
+    def week_actigraphy_data(self) -> list[ActigraphyDataPoint]:
         """Generate a full week of actigraphy data (10080 points)."""
         data_points = []
         base_time = datetime.now(UTC)

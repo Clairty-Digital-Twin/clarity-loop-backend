@@ -227,7 +227,7 @@ class HealthKitClient:
     async def exchange_code_for_tokens(
         self,
         authorization_code: str,
-        state: str,  # noqa: ARG002
+        state: str,
     ) -> HealthKitTokens:
         """Exchange authorization code for access tokens.
 
@@ -338,7 +338,7 @@ class HealthKitClient:
         else:
             return tokens
 
-    def _handle_api_error(self, response: httpx.Response) -> None:  # noqa: PLR6301
+    def _handle_api_error(self, response: httpx.Response) -> None:
         """Handle HealthKit API errors."""
         error_msg = f"HealthKit API error: {response.status_code} {response.text}"
         raise IntegrationError(error_msg)

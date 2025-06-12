@@ -393,6 +393,7 @@ class DynamoDBService:
         key_condition_expression: str,
         expression_attribute_values: dict[str, Any],
         limit: int | None = None,
+        *,
         scan_index_forward: bool = True,
     ) -> dict[str, Any]:
         """Query items from a table.
@@ -918,7 +919,7 @@ class DynamoDBHealthDataRepository(IHealthDataRepository):
         """Clean up repository resources."""
         try:
             # Clear cache
-            self._dynamodb_service._cache.clear()
+            self._dynamodb_service._cache.clear()  # noqa: SLF001
             logger.info("DynamoDBHealthDataRepository cleaned up successfully")
 
         except Exception:

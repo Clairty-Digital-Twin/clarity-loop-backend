@@ -77,7 +77,7 @@ class ClarityAPIException(HTTPException):
     Enterprise-grade exception handling that outputs professional Problem Details.
     """
 
-    def __init__(  # noqa: PLR0913
+    def __init__(
         self,
         status_code: int,
         problem_type: str,

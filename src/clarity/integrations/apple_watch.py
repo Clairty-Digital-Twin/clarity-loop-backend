@@ -261,7 +261,7 @@ class AppleWatchDataProcessor:
 
         result.heart_rate_series = minute_values
 
-    async def _process_hrv(  # noqa: PLR6301
+    async def _process_hrv(
         self,
         samples: list[HealthDataPoint],
         result: ProcessedHealthData,
@@ -499,7 +499,7 @@ class AppleWatchDataProcessor:
                 # Change from second-to-last to last
                 result.vo2_max_trend = float(values[-1][1] - values[-2][1])
 
-    async def _process_workouts(  # noqa: PLR6301
+    async def _process_workouts(
         self, samples: list[Any], result: ProcessedHealthData
     ) -> None:
         """Process workout data."""
@@ -522,7 +522,7 @@ class AppleWatchDataProcessor:
         if result.workout_count > 0:
             result.avg_workout_intensity = total_intensity / result.workout_count
 
-    async def _process_ecg(  # noqa: PLR6301
+    async def _process_ecg(
         self, samples: list[Any], result: ProcessedHealthData
     ) -> None:
         """Process ECG classifications."""

@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import asyncio
 from datetime import UTC, datetime
+from functools import partial
 import json
 import logging
 from typing import TYPE_CHECKING, Any
@@ -438,12 +439,13 @@ class S3StorageService(CloudStoragePort):
             for file_info in files:
                 try:
                     file_key = file_info["key"]
-                    await asyncio.get_event_loop().run_in_executor(
-                        None,
-                        lambda: self.s3_client.delete_object(
-                            Bucket=self.bucket_name, Key=file_key
-                        ),
+                    # Use functools.partial to avoid lambda type inference issues
+                    delete_func = partial(
+                        self.s3_client.delete_object,
+                        Bucket=self.bucket_name,
+                        Key=file_key,
                     )
+                    await asyncio.get_event_loop().run_in_executor(None, delete_func)
                     deleted_count += 1
                 except Exception as e:  # noqa: BLE001
                     logger.warning("Failed to delete file %s: %s", file_info["key"], e)
@@ -697,7 +699,7 @@ def get_s3_service(
     endpoint_url: str | None = None,
 ) -> S3StorageService:
     """Get or create global S3 service instance."""
-    global _s3_service
+    global _s3_service  # noqa: PLW0603
 
     if _s3_service is None:
         if not bucket_name:

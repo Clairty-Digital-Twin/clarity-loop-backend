@@ -1,4 +1,4 @@
-# ruff: noqa: PLR0912, PLR0914, PLR0915, PLR1702
+# ruff: noqa: PLR1702
 """WebSocket chat handler for real-time health insights and communication."""
 
 from __future__ import annotations

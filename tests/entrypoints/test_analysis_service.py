@@ -17,13 +17,13 @@ if TYPE_CHECKING:
 class TestAnalysisService:
     """Test the analysis service entrypoint."""
 
-    def test_app_initialization(self) -> None:  # noqa: PLR6301
+    def test_app_initialization(self) -> None:
         """Test that the FastAPI app is properly initialized."""
         assert app.title == "CLARITY Analysis Service"
         assert app.description == "Health data analysis processing service"
         assert app.version == "1.0.0"
 
-    def test_app_has_cors_middleware(self) -> None:  # noqa: PLR6301
+    def test_app_has_cors_middleware(self) -> None:
         """Test that CORS middleware is properly configured."""
         # Check if CORS middleware is in the middleware stack
         cors_found = False
@@ -34,15 +34,13 @@ class TestAnalysisService:
 
         assert cors_found, "CORS middleware should be configured"
 
-    def test_app_mounts_analysis_app(self) -> None:  # noqa: PLR6301
+    def test_app_mounts_analysis_app(self) -> None:
         """Test that the analysis app is mounted."""
         # Check if there are routes mounted
         assert len(app.routes) > 0, "Analysis app should be mounted"
 
     @patch("clarity.entrypoints.analysis_service.uvicorn.run")
-    def test_main_function_with_defaults(  # noqa: PLR6301
-        self, mock_uvicorn_run: Mock
-    ) -> None:
+    def test_main_function_with_defaults(self, mock_uvicorn_run: Mock) -> None:
         """Test main function with default environment variables."""
         with patch.dict(os.environ, {}, clear=True):
             main()
@@ -56,9 +54,7 @@ class TestAnalysisService:
         )
 
     @patch("clarity.entrypoints.analysis_service.uvicorn.run")
-    def test_main_function_with_custom_env(  # noqa: PLR6301
-        self, mock_uvicorn_run: Mock
-    ) -> None:
+    def test_main_function_with_custom_env(self, mock_uvicorn_run: Mock) -> None:
         """Test main function with custom environment variables."""
         env_vars = {
             "HOST": "0.0.0.0",  # noqa: S104
@@ -77,7 +73,7 @@ class TestAnalysisService:
             log_level="info",
         )
 
-    def test_health_endpoint_access(self) -> None:  # noqa: PLR6301
+    def test_health_endpoint_access(self) -> None:
         """Test that we can create a test client and the app responds."""
         with TestClient(app) as client:
             # The mounted analysis_app should handle requests

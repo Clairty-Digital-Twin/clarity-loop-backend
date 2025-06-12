@@ -43,7 +43,7 @@ s3_client = None
 
 def init_aws_clients() -> None:
     """Initialize AWS clients when needed."""
-    global session, dynamodb, cognito_client, s3_client  # noqa: PLW0603
+    global session, dynamodb, cognito_client, s3_client  # noqa: PLW0603  # Singleton pattern
     if session is None:
         session = boto3.Session(region_name=AWS_REGION)
         dynamodb = boto3.resource("dynamodb", region_name=AWS_REGION)
@@ -66,7 +66,7 @@ else:
 
 
 @asynccontextmanager
-async def lifespan(_app: FastAPI) -> AsyncGenerator[None, None]:
+async def lifespan(_app: FastAPI) -> AsyncGenerator[None, None]:  # noqa: RUF029
     """Application lifespan manager."""
     logger.info("Starting CLARITY Digital Twin backend in %s mode", ENVIRONMENT)
     logger.info("AWS Region: %s", AWS_REGION)

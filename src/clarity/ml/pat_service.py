@@ -1,5 +1,3 @@
-# ruff: noqa: TRY300
-
 """PAT (Pretrained Actigraphy Transformer) Model Service.
 
 This service implements the Dartmouth PAT model for actigraphy analysis,
@@ -730,9 +728,9 @@ class PATModelService(IMLModelService):
 
         return state_dict
 
-    def _convert_attention_weights(  # noqa: PLR0914 - TODO: Refactor to reduce local variables
+    def _convert_attention_weights(
         self,
-        layer_group: Any,  # noqa: ANN401
+        layer_group: Any,
         state_dict: dict[str, torch.Tensor],
         layer_idx: int,
     ) -> None:
@@ -813,7 +811,7 @@ class PATModelService(IMLModelService):
 
     @staticmethod
     def _convert_ff_weights(
-        layer_group: Any,  # noqa: ANN401
+        layer_group: Any,
         state_dict: dict[str, torch.Tensor],
         layer_idx: int,
     ) -> None:
@@ -854,7 +852,7 @@ class PATModelService(IMLModelService):
 
     @staticmethod
     def _convert_layernorm_weights(
-        layer_group: Any,  # noqa: ANN401
+        layer_group: Any,
         state_dict: dict[str, torch.Tensor],
         layer_idx: int,
     ) -> None:

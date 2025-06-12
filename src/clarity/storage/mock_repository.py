@@ -244,7 +244,7 @@ class MockHealthDataRepository(IHealthDataRepository):
     async def get_data(
         self,
         user_id: str,
-        filters: dict[str, Any] | None = None,  # noqa: ARG002
+        filters: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         """Retrieve health data for a user (legacy method)."""
         if user_id not in self._health_data:

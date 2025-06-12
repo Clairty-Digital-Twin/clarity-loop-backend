@@ -111,8 +111,8 @@ class BaseServiceTestCase(BaseTestCase):
     def create_service_with_dependencies(
         self,
         service_class: type,
-        **kwargs: Any,  # noqa: ANN401
-    ) -> Any:  # noqa: ANN401
+        **kwargs: Any,
+    ) -> Any:
         """Factory method to create services with injected dependencies.
 
         This method demonstrates the proper way to inject dependencies
@@ -144,7 +144,7 @@ class BaseServiceTestCase(BaseTestCase):
         """
         assert result is not None, "Service call should return a result"
 
-    def assert_service_call_failed(self, result: Any) -> None:  # noqa: ANN401
+    def assert_service_call_failed(self, result: Any) -> None:
         """Assert that a service call failed appropriately.
 
         Args:
@@ -168,7 +168,7 @@ class BaseIntegrationTestCase(BaseTestCase):
         # Integration tests might need multiple services
         self.services: dict[str, Any] = {}
 
-    def register_service(self, name: str, service: Any) -> None:  # noqa: ANN401
+    def register_service(self, name: str, service: Any) -> None:
         """Register a service for use in integration tests.
 
         Args:
@@ -177,7 +177,7 @@ class BaseIntegrationTestCase(BaseTestCase):
         """
         self.services[name] = service
 
-    def get_service(self, name: str) -> Any:  # noqa: ANN401
+    def get_service(self, name: str) -> Any:
         """Get a registered service.
 
         Args:

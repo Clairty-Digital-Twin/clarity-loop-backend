@@ -374,7 +374,7 @@ Respond only with valid JSON."""
         """Parse and validate Gemini response."""
         try:
             # Extract text from response
-            response_text = getattr(response, 'text', '').strip()
+            response_text = getattr(response, "text", "").strip()
 
             # SECURITY: Sanitize the AI response
             sanitized_response_text = GeminiService._sanitize_ai_response(response_text)
@@ -413,7 +413,9 @@ Respond only with valid JSON."""
         except json.JSONDecodeError:
             logger.warning("Failed to parse Gemini JSON response, using fallback")
             # Fallback to extracting insights from text response
-            return GeminiService._create_fallback_response(getattr(response, 'text', ''), user_id)
+            return GeminiService._create_fallback_response(
+                getattr(response, "text", ""), user_id
+            )
         except Exception:
             logger.exception("Error parsing Gemini response")
             raise

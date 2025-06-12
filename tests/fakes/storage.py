@@ -189,9 +189,7 @@ class FakeQuery:
 
         return results
 
-    def _matches_filters(  # noqa: PLR0911, PLR0912
-        self, doc_data: dict[str, Any]
-    ) -> bool:
+    def _matches_filters(self, doc_data: dict[str, Any]) -> bool:
         """Check if document matches all filters.
 
         Args:

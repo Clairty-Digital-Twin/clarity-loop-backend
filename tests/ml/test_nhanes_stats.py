@@ -315,7 +315,7 @@ class TestNHANESStatsError:
         assert str(error) == "Test error"
 
     @patch("clarity.ml.nhanes_stats.NHANES_REFERENCE_STATS", {})
-    def test_lookup_with_empty_stats(self) -> None:  # noqa: PLR6301
+    def test_lookup_with_empty_stats(self) -> None:
         """Test lookup behavior with empty reference stats."""
         with pytest.raises(NHANESStatsError):
             lookup_norm_stats(year=2025)
@@ -362,7 +362,7 @@ class TestIntegrationNHANESStats:
         assert isinstance(info, dict)
 
     @patch("clarity.ml.nhanes_stats.logger")
-    def test_logging_integration(self, mock_logger: MagicMock) -> None:  # noqa: PLR6301
+    def test_logging_integration(self, mock_logger: MagicMock) -> None:
         """Test that logging works correctly."""
         # Test with invalid inputs that should trigger logging
         lookup_norm_stats(year=9999)  # Invalid year

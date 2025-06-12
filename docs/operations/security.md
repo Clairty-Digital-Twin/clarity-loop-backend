@@ -272,7 +272,7 @@ SECURITY_METRICS = {
 
 ### **Intrusion Detection**
 
-**AWS GuardDuty Integration:**
+#### AWS GuardDuty Integration
 
 ```bash
 # Enable GuardDuty for threat detection
@@ -281,7 +281,7 @@ aws guardduty create-detector \
   --finding-publishing-frequency FIFTEEN_MINUTES
 ```
 
-**Custom Security Rules:**
+#### Custom Security Rules
 
 ```python
 # Real-time security monitoring
@@ -309,31 +309,31 @@ async def security_middleware(request: Request, call_next):
 
 ### **Technical Safeguards**
 
-**Access Control:**
+#### Access Control
 
 - Unique user identification (Cognito User Pools)
 - Automatic logoff after 30 minutes inactivity
 - Encryption for data at rest and in transit
 
-**Audit Controls:**
+#### Audit Controls
 
 - Comprehensive logging of all data access
 - CloudTrail for API-level auditing
 - Regular access log reviews
 
-**Integrity Controls:**
+#### Integrity Controls
 
 - Electronic signature validation
 - Data integrity checks via checksums
 - Version control for data modifications
 
-**Person or Entity Authentication:**
+#### Person or Entity Authentication
 
 - Multi-factor authentication available
 - Strong password requirements
 - Session token expiration
 
-**Transmission Security:**
+#### Transmission Security
 
 - TLS 1.3 encryption for all communications
 - VPN access for administrative functions
@@ -341,19 +341,19 @@ async def security_middleware(request: Request, call_next):
 
 ### **Administrative Safeguards**
 
-**Security Officer:**
+#### Security Officer
 
 - Designated security officer responsible for HIPAA compliance
 - Regular security training for all team members
 - Incident response procedures
 
-**Access Management:**
+#### Access Management
 
 - Workforce access procedures
 - Information access management
 - Security awareness training
 
-**Contingency Plan:**
+#### Contingency Plan
 
 - Data backup procedures
 - Disaster recovery plan

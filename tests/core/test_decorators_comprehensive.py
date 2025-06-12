@@ -3,6 +3,8 @@
 Tests all decorators and edge cases to improve coverage from 11% to 90%+.
 """
 
+from __future__ import annotations
+
 import asyncio
 import logging
 import operator

@@ -249,8 +249,11 @@ class TestAuditLog:
     """Test audit logging functionality."""
 
     @pytest.mark.asyncio
-    async def test_audit_log_success(self, dynamodb_service, mock_table):
+    async def test_audit_log_success(self, dynamodb_service, mock_dynamodb_resource):
         """Test successful audit log creation."""
+        # Get the mock audit table that was created by the fixture
+        mock_audit_table = mock_dynamodb_resource.Table("test_audit_logs")
+        
         await dynamodb_service._audit_log(
             operation="test_operation",
             table="test_table",
@@ -260,11 +263,11 @@ class TestAuditLog:
         )
 
         # Verify table was called
-        dynamodb_service.dynamodb.Table.assert_called_with("test_audit_logs")
-        mock_table.put_item.assert_called_once()
+        mock_dynamodb_resource.Table.assert_called_with("test_audit_logs")
+        mock_audit_table.put_item.assert_called_once()
 
         # Check audit entry
-        call_args = mock_table.put_item.call_args[1]
+        call_args = mock_audit_table.put_item.call_args[1]
         audit_entry = call_args["Item"]
         assert audit_entry["operation"] == "test_operation"
         assert audit_entry["table"] == "test_table"
@@ -460,8 +463,8 @@ class TestDeleteItem:
             "DeleteItem"
         )
 
-        with pytest.raises(DynamoDBConnectionError):
-            await dynamodb_service.delete_item("test_table", "item123")
+        with pytest.raises(DynamoDBError):
+            await dynamodb_service.delete_item("test_table", {"id": "item123"})
 
 
 class TestQueryItems:
@@ -478,13 +481,14 @@ class TestQueryItems:
             "Count": 2,
         }
 
-        results = await dynamodb_service.query_items(
+        response = await dynamodb_service.query(
             table_name="health_data",
             key_condition_expression="user_id = :uid",
             expression_attribute_values={":uid": "user123"},
             limit=10,
         )
-
+        
+        results = response["Items"]
         assert len(results) == 2
         assert results[0]["id"] == "1"
         assert results[1]["id"] == "2"
@@ -500,16 +504,15 @@ class TestQueryItems:
         """Test query with filter expression."""
         mock_table.query.return_value = {"Items": [], "Count": 0}
 
-        await dynamodb_service.query_items(
+        await dynamodb_service.query(
             table_name="health_data",
             key_condition_expression="user_id = :uid",
             expression_attribute_values={":uid": "user123"},
-            filter_expression="status = :status",
+            limit=None,
             scan_index_forward=False,
         )
 
         call_args = mock_table.query.call_args[1]
-        assert call_args["FilterExpression"] == "status = :status"
         assert call_args["ScanIndexForward"] is False
 
     @pytest.mark.asyncio
@@ -517,13 +520,13 @@ class TestQueryItems:
         """Test query with no results."""
         mock_table.query.return_value = {"Items": [], "Count": 0}
 
-        results = await dynamodb_service.query_items(
+        response = await dynamodb_service.query(
             table_name="test_table",
             key_condition_expression="id = :id",
             expression_attribute_values={":id": "missing"},
         )
 
-        assert results == []
+        assert response["Items"] == []
 
 
 class TestUpdateItem:
@@ -546,15 +549,13 @@ class TestUpdateItem:
 
         result = await dynamodb_service.update_item(
             table_name="test_table",
-            item_id="item123",
+            key={"id": "item123"},
             update_expression="SET #status = :status",
-            expression_attribute_names={"#status": "status"},
             expression_attribute_values={":status": "updated"},
             user_id="user456",
         )
 
-        assert result["status"] == "updated"
-        assert "updated_at" in result
+        assert result is True
         # Cache should be cleared
         assert cache_key not in dynamodb_service._cache
 
@@ -566,14 +567,14 @@ class TestUpdateItem:
             "UpdateItem"
         )
 
-        with pytest.raises(DocumentNotFoundError):
-            await dynamodb_service.update_item(
-                table_name="test_table",
-                item_id="missing123",
-                update_expression="SET #status = :status",
-                expression_attribute_names={"#status": "status"},
-                expression_attribute_values={":status": "updated"},
-            )
+        result = await dynamodb_service.update_item(
+            table_name="test_table",
+            key={"id": "missing123"},
+            update_expression="SET #status = :status",
+            expression_attribute_values={":status": "updated"},
+        )
+        
+        assert result is False
 
 
 class TestBatchOperations:

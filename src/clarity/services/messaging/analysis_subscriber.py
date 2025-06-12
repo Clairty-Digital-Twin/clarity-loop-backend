@@ -3,6 +3,8 @@
 Handles Pub/Sub messages for health data analysis processing.
 """
 
+from __future__ import annotations
+
 import base64
 import json
 import logging

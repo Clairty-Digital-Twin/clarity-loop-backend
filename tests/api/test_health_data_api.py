@@ -5,6 +5,8 @@ Tests cover:
 - Simple functionality tests
 """
 
+from __future__ import annotations
+
 from clarity.api.v1.health_data import router
 
 

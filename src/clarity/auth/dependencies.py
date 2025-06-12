@@ -5,6 +5,8 @@ following Robert C. Martin's principles and security best practices.
 Uses AWS Cognito for authentication backend.
 """
 
+from __future__ import annotations
+
 import logging
 from typing import Annotated, Any, cast
 

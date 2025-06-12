@@ -4,6 +4,8 @@ Environment-based configuration using Pydantic settings for secure,
 production-ready deployment across development, staging, and production.
 """
 
+from __future__ import annotations
+
 from dataclasses import dataclass
 from functools import lru_cache
 import logging

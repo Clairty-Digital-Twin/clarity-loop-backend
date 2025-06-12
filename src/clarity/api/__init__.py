@@ -7,6 +7,8 @@ The API is organized into versioned modules:
 - v1/: Version 1 API endpoints
 """
 
+from __future__ import annotations
+
 __version__ = "0.1.0"
 __author__ = "CLARITY Digital Twin Platform"
 

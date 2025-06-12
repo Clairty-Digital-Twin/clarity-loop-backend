@@ -1,5 +1,7 @@
 """User models for the CLARITY Digital Twin Platform."""
 
+from __future__ import annotations
+
 from datetime import datetime
 from typing import Any
 

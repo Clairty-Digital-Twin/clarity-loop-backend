@@ -8,6 +8,8 @@ Types are organized by domain and usage patterns for better discoverability
 and maintainability.
 """
 
+from __future__ import annotations
+
 from collections.abc import Awaitable, Callable, Mapping, Sequence
 from datetime import datetime
 from typing import Any, Protocol, TypeAlias, TypeVar

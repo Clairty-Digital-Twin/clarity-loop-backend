@@ -8,6 +8,8 @@ not on low-level modules (infrastructure implementations).
 The ports are implemented by adapters in the infrastructure layer.
 """
 
+from __future__ import annotations
+
 from clarity.ports.auth_ports import IAuthProvider
 from clarity.ports.config_ports import IConfigProvider
 from clarity.ports.data_ports import IHealthDataRepository

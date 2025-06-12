@@ -1,5 +1,7 @@
 """Authentication decorators and utilities for API endpoints."""
 
+from __future__ import annotations
+
 from collections.abc import Awaitable, Callable
 from functools import wraps
 from typing import TYPE_CHECKING, ParamSpec, TypeVar, cast

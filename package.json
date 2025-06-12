@@ -1,7 +1,7 @@
 {
   "name": "clarity-loop-backend-docs",
   "version": "1.0.0",
-  "description": "Documentation tools for Clarity Loop Backend",
+  "description": "Documentation tools for Clarity Loop Backend - THIS IS ONLY FOR MARKDOWN LINTING, NOT PART OF PYTHON APPLICATION",
   "scripts": {
     "lint:md": "markdownlint-cli2 \"docs/**/*.md\" \"*.md\"",
     "lint:md:fix": "markdownlint-cli2 \"docs/**/*.md\" \"*.md\" --fix",

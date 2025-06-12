@@ -6,6 +6,8 @@ and testing without requiring external dependencies.
 Following Clean Architecture and SOLID principles.
 """
 
+from __future__ import annotations
+
 from datetime import UTC, datetime
 import logging
 from operator import itemgetter

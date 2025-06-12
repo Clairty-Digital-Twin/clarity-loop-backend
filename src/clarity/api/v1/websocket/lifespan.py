@@ -1,5 +1,7 @@
 """FastAPI lifespan management for WebSocket features."""
 
+from __future__ import annotations
+
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 import inspect

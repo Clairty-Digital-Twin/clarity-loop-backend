@@ -3,6 +3,8 @@
 This module provides centralized access to AWS credentials and API keys.
 """
 
+from __future__ import annotations
+
 import os
 from typing import TYPE_CHECKING
 

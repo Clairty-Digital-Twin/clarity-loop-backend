@@ -1,5 +1,7 @@
 """AWS-compatible Clarity backend - CLEAN version with routers only."""
 
+from __future__ import annotations
+
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 import logging

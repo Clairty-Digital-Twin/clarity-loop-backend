@@ -21,6 +21,8 @@ HIPAA-compliant data models for the revolutionary psychiatry digital twin platfo
 These models establish new standards for clinical data validation and processing.
 """
 
+from __future__ import annotations
+
 # Use lazy imports to avoid circular dependencies during package installation
 # This is a common pattern for packages with complex interdependencies
 

@@ -3,6 +3,8 @@
 THIS SHOULD BE REMOVED OR DISABLED IN PRODUCTION!
 """
 
+from __future__ import annotations
+
 from datetime import UTC, datetime
 import logging
 import os

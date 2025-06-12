@@ -4,6 +4,8 @@ Enterprise-grade AWS DynamoDB client for health data operations.
 Provides AWS-native NoSQL solution.
 """
 
+from __future__ import annotations
+
 import asyncio
 from datetime import UTC, datetime, timedelta
 import json

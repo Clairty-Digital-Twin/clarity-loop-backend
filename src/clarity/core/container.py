@@ -1,5 +1,7 @@
 """Container compatibility module - aliases to container_aws."""
 
+from __future__ import annotations
+
 from fastapi import FastAPI
 
 # Import everything from container_aws for compatibility

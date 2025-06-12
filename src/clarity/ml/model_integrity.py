@@ -4,6 +4,8 @@ Provides checksum verification and integrity checking for ML model weights
 following security best practices for healthcare AI systems.
 """
 
+from __future__ import annotations
+
 from datetime import UTC, datetime
 import hashlib
 import json

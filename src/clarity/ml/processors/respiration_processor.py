@@ -4,6 +4,8 @@ Extracts respiratory features from breathing rate and oxygen saturation data.
 Implements domain-specific preprocessing and feature extraction for respiratory health.
 """
 
+from __future__ import annotations
+
 from datetime import datetime
 import logging
 

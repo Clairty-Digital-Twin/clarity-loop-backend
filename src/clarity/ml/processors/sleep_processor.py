@@ -14,6 +14,8 @@ Features extracted align with clinical sleep medicine standards:
 References sleep research standards from AASM, NSRR, and MESA studies.
 """
 
+from __future__ import annotations
+
 import logging
 
 import numpy as np

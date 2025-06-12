@@ -1,5 +1,7 @@
 """WebSocket connection management with advanced features."""
 
+from __future__ import annotations
+
 import asyncio
 from collections import defaultdict
 import contextlib

@@ -5,6 +5,8 @@ a mock implementation of IAuthProvider interface for development and testing.
 Implements Liskov Substitution Principle - can substitute real auth provider.
 """
 
+from __future__ import annotations
+
 from typing import Any
 
 from clarity.ports.auth_ports import IAuthProvider

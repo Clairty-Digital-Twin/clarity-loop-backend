@@ -14,6 +14,8 @@ This implementation follows clean code principles with proper separation of conc
 dependency injection, and comprehensive error handling.
 """
 
+from __future__ import annotations
+
 import asyncio
 from collections.abc import Callable
 from functools import wraps

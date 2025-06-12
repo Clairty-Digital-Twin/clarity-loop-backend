@@ -11,6 +11,8 @@ Exposes custom application metrics including:
 Designed for production monitoring and alerting.
 """
 
+from __future__ import annotations
+
 import logging
 import time
 from typing import Any

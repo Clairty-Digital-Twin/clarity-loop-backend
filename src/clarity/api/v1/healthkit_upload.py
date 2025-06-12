@@ -4,6 +4,8 @@ FastAPI router for handling HealthKit data uploads with immediate acknowledgment
 and asynchronous processing via Pub/Sub.
 """
 
+from __future__ import annotations
+
 from datetime import UTC, datetime
 import logging
 import os

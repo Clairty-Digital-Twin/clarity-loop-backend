@@ -4,6 +4,8 @@ Publishes health data processing events to AWS SQS/SNS for async processing.
 Replaces Google Pub/Sub with enterprise-grade AWS messaging.
 """
 
+from __future__ import annotations
+
 import logging
 import os
 from typing import Any

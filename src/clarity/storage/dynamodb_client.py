@@ -1,5 +1,7 @@
 """AWS DynamoDB implementation for health data storage."""
 
+from __future__ import annotations
+
 from datetime import UTC, datetime
 from decimal import Decimal
 import logging

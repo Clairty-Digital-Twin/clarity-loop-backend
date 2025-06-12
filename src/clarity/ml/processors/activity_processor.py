@@ -16,6 +16,8 @@ This fills the gap where the PAT model provides deep insights but users
 need direct answers to questions like "How many steps did I walk this week?"
 """
 
+from __future__ import annotations
+
 from collections.abc import Sequence
 from datetime import UTC, datetime
 import logging

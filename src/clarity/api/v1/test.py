@@ -1,5 +1,7 @@
 """SIMPLE TEST ENDPOINT - NO FANCY IMPORTS."""
 
+from __future__ import annotations
+
 from typing import Any
 
 from fastapi import APIRouter, Request

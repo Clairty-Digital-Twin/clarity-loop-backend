@@ -4,6 +4,8 @@ Defines the contract for data repositories following Clean Architecture.
 Business logic layer depends on this abstraction, not concrete implementations.
 """
 
+from __future__ import annotations
+
 from abc import ABC, abstractmethod
 from datetime import datetime
 

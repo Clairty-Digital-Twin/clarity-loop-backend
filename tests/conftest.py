@@ -3,6 +3,8 @@
 Provides common test utilities following pytest best practices.
 """
 
+from __future__ import annotations
+
 import asyncio
 from collections.abc import AsyncGenerator, Generator
 import os
@@ -21,7 +23,7 @@ import redis
 import torch
 
 from clarity.api.v1.websocket.connection_manager import ConnectionManager
-from clarity.main import create_app  # type: ignore[import-untyped]
+from clarity.main import create_app
 
 # Load test environment variables from .env.test
 # This file should be created locally by developers and not version controlled.
@@ -193,7 +195,7 @@ def sample_health_labels():
 @pytest.fixture
 def app() -> FastAPI:
     """Create FastAPI test application."""
-    return create_app()  # type: ignore[no-any-return]
+    return create_app()
 
 
 @pytest.fixture

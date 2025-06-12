@@ -3,6 +3,8 @@
 AWS Cognito-based authentication and authorization for enterprise healthcare applications.
 """
 
+from __future__ import annotations
+
 from clarity.auth.decorators import require_auth
 from clarity.auth.dependencies import (
     AuthenticatedUser,

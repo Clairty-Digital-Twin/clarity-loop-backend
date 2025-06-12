@@ -4,6 +4,8 @@ This file demonstrates how to properly integrate the WebSocket connection manage
 with FastAPI's lifespan events for production use.
 """
 
+from __future__ import annotations
+
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 

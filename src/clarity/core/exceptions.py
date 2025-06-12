@@ -10,6 +10,8 @@ The exception hierarchy is designed to be:
 - Self-documenting through clear names and messages
 """
 
+from __future__ import annotations
+
 import logging
 from typing import Any
 from uuid import uuid4

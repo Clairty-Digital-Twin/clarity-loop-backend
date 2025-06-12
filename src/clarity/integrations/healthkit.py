@@ -4,6 +4,8 @@ Handles OAuth 2.0 authorization, data fetching, and normalization
 for Apple Watch health metrics including activity, sleep, and heart rate.
 """
 
+from __future__ import annotations
+
 import asyncio
 from dataclasses import asdict, dataclass
 from datetime import UTC, datetime, timedelta

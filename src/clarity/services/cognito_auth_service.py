@@ -4,6 +4,8 @@ Business logic layer for authentication operations using AWS Cognito.
 Provides AWS-native authentication solution.
 """
 
+from __future__ import annotations
+
 import base64
 from datetime import UTC, datetime, timedelta
 import hashlib

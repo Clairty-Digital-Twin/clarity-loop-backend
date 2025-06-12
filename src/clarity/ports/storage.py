@@ -5,6 +5,8 @@ following the Dependency Inversion Principle where high-level modules
 depend on abstractions, not concrete implementations.
 """
 
+from __future__ import annotations
+
 from abc import ABC, abstractmethod
 from typing import Any
 

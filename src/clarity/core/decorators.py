@@ -4,6 +4,8 @@ Implements decorator pattern for orthogonal concerns like logging, timing,
 error handling, and monitoring following Gang of Four design patterns.
 """
 
+from __future__ import annotations
+
 import asyncio
 from collections.abc import Callable
 from datetime import UTC, datetime

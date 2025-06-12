@@ -1,5 +1,7 @@
 """WebSocket data models for structured communication."""
 
+from __future__ import annotations
+
 from datetime import UTC, datetime
 from enum import StrEnum
 from typing import Any

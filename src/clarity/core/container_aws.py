@@ -3,6 +3,8 @@
 This module configures all AWS service dependencies and their initialization.
 """
 
+from __future__ import annotations
+
 import logging
 from typing import Any
 

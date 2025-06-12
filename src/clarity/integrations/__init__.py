@@ -6,6 +6,8 @@ External service integrations for the Clarity platform:
 - Third-party health platforms
 """
 
+from __future__ import annotations
+
 from clarity.integrations.apple_watch import AppleWatchDataProcessor
 from clarity.integrations.healthkit import HealthKitClient
 

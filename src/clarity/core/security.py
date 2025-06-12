@@ -7,6 +7,8 @@ All functions use cryptographically secure algorithms and are designed to be
 resistant to common attacks while maintaining good performance.
 """
 
+from __future__ import annotations
+
 import hashlib
 import secrets
 

@@ -4,6 +4,8 @@ HIPAA-compliant structured logging with audit trail support and
 configurable log levels for development and production environments.
 """
 
+from __future__ import annotations
+
 import logging
 import logging.config
 import sys

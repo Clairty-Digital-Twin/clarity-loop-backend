@@ -4,6 +4,8 @@ Tests the authentication system with proper dependency injection
 and service configuration.
 """
 
+from __future__ import annotations
+
 from fastapi.testclient import TestClient
 import pytest
 

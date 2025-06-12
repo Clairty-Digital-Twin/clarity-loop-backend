@@ -4,6 +4,8 @@ Defines the contract for authentication providers following Clean Architecture.
 Business logic layer depends on this abstraction, not concrete implementations.
 """
 
+from __future__ import annotations
+
 from abc import ABC, abstractmethod
 from typing import Any
 

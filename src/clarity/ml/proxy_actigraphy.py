@@ -19,6 +19,8 @@ This implementation follows clean code principles with proper separation of conc
 comprehensive error handling, and extensive validation.
 """
 
+from __future__ import annotations
+
 from datetime import datetime
 import logging
 from typing import Any

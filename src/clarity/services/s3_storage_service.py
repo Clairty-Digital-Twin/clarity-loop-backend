@@ -4,6 +4,8 @@ Enterprise-grade AWS S3 client for health data storage and management.
 Replaces Google Cloud Storage with AWS-native solution.
 """
 
+from __future__ import annotations
+
 import asyncio
 from datetime import UTC, datetime
 import json

@@ -4,6 +4,8 @@ Modal doesn't properly propagate request.state between middleware and route hand
 This module provides a workaround using Python's contextvars for thread-local storage.
 """
 
+from __future__ import annotations
+
 import contextvars
 
 from clarity.models.auth import UserContext

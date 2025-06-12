@@ -5,6 +5,8 @@ These models establish entirely new standards for clinical data validation,
 HIPAA compliance, and mental health analytics.
 """
 
+from __future__ import annotations
+
 from datetime import UTC, datetime
 from enum import StrEnum
 from typing import Annotated, Any, ClassVar

@@ -236,4 +236,13 @@ results = await pipeline.process_health_data(user_id, health_metrics)
 
 **Built with**: Python 3.11+, FastAPI, PyTorch, AWS, Apple HealthKit  
 **Research**: Dartmouth College Jacobson Lab  
-**License**: Apache 2.0 (platform), CC BY-4.0 (PAT models) 
+**License**: Apache 2.0 (platform), CC BY-4.0 (PAT models)
+
+## 📚 **Quick Start Guide**
+
+- [System Overview](01-overview.md) - Architecture and components
+- [AI Models & Machine Learning](03-ai-models.md) - PAT and fusion models  
+- [Operations Documentation](operations/) - Deployment, monitoring, security
+- [Contributing Guide](../CONTRIBUTING.md) - How to contribute to the project
+
+## 🛠 **Development Resources** 

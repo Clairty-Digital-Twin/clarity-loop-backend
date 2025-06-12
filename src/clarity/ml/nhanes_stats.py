@@ -11,6 +11,8 @@ Reference:
 - Population-based normalization for sleep/activity analysis
 """
 
+from __future__ import annotations
+
 from functools import lru_cache
 import logging
 from typing import Any

@@ -1,11 +1,13 @@
 """Resilience and utility decorators for the CLARITY platform."""
 
+from __future__ import annotations
+
 from collections.abc import Awaitable, Callable
 import functools
 import logging
 from typing import ParamSpec, TypeVar
 
-from circuitbreaker import (  # type: ignore[import-untyped]
+from circuitbreaker import (
     CircuitBreaker,
     CircuitBreakerError,
 )

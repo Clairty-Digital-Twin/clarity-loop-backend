@@ -46,13 +46,7 @@ def test_imports() -> bool:
 
     # Test 4: FastAPI app creation
     try:
-        # Add project root to path if not already there
-        root_path = Path(__file__).parent.parent
-        if str(root_path) not in sys.path:
-            sys.path.insert(0, str(root_path))
-
-        from main import get_app  # noqa: PLC0415
-
+        # Use the already imported get_app function from clarity.main
         _app = get_app()
     except Exception:  # noqa: BLE001
         traceback.print_exc()

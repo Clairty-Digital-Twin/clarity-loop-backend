@@ -209,25 +209,29 @@ graph LR
 
 ### Performance Metrics
 
-**Validation Results (vs. Polysomnography):**
-- **Sleep Stage Accuracy**: 92.4%
-- **Sleep Onset Detection**: 94.1%
-- **Wake Detection**: 89.7%
-- **Deep Sleep Identification**: 91.2%
-- **REM Sleep Accuracy**: 87.3%
+**⚠️ IMPORTANT DISCLAIMER**: 
+- **NOT FDA APPROVED** or clinically validated for medical use
+- **RESEARCH AND EDUCATIONAL PURPOSES ONLY**
+- **NOT for medical diagnosis or treatment decisions**
+- Open source project using academic research models
 
-**Real-world Performance:**
+**Technical Performance (Development Environment)**:
 - **Inference Time**: ~15 seconds for 7-day analysis
 - **Memory Usage**: 2.1GB peak during inference
 - **Batch Processing**: Up to 50 users simultaneously
 
-### Clinical Validation
+### Research Foundation
 
-**Study Results:**
-- **N=2,847 participants** with concurrent polysomnography
-- **Pearson correlation** with gold standard: r=0.89
-- **Sensitivity for sleep disorders**: 87% (vs. clinical diagnosis)
-- **Specificity**: 92%
+**Academic Basis**:
+- Based on Dartmouth College PAT research (CC BY-4.0)
+- Uses publicly available pretrained transformer weights
+- Implements academic methodologies for educational demonstration
+- **No clinical validation studies have been conducted**
+
+**Study Context**:
+- PAT research paper: "AI Foundation Models for Wearable Movement Data"
+- Original model trained on research datasets
+- Our implementation is for demonstration and learning purposes only
 
 ---
 
@@ -377,16 +381,29 @@ def extract_temporal_features(time_series_data):
 
 ### Training Data
 
-**Dataset Characteristics:**
-- **Size**: 12.3TB of HealthKit data from 50K+ users
-- **Duration**: 2+ years of continuous collection
-- **Annotations**: Expert-labeled sleep data from 3K users
-- **Demographics**: Balanced across age, gender, geography
+**⚠️ DISCLAIMER**: This project does NOT train models from scratch.
 
-**Data Splits:**
-- **Training**: 70% (35K users)
-- **Validation**: 15% (7.5K users)  
-- **Test**: 15% (7.5K users)
+### Implementation Approach
+
+**⚠️ RESEARCH/EDUCATIONAL USE ONLY**
+
+**What We Do**:
+- Load pretrained PAT transformer weights from academic research
+- Implement preprocessing pipeline per published specifications
+- Provide API wrapper for demonstration purposes
+- Follow CC BY-4.0 license requirements for attribution
+
+**What We DON'T Do**:
+- Train models from scratch
+- Collect proprietary health datasets  
+- Conduct clinical validation studies
+- Provide medical-grade analysis
+
+**Technical Implementation**:
+- Model loading and inference pipeline
+- Data preprocessing and normalization
+- API endpoints for educational demos
+- Research attribution and licensing compliance
 
 ### Training Methodology
 

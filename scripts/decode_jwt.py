@@ -7,7 +7,7 @@ import json
 import sys
 
 
-def decode_jwt(token: str) -> dict:
+def decode_jwt(token: str) -> dict[str, any]:
     """Decode JWT token without verification."""
     parts = token.split(".")
     if len(parts) != 3:

@@ -9,12 +9,15 @@ from datetime import UTC, datetime, timedelta
 import json
 import logging
 import time
-from typing import Any
+from typing import TYPE_CHECKING, Any
 import uuid
 from uuid import UUID
 
 import boto3
 from botocore.exceptions import ClientError
+
+if TYPE_CHECKING:
+    from mypy_boto3_dynamodb import DynamoDBClient
 
 from clarity.ports.data_ports import IHealthDataRepository
 

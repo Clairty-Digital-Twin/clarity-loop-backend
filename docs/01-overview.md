@@ -2,17 +2,19 @@
 
 ## Executive Summary
 
-CLARITY transforms Apple Health data into conversational mental health insights using state-of-the-art AI. It's a **digital psychiatric twin** that understands your health patterns and explains them in natural language.
+CLARITY processes Apple Health data using machine learning models to generate health insights and natural language explanations. The system combines a Pretrained Actigraphy Transformer (PAT) for temporal analysis with Google Gemini for conversational health insights.
 
-### What Problem We Solve
+### Core Functionality
 
-**Traditional health apps**: Show you numbers (10,000 steps, 7 hours sleep)  
-**CLARITY**: Explains what those patterns mean for your mental health and lets you ask questions
+**Input**: Apple Health exports (heart rate, sleep, activity, HRV)  
+**Processing**: PAT transformer + Google Gemini AI  
+**Output**: Health pattern analysis with natural language explanations
 
-Example conversation:
+Example use case:
 ```
-User: "Why do I feel tired even with 8 hours of sleep?"
-CLARITY: "Your sleep efficiency was only 73% last week due to frequent awakenings between 2-4 AM. Your HRV data suggests elevated stress levels during this period. Consider..."
+Input: 7 days of sleep and activity data
+Analysis: Sleep efficiency trends, circadian rhythm analysis
+Output: "Sleep efficiency decreased 15% this week due to irregular bedtimes"
 ```
 
 ## System Architecture
@@ -30,14 +32,14 @@ Apple Watch/iPhone
        ↓
    ┌──────────────────┐    ┌───────────────────┐
    │ PAT Transformer  │    │     Gemini AI     │
-   │ (Sleep Analysis) │    │ (Chat & Insights) │
+   │ (Sleep Analysis) │    │ (Text Generation) │
    └──────────────────┘    └───────────────────┘
            ↓                        ↓
-   Sleep Quality Scores    Natural Language Insights
+   Health Pattern Analysis    Natural Language Insights
            ↓                        ↓
    ┌──────────────────────────────────────────┐
-   │        User Conversations                │
-   │   "What's affecting my sleep quality?"   │
+   │        Structured Output                 │
+   │     Health summaries and trends          │
    └──────────────────────────────────────────┘
 ```
 
@@ -51,7 +53,7 @@ Apple Watch/iPhone
 ┌─────────────────────▼───────────────────────────────────────┐
 │                FastAPI Application                          │
 │  ┌─────────────┐ ┌─────────────┐ ┌─────────────────────────┐│
-│  │   Auth      │ │ Health Data │ │    AI Insights          ││
+│  │   Auth      │ │ Health Data │ │    AI Processing        ││
 │  │ (Cognito)   │ │   (CRUD)    │ │ (PAT + Gemini)          ││
 │  └─────────────┘ └─────────────┘ └─────────────────────────┘│
 └─────────────────────┬───────────────────────────────────────┘
@@ -74,20 +76,20 @@ Apple Watch/iPhone
 - **Processing**: Time-series alignment, outlier removal, normalization
 
 ### 2. PAT (Pretrained Actigraphy Transformer) 
-- **Purpose**: Advanced sleep and circadian rhythm analysis
+- **Purpose**: Sleep and circadian rhythm analysis from movement data
 - **Key Files**: `src/clarity/ml/pat_service.py`, `research/Pretrained-Actigraphy-Transformer/`
 - **Input**: 7-day activity vectors (10,080 time points)
 - **Output**: Sleep quality scores, circadian disruption detection
-- **Innovation**: First transformer model for consumer health data
+- **License**: CC BY-4.0 (Dartmouth College, Jacobson Lab)
 
 ### 3. Gemini AI Integration
-- **Purpose**: Natural language health insights and conversational interface
+- **Purpose**: Natural language health insight generation
 - **Key Files**: `src/clarity/ml/gemini_service.py`, `src/clarity/api/v1/gemini_insights.py`
 - **Capabilities**: 
   - Generate health summaries from time-series data
-  - Answer specific questions about health patterns
-  - Provide personalized recommendations
-  - Explain complex medical concepts in simple terms
+  - Create natural language explanations of health patterns
+  - Provide contextual health recommendations
+  - Process complex health data queries
 
 ### 4. Health Data Processing Pipeline
 - **Purpose**: Transform raw HealthKit data into ML-ready features
@@ -99,9 +101,9 @@ Apple Watch/iPhone
   - **Normalization**: Population-based z-scores using NHANES data
 
 ### 5. WebSocket Real-time Streaming
-- **Purpose**: Live health data streaming and chat
+- **Purpose**: Live health data streaming and real-time communication
 - **Key Files**: `src/clarity/api/v1/websocket/`
-- **Use Cases**: Real-time activity monitoring, live chat with AI
+- **Use Cases**: Real-time activity monitoring, live data updates
 
 ## Data Models
 
@@ -138,34 +140,33 @@ Apple Watch/iPhone
 ### AI Insights Output
 ```python
 {
-  "summary": "Your sleep quality declined 15% this week...",
-  "recommendations": ["Consider reducing caffeine after 2 PM"],
+  "summary": "Sleep efficiency trends show 15% decrease this week",
+  "recommendations": ["Consider consistent bedtime routine"],
   "metrics": {
     "sleep_efficiency": 0.78,
     "circadian_stability": 0.65
   },
-  "conversation_ready": True
+  "analysis_complete": True
 }
 ```
 
 ## Performance Characteristics
 
 ### Scale
-- **Users**: Designed for 100K+ concurrent users
+- **Concurrent Users**: Designed for high-throughput processing
 - **Data Volume**: ~10MB per user per week (HealthKit export)
-- **Processing**: Real-time for simple queries, <30s for complex AI analysis
-- **Storage**: DynamoDB scales automatically
+- **Processing**: Real-time for simple queries, <30s for ML analysis
+- **Storage**: DynamoDB with auto-scaling
 
-### Accuracy
-- **PAT Model**: 92% accuracy on sleep stage classification (vs. polysomnography)
-- **Heart Rate Processing**: <2% error rate after outlier removal
-- **Gemini Insights**: Contextually relevant 95%+ of the time
+### Processing Accuracy
+- **Heart Rate Processing**: Validated against clinical standards
+- **Data Validation**: Multi-layer schema and physiological bounds checking
+- **ML Pipeline**: Consistent preprocessing and feature extraction
 
 ### Availability
-- **SLA**: 99.9% uptime target
-- **Auto-scaling**: ECS Fargate based on CPU/memory
-- **Health Checks**: Multiple layers (container, load balancer, application)
-- **Graceful Degradation**: Core functions work even if AI services are down
+- **Infrastructure**: AWS ECS Fargate with auto-scaling
+- **Health Checks**: Multi-layer monitoring (container, load balancer, application)
+- **Graceful Degradation**: Core functions remain available during external service issues
 
 ## Security & Privacy
 
@@ -173,58 +174,58 @@ Apple Watch/iPhone
 - **Encryption**: AES-256 at rest, TLS 1.3 in transit
 - **Access Control**: JWT tokens via AWS Cognito
 - **Audit Logging**: All health data access logged
-- **Data Residency**: US-only (configurable by region)
+- **Data Residency**: Configurable by region
 
 ### Compliance
 - **HIPAA Ready**: Infrastructure meets HIPAA technical safeguards
-- **SOC 2**: AWS services provide SOC 2 compliance
-- **GDPR**: Data deletion and export capabilities
+- **AWS Compliance**: Leverages AWS SOC 2 and other certifications
+- **Data Controls**: Complete data export and deletion capabilities
 
-### Privacy by Design
-- **Minimal Data**: Only clinically relevant metrics stored
-- **User Control**: Complete data export and deletion
-- **Anonymization**: PII separated from health data
-- **Consent Management**: Granular permissions for data types
+### Privacy Implementation
+- **Minimal Data**: Only necessary health metrics stored
+- **User Control**: Granular data access and retention controls
+- **Separation**: PII separated from health analytics data
+- **Consent Management**: Configurable permissions for data types
 
-## Development Status
+## Current Status
 
-### Production Ready ✅
-- **Core API**: All 44 endpoints functional
-- **AWS Infrastructure**: Fully deployed and tested
-- **Test Coverage**: 807/810 tests passing (99.6%)
-- **Performance**: Sub-second response times for most endpoints
+### Production Ready
+- **Tests**: 807/810 tests passing (99.6% success rate)
+- **Coverage**: 57% (target: 85%)
+- **API**: 44 endpoints, all core functionality operational
+- **Infrastructure**: Complete AWS deployment with monitoring
 
-### In Development 🔄
-- **PAT Model Optimization**: Reducing inference time from 15s to 5s
-- **Advanced Chat Features**: Multi-turn conversations with memory
-- **Additional Integrations**: Fitbit, Garmin, Oura support
-- **Mobile SDKs**: iOS/Android libraries for easier integration
+### Development Focus
+- **Test Coverage**: Increasing coverage to production standards
+- **Performance**: Optimizing ML inference times
+- **Documentation**: Comprehensive technical documentation
+- **Integration**: Additional health data source support
 
-### Roadmap 📋
-- **Q1 2024**: Real-time anomaly detection
-- **Q2 2024**: Predictive health modeling
-- **Q3 2024**: Integration with healthcare providers
-- **Q4 2024**: Longitudinal studies and research platform
+### Roadmap
+- **Enhanced ML**: Additional health pattern analysis models
+- **Real-time Processing**: Improved streaming data capabilities
+- **Extended Integrations**: Support for additional wearable devices
+- **Research Platform**: Tools for health data research and analysis
 
 ## Getting Started
 
-### For Developers
+### Development Setup
 ```bash
 git clone https://github.com/your-org/clarity-loop-backend.git
 cd clarity-loop-backend
 make install && make dev
 ```
 
-### For Users
-1. Export your Apple Health data
+### API Usage
+1. Export Apple Health data
 2. POST to `/api/v1/healthkit/upload`
-3. Wait for processing (30-60 seconds)
-4. Start chatting at `/api/v1/insights/chat`
+3. Process data through ML pipeline
+4. Retrieve insights via `/api/v1/insights/*`
 
-### For Researchers
-- Access anonymized aggregate data via `/api/v1/research/*` endpoints
-- Run population-level analysis with our PAT model
-- Contribute to open health AI research
+### Integration
+- Complete API documentation available in [API Reference](02-api-reference.md)
+- WebSocket support for real-time applications
+- Comprehensive error handling and status reporting
 
 ---
 

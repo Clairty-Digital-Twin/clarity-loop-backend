@@ -261,65 +261,112 @@ extend-exclude = '''
 )/
 '''
 
-# MyPy configuration
+# MyPy configuration (consolidated from mypy.ini)
 [tool.mypy]
 python_version = "3.11"
 warn_return_any = true
 warn_unused_configs = true
-disallow_untyped_defs = true
-disallow_incomplete_defs = true
-check_untyped_defs = true
-disallow_untyped_decorators = true
-strict_optional = true
 warn_redundant_casts = true
-warn_unused_ignores = true
+warn_unused_ignores = false
 warn_no_return = true
 warn_unreachable = true
+strict_optional = true
 strict_equality = true
+extra_checks = true
+check_untyped_defs = true
+disallow_any_generics = true
+disallow_untyped_calls = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+disallow_untyped_decorators = true
+disallow_subclassing_any = true
+no_implicit_optional = true
+no_implicit_reexport = true
 show_error_codes = true
-ignore_missing_imports = true
+show_column_numbers = true
+color_output = true
+error_summary = true
+pretty = true
+files = ["src/clarity", "tests"]
+plugins = ["pydantic.mypy"]
 
 [[tool.mypy.overrides]]
 module = [
-    "firebase_admin.*",
-    "google.cloud.*",
-    "tensorflow.*",
     "torch.*",
-    "transformers.*",
-    "scipy.*",
+    "transformers.*", 
+    "google.*",
+    "firebase_admin.*",
+    "matplotlib.*",
+    "seaborn.*",
+    "plotly.*",
     "sklearn.*",
+    "pytest.*",
+    "factory.*",
+    "faker.*",
+    "redis.*",
+    "prometheus_client.*",
+    "structlog.*",
+    "scipy.*",
     "circuitbreaker.*",
 ]
 ignore_missing_imports = true
 
-# Pytest configuration
+[[tool.mypy.overrides]]
+module = ["tests.*"]
+disallow_untyped_defs = false
+disallow_incomplete_defs = false
+disallow_untyped_calls = false
+check_untyped_defs = false
+
+# Pytest configuration (consolidated from pytest.ini)
 [tool.pytest.ini_options]
 minversion = "8.0"
 addopts = [
     "--strict-markers",
     "--strict-config",
+    "--verbose",
+    "--tb=short",
     "--cov=src/clarity",
     "--cov-report=term-missing",
-    "--cov-report=html",
-    "--cov-report=xml",
-    "--cov-fail-under=80",
-    "-v",
+    "--cov-report=html:htmlcov",
+    "--cov-report=xml:coverage.xml",
+    "--cov-fail-under=85",
+    "--cov-branch",
+    "--maxfail=5",
+    "--durations=10",
+    "--asyncio-mode=auto",
+    "-p", "no:warnings",
 ]
 testpaths = ["tests"]
+python_files = ["test_*.py", "*_test.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+norecursedirs = [".git", ".tox", "dist", "build", "*.egg", "node_modules", ".venv", "venv"]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
 filterwarnings = [
-    "error",
-    "ignore::UserWarning",
     "ignore::DeprecationWarning",
+    "ignore::PendingDeprecationWarning", 
+    "ignore::UserWarning:google.*",
+    "ignore::UserWarning:torch.*",
+    "ignore::UserWarning:transformers.*",
+    "ignore::pytest_asyncio.plugin::PytestDeprecationWarning",
 ]
 markers = [
     "unit: Unit tests",
     "integration: Integration tests",
-    "api: API endpoint tests",
-    "ml: Machine learning tests",
+    "e2e: End-to-end tests", 
+    "slow: Slow-running tests",
+    "ml: Machine learning model tests",
     "auth: Authentication tests",
-    "slow: Slow running tests",
-    "requires_gcp: Tests requiring Google Cloud Platform",
-    "requires_firebase: Tests requiring Firebase",
+    "api: API endpoint tests",
+    "db: Database tests",
+    "gcp: Google Cloud Platform tests",
+    "health: Health data processing tests",
+    "pat: PAT model specific tests",
+    "gemini: Gemini LLM tests",
+    "explainability: Model explainability tests",
+    "asyncio: marks tests as async (defers to plugin detection)",
 ]
 
 # Coverage configuration

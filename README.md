@@ -85,13 +85,13 @@ flowchart TD
 ## Current Status
 
 **API Endpoints**: 44 routes across authentication, data processing, and analysis  
-**Test Coverage**: 807/810 tests passing (99.6%) • 57% code coverage (target: 85%)  
+**Test Coverage**: 57% code coverage (building toward 85% target)  
 **Production Deployment**: AWS ECS with CloudFormation infrastructure
 
 ```mermaid
 graph TB
     subgraph Frontend ["🖥️ Client Applications"]
-        A[iOS App<br/>React Native<br/>HealthKit Integration]
+        A[iOS App<br/>SwiftUI<br/>HealthKit Integration]
         B[Web Dashboard<br/>React/TypeScript<br/>Real-time Analytics]
     end
     
@@ -121,10 +121,10 @@ graph TB
     E --> I --> J
     F --> K
     
-    classDef frontend fill:#2196f3,stroke:#0d47a1,stroke-width:2px,color:white
-    classDef api fill:#ff9900,stroke:#e65100,stroke-width:2px,color:white
-    classDef storage fill:#9c27b0,stroke:#4a148c,stroke-width:2px,color:white
-    classDef ml fill:#4caf50,stroke:#1b5e20,stroke-width:2px,color:white
+    classDef frontend fill:#2196f3,stroke:#0d47a1,stroke-width:3px,color:white
+    classDef api fill:#ff9900,stroke:#e65100,stroke-width:3px,color:white
+    classDef storage fill:#9c27b0,stroke:#4a148c,stroke-width:3px,color:white
+    classDef ml fill:#4caf50,stroke:#1b5e20,stroke-width:3px,color:white
     
     class A,B frontend
     class C,D,E,F api
@@ -151,8 +151,8 @@ CLARITY-AI leverages peer-reviewed research for clinical-grade analysis:
 git clone https://github.com/your-org/clarity-loop-backend.git
 cd clarity-loop-backend
 
-# Install dependencies
-pip install -r requirements.txt
+# Install dependencies (development)
+pip install -e ".[dev]"
 
 # Configure environment
 cp .env.example .env

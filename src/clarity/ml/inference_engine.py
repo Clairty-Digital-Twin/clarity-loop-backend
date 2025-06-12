@@ -22,9 +22,9 @@ from functools import wraps
 import logging
 import time
 from typing import TYPE_CHECKING, Any
-from typing_extensions import Self
 
 from pydantic import BaseModel, Field
+from typing_extensions import Self
 
 from clarity.core.constants import (
     BATCH_PROCESSOR_ERROR_SLEEP_SECONDS,

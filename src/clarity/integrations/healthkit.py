@@ -13,10 +13,10 @@ from enum import StrEnum
 import logging
 import types
 from typing import Any
-from typing_extensions import Self
 
 import httpx
 from pydantic import BaseModel, Field, validator
+from typing_extensions import Self
 
 from clarity.core.config_aws import get_settings
 from clarity.core.exceptions import (

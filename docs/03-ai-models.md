@@ -9,13 +9,13 @@ Raw HealthKit Data
        ↓
 Data Preprocessing Pipeline
        ↓
-┌─────────────────┐    ┌─────────────────┐
-│ PAT Transformer │    │   Gemini AI     │
-│                 │    │                 │
-│ • Sleep Analysis│    │ • Insight Gen   │
-│ • Circadian     │    │ • Chat Interface│
-│ • Activity Pattn│    │ • Recommendations│
-└─────────────────┘    └─────────────────┘
+┌────────────────────┐    ┌───────────────────┐
+│ PAT Transformer    │    │   Gemini AI       │
+│                    │    │                   │
+│ • Sleep Analysis   │    │ • Insight Gen     │
+│ • Circadian        │    │ • Chat Interface  │
+│ • Activity Pattern │    │ • Recommendations │
+└────────────────────┘    └───────────────────┘
        ↓                        ↓
 Sleep Quality Scores     Natural Language Insights
        ↓                        ↓

@@ -1,12 +1,14 @@
 """SIMPLE TEST ENDPOINT - NO FANCY IMPORTS."""
 
+from typing import Dict, Any
+
 from fastapi import APIRouter, Request
 
 router = APIRouter(prefix="/test", tags=["test"])
 
 
 @router.get("/ping")
-async def simple_ping(request: Request):
+async def simple_ping(request: Request) -> Dict[str, Any]:
     """Dead simple endpoint to test if anything works."""
     return {
         "message": "PONG! Backend is alive!",
@@ -21,7 +23,7 @@ async def simple_ping(request: Request):
 
 
 @router.get("/check-middleware")
-async def check_middleware(request: Request):
+async def check_middleware(request: Request) -> Dict[str, Any]:
     """Check if middleware sets user."""
     has_user = hasattr(request.state, "user")
     user_info = None

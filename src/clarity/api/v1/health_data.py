@@ -269,11 +269,11 @@ async def upload_health_data(
                 # Continue anyway - we can retry later
 
             # Publish to Pub/Sub
-            publisher = get_publisher()
-            publisher.publish_health_data_upload(
+            publisher = await get_publisher()
+            await publisher.publish_health_data_upload(
                 user_id=current_user.user_id,
                 upload_id=str(response.processing_id),
-                gcs_path=gcs_path,
+                s3_path=gcs_path,  # Note: Using gcs_path value but naming it s3_path for compatibility
                 metadata={
                     "source": health_data.upload_source,
                     "metrics_count": len(health_data.metrics),
@@ -648,7 +648,7 @@ async def delete_health_data(
         503: {"description": "Service is unhealthy"},
     },
 )
-async def health_check() -> dict[str, Any]:
+async def health_check_detailed() -> dict[str, Any]:
     """🔥 Comprehensive health check with detailed status information."""
     try:
         # Get current timestamp

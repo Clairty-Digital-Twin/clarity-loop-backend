@@ -127,7 +127,7 @@ async def debug_middleware_stack(request: Request) -> dict[str, Any]:
         middleware_info.append({"built_middleware_class": str(app.middleware.cls)})
 
     # Check if middleware stack was built
-    middleware_info.append({"middleware_stack_built": hasattr(app, "middleware_stack")})
+    middleware_info.append({"middleware_stack_built": str(hasattr(app, "middleware_stack"))})
 
     # Check request state
     state_info = {}
@@ -161,7 +161,7 @@ async def debug_verify_token_directly(
     from clarity.core.container import get_container
 
     container = get_container()
-    auth_provider = container.get_auth_provider()
+    auth_provider = container.auth_provider
 
     result = {
         "timestamp": datetime.now(UTC).isoformat(),

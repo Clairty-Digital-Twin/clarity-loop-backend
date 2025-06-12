@@ -1,5 +1,7 @@
 """Container compatibility module - aliases to container_aws."""
 
+from typing import Any
+
 # Import everything from container_aws for compatibility
 from clarity.core.container_aws import *  # noqa: F403
 

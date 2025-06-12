@@ -8,7 +8,7 @@ from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
-    from clarity.core.config import MiddlewareConfig
+    from clarity.core.config_aws import MiddlewareConfig
 
 
 class IConfigProvider(ABC):

@@ -7,11 +7,11 @@ concrete implementation of IConfigProvider interface for dependency injection.
 import os
 from typing import TYPE_CHECKING
 
-from clarity.core.config_aws import Settings
+from clarity.core.config_aws import MiddlewareConfig, Settings
 from clarity.ports.config_ports import IConfigProvider
 
 if TYPE_CHECKING:
-    from clarity.core.config_aws import MiddlewareConfig, Settings
+    pass
 
 
 class ConfigProvider(IConfigProvider):  # noqa: PLR0904
@@ -166,13 +166,13 @@ class ConfigProvider(IConfigProvider):  # noqa: PLR0904
             "burst_size": getattr(self._settings, "rate_limit_burst", 10),
         }
 
-    def get_middleware_config(self) -> "MiddlewareConfig":
+    def get_middleware_config(self) -> MiddlewareConfig:
         """Get environment-specific middleware configuration.
 
         Returns:
             MiddlewareConfig: Configuration object with environment-specific settings
         """
-        return self._settings.get_middleware_config()
+        return self._settings.middleware_config
 
     def get_auth_timeout_seconds(self) -> int:
         """Get authentication timeout in seconds.

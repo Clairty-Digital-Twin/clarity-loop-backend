@@ -406,6 +406,7 @@ def extract_temporal_features(time_series_data):
 
 ### Implementation Approach
 
+<!-- markdownlint-disable-next-line MD036 -->
 **⚠️ RESEARCH/EDUCATIONAL USE ONLY**
 
 #### What We Do

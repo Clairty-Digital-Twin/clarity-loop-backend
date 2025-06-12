@@ -28,13 +28,13 @@ Apple Watch/iPhone
        ↓ 
    Data Validation & Preprocessing
        ↓
-   ┌─────────────────┐    ┌─────────────────┐
-   │ PAT Transformer │    │   Gemini AI     │
-   │ (Sleep Analysis)│    │ (Chat & Insights)│
-   └─────────────────┘    └─────────────────┘
-       ↓                        ↓
+   ┌──────────────────┐    ┌───────────────────┐
+   │ PAT Transformer  │    │     Gemini AI     │
+   │ (Sleep Analysis) │    │ (Chat & Insights) │
+   └──────────────────┘    └───────────────────┘
+           ↓                        ↓
    Sleep Quality Scores    Natural Language Insights
-       ↓                        ↓
+           ↓                        ↓
    ┌──────────────────────────────────────────┐
    │        User Conversations                │
    │   "What's affecting my sleep quality?"   │
@@ -45,11 +45,11 @@ Apple Watch/iPhone
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                     API Gateway (AWS ALB)                   │
+│                    API Gateway (AWS ALB)                    │
 └─────────────────────┬───────────────────────────────────────┘
                       │
 ┌─────────────────────▼───────────────────────────────────────┐
-│                FastAPI Application                         │
+│                FastAPI Application                          │
 │  ┌─────────────┐ ┌─────────────┐ ┌─────────────────────────┐│
 │  │   Auth      │ │ Health Data │ │    AI Insights          ││
 │  │ (Cognito)   │ │   (CRUD)    │ │ (PAT + Gemini)          ││
@@ -57,7 +57,7 @@ Apple Watch/iPhone
 └─────────────────────┬───────────────────────────────────────┘
                       │
 ┌─────────────────────▼───────────────────────────────────────┐
-│                  Data Layer                                │
+│                  Data Layer                                 │
 │  ┌─────────────┐ ┌─────────────┐ ┌─────────────────────────┐│
 │  │  DynamoDB   │ │     S3      │ │    External APIs        ││
 │  │(User Data)  │ │(Raw Files)  │ │(Gemini, HealthKit)      ││
@@ -118,7 +118,7 @@ Apple Watch/iPhone
   ],
   "sleep_samples": [...],
   "activity_samples": [...]
-}
+} 
 ```
 
 ### Processed Features (PAT Ready)

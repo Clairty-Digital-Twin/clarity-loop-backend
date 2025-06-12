@@ -21,50 +21,112 @@ Output: "Sleep efficiency decreased 15% this week due to irregular bedtimes"
 
 ### High-Level Data Flow
 
-```
-Apple Watch/iPhone
-       ↓
-   HealthKit Export (JSON)
-       ↓
-   CLARITY API (/healthkit/upload)
-       ↓ 
-   Data Validation & Preprocessing
-       ↓
-   ┌──────────────────┐    ┌───────────────────┐
-   │ PAT Transformer  │    │     Gemini AI     │
-   │ (Sleep Analysis) │    │ (Text Generation) │
-   └──────────────────┘    └───────────────────┘
-           ↓                        ↓
-   Health Pattern Analysis    Natural Language Insights
-           ↓                        ↓
-   ┌──────────────────────────────────────────┐
-   │        Structured Output                 │
-   │     Health summaries and trends          │
-   └──────────────────────────────────────────┘
+```mermaid
+journey
+    title 🏃‍♂️ Health Data Journey: From Wearable to Insights
+    section Data Collection
+      Wear Device          : 5: User
+      Generate Metrics     : 4: Apple Watch
+      Export HealthKit     : 3: iPhone
+    section Processing
+      Upload to API        : 4: Client App
+      Validate & Process   : 5: CLARITY
+      AI Analysis          : 5: PAT + Gemini
+    section Insights
+      Generate Insights    : 5: CLARITY
+      Deliver Results      : 4: Client App
+      User Understanding   : 5: User
 ```
 
 ### Technical Architecture
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│                    API Gateway (AWS ALB)                    │
-└─────────────────────┬───────────────────────────────────────┘
-                      │
-┌─────────────────────▼───────────────────────────────────────┐
-│                FastAPI Application                          │
-│  ┌─────────────┐ ┌─────────────┐ ┌─────────────────────────┐│
-│  │   Auth      │ │ Health Data │ │    AI Processing        ││
-│  │ (Cognito)   │ │   (CRUD)    │ │ (PAT + Gemini)          ││
-│  └─────────────┘ └─────────────┘ └─────────────────────────┘│
-└─────────────────────┬───────────────────────────────────────┘
-                      │
-┌─────────────────────▼───────────────────────────────────────┐
-│                  Data Layer                                 │
-│  ┌─────────────┐ ┌─────────────┐ ┌─────────────────────────┐│
-│  │  DynamoDB   │ │     S3      │ │    External APIs        ││
-│  │(User Data)  │ │(Raw Files)  │ │(Gemini, HealthKit)      ││
-│  └─────────────┘ └─────────────┘ └─────────────────────────┘│
-└─────────────────────────────────────────────────────────────┘
+```mermaid
+graph TB
+    subgraph Devices ["📱 Data Sources"]
+        AW[Apple Watch<br/>⌚ Sensors]
+        IP[iPhone<br/>📱 HealthKit]
+        Export[HealthKit Export<br/>📋 JSON Data]
+    end
+    
+    subgraph Gateway ["🚪 API Gateway"]
+        LB[Load Balancer<br/>⚖️ AWS ALB]
+        Auth[Authentication<br/>🔐 JWT + Cognito]
+        Rate[Rate Limiting<br/>🚥 Request Control]
+    end
+    
+    subgraph Backend ["🚀 FastAPI Backend"]
+        API[API Controllers<br/>📡 REST Endpoints]
+        Valid[Data Validation<br/>✅ Pydantic Schemas]
+        Route[Request Routing<br/>🛤️ Endpoint Logic]
+    end
+    
+    subgraph Processing ["🧠 AI/ML Pipeline"]
+        Prep[Preprocessing<br/>⚙️ Data Cleaning]
+        PAT[PAT Transformer<br/>🧬 Sleep Analysis]
+        Gemini[Gemini AI<br/>💎 NL Generation]
+        Fusion[Data Fusion<br/>🔗 Multi-modal]
+    end
+    
+    subgraph Storage ["💾 Data Layer"]
+        DDB[(DynamoDB<br/>🗄️ Health Records)]
+        S3[(S3 Buckets<br/>📦 Raw Data)]
+        Cache[(Redis Cache<br/>⚡ Fast Access)]
+        Cognito[AWS Cognito<br/>👥 User Management]
+    end
+    
+    subgraph Monitoring ["📊 Observability"]
+        CW[CloudWatch<br/>📈 Logs & Metrics]
+        Prom[Prometheus<br/>📊 Custom Metrics]
+        Grafana[Grafana<br/>📉 Dashboards]
+        Alerts[Alerting<br/>🚨 Incident Response]
+    end
+    
+    subgraph Output ["🎯 Client Interface"]
+        WS[WebSocket<br/>⚡ Real-time]
+        REST[REST API<br/>📡 Request/Response]
+        Insights[Health Insights<br/>🧠 AI Results]
+    end
+    
+    %% Data Flow
+    AW --> IP --> Export
+    Export --> LB --> Auth --> Rate
+    Rate --> API --> Valid --> Route
+    Route --> Prep --> PAT
+    Route --> Prep --> Gemini
+    PAT --> Fusion
+    Gemini --> Fusion
+    Fusion --> DDB
+    Prep --> S3
+    DDB --> Cache
+    Auth --> Cognito
+    
+    %% Monitoring Flow
+    API --> CW
+    Processing --> Prom
+    Prom --> Grafana
+    CW --> Alerts
+    
+    %% Output Flow
+    DDB --> WS
+    DDB --> REST
+    REST --> Insights
+    
+    %% Styling
+    classDef device fill:#fff3e0,stroke:#e65100,stroke-width:2px
+    classDef gateway fill:#e8f5e8,stroke:#2e7d32,stroke-width:2px
+    classDef backend fill:#e3f2fd,stroke:#1565c0,stroke-width:2px
+    classDef ai fill:#fce4ec,stroke:#c2185b,stroke-width:2px
+    classDef storage fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px
+    classDef monitor fill:#fff8e1,stroke:#f57f17,stroke-width:2px
+    classDef output fill:#e0f2f1,stroke:#00695c,stroke-width:2px
+    
+    class AW,IP,Export device
+    class LB,Auth,Rate gateway
+    class API,Valid,Route backend
+    class Prep,PAT,Gemini,Fusion ai
+    class DDB,S3,Cache,Cognito storage
+    class CW,Prom,Grafana,Alerts monitor
+    class WS,REST,Insights output
 ```
 
 ## Core Components

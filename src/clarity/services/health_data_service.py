@@ -19,7 +19,7 @@ try:
     _HAS_S3 = True
 except ImportError:
     _HAS_S3 = False
-    S3StorageService = None
+    S3StorageService = None  # type: ignore[assignment]
 
 from clarity.core.secure_logging import log_health_data_received
 from clarity.models.health_data import (
@@ -106,7 +106,7 @@ class HealthDataService:
         # Use injected cloud storage or fallback to S3 implementation if available
         if cloud_storage:
             self.cloud_storage = cloud_storage
-        elif _HAS_S3 and S3StorageService:
+        elif _HAS_S3 and S3StorageService is not None:
             self.cloud_storage = S3StorageService(
                 bucket_name=os.getenv(
                     "HEALTHKIT_RAW_BUCKET", "clarity-healthkit-raw-data"

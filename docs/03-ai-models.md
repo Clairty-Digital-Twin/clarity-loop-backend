@@ -4,60 +4,160 @@ CLARITY uses cutting-edge AI models to transform raw health data into actionable
 
 ## Model Architecture Overview
 
+```mermaid
+flowchart TB
+    subgraph Input ["📊 Raw Health Data Input"]
+        HK[HealthKit Export<br/>JSON Data]
+        Sensors[Multi-sensor Data<br/>HR, Steps, Sleep, HRV]
+        Context[User Context<br/>Demographics, History]
+    end
+    
+    subgraph Preprocessing ["⚙️ Data Preprocessing Pipeline"]
+        Valid[Data Validation<br/>✅ Schema Checking]
+        Clean[Data Cleaning<br/>🧹 Outlier Removal]
+        Norm[Normalization<br/>📊 Z-score, Min-Max]
+        Align[Temporal Alignment<br/>⏰ 1-min Intervals]
+        Feature[Feature Engineering<br/>🔧 Signal Processing]
+    end
+    
+    subgraph PAT ["🧠 PAT Transformer Model"]
+        Embed[Temporal Embedding<br/>📈 Time Series → Vectors]
+        Pos[Positional Encoding<br/>🕐 Circadian Awareness]
+        Attn[Multi-Head Attention<br/>👁️ 8 Attention Heads]
+        Layers[Transformer Layers<br/>🔗 Deep Learning Stack]
+        SleepHead[Sleep Analysis Head<br/>😴 Sleep Quality Scores]
+        CircHead[Circadian Head<br/>🌙 Rhythm Analysis]
+    end
+    
+    subgraph Gemini ["💎 Gemini AI Integration"]
+        PromptEng[Prompt Engineering<br/>📝 Context Building]
+        LLM[Gemini Pro Model<br/>🤖 Large Language Model]
+        PostProc[Post-processing<br/>✨ Response Refinement]
+        NLG[Natural Language Generation<br/>💬 Human-readable Insights]
+    end
+    
+    subgraph Fusion ["🔗 Multi-Modal Fusion"]
+        Combine[Feature Combination<br/>🔀 PAT + Metadata]
+        Weight[Attention Weighting<br/>⚖️ Importance Scoring]
+        Ensemble[Ensemble Methods<br/>🎯 Model Averaging]
+    end
+    
+    subgraph Output ["🎯 Analysis Outputs"]
+        Metrics[Quantitative Metrics<br/>📊 Sleep Quality, HRV]
+        Insights[Natural Language Insights<br/>📝 Explanations]
+        Recommendations[Personalized Recommendations<br/>💡 Actionable Advice]
+        Alerts[Health Alerts<br/>🚨 Anomaly Detection]
+    end
+    
+    %% Data Flow - Main Pipeline
+    HK --> Valid
+    Sensors --> Clean
+    Context --> Norm
+    Valid --> Clean --> Norm --> Align --> Feature
+    
+    %% PAT Processing Branch
+    Feature --> Embed --> Pos --> Attn --> Layers
+    Layers --> SleepHead
+    Layers --> CircHead
+    
+    %% Gemini Processing Branch
+    Feature --> PromptEng --> LLM --> PostProc --> NLG
+    
+    %% Fusion Process
+    SleepHead --> Combine
+    CircHead --> Combine
+    Context --> Weight
+    Combine --> Weight --> Ensemble
+    
+    %% Output Generation
+    Ensemble --> Metrics
+    NLG --> Insights
+    Ensemble --> Recommendations
+    SleepHead --> Alerts
+    
+    %% Cross-connections
+    Metrics --> PromptEng
+    CircHead --> PromptEng
+    
+    %% Styling
+    classDef input fill:#e8f5e8,stroke:#2e7d32,stroke-width:2px
+    classDef preprocess fill:#e3f2fd,stroke:#1565c0,stroke-width:2px
+    classDef pat fill:#fff3e0,stroke:#ef6c00,stroke-width:2px
+    classDef gemini fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px
+    classDef fusion fill:#fce4ec,stroke:#c2185b,stroke-width:2px
+    classDef output fill:#e0f2f1,stroke:#00695c,stroke-width:2px
+    
+    class HK,Sensors,Context input
+    class Valid,Clean,Norm,Align,Feature preprocess
+    class Embed,Pos,Attn,Layers,SleepHead,CircHead pat
+    class PromptEng,LLM,PostProc,NLG gemini
+    class Combine,Weight,Ensemble fusion
+    class Metrics,Insights,Recommendations,Alerts output
 ```
-Raw HealthKit Data
-       ↓
-Data Preprocessing Pipeline
-       ↓
-┌────────────────────┐    ┌───────────────────┐
-│ PAT Transformer    │    │   Gemini AI       │
-│                    │    │                   │
-│ • Sleep Analysis   │    │ • Insight Gen     │
-│ • Circadian        │    │ • Chat Interface  │
-│ • Activity Pattern │    │ • Recommendations │
-└────────────────────┘    └───────────────────┘
-       ↓                        ↓
-Sleep Quality Scores     Natural Language Insights
-       ↓                        ↓
-┌──────────────────────────────────────────┐
-│        Fusion Layer                      │
-│   (Combines quantitative + qualitative)  │
-└──────────────────────────────────────────┘
-       ↓
-Personalized Health Dashboard
+
+### Data Flow Summary
+
+**Input**: HealthKit exports (heart rate, sleep, activity, HRV)  
+**Processing**: PAT transformer + Google Gemini AI  
+**Output**: Health pattern analysis with natural language explanations
+
+## PAT (Pretrained Actigraphy Transformer) Deep Dive
+
+```mermaid
+graph LR
+    subgraph InputLayer ["📥 Input Processing"]
+        A[7-day Activity Window<br/>10,080 time points<br/>1-minute sampling]
+        B[Data Normalization<br/>Z-score standardization<br/>NHANES population stats]
+        C[Missing Value Handling<br/>Forward fill + interpolation<br/>Quality score tracking]
+    end
+    
+    subgraph EmbeddingLayer ["🔤 Embedding Layer"]
+        D[Temporal Embedding<br/>1D Conv layers<br/>Position-aware encoding]
+        E[Circadian Features<br/>Sin/cos time encoding<br/>24-hour cycle awareness]
+        F[Feature Fusion<br/>Concatenate embeddings<br/>Learnable projection]
+    end
+    
+    subgraph TransformerStack ["🧠 Transformer Architecture"]
+        G[Multi-Head Attention<br/>8 parallel attention heads<br/>Global temporal patterns]
+        H[Feed-Forward Network<br/>Position-wise processing<br/>ReLU activation]
+        I[Layer Normalization<br/>Residual connections<br/>Gradient stability]
+        J[Dropout Regularization<br/>0.1 dropout rate<br/>Overfitting prevention]
+    end
+    
+    subgraph OutputHeads ["🎯 Specialized Output Heads"]
+        K[Sleep Quality Head<br/>Regression output<br/>0-1 quality score]
+        L[Sleep Stage Head<br/>4-class classification<br/>REM/Deep/Light/Wake]
+        M[Circadian Head<br/>Phase + amplitude<br/>Rhythm disruption score]
+        N[Anomaly Detection<br/>Reconstruction loss<br/>Health alert triggers]
+    end
+    
+    A --> B --> C
+    C --> D --> E --> F
+    F --> G --> H --> I --> J
+    J --> K
+    J --> L
+    J --> M
+    J --> N
+    
+    classDef input fill:#e8f5e8,stroke:#2e7d32
+    classDef embed fill:#e3f2fd,stroke:#1565c0
+    classDef transformer fill:#fff3e0,stroke:#ef6c00
+    classDef output fill:#fce4ec,stroke:#c2185b
+    
+    class A,B,C input
+    class D,E,F embed
+    class G,H,I,J transformer
+    class K,L,M,N output
 ```
 
----
+### Model Specifications
 
-## 1. PAT (Pretrained Actigraphy Transformer)
-
-### Overview
-PAT is our flagship transformer model specifically designed for analyzing wearable device data. It's the first transformer architecture applied to consumer actigraphy data at scale.
-
-### Architecture Details
-
-**Core Specifications:**
+**Architecture Details:**
 - **Model Type**: Transformer with temporal encoding
 - **Input Size**: 10,080 time points (7 days × 24 hours × 60 minutes)
 - **Context Length**: Up to 2 weeks of continuous data
 - **Parameters**: ~12M parameters
 - **Attention Heads**: 8 multi-head attention layers
-- **Hidden Dimensions**: 512
-
-**Key Features:**
-```python
-class PATTransformer(nn.Module):
-    def __init__(self):
-        self.embedding = TimeSeriesEmbedding(input_dim=1, hidden_dim=512)
-        self.positional_encoding = PositionalEncoding(max_len=10080)
-        self.transformer = nn.TransformerEncoder(
-            num_layers=6,
-            d_model=512,
-            nhead=8,
-            dim_feedforward=2048
-        )
-        self.classifier = SleepClassificationHead(num_classes=4)
-```
 
 ### Input Processing
 

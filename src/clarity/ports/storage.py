@@ -182,3 +182,18 @@ class CloudStoragePort(ABC):
         Returns:
             Bucket name for raw data storage
         """
+
+    @abstractmethod
+    async def upload_file(
+        self, file_data: bytes, file_path: str, metadata: dict[str, Any] | None = None
+    ) -> str:
+        """Upload a file to cloud storage.
+
+        Args:
+            file_data: Binary data to upload
+            file_path: Path for the file in cloud storage
+            metadata: Optional metadata for the file
+
+        Returns:
+            Full path/URL of uploaded object
+        """

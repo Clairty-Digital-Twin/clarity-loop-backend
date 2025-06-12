@@ -232,7 +232,7 @@ class DependencyContainer:
 
     def configure_routes(self, app: FastAPI) -> None:
         """Configure FastAPI routes with AWS dependencies.
-        
+
         Note: This method is currently not used as route configuration
         is handled directly in main.py to avoid circular imports.
         """

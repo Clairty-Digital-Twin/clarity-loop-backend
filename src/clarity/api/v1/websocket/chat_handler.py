@@ -61,7 +61,8 @@ def get_pat_model_service() -> PATModelService:
     # Direct initialization to avoid circular import
     service = get_pat_service()
     if not isinstance(service, PATModelService):
-        raise TypeError(f"Expected PATModelService, got {type(service).__name__}")
+        msg = f"Expected PATModelService, got {type(service).__name__}"
+        raise TypeError(msg)
     return service
 
 
@@ -445,7 +446,8 @@ async def _authenticate_websocket_user(
         if hasattr(auth_provider, "get_or_create_user_context"):
             user_context = await auth_provider.get_or_create_user_context(user_info)
             if not isinstance(user_context, UserContext):
-                raise TypeError(f"Expected UserContext, got {type(user_context).__name__}")
+                msg = f"Expected UserContext, got {type(user_context).__name__}"
+                raise TypeError(msg)
             return user_context
         # Fallback for providers without the enhanced method
         # This part might need adjustment based on what verify_token returns

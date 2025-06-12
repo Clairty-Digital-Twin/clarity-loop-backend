@@ -47,11 +47,11 @@ flowchart TB
     Processing --> Storage
     Storage --> Infrastructure
     
-    classDef client fill:#e3f2fd,stroke:#01579b,stroke-width:2px
-    classDef api fill:#e8f5e8,stroke:#2e7d32,stroke-width:2px
-    classDef ml fill:#fff3e0,stroke:#ef6c00,stroke-width:2px
-    classDef storage fill:#fce4ec,stroke:#c2185b,stroke-width:2px
-    classDef infra fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px
+    classDef client fill:#9c27b0,stroke:#4a148c,stroke-width:2px,color:white
+    classDef api fill:#ff9900,stroke:#e65100,stroke-width:2px,color:white
+    classDef ml fill:#4caf50,stroke:#1b5e20,stroke-width:2px,color:white
+    classDef storage fill:#2196f3,stroke:#0d47a1,stroke-width:2px,color:white
+    classDef infra fill:#ff5722,stroke:#bf360c,stroke-width:2px,color:white
     
     class Mobile,Web,SDK client
     class FastAPI,Auth,Valid,Rate api
@@ -145,9 +145,9 @@ graph LR
     G --> I
     H --> I
     
-    classDef input fill:#e8f5e8,stroke:#2e7d32
-    classDef process fill:#e1f5fe,stroke:#0277bd
-    classDef output fill:#fff3e0,stroke:#f57c00
+    classDef input fill:#ff9900,stroke:#e65100,stroke-width:2px,color:white
+    classDef process fill:#4caf50,stroke:#1b5e20,stroke-width:2px,color:white
+    classDef output fill:#2196f3,stroke:#0d47a1,stroke-width:2px,color:white
     
     class A,B,C input
     class D,E,F process

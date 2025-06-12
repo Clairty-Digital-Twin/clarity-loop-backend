@@ -89,15 +89,15 @@ flowchart TD
 **Production Deployment**: AWS ECS with CloudFormation infrastructure
 
 ```mermaid
-flowchart LR
+flowchart TD
     subgraph Clients ["🖥️ Client Applications"]
-        direction TB
+        direction LR
         A[iOS App<br/>SwiftUI<br/>HealthKit Integration]
         B[Web Dashboard<br/>React/TypeScript<br/>Real-time Analytics]
     end
     
     subgraph Core ["⚡ FastAPI Backend"]
-        direction TB
+        direction LR
         C[Authentication<br/>AWS Cognito<br/>OAuth 2.0]
         D[Data Processing<br/>Multi-modal Pipeline<br/>Quality Validation]
         E[ML Analysis<br/>PAT + Fusion Models<br/>Batch Processing]
@@ -111,13 +111,13 @@ flowchart LR
     end
     
     subgraph AI ["🤖 AI Infrastructure"]
-        direction TB
+        direction LR
         I[PAT Models<br/>S/M/L variants<br/>CC BY-4.0 Licensed]
         J[Fusion Transformer<br/>Multi-modal Integration<br/>Custom Architecture]
         K[Google Gemini<br/>Natural Language<br/>Clinical Context]
     end
     
-    %% Main flow connections
+    %% Main flow - top to bottom
     Clients --> Core
     Core --> Data
     Core --> AI

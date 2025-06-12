@@ -278,9 +278,11 @@ class TestAuditLog:
         assert "timestamp" in audit_entry
 
     @pytest.mark.asyncio
-    async def test_audit_log_failure(self, dynamodb_service, mock_table):
+    async def test_audit_log_failure(self, dynamodb_service, mock_dynamodb_resource):
         """Test audit log creation failure (should not raise)."""
-        mock_table.put_item.side_effect = Exception("Audit error")
+        # Get the mock audit table that was created by the fixture
+        mock_audit_table = mock_dynamodb_resource.Table("test_audit_logs")
+        mock_audit_table.put_item.side_effect = Exception("Audit error")
 
         # Should not raise exception
         await dynamodb_service._audit_log(

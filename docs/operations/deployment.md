@@ -1,12 +1,12 @@
 # CLARITY-AI Production Deployment Guide
 
-**Enterprise-grade AWS ECS deployment with zero-downtime updates**
+## Enterprise-grade AWS ECS deployment with zero-downtime updates
 
 ## 🚀 **Quick Start Deployment**
 
 ### Prerequisites
 
-**Required AWS Services:**
+#### Required AWS Services
 
 - **ECS Fargate** - Container orchestration
 - **ECR** - Container registry  
@@ -15,7 +15,7 @@
 - **S3** - File storage
 - **CloudWatch** - Logging & monitoring
 
-**Required Permissions:**
+#### Required Permissions
 
 ```json
 {
@@ -39,7 +39,7 @@
 
 ### 1. **Environment Setup**
 
-**Production Environment Variables:**
+#### Production Environment Variables
 
 ```bash
 export AWS_REGION=us-east-1
@@ -48,7 +48,7 @@ export CLUSTER_NAME=clarity-backend-cluster
 export SERVICE_NAME=clarity-backend-service
 ```
 
-**Secrets Configuration:**
+#### Secrets Configuration
 
 ```bash
 # Set these in GitHub Secrets for CI/CD
@@ -59,7 +59,7 @@ GEMINI_API_KEY=<your-gemini-key>
 
 ### 2. **Deploy Infrastructure**
 
-**Create ECS Cluster:**
+#### Create ECS Cluster
 
 ```bash
 aws ecs create-cluster \
@@ -68,7 +68,7 @@ aws ecs create-cluster \
   --default-capacity-provider-strategy capacityProvider=FARGATE,weight=1
 ```
 
-**Create ECR Repository:**
+#### Create ECR Repository
 
 ```bash
 aws ecr create-repository \
@@ -76,7 +76,7 @@ aws ecr create-repository \
   --region $AWS_REGION
 ```
 
-**Create Task Execution Role:**
+#### Create Task Execution Role
 
 ```bash
 aws iam create-role \
@@ -90,7 +90,7 @@ aws iam attach-role-policy \
 
 ### 3. **Deploy Application**
 
-**Manual Deployment:**
+#### Manual Deployment
 
 ```bash
 # Build and push image
@@ -109,7 +109,7 @@ aws ecs create-service \
   --network-configuration "awsvpcConfiguration={subnets=[subnet-xxx],securityGroups=[sg-xxx],assignPublicIp=ENABLED}"
 ```
 
-**Automated Deployment (Recommended):**
+#### Automated Deployment (Recommended)
 
 ```bash
 # Push to main branch triggers automatic deployment
@@ -120,13 +120,13 @@ git push origin main
 
 ### **GitHub Actions Workflow**
 
-**Trigger Events:**
+#### Trigger Events
 
 - Push to `main` → **Production deployment**
 - Push to `develop` → **Development deployment**
 - Pull requests → **Quality gates only**
 
-**Pipeline Stages:**
+#### Pipeline Stages
 
 ```mermaid
 flowchart TD
@@ -170,7 +170,7 @@ flowchart TD
     class H,I,J,K deploy
 ```
 
-**Quality Gates:**
+#### Quality Gates
 
 - **Code Coverage**: >90% required
 - **Security Scan**: Zero high/critical vulnerabilities
@@ -230,7 +230,7 @@ aws ecs update-service \
 
 ### **Common Issues**
 
-**Container Won't Start:**
+#### Container Won't Start
 
 ```bash
 # Check task logs
@@ -240,7 +240,7 @@ aws logs tail /ecs/clarity-backend --follow
 aws ecs describe-tasks --cluster $CLUSTER_NAME --tasks <task-arn>
 ```
 
-**Health Check Failures:**
+#### Health Check Failures
 
 ```bash
 # Test health endpoint directly
@@ -250,7 +250,7 @@ curl -f http://<container-ip>:8000/health
 aws logs filter-log-events --log-group-name /ecs/clarity-backend --filter-pattern "ERROR"
 ```
 
-**Performance Issues:**
+#### Performance Issues
 
 ```bash
 # Check resource utilization

@@ -155,7 +155,7 @@ make typecheck
 
 ### **Project Structure**
 
-```
+```text
 src/clarity/
 ├── api/              # FastAPI endpoints
 ├── ml/               # Machine learning models

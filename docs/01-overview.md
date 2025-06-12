@@ -12,7 +12,7 @@ CLARITY-AI processes Apple Health data using machine learning models to generate
 
 Example use case:
 
-```
+```text
 Input: 7 days of sleep and activity data
 Analysis: Sleep efficiency trends, circadian rhythm analysis
 Output: "Sleep efficiency decreased 15% this week due to irregular bedtimes"

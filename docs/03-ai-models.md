@@ -408,21 +408,21 @@ def extract_temporal_features(time_series_data):
 
 **⚠️ RESEARCH/EDUCATIONAL USE ONLY**
 
-**What We Do**:
+#### What We Do
 
 - Load pretrained PAT transformer weights from academic research
 - Implement preprocessing pipeline per published specifications
 - Provide API wrapper for demonstration purposes
 - Follow CC BY-4.0 license requirements for attribution
 
-**What We DON'T Do**:
+#### What We DON'T Do
 
 - Train models from scratch
 - Collect proprietary health datasets  
 - Conduct clinical validation studies
 - Provide medical-grade analysis
 
-**Technical Implementation**:
+#### Technical Implementation
 
 - Model loading and inference pipeline
 - Data preprocessing and normalization
@@ -596,19 +596,19 @@ async def continuous_learning_pipeline():
 
 ### Current Research Projects
 
-**1. Multimodal Health Prediction**
+#### 1. Multimodal Health Prediction
 
 - Integrating wearable data with smartphone sensors
 - Social context (calendar, location) for stress prediction
 - Environmental factors (weather, air quality) correlation
 
-**2. Personalized Model Adaptation**
+#### 2. Personalized Model Adaptation
 
 - Few-shot learning for individual sleep patterns
 - Transfer learning across similar user profiles
 - Federated learning for privacy-preserving personalization
 
-**3. Clinical Decision Support**
+#### 3. Clinical Decision Support
 
 - Early detection of sleep disorders
 - Mental health state prediction
@@ -616,7 +616,7 @@ async def continuous_learning_pipeline():
 
 ### Future Roadmap
 
-**Q1 2025**:
+#### Q1 2025
 
 - PAT v3.0 with attention mechanism improvements
 - Real-time anomaly detection

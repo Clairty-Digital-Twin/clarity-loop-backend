@@ -1,6 +1,6 @@
 # CLARITY-AI Monitoring & Observability
 
-**Enterprise-grade monitoring for health data platform**
+## Enterprise-grade monitoring for health data platform
 
 ## 📊 **Monitoring Stack Overview**
 
@@ -59,14 +59,14 @@ flowchart TD
 
 ### **Application Health Endpoints**
 
-**Primary Health Check:**
+#### Primary Health Check
 
 ```bash
 # Basic health status
 curl http://localhost:8000/health
 ```
 
-**Response Format:**
+#### Response Format
 
 ```json
 {
@@ -88,21 +88,21 @@ curl http://localhost:8000/health
 }
 ```
 
-**Detailed Health Check:**
+#### Detailed Health Check
 
 ```bash
 # Comprehensive service status
 curl http://localhost:8000/health/detailed
 ```
 
-**Database Health:**
+#### Database Health
 
 ```bash
 # DynamoDB connectivity test
 curl http://localhost:8000/health/database
 ```
 
-**ML Model Health:**
+#### ML Model Health
 
 ```bash
 # PAT model inference test
@@ -111,7 +111,7 @@ curl http://localhost:8000/health/models
 
 ### **ECS Health Monitoring**
 
-**Task Health Configuration:**
+#### Task Health Configuration
 
 ```json
 {
@@ -125,7 +125,7 @@ curl http://localhost:8000/health/models
 }
 ```
 
-**Service-Level Monitoring:**
+#### Service-Level Monitoring
 
 ```bash
 # Monitor ECS service health
@@ -139,7 +139,7 @@ aws ecs describe-services \
 
 ### **Application Metrics**
 
-**FastAPI Built-in Metrics:**
+#### FastAPI Built-in Metrics
 
 ```python
 # Custom metrics endpoint
@@ -154,7 +154,7 @@ async def get_metrics():
     }
 ```
 
-**Key Performance Indicators:**
+#### Key Performance Indicators
 
 - **Response Time**: P50, P95, P99 latency
 - **Throughput**: Requests per second
@@ -164,14 +164,14 @@ async def get_metrics():
 
 ### **Infrastructure Metrics**
 
-**ECS Container Metrics:**
+#### ECS Container Metrics
 
 - CPU Utilization (target: <70%)
 - Memory Utilization (target: <80%)
 - Network I/O
 - Task count and health
 
-**AWS CloudWatch Metrics:**
+#### AWS CloudWatch Metrics
 
 ```bash
 # Get CPU utilization
@@ -187,14 +187,14 @@ aws cloudwatch get-metric-statistics \
 
 ### **Business Metrics**
 
-**Health Data Processing:**
+#### Health Data Processing
 
 - Users analyzed per day
 - PAT model inference success rate
 - Gemini API response quality
 - Data upload success rate
 
-**System Performance:**
+#### System Performance
 
 - Authentication success rate
 - Health insight generation time
@@ -205,7 +205,7 @@ aws cloudwatch get-metric-statistics \
 
 ### **Critical Alerts (Immediate Response)**
 
-**Service Down:**
+#### Service Down
 
 ```yaml
 # CloudWatch Alarm
@@ -216,7 +216,7 @@ Evaluation: "2 consecutive periods"
 Action: "SNS → Slack + PagerDuty"
 ```
 
-**High Error Rate:**
+#### High Error Rate
 
 ```yaml
 AlertName: "High Error Rate"
@@ -226,7 +226,7 @@ Evaluation: "2 consecutive periods"
 Action: "SNS → Slack notification"
 ```
 
-**Database Connection Issues:**
+#### Database Connection Issues
 
 ```yaml
 AlertName: "Database Connection Failure"
@@ -238,7 +238,7 @@ Action: "SNS → Immediate PagerDuty"
 
 ### **Warning Alerts (Next Business Day)**
 
-**High CPU Usage:**
+#### High CPU Usage
 
 ```yaml
 AlertName: "High CPU Utilization"
@@ -248,7 +248,7 @@ Evaluation: "1 consecutive period"
 Action: "SNS → Slack notification"
 ```
 
-**Memory Pressure:**
+#### Memory Pressure
 
 ```yaml
 AlertName: "High Memory Usage"
@@ -262,7 +262,7 @@ Action: "SNS → Email notification"
 
 ### **Structured Logging**
 
-**Log Format:**
+#### Log Format
 
 ```json
 {
@@ -278,7 +278,7 @@ Action: "SNS → Email notification"
 }
 ```
 
-**Log Categories:**
+#### Log Categories
 
 - **API Requests** - All HTTP requests/responses
 - **ML Processing** - PAT model inference events
@@ -288,7 +288,7 @@ Action: "SNS → Email notification"
 
 ### **Log Aggregation**
 
-**CloudWatch Log Groups:**
+#### CloudWatch Log Groups
 
 ```bash
 # Application logs
@@ -301,7 +301,7 @@ Action: "SNS → Email notification"
 /ecs/clarity-backend/audit
 ```
 
-**Log Retention:**
+#### Log Retention
 
 - **Application Logs**: 30 days
 - **Error Logs**: 90 days  
@@ -309,7 +309,7 @@ Action: "SNS → Email notification"
 
 ### **Log Querying**
 
-**Common Log Queries:**
+#### Common Log Queries
 
 ```bash
 # Find all errors in the last hour
@@ -333,7 +333,7 @@ aws logs filter-log-events \
 
 ### **Executive Dashboard**
 
-**Key Metrics:**
+#### Key Metrics
 
 - Daily active users
 - Health analyses completed
@@ -342,7 +342,7 @@ aws logs filter-log-events \
 
 ### **Operations Dashboard**
 
-**Infrastructure Metrics:**
+#### Infrastructure Metrics
 
 - CPU/Memory utilization
 - Request latency percentiles
@@ -351,7 +351,7 @@ aws logs filter-log-events \
 
 ### **ML Performance Dashboard**
 
-**Model Metrics:**
+#### Model Metrics
 
 - PAT inference time
 - Gemini API response time
@@ -362,27 +362,27 @@ aws logs filter-log-events \
 
 ### **Severity Levels**
 
-**SEV-1 (Critical):**
+#### SEV-1 (Critical)
 
 - Complete service outage
 - Data loss or corruption
 - Security breach
 - **Response Time**: 15 minutes
 
-**SEV-2 (High):**
+#### SEV-2 (High)
 
 - Partial service degradation
 - High error rates (>10%)
 - Authentication issues
 - **Response Time**: 1 hour
 
-**SEV-3 (Medium):**
+#### SEV-3 (Medium)
 
 - Performance degradation
 - Non-critical feature failure
 - **Response Time**: 4 hours
 
-**SEV-4 (Low):**
+#### SEV-4 (Low)
 
 - Documentation issues
 - Minor UI problems
@@ -390,13 +390,13 @@ aws logs filter-log-events \
 
 ### **On-Call Rotation**
 
-**Primary On-Call:**
+#### Primary On-Call
 
 - Platform Engineering Team
 - 24/7 coverage
 - PagerDuty escalation
 
-**Secondary On-Call:**
+#### Secondary On-Call
 
 - ML Engineering Team
 - Business hours coverage
@@ -406,7 +406,7 @@ aws logs filter-log-events \
 
 ### **Prometheus Configuration**
 
-**Prometheus Config (`ops/prometheus.yml`):**
+#### Prometheus Config (`ops/prometheus.yml`)
 
 ```yaml
 global:
@@ -425,13 +425,13 @@ scrape_configs:
 
 ### **Grafana Setup**
 
-**Data Sources:**
+#### Data Sources
 
 - Prometheus (application metrics)
 - CloudWatch (infrastructure metrics)
 - CloudWatch Logs (log analysis)
 
-**Dashboard Templates:**
+#### Dashboard Templates
 
 ```bash
 # Import pre-built dashboards
@@ -442,7 +442,7 @@ curl -H "Content-Type: application/json" \
 
 ### **Alert Manager Configuration**
 
-**Slack Integration:**
+#### Slack Integration
 
 ```yaml
 # alertmanager.yml
@@ -466,7 +466,7 @@ receivers:
 
 ### **Common Operations**
 
-**Service Restart:**
+#### Service Restart
 
 ```bash
 # Force new deployment (restart all tasks)
@@ -476,7 +476,7 @@ aws ecs update-service \
   --force-new-deployment
 ```
 
-**Scale Service:**
+#### Scale Service
 
 ```bash
 # Scale to 4 instances
@@ -486,7 +486,7 @@ aws ecs update-service \
   --desired-count 4
 ```
 
-**Check Service Health:**
+#### Check Service Health
 
 ```bash
 # Run comprehensive health check

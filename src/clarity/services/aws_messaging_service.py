@@ -121,7 +121,7 @@ class AWSMessagingService:
                             "VisibilityTimeout": "300",  # 5 minutes
                             "ReceiveMessageWaitTimeSeconds": "20",  # Long polling
                         },
-                    )
+                    ),
                 )
                 queue_url = response["QueueUrl"]
             else:
@@ -175,16 +175,16 @@ class AWSMessagingService:
                             "StringValue": user_id,
                             "DataType": "String",
                         },
-                    "upload_id": {
-                        "StringValue": upload_id,
-                        "DataType": "String",
+                        "upload_id": {
+                            "StringValue": upload_id,
+                            "DataType": "String",
+                        },
+                        "event_type": {
+                            "StringValue": "health_data_upload",
+                            "DataType": "String",
+                        },
                     },
-                    "event_type": {
-                        "StringValue": "health_data_upload",
-                        "DataType": "String",
-                    },
-                },
-                )
+                ),
             )
 
             message_id: str = response["MessageId"]
@@ -265,7 +265,7 @@ class AWSMessagingService:
                             "DataType": "String",
                         },
                     },
-                )
+                ),
             )
 
             message_id: str = response["MessageId"]
@@ -332,7 +332,7 @@ class AWSMessagingService:
                     Subject=subject,
                     Message=json.dumps(message, indent=2),
                     MessageAttributes=sns_attributes,
-                )
+                ),
             )
 
             message_id: str = response["MessageId"]
@@ -371,7 +371,7 @@ class AWSMessagingService:
                     MaxNumberOfMessages=max_messages,
                     WaitTimeSeconds=wait_time_seconds,
                     MessageAttributeNames=["All"],
-                )
+                ),
             )
 
             messages = response.get("Messages", [])
@@ -400,7 +400,7 @@ class AWSMessagingService:
                 lambda: self.sqs_client.delete_message(
                     QueueUrl=queue_url,
                     ReceiptHandle=receipt_handle,
-                )
+                ),
             )
 
             logger.debug("Deleted message from queue %s", queue_name)
@@ -427,7 +427,7 @@ class AWSMessagingService:
                 lambda: self.sqs_client.get_queue_attributes(
                     QueueUrl=queue_url,
                     AttributeNames=["All"],
-                )
+                ),
             )
 
             attributes = response.get("Attributes", {})
@@ -451,8 +451,7 @@ class AWSMessagingService:
 
             loop = asyncio.get_event_loop()
             await loop.run_in_executor(
-                None,
-                lambda: self.sqs_client.purge_queue(QueueUrl=queue_url)
+                None, lambda: self.sqs_client.purge_queue(QueueUrl=queue_url)
             )
             logger.warning("Purged queue %s", queue_name)
 
@@ -522,7 +521,7 @@ def get_messaging_service(
     sns_topic_arn: str | None = None,
 ) -> AWSMessagingService:
     """Get or create global AWS messaging service instance."""
-    global _messaging_service  # noqa: PLW0603
+    global _messaging_service
 
     if _messaging_service is None:
         _messaging_service = AWSMessagingService(

@@ -103,7 +103,7 @@ def sample_analysis_result() -> ActigraphyAnalysis:
     )
 
 
-class TestPATPerformanceOptimizer:  # noqa: PLR0904
+class TestPATPerformanceOptimizer:
     """Test PAT performance optimizer."""
 
     @staticmethod
@@ -477,7 +477,7 @@ class TestModuleFunctions:
     @staticmethod
     def test_get_pat_optimizer_not_implemented() -> None:
         """Test get_pat_optimizer raises NotImplementedError."""
-        from clarity.ml.pat_optimization import get_pat_optimizer  # noqa: PLC0415
+        from clarity.ml.pat_optimization import get_pat_optimizer
 
         with pytest.raises(NotImplementedError, match="Call initialize_pat_optimizer"):
             get_pat_optimizer()

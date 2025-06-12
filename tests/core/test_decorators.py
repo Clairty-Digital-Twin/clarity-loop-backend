@@ -824,7 +824,7 @@ class TestDecoratorsBasic:
                     return func(*args, **kwargs)
                 except ValueError:
                     return "handled_error"
-                except Exception as e:  # noqa: BLE001
+                except Exception as e:
                     return f"unexpected_error_{type(e).__name__}"
 
             return wrapper  # type: ignore[return-value]
@@ -939,7 +939,7 @@ class TestDecoratorsBasic:
                     for attempt in range(max_attempts):
                         try:
                             return func(*args, **kwargs)
-                        except Exception:  # noqa: BLE001
+                        except Exception:
                             if attempt == max_attempts - 1:
                                 break
                     return f"failed_after_{max_attempts}_attempts"
@@ -1066,7 +1066,7 @@ class TestDecoratorsBasic:
                     if asyncio.iscoroutinefunction(func):
                         return await func(*args, **kwargs)
                     return func(*args, **kwargs)
-                except Exception:  # noqa: BLE001
+                except Exception:
                     return "async_error_handled"
 
             return wrapper  # type: ignore[return-value]

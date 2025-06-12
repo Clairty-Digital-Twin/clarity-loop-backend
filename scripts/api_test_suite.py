@@ -31,9 +31,9 @@ else:
         import sys
 
         print("Installing required packages...")
-        import subprocess  # noqa: S404
+        import subprocess
 
-        subprocess.check_call(  # noqa: S603
+        subprocess.check_call(
             [sys.executable, "-m", "pip", "install", "aiohttp", "colorama"]
         )
         import aiohttp
@@ -409,10 +409,10 @@ if __name__ == "__main__":
         import colorama
     except ImportError:
         print("Installing required packages...")
-        import subprocess  # noqa: S404
+        import subprocess
         import sys
 
-        subprocess.check_call(  # noqa: S603
+        subprocess.check_call(
             [sys.executable, "-m", "pip", "install", "aiohttp", "colorama"]
         )
         import aiohttp

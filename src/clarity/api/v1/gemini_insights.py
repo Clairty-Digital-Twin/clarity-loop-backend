@@ -48,7 +48,7 @@ def set_dependencies(
     """Set dependencies for the router (called by container)."""
     # Note: Using globals here for FastAPI dependency injection pattern
     # This is the recommended approach for this architecture
-    global _auth_provider, _config_provider, _gemini_service  # noqa: PLW0603
+    global _auth_provider, _config_provider, _gemini_service
     _auth_provider = auth_provider
     _config_provider = config_provider
 
@@ -564,7 +564,7 @@ async def get_insight_history(
     description="Check the health status of the Gemini insights service",
 )
 async def get_service_status(
-    current_user: AuthenticatedUser,  # noqa: ARG001
+    current_user: AuthenticatedUser,
     gemini_service: GeminiService = Depends(get_gemini_service),
 ) -> ServiceStatusResponse:
     """Check Gemini service health status.

@@ -97,13 +97,13 @@ class TestS3StorageServiceInit:
         """Test initialization with default parameters."""
         with patch("boto3.client") as mock_boto_client:
             service = S3StorageService(bucket_name="test-bucket")
-            
+
             assert service.bucket_name == "test-bucket"
             assert service.region == "us-east-1"
             assert service.endpoint_url is None
             assert service.enable_encryption is True
             assert service.storage_class == "STANDARD"
-            
+
             mock_boto_client.assert_called_once_with(
                 "s3",
                 region_name="us-east-1",
@@ -120,13 +120,13 @@ class TestS3StorageServiceInit:
                 enable_encryption=False,
                 storage_class="GLACIER",
             )
-            
+
             assert service.bucket_name == "custom-bucket"
             assert service.region == "eu-west-1"
             assert service.endpoint_url == "http://localhost:9000"
             assert service.enable_encryption is False
             assert service.storage_class == "GLACIER"
-            
+
             mock_boto_client.assert_called_once_with(
                 "s3",
                 region_name="eu-west-1",
@@ -137,7 +137,7 @@ class TestS3StorageServiceInit:
         """Test lifecycle rules configuration."""
         assert "raw_data" in s3_service.lifecycle_rules
         assert "processed_data" in s3_service.lifecycle_rules
-        
+
         raw_rules = s3_service.lifecycle_rules["raw_data"]
         assert raw_rules["transition_ia_days"] == 30
         assert raw_rules["transition_glacier_days"] == 90
@@ -157,17 +157,17 @@ class TestAuditLog:
                 user_id="user-123",
                 metadata={"size": 1024},
             )
-            
+
             mock_logger.info.assert_called_once()
             call_args = mock_logger.info.call_args
-            
+
             # Check the format string and arguments
             assert call_args[0][0] == "S3 operation: %s on %s/%s by user %s"
             assert call_args[0][1] == "test_operation"
             assert call_args[0][2] == "test-health-bucket"
             assert call_args[0][3] == "test/key.json"
             assert call_args[0][4] == "user-123"
-            
+
             extra_data = call_args[1]["extra"]["audit_data"]
             assert extra_data["operation"] == "test_operation"
             assert extra_data["bucket"] == "test-health-bucket"
@@ -180,7 +180,7 @@ class TestAuditLog:
         """Test audit log creation failure (should not raise)."""
         with patch("clarity.services.s3_storage_service.audit_logger") as mock_logger:
             mock_logger.info.side_effect = Exception("Logger error")
-            
+
             # Should not raise exception
             await s3_service._audit_log(
                 operation="test_operation",
@@ -192,33 +192,36 @@ class TestUploadRawHealthData:
     """Test raw health data upload functionality."""
 
     @pytest.mark.asyncio
-    async def test_upload_raw_health_data_success(self, s3_service, mock_s3_client, valid_health_data):
+    async def test_upload_raw_health_data_success(
+        self, s3_service, mock_s3_client, valid_health_data
+    ):
         """Test successful health data upload."""
         processing_id = "proc-123"
         user_id = valid_health_data.user_id
-        
+
         with patch("clarity.services.s3_storage_service.datetime") as mock_datetime:
             from datetime import datetime, timezone
-            mock_date = datetime(2024, 1, 15, 12, 0, 0, tzinfo=timezone.utc)
+
+            mock_date = datetime(2024, 1, 15, 12, 0, 0, tzinfo=UTC)
             mock_datetime.now.return_value = mock_date
-            
+
             s3_uri = await s3_service.upload_raw_health_data(
                 user_id, processing_id, valid_health_data
             )
-        
+
         expected_key = f"raw_data/2024/01/15/{user_id}/{processing_id}.json"
         assert s3_uri == f"s3://test-health-bucket/{expected_key}"
-        
+
         # Verify put_object was called
         mock_s3_client.put_object.assert_called_once()
         call_kwargs = mock_s3_client.put_object.call_args[1]
-        
+
         assert call_kwargs["Bucket"] == "test-health-bucket"
         assert call_kwargs["Key"] == expected_key
         assert call_kwargs["ContentType"] == "application/json"
         assert call_kwargs["StorageClass"] == "STANDARD"
         assert call_kwargs["ServerSideEncryption"] == "AES256"
-        
+
         # Verify metadata
         metadata = call_kwargs["Metadata"]
         assert metadata["user-id"] == user_id
@@ -227,53 +230,61 @@ class TestUploadRawHealthData:
         assert metadata["metrics-count"] == "2"
         assert metadata["data-type"] == "raw-health-data"
         assert metadata["compliance"] == "hipaa"
-        
+
         # Verify body content
         body_data = json.loads(call_kwargs["Body"])
-        assert body_data["user_id"] == user_id
+        assert body_data["user_id"] == str(
+            user_id
+        )  # Convert UUID to string for comparison
         assert body_data["processing_id"] == processing_id
         assert body_data["metrics_count"] == 2
         assert len(body_data["metrics"]) == 2
 
     @pytest.mark.asyncio
-    async def test_upload_raw_health_data_no_encryption(self, mock_s3_client, valid_health_data):
+    async def test_upload_raw_health_data_no_encryption(
+        self, mock_s3_client, valid_health_data
+    ):
         """Test upload without encryption."""
         service = S3StorageService(
             bucket_name="test-bucket",
             enable_encryption=False,
         )
         service.s3_client = mock_s3_client
-        
+
         await service.upload_raw_health_data("user-123", "proc-123", valid_health_data)
-        
+
         call_kwargs = mock_s3_client.put_object.call_args[1]
         assert "ServerSideEncryption" not in call_kwargs
 
     @pytest.mark.asyncio
-    async def test_upload_raw_health_data_client_error(self, s3_service, mock_s3_client, valid_health_data):
+    async def test_upload_raw_health_data_client_error(
+        self, s3_service, mock_s3_client, valid_health_data
+    ):
         """Test upload with ClientError."""
         mock_s3_client.put_object.side_effect = ClientError(
             {"Error": {"Code": "AccessDenied", "Message": "Access denied"}},
             "PutObject",
         )
-        
+
         with pytest.raises(S3UploadError) as exc_info:
             await s3_service.upload_raw_health_data(
                 "user-123", "proc-123", valid_health_data
             )
-        
+
         assert "S3 upload failed (AccessDenied)" in str(exc_info.value)
 
     @pytest.mark.asyncio
-    async def test_upload_raw_health_data_unexpected_error(self, s3_service, mock_s3_client, valid_health_data):
+    async def test_upload_raw_health_data_unexpected_error(
+        self, s3_service, mock_s3_client, valid_health_data
+    ):
         """Test upload with unexpected error."""
         mock_s3_client.put_object.side_effect = Exception("Unexpected error")
-        
+
         with pytest.raises(S3UploadError) as exc_info:
             await s3_service.upload_raw_health_data(
                 "user-123", "proc-123", valid_health_data
             )
-        
+
         assert "S3 upload failed" in str(exc_info.value)
 
 
@@ -289,39 +300,44 @@ class TestUploadAnalysisResults:
             "summary": {"risk_score": 0.2, "health_status": "good"},
             "metrics": {"heart_rate_avg": 72, "steps_total": 8500},
         }
-        
+
         from datetime import datetime, timezone
-        mock_date = datetime(2024, 1, 15, 12, 0, 0, tzinfo=timezone.utc)
-        
+
+        mock_date = datetime(2024, 1, 15, 12, 0, 0, tzinfo=UTC)
+
         with patch("clarity.services.s3_storage_service.datetime") as mock_datetime:
             mock_datetime.now.return_value = mock_date
-            
+
             s3_uri = await s3_service.upload_analysis_results(
                 user_id, processing_id, analysis_results
             )
-        
-        expected_key = f"analysis_results/2024/01/15/{user_id}/{processing_id}_results.json"
+
+        expected_key = (
+            f"analysis_results/2024/01/15/{user_id}/{processing_id}_results.json"
+        )
         assert s3_uri == f"s3://test-health-bucket/{expected_key}"
-        
+
         # Verify put_object was called
         mock_s3_client.put_object.assert_called_once()
         call_kwargs = mock_s3_client.put_object.call_args[1]
-        
+
         assert call_kwargs["Bucket"] == "test-health-bucket"
         assert call_kwargs["Key"] == expected_key
         assert call_kwargs["ContentType"] == "application/json"
         assert call_kwargs["StorageClass"] == "STANDARD_IA"
         assert call_kwargs["ServerSideEncryption"] == "AES256"
-        
+
         # Verify metadata
         metadata = call_kwargs["Metadata"]
         assert metadata["user-id"] == user_id
         assert metadata["processing-id"] == processing_id
         assert metadata["data-type"] == "analysis-results"
-        
+
         # Verify body content
         body_data = json.loads(call_kwargs["Body"])
-        assert body_data["user_id"] == user_id
+        assert body_data["user_id"] == str(
+            user_id
+        )  # Convert UUID to string for comparison
         assert body_data["processing_id"] == processing_id
         assert body_data["results"] == analysis_results
 
@@ -329,12 +345,12 @@ class TestUploadAnalysisResults:
     async def test_upload_analysis_results_error(self, s3_service, mock_s3_client):
         """Test analysis results upload with error."""
         mock_s3_client.put_object.side_effect = Exception("Upload error")
-        
+
         with pytest.raises(S3UploadError) as exc_info:
             await s3_service.upload_analysis_results(
                 "user-123", "proc-123", {"test": "data"}
             )
-        
+
         assert "Analysis results upload failed" in str(exc_info.value)
 
 
@@ -350,16 +366,14 @@ class TestDownloadRawData:
             "processing_id": "proc-123",
             "metrics": [{"type": "heart_rate", "value": 72}],
         }
-        
+
         # Mock response
-        mock_response = {
-            "Body": MagicMock()
-        }
+        mock_response = {"Body": MagicMock()}
         mock_response["Body"].read.return_value = json.dumps(test_data).encode()
         mock_s3_client.get_object.return_value = mock_response
-        
+
         result = await s3_service.download_raw_data(s3_key, "user-123")
-        
+
         assert result == test_data
         mock_s3_client.get_object.assert_called_once_with(
             Bucket="test-health-bucket",
@@ -373,10 +387,10 @@ class TestDownloadRawData:
             {"Error": {"Code": "NoSuchKey", "Message": "Key not found"}},
             "GetObject",
         )
-        
+
         with pytest.raises(S3DownloadError) as exc_info:
             await s3_service.download_raw_data("missing/key.json", "user-123")
-        
+
         assert "File not found" in str(exc_info.value)
 
     @pytest.mark.asyncio
@@ -386,10 +400,10 @@ class TestDownloadRawData:
             {"Error": {"Code": "AccessDenied", "Message": "Access denied"}},
             "GetObject",
         )
-        
+
         with pytest.raises(S3DownloadError) as exc_info:
             await s3_service.download_raw_data("test/key.json", "user-123")
-        
+
         assert "S3 download failed" in str(exc_info.value)
 
     @pytest.mark.asyncio
@@ -398,10 +412,10 @@ class TestDownloadRawData:
         mock_response = {"Body": MagicMock()}
         mock_response["Body"].read.return_value = b"invalid json"
         mock_s3_client.get_object.return_value = mock_response
-        
+
         with pytest.raises(S3DownloadError) as exc_info:
             await s3_service.download_raw_data("test/key.json", "user-123")
-        
+
         assert "Download failed" in str(exc_info.value)
 
 
@@ -431,15 +445,15 @@ class TestListUserFiles:
             ]
         }
         mock_s3_client.list_objects_v2.return_value = mock_response
-        
+
         files = await s3_service.list_user_files(user_id)
-        
+
         assert len(files) == 2
         assert files[0]["key"] == f"raw_data/2024/01/15/{user_id}/file1.json"
         assert files[0]["size"] == 1024
         assert files[1]["key"] == f"raw_data/2024/01/14/{user_id}/file2.json"
         assert files[1]["size"] == 2048
-        
+
         mock_s3_client.list_objects_v2.assert_called_once_with(
             Bucket="test-health-bucket",
             Prefix="raw_data/",
@@ -450,9 +464,9 @@ class TestListUserFiles:
     async def test_list_user_files_with_prefix(self, s3_service, mock_s3_client):
         """Test file listing with prefix."""
         mock_s3_client.list_objects_v2.return_value = {"Contents": []}
-        
+
         await s3_service.list_user_files("user-123", prefix="2024/01/")
-        
+
         mock_s3_client.list_objects_v2.assert_called_once_with(
             Bucket="test-health-bucket",
             Prefix="raw_data/2024/01/user-123/",
@@ -463,19 +477,19 @@ class TestListUserFiles:
     async def test_list_user_files_empty(self, s3_service, mock_s3_client):
         """Test file listing with no results."""
         mock_s3_client.list_objects_v2.return_value = {}
-        
+
         files = await s3_service.list_user_files("user-123")
-        
+
         assert files == []
 
     @pytest.mark.asyncio
     async def test_list_user_files_error(self, s3_service, mock_s3_client):
         """Test file listing with error."""
         mock_s3_client.list_objects_v2.side_effect = Exception("List error")
-        
+
         with pytest.raises(S3StorageError) as exc_info:
             await s3_service.list_user_files("user-123")
-        
+
         assert "File listing failed" in str(exc_info.value)
 
 
@@ -486,9 +500,9 @@ class TestDeleteFile:
     async def test_delete_file_success(self, s3_service, mock_s3_client):
         """Test successful file deletion."""
         s3_key = "raw_data/2024/01/15/user-123/file.json"
-        
+
         result = await s3_service.delete_file(s3_key)
-        
+
         assert result is True
         mock_s3_client.delete_object.assert_called_once_with(
             Bucket="test-health-bucket",
@@ -499,10 +513,10 @@ class TestDeleteFile:
     async def test_delete_file_error(self, s3_service, mock_s3_client):
         """Test deletion with error."""
         mock_s3_client.delete_object.side_effect = Exception("Delete error")
-        
+
         # Should return False on error
         result = await s3_service.delete_file("test/file.json")
-        
+
         assert result is False
 
 
@@ -518,9 +532,9 @@ class TestDeleteUserData:
                 {"key": "raw_data/2024/01/15/user-123/file1.json"},
                 {"key": "raw_data/2024/01/14/user-123/file2.json"},
             ]
-            
+
             deleted_count = await s3_service.delete_user_data("user-123")
-            
+
             assert deleted_count == 2
             assert mock_s3_client.delete_object.call_count == 2
 
@@ -532,12 +546,12 @@ class TestDeleteUserData:
                 {"key": "raw_data/2024/01/15/user-123/file1.json"},
                 {"key": "raw_data/2024/01/14/user-123/file2.json"},
             ]
-            
+
             # First delete succeeds, second fails
             mock_s3_client.delete_object.side_effect = [None, Exception("Delete error")]
-            
+
             deleted_count = await s3_service.delete_user_data("user-123")
-            
+
             assert deleted_count == 1  # Only one successful deletion
 
 
@@ -548,16 +562,16 @@ class TestSetupBucketLifecycle:
     async def test_setup_bucket_lifecycle_success(self, s3_service, mock_s3_client):
         """Test successful lifecycle setup."""
         await s3_service.setup_bucket_lifecycle()
-        
+
         mock_s3_client.put_bucket_lifecycle_configuration.assert_called_once()
         call_args = mock_s3_client.put_bucket_lifecycle_configuration.call_args[1]
-        
+
         assert call_args["Bucket"] == "test-health-bucket"
         assert "Rules" in call_args["LifecycleConfiguration"]
-        
+
         rules = call_args["LifecycleConfiguration"]["Rules"]
         assert len(rules) == 2  # raw_data and processed_data rules
-        
+
         # Check raw_data rule
         raw_rule = next(r for r in rules if r["ID"] == "RawDataLifecycle")
         assert raw_rule["Status"] == "Enabled"
@@ -566,8 +580,10 @@ class TestSetupBucketLifecycle:
     @pytest.mark.asyncio
     async def test_setup_bucket_lifecycle_error(self, s3_service, mock_s3_client):
         """Test lifecycle setup with error (should not raise)."""
-        mock_s3_client.put_bucket_lifecycle_configuration.side_effect = Exception("Setup error")
-        
+        mock_s3_client.put_bucket_lifecycle_configuration.side_effect = Exception(
+            "Setup error"
+        )
+
         # Should not raise exception
         await s3_service.setup_bucket_lifecycle()
 
@@ -579,13 +595,13 @@ class TestHealthCheck:
     async def test_health_check_success(self, s3_service, mock_s3_client):
         """Test successful health check."""
         result = await s3_service.health_check()
-        
+
         assert result["status"] == "healthy"
         assert result["bucket"] == "test-health-bucket"
         assert result["region"] == "us-east-1"
         assert result["encryption_enabled"] is True
         assert "timestamp" in result
-        
+
         mock_s3_client.head_bucket.assert_called_once_with(Bucket="test-health-bucket")
 
     @pytest.mark.asyncio
@@ -595,9 +611,9 @@ class TestHealthCheck:
             {"Error": {"Code": "NoSuchBucket", "Message": "Bucket not found"}},
             "HeadBucket",
         )
-        
+
         result = await s3_service.health_check()
-        
+
         assert result["status"] == "unhealthy"
         assert "S3 error (NoSuchBucket)" in result["error"]
 
@@ -605,9 +621,9 @@ class TestHealthCheck:
     async def test_health_check_unexpected_error(self, s3_service, mock_s3_client):
         """Test health check with unexpected error."""
         mock_s3_client.head_bucket.side_effect = Exception("Connection error")
-        
+
         result = await s3_service.health_check()
-        
+
         assert result["status"] == "unhealthy"
         assert "Connection error" in result["error"]
 
@@ -621,11 +637,11 @@ class TestCloudStoragePortMethods:
         file_data = b"test file content"
         file_path = "test/path/file.txt"
         metadata = {"content-type": "text/plain"}
-        
+
         s3_uri = await s3_service.upload_file(file_data, file_path, metadata)
-        
+
         assert s3_uri == f"s3://test-health-bucket/{file_path}"
-        
+
         mock_s3_client.put_object.assert_called_once()
         call_kwargs = mock_s3_client.put_object.call_args[1]
         assert call_kwargs["Body"] == file_data
@@ -639,9 +655,9 @@ class TestCloudStoragePortMethods:
         mock_response = {"Body": MagicMock()}
         mock_response["Body"].read.return_value = file_data
         mock_s3_client.get_object.return_value = mock_response
-        
+
         result = await s3_service.download_file("test/path/file.txt")
-        
+
         assert result == file_data
 
     def test_bucket_method(self, s3_service):
@@ -663,7 +679,7 @@ class TestGlobalFunctions:
             with patch("boto3.client"):
                 service1 = get_s3_service("test-bucket")
                 service2 = get_s3_service("test-bucket")
-                
+
                 assert service1 is service2  # Same instance
 
 

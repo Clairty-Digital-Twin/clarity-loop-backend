@@ -43,7 +43,7 @@ s3_client = None
 
 def init_aws_clients() -> None:
     """Initialize AWS clients when needed."""
-    global session, dynamodb, cognito_client, s3_client  # noqa: PLW0603  # Singleton pattern
+    global session, dynamodb, cognito_client, s3_client  # Singleton pattern
     if session is None:
         session = boto3.Session(region_name=AWS_REGION)
         dynamodb = boto3.resource("dynamodb", region_name=AWS_REGION)
@@ -91,7 +91,7 @@ async def lifespan(_app: FastAPI) -> AsyncGenerator[None, None]:  # noqa: RUF029
                 logger.warning("⚠️  DynamoDB table %s not found", DYNAMODB_TABLE)
             else:
                 logger.exception("❌ DynamoDB error")
-        except Exception as e:  # noqa: BLE001
+        except Exception as e:
             # Handle credentials errors and other AWS connectivity issues
             if "NoCredentialsError" in str(e) or "Unable to locate credentials" in str(
                 e

@@ -57,7 +57,7 @@ class TestAnalysisService:
     def test_main_function_with_custom_env(self, mock_uvicorn_run: Mock) -> None:
         """Test main function with custom environment variables."""
         env_vars = {
-            "HOST": "0.0.0.0",  # noqa: S104
+            "HOST": "0.0.0.0",
             "PORT": "9000",
             "ENVIRONMENT": "development",
         }
@@ -67,7 +67,7 @@ class TestAnalysisService:
 
         mock_uvicorn_run.assert_called_once_with(
             "clarity.entrypoints.analysis_service:app",
-            host="0.0.0.0",  # noqa: S104
+            host="0.0.0.0",
             port=9000,
             reload=True,
             log_level="info",

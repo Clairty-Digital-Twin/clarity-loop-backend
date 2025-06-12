@@ -21,7 +21,6 @@ if TYPE_CHECKING:
 
     from clarity.models.health_data import HealthDataUpload
 
-from clarity.core.secure_logging import sanitize_for_logging
 from clarity.ports.storage import CloudStoragePort
 
 # Configure logger
@@ -29,11 +28,11 @@ logger = logging.getLogger(__name__)
 audit_logger = logging.getLogger("audit")
 
 __all__ = [
-    "S3StorageService",
-    "S3StorageError",
-    "S3UploadError",
     "S3DownloadError",
     "S3PermissionError",
+    "S3StorageError",
+    "S3StorageService",
+    "S3UploadError",
     "get_s3_service",
 ]
 
@@ -185,7 +184,8 @@ class S3StorageService(CloudStoragePort):
                         "metric_id": str(metric.metric_id),
                         "metric_type": metric.metric_type.value,
                         "created_at": metric.created_at.isoformat(),
-                        "device_id": metric.device_id or "unknown",  # Store raw device_id
+                        "device_id": metric.device_id
+                        or "unknown",  # Store raw device_id
                         "biometric_data": (
                             metric.biometric_data.model_dump()
                             if metric.biometric_data
@@ -215,7 +215,9 @@ class S3StorageService(CloudStoragePort):
             upload_params: dict[str, Any] = {
                 "Bucket": self.bucket_name,
                 "Key": s3_key,
-                "Body": json.dumps(raw_data, indent=2, default=str),  # Convert UUIDs to strings
+                "Body": json.dumps(
+                    raw_data, indent=2, default=str
+                ),  # Convert UUIDs to strings
                 "ContentType": "application/json",
                 "StorageClass": self.storage_class,
                 "Metadata": {
@@ -454,7 +456,7 @@ class S3StorageService(CloudStoragePort):
                     )
                     await asyncio.get_event_loop().run_in_executor(None, delete_func)
                     deleted_count += 1
-                except Exception as e:  # noqa: BLE001
+                except Exception as e:
                     logger.warning("Failed to delete file %s: %s", file_info["key"], e)
 
             await self._audit_log(
@@ -539,7 +541,7 @@ class S3StorageService(CloudStoragePort):
 
             logger.info("S3 bucket lifecycle policies configured")
 
-        except Exception as e:  # noqa: BLE001
+        except Exception as e:
             logger.warning("Failed to set up bucket lifecycle: %s", e)
             # Don't raise - lifecycle is optional
 
@@ -571,7 +573,7 @@ class S3StorageService(CloudStoragePort):
                 "bucket": self.bucket_name,
                 "timestamp": datetime.now(UTC).isoformat(),
             }
-        except Exception as e:  # noqa: BLE001
+        except Exception as e:
             return {
                 "status": "unhealthy",
                 "error": str(e),
@@ -706,7 +708,7 @@ def get_s3_service(
     endpoint_url: str | None = None,
 ) -> S3StorageService:
     """Get or create global S3 service instance."""
-    global _s3_service  # noqa: PLW0603
+    global _s3_service
 
     if _s3_service is None:
         if not bucket_name:

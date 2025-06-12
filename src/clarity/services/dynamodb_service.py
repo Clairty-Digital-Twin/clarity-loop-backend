@@ -919,7 +919,7 @@ class DynamoDBHealthDataRepository(IHealthDataRepository):
         """Clean up repository resources."""
         try:
             # Clear cache
-            self._dynamodb_service._cache.clear()  # noqa: SLF001
+            self._dynamodb_service._cache.clear()
             logger.info("DynamoDBHealthDataRepository cleaned up successfully")
 
         except Exception:

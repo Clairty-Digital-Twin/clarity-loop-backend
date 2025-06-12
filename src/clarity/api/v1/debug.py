@@ -162,7 +162,7 @@ async def debug_middleware_stack(request: Request) -> dict[str, Any]:
 
 @router.post("/verify-token-directly")
 async def debug_verify_token_directly(
-    request: Request,  # noqa: ARG001
+    request: Request,
     authorization: str | None = Header(None),
 ) -> dict[str, Any]:
     """Debug endpoint to test token verification directly."""
@@ -228,7 +228,7 @@ async def debug_verify_token_directly(
         result["cognito_initialized"] = True
         result["cognito_user_pool_id"] = os.getenv("COGNITO_USER_POOL_ID", "NOT_SET")
         result["cognito_region"] = os.getenv("COGNITO_REGION", "us-east-1")
-    except Exception as e:  # noqa: BLE001
+    except Exception as e:
         result["cognito_initialized"] = False
         result["cognito_note"] = f"Cognito client error: {e!s}"
 

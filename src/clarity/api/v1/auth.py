@@ -284,7 +284,7 @@ async def update_user(
 @router.post("/logout", response_model=LogoutResponse)
 async def logout(
     request: Request,
-    auth_provider: IAuthProvider = Depends(get_auth_provider),  # noqa: ARG001
+    auth_provider: IAuthProvider = Depends(get_auth_provider),
 ) -> LogoutResponse:
     """Logout user (invalidate token if supported)."""
     # Check request format first - get body and auth header
@@ -293,7 +293,7 @@ async def logout(
     # Check if request body is empty
     try:
         body = await request.json()
-    except Exception:  # noqa: BLE001
+    except Exception:
         body = {}
 
     # If both body is empty and no auth header, this is a validation error
@@ -352,7 +352,7 @@ async def auth_health() -> HealthResponse:
         return HealthResponse(
             status="healthy", service="authentication", version="1.0.0"
         )
-    except Exception:  # noqa: BLE001
+    except Exception:
         return HealthResponse(
             status="unhealthy", service="authentication", version="1.0.0"
         )
@@ -373,7 +373,7 @@ async def refresh_token(
         try:
             body = await request.json()
             refresh_token_str = body.get("refresh_token")
-        except Exception:  # noqa: BLE001
+        except Exception:
             refresh_token_str = None
 
     if not refresh_token_str:

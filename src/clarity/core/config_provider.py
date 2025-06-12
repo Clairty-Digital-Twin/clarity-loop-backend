@@ -15,7 +15,7 @@ if TYPE_CHECKING:
     from clarity.core.config_aws import MiddlewareConfig, Settings
 
 
-class ConfigProvider(IConfigProvider):  # noqa: PLR0904
+class ConfigProvider(IConfigProvider):
     """Concrete implementation of configuration provider.
 
     Follows Single Responsibility Principle - only handles configuration access.

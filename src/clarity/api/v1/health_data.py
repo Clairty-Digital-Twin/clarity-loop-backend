@@ -286,7 +286,7 @@ async def upload_health_data(
                 "Published health data event for async processing: %s",
                 response.processing_id,
             )
-        except Exception:  # noqa: BLE001
+        except Exception:
             # Don't fail the upload if Pub/Sub fails - data is already saved
             logger.warning("Failed to publish health data event")
     except HealthDataServiceError as e:
@@ -671,7 +671,7 @@ async def health_check_detailed() -> dict[str, Any]:
             else:
                 health_status["database"] = "not_configured"
                 health_status["status"] = "degraded"
-        except Exception as db_error:  # noqa: BLE001
+        except Exception as db_error:
             logger.warning("Database health check failed: %s", db_error)
             health_status["database"] = "error"
             health_status["status"] = "degraded"
@@ -682,7 +682,7 @@ async def health_check_detailed() -> dict[str, Any]:
             else:
                 health_status["authentication"] = "not_configured"
                 health_status["status"] = "degraded"
-        except Exception as auth_error:  # noqa: BLE001
+        except Exception as auth_error:
             logger.warning("Auth health check failed: %s", auth_error)
             health_status["authentication"] = "error"
             health_status["status"] = "degraded"

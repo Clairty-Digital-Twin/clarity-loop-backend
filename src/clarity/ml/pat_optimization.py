@@ -233,7 +233,7 @@ class PATPerformanceOptimizer:
             raise RuntimeError(msg)
 
         # Preprocess input data
-        input_tensor = self.pat_service._preprocess_actigraphy_data(  # noqa: SLF001
+        input_tensor = self.pat_service._preprocess_actigraphy_data(
             input_data.data_points
         )
         input_tensor = input_tensor.unsqueeze(0)  # Add batch dimension
@@ -260,7 +260,7 @@ class PATPerformanceOptimizer:
         }
 
         # Post-process results
-        return self.pat_service._postprocess_predictions(  # noqa: SLF001
+        return self.pat_service._postprocess_predictions(
             outputs_dict, input_data.user_id
         )
 
@@ -399,7 +399,7 @@ def get_pat_optimizer() -> PATPerformanceOptimizer:
 
 async def initialize_pat_optimizer() -> PATPerformanceOptimizer:
     """Initialize the PAT performance optimizer during app startup."""
-    from clarity.ml.pat_service import get_pat_service  # noqa: PLC0415
+    from clarity.ml.pat_service import get_pat_service
 
     pat_service = await get_pat_service()
     optimizer = PATPerformanceOptimizer(pat_service)

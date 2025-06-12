@@ -10,7 +10,6 @@ import pytest
 from clarity.auth.mock_auth import MockAuthProvider
 
 
-# ruff: noqa: PLR0904
 class TestMockAuthProviderComprehensive:
     """Comprehensive test coverage for MockAuthProvider."""
 
@@ -268,7 +267,7 @@ class TestMockAuthProviderComprehensive:
         """Test create_mock_token for admin user."""
         token = mock_auth_provider.create_mock_token("admin_user")
 
-        assert token == "dev_token_admin"  # noqa: S105
+        assert token == "dev_token_admin"
 
     @staticmethod
     def test_create_mock_token_test_patient(
@@ -277,7 +276,7 @@ class TestMockAuthProviderComprehensive:
         """Test create_mock_token for test patient."""
         token = mock_auth_provider.create_mock_token("test_patient")
 
-        assert token == "dev_token_patient"  # noqa: S105
+        assert token == "dev_token_patient"
 
     @staticmethod
     def test_create_mock_token_default_user(
@@ -286,7 +285,7 @@ class TestMockAuthProviderComprehensive:
         """Test create_mock_token for default user."""
         token = mock_auth_provider.create_mock_token("mock_user_1")
 
-        assert token == "dev_token_user"  # noqa: S105
+        assert token == "dev_token_user"
 
     @staticmethod
     def test_create_mock_token_unknown_user(
@@ -295,7 +294,7 @@ class TestMockAuthProviderComprehensive:
         """Test create_mock_token for unknown user."""
         token = mock_auth_provider.create_mock_token("unknown_user")
 
-        assert token == "dev_token_user"  # noqa: S105
+        assert token == "dev_token_user"
 
     @staticmethod
     def test_create_mock_token_empty_string(
@@ -304,7 +303,7 @@ class TestMockAuthProviderComprehensive:
         """Test create_mock_token with empty string."""
         token = mock_auth_provider.create_mock_token("")
 
-        assert token == "dev_token_user"  # noqa: S105
+        assert token == "dev_token_user"
 
     @staticmethod
     def test_create_mock_token_none(mock_auth_provider: MockAuthProvider) -> None:
@@ -313,7 +312,7 @@ class TestMockAuthProviderComprehensive:
         # Test with empty string instead to represent "no user ID"
         token = mock_auth_provider.create_mock_token("")
 
-        assert token == "dev_token_user"  # noqa: S105
+        assert token == "dev_token_user"
 
     @staticmethod
     def test_get_available_mock_users(mock_auth_provider: MockAuthProvider) -> None:

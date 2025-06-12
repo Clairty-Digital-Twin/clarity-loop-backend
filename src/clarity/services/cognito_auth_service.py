@@ -44,7 +44,7 @@ from clarity.services.dynamodb_service import DynamoDBService
 logger = logging.getLogger(__name__)
 
 # Constants
-BEARER_TOKEN_TYPE = "bearer"  # noqa: S105  # Standard OAuth token type  # nosec B105
+BEARER_TOKEN_TYPE = "bearer"  # Standard OAuth token type  # nosec B105
 
 
 class AuthenticationError(Exception):
@@ -176,8 +176,7 @@ class CognitoAuthenticationService:
 
             loop = asyncio.get_event_loop()
             response: SignUpResponseTypeDef = await loop.run_in_executor(
-                None,
-                lambda: self.cognito_client.sign_up(**sign_up_params)
+                None, lambda: self.cognito_client.sign_up(**sign_up_params)
             )
             user_sub = response["UserSub"]
 
@@ -279,7 +278,7 @@ class CognitoAuthenticationService:
                     ClientId=self.client_id,
                     AuthFlow="ADMIN_NO_SRP_AUTH",
                     AuthParameters=auth_params,
-                )
+                ),
             )
 
             # Handle different authentication challenges
@@ -302,8 +301,7 @@ class CognitoAuthenticationService:
 
             # Get user info from Cognito
             user_info: GetUserResponseTypeDef = await loop.run_in_executor(
-                None,
-                lambda: self.cognito_client.get_user(AccessToken=access_token)
+                None, lambda: self.cognito_client.get_user(AccessToken=access_token)
             )
             user_sub = next(
                 attr["Value"]
@@ -497,7 +495,7 @@ class CognitoAuthenticationService:
                     AuthParameters={
                         "REFRESH_TOKEN": refresh_token,
                     },
-                )
+                ),
             )
             auth_result = response["AuthenticationResult"]
 
@@ -528,7 +526,7 @@ class CognitoAuthenticationService:
                 lambda: self.cognito_client.revoke_token(
                     Token=refresh_token,
                     ClientId=self.client_id,
-                )
+                ),
             )
 
             # Deactivate sessions in DynamoDB

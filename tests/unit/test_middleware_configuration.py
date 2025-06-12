@@ -45,8 +45,15 @@ class TestMiddlewareConfiguration:
     @staticmethod
     def test_middleware_config_testing_defaults() -> None:
         """Test middleware configuration defaults for testing environment."""
-        # Use environment variable to ensure proper setting
-        with patch.dict(os.environ, {"ENVIRONMENT": "testing", "ENABLE_AUTH": "true"}):
+        # Clear any existing environment variables that might interfere
+        with patch.dict(os.environ, {}, clear=True):
+            # Set only the variables we need
+            os.environ["ENVIRONMENT"] = "testing"
+            os.environ["ENABLE_AUTH"] = "true"
+            
+            Settings = get_fresh_settings()
+            ConfigProvider = get_config_provider()
+            
             settings = Settings()
             config_provider = ConfigProvider(settings)
 

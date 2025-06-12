@@ -104,45 +104,51 @@ flowchart TB
 ## PAT (Pretrained Actigraphy Transformer) Deep Dive
 
 ```mermaid
-graph LR
-    subgraph InputLayer ["📥 Input Processing"]
-        A[7-day Activity Window<br/>10,080 time points<br/>1-minute sampling]
-        B[Data Normalization<br/>Z-score standardization<br/>NHANES population stats]
-        C[Missing Value Handling<br/>Forward fill + interpolation<br/>Quality score tracking]
+flowchart TD
+    subgraph InputLayer ["📥 INPUT PROCESSING"]
+        A[7-DAY ACTIVITY WINDOW<br/>10,080 time points<br/>1-minute sampling]
+        B[DATA NORMALIZATION<br/>Z-score standardization<br/>NHANES population stats]
+        C[MISSING VALUE HANDLING<br/>Forward fill + interpolation<br/>Quality score tracking]
     end
     
-    subgraph EmbeddingLayer ["🔤 Embedding Layer"]
-        D[Temporal Embedding<br/>1D Conv layers<br/>Position-aware encoding]
-        E[Circadian Features<br/>Sin/cos time encoding<br/>24-hour cycle awareness]
-        F[Feature Fusion<br/>Concatenate embeddings<br/>Learnable projection]
+    subgraph EmbeddingLayer ["🔤 EMBEDDING LAYER"]
+        D[TEMPORAL EMBEDDING<br/>1D Conv layers<br/>Position-aware encoding]
+        E[CIRCADIAN FEATURES<br/>Sin/cos time encoding<br/>24-hour cycle awareness]
+        F[FEATURE FUSION<br/>Concatenate embeddings<br/>Learnable projection]
     end
     
-    subgraph TransformerStack ["🧠 Transformer Architecture"]
-        G[Multi-Head Attention<br/>8 parallel attention heads<br/>Global temporal patterns]
-        H[Feed-Forward Network<br/>Position-wise processing<br/>ReLU activation]
-        I[Layer Normalization<br/>Residual connections<br/>Gradient stability]
-        J[Dropout Regularization<br/>0.1 dropout rate<br/>Overfitting prevention]
+    subgraph TransformerStack ["🧠 TRANSFORMER ARCHITECTURE"]
+        G[MULTI-HEAD ATTENTION<br/>8 parallel attention heads<br/>Global temporal patterns]
+        H[FEED-FORWARD NETWORK<br/>Position-wise processing<br/>ReLU activation]
+        I[LAYER NORMALIZATION<br/>Residual connections<br/>Gradient stability]
+        J[DROPOUT REGULARIZATION<br/>0.1 dropout rate<br/>Overfitting prevention]
     end
     
-    subgraph OutputHeads ["🎯 Specialized Output Heads"]
-        K[Sleep Quality Head<br/>Regression output<br/>0-1 quality score]
-        L[Sleep Stage Head<br/>4-class classification<br/>REM/Deep/Light/Wake]
-        M[Circadian Head<br/>Phase + amplitude<br/>Rhythm disruption score]
-        N[Anomaly Detection<br/>Reconstruction loss<br/>Health alert triggers]
+    subgraph OutputHeads ["🎯 SPECIALIZED OUTPUT HEADS"]
+        K[SLEEP QUALITY HEAD<br/>Regression output<br/>0-1 quality score]
+        L[SLEEP STAGE HEAD<br/>4-class classification<br/>REM/Deep/Light/Wake]
+        M[CIRCADIAN HEAD<br/>Phase + amplitude<br/>Rhythm disruption score]
+        N[ANOMALY DETECTION<br/>Reconstruction loss<br/>Health alert triggers]
     end
     
-    A --> B --> C
-    C --> D --> E --> F
-    F --> G --> H --> I --> J
+    A --> B
+    B --> C
+    C --> D
+    D --> E
+    E --> F
+    F --> G
+    G --> H
+    H --> I
+    I --> J
     J --> K
     J --> L
     J --> M
     J --> N
     
-    classDef input fill:#ff9900,stroke:#e65100,stroke-width:2px,color:white
-    classDef embed fill:#2196f3,stroke:#0d47a1,stroke-width:2px,color:white
-    classDef transformer fill:#4caf50,stroke:#1b5e20,stroke-width:2px,color:white
-    classDef output fill:#9c27b0,stroke:#4a148c,stroke-width:2px,color:white
+    classDef input fill:#ff9900,stroke:#e65100,stroke-width:3px,color:white
+    classDef embed fill:#2196f3,stroke:#0d47a1,stroke-width:3px,color:white
+    classDef transformer fill:#4caf50,stroke:#1b5e20,stroke-width:3px,color:white
+    classDef output fill:#9c27b0,stroke:#4a148c,stroke-width:3px,color:white
     
     class A,B,C input
     class D,E,F embed

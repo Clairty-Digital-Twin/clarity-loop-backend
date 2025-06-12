@@ -225,7 +225,7 @@ class S3StorageService(CloudStoragePort):
 
             # Upload to S3
             await asyncio.get_event_loop().run_in_executor(
-                None, self.s3_client.put_object, upload_params
+                None, lambda: self.s3_client.put_object(**upload_params)
             )
 
             # Create audit log
@@ -309,7 +309,7 @@ class S3StorageService(CloudStoragePort):
 
             # Upload to S3
             await asyncio.get_event_loop().run_in_executor(
-                None, self.s3_client.put_object, upload_params
+                None, lambda: self.s3_client.put_object(**upload_params)
             )
 
             await self._audit_log(
@@ -345,8 +345,7 @@ class S3StorageService(CloudStoragePort):
             # Download from S3
             response = await asyncio.get_event_loop().run_in_executor(
                 None,
-                self.s3_client.get_object,
-                {"Bucket": self.bucket_name, "Key": s3_key},
+                lambda: self.s3_client.get_object(Bucket=self.bucket_name, Key=s3_key),
             )
 
             # Parse JSON data

@@ -60,7 +60,9 @@ def get_pat_model_service() -> PATModelService:
     # Direct initialization to avoid circular import
     from clarity.ml.pat_service import get_pat_service
 
-    return get_pat_service()
+    service = get_pat_service()
+    assert isinstance(service, PATModelService)
+    return service
 
 
 class WebSocketChatHandler:
@@ -258,7 +260,7 @@ async def websocket_chat_endpoint(
     user_id = current_user.user_id
     username = str(current_user.email)  # Ensure username is string
 
-    await connection_manager.connect(user_id, room_id, websocket)
+    await connection_manager.connect(websocket, user_id, username, room_id)
     logger.info("User %s (%s) connected to room %s", user_id, username, room_id)
 
     try:
@@ -411,10 +413,10 @@ async def websocket_chat_endpoint(
         )
 
 
-def _extract_username(user: User | None, user_id: str) -> str:
-    # Ensure display_name is not None; fallback with generated username
-    if user and user.display_name:
-        return user.display_name
+def _extract_username(user: UserContext | None, user_id: str) -> str:
+    # Ensure we have a username; fallback with generated username
+    if user and user.email:
+        return user.email
     return f"User_{user_id[:8]}"
 
 
@@ -443,7 +445,9 @@ async def _authenticate_websocket_user(
 
         # Use the provider to create the full user context
         if hasattr(auth_provider, "get_or_create_user_context"):
-            return await auth_provider.get_or_create_user_context(user_info)
+            user_context = await auth_provider.get_or_create_user_context(user_info)
+            assert isinstance(user_context, UserContext)
+            return user_context
         # Fallback for providers without the enhanced method
         # This part might need adjustment based on what verify_token returns
         # For now, assuming it returns a dict that can be used to build a basic context
@@ -451,11 +455,11 @@ async def _authenticate_websocket_user(
         return UserContext(
             user_id=user_info.get("sub", user_info.get("user_id", "unknown")),
             email=user_info.get("email", ""),
-            display_name=user_info.get("name", ""),
-            roles=user_info.get("roles", []),
+            role=UserRole.PATIENT,  # Default role
+            permissions=[],
             is_verified=user_info.get("email_verified", False),
-            provider="cognito",
-            claims=user_info,
+            is_active=True,
+            custom_claims=user_info,
         )
 
     except Exception:
@@ -562,10 +566,10 @@ async def websocket_health_analysis_endpoint(
         await websocket.accept()
         username = _extract_username(current_user, user_id)
         await connection_manager.connect(
-            websocket=websocket,
-            user_id=user_id,
-            username=username,
-            room_id=f"health_analysis_{user_id}",
+            websocket,
+            user_id,
+            username,
+            f"health_analysis_{user_id}",
         )
         logger.info("Health analysis WebSocket connected for %s", username)
         welcome_msg = SystemMessage(

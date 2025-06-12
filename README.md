@@ -254,7 +254,7 @@ If you use this platform in research, please cite:
   title={AI Foundation Models for Wearable Movement Data in Mental Health Research},
   author={Ruan, Franklin Y. and Zhang, Aiwei and Oh, Jenny and Jin, SouYoung and Jacobson, Nicholas C.},
   journal={arXiv preprint arXiv:2411.15240},
-  year={2024},
+  year={2025},
   doi={10.48550/arXiv.2411.15240}
 }
 ```

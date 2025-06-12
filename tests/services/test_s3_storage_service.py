@@ -745,11 +745,15 @@ class TestCloudStoragePortMethods:
     def test_upload_json(self, s3_service):
         """Test JSON upload method."""
         # This is a synchronous method that needs special handling
-        with patch.object(s3_service, 'upload_file') as mock_upload:
-            mock_upload.return_value = asyncio.Future()
-            mock_upload.return_value.set_result("s3://test-bucket/test.json")
-            
+        import asyncio
+        
+        async def mock_upload_file(data, file_path, metadata=None):
+            return f"s3://test-bucket/{file_path}"
+        
+        with patch.object(s3_service, 'upload_file', side_effect=mock_upload_file):
             data = {"test": "data", "number": 123}
+            
+            # Run the synchronous method that internally uses asyncio.run
             result = s3_service.upload_json(
                 "test-bucket",
                 "test.json",

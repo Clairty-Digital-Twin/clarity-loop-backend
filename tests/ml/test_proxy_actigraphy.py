@@ -14,7 +14,7 @@ import numpy as np
 from pydantic_core import ValidationError
 import pytest
 
-from clarity.ml.proxy_actigraphy import (  # type: ignore[import-untyped,attr-defined]
+from clarity.ml.proxy_actigraphy import (
     DEFAULT_NHANES_STATS,
     MAX_REALISTIC_STEPS_PER_MINUTE,
     MINUTES_PER_DAY,

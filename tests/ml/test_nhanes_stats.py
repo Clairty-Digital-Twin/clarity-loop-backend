@@ -11,7 +11,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from clarity.ml.nhanes_stats import (  # type: ignore[import-untyped]
+from clarity.ml.nhanes_stats import (
     AGE_STRATIFIED_STATS,
     EXTREME_OUTLIER_THRESHOLD,
     NHANES_REFERENCE_STATS,

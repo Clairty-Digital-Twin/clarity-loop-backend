@@ -90,12 +90,12 @@ flowchart TD
 
 ```mermaid
 flowchart LR
-    subgraph Clients ["🖥️ Client Applications"]
+    subgraph Clients["🖥️ Client Applications"]
         A[iOS App<br/>SwiftUI<br/>HealthKit Integration]
         B[Web Dashboard<br/>React/TypeScript<br/>Real-time Analytics]
     end
     
-    subgraph Core ["⚡ FastAPI Backend"]
+    subgraph Core["⚡ FastAPI Backend"]
         C[Authentication<br/>AWS Cognito<br/>OAuth 2.0]
         D[Data Processing<br/>Multi-modal Pipeline<br/>Quality Validation]
         E[ML Analysis<br/>PAT + Fusion Models<br/>Batch Processing]
@@ -106,36 +106,32 @@ flowchart LR
         E --> F
     end
     
-    subgraph Data ["💾 Data Layer"]
+    subgraph Data["💾 Data Layer"]
         G[DynamoDB<br/>Health Metrics<br/>Analysis Results]
         H[S3 Storage<br/>Model Weights<br/>Processing Cache]
     end
     
-    subgraph AI ["🤖 AI Models"]
+    subgraph AI["🤖 AI Models"]
         I[PAT Models<br/>S/M/L variants<br/>CC BY-4.0 Licensed]
         J[Fusion Transformer<br/>Multi-modal Integration<br/>Custom Architecture]
         K[Google Gemini<br/>Natural Language<br/>Clinical Context]
+        
+        I --> J
     end
     
-    %% Main connections
     A --> C
     B --> C
     
-    %% Core to Infrastructure connections
-    Clients --> Core
     Core --> Data
     Core --> AI
     
-    D --> G
-    D --> H
-    E --> G
-    E --> H
+    D -.-> G
+    D -.-> H
+    E -.-> G
+    E -.-> H
     
-    E --> I
-    E --> J
-    F --> K
-    
-    I --> J
+    E -.-> I
+    F -.-> K
     
     classDef frontend fill:#2196f3,stroke:#0d47a1,stroke-width:3px,color:white
     classDef api fill:#ff9900,stroke:#e65100,stroke-width:3px,color:white

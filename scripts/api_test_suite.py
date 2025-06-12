@@ -15,14 +15,14 @@ from typing import TYPE_CHECKING, Any
 
 # Dynamic imports - packages installed at runtime if needed
 if TYPE_CHECKING:
-    import aiohttp  # type: ignore[import-not-found, import-untyped]
-    import colorama  # type: ignore[import-untyped]
-    from colorama import Fore, Style  # type: ignore[import-untyped]
+    import aiohttp
+    import colorama
+    from colorama import Fore, Style
 else:
     try:
-        import aiohttp  # type: ignore[import-not-found, import-untyped]
-        import colorama  # type: ignore[import-untyped]
-        from colorama import Fore, Style  # type: ignore[import-untyped]
+        import aiohttp
+        import colorama
+        from colorama import Fore, Style
 
         # Initialize colorama for cross-platform colored output
         colorama.init()
@@ -36,9 +36,9 @@ else:
         subprocess.check_call(  # noqa: S603
             [sys.executable, "-m", "pip", "install", "aiohttp", "colorama"]
         )
-        import aiohttp  # type: ignore[import-not-found, import-untyped]
-        import colorama  # type: ignore[import-untyped]
-        from colorama import Fore, Style  # type: ignore[import-untyped]
+        import aiohttp
+        import colorama
+        from colorama import Fore, Style
 
         colorama.init()
 
@@ -405,8 +405,8 @@ async def main() -> None:
 if __name__ == "__main__":
     # Install required packages if not available
     try:
-        import aiohttp  # type: ignore[import-not-found, import-untyped]
-        import colorama  # type: ignore[import-untyped]
+        import aiohttp
+        import colorama
     except ImportError:
         print("Installing required packages...")
         import subprocess  # noqa: S404
@@ -415,7 +415,7 @@ if __name__ == "__main__":
         subprocess.check_call(  # noqa: S603
             [sys.executable, "-m", "pip", "install", "aiohttp", "colorama"]
         )
-        import aiohttp  # type: ignore[import-not-found, import-untyped]
-        import colorama  # type: ignore[import-untyped]
+        import aiohttp
+        import colorama
 
     asyncio.run(main())

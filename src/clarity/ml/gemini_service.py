@@ -28,12 +28,12 @@ try:
     VERTEXAI_AVAILABLE = True
 except ImportError:
     # Fallback types for testing/development without vertexai
-    vertexai = None  # type: ignore[assignment]
-    GenerationConfig = object  # type: ignore[misc]
-    GenerativeModel = object  # type: ignore[misc]
-    HarmBlockThreshold = object  # type: ignore[misc]
-    HarmCategory = object  # type: ignore[misc]
-    SafetySetting = object  # type: ignore[misc]
+    vertexai = None
+    GenerationConfig = object
+    GenerativeModel = object
+    HarmBlockThreshold = object
+    HarmCategory = object
+    SafetySetting = object
     VERTEXAI_AVAILABLE = False
 from clarity.core.config_aws import get_settings
 from clarity.utils.decorators import resilient_prediction
@@ -146,10 +146,10 @@ class GeminiService:
 
         try:
             # Initialize Vertex AI with project and location
-            vertexai.init(project=self.project_id, location=self.location)  # type: ignore[union-attr]
+            vertexai.init(project=self.project_id, location=self.location)
 
             # Create Gemini 2.5 Pro model instance
-            self.model = GenerativeModel("gemini-2.5-pro")  # type: ignore[misc]
+            self.model = GenerativeModel("gemini-2.5-pro")
 
             self.is_initialized = True
             logger.info("Gemini service initialized successfully")
@@ -183,7 +183,7 @@ class GeminiService:
             prompt = self._create_health_insight_prompt(request)
 
             # Configure generation parameters for health insights
-            generation_config = GenerationConfig(  # type: ignore[misc]
+            generation_config = GenerationConfig(
                 temperature=0.3,  # Lower temperature for more consistent medical insights
                 top_p=0.8,
                 top_k=40,
@@ -193,26 +193,26 @@ class GeminiService:
 
             # Configure safety settings for medical content
             safety_settings = [
-                SafetySetting(  # type: ignore[misc]
-                    category=HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,  # type: ignore[union-attr]
-                    threshold=HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,  # type: ignore[union-attr]
+                SafetySetting(
+                    category=HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
+                    threshold=HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
                 ),
-                SafetySetting(  # type: ignore[misc]
-                    category=HarmCategory.HARM_CATEGORY_HARASSMENT,  # type: ignore[union-attr]
-                    threshold=HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,  # type: ignore[union-attr]
+                SafetySetting(
+                    category=HarmCategory.HARM_CATEGORY_HARASSMENT,
+                    threshold=HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
                 ),
-                SafetySetting(  # type: ignore[misc]
-                    category=HarmCategory.HARM_CATEGORY_HATE_SPEECH,  # type: ignore[union-attr]
-                    threshold=HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,  # type: ignore[union-attr]
+                SafetySetting(
+                    category=HarmCategory.HARM_CATEGORY_HATE_SPEECH,
+                    threshold=HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
                 ),
-                SafetySetting(  # type: ignore[misc]
-                    category=HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,  # type: ignore[union-attr]
-                    threshold=HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,  # type: ignore[union-attr]
+                SafetySetting(
+                    category=HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
+                    threshold=HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
                 ),
             ]
 
             # Generate response using Gemini
-            response = self.model.generate_content(  # type: ignore[union-attr]
+            response = self.model.generate_content(
                 prompt,
                 generation_config=generation_config,
                 safety_settings=safety_settings,
@@ -374,7 +374,7 @@ Respond only with valid JSON."""
         """Parse and validate Gemini response."""
         try:
             # Extract text from response
-            response_text = response.text.strip()  # type: ignore[attr-defined]
+            response_text = response.text.strip()
 
             # SECURITY: Sanitize the AI response
             sanitized_response_text = GeminiService._sanitize_ai_response(response_text)

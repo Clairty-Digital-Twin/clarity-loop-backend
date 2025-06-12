@@ -18,8 +18,8 @@ from clarity.core.exceptions import ServiceError
 class MessagingError(ServiceError):
     """Raised when messaging operations fail."""
 
-    def __init__(self, message: str, **kwargs: dict[str, Any]) -> None:
-        super().__init__(message, error_code="MESSAGING_ERROR", **kwargs)
+    def __init__(self, message: str, **kwargs: Any) -> None:
+        super().__init__(message, error_code="MESSAGING_ERROR", details=kwargs)
 
 
 logger = logging.getLogger(__name__)

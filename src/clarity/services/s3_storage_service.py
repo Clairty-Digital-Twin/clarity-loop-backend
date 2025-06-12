@@ -215,7 +215,7 @@ class S3StorageService(CloudStoragePort):
             upload_params: dict[str, Any] = {
                 "Bucket": self.bucket_name,
                 "Key": s3_key,
-                "Body": json.dumps(raw_data, indent=2),
+                "Body": json.dumps(raw_data, indent=2, default=str),  # Convert UUIDs to strings
                 "ContentType": "application/json",
                 "StorageClass": self.storage_class,
                 "Metadata": {
@@ -246,7 +246,7 @@ class S3StorageService(CloudStoragePort):
                 metadata={
                     "metrics_count": len(health_data.metrics),
                     "upload_source": health_data.upload_source,
-                    "data_size_bytes": len(json.dumps(raw_data)),
+                    "data_size_bytes": len(json.dumps(raw_data, default=str)),
                 },
             )
 

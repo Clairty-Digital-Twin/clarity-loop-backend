@@ -276,9 +276,11 @@ class TestPutItem:
         
         assert item_id == "generated-id"
         
-        # Verify put_item was called
-        mock_table.put_item.assert_called_once()
-        saved_item = mock_table.put_item.call_args[1]["Item"]
+        # Verify put_item was called twice (once for item, once for audit log)
+        assert mock_table.put_item.call_count == 2
+        
+        # Check the first call (actual item)
+        saved_item = mock_table.put_item.call_args_list[0][1]["Item"]
         
         assert saved_item["id"] == "generated-id"
         assert saved_item["name"] == "Test Item"

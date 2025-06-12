@@ -161,10 +161,12 @@ class TestAuditLog:
             mock_logger.info.assert_called_once()
             call_args = mock_logger.info.call_args
             
-            assert "test_operation" in call_args[0][0]
-            assert "test-health-bucket" in call_args[0][0]
-            assert "test/key.json" in call_args[0][0]
-            assert "user-123" in call_args[0][0]
+            # Check the format string and arguments
+            assert call_args[0][0] == "S3 operation: %s on %s/%s by user %s"
+            assert call_args[0][1] == "test_operation"
+            assert call_args[0][2] == "test-health-bucket"
+            assert call_args[0][3] == "test/key.json"
+            assert call_args[0][4] == "user-123"
             
             extra_data = call_args[1]["extra"]["audit_data"]
             assert extra_data["operation"] == "test_operation"
@@ -195,9 +197,10 @@ class TestUploadRawHealthData:
         processing_id = "proc-123"
         user_id = valid_health_data.user_id
         
-        with patch("datetime.datetime") as mock_datetime:
-            mock_datetime.now.return_value.strftime.return_value = "2024/01/15"
-            mock_datetime.now.return_value.isoformat.return_value = "2024-01-15T12:00:00Z"
+        with patch("clarity.services.s3_storage_service.datetime") as mock_datetime:
+            from datetime import datetime, timezone
+            mock_date = datetime(2024, 1, 15, 12, 0, 0, tzinfo=timezone.utc)
+            mock_datetime.now.return_value = mock_date
             
             s3_uri = await s3_service.upload_raw_health_data(
                 user_id, processing_id, valid_health_data
@@ -287,9 +290,11 @@ class TestUploadAnalysisResults:
             "metrics": {"heart_rate_avg": 72, "steps_total": 8500},
         }
         
-        with patch("datetime.datetime") as mock_datetime:
-            mock_datetime.now.return_value.strftime.return_value = "2024/01/15"
-            mock_datetime.now.return_value.isoformat.return_value = "2024-01-15T12:00:00Z"
+        from datetime import datetime, timezone
+        mock_date = datetime(2024, 1, 15, 12, 0, 0, tzinfo=timezone.utc)
+        
+        with patch("clarity.services.s3_storage_service.datetime") as mock_datetime:
+            mock_datetime.now.return_value = mock_date
             
             s3_uri = await s3_service.upload_analysis_results(
                 user_id, processing_id, analysis_results
@@ -413,12 +418,14 @@ class TestListUserFiles:
                     "Key": f"raw_data/2024/01/15/{user_id}/file1.json",
                     "Size": 1024,
                     "LastModified": datetime.now(UTC),
+                    "ETag": '"abc123"',
                     "StorageClass": "STANDARD",
                 },
                 {
                     "Key": f"raw_data/2024/01/14/{user_id}/file2.json",
                     "Size": 2048,
                     "LastModified": datetime.now(UTC),
+                    "ETag": '"def456"',
                     "StorageClass": "STANDARD",
                 },
             ]
@@ -469,7 +476,7 @@ class TestListUserFiles:
         with pytest.raises(S3StorageError) as exc_info:
             await s3_service.list_user_files("user-123")
         
-        assert "Failed to list files" in str(exc_info.value)
+        assert "File listing failed" in str(exc_info.value)
 
 
 class TestDeleteFile:

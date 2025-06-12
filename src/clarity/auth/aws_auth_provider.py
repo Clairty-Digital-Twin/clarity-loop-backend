@@ -137,7 +137,9 @@ class CognitoAuthProvider(IAuthProvider):
                 msg = f"Invalid URL scheme: {parsed_url.scheme}. Only HTTPS is allowed."
                 raise ValueError(msg)
 
-            with urllib.request.urlopen(self.jwks_url) as response:  # noqa: S310  # nosec B310
+            with urllib.request.urlopen(  # noqa: S310  # nosec B310
+                self.jwks_url
+            ) as response:
                 jwks = json.loads(response.read())
                 self._jwks_cache = jwks
                 self._jwks_cache_time = current_time

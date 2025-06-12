@@ -7,6 +7,7 @@
 ### Prerequisites
 
 **Required AWS Services:**
+
 - **ECS Fargate** - Container orchestration
 - **ECR** - Container registry  
 - **DynamoDB** - Health data storage
@@ -15,6 +16,7 @@
 - **CloudWatch** - Logging & monitoring
 
 **Required Permissions:**
+
 ```json
 {
   "Version": "2012-10-17",
@@ -38,6 +40,7 @@
 ### 1. **Environment Setup**
 
 **Production Environment Variables:**
+
 ```bash
 export AWS_REGION=us-east-1
 export ECR_REPOSITORY=clarity-backend
@@ -46,6 +49,7 @@ export SERVICE_NAME=clarity-backend-service
 ```
 
 **Secrets Configuration:**
+
 ```bash
 # Set these in GitHub Secrets for CI/CD
 AWS_ACCESS_KEY_ID=<your-key>
@@ -56,6 +60,7 @@ GEMINI_API_KEY=<your-gemini-key>
 ### 2. **Deploy Infrastructure**
 
 **Create ECS Cluster:**
+
 ```bash
 aws ecs create-cluster \
   --cluster-name $CLUSTER_NAME \
@@ -64,6 +69,7 @@ aws ecs create-cluster \
 ```
 
 **Create ECR Repository:**
+
 ```bash
 aws ecr create-repository \
   --repository-name $ECR_REPOSITORY \
@@ -71,6 +77,7 @@ aws ecr create-repository \
 ```
 
 **Create Task Execution Role:**
+
 ```bash
 aws iam create-role \
   --role-name ecsTaskExecutionRole \
@@ -84,6 +91,7 @@ aws iam attach-role-policy \
 ### 3. **Deploy Application**
 
 **Manual Deployment:**
+
 ```bash
 # Build and push image
 docker build -t $ECR_REPOSITORY .
@@ -102,6 +110,7 @@ aws ecs create-service \
 ```
 
 **Automated Deployment (Recommended):**
+
 ```bash
 # Push to main branch triggers automatic deployment
 git push origin main
@@ -112,8 +121,9 @@ git push origin main
 ### **GitHub Actions Workflow**
 
 **Trigger Events:**
+
 - Push to `main` → **Production deployment**
-- Push to `develop` → **Development deployment** 
+- Push to `develop` → **Development deployment**
 - Pull requests → **Quality gates only**
 
 **Pipeline Stages:**
@@ -161,6 +171,7 @@ flowchart TD
 ```
 
 **Quality Gates:**
+
 - **Code Coverage**: >90% required
 - **Security Scan**: Zero high/critical vulnerabilities
 - **Type Safety**: MyPy strict mode passing
@@ -169,6 +180,7 @@ flowchart TD
 ## 🛡️ **Security & Monitoring**
 
 ### **Security Features**
+
 - **Container Security**: Non-root user, minimal base image
 - **Network Security**: VPC with private subnets
 - **Data Encryption**: At rest (DynamoDB/S3) and in transit (TLS 1.3)
@@ -176,12 +188,14 @@ flowchart TD
 - **Vulnerability Scanning**: Trivy security scanning
 
 ### **Monitoring Stack**
+
 - **Health Checks**: `/health` endpoint every 30 seconds
 - **Logging**: CloudWatch with structured JSON logs
 - **Metrics**: CPU, memory, request latency tracking
 - **Alerts**: Slack/email notifications for critical issues
 
 ### **Performance Characteristics**
+
 - **Container Resources**: 1 vCPU, 4GB RAM
 - **Auto Scaling**: 2-10 instances based on CPU/memory
 - **Response Time**: <500ms P95 for health endpoints
@@ -190,6 +204,7 @@ flowchart TD
 ## 🔄 **Rollback Procedures**
 
 ### **Automated Rollback**
+
 ```bash
 # Rollback to previous task definition
 aws ecs update-service \
@@ -199,6 +214,7 @@ aws ecs update-service \
 ```
 
 ### **Manual Rollback**
+
 ```bash
 # Rollback to specific version
 aws ecs update-service \
@@ -215,6 +231,7 @@ aws ecs update-service \
 ### **Common Issues**
 
 **Container Won't Start:**
+
 ```bash
 # Check task logs
 aws logs tail /ecs/clarity-backend --follow
@@ -224,6 +241,7 @@ aws ecs describe-tasks --cluster $CLUSTER_NAME --tasks <task-arn>
 ```
 
 **Health Check Failures:**
+
 ```bash
 # Test health endpoint directly
 curl -f http://<container-ip>:8000/health
@@ -233,6 +251,7 @@ aws logs filter-log-events --log-group-name /ecs/clarity-backend --filter-patter
 ```
 
 **Performance Issues:**
+
 ```bash
 # Check resource utilization
 aws cloudwatch get-metric-statistics \
@@ -248,13 +267,15 @@ aws cloudwatch get-metric-statistics \
 ## 📊 **Environment Configuration**
 
 ### **Production Environment**
+
 - **Cluster**: `clarity-backend-cluster`
-- **Service**: `clarity-backend-service` 
+- **Service**: `clarity-backend-service`
 - **Desired Count**: 2 instances
 - **Load Balancer**: Application Load Balancer with health checks
 - **Auto Scaling**: Target 70% CPU utilization
 
 ### **Development Environment**
+
 - **Cluster**: `clarity-backend-dev`
 - **Service**: `clarity-backend-dev-service`
 - **Desired Count**: 1 instance
@@ -272,4 +293,4 @@ aws cloudwatch get-metric-statistics \
 
 **Production Status**: ✅ Ready for deployment  
 **Last Updated**: January 2025  
-**Maintained By**: CLARITY-AI Platform Team 
+**Maintained By**: CLARITY-AI Platform Team

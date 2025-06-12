@@ -65,18 +65,21 @@ flowchart TD
 ## Core Capabilities
 
 ### 🔬 **PAT Foundation Model Analysis**
+
 - **Sleep Quality Metrics**: Efficiency, onset latency, wake episodes, total sleep time
 - **Circadian Rhythm Assessment**: 24-hour pattern regularity and phase alignment  
 - **Activity Fragmentation**: Movement pattern consistency and disruption detection
 - **Population-Normalized Scores**: Individual metrics compared to NHANES population data
 
 ### 📊 **Multi-Modal Health Processing**
+
 - **Heart Rate Analysis**: Resting HR, variability (HRV), exercise response patterns
 - **Respiratory Monitoring**: Rate patterns, sleep-related breathing irregularities
 - **Activity Intelligence**: Step patterns, energy expenditure, exercise recognition
 - **Sleep Stage Detection**: REM, deep, light sleep proportions and timing
 
 ### 💬 **Conversational Health Insights**
+
 - **Natural Language Explanations**: Technical metrics translated to plain English
 - **Personalized Recommendations**: Actionable suggestions based on data patterns  
 - **Trend Analysis**: Week-over-week changes with clinical context
@@ -149,6 +152,7 @@ flowchart LR
 CLARITY-AI leverages peer-reviewed research for clinical-grade analysis:
 
 **PAT Model**: ["AI Foundation Models for Wearable Movement Data in Mental Health Research"](https://doi.org/10.48550/arXiv.2411.15240)  
+
 - **Authors**: Franklin Y. Ruan, Aiwei Zhang, Jenny Oh, SouYoung Jin, Nicholas C. Jacobson (Dartmouth College)
 - **Training Data**: NHANES 2003-2014 actigraphy data from 29,307 participants
 - **Architecture**: Transformer-based with specialized attention for temporal health patterns
@@ -216,6 +220,7 @@ The platform processes your Apple Health data through this pipeline:
 ## Model Performance
 
 **PAT Foundation Model**:
+
 - **Architecture**: Transformer with patch embeddings optimized for 1-week actigraphy windows
 - **Training Scale**: 29,307 participants across multiple NHANES cycles (2003-2014)
 - **Inference Speed**: <2 seconds for 7-day analysis on standard hardware

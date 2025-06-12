@@ -24,25 +24,30 @@ We're building something unprecedented - but we're doing it RIGHT. This is your 
 We're researching integration with cutting-edge tech that's reshaping healthcare:
 
 ### **🤖 Advanced AI Models (2025)**
+
 - [Google MedGemma](https://medgemma.org/) - Specialized medical AI models for text and image analysis, launched May 2025
 - [Google AMIE with Vision](https://research.google/blog/amie-gains-vision-a-research-ai-agent-for-multi-modal-diagnostic-dialogue/) - Multimodal diagnostic conversational AI
 - [Meta's OpenBioLLM](https://ai.meta.com/blog/saama-data-driven-care-built-with-llama/) - Llama 3-based models for clinical trials, drug discovery, genomics analysis
 - [OpenAI's Open Weights Model](https://www.thehindu.com/sci-tech/technology/openai-rolls-out-o3-pro-model-ceo-sam-altman-says-open-weights-model-needs-more-time/article69681553.ece) - First open model since GPT-2, delayed to summer 2025 but "will be very worth the wait"
 - **Our Research**: Multi-modal AI fusion for personalized mental health insights
 
-### **🏥 Electronic Health Record Integration** 
+### **🏥 Electronic Health Record Integration**
+
 **THE HOLY GRAIL: Direct Epic Integration** - 78% of US patients (280M+ records)
+
 - [Epic's FHIR API](https://fhir.epic.com/) - 100+ production-ready endpoints
 - [Cerner SMART on FHIR](https://engineering.cerner.com/smart-on-fhir/) - Clinical decision support
-- **Epic FHIR Goldmine**: `Observation (Social History)`, `Condition (Problems)`, `CarePlan`, `Goal (Patient)` 
+- **Epic FHIR Goldmine**: `Observation (Social History)`, `Condition (Problems)`, `CarePlan`, `Goal (Patient)`
 - **Our Research**: Direct EHR pulls → Real psychiatric history + treatment plans
 
 ### **🥽 AR/VR Digital Therapeutics**
+
 - [Meta Quest for Healthcare](https://about.fb.com/news/2023/08/meta-quest-for-business-healthcare/) - Immersive therapy platforms
 - [Apple Vision Pro Health Apps](https://developer.apple.com/visionos/health/) - Spatial computing for wellness
 - **Our Research**: VR-integrated mood tracking and therapeutic interventions
 
 ### **🧠 Brain-Computer Interfaces (BCIs)**
+
 - [Precision Neuroscience](https://precisionneuro.io/) - Ex-Neuralink BCI company, FDA-cleared Layer 7 interface, 37 patients implanted
 - [Neuralink's Latest Updates](https://neuralink.com/) - Direct neural interface research
 - [Meta's EMG Neural Interfaces](https://about.fb.com/news/2021/03/inside-facebook-reality-labs-wrist-based-interaction-for-the-next-computing-platform/) - Non-invasive neural signal detection
@@ -53,24 +58,29 @@ We're researching integration with cutting-edge tech that's reshaping healthcare
 ## 🛠 **CONTRIBUTION LEVELS**
 
 ### **🟢 LEVEL 1: FOUNDATION (Start Here)**
+
 Perfect for new contributors or those with 120 days of coding experience!
 
 **Code Quality & Documentation:**
+
 - Fix typos and improve documentation clarity
 - Add code comments and docstrings
 - Update README examples and setup instructions
 - Improve test coverage (currently 57%, targeting 85%)
 
 **Research Validation:**
+
 - Verify PAT (Pretrained Actigraphy Transformer) model outputs
 - Test actigraphy processing against known datasets
 - Validate heart rate and movement detection algorithms
 - Cross-reference our analysis with published sleep research
 
 ### **🟡 LEVEL 2: DEVELOPMENT**
+
 Ready to dive into the codebase!
 
 **🔥 Epic EHR Integration Challenge (DEVELOPER GOLDMINE):**
+
 ```python
 # Direct access to 280M+ patient records via Epic's FHIR API
 GET /Patient/{id}/Observation?category=social-history      # Mental health history
@@ -78,32 +88,38 @@ GET /Patient/{id}/Condition?category=encounter-diagnosis   # Psychiatric conditi
 GET /Patient/{id}/CarePlan?category=assess-plan           # Treatment plans
 GET /Patient/{id}/Goal?lifecycle-status=active            # Therapeutic goals
 ```
+
 - **Build**: FHIR R4 client with Epic's OAuth 2.0 flow
 - **Integrate**: Merge EHR psychiatric data with actigraphy analysis
 - **Code**: Real-time patient data sync pipeline (research-grade only)
 
 **Feature Development:**
+
 - Implement new actigraphy processing algorithms
 - Add support for additional wearable devices
 - Build data visualization components
 - Create API endpoints for new health metrics
 
 **Research Implementation:**
+
 - Integrate new research papers into our models
 - Implement validation studies from literature
 - Add support for new biometric data types
 - Build research data export tools
 
 ### **🔴 LEVEL 3: RESEARCH & INNOVATION**
+
 Shape the future of digital psychiatry!
 
 **Advanced AI Research:**
+
 - Develop novel multi-modal fusion architectures
 - Research privacy-preserving federated learning
 - Explore transformer architectures for health data
 - Investigate explainable AI for clinical insights
 
 **Clinical Research Partnerships:**
+
 - Collaborate with academic institutions
 - Design validation studies with medical professionals
 - Contribute to research publications
@@ -114,11 +130,13 @@ Shape the future of digital psychiatry!
 ## 🏗 **DEVELOPMENT SETUP**
 
 ### **Prerequisites**
+
 - Python 3.11+
 - AWS CLI (for cloud services)
 - Git (obviously!)
 
 ### **Quick Start**
+
 ```bash
 # Clone the repository
 git clone https://github.com/your-org/clarity-loop-backend.git
@@ -136,6 +154,7 @@ make typecheck
 ```
 
 ### **Project Structure**
+
 ```
 src/clarity/
 ├── api/              # FastAPI endpoints
@@ -150,12 +169,14 @@ src/clarity/
 ## 📋 **CODING STANDARDS**
 
 ### **Code Quality Requirements**
+
 - **Type Safety**: All functions must have type annotations
 - **Testing**: Minimum 85% test coverage for new code
 - **Documentation**: Docstrings required for all public functions
 - **Linting**: Code must pass `ruff` and `mypy` checks
 
 ### **Research Standards**
+
 - **Reproducibility**: All ML experiments must be reproducible
 - **Documentation**: Research decisions must be documented
 - **Validation**: New algorithms need validation against known datasets
@@ -166,11 +187,13 @@ src/clarity/
 ## 🤝 **HOW TO CONTRIBUTE**
 
 ### **1. Pick Your Adventure**
+
 - Browse [Issues](https://github.com/your-org/clarity-loop-backend/issues) labeled `good-first-issue`
 - Check [Research Tasks](https://github.com/your-org/clarity-loop-backend/projects) for academic work
 - Propose new features via [Discussions](https://github.com/your-org/clarity-loop-backend/discussions)
 
 ### **2. Development Workflow**
+
 ```bash
 # Create feature branch
 git checkout -b feature/your-awesome-feature
@@ -187,6 +210,7 @@ git push origin feature/your-awesome-feature
 ```
 
 ### **3. Pull Request Guidelines**
+
 - **Clear Description**: Explain what you built and why
 - **Research Context**: Link to relevant papers or studies
 - **Testing**: Include tests for new functionality
@@ -197,13 +221,16 @@ git push origin feature/your-awesome-feature
 ## 🔬 **RESEARCH OPPORTUNITIES**
 
 ### **Active Research Areas**
+
 - **Sleep Pattern Analysis**: Improving circadian rhythm detection
 - **Multi-Modal Fusion**: Combining actigraphy, heart rate, and environmental data
 - **Privacy-Preserving ML**: Federated learning for health data
 - **Explainable AI**: Making AI decisions interpretable for clinicians
 
 ### **Academic Partnerships**
+
 We welcome collaborations with:
+
 - Psychology and psychiatry research labs
 - Computer science ML/AI research groups
 - Digital health and mHealth researchers
@@ -214,10 +241,12 @@ We welcome collaborations with:
 ## 📖 **LEARNING RESOURCES**
 
 ### **Digital Health Background**
+
 - [Digital Medicine Society (DiMe)](https://www.dimesociety.org/) - Digital health standards
 - [mHealth Evidence Database](https://www.evidencein.mhealth.org/) - Research on mobile health
 
 ### **Technical Skills**
+
 - [FastAPI Documentation](https://fastapi.tiangolo.com/) - Our API framework
 - [Transformers for Time Series](https://huggingface.co/docs/transformers/main/en/tasks/time_series_forecasting) - ML for health data
 - [FHIR Standard](https://www.hl7.org/fhir/) - Healthcare data exchange
@@ -227,6 +256,7 @@ We welcome collaborations with:
 ## 🎯 **RECOGNITION**
 
 ### **Contributor Types**
+
 - **🔧 Code Contributors**: Direct code improvements
 - **📚 Research Contributors**: Academic research and validation
 - **📖 Documentation Contributors**: Improved clarity and examples
@@ -234,7 +264,9 @@ We welcome collaborations with:
 - **💡 Visionaries**: Proposing new research directions
 
 ### **Attribution**
+
 All contributors are recognized in:
+
 - GitHub contributors list
 - Research paper acknowledgments (when applicable)
 - Project documentation credits
@@ -244,12 +276,14 @@ All contributors are recognized in:
 ## ⚖️ **ETHICAL GUIDELINES**
 
 ### **Research Ethics**
+
 - **Privacy First**: All health data must be anonymized
 - **Informed Consent**: Users must understand data usage
 - **Bias Awareness**: Actively work to reduce algorithmic bias
 - **Open Science**: Share research findings with the community
 
 ### **Clinical Responsibility**
+
 - **Not Medical Advice**: Our software provides research insights only
 - **Professional Oversight**: Clinical applications require medical supervision
 - **Safety First**: Any concerning patterns should be reported to professionals
@@ -266,4 +300,4 @@ This isn't just another health app - we're researching the future of personalize
 
 *"The best way to predict the future is to invent it."* - Alan Kay
 
-Let's invent the future of mental healthcare. Together. 🧠✨ 
+Let's invent the future of mental healthcare. Together. 🧠✨

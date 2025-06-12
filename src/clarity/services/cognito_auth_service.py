@@ -601,8 +601,8 @@ class CognitoAuthenticationService:
                 created_at=datetime.now(UTC),
             ),
             tokens=TokenResponse(
-                access_token="",  # Empty for MFA flow
-                refresh_token="",  # Empty for MFA flow
+                access_token="",  # Empty for MFA flow  # nosec B106
+                refresh_token="",  # Empty for MFA flow  # nosec B106
                 token_type=BEARER_TOKEN_TYPE,
                 expires_in=0,
                 scope="mfa_pending",

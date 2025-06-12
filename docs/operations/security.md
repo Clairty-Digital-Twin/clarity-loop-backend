@@ -5,6 +5,7 @@
 ## 🛡️ **Security Overview**
 
 ### **Compliance Standards**
+
 - **HIPAA** - Health Insurance Portability and Accountability Act
 - **SOC 2 Type II** - AWS infrastructure compliance
 - **ISO 27001** - Information security management
@@ -74,6 +75,7 @@ flowchart TD
 ### **AWS Cognito Integration**
 
 **User Pool Configuration:**
+
 ```json
 {
   "UserPoolId": "us-east-1_1G5jYI8FO",
@@ -101,6 +103,7 @@ flowchart TD
 ```
 
 **JWT Token Validation:**
+
 ```python
 # FastAPI dependency for secure endpoints
 @app.dependency
@@ -124,12 +127,14 @@ async def verify_token(token: str = Depends(oauth2_scheme)):
 ### **Role-Based Access Control (RBAC)**
 
 **User Roles:**
+
 - **Patient** - Own health data access only
 - **Clinician** - Patient data with consent
 - **Researcher** - Anonymized aggregate data
 - **Admin** - System configuration access
 
 **Permission Matrix:**
+
 ```python
 PERMISSIONS = {
     "patient": [
@@ -159,6 +164,7 @@ PERMISSIONS = {
 ### **Encryption at Rest**
 
 **DynamoDB Encryption:**
+
 ```bash
 # Enable customer-managed KMS encryption
 aws dynamodb put-item \
@@ -175,6 +181,7 @@ aws dynamodb put-item \
 ```
 
 **S3 Bucket Encryption:**
+
 ```json
 {
   "Rules": [
@@ -192,6 +199,7 @@ aws dynamodb put-item \
 ### **Encryption in Transit**
 
 **TLS Configuration:**
+
 ```nginx
 # Application Load Balancer SSL Policy
 ssl_protocols TLSv1.3;
@@ -205,6 +213,7 @@ add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" alway
 ```
 
 **API Client Configuration:**
+
 ```python
 # Enforce TLS 1.3 for all external API calls
 import ssl
@@ -222,6 +231,7 @@ async with httpx.AsyncClient(verify=ssl_context) as client:
 ### **Security Event Logging**
 
 **CloudTrail Configuration:**
+
 ```json
 {
   "TrailName": "clarity-security-audit",
@@ -248,6 +258,7 @@ async with httpx.AsyncClient(verify=ssl_context) as client:
 ```
 
 **Security Metrics:**
+
 ```python
 # Custom security metrics
 SECURITY_METRICS = {
@@ -262,6 +273,7 @@ SECURITY_METRICS = {
 ### **Intrusion Detection**
 
 **AWS GuardDuty Integration:**
+
 ```bash
 # Enable GuardDuty for threat detection
 aws guardduty create-detector \
@@ -270,6 +282,7 @@ aws guardduty create-detector \
 ```
 
 **Custom Security Rules:**
+
 ```python
 # Real-time security monitoring
 async def security_middleware(request: Request, call_next):
@@ -297,26 +310,31 @@ async def security_middleware(request: Request, call_next):
 ### **Technical Safeguards**
 
 **Access Control:**
+
 - Unique user identification (Cognito User Pools)
 - Automatic logoff after 30 minutes inactivity
 - Encryption for data at rest and in transit
 
 **Audit Controls:**
+
 - Comprehensive logging of all data access
 - CloudTrail for API-level auditing
 - Regular access log reviews
 
 **Integrity Controls:**
+
 - Electronic signature validation
 - Data integrity checks via checksums
 - Version control for data modifications
 
 **Person or Entity Authentication:**
+
 - Multi-factor authentication available
 - Strong password requirements
 - Session token expiration
 
 **Transmission Security:**
+
 - TLS 1.3 encryption for all communications
 - VPN access for administrative functions
 - Network segmentation and firewalls
@@ -324,16 +342,19 @@ async def security_middleware(request: Request, call_next):
 ### **Administrative Safeguards**
 
 **Security Officer:**
+
 - Designated security officer responsible for HIPAA compliance
 - Regular security training for all team members
 - Incident response procedures
 
 **Access Management:**
+
 - Workforce access procedures
 - Information access management
 - Security awareness training
 
 **Contingency Plan:**
+
 - Data backup procedures
 - Disaster recovery plan
 - Emergency access procedures
@@ -341,6 +362,7 @@ async def security_middleware(request: Request, call_next):
 ### **Physical Safeguards**
 
 **AWS Data Center Security:**
+
 - 24/7 physical security monitoring
 - Biometric access controls
 - Environmental controls
@@ -351,18 +373,21 @@ async def security_middleware(request: Request, call_next):
 ### **Security Incident Classification**
 
 **Critical (SEV-1):**
+
 - Data breach or unauthorized access
 - Malware/ransomware detection
 - System compromise
 - **Response Time**: Immediate (15 minutes)
 
 **High (SEV-2):**
+
 - Failed authentication spikes
 - Suspicious API activity
 - DDoS attacks
 - **Response Time**: 1 hour
 
 **Medium (SEV-3):**
+
 - Security configuration changes
 - Failed security scans
 - **Response Time**: 4 hours
@@ -372,6 +397,7 @@ async def security_middleware(request: Request, call_next):
 **Detection → Assessment → Containment → Eradication → Recovery → Lessons Learned**
 
 **Security Incident Response Team:**
+
 - **Incident Commander** - Platform Engineering Lead
 - **Security Lead** - CISO or Security Engineer
 - **Communications Lead** - Product Manager
@@ -380,11 +406,13 @@ async def security_middleware(request: Request, call_next):
 ### **Breach Notification Procedures**
 
 **HIPAA Breach Notification Timeline:**
+
 - **60 days** - Notification to affected individuals
 - **60 days** - Notification to HHS Office for Civil Rights
 - **Next business day** - Media notification (if >500 individuals affected)
 
 **Notification Template:**
+
 ```
 Subject: Important Security Notification - CLARITY-AI Platform
 
@@ -412,6 +440,7 @@ Contact Information:
 ### **Container Security**
 
 **Dockerfile Security Best Practices:**
+
 ```dockerfile
 # Use minimal base image
 FROM python:3.11-slim
@@ -437,6 +466,7 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
 ```
 
 **Security Context:**
+
 ```json
 {
   "securityContext": {
@@ -455,6 +485,7 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
 ### **Network Security**
 
 **Security Groups:**
+
 ```json
 {
   "SecurityGroupRules": [
@@ -477,6 +508,7 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
 ```
 
 **VPC Configuration:**
+
 ```bash
 # Create VPC with private subnets
 aws ec2 create-vpc --cidr-block 10.0.0.0/16
@@ -488,6 +520,7 @@ aws ec2 create-subnet --vpc-id vpc-xxx --cidr-block 10.0.101.0/24  # Public (NAT
 ### **Environment Variables Security**
 
 **Secrets Management:**
+
 ```python
 # Use AWS Secrets Manager for sensitive configuration
 import boto3
@@ -507,12 +540,14 @@ DATABASE_PASSWORD = get_secret("clarity/database-password")
 ### **Vulnerability Scanning**
 
 **Container Image Scanning:**
+
 ```bash
 # Trivy security scan in CI/CD
 trivy image --severity HIGH,CRITICAL clarity-backend:latest
 ```
 
 **Dependency Scanning:**
+
 ```bash
 # Check for known vulnerabilities
 safety check --json --output safety-report.json
@@ -522,12 +557,14 @@ bandit -r src/ -f json -o bandit-report.json
 ### **Penetration Testing**
 
 **Annual Penetration Testing:**
+
 - External penetration testing by certified firm
 - API security testing
 - Infrastructure vulnerability assessment
 - Social engineering assessment
 
 **Security Code Review:**
+
 - Static application security testing (SAST)
 - Dynamic application security testing (DAST)
 - Interactive application security testing (IAST)
@@ -565,4 +602,4 @@ bandit -r src/ -f json -o bandit-report.json
 **Security Status**: ✅ HIPAA Compliant  
 **Last Security Audit**: December 2024  
 **Next Penetration Test**: June 2025  
-**Compliance Officer**: security@clarity-ai.com 
+**Compliance Officer**: <security@clarity-ai.com>

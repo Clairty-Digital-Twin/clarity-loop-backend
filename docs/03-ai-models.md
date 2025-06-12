@@ -159,6 +159,7 @@ flowchart TD
 ### Model Specifications
 
 **Architecture Details:**
+
 - **Model Type**: Transformer with temporal encoding
 - **Input Size**: 10,080 time points (7 days × 24 hours × 60 minutes)
 - **Context Length**: Up to 2 weeks of continuous data
@@ -168,12 +169,14 @@ flowchart TD
 ### Input Processing
 
 **Data Preprocessing Pipeline:**
+
 1. **Temporal Alignment**: All data resampled to 1-minute intervals
 2. **Outlier Removal**: Physiological bounds filtering
 3. **Normalization**: Population-based z-scores using NHANES data
 4. **Feature Engineering**: Movement proxy vector generation
 
 **Input Format:**
+
 ```python
 {
   "actigraphy_sequence": [0.1, 0.3, 2.1, ...],  # 10,080 points
@@ -189,6 +192,7 @@ flowchart TD
 ### Model Outputs
 
 **Sleep Analysis Results:**
+
 ```python
 {
   "sleep_quality_score": 0.78,        # 0-1 scale
@@ -215,13 +219,15 @@ flowchart TD
 
 ### Performance Metrics
 
-**⚠️ IMPORTANT DISCLAIMER**: 
+**⚠️ IMPORTANT DISCLAIMER**:
+
 - **NOT FDA APPROVED** or clinically validated for medical use
 - **RESEARCH AND EDUCATIONAL PURPOSES ONLY**
 - **NOT for medical diagnosis or treatment decisions**
 - Open source project using academic research models
 
 **Technical Performance (Development Environment)**:
+
 - **Inference Time**: ~15 seconds for 7-day analysis
 - **Memory Usage**: 2.1GB peak during inference
 - **Batch Processing**: Up to 50 users simultaneously
@@ -229,12 +235,14 @@ flowchart TD
 ### Research Foundation
 
 **Academic Basis**:
+
 - Based on Dartmouth College PAT research (CC BY-4.0)
 - Uses publicly available pretrained transformer weights
 - Implements academic methodologies for educational demonstration
 - **No clinical validation studies have been conducted**
 
 **Study Context**:
+
 - PAT research paper: "AI Foundation Models for Wearable Movement Data"
 - Original model trained on research datasets
 - Our implementation is for demonstration and learning purposes only
@@ -244,11 +252,13 @@ flowchart TD
 ## 2. Gemini AI Integration
 
 ### Overview
+
 Google's Gemini Pro provides the natural language processing layer for CLARITY, enabling conversational health insights and personalized recommendations.
 
 ### Integration Architecture
 
 **Service Layer:**
+
 ```python
 class GeminiService:
     def __init__(self):
@@ -264,6 +274,7 @@ class GeminiService:
 ### Prompt Engineering
 
 **Health Data Context Prompt:**
+
 ```python
 HEALTH_ANALYSIS_PROMPT = """
 You are a health AI assistant analyzing wearable device data. 
@@ -294,6 +305,7 @@ Keep responses conversational but scientifically accurate.
 ### Response Processing
 
 **Structured Output Parsing:**
+
 ```python
 def parse_gemini_response(response_text):
     return {
@@ -308,6 +320,7 @@ def parse_gemini_response(response_text):
 ### Conversation Management
 
 **Multi-turn Context:**
+
 ```python
 class ConversationManager:
     def __init__(self):
@@ -338,6 +351,7 @@ class ConversationManager:
 ### Multi-modal Integration
 
 **Fusion Architecture:**
+
 ```python
 class HealthFusionModel:
     def __init__(self):
@@ -359,6 +373,7 @@ class HealthFusionModel:
 ### Feature Engineering
 
 **Time-series Features:**
+
 ```python
 def extract_temporal_features(time_series_data):
     return {
@@ -394,18 +409,21 @@ def extract_temporal_features(time_series_data):
 **⚠️ RESEARCH/EDUCATIONAL USE ONLY**
 
 **What We Do**:
+
 - Load pretrained PAT transformer weights from academic research
 - Implement preprocessing pipeline per published specifications
 - Provide API wrapper for demonstration purposes
 - Follow CC BY-4.0 license requirements for attribution
 
 **What We DON'T Do**:
+
 - Train models from scratch
 - Collect proprietary health datasets  
 - Conduct clinical validation studies
 - Provide medical-grade analysis
 
 **Technical Implementation**:
+
 - Model loading and inference pipeline
 - Data preprocessing and normalization
 - API endpoints for educational demos
@@ -414,6 +432,7 @@ def extract_temporal_features(time_series_data):
 ### Training Methodology
 
 **PAT Training Process:**
+
 ```python
 def train_pat_model():
     # 1. Self-supervised pretraining on activity patterns
@@ -440,11 +459,13 @@ def train_pat_model():
 ### Model Validation
 
 **Cross-validation Strategy:**
+
 - **Temporal Splits**: Train on 2022 data, validate on 2023
 - **User-stratified**: Ensure no user appears in both train/test
 - **Device-stratified**: Balanced representation across device types
 
 **Validation Metrics:**
+
 ```python
 validation_metrics = {
     "accuracy": 0.924,
@@ -463,6 +484,7 @@ validation_metrics = {
 ### Production Infrastructure
 
 **Model Serving Architecture:**
+
 ```python
 class ModelServingPipeline:
     def __init__(self):
@@ -492,12 +514,14 @@ class ModelServingPipeline:
 ### Performance Optimization
 
 **Model Optimization Techniques:**
+
 - **Quantization**: FP16 precision for 2x speedup
 - **Batch Processing**: Dynamic batching for throughput
 - **Caching**: Redis cache for common patterns
 - **GPU Acceleration**: CUDA-optimized inference
 
 **Production Metrics:**
+
 ```python
 production_performance = {
     "p50_latency_ms": 850,
@@ -516,6 +540,7 @@ production_performance = {
 ### Real-time Monitoring
 
 **Model Drift Detection:**
+
 ```python
 class ModelDriftMonitor:
     def __init__(self):
@@ -533,6 +558,7 @@ class ModelDriftMonitor:
 ```
 
 **Performance Tracking:**
+
 - **Daily accuracy reports** against held-out validation set
 - **User feedback integration** (thumbs up/down on insights)
 - **Clinical outcome correlation** where available
@@ -541,6 +567,7 @@ class ModelDriftMonitor:
 ### Continuous Learning
 
 **Model Update Pipeline:**
+
 ```python
 async def continuous_learning_pipeline():
     # 1. Collect new labeled data
@@ -570,16 +597,19 @@ async def continuous_learning_pipeline():
 ### Current Research Projects
 
 **1. Multimodal Health Prediction**
+
 - Integrating wearable data with smartphone sensors
 - Social context (calendar, location) for stress prediction
 - Environmental factors (weather, air quality) correlation
 
 **2. Personalized Model Adaptation**
+
 - Few-shot learning for individual sleep patterns
 - Transfer learning across similar user profiles
 - Federated learning for privacy-preserving personalization
 
 **3. Clinical Decision Support**
+
 - Early detection of sleep disorders
 - Mental health state prediction
 - Medication adherence tracking
@@ -587,21 +617,25 @@ async def continuous_learning_pipeline():
 ### Future Roadmap
 
 **Q1 2025**:
+
 - PAT v3.0 with attention mechanism improvements
 - Real-time anomaly detection
 - Multi-device fusion (Apple Watch + Oura + CGM)
 
 **Q2 2025**:
+
 - Predictive health modeling (7-day forecasts)
 - Integration with electronic health records
 - Clinical trial partnership for validation
 
 **Q3 2025**:
+
 - Enhanced sleep disorder detection
 - Multi-device data fusion improvements
 - Advanced circadian rhythm analysis
 
 **Q4 2025**:
+
 - Real-time health alert system
 - Predictive health modeling
 - Integration with additional wearable devices
@@ -620,12 +654,14 @@ async def continuous_learning_pipeline():
 ## System Architecture
 
 **Technical Implementation:**
+
 - **PAT Model Loading**: Academic weights from Dartmouth research
 - **Data Processing**: NHANES-normalized preprocessing pipeline  
 - **Natural Language**: Google Gemini integration for conversational insights
 - **Storage**: AWS DynamoDB with health data encryption
 
 **Development Status:**
+
 - **Tests**: 807/810 passing (99.6% success rate)
 - **Coverage**: 57% code coverage (target: 85%)
 - **API**: 44 endpoints for health data processing
@@ -633,4 +669,4 @@ async def continuous_learning_pipeline():
 
 ---
 
-**Next**: Read [Deployment Guide](../operations/deployment.md) for production setup instructions 
+**Next**: Read [Deployment Guide](../operations/deployment.md) for production setup instructions

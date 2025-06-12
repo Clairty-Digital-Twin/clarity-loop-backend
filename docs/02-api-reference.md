@@ -21,7 +21,7 @@ Authorization: Bearer <jwt_token>
 ## Base URL
 
 - **Production**: `https://api.clarity-health.com`
-- **Staging**: `https://staging-api.clarity-health.com` 
+- **Staging**: `https://staging-api.clarity-health.com`
 - **Local**: `http://localhost:8000`
 
 ---
@@ -29,9 +29,11 @@ Authorization: Bearer <jwt_token>
 ## Authentication Endpoints
 
 ### POST `/api/v1/auth/register`
+
 Create a new user account.
 
 **Request Body:**
+
 ```json
 {
   "email": "user@example.com",
@@ -42,6 +44,7 @@ Create a new user account.
 ```
 
 **Response (201):**
+
 ```json
 {
   "user_id": "uuid-here",
@@ -51,9 +54,11 @@ Create a new user account.
 ```
 
 ### POST `/api/v1/auth/login`
+
 Authenticate user and get access token.
 
 **Request Body:**
+
 ```json
 {
   "email": "user@example.com", 
@@ -62,6 +67,7 @@ Authenticate user and get access token.
 ```
 
 **Response (200):**
+
 ```json
 {
   "access_token": "jwt_token_here",
@@ -72,11 +78,13 @@ Authenticate user and get access token.
 ```
 
 ### POST `/api/v1/auth/logout`
+
 Invalidate current session.
 
 **Headers:** `Authorization: Bearer <token>`
 
 **Response (200):**
+
 ```json
 {
   "message": "Successfully logged out"
@@ -84,9 +92,11 @@ Invalidate current session.
 ```
 
 ### POST `/api/v1/auth/refresh`
+
 Get new access token using refresh token.
 
 **Request Body:**
+
 ```json
 {
   "refresh_token": "refresh_token_here"
@@ -94,6 +104,7 @@ Get new access token using refresh token.
 ```
 
 **Response (200):**
+
 ```json
 {
   "access_token": "new_jwt_token",
@@ -102,9 +113,11 @@ Get new access token using refresh token.
 ```
 
 ### POST `/api/v1/auth/verify`
+
 Verify email address.
 
 **Request Body:**
+
 ```json
 {
   "email": "user@example.com",
@@ -113,9 +126,11 @@ Verify email address.
 ```
 
 ### POST `/api/v1/auth/reset-password`
+
 Request password reset.
 
 **Request Body:**
+
 ```json
 {
   "email": "user@example.com"
@@ -123,11 +138,13 @@ Request password reset.
 ```
 
 ### GET `/api/v1/auth/profile`
+
 Get user profile information.
 
 **Headers:** `Authorization: Bearer <token>`
 
 **Response (200):**
+
 ```json
 {
   "user_id": "uuid-here",
@@ -144,11 +161,13 @@ Get user profile information.
 ## Health Data Endpoints
 
 ### POST `/api/v1/health-data/upload`
+
 Upload processed health metrics.
 
 **Headers:** `Authorization: Bearer <token>`
 
 **Request Body:**
+
 ```json
 {
   "user_id": "uuid-here",
@@ -165,6 +184,7 @@ Upload processed health metrics.
 ```
 
 **Response (201):**
+
 ```json
 {
   "processing_id": "proc-uuid-here",
@@ -175,11 +195,13 @@ Upload processed health metrics.
 ```
 
 ### GET `/api/v1/health-data/`
+
 List user's health data with pagination.
 
 **Headers:** `Authorization: Bearer <token>`
 
 **Query Parameters:**
+
 - `limit` (int, default: 50): Number of records to return
 - `offset` (int, default: 0): Number of records to skip  
 - `start_date` (ISO string): Filter by date range
@@ -187,6 +209,7 @@ List user's health data with pagination.
 - `metric_type` (string): Filter by metric type
 
 **Response (200):**
+
 ```json
 {
   "total": 1250,
@@ -205,9 +228,11 @@ List user's health data with pagination.
 ```
 
 ### GET `/api/v1/health-data/{processing_id}`
+
 Get details of a specific processing job.
 
 **Response (200):**
+
 ```json
 {
   "processing_id": "proc-uuid-here",
@@ -220,14 +245,17 @@ Get details of a specific processing job.
 ```
 
 ### DELETE `/api/v1/health-data/{processing_id}`
+
 Delete a processing job and associated data.
 
 **Response (204):** No content
 
 ### GET `/api/v1/health-data/processing/{id}/status`
+
 Get status of data processing job.
 
 **Response (200):**
+
 ```json
 {
   "id": "proc-uuid-here",
@@ -242,13 +270,16 @@ Get status of data processing job.
 ## HealthKit Integration Endpoints
 
 ### POST `/api/v1/healthkit/upload`
+
 Upload raw HealthKit data export.
 
-**Headers:** 
+**Headers:**
+
 - `Authorization: Bearer <token>`
 - `Content-Type: application/json`
 
 **Request Body:**
+
 ```json
 {
   "user_id": "uuid-here",
@@ -280,6 +311,7 @@ Upload raw HealthKit data export.
 ```
 
 **Response (202):**
+
 ```json
 {
   "upload_id": "upload-uuid-here",
@@ -290,9 +322,11 @@ Upload raw HealthKit data export.
 ```
 
 ### GET `/api/v1/healthkit/status/{upload_id}`
+
 Check status of HealthKit upload processing.
 
 **Response (200):**
+
 ```json
 {
   "upload_id": "upload-uuid-here",
@@ -305,11 +339,13 @@ Check status of HealthKit upload processing.
 ```
 
 ### POST `/api/v1/healthkit/sync`
+
 Trigger sync with HealthKit (for connected apps).
 
 **Headers:** `Authorization: Bearer <token>`
 
 **Response (202):**
+
 ```json
 {
   "sync_id": "sync-uuid-here",
@@ -319,9 +355,11 @@ Trigger sync with HealthKit (for connected apps).
 ```
 
 ### GET `/api/v1/healthkit/categories`
+
 Get supported HealthKit data categories.
 
 **Response (200):**
+
 ```json
 {
   "quantity_types": [
@@ -347,11 +385,13 @@ Get supported HealthKit data categories.
 ## AI Insights Endpoints
 
 ### POST `/api/v1/insights/generate`
+
 Generate health insights from user's data.
 
 **Headers:** `Authorization: Bearer <token>`
 
 **Request Body:**
+
 ```json
 {
   "user_id": "uuid-here",
@@ -365,6 +405,7 @@ Generate health insights from user's data.
 ```
 
 **Response (200):**
+
 ```json
 {
   "insight_id": "insight-uuid-here",
@@ -384,11 +425,13 @@ Generate health insights from user's data.
 ```
 
 ### POST `/api/v1/insights/chat`
+
 Interactive chat with health AI.
 
 **Headers:** `Authorization: Bearer <token>`
 
 **Request Body:**
+
 ```json
 {
   "message": "Why do I feel tired even with 8 hours of sleep?",
@@ -400,6 +443,7 @@ Interactive chat with health AI.
 ```
 
 **Response (200):**
+
 ```json
 {
   "response": "Based on your sleep data, while you're getting 8 hours in bed, your sleep efficiency is only 73%. You're experiencing frequent awakenings between 2-4 AM, which is fragmenting your deep sleep phases. Your HRV data also shows elevated stress levels during these periods.",
@@ -417,15 +461,18 @@ Interactive chat with health AI.
 ```
 
 ### GET `/api/v1/insights/summary`
+
 Get daily/weekly health summaries.
 
 **Headers:** `Authorization: Bearer <token>`
 
 **Query Parameters:**
+
 - `period` (string): "daily" | "weekly" | "monthly"
 - `date` (ISO string): Date for the summary
 
 **Response (200):**
+
 ```json
 {
   "period": "weekly",
@@ -444,11 +491,13 @@ Get daily/weekly health summaries.
 ```
 
 ### GET `/api/v1/insights/recommendations`
+
 Get personalized health recommendations.
 
 **Headers:** `Authorization: Bearer <token>`
 
 **Response (200):**
+
 ```json
 {
   "recommendations": [
@@ -468,15 +517,18 @@ Get personalized health recommendations.
 ```
 
 ### GET `/api/v1/insights/trends`
+
 Analyze health trends over time.
 
 **Headers:** `Authorization: Bearer <token>`
 
 **Query Parameters:**
+
 - `metric` (string): "sleep" | "heart_rate" | "activity" | "hrv"
 - `timeframe` (string): "week" | "month" | "quarter"
 
 **Response (200):**
+
 ```json
 {
   "metric": "sleep",
@@ -492,11 +544,13 @@ Analyze health trends over time.
 ```
 
 ### GET `/api/v1/insights/alerts`
+
 Get health alerts and warnings.
 
 **Headers:** `Authorization: Bearer <token>`
 
 **Response (200):**
+
 ```json
 {
   "alerts": [
@@ -519,11 +573,13 @@ Get health alerts and warnings.
 ## PAT Analysis Endpoints
 
 ### POST `/api/v1/pat/analyze`
+
 Run PAT transformer analysis on movement data.
 
 **Headers:** `Authorization: Bearer <token>`
 
 **Request Body:**
+
 ```json
 {
   "user_id": "uuid-here",
@@ -537,6 +593,7 @@ Run PAT transformer analysis on movement data.
 ```
 
 **Response (202):**
+
 ```json
 {
   "analysis_id": "pat-analysis-uuid",
@@ -547,9 +604,11 @@ Run PAT transformer analysis on movement data.
 ```
 
 ### GET `/api/v1/pat/status/{analysis_id}`
+
 Check status of PAT analysis.
 
 **Response (200):**
+
 ```json
 {
   "analysis_id": "pat-analysis-uuid",
@@ -561,9 +620,11 @@ Check status of PAT analysis.
 ```
 
 ### GET `/api/v1/pat/results/{analysis_id}`
+
 Get PAT analysis results.
 
 **Response (200):**
+
 ```json
 {
   "analysis_id": "pat-analysis-uuid",
@@ -588,11 +649,13 @@ Get PAT analysis results.
 ```
 
 ### POST `/api/v1/pat/batch`
+
 Run batch PAT analysis for multiple users/timeframes.
 
 **Headers:** `Authorization: Bearer <token>`
 
 **Request Body:**
+
 ```json
 {
   "analyses": [
@@ -609,6 +672,7 @@ Run batch PAT analysis for multiple users/timeframes.
 ```
 
 **Response (202):**
+
 ```json
 {
   "batch_id": "batch-uuid",
@@ -618,9 +682,11 @@ Run batch PAT analysis for multiple users/timeframes.
 ```
 
 ### GET `/api/v1/pat/models`
+
 List available PAT model versions.
 
 **Response (200):**
+
 ```json
 {
   "models": [
@@ -646,9 +712,11 @@ List available PAT model versions.
 ## Metrics & Monitoring Endpoints
 
 ### GET `/api/v1/metrics/health`
+
 Get system health metrics.
 
 **Response (200):**
+
 ```json
 {
   "status": "healthy",
@@ -667,11 +735,13 @@ Get system health metrics.
 ```
 
 ### GET `/api/v1/metrics/user/{user_id}`
+
 Get user-specific health statistics.
 
 **Headers:** `Authorization: Bearer <token>`
 
 **Response (200):**
+
 ```json
 {
   "user_id": "uuid-here",
@@ -689,11 +759,13 @@ Get user-specific health statistics.
 ```
 
 ### POST `/api/v1/metrics/export`
+
 Export user health metrics.
 
 **Headers:** `Authorization: Bearer <token>`
 
 **Request Body:**
+
 ```json
 {
   "format": "csv",
@@ -706,6 +778,7 @@ Export user health metrics.
 ```
 
 **Response (200):**
+
 ```json
 {
   "export_id": "export-uuid",
@@ -715,9 +788,11 @@ Export user health metrics.
 ```
 
 ### GET `/metrics`
+
 Prometheus metrics endpoint (for monitoring).
 
 **Response (200):**
+
 ```
 # HELP http_requests_total Total HTTP requests
 # TYPE http_requests_total counter
@@ -730,9 +805,11 @@ http_requests_total{method="GET",status="200"} 1234
 ## WebSocket Endpoints
 
 ### WS `/api/v1/ws`
+
 Main WebSocket connection for real-time data.
 
 **Connection Headers:**
+
 ```
 Authorization: Bearer <jwt_token>
 ```
@@ -740,6 +817,7 @@ Authorization: Bearer <jwt_token>
 **Message Types:**
 
 **Subscribe to health data updates:**
+
 ```json
 {
   "type": "subscribe",
@@ -749,6 +827,7 @@ Authorization: Bearer <jwt_token>
 ```
 
 **Receive real-time health data:**
+
 ```json
 {
   "type": "health_data",
@@ -760,6 +839,7 @@ Authorization: Bearer <jwt_token>
 ```
 
 **Start AI chat session:**
+
 ```json
 {
   "type": "chat_message", 
@@ -769,9 +849,11 @@ Authorization: Bearer <jwt_token>
 ```
 
 ### GET `/api/v1/ws/health`
+
 WebSocket health check endpoint.
 
 **Response (200):**
+
 ```json
 {
   "websocket_status": "operational",
@@ -781,11 +863,13 @@ WebSocket health check endpoint.
 ```
 
 ### GET `/api/v1/ws/rooms`
+
 Get active WebSocket rooms/channels.
 
 **Headers:** `Authorization: Bearer <token>`
 
 **Response (200):**
+
 ```json
 {
   "rooms": [
@@ -808,9 +892,11 @@ Get active WebSocket rooms/channels.
 ## System Endpoints
 
 ### GET `/health`
+
 Root health check for load balancers.
 
 **Response (200):**
+
 ```json
 {
   "status": "healthy",
@@ -821,18 +907,23 @@ Root health check for load balancers.
 ```
 
 ### GET `/docs`
+
 OpenAPI documentation (Swagger UI).
 
 ### GET `/redoc`
+
 ReDoc API documentation.
 
 ### GET `/openapi.json`
+
 OpenAPI schema definition.
 
 ### GET `/`
+
 Root endpoint with service information.
 
 **Response (200):**
+
 ```json
 {
   "name": "CLARITY Digital Twin Platform",
@@ -865,6 +956,7 @@ All endpoints use standard HTTP status codes and return errors in this format:
 ```
 
 ### Common Status Codes
+
 - **200**: Success
 - **201**: Created
 - **202**: Accepted (processing)
@@ -879,4 +971,4 @@ All endpoints use standard HTTP status codes and return errors in this format:
 
 ---
 
-**Next**: Read [Data Models](03-data-models.md) for detailed schema definitions 
+**Next**: Read [Data Models](03-data-models.md) for detailed schema definitions

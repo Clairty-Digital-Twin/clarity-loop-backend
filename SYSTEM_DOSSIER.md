@@ -9,6 +9,7 @@ CLARITY is a sophisticated health data platform that creates a "digital twin" of
 ## System Architecture Overview
 
 ### Core Purpose
+
 1. **Health Data Aggregation**: Collect and store health metrics from wearable devices
 2. **AI-Powered Analysis**: Process health data using machine learning models including:
    - Pretrained Actigraphy Transformer (PAT) for movement analysis
@@ -18,6 +19,7 @@ CLARITY is a sophisticated health data platform that creates a "digital twin" of
 4. **Personalized Insights**: Generate actionable health recommendations based on user data
 
 ### Technology Stack
+
 - **Backend Framework**: FastAPI (Python 3.12)
 - **Cloud Provider**: AWS
   - Authentication: AWS Cognito
@@ -25,7 +27,7 @@ CLARITY is a sophisticated health data platform that creates a "digital twin" of
   - Storage: S3
   - Messaging: SQS/SNS
   - Deployment: ECS with Docker
-- **AI/ML**: 
+- **AI/ML**:
   - Google Gemini API for insights
   - Custom transformers for actigraphy
   - NumPy/Pandas for data processing
@@ -35,6 +37,7 @@ CLARITY is a sophisticated health data platform that creates a "digital twin" of
 ## API Endpoints Analysis
 
 ### Authentication (7 endpoints)
+
 - `/api/v1/auth/register` - User registration
 - `/api/v1/auth/login` - User login
 - `/api/v1/auth/logout` - User logout
@@ -44,6 +47,7 @@ CLARITY is a sophisticated health data platform that creates a "digital twin" of
 - `/api/v1/auth/profile` - User profile management
 
 ### Health Data (10 endpoints)
+
 - `/api/v1/health-data/upload` - Upload health metrics
 - `/api/v1/health-data/` - List health data (paginated)
 - `/api/v1/health-data/{processing_id}` - Get/Delete specific data
@@ -52,12 +56,14 @@ CLARITY is a sophisticated health data platform that creates a "digital twin" of
 - `/api/v1/health-data/health` - Service health check
 
 ### HealthKit Integration (4 endpoints)
+
 - `/api/v1/healthkit/upload` - Upload HealthKit data batches
 - `/api/v1/healthkit/status/{upload_id}` - Check upload status
 - `/api/v1/healthkit/sync` - Sync HealthKit data
 - `/api/v1/healthkit/categories` - Get supported data categories
 
 ### AI Insights (6 endpoints)
+
 - `/api/v1/insights/generate` - Generate health insights
 - `/api/v1/insights/chat` - Interactive health chat
 - `/api/v1/insights/summary` - Daily/weekly summaries
@@ -66,6 +72,7 @@ CLARITY is a sophisticated health data platform that creates a "digital twin" of
 - `/api/v1/insights/alerts` - Health alerts/warnings
 
 ### PAT Analysis (5 endpoints)
+
 - `/api/v1/pat/analyze` - Run PAT analysis on movement data
 - `/api/v1/pat/status/{analysis_id}` - Check analysis status
 - `/api/v1/pat/results/{analysis_id}` - Get analysis results
@@ -73,17 +80,20 @@ CLARITY is a sophisticated health data platform that creates a "digital twin" of
 - `/api/v1/pat/models` - List available PAT models
 
 ### Metrics & Monitoring (4 endpoints)
+
 - `/api/v1/metrics/health` - System health metrics
 - `/api/v1/metrics/user/{user_id}` - User health statistics
 - `/api/v1/metrics/export` - Export metrics data
 - `/metrics` - Prometheus metrics endpoint
 
 ### WebSocket (3 endpoints)
+
 - `/api/v1/ws` - Main WebSocket connection
 - `/api/v1/ws/health` - WebSocket health check
 - `/api/v1/ws/rooms` - WebSocket room management
 
 ### System (5 endpoints)
+
 - `/health` - Root health check
 - `/docs` - OpenAPI documentation
 - `/redoc` - ReDoc documentation
@@ -95,6 +105,7 @@ CLARITY is a sophisticated health data platform that creates a "digital twin" of
 ## Data Models
 
 ### Health Data Types
+
 1. **Biometric Data**: Heart rate, HRV, blood pressure, SpO2, temperature
 2. **Sleep Data**: Sleep stages, duration, efficiency, disruptions
 3. **Activity Data**: Steps, calories, distance, exercise minutes
@@ -103,6 +114,7 @@ CLARITY is a sophisticated health data platform that creates a "digital twin" of
 6. **Glucose**: Blood glucose readings (for diabetic users)
 
 ### Processing Pipeline
+
 1. Raw data upload → S3 storage
 2. SQS message triggers analysis
 3. ML pipeline processes data
@@ -113,6 +125,7 @@ CLARITY is a sophisticated health data platform that creates a "digital twin" of
 ## Current State Audit
 
 ### ✅ Strengths
+
 1. **Complete AWS Migration**: Successfully migrated from GCP/Firebase
 2. **Robust Test Suite**: 807 passing tests with comprehensive coverage
 3. **Clean Architecture**: Follows Clean Architecture/SOLID principles
@@ -122,6 +135,7 @@ CLARITY is a sophisticated health data platform that creates a "digital twin" of
 7. **Security**: JWT auth with Cognito, role-based permissions
 
 ### ⚠️ Concerns
+
 1. **Test Coverage**: 57% is below industry standard (target 85%)
 2. **Unused Services**: Several AWS services not fully implemented:
    - `sqs_messaging_service.py` (0% coverage)
@@ -134,6 +148,7 @@ CLARITY is a sophisticated health data platform that creates a "digital twin" of
 ### 🔍 Reality Check
 
 **What's Actually Working:**
+
 - Core health data upload/retrieval
 - Basic authentication flow
 - Mock services for development
@@ -141,6 +156,7 @@ CLARITY is a sophisticated health data platform that creates a "digital twin" of
 - Database operations (via mocks in tests)
 
 **What Needs Verification:**
+
 - AWS service integrations (Cognito, DynamoDB, S3)
 - Gemini API integration
 - PAT model inference
@@ -149,9 +165,10 @@ CLARITY is a sophisticated health data platform that creates a "digital twin" of
 
 ## Professional Recommendations
 
-### Immediate Priority Order:
+### Immediate Priority Order
 
 1. **Local Docker Validation** (2-4 hours)
+
    ```bash
    docker build -t clarity-backend .
    docker run -p 8000:8000 clarity-backend
@@ -194,6 +211,7 @@ CLARITY is a sophisticated health data platform that creates a "digital twin" of
 ### Next Immediate Steps
 
 1. **Run Local Docker Test** (NOW)
+
    ```bash
    # Build and run
    docker-compose up --build
@@ -223,7 +241,8 @@ CLARITY is an ambitious health data platform with sophisticated ML capabilities.
 
 **Recommendation**: Proceed with local Docker testing immediately to validate functionality, then deploy to AWS staging. The platform appears ready for controlled testing but needs integration validation before production use.
 
-**Estimated Timeline to Production**: 
+**Estimated Timeline to Production**:
+
 - Optimistic: 1 week (if AWS services work as expected)
 - Realistic: 2-3 weeks (allowing for debugging and coverage increase)
 - Conservative: 1 month (full testing and documentation)

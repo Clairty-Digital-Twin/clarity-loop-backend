@@ -24,6 +24,7 @@ npm run lint:md:fix
 ## For Python Developers
 
 You can safely ignore these files unless you're:
+
 1. Working on documentation
 2. Want to ensure your markdown follows best practices
 

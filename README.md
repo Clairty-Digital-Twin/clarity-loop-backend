@@ -106,22 +106,25 @@ flowchart LR
         E --> F
     end
     
-    subgraph Infrastructure ["🔧 Infrastructure"]
-        subgraph Data ["💾 Data Layer"]
-            G[DynamoDB<br/>Health Metrics<br/>Analysis Results]
-            H[S3 Storage<br/>Model Weights<br/>Processing Cache]
-        end
-        
-        subgraph AI ["🤖 AI Models"]
-            I[PAT Models<br/>S/M/L variants<br/>CC BY-4.0 Licensed]
-            J[Fusion Transformer<br/>Multi-modal Integration<br/>Custom Architecture]
-            K[Google Gemini<br/>Natural Language<br/>Clinical Context]
-        end
+    subgraph Data ["💾 Data Layer"]
+        G[DynamoDB<br/>Health Metrics<br/>Analysis Results]
+        H[S3 Storage<br/>Model Weights<br/>Processing Cache]
+    end
+    
+    subgraph AI ["🤖 AI Models"]
+        I[PAT Models<br/>S/M/L variants<br/>CC BY-4.0 Licensed]
+        J[Fusion Transformer<br/>Multi-modal Integration<br/>Custom Architecture]
+        K[Google Gemini<br/>Natural Language<br/>Clinical Context]
     end
     
     %% Main connections
     A --> C
     B --> C
+    
+    %% Core to Infrastructure connections
+    Clients --> Core
+    Core --> Data
+    Core --> AI
     
     D --> G
     D --> H

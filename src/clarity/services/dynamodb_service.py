@@ -18,6 +18,7 @@ from botocore.exceptions import ClientError
 
 if TYPE_CHECKING:
     from mypy_boto3_dynamodb import DynamoDBClient
+    from mypy_boto3_dynamodb.service_resource import DynamoDBServiceResource
 
 from clarity.ports.data_ports import IHealthDataRepository
 
@@ -76,7 +77,7 @@ class DynamoDBService:
         self.cache_ttl = cache_ttl
 
         # Initialize DynamoDB client
-        self.dynamodb = boto3.resource(
+        self.dynamodb: DynamoDBServiceResource = boto3.resource(
             "dynamodb",
             region_name=region,
             endpoint_url=endpoint_url,
@@ -158,7 +159,7 @@ class DynamoDBService:
             }
 
             await asyncio.get_event_loop().run_in_executor(
-                None, audit_table.put_item, {"Item": audit_entry}
+                None, lambda: audit_table.put_item(Item=audit_entry)
             )
 
             logger.debug("Audit log created: %s on %s/%s", operation, table, item_id)
@@ -206,10 +207,10 @@ class DynamoDBService:
 
             table = self.dynamodb.Table(table_name)
             await asyncio.get_event_loop().run_in_executor(
-                None, table.put_item, {"Item": item}
+                None, lambda: table.put_item(Item=item)
             )
 
-            item_id = item["id"]
+            item_id: str = str(item["id"])
 
             # Cache the item
             if self.enable_caching:
@@ -265,11 +266,11 @@ class DynamoDBService:
                 cache_entry = self._cache[cache_key]
                 if self._is_cache_valid(cache_entry):
                     logger.debug("Cache hit for %s/%s", table_name, item_id)
-                    return cache_entry["data"]
+                    return dict(cache_entry["data"])
 
             table = self.dynamodb.Table(table_name)
             response = await asyncio.get_event_loop().run_in_executor(
-                None, table.get_item, {"Key": key}
+                None, lambda: table.get_item(Key=key)
             )
 
             if "Item" not in response:
@@ -318,12 +319,11 @@ class DynamoDBService:
             table = self.dynamodb.Table(table_name)
             await asyncio.get_event_loop().run_in_executor(
                 None,
-                table.update_item,
-                {
-                    "Key": key,
-                    "UpdateExpression": update_expression,
-                    "ExpressionAttributeValues": expression_attribute_values,
-                },
+                lambda: table.update_item(
+                    Key=key,
+                    UpdateExpression=update_expression,
+                    ExpressionAttributeValues=expression_attribute_values,
+                ),
             )
 
             # Clear cache
@@ -367,7 +367,7 @@ class DynamoDBService:
         try:
             table = self.dynamodb.Table(table_name)
             await asyncio.get_event_loop().run_in_executor(
-                None, table.delete_item, {"Key": key}
+                None, lambda: table.delete_item(Key=key)
             )
 
             # Clear cache
@@ -409,7 +409,7 @@ class DynamoDBService:
         try:
             table = self.dynamodb.Table(table_name)
 
-            query_params = {
+            query_params: dict[str, Any] = {
                 "KeyConditionExpression": key_condition_expression,
                 "ExpressionAttributeValues": expression_attribute_values,
                 "ScanIndexForward": scan_index_forward,
@@ -419,7 +419,7 @@ class DynamoDBService:
                 query_params["Limit"] = limit
 
             response = await asyncio.get_event_loop().run_in_executor(
-                None, table.query, query_params
+                None, lambda: table.query(**query_params)
             )
 
             return {
@@ -487,7 +487,7 @@ class DynamoDBService:
         try:
             # Test connection by describing a table
             table = self.dynamodb.Table(self.tables["health_data"])
-            await asyncio.get_event_loop().run_in_executor(None, table.load)
+            await asyncio.get_event_loop().run_in_executor(None, lambda: table.load())
 
             return {
                 "status": "healthy",

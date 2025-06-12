@@ -40,6 +40,39 @@ class UserUpdate(BaseModel):
     email: str | None = Field(None, description="New email address")
 
 
+class UserInfoResponse(BaseModel):
+    """User information response model."""
+
+    user_id: str = Field(..., description="Unique user identifier")
+    email: str | None = Field(None, description="User email address")
+    email_verified: bool = Field(..., description="Email verification status")
+    display_name: str | None = Field(None, description="User display name")
+    auth_provider: str = Field(..., description="Authentication provider")
+
+
+class UserUpdateResponse(BaseModel):
+    """User update response model."""
+
+    user_id: str = Field(..., description="Unique user identifier")
+    email: str | None = Field(None, description="User email address")
+    display_name: str | None = Field(None, description="User display name")
+    updated: bool = Field(..., description="Update success status")
+
+
+class LogoutResponse(BaseModel):
+    """Logout response model."""
+
+    message: str = Field(..., description="Logout status message")
+
+
+class HealthResponse(BaseModel):
+    """Health check response model."""
+
+    status: str = Field(..., description="Service health status")
+    service: str = Field(..., description="Service name")
+    version: str = Field(..., description="Service version")
+
+
 @router.post("/register", response_model=TokenResponse)
 async def register(
     user_data: UserRegister,
@@ -47,16 +80,48 @@ async def register(
 ) -> TokenResponse:
     """Register a new user."""
     try:
-        # Create authentication service
-        auth_service = CognitoAuthenticationService(
-            auth_provider, None
-        )  # No document store needed for AWS
-
-        # Register user - Note: May need to adapt this based on actual service interface
-        return await auth_service.register_user(
+        # For AWS Cognito, we'll use the auth provider directly
+        # First create the user
+        from clarity.auth.aws_cognito_provider import CognitoAuthProvider
+        
+        if not isinstance(auth_provider, CognitoAuthProvider):
+            raise HTTPException(
+                status_code=500,
+                detail="Invalid authentication provider configuration"
+            )
+        
+        # Create user in Cognito
+        user = await auth_provider.create_user(
             email=user_data.email,
             password=user_data.password,
             display_name=user_data.display_name,
+        )
+        
+        if not user:
+            raise HTTPException(
+                status_code=500,
+                detail="Failed to create user"
+            )
+        
+        # Now authenticate to get tokens
+        tokens = await auth_provider.authenticate(
+            email=user_data.email,
+            password=user_data.password,
+        )
+        
+        if not tokens:
+            raise HTTPException(
+                status_code=500,
+                detail="Failed to authenticate after registration"
+            )
+        
+        # Return token response
+        return TokenResponse(
+            access_token=tokens["access_token"],
+            refresh_token=tokens["refresh_token"],
+            token_type="bearer",
+            expires_in=tokens.get("expires_in", 3600),
+            scope="full_access",
         )
 
     except UserAlreadyExistsError as e:
@@ -91,14 +156,31 @@ async def login(
 ) -> TokenResponse:
     """Authenticate user and return access token."""
     try:
-        # Create authentication service
-        auth_service = CognitoAuthenticationService(
-            auth_provider, None
-        )  # No document store needed for AWS
-
-        # Authenticate user - Note: May need to adapt this based on actual service interface
-        return await auth_service.authenticate_user(
-            email=credentials.email, password=credentials.password
+        # For AWS Cognito, we'll use the auth provider directly
+        from clarity.auth.aws_cognito_provider import CognitoAuthProvider
+        
+        if not isinstance(auth_provider, CognitoAuthProvider):
+            raise HTTPException(
+                status_code=500,
+                detail="Invalid authentication provider configuration"
+            )
+        
+        # Authenticate user
+        tokens = await auth_provider.authenticate(
+            email=credentials.email,
+            password=credentials.password,
+        )
+        
+        if not tokens:
+            raise InvalidCredentialsError("Authentication failed")
+        
+        # Return token response
+        return TokenResponse(
+            access_token=tokens["access_token"],
+            refresh_token=tokens["refresh_token"],
+            token_type="bearer",
+            expires_in=tokens.get("expires_in", 3600),
+            scope="full_access",
         )
 
     except InvalidCredentialsError as e:
@@ -137,47 +219,68 @@ async def login(
         ) from e
 
 
-@router.get("/me")
+@router.get("/me", response_model=UserInfoResponse)
 async def get_current_user_info(
     current_user: dict[str, Any] = Depends(get_current_user),
-) -> dict[str, Any]:
+) -> UserInfoResponse:
     """Get current user information."""
-    return {
-        "user_id": current_user.get("uid", current_user.get("user_id")),
-        "email": current_user.get("email"),
-        "email_verified": current_user.get("email_verified", True),
-        "display_name": current_user.get("display_name"),
-        "auth_provider": current_user.get("auth_provider", "cognito"),
-    }
+    return UserInfoResponse(
+        user_id=current_user.get("uid", current_user.get("user_id", "")),
+        email=current_user.get("email"),
+        email_verified=current_user.get("email_verified", True),
+        display_name=current_user.get("display_name"),
+        auth_provider=current_user.get("auth_provider", "cognito"),
+    )
 
 
-@router.put("/me")
+@router.put("/me", response_model=UserUpdateResponse)
 async def update_user(
     updates: UserUpdate,
     current_user: dict[str, Any] = Depends(get_current_user),
     auth_provider: IAuthProvider = Depends(get_auth_provider),
-) -> dict[str, Any]:
+) -> UserUpdateResponse:
     """Update current user information."""
     try:
-        # Create authentication service
-        auth_service = CognitoAuthenticationService(auth_provider, None)
-
+        # For AWS Cognito, we'll use the auth provider directly
+        from clarity.auth.aws_cognito_provider import CognitoAuthProvider
+        
+        if not isinstance(auth_provider, CognitoAuthProvider):
+            raise HTTPException(
+                status_code=500,
+                detail="Invalid authentication provider configuration"
+            )
+        
         # Get user ID
-        user_id = current_user.get("uid", current_user.get("user_id"))
-
-        # Update user - Note: May need to adapt this based on actual service interface
-        updated_user = await auth_service.update_user(
-            user_id=user_id,
-            display_name=updates.display_name,
-            email=updates.email,
+        user_id = current_user.get("uid", current_user.get("user_id", ""))
+        
+        if not user_id:
+            raise HTTPException(
+                status_code=400,
+                detail="User ID not found in token"
+            )
+        
+        # Build update kwargs
+        update_kwargs: dict[str, Any] = {}
+        if updates.display_name is not None:
+            update_kwargs["display_name"] = updates.display_name
+        if updates.email is not None:
+            update_kwargs["email"] = updates.email
+        
+        # Update user
+        updated_user = await auth_provider.update_user(
+            uid=user_id,
+            **update_kwargs
         )
-
-        return {
-            "user_id": updated_user.get("uid", updated_user.get("user_id")),
-            "email": updated_user.get("email"),
-            "display_name": updated_user.get("display_name"),
-            "updated": True,
-        }
+        
+        if not updated_user:
+            raise UserNotFoundError(f"User {user_id} not found")
+        
+        return UserUpdateResponse(
+            user_id=updated_user.uid,
+            email=updated_user.email,
+            display_name=updated_user.display_name,
+            updated=True,
+        )
 
     except UserNotFoundError as e:
         raise HTTPException(
@@ -204,11 +307,11 @@ async def update_user(
         ) from e
 
 
-@router.post("/logout")
+@router.post("/logout", response_model=LogoutResponse)
 async def logout(
     request: Request,
     auth_provider: IAuthProvider = Depends(get_auth_provider),
-) -> dict[str, str]:
+) -> LogoutResponse:
     """Logout user (invalidate token if supported)."""
     try:
         # Check request format first - get body and auth header
@@ -237,8 +340,8 @@ async def logout(
         current_user = None
         if auth_header:
             try:
-                from clarity.auth.dependencies import get_current_user
-                current_user = await get_current_user(request)
+                from clarity.auth.dependencies import get_current_user as get_user_func
+                current_user = await get_user_func(request)
             except Exception:
                 # Auth failed but we have a request, so it's an auth error not validation
                 raise HTTPException(
@@ -252,15 +355,10 @@ async def logout(
                     ).model_dump(),
                 )
 
-        # Create authentication service
-        auth_service = CognitoAuthenticationService(auth_provider, None)
-
-        # Get token from header
-        token = auth_header.replace("Bearer ", "") if auth_header else None
-
-        # Logout user if we have a token
-        if token:
-            await auth_service.logout_user(token)
+        # For AWS Cognito, logout is typically handled client-side
+        # by removing tokens. Server-side we can optionally revoke tokens
+        # if using refresh tokens
+        logger.info("Logout request processed")
 
     except HTTPException:
         # Re-raise HTTP exceptions (validation errors, auth errors)
@@ -268,27 +366,27 @@ async def logout(
     except Exception as e:
         logger.exception("Logout failed")
         # Return success anyway - client should discard token
-        return {"message": "Logout processed"}
+        return LogoutResponse(message="Logout processed")
     else:
-        return {"message": "Successfully logged out"}
+        return LogoutResponse(message="Successfully logged out")
 
 
-@router.get("/health")
-async def auth_health() -> dict[str, str]:
+@router.get("/health", response_model=HealthResponse)
+async def auth_health() -> HealthResponse:
     """Auth service health check."""
     try:
         # Simple health check - could be enhanced to check auth provider connectivity
-        return {
-            "status": "healthy",
-            "service": "authentication",
-            "version": "1.0.0"
-        }
+        return HealthResponse(
+            status="healthy",
+            service="authentication",
+            version="1.0.0"
+        )
     except Exception:
-        return {
-            "status": "unhealthy",
-            "service": "authentication",
-            "version": "1.0.0"
-        }
+        return HealthResponse(
+            status="unhealthy",
+            service="authentication",
+            version="1.0.0"
+        )
 
 
 @router.post("/refresh")

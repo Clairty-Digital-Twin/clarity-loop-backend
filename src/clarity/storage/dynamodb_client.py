@@ -4,21 +4,21 @@ from collections.abc import AsyncIterator
 from datetime import UTC, datetime
 from decimal import Decimal
 import logging
-from typing import Any
+from typing import Any, TypeAlias, cast
 
 import boto3
-from boto3.dynamodb.conditions import Key
+from boto3.dynamodb.conditions import ConditionBase, Key
 from botocore.exceptions import ClientError
+from mypy_boto3_dynamodb import DynamoDBServiceResource
+from mypy_boto3_dynamodb.service_resource import Table
 
 from clarity.core.exceptions import ServiceError
-from clarity.models.health_data import (
-    HealthDataResponse,
-    HealthDataUpload,
-    HealthMetric,
-    ProcessingStatus,
-)
-from clarity.models.user import User
+from clarity.models.health_data import HealthMetric, ProcessingStatus
 from clarity.ports.data_ports import IHealthDataRepository
+
+# Type aliases for clarity
+DynamoDBItem: TypeAlias = dict[str, Any]
+SerializedItem: TypeAlias = dict[str, Any]
 
 logger = logging.getLogger(__name__)
 
@@ -35,17 +35,17 @@ class DynamoDBHealthDataRepository(IHealthDataRepository):
         self.table_name = table_name
         self.region = region
 
-        # Create DynamoDB resource
+        # Create DynamoDB resource with proper typing
         if endpoint_url:  # For local testing with DynamoDB Local
-            self.dynamodb = boto3.resource(
+            self.dynamodb: DynamoDBServiceResource = boto3.resource(
                 "dynamodb", region_name=region, endpoint_url=endpoint_url
             )
         else:
             self.dynamodb = boto3.resource("dynamodb", region_name=region)
 
-        self.table = self.dynamodb.Table(table_name)
+        self.table: Table = self.dynamodb.Table(table_name)
 
-    def _serialize_item(self, data: dict) -> dict:
+    def _serialize_item(self, data: DynamoDBItem) -> SerializedItem:
         """Convert Python types to DynamoDB-compatible types."""
 
         def convert_value(v: Any) -> Any:
@@ -61,7 +61,7 @@ class DynamoDBHealthDataRepository(IHealthDataRepository):
 
         return {k: convert_value(v) for k, v in data.items()}
 
-    def _deserialize_item(self, item: dict) -> dict:
+    def _deserialize_item(self, item: SerializedItem) -> DynamoDBItem:
         """Convert DynamoDB types back to Python types."""
 
         def convert_value(v: Any) -> Any:
@@ -76,31 +76,55 @@ class DynamoDBHealthDataRepository(IHealthDataRepository):
         return {k: convert_value(v) for k, v in item.items()}
 
     async def save_health_data(
-        self, user_id: str, data: HealthDataUpload
-    ) -> HealthDataResponse:
-        """Save health data to DynamoDB."""
+        self,
+        user_id: str,
+        processing_id: str,
+        metrics: list[HealthMetric],
+        upload_source: str,
+        client_timestamp: datetime,
+    ) -> bool:
+        """Save health data with processing metadata.
+
+        Args:
+            user_id: User identifier
+            processing_id: Processing job identifier
+            metrics: List of health metrics
+            upload_source: Source of the upload
+            client_timestamp: Client-side timestamp
+
+        Returns:
+            True if saved successfully
+        """
         try:
             # Generate unique ID (timestamp-based)
             timestamp = datetime.now(UTC)
             item_id = f"{user_id}#{timestamp.isoformat()}"
 
             # Prepare item for DynamoDB
-            item = {
+            item: DynamoDBItem = {
                 "pk": f"USER#{user_id}",  # Partition key
                 "sk": f"HEALTH#{timestamp.isoformat()}",  # Sort key
                 "id": item_id,
                 "user_id": user_id,
+                "processing_id": processing_id,
                 "timestamp": timestamp.isoformat(),
+                "client_timestamp": client_timestamp.isoformat(),
+                "upload_source": upload_source,
                 "metrics": {
                     metric.metric_type.value: {
-                        "value": metric.value,
-                        "unit": metric.unit,
+                        "metric_id": str(metric.metric_id),
+                        "biometric_data": metric.biometric_data.model_dump() if metric.biometric_data else None,
+                        "sleep_data": metric.sleep_data.model_dump() if metric.sleep_data else None,
+                        "activity_data": metric.activity_data.model_dump() if metric.activity_data else None,
+                        "mental_health_data": metric.mental_health_data.model_dump() if metric.mental_health_data else None,
+                        "device_id": metric.device_id,
+                        "raw_data": metric.raw_data or {},
                         "metadata": metric.metadata or {},
+                        "created_at": metric.created_at.isoformat(),
                     }
-                    for metric in data.metrics
+                    for metric in metrics
                 },
-                "raw_data": data.raw_data or {},
-                "processing_status": ProcessingStatus.PENDING.value,
+                "processing_status": ProcessingStatus.RECEIVED.value,
                 "created_at": timestamp.isoformat(),
                 "ttl": int(
                     (timestamp.timestamp()) + (90 * 24 * 60 * 60)
@@ -113,23 +137,7 @@ class DynamoDBHealthDataRepository(IHealthDataRepository):
             # Save to DynamoDB
             self.table.put_item(Item=serialized_item)
 
-            return HealthDataResponse(
-                id=item_id,
-                user_id=user_id,
-                timestamp=timestamp,
-                metrics=[
-                    HealthMetric(
-                        metric_type=metric.metric_type,
-                        value=metric.value,
-                        unit=metric.unit,
-                        timestamp=timestamp,
-                        metadata=metric.metadata,
-                    )
-                    for metric in data.metrics
-                ],
-                processing_status=ProcessingStatus.PENDING,
-                raw_data=data.raw_data,
-            )
+            return True
 
         except ClientError as e:
             logger.exception("DynamoDB error saving health data")
@@ -140,30 +148,42 @@ class DynamoDBHealthDataRepository(IHealthDataRepository):
             msg = f"Failed to save health data: {e!s}"
             raise ServiceError(msg) from e
 
-    async def get_health_data(
+    async def get_user_health_data(
         self,
         user_id: str,
-        start_date: datetime | None = None,
-        end_date: datetime | None = None,
-        metric_types: list[str] | None = None,
         limit: int = 100,
         offset: int = 0,
-    ) -> list[HealthDataResponse]:
-        """Retrieve health data from DynamoDB."""
+        metric_type: str | None = None,
+        start_date: datetime | None = None,
+        end_date: datetime | None = None,
+    ) -> dict[str, Any]:
+        """Retrieve user health data with filtering and pagination.
+
+        Args:
+            user_id: User identifier
+            limit: Maximum records to return
+            offset: Records to skip
+            metric_type: Filter by metric type
+            start_date: Filter from date
+            end_date: Filter to date
+
+        Returns:
+            Health data with pagination metadata
+        """
         try:
             # Build query
-            key_condition = Key("pk").eq(f"USER#{user_id}")
+            key_condition: ConditionBase = Key("pk").eq(f"USER#{user_id}")
 
             if start_date and end_date:
-                key_condition &= Key("sk").between(
+                key_condition = key_condition & Key("sk").between(
                     f"HEALTH#{start_date.isoformat()}", f"HEALTH#{end_date.isoformat()}"
                 )
             elif start_date:
-                key_condition &= Key("sk").gte(f"HEALTH#{start_date.isoformat()}")
+                key_condition = key_condition & Key("sk").gte(f"HEALTH#{start_date.isoformat()}")
             elif end_date:
-                key_condition &= Key("sk").lte(f"HEALTH#{end_date.isoformat()}")
+                key_condition = key_condition & Key("sk").lte(f"HEALTH#{end_date.isoformat()}")
             else:
-                key_condition &= Key("sk").begins_with("HEALTH#")
+                key_condition = key_condition & Key("sk").begins_with("HEALTH#")
 
             # Query DynamoDB
             response = self.table.query(
@@ -186,38 +206,23 @@ class DynamoDBHealthDataRepository(IHealthDataRepository):
             for item in items:
                 deserialized = self._deserialize_item(item)
 
-                # Convert metrics
-                metrics = []
-                for metric_type, metric_data in deserialized.get("metrics", {}).items():
-                    # Filter by metric types if specified
-                    if metric_types and metric_type not in metric_types:
+                # Filter by metric type if specified
+                if metric_type:
+                    metrics = deserialized.get("metrics", {})
+                    if metric_type not in metrics:
                         continue
 
-                    metrics.append(
-                        HealthMetric(
-                            metric_type=metric_type,
-                            value=metric_data["value"],
-                            unit=metric_data["unit"],
-                            timestamp=datetime.fromisoformat(deserialized["timestamp"]),
-                            metadata=metric_data.get("metadata", {}),
-                        )
-                    )
+                results.append(deserialized)
 
-                if metrics:  # Only include if has matching metrics
-                    results.append(
-                        HealthDataResponse(
-                            id=deserialized["id"],
-                            user_id=deserialized["user_id"],
-                            timestamp=datetime.fromisoformat(deserialized["timestamp"]),
-                            metrics=metrics,
-                            processing_status=ProcessingStatus(
-                                deserialized.get("processing_status", "pending")
-                            ),
-                            raw_data=deserialized.get("raw_data", {}),
-                        )
-                    )
-
-            return results
+            return {
+                "data": results,
+                "pagination": {
+                    "limit": limit,
+                    "offset": offset,
+                    "total": len(results),
+                    "has_more": len(response.get("Items", [])) > limit + offset,
+                },
+            }
 
         except ClientError as e:
             logger.exception("DynamoDB error retrieving health data")
@@ -228,118 +233,169 @@ class DynamoDBHealthDataRepository(IHealthDataRepository):
             msg = f"Failed to retrieve health data: {e!s}"
             raise ServiceError(msg) from e
 
-    async def update_processing_status(
-        self,
-        data_id: str,
-        status: ProcessingStatus,
-        analysis_results: dict[str, Any] | None = None,
-    ) -> None:
-        """Update processing status in DynamoDB."""
-        try:
-            # Parse the composite ID
-            user_id, timestamp = data_id.split("#", 1)
+    async def get_processing_status(
+        self, processing_id: str, user_id: str
+    ) -> dict[str, str] | None:
+        """Get processing status for a health data upload.
 
-            update_expr = "SET processing_status = :status, updated_at = :updated"
-            expr_values = {
-                ":status": status.value,
-                ":updated": datetime.now(UTC).isoformat(),
+        Args:
+            processing_id: Processing job identifier
+            user_id: User identifier for ownership verification
+
+        Returns:
+            Processing status info or None if not found
+        """
+        try:
+            # Query by processing_id
+            response = self.table.query(
+                IndexName="processing-id-index",  # Assumes GSI exists
+                KeyConditionExpression=Key("processing_id").eq(processing_id),
+            )
+
+            items = response.get("Items", [])
+            if not items:
+                return None
+
+            # Verify user owns this data
+            item = items[0]
+            if item.get("user_id") != user_id:
+                return None
+
+            return {
+                "processing_id": processing_id,
+                "status": str(item.get("processing_status", "unknown")),
+                "created_at": str(item.get("created_at", "")),
+                "updated_at": str(item.get("updated_at", "")),
             }
 
-            if analysis_results:
-                update_expr += ", analysis_results = :results"
-                expr_values[":results"] = self._serialize_item(
-                    {"data": analysis_results}
-                )["data"]
+        except ClientError:
+            logger.exception("DynamoDB error getting processing status")
+            return None
 
-            self.table.update_item(
-                Key={"pk": f"USER#{user_id}", "sk": f"HEALTH#{timestamp}"},
-                UpdateExpression=update_expr,
-                ExpressionAttributeValues=expr_values,
-            )
+    async def delete_health_data(
+        self, user_id: str, processing_id: str | None = None
+    ) -> bool:
+        """Delete user health data.
 
-        except ClientError as e:
-            logger.exception("DynamoDB error updating status")
-            msg = f"Failed to update status: {e!s}"
-            raise ServiceError(msg) from e
+        Args:
+            user_id: User identifier
+            processing_id: Optional specific processing job to delete
 
-    async def get_user(self, user_id: str) -> User | None:
-        """Get user from DynamoDB."""
+        Returns:
+            True if deletion was successful
+        """
         try:
-            response = self.table.get_item(
-                Key={"pk": f"USER#{user_id}", "sk": f"PROFILE#{user_id}"}
-            )
-
-            if "Item" in response:
-                item = self._deserialize_item(response["Item"])
-                return User(
-                    id=user_id,
-                    email=item.get("email", ""),
-                    name=item.get("name", ""),
-                    created_at=datetime.fromisoformat(item["created_at"]),
-                    updated_at=datetime.fromisoformat(item["updated_at"]),
+            if processing_id:
+                # Delete specific processing job
+                # First, find the item by processing_id
+                response = self.table.query(
+                    IndexName="processing-id-index",
+                    KeyConditionExpression=Key("processing_id").eq(processing_id),
+                )
+                items = response.get("Items", [])
+                if items and items[0].get("user_id") == user_id:
+                    self.table.delete_item(
+                        Key={"pk": items[0]["pk"], "sk": items[0]["sk"]}
+                    )
+            else:
+                # Delete all user data
+                response = self.table.query(
+                    KeyConditionExpression=Key("pk").eq(f"USER#{user_id}")
+                    & Key("sk").begins_with("HEALTH#")
                 )
 
-            return None
+                # Delete each item
+                with self.table.batch_writer() as batch:
+                    for item in response.get("Items", []):
+                        batch.delete_item(Key={"pk": item["pk"], "sk": item["sk"]})
 
-        except ClientError:
-            logger.exception("DynamoDB error getting user")
-            return None
+            return True
 
-    async def create_user(self, user_id: str, email: str, name: str) -> User:
-        """Create user in DynamoDB."""
+        except ClientError as e:
+            logger.exception("DynamoDB error deleting health data")
+            msg = f"Failed to delete health data: {e!s}"
+            raise ServiceError(msg) from e
+
+    async def save_data(self, user_id: str, data: dict[str, str]) -> str:
+        """Save health data for a user (legacy method).
+
+        Args:
+            user_id: User identifier
+            data: Health data to save
+
+        Returns:
+            Record identifier
+        """
         try:
-            now = datetime.now(UTC)
+            timestamp = datetime.now(UTC)
+            item_id = f"{user_id}#{timestamp.isoformat()}"
 
-            item = {
+            item: DynamoDBItem = {
                 "pk": f"USER#{user_id}",
-                "sk": f"PROFILE#{user_id}",
+                "sk": f"DATA#{timestamp.isoformat()}",
+                "id": item_id,
                 "user_id": user_id,
-                "email": email,
-                "name": name,
-                "created_at": now.isoformat(),
-                "updated_at": now.isoformat(),
+                "data": data,
+                "created_at": timestamp.isoformat(),
             }
 
             self.table.put_item(Item=self._serialize_item(item))
-
-            return User(
-                id=user_id, email=email, name=name, created_at=now, updated_at=now
-            )
+            return item_id
 
         except ClientError as e:
-            logger.exception("DynamoDB error creating user")
-            msg = f"Failed to create user: {e!s}"
+            logger.exception("DynamoDB error saving data")
+            msg = f"Failed to save data: {e!s}"
             raise ServiceError(msg) from e
 
-    async def delete_user_data(self, user_id: str) -> None:
-        """Delete all user data from DynamoDB."""
+    async def get_data(
+        self, user_id: str, filters: dict[str, str] | None = None
+    ) -> dict[str, str]:
+        """Retrieve health data for a user (legacy method).
+
+        Args:
+            user_id: User identifier
+            filters: Optional filters to apply
+
+        Returns:
+            Health data dictionary
+        """
         try:
-            # Query all items for the user
             response = self.table.query(
                 KeyConditionExpression=Key("pk").eq(f"USER#{user_id}")
+                & Key("sk").begins_with("DATA#"),
+                Limit=1,
+                ScanIndexForward=False,
             )
 
-            # Delete each item
-            with self.table.batch_writer() as batch:
-                for item in response.get("Items", []):
-                    batch.delete_item(Key={"pk": item["pk"], "sk": item["sk"]})
+            items = response.get("Items", [])
+            if items:
+                item = self._deserialize_item(items[0])
+                data = item.get("data", {})
+                # Ensure we return dict[str, str]
+                if isinstance(data, dict):
+                    return {str(k): str(v) for k, v in data.items()}
+
+            return {}
 
         except ClientError as e:
-            logger.exception("DynamoDB error deleting user data")
-            msg = f"Failed to delete user data: {e!s}"
+            logger.exception("DynamoDB error getting data")
+            msg = f"Failed to get data: {e!s}"
             raise ServiceError(msg) from e
 
-    async def query_health_data_stream(
-        self,
-        user_id: str,
-        start_date: datetime | None = None,
-        end_date: datetime | None = None,
-        batch_size: int = 100,
-    ) -> AsyncIterator[list[HealthDataResponse]]:
-        """Stream health data in batches (for large datasets)."""
-        # For now, just yield a single batch
-        # In production, this would implement pagination
-        batch = await self.get_health_data(
-            user_id=user_id, start_date=start_date, end_date=end_date, limit=batch_size
-        )
-        yield batch
+    async def initialize(self) -> None:
+        """Initialize the repository.
+
+        Performs any necessary setup operations like connecting to database,
+        creating indexes, etc.
+        """
+        # DynamoDB doesn't need explicit initialization
+        # Table should already exist
+        logger.info("DynamoDB repository initialized")
+
+    async def cleanup(self) -> None:
+        """Clean up repository resources.
+
+        Performs cleanup operations like closing connections, releasing resources, etc.
+        """
+        # DynamoDB client doesn't need explicit cleanup
+        logger.info("DynamoDB repository cleaned up")

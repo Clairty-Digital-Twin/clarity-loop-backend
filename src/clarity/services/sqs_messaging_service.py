@@ -9,7 +9,14 @@ import uuid
 import boto3
 from botocore.exceptions import ClientError
 
-from clarity.core.exceptions import MessagingError
+from clarity.core.exceptions import ServiceError
+
+# Create a specific messaging error type
+class MessagingError(ServiceError):
+    """Raised when messaging operations fail."""
+    
+    def __init__(self, message: str, **kwargs: dict[str, Any]) -> None:
+        super().__init__(message, error_code="MESSAGING_ERROR", **kwargs)
 
 logger = logging.getLogger(__name__)
 
@@ -75,7 +82,7 @@ class SQSMessagingService:
             response = self.sqs_client.send_message(
                 QueueUrl=self.queue_url,
                 MessageBody=json.dumps(message_body),
-                MessageAttributes=message_attributes,
+                MessageAttributes=message_attributes,  # type: ignore[arg-type]
             )
 
             logger.info("Published message %s to SQS", message_id)
@@ -128,8 +135,8 @@ class SQSMessagingService:
 
         except ClientError as e:
             logger.exception("SQS receive error")
-            msg = f"Failed to receive messages: {e!s}"
-            raise MessagingError(msg) from e
+            error_msg = f"Failed to receive messages: {e!s}"
+            raise MessagingError(error_msg) from e
 
     async def delete_message(self, receipt_handle: str) -> None:
         """Delete message from SQS queue."""
@@ -154,7 +161,7 @@ class SQSMessagingService:
             ]
 
             response = self.sqs_client.delete_message_batch(
-                QueueUrl=self.queue_url, Entries=entries
+                QueueUrl=self.queue_url, Entries=entries  # type: ignore[arg-type]
             )
 
             return {
@@ -197,7 +204,7 @@ class SQSMessagingService:
             )
 
             logger.info("Published message to SNS: %s", response["MessageId"])
-            return response["MessageId"]
+            return str(response["MessageId"])
 
         except ClientError as e:
             logger.exception("SNS publish error")
@@ -211,7 +218,8 @@ class SQSMessagingService:
                 QueueUrl=self.queue_url, AttributeNames=["All"]
             )
 
-            return response.get("Attributes", {})
+            attributes = response.get("Attributes", {})
+            return dict(attributes)
 
         except ClientError as e:
             logger.exception("SQS get attributes error")

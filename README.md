@@ -10,10 +10,42 @@ CLARITY processes wearable device data through machine learning models to extrac
 
 ## Architecture
 
-```
-Apple Health Data → FastAPI → PAT Analysis → Gemini AI → Health Insights
-                     ↓
-                AWS DynamoDB Storage
+```mermaid
+graph TB
+    %% Data Sources
+    AW[📱 Apple Watch] --> HK[🍎 HealthKit Export]
+    IP[📱 iPhone] --> HK
+    
+    %% API Layer
+    HK --> API[🚀 FastAPI Backend]
+    API --> Auth[🔐 AWS Cognito]
+    API --> Valid[✅ Data Validation]
+    
+    %% Processing Pipeline
+    Valid --> Prep[⚙️ Preprocessing]
+    Prep --> PAT[🧠 PAT Transformer<br/>Sleep & Circadian Analysis]
+    Prep --> Gem[💎 Gemini AI<br/>Insight Generation]
+    
+    %% Storage & Analysis
+    PAT --> Feat[📊 Feature Extraction]
+    Gem --> NL[📝 Natural Language<br/>Insights]
+    Feat --> DB[(🗄️ DynamoDB)]
+    NL --> DB
+    
+    %% Real-time & Output
+    DB --> WS[⚡ WebSocket<br/>Real-time Updates]
+    DB --> Insights[🎯 Health Insights]
+    
+    %% Styling
+    classDef aiModel fill:#e1f5fe,stroke:#01579b,stroke-width:2px
+    classDef storage fill:#f3e5f5,stroke:#4a148c,stroke-width:2px
+    classDef api fill:#e8f5e8,stroke:#1b5e20,stroke-width:2px
+    classDef device fill:#fff3e0,stroke:#e65100,stroke-width:2px
+    
+    class PAT,Gem aiModel
+    class DB,Auth storage
+    class API,Valid,WS api
+    class AW,IP,HK device
 ```
 
 **Core Components**:
@@ -22,6 +54,38 @@ Apple Health Data → FastAPI → PAT Analysis → Gemini AI → Health Insights
 - **AI Integration**: Gemini for natural language insight generation
 - **Real-time API**: WebSocket support for live data streaming
 - **AWS Infrastructure**: Production-ready cloud deployment
+
+## Data Flow Pipeline
+
+```mermaid
+sequenceDiagram
+    participant Client as 📱 Client App
+    participant API as 🚀 FastAPI
+    participant Auth as 🔐 Cognito
+    participant PAT as 🧠 PAT Model
+    participant Gemini as 💎 Gemini AI
+    participant DB as 🗄️ DynamoDB
+    
+    Client->>API: Upload HealthKit Data
+    API->>Auth: Validate JWT Token
+    Auth-->>API: ✅ Token Valid
+    
+    API->>API: Data Validation & Preprocessing
+    Note over API: Transform to 1-min intervals<br/>Remove outliers<br/>Normalize signals
+    
+    par Parallel Processing
+        API->>PAT: 7-day Activity Vector<br/>(10,080 points)
+        PAT-->>API: Sleep Quality Scores<br/>Circadian Patterns
+    and
+        API->>Gemini: Health Data + Context
+        Gemini-->>API: Natural Language<br/>Insights & Recommendations
+    end
+    
+    API->>DB: Store Results
+    DB-->>Client: Processing Complete ✅
+    
+    Note over Client,DB: Real-time updates via WebSocket
+```
 
 ## Quick Start
 
@@ -45,13 +109,38 @@ curl http://localhost:8000/health
 
 **44 total endpoints** across 7 main areas:
 
-- **Authentication** (`/api/v1/auth/*`) - 7 endpoints, AWS Cognito integration
-- **Health Data** (`/api/v1/health-data/*`) - 10 endpoints, data CRUD operations
-- **HealthKit** (`/api/v1/healthkit/*`) - 4 endpoints, Apple integration
-- **AI Insights** (`/api/v1/insights/*`) - 6 endpoints, Gemini analysis
-- **PAT Analysis** (`/api/v1/pat/*`) - 5 endpoints, transformer inference
-- **WebSocket** (`/api/v1/ws/*`) - 3 endpoints, real-time connections  
-- **System** (`/health`, `/metrics`) - 9 endpoints, monitoring
+```mermaid
+mindmap
+  root((🚀 CLARITY API))
+    🔐 Authentication
+      Login/Register
+      JWT Tokens
+      AWS Cognito
+    📊 Health Data
+      Upload/Retrieve
+      CRUD Operations
+      Data Validation
+    🍎 HealthKit
+      Apple Integration
+      Batch Processing
+      Status Tracking
+    🧠 AI Insights
+      Gemini Analysis
+      Chat Interface
+      Recommendations
+    🏃 PAT Analysis
+      Sleep Patterns
+      Circadian Rhythms
+      Activity Analysis
+    ⚡ WebSocket
+      Real-time Updates
+      Live Streaming
+      Connection Management
+    📈 System
+      Health Checks
+      Metrics
+      Monitoring
+```
 
 ### Example Usage
 
@@ -72,11 +161,44 @@ POST /api/v1/insights/generate
 
 ## Data Processing Pipeline
 
-1. **HealthKit Ingestion**: JSON validation and schema conversion
-2. **Temporal Processing**: 1-minute intervals, outlier detection
-3. **PAT Analysis**: 7-day activity patterns → sleep predictions
-4. **Gemini Processing**: Health data + context → natural language
-5. **Storage**: DynamoDB with audit logging
+```mermaid
+flowchart LR
+    subgraph Input ["📱 Data Sources"]
+        HK[HealthKit Export]
+        JSON[JSON Validation]
+        Schema[Schema Conversion]
+    end
+    
+    subgraph Processing ["⚙️ ML Processing"]
+        Temporal[1-min Intervals]
+        Outlier[Outlier Detection]
+        PAT[PAT Analysis<br/>7-day patterns]
+        Gemini[Gemini Processing<br/>Natural Language]
+    end
+    
+    subgraph Storage ["🗄️ Storage & Audit"]
+        DDB[(DynamoDB)]
+        Audit[Audit Logging]
+        S3[(S3 Raw Data)]
+    end
+    
+    HK --> JSON --> Schema
+    Schema --> Temporal --> Outlier
+    Outlier --> PAT
+    Outlier --> Gemini
+    PAT --> DDB
+    Gemini --> DDB
+    DDB --> Audit
+    Schema --> S3
+    
+    classDef input fill:#e3f2fd,stroke:#0277bd
+    classDef processing fill:#f1f8e9,stroke:#388e3c
+    classDef storage fill:#fce4ec,stroke:#c2185b
+    
+    class HK,JSON,Schema input
+    class Temporal,Outlier,PAT,Gemini processing
+    class DDB,Audit,S3 storage
+```
 
 ### Supported Health Metrics
 - **Activity**: Steps, distance, calories, exercise minutes
@@ -88,6 +210,43 @@ POST /api/v1/insights/generate
 ## AI Models
 
 ### PAT (Pretrained Actigraphy Transformer)
+
+```mermaid
+graph LR
+    subgraph Input ["📊 Input Data"]
+        A[7-day Activity Data<br/>10,080 time points<br/>1-minute intervals]
+    end
+    
+    subgraph Transformer ["🧠 PAT Architecture"]
+        B[Temporal Embedding]
+        C[Multi-Head Attention<br/>8 heads]
+        D[Positional Encoding]
+        E[Transformer Layers]
+    end
+    
+    subgraph Output ["📈 Analysis Output"]
+        F[Sleep Quality Scores]
+        G[Circadian Disruption]
+        H[Activity Patterns]
+    end
+    
+    A --> B
+    B --> C
+    C --> D
+    D --> E
+    E --> F
+    E --> G
+    E --> H
+    
+    classDef input fill:#e8f5e8,stroke:#2e7d32
+    classDef model fill:#e1f5fe,stroke:#0277bd
+    classDef output fill:#fff3e0,stroke:#f57c00
+    
+    class A input
+    class B,C,D,E model
+    class F,G,H output
+```
+
 - **Purpose**: Sleep and circadian rhythm analysis from movement data
 - **Input**: 10,080-point vectors (7 days × 1-minute intervals)
 - **Architecture**: Transformer with temporal positional encoding
@@ -99,6 +258,56 @@ POST /api/v1/insights/generate
 - **Output**: Conversational explanations and recommendations
 
 ## Production Deployment
+
+```mermaid
+graph TB
+    subgraph AWS ["☁️ AWS Infrastructure"]
+        ALB[Application Load Balancer]
+        ECS[ECS Fargate Cluster]
+        
+        subgraph Services ["🚀 Microservices"]
+            API[FastAPI Service]
+            ML[ML Processing Service]
+            WS[WebSocket Service]
+        end
+        
+        subgraph Storage ["💾 Data Layer"]
+            DDB[(DynamoDB)]
+            S3[(S3 Buckets)]
+            Cognito[AWS Cognito]
+        end
+        
+        subgraph Monitoring ["📊 Observability"]
+            CW[CloudWatch Logs]
+            Prometheus[Prometheus Metrics]
+            Grafana[Grafana Dashboards]
+        end
+    end
+    
+    Internet --> ALB
+    ALB --> ECS
+    ECS --> API
+    ECS --> ML
+    ECS --> WS
+    
+    API --> DDB
+    API --> S3
+    API --> Cognito
+    
+    API --> CW
+    ML --> Prometheus
+    Prometheus --> Grafana
+    
+    classDef aws fill:#ff9900,stroke:#232f3e,color:white
+    classDef service fill:#4caf50,stroke:#1b5e20,color:white
+    classDef storage fill:#2196f3,stroke:#0d47a1,color:white
+    classDef monitor fill:#9c27b0,stroke:#4a148c,color:white
+    
+    class ALB,ECS aws
+    class API,ML,WS service
+    class DDB,S3,Cognito storage
+    class CW,Prometheus,Grafana monitor
+```
 
 **AWS ECS Fargate** with:
 - Auto-scaling based on CPU/memory
@@ -133,6 +342,25 @@ make coverage
 ```
 
 ## Current Status
+
+```mermaid
+gantt
+    title 🚀 Development Status & Roadmap
+    dateFormat  YYYY-MM-DD
+    section Backend Core
+    Tests (807/810)     :done, core, 2024-01-01, 2024-01-15
+    AWS Migration       :done, aws, 2024-01-01, 2024-01-20
+    API Endpoints       :done, api, 2024-01-01, 2024-01-18
+    section AI Integration
+    PAT Model          :done, pat, 2024-01-10, 2024-01-25
+    Gemini Integration :done, gemini, 2024-01-15, 2024-01-30
+    section Quality
+    Test Coverage      :active, coverage, 2024-01-20, 2024-02-15
+    Documentation      :active, docs, 2024-01-25, 2024-02-10
+    section Future
+    Enhanced ML        :milestone, 2024-02-15
+    Real-time Features :milestone, 2024-03-01
+```
 
 - **Tests**: 807/810 passing (99.6% success rate)
 - **Coverage**: 57% (increasing to 85% target)

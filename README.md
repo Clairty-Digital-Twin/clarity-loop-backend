@@ -13,44 +13,47 @@ CLARITY-AI is a **research-grade digital health platform** that processes Apple 
 ### Real Data Processing Pipeline
 
 ```mermaid
-graph TB
-    subgraph Stage1 ["📱 APPLE HEALTH DATA"]
-        A["SENSOR DATA<br/>• Step Counts<br/>• Heart Rate<br/>• Sleep Analysis<br/>• HRV & Respiratory"]
-        B["DATA PROCESSING<br/>• 1-minute sampling<br/>• 7-day windows<br/>• NHANES normalization"]
+flowchart TD
+    subgraph Input ["📱 APPLE HEALTH DATA"]
+        A[RAW SENSORS<br/>Steps • Heart Rate<br/>Sleep • HRV] 
+        B[PROCESSING<br/>1-min sampling<br/>NHANES normalized]
     end
     
-    subgraph Stage2 ["🧠 PAT AI ANALYSIS"]
-        C["FOUNDATION MODEL<br/>• 29,307 NHANES participants<br/>• 2003-2014 training data<br/>• Population-scale patterns"]
-        D["TRANSFORMER ENGINE<br/>• 10,080 time points<br/>• 7-day analysis window<br/>• Deep learning architecture"]
+    subgraph AI ["🧠 AI ANALYSIS ENGINES"]
+        C[PAT TRANSFORMER<br/>29K participants<br/>Population patterns]
+        D[GEMINI AI<br/>Clinical context<br/>Natural language]
     end
     
-    subgraph Stage3 ["🔬 MULTI-MODAL FUSION"]
-        E["HEALTH METRICS<br/>• Sleep Quality Score<br/>• Circadian Rhythm<br/>• Activity Patterns"]
-        F["ADVANCED ANALYSIS<br/>• Heart Rate Variability<br/>• Respiratory Patterns<br/>• Activity Fragmentation"]
+    subgraph Analysis ["🔬 HEALTH ANALYSIS"]
+        E[SLEEP QUALITY<br/>Efficiency • Stages<br/>Circadian rhythm]
+        F[ACTIVITY PATTERNS<br/>Fragmentation<br/>Recovery metrics]
+        G[CARDIOVASCULAR<br/>HRV analysis<br/>Exercise response]
     end
     
-    subgraph Stage4 ["💬 NATURAL LANGUAGE AI"]
-        G["GEMINI PROCESSING<br/>• Clinical context<br/>• Conversational insights<br/>• Personalized analysis"]
-        H["YOUR INSIGHTS<br/>\"Your sleep efficiency was 89%<br/>last week, suggesting excellent<br/>recovery and strong circadian rhythm\""]
+    subgraph Output ["💬 YOUR INSIGHTS"]
+        H[PERSONALIZED REPORT<br/>\"Sleep efficiency 89%<br/>Excellent recovery<br/>Strong circadian rhythm\"]
     end
     
     A --> B
     B --> C
-    C --> D
-    D --> E
-    E --> F
-    F --> G
+    B --> D
+    C --> E
+    C --> F
+    C --> G
+    D --> H
+    E --> H
+    F --> H
     G --> H
     
-    classDef data fill:#ff9900,stroke:#e65100,stroke-width:3px,color:white
+    classDef input fill:#ff9900,stroke:#e65100,stroke-width:3px,color:white
     classDef ai fill:#4caf50,stroke:#1b5e20,stroke-width:3px,color:white
-    classDef fusion fill:#9c27b0,stroke:#4a148c,stroke-width:3px,color:white
+    classDef analysis fill:#9c27b0,stroke:#4a148c,stroke-width:3px,color:white
     classDef output fill:#2196f3,stroke:#0d47a1,stroke-width:3px,color:white
     
-    class A,B data
+    class A,B input
     class C,D ai
-    class E,F fusion
-    class G,H output
+    class E,F,G analysis
+    class H output
 ```
 
 ## Technical Architecture

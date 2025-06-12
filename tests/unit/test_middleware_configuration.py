@@ -5,6 +5,7 @@ different environments (development, testing, production) as specified
 in subtask 29.2.
 """
 
+import os
 from unittest.mock import Mock, patch
 
 from fastapi.testclient import TestClient
@@ -20,67 +21,74 @@ class TestMiddlewareConfiguration:
     @staticmethod
     def test_middleware_config_development_defaults() -> None:
         """Test middleware configuration defaults for development environment."""
-        # Create settings with environment set during initialization to trigger validator
-        settings = Settings(environment="development", enable_auth=True)
-        config_provider = ConfigProvider(settings)
+        # Use environment variable to ensure proper setting
+        with patch.dict(os.environ, {"ENVIRONMENT": "development", "ENABLE_AUTH": "true"}):
+            settings = Settings()
+            config_provider = ConfigProvider(settings)
 
-        middleware_config = config_provider.get_middleware_config()
+            middleware_config = config_provider.get_middleware_config()
 
-        # Development should have permissive settings
-        assert middleware_config.enabled is True
-        assert (
-            middleware_config.graceful_degradation is False
-        )  # Show actual auth errors for debugging
-        assert middleware_config.fallback_to_mock is True
-        assert middleware_config.log_successful_auth is True
-        assert middleware_config.cache_enabled is False  # Disabled for easier debugging
-        assert middleware_config.initialization_timeout_seconds == 10  # Longer timeout
+            # Debug print
+            print(f"Environment: {settings.environment}")
+            print(f"Middleware config: {middleware_config}")
+
+            # Development should have permissive settings
+            assert middleware_config.enabled is True
+            assert (
+                middleware_config.graceful_degradation is False
+            )  # Show actual auth errors for debugging
+            assert middleware_config.fallback_to_mock is True
+            assert middleware_config.log_successful_auth is True
+            assert middleware_config.cache_enabled is False  # Disabled for easier debugging
+            assert middleware_config.initialization_timeout_seconds == 10  # Longer timeout
 
     @staticmethod
     def test_middleware_config_testing_defaults() -> None:
         """Test middleware configuration defaults for testing environment."""
-        # Create settings with environment set during initialization to trigger validator
-        settings = Settings(environment="testing", enable_auth=True)
-        config_provider = ConfigProvider(settings)
+        # Use environment variable to ensure proper setting
+        with patch.dict(os.environ, {"ENVIRONMENT": "testing", "ENABLE_AUTH": "true"}):
+            settings = Settings()
+            config_provider = ConfigProvider(settings)
 
-        middleware_config = config_provider.get_middleware_config()
+            middleware_config = config_provider.get_middleware_config()
 
-        # Testing should use mock auth
-        assert middleware_config.enabled is True  # Follows enable_auth setting
-        assert (
-            middleware_config.graceful_degradation is False
-        )  # Show actual auth errors
-        assert middleware_config.fallback_to_mock is True
-        assert middleware_config.log_successful_auth is False
-        assert (
-            middleware_config.cache_enabled is True
-        )  # Default for unknown environments
-        assert middleware_config.audit_logging is True  # Default value
+            # Testing should use mock auth
+            assert middleware_config.enabled is True  # Follows enable_auth setting
+            assert (
+                middleware_config.graceful_degradation is False
+            )  # Show actual auth errors
+            assert middleware_config.fallback_to_mock is True
+            assert middleware_config.log_successful_auth is False
+            assert (
+                middleware_config.cache_enabled is True
+            )  # Default for unknown environments
+            assert middleware_config.audit_logging is True  # Default value
 
     @staticmethod
     def test_middleware_config_production_defaults() -> None:
         """Test middleware configuration defaults for production environment."""
-        # Create settings with environment and required production settings
-        settings = Settings(
-            environment="production",
-            enable_auth=True,
-            testing=False,  # Explicitly disable testing flag
-            aws_region="us-east-1",
-            cognito_user_pool_id="test-pool",
-            cognito_client_id="test-client",
-        )
-        config_provider = ConfigProvider(settings)
+        # Use environment variables for production settings
+        with patch.dict(os.environ, {
+            "ENVIRONMENT": "production",
+            "ENABLE_AUTH": "true",
+            "TESTING": "false",
+            "AWS_REGION": "us-east-1",
+            "COGNITO_USER_POOL_ID": "test-pool",
+            "COGNITO_CLIENT_ID": "test-client",
+        }):
+            settings = Settings()
+            config_provider = ConfigProvider(settings)
 
-        middleware_config = config_provider.get_middleware_config()
+            middleware_config = config_provider.get_middleware_config()
 
-        # Production should have strict settings
-        assert middleware_config.enabled is True
-        assert middleware_config.graceful_degradation is False  # Fail fast
-        assert middleware_config.fallback_to_mock is False  # No mock fallback
-        assert middleware_config.log_successful_auth is False  # Only log failures
-        assert middleware_config.cache_enabled is True  # Performance
-        assert middleware_config.cache_ttl_seconds == 300  # 5 minutes
-        assert middleware_config.initialization_timeout_seconds == 5  # Shorter timeout
+            # Production should have strict settings
+            assert middleware_config.enabled is True
+            assert middleware_config.graceful_degradation is False  # Fail fast
+            assert middleware_config.fallback_to_mock is False  # No mock fallback
+            assert middleware_config.log_successful_auth is False  # Only log failures
+            assert middleware_config.cache_enabled is True  # Performance
+            assert middleware_config.cache_ttl_seconds == 300  # 5 minutes
+            assert middleware_config.initialization_timeout_seconds == 5  # Shorter timeout
 
     @staticmethod
     def test_middleware_config_exempt_paths_default() -> None:
@@ -110,22 +118,23 @@ class TestMiddlewareConfiguration:
     @staticmethod
     def test_config_provider_middleware_methods() -> None:
         """Test config provider middleware-specific methods."""
-        settings = Settings(environment="development")
-        config_provider = ConfigProvider(settings)
+        with patch.dict(os.environ, {"ENVIRONMENT": "development"}):
+            settings = Settings()
+            config_provider = ConfigProvider(settings)
 
-        # Test timeout getter
-        timeout = config_provider.get_auth_timeout_seconds()
-        assert isinstance(timeout, int)
-        assert timeout > 0
+            # Test timeout getter
+            timeout = config_provider.get_auth_timeout_seconds()
+            assert isinstance(timeout, int)
+            assert timeout > 0
 
-        # Test cache enabled getter
-        cache_enabled = config_provider.should_enable_auth_cache()
-        assert isinstance(cache_enabled, bool)
+            # Test cache enabled getter
+            cache_enabled = config_provider.should_enable_auth_cache()
+            assert isinstance(cache_enabled, bool)
 
-        # Test cache TTL getter
-        cache_ttl = config_provider.get_auth_cache_ttl()
-        assert isinstance(cache_ttl, int)
-        assert cache_ttl > 0
+            # Test cache TTL getter
+            cache_ttl = config_provider.get_auth_cache_ttl()
+            assert isinstance(cache_ttl, int)
+            assert cache_ttl > 0
 
     @staticmethod
     def test_container_uses_middleware_config() -> None:
@@ -151,18 +160,19 @@ class TestMiddlewareConfiguration:
     @staticmethod
     def test_middleware_config_with_auth_disabled() -> None:
         """Test middleware configuration when auth is disabled."""
-        settings = Settings(
-            environment="production",
-            enable_auth=False,
-            testing=False,  # Explicitly disable testing flag for production
-        )
-        config_provider = ConfigProvider(settings)
+        with patch.dict(os.environ, {
+            "ENVIRONMENT": "production",
+            "ENABLE_AUTH": "false",
+            "TESTING": "false",
+        }):
+            settings = Settings()
+            config_provider = ConfigProvider(settings)
 
-        middleware_config = config_provider.get_middleware_config()
+            middleware_config = config_provider.get_middleware_config()
 
-        # When enable_auth is False, middleware.enabled should also be False
-        assert middleware_config.enabled is False  # Follows enable_auth setting
-        assert not settings.enable_auth  # Global auth is disabled
+            # When enable_auth is False, middleware.enabled should also be False
+            assert middleware_config.enabled is False  # Follows enable_auth setting
+            assert not settings.enable_auth  # Global auth is disabled
 
     @staticmethod
     def test_cache_configuration_parameters() -> None:

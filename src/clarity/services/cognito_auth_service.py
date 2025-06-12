@@ -18,25 +18,9 @@ import uuid
 import boto3
 from botocore.exceptions import ClientError
 
-if TYPE_CHECKING:
-    from clarity.models.auth import (
-        UserLoginRequest,
-        UserRegistrationRequest,
-    )
-    from clarity.services.dynamodb_service import DynamoDBService
-    from mypy_boto3_cognito_idp.type_defs import (
-        AdminInitiateAuthResponseTypeDef,
-    )
-    from clarity.ports.auth_ports import IAuthProvider
-    from mypy_boto3_cognito_idp import CognitoIdentityProviderClient
-    from mypy_boto3_cognito_idp.type_defs import (
-        AttributeTypeTypeDef,
-        GetUserResponseTypeDef,
-        SignUpResponseTypeDef,
-    )
-
-
 from clarity.models.auth import (
+    UserLoginRequest,
+    UserRegistrationRequest,
     AuthProvider,
     LoginResponse,
     RegistrationResponse,
@@ -45,6 +29,18 @@ from clarity.models.auth import (
     UserSessionResponse,
     UserStatus,
 )
+from clarity.services.dynamodb_service import DynamoDBService
+from mypy_boto3_cognito_idp.type_defs import (
+    AdminInitiateAuthResponseTypeDef,
+    AttributeTypeTypeDef,
+    GetUserResponseTypeDef,
+    SignUpResponseTypeDef,
+)
+from clarity.ports.auth_ports import IAuthProvider
+from mypy_boto3_cognito_idp import CognitoIdentityProviderClient
+
+if TYPE_CHECKING:
+    pass
 
 # Configure logger
 logger = logging.getLogger(__name__)

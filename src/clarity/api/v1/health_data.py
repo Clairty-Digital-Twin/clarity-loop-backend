@@ -41,15 +41,16 @@ from clarity.services.health_data_service import (
     HealthDataServiceError,
 )
 from clarity.services.messaging.publisher import get_publisher
+from clarity.auth.dependencies import AuthenticatedUser
+from clarity.ports.data_ports import IHealthDataRepository
+from clarity.models.health_data import HealthDataUpload
+from clarity.ports.config_ports import IConfigProvider
+from clarity.ports.auth_ports import IAuthProvider
+from fastapi import Request
+from uuid import UUID
 
 if TYPE_CHECKING:
-    from clarity.auth.dependencies import AuthenticatedUser
-    from clarity.ports.data_ports import IHealthDataRepository
-    from clarity.models.health_data import HealthDataUpload
-    from clarity.ports.config_ports import IConfigProvider
-    from clarity.ports.auth_ports import IAuthProvider
-    from fastapi import Request
-    from uuid import UUID
+    pass
 
 # Configure logger
 logger = logging.getLogger(__name__)

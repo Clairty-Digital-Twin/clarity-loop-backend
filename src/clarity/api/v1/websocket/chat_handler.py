@@ -27,10 +27,11 @@ from clarity.ml.gemini_service import (
     HealthInsightRequest,
 )
 from clarity.ml.pat_service import get_pat_service
+from clarity.api.v1.websocket.connection_manager import ConnectionManager
+from clarity.ml.pat_service import ActigraphyAnalysis
 
 if TYPE_CHECKING:
-    from clarity.api.v1.websocket.connection_manager import ConnectionManager
-    from clarity.ml.pat_service import ActigraphyAnalysis
+    pass
 from clarity.api.v1.websocket.lifespan import get_connection_manager
 from clarity.api.v1.websocket.models import (
     ChatMessage,

@@ -10,7 +10,7 @@ from __future__ import annotations
 import logging
 from typing import Annotated, Any, cast, TYPE_CHECKING
 
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, status, Request
 from fastapi.security import HTTPBearer
 
 from clarity.auth.aws_cognito_provider import get_cognito_provider
@@ -19,7 +19,7 @@ from clarity.models.auth import UserContext
 from clarity.models.user import User
 
 if TYPE_CHECKING:
-    from fastapi import Request
+    pass
 
 logger = logging.getLogger(__name__)
 

@@ -56,12 +56,12 @@ from clarity.core.exceptions import (
     EmptyDataError,
     create_numeric_validation_error,
 )
-from clarity.core.types import StepCount
+from clarity.core.types import StepCount, FloatArray, LoggerProtocol, NHANESStats
 from clarity.ml.nhanes_stats import lookup_norm_stats
+from numpy.typing import NDArray
 
 if TYPE_CHECKING:
-    from clarity.core.types import FloatArray, LoggerProtocol, NHANESStats
-    from numpy.typing import NDArray
+    pass
 
 logger: LoggerProtocol = logging.getLogger(__name__)
 

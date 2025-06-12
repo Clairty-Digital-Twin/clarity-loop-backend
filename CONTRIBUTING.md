@@ -24,9 +24,10 @@ We're building something unprecedented - but we're doing it RIGHT. This is your 
 We're researching integration with cutting-edge tech that's reshaping healthcare:
 
 ### **🤖 Advanced AI Models (2025)**
-- [Claude 4.0 (Opus 4 & Sonnet 4)](https://www.anthropic.com/news/claude-4) - World's best coding model, extended thinking, May 2025 release
 - [Google MedGemma](https://medgemma.org/) - Specialized medical AI models for text and image analysis, launched May 2025
 - [Google AMIE with Vision](https://research.google/blog/amie-gains-vision-a-research-ai-agent-for-multi-modal-diagnostic-dialogue/) - Multimodal diagnostic conversational AI
+- [Meta's OpenBioLLM](https://ai.meta.com/blog/saama-data-driven-care-built-with-llama/) - Llama 3-based models for clinical trials, drug discovery, genomics analysis
+- [OpenAI's Open Weights Model](https://www.thehindu.com/sci-tech/technology/openai-rolls-out-o3-pro-model-ceo-sam-altman-says-open-weights-model-needs-more-time/article69681553.ece) - First open model since GPT-2, delayed to summer 2025 but "will be very worth the wait"
 - **Our Research**: Multi-modal AI fusion for personalized mental health insights
 
 ### **🏥 Electronic Health Record Integration** 

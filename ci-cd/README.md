@@ -1,18 +1,19 @@
-# CI/CD & Infrastructure as Code
+# CI/CD & Infrastructure
 
-Complete automation for building, testing, and deploying the Clarity Loop Backend to Google Cloud.
+Complete automation for building, testing, and deploying the Clarity Loop Backend to **AWS**.
 
 ## Overview
 
 Our CI/CD pipeline follows **modern 2025 best practices** with:
 
 - **GitHub Actions** for CI/CD orchestration
-- **Terraform** for Infrastructure as Code
-- **Google Cloud Run** for serverless deployment
-- **Artifact Registry** for container images
-- **Cloud Build** for image building
+- **AWS ECS on Fargate** for serverless container deployment
+- **AWS ECR** for container registry
+- **AWS DynamoDB** for health data storage
+- **AWS S3** for raw data storage
+- **AWS Cognito** for authentication
+- **Google Gemini API** for AI insights (via API calls)
 - **Automated testing** at every stage
-- **Canary deployments** for safety
 
 ## Pipeline Architecture
 
@@ -29,7 +30,7 @@ flowchart TD
     end
     
     subgraph Deployment ["🚀 DEPLOYMENT"]
-        E[BUILD IMAGES<br/>Docker containers<br/>Registry push]
+        E[BUILD IMAGES<br/>Docker containers<br/>ECR push]
         F[DEPLOY TO DEV<br/>Development env<br/>Smoke tests]
         G[DEPLOY TO STAGING<br/>Production-like<br/>E2E tests]
         H[DEPLOY TO PRODUCTION<br/>Manual approval<br/>Blue-green deploy]
@@ -61,19 +62,62 @@ ci-cd/
 │   ├── ci.yml                  # Continuous Integration
 │   ├── cd.yml                  # Continuous Deployment
 │   └── security.yml            # Security scanning
-├── terraform/                  # Infrastructure as Code
-│   ├── modules/               # Reusable Terraform modules
-│   ├── environments/          # Environment-specific configs
-│   └── backend.tf             # Terraform state backend
-├── docker/                    # Docker configurations
-│   ├── api-gateway/          # API Gateway Dockerfile
-│   ├── ml-service/           # ML Service Dockerfile
-│   └── docker-compose.yml    # Local development
-└── scripts/                   # Automation scripts
-    ├── deploy.sh             # Deployment script
-    ├── rollback.sh           # Rollback script
-    └── health-check.sh       # Health check script
+├── aws/                        # AWS Infrastructure
+│   ├── ecs-task-definition.json  # ECS Task Definition
+│   ├── cloudformation/         # CloudFormation templates
+│   └── scripts/                # AWS deployment scripts
+├── docker/                     # Docker configurations
+│   ├── Dockerfile              # Main application Dockerfile
+│   └── docker-compose.yml      # Local development
+└── scripts/                    # Automation scripts
+    ├── deploy.sh               # AWS deployment script
+    ├── rollback.sh             # Rollback script
+    └── health-check.sh         # Health check script
 ```
+
+## AWS Infrastructure
+
+### Core Services
+
+1. **AWS ECS on Fargate**
+   - Serverless container orchestration
+   - Auto-scaling based on CPU/memory
+   - Zero infrastructure management
+
+2. **AWS ECR (Elastic Container Registry)**
+   - Private Docker image repository
+   - Vulnerability scanning
+   - Image lifecycle policies
+
+3. **AWS Application Load Balancer**
+   - HTTPS termination
+   - Health checks
+   - Path-based routing
+
+4. **AWS DynamoDB**
+   - NoSQL database for health metrics
+   - Auto-scaling read/write capacity
+   - Point-in-time recovery
+
+5. **AWS S3**
+   - Raw health data storage
+   - Server-side encryption
+   - Lifecycle policies
+
+6. **AWS Cognito**
+   - User authentication
+   - JWT token management
+   - MFA support
+
+7. **AWS SQS**
+   - Message queuing for async processing
+   - Dead letter queues
+   - FIFO guarantees
+
+8. **Google Gemini API**
+   - AI-powered health insights
+   - Natural language processing
+   - Accessed via REST API calls
 
 ## Environment Strategy
 
@@ -81,14 +125,14 @@ ci-cd/
 
 1. **Development** (`dev`)
    - Auto-deploys from `develop` branch
-   - Uses emulators where possible
+   - Uses LocalStack for AWS services
    - Minimal resource allocation
    - Short retention policies
 
 2. **Staging** (`staging`)
    - Auto-deploys from `main` branch
    - Production-like environment
-   - Full Google Cloud services
+   - Full AWS services
    - Extensive E2E testing
 
 3. **Production** (`prod`)
@@ -97,489 +141,269 @@ ci-cd/
    - Full monitoring and alerting
    - HIPAA compliance validated
 
-### Branch Strategy
+## Deployment Process
 
+### Quick Deployment
+
+```bash
+# Deploy to production (AWS ECS)
+./deploy.sh
+
+# The script handles:
+# 1. ECR login
+# 2. Docker build & push
+# 3. ECS task definition update
+# 4. Service deployment
+# 5. Health check validation
 ```
-main branch (protected)
-├── develop branch (auto-deploy to dev)
-├── feature/* branches (PR required)
-└── release/* branches (staging deployment)
+
+### Manual Deployment Steps
+
+1. **Build and Push Docker Image**
+   ```bash
+   # Login to ECR
+   aws ecr get-login-password --region us-east-1 | \
+     docker login --username AWS --password-stdin 124355672559.dkr.ecr.us-east-1.amazonaws.com
+
+   # Build image
+   docker build -t clarity-backend:latest .
+
+   # Tag and push
+   docker tag clarity-backend:latest \
+     124355672559.dkr.ecr.us-east-1.amazonaws.com/clarity-backend:latest
+   
+   docker push 124355672559.dkr.ecr.us-east-1.amazonaws.com/clarity-backend:latest
+   ```
+
+2. **Update ECS Service**
+   ```bash
+   # Register new task definition
+   aws ecs register-task-definition \
+     --cli-input-json file://ops/ecs-task-definition.json
+
+   # Update service
+   aws ecs update-service \
+     --cluster clarity-backend-cluster \
+     --service clarity-backend-service \
+     --task-definition clarity-backend:latest
+   ```
+
+## Local Development
+
+### Docker Compose Setup
+
+```yaml
+# docker-compose.yml
+version: '3.8'
+
+services:
+  app:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - AWS_REGION=us-east-1
+      - ENVIRONMENT=development
+      - SKIP_EXTERNAL_SERVICES=true
+    depends_on:
+      - dynamodb-local
+      - minio
+
+  dynamodb-local:
+    image: amazon/dynamodb-local:latest
+    ports:
+      - "8001:8000"
+    command: "-jar DynamoDBLocal.jar -sharedDb -dbPath /data"
+
+  minio:
+    image: minio/minio:latest
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      - MINIO_ROOT_USER=minioadmin
+      - MINIO_ROOT_PASSWORD=minioadmin
+    command: server /data --console-address ":9001"
+```
+
+### Running Locally
+
+```bash
+# Start all services
+docker-compose up
+
+# Run tests
+make test
+
+# Check coverage
+make coverage
+
+# Lint and format
+make lint
 ```
 
 ## GitHub Actions Workflows
 
-### 1. Continuous Integration (`.github/workflows/ci.yml`)
-
-Triggered on: Pull requests to `main` and `develop`
-
-**Quality Gates:**
+### Continuous Integration
 
 ```yaml
+# .github/workflows/ci.yml
+name: CI
+
+on:
+  pull_request:
+    branches: [main, develop]
+
 jobs:
-  code-quality:
-    - ruff format --check
-    - ruff check
-    - mypy type checking
-    - bandit security scan
-
-  unit-tests:
-    - pytest with coverage
-    - Coverage must be > 90%
-
-  integration-tests:
-    - Docker Compose test environment
-    - API integration tests
-    - ML service validation
-
-  security:
-    - SAST with CodeQL
-    - Dependency vulnerability scan
-    - Secret scanning
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+      
+      - name: Install dependencies
+        run: |
+          pip install uv
+          uv venv
+          uv pip install -e ".[dev]"
+      
+      - name: Run tests
+        run: |
+          make test
+          make coverage
+      
+      - name: Lint code
+        run: make lint
 ```
 
-### 2. Continuous Deployment (`.github/workflows/cd.yml`)
-
-Triggered on: Push to `main` and `develop` branches
-
-**Deployment Pipeline:**
+### Continuous Deployment
 
 ```yaml
+# .github/workflows/cd.yml
+name: CD
+
+on:
+  push:
+    branches: [main]
+
 jobs:
-  build:
-    - Build Docker images
-    - Push to Artifact Registry
-    - Scan images for vulnerabilities
-
-  deploy-dev:
-    - Deploy to development environment
-    - Run smoke tests
-    - Update deployment status
-
-  deploy-staging:
-    - Deploy to staging (main branch only)
-    - Run E2E test suite
-    - Performance benchmarks
-
-  deploy-production:
-    - Manual approval required
-    - Blue-green deployment
-    - Canary traffic routing
-    - Full monitoring validation
-```
-
-### 3. Security Scanning (`.github/workflows/security.yml`)
-
-Triggered on: Schedule (daily) and security events
-
-**Security Checks:**
-
-- SAST (Static Application Security Testing)
-- DAST (Dynamic Application Security Testing)
-- Dependency vulnerability scanning
-- Infrastructure security validation
-- HIPAA compliance checks
-
-## Infrastructure as Code (Terraform)
-
-### Module Structure
-
-```hcl
-# terraform/modules/clarity-backend/
-├── main.tf                 # Main resources
-├── variables.tf            # Input variables
-├── outputs.tf             # Output values
-├── versions.tf            # Provider versions
-└── README.md              # Module documentation
-```
-
-### Core Infrastructure Modules
-
-#### 1. Google Cloud Run Services
-
-```hcl
-module "api_gateway" {
-  source = "./modules/cloud-run"
-
-  service_name = "clarity-api-gateway"
-  image        = var.api_gateway_image
-  port         = 8000
-
-  cpu_limit    = "2000m"
-  memory_limit = "4Gi"
-
-  min_instances = 0
-  max_instances = 100
-
-  environment_variables = {
-    GOOGLE_CLOUD_PROJECT = var.project_id
-    ENVIRONMENT         = var.environment
-  }
-}
-```
-
-#### 2. Pub/Sub Topics and Subscriptions
-
-```hcl
-module "messaging" {
-  source = "./modules/pubsub"
-
-  topics = [
-    "healthkit-data-ingestion",
-    "ml-processing-requests",
-    "insight-generation"
-  ]
-
-  dead_letter_policy = {
-    max_delivery_attempts = 5
-    dead_letter_topic    = "dead-letter-queue"
-  }
-}
-```
-
-#### 3. Firestore and Storage
-
-```hcl
-module "databases" {
-  source = "./modules/firestore"
-
-  database_id = "clarity-${var.environment}"
-  location    = var.region
-
-  # Firestore indexes
-  indexes = [
-    {
-      collection = "users"
-      fields     = ["email", "created_at"]
-    },
-    {
-      collection = "health_data"
-      fields     = ["user_id", "timestamp", "data_type"]
-    }
-  ]
-}
-```
-
-#### 4. Security and IAM
-
-```hcl
-module "security" {
-  source = "./modules/iam"
-
-  service_accounts = {
-    api_gateway = {
-      roles = [
-        "roles/firestore.user",
-        "roles/pubsub.publisher"
-      ]
-    }
-    ml_service = {
-      roles = [
-        "roles/aiplatform.user",
-        "roles/storage.objectViewer"
-      ]
-    }
-  }
-}
-```
-
-### Environment Configurations
-
-#### Development Environment
-
-```hcl
-# terraform/environments/dev/terraform.tfvars
-project_id = "clarity-loop-dev"
-region     = "us-central1"
-
-# Minimal resources for development
-api_gateway_config = {
-  cpu_limit      = "1000m"
-  memory_limit   = "2Gi"
-  min_instances  = 0
-  max_instances  = 10
-}
-
-# Use emulators where possible
-use_emulators = true
-```
-
-#### Production Environment
-
-```hcl
-# terraform/environments/prod/terraform.tfvars
-project_id = "clarity-loop-production"
-region     = "us-central1"
-
-# Production-grade resources
-api_gateway_config = {
-  cpu_limit      = "2000m"
-  memory_limit   = "4Gi"
-  min_instances  = 2
-  max_instances  = 100
-}
-
-# Full Google Cloud services
-use_emulators = false
-backup_enabled = true
-monitoring_enabled = true
-```
-
-## Docker Configuration
-
-### Multi-stage Dockerfile (API Gateway)
-
-```dockerfile
-# docker/api-gateway/Dockerfile
-FROM python:3.11-slim as builder
-
-# Install uv for fast dependency management
-COPY --from=ghcr.io/astral-sh/uv:latest /uv /bin/uv
-
-# Create virtual environment
-RUN uv venv /opt/venv
-ENV PATH="/opt/venv/bin:$PATH"
-
-# Install dependencies
-COPY pyproject.toml uv.lock ./
-RUN uv pip install --no-cache -r pyproject.toml
-
-# Production stage
-FROM python:3.11-slim as production
-
-# Copy virtual environment
-COPY --from=builder /opt/venv /opt/venv
-ENV PATH="/opt/venv/bin:$PATH"
-
-# Create non-root user
-RUN groupadd -r appuser && useradd -r -g appuser appuser
-USER appuser
-
-# Copy application code
-COPY --chown=appuser:appuser . /app
-WORKDIR /app
-
-# Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-  CMD curl -f http://localhost:8000/health || exit 1
-
-# Run application
-CMD ["uvicorn", "src.api_gateway.main:app", "--host", "0.0.0.0", "--port", "8000"]
-```
-
-### Docker Compose for Local Development
-
-```yaml
-# docker/docker-compose.yml
-version: '3.8'
-
-services:
-  api-gateway:
-    build:
-      context: ..
-      dockerfile: docker/api-gateway/Dockerfile
-    ports:
-      - "8000:8000"
-    environment:
-      - FIRESTORE_EMULATOR_HOST=firestore:8080
-      - PUBSUB_EMULATOR_HOST=pubsub:8085
-    depends_on:
-      - firestore
-      - pubsub
-
-  ml-service:
-    build:
-      context: ..
-      dockerfile: docker/ml-service/Dockerfile
-    ports:
-      - "8001:8001"
-    environment:
-      - VERTEX_AI_LOCATION=us-central1
-
-  firestore:
-    image: gcr.io/google.com/cloudsdktool/cloud-sdk:emulators
-    command: gcloud emulators firestore start --host-port=0.0.0.0:8080
-    ports:
-      - "8080:8080"
-
-  pubsub:
-    image: gcr.io/google.com/cloudsdktool/cloud-sdk:emulators
-    command: gcloud emulators pubsub start --host-port=0.0.0.0:8085
-    ports:
-      - "8085:8085"
-```
-
-## Deployment Scripts
-
-### Deployment Script (`scripts/deploy.sh`)
-
-```bash
-#!/bin/bash
-set -euo pipefail
-
-ENVIRONMENT=${1:-dev}
-IMAGE_TAG=${2:-latest}
-
-echo "🚀 Deploying Clarity Loop Backend to ${ENVIRONMENT}"
-
-# Build and push images
-echo "📦 Building Docker images..."
-docker build -t gcr.io/clarity-loop-${ENVIRONMENT}/api-gateway:${IMAGE_TAG} \
-  -f docker/api-gateway/Dockerfile .
-
-docker push gcr.io/clarity-loop-${ENVIRONMENT}/api-gateway:${IMAGE_TAG}
-
-# Deploy infrastructure
-echo "🏗️  Deploying infrastructure..."
-cd terraform/environments/${ENVIRONMENT}
-terraform init
-terraform plan
-terraform apply -auto-approve
-
-# Deploy services
-echo "🔄 Deploying services..."
-gcloud run deploy clarity-api-gateway \
-  --image gcr.io/clarity-loop-${ENVIRONMENT}/api-gateway:${IMAGE_TAG} \
-  --platform managed \
-  --region us-central1 \
-  --project clarity-loop-${ENVIRONMENT}
-
-# Health check
-echo "🔍 Running health checks..."
-./scripts/health-check.sh ${ENVIRONMENT}
-
-echo "✅ Deployment complete!"
-```
-
-### Health Check Script (`scripts/health-check.sh`)
-
-```bash
-#!/bin/bash
-set -euo pipefail
-
-ENVIRONMENT=${1:-dev}
-BASE_URL="https://clarity-api-gateway-${ENVIRONMENT}.a.run.app"
-
-echo "🔍 Health checking ${ENVIRONMENT} environment..."
-
-# Check API Gateway
-echo "Checking API Gateway..."
-curl -f "${BASE_URL}/health" || exit 1
-
-# Check ML Service
-echo "Checking ML Service..."
-curl -f "${BASE_URL}/ml/health" || exit 1
-
-# Check database connectivity
-echo "Checking database..."
-curl -f "${BASE_URL}/health/database" || exit 1
-
-echo "✅ All health checks passed!"
-```
-
-## Release Management
-
-### Versioning Strategy
-
-- **Semantic Versioning**: `MAJOR.MINOR.PATCH`
-- **Git Tags**: Automatically created on release
-- **Release Notes**: Auto-generated from commits
-
-### Release Process
-
-1. **Feature Development**
-
-   ```bash
-   git checkout -b feature/new-feature
-   # Develop feature
-   git push origin feature/new-feature
-   # Create PR to develop
-   ```
-
-2. **Release Preparation**
-
-   ```bash
-   git checkout -b release/1.2.0
-   # Update version numbers
-   # Update CHANGELOG.md
-   git push origin release/1.2.0
-   # Create PR to main
-   ```
-
-3. **Production Deployment**
-
-   ```bash
-   # Merge to main triggers staging deployment
-   # Manual approval for production
-   # Automatic rollback on failure
-   ```
-
-### Rollback Strategy
-
-```bash
-# Automatic rollback on health check failure
-# Manual rollback command
-./scripts/rollback.sh production 1.1.0
-
-# Traffic routing rollback (instantaneous)
-gcloud run services update-traffic clarity-api-gateway \
-  --to-revisions=PREVIOUS=100 \
-  --platform managed \
-  --region us-central1
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+      
+      - name: Deploy to AWS
+        run: ./deploy.sh
 ```
 
 ## Monitoring and Observability
 
-### Deployment Metrics
+### Key Metrics
 
+- **API Response Time**: <500ms p99
+- **AI Inference Time**: <2s for health insights
 - **Deployment Success Rate**: >99%
-- **Deployment Duration**: <10 minutes
-- **Rollback Time**: <2 minutes
-- **Mean Time to Recovery**: <5 minutes
+- **Uptime**: 99.9% SLA
 
-### Automated Alerts
+### CloudWatch Dashboards
 
-- Deployment failures
-- Health check failures
-- Performance degradation
-- Security vulnerabilities
+- API Gateway metrics
+- ECS service health
+- DynamoDB performance
+- S3 access patterns
+- Cognito authentication events
+
+### Alerts
+
+- API error rate > 1%
+- ECS task failures
+- DynamoDB throttling
+- S3 access errors
+- Authentication failures
 
 ## Security Best Practices
 
 ### Secrets Management
 
-- Google Secret Manager for production secrets
+- AWS Secrets Manager for API keys (Gemini API)
+- IAM roles for service authentication
 - GitHub Secrets for CI/CD credentials
-- No secrets in code or Terraform files
+- No hardcoded secrets
 
-### Image Security
+### Network Security
 
-- Distroless base images where possible
-- Regular vulnerability scanning
-- Signed container images
+- VPC with private subnets
+- Security groups with minimal permissions
+- AWS WAF for API protection
+- TLS 1.3 everywhere
 
-### Access Control
+### Data Security
 
-- Least privilege IAM roles
-- Service account authentication
-- Branch protection rules
-- Required PR reviews
+- Encryption at rest (S3, DynamoDB)
+- Encryption in transit (TLS)
+- Data sanitization for logs
+- HIPAA compliance
 
 ## Cost Optimization
 
 ### Resource Management
 
-- Auto-scaling based on demand
-- Preemptible instances for non-critical workloads
-- Scheduled shutdowns for development environments
+- Fargate Spot for non-critical workloads
+- DynamoDB on-demand billing
+- S3 lifecycle policies
+- Reserved capacity for production
 
 ### Monitoring
 
-- Cost alerts at 80% of budget
-- Resource utilization dashboards
-- Automated cleanup of unused resources
+- AWS Cost Explorer dashboards
+- Budget alerts at 80% threshold
+- Resource tagging for cost allocation
+- Regular cost optimization reviews
+
+## Troubleshooting
+
+### Common Issues
+
+1. **ECS Task Failures**
+   ```bash
+   # Check task logs
+   aws logs tail /ecs/clarity-backend --follow
+   
+   # Describe task
+   aws ecs describe-tasks --cluster clarity-backend-cluster --tasks <task-arn>
+   ```
+
+2. **Database Connection Issues**
+   ```bash
+   # Test DynamoDB connection
+   aws dynamodb list-tables --region us-east-1
+   
+   # Check IAM permissions
+   aws iam get-role-policy --role-name clarity-backend-task-role
+   ```
+
+3. **Deployment Failures**
+   ```bash
+   # Check service events
+   aws ecs describe-services --cluster clarity-backend-cluster --services clarity-backend-service
+   
+   # Manual rollback
+   ./scripts/rollback.sh
+   ```
 
 ---
 
-**Goal**: Zero-downtime deployments with full automation
-**Standard**: Deploy 10+ times per day safely
+**Goal**: Zero-downtime deployments with full AWS automation
+**Standard**: Deploy safely with comprehensive testing
 **Recovery**: Sub-2-minute rollback capability

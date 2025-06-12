@@ -8,12 +8,11 @@ from __future__ import annotations
 
 from datetime import datetime
 import logging
-from typing import Protocol, TYPE_CHECKING
+from typing import TYPE_CHECKING, Protocol
 
 import numpy as np
 from pydantic import BaseModel, Field
 import torch
-
 
 if TYPE_CHECKING:
     from clarity.models.health_data import HealthMetric

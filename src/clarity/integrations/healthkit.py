@@ -11,7 +11,7 @@ from dataclasses import asdict, dataclass
 from datetime import UTC, datetime, timedelta
 from enum import StrEnum
 import logging
-from typing import Any, Self, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Self
 
 import httpx
 from pydantic import BaseModel, Field, validator

@@ -18,11 +18,13 @@ from datetime import UTC, datetime
 import json
 import logging
 import os
-from typing import Any, NoReturn, TYPE_CHECKING
+from typing import Any, NoReturn
+from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from google.cloud import storage
 
+from clarity.auth.dependencies import AuthenticatedUser
 from clarity.core.exceptions import (
     AuthorizationProblem,
     InternalServerProblem,
@@ -35,22 +37,15 @@ from clarity.core.pagination import (
     PaginationBuilder,
     validate_pagination_params,
 )
-from clarity.models.health_data import HealthDataResponse
+from clarity.models.health_data import HealthDataResponse, HealthDataUpload
+from clarity.ports.auth_ports import IAuthProvider
+from clarity.ports.config_ports import IConfigProvider
+from clarity.ports.data_ports import IHealthDataRepository
 from clarity.services.health_data_service import (
     HealthDataService,
     HealthDataServiceError,
 )
 from clarity.services.messaging.publisher import get_publisher
-from clarity.auth.dependencies import AuthenticatedUser
-from clarity.ports.data_ports import IHealthDataRepository
-from clarity.models.health_data import HealthDataUpload
-from clarity.ports.config_ports import IConfigProvider
-from clarity.ports.auth_ports import IAuthProvider
-from fastapi import Request
-from uuid import UUID
-
-if TYPE_CHECKING:
-    pass
 
 # Configure logger
 logger = logging.getLogger(__name__)

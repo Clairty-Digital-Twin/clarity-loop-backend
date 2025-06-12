@@ -7,6 +7,7 @@ Split into focused test classes to avoid PLR0904 (too many public methods).
 from __future__ import annotations
 
 from datetime import UTC, datetime, timedelta
+from typing import TYPE_CHECKING
 from uuid import uuid4
 
 import pytest
@@ -21,7 +22,6 @@ from clarity.models.health_data import (
     SleepStage,
 )
 from clarity.storage.mock_repository import MockHealthDataRepository
-from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from _pytest.monkeypatch import MonkeyPatch

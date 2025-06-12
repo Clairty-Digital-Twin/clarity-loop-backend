@@ -48,7 +48,7 @@ select = [
     "SLOT", # flake8-slots
     "SIM",  # flake8-simplify
     "TID",  # flake8-tidy-imports
-    "TCH",  # flake8-type-checking
+    # "TCH",  # flake8-type-checking - disabled for now due to runtime import complexity
     "INT",  # flake8-gettext
     "ARG",  # flake8-unused-arguments
     "PTH",  # flake8-use-pathlib
@@ -150,8 +150,9 @@ ban-relative-imports = "all"
 # flake8-type-checking configuration
 [lint.flake8-type-checking]
 strict = true
-runtime-evaluated-base-classes = ["pydantic.BaseModel", "pydantic.BaseSettings"]
-runtime-evaluated-decorators = ["pydantic.validate_call", "pydantic.field_validator", "pydantic.model_validator"]
+runtime-evaluated-base-classes = ["pydantic.BaseModel", "pydantic.BaseSettings", "fastapi.Request", "fastapi.WebSocket"]
+runtime-evaluated-decorators = ["pydantic.validate_call", "pydantic.field_validator", "pydantic.model_validator", "fastapi.Depends", "fastapi.Query"]
+exempt-modules = ["typing", "typing_extensions", "fastapi", "pydantic"]
 
 # McCabe complexity
 [lint.mccabe]

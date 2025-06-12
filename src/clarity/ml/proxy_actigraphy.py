@@ -23,9 +23,10 @@ from __future__ import annotations
 
 from datetime import datetime
 import logging
-from typing import Any, TYPE_CHECKING
+from typing import Any
 
 import numpy as np
+from numpy.typing import NDArray
 from pydantic import BaseModel, Field
 
 from clarity.core.constants import (
@@ -56,12 +57,8 @@ from clarity.core.exceptions import (
     EmptyDataError,
     create_numeric_validation_error,
 )
-from clarity.core.types import StepCount, FloatArray, LoggerProtocol, NHANESStats
+from clarity.core.types import FloatArray, LoggerProtocol, NHANESStats, StepCount
 from clarity.ml.nhanes_stats import lookup_norm_stats
-from numpy.typing import NDArray
-
-if TYPE_CHECKING:
-    pass
 
 logger: LoggerProtocol = logging.getLogger(__name__)
 

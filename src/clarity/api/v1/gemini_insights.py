@@ -12,26 +12,23 @@ from __future__ import annotations
 from datetime import UTC, datetime
 import logging
 import os
-from typing import Any, NoReturn, TYPE_CHECKING
+from typing import Any, NoReturn
 import uuid
 
 from boto3.dynamodb.conditions import Key
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field
 
+from clarity.auth.dependencies import AuthenticatedUser
 from clarity.core.config_aws import get_settings
 from clarity.ml.gemini_service import (
     GeminiService,
     HealthInsightRequest,
     HealthInsightResponse,
 )
-from clarity.storage.dynamodb_client import DynamoDBHealthDataRepository
-from clarity.auth.dependencies import AuthenticatedUser
-from clarity.ports.config_ports import IConfigProvider
 from clarity.ports.auth_ports import IAuthProvider
-
-if TYPE_CHECKING:
-    pass
+from clarity.ports.config_ports import IConfigProvider
+from clarity.storage.dynamodb_client import DynamoDBHealthDataRepository
 
 logger = logging.getLogger(__name__)
 

@@ -41,12 +41,12 @@ from clarity.ml.pat_service import (
 from clarity.utils.decorators import resilient_prediction
 
 if TYPE_CHECKING:
-    from clarity.core.types import LoggerProtocol
+    from collections.abc import Callable
+
+    from clarity.core.types import CacheStorage, LoggerProtocol
     from clarity.ml.pat_service import (
         PATModelService,
     )
-    from collections.abc import Callable
-    from clarity.core.types import CacheStorage
 
 logger: LoggerProtocol = logging.getLogger(__name__)
 

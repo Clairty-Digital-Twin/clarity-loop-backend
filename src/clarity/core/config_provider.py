@@ -12,8 +12,7 @@ from typing import TYPE_CHECKING
 from clarity.ports.config_ports import IConfigProvider
 
 if TYPE_CHECKING:
-    from clarity.core.config_aws import MiddlewareConfig
-    from clarity.core.config_aws import Settings
+    from clarity.core.config_aws import MiddlewareConfig, Settings
 
 
 class ConfigProvider(IConfigProvider):  # noqa: PLR0904

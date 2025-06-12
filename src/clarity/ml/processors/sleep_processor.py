@@ -17,12 +17,12 @@ References sleep research standards from AASM, NSRR, and MESA studies.
 from __future__ import annotations
 
 import logging
+from typing import TYPE_CHECKING
 
 import numpy as np
 from pydantic import BaseModel, Field
 
 from clarity.models.health_data import SleepStage
-from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from clarity.models.health_data import HealthMetric, SleepData

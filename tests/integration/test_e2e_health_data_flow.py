@@ -8,7 +8,7 @@ from __future__ import annotations
 import concurrent.futures
 from datetime import UTC, datetime
 import time
-from typing import Any, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 from uuid import uuid4
 
 from fastapi.testclient import TestClient
@@ -18,8 +18,8 @@ import pytest
 from clarity.core.container import create_application
 
 if TYPE_CHECKING:
-    from httpx import Response
     from fastapi import FastAPI
+    from httpx import Response
 
 
 class TestE2EHealthDataFlow:

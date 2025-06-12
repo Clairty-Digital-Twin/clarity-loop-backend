@@ -9,8 +9,8 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from clarity.models.health_data import HealthDataUpload, HealthMetric
     import logging
+
     from clarity.models.health_data import HealthDataUpload, HealthMetric
 else:
     pass

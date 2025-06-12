@@ -20,14 +20,14 @@ from __future__ import annotations
 
 from datetime import UTC, datetime
 import logging
-from typing import Any, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 
-
 if TYPE_CHECKING:
-    from clarity.models.health_data import ActivityData, HealthMetric
     from collections.abc import Sequence
+
+    from clarity.models.health_data import ActivityData, HealthMetric
 
 logger = logging.getLogger(__name__)
 

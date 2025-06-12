@@ -12,35 +12,32 @@ import hashlib
 import hmac
 import logging
 import secrets
-from typing import TYPE_CHECKING, Any
+from typing import Any
 import uuid
 
 import boto3
 from botocore.exceptions import ClientError
-
-from clarity.models.auth import (
-    UserLoginRequest,
-    UserRegistrationRequest,
-    AuthProvider,
-    LoginResponse,
-    RegistrationResponse,
-    TokenResponse,
-    UserRole,
-    UserSessionResponse,
-    UserStatus,
-)
-from clarity.services.dynamodb_service import DynamoDBService
+from mypy_boto3_cognito_idp import CognitoIdentityProviderClient
 from mypy_boto3_cognito_idp.type_defs import (
     AdminInitiateAuthResponseTypeDef,
     AttributeTypeTypeDef,
     GetUserResponseTypeDef,
     SignUpResponseTypeDef,
 )
-from clarity.ports.auth_ports import IAuthProvider
-from mypy_boto3_cognito_idp import CognitoIdentityProviderClient
 
-if TYPE_CHECKING:
-    pass
+from clarity.models.auth import (
+    AuthProvider,
+    LoginResponse,
+    RegistrationResponse,
+    TokenResponse,
+    UserLoginRequest,
+    UserRegistrationRequest,
+    UserRole,
+    UserSessionResponse,
+    UserStatus,
+)
+from clarity.ports.auth_ports import IAuthProvider
+from clarity.services.dynamodb_service import DynamoDBService
 
 # Configure logger
 logger = logging.getLogger(__name__)

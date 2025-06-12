@@ -9,7 +9,7 @@ import base64
 import json
 import logging
 import os
-from typing import Any, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from fastapi import FastAPI, HTTPException
 from google.cloud import storage

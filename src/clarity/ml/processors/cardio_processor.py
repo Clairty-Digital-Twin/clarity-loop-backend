@@ -7,11 +7,11 @@ Implements domain-specific preprocessing and feature extraction for cardiac heal
 from __future__ import annotations
 
 import logging
+from typing import TYPE_CHECKING
 
 import numpy as np
 import pandas as pd  # type: ignore[import-untyped]
 from pydantic import BaseModel, Field
-from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from datetime import datetime

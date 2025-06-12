@@ -3,12 +3,12 @@
 from __future__ import annotations
 
 import os
+from typing import TYPE_CHECKING
 from unittest.mock import patch
 
 from fastapi.testclient import TestClient
 
 from clarity.entrypoints.analysis_service import app, main
-from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from unittest.mock import Mock

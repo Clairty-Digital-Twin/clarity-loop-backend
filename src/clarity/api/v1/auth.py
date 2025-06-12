@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import logging
-from typing import Any, TYPE_CHECKING
+from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel, EmailStr, Field
@@ -25,9 +25,6 @@ from clarity.services.cognito_auth_service import (
     UserAlreadyExistsError,
     UserNotFoundError,
 )
-
-if TYPE_CHECKING:
-    pass
 
 # Configure logger
 logger = logging.getLogger(__name__)

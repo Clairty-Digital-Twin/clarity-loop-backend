@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
+from collections.abc import Awaitable, Callable
 from functools import wraps
 from typing import TYPE_CHECKING, ParamSpec, TypeVar, cast
-from collections.abc import Awaitable, Callable
 
 from fastapi import HTTPException, status
 

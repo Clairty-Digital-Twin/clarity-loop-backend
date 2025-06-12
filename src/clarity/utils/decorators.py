@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import functools
 import logging
-from typing import ParamSpec, TypeVar, TYPE_CHECKING
+from typing import TYPE_CHECKING, ParamSpec, TypeVar
 
 from circuitbreaker import (
     CircuitBreaker,

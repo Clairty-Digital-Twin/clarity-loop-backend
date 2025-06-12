@@ -7,7 +7,7 @@ from datetime import UTC, datetime
 import json
 import logging
 import os
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 from fastapi import (
     APIRouter,
@@ -18,20 +18,7 @@ from fastapi import (
 )
 from pydantic import ValidationError
 
-from clarity.auth.aws_cognito_provider import CognitoAuthProvider
-from clarity.core.config_aws import get_settings
-
-# Removed circular import - will use direct initialization
-from clarity.ml.gemini_service import (
-    GeminiService,
-    HealthInsightRequest,
-)
-from clarity.ml.pat_service import get_pat_service
 from clarity.api.v1.websocket.connection_manager import ConnectionManager
-from clarity.ml.pat_service import ActigraphyAnalysis
-
-if TYPE_CHECKING:
-    pass
 from clarity.api.v1.websocket.lifespan import get_connection_manager
 from clarity.api.v1.websocket.models import (
     ChatMessage,
@@ -43,7 +30,20 @@ from clarity.api.v1.websocket.models import (
     TypingMessage,
     WebSocketHealthDataPayload,
 )
-from clarity.ml.pat_service import ActigraphyInput, PATModelService
+from clarity.auth.aws_cognito_provider import CognitoAuthProvider
+from clarity.core.config_aws import get_settings
+
+# Removed circular import - will use direct initialization
+from clarity.ml.gemini_service import (
+    GeminiService,
+    HealthInsightRequest,
+)
+from clarity.ml.pat_service import (
+    ActigraphyAnalysis,
+    ActigraphyInput,
+    PATModelService,
+    get_pat_service,
+)
 from clarity.ml.preprocessing import ActigraphyDataPoint
 from clarity.models.auth import UserContext, UserRole
 

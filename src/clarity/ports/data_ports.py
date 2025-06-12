@@ -7,13 +7,9 @@ Business logic layer depends on this abstraction, not concrete implementations.
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-
-from typing import TYPE_CHECKING
-from clarity.models.health_data import HealthMetric
 from datetime import datetime
 
-if TYPE_CHECKING:
-    pass
+from clarity.models.health_data import HealthMetric
 
 
 class IHealthDataRepository(ABC):

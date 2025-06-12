@@ -7,7 +7,6 @@ This module provides a workaround using Python's contextvars for thread-local st
 from __future__ import annotations
 
 import contextvars
-
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:

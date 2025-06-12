@@ -7,12 +7,12 @@ with FastAPI's lifespan events for production use.
 from __future__ import annotations
 
 from contextlib import asynccontextmanager
+from typing import TYPE_CHECKING
 
 from fastapi import FastAPI
 
 from clarity.api.v1.websocket.chat_handler import router as chat_router
 from clarity.api.v1.websocket.lifespan import get_connection_manager, websocket_lifespan
-from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from collections.abc import AsyncGenerator

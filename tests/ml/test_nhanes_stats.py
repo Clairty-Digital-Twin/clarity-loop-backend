@@ -7,6 +7,7 @@ used for normalizing health data against population norms.
 from __future__ import annotations
 
 import time
+from typing import TYPE_CHECKING
 from unittest.mock import patch
 
 import pytest
@@ -23,7 +24,6 @@ from clarity.ml.nhanes_stats import (
     lookup_norm_stats,
     validate_proxy_values,
 )
-from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from unittest.mock import MagicMock

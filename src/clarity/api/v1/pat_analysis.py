@@ -15,14 +15,15 @@ from __future__ import annotations
 from datetime import UTC, datetime
 import logging
 import os
-from typing import Any, cast, TYPE_CHECKING
+from typing import Any, cast
 import uuid
 
 from boto3.dynamodb.conditions import Key
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
 from pydantic import BaseModel, Field, validator
 
-from clarity.ml.inference_engine import get_inference_engine
+from clarity.auth.dependencies import AuthenticatedUser
+from clarity.ml.inference_engine import AsyncInferenceEngine, get_inference_engine
 from clarity.ml.pat_service import ActigraphyAnalysis, ActigraphyInput
 from clarity.ml.preprocessing import ActigraphyDataPoint
 from clarity.ml.proxy_actigraphy import (
@@ -30,12 +31,6 @@ from clarity.ml.proxy_actigraphy import (
     create_proxy_actigraphy_transformer,
 )
 from clarity.storage.dynamodb_client import DynamoDBHealthDataRepository
-from clarity.auth.dependencies import AuthenticatedUser
-from fastapi import BackgroundTasks
-from clarity.ml.inference_engine import AsyncInferenceEngine
-
-if TYPE_CHECKING:
-    pass
 
 logger = logging.getLogger(__name__)
 

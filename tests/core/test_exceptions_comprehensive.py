@@ -5,6 +5,7 @@ Tests all exception classes and utility functions to improve coverage from 42% t
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
 from unittest.mock import MagicMock
 from uuid import UUID
 
@@ -65,7 +66,6 @@ from clarity.core.exceptions import (
     # Exception handlers
     problem_detail_exception_handler,
 )
-from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     import pytest

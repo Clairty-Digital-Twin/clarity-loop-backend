@@ -12,6 +12,7 @@ from __future__ import annotations
 import asyncio
 from datetime import UTC, datetime, timedelta
 import time
+from typing import TYPE_CHECKING
 from unittest.mock import AsyncMock, Mock, patch
 from uuid import uuid4
 
@@ -25,7 +26,6 @@ from clarity.ml.pat_optimization import (
 )
 from clarity.ml.pat_service import ActigraphyAnalysis, ActigraphyInput, PATModelService
 from clarity.ml.preprocessing import ActigraphyDataPoint
-from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from pathlib import Path

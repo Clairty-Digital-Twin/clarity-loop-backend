@@ -5,7 +5,7 @@ from __future__ import annotations
 from contextlib import asynccontextmanager
 import logging
 import os
-from typing import Any, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import boto3
 from botocore.exceptions import ClientError

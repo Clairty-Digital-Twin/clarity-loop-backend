@@ -11,7 +11,7 @@ from __future__ import annotations
 from datetime import UTC, datetime
 import logging
 from operator import itemgetter
-from typing import Any, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 import uuid
 
 from clarity.ports.data_ports import IHealthDataRepository

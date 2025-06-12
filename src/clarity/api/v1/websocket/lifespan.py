@@ -2,18 +2,15 @@
 
 from __future__ import annotations
 
+from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 import inspect
 import logging
-from typing import Any, TYPE_CHECKING
+from typing import Any
 
+from fastapi import FastAPI
 
 from clarity.api.v1.websocket.connection_manager import ConnectionManager
-from fastapi import FastAPI
-from collections.abc import AsyncGenerator
-
-if TYPE_CHECKING:
-    pass
 
 logger = logging.getLogger(__name__)
 

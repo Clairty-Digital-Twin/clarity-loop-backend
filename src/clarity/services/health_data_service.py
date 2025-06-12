@@ -12,7 +12,7 @@ from datetime import UTC, datetime
 import json
 import logging
 import os
-from typing import Any, TYPE_CHECKING
+from typing import Any
 import uuid
 
 try:
@@ -26,15 +26,12 @@ except ImportError:
 from clarity.core.secure_logging import log_health_data_received
 from clarity.models.health_data import (
     HealthDataResponse,
-    ProcessingStatus,
     HealthDataUpload,
     HealthMetric,
+    ProcessingStatus,
 )
 from clarity.ports.data_ports import IHealthDataRepository
 from clarity.ports.storage import CloudStoragePort
-
-if TYPE_CHECKING:
-    pass
 
 # Configure logger
 logger = logging.getLogger(__name__)

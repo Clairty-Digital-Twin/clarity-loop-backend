@@ -52,7 +52,18 @@ def dynamodb_service(mock_dynamodb_resource, mock_table):
         cache_ttl=300,
     )
     service.dynamodb = mock_dynamodb_resource
-    mock_dynamodb_resource.Table.return_value = mock_table
+    
+    # Create separate mock for audit table
+    mock_audit_table = MagicMock()
+    mock_audit_table.put_item = MagicMock()
+    
+    # Return different mocks based on table name
+    def get_table(table_name):
+        if "audit" in table_name:
+            return mock_audit_table
+        return mock_table
+    
+    mock_dynamodb_resource.Table.side_effect = get_table
     return service
 
 
@@ -283,7 +294,7 @@ class TestPutItem:
     async def test_put_item_success(self, dynamodb_service, mock_table, valid_health_data):
         """Test successful item creation."""
         item_id = await dynamodb_service.put_item(
-            table_name="health_data",
+            table_name="test_health_data",  # Use full table name
             item=valid_health_data.copy(),
             user_id="user123",
         )
@@ -308,15 +319,16 @@ class TestPutItem:
         }
 
         # Don't include user_id so it generates a new ID
-        with patch("clarity.services.dynamodb_service.uuid.uuid4", return_value="generated-id"):
+        test_uuid = uuid.uuid4()
+        with patch("uuid.uuid4", return_value=test_uuid):
             item_id = await dynamodb_service.put_item(
-                table_name="other_table",  # Not health_data to skip validation
+                table_name="test_other_table",  # Not health_data to skip validation
                 item=item_data.copy(),
             )
 
-        assert item_id == "generated-id"
+        assert item_id == str(test_uuid)
         call_args = mock_table.put_item.call_args[1]
-        assert call_args["Item"]["id"] == "generated-id"
+        assert call_args["Item"]["id"] == str(test_uuid)
 
     @pytest.mark.asyncio
     async def test_put_item_validation_failure(self, dynamodb_service):
@@ -329,7 +341,7 @@ class TestPutItem:
 
         with pytest.raises(DynamoDBValidationError):
             await dynamodb_service.put_item(
-                table_name="health_data",
+                table_name="test_health_data",  # Use full table name
                 item=invalid_data,
             )
 
@@ -343,7 +355,7 @@ class TestPutItem:
 
         with pytest.raises(DynamoDBError, match="ResourceNotFoundException"):
             await dynamodb_service.put_item(
-                table_name="health_data",
+                table_name="test_health_data",  # Use full table name
                 item=valid_health_data.copy(),
             )
 
@@ -375,7 +387,7 @@ class TestGetItem:
             "Item": {"id": "item123", "test": "db_data"}
         }
 
-        result = await dynamodb_service.get_item("test_table", "item123")
+        result = await dynamodb_service.get_item("test_table", {"id": "item123"})
 
         assert result == {"id": "item123", "test": "db_data"}
         mock_table.get_item.assert_called_once_with(Key={"id": "item123"})
@@ -390,8 +402,9 @@ class TestGetItem:
         """Test get_item when item doesn't exist."""
         mock_table.get_item.return_value = {}  # No Item key
 
-        with pytest.raises(DocumentNotFoundError, match="Item not found"):
-            await dynamodb_service.get_item("test_table", "missing123")
+        result = await dynamodb_service.get_item("test_table", {"id": "missing123"})
+            
+        assert result is None
 
     @pytest.mark.asyncio
     async def test_get_item_no_cache(self, dynamodb_service_no_cache, mock_table):
@@ -400,7 +413,7 @@ class TestGetItem:
             "Item": {"id": "item123", "test": "data"}
         }
 
-        result = await dynamodb_service_no_cache.get_item("test_table", "item123")
+        result = await dynamodb_service_no_cache.get_item("test_table", {"id": "item123"})
 
         assert result == {"id": "item123", "test": "data"}
         # Cache should be empty
@@ -420,7 +433,7 @@ class TestDeleteItem:
             "timestamp": time.time(),
         }
 
-        result = await dynamodb_service.delete_item("test_table", "item123", user_id="user456")
+        result = await dynamodb_service.delete_item("test_table", {"id": "item123"}, user_id="user456")
 
         assert result is True
         mock_table.delete_item.assert_called_once_with(Key={"id": "item123"})

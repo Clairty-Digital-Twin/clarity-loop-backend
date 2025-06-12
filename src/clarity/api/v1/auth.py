@@ -107,8 +107,11 @@ async def register(
             password=user_data.password,
         )
 
-    except UserAlreadyExistsError:
-        raise
+    except UserAlreadyExistsError as e:
+        raise HTTPException(
+            status_code=409,
+            detail=str(e),
+        ) from e
     except Exception as e:
         logger.exception("Registration failed")
         raise HTTPException(

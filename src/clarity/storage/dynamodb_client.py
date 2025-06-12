@@ -47,7 +47,8 @@ class DynamoDBHealthDataRepository(IHealthDataRepository):
 
         self.table: Table = self.dynamodb.Table(table_name)
 
-    def _serialize_item(self, data: DynamoDBItem) -> SerializedItem:
+    @staticmethod
+    def _serialize_item(data: DynamoDBItem) -> SerializedItem:
         """Convert Python types to DynamoDB-compatible types."""
 
         def convert_value(v: Any) -> Any:
@@ -63,7 +64,8 @@ class DynamoDBHealthDataRepository(IHealthDataRepository):
 
         return {k: convert_value(v) for k, v in data.items()}
 
-    def _deserialize_item(self, item: SerializedItem) -> DynamoDBItem:
+    @staticmethod
+    def _deserialize_item(item: SerializedItem) -> DynamoDBItem:
         """Convert DynamoDB types back to Python types."""
 
         def convert_value(v: Any) -> Any:
@@ -351,7 +353,7 @@ class DynamoDBHealthDataRepository(IHealthDataRepository):
             return item_id
 
     async def get_data(
-        self, user_id: str, filters: dict[str, str] | None = None
+        self, user_id: str, _filters: dict[str, str] | None = None
     ) -> dict[str, str]:
         """Retrieve health data for a user (legacy method).
 
@@ -385,7 +387,8 @@ class DynamoDBHealthDataRepository(IHealthDataRepository):
         else:
             return {}
 
-    async def initialize(self) -> None:
+    @staticmethod
+    async def initialize() -> None:
         """Initialize the repository.
 
         Performs any necessary setup operations like connecting to database,
@@ -395,7 +398,8 @@ class DynamoDBHealthDataRepository(IHealthDataRepository):
         # Table should already exist
         logger.info("DynamoDB repository initialized")
 
-    async def cleanup(self) -> None:
+    @staticmethod
+    async def cleanup() -> None:
         """Clean up repository resources.
 
         Performs cleanup operations like closing connections, releasing resources, etc.

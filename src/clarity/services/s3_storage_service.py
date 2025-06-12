@@ -170,9 +170,9 @@ class S3StorageService(CloudStoragePort):
             s3_key = f"raw_data/{upload_date}/{user_id}/{processing_id}.json"
             s3_uri = f"s3://{self.bucket_name}/{s3_key}"
 
-            # Prepare health data for storage
+            # Prepare health data for storage - DO NOT SANITIZE raw data!
             raw_data = {
-                "user_id": sanitize_for_logging(user_id),
+                "user_id": user_id,  # Store raw user_id
                 "processing_id": processing_id,
                 "upload_source": health_data.upload_source,
                 "client_timestamp": health_data.client_timestamp.isoformat(),
@@ -185,9 +185,7 @@ class S3StorageService(CloudStoragePort):
                         "metric_id": str(metric.metric_id),
                         "metric_type": metric.metric_type.value,
                         "created_at": metric.created_at.isoformat(),
-                        "device_id": sanitize_for_logging(
-                            metric.device_id or "unknown"
-                        ),
+                        "device_id": metric.device_id or "unknown",  # Store raw device_id
                         "biometric_data": (
                             metric.biometric_data.model_dump()
                             if metric.biometric_data

@@ -164,14 +164,17 @@ class AWSMessagingService:
             queue_url = await self._get_queue_url(self.health_data_queue)
 
             # Send message to SQS
-            response = self.sqs_client.send_message(
-                QueueUrl=queue_url,
-                MessageBody=json.dumps(message_data),
-                MessageAttributes={
-                    "user_id": {
-                        "StringValue": user_id,
-                        "DataType": "String",
-                    },
+            loop = asyncio.get_event_loop()
+            response = await loop.run_in_executor(
+                None,
+                lambda: self.sqs_client.send_message(
+                    QueueUrl=queue_url,
+                    MessageBody=json.dumps(message_data),
+                    MessageAttributes={
+                        "user_id": {
+                            "StringValue": user_id,
+                            "DataType": "String",
+                        },
                     "upload_id": {
                         "StringValue": upload_id,
                         "DataType": "String",
@@ -181,6 +184,7 @@ class AWSMessagingService:
                         "DataType": "String",
                     },
                 },
+                )
             )
 
             message_id: str = response["MessageId"]
@@ -241,23 +245,27 @@ class AWSMessagingService:
             queue_url = await self._get_queue_url(self.insight_queue)
 
             # Send message to SQS
-            response = self.sqs_client.send_message(
-                QueueUrl=queue_url,
-                MessageBody=json.dumps(message_data),
-                MessageAttributes={
-                    "user_id": {
-                        "StringValue": user_id,
-                        "DataType": "String",
+            loop = asyncio.get_event_loop()
+            response = await loop.run_in_executor(
+                None,
+                lambda: self.sqs_client.send_message(
+                    QueueUrl=queue_url,
+                    MessageBody=json.dumps(message_data),
+                    MessageAttributes={
+                        "user_id": {
+                            "StringValue": user_id,
+                            "DataType": "String",
+                        },
+                        "upload_id": {
+                            "StringValue": upload_id,
+                            "DataType": "String",
+                        },
+                        "event_type": {
+                            "StringValue": "insight_request",
+                            "DataType": "String",
+                        },
                     },
-                    "upload_id": {
-                        "StringValue": upload_id,
-                        "DataType": "String",
-                    },
-                    "event_type": {
-                        "StringValue": "insight_request",
-                        "DataType": "String",
-                    },
-                },
+                )
             )
 
             message_id: str = response["MessageId"]
@@ -316,11 +324,15 @@ class AWSMessagingService:
                     }
 
             # Publish to SNS
-            response = self.sns_client.publish(
-                TopicArn=self.sns_topic_arn,
-                Subject=subject,
-                Message=json.dumps(message, indent=2),
-                MessageAttributes=sns_attributes,
+            loop = asyncio.get_event_loop()
+            response = await loop.run_in_executor(
+                None,
+                lambda: self.sns_client.publish(
+                    TopicArn=self.sns_topic_arn,
+                    Subject=subject,
+                    Message=json.dumps(message, indent=2),
+                    MessageAttributes=sns_attributes,
+                )
             )
 
             message_id: str = response["MessageId"]
@@ -351,11 +363,15 @@ class AWSMessagingService:
         try:
             queue_url = await self._get_queue_url(queue_name)
 
-            response = self.sqs_client.receive_message(
-                QueueUrl=queue_url,
-                MaxNumberOfMessages=max_messages,
-                WaitTimeSeconds=wait_time_seconds,
-                MessageAttributeNames=["All"],
+            loop = asyncio.get_event_loop()
+            response = await loop.run_in_executor(
+                None,
+                lambda: self.sqs_client.receive_message(
+                    QueueUrl=queue_url,
+                    MaxNumberOfMessages=max_messages,
+                    WaitTimeSeconds=wait_time_seconds,
+                    MessageAttributeNames=["All"],
+                )
             )
 
             messages = response.get("Messages", [])
@@ -378,9 +394,13 @@ class AWSMessagingService:
         try:
             queue_url = await self._get_queue_url(queue_name)
 
-            self.sqs_client.delete_message(
-                QueueUrl=queue_url,
-                ReceiptHandle=receipt_handle,
+            loop = asyncio.get_event_loop()
+            await loop.run_in_executor(
+                None,
+                lambda: self.sqs_client.delete_message(
+                    QueueUrl=queue_url,
+                    ReceiptHandle=receipt_handle,
+                )
             )
 
             logger.debug("Deleted message from queue %s", queue_name)
@@ -401,9 +421,13 @@ class AWSMessagingService:
         try:
             queue_url = await self._get_queue_url(queue_name)
 
-            response = self.sqs_client.get_queue_attributes(
-                QueueUrl=queue_url,
-                AttributeNames=["All"],
+            loop = asyncio.get_event_loop()
+            response = await loop.run_in_executor(
+                None,
+                lambda: self.sqs_client.get_queue_attributes(
+                    QueueUrl=queue_url,
+                    AttributeNames=["All"],
+                )
             )
 
             attributes = response.get("Attributes", {})
@@ -425,7 +449,11 @@ class AWSMessagingService:
         try:
             queue_url = await self._get_queue_url(queue_name)
 
-            self.sqs_client.purge_queue(QueueUrl=queue_url)
+            loop = asyncio.get_event_loop()
+            await loop.run_in_executor(
+                None,
+                lambda: self.sqs_client.purge_queue(QueueUrl=queue_url)
+            )
             logger.warning("Purged queue %s", queue_name)
 
         except Exception:

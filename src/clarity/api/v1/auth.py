@@ -341,7 +341,7 @@ async def logout(
         if auth_header:
             try:
                 from clarity.auth.dependencies import get_current_user as get_user_func
-                current_user = await get_user_func(request)
+                current_user = get_user_func(request)
             except Exception:
                 # Auth failed but we have a request, so it's an auth error not validation
                 raise HTTPException(
@@ -389,26 +389,23 @@ async def auth_health() -> HealthResponse:
         )
 
 
-@router.post("/refresh")
+@router.post("/refresh", response_model=TokenResponse)
 async def refresh_token(
     request: Request,
     auth_provider: IAuthProvider = Depends(get_auth_provider),
 ) -> TokenResponse:
     """Refresh access token using refresh token."""
     try:
-        # Create authentication service
-        auth_service = CognitoAuthenticationService(auth_provider, None)
-
         # Get refresh token from request body or header
         auth_header = request.headers.get("Authorization", "")
-        refresh_token = auth_header.replace("Bearer ", "") if auth_header else None
+        refresh_token_str = auth_header.replace("Bearer ", "") if auth_header else None
 
-        if not refresh_token:
+        if not refresh_token_str:
             # Try to get from request body
             body = await request.json()
-            refresh_token = body.get("refresh_token")
+            refresh_token_str = body.get("refresh_token")
 
-        if not refresh_token:
+        if not refresh_token_str:
             raise HTTPException(
                 status_code=422,
                 detail=ProblemDetail(
@@ -420,8 +417,48 @@ async def refresh_token(
                 ).model_dump(),
             )
 
-        # Refresh the token
-        return await auth_service.refresh_token(refresh_token)
+        # For AWS Cognito, we need to use the boto3 client directly
+        # Since refresh token handling is different
+        from clarity.auth.aws_cognito_provider import CognitoAuthProvider
+        
+        if not isinstance(auth_provider, CognitoAuthProvider):
+            raise HTTPException(
+                status_code=500,
+                detail="Invalid authentication provider configuration"
+            )
+        
+        # Use Cognito's refresh token flow
+        import boto3
+        client = auth_provider.cognito_client
+        
+        try:
+            response = client.initiate_auth(
+                ClientId=auth_provider.client_id,
+                AuthFlow="REFRESH_TOKEN_AUTH",
+                AuthParameters={
+                    "REFRESH_TOKEN": refresh_token_str,
+                },
+            )
+            
+            if "AuthenticationResult" in response:
+                result = response["AuthenticationResult"]
+                return TokenResponse(
+                    access_token=result["AccessToken"],
+                    refresh_token=refresh_token_str,  # Cognito doesn't rotate refresh tokens
+                    token_type="bearer",
+                    expires_in=result.get("ExpiresIn", 3600),
+                    scope="full_access",
+                )
+            else:
+                raise HTTPException(
+                    status_code=500,
+                    detail="Failed to refresh token"
+                )
+        except client.exceptions.NotAuthorizedException:
+            raise HTTPException(
+                status_code=401,
+                detail="Invalid refresh token"
+            )
 
     except Exception as e:
         logger.exception("Token refresh failed")

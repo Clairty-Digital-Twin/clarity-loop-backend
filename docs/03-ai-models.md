@@ -1,6 +1,6 @@
-# CLARITY AI Models & Machine Learning
+# CLARITY-AI Models & Machine Learning
 
-CLARITY uses cutting-edge AI models to transform raw health data into actionable insights. This document details our ML pipeline, model architectures, and performance characteristics.
+CLARITY-AI uses cutting-edge AI models to transform raw health data into actionable insights. This document details our ML pipeline, model architectures, and performance characteristics.
 
 ## Model Architecture Overview
 

@@ -26,12 +26,6 @@ class TestMiddlewareConfiguration:
 
         middleware_config = config_provider.get_middleware_config()
 
-        # Print actual values for debugging
-        print(f"Environment: {settings.environment}")
-        print(f"Middleware config: {middleware_config}")
-        print(f"graceful_degradation: {middleware_config.graceful_degradation}")
-        print(f"cache_enabled: {middleware_config.cache_enabled}")
-
         # Development should have permissive settings
         assert middleware_config.enabled is True
         assert (
@@ -45,9 +39,8 @@ class TestMiddlewareConfiguration:
     @staticmethod
     def test_middleware_config_testing_defaults() -> None:
         """Test middleware configuration defaults for testing environment."""
-        settings = Settings()
-        settings.environment = "testing"
-        settings.enable_auth = True
+        # Create settings with environment set during initialization to trigger validator
+        settings = Settings(environment="testing", enable_auth=True)
         config_provider = ConfigProvider(settings)
 
         middleware_config = config_provider.get_middleware_config()
@@ -67,15 +60,15 @@ class TestMiddlewareConfiguration:
     @staticmethod
     def test_middleware_config_production_defaults() -> None:
         """Test middleware configuration defaults for production environment."""
-        settings = Settings()
-        settings.environment = "production"
-        settings.enable_auth = True
-        settings.testing = False  # Explicitly disable testing flag
-        # Mock required production settings to avoid validation errors
-        settings.aws_region = "us-east-1"
-        settings.cognito_user_pool_id = "test-pool"
-        settings.cognito_client_id = "test-client"
-
+        # Create settings with environment and required production settings
+        settings = Settings(
+            environment="production",
+            enable_auth=True,
+            testing=False,  # Explicitly disable testing flag
+            aws_region="us-east-1",
+            cognito_user_pool_id="test-pool",
+            cognito_client_id="test-client",
+        )
         config_provider = ConfigProvider(settings)
 
         middleware_config = config_provider.get_middleware_config()
@@ -117,8 +110,7 @@ class TestMiddlewareConfiguration:
     @staticmethod
     def test_config_provider_middleware_methods() -> None:
         """Test config provider middleware-specific methods."""
-        settings = Settings()
-        settings.environment = "development"
+        settings = Settings(environment="development")
         config_provider = ConfigProvider(settings)
 
         # Test timeout getter
@@ -159,10 +151,11 @@ class TestMiddlewareConfiguration:
     @staticmethod
     def test_middleware_config_with_auth_disabled() -> None:
         """Test middleware configuration when auth is disabled."""
-        settings = Settings()
-        settings.environment = "production"
-        settings.enable_auth = False
-        settings.testing = False  # Explicitly disable testing flag for production
+        settings = Settings(
+            environment="production",
+            enable_auth=False,
+            testing=False,  # Explicitly disable testing flag for production
+        )
         config_provider = ConfigProvider(settings)
 
         middleware_config = config_provider.get_middleware_config()

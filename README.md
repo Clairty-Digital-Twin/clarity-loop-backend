@@ -13,38 +13,44 @@ CLARITY-AI is a **research-grade digital health platform** that processes Apple 
 ### Real Data Processing Pipeline
 
 ```mermaid
-graph LR
-    subgraph DataIngestion ["📱 Apple Health Data"]
-        A[Step Counts<br/>Heart Rate<br/>Sleep Analysis<br/>HRV & Respiratory]
-        B[1-minute sampling<br/>7-day windows<br/>NHANES normalization]
+graph TB
+    subgraph Stage1 ["📱 APPLE HEALTH DATA"]
+        A["SENSOR DATA<br/>• Step Counts<br/>• Heart Rate<br/>• Sleep Analysis<br/>• HRV & Respiratory"]
+        B["DATA PROCESSING<br/>• 1-minute sampling<br/>• 7-day windows<br/>• NHANES normalization"]
     end
     
-    subgraph PAT ["🧠 PAT Foundation Model"]
-        C[Pretrained on 29,307<br/>NHANES participants<br/>2003-2014 cycles]
-        D[Transformer Architecture<br/>10,080 time points<br/>7-day analysis window]
-        E[Sleep Quality Score<br/>Circadian Rhythm<br/>Activity Patterns]
+    subgraph Stage2 ["🧠 PAT AI ANALYSIS"]
+        C["FOUNDATION MODEL<br/>• 29,307 NHANES participants<br/>• 2003-2014 training data<br/>• Population-scale patterns"]
+        D["TRANSFORMER ENGINE<br/>• 10,080 time points<br/>• 7-day analysis window<br/>• Deep learning architecture"]
     end
     
-    subgraph Multimodal ["🔬 Multi-Modal Fusion"]
-        F[Heart Rate Variability<br/>Respiratory Patterns<br/>Activity Fragmentation]
-        G[Fusion Transformer<br/>Cross-modal attention<br/>Holistic health state]
+    subgraph Stage3 ["🔬 MULTI-MODAL FUSION"]
+        E["HEALTH METRICS<br/>• Sleep Quality Score<br/>• Circadian Rhythm<br/>• Activity Patterns"]
+        F["ADVANCED ANALYSIS<br/>• Heart Rate Variability<br/>• Respiratory Patterns<br/>• Activity Fragmentation"]
     end
     
-    subgraph NLG ["💬 Natural Language"]
-        H[Google Gemini<br/>Clinical context<br/>Conversational insights]
-        I["Your sleep efficiency<br/>was 89% last week...<br/>suggesting good recovery"]
+    subgraph Stage4 ["💬 NATURAL LANGUAGE AI"]
+        G["GEMINI PROCESSING<br/>• Clinical context<br/>• Conversational insights<br/>• Personalized analysis"]
+        H["YOUR INSIGHTS<br/>\"Your sleep efficiency was 89%<br/>last week, suggesting excellent<br/>recovery and strong circadian rhythm\""]
     end
     
-    A --> B --> C --> D --> E
-    E --> F --> G --> H --> I
+    A --> B
+    B --> C
+    C --> D
+    D --> E
+    E --> F
+    F --> G
+    G --> H
     
-    classDef data fill:#ff9900,stroke:#e65100,stroke-width:2px,color:white
-    classDef ai fill:#4caf50,stroke:#1b5e20,stroke-width:2px,color:white
-    classDef output fill:#2196f3,stroke:#0d47a1,stroke-width:2px,color:white
+    classDef data fill:#ff9900,stroke:#e65100,stroke-width:3px,color:white
+    classDef ai fill:#4caf50,stroke:#1b5e20,stroke-width:3px,color:white
+    classDef fusion fill:#9c27b0,stroke:#4a148c,stroke-width:3px,color:white
+    classDef output fill:#2196f3,stroke:#0d47a1,stroke-width:3px,color:white
     
     class A,B data
-    class C,D,E,F,G ai
-    class H,I output
+    class C,D ai
+    class E,F fusion
+    class G,H output
 ```
 
 ## Technical Architecture

@@ -1,12 +1,12 @@
-# CLARITY Digital Twin Documentation
+# CLARITY-AI Digital Twin Documentation
 
 **Research-grade health analytics platform** powered by foundation models trained on population-scale data.
 
 Transform your Apple Health data into clinically-informed insights through cutting-edge AI.
 
-## What Makes CLARITY Different
+## What Makes CLARITY-AI Different
 
-CLARITY isn't just another health app – it's a **research platform** built on peer-reviewed science:
+CLARITY-AI isn't just another health app – it's a **research platform** built on peer-reviewed science:
 
 ### 🔬 **Foundation Model Approach**
 - **PAT (Pretrained Actigraphy Transformer)**: First open-source foundation model for wearable data
@@ -48,9 +48,9 @@ graph TB
     A --> B --> C --> D --> E
     E --> F --> G --> H
     
-    classDef collection fill:#e3f2fd,stroke:#1976d2,stroke-width:2px,color:black
-    classDef processing fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px,color:black
-    classDef intelligence fill:#e8f5e8,stroke:#388e3c,stroke-width:2px,color:black
+    classDef collection fill:#ff9900,stroke:#e65100,stroke-width:2px,color:white
+    classDef processing fill:#4caf50,stroke:#1b5e20,stroke-width:2px,color:white
+    classDef intelligence fill:#2196f3,stroke:#0d47a1,stroke-width:2px,color:white
     
     class A,B collection
     class C,D,E processing
@@ -76,7 +76,7 @@ graph TB
 
 ## Research Foundation
 
-CLARITY is built on **peer-reviewed academic research**, not proprietary algorithms:
+CLARITY-AI is built on **peer-reviewed academic research**, not proprietary algorithms:
 
 **Primary Research**: ["AI Foundation Models for Wearable Movement Data in Mental Health Research"](https://doi.org/10.48550/arXiv.2411.15240)
 
@@ -94,7 +94,7 @@ graph LR
         F[Transfer Learning<br/>Fine-tuning capability<br/>Individual adaptation]
     end
     
-    subgraph Application ["💡 CLARITY Platform"]
+    subgraph Application ["💡 CLARITY-AI Platform"]
         G[Sleep Quality Analysis<br/>Circadian assessment<br/>Activity fragmentation]
         H[Population Comparisons<br/>Peer group metrics<br/>Percentile rankings]
         I[Clinical Context<br/>Health significance<br/>Actionable insights]
@@ -102,9 +102,9 @@ graph LR
     
     A --> B --> C --> D --> E --> F --> G --> H --> I
     
-    classDef research fill:#ffecb3,stroke:#f57c00,stroke-width:2px,color:black
-    classDef model fill:#e1f5fe,stroke:#0288d1,stroke-width:2px,color:black
-    classDef application fill:#e8f5e8,stroke:#388e3c,stroke-width:2px,color:black
+    classDef research fill:#ff9900,stroke:#e65100,stroke-width:2px,color:white
+    classDef model fill:#2196f3,stroke:#0d47a1,stroke-width:2px,color:white
+    classDef application fill:#4caf50,stroke:#1b5e20,stroke-width:2px,color:white
     
     class A,B,C research
     class D,E,F model
@@ -193,7 +193,7 @@ results = await pipeline.process_health_data(user_id, health_metrics)
 
 ### **For Developers**
 1. **[Quick Start Guide](../README.md#quick-start)** → Set up development environment
-2. **[API Documentation](02-api-reference.md)** → Integrate with CLARITY platform
+2. **[API Documentation](02-api-reference.md)** → Integrate with CLARITY-AI platform
 3. **[Architecture Overview](01-overview.md)** → Understand system design
 
 ### **For Researchers**
@@ -208,7 +208,7 @@ results = await pipeline.process_health_data(user_id, health_metrics)
 
 ## Important Disclaimers
 
-⚠️ **Research Platform**: CLARITY is designed for health insights and research applications  
+⚠️ **Research Platform**: CLARITY-AI is designed for health insights and research applications  
 ⚠️ **Not Medical Device**: Not FDA approved, not for medical diagnosis or treatment  
 ⚠️ **Educational Use**: Consult healthcare providers for medical decisions  
 ⚠️ **Data Privacy**: All processing follows privacy-first design principles

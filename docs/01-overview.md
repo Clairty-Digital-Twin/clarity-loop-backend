@@ -1,8 +1,8 @@
-# CLARITY Digital Twin Platform - System Overview
+# CLARITY-AI Digital Twin Platform - System Overview
 
 ## Executive Summary
 
-CLARITY processes Apple Health data using machine learning models to generate health insights and natural language explanations. The system combines a Pretrained Actigraphy Transformer (PAT) for temporal analysis with Google Gemini for conversational health insights.
+CLARITY-AI processes Apple Health data using machine learning models to generate health insights and natural language explanations. The system combines a Pretrained Actigraphy Transformer (PAT) for temporal analysis with Google Gemini for conversational health insights.
 
 ### Core Functionality
 
@@ -30,10 +30,10 @@ journey
       Export HealthKit     : 3: iPhone
     section Processing
       Upload to API        : 4: Client App
-      Validate & Process   : 5: CLARITY
+      Validate & Process   : 5: CLARITY-AI
       AI Analysis          : 5: PAT + Gemini
     section Insights
-      Generate Insights    : 5: CLARITY
+      Generate Insights    : 5: CLARITY-AI
       Deliver Results      : 4: Client App
       User Understanding   : 5: User
 ```

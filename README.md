@@ -112,10 +112,10 @@ graph TB
     E --> I --> J
     F --> K
     
-    classDef frontend fill:#e1f5fe,stroke:#0288d1,stroke-width:2px,color:black
-    classDef api fill:#fff3e0,stroke:#f57c00,stroke-width:2px,color:black
-    classDef storage fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px,color:black
-    classDef ml fill:#e8f5e8,stroke:#388e3c,stroke-width:2px,color:black
+    classDef frontend fill:#2196f3,stroke:#0d47a1,stroke-width:2px,color:white
+    classDef api fill:#ff9900,stroke:#e65100,stroke-width:2px,color:white
+    classDef storage fill:#9c27b0,stroke:#4a148c,stroke-width:2px,color:white
+    classDef ml fill:#4caf50,stroke:#1b5e20,stroke-width:2px,color:white
     
     class A,B frontend
     class C,D,E,F api
@@ -125,7 +125,7 @@ graph TB
 
 ## Research Foundation
 
-CLARITY leverages peer-reviewed research for clinical-grade analysis:
+CLARITY-AI leverages peer-reviewed research for clinical-grade analysis:
 
 **PAT Model**: ["AI Foundation Models for Wearable Movement Data in Mental Health Research"](https://doi.org/10.48550/arXiv.2411.15240)  
 - **Authors**: Franklin Y. Ruan, Aiwei Zhang, Jenny Oh, SouYoung Jin, Nicholas C. Jacobson (Dartmouth College)

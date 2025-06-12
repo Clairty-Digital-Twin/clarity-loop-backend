@@ -20,9 +20,8 @@ class TestMiddlewareConfiguration:
     @staticmethod
     def test_middleware_config_development_defaults() -> None:
         """Test middleware configuration defaults for development environment."""
-        settings = Settings()
-        settings.environment = "development"
-        settings.enable_auth = True
+        # Create settings with environment set during initialization to trigger validator
+        settings = Settings(environment="development", enable_auth=True)
         config_provider = ConfigProvider(settings)
 
         middleware_config = config_provider.get_middleware_config()

@@ -17,7 +17,6 @@ import boto3
 from botocore.exceptions import ClientError
 
 if TYPE_CHECKING:
-    from mypy_boto3_dynamodb import DynamoDBClient
     from mypy_boto3_dynamodb.service_resource import DynamoDBServiceResource
 
 from clarity.ports.data_ports import IHealthDataRepository
@@ -898,12 +897,13 @@ class DynamoDBHealthDataRepository(IHealthDataRepository):
 
     async def initialize(self) -> None:
         """Initialize the repository."""
+        # Test connection
+        health_status = await self._dynamodb_service.health_check()
+        if health_status["status"] != "healthy":
+            msg = "DynamoDB connection unhealthy"
+            raise ConnectionError(msg)
+
         try:
-            # Test connection
-            health_status = await self._dynamodb_service.health_check()
-            if health_status["status"] != "healthy":
-                msg = "DynamoDB connection unhealthy"
-                raise ConnectionError(msg)
 
             logger.info("DynamoDBHealthDataRepository initialized successfully")
 

@@ -957,7 +957,7 @@ class TestExceptionEdgeCases:
 
         error = ValidationProblem(
             detail="Complex validation failure",
-            errors=complex_details["validation_errors"],
+            errors=complex_details["validation_errors"],  # type: ignore[arg-type]
         )
 
         problem = error.to_problem_detail()

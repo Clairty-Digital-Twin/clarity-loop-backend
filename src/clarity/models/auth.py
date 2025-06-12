@@ -11,10 +11,12 @@ from datetime import UTC, datetime
 from enum import StrEnum
 from typing import TYPE_CHECKING, Any, Literal
 
-from pydantic import BaseModel, EmailStr, Field, field_validator
+from pydantic import BaseModel, Field, field_validator
 
 if TYPE_CHECKING:
     from uuid import UUID
+
+    from pydantic import EmailStr
 
 # Constants for validation
 MIN_PASSWORD_LENGTH = 8

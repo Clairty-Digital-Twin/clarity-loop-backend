@@ -117,7 +117,7 @@ async def test_rate_limiting():
 @pytest.mark.asyncio
 @patch("time.time", return_value=1622995200.0)
 async def test_background_tasks(mock_time: MagicMock):
-    manager = ConnectionManager(heartbeat_interval=0.1, connection_timeout=0.1)
+    manager = ConnectionManager(heartbeat_interval=1, connection_timeout=1)  # Use integers instead of floats
     await manager.start_background_tasks()
 
     # Test heartbeat

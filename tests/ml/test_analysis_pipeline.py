@@ -13,7 +13,7 @@ This test suite covers all aspects of the analysis pipeline including:
 """
 
 from datetime import UTC, datetime, timedelta
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock, Mock, patch
 
 import pytest
 
@@ -230,7 +230,9 @@ class TestHealthAnalysisPipelineModalityProcessing:
 
         # Mock cardio processor
         expected_features = [1.0, 2.0, 3.0]
-        pipeline.cardio_processor.process = MagicMock(return_value=expected_features)
+        mock_processor = Mock()
+        mock_processor.process = MagicMock(return_value=expected_features)
+        pipeline.cardio_processor = mock_processor
 
         cardio_metric = HealthMetric(
             metric_type=HealthMetricType.HEART_RATE,
@@ -258,9 +260,9 @@ class TestHealthAnalysisPipelineModalityProcessing:
 
         # Mock respiratory processor
         expected_features = [4.0, 5.0, 6.0]
-        pipeline.respiratory_processor.process = MagicMock(
-            return_value=expected_features
-        )
+        mock_processor = Mock()
+        mock_processor.process = MagicMock(return_value=expected_features)
+        pipeline.respiratory_processor = mock_processor
 
         # Since HRV is categorized as cardio, pass empty list to respiratory processor
         result = await pipeline._process_respiratory_data([])
@@ -332,8 +334,10 @@ class TestHealthAnalysisPipelineFusion:
 
         # Mock fusion service
         expected_fused = [7.0, 8.0, 9.0]
-        pipeline.fusion_service.fuse_modalities = MagicMock(return_value=expected_fused)
-        pipeline.fusion_service.initialize_model = MagicMock()
+        mock_fusion = Mock()
+        mock_fusion.fuse_modalities = MagicMock(return_value=expected_fused)
+        mock_fusion.initialize_model = MagicMock()
+        pipeline.fusion_service = mock_fusion
 
         modality_features = {"cardio": [1.0, 2.0, 3.0], "respiratory": [4.0, 5.0, 6.0]}
 
@@ -352,10 +356,12 @@ class TestHealthAnalysisPipelineFusion:
         pipeline = HealthAnalysisPipeline()
 
         # Mock fusion service to raise error
-        pipeline.fusion_service.initialize_model = MagicMock()
-        pipeline.fusion_service.fuse_modalities = MagicMock(
+        mock_fusion = Mock()
+        mock_fusion.initialize_model = MagicMock()
+        mock_fusion.fuse_modalities = MagicMock(
             side_effect=RuntimeError("Fusion error")
         )
+        pipeline.fusion_service = mock_fusion
 
         modality_features = {"cardio": [1.0, 2.0, 3.0], "respiratory": [4.0, 5.0, 6.0]}
 
@@ -625,9 +631,9 @@ class TestHealthAnalysisPipelineMainWorkflow:
 
         # Mock cardio processor
         expected_cardio_features = [1.0, 2.0, 3.0]
-        pipeline.cardio_processor.process = MagicMock(
-            return_value=expected_cardio_features
-        )
+        mock_processor = Mock()
+        mock_processor.process = MagicMock(return_value=expected_cardio_features)
+        pipeline.cardio_processor = mock_processor
 
         cardio_metric = HealthMetric(
             metric_type=HealthMetricType.HEART_RATE,
@@ -656,11 +662,18 @@ class TestHealthAnalysisPipelineMainWorkflow:
         expected_respiratory = [4.0, 5.0, 6.0]
         expected_fused = [7.0, 8.0, 9.0]
 
-        pipeline.cardio_processor.process = MagicMock(return_value=expected_cardio)
-        pipeline.respiratory_processor.process = MagicMock(
-            return_value=expected_respiratory
-        )
-        pipeline.fusion_service.fuse_embeddings = AsyncMock(return_value=expected_fused)
+        mock_cardio = Mock()
+        mock_cardio.process = MagicMock(return_value=expected_cardio)
+        pipeline.cardio_processor = mock_cardio
+
+        mock_respiratory = Mock()
+        mock_respiratory.process = MagicMock(return_value=expected_respiratory)
+        pipeline.respiratory_processor = mock_respiratory
+
+        mock_fusion = Mock()
+        mock_fusion.fuse_modalities = MagicMock(return_value=expected_fused)
+        mock_fusion.initialize_model = MagicMock()
+        pipeline.fusion_service = mock_fusion
 
         cardio_metric = HealthMetric(
             metric_type=HealthMetricType.HEART_RATE,
@@ -693,7 +706,9 @@ class TestHealthAnalysisPipelineMainWorkflow:
 
         # Mock processors
         expected_cardio = [1.0, 2.0, 3.0]
-        pipeline.cardio_processor.process = MagicMock(return_value=expected_cardio)
+        mock_processor = Mock()
+        mock_processor.process = MagicMock(return_value=expected_cardio)
+        pipeline.cardio_processor = mock_processor
 
         # Mock DynamoDB client
         mock_dynamodb = MagicMock()
@@ -830,9 +845,11 @@ class TestAnalysisPipelineErrorHandling:
         pipeline = HealthAnalysisPipeline()
 
         # Mock cardio processor to raise error
-        pipeline.cardio_processor.process = MagicMock(
+        mock_processor = Mock()
+        mock_processor.process = MagicMock(
             side_effect=RuntimeError("Processor error")
         )
+        pipeline.cardio_processor = mock_processor
 
         cardio_metric = HealthMetric(
             metric_type=HealthMetricType.HEART_RATE,
@@ -850,7 +867,9 @@ class TestAnalysisPipelineErrorHandling:
         pipeline = HealthAnalysisPipeline()
 
         # Mock processors
-        pipeline.cardio_processor.process = MagicMock(return_value=[1.0, 2.0, 3.0])
+        mock_processor = Mock()
+        mock_processor.process = MagicMock(return_value=[1.0, 2.0, 3.0])
+        pipeline.cardio_processor = mock_processor
 
         # Mock DynamoDB client to raise error
         mock_dynamodb = AsyncMock()

@@ -168,7 +168,7 @@ class HealthDataService:
             }
 
             file_path = f"{user_id}/{processing_id}.json"
-            result = await self.cloud_storage.upload_file(
+            return await self.cloud_storage.upload_file(
                 file_data=json.dumps(raw_data, indent=2).encode(),
                 file_path=file_path,
                 metadata={
@@ -177,7 +177,6 @@ class HealthDataService:
                     "upload_source": health_data.upload_source,
                 },
             )
-            return result
 
         except Exception as e:
             self.logger.exception("Failed to upload raw data to S3")

@@ -14,6 +14,7 @@ import pytest
 
 from clarity.core.config import get_settings
 from clarity.core.container import create_application, get_container
+from clarity.main import lifespan
 
 if TYPE_CHECKING:
     from clarity.ports.data_ports import IHealthDataRepository
@@ -49,8 +50,6 @@ class TestApplicationStartup:
     @staticmethod
     async def test_lifespan_context_manager() -> None:
         """Test that the lifespan context manager works without hanging."""
-        from clarity.main import lifespan
-
         app = create_application()
 
         # Test lifespan context manager with timeout
@@ -167,8 +166,6 @@ class TestFullStartupCycle:
         start_time = time.perf_counter()
 
         try:
-            from clarity.main import lifespan
-
             app = create_application()
 
             async with lifespan(app):

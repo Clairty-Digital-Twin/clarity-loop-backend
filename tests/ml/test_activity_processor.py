@@ -3,7 +3,7 @@
 Tests cover all functionality to achieve 95%+ test coverage.
 """
 
-from typing import Any
+from typing import Any, cast
 from unittest.mock import Mock, patch
 
 import pytest
@@ -56,7 +56,7 @@ class TestActivityProcessorMainFlow:
         processor: ActivityProcessor, sample_metrics: list[Mock]
     ) -> None:
         """Test successful processing with valid activity data."""
-        result = processor.process(sample_metrics)
+        result = processor.process(cast("list[HealthMetric]", sample_metrics))
 
         assert isinstance(result, list)
         assert len(result) > 0
@@ -99,7 +99,7 @@ class TestActivityProcessorMainFlow:
         for metric in metrics:
             metric.activity_data = None
 
-        result = processor.process(metrics)
+        result = processor.process(cast("list[HealthMetric]", metrics))
 
         assert isinstance(result, list)
         assert len(result) == 1
@@ -114,7 +114,7 @@ class TestActivityProcessorMainFlow:
         with patch.object(
             processor, "_extract_activity_data", side_effect=Exception("Test error")
         ):
-            result = processor.process(sample_metrics)
+            result = processor.process(cast("list[HealthMetric]", sample_metrics))
 
             assert isinstance(result, list)
             assert len(result) == 1
@@ -134,7 +134,8 @@ class TestActivityDataExtraction:
             metric.activity_data = Mock(spec=ActivityData)
             metrics.append(metric)
 
-        result = ActivityProcessor._extract_activity_data(metrics)
+        processor = ActivityProcessor()
+        result = processor._extract_activity_data(cast("list[HealthMetric]", metrics))
 
         assert len(result) == 3
         assert all(isinstance(data, Mock) for data in result)
@@ -148,7 +149,8 @@ class TestActivityDataExtraction:
             metric.activity_data = Mock(spec=ActivityData) if i % 2 == 0 else None
             metrics.append(metric)
 
-        result = ActivityProcessor._extract_activity_data(metrics)
+        processor = ActivityProcessor()
+        result = processor._extract_activity_data(cast("list[HealthMetric]", metrics))
 
         # Should only get 3 (indices 0, 2, 4)
         assert len(result) == 3
@@ -156,7 +158,8 @@ class TestActivityDataExtraction:
     @staticmethod
     def test_extract_activity_data_empty() -> None:
         """Test extraction from empty metrics list."""
-        result = ActivityProcessor._extract_activity_data([])
+        processor = ActivityProcessor()
+        result = processor._extract_activity_data([])
         assert result == []
 
 
@@ -180,7 +183,8 @@ class TestActivityFeatureCalculation:
         """Test step feature calculations."""
         steps = [5000, 7000, 6000, 8000, 4000]
 
-        result = ActivityProcessor._calculate_step_features(steps)
+        processor = ActivityProcessor()
+        result = processor._calculate_step_features(steps)
 
         assert len(result) == 3
 
@@ -204,7 +208,8 @@ class TestActivityFeatureCalculation:
         """Test distance feature calculations."""
         distances = [3.5, 4.0, 2.8, 5.2, 3.1]
 
-        result = ActivityProcessor._calculate_distance_features(distances)
+        processor = ActivityProcessor()
+        result = processor._calculate_distance_features(distances)
 
         assert len(result) == 2
 
@@ -224,7 +229,8 @@ class TestActivityFeatureCalculation:
         """Test energy feature calculations."""
         energy = [200.5, 250.0, 180.2, 300.8, 220.5]
 
-        result = ActivityProcessor._calculate_energy_features(energy)
+        processor = ActivityProcessor()
+        result = processor._calculate_energy_features(energy)
 
         assert len(result) == 2
 
@@ -246,7 +252,8 @@ class TestActivityFeatureCalculation:
         """Test exercise feature calculations."""
         exercise = [30, 45, 25, 60, 35]
 
-        result = ActivityProcessor._calculate_exercise_features(exercise)
+        processor = ActivityProcessor()
+        result = processor._calculate_exercise_features(exercise)
 
         assert len(result) == 2
 
@@ -267,28 +274,32 @@ class TestActivityFeatureCalculation:
     def test_calculate_consistency_score_perfect() -> None:
         """Test consistency score with perfectly consistent values."""
         values = [100, 100, 100, 100, 100]
-        score = ActivityProcessor._calculate_consistency_score(values)
+        processor = ActivityProcessor()
+        score = processor._calculate_consistency_score(values)
         assert score == 1.0
 
     @staticmethod
     def test_calculate_consistency_score_variable() -> None:
         """Test consistency score with variable values."""
         values = [100, 200, 50, 150, 75]
-        score = ActivityProcessor._calculate_consistency_score(values)
+        processor = ActivityProcessor()
+        score = processor._calculate_consistency_score(values)
         assert 0.0 <= score <= 1.0
 
     @staticmethod
     def test_calculate_consistency_score_single_value() -> None:
         """Test consistency score with single value."""
         values = [100]
-        score = ActivityProcessor._calculate_consistency_score(values)
+        processor = ActivityProcessor()
+        score = processor._calculate_consistency_score(values)
         assert score == 1.0
 
     @staticmethod
     def test_calculate_consistency_score_empty() -> None:
         """Test consistency score with empty values."""
-        values = []
-        score = ActivityProcessor._calculate_consistency_score(values)
+        values: list[float] = []
+        processor = ActivityProcessor()
+        score = processor._calculate_consistency_score(values)
         assert score == 1.0  # 🔥 FIXED: empty values return 1.0 not 0.0
 
 
@@ -341,7 +352,8 @@ class TestActivitySummaryStats:
     @staticmethod
     def test_categorize_features(sample_features: list[dict[str, Any]]) -> None:
         """Test feature categorization."""
-        result = ActivityProcessor._categorize_features(sample_features)
+        processor = ActivityProcessor()
+        result = processor._categorize_features(sample_features)
 
         assert isinstance(result, dict)
         assert "steps" in result  # 🔥 FIXED: actual key name
@@ -387,7 +399,7 @@ class TestActivityProcessorEdgeCases:
             metric.activity_data.resting_heart_rate = None
             metrics.append(metric)
 
-        result = processor.process(metrics)
+        result = processor.process(cast("list[HealthMetric]", metrics))
 
         # Should still process what's available
         assert isinstance(result, list)
@@ -412,7 +424,7 @@ class TestActivityProcessorEdgeCases:
             data.resting_heart_rate = None
             activity_data.append(data)
 
-        result = processor._calculate_activity_features(activity_data)
+        result = processor._calculate_activity_features(cast("list[ActivityData]", activity_data))
 
         # Should have step and flights features only
         feature_names = [f.get("feature_name") for f in result]
@@ -425,21 +437,24 @@ class TestActivityProcessorEdgeCases:
     def test_consistency_score_with_zeros() -> None:
         """Test consistency score calculation with zero values."""
         values = [0, 0, 0, 0, 0]
-        score = ActivityProcessor._calculate_consistency_score(values)
+        processor = ActivityProcessor()
+        score = processor._calculate_consistency_score(values)
         assert score == 0.0  # 🔥 FIXED: zero mean returns 0.0
 
     @staticmethod
     def test_consistency_score_with_negative_values() -> None:
         """Test consistency score with negative values (edge case)."""
         values = [-10, -5, -8, -12, -6]
-        score = ActivityProcessor._calculate_consistency_score(values)
+        processor = ActivityProcessor()
+        score = processor._calculate_consistency_score(values)
         assert 0.0 <= score <= 1.0
 
     @staticmethod
     def test_feature_calculations_with_single_data_point() -> None:
         """Test feature calculations with only one data point."""
         # Single step count
-        result = ActivityProcessor._calculate_step_features([5000])
+        processor = ActivityProcessor()
+        result = processor._calculate_step_features([5000])
         assert len(result) == 3
 
         total_steps = next(f for f in result if f["feature_name"] == "total_steps")
@@ -482,7 +497,7 @@ class TestActivityProcessorIntegration:
             metrics.append(metric)
 
         # Process the data
-        features = processor.process(metrics)
+        features = processor.process(cast("list[HealthMetric]", metrics))
 
         # Verify comprehensive feature set
         assert len(features) >= 10
@@ -534,7 +549,7 @@ class TestActivityProcessorIntegration:
             metric.activity_data.resting_heart_rate = None
             metrics.append(metric)
 
-        features = processor.process(metrics)
+        features = processor.process(cast("list[HealthMetric]", metrics))
 
         # Should handle realistic variation well
         assert len(features) > 0

@@ -20,6 +20,7 @@ import pytest
 import redis
 import torch
 
+from clarity.api.v1.websocket.connection_manager import ConnectionManager
 from clarity.main import create_app  # type: ignore[import-untyped]
 
 # Load test environment variables from .env.test
@@ -231,9 +232,6 @@ def mock_redis():
 @pytest.fixture
 def mock_test_connection_manager():
     """Stateful mock connection manager for WebSocket testing."""
-    # Import here to avoid circular imports - this is necessary for test fixtures
-    from clarity.api.v1.websocket.connection_manager import ConnectionManager
-
     return ConnectionManager(
         heartbeat_interval=5,
         max_connections_per_user=2,

@@ -114,7 +114,7 @@ class TestBasicValidations:
         # Act & Assert
         assert isinstance(valid_int, int)
         assert isinstance(valid_float, float)
-        assert not isinstance(invalid_string, (int, float))
+        assert not isinstance(invalid_string, (int, float))  # type: ignore[unreachable]
 
     @staticmethod
     def test_range_validation() -> None:

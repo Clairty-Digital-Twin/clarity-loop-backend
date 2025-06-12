@@ -396,8 +396,8 @@ async def get_pat_analysis(
 
         if processing_status:
             # Cast to dict since we know it's not None
-            processing_status_dict = cast(dict[str, Any], processing_status)
-            
+            processing_status_dict = cast("dict[str, Any]", processing_status)
+
             # Check if user owns this processing job
             if processing_status_dict.get("user_id") != current_user.user_id:
                 logger.warning(

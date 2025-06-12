@@ -92,32 +92,34 @@ class DependencyContainer:
         service_name = "auth_provider"
 
         with service_initialization_duration.labels(service=service_name).time():
-            try:
-                if self.settings.should_use_mock_services():
-                    logger.info(
-                        "Using mock auth provider (skip_external_services=True)"
+            # Check configuration before try block
+            if self.settings.should_use_mock_services():
+                logger.info(
+                    "Using mock auth provider (skip_external_services=True)"
+                )
+                self._auth_provider = MockAuthProvider()
+                service_initialization_counter.labels(
+                    service=service_name, status="mock"
+                ).inc()
+                return
+
+            if (
+                not self.settings.cognito_user_pool_id
+                or not self.settings.cognito_client_id
+            ):
+                if self.settings.is_development():
+                    logger.warning(
+                        "Cognito not configured, using mock auth provider"
                     )
                     self._auth_provider = MockAuthProvider()
                     service_initialization_counter.labels(
                         service=service_name, status="mock"
                     ).inc()
                     return
+                msg = "Cognito configuration missing in production"
+                raise ConfigurationError(msg)
 
-                if (
-                    not self.settings.cognito_user_pool_id
-                    or not self.settings.cognito_client_id
-                ):
-                    if self.settings.is_development():
-                        logger.warning(
-                            "Cognito not configured, using mock auth provider"
-                        )
-                        self._auth_provider = MockAuthProvider()
-                        service_initialization_counter.labels(
-                            service=service_name, status="mock"
-                        ).inc()
-                        return
-                    msg = "Cognito configuration missing in production"
-                    raise ConfigurationError(msg)
+            try:
 
                 # Initialize Cognito auth provider
                 self._auth_provider = CognitoAuthProvider(

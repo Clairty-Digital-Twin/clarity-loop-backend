@@ -240,6 +240,7 @@ class TestAnalysisPipelineSleepIntegration:
         assert 0 <= vector[1] <= 1  # efficiency already 0-1
         assert 0 <= vector[2] <= 1  # latency normalized by 1 hour
 
+    @pytest.mark.asyncio
     async def test_save_results_to_dynamodb_success(
         self, mock_dynamodb: MagicMock
     ) -> None:
@@ -275,6 +276,7 @@ class TestAnalysisPipelineSleepIntegration:
         )
         mock_dynamodb.table.put_item.assert_called_once()
 
+    @pytest.mark.asyncio
     async def test_save_results_to_dynamodb_failure(
         self, mock_dynamodb: MagicMock
     ) -> None:
@@ -309,6 +311,7 @@ class TestAnalysisPipelineSleepIntegration:
         )
         mock_dynamodb.table.put_item.assert_called_once()
 
+    @pytest.mark.asyncio
     async def test_dynamodb_client_initialization(self) -> None:
         """Test that Firestore client is initialized when needed."""
         self.pipeline.dynamodb_client = None
@@ -352,11 +355,12 @@ class TestAnalysisPipelineSleepIntegration:
                 processing_id=processing_id,
             )
             assert self.pipeline.dynamodb_client is not None
-            mock_table.put_item.assert_called_once()
+            mock_table.put_item.assert_called_once()  # type: ignore[unreachable]
 
     @patch.dict(
         os.environ, {"DYNAMODB_TABLE_NAME": "test-table", "AWS_REGION": "us-west-2"}
     )
+    @pytest.mark.asyncio
     async def test_get_dynamodb_client_custom_project_id(self) -> None:
         """Test _get_dynamodb_client with custom table and region from env."""
         self.pipeline.dynamodb_client = None  # Ensure it's reset
@@ -369,6 +373,7 @@ class TestAnalysisPipelineSleepIntegration:
                 table_name="test-table", region="us-west-2"
             )
 
+    @pytest.mark.asyncio
     async def test_get_dynamodb_client_reuse_existing(self) -> None:
         """Test that _get_dynamodb_client reuses an existing client."""
         mock_client = MagicMock(spec=DynamoDBHealthDataRepository)

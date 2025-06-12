@@ -3,7 +3,6 @@
 import logging
 from typing import Any
 
-import boto3
 from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel, EmailStr, Field
 
@@ -80,15 +79,14 @@ async def register(
     auth_provider: IAuthProvider = Depends(get_auth_provider),
 ) -> TokenResponse:
     """Register a new user."""
-    try:
-        # For AWS Cognito, we'll use the auth provider directly
-        # First create the user
-        if not isinstance(auth_provider, CognitoAuthProvider):
-            raise HTTPException(
-                status_code=500,
-                detail="Invalid authentication provider configuration"
-            )
+    # Validate auth provider before try block
+    if not isinstance(auth_provider, CognitoAuthProvider):
+        raise HTTPException(
+            status_code=500,
+            detail="Invalid authentication provider configuration"
+        )
 
+    try:
         # Create user in Cognito
         user = await auth_provider.create_user(
             email=user_data.email,
@@ -96,44 +94,14 @@ async def register(
             display_name=user_data.display_name,
         )
 
-        if not user:
-            raise HTTPException(
-                status_code=500,
-                detail="Failed to create user"
-            )
-
         # Now authenticate to get tokens
         tokens = await auth_provider.authenticate(
             email=user_data.email,
             password=user_data.password,
         )
 
-        if not tokens:
-            raise HTTPException(
-                status_code=500,
-                detail="Failed to authenticate after registration"
-            )
-
-        # Return token response
-        return TokenResponse(
-            access_token=tokens["access_token"],
-            refresh_token=tokens["refresh_token"],
-            token_type="bearer",
-            expires_in=tokens.get("expires_in", 3600),
-            scope="full_access",
-        )
-
-    except UserAlreadyExistsError as e:
-        raise HTTPException(
-            status_code=409,
-            detail=ProblemDetail(
-                type="user_already_exists",
-                title="User Already Exists",
-                detail=str(e),
-                status=409,
-                instance=f"https://api.clarity.health/requests/{id(e)}",
-            ).model_dump(),
-        ) from e
+    except UserAlreadyExistsError:
+        raise
     except Exception as e:
         logger.exception("Registration failed")
         raise HTTPException(
@@ -147,6 +115,28 @@ async def register(
             ).model_dump(),
         ) from e
 
+    # Validate results outside try block
+    if not user:
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to create user"
+        )
+
+    if not tokens:
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to authenticate after registration"
+        )
+
+    # Return token response
+    return TokenResponse(
+        access_token=tokens["access_token"],
+        refresh_token=tokens["refresh_token"],
+        token_type="bearer",
+        expires_in=tokens.get("expires_in", 3600),
+        scope="full_access",
+    )
+
 
 @router.post("/login", response_model=TokenResponse)
 async def login(
@@ -154,31 +144,18 @@ async def login(
     auth_provider: IAuthProvider = Depends(get_auth_provider),
 ) -> TokenResponse:
     """Authenticate user and return access token."""
-    try:
-        # For AWS Cognito, we'll use the auth provider directly
-        if not isinstance(auth_provider, CognitoAuthProvider):
-            raise HTTPException(
-                status_code=500,
-                detail="Invalid authentication provider configuration"
-            )
+    # Validate auth provider before try block
+    if not isinstance(auth_provider, CognitoAuthProvider):
+        raise HTTPException(
+            status_code=500,
+            detail="Invalid authentication provider configuration"
+        )
 
+    try:
         # Authenticate user
         tokens = await auth_provider.authenticate(
             email=credentials.email,
             password=credentials.password,
-        )
-
-        if not tokens:
-            msg = "Authentication failed"
-            raise InvalidCredentialsError(msg)
-
-        # Return token response
-        return TokenResponse(
-            access_token=tokens["access_token"],
-            refresh_token=tokens["refresh_token"],
-            token_type="bearer",
-            expires_in=tokens.get("expires_in", 3600),
-            scope="full_access",
         )
 
     except InvalidCredentialsError as e:
@@ -238,22 +215,22 @@ async def update_user(
     auth_provider: IAuthProvider = Depends(get_auth_provider),
 ) -> UserUpdateResponse:
     """Update current user information."""
+    # Validate auth provider before try block
+    if not isinstance(auth_provider, CognitoAuthProvider):
+        raise HTTPException(
+            status_code=500,
+            detail="Invalid authentication provider configuration"
+        )
+
+    # Get user ID and validate
+    user_id = current_user.get("uid", current_user.get("user_id", ""))
+    if not user_id:
+        raise HTTPException(
+            status_code=400,
+            detail="User ID not found in token"
+        )
+
     try:
-        # For AWS Cognito, we'll use the auth provider directly
-        if not isinstance(auth_provider, CognitoAuthProvider):
-            raise HTTPException(
-                status_code=500,
-                detail="Invalid authentication provider configuration"
-            )
-
-        # Get user ID
-        user_id = current_user.get("uid", current_user.get("user_id", ""))
-
-        if not user_id:
-            raise HTTPException(
-                status_code=400,
-                detail="User ID not found in token"
-            )
 
         # Build update kwargs
         update_kwargs: dict[str, Any] = {}
@@ -268,28 +245,8 @@ async def update_user(
             **update_kwargs
         )
 
-        if not updated_user:
-            msg = f"User {user_id} not found"
-            raise UserNotFoundError(msg)
-
-        return UserUpdateResponse(
-            user_id=updated_user.uid,
-            email=updated_user.email,
-            display_name=updated_user.display_name,
-            updated=True,
-        )
-
-    except UserNotFoundError as e:
-        raise HTTPException(
-            status_code=404,
-            detail=ProblemDetail(
-                type="user_not_found",
-                title="User Not Found",
-                detail=str(e),
-                status=404,
-                instance=f"https://api.clarity.health/requests/{id(e)}",
-            ).model_dump(),
-        )
+    except UserNotFoundError:
+        raise
     except Exception as e:
         logger.exception("User update failed")
         raise HTTPException(
@@ -303,6 +260,17 @@ async def update_user(
             ).model_dump(),
         ) from e
 
+    # Validate result outside try block
+    if not updated_user:
+        raise UserNotFoundError(f"User {user_id} not found")
+
+    return UserUpdateResponse(
+        user_id=updated_user.uid,
+        email=updated_user.email,
+        display_name=updated_user.display_name,
+        updated=True,
+    )
+
 
 @router.post("/logout", response_model=LogoutResponse)
 async def logout(
@@ -310,28 +278,29 @@ async def logout(
     auth_provider: IAuthProvider = Depends(get_auth_provider),
 ) -> LogoutResponse:
     """Logout user (invalidate token if supported)."""
+    # Check request format first - get body and auth header
+    auth_header = request.headers.get("Authorization", "")
+
+    # Check if request body is empty
     try:
-        # Check request format first - get body and auth header
-        auth_header = request.headers.get("Authorization", "")
+        body = await request.json()
+    except Exception:
+        body = {}
 
-        # Check if request body is empty
-        try:
-            body = await request.json()
-        except Exception:
-            body = {}
+    # If both body is empty and no auth header, this is a validation error
+    if not body and not auth_header:
+        raise HTTPException(
+            status_code=422,
+            detail=ProblemDetail(
+                type="validation_error",
+                title="Validation Error",
+                detail="Request body or Authorization header required for logout",
+                status=422,
+                instance=f"https://api.clarity.health/requests/{id(request)}",
+            ).model_dump(),
+        )
 
-        # If both body is empty and no auth header, this is a validation error
-        if not body and not auth_header:
-            raise HTTPException(
-                status_code=422,
-                detail=ProblemDetail(
-                    type="validation_error",
-                    title="Validation Error",
-                    detail="Request body or Authorization header required for logout",
-                    status=422,
-                    instance=f"https://api.clarity.health/requests/{id(request)}",
-                ).model_dump(),
-            )
+    try:
 
         # Now try to authenticate - if we have auth header
         current_user = None
@@ -392,35 +361,39 @@ async def refresh_token(
     auth_provider: IAuthProvider = Depends(get_auth_provider),
 ) -> TokenResponse:
     """Refresh access token using refresh token."""
-    try:
-        # Get refresh token from request body or header
-        auth_header = request.headers.get("Authorization", "")
-        refresh_token_str = auth_header.replace("Bearer ", "") if auth_header else None
+    # Get refresh token from request body or header
+    auth_header = request.headers.get("Authorization", "")
+    refresh_token_str = auth_header.replace("Bearer ", "") if auth_header else None
 
-        if not refresh_token_str:
-            # Try to get from request body
+    if not refresh_token_str:
+        # Try to get from request body
+        try:
             body = await request.json()
             refresh_token_str = body.get("refresh_token")
+        except Exception:
+            refresh_token_str = None
 
-        if not refresh_token_str:
-            raise HTTPException(
-                status_code=422,
-                detail=ProblemDetail(
-                    type="missing_refresh_token",
-                    title="Missing Refresh Token",
-                    detail="Refresh token is required",
-                    status=422,
-                    instance=f"https://api.clarity.health/requests/{id(request)}",
-                ).model_dump(),
-            )
+    if not refresh_token_str:
+        raise HTTPException(
+            status_code=422,
+            detail=ProblemDetail(
+                type="missing_refresh_token",
+                title="Missing Refresh Token",
+                detail="Refresh token is required",
+                status=422,
+                instance=f"https://api.clarity.health/requests/{id(request)}",
+            ).model_dump(),
+        )
 
-        # For AWS Cognito, we need to use the boto3 client directly
-        # Since refresh token handling is different
-        if not isinstance(auth_provider, CognitoAuthProvider):
-            raise HTTPException(
-                status_code=500,
-                detail="Invalid authentication provider configuration"
-            )
+    # For AWS Cognito, we need to use the boto3 client directly
+    # Since refresh token handling is different
+    if not isinstance(auth_provider, CognitoAuthProvider):
+        raise HTTPException(
+            status_code=500,
+            detail="Invalid authentication provider configuration"
+        )
+
+    try:
 
         # Use Cognito's refresh token flow
         client = auth_provider.cognito_client

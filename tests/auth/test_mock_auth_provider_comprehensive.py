@@ -120,7 +120,9 @@ class TestMockAuthProviderComprehensive:
     @staticmethod
     async def test_verify_token_none(mock_auth_provider: MockAuthProvider) -> None:
         """Test token verification with None token."""
-        result = await mock_auth_provider.verify_token(None)
+        # Type-safe test: verify_token expects str, not None
+        # Test with empty string instead to represent "no token"
+        result = await mock_auth_provider.verify_token("")
 
         assert result is None
 
@@ -149,6 +151,10 @@ class TestMockAuthProviderComprehensive:
         """Test that verify_token returns a copy of user data."""
         result1 = await mock_auth_provider.verify_token("dev_token_user")
         result2 = await mock_auth_provider.verify_token("dev_token_user")
+
+        # Both results should be valid
+        assert result1 is not None
+        assert result2 is not None
 
         # Should be equal but not the same object
         assert result1 == result2
@@ -215,7 +221,9 @@ class TestMockAuthProviderComprehensive:
     @staticmethod
     async def test_get_user_info_none(mock_auth_provider: MockAuthProvider) -> None:
         """Test get_user_info with None."""
-        result = await mock_auth_provider.get_user_info(None)
+        # Type-safe test: get_user_info expects str, not None
+        # Test with empty string instead to represent "no user ID"
+        result = await mock_auth_provider.get_user_info("")
 
         assert result is None
 
@@ -226,6 +234,10 @@ class TestMockAuthProviderComprehensive:
         """Test that get_user_info returns a copy of user data."""
         result1 = await mock_auth_provider.get_user_info("mock_user_1")
         result2 = await mock_auth_provider.get_user_info("mock_user_1")
+
+        # Both results should be valid
+        assert result1 is not None
+        assert result2 is not None
 
         # Should be equal but not the same object
         assert result1 == result2
@@ -297,7 +309,9 @@ class TestMockAuthProviderComprehensive:
     @staticmethod
     def test_create_mock_token_none(mock_auth_provider: MockAuthProvider) -> None:
         """Test create_mock_token with None."""
-        token = mock_auth_provider.create_mock_token(None)
+        # Type-safe test: create_mock_token expects str, not None
+        # Test with empty string instead to represent "no user ID"
+        token = mock_auth_provider.create_mock_token("")
 
         assert token == "dev_token_user"  # noqa: S105
 
@@ -389,6 +403,7 @@ class TestMockAuthProviderComprehensive:
         """Test that internal mock users data is protected."""
         # Get user info
         user_info = await mock_auth_provider.get_user_info("mock_user_1")
+        assert user_info is not None  # Type guard
 
         # Modify the returned data
         original_email = user_info["email"]
@@ -396,6 +411,7 @@ class TestMockAuthProviderComprehensive:
 
         # Get user info again - should be unchanged
         user_info_again = await mock_auth_provider.get_user_info("mock_user_1")
+        assert user_info_again is not None  # Type guard
         assert user_info_again["email"] == original_email
 
     @staticmethod

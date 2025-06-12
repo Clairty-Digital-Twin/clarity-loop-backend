@@ -12,7 +12,7 @@ from typing import Any
 from fastapi import FastAPI, HTTPException, Request
 from google.cloud import storage  # type: ignore[attr-defined]
 
-from clarity.ml.gemini_service import GeminiService
+from clarity.ml.gemini_service import GeminiService, HealthInsightRequest
 
 logger = logging.getLogger(__name__)
 
@@ -57,17 +57,18 @@ class InsightSubscriber:
             )
 
             # Generate insights using Gemini
-            insights = await self.gemini_service.generate_health_insights(
+            insight_request = HealthInsightRequest(
                 user_id=message_data["user_id"],
                 analysis_results=message_data["analysis_results"],
-                metadata=message_data.get("metadata", {}),
+                context=message_data.get("context"),
             )
+            insights = await self.gemini_service.generate_health_insights(insight_request)
 
             # Store insights (implementation depends on your storage solution)
             await self._store_insights(
                 user_id=message_data["user_id"],
                 upload_id=message_data["upload_id"],
-                insights=insights,
+                insights=insights.model_dump(),
             )
 
             self.logger.info(

@@ -4,7 +4,7 @@ from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 import logging
 import os
-from typing import Any, Optional
+from typing import Any
 
 import boto3
 from botocore.exceptions import ClientError
@@ -48,7 +48,7 @@ def init_aws_clients() -> None:
 
 
 # Initialize Gemini if available
-model: Optional[Any] = None
+model: Any | None = None
 if GEMINI_API_KEY:
     genai.configure(api_key=GEMINI_API_KEY)  # type: ignore[attr-defined]
     model = genai.GenerativeModel("gemini-1.5-flash")  # type: ignore[attr-defined]

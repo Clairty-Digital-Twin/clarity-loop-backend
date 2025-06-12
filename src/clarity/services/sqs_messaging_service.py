@@ -3,7 +3,7 @@
 from datetime import UTC, datetime
 import json
 import logging
-from typing import Any
+from typing import Any, cast
 import uuid
 
 import boto3
@@ -11,12 +11,14 @@ from botocore.exceptions import ClientError
 
 from clarity.core.exceptions import ServiceError
 
+
 # Create a specific messaging error type
 class MessagingError(ServiceError):
     """Raised when messaging operations fail."""
-    
+
     def __init__(self, message: str, **kwargs: dict[str, Any]) -> None:
         super().__init__(message, error_code="MESSAGING_ERROR", **kwargs)
+
 
 logger = logging.getLogger(__name__)
 
@@ -218,8 +220,7 @@ class SQSMessagingService:
                 QueueUrl=self.queue_url, AttributeNames=["All"]
             )
 
-            attributes = response.get("Attributes", {})
-            return dict(attributes)
+            return cast("dict[str, Any]", response.get("Attributes", {}))
 
         except ClientError as e:
             logger.exception("SQS get attributes error")

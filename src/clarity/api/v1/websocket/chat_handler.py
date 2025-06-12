@@ -41,7 +41,6 @@ from clarity.api.v1.websocket.models import (
 from clarity.ml.pat_service import ActigraphyInput, PATModelService
 from clarity.ml.preprocessing import ActigraphyDataPoint
 from clarity.models.auth import UserContext, UserRole
-from clarity.models.user import User
 
 logger = logging.getLogger(__name__)
 settings = get_settings()

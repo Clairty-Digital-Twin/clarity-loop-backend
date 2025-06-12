@@ -91,6 +91,20 @@ class MockCloudStorage(CloudStoragePort):
         """Get the name of the raw data bucket."""
         return "clarity-raw-data-test"
 
+    async def upload_file(
+        self, file_data: bytes, file_path: str, metadata: dict[str, Any] | None = None
+    ) -> str:
+        """Mock upload file operation."""
+        if self.should_fail:
+            msg = "Mock file upload failure"
+            raise MockTestError(msg)
+
+        self.uploaded_data[file_path] = {
+            "data": file_data,
+            "metadata": metadata,
+        }
+        return f"gs://test-bucket/{file_path}"
+
 
 class MockBucket:
     """Mock GCS bucket."""
@@ -396,7 +410,7 @@ class TestHealthDataServiceGCSIntegration(BaseServiceTestCase):
         health_data = self._create_comprehensive_health_upload(test_env_credentials)
 
         # Act
-        gcs_path = await self.service._upload_raw_data_to_gcs(
+        gcs_path = await self.service._upload_raw_data_to_gcs(  # type: ignore[attr-defined]
             user_id, processing_id, health_data
         )
 
@@ -459,7 +473,7 @@ class TestHealthDataServiceGCSIntegration(BaseServiceTestCase):
 
         # Act & Assert
         with pytest.raises(HealthDataServiceError, match="GCS upload failed"):
-            await self.service._upload_raw_data_to_gcs(
+            await self.service._upload_raw_data_to_gcs(  # type: ignore[attr-defined]
                 str(user_id_uuid), processing_id, health_data
             )
 

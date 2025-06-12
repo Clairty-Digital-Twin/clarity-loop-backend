@@ -15,7 +15,6 @@ from jose import JWTError, jwt
 
 if TYPE_CHECKING:
     from mypy_boto3_cognito_idp import CognitoIdentityProviderClient
-    from mypy_boto3_cognito_idp.type_defs import AdminGetUserResponseTypeDef
 
 from clarity.models.auth import (
     AuthError,
@@ -176,27 +175,28 @@ class CognitoAuthProvider(IAuthProvider):
 
         logger.debug("🔐 COGNITO VERIFY_TOKEN CALLED")
 
+        # Get JWKS for verification
+        jwks = await self._get_jwks()
+
+        # Decode and verify the token
+        # First, decode without verification to get the header
+        unverified_header = jwt.get_unverified_header(token)
+
+        # Find the correct key
+        rsa_key = None
+        for key in jwks["keys"]:
+            if key["kid"] == unverified_header["kid"]:
+                rsa_key = key
+                break
+
+        if not rsa_key:
+            raise AuthError(
+                message="Unable to find appropriate key",
+                status_code=401,
+                error_code="invalid_key",
+            )
+
         try:
-            # Get JWKS for verification
-            jwks = await self._get_jwks()
-
-            # Decode and verify the token
-            # First, decode without verification to get the header
-            unverified_header = jwt.get_unverified_header(token)
-
-            # Find the correct key
-            rsa_key = None
-            for key in jwks["keys"]:
-                if key["kid"] == unverified_header["kid"]:
-                    rsa_key = key
-                    break
-
-            if not rsa_key:
-                raise AuthError(
-                    message="Unable to find appropriate key",
-                    status_code=401,
-                    error_code="invalid_key",
-                )
 
             # Verify the token
             payload = jwt.decode(

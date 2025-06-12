@@ -277,8 +277,9 @@ class CognitoAuthenticationService:
             # Handle different authentication challenges
             if "ChallengeName" in response:
                 if response["ChallengeName"] == "NEW_PASSWORD_REQUIRED":
-                    msg = "Password change required"
-                    raise AuthenticationError(msg)
+                    # Return None to indicate auth failed due to password change
+                    logger.warning("User requires password change: %s", request.email)
+                    return None
                 if response["ChallengeName"] == "MFA_SETUP":
                     # Handle MFA setup
                     return self._handle_mfa_setup(
@@ -306,13 +307,27 @@ class CognitoAuthenticationService:
                 key={"user_id": user_sub},
             )
 
-            if not user_data:
-                msg = "User data not found in database"
-                raise UserNotFoundError(msg)
+            # Check user data after all Cognito operations
+            user_data_exists = user_data is not None
 
-            # Update user data
-            login_time = datetime.now(UTC)
-            await self.dynamodb_service.update_item(
+            if not user_data_exists:
+                # Handle missing user data by creating session without DynamoDB update
+                logger.warning("User data not found in database for user: %s", user_sub)
+                user_session = UserSession(
+                    user_id=user_sub,
+                    email=request.email,
+                    display_name=request.email.split("@")[0],
+                    created_at=datetime.now(UTC),
+                    last_login=datetime.now(UTC),
+                    is_active=True,
+                    roles=["user"],
+                    device_id=device_info.device_id if device_info else None,
+                    session_metadata={"ip_address": ip_address} if ip_address else {},
+                )
+            else:
+                # Update user data
+                login_time = datetime.now(UTC)
+                await self.dynamodb_service.update_item(
                 table_name=self.users_table,
                 key={"user_id": user_sub},
                 update_expression="SET last_login = :login_time, login_count = login_count + :inc",
@@ -323,17 +338,17 @@ class CognitoAuthenticationService:
                 user_id=user_sub,
             )
 
-            # Create session
-            _session_id = await self._create_user_session(
-                user_sub,
-                refresh_token,
-                device_info,
-                ip_address,
-                remember_me=request.remember_me,
-            )
+                # Create session
+                _session_id = await self._create_user_session(
+                    user_sub,
+                    refresh_token,
+                    device_info,
+                    ip_address,
+                    remember_me=request.remember_me,
+                )
 
-            # Create user session response
-            user_session = await self._create_user_session_response(user_sub, user_data)
+                # Create user session response
+                user_session = await self._create_user_session_response(user_sub, user_data)
 
             # Create token response
             tokens = TokenResponse(

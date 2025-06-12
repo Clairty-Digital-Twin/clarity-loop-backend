@@ -1,10 +1,9 @@
 """AWS DynamoDB implementation for health data storage."""
 
-from collections.abc import AsyncIterator
 from datetime import UTC, datetime
 from decimal import Decimal
 import logging
-from typing import TYPE_CHECKING, Any, TypeAlias, cast
+from typing import TYPE_CHECKING, Any, TypeAlias
 
 import boto3
 from boto3.dynamodb.conditions import Key
@@ -140,8 +139,6 @@ class DynamoDBHealthDataRepository(IHealthDataRepository):
             # Save to DynamoDB
             self.table.put_item(Item=serialized_item)
 
-            return True
-
         except ClientError as e:
             logger.exception("DynamoDB error saving health data")
             msg = f"Failed to save health data: {e!s}"
@@ -150,6 +147,8 @@ class DynamoDBHealthDataRepository(IHealthDataRepository):
             logger.exception("Unexpected error saving health data")
             msg = f"Failed to save health data: {e!s}"
             raise ServiceError(msg) from e
+        else:
+            return True
 
     async def get_user_health_data(
         self,
@@ -312,12 +311,12 @@ class DynamoDBHealthDataRepository(IHealthDataRepository):
                     for item in response.get("Items", []):
                         batch.delete_item(Key={"pk": item["pk"], "sk": item["sk"]})
 
-            return True
-
         except ClientError as e:
             logger.exception("DynamoDB error deleting health data")
             msg = f"Failed to delete health data: {e!s}"
             raise ServiceError(msg) from e
+        else:
+            return True
 
     async def save_data(self, user_id: str, data: dict[str, str]) -> str:
         """Save health data for a user (legacy method).
@@ -343,12 +342,13 @@ class DynamoDBHealthDataRepository(IHealthDataRepository):
             }
 
             self.table.put_item(Item=self._serialize_item(item))
-            return item_id
 
         except ClientError as e:
             logger.exception("DynamoDB error saving data")
             msg = f"Failed to save data: {e!s}"
             raise ServiceError(msg) from e
+        else:
+            return item_id
 
     async def get_data(
         self, user_id: str, filters: dict[str, str] | None = None
@@ -378,12 +378,12 @@ class DynamoDBHealthDataRepository(IHealthDataRepository):
                 if isinstance(data, dict):
                     return {str(k): str(v) for k, v in data.items()}
 
-            return {}
-
         except ClientError as e:
             logger.exception("DynamoDB error getting data")
             msg = f"Failed to get data: {e!s}"
             raise ServiceError(msg) from e
+        else:
+            return {}
 
     async def initialize(self) -> None:
         """Initialize the repository.

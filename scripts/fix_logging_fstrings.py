@@ -3,7 +3,6 @@
 
 from pathlib import Path
 import re
-import sys
 
 
 def fix_logging_fstring(line: str) -> str:
@@ -44,9 +43,9 @@ def process_file(filepath: Path) -> int:
     changes = 0
 
     try:
-        with open(filepath, encoding="utf-8") as f:
+        with filepath.open(encoding="utf-8") as f:
             lines = f.readlines()
-    except Exception as e:
+    except OSError as e:
         print(f"Error reading {filepath}: {e}")
         return 0
 
@@ -59,10 +58,10 @@ def process_file(filepath: Path) -> int:
 
     if changes > 0:
         try:
-            with open(filepath, "w", encoding="utf-8") as f:
+            with filepath.open("w", encoding="utf-8") as f:
                 f.writelines(new_lines)
             print(f"Fixed {changes} f-string(s) in {filepath}")
-        except Exception as e:
+        except OSError as e:
             print(f"Error writing {filepath}: {e}")
             return 0
 

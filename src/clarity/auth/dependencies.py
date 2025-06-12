@@ -6,7 +6,7 @@ Uses AWS Cognito for authentication backend.
 """
 
 import logging
-from typing import Annotated, Any, Dict, Optional, cast
+from typing import Annotated, Any, cast
 
 from fastapi import Depends, HTTPException, Request, status
 from fastapi.security import HTTPBearer
@@ -79,7 +79,7 @@ def get_authenticated_user(
     return user_context
 
 
-def get_current_user(request: Request) -> Dict[str, Any]:
+def get_current_user(request: Request) -> dict[str, Any]:
     """Get current user for backward compatibility.
 
     This is an alias for get_authenticated_user but returns a dict format

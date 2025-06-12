@@ -291,8 +291,8 @@ class CognitoAuthProvider(IAuthProvider):
                 logger.warning(
                     "Authentication challenge required: %s", challenge
                 )
-                msg = f"Challenge required: {challenge}"
-                raise AuthenticationError(msg)
+                # Return None to indicate authentication failed due to challenge
+                return None
 
             # If we get here without AuthenticationResult or Challenge, return None
             logger.warning("Unexpected authentication response format")

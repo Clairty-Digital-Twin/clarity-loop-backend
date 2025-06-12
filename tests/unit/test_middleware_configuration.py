@@ -26,7 +26,7 @@ class TestMiddlewareConfiguration:
             # Set only the variables we need
             os.environ["ENVIRONMENT"] = "development"
             os.environ["ENABLE_AUTH"] = "true"
-            
+
             settings = Settings()
             config_provider = ConfigProvider(settings)
 
@@ -50,7 +50,7 @@ class TestMiddlewareConfiguration:
             # Set only the variables we need
             os.environ["ENVIRONMENT"] = "testing"
             os.environ["ENABLE_AUTH"] = "true"
-            
+
             settings = Settings()
             config_provider = ConfigProvider(settings)
 
@@ -145,7 +145,7 @@ class TestMiddlewareConfiguration:
         """Test that the container properly uses middleware configuration."""
         # Import create_application here to avoid early module loading
         from clarity.core.container import create_application
-        
+
         with patch("clarity.core.container.get_settings") as mock_get_settings:
             # Mock settings to disable auth for simpler testing
             mock_settings = Mock()

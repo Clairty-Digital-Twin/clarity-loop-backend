@@ -69,6 +69,18 @@ Perfect for new contributors or those with 120 days of coding experience!
 ### **🟡 LEVEL 2: DEVELOPMENT**
 Ready to dive into the codebase!
 
+**🔥 Epic EHR Integration Challenge (DEVELOPER GOLDMINE):**
+```python
+# Direct access to 280M+ patient records via Epic's FHIR API
+GET /Patient/{id}/Observation?category=social-history      # Mental health history
+GET /Patient/{id}/Condition?category=encounter-diagnosis   # Psychiatric conditions  
+GET /Patient/{id}/CarePlan?category=assess-plan           # Treatment plans
+GET /Patient/{id}/Goal?lifecycle-status=active            # Therapeutic goals
+```
+- **Build**: FHIR R4 client with Epic's OAuth 2.0 flow
+- **Integrate**: Merge EHR psychiatric data with actigraphy analysis
+- **Code**: Real-time patient data sync pipeline (research-grade only)
+
 **Feature Development:**
 - Implement new actigraphy processing algorithms
 - Add support for additional wearable devices

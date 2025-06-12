@@ -8,14 +8,13 @@ import asyncio
 from datetime import UTC, datetime
 import json
 import logging
-from typing import TYPE_CHECKING, Any, cast
+from typing import TYPE_CHECKING, Any
 
 import boto3
 from botocore.exceptions import ClientError
 
 if TYPE_CHECKING:
     from mypy_boto3_s3 import S3Client
-    from mypy_boto3_s3.type_defs import PutObjectOutputTypeDef
 
 from clarity.core.secure_logging import sanitize_for_logging
 from clarity.models.health_data import HealthDataUpload

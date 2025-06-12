@@ -43,7 +43,7 @@ from clarity.services.dynamodb_service import DynamoDBService
 logger = logging.getLogger(__name__)
 
 # Constants
-BEARER_TOKEN_TYPE = "bearer"  # noqa: S105  # Standard OAuth token type
+BEARER_TOKEN_TYPE = "bearer"  # noqa: S105  # Standard OAuth token type  # nosec B105
 
 
 class AuthenticationError(Exception):

@@ -215,7 +215,7 @@ def user_context_to_simple_user(context: UserContext) -> User:
         uid=context.user_id,
         email=context.email,
         display_name=getattr(context, "display_name", None),
-        cognito_token="",  # Not available from context
+        cognito_token="",  # Not available from context  # nosec B106
         cognito_token_exp=None,
         role=getattr(context, "role", "user"),
         created_at=context.created_at,

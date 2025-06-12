@@ -7,6 +7,8 @@ Tests cover:
 - Error handling and edge cases
 """
 
+from __future__ import annotations
+
 import asyncio
 from datetime import UTC, datetime, timedelta
 from pathlib import Path

@@ -4,6 +4,8 @@ Tests the complete integration of sleep processing within the analysis pipeline,
 ensuring proper data flow and feature fusion.
 """
 
+from __future__ import annotations
+
 from datetime import UTC, datetime
 import os
 from unittest.mock import AsyncMock, MagicMock, Mock, create_autospec, patch

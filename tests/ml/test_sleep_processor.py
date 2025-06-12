@@ -4,6 +4,8 @@ This test suite follows TDD principles and mirrors the patterns from existing
 processor tests (cardio, activity, respiration) while achieving high coverage.
 """
 
+from __future__ import annotations
+
 from datetime import UTC, datetime, timedelta
 
 import pytest

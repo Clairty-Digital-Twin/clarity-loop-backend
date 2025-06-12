@@ -4,6 +4,8 @@ This test suite provides thorough coverage of the PAT service functionality,
 including model loading, weight conversion, inference, and clinical analysis.
 """
 
+from __future__ import annotations
+
 import asyncio
 from datetime import UTC, datetime, timedelta
 import logging

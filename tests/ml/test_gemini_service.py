@@ -8,6 +8,8 @@ This test suite covers all aspects of the Gemini service including:
 - Integration with PAT analysis results
 """
 
+from __future__ import annotations
+
 import json
 from unittest.mock import MagicMock, patch
 from uuid import uuid4

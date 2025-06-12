@@ -8,6 +8,8 @@ This test suite covers all aspects of the inference engine including:
 - Performance monitoring
 """
 
+from __future__ import annotations
+
 import asyncio
 from datetime import UTC, datetime
 from typing import Never

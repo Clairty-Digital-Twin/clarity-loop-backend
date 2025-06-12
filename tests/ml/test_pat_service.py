@@ -8,6 +8,8 @@ This test suite covers all aspects of the PAT service including:
 - Health checks and status monitoring
 """
 
+from __future__ import annotations
+
 from datetime import UTC, datetime
 import sys
 from unittest.mock import MagicMock, patch

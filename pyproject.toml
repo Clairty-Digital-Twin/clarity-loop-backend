@@ -231,7 +231,6 @@ ignore = [
     "PLW0603",  # global statement usage in lifespan for singleton pattern
     "ANN401",   # allow use of Any in some interfaces & tests
     "RUF029",   # allow async def without await in mock helpers
-    "TCH",      # type-checking imports - we use __future__ annotations everywhere
 ]
 
 [tool.ruff.lint.pyupgrade]

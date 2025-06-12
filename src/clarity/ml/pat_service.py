@@ -1,7 +1,5 @@
 # ruff: noqa: TRY300
 
-from __future__ import annotations
-
 """PAT (Pretrained Actigraphy Transformer) Model Service.
 
 This service implements the Dartmouth PAT model for actigraphy analysis,

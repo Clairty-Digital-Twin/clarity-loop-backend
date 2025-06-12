@@ -150,9 +150,6 @@ class Settings(BaseSettings):
     @model_validator(mode="after")
     def validate_environment_requirements(self) -> Self:
         """Validate environment-specific requirements and set development defaults."""
-        # If in testing mode, use defaults
-        if self.is_testing():
-            return self
 
         # In development, warn about missing credentials but don't fail
         if self.environment.lower() == "development":

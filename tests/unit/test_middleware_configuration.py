@@ -51,9 +51,6 @@ class TestMiddlewareConfiguration:
             os.environ["ENVIRONMENT"] = "testing"
             os.environ["ENABLE_AUTH"] = "true"
             
-            Settings = get_fresh_settings()
-            ConfigProvider = get_config_provider()
-            
             settings = Settings()
             config_provider = ConfigProvider(settings)
 

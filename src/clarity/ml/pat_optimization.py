@@ -130,7 +130,7 @@ class PATPerformanceOptimizer:
 
             # Optimize for inference
             if hasattr(torch.jit, "optimize_for_inference"):
-                return torch.jit.optimize_for_inference(traced_model)
+                return torch.jit.optimize_for_inference(traced_model)  # type: ignore[no-any-return]
             return traced_model  # noqa: TRY300
 
         except Exception:
@@ -144,7 +144,7 @@ class PATPerformanceOptimizer:
             return
 
         try:
-            torch.jit.save(self.compiled_model, str(model_path))  # type: ignore[no-untyped-call,misc]
+            torch.jit.save(self.compiled_model, str(model_path))  # type: ignore[no-untyped-call]
             logger.info("Compiled model saved to %s", model_path)
 
         except Exception:

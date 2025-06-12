@@ -24,7 +24,6 @@ from starlette.datastructures import Headers
 
 from clarity.api.v1.health_data import (
     list_health_data,
-    query_health_data_legacy,
     upload_health_data,
 )
 from clarity.auth import UserContext
@@ -366,56 +365,7 @@ class TestHealthDataMetricsEndpoint(BaseServiceTestCase):
             )
 
 
-class TestHealthDataQueryEndpoint(BaseServiceTestCase):
-    """Test health data query endpoint - CHUNK 2C."""
-
-    def setUp(self) -> None:
-        """Set up test dependencies."""
-        super().setUp()
-        self.mock_service = MockHealthDataService()
-
-    @patch("clarity.api.v1.health_data.get_health_data_service")
-    async def test_query_health_data_missing_user_id(
-        self, mock_get_service: Mock
-    ) -> None:
-        """Test query with missing user ID."""
-        # Arrange
-        mock_get_service.return_value = self.mock_service
-
-        # Create mock user context (will be None to trigger error)
-        user_context = UserContext(user_id=None, permissions=[])
-
-        # Act & Assert
-        with pytest.raises((ValueError, RuntimeError, AttributeError)):
-            await query_health_data_legacy(
-                current_user=user_context,
-                service=self.mock_service,  # type: ignore[arg-type]
-            )
-
-    @patch("clarity.api.v1.health_data.get_health_data_service")
-    async def test_query_health_data_with_filters(self, mock_get_service: Mock) -> None:
-        """Test query with various filters."""
-        # Arrange
-        self.mock_service.query_result = {"data": [], "total": 0}
-        mock_get_service.return_value = self.mock_service
-
-        # Create mock user context
-        user_context = UserContext(user_id=str(uuid4()), permissions=[])
-
-        # Act
-        result = await query_health_data_legacy(
-            current_user=user_context,
-            metric_type="activity",
-            start_date=datetime.now(UTC).replace(day=1),
-            end_date=datetime.now(UTC),
-            limit=50,
-            offset=0,
-            service=self.mock_service,  # type: ignore[arg-type]
-        )
-
-        # Assert
-        assert "data" in result
-        assert "total" in result
+# TestHealthDataQueryEndpoint removed - query_health_data_legacy endpoint was removed from API
 
 
 class TestHealthDataErrorHandling(BaseServiceTestCase):

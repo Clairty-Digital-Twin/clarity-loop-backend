@@ -309,7 +309,14 @@ class TestHealthKitUploadIntegration:
 
     def test_router_endpoints(self) -> None:  # noqa: PLR6301
         """Test that router has expected endpoints."""
-        routes = [route.path for route in router.routes]
+        # Get path from route objects - handle different route types
+        routes = []
+        for route in router.routes:
+            if hasattr(route, "path"):
+                routes.append(route.path)
+            elif hasattr(route, "path_format"):
+                routes.append(route.path_format)  # type: ignore[attr-defined]
+        
         # Routes include the full prefix path
         assert any("upload" in route_path for route_path in routes)
         assert any("status" in route_path for route_path in routes)

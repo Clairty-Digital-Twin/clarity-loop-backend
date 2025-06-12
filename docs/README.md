@@ -1,403 +1,227 @@
-# CLARITY Digital Twin Platform - Documentation
+# CLARITY Digital Twin Documentation
 
-Technical documentation for the CLARITY health data processing backend.
+**Research-grade health analytics platform** powered by foundation models trained on population-scale data.
 
-## Overview
+Transform your Apple Health data into clinically-informed insights through cutting-edge AI.
 
-CLARITY is a FastAPI-based platform that processes Apple Health data using machine learning models to extract health patterns and generate natural language insights. The system combines a Pretrained Actigraphy Transformer (PAT) for temporal analysis with Google Gemini for conversational health explanations.
+## What Makes CLARITY Different
 
-## System Architecture
+CLARITY isn't just another health app – it's a **research platform** built on peer-reviewed science:
 
-```mermaid
-flowchart TB
-    subgraph Client ["📱 Client Layer"]
-        Mobile[Mobile Apps]
-        Web[Web Interface]
-        SDK[SDK/Libraries]
-    end
-    
-    subgraph API ["🚀 API Gateway Layer"]
-        FastAPI[FastAPI Backend]
-        Auth[Authentication]
-        Valid[Validation]
-        Rate[Rate Limiting]
-    end
-    
-    subgraph Processing ["🧠 AI/ML Processing"]
-        PAT[PAT Transformer<br/>Sleep Analysis]
-        Gemini[Gemini AI<br/>Insights]
-        Pipeline[Analysis Pipeline]
-    end
-    
-    subgraph Storage ["💾 Data Infrastructure"]
-        DDB[(DynamoDB<br/>Health Data)]
-        S3[(S3<br/>Raw Files)]
-        Cognito[AWS Cognito<br/>User Auth]
-    end
-    
-    subgraph Infrastructure ["☁️ AWS Infrastructure"]
-        ECS[ECS Fargate]
-        ALB[Load Balancer]
-        CW[CloudWatch]
-        VPC[VPC/Security]
-    end
-    
-    Client --> API
-    API --> Processing
-    Processing --> Storage
-    Storage --> Infrastructure
-    
-    classDef client fill:#9c27b0,stroke:#4a148c,stroke-width:2px,color:white
-    classDef api fill:#ff9900,stroke:#e65100,stroke-width:2px,color:white
-    classDef ml fill:#4caf50,stroke:#1b5e20,stroke-width:2px,color:white
-    classDef storage fill:#2196f3,stroke:#0d47a1,stroke-width:2px,color:white
-    classDef infra fill:#ff5722,stroke:#bf360c,stroke-width:2px,color:white
-    
-    class Mobile,Web,SDK client
-    class FastAPI,Auth,Valid,Rate api
-    class PAT,Gemini,Pipeline ml
-    class DDB,S3,Cognito storage
-    class ECS,ALB,CW,VPC infra
-```
+### 🔬 **Foundation Model Approach**
+- **PAT (Pretrained Actigraphy Transformer)**: First open-source foundation model for wearable data
+- **Population Training**: 29,307 participants from NHANES 2003-2014 datasets
+- **Transformer Architecture**: State-of-the-art temporal modeling for health patterns
 
-**Core Stack**: Python 3.11+, FastAPI, AWS (DynamoDB/Cognito/ECS), PyTorch, Transformers
+### 📊 **Multi-Modal Intelligence**
+- **Activity Analysis**: Movement patterns through population-normalized metrics
+- **Sleep Intelligence**: REM/deep/light sleep staging and circadian assessment
+- **Cardiovascular Monitoring**: HRV analysis and exercise response patterns
+- **Respiratory Insights**: Breathing patterns and sleep-related irregularities
 
-## Quick Navigation
+### 💬 **Clinical Context**
+- **Natural Language Processing**: Google Gemini transforms metrics into conversations
+- **Population Comparisons**: Your data vs. peer groups from national health surveys
+- **Trend Analysis**: Week-over-week changes with clinical significance
 
-### Core Documentation
+## Real-World Data Pipeline
 
 ```mermaid
-mindmap
-  root((📚 Documentation))
-    🏗️ System Overview
-      Architecture
-      Components
-      Data Flow
-      Performance
-    📡 API Reference
-      44 Endpoints
-      Authentication
-      Request/Response
-      Error Handling
-    🧠 AI Models
-      PAT Transformer
-      Gemini Integration
-      Performance Metrics
-      Deployment
-    🍎 HealthKit Integration
-      Data Pipeline
-      Processing
-      Supported Metrics
-      Troubleshooting
-```
-
-1. **[System Overview](01-overview.md)** 
-   - Technical architecture and components
-   - Data flow and processing pipeline
-   - Performance characteristics and metrics
-   - Current development status
-
-2. **[API Reference](02-api-reference.md)**
-   - Complete endpoint documentation (44 endpoints)
-   - Authentication and authorization
-   - Request/response schemas
-   - Error handling and status codes
-
-3. **[AI Models & Machine Learning](03-ai-models.md)**
-   - PAT (Pretrained Actigraphy Transformer) details
-   - Google Gemini integration
-   - Model performance and validation
-   - Deployment and monitoring
-
-4. **[Apple HealthKit Integration](integrations/healthkit.md)**
-   - Data processing pipeline
-   - Supported metrics and data types
-   - Performance benchmarks
-   - Troubleshooting guide
-
-### Key Components
-
-```mermaid
-graph LR
-    subgraph Input ["📊 Data Input"]
-        A[HealthKit JSON]
-        B[Data Validation]
-        C[Schema Conversion]
+graph TB
+    subgraph DataCollection ["📱 Data Collection"]
+        A[Apple Watch<br/>Step counts, HR, Sleep<br/>HRV, Respiratory rate]
+        B[HealthKit Export<br/>JSON validation<br/>Quality assessment]
     end
     
-    subgraph Process ["⚙️ Processing"]
-        D[Temporal Alignment]
-        E[PAT Analysis]
-        F[Gemini Processing]
+    subgraph Processing ["🧠 AI Processing"]
+        C[Data Normalization<br/>NHANES population stats<br/>Z-score standardization]
+        D[PAT Foundation Model<br/>7-day windows<br/>10,080 time points]
+        E[Multi-Modal Fusion<br/>Cross-signal integration<br/>Holistic health state]
     end
     
-    subgraph Output ["🎯 Output"]
-        G[Health Insights]
-        H[Natural Language]
-        I[Real-time Updates]
+    subgraph Intelligence ["💡 Intelligence Layer"]
+        F[Clinical Metrics<br/>Sleep efficiency<br/>Circadian rhythm score]
+        G[Natural Language<br/>Conversational insights<br/>Personalized recommendations]
+        H[Risk Indicators<br/>Pattern anomalies<br/>Trend warnings]
     end
     
-    A --> B --> C
-    C --> D --> E
-    C --> D --> F
-    E --> G
-    F --> H
-    G --> I
-    H --> I
+    A --> B --> C --> D --> E
+    E --> F --> G --> H
     
-    classDef input fill:#ff9900,stroke:#e65100,stroke-width:2px,color:white
-    classDef process fill:#4caf50,stroke:#1b5e20,stroke-width:2px,color:white
-    classDef output fill:#2196f3,stroke:#0d47a1,stroke-width:2px,color:white
+    classDef collection fill:#e3f2fd,stroke:#1976d2,stroke-width:2px,color:black
+    classDef processing fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px,color:black
+    classDef intelligence fill:#e8f5e8,stroke:#388e3c,stroke-width:2px,color:black
     
-    class A,B,C input
-    class D,E,F process
-    class G,H,I output
+    class A,B collection
+    class C,D,E processing
+    class F,G,H intelligence
 ```
-
-- **Data Ingestion**: HealthKit JSON processing and validation
-- **PAT Analysis**: 7-day temporal pattern analysis using transformers
-- **Gemini Integration**: Natural language insight generation
-- **Real-time API**: WebSocket support for live data streaming
-- **AWS Infrastructure**: Production-ready cloud deployment
-
-## Performance Metrics
-
-```mermaid
-xychart-beta
-    title "📊 System Performance Overview"
-    x-axis [Tests, Coverage, Endpoints, Uptime, Response]
-    y-axis "Percentage/Count" 0 --> 100
-    bar [99.6, 57, 44, 99.9, 95]
-```
-
-| Component | Status |
-|-----------|--------|
-| **Tests** | 807/810 passing (99.6%) |
-| **Coverage** | 57% (target: 85%) |
-| **API Endpoints** | 44 total, sub-second response times |
-| **Infrastructure** | AWS ECS with auto-scaling |
-| **AI Models** | PAT + Gemini integration operational |
-
-## Development Setup
-
-```bash
-# Setup
-git clone https://github.com/your-org/clarity-loop-backend.git
-cd clarity-loop-backend
-make install
-
-# Configure
-cp .env.example .env  # Add API keys
-
-# Run
-make dev
-curl http://localhost:8000/health
-```
-
-## Production Deployment
-
-```mermaid
-sequenceDiagram
-    participant Dev as 👨‍💻 Developer
-    participant GH as 📦 GitHub
-    participant CI as ⚙️ CI/CD
-    participant AWS as ☁️ AWS
-    participant Monitor as 📊 Monitoring
-    
-    Dev->>GH: Push Code
-    GH->>CI: Trigger Build
-    CI->>CI: Run Tests<br/>Build Images
-    CI->>AWS: Deploy to ECS
-    AWS->>Monitor: Health Checks
-    Monitor-->>Dev: Deployment Status ✅
-    
-    Note over CI,AWS: Zero-downtime deployment<br/>Auto-scaling enabled
-```
-
-**AWS ECS Fargate** with:
-- Auto-scaling containers
-- Zero-downtime deployments
-- CloudWatch monitoring
-- Prometheus metrics
-
-```bash
-./deploy.sh production
-aws logs tail /aws/ecs/clarity-backend --follow
-```
-
-## API Overview
-
-**44 endpoints** across 7 areas:
-
-```mermaid
-pie title 🚀 API Endpoint Distribution
-    "Authentication (7)" : 7
-    "Health Data (10)" : 10
-    "HealthKit (4)" : 4
-    "AI Insights (6)" : 6
-    "PAT Analysis (5)" : 5
-    "WebSocket (3)" : 3
-    "System (9)" : 9
-```
-
-- **Authentication** (7) - AWS Cognito integration
-- **Health Data** (10) - CRUD operations for health metrics
-- **HealthKit** (4) - Apple Health data processing
-- **AI Insights** (6) - Gemini analysis and chat
-- **PAT Analysis** (5) - Transformer model inference
-- **WebSocket** (3) - Real-time data streaming
-- **System** (9) - Health checks and monitoring
-
-## AI Models
-
-### PAT (Pretrained Actigraphy Transformer)
-
-```mermaid
-timeline
-    title 🧠 PAT Model Pipeline
-    
-    section Data Input
-        7-day Window    : 10,080 time points
-                       : 1-minute intervals
-                       : Continuous monitoring
-    
-    section Processing
-        Preprocessing   : Outlier removal
-                       : Signal normalization
-                       : Temporal alignment
-        
-        Transformer     : Multi-head attention
-                       : Positional encoding
-                       : Pattern recognition
-    
-    section Output
-        Sleep Analysis  : Quality scores
-                       : Efficiency metrics
-                       : Circadian patterns
-```
-
-- **Input**: 10,080-point vectors (7 days × 1-minute intervals)
-- **Purpose**: Sleep and circadian rhythm analysis
-- **License**: CC BY-4.0 (Dartmouth College)
-
-### Google Gemini
-- **Purpose**: Natural language health insights
-- **Input**: Processed health metrics + context
-- **Output**: Conversational explanations
-
-## Security & Compliance
-
-```mermaid
-flowchart LR
-    subgraph Security ["🔐 Security Layers"]
-        Auth[JWT Authentication]
-        Encrypt[End-to-End Encryption]
-        HIPAA[HIPAA Compliance]
-    end
-    
-    subgraph Privacy ["🛡️ Privacy Controls"]
-        Control[User Data Control]
-        Retention[Configurable Retention]
-        Audit[Audit Logging]
-    end
-    
-    subgraph Infrastructure ["🏗️ Infrastructure"]
-        AWS[AWS Security]
-        Network[Network Isolation]
-        Monitor[24/7 Monitoring]
-    end
-    
-    Auth --> Control
-    Encrypt --> Retention
-    HIPAA --> Audit
-    
-    Control --> AWS
-    Retention --> Network
-    Audit --> Monitor
-    
-    classDef security fill:#ff5722,stroke:#bf360c,stroke-width:2px,color:white
-    classDef privacy fill:#4caf50,stroke:#1b5e20,stroke-width:2px,color:white
-    classDef infra fill:#2196f3,stroke:#0d47a1,stroke-width:2px,color:white
-    
-    class Auth,Encrypt,HIPAA security
-    class Control,Retention,Audit privacy
-    class AWS,Network,Monitor infra
-```
-
-- **Authentication**: JWT via AWS Cognito
-- **Encryption**: End-to-end for health data
-- **HIPAA Ready**: AWS infrastructure with audit logging
-- **Privacy**: User-controlled data retention
 
 ## Documentation Structure
 
-### Core Platform
-- [System Overview](01-overview.md) - Technical architecture
-- [API Reference](02-api-reference.md) - Complete endpoint docs
-- [AI Models](03-ai-models.md) - ML pipeline details
+### 🏗️ **Architecture & System Design**
+- **[01-overview.md](01-overview.md)** → System architecture, components, and data flow
+- **[02-api-reference.md](02-api-reference.md)** → Complete API documentation with examples
 
-### Integrations
-- [Apple HealthKit](integrations/healthkit.md) - Data integration
-- [Authentication](integrations/auth.md) - AWS Cognito setup
-- [WebSockets](integrations/websockets.md) - Real-time connections
+### 🤖 **AI Models & Research** 
+- **[03-ai-models.md](03-ai-models.md)** → PAT model details, training data, and performance
 
-### Operations
-- [Deployment](operations/deployment.md) - Production setup
-- [Monitoring](operations/monitoring.md) - System health
-- [Security](operations/security.md) - HIPAA compliance
+### 🔌 **Integrations & Data Sources**
+- **[integrations/healthkit.md](integrations/healthkit.md)** → Apple HealthKit data processing
+- **[integrations/gemini.md](integrations/gemini.md)** → Natural language generation
 
-## Current Status
+### 🚀 **Operations & Deployment**
+- **[operations/deployment.md](operations/deployment.md)** → AWS ECS production deployment
+- **[operations/monitoring.md](operations/monitoring.md)** → Observability and alerting
+
+## Research Foundation
+
+CLARITY is built on **peer-reviewed academic research**, not proprietary algorithms:
+
+**Primary Research**: ["AI Foundation Models for Wearable Movement Data in Mental Health Research"](https://doi.org/10.48550/arXiv.2411.15240)
 
 ```mermaid
-flowchart TD
-    subgraph Foundation ["🏗️ Foundation (Completed)"]
-        Initial[Initial Setup<br/>Project Structure<br/>Core Framework]
-        API[Core API<br/>44 endpoints<br/>REST + WebSocket]
-        AWS[AWS Migration<br/>ECS Infrastructure<br/>Production Ready]
+graph LR
+    subgraph Research ["📚 Academic Foundation"]
+        A[Dartmouth College<br/>Jacobson Lab<br/>Mental Health Research]
+        B[NHANES 2003-2014<br/>29,307 participants<br/>National health survey]
+        C[Actigraphy Data<br/>Movement patterns<br/>Sleep-wake cycles]
     end
     
-    subgraph Intelligence ["🧠 AI Integration (Completed)"]
-        PAT[PAT Integration<br/>Sleep Analysis<br/>Transformer Model]
-        Gemini[Gemini AI<br/>Natural Language<br/>Insights Generation]
+    subgraph Model ["🧠 PAT Foundation Model"]
+        D[Transformer Architecture<br/>Patch embeddings<br/>Temporal attention]
+        E[Self-Supervised Learning<br/>Masked autoencoding<br/>Population patterns]
+        F[Transfer Learning<br/>Fine-tuning capability<br/>Individual adaptation]
     end
     
-    subgraph Quality ["✅ Quality Assurance (In Progress)"]
-        Tests[Testing Suite<br/>807/810 Tests ✅<br/>99.6% Success Rate]
-        Coverage[Test Coverage<br/>57% → 85%<br/>Target Q3 2025]
+    subgraph Application ["💡 CLARITY Platform"]
+        G[Sleep Quality Analysis<br/>Circadian assessment<br/>Activity fragmentation]
+        H[Population Comparisons<br/>Peer group metrics<br/>Percentile rankings]
+        I[Clinical Context<br/>Health significance<br/>Actionable insights]
     end
     
-    subgraph Future ["🚀 Future Roadmap"]
-        Enhanced[Enhanced ML<br/>Advanced Models<br/>Q3 2025]
-        Realtime[Real-time Features<br/>Live Analytics<br/>Q4 2025]
-    end
+    A --> B --> C --> D --> E --> F --> G --> H --> I
     
-    Initial --> API --> AWS
-    PAT --> Gemini
-    Foundation --> Intelligence
-    Intelligence --> Quality
-    Quality --> Future
+    classDef research fill:#ffecb3,stroke:#f57c00,stroke-width:2px,color:black
+    classDef model fill:#e1f5fe,stroke:#0288d1,stroke-width:2px,color:black
+    classDef application fill:#e8f5e8,stroke:#388e3c,stroke-width:2px,color:black
     
-    classDef foundation fill:#2196f3,stroke:#0d47a1,stroke-width:2px,color:white
-    classDef intelligence fill:#4caf50,stroke:#1b5e20,stroke-width:2px,color:white
-    classDef quality fill:#ff9900,stroke:#e65100,stroke-width:2px,color:white
-    classDef future fill:#9c27b0,stroke:#4a148c,stroke-width:2px,color:white
-    
-    class Initial,API,AWS foundation
-    class PAT,Gemini intelligence
-    class Tests,Coverage quality
-    class Enhanced,Realtime future
+    class A,B,C research
+    class D,E,F model
+    class G,H,I application
 ```
 
-- **Backend**: Production-ready with comprehensive test suite
-- **AWS Migration**: Complete infrastructure deployment
-- **AI Integration**: PAT and Gemini models operational
-- **Coverage**: Increasing from 57% to 85% target
-- **Documentation**: Comprehensive technical docs
+### Key Research Citations
 
-## License
+**Primary Model**:
+- Ruan, F.Y., Zhang, A., Oh, J., Jin, S., & Jacobson, N.C. (2024). *AI Foundation Models for Wearable Movement Data in Mental Health Research*. arXiv:2411.15240
 
-Apache License 2.0. PAT models under CC BY-4.0.
+**Training Data**:
+- NHANES (National Health and Nutrition Examination Survey) 2003-2014 cycles
+- 29,307 participants with actigraphy data
+- Population-representative sample of US adults
+
+## Platform Capabilities
+
+### **Sleep Intelligence**
+- **Sleep Efficiency**: Time asleep vs. time in bed (target: >85%)
+- **Sleep Onset Latency**: Time to fall asleep (normal: <15 minutes)
+- **Wake After Sleep Onset**: Minutes awake during sleep (normal: <30 minutes)  
+- **Sleep Stages**: REM, deep, light sleep proportions and timing
+- **Circadian Rhythm**: 24-hour pattern regularity and phase alignment
+
+### **Activity Intelligence**
+- **Step Pattern Analysis**: Daily/weekly movement consistency
+- **Activity Fragmentation**: Movement bout length and frequency
+- **Energy Expenditure**: Active vs. passive calorie burn patterns
+- **Exercise Recognition**: Workout intensity and recovery patterns
+
+### **Cardiovascular Intelligence**
+- **Heart Rate Variability**: Autonomic nervous system balance
+- **Resting Heart Rate Trends**: Fitness and recovery indicators
+- **Exercise Response**: Heart rate adaptation to physical activity
+- **Blood Pressure Patterns**: Episodic measurements and trends
+
+### **Natural Language Intelligence**
+Transform complex metrics into conversational insights:
+
+**Example Output**:
+> *"Your sleep efficiency averaged 89% this week, which is excellent compared to your age group. The consistent 11 PM bedtime is supporting strong circadian rhythm alignment. However, your activity fragmentation score suggests more frequent movement breaks during the day could improve overall metabolic health."*
+
+## Implementation Examples
+
+### Data Processing Pipeline
+```python
+# Real implementation from the codebase
+from clarity.ml.pat_service import ActigraphyInput, get_pat_service
+from clarity.ml.preprocessing import HealthDataPreprocessor
+
+# Process Apple Health data
+preprocessor = HealthDataPreprocessor()
+actigraphy_points = preprocessor.convert_health_metrics_to_actigraphy(health_metrics)
+
+# PAT analysis (7-day window)
+pat_service = await get_pat_service()
+actigraphy_input = ActigraphyInput(
+    user_id=user_id,
+    data_points=actigraphy_points,
+    sampling_rate=1.0,  # 1 sample per minute
+    duration_hours=168   # 1 week
+)
+
+analysis = await pat_service.analyze_actigraphy(actigraphy_input)
+# Returns: sleep_efficiency, circadian_score, depression_risk, etc.
+```
+
+### Multi-Modal Analysis
+```python
+# Fusion of multiple health signals
+from clarity.ml.analysis_pipeline import HealthAnalysisPipeline
+
+pipeline = HealthAnalysisPipeline()
+results = await pipeline.process_health_data(user_id, health_metrics)
+
+# Results include:
+# - PAT activity analysis (128-dim embedding)
+# - Cardiovascular features (HRV, resting HR)
+# - Respiratory patterns (breathing rate, SpO2)
+# - Sleep stage analysis (REM/deep/light percentages)
+# - Fused health state vector
+```
+
+## Getting Started
+
+### **For Developers**
+1. **[Quick Start Guide](../README.md#quick-start)** → Set up development environment
+2. **[API Documentation](02-api-reference.md)** → Integrate with CLARITY platform
+3. **[Architecture Overview](01-overview.md)** → Understand system design
+
+### **For Researchers**
+1. **[AI Models Documentation](03-ai-models.md)** → PAT model specifications
+2. **[Research Citations](#research-foundation)** → Academic references
+3. **[Data Processing Pipeline](#real-world-data-pipeline)** → Technical implementation
+
+### **For Operations**
+1. **[Deployment Guide](operations/deployment.md)** → AWS ECS production setup
+2. **[Monitoring Guide](operations/monitoring.md)** → Observability configuration
+3. **[Security Guide](operations/security.md)** → HIPAA-ready infrastructure
+
+## Important Disclaimers
+
+⚠️ **Research Platform**: CLARITY is designed for health insights and research applications  
+⚠️ **Not Medical Device**: Not FDA approved, not for medical diagnosis or treatment  
+⚠️ **Educational Use**: Consult healthcare providers for medical decisions  
+⚠️ **Data Privacy**: All processing follows privacy-first design principles
+
+## Community & Support
+
+- **GitHub Issues**: Bug reports and feature requests
+- **Documentation**: Comprehensive technical specifications
+- **Research Collaboration**: Open to academic partnerships
+- **Model Licensing**: PAT models under CC BY-4.0 (properly attributed)
 
 ---
 
-*Updated: June 2025* 
+**Built with**: Python 3.11+, FastAPI, PyTorch, AWS, Apple HealthKit  
+**Research**: Dartmouth College Jacobson Lab  
+**License**: Apache 2.0 (platform), CC BY-4.0 (PAT models) 

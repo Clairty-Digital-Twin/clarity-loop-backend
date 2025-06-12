@@ -36,16 +36,16 @@ graph TB
     DB --> WS[⚡ WebSocket<br/>Real-time Updates]
     DB --> Insights[🎯 Health Insights]
     
-    %% Styling
-    classDef aiModel fill:#e1f5fe,stroke:#01579b,stroke-width:2px
-    classDef storage fill:#f3e5f5,stroke:#4a148c,stroke-width:2px
-    classDef api fill:#e8f5e8,stroke:#1b5e20,stroke-width:2px
-    classDef device fill:#fff3e0,stroke:#e65100,stroke-width:2px
+    %% Styling - Bold colors with white text like Production diagram
+    classDef aiModel fill:#4caf50,stroke:#1b5e20,stroke-width:2px,color:white
+    classDef storage fill:#2196f3,stroke:#0d47a1,stroke-width:2px,color:white
+    classDef api fill:#ff9900,stroke:#e65100,stroke-width:2px,color:white
+    classDef device fill:#9c27b0,stroke:#4a148c,stroke-width:2px,color:white
     
     class PAT,Gem aiModel
     class DB,Auth storage
-    class API,Valid,WS api
-    class AW,IP,HK device
+    class API,Valid,WS,Prep,Feat,NL api
+    class AW,IP,HK,Insights device
 ```
 
 **Core Components**:
@@ -191,9 +191,9 @@ flowchart LR
     DDB --> Audit
     Schema --> S3
     
-    classDef input fill:#e3f2fd,stroke:#0277bd
-    classDef processing fill:#f1f8e9,stroke:#388e3c
-    classDef storage fill:#fce4ec,stroke:#c2185b
+    classDef input fill:#ff9900,stroke:#e65100,stroke-width:2px,color:white
+    classDef processing fill:#4caf50,stroke:#1b5e20,stroke-width:2px,color:white
+    classDef storage fill:#2196f3,stroke:#0d47a1,stroke-width:2px,color:white
     
     class HK,JSON,Schema input
     class Temporal,Outlier,PAT,Gemini processing
@@ -238,9 +238,9 @@ graph LR
     E --> G
     E --> H
     
-    classDef input fill:#e8f5e8,stroke:#2e7d32
-    classDef model fill:#e1f5fe,stroke:#0277bd
-    classDef output fill:#fff3e0,stroke:#f57c00
+    classDef input fill:#ff9900,stroke:#e65100,stroke-width:2px,color:white
+    classDef model fill:#4caf50,stroke:#1b5e20,stroke-width:2px,color:white
+    classDef output fill:#2196f3,stroke:#0d47a1,stroke-width:2px,color:white
     
     class A input
     class B,C,D,E model

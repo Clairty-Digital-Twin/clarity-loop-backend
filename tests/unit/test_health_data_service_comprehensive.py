@@ -63,7 +63,7 @@ class MockCloudStorage(CloudStoragePort):
         self.bucket_name = ""
         self.blob_path = ""
 
-    def bucket(self, bucket_name: str) -> "MockBucket":
+    def bucket(self, bucket_name: str) -> MockBucket:
         """Return mock bucket."""
         self.bucket_name = bucket_name
         return MockBucket(self)
@@ -115,7 +115,7 @@ class MockBucket:
         """Initialize mock bucket."""
         self.storage = storage
 
-    def blob(self, blob_path: str) -> "MockBlob":
+    def blob(self, blob_path: str) -> MockBlob:
         """Return mock blob."""
         self.storage.blob_path = blob_path
         return MockBlob(self.storage)

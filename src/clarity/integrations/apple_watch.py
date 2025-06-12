@@ -16,8 +16,8 @@ from typing import Any
 import numpy as np
 import numpy.typing as npt
 import pandas as pd  # type: ignore[import-untyped]
-from scipy.interpolate import interp1d  # type: ignore[import-untyped]
-import scipy.signal  # type: ignore[import-untyped]
+from scipy.interpolate import interp1d
+import scipy.signal
 
 from clarity.core.exceptions import ProcessingError
 from clarity.integrations.healthkit import HealthDataBatch, HealthDataPoint

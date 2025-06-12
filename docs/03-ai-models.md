@@ -79,13 +79,13 @@ flowchart TB
     Metrics --> PromptEng
     CircHead --> PromptEng
     
-    %% Styling
-    classDef input fill:#e8f5e8,stroke:#2e7d32,stroke-width:2px
-    classDef preprocess fill:#e3f2fd,stroke:#1565c0,stroke-width:2px
-    classDef pat fill:#fff3e0,stroke:#ef6c00,stroke-width:2px
-    classDef gemini fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px
-    classDef fusion fill:#fce4ec,stroke:#c2185b,stroke-width:2px
-    classDef output fill:#e0f2f1,stroke:#00695c,stroke-width:2px
+    %% Styling - Bold colors with white text
+    classDef input fill:#ff9900,stroke:#e65100,stroke-width:2px,color:white
+    classDef preprocess fill:#2196f3,stroke:#0d47a1,stroke-width:2px,color:white
+    classDef pat fill:#4caf50,stroke:#1b5e20,stroke-width:2px,color:white
+    classDef gemini fill:#9c27b0,stroke:#4a148c,stroke-width:2px,color:white
+    classDef fusion fill:#ff5722,stroke:#bf360c,stroke-width:2px,color:white
+    classDef output fill:#607d8b,stroke:#263238,stroke-width:2px,color:white
     
     class HK,Sensors,Context input
     class Valid,Clean,Norm,Align,Feature preprocess
@@ -139,10 +139,10 @@ graph LR
     J --> M
     J --> N
     
-    classDef input fill:#e8f5e8,stroke:#2e7d32
-    classDef embed fill:#e3f2fd,stroke:#1565c0
-    classDef transformer fill:#fff3e0,stroke:#ef6c00
-    classDef output fill:#fce4ec,stroke:#c2185b
+    classDef input fill:#ff9900,stroke:#e65100,stroke-width:2px,color:white
+    classDef embed fill:#2196f3,stroke:#0d47a1,stroke-width:2px,color:white
+    classDef transformer fill:#4caf50,stroke:#1b5e20,stroke-width:2px,color:white
+    classDef output fill:#9c27b0,stroke:#4a148c,stroke-width:2px,color:white
     
     class A,B,C input
     class D,E,F embed

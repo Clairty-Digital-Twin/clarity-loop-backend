@@ -111,14 +111,14 @@ graph TB
     DDB --> REST
     REST --> Insights
     
-    %% Styling
-    classDef device fill:#fff3e0,stroke:#e65100,stroke-width:2px
-    classDef gateway fill:#e8f5e8,stroke:#2e7d32,stroke-width:2px
-    classDef backend fill:#e3f2fd,stroke:#1565c0,stroke-width:2px
-    classDef ai fill:#fce4ec,stroke:#c2185b,stroke-width:2px
-    classDef storage fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px
-    classDef monitor fill:#fff8e1,stroke:#f57f17,stroke-width:2px
-    classDef output fill:#e0f2f1,stroke:#00695c,stroke-width:2px
+    %% Styling - Bold colors with white text
+    classDef device fill:#9c27b0,stroke:#4a148c,stroke-width:2px,color:white
+    classDef gateway fill:#ff9900,stroke:#e65100,stroke-width:2px,color:white
+    classDef backend fill:#2196f3,stroke:#0d47a1,stroke-width:2px,color:white
+    classDef ai fill:#4caf50,stroke:#1b5e20,stroke-width:2px,color:white
+    classDef storage fill:#ff5722,stroke:#bf360c,stroke-width:2px,color:white
+    classDef monitor fill:#795548,stroke:#3e2723,stroke-width:2px,color:white
+    classDef output fill:#607d8b,stroke:#263238,stroke-width:2px,color:white
     
     class AW,IP,Export device
     class LB,Auth,Rate gateway

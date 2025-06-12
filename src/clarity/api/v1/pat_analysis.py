@@ -389,10 +389,10 @@ async def get_pat_analysis(
             )
 
         # If not found in analysis_results, check processing_jobs in DynamoDB
-        response = dynamodb_client.table.get_item(
+        job_response = dynamodb_client.table.get_item(
             Key={"pk": f"JOB#{processing_id}", "sk": f"JOB#{processing_id}"}
         )
-        processing_status = response.get("Item")
+        processing_status = job_response.get("Item")
 
         if processing_status:
             # Check if user owns this processing job

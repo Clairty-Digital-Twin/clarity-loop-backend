@@ -25,7 +25,7 @@ This document contains licenses and notices for third-party software components 
 
 **Citation:**
 
-```
+```bibtex
 Ruan, Franklin Y., Zhang, Aiwei, Oh, Jenny, Jin, SouYoung, and Jacobson, Nicholas C.
 "AI Foundation Models for Wearable Movement Data in Mental Health Research."
 arXiv:2411.15240 (2024). https://doi.org/10.48550/arXiv.2411.15240

@@ -413,7 +413,7 @@ async def security_middleware(request: Request, call_next):
 
 #### Notification Template
 
-```
+```text
 Subject: Important Security Notification - CLARITY-AI Platform
 
 Dear [Patient Name],

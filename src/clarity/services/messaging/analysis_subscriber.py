@@ -25,7 +25,7 @@ class AnalysisSubscriber:
         """Initialize analysis subscriber."""
         self.logger = logging.getLogger(__name__)
         self.storage_client = storage.Client()
-        self.publisher = None  # Will be initialized asynchronously
+        self.publisher: HealthDataPublisher | None = None  # Will be initialized asynchronously
 
         # Environment settings
         self.environment = os.getenv("ENVIRONMENT", "development")

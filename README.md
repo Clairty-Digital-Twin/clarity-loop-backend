@@ -89,36 +89,49 @@ flowchart TD
 **Production Deployment**: AWS ECS with CloudFormation infrastructure
 
 ```mermaid
-graph TB
-    subgraph Frontend ["🖥️ Client Applications"]
+flowchart LR
+    subgraph Clients ["🖥️ Client Applications"]
+        direction TB
         A[iOS App<br/>SwiftUI<br/>HealthKit Integration]
         B[Web Dashboard<br/>React/TypeScript<br/>Real-time Analytics]
     end
     
-    subgraph API ["⚡ FastAPI Backend"]
+    subgraph Core ["⚡ FastAPI Backend"]
+        direction TB
         C[Authentication<br/>AWS Cognito<br/>OAuth 2.0]
         D[Data Processing<br/>Multi-modal Pipeline<br/>Quality Validation]
         E[ML Analysis<br/>PAT + Fusion Models<br/>Batch Processing]
         F[Natural Language<br/>Gemini Integration<br/>Insight Generation]
     end
     
-    subgraph Storage ["💾 Data Layer"]
+    subgraph Data ["💾 Data Layer"]
+        direction LR
         G[DynamoDB<br/>Health Metrics<br/>Analysis Results]
         H[S3 Storage<br/>Model Weights<br/>Processing Cache]
     end
     
-    subgraph ML ["🤖 AI Infrastructure"]
+    subgraph AI ["🤖 AI Infrastructure"]
+        direction TB
         I[PAT Models<br/>S/M/L variants<br/>CC BY-4.0 Licensed]
         J[Fusion Transformer<br/>Multi-modal Integration<br/>Custom Architecture]
         K[Google Gemini<br/>Natural Language<br/>Clinical Context]
     end
     
+    %% Main flow connections
+    Clients --> Core
+    Core --> Data
+    Core --> AI
+    
+    %% Detailed connections
     A --> C
     B --> C
-    C --> D --> E --> F
+    C --> D
+    D --> E
+    E --> F
     D --> G
     E --> H
-    E --> I --> J
+    E --> I
+    I --> J
     F --> K
     
     classDef frontend fill:#2196f3,stroke:#0d47a1,stroke-width:3px,color:white

@@ -16,6 +16,8 @@ ARCHITECTURE SPECIFICATIONS (from Dartmouth source):
 - All models: ff_dim=256, dropout=0.1, key_dim=embed_dim (non-standard attention)
 """
 
+from __future__ import annotations
+
 from datetime import UTC, datetime
 import hashlib
 import hmac

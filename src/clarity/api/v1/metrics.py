@@ -16,6 +16,7 @@ from __future__ import annotations
 import logging
 import time
 from typing import Any
+from typing_extensions import Self
 
 try:
     import psutil  # type: ignore[import-untyped]
@@ -357,7 +358,7 @@ class MetricsContext:
         self.labels = labels or {}
         self.start_time = time.time()
 
-    def __enter__(self) -> MetricsContext:
+    def __enter__(self) -> Self:
         return self
 
     def __exit__(

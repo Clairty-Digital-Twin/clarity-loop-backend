@@ -22,6 +22,7 @@ from functools import wraps
 import logging
 import time
 from typing import TYPE_CHECKING, Any
+from typing_extensions import Self
 
 from pydantic import BaseModel, Field
 
@@ -216,7 +217,7 @@ class AsyncInferenceEngine:
             batch_timeout_ms,
         )
 
-    async def __aenter__(self) -> AsyncInferenceEngine:
+    async def __aenter__(self) -> Self:
         """Async context manager entry."""
         await self.start()
         return self

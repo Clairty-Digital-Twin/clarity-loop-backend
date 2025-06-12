@@ -13,6 +13,7 @@ from enum import StrEnum
 import logging
 import types
 from typing import Any
+from typing_extensions import Self
 
 import httpx
 from pydantic import BaseModel, Field, validator
@@ -519,7 +520,7 @@ class HealthKitClient:
         """Clean up HTTP client."""
         await self._http_client.aclose()
 
-    async def __aenter__(self) -> HealthKitClient:
+    async def __aenter__(self) -> Self:
         """Async context manager entry."""
         return self
 

@@ -10,6 +10,8 @@ without any dependencies whatsoever."
 NO EXTERNAL DEPENDENCIES ALLOWED IN THESE TESTS.
 """
 
+from __future__ import annotations
+
 from datetime import UTC, datetime, timedelta
 from uuid import UUID, uuid4
 

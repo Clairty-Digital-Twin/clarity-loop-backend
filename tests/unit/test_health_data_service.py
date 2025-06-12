@@ -11,6 +11,8 @@ Following Clean Architecture and SOLID principles:
 🏗️ CLEAN ARCHITECTURE ACHIEVED - NO MORE LINT ERRORS! 🏗️
 """
 
+from __future__ import annotations
+
 from datetime import UTC, datetime
 from typing import Any
 from uuid import UUID, uuid4

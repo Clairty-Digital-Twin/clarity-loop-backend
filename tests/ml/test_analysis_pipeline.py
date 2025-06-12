@@ -12,6 +12,8 @@ This test suite covers all aspects of the analysis pipeline including:
 - Utility functions for HealthKit data conversion
 """
 
+from __future__ import annotations
+
 from datetime import UTC, datetime, timedelta
 from unittest.mock import AsyncMock, MagicMock, Mock, patch
 

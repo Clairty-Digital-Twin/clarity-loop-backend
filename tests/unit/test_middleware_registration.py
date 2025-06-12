@@ -4,6 +4,8 @@ Tests that the AWS Cognito authentication middleware can be properly
 registered in the FastAPI application without type errors.
 """
 
+from __future__ import annotations
+
 from unittest.mock import Mock, patch
 
 from fastapi.testclient import TestClient

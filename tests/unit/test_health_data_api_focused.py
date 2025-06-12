@@ -13,6 +13,8 @@ Breaking down into small, testable chunks:
 Each test targets specific uncovered code paths.
 """
 
+from __future__ import annotations
+
 from datetime import UTC, datetime
 from typing import Any
 from unittest.mock import Mock, patch

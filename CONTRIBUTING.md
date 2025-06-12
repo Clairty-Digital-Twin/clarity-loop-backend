@@ -29,10 +29,12 @@ We're researching integration with cutting-edge tech that's reshaping healthcare
 - [Google AMIE with Vision](https://research.google/blog/amie-gains-vision-a-research-ai-agent-for-multi-modal-diagnostic-dialogue/) - Multimodal diagnostic conversational AI
 - **Our Research**: Multi-modal AI fusion for personalized mental health insights
 
-### **🏥 Electronic Health Record Integration**
-- [Epic's FHIR API](https://fhir.epic.com/) - Modern healthcare data exchange
+### **🏥 Electronic Health Record Integration** 
+**THE HOLY GRAIL: Direct Epic Integration** - 78% of US patients (280M+ records)
+- [Epic's FHIR API](https://fhir.epic.com/) - 100+ production-ready endpoints
 - [Cerner SMART on FHIR](https://engineering.cerner.com/smart-on-fhir/) - Clinical decision support
-- **Our Research**: Seamless EHR integration for comprehensive patient data
+- **Epic FHIR Goldmine**: `Observation (Social History)`, `Condition (Problems)`, `CarePlan`, `Goal (Patient)` 
+- **Our Research**: Direct EHR pulls → Real psychiatric history + treatment plans
 
 ### **🥽 AR/VR Digital Therapeutics**
 - [Meta Quest for Healthcare](https://about.fb.com/news/2023/08/meta-quest-for-business-healthcare/) - Immersive therapy platforms

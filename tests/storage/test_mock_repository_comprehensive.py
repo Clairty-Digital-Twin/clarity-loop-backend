@@ -4,6 +4,8 @@ Tests all methods and edge cases to improve coverage from 17% to 90%+.
 Split into focused test classes to avoid PLR0904 (too many public methods).
 """
 
+from __future__ import annotations
+
 from datetime import UTC, datetime, timedelta
 from uuid import uuid4
 

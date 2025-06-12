@@ -5,6 +5,8 @@ different environments (development, testing, production) as specified
 in subtask 29.2.
 """
 
+from __future__ import annotations
+
 import os
 from unittest.mock import Mock, patch
 

@@ -13,7 +13,7 @@ Endpoints:
 from datetime import UTC, datetime
 import logging
 import os
-from typing import Any
+from typing import Any, cast
 import uuid
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
@@ -395,8 +395,11 @@ async def get_pat_analysis(
         processing_status = job_response.get("Item")
 
         if processing_status:
+            # Cast to dict since we know it's not None
+            processing_status_dict = cast(dict[str, Any], processing_status)
+            
             # Check if user owns this processing job
-            if processing_status.get("user_id") != current_user.user_id:
+            if processing_status_dict.get("user_id") != current_user.user_id:
                 logger.warning(
                     "User %s attempted to access processing job %s",
                     current_user.user_id,
@@ -413,15 +416,15 @@ async def get_pat_analysis(
                 )
 
             # Return status from processing job
-            job_status = processing_status.get("status", "unknown")
+            job_status = processing_status_dict.get("status", "unknown")
             return PATAnalysisResponse(
                 processing_id=processing_id,
                 status=job_status,
                 message=f"Analysis is {job_status}. Results will be available when processing completes.",
-                analysis_date=processing_status.get("created_at"),
+                analysis_date=processing_status_dict.get("created_at"),
                 pat_features=None,
                 activity_embedding=None,
-                metadata=processing_status,
+                metadata=processing_status_dict,
             )
 
         # Neither analysis results nor processing job found

@@ -8,13 +8,14 @@ import asyncio
 from datetime import UTC, datetime
 import json
 import logging
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, cast
 
 import boto3
 from botocore.exceptions import ClientError
 
 if TYPE_CHECKING:
     from mypy_boto3_s3 import S3Client
+    from mypy_boto3_s3.type_defs import PutObjectOutputTypeDef
 
 from clarity.core.secure_logging import sanitize_for_logging
 from clarity.models.health_data import HealthDataUpload
@@ -201,7 +202,7 @@ class S3StorageService(CloudStoragePort):
             }
 
             # Prepare upload parameters
-            upload_params = {
+            upload_params: dict[str, Any] = {
                 "Bucket": self.bucket_name,
                 "Key": s3_key,
                 "Body": json.dumps(raw_data, indent=2),
@@ -216,7 +217,6 @@ class S3StorageService(CloudStoragePort):
                     "data-type": "raw-health-data",
                     "compliance": "hipaa",
                 },
-                "Tagging": f"DataType=HealthData&UserID={user_id}&ProcessingID={processing_id}&Environment={self.region}",
             }
 
             # Add server-side encryption
@@ -289,7 +289,7 @@ class S3StorageService(CloudStoragePort):
             }
 
             # Upload parameters
-            upload_params = {
+            upload_params: dict[str, Any] = {
                 "Bucket": self.bucket_name,
                 "Key": s3_key,
                 "Body": json.dumps(analysis_data, indent=2),
@@ -301,7 +301,6 @@ class S3StorageService(CloudStoragePort):
                     "data-type": "analysis-results",
                     "created-at": datetime.now(UTC).isoformat(),
                 },
-                "Tagging": f"DataType=AnalysisResults&UserID={user_id}&ProcessingID={processing_id}",
             }
 
             if self.enable_encryption:
@@ -358,6 +357,7 @@ class S3StorageService(CloudStoragePort):
             )
 
             logger.info("Raw data downloaded from S3: %s", s3_key)
+            return data
 
         except ClientError as e:
             if e.response["Error"]["Code"] == "NoSuchKey":
@@ -369,8 +369,6 @@ class S3StorageService(CloudStoragePort):
             logger.exception("Failed to download from S3")
             msg = f"Download failed: {e}"
             raise S3DownloadError(msg) from e
-        else:
-            return data
 
     async def list_user_files(
         self, user_id: str, prefix: str = "", max_keys: int = 1000
@@ -391,12 +389,11 @@ class S3StorageService(CloudStoragePort):
 
             response = await asyncio.get_event_loop().run_in_executor(
                 None,
-                self.s3_client.list_objects_v2,
-                {
-                    "Bucket": self.bucket_name,
-                    "Prefix": search_prefix,
-                    "MaxKeys": max_keys,
-                },
+                lambda: self.s3_client.list_objects_v2(
+                    Bucket=self.bucket_name,
+                    Prefix=search_prefix,
+                    MaxKeys=max_keys,
+                ),
             )
 
             # Filter for user's files if using broader prefix
@@ -438,10 +435,12 @@ class S3StorageService(CloudStoragePort):
             # Delete files in batches
             for file_info in files:
                 try:
+                    file_key = file_info["key"]
                     await asyncio.get_event_loop().run_in_executor(
                         None,
-                        self.s3_client.delete_object,
-                        {"Bucket": self.bucket_name, "Key": file_info["key"]},
+                        lambda: self.s3_client.delete_object(
+                            Bucket=self.bucket_name, Key=file_key
+                        ),
                     )
                     deleted_count += 1
                 except Exception as e:
@@ -521,11 +520,10 @@ class S3StorageService(CloudStoragePort):
             # Apply lifecycle configuration
             await asyncio.get_event_loop().run_in_executor(
                 None,
-                self.s3_client.put_bucket_lifecycle_configuration,
-                {
-                    "Bucket": self.bucket_name,
-                    "LifecycleConfiguration": lifecycle_config,
-                },
+                lambda: self.s3_client.put_bucket_lifecycle_configuration(
+                    Bucket=self.bucket_name,
+                    LifecycleConfiguration=lifecycle_config,
+                ),
             )
 
             logger.info("S3 bucket lifecycle policies configured")
@@ -543,7 +541,7 @@ class S3StorageService(CloudStoragePort):
         try:
             # Test S3 connection by checking bucket existence
             await asyncio.get_event_loop().run_in_executor(
-                None, self.s3_client.head_bucket, {"Bucket": self.bucket_name}
+                None, lambda: self.s3_client.head_bucket(Bucket=self.bucket_name)
             )
 
             return {
@@ -576,7 +574,7 @@ class S3StorageService(CloudStoragePort):
     ) -> str:
         """Generic file upload method (CloudStoragePort interface)."""
         try:
-            upload_params = {
+            upload_params: dict[str, Any] = {
                 "Bucket": self.bucket_name,
                 "Key": file_path,
                 "Body": file_data,
@@ -587,7 +585,7 @@ class S3StorageService(CloudStoragePort):
                 upload_params["ServerSideEncryption"] = "AES256"
 
             await asyncio.get_event_loop().run_in_executor(
-                None, self.s3_client.put_object, upload_params
+                None, lambda: self.s3_client.put_object(**upload_params)
             )
 
             s3_uri = f"s3://{self.bucket_name}/{file_path}"
@@ -604,8 +602,9 @@ class S3StorageService(CloudStoragePort):
         try:
             response = await asyncio.get_event_loop().run_in_executor(
                 None,
-                self.s3_client.get_object,
-                {"Bucket": self.bucket_name, "Key": file_path},
+                lambda: self.s3_client.get_object(
+                    Bucket=self.bucket_name, Key=file_path
+                ),
             )
 
             file_data = response["Body"].read()
@@ -622,8 +621,9 @@ class S3StorageService(CloudStoragePort):
         try:
             await asyncio.get_event_loop().run_in_executor(
                 None,
-                self.s3_client.delete_object,
-                {"Bucket": self.bucket_name, "Key": file_path},
+                lambda: self.s3_client.delete_object(
+                    Bucket=self.bucket_name, Key=file_path
+                ),
             )
 
             logger.info("File deleted from S3: %s", file_path)

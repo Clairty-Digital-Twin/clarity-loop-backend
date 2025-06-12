@@ -4,7 +4,7 @@ from functools import lru_cache
 import logging
 import os
 import time
-from typing import Any, TypedDict, cast
+from typing import Any
 
 import boto3
 from botocore.exceptions import ClientError
@@ -238,7 +238,7 @@ class CognitoAuthProvider(IAuthProvider):
         try:
             # Build attributes list with proper typing
             from mypy_boto3_cognito_idp.type_defs import AttributeTypeTypeDef
-            
+
             attributes: list[AttributeTypeTypeDef] = []
             if "display_name" in kwargs:
                 attributes.append({"Name": "name", "Value": str(kwargs["display_name"])})
@@ -272,25 +272,29 @@ class CognitoAuthProvider(IAuthProvider):
                 AuthParameters={"USERNAME": email, "PASSWORD": password},
             )
 
-            if "AuthenticationResult" in response:
-                result = response["AuthenticationResult"]
+            # Check for authentication result first
+            auth_result = response.get("AuthenticationResult")
+            if auth_result:
                 logger.info("User authenticated: %s", email)
                 return {
-                    "access_token": result["AccessToken"],
-                    "id_token": result["IdToken"],
-                    "refresh_token": result["RefreshToken"],
-                    "expires_in": str(result["ExpiresIn"]),
+                    "access_token": auth_result["AccessToken"],
+                    "id_token": auth_result["IdToken"],
+                    "refresh_token": auth_result["RefreshToken"],
+                    "expires_in": str(auth_result["ExpiresIn"]),
                 }
-            elif "ChallengeName" in response:
-                # Handle challenges (MFA, etc)
+
+            # Handle challenges (MFA, etc)
+            challenge = response.get("ChallengeName")
+            if challenge:
                 logger.warning(
-                    "Authentication challenge required: %s", response['ChallengeName']
+                    "Authentication challenge required: %s", challenge
                 )
-                msg = f"Challenge required: {response['ChallengeName']}"
+                msg = f"Challenge required: {challenge}"
                 raise AuthenticationError(msg)
-            else:
-                # If we get here without AuthenticationResult, return None
-                return None
+
+            # If we get here without AuthenticationResult or Challenge, return None
+            logger.warning("Unexpected authentication response format")
+            return None
 
         except ClientError as e:
             error_code = e.response["Error"]["Code"]

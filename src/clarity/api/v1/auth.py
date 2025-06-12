@@ -83,38 +83,38 @@ async def register(
         # For AWS Cognito, we'll use the auth provider directly
         # First create the user
         from clarity.auth.aws_cognito_provider import CognitoAuthProvider
-        
+
         if not isinstance(auth_provider, CognitoAuthProvider):
             raise HTTPException(
                 status_code=500,
                 detail="Invalid authentication provider configuration"
             )
-        
+
         # Create user in Cognito
         user = await auth_provider.create_user(
             email=user_data.email,
             password=user_data.password,
             display_name=user_data.display_name,
         )
-        
+
         if not user:
             raise HTTPException(
                 status_code=500,
                 detail="Failed to create user"
             )
-        
+
         # Now authenticate to get tokens
         tokens = await auth_provider.authenticate(
             email=user_data.email,
             password=user_data.password,
         )
-        
+
         if not tokens:
             raise HTTPException(
                 status_code=500,
                 detail="Failed to authenticate after registration"
             )
-        
+
         # Return token response
         return TokenResponse(
             access_token=tokens["access_token"],
@@ -158,22 +158,22 @@ async def login(
     try:
         # For AWS Cognito, we'll use the auth provider directly
         from clarity.auth.aws_cognito_provider import CognitoAuthProvider
-        
+
         if not isinstance(auth_provider, CognitoAuthProvider):
             raise HTTPException(
                 status_code=500,
                 detail="Invalid authentication provider configuration"
             )
-        
+
         # Authenticate user
         tokens = await auth_provider.authenticate(
             email=credentials.email,
             password=credentials.password,
         )
-        
+
         if not tokens:
             raise InvalidCredentialsError("Authentication failed")
-        
+
         # Return token response
         return TokenResponse(
             access_token=tokens["access_token"],
@@ -243,38 +243,38 @@ async def update_user(
     try:
         # For AWS Cognito, we'll use the auth provider directly
         from clarity.auth.aws_cognito_provider import CognitoAuthProvider
-        
+
         if not isinstance(auth_provider, CognitoAuthProvider):
             raise HTTPException(
                 status_code=500,
                 detail="Invalid authentication provider configuration"
             )
-        
+
         # Get user ID
         user_id = current_user.get("uid", current_user.get("user_id", ""))
-        
+
         if not user_id:
             raise HTTPException(
                 status_code=400,
                 detail="User ID not found in token"
             )
-        
+
         # Build update kwargs
         update_kwargs: dict[str, Any] = {}
         if updates.display_name is not None:
             update_kwargs["display_name"] = updates.display_name
         if updates.email is not None:
             update_kwargs["email"] = updates.email
-        
+
         # Update user
         updated_user = await auth_provider.update_user(
             uid=user_id,
             **update_kwargs
         )
-        
+
         if not updated_user:
             raise UserNotFoundError(f"User {user_id} not found")
-        
+
         return UserUpdateResponse(
             user_id=updated_user.uid,
             email=updated_user.email,
@@ -420,17 +420,17 @@ async def refresh_token(
         # For AWS Cognito, we need to use the boto3 client directly
         # Since refresh token handling is different
         from clarity.auth.aws_cognito_provider import CognitoAuthProvider
-        
+
         if not isinstance(auth_provider, CognitoAuthProvider):
             raise HTTPException(
                 status_code=500,
                 detail="Invalid authentication provider configuration"
             )
-        
+
         # Use Cognito's refresh token flow
         import boto3
         client = auth_provider.cognito_client
-        
+
         try:
             response = client.initiate_auth(
                 ClientId=auth_provider.client_id,
@@ -439,7 +439,7 @@ async def refresh_token(
                     "REFRESH_TOKEN": refresh_token_str,
                 },
             )
-            
+
             if "AuthenticationResult" in response:
                 result = response["AuthenticationResult"]
                 return TokenResponse(
@@ -449,11 +449,10 @@ async def refresh_token(
                     expires_in=result.get("ExpiresIn", 3600),
                     scope="full_access",
                 )
-            else:
-                raise HTTPException(
-                    status_code=500,
-                    detail="Failed to refresh token"
-                )
+            raise HTTPException(
+                status_code=500,
+                detail="Failed to refresh token"
+            )
         except client.exceptions.NotAuthorizedException:
             raise HTTPException(
                 status_code=401,

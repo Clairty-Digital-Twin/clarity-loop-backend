@@ -132,7 +132,7 @@ class CognitoAuthProvider(IAuthProvider):
                 jwks = json.loads(response.read())
                 self._jwks_cache = jwks
                 self._jwks_cache_time = current_time
-                return cast(dict[str, Any], jwks)
+                return cast("dict[str, Any]", jwks)
         except Exception as e:
             logger.exception("Failed to fetch JWKS: %s", e)
             if self._jwks_cache:
@@ -172,7 +172,7 @@ class CognitoAuthProvider(IAuthProvider):
         # Check cache first if enabled
         if self.cache_is_enabled and token in self._token_cache:
             logger.debug("Token found in cache")
-            return cast(dict[str, Any], self._token_cache[token]["user_data"])
+            return cast("dict[str, Any]", self._token_cache[token]["user_data"])
 
         logger.debug("🔐 COGNITO VERIFY_TOKEN CALLED")
 

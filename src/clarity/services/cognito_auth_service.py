@@ -7,7 +7,7 @@ Provides AWS-native authentication solution.
 from datetime import UTC, datetime, timedelta
 import logging
 import secrets
-from typing import Any, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 import uuid
 
 import boto3
@@ -155,7 +155,7 @@ class CognitoAuthenticationService:
                 {"Name": "given_name", "Value": request.first_name},
                 {"Name": "family_name", "Value": request.last_name},
             ]
-            
+
             if request.phone_number:
                 user_attributes.append({"Name": "phone_number", "Value": request.phone_number})
 

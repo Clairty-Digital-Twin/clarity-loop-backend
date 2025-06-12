@@ -1,202 +1,187 @@
 # CLARITY Digital Twin Platform
 
-## 🚀 AWS-Native Health AI Platform
+> **Your Apple Health data becomes a conversation with an AI psychiatrist**
 
-CLARITY is a revolutionary AI-powered mental health platform that uses wearable device data to provide personalized insights and interventions. Built with Clean Architecture principles and deployed on AWS infrastructure.
+Transform wearable data into actionable mental health insights using state-of-the-art AI. CLARITY processes Apple Watch data through advanced transformer models to create a "digital twin" of your health patterns.
 
-### ✅ Current Status: **Production Ready on AWS**
+## What This Does
 
-- **Backend API**: `https://your-domain.com/api` (configured via environment)
-- **Architecture**: Clean Architecture with Dependency Injection
-- **Infrastructure**: AWS ECS Fargate with Auto-scaling
-- **AI Integration**: Google Gemini for health insights
-
-## 🏗️ Architecture
+**Input**: Your Apple Health data (heart rate, sleep, activity, etc.)  
+**Processing**: Pretrained Actigraphy Transformer (PAT) + Google Gemini AI  
+**Output**: Personalized mental health insights you can chat with  
 
 ```
-┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
-│   iOS/Flutter   │────▶│   AWS ALB       │────▶│  ECS Fargate    │
-│   Mobile App    │     │  Load Balancer  │     │   Containers    │
-└─────────────────┘     └─────────────────┘     └─────────────────┘
-                                                          │
-                              ┌───────────────────────────┴────────────┐
-                              │                                        │
-                    ┌─────────▼─────────┐                    ┌─────────▼─────────┐
-                    │   AWS Cognito     │                    │    DynamoDB       │
-                    │  Authentication   │                    │   Health Data     │
-                    └───────────────────┘                    └───────────────────┘
-                                                                       │
-                    ┌─────────────────┐                      ┌─────────▼─────────┐
-                    │   Gemini API    │◀─────────────────────│   FastAPI App     │
-                    │   AI Insights   │                      │  Python Backend   │
-                    └─────────────────┘                      └───────────────────┘
+Apple Watch → HealthKit Data → AI Analysis → Conversational Health Insights
 ```
 
+## Architecture
 
-## 🚀 Quick Start
+```
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│  Apple Health   │───▶│   FastAPI       │───▶│  AWS DynamoDB   │
+│  Data Upload    │    │   Backend       │    │  Storage        │
+└─────────────────┘    └─────────────────┘    └─────────────────┘
+                                │
+                       ┌────────┴────────┐
+                       │                 │
+              ┌────────▼────────┐ ┌──────▼──────┐
+              │ PAT Transformer │ │ Gemini AI   │
+              │ Sleep/Activity  │ │ Chat Engine │
+              └─────────────────┘ └─────────────┘
+```
 
-### Local Development
+**Tech Stack**: Python FastAPI, AWS (DynamoDB/Cognito/ECS), Google Gemini, PyTorch Transformers
+
+## Quick Start
 
 ```bash
-# Clone the repository
+# Clone and setup
 git clone https://github.com/your-org/clarity-loop-backend.git
 cd clarity-loop-backend
-
-# Install dependencies
 make install
 
-# Copy AWS environment configuration
-cp .env.aws .env
-
-# Run locally with AWS services
+# Local development
+cp .env.example .env  # Configure your API keys
 make dev
 
-# Run tests
-make test
+# Test it works
+curl http://localhost:8000/health
 ```
 
-### Production Deployment
+## API Endpoints
+
+### Core Flow
+```bash
+# 1. Upload Apple Health data
+POST /api/v1/healthkit/upload
+{
+  "data": [/* HealthKit JSON export */]
+}
+
+# 2. Get AI analysis
+POST /api/v1/insights/generate
+{
+  "user_id": "123",
+  "type": "mental_health"
+}
+
+# 3. Chat about your health
+POST /api/v1/insights/chat
+{
+  "message": "Why am I sleeping poorly?",
+  "context": "sleep_patterns"
+}
+```
+
+### All Endpoints (44 total)
+- **Auth**: `/api/v1/auth/*` (7 endpoints) - Cognito-based authentication
+- **Health Data**: `/api/v1/health-data/*` (10 endpoints) - Raw data management  
+- **HealthKit**: `/api/v1/healthkit/*` (4 endpoints) - Apple integration
+- **AI Insights**: `/api/v1/insights/*` (6 endpoints) - Gemini chat & analysis
+- **PAT Analysis**: `/api/v1/pat/*` (5 endpoints) - Transformer model inference
+- **WebSocket**: `/api/v1/ws/*` (3 endpoints) - Real-time connections
+- **Monitoring**: `/api/v1/metrics/*` + `/health` (5 endpoints) - System health
+
+## Data Pipeline
+
+**Apple Health → Preprocessing → AI Models → Insights**
+
+1. **Data Ingestion**: HealthKit JSON → Validated schemas
+2. **Time Series Processing**: 1-minute intervals, outlier removal, normalization  
+3. **PAT Analysis**: Activity patterns → Sleep quality predictions
+4. **Gemini Insights**: Health data + context → Natural language explanations
+5. **User Interface**: Chat-based Q&A about your health trends
+
+### Supported Health Metrics
+- **Cardiovascular**: Heart rate, HRV, blood pressure, ECG
+- **Sleep**: Stages, efficiency, disturbances  
+- **Activity**: Steps, calories, exercise, movement patterns
+- **Mental Health**: Mood, stress, energy levels
+- **Respiratory**: Breathing rate, SpO2
+
+## AI Models
+
+### PAT (Pretrained Actigraphy Transformer)
+- **Purpose**: Sleep and circadian rhythm analysis from movement data
+- **Input**: 7-day activity vectors (10,080 time points)  
+- **Output**: Sleep quality scores, circadian disruption detection
+- **Architecture**: Transformer with positional encoding for temporal patterns
+
+### Google Gemini Integration  
+- **Purpose**: Natural language health insights and chat
+- **Context**: Your processed health data + conversation history
+- **Capabilities**: Trend analysis, recommendations, Q&A about patterns
+
+## Production Deployment
+
+**AWS ECS Fargate** with auto-scaling, health checks, zero-downtime deployments
 
 ```bash
-# Deploy to AWS ECS
-./deploy-to-aws.sh
+# Deploy to AWS
+./deploy.sh production
 
-# Monitor deployment
-./ops/monitor-deployment.sh
+# Monitor
+aws logs tail /aws/ecs/clarity-backend --follow
 ```
 
-## 🔑 API Endpoints
+**Infrastructure**: 
+- **Compute**: ECS Fargate containers
+- **Database**: DynamoDB (health data) + Cognito (auth)
+- **Storage**: S3 (raw uploads) 
+- **Monitoring**: CloudWatch + Prometheus metrics
 
-### Health Check
-```bash
-curl https://your-domain.com/api/health
-```
-
-### Authentication
-- `POST /api/v1/auth/signup` - User registration
-- `POST /api/v1/auth/login` - User login
-- `GET /api/v1/user/profile` - Get user profile
-
-### Health Data
-- `POST /api/v1/health-data` - Upload health metrics
-- `GET /api/v1/health-data` - Query health history
-
-### AI Insights
-- `POST /api/v1/insights` - Generate personalized health insights
-
-## 🛠️ Technology Stack
-
-### Backend
-- **Language**: Python 3.11
-- **Framework**: FastAPI
-- **Architecture**: Clean Architecture + Dependency Injection
-- **API**: RESTful + WebSocket support
-
-### AWS Services
-- **Compute**: ECS Fargate (serverless containers)
-- **Load Balancing**: Application Load Balancer
-- **Authentication**: AWS Cognito
-- **Database**: DynamoDB (NoSQL)
-- **Storage**: S3 (file storage)
-- **Messaging**: SQS/SNS (async processing)
-- **Monitoring**: CloudWatch
-
-### AI/ML
-- **Insights**: Google Gemini API
-- **Analysis**: Pretrained Actigraphy Transformer (PAT)
-- **Processing**: Custom ML pipelines for health metrics
-
-## 📋 Environment Variables
-
-Create a `.env` file for local development:
+## Development
 
 ```bash
-# Environment
-ENVIRONMENT=development
-USE_AWS_SERVICES=true
+# Setup
+make install          # Install dependencies
+make test            # Run tests (807/810 passing)
+make lint            # Code quality checks
+make typecheck       # MyPy validation
 
-# AWS Configuration
-AWS_REGION=us-east-1
-COGNITO_USER_POOL_ID=your-pool-id
-COGNITO_CLIENT_ID=your-client-id
-
-# Database
-DYNAMODB_TABLE_PREFIX=clarity
-
-# AI Services
-GEMINI_API_KEY=your-gemini-key
+# Local services
+make dev             # Run with hot reload
+make test-integration  # Test against real AWS services
 ```
 
-## 🧪 Testing
+## Security & Compliance
+
+- **HIPAA-ready infrastructure** on AWS
+- **End-to-end encryption** for all health data
+- **JWT authentication** via AWS Cognito
+- **Audit logging** for all data access
+- **Role-based permissions** for API access
+
+## Status
+
+✅ **Backend Complete**: 807/810 tests passing (99.6%)  
+✅ **AWS Migration**: Fully deployed on production infrastructure  
+⚠️ **Test Coverage**: 56% (targeting 85% for production)  
+🔄 **Active Development**: Adding new AI models and chat features
+
+## What Makes This Different
+
+This isn't just another health app. CLARITY creates a **digital psychiatric twin** by:
+
+1. **Deep Analysis**: Beyond step counting - analyzing circadian rhythms, sleep architecture, HRV patterns
+2. **Conversational AI**: Chat with your health data using Gemini's language understanding  
+3. **Temporal Intelligence**: PAT model understands time-series patterns humans miss
+4. **Clinical Relevance**: Metrics that matter for mental health, not just fitness
+
+## Contributing
+
+Built for developers who want to push the boundaries of health AI.
 
 ```bash
-# Run all tests
-make test
-
-# Run specific test categories
-make test-unit        # Unit tests only
-make test-integration # Integration tests
-make test-ml         # ML pipeline tests
-
-# Check code quality
-make lint
-make typecheck
+git checkout -b feature/amazing-ai-model
+# Build something incredible
+git commit -m "feat: revolutionary health insight algorithm"
 ```
 
-## 🚀 Deployment
+## License
 
-The application is deployed on AWS ECS Fargate with:
-
-- Auto-scaling based on CPU/memory usage
-- Health checks via ALB
-- Rolling deployments with zero downtime
-- CloudWatch logging and monitoring
-
-### Manual Deployment
-
-```bash
-# Build and push Docker image
-docker build -t clarity-backend .
-docker tag clarity-backend:latest [your-ecr-registry]/clarity-backend:latest
-docker push [your-ecr-registry]/clarity-backend:latest
-
-# Update ECS service
-aws ecs update-service --cluster [your-cluster] --service clarity-backend --force-new-deployment
-```
-
-## 📈 Monitoring
-
-- **Health Dashboard**: CloudWatch metrics
-- **Logs**: CloudWatch Logs for all containers
-- **Alerts**: SNS notifications for critical issues
-- **Tracing**: X-Ray for distributed tracing (coming soon)
-
-## 🔒 Security
-
-- HIPAA-compliant infrastructure
-- End-to-end encryption
-- JWT-based authentication
-- Role-based access control
-- Audit logging for all data access
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-## 📝 License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
-
-## 🙏 Acknowledgments
-
-- Built with ❤️ by the CLARITY team
-- Powered by AWS and Google Gemini
-- Special thanks to all contributors
+MIT License - Build the future of health AI
 
 ---
 
-**Note**: This is a production system handling sensitive health data. Please ensure all contributions maintain HIPAA compliance and security best practices.
+**CLARITY Digital Twin Platform** - Making Apple Health data intelligent

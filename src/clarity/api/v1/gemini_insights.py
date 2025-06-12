@@ -503,7 +503,7 @@ async def get_insight_history(
             narrative = str(insight.get("narrative", ""))
             key_insights = insight.get("key_insights", [])
             recommendations = insight.get("recommendations", [])
-            
+
             formatted_insight = {
                 "id": insight.get("id"),
                 "narrative": (

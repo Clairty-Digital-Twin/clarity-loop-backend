@@ -405,7 +405,7 @@ class AWSMessagingService:
             raise
         else:
             # Cast AWS attribute dict to dict[str, Any] for our interface
-            return cast(dict[str, Any], attributes)
+            return cast("dict[str, Any]", attributes)
 
     async def purge_queue(self, queue_name: str) -> None:
         """Purge all messages from queue (use with caution).

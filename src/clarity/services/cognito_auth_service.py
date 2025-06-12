@@ -6,6 +6,7 @@ Provides AWS-native authentication solution.
 
 from __future__ import annotations
 
+import asyncio
 import base64
 from datetime import UTC, datetime, timedelta
 import hashlib
@@ -173,8 +174,10 @@ class CognitoAuthenticationService:
             if secret_hash:
                 sign_up_params["SecretHash"] = secret_hash
 
-            response: SignUpResponseTypeDef = self.cognito_client.sign_up(
-                **sign_up_params
+            loop = asyncio.get_event_loop()
+            response: SignUpResponseTypeDef = await loop.run_in_executor(
+                None,
+                lambda: self.cognito_client.sign_up(**sign_up_params)
             )
             user_sub = response["UserSub"]
 
@@ -267,8 +270,11 @@ class CognitoAuthenticationService:
                 auth_params["SECRET_HASH"] = secret_hash
 
             # Authenticate with Cognito
-            response: AdminInitiateAuthResponseTypeDef = (
-                self.cognito_client.admin_initiate_auth(
+            # Use run_in_executor to avoid blocking the event loop
+            loop = asyncio.get_event_loop()
+            response: AdminInitiateAuthResponseTypeDef = await loop.run_in_executor(
+                None,
+                lambda: self.cognito_client.admin_initiate_auth(
                     UserPoolId=self.user_pool_id,
                     ClientId=self.client_id,
                     AuthFlow="ADMIN_NO_SRP_AUTH",
@@ -295,8 +301,9 @@ class CognitoAuthenticationService:
             refresh_token = auth_result["RefreshToken"]
 
             # Get user info from Cognito
-            user_info: GetUserResponseTypeDef = self.cognito_client.get_user(
-                AccessToken=access_token
+            user_info: GetUserResponseTypeDef = await loop.run_in_executor(
+                None,
+                lambda: self.cognito_client.get_user(AccessToken=access_token)
             )
             user_sub = next(
                 attr["Value"]
@@ -480,8 +487,10 @@ class CognitoAuthenticationService:
         """Refresh access token using refresh token with Cognito."""
         try:
             # Note: Refresh token flow doesn't require username, so no secret hash needed
-            response: AdminInitiateAuthResponseTypeDef = (
-                self.cognito_client.admin_initiate_auth(
+            loop = asyncio.get_event_loop()
+            response: AdminInitiateAuthResponseTypeDef = await loop.run_in_executor(
+                None,
+                lambda: self.cognito_client.admin_initiate_auth(
                     UserPoolId=self.user_pool_id,
                     ClientId=self.client_id,
                     AuthFlow="REFRESH_TOKEN_AUTH",
@@ -513,9 +522,13 @@ class CognitoAuthenticationService:
         """Logout user by revoking tokens and ending session."""
         try:
             # Revoke the refresh token in Cognito
-            self.cognito_client.revoke_token(
-                Token=refresh_token,
-                ClientId=self.client_id,
+            loop = asyncio.get_event_loop()
+            await loop.run_in_executor(
+                None,
+                lambda: self.cognito_client.revoke_token(
+                    Token=refresh_token,
+                    ClientId=self.client_id,
+                )
             )
 
             # Deactivate sessions in DynamoDB

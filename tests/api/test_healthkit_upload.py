@@ -1,5 +1,7 @@
 """Tests for HealthKit upload API endpoint."""
 
+from __future__ import annotations
+
 from unittest.mock import AsyncMock, Mock, patch
 
 from fastapi import FastAPI, HTTPException, status

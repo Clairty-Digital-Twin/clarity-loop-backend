@@ -5,6 +5,8 @@ and other testing best practices, making individual test files cleaner
 and more focused on testing business logic rather than setup.
 """
 
+from __future__ import annotations
+
 from typing import Any
 import unittest
 

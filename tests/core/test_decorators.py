@@ -9,6 +9,8 @@ Comprehensive tests for production decorators including:
 - Composite decorators for service and repository layers
 """
 
+from __future__ import annotations
+
 import asyncio
 from collections.abc import Callable
 import functools

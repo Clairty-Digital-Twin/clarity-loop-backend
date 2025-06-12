@@ -3,6 +3,8 @@
 Tests to ensure CLARITY application starts quickly and handles errors gracefully.
 """
 
+from __future__ import annotations
+
 import asyncio
 from pathlib import Path
 import sys

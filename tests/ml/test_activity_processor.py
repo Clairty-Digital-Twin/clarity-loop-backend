@@ -3,6 +3,8 @@
 Tests cover all functionality to achieve 95%+ test coverage.
 """
 
+from __future__ import annotations
+
 from typing import Any, cast
 from unittest.mock import Mock, patch
 

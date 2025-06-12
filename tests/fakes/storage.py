@@ -10,6 +10,8 @@ Fakes are preferred over mocks because they:
 4. Don't require complex mock setup
 """
 
+from __future__ import annotations
+
 import json
 from typing import Any
 import uuid

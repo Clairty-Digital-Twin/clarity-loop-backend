@@ -5,3 +5,5 @@ This package contains all tests for the Clarity Loop Backend:
 - integration/: Integration tests for API endpoints and services
 - ml/: Machine learning model tests
 """
+
+from __future__ import annotations

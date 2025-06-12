@@ -9,6 +9,8 @@ Tests cover:
 - Edge cases and error scenarios
 """
 
+from __future__ import annotations
+
 import json
 from unittest.mock import Mock, patch
 from uuid import UUID

@@ -1,3 +1,7 @@
+"""Tests for authentication decorators."""
+
+from __future__ import annotations
+
 from unittest.mock import MagicMock
 
 from fastapi import HTTPException, status

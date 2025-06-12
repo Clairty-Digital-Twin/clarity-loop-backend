@@ -23,25 +23,27 @@ We're building something unprecedented - but we're doing it RIGHT. This is your 
 
 We're researching integration with cutting-edge tech that's reshaping healthcare:
 
-### **🧠 Brain-Computer Interfaces (BCIs)**
-- [Meta's EMG Neural Interfaces](https://about.fb.com/news/2021/03/inside-facebook-reality-labs-wrist-based-interaction-for-the-next-computing-platform/) - Non-invasive neural signal detection
-- [Neuralink's Latest Updates](https://neuralink.com/) - Direct neural interface research
-- **Our Research**: Exploring how BCIs could enhance actigraphy data with neural patterns
-
-### **🥽 AR/VR Digital Therapeutics**
-- [Meta Quest for Healthcare](https://about.fb.com/news/2023/08/meta-quest-for-business-healthcare/) - Immersive therapy platforms
-- [Apple Vision Pro Health Apps](https://developer.apple.com/visionos/health/) - Spatial computing for wellness
-- **Our Research**: VR-integrated mood tracking and therapeutic interventions
+### **🤖 Advanced AI Models (2025)**
+- [Claude 4.0 (Opus 4 & Sonnet 4)](https://www.anthropic.com/news/claude-4) - World's best coding model, extended thinking, May 2025 release
+- [Google MedGemma](https://medgemma.org/) - Specialized medical AI models for text and image analysis, launched May 2025
+- [Google AMIE with Vision](https://research.google/blog/amie-gains-vision-a-research-ai-agent-for-multi-modal-diagnostic-dialogue/) - Multimodal diagnostic conversational AI
+- **Our Research**: Multi-modal AI fusion for personalized mental health insights
 
 ### **🏥 Electronic Health Record Integration**
 - [Epic's FHIR API](https://fhir.epic.com/) - Modern healthcare data exchange
 - [Cerner SMART on FHIR](https://engineering.cerner.com/smart-on-fhir/) - Clinical decision support
 - **Our Research**: Seamless EHR integration for comprehensive patient data
 
-### **🤖 Advanced AI Models (2025)**
-- [Google Med-PaLM 2](https://blog.google/technology/health/ai-llm-medpalm-research-thefuture/) - Medical language understanding
-- [GPT-4 Medical Applications](https://openai.com/research/gpt-4) - Clinical reasoning capabilities
-- **Our Research**: Multi-modal AI fusion for personalized mental health insights
+### **🥽 AR/VR Digital Therapeutics**
+- [Meta Quest for Healthcare](https://about.fb.com/news/2023/08/meta-quest-for-business-healthcare/) - Immersive therapy platforms
+- [Apple Vision Pro Health Apps](https://developer.apple.com/visionos/health/) - Spatial computing for wellness
+- **Our Research**: VR-integrated mood tracking and therapeutic interventions
+
+### **🧠 Brain-Computer Interfaces (BCIs)**
+- [Precision Neuroscience](https://precisionneuro.io/) - Ex-Neuralink BCI company, FDA-cleared Layer 7 interface, 37 patients implanted
+- [Neuralink's Latest Updates](https://neuralink.com/) - Direct neural interface research
+- [Meta's EMG Neural Interfaces](https://about.fb.com/news/2021/03/inside-facebook-reality-labs-wrist-based-interaction-for-the-next-computing-platform/) - Non-invasive neural signal detection
+- **Our Research**: Exploring how BCIs could enhance actigraphy data with neural patterns
 
 ---
 

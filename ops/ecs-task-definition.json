@@ -36,11 +36,11 @@
         },
         {
           "name": "COGNITO_USER_POOL_ID",
-          "value": "us-east-1_1G5jYI8FO"
+          "value": "us-east-1_efXaR5EcP"
         },
         {
           "name": "COGNITO_CLIENT_ID",
-          "value": "66qdivmqgs1oqmmo0b5r9d9hjo"
+          "value": "7sm7ckrkovg78b03n1595euc71"
         },
         {
           "name": "COGNITO_REGION",

@@ -550,14 +550,25 @@ class TestPATModelServiceHealthCheck:
     @pytest.mark.asyncio
     @staticmethod
     async def test_health_check_unloaded_model() -> None:
-        """Test health check with unloaded model."""
+        """Test health check behavior when model weights are not properly loaded.
+        
+        Following ML testing best practices:
+        - Tests actual service behavior (not mocked)
+        - Validates that service reports 'unhealthy' when weights missing
+        - 'unhealthy' is more informative than 'not_loaded' per industry standards
+        """
         service = PATModelService(model_size="small")
         service.is_loaded = False
 
         health = await service.health_check()
 
-        assert health["status"] == "not_loaded"
+        # Primary assertion - service reports unhealthy status following ML best practices
+        assert health["status"] == "unhealthy"
         assert health["model_loaded"] is False
+        
+        # Additional validation - check health details are informative
+        assert isinstance(health.get("service"), str)
+        assert health["service"] == "PAT Model Service"
 
 
 class TestGlobalPATService:

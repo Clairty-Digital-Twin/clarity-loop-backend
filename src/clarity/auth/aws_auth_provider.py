@@ -236,6 +236,9 @@ class CognitoAuthProvider(IAuthProvider):
             logger.debug("✅ COGNITO TOKEN VERIFIED SUCCESSFULLY")
             return user_info
 
+        except AuthError:
+            # Re-raise AuthError as-is to preserve original message
+            raise
         except JWTError as e:
             logger.exception("❌ COGNITO ERROR: JWT verification failed: %s", e)
             raise AuthError(

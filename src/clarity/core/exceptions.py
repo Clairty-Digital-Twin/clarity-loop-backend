@@ -291,8 +291,7 @@ def generic_exception_handler(_request: Request, exc: Exception) -> JSONResponse
     ).to_problem_detail()
 
     # Log the actual exception for debugging
-    error_msg = f"Unhandled exception (trace_id={trace_id}): {exc}"
-    logger.error(error_msg, exc_info=exc)
+    logger.error("Unhandled exception", exc_info=exc)
 
     return JSONResponse(status_code=500, content=problem.model_dump(exclude_none=True))
 

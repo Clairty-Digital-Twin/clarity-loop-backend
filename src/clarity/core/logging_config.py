@@ -57,7 +57,7 @@ def setup_logging() -> None:
             "clarity": {
                 "level": settings.log_level,
                 "handlers": ["console"],
-                "propagate": False,
+                "propagate": True,
             },
             "uvicorn": {
                 "level": "INFO",

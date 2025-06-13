@@ -1137,7 +1137,7 @@ class PATModelService(IMLModelService):
 
     async def health_check(self) -> dict[str, str | bool]:
         """Check the health status of the PAT service."""
-        status = "healthy" if self.is_loaded else "not_loaded"
+        status = "healthy" if self.is_loaded else "unhealthy"
         weights_verified = (
             await self.verify_weights_loaded() if self.is_loaded else False
         )

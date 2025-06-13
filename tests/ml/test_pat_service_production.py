@@ -574,12 +574,23 @@ class TestModelLoadingAndSecurity:
         try:
             checksum = PATModelService._calculate_file_checksum(temp_path)
             
-            # Calculate the expected checksum for our test content
+            # Calculate the expected checksum matching the implementation (HMAC of SHA256)
             import hashlib
-            expected = hashlib.sha256(test_content).hexdigest()  # test_content is already bytes
+            import hmac
+            from clarity.ml.pat_service import MODEL_SIGNATURE_KEY
+            
+            # Step 1: Calculate SHA256 of file content
+            file_digest = hashlib.sha256(test_content).hexdigest()
+            
+            # Step 2: Calculate HMAC signature (matching the implementation)
+            expected = hmac.new(
+                MODEL_SIGNATURE_KEY.encode("utf-8"),
+                file_digest.encode("utf-8"),
+                hashlib.sha256,
+            ).hexdigest()
             
             assert checksum == expected
-            assert len(checksum) == 64  # SHA-256 produces 64-character hex string
+            assert len(checksum) == 64  # HMAC-SHA256 produces 64-character hex string
         finally:
             temp_path.unlink()  # Clean up
 

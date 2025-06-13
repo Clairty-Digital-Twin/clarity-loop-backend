@@ -857,6 +857,9 @@ class TestGetCognitoProviderFunction:
     )
     def test_get_cognito_provider_aws_region_fallback(self):
         """Test provider creation with AWS_REGION fallback."""
+        # Clear LRU cache to prevent test isolation issues
+        get_cognito_provider.cache_clear()
+        
         provider = get_cognito_provider()
 
         assert provider.region == "eu-west-1"
@@ -870,25 +873,37 @@ class TestGetCognitoProviderFunction:
     )
     def test_get_cognito_provider_default_region(self):
         """Test provider creation with default region."""
+        # Clear LRU cache to prevent test isolation issues
+        get_cognito_provider.cache_clear()
+        
         provider = get_cognito_provider()
 
         assert provider.region == "us-east-1"
 
-    @patch.dict("os.environ", {"COGNITO_CLIENT_ID": "test-client-123"})
+    @patch.dict("os.environ", {"COGNITO_CLIENT_ID": "test-client-123"}, clear=True)
     def test_get_cognito_provider_missing_pool_id(self):
         """Test provider creation with missing user pool ID."""
+        # Clear LRU cache to prevent test isolation issues
+        get_cognito_provider.cache_clear()
+        
         with pytest.raises(ValueError, match="Cognito configuration missing"):
             get_cognito_provider()
 
-    @patch.dict("os.environ", {"COGNITO_USER_POOL_ID": "test-pool-123"})
+    @patch.dict("os.environ", {"COGNITO_USER_POOL_ID": "test-pool-123"}, clear=True)
     def test_get_cognito_provider_missing_client_id(self):
         """Test provider creation with missing client ID."""
+        # Clear LRU cache to prevent test isolation issues
+        get_cognito_provider.cache_clear()
+        
         with pytest.raises(ValueError, match="Cognito configuration missing"):
             get_cognito_provider()
 
-    @patch.dict("os.environ", {})
+    @patch.dict("os.environ", {}, clear=True)
     def test_get_cognito_provider_no_config(self):
         """Test provider creation with no configuration."""
+        # Clear LRU cache to prevent test isolation issues
+        get_cognito_provider.cache_clear()
+        
         with pytest.raises(ValueError, match="Cognito configuration missing"):
             get_cognito_provider()
 
@@ -918,6 +933,8 @@ class TestProductionScenarios:
             "Username": "user123",
             "UserStatus": "CONFIRMED",
             "Enabled": True,
+            "UserCreateDate": datetime(2023, 1, 1, tzinfo=UTC),
+            "UserLastModifiedDate": datetime(2023, 1, 2, tzinfo=UTC),
             "UserAttributes": [
                 {"Name": "email", "Value": "test@example.com"},
                 {"Name": "name", "Value": "Test User"},
@@ -1022,11 +1039,8 @@ class TestProductionScenarios:
         """Test provider resilience to network issues."""
         # Test JWKS fetch with network issues
         with patch("clarity.auth.aws_cognito_provider.requests.get") as mock_get:
-            # First call fails
-            mock_get.side_effect = [
-                requests.RequestException("Network timeout"),
-                Mock(json=lambda: {"keys": []}, raise_for_status=lambda: None),
-            ]
+            # Both calls fail - simulates persistent network issues
+            mock_get.side_effect = requests.RequestException("Network timeout")
 
             # Should raise on first call with no cache
             with pytest.raises(AuthenticationError):

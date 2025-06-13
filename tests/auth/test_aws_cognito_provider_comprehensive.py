@@ -591,11 +591,12 @@ class TestUserManagement:
 
         # Mock get_user for return value
         from datetime import datetime, timezone
+
         mock_user = User(
             uid="user123",
             email="updated@example.com",
             display_name="Updated User",
-            created_at=datetime.now(timezone.utc),
+            created_at=datetime.now(UTC),
             last_login=None,
             metadata={},
         )
@@ -620,11 +621,12 @@ class TestUserManagement:
     async def test_update_user_no_attributes(self):
         """Test user update with no attributes to update."""
         from datetime import datetime, timezone
+
         mock_user = User(
             uid="user123",
             email="test@example.com",
             display_name="Test User",
-            created_at=datetime.now(timezone.utc),
+            created_at=datetime.now(UTC),
             last_login=None,
             metadata={},
         )

@@ -336,7 +336,8 @@ class TestTokenVerification:
             patch.object(provider, "_get_jwks", return_value=mock_jwks),
             patch(
                 "jose.jwt.get_unverified_header", return_value={"kid": "missing_key_id"}
-            ), pytest.raises(AuthError, match="Unable to find appropriate key")
+            ),
+            pytest.raises(AuthError, match="Unable to find appropriate key"),
         ):
             await provider.verify_token("invalid_token")
 
@@ -367,9 +368,12 @@ class TestTokenVerification:
         )
         provider._initialized = True
 
-        with patch.object(
-            provider, "_get_jwks", side_effect=Exception("Unexpected error")
-        ), pytest.raises(AuthError, match="An unexpected error occurred"):
+        with (
+            patch.object(
+                provider, "_get_jwks", side_effect=Exception("Unexpected error")
+            ),
+            pytest.raises(AuthError, match="An unexpected error occurred"),
+        ):
             await provider.verify_token("test_token")
 
 

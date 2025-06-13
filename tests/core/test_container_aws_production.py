@@ -214,10 +214,13 @@ class TestAuthProviderInitialization:
 
         container = DependencyContainer(settings)
 
-        with patch(
-            "clarity.core.container_aws.CognitoAuthProvider",
-            side_effect=Exception("Cognito init failed"),
-        ), pytest.raises(Exception, match="Cognito init failed"):
+        with (
+            patch(
+                "clarity.core.container_aws.CognitoAuthProvider",
+                side_effect=Exception("Cognito init failed"),
+            ),
+            pytest.raises(Exception, match="Cognito init failed"),
+        ):
             await container._initialize_auth_provider()
 
 
@@ -295,10 +298,13 @@ class TestRepositoryInitialization:
 
         container = DependencyContainer(settings)
 
-        with patch(
-            "clarity.core.container_aws.DynamoDBHealthDataRepository",
-            side_effect=Exception("DynamoDB init failed"),
-        ), pytest.raises(Exception, match="DynamoDB init failed"):
+        with (
+            patch(
+                "clarity.core.container_aws.DynamoDBHealthDataRepository",
+                side_effect=Exception("DynamoDB init failed"),
+            ),
+            pytest.raises(Exception, match="DynamoDB init failed"),
+        ):
             await container._initialize_repository()
 
 
@@ -349,10 +355,13 @@ class TestGeminiServiceInitialization:
 
         container = DependencyContainer(settings)
 
-        with patch(
-            "clarity.core.container_aws.GeminiService",
-            side_effect=Exception("Gemini init failed"),
-        ), pytest.raises(Exception, match="Gemini init failed"):
+        with (
+            patch(
+                "clarity.core.container_aws.GeminiService",
+                side_effect=Exception("Gemini init failed"),
+            ),
+            pytest.raises(Exception, match="Gemini init failed"),
+        ):
             await container._initialize_gemini_service()
 
 

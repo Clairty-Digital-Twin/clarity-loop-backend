@@ -103,12 +103,16 @@ class TestDynamoDBServiceInitialization:
 class TestCachingFunctionality:
     """Test DynamoDB service caching functionality."""
 
-    @patch('clarity.services.dynamodb_service.boto3.resource')
-    def setup_method(self, method):
+    def setup_method(self):
         """Set up test fixtures."""
         self.mock_resource = Mock()
-        with patch('clarity.services.dynamodb_service.boto3.resource', return_value=self.mock_resource):
-            self.service = DynamoDBService(enable_caching=True, cache_ttl=300)
+        self.patcher = patch('clarity.services.dynamodb_service.boto3.resource', return_value=self.mock_resource)
+        self.patcher.start()
+        self.service = DynamoDBService(enable_caching=True, cache_ttl=300)
+
+    def teardown_method(self):
+        """Clean up test fixtures."""
+        self.patcher.stop()
 
     def test_cache_key_generation(self):
         """Test cache key generation."""
@@ -220,15 +224,19 @@ class TestDataValidation:
 class TestAuditLogging:
     """Test audit logging functionality for HIPAA compliance."""
 
-    @patch('clarity.services.dynamodb_service.boto3.resource')
-    def setup_method(self, method):
+    def setup_method(self):
         """Set up test fixtures."""
         self.mock_resource = Mock()
         self.mock_table = Mock()
         self.mock_resource.Table.return_value = self.mock_table
         
-        with patch('clarity.services.dynamodb_service.boto3.resource', return_value=self.mock_resource):
-            self.service = DynamoDBService()
+        self.patcher = patch('clarity.services.dynamodb_service.boto3.resource', return_value=self.mock_resource)
+        self.patcher.start()
+        self.service = DynamoDBService()
+
+    def teardown_method(self):
+        """Clean up test fixtures."""
+        self.patcher.stop()
 
     @pytest.mark.asyncio
     async def test_audit_log_creation_success(self):
@@ -289,15 +297,19 @@ class TestAuditLogging:
 class TestItemOperations:
     """Test DynamoDB item CRUD operations."""
 
-    @patch('clarity.services.dynamodb_service.boto3.resource')
-    def setup_method(self, method):
+    def setup_method(self):
         """Set up test fixtures."""
         self.mock_resource = Mock()
         self.mock_table = Mock()
         self.mock_resource.Table.return_value = self.mock_table
         
-        with patch('clarity.services.dynamodb_service.boto3.resource', return_value=self.mock_resource):
-            self.service = DynamoDBService()
+        self.patcher = patch('clarity.services.dynamodb_service.boto3.resource', return_value=self.mock_resource)
+        self.patcher.start()
+        self.service = DynamoDBService()
+
+    def teardown_method(self):
+        """Clean up test fixtures."""
+        self.patcher.stop()
 
     @pytest.mark.asyncio
     async def test_put_item_success(self):
@@ -577,15 +589,19 @@ class TestItemOperations:
 class TestQueryOperations:
     """Test DynamoDB query operations."""
 
-    @patch('clarity.services.dynamodb_service.boto3.resource')
-    def setup_method(self, method):
+    def setup_method(self):
         """Set up test fixtures."""
         self.mock_resource = Mock()
         self.mock_table = Mock()
         self.mock_resource.Table.return_value = self.mock_table
         
-        with patch('clarity.services.dynamodb_service.boto3.resource', return_value=self.mock_resource):
-            self.service = DynamoDBService()
+        self.patcher = patch('clarity.services.dynamodb_service.boto3.resource', return_value=self.mock_resource)
+        self.patcher.start()
+        self.service = DynamoDBService()
+
+    def teardown_method(self):
+        """Clean up test fixtures."""
+        self.patcher.stop()
 
     @pytest.mark.asyncio
     async def test_query_success(self):
@@ -671,8 +687,7 @@ class TestQueryOperations:
 class TestBatchOperations:
     """Test DynamoDB batch operations."""
 
-    @patch('clarity.services.dynamodb_service.boto3.resource')
-    def setup_method(self, method):
+    def setup_method(self):
         """Set up test fixtures."""
         self.mock_resource = Mock()
         self.mock_table = Mock()
@@ -680,8 +695,13 @@ class TestBatchOperations:
         self.mock_table.batch_writer.return_value.__enter__.return_value = self.mock_batch_writer
         self.mock_resource.Table.return_value = self.mock_table
         
-        with patch('clarity.services.dynamodb_service.boto3.resource', return_value=self.mock_resource):
-            self.service = DynamoDBService()
+        self.patcher = patch('clarity.services.dynamodb_service.boto3.resource', return_value=self.mock_resource)
+        self.patcher.start()
+        self.service = DynamoDBService()
+
+    def teardown_method(self):
+        """Clean up test fixtures."""
+        self.patcher.stop()
 
     @pytest.mark.asyncio
     async def test_batch_write_items_single_batch(self):
@@ -755,15 +775,19 @@ class TestBatchOperations:
 class TestHealthCheck:
     """Test DynamoDB service health check functionality."""
 
-    @patch('clarity.services.dynamodb_service.boto3.resource')
-    def setup_method(self, method):
+    def setup_method(self):
         """Set up test fixtures."""
         self.mock_resource = Mock()
         self.mock_table = Mock()
         self.mock_resource.Table.return_value = self.mock_table
         
-        with patch('clarity.services.dynamodb_service.boto3.resource', return_value=self.mock_resource):
-            self.service = DynamoDBService(region="us-west-1", enable_caching=False)
+        self.patcher = patch('clarity.services.dynamodb_service.boto3.resource', return_value=self.mock_resource)
+        self.patcher.start()
+        self.service = DynamoDBService(region="us-west-1", enable_caching=False)
+
+    def teardown_method(self):
+        """Clean up test fixtures."""
+        self.patcher.stop()
 
     @pytest.mark.asyncio
     async def test_health_check_success(self):
@@ -815,15 +839,19 @@ class TestHealthCheck:
 class TestDynamoDBHealthDataRepository:
     """Test DynamoDB Health Data Repository implementation."""
 
-    @patch('clarity.services.dynamodb_service.boto3.resource')
-    def setup_method(self, method):
+    def setup_method(self):
         """Set up test fixtures."""
         self.mock_resource = Mock()
-        with patch('clarity.services.dynamodb_service.boto3.resource', return_value=self.mock_resource):
-            self.repository = DynamoDBHealthDataRepository(
-                region="us-east-1",
-                endpoint_url="http://localhost:8000"
-            )
+        self.patcher = patch('clarity.services.dynamodb_service.boto3.resource', return_value=self.mock_resource)
+        self.patcher.start()
+        self.repository = DynamoDBHealthDataRepository(
+            region="us-east-1",
+            endpoint_url="http://localhost:8000"
+        )
+
+    def teardown_method(self):
+        """Clean up test fixtures."""
+        self.patcher.stop()
 
     def test_repository_initialization(self):
         """Test repository initialization."""
@@ -897,12 +925,16 @@ class TestDynamoDBHealthDataRepository:
 class TestErrorHandling:
     """Test comprehensive error handling scenarios."""
 
-    @patch('clarity.services.dynamodb_service.boto3.resource')
-    def setup_method(self, method):
+    def setup_method(self):
         """Set up test fixtures."""
         self.mock_resource = Mock()
-        with patch('clarity.services.dynamodb_service.boto3.resource', return_value=self.mock_resource):
-            self.service = DynamoDBService()
+        self.patcher = patch('clarity.services.dynamodb_service.boto3.resource', return_value=self.mock_resource)
+        self.patcher.start()
+        self.service = DynamoDBService()
+
+    def teardown_method(self):
+        """Clean up test fixtures."""
+        self.patcher.stop()
 
     def test_dynamodb_error_inheritance(self):
         """Test DynamoDB error class inheritance."""
@@ -923,15 +955,19 @@ class TestErrorHandling:
 class TestProductionScenarios:
     """Test realistic production scenarios."""
 
-    @patch('clarity.services.dynamodb_service.boto3.resource')
-    def setup_method(self, method):
+    def setup_method(self):
         """Set up test fixtures."""
         self.mock_resource = Mock()
         self.mock_table = Mock()
         self.mock_resource.Table.return_value = self.mock_table
         
-        with patch('clarity.services.dynamodb_service.boto3.resource', return_value=self.mock_resource):
-            self.service = DynamoDBService()
+        self.patcher = patch('clarity.services.dynamodb_service.boto3.resource', return_value=self.mock_resource)
+        self.patcher.start()
+        self.service = DynamoDBService()
+
+    def teardown_method(self):
+        """Clean up test fixtures."""
+        self.patcher.stop()
 
     @pytest.mark.asyncio
     async def test_complete_health_data_workflow(self):

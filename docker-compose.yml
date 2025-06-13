@@ -4,7 +4,7 @@ services:
   clarity-backend:
     build:
       context: .
-      dockerfile: Dockerfile.local
+      dockerfile: Dockerfile
     ports:
       - "8000:8000"
     environment:
@@ -15,9 +15,10 @@ services:
       - AWS_DEFAULT_REGION=us-east-1
       - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID:-dummy}
       - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY:-dummy}
-      # AWS Cognito config
-      - COGNITO_USER_POOL_ID=${COGNITO_USER_POOL_ID:-dummy}
-      - COGNITO_CLIENT_ID=${COGNITO_CLIENT_ID:-dummy}
+      # AWS Cognito config (real values for testing)
+      - COGNITO_USER_POOL_ID=${COGNITO_USER_POOL_ID:-us-east-1_efXaR5EcP}
+      - COGNITO_CLIENT_ID=${COGNITO_CLIENT_ID:-7sm7ckrkovg78b03n1595euc71}
+      - COGNITO_REGION=us-east-1
       - DYNAMODB_TABLE_PREFIX=clarity
       - GEMINI_API_KEY=${GEMINI_API_KEY:-dummy}
     volumes:

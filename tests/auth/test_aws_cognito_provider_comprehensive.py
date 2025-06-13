@@ -590,11 +590,12 @@ class TestUserManagement:
         self.provider.cognito_client.admin_update_user_attributes.return_value = {}
 
         # Mock get_user for return value
+        from datetime import datetime, timezone
         mock_user = User(
             uid="user123",
             email="updated@example.com",
             display_name="Updated User",
-            created_at=None,
+            created_at=datetime.now(timezone.utc),
             last_login=None,
             metadata={},
         )
@@ -618,11 +619,12 @@ class TestUserManagement:
     @pytest.mark.asyncio
     async def test_update_user_no_attributes(self):
         """Test user update with no attributes to update."""
+        from datetime import datetime, timezone
         mock_user = User(
             uid="user123",
             email="test@example.com",
             display_name="Test User",
-            created_at=None,
+            created_at=datetime.now(timezone.utc),
             last_login=None,
             metadata={},
         )
@@ -767,13 +769,13 @@ class TestProviderLifecycle:
 
         # Should not raise any errors
 
-    @patch.object(CognitoAuthProvider, "jwks")
+    @patch("clarity.auth.aws_cognito_provider.requests.get")
     @pytest.mark.asyncio
-    async def test_initialize_failure(self, mock_jwks):
+    async def test_initialize_failure(self, mock_requests_get):
         """Test provider initialization failure."""
-        mock_jwks.side_effect = Exception("JWKS fetch failed")
+        mock_requests_get.side_effect = Exception("JWKS fetch failed")
 
-        with pytest.raises(Exception, match="JWKS fetch failed"):
+        with pytest.raises(Exception, match="Failed to fetch JWKS keys"):
             await self.provider.initialize()
 
     @pytest.mark.asyncio

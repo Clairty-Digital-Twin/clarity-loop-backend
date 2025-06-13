@@ -32,6 +32,8 @@ class TestLogExecutionDecorator:
         caplog: pytest.LogCaptureFixture,
     ) -> None:
         """Test log_execution decorator with default parameters on sync function."""
+        caplog.set_level(logging.INFO, logger="clarity.core.decorators")
+
         with caplog.at_level(logging.INFO):
             # Use operator.add instead of custom function per FURB118
             test_func = log_execution()(operator.add)
@@ -47,6 +49,8 @@ class TestLogExecutionDecorator:
         caplog: pytest.LogCaptureFixture,
     ) -> None:
         """Test log_execution decorator with args and result logging."""
+        caplog.set_level(logging.INFO, logger="clarity.core.decorators")
+
         with caplog.at_level(logging.INFO):
 
             @log_execution(include_args=True, include_result=True)
@@ -65,6 +69,8 @@ class TestLogExecutionDecorator:
         caplog: pytest.LogCaptureFixture,
     ) -> None:
         """Test log_execution decorator when sync function raises exception."""
+        caplog.set_level(logging.INFO, logger="clarity.core.decorators")
+
         with caplog.at_level(logging.INFO):
 
             @log_execution()
@@ -83,6 +89,8 @@ class TestLogExecutionDecorator:
         caplog: pytest.LogCaptureFixture,
     ) -> None:
         """Test log_execution decorator with default parameters on async function."""
+        caplog.set_level(logging.INFO, logger="clarity.core.decorators")
+
         with caplog.at_level(logging.INFO):
 
             @log_execution()
@@ -101,6 +109,8 @@ class TestLogExecutionDecorator:
         caplog: pytest.LogCaptureFixture,
     ) -> None:
         """Test log_execution decorator with args and result logging on async function."""
+        caplog.set_level(logging.DEBUG, logger="clarity.core.decorators")
+
         with caplog.at_level(logging.DEBUG):
 
             @log_execution(level=logging.DEBUG, include_args=True, include_result=True)
@@ -119,6 +129,8 @@ class TestLogExecutionDecorator:
         caplog: pytest.LogCaptureFixture,
     ) -> None:
         """Test log_execution decorator when async function raises exception."""
+        caplog.set_level(logging.INFO, logger="clarity.core.decorators")
+
         with caplog.at_level(logging.INFO):
 
             @log_execution()
@@ -136,6 +148,8 @@ class TestLogExecutionDecorator:
     @staticmethod
     def test_log_execution_custom_log_level(caplog: pytest.LogCaptureFixture) -> None:
         """Test log_execution decorator with custom log level."""
+        caplog.set_level(logging.WARNING, logger="clarity.core.decorators")
+
         with caplog.at_level(logging.WARNING):
 
             @log_execution(level=logging.WARNING)
@@ -156,6 +170,8 @@ class TestMeasureExecutionTimeDecorator:
         caplog: pytest.LogCaptureFixture,
     ) -> None:
         """Test measure_execution_time decorator on sync function."""
+        caplog.set_level(logging.INFO, logger="clarity.core.decorators")
+
         with caplog.at_level(logging.INFO):
 
             @measure_execution_time()
@@ -174,6 +190,8 @@ class TestMeasureExecutionTimeDecorator:
         caplog: pytest.LogCaptureFixture,
     ) -> None:
         """Test measure_execution_time decorator with threshold."""
+        caplog.set_level(logging.INFO, logger="clarity.core.decorators")
+
         with caplog.at_level(logging.INFO):
 
             @measure_execution_time(threshold_ms=1000.0)  # High threshold
@@ -191,6 +209,8 @@ class TestMeasureExecutionTimeDecorator:
         caplog: pytest.LogCaptureFixture,
     ) -> None:
         """Test measure_execution_time decorator when sync function raises exception."""
+        caplog.set_level(logging.INFO, logger="clarity.core.decorators")
+
         with caplog.at_level(logging.INFO):
 
             @measure_execution_time()
@@ -210,6 +230,8 @@ class TestMeasureExecutionTimeDecorator:
         caplog: pytest.LogCaptureFixture,
     ) -> None:
         """Test measure_execution_time decorator on async function."""
+        caplog.set_level(logging.INFO, logger="clarity.core.decorators")
+
         with caplog.at_level(logging.INFO):
 
             @measure_execution_time()
@@ -227,6 +249,8 @@ class TestMeasureExecutionTimeDecorator:
         caplog: pytest.LogCaptureFixture,
     ) -> None:
         """Test measure_execution_time decorator when async function raises exception."""
+        caplog.set_level(logging.INFO, logger="clarity.core.decorators")
+
         with caplog.at_level(logging.INFO):
 
             @measure_execution_time()
@@ -245,6 +269,8 @@ class TestMeasureExecutionTimeDecorator:
         caplog: pytest.LogCaptureFixture,
     ) -> None:
         """Test measure_execution_time decorator with custom log level."""
+        caplog.set_level(logging.DEBUG, logger="clarity.core.decorators")
+
         with caplog.at_level(logging.DEBUG):
 
             @measure_execution_time(log_level=logging.DEBUG)
@@ -265,6 +291,8 @@ class TestRetryOnFailureDecorator:
         caplog: pytest.LogCaptureFixture,
     ) -> None:
         """Test retry decorator when sync function succeeds on first try."""
+        caplog.set_level(logging.WARNING, logger="clarity.core.decorators")
+
         with caplog.at_level(logging.WARNING):
 
             @retry_on_failure(max_retries=2)
@@ -283,6 +311,9 @@ class TestRetryOnFailureDecorator:
     ) -> None:
         """Test retry decorator when sync function succeeds after retries."""
         call_count = 0
+
+        caplog.set_level(logging.WARNING, logger="clarity.core.decorators")
+
 
         with caplog.at_level(logging.WARNING):
 
@@ -307,6 +338,8 @@ class TestRetryOnFailureDecorator:
         caplog: pytest.LogCaptureFixture,
     ) -> None:
         """Test retry decorator when sync function fails all retries."""
+        caplog.set_level(logging.WARNING, logger="clarity.core.decorators")
+
         with caplog.at_level(logging.WARNING):
 
             @retry_on_failure(max_retries=1, delay_seconds=0.001)
@@ -412,6 +445,9 @@ class TestRetryOnFailureDecorator:
         """Test retry decorator on async function with retries."""
         call_count = 0
 
+        caplog.set_level(logging.WARNING, logger="clarity.core.decorators")
+
+
         with caplog.at_level(logging.WARNING):
 
             @retry_on_failure(max_retries=1, delay_seconds=0.001)
@@ -435,6 +471,8 @@ class TestRetryOnFailureDecorator:
         caplog: pytest.LogCaptureFixture,
     ) -> None:
         """Test retry decorator when async function fails all retries."""
+        caplog.set_level(logging.WARNING, logger="clarity.core.decorators")
+
         with caplog.at_level(logging.WARNING):
 
             @retry_on_failure(max_retries=1, delay_seconds=0.001)
@@ -545,6 +583,8 @@ class TestAuditTrailDecorator:
         caplog: pytest.LogCaptureFixture,
     ) -> None:
         """Test audit_trail decorator on successful sync function."""
+        caplog.set_level(logging.INFO, logger="clarity.core.decorators")
+
         with caplog.at_level(logging.INFO):
 
             @audit_trail("test_operation")
@@ -563,6 +603,8 @@ class TestAuditTrailDecorator:
         caplog: pytest.LogCaptureFixture,
     ) -> None:
         """Test audit_trail decorator with user_id and resource_id parameters."""
+        caplog.set_level(logging.INFO, logger="clarity.core.decorators")
+
         with caplog.at_level(logging.INFO):
 
             @audit_trail(
@@ -584,6 +626,8 @@ class TestAuditTrailDecorator:
         caplog: pytest.LogCaptureFixture,
     ) -> None:
         """Test audit_trail decorator when sync function fails."""
+        caplog.set_level(logging.INFO, logger="clarity.core.decorators")
+
         with caplog.at_level(logging.INFO):
 
             @audit_trail("failing_operation")
@@ -603,6 +647,8 @@ class TestAuditTrailDecorator:
         caplog: pytest.LogCaptureFixture,
     ) -> None:
         """Test audit_trail decorator on successful async function."""
+        caplog.set_level(logging.INFO, logger="clarity.core.decorators")
+
         with caplog.at_level(logging.INFO):
 
             @audit_trail("async_operation")
@@ -622,6 +668,8 @@ class TestAuditTrailDecorator:
         caplog: pytest.LogCaptureFixture,
     ) -> None:
         """Test audit_trail decorator when async function fails."""
+        caplog.set_level(logging.INFO, logger="clarity.core.decorators")
+
         with caplog.at_level(logging.INFO):
 
             @audit_trail("async_failing_operation")
@@ -641,6 +689,8 @@ class TestAuditTrailDecorator:
         caplog: pytest.LogCaptureFixture,
     ) -> None:
         """Test audit_trail decorator when user/resource params are not provided."""
+        caplog.set_level(logging.INFO, logger="clarity.core.decorators")
+
         with caplog.at_level(logging.INFO):
 
             @audit_trail(
@@ -665,6 +715,8 @@ class TestServiceMethodDecorator:
         caplog: pytest.LogCaptureFixture,
     ) -> None:
         """Test service_method decorator with default configuration."""
+        caplog.set_level(logging.INFO, logger="clarity.core.decorators")
+
         with caplog.at_level(logging.INFO):
 
             @service_method()
@@ -684,6 +736,8 @@ class TestServiceMethodDecorator:
         caplog: pytest.LogCaptureFixture,
     ) -> None:
         """Test service_method decorator with custom configuration."""
+        caplog.set_level(logging.DEBUG, logger="clarity.core.decorators")
+
         with caplog.at_level(logging.DEBUG):
 
             @service_method(
@@ -701,6 +755,9 @@ class TestServiceMethodDecorator:
     def test_service_method_with_retries(caplog: pytest.LogCaptureFixture) -> None:
         """Test service_method decorator with retry functionality."""
         call_count = 0
+
+        caplog.set_level(logging.WARNING, logger="clarity.core.decorators")
+
 
         with caplog.at_level(logging.WARNING):
 
@@ -724,6 +781,8 @@ class TestServiceMethodDecorator:
         caplog: pytest.LogCaptureFixture,
     ) -> None:
         """Test service_method decorator on async function."""
+        caplog.set_level(logging.INFO, logger="clarity.core.decorators")
+
         with caplog.at_level(logging.INFO):
 
             @service_method()
@@ -745,6 +804,8 @@ class TestRepositoryMethodDecorator:
         caplog: pytest.LogCaptureFixture,
     ) -> None:
         """Test repository_method decorator with default configuration."""
+        caplog.set_level(logging.DEBUG, logger="clarity.core.decorators")
+
         with caplog.at_level(logging.DEBUG):
 
             @repository_method()
@@ -762,6 +823,9 @@ class TestRepositoryMethodDecorator:
     def test_repository_method_with_retries(caplog: pytest.LogCaptureFixture) -> None:
         """Test repository_method decorator with default retry functionality."""
         call_count = 0
+
+        caplog.set_level(logging.WARNING, logger="clarity.core.decorators")
+
 
         with caplog.at_level(logging.WARNING):
 
@@ -785,6 +849,8 @@ class TestRepositoryMethodDecorator:
         caplog: pytest.LogCaptureFixture,
     ) -> None:
         """Test repository_method decorator with custom configuration."""
+        caplog.set_level(logging.INFO, logger="clarity.core.decorators")
+
         with caplog.at_level(logging.INFO):
 
             @repository_method(
@@ -803,6 +869,8 @@ class TestRepositoryMethodDecorator:
         caplog: pytest.LogCaptureFixture,
     ) -> None:
         """Test repository_method decorator on async function."""
+        caplog.set_level(logging.DEBUG, logger="clarity.core.decorators")
+
         with caplog.at_level(logging.DEBUG):
 
             @repository_method()
@@ -835,6 +903,9 @@ class TestDecoratorEdgeCases:
                 await asyncio.sleep(0.001)
                 return x + 1
 
+        caplog.set_level(logging.INFO, logger="clarity.core.decorators")
+
+
         with caplog.at_level(logging.INFO):
             obj = TestClass()
             result = obj.method(5)
@@ -863,6 +934,9 @@ class TestDecoratorEdgeCases:
     def test_multiple_decorators_composition(caplog: pytest.LogCaptureFixture) -> None:
         """Test multiple decorators working together."""
         call_count = 0
+
+        caplog.set_level(logging.INFO, logger="clarity.core.decorators")
+
 
         with caplog.at_level(logging.INFO):
 
@@ -908,6 +982,8 @@ class TestDecoratorEdgeCases:
     @staticmethod
     def test_timing_threshold_edge_case(caplog: pytest.LogCaptureFixture) -> None:
         """Test timing decorator at threshold boundary."""
+        caplog.set_level(logging.INFO, logger="clarity.core.decorators")
+
         with caplog.at_level(logging.INFO):
 
             @measure_execution_time(threshold_ms=0.0)  # Log everything
@@ -924,6 +1000,8 @@ class TestDecoratorEdgeCases:
         caplog: pytest.LogCaptureFixture,
     ) -> None:
         """Test audit_trail decorator with complex parameter types."""
+        caplog.set_level(logging.INFO, logger="clarity.core.decorators")
+
         with caplog.at_level(logging.INFO):
 
             @audit_trail("complex_data_op", user_id_param="user_data")

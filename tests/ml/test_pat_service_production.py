@@ -47,7 +47,7 @@ class TestActigraphyModels:
         data_points = [
             ActigraphyDataPoint(
                 timestamp=datetime.now(UTC),
-                value=1.0  # Use single value field instead of x,y,z,magnitude
+                value=1.0
             )
         ]
         
@@ -68,7 +68,7 @@ class TestActigraphyModels:
         data_points = [
             ActigraphyDataPoint(
                 timestamp=datetime.now(UTC),
-                value=1.0  # Use single value field instead of x,y,z,magnitude
+                value=1.0
             )
         ]
         
@@ -622,10 +622,7 @@ class TestDataPreprocessingAndPredictions:
         self.sample_data_points = [
             ActigraphyDataPoint(
                 timestamp=datetime.now(UTC),
-                x=0.1 * i,
-                y=0.2 * i,
-                z=0.3 * i,
-                magnitude=0.4 * i
+                value=0.4 * i  # Use combined value instead of x,y,z,magnitude
             )
             for i in range(100)
         ]
@@ -750,7 +747,7 @@ class TestErrorHandlingAndValidation:
             data_points=[
                 ActigraphyDataPoint(
                     timestamp=datetime.now(UTC),
-                    x=0.5, y=0.3, z=0.8, magnitude=1.0
+                    value=1.0
                 )
             ]
         )
@@ -776,7 +773,7 @@ class TestErrorHandlingAndValidation:
         large_data = [
             ActigraphyDataPoint(
                 timestamp=datetime.now(UTC),
-                x=0.1, y=0.2, z=0.3, magnitude=0.4
+                value=0.4
             )
             for _ in range(20000)  # Exceeds typical limits
         ]
@@ -866,10 +863,7 @@ class TestIntegrationScenarios:
         data_points = [
             ActigraphyDataPoint(
                 timestamp=datetime.now(UTC),
-                x=np.sin(i * 0.1),
-                y=np.cos(i * 0.1), 
-                z=0.1 * np.random.randn(),
-                magnitude=1.0 + 0.1 * np.random.randn()
+                value=1.0 + 0.1 * np.sin(i * 0.1) + 0.05 * np.random.randn()
             )
             for i in range(1000)
         ]
@@ -918,10 +912,7 @@ class TestIntegrationScenarios:
             data_points = [
                 ActigraphyDataPoint(
                     timestamp=datetime.now(UTC),
-                    x=0.1 * j + i,
-                    y=0.2 * j + i,
-                    z=0.3 * j + i,
-                    magnitude=1.0 + 0.1 * j + i
+                    value=1.0 + 0.1 * j + i
                 )
                 for j in range(500)
             ]
@@ -1010,10 +1001,7 @@ class TestResilienceAndErrorRecovery:
         corrupted_data = [
             ActigraphyDataPoint(
                 timestamp=datetime.now(UTC),
-                x=float('nan'),
-                y=float('inf'),
-                z=0.0,
-                magnitude=-1.0  # Invalid magnitude
+                value=float('nan')  # Invalid value
             )
         ]
         
@@ -1040,10 +1028,7 @@ class TestResilienceAndErrorRecovery:
         realistic_data = [
             ActigraphyDataPoint(
                 timestamp=datetime.now(UTC),
-                x=0.1 * np.sin(i * 0.01),
-                y=0.1 * np.cos(i * 0.01),
-                z=0.05 * np.random.randn(),
-                magnitude=1.0 + 0.1 * np.random.randn()
+                value=1.0 + 0.1 * np.sin(i * 0.01) + 0.05 * np.random.randn()
             )
             for i in range(5000)  # Smaller for testing, but realistic pattern
         ]

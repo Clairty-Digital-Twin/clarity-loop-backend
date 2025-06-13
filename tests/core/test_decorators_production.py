@@ -34,6 +34,13 @@ class TestLogExecutionDecorator:
         def test_function():
             return "success"
         
+        caplog.set_level(logging.INFO, logger="clarity.core.decorators")
+
+        
+        caplog.set_level(logging.INFO, logger="clarity.core.decorators")
+
+
+        
         with caplog.at_level(logging.INFO):
             result = test_function()
         
@@ -48,6 +55,13 @@ class TestLogExecutionDecorator:
         def test_function(x, y, z=None):
             return x + y
         
+        caplog.set_level(logging.INFO, logger="clarity.core.decorators")
+
+        
+        caplog.set_level(logging.INFO, logger="clarity.core.decorators")
+
+
+        
         with caplog.at_level(logging.INFO):
             result = test_function(1, 2, z="test")
         
@@ -61,6 +75,13 @@ class TestLogExecutionDecorator:
         @log_execution()
         def failing_function():
             raise ValueError("Test error")
+        
+        caplog.set_level(logging.INFO, logger="clarity.core.decorators")
+
+        
+        caplog.set_level(logging.INFO, logger="clarity.core.decorators")
+
+
         
         with caplog.at_level(logging.INFO):
             with pytest.raises(ValueError, match="Test error"):
@@ -77,6 +98,13 @@ class TestLogExecutionDecorator:
         async def async_test_function():
             await asyncio.sleep(0.001)
             return "async success"
+        
+        caplog.set_level(logging.INFO, logger="clarity.core.decorators")
+
+        
+        caplog.set_level(logging.INFO, logger="clarity.core.decorators")
+
+
         
         with caplog.at_level(logging.INFO):
             result = await async_test_function()
@@ -97,6 +125,13 @@ class TestMeasureExecutionTimeDecorator:
             time.sleep(0.01)  # 10ms delay
             return "timed"
         
+        caplog.set_level(logging.INFO, logger="clarity.core.decorators")
+
+        
+        caplog.set_level(logging.INFO, logger="clarity.core.decorators")
+
+
+        
         with caplog.at_level(logging.INFO):
             result = test_function()
         
@@ -114,6 +149,13 @@ class TestMeasureExecutionTimeDecorator:
         def slow_function():
             time.sleep(0.01)  # 10ms delay, above 5ms threshold
             return "slow"
+        
+        caplog.set_level(logging.INFO, logger="clarity.core.decorators")
+
+        
+        caplog.set_level(logging.INFO, logger="clarity.core.decorators")
+
+
         
         with caplog.at_level(logging.INFO):
             fast_result = fast_function()
@@ -135,6 +177,13 @@ class TestMeasureExecutionTimeDecorator:
             time.sleep(0.01)
             raise Exception("Timing test error")
         
+        caplog.set_level(logging.INFO, logger="clarity.core.decorators")
+
+        
+        caplog.set_level(logging.INFO, logger="clarity.core.decorators")
+
+
+        
         with caplog.at_level(logging.INFO):
             with pytest.raises(Exception, match="Timing test error"):
                 failing_function()
@@ -149,6 +198,13 @@ class TestMeasureExecutionTimeDecorator:
         async def async_test_function():
             await asyncio.sleep(0.01)
             return "async timed"
+        
+        caplog.set_level(logging.INFO, logger="clarity.core.decorators")
+
+        
+        caplog.set_level(logging.INFO, logger="clarity.core.decorators")
+
+
         
         with caplog.at_level(logging.INFO):
             result = await async_test_function()
@@ -166,6 +222,13 @@ class TestRetryOnFailureDecorator:
         @retry_on_failure(max_retries=3)
         def successful_function():
             return "success"
+        
+        caplog.set_level(logging.WARNING, logger="clarity.core.decorators")
+
+        
+        caplog.set_level(logging.WARNING, logger="clarity.core.decorators")
+
+
         
         with caplog.at_level(logging.WARNING):
             result = successful_function()
@@ -186,6 +249,13 @@ class TestRetryOnFailureDecorator:
                 raise ConnectionError("Temporary failure")
             return "eventual success"
         
+        caplog.set_level(logging.WARNING, logger="clarity.core.decorators")
+
+        
+        caplog.set_level(logging.WARNING, logger="clarity.core.decorators")
+
+
+        
         with caplog.at_level(logging.WARNING):
             result = flaky_function()
         
@@ -203,6 +273,13 @@ class TestRetryOnFailureDecorator:
             nonlocal call_count
             call_count += 1
             raise ValueError("Always fails")
+        
+        caplog.set_level(logging.WARNING, logger="clarity.core.decorators")
+
+        
+        caplog.set_level(logging.WARNING, logger="clarity.core.decorators")
+
+
         
         with caplog.at_level(logging.WARNING):
             with pytest.raises(ValueError, match="Always fails"):
@@ -260,6 +337,13 @@ class TestRetryOnFailureDecorator:
             if call_count < 3:
                 raise asyncio.TimeoutError("Async timeout")
             return "async success"
+        
+        caplog.set_level(logging.WARNING, logger="clarity.core.decorators")
+
+        
+        caplog.set_level(logging.WARNING, logger="clarity.core.decorators")
+
+
         
         with caplog.at_level(logging.WARNING):
             result = await async_flaky_function()
@@ -324,6 +408,13 @@ class TestAuditTrailDecorator:
         def login_user():
             return {"status": "success", "user_id": "123"}
         
+        caplog.set_level(logging.INFO, logger="clarity.core.decorators")
+
+        
+        caplog.set_level(logging.INFO, logger="clarity.core.decorators")
+
+
+        
         with caplog.at_level(logging.INFO):
             result = login_user()
         
@@ -338,6 +429,13 @@ class TestAuditTrailDecorator:
         def delete_document(user_id, doc_id):
             return {"deleted": True}
         
+        caplog.set_level(logging.INFO, logger="clarity.core.decorators")
+
+        
+        caplog.set_level(logging.INFO, logger="clarity.core.decorators")
+
+
+        
         with caplog.at_level(logging.INFO):
             result = delete_document(user_id="user123", doc_id="doc456")
         
@@ -351,6 +449,13 @@ class TestAuditTrailDecorator:
         @audit_trail("risky_operation")
         def failing_operation():
             raise PermissionError("Access denied")
+        
+        caplog.set_level(logging.INFO, logger="clarity.core.decorators")
+
+        
+        caplog.set_level(logging.INFO, logger="clarity.core.decorators")
+
+
         
         with caplog.at_level(logging.INFO):
             with pytest.raises(PermissionError, match="Access denied"):
@@ -367,6 +472,13 @@ class TestAuditTrailDecorator:
         async def async_operation(user_id):
             await asyncio.sleep(0.001)
             return {"completed": True}
+        
+        caplog.set_level(logging.INFO, logger="clarity.core.decorators")
+
+        
+        caplog.set_level(logging.INFO, logger="clarity.core.decorators")
+
+
         
         with caplog.at_level(logging.INFO):
             result = await async_operation(user_id="async_user")
@@ -386,6 +498,13 @@ class TestCompositeDecorators:
         def service_function(data):
             time.sleep(0.001)
             return f"Processed: {data}"
+        
+        caplog.set_level(logging.INFO, logger="clarity.core.decorators")
+
+        
+        caplog.set_level(logging.INFO, logger="clarity.core.decorators")
+
+
         
         with caplog.at_level(logging.INFO):
             result = service_function("test data")
@@ -407,6 +526,13 @@ class TestCompositeDecorators:
                 raise ConnectionError("Service unavailable")
             return f"Service result: {data}"
         
+        caplog.set_level(logging.INFO, logger="clarity.core.decorators")
+
+        
+        caplog.set_level(logging.INFO, logger="clarity.core.decorators")
+
+
+        
         with caplog.at_level(logging.INFO):
             result = unreliable_service("retry test")
         
@@ -419,6 +545,13 @@ class TestCompositeDecorators:
         def repository_function(query):
             time.sleep(0.001)
             return {"results": [1, 2, 3], "query": query}
+        
+        caplog.set_level(logging.DEBUG, logger="clarity.core.decorators")
+
+        
+        caplog.set_level(logging.DEBUG, logger="clarity.core.decorators")
+
+
         
         with caplog.at_level(logging.DEBUG):
             result = repository_function("SELECT * FROM users")
@@ -440,6 +573,13 @@ class TestCompositeDecorators:
             if call_count < 3:
                 raise ConnectionError("Database connection lost")
             return {"data": "retrieved"}
+        
+        caplog.set_level(logging.DEBUG, logger="clarity.core.decorators")
+
+        
+        caplog.set_level(logging.DEBUG, logger="clarity.core.decorators")
+
+
         
         with caplog.at_level(logging.DEBUG):
             result = flaky_repository()
@@ -463,6 +603,13 @@ class TestProductionScenarios:
                 "processed_data": data.upper(),
                 "timestamp": datetime.now(UTC).isoformat()
             }
+        
+        caplog.set_level(logging.INFO, logger="clarity.core.decorators")
+
+        
+        caplog.set_level(logging.INFO, logger="clarity.core.decorators")
+
+
         
         with caplog.at_level(logging.INFO):
             result = process_user_request(
@@ -495,6 +642,13 @@ class TestProductionScenarios:
             return {"saved": True, "user_id": user_data["id"]}
         
         user_data = {"id": "user789", "name": "Test User"}
+        
+        caplog.set_level(logging.DEBUG, logger="clarity.core.decorators")
+
+        
+        caplog.set_level(logging.DEBUG, logger="clarity.core.decorators")
+
+
         
         with caplog.at_level(logging.DEBUG):
             result = save_user_data(user_data)

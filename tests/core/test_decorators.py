@@ -41,13 +41,14 @@ class TestLogExecution:
         caplog: pytest.LogCaptureFixture,
     ) -> None:
         """Test basic logging for sync functions."""
-        with caplog.at_level(logging.INFO):
+        # Set caplog level for the specific logger used by decorators
+        caplog.set_level(logging.INFO, logger="clarity.core.decorators")
+        
+        @log_execution()
+        def test_function() -> str:
+            return "test_result"
 
-            @log_execution()
-            def test_function() -> str:
-                return "test_result"
-
-            result = test_function()
+        result = test_function()
 
         assert result == "test_result"
         log_messages = caplog.messages
@@ -63,13 +64,13 @@ class TestLogExecution:
         caplog: pytest.LogCaptureFixture,
     ) -> None:
         """Test logging with arguments and result included."""
-        with caplog.at_level(logging.INFO):
+        caplog.set_level(logging.INFO, logger="clarity.core.decorators")
+        
+        @log_execution(include_args=True, include_result=True)
+        def test_function(x: int, y: str = "default") -> str:
+            return f"{x}_{y}"
 
-            @log_execution(include_args=True, include_result=True)
-            def test_function(x: int, y: str = "default") -> str:
-                return f"{x}_{y}"
-
-            result = test_function(42, y="test")
+        result = test_function(42, y="test")
 
         assert result == "42_test"
         log_messages = " ".join(caplog.messages)
@@ -82,14 +83,14 @@ class TestLogExecution:
         caplog: pytest.LogCaptureFixture,
     ) -> None:
         """Test logging for async functions."""
-        with caplog.at_level(logging.INFO):
+        caplog.set_level(logging.INFO, logger="clarity.core.decorators")
+        
+        @log_execution()
+        async def async_test_function() -> str:
+            await asyncio.sleep(0.01)
+            return "async_result"
 
-            @log_execution()
-            async def async_test_function() -> str:
-                await asyncio.sleep(0.01)
-                return "async_result"
-
-            result = await async_test_function()
+        result = await async_test_function()
 
         assert result == "async_result"
         log_messages = caplog.messages
@@ -103,15 +104,15 @@ class TestLogExecution:
     @staticmethod
     def test_log_execution_exception_handling(caplog: pytest.LogCaptureFixture) -> None:
         """Test logging when function raises exception."""
-        with caplog.at_level(logging.INFO):
+        caplog.set_level(logging.INFO, logger="clarity.core.decorators")
+        
+        @log_execution()
+        def failing_function() -> str:
+            msg = "Test error"
+            raise ValueError(msg)
 
-            @log_execution()
-            def failing_function() -> str:
-                msg = "Test error"
-                raise ValueError(msg)
-
-            with pytest.raises(ValueError, match="Test error"):
-                failing_function()
+        with pytest.raises(ValueError, match="Test error"):
+            failing_function()
 
         log_messages = " ".join(caplog.messages)
         assert "Executing" in log_messages
@@ -124,16 +125,16 @@ class TestLogExecution:
         caplog: pytest.LogCaptureFixture,
     ) -> None:
         """Test logging when async function raises exception."""
-        with caplog.at_level(logging.INFO):
+        caplog.set_level(logging.INFO, logger="clarity.core.decorators")
+        
+        @log_execution()
+        async def failing_async_function() -> str:
+            await asyncio.sleep(0.01)
+            msg = "Async test error"
+            raise ValueError(msg)
 
-            @log_execution()
-            async def failing_async_function() -> str:
-                await asyncio.sleep(0.01)
-                msg = "Async test error"
-                raise ValueError(msg)
-
-            with pytest.raises(ValueError, match="Async test error"):
-                await failing_async_function()
+        with pytest.raises(ValueError, match="Async test error"):
+            await failing_async_function()
 
         log_messages = " ".join(caplog.messages)
         assert "Executing" in log_messages
@@ -144,13 +145,13 @@ class TestLogExecution:
     @staticmethod
     def test_log_execution_custom_level(caplog: pytest.LogCaptureFixture) -> None:
         """Test logging with custom log level."""
-        with caplog.at_level(logging.DEBUG):
+        caplog.set_level(logging.DEBUG, logger="clarity.core.decorators")
+        
+        @log_execution(level=logging.DEBUG)
+        def debug_function() -> str:
+            return "debug_result"
 
-            @log_execution(level=logging.DEBUG)
-            def debug_function() -> str:
-                return "debug_result"
-
-            result = debug_function()
+        result = debug_function()
 
         assert result == "debug_result"
         # Check that debug messages are captured
@@ -166,14 +167,14 @@ class TestMeasureExecutionTime:
     @staticmethod
     def test_measure_execution_time_basic(caplog: pytest.LogCaptureFixture) -> None:
         """Test basic execution time measurement."""
-        with caplog.at_level(logging.INFO):
+        caplog.set_level(logging.INFO, logger="clarity.core.decorators")
+        
+        @measure_execution_time()
+        def timed_function() -> str:
+            time.sleep(0.05)  # 50ms delay
+            return "timed_result"
 
-            @measure_execution_time()
-            def timed_function() -> str:
-                time.sleep(0.05)  # 50ms delay
-                return "timed_result"
-
-            result = timed_function()
+        result = timed_function()
 
         assert result == "timed_result"
         log_messages = " ".join(caplog.messages)
@@ -185,20 +186,20 @@ class TestMeasureExecutionTime:
         caplog: pytest.LogCaptureFixture,
     ) -> None:
         """Test execution time measurement with threshold."""
-        with caplog.at_level(logging.INFO):
+        caplog.set_level(logging.INFO, logger="clarity.core.decorators")
+        
+        @measure_execution_time(threshold_ms=100.0)  # 100ms threshold
+        def fast_function() -> str:
+            time.sleep(0.01)  # 10ms delay (below threshold)
+            return "fast_result"
 
-            @measure_execution_time(threshold_ms=100.0)  # 100ms threshold
-            def fast_function() -> str:
-                time.sleep(0.01)  # 10ms delay (below threshold)
-                return "fast_result"
+        @measure_execution_time(threshold_ms=10.0)  # 10ms threshold
+        def slow_function() -> str:
+            time.sleep(0.05)  # 50ms delay (above threshold)
+            return "slow_result"
 
-            @measure_execution_time(threshold_ms=10.0)  # 10ms threshold
-            def slow_function() -> str:
-                time.sleep(0.05)  # 50ms delay (above threshold)
-                return "slow_result"
-
-            fast_result = fast_function()
-            slow_result = slow_function()
+        fast_result = fast_function()
+        slow_result = slow_function()
 
         assert fast_result == "fast_result"
         assert slow_result == "slow_result"
@@ -214,14 +215,14 @@ class TestMeasureExecutionTime:
         caplog: pytest.LogCaptureFixture,
     ) -> None:
         """Test execution time measurement for async functions."""
-        with caplog.at_level(logging.INFO):
+        caplog.set_level(logging.INFO, logger="clarity.core.decorators")
+        
+        @measure_execution_time()
+        async def async_timed_function() -> str:
+            await asyncio.sleep(0.05)  # 50ms delay
+            return "async_timed_result"
 
-            @measure_execution_time()
-            async def async_timed_function() -> str:
-                await asyncio.sleep(0.05)  # 50ms delay
-                return "async_timed_result"
-
-            result = await async_timed_function()
+        result = await async_timed_function()
 
         assert result == "async_timed_result"
         log_messages = " ".join(caplog.messages)
@@ -232,16 +233,16 @@ class TestMeasureExecutionTime:
         caplog: pytest.LogCaptureFixture,
     ) -> None:
         """Test timing measurement when function raises exception."""
-        with caplog.at_level(logging.INFO):
+        caplog.set_level(logging.INFO, logger="clarity.core.decorators")
+        
+        @measure_execution_time()
+        def failing_timed_function() -> str:
+            time.sleep(0.02)  # Small delay before failing
+            msg = "Timing test error"
+            raise RuntimeError(msg)
 
-            @measure_execution_time()
-            def failing_timed_function() -> str:
-                time.sleep(0.02)  # Small delay before failing
-                msg = "Timing test error"
-                raise RuntimeError(msg)
-
-            with pytest.raises(RuntimeError, match="Timing test error"):
-                failing_timed_function()
+        with pytest.raises(RuntimeError, match="Timing test error"):
+            failing_timed_function()
 
         log_messages = " ".join(caplog.messages)
         assert "failed after" in log_messages
@@ -273,6 +274,9 @@ class TestRetryOnFailure:
         """Test retry decorator when function succeeds after retries."""
         call_count = 0
 
+        caplog.set_level(logging.WARNING, logger="clarity.core.decorators")
+
+
         with caplog.at_level(logging.WARNING):
 
             @retry_on_failure(max_retries=3, delay_seconds=0.01)
@@ -295,6 +299,9 @@ class TestRetryOnFailure:
     def test_retry_on_failure_final_failure(caplog: pytest.LogCaptureFixture) -> None:
         """Test retry decorator when all retries are exhausted."""
         call_count = 0
+
+        caplog.set_level(logging.WARNING, logger="clarity.core.decorators")
+
 
         with caplog.at_level(logging.WARNING):
 
@@ -439,6 +446,8 @@ class TestAuditTrail:
     @staticmethod
     def test_audit_trail_basic(caplog: pytest.LogCaptureFixture) -> None:
         """Test basic audit trail functionality."""
+        caplog.set_level(logging.INFO, logger="clarity.core.decorators")
+
         with caplog.at_level(logging.INFO):
 
             @audit_trail("test_operation")
@@ -458,6 +467,8 @@ class TestAuditTrail:
         caplog: pytest.LogCaptureFixture,
     ) -> None:
         """Test audit trail with user and resource IDs."""
+        caplog.set_level(logging.INFO, logger="clarity.core.decorators")
+
         with caplog.at_level(logging.INFO):
 
             @audit_trail(
@@ -477,6 +488,8 @@ class TestAuditTrail:
     @staticmethod
     def test_audit_trail_exception_handling(caplog: pytest.LogCaptureFixture) -> None:
         """Test audit trail when function raises exception."""
+        caplog.set_level(logging.INFO, logger="clarity.core.decorators")
+
         with caplog.at_level(logging.INFO):
 
             @audit_trail("failing_operation")
@@ -495,6 +508,8 @@ class TestAuditTrail:
     @staticmethod
     async def test_audit_trail_async(caplog: pytest.LogCaptureFixture) -> None:
         """Test audit trail with async functions."""
+        caplog.set_level(logging.INFO, logger="clarity.core.decorators")
+
         with caplog.at_level(logging.INFO):
 
             @audit_trail("async_operation")
@@ -516,6 +531,8 @@ class TestServiceMethod:
     @staticmethod
     def test_service_method_basic(caplog: pytest.LogCaptureFixture) -> None:
         """Test service_method decorator basic functionality."""
+        caplog.set_level(logging.INFO, logger="clarity.core.decorators")
+
         with caplog.at_level(logging.INFO):
 
             @service_method()
@@ -536,6 +553,9 @@ class TestServiceMethod:
         """Test service_method decorator with retry functionality."""
         call_count = 0
 
+        caplog.set_level(logging.INFO, logger="clarity.core.decorators")
+
+
         with caplog.at_level(logging.INFO):
 
             @service_method(max_retries=2)
@@ -555,6 +575,8 @@ class TestServiceMethod:
     @staticmethod
     def test_service_method_timing_threshold(caplog: pytest.LogCaptureFixture) -> None:
         """Test service_method decorator with timing threshold."""
+        caplog.set_level(logging.INFO, logger="clarity.core.decorators")
+
         with caplog.at_level(logging.INFO):
 
             @service_method(timing_threshold_ms=10.0)
@@ -584,6 +606,8 @@ class TestRepositoryMethod:
     @staticmethod
     def test_repository_method_basic(caplog: pytest.LogCaptureFixture) -> None:
         """Test repository_method decorator basic functionality."""
+        caplog.set_level(logging.DEBUG, logger="clarity.core.decorators")
+
         with caplog.at_level(logging.DEBUG):
 
             @repository_method()
@@ -604,6 +628,9 @@ class TestRepositoryMethod:
     def test_repository_method_with_retries(caplog: pytest.LogCaptureFixture) -> None:
         """Test repository_method decorator with automatic retries."""
         call_count = 0
+
+        caplog.set_level(logging.DEBUG, logger="clarity.core.decorators")
+
 
         with caplog.at_level(logging.DEBUG):
 
@@ -626,6 +653,8 @@ class TestRepositoryMethod:
         caplog: pytest.LogCaptureFixture,
     ) -> None:
         """Test repository_method decorator with timing threshold."""
+        caplog.set_level(logging.DEBUG, logger="clarity.core.decorators")
+
         with caplog.at_level(logging.DEBUG):
 
             @repository_method()
@@ -648,6 +677,9 @@ class TestDecoratorsIntegration:
     def test_multiple_decorators_combination(caplog: pytest.LogCaptureFixture) -> None:
         """Test applying multiple decorators together."""
         call_count = 0
+
+        caplog.set_level(logging.INFO, logger="clarity.core.decorators")
+
 
         with caplog.at_level(logging.INFO):
 

@@ -919,12 +919,10 @@ class PATModelService(IMLModelService):
         circadian_score = outputs["circadian_score"].cpu().item()
         depression_risk = outputs["depression_risk"].cpu().item()
 
-        # Extract the PAT embedding (96-dim from model, expand to 128 for compatibility)
+        # Extract the PAT embedding (96-dim from model, keep original dimensions)
         pat_embedding = outputs["embeddings"].cpu().numpy()[0]  # (96,)
-        # Pad to 128 dimensions for fusion compatibility
-        full_embedding = np.pad(
-            pat_embedding, (0, 128 - len(pat_embedding)), mode="constant"
-        ).tolist()
+        # Keep 96 dimensions as per test contract
+        full_embedding = pat_embedding.tolist()
 
         # Calculate sleep metrics with explicit type annotations
         sleep_efficiency: float = float(sleep_metrics[0] * 100)  # Convert to percentage

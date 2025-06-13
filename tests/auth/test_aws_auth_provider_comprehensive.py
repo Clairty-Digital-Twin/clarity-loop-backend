@@ -266,10 +266,13 @@ class TestTokenVerification:
             client_id="client123"
         )
         
+        mock_jwks = {"keys": [{"kid": "test_key_id"}]}
+        mock_payload = {"sub": "user123", "email": "test@example.com"}
+        
         with patch.object(provider, 'initialize') as mock_init, \
-             patch.object(provider, '_get_jwks'), \
-             patch('jose.jwt.get_unverified_header'), \
-             patch('jose.jwt.decode'):
+             patch.object(provider, '_get_jwks', return_value=mock_jwks), \
+             patch('jose.jwt.get_unverified_header', return_value={"kid": "test_key_id"}), \
+             patch('jose.jwt.decode', return_value=mock_payload):
             
             provider._initialized = False
             await provider.verify_token("mock_token")

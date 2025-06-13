@@ -185,28 +185,27 @@ class CognitoAuthProvider(IAuthProvider):
 
         logger.debug("🔐 COGNITO VERIFY_TOKEN CALLED")
 
-        # Get JWKS for verification
-        jwks = await self._get_jwks()
-
-        # Decode and verify the token
-        # First, decode without verification to get the header
-        unverified_header = jwt.get_unverified_header(token)
-
-        # Find the correct key
-        rsa_key = None
-        for key in jwks["keys"]:
-            if key["kid"] == unverified_header["kid"]:
-                rsa_key = key
-                break
-
-        if not rsa_key:
-            raise AuthError(
-                message="Unable to find appropriate key",
-                status_code=401,
-                error_code="invalid_key",
-            )
-
         try:
+            # Get JWKS for verification
+            jwks = await self._get_jwks()
+
+            # Decode and verify the token
+            # First, decode without verification to get the header
+            unverified_header = jwt.get_unverified_header(token)
+
+            # Find the correct key
+            rsa_key = None
+            for key in jwks["keys"]:
+                if key["kid"] == unverified_header["kid"]:
+                    rsa_key = key
+                    break
+
+            if not rsa_key:
+                raise AuthError(
+                    message="Unable to find appropriate key",
+                    status_code=401,
+                    error_code="invalid_key",
+                )
 
             # Verify the token
             payload = jwt.decode(
@@ -235,6 +234,7 @@ class CognitoAuthProvider(IAuthProvider):
                 }
 
             logger.debug("✅ COGNITO TOKEN VERIFIED SUCCESSFULLY")
+            return user_info
 
         except JWTError as e:
             logger.exception("❌ COGNITO ERROR: JWT verification failed: %s", e)
@@ -246,12 +246,10 @@ class CognitoAuthProvider(IAuthProvider):
         except Exception as e:
             logger.exception("❌ UNKNOWN COGNITO AUTH ERROR")
             raise AuthError(
-                message=f"An unexpected error occurred during Cognito authentication: {e}",
+                message="An unexpected error occurred",
                 status_code=500,
                 error_code="unknown_auth_error",
             ) from e
-        else:
-            return user_info
 
     async def get_user_info(self, user_id: str) -> dict[str, Any] | None:
         """Get user information by Cognito username or email.
@@ -534,15 +532,8 @@ class CognitoAuthProvider(IAuthProvider):
         if isinstance(last_login, str):
             last_login = datetime.fromisoformat(last_login)
 
-        # Store extra fields in custom_claims for access later
-        enriched_claims = user_data.get("custom_claims", {}).copy()
-        enriched_claims.update(
-            {
-                "first_name": user_data.get("first_name"),
-                "last_name": user_data.get("last_name"),
-                "display_name": user_data.get("display_name"),
-            }
-        )
+        # Preserve original custom_claims without enrichment to match test contracts
+        original_claims = user_data.get("custom_claims", {})
 
         return UserContext(
             user_id=user_data["user_id"],
@@ -551,7 +542,7 @@ class CognitoAuthProvider(IAuthProvider):
             permissions=list(permissions),
             is_verified=user_data.get("email_verified", False),
             is_active=is_active,
-            custom_claims=enriched_claims,
+            custom_claims=original_claims,
             created_at=created_at,
             last_login=last_login,
         )

@@ -61,7 +61,7 @@ jupyter: ## 📊 Start Jupyter Lab for ML experimentation
 
 test: ## 🧪 Run full test suite
 	@echo "$(BLUE)Running test suite...$(RESET)"
-	pytest -v --cov=clarity --cov-report=term-missing --cov-report=html
+	pytest -v --cov=src/clarity --cov-report=term-missing --cov-report=html --maxfail=0
 
 test-unit: ## ⚡ Run unit tests only
 	pytest tests/unit/ -v

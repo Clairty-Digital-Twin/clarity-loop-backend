@@ -1,4 +1,4 @@
-"""Tests for integrations module initialization."""
+"""Tests f r integrations module initialization."""
 
 from __future__ import annotations
 

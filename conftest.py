@@ -10,7 +10,7 @@ import pytest
 
 
 @pytest.fixture(autouse=True)
-def setup_logging():
+def setup_logging() -> None:
     """Global fixture to ensure consistent logging configuration across all tests.
 
     This fixture:
@@ -42,7 +42,7 @@ def setup_logging():
 
 
 @pytest.fixture(autouse=True)
-def configure_caplog(caplog):
+def configure_caplog(caplog) -> None:
     """Global fixture to configure caplog for all tests.
 
     This ensures caplog can capture logs from all our modules

@@ -2,9 +2,9 @@
 import re
 
 
-def fix_caplog_and_indentation(file_path):
+def fix_caplog_and_indentation(file_path) -> None:
     """Fix caplog usage and indentation in decorator test files."""
-    with open(file_path) as f:
+    with open(file_path, encoding="utf-8") as f:
         content = f.read()
 
     # First pass: Replace caplog.at_level patterns
@@ -19,7 +19,7 @@ def fix_caplog_and_indentation(file_path):
     fixed_lines = []
     in_caplog_block = False
 
-    for i, line in enumerate(lines):
+    for line in lines:
         # Detect caplog.set_level lines
         if "caplog.set_level(" in line:
             fixed_lines.append(line)
@@ -50,10 +50,8 @@ def fix_caplog_and_indentation(file_path):
 
     content = "\n".join(fixed_lines)
 
-    with open(file_path, "w") as f:
+    with open(file_path, "w", encoding="utf-8") as f:
         f.write(content)
-
-    print(f"Fixed {file_path}")
 
 
 # Fix both files

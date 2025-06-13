@@ -99,10 +99,10 @@ class TestHealthAnalysisPipelineInitialization:
     @patch("clarity.ml.analysis_pipeline.DynamoDBHealthDataRepository")
     async def test_get_dynamodb_client(self, mock_repository, mock_getenv):
         """Test DynamoDB client initialization."""
-        mock_getenv.side_effect = lambda key, default: {
+        mock_getenv.side_effect = {
             "DYNAMODB_TABLE_NAME": "test-table",
             "AWS_REGION": "us-west-2",
-        }.get(key, default)
+        }.get
 
         mock_client = Mock()
         mock_repository.return_value = mock_client

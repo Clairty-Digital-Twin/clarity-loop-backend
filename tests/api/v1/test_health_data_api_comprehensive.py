@@ -216,17 +216,14 @@ class TestUploadHealthDataWithDependencies:
     def test_upload_too_many_metrics(self, client_with_dependencies, test_user):
         """Test upload with too many metrics."""
         # Create upload with too many metrics (over 10000 limit)
-        metrics = []
-        for i in range(10001):  # Over the 10000 limit
-            metrics.append(
-                {
+        # Over the 10000 limit
+        metrics = [{
                     "metric_id": str(uuid.uuid4()),
                     "metric_type": "heart_rate",
                     "created_at": datetime.now(UTC).isoformat(),
                     "device_id": "device-123",
                     "biometric_data": {"heart_rate": 72},
-                }
-            )
+                } for i in range(10001)]
 
         upload = {
             "user_id": test_user.user_id,

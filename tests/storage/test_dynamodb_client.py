@@ -49,23 +49,21 @@ def mock_dynamodb_resource(mock_table):
 def dynamodb_repository(mock_dynamodb_resource):
     """Create DynamoDB repository with mocked resource."""
     with patch("boto3.resource", return_value=mock_dynamodb_resource):
-        repo = DynamoDBHealthDataRepository(
+        return DynamoDBHealthDataRepository(
             table_name="test-health-data",
             region="us-east-1",
         )
-        return repo
 
 
 @pytest.fixture
 def dynamodb_repository_with_endpoint(mock_dynamodb_resource):
     """Create DynamoDB repository with endpoint URL."""
     with patch("boto3.resource", return_value=mock_dynamodb_resource):
-        repo = DynamoDBHealthDataRepository(
+        return DynamoDBHealthDataRepository(
             table_name="test-health-data",
             region="us-east-1",
             endpoint_url="http://localhost:8000",
         )
-        return repo
 
 
 @pytest.fixture

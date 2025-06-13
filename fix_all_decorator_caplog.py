@@ -3,13 +3,12 @@ import os
 import re
 
 
-def fix_caplog_in_file(file_path):
+def fix_caplog_in_file(file_path) -> None:
     """Fix caplog usage in decorator test files by adding logger specification."""
     if not os.path.exists(file_path):
-        print(f"File not found: {file_path}")
         return
 
-    with open(file_path) as f:
+    with open(file_path, encoding="utf-8") as f:
         content = f.read()
 
     # Add caplog.set_level before with caplog.at_level blocks
@@ -19,10 +18,8 @@ def fix_caplog_in_file(file_path):
         content,
     )
 
-    with open(file_path, "w") as f:
+    with open(file_path, "w", encoding="utf-8") as f:
         f.write(content)
-
-    print(f"Fixed {file_path}")
 
 
 # Fix all decorator test files

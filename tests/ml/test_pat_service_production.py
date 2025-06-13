@@ -333,7 +333,7 @@ class TestPATEncoder:
 
     def test_encoder_different_configs(self):
         """Test encoder with different PAT configurations."""
-        for config_name, config in PAT_CONFIGS.items():
+        for config in PAT_CONFIGS.values():
             encoder = PATEncoder(
                 input_size=config["input_size"],
                 patch_size=config["patch_size"],
@@ -400,15 +400,18 @@ class TestPATForMentalHealthClassification:
 
         # Sleep metrics should be in [0, 1] range (sigmoid activation)
         sleep_metrics = outputs["sleep_metrics"]
-        assert torch.all(sleep_metrics >= 0) and torch.all(sleep_metrics <= 1)
+        assert torch.all(sleep_metrics >= 0)
+        assert torch.all(sleep_metrics <= 1)
 
         # Circadian score should be in [0, 1] range
         circadian_score = outputs["circadian_score"]
-        assert torch.all(circadian_score >= 0) and torch.all(circadian_score <= 1)
+        assert torch.all(circadian_score >= 0)
+        assert torch.all(circadian_score <= 1)
 
         # Depression risk should be in [0, 1] range
         depression_risk = outputs["depression_risk"]
-        assert torch.all(depression_risk >= 0) and torch.all(depression_risk <= 1)
+        assert torch.all(depression_risk >= 0)
+        assert torch.all(depression_risk <= 1)
 
     def test_classification_different_num_classes(self):
         """Test classification model with different number of classes."""
@@ -430,7 +433,7 @@ class TestPATModelServiceInitialization:
         service = PATModelService()
 
         assert service.model_size == "medium"
-        assert service.device in ["cuda", "cpu"]
+        assert service.device in {"cuda", "cpu"}
         assert service.model is None
         assert service.is_loaded is False
         assert service.config == PAT_CONFIGS["medium"]
@@ -994,7 +997,7 @@ class TestResilienceAndErrorRecovery:
 
         # Service should still initialize (may fall back to CPU internally)
         service = PATModelService()
-        assert service.device in ["cuda", "cpu"]
+        assert service.device in {"cuda", "cpu"}
 
     @pytest.mark.asyncio
     async def test_prediction_with_corrupted_input(self):

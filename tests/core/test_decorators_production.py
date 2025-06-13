@@ -10,6 +10,7 @@ import asyncio
 from datetime import UTC, datetime
 import logging
 import time
+from typing import Never
 from unittest.mock import Mock, patch
 
 import pytest
@@ -32,7 +33,7 @@ class TestLogExecutionDecorator:
         """Test basic logging for synchronous functions."""
 
         @log_execution()
-        def test_function():
+        def test_function() -> str:
             return "success"
 
         caplog.set_level(logging.INFO, logger="clarity.core.decorators")
@@ -70,8 +71,9 @@ class TestLogExecutionDecorator:
         """Test logging when function raises exception."""
 
         @log_execution()
-        def failing_function():
-            raise ValueError("Test error")
+        def failing_function() -> Never:
+            msg = "Test error"
+            raise ValueError(msg)
 
         caplog.set_level(logging.INFO, logger="clarity.core.decorators")
 
@@ -90,7 +92,7 @@ class TestLogExecutionDecorator:
         """Test logging for async functions."""
 
         @log_execution()
-        async def async_test_function():
+        async def async_test_function() -> str:
             await asyncio.sleep(0.001)
             return "async success"
 
@@ -114,7 +116,7 @@ class TestMeasureExecutionTimeDecorator:
         """Test execution time measurement for sync functions."""
 
         @measure_execution_time()
-        def test_function():
+        def test_function() -> str:
             time.sleep(0.01)  # 10ms delay
             return "timed"
 
@@ -133,11 +135,11 @@ class TestMeasureExecutionTimeDecorator:
         """Test execution time measurement with threshold."""
 
         @measure_execution_time(threshold_ms=50.0)
-        def fast_function():
+        def fast_function() -> str:
             return "fast"
 
         @measure_execution_time(threshold_ms=5.0)
-        def slow_function():
+        def slow_function() -> str:
             time.sleep(0.01)  # 10ms delay, above 5ms threshold
             return "slow"
 
@@ -162,9 +164,10 @@ class TestMeasureExecutionTimeDecorator:
         """Test execution time measurement when function fails."""
 
         @measure_execution_time()
-        def failing_function():
+        def failing_function() -> Never:
             time.sleep(0.01)
-            raise Exception("Timing test error")
+            msg = "Timing test error"
+            raise Exception(msg)
 
         caplog.set_level(logging.INFO, logger="clarity.core.decorators")
 
@@ -182,7 +185,7 @@ class TestMeasureExecutionTimeDecorator:
         """Test execution time measurement for async functions."""
 
         @measure_execution_time()
-        async def async_test_function():
+        async def async_test_function() -> str:
             await asyncio.sleep(0.01)
             return "async timed"
 
@@ -205,7 +208,7 @@ class TestRetryOnFailureDecorator:
         """Test retry decorator when function succeeds on first attempt."""
 
         @retry_on_failure(max_retries=3)
-        def successful_function():
+        def successful_function() -> str:
             return "success"
 
         caplog.set_level(logging.WARNING, logger="clarity.core.decorators")
@@ -224,11 +227,12 @@ class TestRetryOnFailureDecorator:
         call_count = 0
 
         @retry_on_failure(max_retries=2, delay_seconds=0.001)
-        def flaky_function():
+        def flaky_function() -> str:
             nonlocal call_count
             call_count += 1
             if call_count < 3:
-                raise ConnectionError("Temporary failure")
+                msg = "Temporary failure"
+                raise ConnectionError(msg)
             return "eventual success"
 
         caplog.set_level(logging.WARNING, logger="clarity.core.decorators")
@@ -248,10 +252,11 @@ class TestRetryOnFailureDecorator:
         call_count = 0
 
         @retry_on_failure(max_retries=2, delay_seconds=0.001)
-        def always_failing_function():
+        def always_failing_function() -> Never:
             nonlocal call_count
             call_count += 1
-            raise ValueError("Always fails")
+            msg = "Always fails"
+            raise ValueError(msg)
 
         caplog.set_level(logging.WARNING, logger="clarity.core.decorators")
 
@@ -270,9 +275,10 @@ class TestRetryOnFailureDecorator:
         call_times = []
 
         @retry_on_failure(max_retries=2, delay_seconds=0.001, exponential_backoff=True)
-        def timing_function():
+        def timing_function() -> Never:
             call_times.append(time.time())
-            raise Exception("Timing test")
+            msg = "Timing test"
+            raise Exception(msg)
 
         with pytest.raises(Exception):
             timing_function()
@@ -289,14 +295,16 @@ class TestRetryOnFailureDecorator:
         @retry_on_failure(
             max_retries=2, delay_seconds=0.001, exceptions=(ConnectionError,)
         )
-        def connection_error_function():
-            raise ConnectionError("Connection failed")
+        def connection_error_function() -> Never:
+            msg = "Connection failed"
+            raise ConnectionError(msg)
 
         @retry_on_failure(
             max_retries=2, delay_seconds=0.001, exceptions=(ConnectionError,)
         )
-        def value_error_function():
-            raise ValueError("Value error - should not retry")
+        def value_error_function() -> Never:
+            msg = "Value error - should not retry"
+            raise ValueError(msg)
 
         # ConnectionError should be retried
         with pytest.raises(ConnectionError):
@@ -312,11 +320,12 @@ class TestRetryOnFailureDecorator:
         call_count = 0
 
         @retry_on_failure(max_retries=2, delay_seconds=0.001)
-        async def async_flaky_function():
+        async def async_flaky_function() -> str:
             nonlocal call_count
             call_count += 1
             if call_count < 3:
-                raise TimeoutError("Async timeout")
+                msg = "Async timeout"
+                raise TimeoutError(msg)
             return "async success"
 
         caplog.set_level(logging.WARNING, logger="clarity.core.decorators")
@@ -337,7 +346,7 @@ class TestValidateInputDecorator:
         """Test input validation when validation passes."""
 
         def positive_number_validator(args_kwargs):
-            args, kwargs = args_kwargs
+            args, _kwargs = args_kwargs
             return len(args) > 0 and isinstance(args[0], (int, float)) and args[0] > 0
 
         @validate_input(positive_number_validator, "Number must be positive")
@@ -351,7 +360,7 @@ class TestValidateInputDecorator:
         """Test input validation when validation fails."""
 
         def positive_number_validator(args_kwargs):
-            args, kwargs = args_kwargs
+            args, _kwargs = args_kwargs
             return len(args) > 0 and isinstance(args[0], (int, float)) and args[0] > 0
 
         @validate_input(positive_number_validator, "Number must be positive")
@@ -365,12 +374,12 @@ class TestValidateInputDecorator:
         """Test input validation with keyword arguments."""
 
         def email_validator(args_kwargs):
-            args, kwargs = args_kwargs
+            _args, kwargs = args_kwargs
             email = kwargs.get("email", "")
             return "@" in email and "." in email
 
         @validate_input(email_validator, "Invalid email format")
-        def send_email(message, email=None):
+        def send_email(message, email=None) -> str:
             return f"Sent: {message} to {email}"
 
         result = send_email("Hello", email="test@example.com")
@@ -427,8 +436,9 @@ class TestAuditTrailDecorator:
         """Test audit trail when function raises exception."""
 
         @audit_trail("risky_operation")
-        def failing_operation():
-            raise PermissionError("Access denied")
+        def failing_operation() -> Never:
+            msg = "Access denied"
+            raise PermissionError(msg)
 
         caplog.set_level(logging.INFO, logger="clarity.core.decorators")
 
@@ -471,7 +481,7 @@ class TestCompositeDecorators:
         """Test service method composite decorator."""
 
         @service_method(log_level=logging.INFO, timing_threshold_ms=0.0)
-        def service_function(data):
+        def service_function(data) -> str:
             time.sleep(0.001)
             return f"Processed: {data}"
 
@@ -492,11 +502,12 @@ class TestCompositeDecorators:
         call_count = 0
 
         @service_method(max_retries=2, timing_threshold_ms=0.0)
-        def unreliable_service(data):
+        def unreliable_service(data) -> str:
             nonlocal call_count
             call_count += 1
             if call_count < 2:
-                raise ConnectionError("Service unavailable")
+                msg = "Service unavailable"
+                raise ConnectionError(msg)
             return f"Service result: {data}"
 
         caplog.set_level(logging.INFO, logger="clarity.core.decorators")
@@ -539,7 +550,8 @@ class TestCompositeDecorators:
             nonlocal call_count
             call_count += 1
             if call_count < 3:
-                raise ConnectionError("Database connection lost")
+                msg = "Database connection lost"
+                raise ConnectionError(msg)
             return {"data": "retrieved"}
 
         caplog.set_level(logging.DEBUG, logger="clarity.core.decorators")
@@ -604,7 +616,8 @@ class TestProductionScenarios:
             connection_attempts += 1
 
             if connection_attempts <= 2:
-                raise ConnectionError("Database connection failed")
+                msg = "Database connection failed"
+                raise ConnectionError(msg)
 
             return {"saved": True, "user_id": user_data["id"]}
 
@@ -628,7 +641,7 @@ class TestProductionScenarios:
         """Test input validation in realistic production scenario."""
 
         def validate_api_request(args_kwargs):
-            args, kwargs = args_kwargs
+            args, _kwargs = args_kwargs
             if len(args) == 0:
                 return False
 

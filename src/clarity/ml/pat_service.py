@@ -1089,6 +1089,9 @@ class PATModelService(IMLModelService):
         except DataValidationError:
             # Re-raise data validation errors without wrapping - these are user input issues
             raise
+        except MLPredictionError:
+            # Re-raise ML prediction errors without double-wrapping
+            raise
         except Exception as e:
             logger.exception(
                 "PAT model analysis failed for user %s",

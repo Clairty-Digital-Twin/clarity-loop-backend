@@ -2,7 +2,7 @@
 import re
 
 # Fix test_decorators_comprehensive.py
-with open("tests/core/test_decorators_comprehensive.py") as f:
+with open("tests/core/test_decorators_comprehensive.py", encoding="utf-8") as f:
     content = f.read()
 
 # Replace caplog.at_level patterns
@@ -13,13 +13,12 @@ content = re.sub(
 )
 
 # Write back
-with open("tests/core/test_decorators_comprehensive.py", "w") as f:
+with open("tests/core/test_decorators_comprehensive.py", "w", encoding="utf-8") as f:
     f.write(content)
 
-print("Fixed comprehensive test file")
 
 # Fix test_decorators_production.py
-with open("tests/core/test_decorators_production.py") as f:
+with open("tests/core/test_decorators_production.py", encoding="utf-8") as f:
     content = f.read()
 
 # Replace caplog.at_level patterns
@@ -30,7 +29,5 @@ content = re.sub(
 )
 
 # Write back
-with open("tests/core/test_decorators_production.py", "w") as f:
+with open("tests/core/test_decorators_production.py", "w", encoding="utf-8") as f:
     f.write(content)
-
-print("Fixed production test file")

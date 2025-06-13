@@ -1044,7 +1044,7 @@ class TestProductionScenarios:
 
         audit_calls = []
 
-        async def mock_audit_log(*args, **kwargs):
+        async def mock_audit_log(*args, **kwargs) -> None:
             audit_calls.append((args, kwargs))
 
         self.service._audit_log = mock_audit_log

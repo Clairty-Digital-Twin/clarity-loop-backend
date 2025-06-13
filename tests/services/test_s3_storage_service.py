@@ -746,7 +746,7 @@ class TestCloudStoragePortMethods:
         """Test JSON upload method."""
         # This is a synchronous method that needs special handling
 
-        async def mock_upload_file(data, file_path, metadata=None):
+        async def mock_upload_file(data, file_path, metadata=None) -> str:
             return f"s3://test-bucket/{file_path}"
 
         with patch.object(s3_service, "upload_file", side_effect=mock_upload_file):

@@ -611,9 +611,19 @@ class TestPATModelServiceEdgeCases:
 
     @staticmethod
     def test_raise_model_not_loaded_error() -> None:
-        """Test the model not loaded error helper."""
-        with pytest.raises(RuntimeError, match="PAT model not loaded"):
+        """Test the model not loaded error helper.
+
+        Following ML testing best practices:
+        - Service methods raise domain-specific MLPredictionError
+        - RuntimeError is preserved as the __cause__ for proper exception chaining
+        - This enables better error handling and monitoring in production
+        """
+        with pytest.raises(MLPredictionError, match="PAT model not loaded") as exc_info:
             PATModelService._raise_model_not_loaded_error()
+
+        # Verify exception chaining - RuntimeError should be the cause
+        assert isinstance(exc_info.value.__cause__, RuntimeError)
+        assert "PAT model not loaded" in str(exc_info.value.__cause__)
 
     @pytest.mark.asyncio
     @staticmethod

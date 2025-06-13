@@ -64,7 +64,7 @@
         },
         {
           "name": "SKIP_EXTERNAL_SERVICES",
-          "value": "false"
+          "value": "true"
         }
       ],
       "logConfiguration": {

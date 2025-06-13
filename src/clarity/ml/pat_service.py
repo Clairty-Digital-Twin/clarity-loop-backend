@@ -1007,7 +1007,7 @@ class PATModelService(IMLModelService):
     def _raise_model_not_loaded_error() -> NoReturn:
         """Raise error when model is not loaded."""
         msg = "PAT model not loaded. Call load_model() first."
-        raise RuntimeError(msg)
+        raise MLPredictionError(msg, model_name="PAT")
 
     @staticmethod
     def _raise_data_too_large_error(
@@ -1015,7 +1015,7 @@ class PATModelService(IMLModelService):
     ) -> NoReturn:
         """Raise error when input data is too large."""
         error_msg = (
-            f"Input data too large: {data_point_count} points exceeds "
+            f"Too many data points: {data_point_count} points exceeds "
             f"maximum allowed {max_data_points} points"
         )
         raise DataValidationError(error_msg)
@@ -1023,7 +1023,7 @@ class PATModelService(IMLModelService):
     @staticmethod
     def _raise_empty_data_error() -> NoReturn:
         """Raise error when input data is empty."""
-        empty_data_msg = "Input data cannot be empty"
+        empty_data_msg = "No actigraphy data provided"
         raise DataValidationError(empty_data_msg)
 
     @resilient_prediction(model_name="PAT")

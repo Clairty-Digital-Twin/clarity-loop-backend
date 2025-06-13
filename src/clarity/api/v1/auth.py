@@ -146,10 +146,22 @@ async def register(
 
 @router.post("/login", response_model=TokenResponse)
 async def login(
+    request: Request,
     credentials: UserLoginRequest,
     auth_provider: IAuthProvider = Depends(get_auth_provider),
 ) -> TokenResponse:
     """Authenticate user and return access token."""
+    # Debug logging for request body
+    try:
+        body_bytes = await request.body()
+        logger.warning("🔍 LOGIN REQUEST DEBUG:")
+        logger.warning(f"  Raw body bytes: {body_bytes}")
+        logger.warning(f"  Body length: {len(body_bytes)} bytes")
+        logger.warning(f"  Body as string: {body_bytes.decode('utf-8')}")
+        logger.warning(f"  Parsed credentials: email={credentials.email}")
+    except Exception as e:
+        logger.error(f"Failed to log request body: {e}")
+    
     # Validate auth provider before try block
     if not isinstance(auth_provider, CognitoAuthProvider):
         raise HTTPException(

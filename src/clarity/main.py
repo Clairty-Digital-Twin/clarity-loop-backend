@@ -130,6 +130,12 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Add request logging middleware in development
+if ENVIRONMENT == "development":
+    from clarity.middleware.request_logger import RequestLoggingMiddleware
+    app.add_middleware(RequestLoggingMiddleware)
+    logger.info("✅ Added request logging middleware for development")
+
 # =============================================================================
 # Include ALL API routers
 # =============================================================================

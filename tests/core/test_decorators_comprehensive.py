@@ -314,7 +314,6 @@ class TestRetryOnFailureDecorator:
 
         caplog.set_level(logging.WARNING, logger="clarity.core.decorators")
 
-
         with caplog.at_level(logging.WARNING):
 
             @retry_on_failure(max_retries=2, delay_seconds=0.001)
@@ -446,7 +445,6 @@ class TestRetryOnFailureDecorator:
         call_count = 0
 
         caplog.set_level(logging.WARNING, logger="clarity.core.decorators")
-
 
         with caplog.at_level(logging.WARNING):
 
@@ -758,7 +756,6 @@ class TestServiceMethodDecorator:
 
         caplog.set_level(logging.WARNING, logger="clarity.core.decorators")
 
-
         with caplog.at_level(logging.WARNING):
 
             @service_method(max_retries=1, log_level=logging.WARNING)
@@ -825,7 +822,6 @@ class TestRepositoryMethodDecorator:
         call_count = 0
 
         caplog.set_level(logging.WARNING, logger="clarity.core.decorators")
-
 
         with caplog.at_level(logging.WARNING):
 
@@ -905,7 +901,6 @@ class TestDecoratorEdgeCases:
 
         caplog.set_level(logging.INFO, logger="clarity.core.decorators")
 
-
         with caplog.at_level(logging.INFO):
             obj = TestClass()
             result = obj.method(5)
@@ -936,7 +931,6 @@ class TestDecoratorEdgeCases:
         call_count = 0
 
         caplog.set_level(logging.INFO, logger="clarity.core.decorators")
-
 
         with caplog.at_level(logging.INFO):
 

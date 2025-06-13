@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from datetime import UTC, datetime, timedelta
 from decimal import Decimal
+import math
 from typing import Any
 from unittest.mock import MagicMock, Mock, patch
 import uuid
@@ -139,7 +140,9 @@ class TestDynamoDBHealthDataRepositoryInit:
 
             assert repo.table_name == "test-table"
             assert repo.region == "us-west-2"
-            mock_boto_resource.assert_called_once_with("dynamodb", region_name="us-west-2")
+            mock_boto_resource.assert_called_once_with(
+                "dynamodb", region_name="us-west-2"
+            )
 
     def test_init_with_endpoint(self):
         """Test initialization with endpoint URL."""
@@ -192,7 +195,7 @@ class TestSerializationMethods:
         data = {
             "string": "test",
             "int": 42,
-            "float": 3.14,
+            "float": math.pi,
             "bool": True,
             "none": None,
             "list": ["a", 1, 2.5],
@@ -238,7 +241,7 @@ class TestSerializationMethods:
 
         assert result["string"] == "test"
         assert isinstance(result["decimal"], float)
-        assert result["decimal"] == 3.14
+        assert result["decimal"] == math.pi
         assert result["int"] == 42
         assert result["list"][1] == 1.5
         assert result["dict"]["nested"] == 2.5
@@ -287,7 +290,7 @@ class TestSaveHealthData:
 
         # Check specific metric data
         heart_rate_metric = item["metrics"]["heart_rate"]
-        assert heart_rate_metric["biometric_data"]["heart_rate"] == Decimal("72")
+        assert heart_rate_metric["biometric_data"]["heart_rate"] == Decimal(72)
         assert heart_rate_metric["device_id"] == "device-123"
 
         # Check TTL is set (90 days)
@@ -343,15 +346,15 @@ class TestGetUserHealthData:
                     "pk": f"USER#{user_id}",
                     "sk": "HEALTH#2024-01-15T12:00:00",
                     "metrics": {
-                        "heart_rate": {"value": Decimal("72")},
-                        "steps": {"value": Decimal("5000")},
+                        "heart_rate": {"value": Decimal(72)},
+                        "steps": {"value": Decimal(5000)},
                     },
                 },
                 {
                     "pk": f"USER#{user_id}",
                     "sk": "HEALTH#2024-01-15T11:00:00",
                     "metrics": {
-                        "heart_rate": {"value": Decimal("68")},
+                        "heart_rate": {"value": Decimal(68)},
                     },
                 },
             ]
@@ -375,7 +378,9 @@ class TestGetUserHealthData:
         assert first_item["metrics"]["steps"]["value"] == 5000.0
 
     @pytest.mark.asyncio
-    async def test_get_user_health_data_with_date_range(self, dynamodb_repository, mock_table):
+    async def test_get_user_health_data_with_date_range(
+        self, dynamodb_repository, mock_table
+    ):
         """Test retrieval with date range filtering."""
         user_id = "user-123"
         start_date = datetime(2024, 1, 1, tzinfo=UTC)
@@ -392,12 +397,14 @@ class TestGetUserHealthData:
         # Check query was called with date range
         call_args = mock_table.query.call_args[1]
         assert "KeyConditionExpression" in call_args
-        # Just verify the query was called - the actual key condition 
+        # Just verify the query was called - the actual key condition
         # is a boto3 object that we can't easily inspect
         mock_table.query.assert_called_once()
 
     @pytest.mark.asyncio
-    async def test_get_user_health_data_with_metric_filter(self, dynamodb_repository, mock_table):
+    async def test_get_user_health_data_with_metric_filter(
+        self, dynamodb_repository, mock_table
+    ):
         """Test retrieval with metric type filtering."""
         user_id = "user-123"
         mock_table.query.return_value = {
@@ -405,12 +412,12 @@ class TestGetUserHealthData:
                 {
                     "pk": f"USER#{user_id}",
                     "sk": "HEALTH#2024-01-15T12:00:00",
-                    "metrics": {"heart_rate": {"value": Decimal("72")}},
+                    "metrics": {"heart_rate": {"value": Decimal(72)}},
                 },
                 {
                     "pk": f"USER#{user_id}",
                     "sk": "HEALTH#2024-01-15T11:00:00",
-                    "metrics": {"steps": {"value": Decimal("5000")}},
+                    "metrics": {"steps": {"value": Decimal(5000)}},
                 },
             ]
         }
@@ -425,14 +432,16 @@ class TestGetUserHealthData:
         assert "heart_rate" in result["data"][0]["metrics"]
 
     @pytest.mark.asyncio
-    async def test_get_user_health_data_with_pagination(self, dynamodb_repository, mock_table):
+    async def test_get_user_health_data_with_pagination(
+        self, dynamodb_repository, mock_table
+    ):
         """Test retrieval with pagination."""
         user_id = "user-123"
         items = [
             {
                 "pk": f"USER#{user_id}",
                 "sk": f"HEALTH#2024-01-15T{i:02d}:00:00",
-                "metrics": {"heart_rate": {"value": Decimal("70")}},
+                "metrics": {"heart_rate": {"value": Decimal(70)}},
             }
             for i in range(15)
         ]
@@ -449,7 +458,9 @@ class TestGetUserHealthData:
         assert result["pagination"]["has_more"] is True
 
     @pytest.mark.asyncio
-    async def test_get_user_health_data_client_error(self, dynamodb_repository, mock_table):
+    async def test_get_user_health_data_client_error(
+        self, dynamodb_repository, mock_table
+    ):
         """Test retrieval with client error."""
         mock_table.query.side_effect = ClientError(
             {"Error": {"Code": "ResourceNotFoundException"}},
@@ -490,16 +501,22 @@ class TestGetProcessingStatus:
         assert result["updated_at"] == "2024-01-15T12:05:00"
 
     @pytest.mark.asyncio
-    async def test_get_processing_status_not_found(self, dynamodb_repository, mock_table):
+    async def test_get_processing_status_not_found(
+        self, dynamodb_repository, mock_table
+    ):
         """Test status retrieval when not found."""
         mock_table.query.return_value = {"Items": []}
 
-        result = await dynamodb_repository.get_processing_status("missing-123", "user-123")
+        result = await dynamodb_repository.get_processing_status(
+            "missing-123", "user-123"
+        )
 
         assert result is None
 
     @pytest.mark.asyncio
-    async def test_get_processing_status_wrong_user(self, dynamodb_repository, mock_table):
+    async def test_get_processing_status_wrong_user(
+        self, dynamodb_repository, mock_table
+    ):
         """Test status retrieval with wrong user."""
         mock_table.query.return_value = {
             "Items": [
@@ -516,7 +533,9 @@ class TestGetProcessingStatus:
         assert result is None
 
     @pytest.mark.asyncio
-    async def test_get_processing_status_client_error(self, dynamodb_repository, mock_table):
+    async def test_get_processing_status_client_error(
+        self, dynamodb_repository, mock_table
+    ):
         """Test status retrieval with client error."""
         mock_table.query.side_effect = ClientError(
             {"Error": {"Code": "ValidationException"}},
@@ -532,7 +551,9 @@ class TestDeleteHealthData:
     """Test delete_health_data method."""
 
     @pytest.mark.asyncio
-    async def test_delete_health_data_specific_processing(self, dynamodb_repository, mock_table):
+    async def test_delete_health_data_specific_processing(
+        self, dynamodb_repository, mock_table
+    ):
         """Test deletion of specific processing job."""
         processing_id = "proc-123"
         user_id = "user-123"
@@ -556,7 +577,9 @@ class TestDeleteHealthData:
         )
 
     @pytest.mark.asyncio
-    async def test_delete_health_data_all_user_data(self, dynamodb_repository, mock_table):
+    async def test_delete_health_data_all_user_data(
+        self, dynamodb_repository, mock_table
+    ):
         """Test deletion of all user data."""
         user_id = "user-123"
         items = [
@@ -577,7 +600,9 @@ class TestDeleteHealthData:
         assert mock_batch_writer.delete_item.call_count == 3
 
     @pytest.mark.asyncio
-    async def test_delete_health_data_client_error(self, dynamodb_repository, mock_table):
+    async def test_delete_health_data_client_error(
+        self, dynamodb_repository, mock_table
+    ):
         """Test deletion with client error."""
         mock_table.query.side_effect = ClientError(
             {"Error": {"Code": "ValidationException"}},
@@ -704,7 +729,7 @@ class TestEdgeCases:
                 "level2": {
                     "level3": {
                         "level4": {
-                            "value": 3.14,
+                            "value": math.pi,
                             "list": [1.1, 2.2, {"nested": 4.4}],
                         }
                     }

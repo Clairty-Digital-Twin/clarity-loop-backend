@@ -745,22 +745,18 @@ class TestCloudStoragePortMethods:
     def test_upload_json(self, s3_service):
         """Test JSON upload method."""
         # This is a synchronous method that needs special handling
-        import asyncio
-        
+
         async def mock_upload_file(data, file_path, metadata=None):
             return f"s3://test-bucket/{file_path}"
-        
-        with patch.object(s3_service, 'upload_file', side_effect=mock_upload_file):
+
+        with patch.object(s3_service, "upload_file", side_effect=mock_upload_file):
             data = {"test": "data", "number": 123}
-            
+
             # Run the synchronous method that internally uses asyncio.run
             result = s3_service.upload_json(
-                "test-bucket",
-                "test.json",
-                data,
-                metadata={"type": "test"}
+                "test-bucket", "test.json", data, metadata={"type": "test"}
             )
-            
+
             assert result == "s3://test-bucket/test.json"
 
 
@@ -781,7 +777,7 @@ class TestGlobalFunctions:
         with patch("clarity.services.s3_storage_service._s3_service", None):
             with patch("boto3.client"):
                 service = get_s3_service()  # No bucket name provided
-                
+
                 assert service.bucket_name == "clarity-health-data-storage"
 
 

@@ -77,7 +77,9 @@ class TestHealthDataPublisherInit:
 
     def test_init_default_env(self):
         """Test initialization with default environment."""
-        with patch("clarity.services.messaging.publisher.AWSMessagingService") as mock_aws:
+        with patch(
+            "clarity.services.messaging.publisher.AWSMessagingService"
+        ) as mock_aws:
             publisher = HealthDataPublisher()
 
             mock_aws.assert_called_once_with(
@@ -98,11 +100,16 @@ class TestHealthDataPublisherInit:
     )
     def test_init_custom_env(self):
         """Test initialization with custom environment variables."""
-        with patch("clarity.services.messaging.publisher.AWSMessagingService") as mock_aws:
+        with patch(
+            "clarity.services.messaging.publisher.AWSMessagingService"
+        ) as mock_aws:
             publisher = HealthDataPublisher()
 
             assert publisher.aws_region == "eu-west-1"
-            assert publisher.sns_topic_arn == "arn:aws:sns:eu-west-1:123456789012:clarity-topic"
+            assert (
+                publisher.sns_topic_arn
+                == "arn:aws:sns:eu-west-1:123456789012:clarity-topic"
+            )
 
             mock_aws.assert_called_once_with(
                 region="eu-west-1",
@@ -116,7 +123,9 @@ class TestPublishHealthDataUpload:
     """Test health data upload publishing."""
 
     @pytest.mark.asyncio
-    async def test_publish_health_data_upload_success(self, publisher, mock_messaging_service):
+    async def test_publish_health_data_upload_success(
+        self, publisher, mock_messaging_service
+    ):
         """Test successful health data upload publishing."""
         user_id = str(uuid.uuid4())
         upload_id = str(uuid.uuid4())
@@ -139,7 +148,9 @@ class TestPublishHealthDataUpload:
         )
 
     @pytest.mark.asyncio
-    async def test_publish_health_data_upload_no_metadata(self, publisher, mock_messaging_service):
+    async def test_publish_health_data_upload_no_metadata(
+        self, publisher, mock_messaging_service
+    ):
         """Test publishing without metadata."""
         message_id = await publisher.publish_health_data_upload(
             user_id="user-123",
@@ -156,9 +167,13 @@ class TestPublishHealthDataUpload:
         )
 
     @pytest.mark.asyncio
-    async def test_publish_health_data_upload_error(self, publisher, mock_messaging_service):
+    async def test_publish_health_data_upload_error(
+        self, publisher, mock_messaging_service
+    ):
         """Test publishing with error."""
-        mock_messaging_service.publish_health_data_upload.side_effect = Exception("SQS error")
+        mock_messaging_service.publish_health_data_upload.side_effect = Exception(
+            "SQS error"
+        )
 
         with pytest.raises(Exception, match="SQS error"):
             await publisher.publish_health_data_upload(
@@ -172,7 +187,9 @@ class TestPublishInsightRequest:
     """Test insight request publishing."""
 
     @pytest.mark.asyncio
-    async def test_publish_insight_request_success(self, publisher, mock_messaging_service):
+    async def test_publish_insight_request_success(
+        self, publisher, mock_messaging_service
+    ):
         """Test successful insight request publishing."""
         user_id = str(uuid.uuid4())
         upload_id = str(uuid.uuid4())
@@ -199,7 +216,9 @@ class TestPublishInsightRequest:
         )
 
     @pytest.mark.asyncio
-    async def test_publish_insight_request_no_metadata(self, publisher, mock_messaging_service):
+    async def test_publish_insight_request_no_metadata(
+        self, publisher, mock_messaging_service
+    ):
         """Test publishing without metadata."""
         message_id = await publisher.publish_insight_request(
             user_id="user-123",
@@ -216,9 +235,13 @@ class TestPublishInsightRequest:
         )
 
     @pytest.mark.asyncio
-    async def test_publish_insight_request_error(self, publisher, mock_messaging_service):
+    async def test_publish_insight_request_error(
+        self, publisher, mock_messaging_service
+    ):
         """Test publishing with error."""
-        mock_messaging_service.publish_insight_request.side_effect = Exception("SQS error")
+        mock_messaging_service.publish_insight_request.side_effect = Exception(
+            "SQS error"
+        )
 
         with pytest.raises(Exception, match="SQS error"):
             await publisher.publish_insight_request(
@@ -271,7 +294,9 @@ class TestGetPublisher:
 
         clarity.services.messaging.publisher._publisher = None
 
-        with patch("clarity.services.messaging.publisher.AWSMessagingService") as mock_aws:
+        with patch(
+            "clarity.services.messaging.publisher.AWSMessagingService"
+        ) as mock_aws:
             publisher = await get_publisher()
 
             assert publisher is not None
@@ -282,7 +307,9 @@ class TestLoggingIntegration:
     """Test logging behavior."""
 
     @pytest.mark.asyncio
-    async def test_publish_health_data_logs_success(self, publisher, mock_messaging_service):
+    async def test_publish_health_data_logs_success(
+        self, publisher, mock_messaging_service
+    ):
         """Test successful publish logs info."""
         # Patch the logger in the instance instead of the module
         with patch.object(publisher, "logger") as mock_logger:
@@ -301,9 +328,13 @@ class TestLoggingIntegration:
             assert "msg-123" in str(call_args)
 
     @pytest.mark.asyncio
-    async def test_publish_health_data_logs_error(self, publisher, mock_messaging_service):
+    async def test_publish_health_data_logs_error(
+        self, publisher, mock_messaging_service
+    ):
         """Test failed publish logs exception."""
-        mock_messaging_service.publish_health_data_upload.side_effect = Exception("Test error")
+        mock_messaging_service.publish_health_data_upload.side_effect = Exception(
+            "Test error"
+        )
 
         # Patch the logger in the instance instead of the module
         with patch.object(publisher, "logger") as mock_logger:
@@ -316,4 +347,7 @@ class TestLoggingIntegration:
 
             # Should log exception
             mock_logger.exception.assert_called_once()
-            assert "Failed to publish health data event" in mock_logger.exception.call_args[0][0]
+            assert (
+                "Failed to publish health data event"
+                in mock_logger.exception.call_args[0][0]
+            )

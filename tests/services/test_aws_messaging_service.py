@@ -89,10 +89,16 @@ class TestAWSMessagingServiceInit:
                 sns_topic_arn="arn:aws:sns:us-east-1:123456789012:test-topic"
             )
 
-            assert service.sns_topic_arn == "arn:aws:sns:us-east-1:123456789012:test-topic"
+            assert (
+                service.sns_topic_arn == "arn:aws:sns:us-east-1:123456789012:test-topic"
+            )
             assert mock_boto_client.call_count == 2
-            mock_boto_client.assert_any_call("sqs", region_name="us-east-1", endpoint_url=None)
-            mock_boto_client.assert_any_call("sns", region_name="us-east-1", endpoint_url=None)
+            mock_boto_client.assert_any_call(
+                "sqs", region_name="us-east-1", endpoint_url=None
+            )
+            mock_boto_client.assert_any_call(
+                "sns", region_name="us-east-1", endpoint_url=None
+            )
 
     def test_init_with_endpoint_url(self):
         """Test initialization with endpoint URL (LocalStack)."""
@@ -118,13 +124,17 @@ class TestGetQueueUrl:
     async def test_get_queue_url_cached(self, aws_messaging_service):
         """Test getting queue URL from cache."""
         url = await aws_messaging_service._get_queue_url("test-health-queue")
-        
-        assert url == "https://sqs.us-east-1.amazonaws.com/123456789012/test-health-queue"
+
+        assert (
+            url == "https://sqs.us-east-1.amazonaws.com/123456789012/test-health-queue"
+        )
         # Should not call SQS since it's cached
         aws_messaging_service.sqs_client.get_queue_url.assert_not_called()
 
     @pytest.mark.asyncio
-    async def test_get_queue_url_existing_queue(self, aws_messaging_service_no_sns, mock_sqs_client):
+    async def test_get_queue_url_existing_queue(
+        self, aws_messaging_service_no_sns, mock_sqs_client
+    ):
         """Test getting URL for existing queue."""
         mock_sqs_client.get_queue_url.return_value = {
             "QueueUrl": "https://sqs.us-east-1.amazonaws.com/123456789012/existing-queue"
@@ -136,11 +146,13 @@ class TestGetQueueUrl:
         mock_sqs_client.get_queue_url.assert_called_once()
 
     @pytest.mark.asyncio
-    async def test_get_queue_url_create_new_queue(self, aws_messaging_service_no_sns, mock_sqs_client):
+    async def test_get_queue_url_create_new_queue(
+        self, aws_messaging_service_no_sns, mock_sqs_client
+    ):
         """Test creating new queue when it doesn't exist."""
         mock_sqs_client.get_queue_url.side_effect = ClientError(
             {"Error": {"Code": "AWS.SimpleQueueService.NonExistentQueue"}},
-            "GetQueueUrl"
+            "GetQueueUrl",
         )
         mock_sqs_client.create_queue.return_value = {
             "QueueUrl": "https://sqs.us-east-1.amazonaws.com/123456789012/new-queue"
@@ -159,11 +171,12 @@ class TestGetQueueUrl:
         )
 
     @pytest.mark.asyncio
-    async def test_get_queue_url_other_error(self, aws_messaging_service_no_sns, mock_sqs_client):
+    async def test_get_queue_url_other_error(
+        self, aws_messaging_service_no_sns, mock_sqs_client
+    ):
         """Test handling other client errors."""
         mock_sqs_client.get_queue_url.side_effect = ClientError(
-            {"Error": {"Code": "AccessDenied"}},
-            "GetQueueUrl"
+            {"Error": {"Code": "AccessDenied"}}, "GetQueueUrl"
         )
 
         with pytest.raises(ClientError):
@@ -174,10 +187,12 @@ class TestPublishHealthDataUpload:
     """Test health data upload publishing."""
 
     @pytest.mark.asyncio
-    async def test_publish_health_data_upload_success(self, aws_messaging_service, mock_sqs_client):
+    async def test_publish_health_data_upload_success(
+        self, aws_messaging_service, mock_sqs_client
+    ):
         """Test successful health data upload publishing."""
         mock_sqs_client.send_message.return_value = {"MessageId": "msg-123"}
-        
+
         user_id = "user-123"
         upload_id = "upload-456"
         s3_path = "s3://bucket/path/data.json"
@@ -192,9 +207,12 @@ class TestPublishHealthDataUpload:
         # Verify SQS message
         mock_sqs_client.send_message.assert_called_once()
         call_args = mock_sqs_client.send_message.call_args[1]
-        
-        assert call_args["QueueUrl"] == "https://sqs.us-east-1.amazonaws.com/123456789012/test-health-queue"
-        
+
+        assert (
+            call_args["QueueUrl"]
+            == "https://sqs.us-east-1.amazonaws.com/123456789012/test-health-queue"
+        )
+
         body = json.loads(call_args["MessageBody"])
         assert body["user_id"] == user_id
         assert body["upload_id"] == upload_id
@@ -209,7 +227,9 @@ class TestPublishHealthDataUpload:
         assert attrs["event_type"]["StringValue"] == "health_data_upload"
 
     @pytest.mark.asyncio
-    async def test_publish_health_data_upload_with_sns(self, aws_messaging_service, mock_sqs_client, mock_sns_client):
+    async def test_publish_health_data_upload_with_sns(
+        self, aws_messaging_service, mock_sqs_client, mock_sns_client
+    ):
         """Test publishing with SNS fan-out."""
         mock_sqs_client.send_message.return_value = {"MessageId": "msg-123"}
         mock_sns_client.publish.return_value = {"MessageId": "sns-msg-456"}
@@ -223,7 +243,9 @@ class TestPublishHealthDataUpload:
         mock_sns_client.publish.assert_called_once()
 
     @pytest.mark.asyncio
-    async def test_publish_health_data_upload_error(self, aws_messaging_service, mock_sqs_client):
+    async def test_publish_health_data_upload_error(
+        self, aws_messaging_service, mock_sqs_client
+    ):
         """Test handling publish errors."""
         mock_sqs_client.send_message.side_effect = Exception("SQS error")
 
@@ -237,10 +259,12 @@ class TestPublishInsightRequest:
     """Test insight request publishing."""
 
     @pytest.mark.asyncio
-    async def test_publish_insight_request_success(self, aws_messaging_service, mock_sqs_client):
+    async def test_publish_insight_request_success(
+        self, aws_messaging_service, mock_sqs_client
+    ):
         """Test successful insight request publishing."""
         mock_sqs_client.send_message.return_value = {"MessageId": "msg-789"}
-        
+
         user_id = "user-123"
         upload_id = "upload-456"
         analysis_results = {"risk_score": 0.2, "health_status": "good"}
@@ -255,9 +279,12 @@ class TestPublishInsightRequest:
         # Verify SQS message
         mock_sqs_client.send_message.assert_called_once()
         call_args = mock_sqs_client.send_message.call_args[1]
-        
-        assert call_args["QueueUrl"] == "https://sqs.us-east-1.amazonaws.com/123456789012/test-insight-queue"
-        
+
+        assert (
+            call_args["QueueUrl"]
+            == "https://sqs.us-east-1.amazonaws.com/123456789012/test-insight-queue"
+        )
+
         body = json.loads(call_args["MessageBody"])
         assert body["user_id"] == user_id
         assert body["upload_id"] == upload_id
@@ -265,7 +292,9 @@ class TestPublishInsightRequest:
         assert body["metadata"] == metadata
 
     @pytest.mark.asyncio
-    async def test_publish_insight_request_with_sns(self, aws_messaging_service, mock_sqs_client, mock_sns_client):
+    async def test_publish_insight_request_with_sns(
+        self, aws_messaging_service, mock_sqs_client, mock_sns_client
+    ):
         """Test publishing with SNS fan-out."""
         mock_sqs_client.send_message.return_value = {"MessageId": "msg-789"}
         mock_sns_client.publish.return_value = {"MessageId": "sns-msg-999"}
@@ -289,16 +318,16 @@ class TestPublishToSNS:
         message_id = await aws_messaging_service._publish_to_sns(
             subject="Test Subject",
             message={"data": "test"},
-            attributes={"key": "value"}
+            attributes={"key": "value"},
         )
 
         assert message_id == "sns-123"
-        
+
         mock_sns_client.publish.assert_called_once_with(
             TopicArn="arn:aws:sns:us-east-1:123456789012:test-topic",
             Subject="Test Subject",
             Message=json.dumps({"data": "test"}, indent=2),
-            MessageAttributes={"key": {"DataType": "String", "StringValue": "value"}}
+            MessageAttributes={"key": {"DataType": "String", "StringValue": "value"}},
         )
 
     @pytest.mark.asyncio
@@ -324,7 +353,9 @@ class TestReceiveMessages:
     """Test message receiving functionality."""
 
     @pytest.mark.asyncio
-    async def test_receive_messages_success(self, aws_messaging_service, mock_sqs_client):
+    async def test_receive_messages_success(
+        self, aws_messaging_service, mock_sqs_client
+    ):
         """Test successful message receiving."""
         mock_sqs_client.receive_message.return_value = {
             "Messages": [
@@ -357,7 +388,9 @@ class TestReceiveMessages:
         )
 
     @pytest.mark.asyncio
-    async def test_receive_messages_empty_queue(self, aws_messaging_service, mock_sqs_client):
+    async def test_receive_messages_empty_queue(
+        self, aws_messaging_service, mock_sqs_client
+    ):
         """Test receiving from empty queue."""
         mock_sqs_client.receive_message.return_value = {}
 
@@ -380,7 +413,9 @@ class TestDeleteMessage:
     @pytest.mark.asyncio
     async def test_delete_message_success(self, aws_messaging_service, mock_sqs_client):
         """Test successful message deletion."""
-        await aws_messaging_service.delete_message("test-health-queue", "receipt-handle-123")
+        await aws_messaging_service.delete_message(
+            "test-health-queue", "receipt-handle-123"
+        )
 
         mock_sqs_client.delete_message.assert_called_once_with(
             QueueUrl="https://sqs.us-east-1.amazonaws.com/123456789012/test-health-queue",
@@ -393,14 +428,18 @@ class TestDeleteMessage:
         mock_sqs_client.delete_message.side_effect = Exception("Delete error")
 
         with pytest.raises(Exception, match="Delete error"):
-            await aws_messaging_service.delete_message("test-health-queue", "receipt-123")
+            await aws_messaging_service.delete_message(
+                "test-health-queue", "receipt-123"
+            )
 
 
 class TestQueueOperations:
     """Test queue-level operations."""
 
     @pytest.mark.asyncio
-    async def test_get_queue_attributes_success(self, aws_messaging_service, mock_sqs_client):
+    async def test_get_queue_attributes_success(
+        self, aws_messaging_service, mock_sqs_client
+    ):
         """Test getting queue attributes."""
         mock_sqs_client.get_queue_attributes.return_value = {
             "Attributes": {
@@ -409,7 +448,9 @@ class TestQueueOperations:
             }
         }
 
-        attributes = await aws_messaging_service.get_queue_attributes("test-health-queue")
+        attributes = await aws_messaging_service.get_queue_attributes(
+            "test-health-queue"
+        )
 
         assert attributes["ApproximateNumberOfMessages"] == "10"
         assert attributes["ApproximateNumberOfMessagesNotVisible"] == "5"
@@ -420,7 +461,9 @@ class TestQueueOperations:
         )
 
     @pytest.mark.asyncio
-    async def test_get_queue_attributes_error(self, aws_messaging_service, mock_sqs_client):
+    async def test_get_queue_attributes_error(
+        self, aws_messaging_service, mock_sqs_client
+    ):
         """Test getting queue attributes with error."""
         mock_sqs_client.get_queue_attributes.side_effect = Exception("Attributes error")
 
@@ -466,7 +509,9 @@ class TestHealthCheck:
     @pytest.mark.asyncio
     async def test_health_check_failure(self, aws_messaging_service, mock_sqs_client):
         """Test health check with failure."""
-        mock_sqs_client.get_queue_attributes.side_effect = Exception("Health check failed")
+        mock_sqs_client.get_queue_attributes.side_effect = Exception(
+            "Health check failed"
+        )
 
         result = await aws_messaging_service.health_check()
 
@@ -500,13 +545,16 @@ class TestCloseAndSingleton:
                     region="eu-west-1",
                     health_data_queue="custom-health-queue",
                     insight_queue="custom-insight-queue",
-                    sns_topic_arn="arn:aws:sns:eu-west-1:123456789012:custom-topic"
+                    sns_topic_arn="arn:aws:sns:eu-west-1:123456789012:custom-topic",
                 )
 
                 assert service.region == "eu-west-1"
                 assert service.health_data_queue == "custom-health-queue"
                 assert service.insight_queue == "custom-insight-queue"
-                assert service.sns_topic_arn == "arn:aws:sns:eu-west-1:123456789012:custom-topic"
+                assert (
+                    service.sns_topic_arn
+                    == "arn:aws:sns:eu-west-1:123456789012:custom-topic"
+                )
 
 
 class TestPydanticModels:
@@ -519,7 +567,7 @@ class TestPydanticModels:
             upload_id="upload-456",
             s3_path="s3://bucket/path.json",
             timestamp="2024-01-15T12:00:00Z",
-            metadata={"source": "mobile"}
+            metadata={"source": "mobile"},
         )
 
         assert event.user_id == "user-123"
@@ -535,7 +583,7 @@ class TestPydanticModels:
             upload_id="upload-456",
             analysis_results={"risk_score": 0.5},
             timestamp="2024-01-15T12:00:00Z",
-            metadata={"version": "1.0"}
+            metadata={"version": "1.0"},
         )
 
         assert event.user_id == "user-123"

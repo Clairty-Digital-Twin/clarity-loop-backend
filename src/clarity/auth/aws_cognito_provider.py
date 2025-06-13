@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from datetime import UTC, datetime, timezone
 from functools import lru_cache
 import logging
 import os
@@ -204,7 +205,7 @@ class CognitoAuthProvider(IAuthProvider):
                 uid=user_sub,
                 email=email,
                 display_name=display_name or email,
-                created_at=None,
+                created_at=datetime.now(UTC),
                 last_login=None,
                 metadata={"username": email, "status": "CONFIRMED"},
             )

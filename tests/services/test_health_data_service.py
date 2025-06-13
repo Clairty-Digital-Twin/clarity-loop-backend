@@ -221,10 +221,15 @@ class TestUploadRawData:
         """Test raw data upload with generic cloud storage."""
         # Create a mock that's not an S3StorageService
         mock_generic_storage = Mock()
-        mock_generic_storage.upload_file = AsyncMock(return_value="s3://bucket/file.json")
+        mock_generic_storage.upload_file = AsyncMock(
+            return_value="s3://bucket/file.json"
+        )
 
         # We need to ensure isinstance check fails
-        with patch("clarity.services.health_data_service.isinstance", side_effect=lambda obj, cls: False):
+        with patch(
+            "clarity.services.health_data_service.isinstance",
+            side_effect=lambda obj, cls: False,
+        ):
             service = HealthDataService(
                 repository=mock_repository,
                 cloud_storage=mock_generic_storage,
@@ -342,9 +347,7 @@ class TestGetProcessingStatus:
         }
         mock_repository.get_processing_status.return_value = status_data
 
-        result = await health_data_service.get_processing_status(
-            "test-123", "user-123"
-        )
+        result = await health_data_service.get_processing_status("test-123", "user-123")
 
         assert result == status_data
         mock_repository.get_processing_status.assert_called_once_with(
@@ -465,9 +468,7 @@ class TestDeleteHealthData:
         )
 
     @pytest.mark.asyncio
-    async def test_delete_health_data_error(
-        self, health_data_service, mock_repository
-    ):
+    async def test_delete_health_data_error(self, health_data_service, mock_repository):
         """Test health data deletion with error."""
         mock_repository.delete_health_data.side_effect = Exception("DB error")
 

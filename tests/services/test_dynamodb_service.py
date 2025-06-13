@@ -52,17 +52,17 @@ def dynamodb_service(mock_dynamodb_resource, mock_table):
         cache_ttl=300,
     )
     service.dynamodb = mock_dynamodb_resource
-    
+
     # Create separate mock for audit table
     mock_audit_table = MagicMock()
     mock_audit_table.put_item = MagicMock()
-    
+
     # Return different mocks based on table name
     def get_table(table_name):
         if "audit" in table_name:
             return mock_audit_table
         return mock_table
-    
+
     mock_dynamodb_resource.Table.side_effect = get_table
     return service
 
@@ -192,7 +192,9 @@ class TestValidateHealthData:
     """Test health data validation."""
 
     @pytest.mark.asyncio
-    async def test_validate_health_data_success(self, dynamodb_service, valid_health_data):
+    async def test_validate_health_data_success(
+        self, dynamodb_service, valid_health_data
+    ):
         """Test successful health data validation."""
         # Should not raise
         await dynamodb_service._validate_health_data(valid_health_data)
@@ -205,7 +207,9 @@ class TestValidateHealthData:
             # Missing "metrics" and "upload_source"
         }
 
-        with pytest.raises(DynamoDBValidationError, match="Missing required field: metrics"):
+        with pytest.raises(
+            DynamoDBValidationError, match="Missing required field: metrics"
+        ):
             await dynamodb_service._validate_health_data(invalid_data)
 
     @pytest.mark.asyncio
@@ -229,7 +233,9 @@ class TestValidateHealthData:
             "upload_source": "test",
         }
 
-        with pytest.raises(DynamoDBValidationError, match="Metrics must be a non-empty list"):
+        with pytest.raises(
+            DynamoDBValidationError, match="Metrics must be a non-empty list"
+        ):
             await dynamodb_service._validate_health_data(invalid_data)
 
     @pytest.mark.asyncio
@@ -241,7 +247,9 @@ class TestValidateHealthData:
             "upload_source": "test",
         }
 
-        with pytest.raises(DynamoDBValidationError, match="Metrics must be a non-empty list"):
+        with pytest.raises(
+            DynamoDBValidationError, match="Metrics must be a non-empty list"
+        ):
             await dynamodb_service._validate_health_data(invalid_data)
 
 
@@ -253,7 +261,7 @@ class TestAuditLog:
         """Test successful audit log creation."""
         # Get the mock audit table that was created by the fixture
         mock_audit_table = mock_dynamodb_resource.Table("test_audit_logs")
-        
+
         await dynamodb_service._audit_log(
             operation="test_operation",
             table="test_table",
@@ -296,7 +304,9 @@ class TestPutItem:
     """Test put_item functionality."""
 
     @pytest.mark.asyncio
-    async def test_put_item_success(self, dynamodb_service, mock_table, valid_health_data):
+    async def test_put_item_success(
+        self, dynamodb_service, mock_table, valid_health_data
+    ):
         """Test successful item creation."""
         item_id = await dynamodb_service.put_item(
             table_name="test_health_data",  # Use full table name
@@ -351,11 +361,12 @@ class TestPutItem:
             )
 
     @pytest.mark.asyncio
-    async def test_put_item_client_error(self, dynamodb_service, mock_table, valid_health_data):
+    async def test_put_item_client_error(
+        self, dynamodb_service, mock_table, valid_health_data
+    ):
         """Test put_item with ClientError."""
         mock_table.put_item.side_effect = ClientError(
-            {"Error": {"Code": "ResourceNotFoundException"}},
-            "PutItem"
+            {"Error": {"Code": "ResourceNotFoundException"}}, "PutItem"
         )
 
         with pytest.raises(DynamoDBError, match="ResourceNotFoundException"):
@@ -408,17 +419,17 @@ class TestGetItem:
         mock_table.get_item.return_value = {}  # No Item key
 
         result = await dynamodb_service.get_item("test_table", {"id": "missing123"})
-            
+
         assert result is None
 
     @pytest.mark.asyncio
     async def test_get_item_no_cache(self, dynamodb_service_no_cache, mock_table):
         """Test get_item without caching."""
-        mock_table.get_item.return_value = {
-            "Item": {"id": "item123", "test": "data"}
-        }
+        mock_table.get_item.return_value = {"Item": {"id": "item123", "test": "data"}}
 
-        result = await dynamodb_service_no_cache.get_item("test_table", {"id": "item123"})
+        result = await dynamodb_service_no_cache.get_item(
+            "test_table", {"id": "item123"}
+        )
 
         assert result == {"id": "item123", "test": "data"}
         # Cache should be empty
@@ -438,7 +449,9 @@ class TestDeleteItem:
             "timestamp": time.time(),
         }
 
-        result = await dynamodb_service.delete_item("test_table", {"id": "item123"}, user_id="user456")
+        result = await dynamodb_service.delete_item(
+            "test_table", {"id": "item123"}, user_id="user456"
+        )
 
         assert result is True
         mock_table.delete_item.assert_called_once_with(Key={"id": "item123"})
@@ -457,8 +470,7 @@ class TestDeleteItem:
     async def test_delete_item_other_error(self, dynamodb_service, mock_table):
         """Test delete_item with other errors."""
         mock_table.delete_item.side_effect = ClientError(
-            {"Error": {"Code": "ValidationException"}},
-            "DeleteItem"
+            {"Error": {"Code": "ValidationException"}}, "DeleteItem"
         )
 
         with pytest.raises(DynamoDBError):
@@ -485,7 +497,7 @@ class TestQueryItems:
             expression_attribute_values={":uid": "user123"},
             limit=10,
         )
-        
+
         results = response["Items"]
         assert len(results) == 2
         assert results[0]["id"] == "1"
@@ -543,7 +555,10 @@ class TestUpdateItem:
 
         # Clear cache to ensure update
         cache_key = dynamodb_service._cache_key("test_table", "item123")
-        dynamodb_service._cache[cache_key] = {"data": {"old": "data"}, "timestamp": time.time()}
+        dynamodb_service._cache[cache_key] = {
+            "data": {"old": "data"},
+            "timestamp": time.time(),
+        }
 
         result = await dynamodb_service.update_item(
             table_name="test_table",
@@ -561,8 +576,7 @@ class TestUpdateItem:
     async def test_update_item_not_found(self, dynamodb_service, mock_table):
         """Test update_item when item doesn't exist."""
         mock_table.update_item.side_effect = ClientError(
-            {"Error": {"Code": "ConditionalCheckFailedException"}},
-            "UpdateItem"
+            {"Error": {"Code": "ConditionalCheckFailedException"}}, "UpdateItem"
         )
 
         result = await dynamodb_service.update_item(
@@ -571,7 +585,7 @@ class TestUpdateItem:
             update_expression="SET #status = :status",
             expression_attribute_values={":status": "updated"},
         )
-        
+
         assert result is False
 
 
@@ -603,8 +617,7 @@ class TestBatchOperations:
         """Test batch write with error."""
         mock_batch_writer = MagicMock()
         mock_batch_writer.__enter__.side_effect = ClientError(
-            {"Error": {"Code": "ValidationException"}},
-            "BatchWriteItem"
+            {"Error": {"Code": "ValidationException"}}, "BatchWriteItem"
         )
         mock_table.batch_writer.return_value = mock_batch_writer
 
@@ -627,9 +640,10 @@ class TestHealthDataRepository:
 
         # Create a health data repository instead
         from clarity.services.dynamodb_service import DynamoDBHealthDataRepository
+
         repository = DynamoDBHealthDataRepository()
         repository._dynamodb_service = dynamodb_service
-        
+
         result = await repository.save_health_data(
             user_id=user_id,
             processing_id=processing_id,
@@ -657,9 +671,10 @@ class TestHealthDataRepository:
 
         # Create a health data repository instead
         from clarity.services.dynamodb_service import DynamoDBHealthDataRepository
+
         repository = DynamoDBHealthDataRepository()
         repository._dynamodb_service = dynamodb_service
-        
+
         result = await repository.get_processing_status("proc123", "user123")
 
         assert result["status"] == "completed"
@@ -678,9 +693,10 @@ class TestHealthDataRepository:
 
         # Create a health data repository instead
         from clarity.services.dynamodb_service import DynamoDBHealthDataRepository
+
         repository = DynamoDBHealthDataRepository()
         repository._dynamodb_service = dynamodb_service
-        
+
         result = await repository.get_user_health_data(
             user_id="user123",
             limit=10,
@@ -705,9 +721,10 @@ class TestHealthDataRepository:
 
         # Create a health data repository instead
         from clarity.services.dynamodb_service import DynamoDBHealthDataRepository
+
         repository = DynamoDBHealthDataRepository()
         repository._dynamodb_service = dynamodb_service
-        
+
         result = await repository.delete_health_data("user123", "proc123")
 
         assert result is True

@@ -2,35 +2,35 @@
 import re
 
 # Fix test_decorators_comprehensive.py
-with open('tests/core/test_decorators_comprehensive.py', 'r') as f:
+with open("tests/core/test_decorators_comprehensive.py") as f:
     content = f.read()
 
 # Replace caplog.at_level patterns
 content = re.sub(
-    r'with caplog\.at_level\(logging\.(INFO|DEBUG|WARNING)\):',
+    r"with caplog\.at_level\(logging\.(INFO|DEBUG|WARNING)\):",
     r'caplog.set_level(logging.\1, logger="clarity.core.decorators")',
-    content
+    content,
 )
 
 # Write back
-with open('tests/core/test_decorators_comprehensive.py', 'w') as f:
+with open("tests/core/test_decorators_comprehensive.py", "w") as f:
     f.write(content)
 
-print('Fixed comprehensive test file')
+print("Fixed comprehensive test file")
 
 # Fix test_decorators_production.py
-with open('tests/core/test_decorators_production.py', 'r') as f:
+with open("tests/core/test_decorators_production.py") as f:
     content = f.read()
 
 # Replace caplog.at_level patterns
 content = re.sub(
-    r'with caplog\.at_level\(logging\.(INFO|DEBUG|WARNING)\):',
+    r"with caplog\.at_level\(logging\.(INFO|DEBUG|WARNING)\):",
     r'caplog.set_level(logging.\1, logger="clarity.core.decorators")',
-    content
+    content,
 )
 
 # Write back
-with open('tests/core/test_decorators_production.py', 'w') as f:
+with open("tests/core/test_decorators_production.py", "w") as f:
     f.write(content)
 
-print('Fixed production test file')
+print("Fixed production test file")

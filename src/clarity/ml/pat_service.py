@@ -1005,7 +1005,8 @@ class PATModelService(IMLModelService):
     def _raise_model_not_loaded_error() -> NoReturn:
         """Raise error when model is not loaded."""
         msg = "PAT model not loaded. Call load_model() first."
-        raise MLPredictionError(msg, model_name="PAT")
+        runtime_error = RuntimeError(msg)
+        raise MLPredictionError(msg, model_name="PAT") from runtime_error
 
     @staticmethod
     def _raise_data_too_large_error(
@@ -1047,22 +1048,23 @@ class PATModelService(IMLModelService):
         )
 
         try:
+            # SECURITY: Validate input data bounds FIRST to prevent memory exhaustion
+            max_data_points = 20160  # 2 weeks max for safety
+            data_point_count = len(input_data.data_points)
+
+            if data_point_count == 0:
+                self._raise_empty_data_error()
+
+            if data_point_count > max_data_points:
+                self._raise_data_too_large_error(data_point_count, max_data_points)
+
+            # Check model loading status AFTER data validation
             if not self.is_loaded or not self.model:
                 self._raise_model_not_loaded_error()
 
             assert (  # nosec B101
                 self.model is not None
             ), "Model must be loaded at this point"
-
-            # SECURITY: Validate input data bounds to prevent memory exhaustion
-            max_data_points = 20160  # 2 weeks max for safety
-            data_point_count = len(input_data.data_points)
-
-            if data_point_count > max_data_points:
-                self._raise_data_too_large_error(data_point_count, max_data_points)
-
-            if data_point_count == 0:
-                self._raise_empty_data_error()
 
             # Preprocess input data
             input_tensor = self._preprocess_actigraphy_data(input_data.data_points)
@@ -1084,6 +1086,9 @@ class PATModelService(IMLModelService):
                 input_data.user_id,
             )
 
+        except DataValidationError:
+            # Re-raise data validation errors without wrapping - these are user input issues
+            raise
         except Exception as e:
             logger.exception(
                 "PAT model analysis failed for user %s",

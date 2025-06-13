@@ -859,7 +859,7 @@ class TestGetCognitoProviderFunction:
         """Test provider creation with AWS_REGION fallback."""
         # Clear LRU cache to prevent test isolation issues
         get_cognito_provider.cache_clear()
-        
+
         provider = get_cognito_provider()
 
         assert provider.region == "eu-west-1"
@@ -875,7 +875,7 @@ class TestGetCognitoProviderFunction:
         """Test provider creation with default region."""
         # Clear LRU cache to prevent test isolation issues
         get_cognito_provider.cache_clear()
-        
+
         provider = get_cognito_provider()
 
         assert provider.region == "us-east-1"
@@ -885,7 +885,7 @@ class TestGetCognitoProviderFunction:
         """Test provider creation with missing user pool ID."""
         # Clear LRU cache to prevent test isolation issues
         get_cognito_provider.cache_clear()
-        
+
         with pytest.raises(ValueError, match="Cognito configuration missing"):
             get_cognito_provider()
 
@@ -894,7 +894,7 @@ class TestGetCognitoProviderFunction:
         """Test provider creation with missing client ID."""
         # Clear LRU cache to prevent test isolation issues
         get_cognito_provider.cache_clear()
-        
+
         with pytest.raises(ValueError, match="Cognito configuration missing"):
             get_cognito_provider()
 
@@ -903,7 +903,7 @@ class TestGetCognitoProviderFunction:
         """Test provider creation with no configuration."""
         # Clear LRU cache to prevent test isolation issues
         get_cognito_provider.cache_clear()
-        
+
         with pytest.raises(ValueError, match="Cognito configuration missing"):
             get_cognito_provider()
 

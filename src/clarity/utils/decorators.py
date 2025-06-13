@@ -12,7 +12,7 @@ from circuitbreaker import (
 )
 from prometheus_client import Counter
 
-from clarity.core.exceptions import ServiceUnavailableProblem
+from clarity.core.exceptions import DataValidationError, ServiceUnavailableProblem
 
 if TYPE_CHECKING:
     from collections.abc import Awaitable, Callable
@@ -73,6 +73,11 @@ def resilient_prediction(
                 PREDICTION_FAILURE.labels(model_name=model_name).inc()
                 raise ServiceUnavailableProblem(msg) from e
             except Exception as e:
+                # Allow validation errors to pass through - these are user input issues
+                if isinstance(e, DataValidationError):
+                    PREDICTION_FAILURE.labels(model_name=model_name).inc()
+                    raise
+
                 # Allow domain-specific exceptions to pass through unchanged
                 if _HEALTH_DATA_SERVICE_ERROR and isinstance(
                     e, _HEALTH_DATA_SERVICE_ERROR

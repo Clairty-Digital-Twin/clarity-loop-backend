@@ -793,9 +793,22 @@ class TestHealthCheckAndServiceManagement:
     @pytest.mark.asyncio
     async def test_verify_weights_loaded_success(self):
         """Test weights verification when model is loaded."""
-        # Mock a loaded model
+        # Mock a loaded model with proper return structure
+        mock_model = Mock()
+        mock_embeddings = torch.zeros(1, 96)  # Same embeddings for both calls
+        mock_output = {
+            "embeddings": mock_embeddings,
+            "sleep_metrics": torch.zeros(1, 8),
+            "circadian_score": torch.zeros(1, 1),
+            "depression_risk": torch.zeros(1, 1),
+        }
+
+        # Configure mock to return the same output both times (indicates loaded weights)
+        mock_model.return_value = mock_output
+        mock_model.eval = Mock()  # Mock the eval() method
+
         self.service.is_loaded = True
-        self.service.model = Mock()
+        self.service.model = mock_model
 
         result = await self.service.verify_weights_loaded()
 

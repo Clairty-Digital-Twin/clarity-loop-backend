@@ -27,8 +27,7 @@ class TestAuthenticationE2E:
     """Test authentication flow from frontend to backend."""
 
     BASE_URL = os.getenv(
-        "AUTH_BASE_URL",
-        "http://clarity-alb-1762715656.us-east-1.elb.amazonaws.com"
+        "AUTH_BASE_URL", "https://clarity.novamindnyc.com"
     )
 
     @pytest.fixture
@@ -97,12 +96,16 @@ class TestAuthenticationE2E:
             )
 
             # Should return 401 Unauthorized
-            assert response.status_code == 401, f"Expected 401, got {response.status_code}. Response: {response.text}"
+            assert (
+                response.status_code == 401
+            ), f"Expected 401, got {response.status_code}. Response: {response.text}"
 
             # Verify error response
             data = response.json()
             assert "detail" in data
-            assert isinstance(data["detail"], dict), f"Expected detail to be dict, got {type(data['detail'])}"
+            assert isinstance(
+                data["detail"], dict
+            ), f"Expected detail to be dict, got {type(data['detail'])}"
             assert data["detail"]["type"] == "invalid_credentials"
             assert data["detail"]["status"] == 401
 

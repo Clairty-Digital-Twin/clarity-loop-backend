@@ -313,9 +313,11 @@ class CognitoAuthProvider(IAuthProvider):
                 logger.warning("Invalid credentials for: %s", email)
                 msg = "Invalid email or password"
                 raise InvalidCredentialsError(msg) from e
-            elif error_code == "UserNotConfirmedException":
+            if error_code == "UserNotConfirmedException":
                 logger.warning("Email not verified for: %s", email)
-                msg = "Email not verified. Please check your email for verification link."
+                msg = (
+                    "Email not verified. Please check your email for verification link."
+                )
                 raise EmailNotVerifiedError(msg) from e
             logger.exception("Authentication failed")
             msg = f"Authentication failed: {e!s}"

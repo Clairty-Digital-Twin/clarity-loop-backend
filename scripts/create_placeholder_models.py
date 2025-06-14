@@ -5,10 +5,11 @@ This script creates minimal HDF5 files that match the structure expected
 by the PAT model loader but contain random weights for testing purposes.
 """
 
-import os
 import hashlib
 import json
+import os
 from pathlib import Path
+
 import numpy as np
 
 try:
@@ -39,26 +40,26 @@ MODEL_CONFIGS = {
         "embed_dim": 96,
         "ff_dim": 256,
         "patch_size": 9,
-    }
+    },
 }
 
 
 def create_placeholder_weights(config):
     """Create placeholder weights matching PAT architecture."""
     weights = {}
-    
+
     # Patch embedding layer
     weights["patch_embedding/kernel:0"] = np.random.randn(
         config["patch_size"], config["embed_dim"]
     ).astype(np.float32)
-    weights["patch_embedding/bias:0"] = np.random.randn(
-        config["embed_dim"]
-    ).astype(np.float32)
-    
+    weights["patch_embedding/bias:0"] = np.random.randn(config["embed_dim"]).astype(
+        np.float32
+    )
+
     # Transformer layers
     for layer_idx in range(config["num_layers"]):
         prefix = f"transformer_block_{layer_idx}"
-        
+
         # Multi-head attention
         weights[f"{prefix}/multi_head_attention/query/kernel:0"] = np.random.randn(
             config["embed_dim"], config["embed_dim"]
@@ -69,10 +70,10 @@ def create_placeholder_weights(config):
         weights[f"{prefix}/multi_head_attention/value/kernel:0"] = np.random.randn(
             config["embed_dim"], config["embed_dim"]
         ).astype(np.float32)
-        weights[f"{prefix}/multi_head_attention/attention_output/kernel:0"] = np.random.randn(
-            config["embed_dim"], config["embed_dim"]
-        ).astype(np.float32)
-        
+        weights[f"{prefix}/multi_head_attention/attention_output/kernel:0"] = (
+            np.random.randn(config["embed_dim"], config["embed_dim"]).astype(np.float32)
+        )
+
         # Layer normalization
         weights[f"{prefix}/layer_normalization/gamma:0"] = np.ones(
             config["embed_dim"]
@@ -86,7 +87,7 @@ def create_placeholder_weights(config):
         weights[f"{prefix}/layer_normalization_1/beta:0"] = np.zeros(
             config["embed_dim"]
         ).astype(np.float32)
-        
+
         # Feed-forward network
         weights[f"{prefix}/ffn/dense_1/kernel:0"] = np.random.randn(
             config["embed_dim"], config["ff_dim"]
@@ -100,48 +101,47 @@ def create_placeholder_weights(config):
         weights[f"{prefix}/ffn/dense_2/bias:0"] = np.random.randn(
             config["embed_dim"]
         ).astype(np.float32)
-    
+
     # Output layers
     weights["classifier/kernel:0"] = np.random.randn(
         config["embed_dim"], 18  # 18 output classes
     ).astype(np.float32)
     weights["classifier/bias:0"] = np.random.randn(18).astype(np.float32)
-    
+
     return weights
 
 
 def create_model_file(filename, config, output_dir):
     """Create a placeholder HDF5 model file."""
     filepath = output_dir / filename
-    
+
     # Create placeholder weights
     weights = create_placeholder_weights(config)
-    
+
     # Save to HDF5
-    with h5py.File(filepath, 'w') as f:
+    with h5py.File(filepath, "w") as f:
         # Create model weights group
-        model_weights = f.create_group('model_weights')
-        
+        model_weights = f.create_group("model_weights")
+
         # Add each weight array
         for name, array in weights.items():
             model_weights.create_dataset(name, data=array)
-        
+
         # Add metadata
-        f.attrs['keras_version'] = '2.13.0'
-        f.attrs['backend'] = 'tensorflow'
-        f.attrs['model_config'] = json.dumps({
-            'class_name': 'PATModel',
-            'config': config
-        })
-    
+        f.attrs["keras_version"] = "2.13.0"
+        f.attrs["backend"] = "tensorflow"
+        f.attrs["model_config"] = json.dumps(
+            {"class_name": "PATModel", "config": config}
+        )
+
     # Calculate SHA256 checksum
     sha256_hash = hashlib.sha256()
     with open(filepath, "rb") as f:
         for byte_block in iter(lambda: f.read(4096), b""):
             sha256_hash.update(byte_block)
-    
+
     checksum = sha256_hash.hexdigest()
-    
+
     return filepath, checksum
 
 
@@ -151,16 +151,16 @@ def main():
     script_dir = Path(__file__).parent
     project_root = script_dir.parent
     models_dir = project_root / "models" / "pat"
-    
+
     # Create models directory
     models_dir.mkdir(parents=True, exist_ok=True)
-    
+
     print("Creating placeholder PAT model files...")
     print(f"Output directory: {models_dir}")
     print()
-    
+
     checksums = {}
-    
+
     for filename, config in MODEL_CONFIGS.items():
         print(f"Creating {filename}...")
         filepath, checksum = create_model_file(filename, config, models_dir)
@@ -168,13 +168,13 @@ def main():
         print(f"  ✓ Created: {filepath}")
         print(f"  ✓ SHA256: {checksum}")
         print()
-    
+
     # Save checksums to file
     checksum_file = models_dir / "checksums.json"
-    with open(checksum_file, 'w') as f:
+    with open(checksum_file, "w") as f:
         json.dump(checksums, f, indent=2)
     print(f"Saved checksums to: {checksum_file}")
-    
+
     # Print environment variables for deployment
     print("\nEnvironment variables for deployment:")
     print(f"export PAT_S_CHECKSUM=\"{checksums['PAT-S_29k_weights.h5']}\"")

@@ -19,7 +19,7 @@ async def test_auth():
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         text=True,
-        preexec_fn=os.setsid
+        preexec_fn=os.setsid,
     )
 
     # Wait for server to start
@@ -36,22 +36,24 @@ async def test_auth():
                 "device_info": {
                     "device_id": "test-device",
                     "os_version": "test-os",
-                    "app_version": "1.0.0"
-                }
+                    "app_version": "1.0.0",
+                },
             }
 
             print("\nTesting with invalid credentials...")
             response = await client.post(
                 "http://localhost:8000/api/v1/auth/login",
                 json=payload,
-                headers={"Content-Type": "application/json"}
+                headers={"Content-Type": "application/json"},
             )
 
             print(f"Status: {response.status_code}")
             print(f"Response: {json.dumps(response.json(), indent=2)}")
 
             if response.status_code == 401:
-                print("\n✅ LOCAL TEST PASSED! Backend correctly returns 401 for invalid credentials")
+                print(
+                    "\n✅ LOCAL TEST PASSED! Backend correctly returns 401 for invalid credentials"
+                )
                 print("The fix is working locally. Ready to deploy to production!")
                 return True
             print(f"\n❌ LOCAL TEST FAILED! Expected 401, got {response.status_code}")

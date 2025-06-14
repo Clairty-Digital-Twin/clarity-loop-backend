@@ -18,6 +18,8 @@ from clarity.core.constants import (
 )
 from clarity.core.exceptions import (
     AuthenticationError as CoreAuthError,
+)
+from clarity.core.exceptions import (
     EmailNotVerifiedError,
     InvalidCredentialsError,
     ProblemDetail,
@@ -156,12 +158,12 @@ async def login(
     try:
         body_bytes = await request.body()
         logger.warning("🔍 LOGIN REQUEST DEBUG:")
-        logger.warning(f"  Raw body bytes: {body_bytes!r}")
-        logger.warning(f"  Body length: {len(body_bytes)} bytes")
-        logger.warning(f"  Body as string: {body_bytes.decode('utf-8')}")
-        logger.warning(f"  Parsed credentials: email={credentials.email}")
+        logger.warning("  Raw body bytes: %r", body_bytes)
+        logger.warning("  Body length: %d bytes", len(body_bytes))
+        logger.warning("  Body as string: %s", body_bytes.decode("utf-8"))
+        logger.warning("  Parsed credentials: email=%s", credentials.email)
     except Exception as e:
-        logger.exception(f"Failed to log request body: {e}")
+        logger.exception("Failed to log request body: %s", e)
 
     # Validate auth provider before try block
     if not isinstance(auth_provider, CognitoAuthProvider):
@@ -192,7 +194,9 @@ async def login(
         # from the provider layer indicate a client-side authentication failure.
         # These should consistently result in a 401 Unauthorized response.
         # We use a generic error message to avoid leaking details about the failure.
-        logger.warning("Authentication failed for user: %s. Returning 401.", credentials.email)
+        logger.warning(
+            "Authentication failed for user: %s. Returning 401.", credentials.email
+        )
         raise HTTPException(
             status_code=401,
             detail=ProblemDetail(

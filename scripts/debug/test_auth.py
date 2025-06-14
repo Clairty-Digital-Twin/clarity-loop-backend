@@ -16,22 +16,24 @@ async def test_auth():
             "device_info": {
                 "device_id": "test-device",
                 "os_version": "test-os",
-                "app_version": "1.0.0"
-            }
+                "app_version": "1.0.0",
+            },
         }
 
         print("Testing with invalid credentials...")
         response = await client.post(
             "http://localhost:8000/api/v1/auth/login",
             json=payload,
-            headers={"Content-Type": "application/json"}
+            headers={"Content-Type": "application/json"},
         )
 
         print(f"Status: {response.status_code}")
         print(f"Response: {json.dumps(response.json(), indent=2)}")
 
         if response.status_code == 401:
-            print("✅ Test passed! Backend correctly returns 401 for invalid credentials")
+            print(
+                "✅ Test passed! Backend correctly returns 401 for invalid credentials"
+            )
         else:
             print(f"❌ Test failed! Expected 401, got {response.status_code}")
 

@@ -512,6 +512,11 @@ class UserNotFoundError(AuthenticationError):
 class InvalidCredentialsError(AuthenticationError):
     """Raised when credentials are invalid."""
 
+    def __init__(self, message: str, **kwargs: dict[str, Any]) -> None:
+        """Initialize with specific error code."""
+        super().__init__(message, **kwargs)
+        self.error_code = "INVALID_CREDENTIALS"
+
 
 class UserAlreadyExistsError(AuthenticationError):
     """Raised when user already exists."""

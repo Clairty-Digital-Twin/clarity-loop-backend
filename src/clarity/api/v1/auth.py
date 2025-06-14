@@ -161,7 +161,7 @@ async def login(
         logger.warning(f"  Parsed credentials: email={credentials.email}")
     except Exception as e:
         logger.error(f"Failed to log request body: {e}")
-    
+
     # Validate auth provider before try block
     if not isinstance(auth_provider, CognitoAuthProvider):
         raise HTTPException(

@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 """Final comprehensive test of backend authentication."""
 
-import httpx
-import json
 import asyncio
 from datetime import datetime
+import json
+
+import httpx
 
 # Test configuration
 BASE_URL = "http://clarity-alb-1762715656.us-east-1.elb.amazonaws.com"
@@ -18,9 +19,10 @@ test_payload = {
     "device_info": {
         "device_id": "iPhone-123",
         "os_version": "iOS 18.0",
-        "app_version": "1.0.0"
-    }
+        "app_version": "1.0.0",
+    },
 }
+
 
 async def test_authentication():
     """Test authentication endpoint."""
@@ -30,19 +32,19 @@ async def test_authentication():
     print(f"Endpoint: {LOGIN_ENDPOINT}")
     print(f"Payload: {json.dumps(test_payload, indent=2)}")
     print("-" * 60)
-    
+
     async with httpx.AsyncClient() as client:
         try:
             # Make the request
             response = await client.post(
                 LOGIN_ENDPOINT,
                 json=test_payload,
-                headers={"Content-Type": "application/json"}
+                headers={"Content-Type": "application/json"},
             )
-            
+
             print(f"Status Code: {response.status_code}")
             print(f"Response Headers: {dict(response.headers)}")
-            
+
             if response.status_code == 200:
                 data = response.json()
                 print("\n✅ SUCCESS! Authentication is working!")
@@ -53,30 +55,35 @@ async def test_authentication():
             else:
                 print(f"\n❌ FAILED with status {response.status_code}")
                 print(f"Response: {response.text}")
-                
+
         except Exception as e:
             print(f"\n❌ Error: {e}")
-    
+
     print("\n" + "=" * 60)
     print("CURL COMMAND COMPARISON")
     print("=" * 60)
-    
+
     print("\n❌ WRONG (causes JSON decode error):")
-    print("""curl -X POST http://clarity-alb-1762715656.us-east-1.elb.amazonaws.com/api/v1/auth/login \\
+    print(
+        """curl -X POST http://clarity-alb-1762715656.us-east-1.elb.amazonaws.com/api/v1/auth/login \\
   -H "Content-Type: application/json" \\
-  -d '{"email":"test@example.com","password":"TestPassword123!","remember_me":true,"device_info":{"device_id":"test","os_version":"test","app_version":"1.0"}}'""")
-    
+  -d '{"email":"test@example.com","password":"TestPassword123!","remember_me":true,"device_info":{"device_id":"test","os_version":"test","app_version":"1.0"}}'"""
+    )
+
     print("\n✅ CORRECT (proper escaping):")
-    print("""curl -X POST http://clarity-alb-1762715656.us-east-1.elb.amazonaws.com/api/v1/auth/login \\
+    print(
+        """curl -X POST http://clarity-alb-1762715656.us-east-1.elb.amazonaws.com/api/v1/auth/login \\
   -H "Content-Type: application/json" \\
-  -d '{"email":"test@example.com","password":"TestPassword123!","remember_me":true,"device_info":{"device_id":"test","os_version":"test","app_version":"1.0"}}'""")
-    
+  -d '{"email":"test@example.com","password":"TestPassword123!","remember_me":true,"device_info":{"device_id":"test","os_version":"test","app_version":"1.0"}}'"""
+    )
+
     print("\n🔍 The difference: Proper JSON formatting without shell escaping issues")
-    
+
     print("\n" + "=" * 60)
     print("SUMMARY")
     print("=" * 60)
-    print("""
+    print(
+        """
     1. The backend authentication is WORKING CORRECTLY ✅
     2. The error was in the curl command syntax (shell escaping)
     3. The iOS frontend sends properly formatted JSON
@@ -85,7 +92,9 @@ async def test_authentication():
     
     The original error message was misleading - it was a JSON parsing error
     from an improperly formatted curl command, NOT a backend issue!
-    """)
+    """
+    )
+
 
 if __name__ == "__main__":
     asyncio.run(test_authentication())

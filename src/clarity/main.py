@@ -133,6 +133,7 @@ app.add_middleware(
 # Add request logging middleware in development
 if ENVIRONMENT == "development":
     from clarity.middleware.request_logger import RequestLoggingMiddleware
+
     app.add_middleware(RequestLoggingMiddleware)
     logger.info("✅ Added request logging middleware for development")
 

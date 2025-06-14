@@ -155,12 +155,12 @@ async def login(
     try:
         body_bytes = await request.body()
         logger.warning("🔍 LOGIN REQUEST DEBUG:")
-        logger.warning(f"  Raw body bytes: {body_bytes}")
+        logger.warning(f"  Raw body bytes: {body_bytes!r}")
         logger.warning(f"  Body length: {len(body_bytes)} bytes")
         logger.warning(f"  Body as string: {body_bytes.decode('utf-8')}")
         logger.warning(f"  Parsed credentials: email={credentials.email}")
     except Exception as e:
-        logger.error(f"Failed to log request body: {e}")
+        logger.exception(f"Failed to log request body: {e}")
 
     # Validate auth provider before try block
     if not isinstance(auth_provider, CognitoAuthProvider):

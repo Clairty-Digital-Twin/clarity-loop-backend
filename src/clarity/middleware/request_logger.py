@@ -27,7 +27,7 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
         logger.warning(f"  Headers: {dict(request.headers)}")
 
         # For POST/PUT/PATCH requests, try to log the body
-        if request.method in ["POST", "PUT", "PATCH"]:
+        if request.method in {"POST", "PUT", "PATCH"}:
             try:
                 # Note: After reading body here, we need to make it available to the endpoint
                 body_bytes = await request.body()
@@ -55,7 +55,7 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
                 request._body = body_bytes
 
             except Exception as e:
-                logger.error(f"  Failed to read request body: {e}")
+                logger.exception(f"  Failed to read request body: {e}")
 
         # Process the request
         response = await call_next(request)

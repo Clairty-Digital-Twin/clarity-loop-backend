@@ -24,8 +24,8 @@ async def capture_raw_request(request: Request) -> dict[str, Any]:
         # Get raw body bytes
         body_bytes = await request.body()
 
-        # Prepare response
-        response = {
+        # Prepare response with proper typing
+        response: dict[str, Any] = {
             "headers": dict(request.headers),
             "method": request.method,
             "url": str(request.url),
@@ -84,12 +84,14 @@ async def capture_raw_request(request: Request) -> dict[str, Any]:
                         ),
                     }
 
-                logger.error(f"❌ DEBUG: JSON decode error at position {e.pos}: {e}")
+                logger.exception(
+                    f"❌ DEBUG: JSON decode error at position {e.pos}: {e}"
+                )
 
         except UnicodeDecodeError as e:
             response["body_info"]["decoded_success"] = False
             response["body_info"]["decode_error"] = str(e)
-            logger.error(f"❌ DEBUG: UTF-8 decode error: {e}")
+            logger.exception(f"❌ DEBUG: UTF-8 decode error: {e}")
 
         return response
 
@@ -108,7 +110,7 @@ async def echo_login_request(request: Request) -> JSONResponse:
     logger.warning("ECHO LOGIN REQUEST")
     logger.warning("=" * 60)
     logger.warning(f"Headers: {dict(request.headers)}")
-    logger.warning(f"Body bytes: {body_bytes}")
+    logger.warning(f"Body bytes: {body_bytes!r}")
     logger.warning(f"Body hex: {body_bytes.hex()}")
 
     try:
@@ -126,5 +128,5 @@ async def echo_login_request(request: Request) -> JSONResponse:
             }
         )
     except Exception as e:
-        logger.error(f"Echo error: {e}")
+        logger.exception(f"Echo error: {e}")
         return JSONResponse(status_code=400, content={"error": str(e)})

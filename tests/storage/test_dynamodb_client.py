@@ -5,8 +5,7 @@ from __future__ import annotations
 from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 import math
-from typing import Any
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import MagicMock, patch
 import uuid
 
 from botocore.exceptions import ClientError
@@ -26,7 +25,7 @@ from clarity.storage.dynamodb_client import DynamoDBHealthDataRepository
 
 
 @pytest.fixture
-def mock_table():
+def mock_table() -> MagicMock:
     """Mock DynamoDB table."""
     table = MagicMock()
     table.put_item = MagicMock()
@@ -38,7 +37,7 @@ def mock_table():
 
 
 @pytest.fixture
-def mock_dynamodb_resource(mock_table):
+def mock_dynamodb_resource(mock_table: MagicMock) -> MagicMock:
     """Mock DynamoDB resource."""
     resource = MagicMock()
     resource.Table.return_value = mock_table
@@ -46,7 +45,7 @@ def mock_dynamodb_resource(mock_table):
 
 
 @pytest.fixture
-def dynamodb_repository(mock_dynamodb_resource):
+def dynamodb_repository(mock_dynamodb_resource: MagicMock) -> DynamoDBHealthDataRepository:
     """Create DynamoDB repository with mocked resource."""
     with patch("boto3.resource", return_value=mock_dynamodb_resource):
         return DynamoDBHealthDataRepository(
@@ -56,7 +55,7 @@ def dynamodb_repository(mock_dynamodb_resource):
 
 
 @pytest.fixture
-def dynamodb_repository_with_endpoint(mock_dynamodb_resource):
+def dynamodb_repository_with_endpoint(mock_dynamodb_resource: MagicMock) -> DynamoDBHealthDataRepository:
     """Create DynamoDB repository with endpoint URL."""
     with patch("boto3.resource", return_value=mock_dynamodb_resource):
         return DynamoDBHealthDataRepository(
@@ -67,7 +66,7 @@ def dynamodb_repository_with_endpoint(mock_dynamodb_resource):
 
 
 @pytest.fixture
-def valid_health_metrics():
+def valid_health_metrics() -> list[HealthMetric]:
     """Create valid health metrics."""
     return [
         HealthMetric(

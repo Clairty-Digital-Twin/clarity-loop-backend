@@ -176,32 +176,21 @@ async def login(
         )
 
     except (InvalidCredentialsError, CoreAuthError) as e:
-        # Both InvalidCredentialsError from cognito_auth_service and 
-        # AuthenticationError from core.exceptions should result in 401
-        error_msg = str(e)
-        if "Invalid email or password" in error_msg or isinstance(e, InvalidCredentialsError):
-            raise HTTPException(
-                status_code=401,
-                detail=ProblemDetail(
-                    type="invalid_credentials",
-                    title="Invalid Credentials",
-                    detail=error_msg,
-                    status=401,
-                    instance=f"https://api.clarity.health/requests/{id(e)}",
-                ).model_dump(),
-            ) from e
-        else:
-            # Other authentication errors get 500
-            raise HTTPException(
-                status_code=500,
-                detail=ProblemDetail(
-                    type="authentication_error",
-                    title="Authentication Failed",
-                    detail=error_msg,
-                    status=500,
-                    instance=f"https://api.clarity.health/requests/{id(e)}",
-                ).model_dump(),
-            ) from e
+        # Both InvalidCredentialsError from the service layer and CoreAuthError
+        # from the provider layer indicate a client-side authentication failure.
+        # These should consistently result in a 401 Unauthorized response.
+        # We use a generic error message to avoid leaking details about the failure.
+        logger.warning("Authentication failed for user: %s. Returning 401.", credentials.email)
+        raise HTTPException(
+            status_code=401,
+            detail=ProblemDetail(
+                type="invalid_credentials",
+                title="Invalid Credentials",
+                detail="Invalid email or password.",
+                status=401,
+                instance=f"https://api.clarity.health/requests/{id(e)}",
+            ).model_dump(),
+        ) from e
     except EmailNotVerifiedError as e:
         raise HTTPException(
             status_code=403,

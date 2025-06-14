@@ -240,7 +240,7 @@ class TestUploadRawData:
         # We need to ensure isinstance check fails
         with patch(
             "clarity.services.health_data_service.isinstance",
-            side_effect=lambda obj, cls: False,
+            side_effect=lambda _obj, _cls: False,
         ):
             service = HealthDataService(
                 repository=mock_repository,

@@ -63,7 +63,7 @@ async def test_ios_payload() -> None:
 
     for i, test_str in enumerate(test_strings):
         if len(test_str) > 55:
-            print(f"Format {i+1} - Position 55: '{test_str[55]}' (in: {test_str[50:60]})")
+            print(f"Format {i + 1} - Position 55: '{test_str[55]}' (in: {test_str[50:60]})")
 
 
 if __name__ == "__main__":

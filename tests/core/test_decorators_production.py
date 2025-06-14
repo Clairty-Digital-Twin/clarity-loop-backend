@@ -54,7 +54,7 @@ class TestLogExecutionDecorator:
         """Test logging with arguments and result included."""
 
         @log_execution(include_args=True, include_result=True)
-        def test_function(x: int, y: int, z: str | None = None) -> int:
+        def test_function(x: int, y: int, _z: str | None = None) -> int:
             return x + y
 
         caplog.set_level(logging.INFO, logger="clarity.core.decorators")
@@ -81,9 +81,11 @@ class TestLogExecutionDecorator:
 
         caplog.set_level(logging.INFO, logger="clarity.core.decorators")
 
-        with caplog.at_level(logging.INFO):
-            with pytest.raises(ValueError, match="Test error"):
-                failing_function()
+        with (
+            caplog.at_level(logging.INFO),
+            pytest.raises(ValueError, match="Test error"),
+        ):
+            failing_function()
 
         log_messages = [record.message for record in caplog.records]
         assert any("Executing" in msg for msg in log_messages)
@@ -177,11 +179,11 @@ class TestMeasureExecutionTimeDecorator:
 
         caplog.set_level(logging.INFO, logger="clarity.core.decorators")
 
-        caplog.set_level(logging.INFO, logger="clarity.core.decorators")
-
-        with caplog.at_level(logging.INFO):
-            with pytest.raises(Exception, match="Timing test error"):
-                failing_function()
+        with (
+            caplog.at_level(logging.INFO),
+            pytest.raises(Exception, match="Timing test error"),
+        ):
+            failing_function()
 
         log_messages = [record.message for record in caplog.records]
         assert any("failed after" in msg and "ms" in msg for msg in log_messages)
@@ -433,7 +435,7 @@ class TestAuditTrailDecorator:
         @audit_trail(
             "delete_document", user_id_param="user_id", resource_id_param="doc_id"
         )
-        def delete_document(user_id: str, doc_id: str) -> dict[str, bool]:
+        def delete_document(_user_id: str, _doc_id: str) -> dict[str, bool]:
             return {"deleted": True}
 
         caplog.set_level(logging.INFO, logger="clarity.core.decorators")
@@ -473,7 +475,7 @@ class TestAuditTrailDecorator:
         """Test audit trail with async functions."""
 
         @audit_trail("async_operation", user_id_param="user_id")
-        async def async_operation(user_id: str) -> dict[str, bool]:
+        async def async_operation(_user_id: str) -> dict[str, bool]:
             await asyncio.sleep(0.001)
             return {"completed": True}
 
@@ -675,7 +677,7 @@ class TestProductionScenarios:
         @validate_input(validate_api_request, "Invalid API request format")
         @audit_trail("api_request", user_id_param="user_id")
         def handle_api_request(
-            request_data: dict[str, Any], user_id: str | None = None
+            request_data: dict[str, Any], _user_id: str | None = None
         ) -> dict[str, str]:
             return {
                 "status": "processed",

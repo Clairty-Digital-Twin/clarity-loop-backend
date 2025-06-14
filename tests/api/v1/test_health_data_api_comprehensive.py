@@ -273,32 +273,28 @@ class TestUploadHealthDataWithDependencies:
         mock_repository.save_health_data.return_value = True
 
         # Mock GCS and publisher
-        with patch("clarity.api.v1.health_data.storage"):
-            with patch(
-                "clarity.api.v1.health_data.get_publisher"
-            ) as mock_get_publisher:
-                mock_publisher = AsyncMock()
-                mock_publisher.publish_health_data_upload = AsyncMock(
-                    return_value="msg-123"
-                )
-                mock_get_publisher.return_value = mock_publisher
+        with (
+            patch("clarity.api.v1.health_data.storage"),
+            patch("clarity.api.v1.health_data.get_publisher") as mock_get_publisher,
+            patch("clarity.services.health_data_service.HealthDataService.process_health_data") as mock_process,
+        ):
+            mock_publisher = AsyncMock()
+            mock_publisher.publish_health_data_upload = AsyncMock(
+                return_value="msg-123"
+            )
+            mock_get_publisher.return_value = mock_publisher
+            mock_process.return_value = HealthDataResponse(
+                processing_id=processing_id,
+                status=ProcessingStatus.RECEIVED,
+                accepted_metrics=len(valid_health_data_upload.metrics),
+                message="Health data received successfully",
+            )
 
-                # Mock the health data service's process_health_data method
-                with patch(
-                    "clarity.services.health_data_service.HealthDataService.process_health_data"
-                ) as mock_process:
-                    mock_process.return_value = HealthDataResponse(
-                        processing_id=processing_id,
-                        status=ProcessingStatus.RECEIVED,
-                        accepted_metrics=len(valid_health_data_upload.metrics),
-                        message="Health data received successfully",
-                    )
-
-                    response = client_with_dependencies.post(
-                        "/api/v1/health-data/upload",
-                        json=valid_health_data_upload.model_dump(mode="json"),
-                        headers={"Authorization": "Bearer test-token"},
-                    )
+            response = client_with_dependencies.post(
+                "/api/v1/health-data/upload",
+                json=valid_health_data_upload.model_dump(mode="json"),
+                headers={"Authorization": "Bearer test-token"},
+            )
 
         assert response.status_code == 201
         data = response.json()

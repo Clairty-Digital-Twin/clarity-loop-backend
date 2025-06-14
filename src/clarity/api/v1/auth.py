@@ -309,7 +309,7 @@ async def update_user(
 @router.post("/logout", response_model=LogoutResponse)
 async def logout(
     request: Request,
-    auth_provider: IAuthProvider = Depends(get_auth_provider),
+    _auth_provider: IAuthProvider = Depends(get_auth_provider),
 ) -> LogoutResponse:
     """Logout user (invalidate token if supported)."""
     # Check request format first - get body and auth header

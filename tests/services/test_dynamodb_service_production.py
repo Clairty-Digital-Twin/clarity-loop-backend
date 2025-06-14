@@ -835,7 +835,7 @@ class TestHealthCheck:
         try:
             await self.service.health_check()
         except (
-            Exception
+            Exception  # noqa: BLE001 - Health check can raise any exception during failure scenarios
         ):
             # If health check raises exception, that's also valid behavior
             # No action needed as we're testing that health check completes without crashing

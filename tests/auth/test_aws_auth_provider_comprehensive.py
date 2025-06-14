@@ -353,9 +353,9 @@ class TestTokenVerification:
                 "jose.jwt.get_unverified_header", return_value={"kid": "test_key_id"}
             ),
             patch("jose.jwt.decode", side_effect=JWTError("Invalid token")),
+            pytest.raises(AuthError, match="Invalid Cognito token"),
         ):
-            with pytest.raises(AuthError, match="Invalid Cognito token"):
-                await provider.verify_token("invalid_token")
+            await provider.verify_token("invalid_token")
 
     async def test_verify_token_unexpected_error(self):
         """Test token verification unexpected error handling."""
@@ -861,9 +861,11 @@ class TestProductionIntegrationScenarios:
         provider._initialized = True
 
         # Test JWKS failure
-        with patch.object(provider, "_get_jwks", side_effect=Exception("JWKS failed")):
-            with pytest.raises(AuthError, match="An unexpected error occurred"):
-                await provider.verify_token("any_token")
+        with (
+            patch.object(provider, "_get_jwks", side_effect=Exception("JWKS failed")),
+            pytest.raises(AuthError, match="An unexpected error occurred"),
+        ):
+            await provider.verify_token("any_token")
 
     async def test_concurrent_token_verification(self):
         """Test concurrent token verification doesn't break caching."""

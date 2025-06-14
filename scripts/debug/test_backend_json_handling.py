@@ -76,7 +76,7 @@ async def test_json_handling() -> None:
                 else:
                     print(f"✗ {test['name']}: Failed with status {response.status_code}")
 
-            except Exception as e:
+            except (httpx.HTTPError, httpx.ConnectError, ValueError, json.JSONDecodeError) as e:
                 # Log JSON handling errors for debugging
                 print(f"JSON handling error with test '{test.get('name', 'unknown')}': {e}")
 

@@ -804,7 +804,7 @@ class TestCloudStoragePortMethods:
         # This is a synchronous method that needs special handling
 
         async def mock_upload_file(
-            data: bytes, file_path: str, metadata: dict[str, Any] | None = None
+            _data: bytes, file_path: str, _metadata: dict[str, Any] | None = None
         ) -> str:
             return f"s3://test-bucket/{file_path}"
 

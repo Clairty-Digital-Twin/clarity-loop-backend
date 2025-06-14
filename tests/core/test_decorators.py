@@ -852,7 +852,7 @@ class TestDecoratorsBasic:
                 except ValueError:
                     return "handled_error"
                 except (
-                    Exception
+                    Exception  # noqa: BLE001 - Test decorator needs to catch all exceptions
                 ) as e:
                     return f"unexpected_error_{type(e).__name__}"
 
@@ -969,7 +969,7 @@ class TestDecoratorsBasic:
                         try:
                             return func(*args, **kwargs)
                         except (
-                            Exception
+                            Exception  # noqa: BLE001 - Testing generic retry decorator pattern
                         ):
                             if attempt == max_attempts - 1:
                                 break
@@ -1098,7 +1098,7 @@ class TestDecoratorsBasic:
                         return await func(*args, **kwargs)
                     return func(*args, **kwargs)
                 except (
-                    Exception
+                    Exception  # noqa: BLE001 - Testing generic error handler decorator pattern
                 ):
                     return "async_error_handled"
 

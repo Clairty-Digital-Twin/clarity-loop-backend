@@ -54,7 +54,7 @@ class TestLogExecutionDecorator:
         """Test logging with arguments and result included."""
 
         @log_execution(include_args=True, include_result=True)
-        def test_function(x: int, y: int, z: str | None = None) -> int:
+        def test_function(x: int, y: int, _z: str | None = None) -> int:
             return x + y
 
         caplog.set_level(logging.INFO, logger="clarity.core.decorators")
@@ -62,12 +62,12 @@ class TestLogExecutionDecorator:
         caplog.set_level(logging.INFO, logger="clarity.core.decorators")
 
         with caplog.at_level(logging.INFO):
-            result = test_function(1, 2, z="test")
+            result = test_function(1, 2, _z="test")
 
         assert result == 3
         log_messages = [record.message for record in caplog.records]
         assert any("args=(1, 2)" in msg for msg in log_messages)
-        assert any("kwargs={'z': 'test'}" in msg for msg in log_messages)
+        assert any("kwargs={'_z': 'test'}" in msg for msg in log_messages)
 
     def test_log_execution_exception_handling(self, caplog: LogCaptureFixture) -> None:
         """Test logging when function raises exception."""
@@ -678,7 +678,7 @@ class TestProductionScenarios:
         @validate_input(validate_api_request, "Invalid API request format")
         @audit_trail("api_request", user_id_param="user_id")
         def handle_api_request(
-            request_data: dict[str, Any], user_id: str | None = None
+            request_data: dict[str, Any], _user_id: str | None = None
         ) -> dict[str, str]:
             return {
                 "status": "processed",

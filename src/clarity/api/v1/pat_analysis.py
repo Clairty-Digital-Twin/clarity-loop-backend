@@ -142,7 +142,7 @@ async def get_pat_inference_engine() -> AsyncInferenceEngine:
 )
 async def analyze_step_data(
     request: StepDataRequest,
-    background_tasks: BackgroundTasks,
+    _background_tasks: BackgroundTasks,
     current_user: AuthenticatedUser,
     inference_engine: AsyncInferenceEngine = Depends(get_pat_inference_engine),
 ) -> AnalysisResponse:
@@ -515,7 +515,7 @@ async def health_check(
     description="Get information about the available PAT models and current configuration",
 )
 async def get_model_info(
-    current_user: AuthenticatedUser,
+    _current_user: AuthenticatedUser,
     inference_engine: AsyncInferenceEngine = Depends(get_pat_inference_engine),
 ) -> dict[str, Any]:
     """Get detailed information about PAT model configuration and capabilities."""

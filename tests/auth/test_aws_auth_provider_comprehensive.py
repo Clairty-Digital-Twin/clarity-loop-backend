@@ -70,7 +70,9 @@ class TestCognitoAuthProviderInitialization:
         assert provider._token_cache_max_size == 2000
 
     @patch("boto3.client")
-    async def test_cognito_auth_provider_initialize_success(self, mock_boto_client: MagicMock) -> None:
+    async def test_cognito_auth_provider_initialize_success(
+        self, mock_boto_client: MagicMock
+    ) -> None:
         """Test successful initialization with AWS connection."""
         mock_cognito = Mock()
         mock_cognito.describe_user_pool.return_value = {
@@ -91,7 +93,9 @@ class TestCognitoAuthProviderInitialization:
         )
 
     @patch("boto3.client")
-    async def test_cognito_auth_provider_initialize_failure(self, mock_boto_client: MagicMock) -> None:
+    async def test_cognito_auth_provider_initialize_failure(
+        self, mock_boto_client: MagicMock
+    ) -> None:
         """Test initialization failure handling."""
         mock_cognito = Mock()
         mock_cognito.describe_user_pool.side_effect = ClientError(
@@ -188,7 +192,9 @@ class TestJWKSHandling:
             await provider._get_jwks()
 
     @patch("urllib.request.urlopen")
-    async def test_get_jwks_network_error_with_cache_fallback(self, mock_urlopen: MagicMock) -> None:
+    async def test_get_jwks_network_error_with_cache_fallback(
+        self, mock_urlopen: MagicMock
+    ) -> None:
         """Test JWKS network error with cache fallback."""
         provider = CognitoAuthProvider(
             user_pool_id="us-east-1_ABC123", client_id="client123"
@@ -421,7 +427,9 @@ class TestUserInfoRetrieval:
     """Test user information retrieval from Cognito."""
 
     @patch("boto3.client")
-    async def test_get_user_info_by_username_success(self, mock_boto_client: MagicMock) -> None:
+    async def test_get_user_info_by_username_success(
+        self, mock_boto_client: MagicMock
+    ) -> None:
         """Test successful user info retrieval by username."""
         mock_cognito = Mock()
         mock_cognito.admin_get_user.return_value = {
@@ -447,7 +455,9 @@ class TestUserInfoRetrieval:
         assert "admin" in result["roles"]
 
     @patch("boto3.client")
-    async def test_get_user_info_by_email_fallback(self, mock_boto_client: MagicMock) -> None:
+    async def test_get_user_info_by_email_fallback(
+        self, mock_boto_client: MagicMock
+    ) -> None:
         """Test user info retrieval fallback to email search."""
         mock_cognito = Mock()
         # First call (by username) fails
@@ -479,7 +489,9 @@ class TestUserInfoRetrieval:
         assert "clinician" in result["roles"]
 
     @patch("boto3.client")
-    async def test_get_user_info_user_not_found(self, mock_boto_client: MagicMock) -> None:
+    async def test_get_user_info_user_not_found(
+        self, mock_boto_client: MagicMock
+    ) -> None:
         """Test user info retrieval when user is not found."""
         mock_cognito = Mock()
         mock_cognito.admin_get_user.side_effect = ClientError(

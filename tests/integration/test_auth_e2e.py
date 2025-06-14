@@ -35,7 +35,9 @@ class TestAuthenticationE2E:
         return {"email": "test@example.com", "password": "TestPassword123!"}
 
     @pytest.fixture
-    def frontend_login_payload(self, test_user_credentials: dict[str, str]) -> dict[str, Any]:
+    def frontend_login_payload(
+        self, test_user_credentials: dict[str, str]
+    ) -> dict[str, Any]:
         """Frontend login payload exactly as iOS app sends it."""
         return {
             "email": test_user_credentials["email"],
@@ -70,9 +72,7 @@ class TestAuthenticationE2E:
             assert "access_token" in data
             assert "refresh_token" in data
             assert "token_type" in data
-            assert (
-                data["token_type"] == "bearer"  # noqa: S105 - Expected token type
-            )
+            assert data["token_type"] == "bearer"  # noqa: S105 - Expected token type
             assert "expires_in" in data
             assert data["expires_in"] == 3600
             assert "scope" in data
@@ -88,7 +88,9 @@ class TestAuthenticationE2E:
     @pytest.mark.skipif(
         os.getenv("CI") == "true", reason="Requires live Cognito credentials"
     )
-    async def test_login_invalid_credentials(self, frontend_login_payload: dict[str, Any]) -> None:
+    async def test_login_invalid_credentials(
+        self, frontend_login_payload: dict[str, Any]
+    ) -> None:
         """Test login with invalid credentials."""
         # Skip if service is unreachable
         if not _service_up(self.BASE_URL):

@@ -74,11 +74,20 @@ async def test_json_handling() -> None:
                 if response.status_code == 200:
                     print(f"✓ {test['name']}: Success")
                 else:
-                    print(f"✗ {test['name']}: Failed with status {response.status_code}")
+                    print(
+                        f"✗ {test['name']}: Failed with status {response.status_code}"
+                    )
 
-            except (httpx.HTTPError, httpx.ConnectError, ValueError, json.JSONDecodeError) as e:
+            except (
+                httpx.HTTPError,
+                httpx.ConnectError,
+                ValueError,
+                json.JSONDecodeError,
+            ) as e:
                 # Log JSON handling errors for debugging
-                print(f"JSON handling error with test '{test.get('name', 'unknown')}': {e}")
+                print(
+                    f"JSON handling error with test '{test.get('name', 'unknown')}': {e}"
+                )
 
 
 async def test_debug_endpoint() -> None:

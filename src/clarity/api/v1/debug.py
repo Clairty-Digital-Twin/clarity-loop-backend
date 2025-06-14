@@ -59,7 +59,7 @@ async def capture_raw_request(request: Request) -> dict[str, Any]:
 
                 # Log for debugging
                 logger.warning("✅ DEBUG: Valid JSON received")
-                logger.warning(f"JSON: {json.dumps(body_json, indent=2)}")
+                logger.warning("JSON: %s", json.dumps(body_json, indent=2))
 
             except json.JSONDecodeError as e:
                 response["body_info"]["json_valid"] = False
@@ -85,13 +85,13 @@ async def capture_raw_request(request: Request) -> dict[str, Any]:
                     }
 
                 logger.exception(
-                    f"❌ DEBUG: JSON decode error at position {e.pos}: {e}"
+                    "❌ DEBUG: JSON decode error at position %s: %s", e.pos, e
                 )
 
         except UnicodeDecodeError as e:
             response["body_info"]["decoded_success"] = False
             response["body_info"]["decode_error"] = str(e)
-            logger.exception(f"❌ DEBUG: UTF-8 decode error: {e}")
+            logger.exception("❌ DEBUG: UTF-8 decode error: %s", e)
 
         return response
 
@@ -109,13 +109,13 @@ async def echo_login_request(request: Request) -> JSONResponse:
     logger.warning("=" * 60)
     logger.warning("ECHO LOGIN REQUEST")
     logger.warning("=" * 60)
-    logger.warning(f"Headers: {dict(request.headers)}")
-    logger.warning(f"Body bytes: {body_bytes!r}")
-    logger.warning(f"Body hex: {body_bytes.hex()}")
+    logger.warning("Headers: %s", dict(request.headers))
+    logger.warning("Body bytes: %r", body_bytes)
+    logger.warning("Body hex: %s", body_bytes.hex())
 
     try:
         body_str = body_bytes.decode("utf-8")
-        logger.warning(f"Body string: {body_str}")
+        logger.warning("Body string: %s", body_str)
 
         # Return mock auth response to keep client happy
         return JSONResponse(
@@ -128,5 +128,5 @@ async def echo_login_request(request: Request) -> JSONResponse:
             }
         )
     except Exception as e:
-        logger.exception(f"Echo error: {e}")
+        logger.exception("Echo error: %s", e)
         return JSONResponse(status_code=400, content={"error": str(e)})

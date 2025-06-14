@@ -464,7 +464,9 @@ class TestPATModelServiceInitialization:
         assert service.preprocessor == mock_preprocessor
 
     @patch("torch.cuda.is_available")
-    def test_service_device_selection_cuda_available(self, mock_cuda: MagicMock) -> None:
+    def test_service_device_selection_cuda_available(
+        self, mock_cuda: MagicMock
+    ) -> None:
         """Test device selection when CUDA is available."""
         mock_cuda.return_value = True
         service = PATModelService()
@@ -472,7 +474,9 @@ class TestPATModelServiceInitialization:
         assert service.device == "cuda"
 
     @patch("torch.cuda.is_available")
-    def test_service_device_selection_cuda_unavailable(self, mock_cuda: MagicMock) -> None:
+    def test_service_device_selection_cuda_unavailable(
+        self, mock_cuda: MagicMock
+    ) -> None:
         """Test device selection when CUDA is unavailable."""
         mock_cuda.return_value = False
         service = PATModelService()
@@ -498,7 +502,9 @@ class TestModelLoadingAndSecurity:
 
     @patch("pathlib.Path.exists")
     @patch.object(PATModelService, "_load_pretrained_weights")
-    async def test_load_model_with_weights(self, mock_load_weights: MagicMock, mock_exists: MagicMock) -> None:
+    async def test_load_model_with_weights(
+        self, mock_load_weights: MagicMock, mock_exists: MagicMock
+    ) -> None:
         """Test model loading with existing weights file."""
         mock_exists.return_value = True
         mock_load_weights.return_value = None
@@ -720,7 +726,9 @@ class TestDataPreprocessingAndPredictions:
         # Verify insights contain relevant keywords
         insight_text = " ".join(insights).lower()
         # Check that we have content about sleep or circadian rhythm
-        assert any(word in insight_text for word in ["sleep", "circadian", "rhythm", "pattern"])
+        assert any(
+            word in insight_text for word in ["sleep", "circadian", "rhythm", "pattern"]
+        )
 
 
 class TestErrorHandlingAndValidation:

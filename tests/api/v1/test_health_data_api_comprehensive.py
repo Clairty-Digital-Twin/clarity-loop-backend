@@ -111,7 +111,10 @@ def reset_health_data_dependencies():
 
 @pytest.fixture
 def app_with_dependencies(
-    test_user: UserContext, mock_auth_provider: Mock, mock_repository: Mock, mock_config_provider: Mock
+    test_user: UserContext,
+    mock_auth_provider: Mock,
+    mock_repository: Mock,
+    mock_config_provider: Mock,
 ) -> Generator[FastAPI, None, None]:
     """Create a real FastAPI app with dependencies properly configured."""
     app = FastAPI()
@@ -171,7 +174,9 @@ class TestHealthCheckEndpoints:
         assert data["service"] == "health-data-api"
         assert "timestamp" in data
 
-    def test_health_check_with_dependencies(self, client_with_dependencies: TestClient) -> None:
+    def test_health_check_with_dependencies(
+        self, client_with_dependencies: TestClient
+    ) -> None:
         """Test health check with dependencies configured."""
         response = client_with_dependencies.get("/api/v1/health-data/health")
 
@@ -184,7 +189,9 @@ class TestHealthCheckEndpoints:
 class TestUploadHealthDataNoDependencies:
     """Test upload endpoint behavior when dependencies are not configured."""
 
-    def test_upload_service_unavailable(self, client: TestClient, valid_health_data_upload: HealthDataUpload) -> None:
+    def test_upload_service_unavailable(
+        self, client: TestClient, valid_health_data_upload: HealthDataUpload
+    ) -> None:
         """Test upload with default behavior when dependencies not explicitly configured."""
         response = client.post(
             "/api/v1/health-data/upload",
@@ -200,7 +207,9 @@ class TestUploadHealthDataWithDependencies:
     """Test upload endpoint with properly configured dependencies."""
 
     def test_upload_authorization_error(
-        self, client_with_dependencies: TestClient, valid_health_data_upload: HealthDataUpload
+        self,
+        client_with_dependencies: TestClient,
+        valid_health_data_upload: HealthDataUpload,
     ) -> None:
         """Test upload with authorization error (wrong user)."""
         # Change user_id to different user
@@ -215,7 +224,9 @@ class TestUploadHealthDataWithDependencies:
         # Router returns 500 for authorization mismatches (internal error handling)
         assert response.status_code == 500
 
-    def test_upload_validation_error(self, client_with_dependencies: TestClient, test_user: UserContext) -> None:
+    def test_upload_validation_error(
+        self, client_with_dependencies: TestClient, test_user: UserContext
+    ) -> None:
         """Test upload with invalid data."""
         # Create upload with invalid data
         invalid_upload = {
@@ -232,7 +243,9 @@ class TestUploadHealthDataWithDependencies:
 
         assert response.status_code == 422
 
-    def test_upload_too_many_metrics(self, client_with_dependencies: TestClient, test_user: UserContext) -> None:
+    def test_upload_too_many_metrics(
+        self, client_with_dependencies: TestClient, test_user: UserContext
+    ) -> None:
         """Test upload with too many metrics."""
         # Create upload with too many metrics (over 10000 limit)
         # Over the 10000 limit
@@ -264,7 +277,10 @@ class TestUploadHealthDataWithDependencies:
 
     @pytest.mark.asyncio
     async def test_upload_success_with_mocked_service(
-        self, client_with_dependencies: TestClient, valid_health_data_upload: HealthDataUpload, mock_repository: Mock
+        self,
+        client_with_dependencies: TestClient,
+        valid_health_data_upload: HealthDataUpload,
+        mock_repository: Mock,
     ) -> None:
         """Test successful upload by mocking only the service layer."""
         processing_id = uuid.uuid4()
@@ -276,7 +292,9 @@ class TestUploadHealthDataWithDependencies:
         with (
             patch("clarity.api.v1.health_data.storage"),
             patch("clarity.api.v1.health_data.get_publisher") as mock_get_publisher,
-            patch("clarity.services.health_data_service.HealthDataService.process_health_data") as mock_process,
+            patch(
+                "clarity.services.health_data_service.HealthDataService.process_health_data"
+            ) as mock_process,
         ):
             mock_publisher = AsyncMock()
             mock_publisher.publish_health_data_upload = AsyncMock(
@@ -306,7 +324,9 @@ class TestUploadHealthDataWithDependencies:
 class TestProcessingStatus:
     """Test processing status endpoint with real code."""
 
-    def test_get_processing_status_service_unavailable(self, client: TestClient) -> None:
+    def test_get_processing_status_service_unavailable(
+        self, client: TestClient
+    ) -> None:
         """Test status retrieval when dependencies not explicitly configured."""
         processing_id = uuid.uuid4()
 

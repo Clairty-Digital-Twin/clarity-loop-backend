@@ -92,7 +92,9 @@ class TestHealthAnalysisPipelineInitialization:
 
     @patch("os.getenv")
     @patch("clarity.ml.analysis_pipeline.DynamoDBHealthDataRepository")
-    async def test_get_dynamodb_client(self, mock_repository: MagicMock, mock_getenv: MagicMock) -> None:
+    async def test_get_dynamodb_client(
+        self, mock_repository: MagicMock, mock_getenv: MagicMock
+    ) -> None:
         """Test DynamoDB client initialization."""
         mock_getenv.side_effect = {
             "DYNAMODB_TABLE_NAME": "test-table",
@@ -300,7 +302,9 @@ class TestMainWorkflow:
     """Test the main process_health_data workflow."""
 
     @patch("clarity.ml.analysis_pipeline.get_pat_service")
-    async def test_process_health_data_single_modality(self, mock_get_pat: MagicMock) -> None:
+    async def test_process_health_data_single_modality(
+        self, mock_get_pat: MagicMock
+    ) -> None:
         """Test processing with single modality (cardio only)."""
         pipeline = HealthAnalysisPipeline()
 

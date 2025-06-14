@@ -671,9 +671,7 @@ async def health_check_detailed() -> dict[str, Any]:
             else:
                 health_status["database"] = "not_configured"
                 health_status["status"] = "degraded"
-        except (
-            Exception
-        ) as db_error:
+        except Exception as db_error:
             logger.warning("Database health check failed: %s", db_error)
             health_status["database"] = "error"
             health_status["status"] = "degraded"
@@ -684,9 +682,7 @@ async def health_check_detailed() -> dict[str, Any]:
             else:
                 health_status["authentication"] = "not_configured"
                 health_status["status"] = "degraded"
-        except (
-            Exception
-        ) as auth_error:
+        except Exception as auth_error:
             logger.warning("Auth health check failed: %s", auth_error)
             health_status["authentication"] = "error"
             health_status["status"] = "degraded"

@@ -78,7 +78,9 @@ class TestDynamoDBServiceInitialization:
         )
 
     @patch("clarity.services.dynamodb_service.boto3.resource")
-    def test_dynamodb_service_default_configuration(self, mock_boto3: MagicMock) -> None:
+    def test_dynamodb_service_default_configuration(
+        self, mock_boto3: MagicMock
+    ) -> None:
         """Test DynamoDB service with default configuration."""
         mock_resource = Mock()
         mock_boto3.return_value = mock_resource
@@ -835,7 +837,7 @@ class TestHealthCheck:
         try:
             await self.service.health_check()
         except (
-            Exception  # noqa: BLE001 - Health check can raise any exception during failure scenarios
+            Exception
         ):
             # If health check raises exception, that's also valid behavior
             # No action needed as we're testing that health check completes without crashing

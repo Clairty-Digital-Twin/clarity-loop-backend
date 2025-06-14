@@ -29,7 +29,9 @@ def mock_messaging_service() -> Mock:
 
 
 @pytest.fixture
-def publisher(mock_messaging_service: Mock) -> Generator[HealthDataPublisher, None, None]:
+def publisher(
+    mock_messaging_service: Mock,
+) -> Generator[HealthDataPublisher, None, None]:
     """Create publisher with mocked dependencies."""
     with patch("clarity.services.messaging.publisher.AWSMessagingService") as mock_aws:
         mock_aws.return_value = mock_messaging_service
@@ -256,14 +258,18 @@ class TestHealthCheckAndClose:
     """Test health check and close methods."""
 
     @pytest.mark.asyncio
-    async def test_health_check(self, publisher: HealthDataPublisher, mock_messaging_service: Mock) -> None:
+    async def test_health_check(
+        self, publisher: HealthDataPublisher, mock_messaging_service: Mock
+    ) -> None:
         """Test health check."""
         result = await publisher.health_check()
 
         assert result == {"status": "healthy"}
         mock_messaging_service.health_check.assert_called_once()
 
-    def test_close(self, publisher: HealthDataPublisher, mock_messaging_service: Mock) -> None:
+    def test_close(
+        self, publisher: HealthDataPublisher, mock_messaging_service: Mock
+    ) -> None:
         """Test close method."""
         publisher.close()
 

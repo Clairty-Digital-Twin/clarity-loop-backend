@@ -269,7 +269,9 @@ class TestCloudModuleBoto3Integration:
     """Test that all functions properly use boto3."""
 
     @patch("clarity.core.cloud.boto3.Session")
-    def test_get_aws_session_calls_boto3_session(self, mock_boto3_session: MagicMock) -> None:
+    def test_get_aws_session_calls_boto3_session(
+        self, mock_boto3_session: MagicMock
+    ) -> None:
         """Test that get_aws_session properly calls boto3.Session."""
         mock_session = Mock()
         mock_boto3_session.return_value = mock_session
@@ -280,7 +282,9 @@ class TestCloudModuleBoto3Integration:
         assert result == mock_session
 
     @patch("clarity.core.cloud.boto3.client")
-    def test_get_cognito_client_calls_boto3_client(self, mock_boto3_client: MagicMock) -> None:
+    def test_get_cognito_client_calls_boto3_client(
+        self, mock_boto3_client: MagicMock
+    ) -> None:
         """Test that get_cognito_client properly calls boto3.client."""
         mock_client = Mock()
         mock_boto3_client.return_value = mock_client
@@ -293,7 +297,9 @@ class TestCloudModuleBoto3Integration:
         assert result == mock_client
 
     @patch("clarity.core.cloud.boto3.resource")
-    def test_get_dynamodb_resource_calls_boto3_resource(self, mock_boto3_resource: MagicMock) -> None:
+    def test_get_dynamodb_resource_calls_boto3_resource(
+        self, mock_boto3_resource: MagicMock
+    ) -> None:
         """Test that get_dynamodb_resource properly calls boto3.resource."""
         mock_resource = Mock()
         mock_boto3_resource.return_value = mock_resource

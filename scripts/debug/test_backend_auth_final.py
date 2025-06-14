@@ -37,7 +37,9 @@ async def test_authentication() -> None:
                 data = response.json()
                 print(f"Authentication successful: {data}")
             else:
-                print(f"Authentication failed with status {response.status_code}: {response.text}")
+                print(
+                    f"Authentication failed with status {response.status_code}: {response.text}"
+                )
 
         except (httpx.HTTPError, httpx.ConnectError, ValueError) as e:
             # Log authentication errors for debugging

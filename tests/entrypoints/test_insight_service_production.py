@@ -79,7 +79,9 @@ class TestInsightServiceMain:
 
     @patch("clarity.entrypoints.insight_service.uvicorn.run")
     @patch.dict(
-        os.environ, {"HOST": "0.0.0.0", "PORT": "9000"}, clear=True  # noqa: S104 - Test value
+        os.environ,
+        {"HOST": "0.0.0.0", "PORT": "9000"},
+        clear=True,
     )
     def test_main_custom_host_port(self, mock_uvicorn_run: MagicMock) -> None:
         """Test main function with custom host and port from environment."""
@@ -144,7 +146,9 @@ class TestInsightServiceMain:
 
     @patch("clarity.entrypoints.insight_service.logger")
     @patch("clarity.entrypoints.insight_service.uvicorn.run")
-    def test_main_logging_output(self, mock_uvicorn_run: MagicMock, mock_logger: MagicMock) -> None:
+    def test_main_logging_output(
+        self, mock_uvicorn_run: MagicMock, mock_logger: MagicMock
+    ) -> None:
         """Test that main function logs startup information."""
         main()
 
@@ -158,7 +162,9 @@ class TestInsightServiceMain:
         {"HOST": "192.168.1.100", "PORT": "3000", "ENVIRONMENT": "staging"},
         clear=True,
     )
-    def test_main_comprehensive_configuration(self, mock_uvicorn_run: MagicMock) -> None:
+    def test_main_comprehensive_configuration(
+        self, mock_uvicorn_run: MagicMock
+    ) -> None:
         """Test main function with comprehensive environment configuration."""
         main()
 
@@ -239,7 +245,9 @@ class TestInsightServiceIntegration:
         assert len(app.routes) > 0  # Should have mounted routes
 
     @patch("clarity.entrypoints.insight_service.uvicorn.run")
-    def test_main_function_can_be_called_directly(self, mock_uvicorn_run: MagicMock) -> None:
+    def test_main_function_can_be_called_directly(
+        self, mock_uvicorn_run: MagicMock
+    ) -> None:
         """Test that main function can be called directly without issues."""
         # This simulates running the script directly
         try:
@@ -265,7 +273,9 @@ class TestInsightServiceProductionScenarios:
         },
         clear=True,
     )
-    def test_production_deployment_configuration(self, mock_uvicorn_run: MagicMock) -> None:
+    def test_production_deployment_configuration(
+        self, mock_uvicorn_run: MagicMock
+    ) -> None:
         """Test configuration for production deployment."""
         main()
 
@@ -283,7 +293,9 @@ class TestInsightServiceProductionScenarios:
         {"HOST": "localhost", "PORT": "8082", "ENVIRONMENT": "development"},
         clear=True,
     )
-    def test_development_environment_configuration(self, mock_uvicorn_run: MagicMock) -> None:
+    def test_development_environment_configuration(
+        self, mock_uvicorn_run: MagicMock
+    ) -> None:
         """Test configuration for development environment."""
         main()
 

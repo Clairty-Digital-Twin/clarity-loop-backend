@@ -564,13 +564,13 @@ async def get_insight_history(
     description="Check the health status of the Gemini insights service",
 )
 async def get_service_status(
-    current_user: AuthenticatedUser,
+    _current_user: AuthenticatedUser,
     gemini_service: GeminiService = Depends(get_gemini_service),
 ) -> ServiceStatusResponse:
     """Check Gemini service health status.
 
     Args:
-        current_user: Authenticated user context
+        _current_user: Authenticated user context
         gemini_service: Gemini service instance
 
     Returns:

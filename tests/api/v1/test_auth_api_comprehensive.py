@@ -90,7 +90,11 @@ class TestUserRegistration:
 
     @pytest.mark.asyncio
     async def test_register_success(
-        self, client: TestClient, mock_cognito_provider: Mock, test_user: User, auth_tokens: dict[str, Any]
+        self,
+        client: TestClient,
+        mock_cognito_provider: Mock,
+        test_user: User,
+        auth_tokens: dict[str, Any],
     ) -> None:
         """Test successful user registration."""
         mock_cognito_provider.create_user.return_value = test_user
@@ -114,7 +118,9 @@ class TestUserRegistration:
         assert data["scope"] == AUTH_SCOPE_FULL_ACCESS
 
     @pytest.mark.asyncio
-    async def test_register_user_already_exists(self, client: TestClient, mock_cognito_provider: Mock) -> None:
+    async def test_register_user_already_exists(
+        self, client: TestClient, mock_cognito_provider: Mock
+    ) -> None:
         """Test registration when user already exists."""
         mock_cognito_provider.create_user.side_effect = UserAlreadyExistsError(
             "User already exists"
@@ -145,7 +151,9 @@ class TestUserRegistration:
         assert response.status_code == 422
 
     @pytest.mark.asyncio
-    async def test_register_create_user_fails(self, client: TestClient, mock_cognito_provider: Mock) -> None:
+    async def test_register_create_user_fails(
+        self, client: TestClient, mock_cognito_provider: Mock
+    ) -> None:
         """Test registration when user creation fails."""
         mock_cognito_provider.create_user.return_value = None
 
@@ -165,7 +173,12 @@ class TestUserLogin:
     """Test user login endpoint with real code."""
 
     @pytest.mark.asyncio
-    async def test_login_success(self, client: TestClient, mock_cognito_provider: Mock, auth_tokens: dict[str, Any]) -> None:
+    async def test_login_success(
+        self,
+        client: TestClient,
+        mock_cognito_provider: Mock,
+        auth_tokens: dict[str, Any],
+    ) -> None:
         """Test successful login."""
         mock_cognito_provider.authenticate.return_value = auth_tokens
 
@@ -184,7 +197,9 @@ class TestUserLogin:
         assert data["token_type"] == AUTH_HEADER_TYPE_BEARER
 
     @pytest.mark.asyncio
-    async def test_login_invalid_credentials(self, client: TestClient, mock_cognito_provider: Mock) -> None:
+    async def test_login_invalid_credentials(
+        self, client: TestClient, mock_cognito_provider: Mock
+    ) -> None:
         """Test login with invalid credentials."""
         mock_cognito_provider.authenticate.side_effect = InvalidCredentialsError(
             "Invalid email or password"
@@ -201,7 +216,9 @@ class TestUserLogin:
         assert response.status_code == 401
 
     @pytest.mark.asyncio
-    async def test_login_email_not_verified(self, client: TestClient, mock_cognito_provider: Mock) -> None:
+    async def test_login_email_not_verified(
+        self, client: TestClient, mock_cognito_provider: Mock
+    ) -> None:
         """Test login with unverified email."""
         mock_cognito_provider.authenticate.side_effect = EmailNotVerifiedError(
             "Email not verified"
@@ -252,7 +269,9 @@ class TestUpdateUser:
     """Test update user endpoint with real code."""
 
     @pytest.mark.asyncio
-    async def test_update_user_success(self, app: FastAPI, mock_cognito_provider: Mock, test_user: User) -> None:
+    async def test_update_user_success(
+        self, app: FastAPI, mock_cognito_provider: Mock, test_user: User
+    ) -> None:
         """Test successful user update."""
         current_user = {
             "uid": test_user.uid,
@@ -325,7 +344,9 @@ class TestRefreshToken:
     """Test refresh token endpoint with real code."""
 
     @pytest.mark.asyncio
-    async def test_refresh_token_success(self, client: TestClient, mock_cognito_provider: Mock) -> None:
+    async def test_refresh_token_success(
+        self, client: TestClient, mock_cognito_provider: Mock
+    ) -> None:
         """Test successful token refresh."""
         mock_cognito_provider.cognito_client.initiate_auth.return_value = {
             "AuthenticationResult": {

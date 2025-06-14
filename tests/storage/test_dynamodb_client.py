@@ -45,7 +45,9 @@ def mock_dynamodb_resource(mock_table: MagicMock) -> MagicMock:
 
 
 @pytest.fixture
-def dynamodb_repository(mock_dynamodb_resource: MagicMock) -> DynamoDBHealthDataRepository:
+def dynamodb_repository(
+    mock_dynamodb_resource: MagicMock,
+) -> DynamoDBHealthDataRepository:
     """Create DynamoDB repository with mocked resource."""
     with patch("boto3.resource", return_value=mock_dynamodb_resource):
         return DynamoDBHealthDataRepository(
@@ -55,7 +57,9 @@ def dynamodb_repository(mock_dynamodb_resource: MagicMock) -> DynamoDBHealthData
 
 
 @pytest.fixture
-def dynamodb_repository_with_endpoint(mock_dynamodb_resource: MagicMock) -> DynamoDBHealthDataRepository:
+def dynamodb_repository_with_endpoint(
+    mock_dynamodb_resource: MagicMock,
+) -> DynamoDBHealthDataRepository:
     """Create DynamoDB repository with endpoint URL."""
     with patch("boto3.resource", return_value=mock_dynamodb_resource):
         return DynamoDBHealthDataRepository(
@@ -162,7 +166,9 @@ class TestDynamoDBHealthDataRepositoryInit:
 class TestSerializationMethods:
     """Test serialization and deserialization methods."""
 
-    def test_serialize_item_with_floats(self, dynamodb_repository: DynamoDBHealthDataRepository) -> None:
+    def test_serialize_item_with_floats(
+        self, dynamodb_repository: DynamoDBHealthDataRepository
+    ) -> None:
         """Test serialization converts floats to Decimal."""
         data = {
             "score": 0.95,
@@ -177,7 +183,9 @@ class TestSerializationMethods:
         assert isinstance(result["nested"]["value"], Decimal)
         assert all(isinstance(v, Decimal) for v in result["list"])
 
-    def test_serialize_item_with_datetime(self, dynamodb_repository: DynamoDBHealthDataRepository) -> None:
+    def test_serialize_item_with_datetime(
+        self, dynamodb_repository: DynamoDBHealthDataRepository
+    ) -> None:
         """Test serialization converts datetime to ISO string."""
         now = datetime.now(UTC)
         data = {"created_at": now, "metadata": {"timestamp": now}}
@@ -187,7 +195,9 @@ class TestSerializationMethods:
         assert result["created_at"] == now.isoformat()
         assert result["metadata"]["timestamp"] == now.isoformat()
 
-    def test_serialize_item_mixed_types(self, dynamodb_repository: DynamoDBHealthDataRepository) -> None:
+    def test_serialize_item_mixed_types(
+        self, dynamodb_repository: DynamoDBHealthDataRepository
+    ) -> None:
         """Test serialization with mixed types."""
         data = {
             "string": "test",
@@ -209,7 +219,9 @@ class TestSerializationMethods:
         assert result["list"][2] == Decimal("2.5")
         assert isinstance(result["dict"]["nested"], Decimal)
 
-    def test_deserialize_item_with_decimals(self, dynamodb_repository: DynamoDBHealthDataRepository) -> None:
+    def test_deserialize_item_with_decimals(
+        self, dynamodb_repository: DynamoDBHealthDataRepository
+    ) -> None:
         """Test deserialization converts Decimal to float."""
         data = {
             "score": Decimal("0.95"),
@@ -224,7 +236,9 @@ class TestSerializationMethods:
         assert isinstance(result["nested"]["value"], float)
         assert all(isinstance(v, float) for v in result["list"])
 
-    def test_deserialize_item_mixed_types(self, dynamodb_repository: DynamoDBHealthDataRepository) -> None:
+    def test_deserialize_item_mixed_types(
+        self, dynamodb_repository: DynamoDBHealthDataRepository
+    ) -> None:
         """Test deserialization with mixed types."""
         data = {
             "string": "test",
@@ -238,7 +252,7 @@ class TestSerializationMethods:
 
         assert result["string"] == "test"
         assert isinstance(result["decimal"], float)
-        assert result["decimal"] == 3.14  # Should match the actual decimal value
+        assert result["decimal"] == math.pi  # Should match the actual decimal value
         assert result["int"] == 42
         assert result["list"][1] == 1.5
         assert result["dict"]["nested"] == 2.5
@@ -249,7 +263,10 @@ class TestSaveHealthData:
 
     @pytest.mark.asyncio
     async def test_save_health_data_success(
-        self, dynamodb_repository: DynamoDBHealthDataRepository, mock_table: MagicMock, valid_health_metrics: list[HealthMetric]
+        self,
+        dynamodb_repository: DynamoDBHealthDataRepository,
+        mock_table: MagicMock,
+        valid_health_metrics: list[HealthMetric],
     ) -> None:
         """Test successful health data save."""
         user_id = str(uuid.uuid4())
@@ -296,7 +313,10 @@ class TestSaveHealthData:
 
     @pytest.mark.asyncio
     async def test_save_health_data_client_error(
-        self, dynamodb_repository: DynamoDBHealthDataRepository, mock_table: MagicMock, valid_health_metrics: list[HealthMetric]
+        self,
+        dynamodb_repository: DynamoDBHealthDataRepository,
+        mock_table: MagicMock,
+        valid_health_metrics: list[HealthMetric],
     ) -> None:
         """Test save with DynamoDB client error."""
         mock_table.put_item.side_effect = ClientError(
@@ -315,7 +335,10 @@ class TestSaveHealthData:
 
     @pytest.mark.asyncio
     async def test_save_health_data_unexpected_error(
-        self, dynamodb_repository: DynamoDBHealthDataRepository, mock_table: MagicMock, valid_health_metrics: list[HealthMetric]
+        self,
+        dynamodb_repository: DynamoDBHealthDataRepository,
+        mock_table: MagicMock,
+        valid_health_metrics: list[HealthMetric],
     ) -> None:
         """Test save with unexpected error."""
         mock_table.put_item.side_effect = Exception("Unexpected error")
@@ -334,7 +357,9 @@ class TestGetUserHealthData:
     """Test get_user_health_data method."""
 
     @pytest.mark.asyncio
-    async def test_get_user_health_data_success(self, dynamodb_repository: DynamoDBHealthDataRepository, mock_table: MagicMock) -> None:
+    async def test_get_user_health_data_success(
+        self, dynamodb_repository: DynamoDBHealthDataRepository, mock_table: MagicMock
+    ) -> None:
         """Test successful health data retrieval."""
         user_id = "user-123"
         mock_table.query.return_value = {
@@ -472,7 +497,9 @@ class TestGetProcessingStatus:
     """Test get_processing_status method."""
 
     @pytest.mark.asyncio
-    async def test_get_processing_status_success(self, dynamodb_repository: DynamoDBHealthDataRepository, mock_table: MagicMock) -> None:
+    async def test_get_processing_status_success(
+        self, dynamodb_repository: DynamoDBHealthDataRepository, mock_table: MagicMock
+    ) -> None:
         """Test successful status retrieval."""
         processing_id = "proc-123"
         user_id = "user-123"
@@ -614,7 +641,9 @@ class TestLegacyMethods:
     """Test legacy save_data and get_data methods."""
 
     @pytest.mark.asyncio
-    async def test_save_data_success(self, dynamodb_repository: DynamoDBHealthDataRepository, mock_table: MagicMock) -> None:
+    async def test_save_data_success(
+        self, dynamodb_repository: DynamoDBHealthDataRepository, mock_table: MagicMock
+    ) -> None:
         """Test legacy save_data method."""
         user_id = "user-123"
         data = {"heart_rate": "72", "steps": "5000"}
@@ -631,7 +660,9 @@ class TestLegacyMethods:
         assert item["data"] == data
 
     @pytest.mark.asyncio
-    async def test_get_data_success(self, dynamodb_repository: DynamoDBHealthDataRepository, mock_table: MagicMock) -> None:
+    async def test_get_data_success(
+        self, dynamodb_repository: DynamoDBHealthDataRepository, mock_table: MagicMock
+    ) -> None:
         """Test legacy get_data method."""
         user_id = "user-123"
         mock_table.query.return_value = {
@@ -649,7 +680,9 @@ class TestLegacyMethods:
         assert result == {"heart_rate": "72", "steps": "5000"}
 
     @pytest.mark.asyncio
-    async def test_get_data_no_results(self, dynamodb_repository: DynamoDBHealthDataRepository, mock_table: MagicMock) -> None:
+    async def test_get_data_no_results(
+        self, dynamodb_repository: DynamoDBHealthDataRepository, mock_table: MagicMock
+    ) -> None:
         """Test get_data with no results."""
         mock_table.query.return_value = {"Items": []}
 
@@ -658,7 +691,9 @@ class TestLegacyMethods:
         assert result == {}
 
     @pytest.mark.asyncio
-    async def test_get_data_invalid_data_type(self, dynamodb_repository: DynamoDBHealthDataRepository, mock_table: MagicMock) -> None:
+    async def test_get_data_invalid_data_type(
+        self, dynamodb_repository: DynamoDBHealthDataRepository, mock_table: MagicMock
+    ) -> None:
         """Test get_data with invalid data type."""
         mock_table.query.return_value = {
             "Items": [
@@ -679,13 +714,17 @@ class TestInitializeAndCleanup:
     """Test initialize and cleanup methods."""
 
     @pytest.mark.asyncio
-    async def test_initialize(self, dynamodb_repository: DynamoDBHealthDataRepository) -> None:
+    async def test_initialize(
+        self, dynamodb_repository: DynamoDBHealthDataRepository
+    ) -> None:
         """Test repository initialization."""
         # Should not raise any exceptions
         await dynamodb_repository.initialize()
 
     @pytest.mark.asyncio
-    async def test_cleanup(self, dynamodb_repository: DynamoDBHealthDataRepository) -> None:
+    async def test_cleanup(
+        self, dynamodb_repository: DynamoDBHealthDataRepository
+    ) -> None:
         """Test repository cleanup."""
         # Should not raise any exceptions
         await dynamodb_repository.cleanup()
@@ -719,7 +758,9 @@ class TestEdgeCases:
 
         assert result is True
 
-    def test_serialize_deeply_nested_structure(self, dynamodb_repository: DynamoDBHealthDataRepository) -> None:
+    def test_serialize_deeply_nested_structure(
+        self, dynamodb_repository: DynamoDBHealthDataRepository
+    ) -> None:
         """Test serialization of deeply nested structures."""
         data = {
             "level1": {

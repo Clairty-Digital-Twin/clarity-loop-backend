@@ -1173,7 +1173,7 @@ _pat_service: PATModelService | None = None
 
 async def get_pat_service() -> PATModelService:
     """Get or create the global PAT service instance."""
-    global _pat_service
+    global _pat_service  # noqa: PLW0603 - Singleton pattern for PAT ML model service
 
     if _pat_service is not None:
         return _pat_service

@@ -6,6 +6,7 @@ user context creation, error handling, and role-based permissions.
 
 from __future__ import annotations
 
+import asyncio
 import json
 import time
 from unittest.mock import AsyncMock, Mock, patch
@@ -880,8 +881,6 @@ class TestProductionIntegrationScenarios:
             patch("jose.jwt.decode", return_value=mock_payload),
         ):
             # Simulate concurrent calls
-            import asyncio
-
             tasks = [
                 provider.verify_token("token1"),
                 provider.verify_token("token1"),  # Same token

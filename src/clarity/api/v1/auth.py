@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import logging
 from typing import Any
 
@@ -317,7 +318,7 @@ async def logout(
     # Check if request body is empty
     try:
         body = await request.json()
-    except Exception:
+    except (json.JSONDecodeError, ValueError, TypeError):
         body = {}
 
     # If both body is empty and no auth header, this is a validation error
@@ -375,7 +376,7 @@ async def auth_health() -> HealthResponse:
         return HealthResponse(
             status="healthy", service="authentication", version="1.0.0"
         )
-    except Exception:
+    except Exception:  # noqa: BLE001 - Health check should catch all exceptions
         return HealthResponse(
             status="unhealthy", service="authentication", version="1.0.0"
         )
@@ -396,7 +397,7 @@ async def refresh_token(
         try:
             body = await request.json()
             refresh_token_str = body.get("refresh_token")
-        except Exception:
+        except (json.JSONDecodeError, ValueError, TypeError):
             refresh_token_str = None
 
     if not refresh_token_str:

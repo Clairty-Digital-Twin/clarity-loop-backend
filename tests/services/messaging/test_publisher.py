@@ -7,6 +7,7 @@ import uuid
 
 import pytest
 
+import clarity.services.messaging.publisher
 from clarity.services.messaging.publisher import (
     HealthDataEvent,
     HealthDataPublisher,
@@ -275,8 +276,6 @@ class TestGetPublisher:
     async def test_get_publisher_singleton(self):
         """Test get_publisher returns singleton."""
         # Reset global state
-        import clarity.services.messaging.publisher
-
         clarity.services.messaging.publisher._publisher = None
 
         with patch("clarity.services.messaging.publisher.AWSMessagingService"):
@@ -289,8 +288,6 @@ class TestGetPublisher:
     async def test_get_publisher_creates_instance(self):
         """Test get_publisher creates new instance when needed."""
         # Reset global state
-        import clarity.services.messaging.publisher
-
         clarity.services.messaging.publisher._publisher = None
 
         with patch(

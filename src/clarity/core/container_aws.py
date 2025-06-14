@@ -298,7 +298,7 @@ _container: DependencyContainer | None = None
 
 def get_container() -> DependencyContainer:
     """Get the global dependency container instance."""
-    global _container
+    global _container  # noqa: PLW0603 - Singleton pattern for dependency injection container
     if _container is None:
         _container = DependencyContainer()
     return _container
@@ -306,7 +306,7 @@ def get_container() -> DependencyContainer:
 
 async def initialize_container(settings: Settings | None = None) -> DependencyContainer:
     """Initialize and return the global container."""
-    global _container
+    global _container  # noqa: PLW0603 - Singleton pattern for dependency injection container
     _container = DependencyContainer(settings)
     await _container.initialize()
     return _container

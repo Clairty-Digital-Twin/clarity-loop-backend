@@ -37,7 +37,8 @@ async def test_authentication() -> None:
                 data = response.json()
 
         except Exception as e:
-            pass
+            # Log authentication errors for debugging
+            print(f"Authentication error: {e}")
 
 
 if __name__ == "__main__":

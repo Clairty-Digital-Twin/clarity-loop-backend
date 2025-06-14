@@ -8,7 +8,7 @@ import os
 from typing import TYPE_CHECKING, Any
 
 import boto3
-from botocore.exceptions import ClientError
+from botocore.exceptions import BotoCoreError, ClientError, NoCredentialsError
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import google.generativeai as genai
@@ -43,7 +43,7 @@ s3_client = None
 
 def init_aws_clients() -> None:
     """Initialize AWS clients when needed."""
-    global session, dynamodb, cognito_client, s3_client  # Singleton pattern
+    global session, dynamodb, cognito_client, s3_client  # noqa: PLW0603 - Singleton pattern for AWS service clients
     if session is None:
         session = boto3.Session(region_name=AWS_REGION)
         dynamodb = boto3.resource("dynamodb", region_name=AWS_REGION)
@@ -91,11 +91,13 @@ async def lifespan(_app: FastAPI) -> AsyncGenerator[None, None]:  # noqa: RUF029
                 logger.warning("⚠️  DynamoDB table %s not found", DYNAMODB_TABLE)
             else:
                 logger.exception("❌ DynamoDB error")
-        except Exception as e:
-            # Handle credentials errors and other AWS connectivity issues
-            if "NoCredentialsError" in str(e) or "Unable to locate credentials" in str(
-                e
-            ):
+        except NoCredentialsError:
+            logger.warning(
+                "🔧 Development mode: AWS credentials not available - running in local mode"
+            )
+        except BotoCoreError as e:
+            # Handle other AWS connectivity issues
+            if "Unable to locate credentials" in str(e):
                 logger.warning(
                     "🔧 Development mode: AWS credentials not available - running in local mode"
                 )

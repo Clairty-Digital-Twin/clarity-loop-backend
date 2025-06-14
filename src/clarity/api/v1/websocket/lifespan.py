@@ -58,13 +58,13 @@ def get_connection_manager() -> ConnectionManager:
         )
 
     # Fallback to module-level singleton
-    global connection_manager
+    global connection_manager  # noqa: PLW0603 - Module-level singleton pattern for WebSocket connection manager
     if connection_manager is not None:
         return connection_manager
 
     # For testing, try to get from test helper
     try:
-        from tests.api.v1.test_websocket_helper import (
+        from tests.api.v1.test_websocket_helper import (  # noqa: PLC0415
             get_test_connection_manager,
         )
 
@@ -112,7 +112,7 @@ async def websocket_lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     3. Store the manager in app state for dependency injection
     4. Clean up everything during shutdown
     """
-    global connection_manager
+    global connection_manager  # noqa: PLW0603 - Module-level singleton pattern for WebSocket connection manager
 
     # Startup: Create and initialize connection manager
     logger.info("Starting WebSocket services...")

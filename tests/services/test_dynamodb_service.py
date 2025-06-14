@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from datetime import UTC, datetime
 import time
-from typing import Any, Dict
+from typing import Any
 from unittest.mock import MagicMock, patch
 import uuid
 
@@ -15,6 +15,7 @@ from clarity.services.dynamodb_service import (
     DocumentNotFoundError,
     DynamoDBConnectionError,
     DynamoDBError,
+    DynamoDBHealthDataRepository,
     DynamoDBPermissionError,
     DynamoDBService,
     DynamoDBValidationError,
@@ -80,7 +81,7 @@ def dynamodb_service_no_cache(mock_dynamodb_resource: MagicMock, mock_table: Mag
 
 
 @pytest.fixture
-def valid_health_data() -> Dict[str, Any]:
+def valid_health_data() -> dict[str, Any]:
     """Create valid health data."""
     return {
         "user_id": str(uuid.uuid4()),
@@ -192,7 +193,7 @@ class TestValidateHealthData:
 
     @pytest.mark.asyncio
     async def test_validate_health_data_success(
-        self, dynamodb_service: DynamoDBService, valid_health_data: Dict[str, Any]
+        self, dynamodb_service: DynamoDBService, valid_health_data: dict[str, Any]
     ) -> None:
         """Test successful health data validation."""
         # Should not raise
@@ -304,7 +305,7 @@ class TestPutItem:
 
     @pytest.mark.asyncio
     async def test_put_item_success(
-        self, dynamodb_service: DynamoDBService, mock_table: MagicMock, valid_health_data: Dict[str, Any]
+        self, dynamodb_service: DynamoDBService, mock_table: MagicMock, valid_health_data: dict[str, Any]
     ) -> None:
         """Test successful item creation."""
         item_id = await dynamodb_service.put_item(
@@ -361,7 +362,7 @@ class TestPutItem:
 
     @pytest.mark.asyncio
     async def test_put_item_client_error(
-        self, dynamodb_service: DynamoDBService, mock_table: MagicMock, valid_health_data: Dict[str, Any]
+        self, dynamodb_service: DynamoDBService, mock_table: MagicMock, valid_health_data: dict[str, Any]
     ) -> None:
         """Test put_item with ClientError."""
         mock_table.put_item.side_effect = ClientError(
@@ -638,8 +639,6 @@ class TestHealthDataRepository:
         ]
 
         # Create a health data repository instead
-        from clarity.services.dynamodb_service import DynamoDBHealthDataRepository
-
         repository = DynamoDBHealthDataRepository()
         repository._dynamodb_service = dynamodb_service
 
@@ -669,8 +668,6 @@ class TestHealthDataRepository:
         }
 
         # Create a health data repository instead
-        from clarity.services.dynamodb_service import DynamoDBHealthDataRepository
-
         repository = DynamoDBHealthDataRepository()
         repository._dynamodb_service = dynamodb_service
 
@@ -691,8 +688,6 @@ class TestHealthDataRepository:
         }
 
         # Create a health data repository instead
-        from clarity.services.dynamodb_service import DynamoDBHealthDataRepository
-
         repository = DynamoDBHealthDataRepository()
         repository._dynamodb_service = dynamodb_service
 
@@ -719,8 +714,6 @@ class TestHealthDataRepository:
         }
 
         # Create a health data repository instead
-        from clarity.services.dynamodb_service import DynamoDBHealthDataRepository
-
         repository = DynamoDBHealthDataRepository()
         repository._dynamodb_service = dynamodb_service
 

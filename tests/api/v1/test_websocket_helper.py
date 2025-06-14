@@ -26,7 +26,7 @@ def get_test_connection_manager() -> ConnectionManager:
 @asynccontextmanager
 async def websocket_test_lifespan(app: FastAPI):
     """Lifespan function for WebSocket tests."""
-    global _test_connection_manager
+    global _test_connection_manager  # noqa: PLW0603 - Test fixture state management
 
     # Create and start connection manager
     _test_connection_manager = ConnectionManager(

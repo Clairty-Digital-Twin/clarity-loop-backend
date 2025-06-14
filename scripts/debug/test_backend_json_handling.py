@@ -75,7 +75,8 @@ async def test_json_handling() -> None:
                     pass
 
             except Exception as e:
-                pass
+                # Log JSON handling errors for debugging
+                print(f"JSON handling error with method {method}: {e}")
 
 
 async def test_debug_endpoint() -> None:

@@ -2,9 +2,8 @@
 
 from __future__ import annotations
 
-from typing import Any, Dict
-
 from datetime import UTC, datetime
+from typing import Any
 from unittest.mock import AsyncMock, Mock, patch
 import uuid
 
@@ -75,7 +74,7 @@ def valid_health_data() -> HealthDataUpload:
         user_id=uuid.uuid4(),
         upload_source="mobile_app",
         client_timestamp=datetime.now(UTC),
-        sync_token="sync-123",
+        sync_token="sync-123",  # noqa: S106 - Test sync token value
         metrics=[
             HealthMetric(
                 metric_id=uuid.uuid4(),
@@ -154,7 +153,7 @@ class TestProcessHealthData:
         assert response.accepted_metrics == 2
         assert response.rejected_metrics == 0
         assert response.validation_errors == []
-        assert response.sync_token == "sync-123"
+        assert response.sync_token == "sync-123"  # noqa: S105 - Test sync token value
 
         # Verify repository was called
         mock_repository.save_health_data.assert_called_once()

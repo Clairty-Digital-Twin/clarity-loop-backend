@@ -456,7 +456,7 @@ class S3StorageService(CloudStoragePort):
                     )
                     await asyncio.get_event_loop().run_in_executor(None, delete_func)
                     deleted_count += 1
-                except Exception as e:
+                except (ClientError, Exception) as e:
                     logger.warning("Failed to delete file %s: %s", file_info["key"], e)
 
             await self._audit_log(
@@ -541,7 +541,7 @@ class S3StorageService(CloudStoragePort):
 
             logger.info("S3 bucket lifecycle policies configured")
 
-        except Exception as e:
+        except (ClientError, Exception) as e:
             logger.warning("Failed to set up bucket lifecycle: %s", e)
             # Don't raise - lifecycle is optional
 
@@ -573,7 +573,7 @@ class S3StorageService(CloudStoragePort):
                 "bucket": self.bucket_name,
                 "timestamp": datetime.now(UTC).isoformat(),
             }
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - Health check should catch all exceptions
             return {
                 "status": "unhealthy",
                 "error": str(e),
@@ -708,7 +708,7 @@ def get_s3_service(
     endpoint_url: str | None = None,
 ) -> S3StorageService:
     """Get or create global S3 service instance."""
-    global _s3_service
+    global _s3_service  # noqa: PLW0603 - Singleton pattern for S3 storage service
 
     if _s3_service is None:
         if not bucket_name:

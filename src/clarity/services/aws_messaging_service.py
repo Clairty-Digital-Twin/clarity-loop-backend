@@ -521,7 +521,7 @@ def get_messaging_service(
     sns_topic_arn: str | None = None,
 ) -> AWSMessagingService:
     """Get or create global AWS messaging service instance."""
-    global _messaging_service
+    global _messaging_service  # noqa: PLW0603 - Singleton pattern for AWS messaging service
 
     if _messaging_service is None:
         _messaging_service = AWSMessagingService(

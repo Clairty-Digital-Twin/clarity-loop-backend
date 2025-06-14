@@ -5,7 +5,7 @@ import asyncio
 import json
 import os
 import signal
-import subprocess
+import subprocess  # noqa: S404 - subprocess needed for server control in test script
 import sys
 import time
 
@@ -17,7 +17,7 @@ async def test_auth() -> bool | None:
     # Start the server
     print("Starting local server...")
     server_process = subprocess.Popen(
-        ["uvicorn", "clarity.main:app", "--host", "0.0.0.0", "--port", "8000"],
+        ["uvicorn", "clarity.main:app", "--host", "127.0.0.1", "--port", "8000"],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         text=True,

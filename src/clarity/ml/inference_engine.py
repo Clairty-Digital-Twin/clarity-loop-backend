@@ -583,7 +583,7 @@ async def get_inference_engine() -> AsyncInferenceEngine:
     Returns:
         Global inference engine instance
     """
-    global _inference_engine
+    global _inference_engine  # noqa: PLW0603 - Singleton pattern for ML inference engine
 
     if _inference_engine is None:
         pat_service = await get_pat_service()
@@ -599,7 +599,7 @@ async def shutdown_inference_engine() -> None:
     This function provides clean shutdown capabilities for the global
     inference engine instance.
     """
-    global _inference_engine
+    global _inference_engine  # noqa: PLW0603 - Singleton pattern for ML inference engine
 
     if _inference_engine:
         await _inference_engine.stop()

@@ -14,6 +14,7 @@ import pytest
 from clarity.auth.aws_auth_provider import CognitoAuthProvider
 from clarity.auth.mock_auth import MockAuthProvider
 from clarity.core.config_aws import Settings
+import clarity.core.container_aws
 from clarity.core.container_aws import (
     DependencyContainer,
     get_container,
@@ -450,8 +451,6 @@ class TestGlobalContainerFunctions:
     def test_get_container_creates_new_instance(self):
         """Test get_container creates new instance when none exists."""
         # Clear global container
-        import clarity.core.container_aws
-
         clarity.core.container_aws._container = None
 
         with patch(
@@ -468,8 +467,6 @@ class TestGlobalContainerFunctions:
     def test_get_container_returns_existing_instance(self):
         """Test get_container returns existing instance."""
         # Set up existing container
-        import clarity.core.container_aws
-
         existing_container = Mock(spec=DependencyContainer)
         clarity.core.container_aws._container = existing_container
 

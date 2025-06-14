@@ -15,6 +15,6 @@ if TYPE_CHECKING:
 def create_application() -> FastAPI:
     """Create application (for tests)."""
     # Import here to avoid circular imports
-    from clarity.main import app as clarity_app
+    from clarity.main import app as clarity_app  # noqa: PLC0415
 
     return clarity_app

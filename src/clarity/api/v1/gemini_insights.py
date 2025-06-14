@@ -48,7 +48,7 @@ def set_dependencies(
     """Set dependencies for the router (called by container)."""
     # Note: Using globals here for FastAPI dependency injection pattern
     # This is the recommended approach for this architecture
-    global _auth_provider, _config_provider, _gemini_service
+    global _auth_provider, _config_provider, _gemini_service  # noqa: PLW0603
     _auth_provider = auth_provider
     _config_provider = config_provider
 

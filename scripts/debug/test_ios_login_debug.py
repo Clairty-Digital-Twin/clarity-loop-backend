@@ -2,6 +2,7 @@
 """Enhanced debug script to test iOS login issues."""
 
 import json
+import traceback
 
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
@@ -115,8 +116,6 @@ async def debug_login(request: Request):
             )
 
     except Exception as e:
-        import traceback
-
         traceback.print_exc()
 
         return JSONResponse(
@@ -144,4 +143,7 @@ async def echo_request(request: Request):
 
 
 if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=8001, log_level="warning")
+    # Use environment variable or default to localhost for security
+    import os
+    host = os.getenv("DEBUG_HOST", "127.0.0.1")
+    uvicorn.run(app, host=host, port=8001, log_level="warning")

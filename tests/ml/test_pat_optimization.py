@@ -477,7 +477,7 @@ class TestModuleFunctions:
     @staticmethod
     def test_get_pat_optimizer_not_implemented() -> None:
         """Test get_pat_optimizer raises NotImplementedError."""
-        from clarity.ml.pat_optimization import get_pat_optimizer
+        from clarity.ml.pat_optimization import get_pat_optimizer  # noqa: PLC0415
 
         with pytest.raises(NotImplementedError, match="Call initialize_pat_optimizer"):
             get_pat_optimizer()

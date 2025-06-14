@@ -6,6 +6,7 @@ user management, authentication flows, and error handling scenarios.
 
 from __future__ import annotations
 
+import asyncio
 from datetime import UTC, datetime
 from unittest.mock import Mock, patch
 
@@ -475,7 +476,7 @@ class TestUserManagement:
         self.provider.cognito_client.admin_confirm_sign_up.return_value = {}
 
         user = await self.provider.create_user(
-            email="new@example.com", password="password123", display_name="New User"
+            email="new@example.com", password="password123", display_name="New User"  # noqa: S106 - Test password
         )
 
         assert user is not None
@@ -497,7 +498,7 @@ class TestUserManagement:
         self.provider.cognito_client.sign_up.return_value = mock_response
 
         user = await self.provider.create_user(
-            email="new@example.com", password="password123"
+            email="new@example.com", password="password123"  # noqa: S106 - Test password
         )
 
         assert user is not None
@@ -587,8 +588,6 @@ class TestUserManagement:
         self.provider.cognito_client.admin_update_user_attributes.return_value = {}
 
         # Mock get_user for return value
-        from datetime import datetime
-
         mock_user = User(
             uid="user123",
             email="updated@example.com",
@@ -617,8 +616,6 @@ class TestUserManagement:
     @pytest.mark.asyncio
     async def test_update_user_no_attributes(self):
         """Test user update with no attributes to update."""
-        from datetime import datetime
-
         mock_user = User(
             uid="user123",
             email="test@example.com",
@@ -683,9 +680,9 @@ class TestAuthentication:
         result = await self.provider.authenticate("test@example.com", "password123")
 
         assert result is not None
-        assert result["access_token"] == "access_token_123"
-        assert result["id_token"] == "id_token_123"
-        assert result["refresh_token"] == "refresh_token_123"
+        assert result["access_token"] == "access_token_123"  # noqa: S105 - Test token value
+        assert result["id_token"] == "id_token_123"  # noqa: S105 - Test token value
+        assert result["refresh_token"] == "refresh_token_123"  # noqa: S105 - Test token value
         assert result["expires_in"] == "3600"
 
     @pytest.mark.asyncio
@@ -973,7 +970,7 @@ class TestProductionScenarios:
         self.provider.cognito_client.initiate_auth.return_value = auth_response
 
         tokens = await self.provider.authenticate("test@example.com", "password123")
-        assert tokens["access_token"] == "access_token_123"
+        assert tokens["access_token"] == "access_token_123"  # noqa: S105 - Test token value
 
         # Verify token
         with patch.object(self.provider, "verify_token") as mock_verify:
@@ -1010,8 +1007,6 @@ class TestProductionScenarios:
     @pytest.mark.asyncio
     async def test_concurrent_jwks_access(self):
         """Test concurrent access to JWKS cache."""
-        import asyncio
-
         # Mock JWKS fetch
         with patch("clarity.auth.aws_cognito_provider.requests.get") as mock_get:
             mock_response = Mock()

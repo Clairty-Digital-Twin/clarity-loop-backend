@@ -101,7 +101,7 @@ def reset_health_data_dependencies():
     """Reset health data dependencies after each test to prevent state pollution."""
     yield
     # Clean up the global container after each test
-    from clarity.api.v1.health_data import _container
+    from clarity.api.v1.health_data import _container  # noqa: PLC0415
 
     _container.auth_provider = None
     _container.repository = None
@@ -119,7 +119,7 @@ def app_with_dependencies(
     set_dependencies(mock_auth_provider, mock_repository, mock_config_provider)
 
     # Override ONLY the authentication dependency - let everything else be real
-    from clarity.auth.dependencies import get_authenticated_user
+    from clarity.auth.dependencies import get_authenticated_user  # noqa: PLC0415
 
     app.dependency_overrides[get_authenticated_user] = lambda: test_user
 
@@ -135,7 +135,7 @@ def app(test_user):
     app = FastAPI()
 
     # Override ONLY the authentication dependency - let everything else be real
-    from clarity.auth.dependencies import get_authenticated_user
+    from clarity.auth.dependencies import get_authenticated_user  # noqa: PLC0415
 
     app.dependency_overrides[get_authenticated_user] = lambda: test_user
 

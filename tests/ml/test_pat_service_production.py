@@ -8,6 +8,8 @@ and comprehensive error handling for the Dartmouth PAT implementation.
 from __future__ import annotations
 
 from datetime import UTC, datetime
+import hashlib
+import hmac
 from pathlib import Path
 import tempfile
 from unittest.mock import Mock, patch
@@ -21,6 +23,7 @@ from torch import nn
 from clarity.core.exceptions import DataValidationError
 from clarity.ml.pat_service import (
     EXPECTED_MODEL_CHECKSUMS,
+    MODEL_SIGNATURE_KEY,
     PAT_CONFIGS,
     ActigraphyAnalysis,
     ActigraphyInput,
@@ -564,11 +567,6 @@ class TestModelLoadingAndSecurity:
             checksum = PATModelService._calculate_file_checksum(temp_path)
 
             # Calculate the expected checksum matching the implementation (HMAC of SHA256)
-            import hashlib
-            import hmac
-
-            from clarity.ml.pat_service import MODEL_SIGNATURE_KEY
-
             # Step 1: Calculate SHA256 of file content
             file_digest = hashlib.sha256(test_content).hexdigest()
 

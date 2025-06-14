@@ -399,7 +399,8 @@ def get_pat_optimizer() -> PATPerformanceOptimizer:
 
 async def initialize_pat_optimizer() -> PATPerformanceOptimizer:
     """Initialize the PAT performance optimizer during app startup."""
-    from clarity.ml.pat_service import get_pat_service
+    # Import here to avoid circular dependency
+    from clarity.ml.pat_service import get_pat_service  # noqa: PLC0415
 
     pat_service = await get_pat_service()
     optimizer = PATPerformanceOptimizer(pat_service)

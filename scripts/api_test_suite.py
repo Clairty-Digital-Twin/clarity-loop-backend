@@ -31,7 +31,7 @@ else:
         import sys
 
         print("Installing required packages...")
-        import subprocess
+        import subprocess  # noqa: S404 - subprocess used safely with fixed args for pip install
 
         subprocess.check_call(
             [
@@ -416,7 +416,7 @@ if __name__ == "__main__":
         import colorama
     except ImportError:
         print("Installing required packages...")
-        import subprocess
+        import subprocess  # noqa: S404 - subprocess used safely with fixed args for pip install
         import sys
 
         subprocess.check_call(

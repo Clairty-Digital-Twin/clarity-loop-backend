@@ -2,10 +2,9 @@
 
 from __future__ import annotations
 
-from typing import Any, Dict, List
-
 from datetime import UTC, datetime
 import json
+from typing import Any
 from unittest.mock import MagicMock, patch
 import uuid
 
@@ -56,7 +55,7 @@ def valid_health_data() -> HealthDataUpload:
         user_id=str(uuid.uuid4()),
         upload_source="mobile_app",
         client_timestamp=datetime.now(UTC),
-        sync_token="sync-token-123",
+        sync_token="sync-token-123",  # noqa: S106 - Test sync token value
         metrics=[
             HealthMetric(
                 metric_id=uuid.uuid4(),
@@ -212,8 +211,6 @@ class TestUploadRawHealthData:
         user_id = valid_health_data.user_id
 
         with patch("clarity.services.s3_storage_service.datetime") as mock_datetime:
-            from datetime import datetime
-
             mock_date = datetime(2024, 1, 15, 12, 0, 0, tzinfo=UTC)
             mock_datetime.now.return_value = mock_date
 
@@ -312,8 +309,6 @@ class TestUploadAnalysisResults:
             "summary": {"risk_score": 0.2, "health_status": "good"},
             "metrics": {"heart_rate_avg": 72, "steps_total": 8500},
         }
-
-        from datetime import datetime
 
         mock_date = datetime(2024, 1, 15, 12, 0, 0, tzinfo=UTC)
 
@@ -744,7 +739,7 @@ class TestCloudStoragePortMethods:
         """Test JSON upload method."""
         # This is a synchronous method that needs special handling
 
-        async def mock_upload_file(data: bytes, file_path: str, metadata: Dict[str, Any] | None = None) -> str:
+        async def mock_upload_file(data: bytes, file_path: str, metadata: dict[str, Any] | None = None) -> str:
             return f"s3://test-bucket/{file_path}"
 
         with patch.object(s3_service, "upload_file", side_effect=mock_upload_file):

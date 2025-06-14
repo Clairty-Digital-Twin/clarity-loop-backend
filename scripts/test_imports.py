@@ -20,26 +20,26 @@ def test_imports() -> bool:
 
     # Test 2: Core clarity module
     try:
-        import clarity  # type: ignore[import-untyped] # noqa: F401
+        import clarity  # type: ignore[import-untyped] # noqa: F401, PLC0415
     except Exception:
         traceback.print_exc()
         return False
 
     # Test 3: Main application modules
     try:
-        from clarity.core.config import (  # type: ignore[import-untyped]
+        from clarity.core.config import (  # type: ignore[import-untyped] # noqa: PLC0415
             get_settings,
         )
 
         _settings = get_settings()
 
-        from clarity.core.container import (  # type: ignore[import-untyped]
+        from clarity.core.container import (  # type: ignore[import-untyped] # noqa: PLC0415
             create_application,
         )
 
         _app_instance = create_application()
 
-        from clarity.main import get_app  # type: ignore[import-untyped]
+        from clarity.main import get_app  # type: ignore[import-untyped] # noqa: PLC0415
     except Exception:
         traceback.print_exc()
         return False
@@ -58,7 +58,7 @@ def test_imports() -> bool:
 def test_configuration() -> bool:
     """Test configuration loading."""
     try:
-        from clarity.core.config import get_settings
+        from clarity.core.config import get_settings  # noqa: PLC0415
 
         _settings = get_settings()
     except Exception:

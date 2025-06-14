@@ -19,6 +19,7 @@ from clarity.ml.analysis_pipeline import (
     _get_healthkit_type_mapping,
     get_analysis_pipeline,
 )
+from clarity.ml.processors.sleep_processor import SleepFeatures
 from clarity.models.health_data import (
     ActivityData,
     BiometricData,
@@ -268,8 +269,6 @@ class TestModalityProcessing:
 
     def test_convert_sleep_features_to_vector(self):
         """Test sleep features to vector conversion."""
-        from clarity.ml.processors.sleep_processor import SleepFeatures
-
         # Create mock sleep features
         sleep_features = SleepFeatures(
             total_sleep_minutes=480,  # 8 hours

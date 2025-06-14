@@ -231,7 +231,7 @@ class TestCurrentUser:
         }
 
         # Override just the get_current_user dependency
-        from clarity.auth.dependencies import get_current_user
+        from clarity.auth.dependencies import get_current_user  # noqa: PLC0415
 
         app.dependency_overrides[get_current_user] = lambda: current_user
 
@@ -266,7 +266,7 @@ class TestUpdateUser:
         mock_cognito_provider.update_user.return_value = updated_user
 
         # Override just the get_current_user dependency
-        from clarity.auth.dependencies import get_current_user
+        from clarity.auth.dependencies import get_current_user  # noqa: PLC0415
 
         app.dependency_overrides[get_current_user] = lambda: current_user
 
@@ -340,7 +340,7 @@ class TestRefreshToken:
 
         assert response.status_code == 200
         data = response.json()
-        assert data["access_token"] == "new-access-token"
+        assert data["access_token"] == "new-access-token"  # noqa: S105 - Test fixture token value
         assert data["expires_in"] == 3600
 
     def test_refresh_token_missing(self, client):

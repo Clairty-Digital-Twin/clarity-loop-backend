@@ -6,6 +6,7 @@ CORS configuration, service mounting, and startup functionality.
 
 from __future__ import annotations
 
+import importlib
 import os
 from unittest.mock import patch
 
@@ -13,6 +14,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import pytest
 
+import clarity.entrypoints.insight_service
 from clarity.entrypoints.insight_service import app, main
 
 
@@ -50,9 +52,7 @@ class TestInsightServiceApp:
         """Test app mounting with mocked insight app."""
         # Import and create a fresh app to test mounting
         # Reload the module to ensure fresh import
-        import importlib
-
-        from clarity.entrypoints import insight_service
+        from clarity.entrypoints import insight_service  # noqa: PLC0415
 
         importlib.reload(insight_service)
 
@@ -78,14 +78,14 @@ class TestInsightServiceMain:
         )
 
     @patch("clarity.entrypoints.insight_service.uvicorn.run")
-    @patch.dict(os.environ, {"HOST": "0.0.0.0", "PORT": "9000"}, clear=True)
+    @patch.dict(os.environ, {"HOST": "0.0.0.0", "PORT": "9000"}, clear=True)  # noqa: S104 - Test configuration
     def test_main_custom_host_port(self, mock_uvicorn_run):
         """Test main function with custom host and port from environment."""
         main()
 
         mock_uvicorn_run.assert_called_once_with(
             "clarity.entrypoints.insight_service:app",
-            host="0.0.0.0",
+            host="0.0.0.0",  # noqa: S104 - Test expects bind all interfaces
             port=9000,
             reload=False,
             log_level="info",
@@ -176,10 +176,6 @@ class TestInsightServiceLogging:
     def test_logging_configuration(self, mock_basic_config):
         """Test that logging is properly configured on module import."""
         # Reload the module to trigger logging configuration
-        import importlib
-
-        import clarity.entrypoints.insight_service
-
         importlib.reload(clarity.entrypoints.insight_service)
 
         # Verify basicConfig was called with correct parameters
@@ -202,8 +198,8 @@ class TestInsightServiceIntegration:
 
     def test_app_can_be_imported_multiple_times(self):
         """Test that app can be safely imported multiple times."""
-        from clarity.entrypoints.insight_service import app as app1
-        from clarity.entrypoints.insight_service import app as app2
+        from clarity.entrypoints.insight_service import app as app1  # noqa: PLC0415
+        from clarity.entrypoints.insight_service import app as app2  # noqa: PLC0415
 
         # Should be the same instance
         assert app1 is app2
@@ -212,8 +208,6 @@ class TestInsightServiceIntegration:
     def test_module_import_dependencies(self, mock_insight_app):
         """Test that all required dependencies are properly imported."""
         # This test ensures all imports work correctly
-        import clarity.entrypoints.insight_service
-
         # Check that key components are available
         assert hasattr(clarity.entrypoints.insight_service, "FastAPI")
         assert hasattr(clarity.entrypoints.insight_service, "CORSMiddleware")
@@ -249,7 +243,7 @@ class TestInsightServiceIntegration:
         try:
             main()
             main_execution_success = True
-        except Exception:
+        except Exception:  # noqa: BLE001 - Test needs to catch all exceptions
             main_execution_success = False
 
         assert main_execution_success
@@ -262,7 +256,7 @@ class TestInsightServiceProductionScenarios:
     @patch("clarity.entrypoints.insight_service.uvicorn.run")
     @patch.dict(
         os.environ,
-        {"HOST": "0.0.0.0", "PORT": "80", "ENVIRONMENT": "production"},
+        {"HOST": "0.0.0.0", "PORT": "80", "ENVIRONMENT": "production"},  # noqa: S104 - Test configuration
         clear=True,
     )
     def test_production_deployment_configuration(self, mock_uvicorn_run):
@@ -271,7 +265,7 @@ class TestInsightServiceProductionScenarios:
 
         mock_uvicorn_run.assert_called_once_with(
             "clarity.entrypoints.insight_service:app",
-            host="0.0.0.0",  # Listen on all interfaces
+            host="0.0.0.0",  # noqa: S104 - Listen on all interfaces (production requirement)
             port=80,  # Standard HTTP port
             reload=False,  # No reload in production
             log_level="info",

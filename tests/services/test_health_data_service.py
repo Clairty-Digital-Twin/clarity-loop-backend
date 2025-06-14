@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import Any, Dict
+
 from datetime import UTC, datetime
 from unittest.mock import AsyncMock, Mock, patch
 import uuid
@@ -28,7 +30,7 @@ from clarity.services.s3_storage_service import S3StorageService
 
 
 @pytest.fixture
-def mock_repository():
+def mock_repository() -> Mock:
     """Mock health data repository."""
     mock = Mock(spec=IHealthDataRepository)
     mock.save_health_data = AsyncMock(return_value=True)
@@ -39,7 +41,7 @@ def mock_repository():
 
 
 @pytest.fixture
-def mock_cloud_storage():
+def mock_cloud_storage() -> Mock:
     """Mock cloud storage service."""
     mock = Mock(spec=S3StorageService)
     mock.upload_raw_health_data = AsyncMock(return_value="s3://bucket/file.json")
@@ -48,7 +50,7 @@ def mock_cloud_storage():
 
 
 @pytest.fixture
-def health_data_service(mock_repository, mock_cloud_storage):
+def health_data_service(mock_repository: Mock, mock_cloud_storage: Mock) -> HealthDataService:
     """Create health data service with mocked dependencies."""
     return HealthDataService(
         repository=mock_repository,
@@ -57,7 +59,7 @@ def health_data_service(mock_repository, mock_cloud_storage):
 
 
 @pytest.fixture
-def health_data_service_no_storage(mock_repository):
+def health_data_service_no_storage(mock_repository: Mock) -> HealthDataService:
     """Create health data service without cloud storage."""
     with patch("clarity.services.health_data_service._HAS_S3", False):
         return HealthDataService(
@@ -67,7 +69,7 @@ def health_data_service_no_storage(mock_repository):
 
 
 @pytest.fixture
-def valid_health_data():
+def valid_health_data() -> HealthDataUpload:
     """Create valid health data upload."""
     return HealthDataUpload(
         user_id=uuid.uuid4(),
@@ -104,7 +106,7 @@ def valid_health_data():
 class TestHealthDataServiceInit:
     """Test HealthDataService initialization."""
 
-    def test_init_with_cloud_storage(self, mock_repository, mock_cloud_storage):
+    def test_init_with_cloud_storage(self, mock_repository: Mock, mock_cloud_storage: Mock) -> None:
         """Test initialization with cloud storage."""
         service = HealthDataService(
             repository=mock_repository,
@@ -116,7 +118,7 @@ class TestHealthDataServiceInit:
         assert service.raw_data_bucket == "clarity-healthkit-raw-data"
 
     @patch("clarity.services.health_data_service._HAS_S3", False)
-    def test_init_without_cloud_storage(self, mock_repository):
+    def test_init_without_cloud_storage(self, mock_repository: Mock) -> None:
         """Test initialization without cloud storage."""
         service = HealthDataService(
             repository=mock_repository,
@@ -127,7 +129,7 @@ class TestHealthDataServiceInit:
         assert service.cloud_storage is None
 
     @patch.dict("os.environ", {"HEALTHKIT_RAW_BUCKET": "custom-bucket"})
-    def test_init_with_env_vars(self, mock_repository):
+    def test_init_with_env_vars(self, mock_repository: Mock) -> None:
         """Test initialization with environment variables."""
         service = HealthDataService(repository=mock_repository)
 
@@ -139,8 +141,8 @@ class TestProcessHealthData:
 
     @pytest.mark.asyncio
     async def test_process_health_data_success(
-        self, health_data_service, mock_repository, valid_health_data
-    ):
+        self, health_data_service: HealthDataService, mock_repository: Mock, valid_health_data: HealthDataUpload
+    ) -> None:
         """Test successful health data processing."""
         test_uuid = uuid.uuid4()
         with patch("uuid.uuid4", return_value=test_uuid):
@@ -163,8 +165,8 @@ class TestProcessHealthData:
 
     @pytest.mark.asyncio
     async def test_process_health_data_validation_failure(
-        self, health_data_service, valid_health_data
-    ):
+        self, health_data_service: HealthDataService, valid_health_data: HealthDataUpload
+    ) -> None:
         """Test health data processing with validation failure."""
         # Create an invalid health data by removing metric_type from existing metrics
         valid_health_data.metrics[0].metric_type = None
@@ -177,8 +179,8 @@ class TestProcessHealthData:
 
     @pytest.mark.asyncio
     async def test_process_health_data_repository_error(
-        self, health_data_service, mock_repository, valid_health_data
-    ):
+        self, health_data_service: HealthDataService, mock_repository: Mock, valid_health_data: HealthDataUpload
+    ) -> None:
         """Test health data processing with repository error."""
         mock_repository.save_health_data.side_effect = Exception("Database error")
 
@@ -194,8 +196,8 @@ class TestUploadRawData:
 
     @pytest.mark.asyncio
     async def test_upload_raw_data_s3_service(
-        self, health_data_service, mock_cloud_storage, valid_health_data
-    ):
+        self, health_data_service: HealthDataService, mock_cloud_storage: Mock, valid_health_data: HealthDataUpload
+    ) -> None:
         """Test raw data upload with S3StorageService."""
         user_id = str(uuid.uuid4())
         processing_id = str(uuid.uuid4())
@@ -213,8 +215,8 @@ class TestUploadRawData:
 
     @pytest.mark.asyncio
     async def test_upload_raw_data_generic_storage(
-        self, mock_repository, valid_health_data
-    ):
+        self, mock_repository: Mock, valid_health_data: HealthDataUpload
+    ) -> None:
         """Test raw data upload with generic cloud storage."""
         # Create a mock that's not an S3StorageService
         mock_generic_storage = Mock()
@@ -244,8 +246,8 @@ class TestUploadRawData:
 
     @pytest.mark.asyncio
     async def test_upload_raw_data_no_storage(
-        self, health_data_service_no_storage, valid_health_data
-    ):
+        self, health_data_service_no_storage: HealthDataService, valid_health_data: HealthDataUpload
+    ) -> None:
         """Test raw data upload without cloud storage."""
         user_id = str(uuid.uuid4())
         processing_id = str(uuid.uuid4())
@@ -258,8 +260,8 @@ class TestUploadRawData:
 
     @pytest.mark.asyncio
     async def test_upload_raw_data_error(
-        self, health_data_service, mock_cloud_storage, valid_health_data
-    ):
+        self, health_data_service: HealthDataService, mock_cloud_storage: Mock, valid_health_data: HealthDataUpload
+    ) -> None:
         """Test raw data upload with error."""
         mock_cloud_storage.upload_raw_health_data.side_effect = Exception("S3 error")
 
@@ -274,12 +276,12 @@ class TestUploadRawData:
 class TestValidateHealthMetrics:
     """Test health metrics validation."""
 
-    def test_validate_metrics_success(self, health_data_service, valid_health_data):
+    def test_validate_metrics_success(self, health_data_service: HealthDataService, valid_health_data: HealthDataUpload) -> None:
         """Test successful metrics validation."""
         errors = health_data_service._validate_health_metrics(valid_health_data.metrics)
         assert errors == []
 
-    def test_validate_metrics_missing_type(self, health_data_service):
+    def test_validate_metrics_missing_type(self, health_data_service: HealthDataService) -> None:
         """Test validation with missing metric type."""
         # Create a mock metric with None type to test validation
         metric = Mock()
@@ -291,7 +293,7 @@ class TestValidateHealthMetrics:
         assert len(errors) == 1
         assert "missing required fields" in errors[0]
 
-    def test_validate_metrics_missing_created_at(self, health_data_service):
+    def test_validate_metrics_missing_created_at(self, health_data_service: HealthDataService) -> None:
         """Test validation with missing created_at."""
         # Create a mock metric with None created_at to test validation
         metric = Mock()
@@ -303,7 +305,7 @@ class TestValidateHealthMetrics:
         assert len(errors) == 1
         assert "missing required fields" in errors[0]
 
-    def test_validate_metrics_business_rule_failure(self, health_data_service):
+    def test_validate_metrics_business_rule_failure(self, health_data_service: HealthDataService) -> None:
         """Test validation with business rule failure."""
         # Create a mock heart rate metric without biometric data
         metric = Mock()
@@ -317,7 +319,7 @@ class TestValidateHealthMetrics:
         assert len(errors) == 1
         assert "failed business validation" in errors[0]
 
-    def test_validate_metrics_exception(self, health_data_service):
+    def test_validate_metrics_exception(self, health_data_service: HealthDataService) -> None:
         """Test validation with exception during processing."""
         metric = Mock()
         metric.metric_id = "test-id"
@@ -334,8 +336,8 @@ class TestGetProcessingStatus:
 
     @pytest.mark.asyncio
     async def test_get_processing_status_success(
-        self, health_data_service, mock_repository
-    ):
+        self, health_data_service: HealthDataService, mock_repository: Mock
+    ) -> None:
         """Test successful status retrieval."""
         status_data = {
             "processing_id": "test-123",
@@ -354,8 +356,8 @@ class TestGetProcessingStatus:
 
     @pytest.mark.asyncio
     async def test_get_processing_status_not_found(
-        self, health_data_service, mock_repository
-    ):
+        self, health_data_service: HealthDataService, mock_repository: Mock
+    ) -> None:
         """Test status retrieval when not found."""
         mock_repository.get_processing_status.return_value = None
 
@@ -367,8 +369,8 @@ class TestGetProcessingStatus:
 
     @pytest.mark.asyncio
     async def test_get_processing_status_repository_error(
-        self, health_data_service, mock_repository
-    ):
+        self, health_data_service: HealthDataService, mock_repository: Mock
+    ) -> None:
         """Test status retrieval with repository error."""
         mock_repository.get_processing_status.side_effect = Exception("DB error")
 
@@ -383,8 +385,8 @@ class TestGetUserHealthData:
 
     @pytest.mark.asyncio
     async def test_get_user_health_data_success(
-        self, health_data_service, mock_repository
-    ):
+        self, health_data_service: HealthDataService, mock_repository: Mock
+    ) -> None:
         """Test successful health data retrieval."""
         health_data = {
             "metrics": [
@@ -418,8 +420,8 @@ class TestGetUserHealthData:
 
     @pytest.mark.asyncio
     async def test_get_user_health_data_error(
-        self, health_data_service, mock_repository
-    ):
+        self, health_data_service: HealthDataService, mock_repository: Mock
+    ) -> None:
         """Test health data retrieval with error."""
         mock_repository.get_user_health_data.side_effect = Exception("DB error")
 
@@ -434,8 +436,8 @@ class TestDeleteHealthData:
 
     @pytest.mark.asyncio
     async def test_delete_health_data_success(
-        self, health_data_service, mock_repository
-    ):
+        self, health_data_service: HealthDataService, mock_repository: Mock
+    ) -> None:
         """Test successful health data deletion."""
         result = await health_data_service.delete_health_data(
             user_id="user-123",
@@ -450,8 +452,8 @@ class TestDeleteHealthData:
 
     @pytest.mark.asyncio
     async def test_delete_health_data_all_user_data(
-        self, health_data_service, mock_repository
-    ):
+        self, health_data_service: HealthDataService, mock_repository: Mock
+    ) -> None:
         """Test deletion of all user data."""
         result = await health_data_service.delete_health_data(
             user_id="user-123",
@@ -465,7 +467,7 @@ class TestDeleteHealthData:
         )
 
     @pytest.mark.asyncio
-    async def test_delete_health_data_error(self, health_data_service, mock_repository):
+    async def test_delete_health_data_error(self, health_data_service: HealthDataService, mock_repository: Mock) -> None:
         """Test health data deletion with error."""
         mock_repository.delete_health_data.side_effect = Exception("DB error")
 
@@ -478,7 +480,7 @@ class TestDeleteHealthData:
 class TestValidateMetricBusinessRules:
     """Test metric business rules validation."""
 
-    def test_validate_business_rules_heart_rate_valid(self, health_data_service):
+    def test_validate_business_rules_heart_rate_valid(self, health_data_service: HealthDataService) -> None:
         """Test valid heart rate metric."""
         metric = HealthMetric(
             metric_id=uuid.uuid4(),
@@ -489,7 +491,7 @@ class TestValidateMetricBusinessRules:
 
         assert health_data_service._validate_metric_business_rules(metric) is True
 
-    def test_validate_business_rules_heart_rate_no_data(self, health_data_service):
+    def test_validate_business_rules_heart_rate_no_data(self, health_data_service: HealthDataService) -> None:
         """Test heart rate metric without biometric data."""
         # Create a mock metric since Pydantic enforces validation
         metric = Mock()
@@ -499,7 +501,7 @@ class TestValidateMetricBusinessRules:
 
         assert health_data_service._validate_metric_business_rules(metric) is False
 
-    def test_validate_business_rules_sleep_valid(self, health_data_service):
+    def test_validate_business_rules_sleep_valid(self, health_data_service: HealthDataService) -> None:
         """Test valid sleep metric."""
         # Create a mock sleep metric
         metric = Mock()
@@ -509,7 +511,7 @@ class TestValidateMetricBusinessRules:
 
         assert health_data_service._validate_metric_business_rules(metric) is True
 
-    def test_validate_business_rules_activity_valid(self, health_data_service):
+    def test_validate_business_rules_activity_valid(self, health_data_service: HealthDataService) -> None:
         """Test valid activity metric."""
         metric = HealthMetric(
             metric_id=uuid.uuid4(),
@@ -520,7 +522,7 @@ class TestValidateMetricBusinessRules:
 
         assert health_data_service._validate_metric_business_rules(metric) is True
 
-    def test_validate_business_rules_mood_valid(self, health_data_service):
+    def test_validate_business_rules_mood_valid(self, health_data_service: HealthDataService) -> None:
         """Test valid mood assessment metric."""
         # Create a mock mood metric
         metric = Mock()
@@ -530,7 +532,7 @@ class TestValidateMetricBusinessRules:
 
         assert health_data_service._validate_metric_business_rules(metric) is True
 
-    def test_validate_business_rules_no_metric_type(self, health_data_service):
+    def test_validate_business_rules_no_metric_type(self, health_data_service: HealthDataService) -> None:
         """Test metric without type."""
         # Create a mock metric with no type
         metric = Mock()
@@ -538,7 +540,7 @@ class TestValidateMetricBusinessRules:
 
         assert health_data_service._validate_metric_business_rules(metric) is False
 
-    def test_validate_business_rules_exception(self, health_data_service):
+    def test_validate_business_rules_exception(self, health_data_service: HealthDataService) -> None:
         """Test validation with exception."""
         metric = Mock()
         metric.metric_type = Mock(side_effect=AttributeError("Invalid"))
@@ -549,32 +551,32 @@ class TestValidateMetricBusinessRules:
 class TestExceptionClasses:
     """Test custom exception classes."""
 
-    def test_health_data_service_error(self):
+    def test_health_data_service_error(self) -> None:
         """Test HealthDataServiceError."""
         error = HealthDataServiceError("Test error", status_code=400)
         assert str(error) == "Test error"
         assert error.status_code == 400
 
-    def test_health_data_service_error_default_status(self):
+    def test_health_data_service_error_default_status(self) -> None:
         """Test HealthDataServiceError with default status."""
         error = HealthDataServiceError("Test error")
         assert error.status_code == 500
 
-    def test_data_not_found_error(self):
+    def test_data_not_found_error(self) -> None:
         """Test DataNotFoundError."""
         error = DataNotFoundError("Data not found")
         assert str(error) == "Data not found"
         assert error.status_code == 404
         assert isinstance(error, HealthDataServiceError)
 
-    def test_ml_prediction_error(self):
+    def test_ml_prediction_error(self) -> None:
         """Test MLPredictionError."""
         error = MLPredictionError("Prediction failed", model_name="test_model")
         assert "ML Prediction Error in test_model" in str(error)
         assert error.status_code == 503
         assert error.model_name == "test_model"
 
-    def test_ml_prediction_error_no_model(self):
+    def test_ml_prediction_error_no_model(self) -> None:
         """Test MLPredictionError without model name."""
         error = MLPredictionError("Prediction failed")
         assert str(error) == "ML Prediction Error: Prediction failed"

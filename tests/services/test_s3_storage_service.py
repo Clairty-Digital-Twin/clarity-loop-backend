@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import Any, Dict, List
+
 from datetime import UTC, datetime
 import json
 from unittest.mock import MagicMock, patch
@@ -252,8 +254,8 @@ class TestUploadRawHealthData:
 
     @pytest.mark.asyncio
     async def test_upload_raw_health_data_no_encryption(
-        self, mock_s3_client, valid_health_data
-    ):
+        self, mock_s3_client: MagicMock, valid_health_data: HealthDataUpload
+    ) -> None:
         """Test upload without encryption."""
         service = S3StorageService(
             bucket_name="test-bucket",
@@ -268,8 +270,8 @@ class TestUploadRawHealthData:
 
     @pytest.mark.asyncio
     async def test_upload_raw_health_data_client_error(
-        self, s3_service, mock_s3_client, valid_health_data
-    ):
+        self, s3_service: S3StorageService, mock_s3_client: MagicMock, valid_health_data: HealthDataUpload
+    ) -> None:
         """Test upload with ClientError."""
         mock_s3_client.put_object.side_effect = ClientError(
             {"Error": {"Code": "AccessDenied", "Message": "Access denied"}},
@@ -285,8 +287,8 @@ class TestUploadRawHealthData:
 
     @pytest.mark.asyncio
     async def test_upload_raw_health_data_unexpected_error(
-        self, s3_service, mock_s3_client, valid_health_data
-    ):
+        self, s3_service: S3StorageService, mock_s3_client: MagicMock, valid_health_data: HealthDataUpload
+    ) -> None:
         """Test upload with unexpected error."""
         mock_s3_client.put_object.side_effect = Exception("Unexpected error")
 
@@ -302,7 +304,7 @@ class TestUploadAnalysisResults:
     """Test analysis results upload functionality."""
 
     @pytest.mark.asyncio
-    async def test_upload_analysis_results_success(self, s3_service, mock_s3_client):
+    async def test_upload_analysis_results_success(self, s3_service: S3StorageService, mock_s3_client: MagicMock) -> None:
         """Test successful analysis results upload."""
         user_id = "user-123"
         processing_id = "proc-456"
@@ -352,7 +354,7 @@ class TestUploadAnalysisResults:
         assert body_data["results"] == analysis_results
 
     @pytest.mark.asyncio
-    async def test_upload_analysis_results_error(self, s3_service, mock_s3_client):
+    async def test_upload_analysis_results_error(self, s3_service: S3StorageService, mock_s3_client: MagicMock) -> None:
         """Test analysis results upload with error."""
         mock_s3_client.put_object.side_effect = Exception("Upload error")
 
@@ -368,7 +370,7 @@ class TestDownloadRawData:
     """Test raw data download functionality."""
 
     @pytest.mark.asyncio
-    async def test_download_raw_data_success(self, s3_service, mock_s3_client):
+    async def test_download_raw_data_success(self, s3_service: S3StorageService, mock_s3_client: MagicMock) -> None:
         """Test successful data download."""
         s3_key = "raw_data/2024/01/15/user-123/proc-123.json"
         test_data = {
@@ -391,7 +393,7 @@ class TestDownloadRawData:
         )
 
     @pytest.mark.asyncio
-    async def test_download_raw_data_not_found(self, s3_service, mock_s3_client):
+    async def test_download_raw_data_not_found(self, s3_service: S3StorageService, mock_s3_client: MagicMock) -> None:
         """Test download when file doesn't exist."""
         mock_s3_client.get_object.side_effect = ClientError(
             {"Error": {"Code": "NoSuchKey", "Message": "Key not found"}},
@@ -404,7 +406,7 @@ class TestDownloadRawData:
         assert "File not found" in str(exc_info.value)
 
     @pytest.mark.asyncio
-    async def test_download_raw_data_client_error(self, s3_service, mock_s3_client):
+    async def test_download_raw_data_client_error(self, s3_service: S3StorageService, mock_s3_client: MagicMock) -> None:
         """Test download with other client error."""
         mock_s3_client.get_object.side_effect = ClientError(
             {"Error": {"Code": "AccessDenied", "Message": "Access denied"}},
@@ -417,7 +419,7 @@ class TestDownloadRawData:
         assert "S3 download failed" in str(exc_info.value)
 
     @pytest.mark.asyncio
-    async def test_download_raw_data_parse_error(self, s3_service, mock_s3_client):
+    async def test_download_raw_data_parse_error(self, s3_service: S3StorageService, mock_s3_client: MagicMock) -> None:
         """Test download with JSON parse error."""
         mock_response = {"Body": MagicMock()}
         mock_response["Body"].read.return_value = b"invalid json"
@@ -433,7 +435,7 @@ class TestListUserFiles:
     """Test user file listing functionality."""
 
     @pytest.mark.asyncio
-    async def test_list_user_files_success(self, s3_service, mock_s3_client):
+    async def test_list_user_files_success(self, s3_service: S3StorageService, mock_s3_client: MagicMock) -> None:
         """Test successful file listing."""
         user_id = "user-123"
         mock_response = {
@@ -471,7 +473,7 @@ class TestListUserFiles:
         )
 
     @pytest.mark.asyncio
-    async def test_list_user_files_with_prefix(self, s3_service, mock_s3_client):
+    async def test_list_user_files_with_prefix(self, s3_service: S3StorageService, mock_s3_client: MagicMock) -> None:
         """Test file listing with prefix."""
         mock_s3_client.list_objects_v2.return_value = {"Contents": []}
 
@@ -484,7 +486,7 @@ class TestListUserFiles:
         )
 
     @pytest.mark.asyncio
-    async def test_list_user_files_empty(self, s3_service, mock_s3_client):
+    async def test_list_user_files_empty(self, s3_service: S3StorageService, mock_s3_client: MagicMock) -> None:
         """Test file listing with no results."""
         mock_s3_client.list_objects_v2.return_value = {}
 
@@ -493,7 +495,7 @@ class TestListUserFiles:
         assert files == []
 
     @pytest.mark.asyncio
-    async def test_list_user_files_filters_others(self, s3_service, mock_s3_client):
+    async def test_list_user_files_filters_others(self, s3_service: S3StorageService, mock_s3_client: MagicMock) -> None:
         """Test file listing filters out other users' files."""
         user_id = "user-123"
         mock_response = {
@@ -532,7 +534,7 @@ class TestListUserFiles:
         assert files[1]["key"] == f"raw_data/2024/01/14/{user_id}/file3.json"
 
     @pytest.mark.asyncio
-    async def test_list_user_files_error(self, s3_service, mock_s3_client):
+    async def test_list_user_files_error(self, s3_service: S3StorageService, mock_s3_client: MagicMock) -> None:
         """Test file listing with error."""
         mock_s3_client.list_objects_v2.side_effect = Exception("List error")
 
@@ -546,7 +548,7 @@ class TestDeleteFile:
     """Test file deletion functionality."""
 
     @pytest.mark.asyncio
-    async def test_delete_file_success(self, s3_service, mock_s3_client):
+    async def test_delete_file_success(self, s3_service: S3StorageService, mock_s3_client: MagicMock) -> None:
         """Test successful file deletion."""
         s3_key = "raw_data/2024/01/15/user-123/file.json"
 
@@ -559,7 +561,7 @@ class TestDeleteFile:
         )
 
     @pytest.mark.asyncio
-    async def test_delete_file_error(self, s3_service, mock_s3_client):
+    async def test_delete_file_error(self, s3_service: S3StorageService, mock_s3_client: MagicMock) -> None:
         """Test deletion with error."""
         mock_s3_client.delete_object.side_effect = Exception("Delete error")
 
@@ -573,7 +575,7 @@ class TestDeleteUserData:
     """Test user data deletion functionality."""
 
     @pytest.mark.asyncio
-    async def test_delete_user_data_success(self, s3_service, mock_s3_client):
+    async def test_delete_user_data_success(self, s3_service: S3StorageService, mock_s3_client: MagicMock) -> None:
         """Test successful user data deletion."""
         # Mock list_user_files response
         with patch.object(s3_service, "list_user_files") as mock_list:
@@ -588,7 +590,7 @@ class TestDeleteUserData:
             assert mock_s3_client.delete_object.call_count == 2
 
     @pytest.mark.asyncio
-    async def test_delete_user_data_partial_failure(self, s3_service, mock_s3_client):
+    async def test_delete_user_data_partial_failure(self, s3_service: S3StorageService, mock_s3_client: MagicMock) -> None:
         """Test user data deletion with partial failures."""
         with patch.object(s3_service, "list_user_files") as mock_list:
             mock_list.return_value = [
@@ -608,7 +610,7 @@ class TestSetupBucketLifecycle:
     """Test bucket lifecycle setup."""
 
     @pytest.mark.asyncio
-    async def test_setup_bucket_lifecycle_success(self, s3_service, mock_s3_client):
+    async def test_setup_bucket_lifecycle_success(self, s3_service: S3StorageService, mock_s3_client: MagicMock) -> None:
         """Test successful lifecycle setup."""
         await s3_service.setup_bucket_lifecycle()
 
@@ -627,7 +629,7 @@ class TestSetupBucketLifecycle:
         assert raw_rule["Filter"]["Prefix"] == "raw_data/"
 
     @pytest.mark.asyncio
-    async def test_setup_bucket_lifecycle_error(self, s3_service, mock_s3_client):
+    async def test_setup_bucket_lifecycle_error(self, s3_service: S3StorageService, mock_s3_client: MagicMock) -> None:
         """Test lifecycle setup with error (should not raise)."""
         mock_s3_client.put_bucket_lifecycle_configuration.side_effect = Exception(
             "Setup error"
@@ -641,7 +643,7 @@ class TestHealthCheck:
     """Test health check functionality."""
 
     @pytest.mark.asyncio
-    async def test_health_check_success(self, s3_service, mock_s3_client):
+    async def test_health_check_success(self, s3_service: S3StorageService, mock_s3_client: MagicMock) -> None:
         """Test successful health check."""
         result = await s3_service.health_check()
 
@@ -654,7 +656,7 @@ class TestHealthCheck:
         mock_s3_client.head_bucket.assert_called_once_with(Bucket="test-health-bucket")
 
     @pytest.mark.asyncio
-    async def test_health_check_client_error(self, s3_service, mock_s3_client):
+    async def test_health_check_client_error(self, s3_service: S3StorageService, mock_s3_client: MagicMock) -> None:
         """Test health check with client error."""
         mock_s3_client.head_bucket.side_effect = ClientError(
             {"Error": {"Code": "NoSuchBucket", "Message": "Bucket not found"}},
@@ -667,7 +669,7 @@ class TestHealthCheck:
         assert "S3 error (NoSuchBucket)" in result["error"]
 
     @pytest.mark.asyncio
-    async def test_health_check_unexpected_error(self, s3_service, mock_s3_client):
+    async def test_health_check_unexpected_error(self, s3_service: S3StorageService, mock_s3_client: MagicMock) -> None:
         """Test health check with unexpected error."""
         mock_s3_client.head_bucket.side_effect = Exception("Connection error")
 
@@ -681,7 +683,7 @@ class TestCloudStoragePortMethods:
     """Test CloudStoragePort interface methods."""
 
     @pytest.mark.asyncio
-    async def test_upload_file(self, s3_service, mock_s3_client):
+    async def test_upload_file(self, s3_service: S3StorageService, mock_s3_client: MagicMock) -> None:
         """Test generic file upload."""
         file_data = b"test file content"
         file_path = "test/path/file.txt"
@@ -698,7 +700,7 @@ class TestCloudStoragePortMethods:
         assert call_kwargs["Metadata"] == metadata
 
     @pytest.mark.asyncio
-    async def test_upload_file_error(self, s3_service, mock_s3_client):
+    async def test_upload_file_error(self, s3_service: S3StorageService, mock_s3_client: MagicMock) -> None:
         """Test file upload with error."""
         mock_s3_client.put_object.side_effect = Exception("Simulated upload error")
 
@@ -708,7 +710,7 @@ class TestCloudStoragePortMethods:
         assert "File upload failed" in str(exc_info.value)
 
     @pytest.mark.asyncio
-    async def test_download_file(self, s3_service, mock_s3_client):
+    async def test_download_file(self, s3_service: S3StorageService, mock_s3_client: MagicMock) -> None:
         """Test generic file download."""
         file_data = b"test file content"
         mock_response = {"Body": MagicMock()}
@@ -720,7 +722,7 @@ class TestCloudStoragePortMethods:
         assert result == file_data
 
     @pytest.mark.asyncio
-    async def test_download_file_error(self, s3_service, mock_s3_client):
+    async def test_download_file_error(self, s3_service: S3StorageService, mock_s3_client: MagicMock) -> None:
         """Test file download with error."""
         mock_s3_client.get_object.side_effect = Exception("Simulated download error")
 
@@ -729,20 +731,20 @@ class TestCloudStoragePortMethods:
 
         assert "File download failed" in str(exc_info.value)
 
-    def test_bucket_method(self, s3_service):
+    def test_bucket_method(self, s3_service: S3StorageService) -> None:
         """Test bucket method."""
         result = s3_service.bucket("test-bucket")
         assert result == "test-bucket"
 
-    def test_get_raw_data_bucket_name(self, s3_service):
+    def test_get_raw_data_bucket_name(self, s3_service: S3StorageService) -> None:
         """Test get_raw_data_bucket_name method."""
         assert s3_service.get_raw_data_bucket_name() == "test-health-bucket"
 
-    def test_upload_json(self, s3_service):
+    def test_upload_json(self, s3_service: S3StorageService) -> None:
         """Test JSON upload method."""
         # This is a synchronous method that needs special handling
 
-        async def mock_upload_file(data, file_path, metadata=None) -> str:
+        async def mock_upload_file(data: bytes, file_path: str, metadata: Dict[str, Any] | None = None) -> str:
             return f"s3://test-bucket/{file_path}"
 
         with patch.object(s3_service, "upload_file", side_effect=mock_upload_file):
@@ -759,7 +761,7 @@ class TestCloudStoragePortMethods:
 class TestGlobalFunctions:
     """Test global functions."""
 
-    def test_get_s3_service(self):
+    def test_get_s3_service(self) -> None:
         """Test get_s3_service singleton."""
         with patch("clarity.services.s3_storage_service._s3_service", None):
             with patch("boto3.client"):
@@ -768,7 +770,7 @@ class TestGlobalFunctions:
 
                 assert service1 is service2  # Same instance
 
-    def test_get_s3_service_default_bucket(self):
+    def test_get_s3_service_default_bucket(self) -> None:
         """Test get_s3_service with default bucket name."""
         with patch("clarity.services.s3_storage_service._s3_service", None):
             with patch("boto3.client"):
@@ -780,24 +782,24 @@ class TestGlobalFunctions:
 class TestExceptionClasses:
     """Test custom exception classes."""
 
-    def test_s3_storage_error(self):
+    def test_s3_storage_error(self) -> None:
         """Test S3StorageError exception."""
         error = S3StorageError("Test error")
         assert str(error) == "Test error"
 
-    def test_s3_upload_error(self):
+    def test_s3_upload_error(self) -> None:
         """Test S3UploadError exception."""
         error = S3UploadError("Upload failed")
         assert str(error) == "Upload failed"
         assert isinstance(error, S3StorageError)
 
-    def test_s3_download_error(self):
+    def test_s3_download_error(self) -> None:
         """Test S3DownloadError exception."""
         error = S3DownloadError("Download failed")
         assert str(error) == "Download failed"
         assert isinstance(error, S3StorageError)
 
-    def test_s3_permission_error(self):
+    def test_s3_permission_error(self) -> None:
         """Test S3PermissionError exception."""
         error = S3PermissionError("Access denied")
         assert str(error) == "Access denied"

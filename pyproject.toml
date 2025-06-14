@@ -218,6 +218,9 @@ select = [
     "FLY", # flynt
     "PERF", # perflint
     "RUF", # ruff-specific rules
+    "PL",  # pylint
+    "S",   # flake8-bandit
+    "ANN", # flake8-annotations
 ]
 ignore = [
     "E501",  # line too long, handled by black
@@ -232,6 +235,8 @@ ignore = [
     "PLW0603",  # global statement usage in lifespan for singleton pattern
     "ANN401",   # allow use of Any in some interfaces & tests
     "RUF029",   # allow async def without await in mock helpers
+    "PLR0913",  # Too many arguments
+    "PLR2004",  # Magic value used in comparison
 ]
 
 [tool.ruff.lint.pyupgrade]
@@ -239,7 +244,9 @@ ignore = [
 keep-runtime-typing = true
 
 [tool.ruff.lint.per-file-ignores]
-"tests/**/*" = ["ARG", "FBT", "PLR2004", "S101", "TID252"]
+"tests/**/*" = ["ARG", "FBT", "PLR2004", "S101", "TID252", "ANN001", "ANN201", "ANN202", "ANN003", "ANN101", "ANN102"]
+"scripts/**/*" = ["S603", "S404", "ANN201", "PLR2004", "F841"]
+"conftest.py" = ["ANN001"]
 
 # Black configuration
 [tool.black]

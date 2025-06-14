@@ -15,11 +15,11 @@ def _service_up(url: str, timeout: float = 2.0) -> bool:
         # Extract host from URL
         host = url.split("//", 1)[-1].split("/", 1)[0].split(":")[0]
         port = 443 if url.startswith("https") else 80
-        
+
         # Try to connect
         socket.create_connection((host, port), timeout=timeout).close()
         return True
-    except (OSError, socket.timeout):
+    except (TimeoutError, OSError):
         return False
 
 
@@ -27,7 +27,7 @@ class TestAuthenticationE2E:
     """Test authentication flow from frontend to backend."""
 
     BASE_URL = os.getenv(
-        "AUTH_BASE_URL", 
+        "AUTH_BASE_URL",
         "http://clarity-alb-1762715656.us-east-1.elb.amazonaws.com"
     )
 
@@ -86,7 +86,7 @@ class TestAuthenticationE2E:
         # Skip if service is unreachable
         if not _service_up(self.BASE_URL):
             pytest.skip(f"⏭  {self.BASE_URL} unreachable – skipping integration test")
-        
+
         frontend_login_payload["password"] = "WrongPassword123!"
 
         async with httpx.AsyncClient() as client:

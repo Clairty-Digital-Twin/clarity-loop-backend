@@ -18,12 +18,12 @@ from clarity.core.constants import (
     AUTH_HEADER_TYPE_BEARER,
     AUTH_SCOPE_FULL_ACCESS,
 )
-from clarity.models.user import User
 from clarity.core.exceptions import (
     EmailNotVerifiedError,
     InvalidCredentialsError,
     UserAlreadyExistsError,
 )
+from clarity.models.user import User
 
 
 @pytest.fixture

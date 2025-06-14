@@ -768,7 +768,7 @@ class TestErrorHandlingAndValidation:
     async def test_analyze_actigraphy_too_much_data(self):
         """Test actigraphy analysis with too much data."""
         # Don't need to mock the model - data validation happens first!
-        
+
         # Create excessive data points (more than 20160 limit)
         large_data = [
             ActigraphyDataPoint(timestamp=datetime.now(UTC), value=0.4)

@@ -702,22 +702,22 @@ class TestBatchOperations:
         self.mock_resource = Mock()
         self.mock_table = Mock()
         self.mock_batch_writer = Mock()
-        
+
         # Mock the batch_writer context manager
         self.mock_batch_writer.__enter__ = Mock(return_value=self.mock_batch_writer)
         self.mock_batch_writer.__exit__ = Mock(return_value=None)
         self.mock_batch_writer.put_item = Mock()
-        
+
         self.mock_table.batch_writer.return_value = self.mock_batch_writer
         self.mock_resource.Table.return_value = self.mock_table
-        
+
         # Patch boto3.resource
         self.patcher = patch(
             "clarity.services.dynamodb_service.boto3.resource",
             return_value=self.mock_resource,
         )
         self.patcher.start()
-        
+
         # Create service
         self.service = DynamoDBService(region="us-east-1", table_prefix="test_")
         self.table_name = self.service.tables["health_data"]
@@ -763,7 +763,9 @@ class TestBatchOperations:
         # Verify put_item was called with correct items
         assert self.mock_batch_writer.put_item.call_count == 5
         # Check that the IDs were preserved in the calls
-        call_args = [call[1]["Item"] for call in self.mock_batch_writer.put_item.call_args_list]
+        call_args = [
+            call[1]["Item"] for call in self.mock_batch_writer.put_item.call_args_list
+        ]
         assert all(item["id"].startswith("existing_id_") for item in call_args)
 
 
@@ -877,7 +879,7 @@ class TestDynamoDBHealthDataRepository:
         # Mock both put_item and batch_write_items
         mock_put_item = AsyncMock(return_value="processing_123")
         mock_batch_write = AsyncMock()  # batch_write_items doesn't return anything
-        
+
         self.repository.service.put_item = mock_put_item
         self.repository.service.batch_write_items = mock_batch_write
 
@@ -893,7 +895,7 @@ class TestDynamoDBHealthDataRepository:
 
         # Verify put_item was called once for the main record
         mock_put_item.assert_called_once()
-        
+
         # Verify batch_write_items was called for metrics
         mock_batch_write.assert_called_once()
         batch_call = mock_batch_write.call_args[1]

@@ -49,8 +49,8 @@ class TestAuthenticationE2E:
 
     @pytest.mark.asyncio
     @pytest.mark.skipif(
-        os.getenv("CI") == "true" or not os.getenv("RUN_INTEGRATION_TESTS"), 
-        reason="Requires live Cognito credentials"
+        os.getenv("CI") == "true" or not os.getenv("RUN_INTEGRATION_TESTS"),
+        reason="Requires live Cognito credentials",
     )
     async def test_login_success(self, frontend_login_payload):
         """Test successful login with frontend payload."""
@@ -137,8 +137,8 @@ class TestAuthenticationE2E:
 
     @pytest.mark.asyncio
     @pytest.mark.skipif(
-        os.getenv("CI") == "true" or not os.getenv("RUN_INTEGRATION_TESTS"), 
-        reason="Requires AWS credentials"
+        os.getenv("CI") == "true" or not os.getenv("RUN_INTEGRATION_TESTS"),
+        reason="Requires AWS credentials",
     )
     async def test_cognito_configuration(self):
         """Verify Cognito is properly configured."""

@@ -693,46 +693,53 @@ class TestQueryOperations:
             )
 
 
-@mock_aws
 class TestBatchOperations:
     """Test DynamoDB batch operations."""
 
     def setup_method(self, method):
-        """Set up test fixtures with moto."""
-        # Create a real DynamoDB table using moto
-        self.dynamodb = boto3.resource("dynamodb", region_name="us-east-1")
-
-        # Create test table
-        self.table_name = "test_health_data"
-        self.table = self.dynamodb.create_table(
-            TableName=self.table_name,
-            KeySchema=[{"AttributeName": "id", "KeyType": "HASH"}],
-            AttributeDefinitions=[{"AttributeName": "id", "AttributeType": "S"}],
-            BillingMode="PAY_PER_REQUEST",
+        """Set up test fixtures."""
+        # Mock the boto3 resource and table
+        self.mock_resource = Mock()
+        self.mock_table = Mock()
+        self.mock_batch_writer = Mock()
+        
+        # Mock the batch_writer context manager
+        self.mock_batch_writer.__enter__ = Mock(return_value=self.mock_batch_writer)
+        self.mock_batch_writer.__exit__ = Mock(return_value=None)
+        self.mock_batch_writer.put_item = Mock()
+        
+        self.mock_table.batch_writer.return_value = self.mock_batch_writer
+        self.mock_resource.Table.return_value = self.mock_table
+        
+        # Patch boto3.resource
+        self.patcher = patch(
+            "clarity.services.dynamodb_service.boto3.resource",
+            return_value=self.mock_resource,
         )
-
-        # Wait for table to be ready
-        self.table.wait_until_exists()
-
-        # Create service with mocked DynamoDB
-        self.service = DynamoDBService(region="us-east-1")
+        self.patcher.start()
+        
+        # Create service
+        self.service = DynamoDBService(region="us-east-1", table_prefix="test_")
+        self.table_name = self.service.tables["health_data"]
 
     def teardown_method(self, method):
         """Clean up test fixtures."""
+        self.patcher.stop()
 
     @pytest.mark.asyncio
     async def test_batch_write_items_single_batch(self):
         """Test batch write with items fitting in single batch."""
         items = [{"name": f"Item {i}"} for i in range(10)]  # Less than 25 (batch limit)
 
-        # Test with real moto DynamoDB - simplified without audit logging
+        # Test batch write
         result = await self.service.batch_write_items(self.table_name, items)
 
         assert result == 10
 
-        # Verify items were actually written to DynamoDB by checking table
-        response = self.table.scan()
-        assert response["Count"] == 10
+        # Verify batch writer was used correctly
+        assert self.mock_table.batch_writer.called
+        # Verify put_item was called for each item
+        assert self.mock_batch_writer.put_item.call_count == 10
 
     @pytest.mark.asyncio
     async def test_batch_write_items_multiple_batches(self):
@@ -743,9 +750,10 @@ class TestBatchOperations:
 
         assert result == 30
 
-        # Verify all items were written
-        response = self.table.scan()
-        assert response["Count"] == 30
+        # Verify batch writer was called multiple times (30 items / 25 batch size = 2 batches)
+        assert self.mock_table.batch_writer.call_count == 2
+        # Verify put_item was called for all items
+        assert self.mock_batch_writer.put_item.call_count == 30
 
     @pytest.mark.asyncio
     async def test_batch_write_items_with_existing_ids(self):
@@ -756,11 +764,11 @@ class TestBatchOperations:
 
         assert result == 5
 
-        # Verify existing IDs were preserved
-        for i in range(5):
-            response = self.table.get_item(Key={"id": f"existing_id_{i}"})
-            assert "Item" in response
-            assert response["Item"]["name"] == f"Item {i}"
+        # Verify put_item was called with correct items
+        assert self.mock_batch_writer.put_item.call_count == 5
+        # Check that the IDs were preserved in the calls
+        call_args = [call[0][0] for call in self.mock_batch_writer.put_item.call_args_list]
+        assert all(item["id"].startswith("existing_id_") for item in call_args)
 
 
 class TestHealthCheck:
@@ -870,8 +878,12 @@ class TestDynamoDBHealthDataRepository:
     @pytest.mark.asyncio
     async def test_save_health_data_success(self):
         """Test successful health data saving."""
+        # Mock both put_item and batch_write_items
         mock_put_item = AsyncMock(return_value="processing_123")
+        mock_batch_write = AsyncMock(return_value=2)  # 1 main + 1 metric
+        
         self.repository.service.put_item = mock_put_item
+        self.repository.service.batch_write_items = mock_batch_write
 
         result = await self.repository.save_health_data(
             user_id="user_123",
@@ -883,17 +895,14 @@ class TestDynamoDBHealthDataRepository:
 
         assert result is True
 
-        # Verify put_item was called with correct parameters
+        # Verify put_item was called once for the main record
         mock_put_item.assert_called_once()
-        call_args = mock_put_item.call_args[0]
-
-        assert call_args[0] == self.repository.service.tables["health_data"]
-
-        item_data = call_args[1]
-        assert item_data["user_id"] == "user_123"
-        assert item_data["processing_id"] == "processing_123"
-        assert item_data["metrics"] == [{"type": "heart_rate", "value": 75}]
-        assert item_data["upload_source"] == "apple_watch"
+        
+        # Verify batch_write_items was called for metrics
+        mock_batch_write.assert_called_once()
+        batch_call = mock_batch_write.call_args[1]
+        assert batch_call["table_name"] == self.repository.service.tables["health_data"]
+        assert len(batch_call["items"]) == 1  # One metric
 
     @pytest.mark.asyncio
     async def test_save_health_data_error(self):

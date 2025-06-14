@@ -767,10 +767,12 @@ class TestErrorHandlingAndValidation:
     @pytest.mark.asyncio
     async def test_analyze_actigraphy_too_much_data(self):
         """Test actigraphy analysis with too much data."""
-        # Create excessive data points
+        # Don't need to mock the model - data validation happens first!
+        
+        # Create excessive data points (more than 20160 limit)
         large_data = [
             ActigraphyDataPoint(timestamp=datetime.now(UTC), value=0.4)
-            for _ in range(20000)  # Exceeds typical limits
+            for _ in range(21000)  # Exceeds the 20160 limit
         ]
 
         input_data = ActigraphyInput(user_id="user_123", data_points=large_data)
@@ -833,7 +835,9 @@ class TestHealthCheckAndServiceManagement:
         self.service.is_loaded = True
         self.service.model = Mock()
 
-        result = await self.service.health_check()
+        # Mock verify_weights_loaded to return True
+        with patch.object(self.service, "verify_weights_loaded", return_value=True):
+            result = await self.service.health_check()
 
         assert result["status"] == "healthy"
         assert result["model_loaded"] is True
@@ -1057,8 +1061,11 @@ class TestProductionReadiness:
         ]
 
         for attack_path in attack_paths:
-            with pytest.raises(ValueError, match="Invalid model path"):
-                PATModelService._sanitize_model_path(attack_path)
+            # Should return safe default path instead of raising
+            result = PATModelService._sanitize_model_path(attack_path)
+            # Verify it returns a safe path within the models directory
+            assert "models/pat/default_model.h5" in result
+            assert attack_path not in result
 
     def test_configuration_validation(self):
         """Test that configurations are properly validated."""

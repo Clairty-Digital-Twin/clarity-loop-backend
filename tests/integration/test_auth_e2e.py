@@ -48,6 +48,10 @@ class TestAuthenticationE2E:
         }
 
     @pytest.mark.asyncio
+    @pytest.mark.skipif(
+        os.getenv("CI") == "true" or not os.getenv("RUN_INTEGRATION_TESTS"), 
+        reason="Requires live Cognito credentials"
+    )
     async def test_login_success(self, frontend_login_payload):
         """Test successful login with frontend payload."""
         async with httpx.AsyncClient() as client:
@@ -78,6 +82,9 @@ class TestAuthenticationE2E:
 
     @pytest.mark.asyncio
     @pytest.mark.integration
+    @pytest.mark.skipif(
+        os.getenv("CI") == "true", reason="Requires live Cognito credentials"
+    )
     async def test_login_invalid_credentials(self, frontend_login_payload):
         """Test login with invalid credentials."""
         # Skip if service is unreachable
@@ -108,6 +115,9 @@ class TestAuthenticationE2E:
             assert data["detail"]["status"] == 401
 
     @pytest.mark.asyncio
+    @pytest.mark.skipif(
+        os.getenv("CI") == "true", reason="Requires live Cognito credentials"
+    )
     async def test_login_missing_fields(self):
         """Test login with missing required fields."""
         incomplete_payload = {
@@ -126,6 +136,10 @@ class TestAuthenticationE2E:
             assert response.status_code == 422
 
     @pytest.mark.asyncio
+    @pytest.mark.skipif(
+        os.getenv("CI") == "true" or not os.getenv("RUN_INTEGRATION_TESTS"), 
+        reason="Requires AWS credentials"
+    )
     async def test_cognito_configuration(self):
         """Verify Cognito is properly configured."""
         import boto3

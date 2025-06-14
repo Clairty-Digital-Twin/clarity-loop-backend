@@ -26,9 +26,7 @@ def _service_up(url: str, timeout: float = 2.0) -> bool:
 class TestAuthenticationE2E:
     """Test authentication flow from frontend to backend."""
 
-    BASE_URL = os.getenv(
-        "AUTH_BASE_URL", "https://clarity.novamindnyc.com"
-    )
+    BASE_URL = os.getenv("AUTH_BASE_URL", "https://clarity.novamindnyc.com")
 
     @pytest.fixture
     def test_user_credentials(self):

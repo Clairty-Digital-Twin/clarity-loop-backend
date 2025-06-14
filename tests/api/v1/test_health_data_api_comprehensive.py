@@ -40,12 +40,14 @@ def mock_repository():
     """Mock health data repository."""
     repo = Mock(spec=IHealthDataRepository)
     repo.save_health_data = AsyncMock(return_value=True)
-    repo.get_processing_status = AsyncMock(return_value={
-        "processing_id": str(uuid.uuid4()),
-        "status": "pending",
-        "created_at": datetime.now(UTC).isoformat(),
-        "updated_at": datetime.now(UTC).isoformat(),
-    })
+    repo.get_processing_status = AsyncMock(
+        return_value={
+            "processing_id": str(uuid.uuid4()),
+            "status": "pending",
+            "created_at": datetime.now(UTC).isoformat(),
+            "updated_at": datetime.now(UTC).isoformat(),
+        }
+    )
     repo.get_user_health_data = AsyncMock(return_value=[])
     repo.delete_health_data = AsyncMock(return_value=True)
     return repo
@@ -101,6 +103,7 @@ def reset_health_data_dependencies():
     yield
     # Clean up the global container after each test
     from clarity.api.v1.health_data import _container
+
     _container.auth_provider = None
     _container.repository = None
     _container.config_provider = None
@@ -189,8 +192,8 @@ class TestUploadHealthDataNoDependencies:
             headers={"Authorization": "Bearer test-token"},
         )
 
-        # Router has fallback behavior and processes requests even without explicit dependencies
-        assert response.status_code == 201
+        # When dependencies are not configured, the service returns 503
+        assert response.status_code == 503
 
 
 class TestUploadHealthDataWithDependencies:
@@ -405,5 +408,5 @@ class TestDeleteHealthData:
             headers={"Authorization": "Bearer test-token"},
         )
 
-        # Router has fallback behavior and processes requests
-        assert response.status_code == 200
+        # When dependencies are not configured, the service returns 503
+        assert response.status_code == 503

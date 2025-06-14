@@ -42,7 +42,7 @@ def setup_logging() -> None:
 
 
 @pytest.fixture(autouse=True)
-def configure_caplog(caplog) -> None:
+def configure_caplog(caplog: pytest.LogCaptureFixture) -> None:
     """Global fixture to configure caplog for all tests.
 
     This ensures caplog can capture logs from all our modules

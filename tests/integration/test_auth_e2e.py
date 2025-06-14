@@ -69,7 +69,9 @@ class TestAuthenticationE2E:
             assert "access_token" in data
             assert "refresh_token" in data
             assert "token_type" in data
-            assert data["token_type"] == "bearer"  # noqa: S105 - Expected auth response type
+            assert (
+                data["token_type"] == "bearer"
+            )
             assert "expires_in" in data
             assert data["expires_in"] == 3600
             assert "scope" in data
@@ -91,7 +93,9 @@ class TestAuthenticationE2E:
         if not _service_up(self.BASE_URL):
             pytest.skip(f"⏭  {self.BASE_URL} unreachable – skipping integration test")
 
-        frontend_login_payload["password"] = "WrongPassword123!"  # noqa: S105 - Test invalid password
+        frontend_login_payload["password"] = (
+            "WrongPassword123!"  # noqa: S105 - Test invalid password
+        )
 
         async with httpx.AsyncClient() as client:
             response = await client.post(

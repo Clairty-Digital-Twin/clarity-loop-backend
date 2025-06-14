@@ -456,8 +456,15 @@ class S3StorageService(CloudStoragePort):
                     )
                     await asyncio.get_event_loop().run_in_executor(None, delete_func)
                     deleted_count += 1
-                except (ClientError, Exception) as e:
+                except ClientError as e:
                     logger.warning("Failed to delete file %s: %s", file_info["key"], e)
+                    logger.debug("S3 delete error details: %s", e, exc_info=True)
+                except (OSError, TimeoutError) as e:
+                    # Network or I/O errors that shouldn't crash the deletion process
+                    logger.warning(
+                        "Network/IO error deleting file %s: %s", file_info["key"], e
+                    )
+                    logger.debug("Network error details: %s", e, exc_info=True)
 
             await self._audit_log(
                 operation="delete_user_data",
@@ -541,8 +548,13 @@ class S3StorageService(CloudStoragePort):
 
             logger.info("S3 bucket lifecycle policies configured")
 
-        except (ClientError, Exception) as e:
+        except ClientError as e:
             logger.warning("Failed to set up bucket lifecycle: %s", e)
+            # Don't raise - lifecycle is optional
+        except (OSError, TimeoutError) as e:
+            # Network errors during lifecycle setup
+            logger.warning("Network error setting up bucket lifecycle: %s", e)
+            logger.debug("Lifecycle setup error details: %s", e, exc_info=True)
             # Don't raise - lifecycle is optional
 
     async def health_check(self) -> dict[str, Any]:
@@ -573,7 +585,9 @@ class S3StorageService(CloudStoragePort):
                 "bucket": self.bucket_name,
                 "timestamp": datetime.now(UTC).isoformat(),
             }
-        except Exception as e:  # noqa: BLE001 - Health check should catch all exceptions
+        except (
+            Exception
+        ) as e:
             return {
                 "status": "unhealthy",
                 "error": str(e),

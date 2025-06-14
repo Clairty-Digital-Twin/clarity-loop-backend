@@ -8,7 +8,8 @@ from __future__ import annotations
 
 import asyncio
 from datetime import UTC, datetime
-from unittest.mock import Mock, patch
+from typing import Any
+from unittest.mock import MagicMock, Mock, patch
 
 from botocore.exceptions import ClientError
 from jose import JWTError
@@ -23,7 +24,7 @@ from clarity.models.user import User
 class TestCognitoAuthProviderInitialization:
     """Test Cognito auth provider initialization."""
 
-    def test_cognito_auth_provider_initialization(self):
+    def test_cognito_auth_provider_initialization(self) -> None:
         """Test basic Cognito auth provider initialization."""
         provider = CognitoAuthProvider(
             user_pool_id="us-east-1_ABC123", client_id="client123", region="us-east-1"
@@ -45,7 +46,9 @@ class TestCognitoAuthProviderInitialization:
         assert provider._jwks_cache_ttl == 3600
 
     @patch("clarity.auth.aws_cognito_provider.boto3.client")
-    def test_cognito_auth_provider_client_creation(self, mock_boto3_client):
+    def test_cognito_auth_provider_client_creation(
+        self, mock_boto3_client: MagicMock
+    ) -> None:
         """Test that Cognito client is created correctly."""
         mock_client = Mock()
         mock_boto3_client.return_value = mock_client
@@ -72,7 +75,7 @@ class TestCognitoJWKSCaching:
     """Test JWKS key caching functionality."""
 
     @patch("clarity.auth.aws_cognito_provider.requests.get")
-    def test_jwks_property_initial_fetch(self, mock_get):
+    def test_jwks_property_initial_fetch(self, mock_get: MagicMock) -> None:
         """Test initial JWKS fetch and caching."""
         mock_response = Mock()
         mock_response.json.return_value = {
@@ -92,7 +95,7 @@ class TestCognitoJWKSCaching:
         mock_get.assert_called_once_with(provider.jwks_url, timeout=30)
 
     @patch("clarity.auth.aws_cognito_provider.requests.get")
-    def test_jwks_property_cache_hit(self, mock_get):
+    def test_jwks_property_cache_hit(self, mock_get: MagicMock) -> None:
         """Test JWKS cache hit (no new request)."""
         provider = CognitoAuthProvider("pool", "client")
         provider._jwks_cache = {"keys": [{"kid": "cached_key"}]}
@@ -105,7 +108,7 @@ class TestCognitoJWKSCaching:
         mock_get.assert_not_called()
 
     @patch("clarity.auth.aws_cognito_provider.requests.get")
-    def test_jwks_property_cache_expired(self, mock_get):
+    def test_jwks_property_cache_expired(self, mock_get: MagicMock) -> None:
         """Test JWKS cache expiration and refresh."""
         mock_response = Mock()
         mock_response.json.return_value = {"keys": [{"kid": "new_key"}]}
@@ -125,7 +128,7 @@ class TestCognitoJWKSCaching:
         mock_get.assert_called_once()
 
     @patch("clarity.auth.aws_cognito_provider.requests.get")
-    def test_jwks_property_fetch_failure_no_cache(self, mock_get):
+    def test_jwks_property_fetch_failure_no_cache(self, mock_get: MagicMock) -> None:
         """Test JWKS fetch failure with no existing cache."""
         mock_get.side_effect = requests.RequestException("Network error")
 
@@ -135,7 +138,7 @@ class TestCognitoJWKSCaching:
             _ = provider.jwks
 
     @patch("clarity.auth.aws_cognito_provider.requests.get")
-    def test_jwks_property_fetch_failure_with_cache(self, mock_get):
+    def test_jwks_property_fetch_failure_with_cache(self, mock_get: MagicMock) -> None:
         """Test JWKS fetch failure with existing cache."""
         mock_get.side_effect = requests.RequestException("Network error")
 
@@ -150,7 +153,7 @@ class TestCognitoJWKSCaching:
         assert jwks == {"keys": [{"kid": "cached_key"}]}
 
     @patch("clarity.auth.aws_cognito_provider.requests.get")
-    def test_jwks_property_http_error(self, mock_get):
+    def test_jwks_property_http_error(self, mock_get: MagicMock) -> None:
         """Test JWKS HTTP error handling."""
         mock_response = Mock()
         mock_response.raise_for_status.side_effect = requests.HTTPError("404 Not Found")
@@ -165,7 +168,7 @@ class TestCognitoJWKSCaching:
 class TestTokenVerification:
     """Test JWT token verification functionality."""
 
-    def setup_method(self):
+    def setup_method(self) -> None:
         """Set up test fixtures."""
         self.provider = CognitoAuthProvider("us-east-1_ABC123", "client123")
         self.mock_jwks = {
@@ -189,13 +192,13 @@ class TestTokenVerification:
     @pytest.mark.asyncio
     async def test_verify_token_success(
         self,
-        mock_time,
-        mock_b64_decode,
-        mock_jwk_construct,
-        mock_get_claims,
-        mock_get_headers,
-        mock_requests_get,
-    ):
+        mock_time: MagicMock,
+        mock_b64_decode: MagicMock,
+        mock_jwk_construct: MagicMock,
+        mock_get_claims: MagicMock,
+        mock_get_headers: MagicMock,
+        mock_requests_get: MagicMock,
+    ) -> None:
         """Test successful token verification."""
         # Mock JWKS fetch
         mock_response = Mock()
@@ -230,8 +233,8 @@ class TestTokenVerification:
     @patch("clarity.auth.aws_cognito_provider.jwt.get_unverified_headers")
     @pytest.mark.asyncio
     async def test_verify_token_kid_not_found(
-        self, mock_get_headers, mock_requests_get
-    ):
+        self, mock_get_headers: MagicMock, mock_requests_get: MagicMock
+    ) -> None:
         """Test token verification with unknown key ID."""
         # Mock JWKS fetch
         mock_response = Mock()
@@ -253,12 +256,12 @@ class TestTokenVerification:
     @pytest.mark.asyncio
     async def test_verify_token_signature_verification_failed(
         self,
-        mock_time,
-        mock_jwk_construct,
-        mock_get_claims,
-        mock_get_headers,
-        mock_requests_get,
-    ):
+        mock_time: MagicMock,
+        mock_jwk_construct: MagicMock,
+        mock_get_claims: MagicMock,
+        mock_get_headers: MagicMock,
+        mock_requests_get: MagicMock,
+    ) -> None:
         """Test token verification with invalid signature."""
         # Mock JWKS fetch
         mock_response = Mock()
@@ -291,13 +294,13 @@ class TestTokenVerification:
     @pytest.mark.asyncio
     async def test_verify_token_expired(
         self,
-        mock_time,
-        mock_b64_decode,
-        mock_jwk_construct,
-        mock_get_claims,
-        mock_get_headers,
-        mock_requests_get,
-    ):
+        mock_time: MagicMock,
+        mock_b64_decode: MagicMock,
+        mock_jwk_construct: MagicMock,
+        mock_get_claims: MagicMock,
+        mock_get_headers: MagicMock,
+        mock_requests_get: MagicMock,
+    ) -> None:
         """Test token verification with expired token."""
         # Mock JWKS fetch
         mock_response = Mock()
@@ -330,13 +333,13 @@ class TestTokenVerification:
     @pytest.mark.asyncio
     async def test_verify_token_wrong_audience(
         self,
-        mock_time,
-        mock_b64_decode,
-        mock_jwk_construct,
-        mock_get_claims,
-        mock_get_headers,
-        mock_requests_get,
-    ):
+        mock_time: MagicMock,
+        mock_b64_decode: MagicMock,
+        mock_jwk_construct: MagicMock,
+        mock_get_claims: MagicMock,
+        mock_get_headers: MagicMock,
+        mock_requests_get: MagicMock,
+    ) -> None:
         """Test token verification with wrong audience."""
         # Mock JWKS fetch
         mock_response = Mock()
@@ -363,7 +366,9 @@ class TestTokenVerification:
     @patch("clarity.auth.aws_cognito_provider.requests.get")
     @patch("clarity.auth.aws_cognito_provider.jwt.get_unverified_headers")
     @pytest.mark.asyncio
-    async def test_verify_token_jwt_error(self, mock_get_headers, mock_requests_get):
+    async def test_verify_token_jwt_error(
+        self, mock_get_headers: MagicMock, mock_requests_get: MagicMock
+    ) -> None:
         """Test token verification with JWT error."""
         # Mock the JWKS HTTP request
         mock_requests_get.return_value.json.return_value = self.mock_jwks
@@ -380,8 +385,8 @@ class TestTokenVerification:
     @patch("clarity.auth.aws_cognito_provider.jwt.get_unverified_headers")
     @pytest.mark.asyncio
     async def test_verify_token_unexpected_error(
-        self, mock_get_headers, mock_requests_get
-    ):
+        self, mock_get_headers: MagicMock, mock_requests_get: MagicMock
+    ) -> None:
         """Test token verification with unexpected error."""
         # Mock the JWKS HTTP request
         mock_requests_get.return_value.json.return_value = self.mock_jwks
@@ -398,13 +403,13 @@ class TestTokenVerification:
 class TestUserManagement:
     """Test user management functionality."""
 
-    def setup_method(self):
+    def setup_method(self) -> None:
         """Set up test fixtures."""
         self.provider = CognitoAuthProvider("us-east-1_ABC123", "client123")
         self.provider.cognito_client = Mock()
 
     @pytest.mark.asyncio
-    async def test_get_user_success(self):
+    async def test_get_user_success(self) -> None:
         """Test successful user retrieval."""
         mock_response = {
             "Username": "user123",
@@ -431,7 +436,7 @@ class TestUserManagement:
         assert user.metadata["enabled"] is True
 
     @pytest.mark.asyncio
-    async def test_get_user_not_found(self):
+    async def test_get_user_not_found(self) -> None:
         """Test user retrieval when user doesn't exist."""
         error = ClientError(
             {"Error": {"Code": "UserNotFoundException", "Message": "User not found"}},
@@ -444,7 +449,7 @@ class TestUserManagement:
         assert user is None
 
     @pytest.mark.asyncio
-    async def test_get_user_client_error(self):
+    async def test_get_user_client_error(self) -> None:
         """Test user retrieval with other client error."""
         error = ClientError(
             {"Error": {"Code": "AccessDeniedException", "Message": "Access denied"}},
@@ -457,7 +462,7 @@ class TestUserManagement:
         assert user is None
 
     @pytest.mark.asyncio
-    async def test_get_user_unexpected_error(self):
+    async def test_get_user_unexpected_error(self) -> None:
         """Test user retrieval with unexpected error."""
         self.provider.cognito_client.admin_get_user.side_effect = Exception(
             "Network error"
@@ -469,14 +474,16 @@ class TestUserManagement:
 
     @patch.dict("os.environ", {"ENVIRONMENT": "development"})
     @pytest.mark.asyncio
-    async def test_create_user_success_development(self):
+    async def test_create_user_success_development(self) -> None:
         """Test successful user creation in development."""
         mock_response = {"UserSub": "new-user-123"}
         self.provider.cognito_client.sign_up.return_value = mock_response
         self.provider.cognito_client.admin_confirm_sign_up.return_value = {}
 
         user = await self.provider.create_user(
-            email="new@example.com", password="password123", display_name="New User"  # noqa: S106 - Test password
+            email="new@example.com",
+            password="password123",
+            display_name="New User",
         )
 
         assert user is not None
@@ -498,7 +505,8 @@ class TestUserManagement:
         self.provider.cognito_client.sign_up.return_value = mock_response
 
         user = await self.provider.create_user(
-            email="new@example.com", password="password123"  # noqa: S106 - Test password
+            email="new@example.com",
+            password="password123",  # noqa: S106 - Test password
         )
 
         assert user is not None
@@ -680,9 +688,13 @@ class TestAuthentication:
         result = await self.provider.authenticate("test@example.com", "password123")
 
         assert result is not None
-        assert result["access_token"] == "access_token_123"  # noqa: S105 - Test token value
+        assert (
+            result["access_token"] == "access_token_123"
+        )
         assert result["id_token"] == "id_token_123"  # noqa: S105 - Test token value
-        assert result["refresh_token"] == "refresh_token_123"  # noqa: S105 - Test token value
+        assert (
+            result["refresh_token"] == "refresh_token_123"
+        )
         assert result["expires_in"] == "3600"
 
     @pytest.mark.asyncio
@@ -970,7 +982,9 @@ class TestProductionScenarios:
         self.provider.cognito_client.initiate_auth.return_value = auth_response
 
         tokens = await self.provider.authenticate("test@example.com", "password123")
-        assert tokens["access_token"] == "access_token_123"  # noqa: S105 - Test token value
+        assert (
+            tokens["access_token"] == "access_token_123"
+        )
 
         # Verify token
         with patch.object(self.provider, "verify_token") as mock_verify:

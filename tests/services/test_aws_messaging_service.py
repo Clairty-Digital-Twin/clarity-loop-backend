@@ -30,7 +30,9 @@ def mock_sns_client() -> MagicMock:
 
 
 @pytest.fixture
-def aws_messaging_service(mock_sqs_client: MagicMock, mock_sns_client: MagicMock) -> AWSMessagingService:
+def aws_messaging_service(
+    mock_sqs_client: MagicMock, mock_sns_client: MagicMock
+) -> AWSMessagingService:
     """Create AWS messaging service with mocked clients."""
     service = AWSMessagingService(
         region="us-east-1",
@@ -119,7 +121,9 @@ class TestGetQueueUrl:
     """Test queue URL retrieval functionality."""
 
     @pytest.mark.asyncio
-    async def test_get_queue_url_cached(self, aws_messaging_service: AWSMessagingService) -> None:
+    async def test_get_queue_url_cached(
+        self, aws_messaging_service: AWSMessagingService
+    ) -> None:
         """Test getting queue URL from cache."""
         url = await aws_messaging_service._get_queue_url("test-health-queue")
 
@@ -131,7 +135,9 @@ class TestGetQueueUrl:
 
     @pytest.mark.asyncio
     async def test_get_queue_url_existing_queue(
-        self, aws_messaging_service_no_sns: AWSMessagingService, mock_sqs_client: MagicMock
+        self,
+        aws_messaging_service_no_sns: AWSMessagingService,
+        mock_sqs_client: MagicMock,
     ) -> None:
         """Test getting URL for existing queue."""
         mock_sqs_client.get_queue_url.return_value = {
@@ -145,7 +151,9 @@ class TestGetQueueUrl:
 
     @pytest.mark.asyncio
     async def test_get_queue_url_create_new_queue(
-        self, aws_messaging_service_no_sns: AWSMessagingService, mock_sqs_client: MagicMock
+        self,
+        aws_messaging_service_no_sns: AWSMessagingService,
+        mock_sqs_client: MagicMock,
     ) -> None:
         """Test creating new queue when it doesn't exist."""
         mock_sqs_client.get_queue_url.side_effect = ClientError(
@@ -170,7 +178,9 @@ class TestGetQueueUrl:
 
     @pytest.mark.asyncio
     async def test_get_queue_url_other_error(
-        self, aws_messaging_service_no_sns: AWSMessagingService, mock_sqs_client: MagicMock
+        self,
+        aws_messaging_service_no_sns: AWSMessagingService,
+        mock_sqs_client: MagicMock,
     ) -> None:
         """Test handling other client errors."""
         mock_sqs_client.get_queue_url.side_effect = ClientError(
@@ -226,7 +236,10 @@ class TestPublishHealthDataUpload:
 
     @pytest.mark.asyncio
     async def test_publish_health_data_upload_with_sns(
-        self, aws_messaging_service: AWSMessagingService, mock_sqs_client: MagicMock, mock_sns_client: MagicMock
+        self,
+        aws_messaging_service: AWSMessagingService,
+        mock_sqs_client: MagicMock,
+        mock_sns_client: MagicMock,
     ) -> None:
         """Test publishing with SNS fan-out."""
         mock_sqs_client.send_message.return_value = {"MessageId": "msg-123"}
@@ -291,7 +304,10 @@ class TestPublishInsightRequest:
 
     @pytest.mark.asyncio
     async def test_publish_insight_request_with_sns(
-        self, aws_messaging_service: AWSMessagingService, mock_sqs_client: MagicMock, mock_sns_client: MagicMock
+        self,
+        aws_messaging_service: AWSMessagingService,
+        mock_sqs_client: MagicMock,
+        mock_sns_client: MagicMock,
     ) -> None:
         """Test publishing with SNS fan-out."""
         mock_sqs_client.send_message.return_value = {"MessageId": "msg-789"}
@@ -309,7 +325,9 @@ class TestPublishToSNS:
     """Test SNS publishing functionality."""
 
     @pytest.mark.asyncio
-    async def test_publish_to_sns_success(self, aws_messaging_service: AWSMessagingService, mock_sns_client: MagicMock) -> None:
+    async def test_publish_to_sns_success(
+        self, aws_messaging_service: AWSMessagingService, mock_sns_client: MagicMock
+    ) -> None:
         """Test successful SNS publishing."""
         mock_sns_client.publish.return_value = {"MessageId": "sns-123"}
 
@@ -329,7 +347,9 @@ class TestPublishToSNS:
         )
 
     @pytest.mark.asyncio
-    async def test_publish_to_sns_no_sns_configured(self, aws_messaging_service_no_sns: AWSMessagingService) -> None:
+    async def test_publish_to_sns_no_sns_configured(
+        self, aws_messaging_service_no_sns: AWSMessagingService
+    ) -> None:
         """Test SNS publishing when not configured."""
         with pytest.raises(RuntimeError, match="SNS not configured"):
             await aws_messaging_service_no_sns._publish_to_sns(
@@ -337,7 +357,9 @@ class TestPublishToSNS:
             )
 
     @pytest.mark.asyncio
-    async def test_publish_to_sns_error(self, aws_messaging_service: AWSMessagingService, mock_sns_client: MagicMock) -> None:
+    async def test_publish_to_sns_error(
+        self, aws_messaging_service: AWSMessagingService, mock_sns_client: MagicMock
+    ) -> None:
         """Test SNS publishing with error."""
         mock_sns_client.publish.side_effect = Exception("SNS error")
 
@@ -397,7 +419,9 @@ class TestReceiveMessages:
         assert messages == []
 
     @pytest.mark.asyncio
-    async def test_receive_messages_error(self, aws_messaging_service: AWSMessagingService, mock_sqs_client: MagicMock) -> None:
+    async def test_receive_messages_error(
+        self, aws_messaging_service: AWSMessagingService, mock_sqs_client: MagicMock
+    ) -> None:
         """Test receiving messages with error."""
         mock_sqs_client.receive_message.side_effect = Exception("Receive error")
 
@@ -409,7 +433,9 @@ class TestDeleteMessage:
     """Test message deletion functionality."""
 
     @pytest.mark.asyncio
-    async def test_delete_message_success(self, aws_messaging_service: AWSMessagingService, mock_sqs_client: MagicMock) -> None:
+    async def test_delete_message_success(
+        self, aws_messaging_service: AWSMessagingService, mock_sqs_client: MagicMock
+    ) -> None:
         """Test successful message deletion."""
         await aws_messaging_service.delete_message(
             "test-health-queue", "receipt-handle-123"
@@ -421,7 +447,9 @@ class TestDeleteMessage:
         )
 
     @pytest.mark.asyncio
-    async def test_delete_message_error(self, aws_messaging_service: AWSMessagingService, mock_sqs_client: MagicMock) -> None:
+    async def test_delete_message_error(
+        self, aws_messaging_service: AWSMessagingService, mock_sqs_client: MagicMock
+    ) -> None:
         """Test message deletion with error."""
         mock_sqs_client.delete_message.side_effect = Exception("Delete error")
 
@@ -469,7 +497,9 @@ class TestQueueOperations:
             await aws_messaging_service.get_queue_attributes("test-health-queue")
 
     @pytest.mark.asyncio
-    async def test_purge_queue_success(self, aws_messaging_service: AWSMessagingService, mock_sqs_client: MagicMock) -> None:
+    async def test_purge_queue_success(
+        self, aws_messaging_service: AWSMessagingService, mock_sqs_client: MagicMock
+    ) -> None:
         """Test purging queue."""
         await aws_messaging_service.purge_queue("test-health-queue")
 
@@ -478,7 +508,9 @@ class TestQueueOperations:
         )
 
     @pytest.mark.asyncio
-    async def test_purge_queue_error(self, aws_messaging_service: AWSMessagingService, mock_sqs_client: MagicMock) -> None:
+    async def test_purge_queue_error(
+        self, aws_messaging_service: AWSMessagingService, mock_sqs_client: MagicMock
+    ) -> None:
         """Test purging queue with error."""
         mock_sqs_client.purge_queue.side_effect = Exception("Purge error")
 
@@ -490,7 +522,9 @@ class TestHealthCheck:
     """Test health check functionality."""
 
     @pytest.mark.asyncio
-    async def test_health_check_success(self, aws_messaging_service: AWSMessagingService, mock_sqs_client: MagicMock) -> None:
+    async def test_health_check_success(
+        self, aws_messaging_service: AWSMessagingService, mock_sqs_client: MagicMock
+    ) -> None:
         """Test successful health check."""
         mock_sqs_client.get_queue_attributes.return_value = {
             "Attributes": {"ApproximateNumberOfMessages": "5"}
@@ -505,7 +539,9 @@ class TestHealthCheck:
         assert "timestamp" in result
 
     @pytest.mark.asyncio
-    async def test_health_check_failure(self, aws_messaging_service: AWSMessagingService, mock_sqs_client: MagicMock) -> None:
+    async def test_health_check_failure(
+        self, aws_messaging_service: AWSMessagingService, mock_sqs_client: MagicMock
+    ) -> None:
         """Test health check with failure."""
         mock_sqs_client.get_queue_attributes.side_effect = Exception(
             "Health check failed"

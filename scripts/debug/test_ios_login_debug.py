@@ -145,5 +145,6 @@ async def echo_request(request: Request):
 if __name__ == "__main__":
     # Use environment variable or default to localhost for security
     import os
+
     host = os.getenv("DEBUG_HOST", "127.0.0.1")
     uvicorn.run(app, host=host, port=8001, log_level="warning")

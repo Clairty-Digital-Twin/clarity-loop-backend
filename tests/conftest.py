@@ -38,7 +38,9 @@ os.environ["ENVIRONMENT"] = "testing"
 # AWS test environment setup
 os.environ["AWS_DEFAULT_REGION"] = "us-east-1"
 os.environ["AWS_ACCESS_KEY_ID"] = "test-key-id"
-os.environ["AWS_SECRET_ACCESS_KEY"] = "test-secret-key"  # noqa: S105 - Test AWS credentials
+os.environ["AWS_SECRET_ACCESS_KEY"] = (
+    "test-secret-key"  # noqa: S105 - Test AWS credentials
+)
 os.environ["COGNITO_USER_POOL_ID"] = "test-pool-id"
 os.environ["COGNITO_CLIENT_ID"] = "test-client-id"
 os.environ["DYNAMODB_TABLE_PREFIX"] = "test"

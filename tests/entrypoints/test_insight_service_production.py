@@ -78,7 +78,9 @@ class TestInsightServiceMain:
         )
 
     @patch("clarity.entrypoints.insight_service.uvicorn.run")
-    @patch.dict(os.environ, {"HOST": "0.0.0.0", "PORT": "9000"}, clear=True)  # noqa: S104 - Test configuration
+    @patch.dict(
+        os.environ, {"HOST": "0.0.0.0", "PORT": "9000"}, clear=True
+    )
     def test_main_custom_host_port(self, mock_uvicorn_run):
         """Test main function with custom host and port from environment."""
         main()
@@ -256,7 +258,11 @@ class TestInsightServiceProductionScenarios:
     @patch("clarity.entrypoints.insight_service.uvicorn.run")
     @patch.dict(
         os.environ,
-        {"HOST": "0.0.0.0", "PORT": "80", "ENVIRONMENT": "production"},  # noqa: S104 - Test configuration
+        {
+            "HOST": "0.0.0.0",
+            "PORT": "80",
+            "ENVIRONMENT": "production",
+        },
         clear=True,
     )
     def test_production_deployment_configuration(self, mock_uvicorn_run):

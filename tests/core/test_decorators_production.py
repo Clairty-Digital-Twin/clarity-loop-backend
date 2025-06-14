@@ -10,8 +10,9 @@ import asyncio
 from datetime import UTC, datetime
 import logging
 import time
-from typing import Never
+from typing import Any, Never
 
+from _pytest.logging import LogCaptureFixture
 import pytest
 
 from clarity.core.decorators import (
@@ -28,7 +29,7 @@ from clarity.core.decorators import (
 class TestLogExecutionDecorator:
     """Test logging execution decorator functionality."""
 
-    def test_log_execution_sync_function_basic(self, caplog):
+    def test_log_execution_sync_function_basic(self, caplog: LogCaptureFixture) -> None:
         """Test basic logging for synchronous functions."""
 
         @log_execution()
@@ -47,11 +48,13 @@ class TestLogExecutionDecorator:
         assert any("Executing" in msg for msg in log_messages)
         assert any("Completed" in msg for msg in log_messages)
 
-    def test_log_execution_with_args_and_result(self, caplog):
+    def test_log_execution_with_args_and_result(
+        self, caplog: LogCaptureFixture
+    ) -> None:
         """Test logging with arguments and result included."""
 
         @log_execution(include_args=True, include_result=True)
-        def test_function(x, y, z=None):
+        def test_function(x: int, y: int, z: str | None = None) -> int:
             return x + y
 
         caplog.set_level(logging.INFO, logger="clarity.core.decorators")
@@ -66,7 +69,7 @@ class TestLogExecutionDecorator:
         assert any("args=(1, 2)" in msg for msg in log_messages)
         assert any("kwargs={'z': 'test'}" in msg for msg in log_messages)
 
-    def test_log_execution_exception_handling(self, caplog):
+    def test_log_execution_exception_handling(self, caplog: LogCaptureFixture) -> None:
         """Test logging when function raises exception."""
 
         @log_execution()
@@ -87,7 +90,9 @@ class TestLogExecutionDecorator:
         assert any(record.levelname == "ERROR" for record in caplog.records)
 
     @pytest.mark.asyncio
-    async def test_log_execution_async_function(self, caplog):
+    async def test_log_execution_async_function(
+        self, caplog: LogCaptureFixture
+    ) -> None:
         """Test logging for async functions."""
 
         @log_execution()
@@ -111,7 +116,7 @@ class TestLogExecutionDecorator:
 class TestMeasureExecutionTimeDecorator:
     """Test execution time measurement decorator."""
 
-    def test_measure_execution_time_basic(self, caplog):
+    def test_measure_execution_time_basic(self, caplog: LogCaptureFixture) -> None:
         """Test execution time measurement for sync functions."""
 
         @measure_execution_time()
@@ -130,7 +135,9 @@ class TestMeasureExecutionTimeDecorator:
         log_messages = [record.message for record in caplog.records]
         assert any("executed in" in msg and "ms" in msg for msg in log_messages)
 
-    def test_measure_execution_time_with_threshold(self, caplog):
+    def test_measure_execution_time_with_threshold(
+        self, caplog: LogCaptureFixture
+    ) -> None:
         """Test execution time measurement with threshold."""
 
         @measure_execution_time(threshold_ms=50.0)
@@ -159,7 +166,7 @@ class TestMeasureExecutionTimeDecorator:
         # Slow function should log (above threshold)
         assert any("slow_function executed in" in msg for msg in log_messages)
 
-    def test_measure_execution_time_exception(self, caplog):
+    def test_measure_execution_time_exception(self, caplog: LogCaptureFixture) -> None:
         """Test execution time measurement when function fails."""
 
         @measure_execution_time()
@@ -180,7 +187,9 @@ class TestMeasureExecutionTimeDecorator:
         assert any("failed after" in msg and "ms" in msg for msg in log_messages)
 
     @pytest.mark.asyncio
-    async def test_measure_execution_time_async(self, caplog):
+    async def test_measure_execution_time_async(
+        self, caplog: LogCaptureFixture
+    ) -> None:
         """Test execution time measurement for async functions."""
 
         @measure_execution_time()
@@ -203,7 +212,7 @@ class TestMeasureExecutionTimeDecorator:
 class TestRetryOnFailureDecorator:
     """Test retry on failure decorator functionality."""
 
-    def test_retry_success_first_attempt(self, caplog):
+    def test_retry_success_first_attempt(self, caplog: LogCaptureFixture) -> None:
         """Test retry decorator when function succeeds on first attempt."""
 
         @retry_on_failure(max_retries=3)
@@ -221,7 +230,7 @@ class TestRetryOnFailureDecorator:
         # Should not have any retry logs
         assert not any("retrying" in record.message for record in caplog.records)
 
-    def test_retry_success_after_failures(self, caplog):
+    def test_retry_success_after_failures(self, caplog: LogCaptureFixture) -> None:
         """Test retry decorator when function succeeds after retries."""
         call_count = 0
 
@@ -246,7 +255,7 @@ class TestRetryOnFailureDecorator:
         log_messages = [record.message for record in caplog.records]
         assert any("retrying" in msg for msg in log_messages)
 
-    def test_retry_exceeds_max_retries(self, caplog):
+    def test_retry_exceeds_max_retries(self, caplog: LogCaptureFixture) -> None:
         """Test retry decorator when max retries are exceeded."""
         call_count = 0
 
@@ -269,7 +278,7 @@ class TestRetryOnFailureDecorator:
         log_messages = [record.message for record in caplog.records]
         assert any("failed after 3 attempts" in msg for msg in log_messages)
 
-    def test_retry_exponential_backoff(self):
+    def test_retry_exponential_backoff(self) -> None:
         """Test retry decorator with exponential backoff."""
         call_times = []
 
@@ -288,7 +297,7 @@ class TestRetryOnFailureDecorator:
         time_diff_2 = call_times[2] - call_times[1]
         assert time_diff_2 > time_diff_1
 
-    def test_retry_specific_exceptions(self):
+    def test_retry_specific_exceptions(self) -> None:
         """Test retry decorator with specific exception types."""
 
         @retry_on_failure(
@@ -314,7 +323,7 @@ class TestRetryOnFailureDecorator:
             value_error_function()
 
     @pytest.mark.asyncio
-    async def test_retry_async_function(self, caplog):
+    async def test_retry_async_function(self, caplog: LogCaptureFixture) -> None:
         """Test retry decorator with async functions."""
         call_count = 0
 
@@ -341,44 +350,50 @@ class TestRetryOnFailureDecorator:
 class TestValidateInputDecorator:
     """Test input validation decorator."""
 
-    def test_validate_input_success(self):
+    def test_validate_input_success(self) -> None:
         """Test input validation when validation passes."""
 
-        def positive_number_validator(args_kwargs):
+        def positive_number_validator(
+            args_kwargs: tuple[tuple[Any, ...], dict[str, Any]],
+        ) -> bool:
             args, _kwargs = args_kwargs
             return len(args) > 0 and isinstance(args[0], (int, float)) and args[0] > 0
 
         @validate_input(positive_number_validator, "Number must be positive")
-        def process_number(num):
+        def process_number(num: float) -> int | float:
             return num * 2
 
         result = process_number(5)
         assert result == 10
 
-    def test_validate_input_failure(self):
+    def test_validate_input_failure(self) -> None:
         """Test input validation when validation fails."""
 
-        def positive_number_validator(args_kwargs):
+        def positive_number_validator(
+            args_kwargs: tuple[tuple[Any, ...], dict[str, Any]],
+        ) -> bool:
             args, _kwargs = args_kwargs
             return len(args) > 0 and isinstance(args[0], (int, float)) and args[0] > 0
 
         @validate_input(positive_number_validator, "Number must be positive")
-        def process_number(num):
+        def process_number(num: float) -> int | float:
             return num * 2
 
         with pytest.raises(ValueError, match="Number must be positive"):
             process_number(-5)
 
-    def test_validate_input_with_kwargs(self):
+    def test_validate_input_with_kwargs(self) -> None:
         """Test input validation with keyword arguments."""
 
-        def email_validator(args_kwargs):
+        def email_validator(
+            args_kwargs: tuple[tuple[Any, ...], dict[str, Any]],
+        ) -> bool:
             _args, kwargs = args_kwargs
             email = kwargs.get("email", "")
             return "@" in email and "." in email
 
         @validate_input(email_validator, "Invalid email format")
-        def send_email(message, email=None) -> str:
+        def send_email(message: str, email: str | None = None) -> str:
             return f"Sent: {message} to {email}"
 
         result = send_email("Hello", email="test@example.com")
@@ -391,11 +406,11 @@ class TestValidateInputDecorator:
 class TestAuditTrailDecorator:
     """Test audit trail decorator functionality."""
 
-    def test_audit_trail_basic(self, caplog):
+    def test_audit_trail_basic(self, caplog: LogCaptureFixture) -> None:
         """Test basic audit trail functionality."""
 
         @audit_trail("user_login")
-        def login_user():
+        def login_user() -> dict[str, str]:
             return {"status": "success", "user_id": "123"}
 
         caplog.set_level(logging.INFO, logger="clarity.core.decorators")
@@ -410,13 +425,15 @@ class TestAuditTrailDecorator:
         assert any("user_login" in msg for msg in log_messages)
         assert any("success" in msg for msg in log_messages)
 
-    def test_audit_trail_with_user_and_resource_ids(self, caplog):
+    def test_audit_trail_with_user_and_resource_ids(
+        self, caplog: LogCaptureFixture
+    ) -> None:
         """Test audit trail with user and resource ID extraction."""
 
         @audit_trail(
             "delete_document", user_id_param="user_id", resource_id_param="doc_id"
         )
-        def delete_document(user_id, doc_id):
+        def delete_document(user_id: str, doc_id: str) -> dict[str, bool]:
             return {"deleted": True}
 
         caplog.set_level(logging.INFO, logger="clarity.core.decorators")
@@ -431,7 +448,7 @@ class TestAuditTrailDecorator:
         assert any("user123" in msg for msg in log_messages)
         assert any("doc456" in msg for msg in log_messages)
 
-    def test_audit_trail_exception(self, caplog):
+    def test_audit_trail_exception(self, caplog: LogCaptureFixture) -> None:
         """Test audit trail when function raises exception."""
 
         @audit_trail("risky_operation")
@@ -452,11 +469,11 @@ class TestAuditTrailDecorator:
         assert any("Access denied" in msg for msg in log_messages)
 
     @pytest.mark.asyncio
-    async def test_audit_trail_async(self, caplog):
+    async def test_audit_trail_async(self, caplog: LogCaptureFixture) -> None:
         """Test audit trail with async functions."""
 
         @audit_trail("async_operation", user_id_param="user_id")
-        async def async_operation(user_id):
+        async def async_operation(user_id: str) -> dict[str, bool]:
             await asyncio.sleep(0.001)
             return {"completed": True}
 
@@ -476,11 +493,11 @@ class TestAuditTrailDecorator:
 class TestCompositeDecorators:
     """Test composite decorators (service_method, repository_method)."""
 
-    def test_service_method_decorator(self, caplog):
+    def test_service_method_decorator(self, caplog: LogCaptureFixture) -> None:
         """Test service method composite decorator."""
 
         @service_method(log_level=logging.INFO, timing_threshold_ms=0.0)
-        def service_function(data) -> str:
+        def service_function(data: str) -> str:
             time.sleep(0.001)
             return f"Processed: {data}"
 
@@ -496,12 +513,12 @@ class TestCompositeDecorators:
         assert any("Executing" in msg for msg in log_messages)
         assert any("executed in" in msg for msg in log_messages)
 
-    def test_service_method_with_retries(self, caplog):
+    def test_service_method_with_retries(self, caplog: LogCaptureFixture) -> None:
         """Test service method with retry functionality."""
         call_count = 0
 
         @service_method(max_retries=2, timing_threshold_ms=0.0)
-        def unreliable_service(data) -> str:
+        def unreliable_service(data: str) -> str:
             nonlocal call_count
             call_count += 1
             if call_count < 2:
@@ -519,11 +536,11 @@ class TestCompositeDecorators:
         assert result == "Service result: retry test"
         assert call_count == 2
 
-    def test_repository_method_decorator(self, caplog):
+    def test_repository_method_decorator(self, caplog: LogCaptureFixture) -> None:
         """Test repository method composite decorator."""
 
         @repository_method(log_level=logging.DEBUG, timing_threshold_ms=0.0)
-        def repository_function(query):
+        def repository_function(query: str) -> dict[str, Any]:
             time.sleep(0.001)
             return {"results": [1, 2, 3], "query": query}
 
@@ -540,12 +557,12 @@ class TestCompositeDecorators:
         assert any("Executing" in msg for msg in log_messages)
         assert any("executed in" in msg for msg in log_messages)
 
-    def test_repository_method_with_retries(self, caplog):
+    def test_repository_method_with_retries(self, caplog: LogCaptureFixture) -> None:
         """Test repository method with default retry functionality."""
         call_count = 0
 
         @repository_method(timing_threshold_ms=0.0)
-        def flaky_repository():
+        def flaky_repository() -> dict[str, str]:
             nonlocal call_count
             call_count += 1
             if call_count < 3:
@@ -567,7 +584,7 @@ class TestCompositeDecorators:
 class TestProductionScenarios:
     """Test realistic production scenarios."""
 
-    def test_complete_service_layer_stack(self, caplog):
+    def test_complete_service_layer_stack(self, caplog: LogCaptureFixture) -> None:
         """Test complete service layer with all decorators."""
 
         @audit_trail(
@@ -576,7 +593,9 @@ class TestProductionScenarios:
             resource_id_param="request_id",
         )
         @service_method(log_level=logging.INFO, timing_threshold_ms=1.0, max_retries=1)
-        def process_user_request(user_id, request_id, data):
+        def process_user_request(
+            user_id: str, request_id: str, data: str
+        ) -> dict[str, str]:
             time.sleep(0.002)  # 2ms to exceed timing threshold
             return {
                 "user_id": user_id,
@@ -603,14 +622,14 @@ class TestProductionScenarios:
         assert any("user123" in msg for msg in log_messages)
         assert any("req456" in msg for msg in log_messages)
 
-    def test_database_operation_with_retries(self, caplog):
+    def test_database_operation_with_retries(self, caplog: LogCaptureFixture) -> None:
         """Test database operation with retry and timing."""
         connection_attempts = 0
 
         @repository_method(
             log_level=logging.DEBUG, timing_threshold_ms=0.0, max_retries=3
         )
-        def save_user_data(user_data):
+        def save_user_data(user_data: dict[str, str]) -> dict[str, Any]:
             nonlocal connection_attempts
             connection_attempts += 1
 
@@ -636,10 +655,12 @@ class TestProductionScenarios:
         log_messages = [record.message for record in caplog.records]
         assert any("retrying" in msg for msg in log_messages)
 
-    def test_input_validation_production_context(self):
+    def test_input_validation_production_context(self) -> None:
         """Test input validation in realistic production scenario."""
 
-        def validate_api_request(args_kwargs):
+        def validate_api_request(
+            args_kwargs: tuple[tuple[Any, ...], dict[str, Any]],
+        ) -> bool:
             args, _kwargs = args_kwargs
             if len(args) == 0:
                 return False
@@ -653,7 +674,9 @@ class TestProductionScenarios:
 
         @validate_input(validate_api_request, "Invalid API request format")
         @audit_trail("api_request", user_id_param="user_id")
-        def handle_api_request(request_data, user_id=None):
+        def handle_api_request(
+            request_data: dict[str, Any], user_id: str | None = None
+        ) -> dict[str, str]:
             return {
                 "status": "processed",
                 "action": request_data["action"],

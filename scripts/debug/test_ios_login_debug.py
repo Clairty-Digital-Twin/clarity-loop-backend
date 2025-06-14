@@ -47,19 +47,21 @@ async def debug_login(request: Request):
                     login_data = UserLoginRequest(**body_json)
 
                     # Return success response
-                    return JSONResponse({
-                        "access_token": "debug_token_12345",
-                        "refresh_token": "debug_refresh_67890",
-                        "token_type": "bearer",
-                        "expires_in": 3600,
-                        "scope": "full_access",
-                        "debug_info": {
-                            "request_received": True,
-                            "json_parsed": True,
-                            "pydantic_validated": True,
-                            "email_received": login_data.email,
-                        },
-                    })
+                    return JSONResponse(
+                        {
+                            "access_token": "debug_token_12345",
+                            "refresh_token": "debug_refresh_67890",
+                            "token_type": "bearer",
+                            "expires_in": 3600,
+                            "scope": "full_access",
+                            "debug_info": {
+                                "request_received": True,
+                                "json_parsed": True,
+                                "pydantic_validated": True,
+                                "email_received": login_data.email,
+                            },
+                        }
+                    )
 
                 except Exception as e:
                     return JSONResponse(

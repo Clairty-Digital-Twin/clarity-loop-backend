@@ -187,9 +187,9 @@ class TestAnalysisPipelineSleepIntegration:
 
         for field in expected_fields:
             assert field in sleep_features, f"Missing field: {field}"
-            assert isinstance(sleep_features[field], (int, float)), (
-                f"Field {field} should be numeric"
-            )
+            assert isinstance(
+                sleep_features[field], (int, float)
+            ), f"Field {field} should be numeric"
 
         # Validate reasonable ranges
         assert 0 <= sleep_features["sleep_efficiency"] <= 1

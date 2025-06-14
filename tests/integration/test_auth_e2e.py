@@ -99,16 +99,16 @@ class TestAuthenticationE2E:
             )
 
             # Should return 401 Unauthorized
-            assert response.status_code == 401, (
-                f"Expected 401, got {response.status_code}. Response: {response.text}"
-            )
+            assert (
+                response.status_code == 401
+            ), f"Expected 401, got {response.status_code}. Response: {response.text}"
 
             # Verify error response
             data = response.json()
             assert "detail" in data
-            assert isinstance(data["detail"], dict), (
-                f"Expected detail to be dict, got {type(data['detail'])}"
-            )
+            assert isinstance(
+                data["detail"], dict
+            ), f"Expected detail to be dict, got {type(data['detail'])}"
             assert data["detail"]["type"] == "invalid_credentials"
             assert data["detail"]["status"] == 401
 

@@ -50,10 +50,12 @@ def create_placeholder_weights(config: dict[str, int]) -> dict[str, np.ndarray]:
     rng = np.random.default_rng(42)  # Use new random generator with seed
 
     # Patch embedding layer
-    weights["patch_embedding/kernel:0"] = rng.standard_normal((
-        config["patch_size"],
-        config["embed_dim"],
-    )).astype(np.float32)
+    weights["patch_embedding/kernel:0"] = rng.standard_normal(
+        (
+            config["patch_size"],
+            config["embed_dim"],
+        )
+    ).astype(np.float32)
     weights["patch_embedding/bias:0"] = rng.standard_normal(config["embed_dim"]).astype(
         np.float32
     )
@@ -63,18 +65,24 @@ def create_placeholder_weights(config: dict[str, int]) -> dict[str, np.ndarray]:
         prefix = f"transformer_block_{layer_idx}"
 
         # Multi-head attention
-        weights[f"{prefix}/multi_head_attention/query/kernel:0"] = rng.standard_normal((
-            config["embed_dim"],
-            config["embed_dim"],
-        )).astype(np.float32)
-        weights[f"{prefix}/multi_head_attention/key/kernel:0"] = rng.standard_normal((
-            config["embed_dim"],
-            config["embed_dim"],
-        )).astype(np.float32)
-        weights[f"{prefix}/multi_head_attention/value/kernel:0"] = rng.standard_normal((
-            config["embed_dim"],
-            config["embed_dim"],
-        )).astype(np.float32)
+        weights[f"{prefix}/multi_head_attention/query/kernel:0"] = rng.standard_normal(
+            (
+                config["embed_dim"],
+                config["embed_dim"],
+            )
+        ).astype(np.float32)
+        weights[f"{prefix}/multi_head_attention/key/kernel:0"] = rng.standard_normal(
+            (
+                config["embed_dim"],
+                config["embed_dim"],
+            )
+        ).astype(np.float32)
+        weights[f"{prefix}/multi_head_attention/value/kernel:0"] = rng.standard_normal(
+            (
+                config["embed_dim"],
+                config["embed_dim"],
+            )
+        ).astype(np.float32)
         weights[f"{prefix}/multi_head_attention/attention_output/kernel:0"] = (
             rng.standard_normal((config["embed_dim"], config["embed_dim"])).astype(
                 np.float32
@@ -96,17 +104,21 @@ def create_placeholder_weights(config: dict[str, int]) -> dict[str, np.ndarray]:
         ).astype(np.float32)
 
         # Feed-forward network
-        weights[f"{prefix}/ffn/dense_1/kernel:0"] = rng.standard_normal((
-            config["embed_dim"],
-            config["ff_dim"],
-        )).astype(np.float32)
+        weights[f"{prefix}/ffn/dense_1/kernel:0"] = rng.standard_normal(
+            (
+                config["embed_dim"],
+                config["ff_dim"],
+            )
+        ).astype(np.float32)
         weights[f"{prefix}/ffn/dense_1/bias:0"] = rng.standard_normal(
             config["ff_dim"]
         ).astype(np.float32)
-        weights[f"{prefix}/ffn/dense_2/kernel:0"] = rng.standard_normal((
-            config["ff_dim"],
-            config["embed_dim"],
-        )).astype(np.float32)
+        weights[f"{prefix}/ffn/dense_2/kernel:0"] = rng.standard_normal(
+            (
+                config["ff_dim"],
+                config["embed_dim"],
+            )
+        ).astype(np.float32)
         weights[f"{prefix}/ffn/dense_2/bias:0"] = rng.standard_normal(
             config["embed_dim"]
         ).astype(np.float32)
@@ -139,10 +151,12 @@ def create_model_file(filename: str, config: dict[str, int], output_dir: Path) -
         # Add metadata
         f.attrs["keras_version"] = "2.13.0"
         f.attrs["backend"] = "tensorflow"
-        f.attrs["model_config"] = json.dumps({
-            "class_name": "PATModel",
-            "config": config,
-        })
+        f.attrs["model_config"] = json.dumps(
+            {
+                "class_name": "PATModel",
+                "config": config,
+            }
+        )
 
     # Calculate SHA256 checksum
     sha256_hash = hashlib.sha256()

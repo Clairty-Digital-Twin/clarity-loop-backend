@@ -45,10 +45,12 @@ class FusionTransformer(nn.Module):
         self.modality_names = list(config.modality_dims.keys())
 
         # Linear projection for each modality to common embedding dimension
-        self.modality_projections = nn.ModuleDict({
-            name: nn.Linear(dim, config.embed_dim)
-            for name, dim in config.modality_dims.items()
-        })
+        self.modality_projections = nn.ModuleDict(
+            {
+                name: nn.Linear(dim, config.embed_dim)
+                for name, dim in config.modality_dims.items()
+            }
+        )
 
         # Learnable [CLS] token embedding
         self.cls_token = nn.Parameter(torch.zeros(1, 1, config.embed_dim))

@@ -122,13 +122,15 @@ class SQSMessagingService:
             for msg in response.get("Messages", []):
                 try:
                     body = json.loads(msg["Body"])
-                    messages.append({
-                        "receipt_handle": msg["ReceiptHandle"],
-                        "message_id": msg["MessageId"],
-                        "body": body,
-                        "attributes": msg.get("MessageAttributes", {}),
-                        "system_attributes": msg.get("Attributes", {}),
-                    })
+                    messages.append(
+                        {
+                            "receipt_handle": msg["ReceiptHandle"],
+                            "message_id": msg["MessageId"],
+                            "body": body,
+                            "attributes": msg.get("MessageAttributes", {}),
+                            "system_attributes": msg.get("Attributes", {}),
+                        }
+                    )
                 except json.JSONDecodeError:
                     logger.exception("Failed to decode message: %s", msg["MessageId"])
                     continue

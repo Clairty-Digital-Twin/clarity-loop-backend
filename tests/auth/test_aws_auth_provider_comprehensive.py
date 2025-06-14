@@ -126,17 +126,19 @@ class TestJWKSHandling:
     async def test_get_jwks_success(self, mock_urlopen):
         """Test successful JWKS retrieval."""
         mock_response = Mock()
-        mock_response.read.return_value = json.dumps({
-            "keys": [
-                {
-                    "kid": "key1",
-                    "kty": "RSA",
-                    "use": "sig",
-                    "n": "sample_n",
-                    "e": "AQAB",
-                }
-            ]
-        }).encode()
+        mock_response.read.return_value = json.dumps(
+            {
+                "keys": [
+                    {
+                        "kid": "key1",
+                        "kty": "RSA",
+                        "use": "sig",
+                        "n": "sample_n",
+                        "e": "AQAB",
+                    }
+                ]
+            }
+        ).encode()
         mock_response.__enter__ = Mock(return_value=mock_response)
         mock_response.__exit__ = Mock(return_value=None)
         mock_urlopen.return_value = mock_response

@@ -40,8 +40,13 @@ def mock_repository():
     """Mock health data repository."""
     repo = Mock(spec=IHealthDataRepository)
     repo.save_health_data = AsyncMock(return_value=True)
-    repo.get_processing_status = AsyncMock()
-    repo.get_user_health_data = AsyncMock()
+    repo.get_processing_status = AsyncMock(return_value={
+        "processing_id": str(uuid.uuid4()),
+        "status": "pending",
+        "created_at": datetime.now(UTC).isoformat(),
+        "updated_at": datetime.now(UTC).isoformat(),
+    })
+    repo.get_user_health_data = AsyncMock(return_value=[])
     repo.delete_health_data = AsyncMock(return_value=True)
     return repo
 
@@ -88,6 +93,17 @@ def valid_health_data_upload(test_user):
         upload_source="mobile_app",
         client_timestamp=datetime.now(UTC),
     )
+
+
+@pytest.fixture(autouse=True)
+def reset_health_data_dependencies():
+    """Reset health data dependencies after each test to prevent state pollution."""
+    yield
+    # Clean up the global container after each test
+    from clarity.api.v1.health_data import _container
+    _container.auth_provider = None
+    _container.repository = None
+    _container.config_provider = None
 
 
 @pytest.fixture

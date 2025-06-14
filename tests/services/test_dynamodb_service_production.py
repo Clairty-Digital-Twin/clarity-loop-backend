@@ -731,10 +731,8 @@ class TestBatchOperations:
         """Test batch write with items fitting in single batch."""
         items = [{"name": f"Item {i}"} for i in range(10)]  # Less than 25 (batch limit)
 
-        # Test batch write
-        result = await self.service.batch_write_items(self.table_name, items)
-
-        assert result == 10
+        # Test batch write - it doesn't return anything
+        await self.service.batch_write_items(self.table_name, items)
 
         # Verify batch writer was used correctly
         assert self.mock_table.batch_writer.called
@@ -746,9 +744,8 @@ class TestBatchOperations:
         """Test batch write with items requiring multiple batches."""
         items = [{"name": f"Item {i}"} for i in range(30)]  # More than 25 (batch limit)
 
-        result = await self.service.batch_write_items(self.table_name, items)
-
-        assert result == 30
+        # Test batch write - it doesn't return anything
+        await self.service.batch_write_items(self.table_name, items)
 
         # Verify batch writer was called multiple times (30 items / 25 batch size = 2 batches)
         assert self.mock_table.batch_writer.call_count == 2
@@ -760,14 +757,13 @@ class TestBatchOperations:
         """Test batch write with items that already have IDs."""
         items = [{"id": f"existing_id_{i}", "name": f"Item {i}"} for i in range(5)]
 
-        result = await self.service.batch_write_items(self.table_name, items)
-
-        assert result == 5
+        # Test batch write - it doesn't return anything
+        await self.service.batch_write_items(self.table_name, items)
 
         # Verify put_item was called with correct items
         assert self.mock_batch_writer.put_item.call_count == 5
         # Check that the IDs were preserved in the calls
-        call_args = [call[0][0] for call in self.mock_batch_writer.put_item.call_args_list]
+        call_args = [call[1]["Item"] for call in self.mock_batch_writer.put_item.call_args_list]
         assert all(item["id"].startswith("existing_id_") for item in call_args)
 
 
@@ -880,7 +876,7 @@ class TestDynamoDBHealthDataRepository:
         """Test successful health data saving."""
         # Mock both put_item and batch_write_items
         mock_put_item = AsyncMock(return_value="processing_123")
-        mock_batch_write = AsyncMock(return_value=2)  # 1 main + 1 metric
+        mock_batch_write = AsyncMock()  # batch_write_items doesn't return anything
         
         self.repository.service.put_item = mock_put_item
         self.repository.service.batch_write_items = mock_batch_write
@@ -1091,11 +1087,8 @@ class TestProductionScenarios:
         with patch.object(
             self.service, "batch_write_items", new_callable=AsyncMock
         ) as mock_batch_write:
-            mock_batch_write.return_value = 50
+            await self.service.batch_write_items("test_table", items)
 
-            result = await self.service.batch_write_items("test_table", items)
-
-            assert result == 50
             mock_batch_write.assert_called_once()
 
     @pytest.mark.asyncio

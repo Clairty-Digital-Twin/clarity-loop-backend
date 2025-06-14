@@ -21,11 +21,14 @@ COPY src/ ./src/
 RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir -e .
 
-# Copy Gunicorn configuration
+# Copy Gunicorn configuration and scripts
 COPY gunicorn.aws.conf.py ./
+COPY scripts/download_models.sh scripts/entrypoint.sh ./scripts/
 
-# Create non-root user for security
+# Create non-root user for security and prepare directories
 RUN groupadd -r clarity && useradd -r -g clarity clarity && \
+    mkdir -p /app/models/pat && \
+    chmod +x ./scripts/download_models.sh ./scripts/entrypoint.sh && \
     chown -R clarity:clarity /app
 
 # Switch to non-root user
@@ -38,5 +41,5 @@ HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
 # Expose port
 EXPOSE 8000
 
-# Production command - use Gunicorn for enterprise deployment
-CMD ["gunicorn", "-c", "gunicorn.aws.conf.py", "clarity.main:app"]
+# Use entrypoint script to download models before starting
+ENTRYPOINT ["/app/scripts/entrypoint.sh"]

@@ -32,7 +32,14 @@
         {"name": "S3_BUCKET_NAME", "value": "clarity-health-data-storage"},
         {"name": "SQS_QUEUE_NAME", "value": "clarity-insights-queue"},
         {"name": "SNS_TOPIC_ARN", "value": "arn:aws:sns:us-east-1:124355672559:clarity-insights-topic"},
-        {"name": "LOG_LEVEL", "value": "INFO"}
+        {"name": "LOG_LEVEL", "value": "INFO"},
+        {"name": "S3_ML_MODELS_BUCKET", "value": "clarity-ml-models-124355672559"},
+        {"name": "PAT_S_MODEL_PATH", "value": "s3://clarity-ml-models-124355672559/pat/PAT-S_29k_weights.h5"},
+        {"name": "PAT_M_MODEL_PATH", "value": "s3://clarity-ml-models-124355672559/pat/PAT-M_29k_weights.h5"},
+        {"name": "PAT_L_MODEL_PATH", "value": "s3://clarity-ml-models-124355672559/pat/PAT-L_29k_weights.h5"},
+        {"name": "PAT_S_CHECKSUM", "value": "df8d9f0f66bab088d2d4870cb2df4342745940c732d008cd3d74687be4ee99be"},
+        {"name": "PAT_M_CHECKSUM", "value": "855e482b79707bf1b71a27c7a6a07691b49df69e40b08f54b33d178680f04ba7"},
+        {"name": "PAT_L_CHECKSUM", "value": "e8ebef52e34a6f1ea92bbe3f752afcd1ae427b9efbe0323856e873f12c989521"}
       ],
       "logConfiguration": {
         "logDriver": "awslogs",

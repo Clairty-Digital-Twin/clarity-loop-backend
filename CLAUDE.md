@@ -31,9 +31,18 @@ AWS ECS Fargate ONLY supports `linux/amd64` platform. Building for any other pla
 ### Load Balancer
 - **ALB URL**: http://clarity-alb-1762715656.us-east-1.elb.amazonaws.com
 - **Target Group**: `clarity-targets`
+- **ACM Certificate ARN**: `arn:aws:acm:us-east-1:124355672559:certificate/183ffae7-82d7-4259-a773-f52bb05c46d8` ✅ ISSUED
+- **Domains**: clarity.novamindnyc.com, novamindnyc.com
 
 ### ECR Repository
 - **Repository**: `124355672559.dkr.ecr.us-east-1.amazonaws.com/clarity-backend`
+
+### ML Models S3 Bucket
+- **Bucket**: `clarity-ml-models-124355672559`
+- **PAT Model Checksums**:
+  - PAT-S: `df8d9f0f66bab088d2d4870cb2df4342745940c732d008cd3d74687be4ee99be`
+  - PAT-M: `855e482b79707bf1b71a27c7a6a07691b49df69e40b08f54b33d178680f04ba7`
+  - PAT-L: `e8ebef52e34a6f1ea92bbe3f752afcd1ae427b9efbe0323856e873f12c989521`
 
 ## Deployment Process
 

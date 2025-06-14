@@ -1,95 +1,85 @@
-# CLARITY Digital Twin Platform - Immediate Production Readiness & Documentation
+# CLARITY Backend Production Fixes and Test Suite Stabilization
 
-## Executive Summary
+## Overview
+The CLARITY backend service requires critical fixes to secure production deployment with HTTPS, achieve 100% green test suite, and ensure robust deployment on AWS ECS. The service is currently deployed on AWS but needs security hardening and comprehensive test fixes.
 
-CLARITY is a sophisticated AI-powered mental health platform that processes Apple HealthKit data through a Pretrained Actigraphy Transformer (PAT) model. The platform features real-time chat interfaces, clinical-grade health analytics, and AWS-native infrastructure.
+## Current State
+- Service deployed on AWS ECS at http://clarity-alb-1762715656.us-east-1.elb.amazonaws.com
+- Custom domain clarity.novamindnyc.com pointing to ALB via CNAME
+- 909 tests passing, 5 failing (primarily integration/E2E tests)
+- Docker platform issues resolved (must use linux/amd64)
+- Authentication working but needs HTTPS
 
-**CRITICAL IMMEDIATE NEED**: The AWS deployment currently runs on HTTP instead of HTTPS, which appears unprofessional for a healthcare platform. This must be fixed before any technical co-founder meetings.
+## Goals
+1. Secure production deployment with HTTPS on custom domain
+2. Fix all failing tests to achieve 100% green baseline
+3. Ensure ML model deployment works correctly
+4. Implement proper test mocking for all AWS services
+5. Maintain deployment stability
 
-**SECONDARY NEED**: Comprehensive documentation and README overhaul to properly represent the sophisticated capabilities of this platform.
+## Requirements
 
-## Current State Analysis
+### P0 - Critical Production Security & ML Model
+- Configure AWS Certificate Manager (ACM) SSL certificate for clarity.novamindnyc.com
+- Update ALB to use HTTPS listener on port 443
+- Implement HTTP to HTTPS redirect
+- Fix ML model file loading issues (PAT model weights)
+- Ensure model files are included in Docker image
+- Implement proper model path security
 
-### Live AWS Deployment Status
-- **URL**: http://clarity-alb-1762715656.us-east-1.elb.amazonaws.com/docs
-- **Endpoints**: 38 professional API endpoints across 7 modules
-- **Infrastructure**: AWS ECS + ALB + DynamoDB + Cognito
-- **Problem**: HTTP only (not HTTPS) - looks unprofessional for healthcare
+### P1 - Test Environment Fixes
+- Fix DynamoDB mocking issues (AsyncMock context managers)
+- Fix Cognito authentication test mocks
+- Handle missing ML model files in test environment
+- Fix health data service test async/coroutine issues
+- Ensure all integration tests handle service unavailable (503)
+- Fix decimal serialization test precision
+- Fix email verification test expectations
 
-### Frontend Integration Status  
-- **Status**: ✅ JUST FIXED - Frontend now points to AWS backend
-- **iOS Config**: Updated Info.plist, AppConfig.swift, test scripts
-- **Security**: Currently allowing HTTP (temporary workaround)
+### P2 - Code Quality & Maintainability
+- Implement proper error handling patterns
+- Add comprehensive logging
+- Ensure consistent exception handling
+- Add proper type hints throughout
+- Document critical deployment processes
 
-### Codebase Sophistication Level
-**This is NOT a simple chat app.** Analysis reveals:
-- **ML Integration**: PAT (Pretrained Actigraphy Transformer) from Dartmouth research
-- **Real-time Features**: WebSocket chat with health data analysis
-- **Clinical Analytics**: Depression risk assessment, circadian analysis
-- **Enterprise Infrastructure**: 99.6% test coverage, HIPAA-compliant logging
-- **Multi-modal Processing**: Heart rate, sleep, activity, mood integration
+### P3 - Monitoring & Polish
+- Set up CloudWatch alarms for service health
+- Add deployment validation scripts
+- Create runbook for common issues
+- Implement health check endpoints
 
-## Immediate Tasks (Priority Order)
+## Technical Specifications
 
-### Task 1: HTTPS Production Setup (CRITICAL - Before Co-founder Meeting)
-**Description**: Configure SSL/TLS certificate on AWS Application Load Balancer to enable HTTPS
-**Business Impact**: Professional credibility with technical co-founders
-**Technical Requirements**: 
-- AWS Certificate Manager integration
-- ALB HTTPS listener configuration
-- DNS configuration if needed
-- iOS app security reversion to HTTPS-only
+### HTTPS Configuration
+- Request ACM certificate for clarity.novamindnyc.com
+- Configure ALB with HTTPS listener
+- Update security groups to allow port 443
+- Implement SSL redirect middleware in FastAPI
 
-### Task 2: Comprehensive Documentation Audit
-**Description**: Systematically audit and document the entire codebase architecture
-**Business Impact**: Demonstrate technical sophistication to potential co-founders
-**Scope**: 
-- API documentation enhancement
-- Architecture diagram updates
-- Integration guide completion
-- ML model documentation
+### Test Suite Fixes
+- Mock all AWS service calls properly
+- Handle async context managers in tests
+- Fix model file path resolution in tests
+- Ensure consistent test data formats
 
-### Task 3: Professional README Creation
-**Description**: Create an impressive README that accurately represents the platform's capabilities
-**Business Impact**: GitHub profile enhancement for technical recruiting
-**Requirements**:
-- Highlight PAT integration and clinical research backing
-- Showcase real-time analytics capabilities  
-- Demonstrate AWS enterprise infrastructure
-- Include live demo links and documentation
+### ML Model Deployment
+- Include model files in Docker image
+- Implement model integrity verification
+- Add fallback for missing model files
+- Ensure proper model initialization
 
 ## Success Criteria
+- All tests passing (100% green)
+- HTTPS working on clarity.novamindnyc.com
+- Zero downtime deployment
+- All ML predictions working correctly
+- Comprehensive error handling
+- Clean linting and type checking
 
-### Phase 1 Success (HTTPS Setup)
-- ✅ AWS backend accessible via HTTPS
-- ✅ iOS app configured for HTTPS-only connections
-- ✅ Professional security posture for co-founder demo
-- ✅ Test suite validates HTTPS endpoints
-
-### Phase 2 Success (Documentation)
-- ✅ Comprehensive technical documentation
-- ✅ Architecture diagrams and integration guides
-- ✅ Professional README showcasing platform sophistication
-- ✅ Clear value proposition for technical co-founders
-
-## Risk Assessment
-
-### High Risk
-- **Timeline Pressure**: Co-founder meeting potentially tomorrow
-- **AWS Certificate Complexity**: SSL setup might require DNS changes
-- **iOS Integration**: Ensuring smooth transition back to HTTPS
-
-### Medium Risk  
-- **Documentation Scope**: Platform is more complex than initially assessed
-- **Technical Debt**: Some legacy configuration cleanup needed
-
-## Target Outcomes
-
-1. **Professional HTTPS deployment** ready for technical co-founder demo
-2. **Comprehensive documentation** that reflects true platform sophistication
-3. **Impressive README** that showcases clinical AI capabilities
-4. **Clear technical roadmap** for potential co-founder collaboration
-
----
-
-**BOTTOM LINE**: This is a sophisticated clinical AI platform with enterprise-grade infrastructure that deserves professional presentation. We fix HTTPS first, then document the hell out of it to show how impressive this really is.
+## Constraints
+- Must maintain backwards compatibility
+- Cannot modify existing database schema
+- Must use existing AWS infrastructure
+- Docker images must be built for linux/amd64
+- Must preserve existing API contracts

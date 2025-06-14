@@ -28,14 +28,14 @@ from clarity.services.s3_storage_service import (
 
 
 @pytest.fixture
-def mock_s3_client():
+def mock_s3_client() -> MagicMock:
     """Mock S3 client."""
     with patch("boto3.client") as mock_client:
         yield mock_client.return_value
 
 
 @pytest.fixture
-def s3_service(mock_s3_client):
+def s3_service(mock_s3_client: MagicMock) -> S3StorageService:
     """Create S3 storage service with mocked client."""
     service = S3StorageService(
         bucket_name="test-health-bucket",
@@ -48,7 +48,7 @@ def s3_service(mock_s3_client):
 
 
 @pytest.fixture
-def valid_health_data():
+def valid_health_data() -> HealthDataUpload:
     """Create valid health data upload."""
     return HealthDataUpload(
         user_id=str(uuid.uuid4()),
@@ -89,7 +89,7 @@ def valid_health_data():
 class TestS3StorageServiceInit:
     """Test S3 storage service initialization."""
 
-    def test_init_default_params(self):
+    def test_init_default_params(self) -> None:
         """Test initialization with default parameters."""
         with patch("boto3.client") as mock_boto_client:
             service = S3StorageService(bucket_name="test-bucket")
@@ -106,7 +106,7 @@ class TestS3StorageServiceInit:
                 endpoint_url=None,
             )
 
-    def test_init_custom_params(self):
+    def test_init_custom_params(self) -> None:
         """Test initialization with custom parameters."""
         with patch("boto3.client") as mock_boto_client:
             service = S3StorageService(
@@ -129,7 +129,7 @@ class TestS3StorageServiceInit:
                 endpoint_url="http://localhost:9000",
             )
 
-    def test_lifecycle_rules(self, s3_service):
+    def test_lifecycle_rules(self, s3_service: S3StorageService) -> None:
         """Test lifecycle rules configuration."""
         assert "raw_data" in s3_service.lifecycle_rules
         assert "processed_data" in s3_service.lifecycle_rules
@@ -144,7 +144,7 @@ class TestAuditLog:
     """Test audit logging functionality."""
 
     @pytest.mark.asyncio
-    async def test_audit_log_success(self, s3_service):
+    async def test_audit_log_success(self, s3_service: S3StorageService) -> None:
         """Test successful audit log creation."""
         with patch("clarity.services.s3_storage_service.audit_logger") as mock_logger:
             await s3_service._audit_log(
@@ -172,7 +172,7 @@ class TestAuditLog:
             assert extra_data["metadata"] == {"size": 1024}
 
     @pytest.mark.asyncio
-    async def test_audit_log_failure(self, s3_service):
+    async def test_audit_log_failure(self, s3_service: S3StorageService) -> None:
         """Test audit log creation failure (should not raise)."""
         with patch("clarity.services.s3_storage_service.audit_logger") as mock_logger:
             mock_logger.info.side_effect = Exception("Logger error")
@@ -184,7 +184,7 @@ class TestAuditLog:
             )
 
     @pytest.mark.asyncio
-    async def test_audit_log_no_metadata(self, s3_service):
+    async def test_audit_log_no_metadata(self, s3_service: S3StorageService) -> None:
         """Test audit log with no metadata."""
         with patch("clarity.services.s3_storage_service.audit_logger") as mock_logger:
             await s3_service._audit_log(
@@ -203,8 +203,8 @@ class TestUploadRawHealthData:
 
     @pytest.mark.asyncio
     async def test_upload_raw_health_data_success(
-        self, s3_service, mock_s3_client, valid_health_data
-    ):
+        self, s3_service: S3StorageService, mock_s3_client: MagicMock, valid_health_data: HealthDataUpload
+    ) -> None:
         """Test successful health data upload."""
         processing_id = "proc-123"
         user_id = valid_health_data.user_id

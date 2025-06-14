@@ -9,9 +9,9 @@ from __future__ import annotations
 import asyncio
 from datetime import UTC, datetime
 import time
-from unittest.mock import AsyncMock, Mock, patch, MagicMock
-from uuid import UUID
 from typing import Any
+from unittest.mock import AsyncMock, MagicMock, Mock, patch
+from uuid import UUID
 
 from botocore.exceptions import ClientError
 import pytest

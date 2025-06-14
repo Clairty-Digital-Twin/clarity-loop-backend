@@ -9,7 +9,7 @@ from __future__ import annotations
 import asyncio
 import json
 import time
-from unittest.mock import AsyncMock, Mock, patch
+from unittest.mock import AsyncMock, MagicMock, Mock, patch
 from urllib.error import URLError
 
 from botocore.exceptions import ClientError

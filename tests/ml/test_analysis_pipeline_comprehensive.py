@@ -8,7 +8,7 @@ Focuses on real functionality without over-mocking.
 from __future__ import annotations
 
 from datetime import UTC, datetime, timedelta
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import MagicMock, Mock, patch
 from uuid import uuid4
 
 from clarity.ml.analysis_pipeline import (

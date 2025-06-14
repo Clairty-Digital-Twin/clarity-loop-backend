@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import os
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import MagicMock, Mock, patch
 
 import boto3
 

@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import base64
 import json
-from unittest.mock import AsyncMock, patch, MagicMock, Mock
 from typing import Any
+from unittest.mock import AsyncMock, MagicMock, patch
 
 from fastapi import HTTPException
 from fastapi.testclient import TestClient

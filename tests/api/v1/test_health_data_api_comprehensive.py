@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
+from collections.abc import Generator
 from datetime import UTC, datetime
-from unittest.mock import AsyncMock, Mock, patch, MagicMock
+from unittest.mock import AsyncMock, Mock, patch
 import uuid
-from typing import Any, Generator
 
 from fastapi import FastAPI
 from fastapi.testclient import TestClient

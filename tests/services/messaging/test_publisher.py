@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
+from collections.abc import Generator
 from unittest.mock import AsyncMock, Mock, patch
 import uuid
-from typing import Any, Generator
 
 import pytest
 

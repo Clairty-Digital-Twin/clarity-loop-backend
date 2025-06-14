@@ -12,9 +12,9 @@ import hashlib
 import hmac
 from pathlib import Path
 import tempfile
-from unittest.mock import Mock, patch, MagicMock
-from uuid import uuid4
 from typing import Any
+from unittest.mock import MagicMock, Mock, patch
+from uuid import uuid4
 
 import numpy as np
 import pytest

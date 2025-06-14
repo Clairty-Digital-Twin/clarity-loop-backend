@@ -8,8 +8,7 @@ from __future__ import annotations
 
 import importlib
 import os
-from unittest.mock import patch, Mock, MagicMock
-from typing import Any
+from unittest.mock import MagicMock, patch
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware

@@ -30,7 +30,7 @@ async def debug_login(request: Request):
 
         # Try to parse as JSON
         try:
-            body_json = json.loads(body_str)
+            json.loads(body_str)  # Validate JSON format
 
             # Return success response to keep iOS app happy
             return JSONResponse(
@@ -48,7 +48,7 @@ async def debug_login(request: Request):
                 status_code=422, content={"error": str(e), "position": e.pos}
             )
 
-    except UnicodeDecodeError as e:
+    except UnicodeDecodeError:
         return JSONResponse(
             status_code=400, content={"error": "Invalid UTF-8 encoding"}
         )

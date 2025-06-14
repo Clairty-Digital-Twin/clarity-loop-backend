@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
+from typing import Any
 from unittest.mock import AsyncMock, MagicMock, Mock, patch
 import uuid
-from typing import Any, Generator
 
 from fastapi import FastAPI
 from fastapi.testclient import TestClient

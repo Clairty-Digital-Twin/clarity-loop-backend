@@ -16,7 +16,7 @@ from clarity.core.constants import (
     AUTH_SCOPE_FULL_ACCESS,
     AUTH_TOKEN_DEFAULT_EXPIRY_SECONDS,
 )
-from clarity.core.exceptions import ProblemDetail
+from clarity.core.exceptions import AuthenticationError as CoreAuthError, ProblemDetail
 from clarity.models.auth import TokenResponse, UserLoginRequest
 from clarity.ports.auth_ports import IAuthProvider
 from clarity.services.cognito_auth_service import (
@@ -175,17 +175,33 @@ async def login(
             password=credentials.password,
         )
 
-    except InvalidCredentialsError as e:
-        raise HTTPException(
-            status_code=401,
-            detail=ProblemDetail(
-                type="invalid_credentials",
-                title="Invalid Credentials",
-                detail=str(e),
-                status=401,
-                instance=f"https://api.clarity.health/requests/{id(e)}",
-            ).model_dump(),
-        ) from e
+    except (InvalidCredentialsError, CoreAuthError) as e:
+        # Both InvalidCredentialsError from cognito_auth_service and 
+        # AuthenticationError from core.exceptions should result in 401
+        error_msg = str(e)
+        if "Invalid email or password" in error_msg or isinstance(e, InvalidCredentialsError):
+            raise HTTPException(
+                status_code=401,
+                detail=ProblemDetail(
+                    type="invalid_credentials",
+                    title="Invalid Credentials",
+                    detail=error_msg,
+                    status=401,
+                    instance=f"https://api.clarity.health/requests/{id(e)}",
+                ).model_dump(),
+            ) from e
+        else:
+            # Other authentication errors get 500
+            raise HTTPException(
+                status_code=500,
+                detail=ProblemDetail(
+                    type="authentication_error",
+                    title="Authentication Failed",
+                    detail=error_msg,
+                    status=500,
+                    instance=f"https://api.clarity.health/requests/{id(e)}",
+                ).model_dump(),
+            ) from e
     except EmailNotVerifiedError as e:
         raise HTTPException(
             status_code=403,

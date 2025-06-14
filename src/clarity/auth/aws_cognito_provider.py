@@ -18,6 +18,7 @@ import requests
 from clarity.core.exceptions import AuthenticationError
 from clarity.models.user import User
 from clarity.ports.auth_ports import IAuthProvider
+from clarity.services.cognito_auth_service import InvalidCredentialsError
 
 if TYPE_CHECKING:
     from mypy_boto3_cognito_idp.type_defs import AttributeTypeTypeDef
@@ -307,7 +308,7 @@ class CognitoAuthProvider(IAuthProvider):
             if error_code == "NotAuthorizedException":
                 logger.warning("Invalid credentials for: %s", email)
                 msg = "Invalid email or password"
-                raise AuthenticationError(msg) from e
+                raise InvalidCredentialsError(msg) from e
             logger.exception("Authentication failed")
             msg = f"Authentication failed: {e!s}"
             raise AuthenticationError(msg) from e

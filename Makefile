@@ -67,7 +67,12 @@ test-unit: ## ⚡ Run unit tests only
 	pytest tests/unit/ -v
 
 test-integration: ## 🔗 Run integration tests
+	./scripts/create_test_user.sh test@example.com TestPassword123!
 	pytest tests/integration/ -v
+
+ci-integration: ## 🤖 Seed Cognito user + run integration tests for CI
+	./scripts/create_test_user.sh ci_test_user@example.com Sup3r-Secret
+	AUTH_BASE_URL=http://localhost:8000 pytest -m integration
 
 test-ml: ## 🤖 Run ML model tests
 	pytest tests/ml/ -v -m "pat or gemini"

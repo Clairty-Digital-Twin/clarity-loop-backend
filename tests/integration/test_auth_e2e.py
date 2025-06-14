@@ -2,15 +2,34 @@
 
 from datetime import datetime
 import json
+import os
+import socket
 
 import httpx
 import pytest
 
 
+def _service_up(url: str, timeout: float = 2.0) -> bool:
+    """Check if service is reachable."""
+    try:
+        # Extract host from URL
+        host = url.split("//", 1)[-1].split("/", 1)[0].split(":")[0]
+        port = 443 if url.startswith("https") else 80
+        
+        # Try to connect
+        socket.create_connection((host, port), timeout=timeout).close()
+        return True
+    except (OSError, socket.timeout):
+        return False
+
+
 class TestAuthenticationE2E:
     """Test authentication flow from frontend to backend."""
 
-    BASE_URL = "http://clarity-alb-1762715656.us-east-1.elb.amazonaws.com"
+    BASE_URL = os.getenv(
+        "AUTH_BASE_URL", 
+        "http://clarity-alb-1762715656.us-east-1.elb.amazonaws.com"
+    )
 
     @pytest.fixture
     def test_user_credentials(self):
@@ -61,8 +80,13 @@ class TestAuthenticationE2E:
             assert data["access_token"].count(".") == 2  # JWT has 3 parts
 
     @pytest.mark.asyncio
+    @pytest.mark.integration
     async def test_login_invalid_credentials(self, frontend_login_payload):
         """Test login with invalid credentials."""
+        # Skip if service is unreachable
+        if not _service_up(self.BASE_URL):
+            pytest.skip(f"⏭  {self.BASE_URL} unreachable – skipping integration test")
+        
         frontend_login_payload["password"] = "WrongPassword123!"
 
         async with httpx.AsyncClient() as client:
@@ -73,11 +97,12 @@ class TestAuthenticationE2E:
             )
 
             # Should return 401 Unauthorized
-            assert response.status_code == 401
+            assert response.status_code == 401, f"Expected 401, got {response.status_code}. Response: {response.text}"
 
             # Verify error response
             data = response.json()
             assert "detail" in data
+            assert isinstance(data["detail"], dict), f"Expected detail to be dict, got {type(data['detail'])}"
             assert data["detail"]["type"] == "invalid_credentials"
             assert data["detail"]["status"] == 401
 

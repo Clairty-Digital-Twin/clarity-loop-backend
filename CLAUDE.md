@@ -1,0 +1,133 @@
+# CLAUDE.md - CRITICAL PROJECT INFORMATION
+
+## 🚨 CRITICAL: Docker Build Platform Requirements
+
+**ALWAYS BUILD DOCKER IMAGES FOR linux/amd64 PLATFORM FOR AWS ECS DEPLOYMENT**
+
+```bash
+# ✅ CORRECT - Always use this:
+docker build --platform linux/amd64 -t image-name .
+
+# ❌ WRONG - Never use these:
+docker build -t image-name .  # Uses host platform (arm64 on Mac)
+docker buildx build --load -t image-name .  # May default to wrong platform
+```
+
+## Why This Matters
+
+AWS ECS Fargate ONLY supports `linux/amd64` platform. Building for any other platform (like `arm64` on Apple Silicon Macs) will result in:
+- Error: `CannotPullContainerError: image Manifest does not contain descriptor matching platform 'linux/amd64'`
+- Task fails to start
+- Service shows 0 running tasks
+- Application is DOWN
+
+## Active AWS Resources
+
+### ECS Cluster
+- **Active Cluster**: `clarity-backend-cluster` (NOT `clarity-cluster` which is INACTIVE)
+- **Service**: `clarity-backend-service`
+- **Task Definition**: `clarity-backend`
+
+### Load Balancer
+- **ALB URL**: http://clarity-alb-1762715656.us-east-1.elb.amazonaws.com
+- **Target Group**: `clarity-targets`
+
+### ECR Repository
+- **Repository**: `124355672559.dkr.ecr.us-east-1.amazonaws.com/clarity-backend`
+
+## Deployment Process
+
+1. **Build Docker Image (ALWAYS with platform flag)**:
+   ```bash
+   docker build --platform linux/amd64 -t clarity-backend:tag-name .
+   ```
+
+2. **Tag for ECR**:
+   ```bash
+   docker tag clarity-backend:tag-name 124355672559.dkr.ecr.us-east-1.amazonaws.com/clarity-backend:tag-name
+   ```
+
+3. **Push to ECR**:
+   ```bash
+   docker push 124355672559.dkr.ecr.us-east-1.amazonaws.com/clarity-backend:tag-name
+   ```
+
+4. **Update Task Definition**:
+   ```bash
+   # Update ops/ecs-task-definition.json with new image tag
+   aws ecs register-task-definition --cli-input-json file://ops/ecs-task-definition.json --region us-east-1
+   ```
+
+5. **Update Service**:
+   ```bash
+   aws ecs update-service --cluster clarity-backend-cluster --service clarity-backend-service --task-definition clarity-backend:REVISION --region us-east-1
+   ```
+
+## Authentication Fix Status
+
+The authentication 500 error has been fixed in the code:
+- `InvalidCredentialsError` is properly raised for wrong credentials (returns 401)
+- Exception classes have proper error codes
+- Code is correct in `src/clarity/auth/aws_cognito_provider.py`
+
+## Test Suite Status
+
+Current test failures that need fixing:
+1. Async/coroutine mock issues in health data tests
+2. Mock context manager issues in DynamoDB tests
+3. AWS region configuration test
+4. Decimal serialization test precision
+5. PAT model path security test expectations
+6. Integration tests need to handle service unavailable (503)
+7. Email verification test expectation
+
+## Important Commands
+
+### Check Service Status
+```bash
+aws ecs describe-services --cluster clarity-backend-cluster --services clarity-backend-service --region us-east-1
+```
+
+### Check Latest Task Failure
+```bash
+# Get latest task ARN
+TASK_ARN=$(aws ecs list-tasks --cluster clarity-backend-cluster --service-name clarity-backend-service --region us-east-1 --query 'taskArns[0]' --output text)
+
+# Describe task to see failure reason
+aws ecs describe-tasks --cluster clarity-backend-cluster --tasks $TASK_ARN --region us-east-1
+```
+
+### Run Tests Locally
+```bash
+# Run all tests
+pytest
+
+# Run with coverage
+pytest --cov=src/clarity --cov-report=term-missing
+
+# Run specific test file
+pytest tests/services/test_health_data_service.py -v
+```
+
+### Lint and Type Check
+```bash
+# Lint
+ruff check src/ tests/
+
+# Type check
+mypy src/
+```
+
+## Common Pitfalls to Avoid
+
+1. **Never** forget the `--platform linux/amd64` flag when building Docker images
+2. **Always** verify the correct ECS cluster name (`clarity-backend-cluster`)
+3. **Always** run tests before deploying
+4. **Never** deploy without checking the task failure reasons if deployment fails
+5. **Always** update this file with new critical information
+
+## Last Updated
+
+- Date: June 14, 2025
+- By: Claude (AI Assistant)
+- Reason: Documented critical platform requirements after deployment failure due to wrong architecture

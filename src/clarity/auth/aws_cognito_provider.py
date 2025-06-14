@@ -363,7 +363,7 @@ def get_cognito_provider() -> CognitoAuthProvider:
     """Get singleton Cognito provider instance."""
     user_pool_id = os.getenv("COGNITO_USER_POOL_ID", "")
     client_id = os.getenv("COGNITO_CLIENT_ID", "")
-    region = os.getenv("COGNITO_REGION", os.getenv("AWS_REGION", "us-east-1"))
+    region = os.getenv("COGNITO_REGION") or os.getenv("AWS_REGION") or "us-east-1"
 
     if not user_pool_id or not client_id:
         msg = "Cognito configuration missing"

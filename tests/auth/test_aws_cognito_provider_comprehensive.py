@@ -853,7 +853,9 @@ class TestGetCognitoProviderFunction:
             "COGNITO_USER_POOL_ID": "test-pool-123",
             "COGNITO_CLIENT_ID": "test-client-123",
             "AWS_REGION": "eu-west-1",
+            "COGNITO_REGION": "",  # Clear COGNITO_REGION to test AWS_REGION fallback
         },
+        clear=True,  # Clear all env vars to ensure clean test
     )
     def test_get_cognito_provider_aws_region_fallback(self):
         """Test provider creation with AWS_REGION fallback."""

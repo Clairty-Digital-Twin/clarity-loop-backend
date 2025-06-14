@@ -1053,6 +1053,7 @@ class TestProductionScenarios:
         audit_calls = []
 
         async def mock_audit_log(*args, **kwargs) -> None:
+            await asyncio.sleep(0)  # Make it properly async
             audit_calls.append((args, kwargs))
 
         self.service._audit_log = mock_audit_log

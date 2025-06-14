@@ -516,7 +516,7 @@ class TestModelLoadingAndSecurity:
         service = PATModelService()
         service.config = {"invalid": "config"}  # This will cause errors
 
-        with pytest.raises(Exception):
+        with pytest.raises(Exception, match=".*"):
             await service.load_model()
 
         assert service.is_loaded is False
@@ -1094,7 +1094,7 @@ class TestProductionReadiness:
     def test_error_messages_informativeness(self):
         """Test that error messages are informative for debugging."""
         # Test various error conditions return helpful messages
-        with pytest.raises(ValueError) as exc_info:
+        with pytest.raises(ValueError, match="Invalid model size") as exc_info:
             PATModelService(model_size="nonexistent")
 
         assert "Invalid model size" in str(exc_info.value)

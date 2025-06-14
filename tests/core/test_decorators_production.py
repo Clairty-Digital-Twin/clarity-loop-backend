@@ -54,7 +54,7 @@ class TestLogExecutionDecorator:
         """Test logging with arguments and result included."""
 
         @log_execution(include_args=True, include_result=True)
-        def test_function(x: int, y: int, _z: str | None = None) -> int:
+        def test_function(x: int, y: int, z: str | None = None) -> int:
             return x + y
 
         caplog.set_level(logging.INFO, logger="clarity.core.decorators")
@@ -290,7 +290,7 @@ class TestRetryOnFailureDecorator:
             msg = "Timing test"
             raise Exception(msg)
 
-        with pytest.raises(Exception):
+        with pytest.raises(Exception, match="Timing test"):
             timing_function()
 
         assert len(call_times) == 3
@@ -321,7 +321,7 @@ class TestRetryOnFailureDecorator:
             connection_error_function()
 
         # ValueError should not be retried
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="Value error - should not retry"):
             value_error_function()
 
     @pytest.mark.asyncio
@@ -333,6 +333,7 @@ class TestRetryOnFailureDecorator:
         async def async_flaky_function() -> str:
             nonlocal call_count
             call_count += 1
+            await asyncio.sleep(0)  # Make it properly async
             if call_count < 3:
                 msg = "Async timeout"
                 raise TimeoutError(msg)
@@ -435,7 +436,7 @@ class TestAuditTrailDecorator:
         @audit_trail(
             "delete_document", user_id_param="user_id", resource_id_param="doc_id"
         )
-        def delete_document(_user_id: str, _doc_id: str) -> dict[str, bool]:
+        def delete_document(user_id: str, doc_id: str) -> dict[str, bool]:
             return {"deleted": True}
 
         caplog.set_level(logging.INFO, logger="clarity.core.decorators")
@@ -475,7 +476,7 @@ class TestAuditTrailDecorator:
         """Test audit trail with async functions."""
 
         @audit_trail("async_operation", user_id_param="user_id")
-        async def async_operation(_user_id: str) -> dict[str, bool]:
+        async def async_operation(user_id: str) -> dict[str, bool]:
             await asyncio.sleep(0.001)
             return {"completed": True}
 
@@ -677,7 +678,7 @@ class TestProductionScenarios:
         @validate_input(validate_api_request, "Invalid API request format")
         @audit_trail("api_request", user_id_param="user_id")
         def handle_api_request(
-            request_data: dict[str, Any], _user_id: str | None = None
+            request_data: dict[str, Any], user_id: str | None = None
         ) -> dict[str, str]:
             return {
                 "status": "processed",

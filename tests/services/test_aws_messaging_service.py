@@ -563,31 +563,35 @@ class TestCloseAndSingleton:
 
     def test_get_messaging_service_singleton(self) -> None:
         """Test get_messaging_service singleton pattern."""
-        with patch("clarity.services.aws_messaging_service._messaging_service", None):
-            with patch("boto3.client"):
-                service1 = get_messaging_service()
-                service2 = get_messaging_service()
+        with (
+            patch("clarity.services.aws_messaging_service._messaging_service", None),
+            patch("boto3.client"),
+        ):
+            service1 = get_messaging_service()
+            service2 = get_messaging_service()
 
-                assert service1 is service2
+            assert service1 is service2
 
     def test_get_messaging_service_with_params(self) -> None:
         """Test get_messaging_service with custom params."""
-        with patch("clarity.services.aws_messaging_service._messaging_service", None):
-            with patch("boto3.client"):
-                service = get_messaging_service(
-                    region="eu-west-1",
-                    health_data_queue="custom-health-queue",
-                    insight_queue="custom-insight-queue",
-                    sns_topic_arn="arn:aws:sns:eu-west-1:123456789012:custom-topic",
-                )
+        with (
+            patch("clarity.services.aws_messaging_service._messaging_service", None),
+            patch("boto3.client"),
+        ):
+            service = get_messaging_service(
+                region="eu-west-1",
+                health_data_queue="custom-health-queue",
+                insight_queue="custom-insight-queue",
+                sns_topic_arn="arn:aws:sns:eu-west-1:123456789012:custom-topic",
+            )
 
-                assert service.region == "eu-west-1"
-                assert service.health_data_queue == "custom-health-queue"
-                assert service.insight_queue == "custom-insight-queue"
-                assert (
-                    service.sns_topic_arn
-                    == "arn:aws:sns:eu-west-1:123456789012:custom-topic"
-                )
+            assert service.region == "eu-west-1"
+            assert service.health_data_queue == "custom-health-queue"
+            assert service.insight_queue == "custom-insight-queue"
+            assert (
+                service.sns_topic_arn
+                == "arn:aws:sns:eu-west-1:123456789012:custom-topic"
+            )
 
 
 class TestPydanticModels:

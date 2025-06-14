@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 from datetime import UTC, datetime
 import json
 from typing import Any
@@ -806,6 +807,7 @@ class TestCloudStoragePortMethods:
         async def mock_upload_file(
             _data: bytes, file_path: str, _metadata: dict[str, Any] | None = None
         ) -> str:
+            await asyncio.sleep(0)  # Make it properly async
             return f"s3://test-bucket/{file_path}"
 
         with patch.object(s3_service, "upload_file", side_effect=mock_upload_file):
@@ -824,20 +826,24 @@ class TestGlobalFunctions:
 
     def test_get_s3_service(self) -> None:
         """Test get_s3_service singleton."""
-        with patch("clarity.services.s3_storage_service._s3_service", None):
-            with patch("boto3.client"):
-                service1 = get_s3_service("test-bucket")
-                service2 = get_s3_service("test-bucket")
+        with (
+            patch("clarity.services.s3_storage_service._s3_service", None),
+            patch("boto3.client"),
+        ):
+            service1 = get_s3_service("test-bucket")
+            service2 = get_s3_service("test-bucket")
 
-                assert service1 is service2  # Same instance
+            assert service1 is service2  # Same instance
 
     def test_get_s3_service_default_bucket(self) -> None:
         """Test get_s3_service with default bucket name."""
-        with patch("clarity.services.s3_storage_service._s3_service", None):
-            with patch("boto3.client"):
-                service = get_s3_service()  # No bucket name provided
+        with (
+            patch("clarity.services.s3_storage_service._s3_service", None),
+            patch("boto3.client"),
+        ):
+            service = get_s3_service()  # No bucket name provided
 
-                assert service.bucket_name == "clarity-health-data-storage"
+            assert service.bucket_name == "clarity-health-data-storage"
 
 
 class TestExceptionClasses:

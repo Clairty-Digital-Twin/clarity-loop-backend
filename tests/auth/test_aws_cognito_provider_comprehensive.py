@@ -1029,6 +1029,7 @@ class TestProductionScenarios:
 
             # Simulate concurrent access
             async def access_jwks():
+                await asyncio.sleep(0)  # Make it properly async
                 return self.provider.jwks
 
             # Run multiple concurrent accesses

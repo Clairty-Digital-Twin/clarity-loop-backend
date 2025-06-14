@@ -79,7 +79,7 @@ class TestInsightServiceMain:
 
     @patch("clarity.entrypoints.insight_service.uvicorn.run")
     @patch.dict(
-        os.environ, {"HOST": "0.0.0.0", "PORT": "9000"}, clear=True
+        os.environ, {"HOST": "0.0.0.0", "PORT": "9000"}, clear=True  # noqa: S104 - Test value
     )
     def test_main_custom_host_port(self, mock_uvicorn_run: MagicMock) -> None:
         """Test main function with custom host and port from environment."""
@@ -125,7 +125,7 @@ class TestInsightServiceMain:
     @patch.dict(os.environ, {"PORT": "invalid"}, clear=True)
     def test_main_invalid_port_environment(self, mock_uvicorn_run: MagicMock) -> None:
         """Test main function with invalid port environment variable."""
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="invalid literal for int"):
             main()
 
     @patch("clarity.entrypoints.insight_service.uvicorn.run")
@@ -259,7 +259,7 @@ class TestInsightServiceProductionScenarios:
     @patch.dict(
         os.environ,
         {
-            "HOST": "0.0.0.0",
+            "HOST": "0.0.0.0",  # noqa: S104 - Test value
             "PORT": "80",
             "ENVIRONMENT": "production",
         },

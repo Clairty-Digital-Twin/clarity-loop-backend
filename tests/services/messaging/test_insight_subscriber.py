@@ -35,7 +35,7 @@ def mock_gemini_service() -> MagicMock:
 
 
 @pytest.fixture
-def insight_subscriber(_mock_storage_client: MagicMock, _mock_gemini_service: MagicMock) -> InsightSubscriber:
+def insight_subscriber(mock_storage_client: MagicMock, mock_gemini_service: MagicMock) -> InsightSubscriber:
     """Create insight subscriber with mocked dependencies."""
     # Reset singleton
     InsightSubscriberSingleton._instance = None
@@ -363,7 +363,7 @@ class TestHelperMethods:
 
     def test_raise_missing_field_error(self) -> None:
         """Test _raise_missing_field_error method."""
-        with pytest.raises(ValueError) as exc_info:
+        with pytest.raises(ValueError, match="Missing required field: test_field") as exc_info:
             InsightSubscriber._raise_missing_field_error("test_field")
 
         assert str(exc_info.value) == "Missing required field: test_field"

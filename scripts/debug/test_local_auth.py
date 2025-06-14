@@ -5,12 +5,13 @@ import json
 import os
 import signal
 import subprocess
+import sys
 import time
 
 import httpx
 
 
-async def test_auth():
+async def test_auth() -> bool | None:
     """Test authentication endpoint locally."""
     # Start the server
     print("Starting local server...")
@@ -68,4 +69,4 @@ async def test_auth():
 
 if __name__ == "__main__":
     result = asyncio.run(test_auth())
-    exit(0 if result else 1)
+    sys.exit(0 if result else 1)

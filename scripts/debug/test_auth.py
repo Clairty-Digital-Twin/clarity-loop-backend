@@ -5,7 +5,7 @@ import json
 import httpx
 
 
-async def test_auth():
+async def test_auth() -> None:
     """Test authentication endpoint."""
     async with httpx.AsyncClient() as client:
         # Test with invalid credentials

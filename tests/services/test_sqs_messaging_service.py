@@ -19,19 +19,21 @@ from clarity.services.sqs_messaging_service import (
 
 
 @pytest.fixture
-def mock_sqs_client():
+def mock_sqs_client() -> MagicMock:
     """Mock SQS client."""
     return MagicMock()
 
 
 @pytest.fixture
-def mock_sns_client():
+def mock_sns_client() -> MagicMock:
     """Mock SNS client."""
     return MagicMock()
 
 
 @pytest.fixture
-def sqs_service(mock_sqs_client, mock_sns_client):
+def sqs_service(
+    mock_sqs_client: MagicMock, mock_sns_client: MagicMock
+) -> SQSMessagingService:
     """Create SQS service with mocked clients."""
     service = SQSMessagingService(
         queue_url="https://sqs.us-east-1.amazonaws.com/123456789012/test-queue",
@@ -44,7 +46,7 @@ def sqs_service(mock_sqs_client, mock_sns_client):
 
 
 @pytest.fixture
-def sqs_service_no_sns(mock_sqs_client):
+def sqs_service_no_sns(mock_sqs_client: MagicMock) -> SQSMessagingService:
     """Create SQS service without SNS."""
     service = SQSMessagingService(
         queue_url="https://sqs.us-east-1.amazonaws.com/123456789012/test-queue",
@@ -57,7 +59,7 @@ def sqs_service_no_sns(mock_sqs_client):
 class TestSQSMessagingServiceInit:
     """Test SQS messaging service initialization."""
 
-    def test_init_with_default_params(self):
+    def test_init_with_default_params(self) -> None:
         """Test initialization with default parameters."""
         with patch("boto3.client") as mock_boto_client:
             service = SQSMessagingService(
@@ -72,7 +74,7 @@ class TestSQSMessagingServiceInit:
             assert service.sns_topic_arn is None
             mock_boto_client.assert_called_once_with("sqs", region_name="us-east-1")
 
-    def test_init_with_sns(self):
+    def test_init_with_sns(self) -> None:
         """Test initialization with SNS topic."""
         with patch("boto3.client") as mock_boto_client:
             service = SQSMessagingService(
@@ -87,10 +89,10 @@ class TestSQSMessagingServiceInit:
             mock_boto_client.assert_any_call("sqs", region_name="us-east-1")
             mock_boto_client.assert_any_call("sns", region_name="us-east-1")
 
-    def test_init_with_endpoint_url(self):
+    def test_init_with_endpoint_url(self) -> None:
         """Test initialization with endpoint URL (LocalStack)."""
         with patch("boto3.client") as mock_boto_client:
-            service = SQSMessagingService(
+            SQSMessagingService(
                 queue_url="https://sqs.us-east-1.amazonaws.com/123456789012/test-queue",
                 sns_topic_arn="arn:aws:sns:us-east-1:123456789012:test-topic",
                 endpoint_url="http://localhost:4566",
@@ -109,7 +111,9 @@ class TestPublishMessage:
     """Test message publishing functionality."""
 
     @pytest.mark.asyncio
-    async def test_publish_message_success(self, sqs_service, mock_sqs_client):
+    async def test_publish_message_success(
+        self, sqs_service: SQSMessagingService, mock_sqs_client: MagicMock
+    ) -> None:
         """Test successful message publishing."""
         mock_sqs_client.send_message.return_value = {"MessageId": "test-message-id-123"}
 
@@ -146,7 +150,9 @@ class TestPublishMessage:
         }
 
     @pytest.mark.asyncio
-    async def test_publish_message_no_attributes(self, sqs_service, mock_sqs_client):
+    async def test_publish_message_no_attributes(
+        self, sqs_service: SQSMessagingService, mock_sqs_client: MagicMock
+    ) -> None:
         """Test publishing message without custom attributes."""
         mock_sqs_client.send_message.return_value = {"MessageId": "test-message-id-456"}
 
@@ -163,7 +169,9 @@ class TestPublishMessage:
         assert "MessageType" in call_args["MessageAttributes"]
 
     @pytest.mark.asyncio
-    async def test_publish_message_client_error(self, sqs_service, mock_sqs_client):
+    async def test_publish_message_client_error(
+        self, sqs_service: SQSMessagingService, mock_sqs_client: MagicMock
+    ) -> None:
         """Test message publishing with ClientError."""
         mock_sqs_client.send_message.side_effect = ClientError(
             {"Error": {"Code": "AccessDenied", "Message": "Access denied"}},
@@ -179,7 +187,9 @@ class TestPublishMessage:
         assert "Failed to publish message" in str(exc_info.value)
 
     @pytest.mark.asyncio
-    async def test_publish_message_unexpected_error(self, sqs_service, mock_sqs_client):
+    async def test_publish_message_unexpected_error(
+        self, sqs_service: SQSMessagingService, mock_sqs_client: MagicMock
+    ) -> None:
         """Test message publishing with unexpected error."""
         mock_sqs_client.send_message.side_effect = Exception("Unexpected error")
 
@@ -196,7 +206,9 @@ class TestReceiveMessages:
     """Test message receiving functionality."""
 
     @pytest.mark.asyncio
-    async def test_receive_messages_success(self, sqs_service, mock_sqs_client):
+    async def test_receive_messages_success(
+        self, sqs_service: SQSMessagingService, mock_sqs_client: MagicMock
+    ) -> None:
         """Test successful message receiving."""
         mock_response = {
             "Messages": [
@@ -250,7 +262,9 @@ class TestReceiveMessages:
         )
 
     @pytest.mark.asyncio
-    async def test_receive_messages_empty_queue(self, sqs_service, mock_sqs_client):
+    async def test_receive_messages_empty_queue(
+        self, sqs_service: SQSMessagingService, mock_sqs_client: MagicMock
+    ) -> None:
         """Test receiving from empty queue."""
         mock_sqs_client.receive_message.return_value = {}
 
@@ -260,8 +274,8 @@ class TestReceiveMessages:
 
     @pytest.mark.asyncio
     async def test_receive_messages_json_decode_error(
-        self, sqs_service, mock_sqs_client
-    ):
+        self, sqs_service: SQSMessagingService, mock_sqs_client: MagicMock
+    ) -> None:
         """Test receiving message with invalid JSON."""
         mock_response = {
             "Messages": [
@@ -286,7 +300,9 @@ class TestReceiveMessages:
         assert messages[0]["message_id"] == "msg-2"
 
     @pytest.mark.asyncio
-    async def test_receive_messages_client_error(self, sqs_service, mock_sqs_client):
+    async def test_receive_messages_client_error(
+        self, sqs_service: SQSMessagingService, mock_sqs_client: MagicMock
+    ) -> None:
         """Test receiving messages with ClientError."""
         mock_sqs_client.receive_message.side_effect = ClientError(
             {"Error": {"Code": "QueueDoesNotExist", "Message": "Queue not found"}},
@@ -303,7 +319,9 @@ class TestDeleteMessage:
     """Test message deletion functionality."""
 
     @pytest.mark.asyncio
-    async def test_delete_message_success(self, sqs_service, mock_sqs_client):
+    async def test_delete_message_success(
+        self, sqs_service: SQSMessagingService, mock_sqs_client: MagicMock
+    ) -> None:
         """Test successful message deletion."""
         await sqs_service.delete_message("test-receipt-handle")
 
@@ -313,7 +331,9 @@ class TestDeleteMessage:
         )
 
     @pytest.mark.asyncio
-    async def test_delete_message_client_error(self, sqs_service, mock_sqs_client):
+    async def test_delete_message_client_error(
+        self, sqs_service: SQSMessagingService, mock_sqs_client: MagicMock
+    ) -> None:
         """Test message deletion with ClientError."""
         mock_sqs_client.delete_message.side_effect = ClientError(
             {"Error": {"Code": "ReceiptHandleIsInvalid", "Message": "Invalid handle"}},
@@ -330,7 +350,9 @@ class TestBatchDeleteMessages:
     """Test batch message deletion functionality."""
 
     @pytest.mark.asyncio
-    async def test_batch_delete_messages_success(self, sqs_service, mock_sqs_client):
+    async def test_batch_delete_messages_success(
+        self, sqs_service: SQSMessagingService, mock_sqs_client: MagicMock
+    ) -> None:
         """Test successful batch deletion."""
         mock_sqs_client.delete_message_batch.return_value = {
             "Successful": [
@@ -355,8 +377,8 @@ class TestBatchDeleteMessages:
 
     @pytest.mark.asyncio
     async def test_batch_delete_messages_partial_failure(
-        self, sqs_service, mock_sqs_client
-    ):
+        self, sqs_service: SQSMessagingService, mock_sqs_client: MagicMock
+    ) -> None:
         """Test batch deletion with partial failure."""
         mock_sqs_client.delete_message_batch.return_value = {
             "Successful": [{"Id": "0"}],
@@ -377,8 +399,8 @@ class TestBatchDeleteMessages:
 
     @pytest.mark.asyncio
     async def test_batch_delete_messages_client_error(
-        self, sqs_service, mock_sqs_client
-    ):
+        self, sqs_service: SQSMessagingService, mock_sqs_client: MagicMock
+    ) -> None:
         """Test batch deletion with ClientError."""
         mock_sqs_client.delete_message_batch.side_effect = ClientError(
             {"Error": {"Code": "BatchRequestTooLong", "Message": "Too many messages"}},
@@ -395,7 +417,9 @@ class TestPublishToSNS:
     """Test SNS publishing functionality."""
 
     @pytest.mark.asyncio
-    async def test_publish_to_sns_success(self, sqs_service, mock_sns_client):
+    async def test_publish_to_sns_success(
+        self, sqs_service: SQSMessagingService, mock_sns_client: MagicMock
+    ) -> None:
         """Test successful SNS publishing."""
         mock_sns_client.publish.return_value = {"MessageId": "sns-message-id-123"}
 
@@ -418,7 +442,9 @@ class TestPublishToSNS:
         )
 
     @pytest.mark.asyncio
-    async def test_publish_to_sns_no_topic_arn(self, sqs_service_no_sns):
+    async def test_publish_to_sns_no_topic_arn(
+        self, sqs_service_no_sns: SQSMessagingService
+    ) -> None:
         """Test SNS publishing without topic ARN configured."""
         with pytest.raises(MessagingError) as exc_info:
             await sqs_service_no_sns.publish_to_sns(
@@ -429,7 +455,9 @@ class TestPublishToSNS:
         assert "SNS topic ARN not configured" in str(exc_info.value)
 
     @pytest.mark.asyncio
-    async def test_publish_to_sns_client_error(self, sqs_service, mock_sns_client):
+    async def test_publish_to_sns_client_error(
+        self, sqs_service: SQSMessagingService, mock_sns_client: MagicMock
+    ) -> None:
         """Test SNS publishing with ClientError."""
         mock_sns_client.publish.side_effect = ClientError(
             {"Error": {"Code": "TopicNotFound", "Message": "Topic not found"}},
@@ -449,7 +477,9 @@ class TestQueueOperations:
     """Test queue-level operations."""
 
     @pytest.mark.asyncio
-    async def test_get_queue_attributes_success(self, sqs_service, mock_sqs_client):
+    async def test_get_queue_attributes_success(
+        self, sqs_service: SQSMessagingService, mock_sqs_client: MagicMock
+    ) -> None:
         """Test getting queue attributes."""
         mock_sqs_client.get_queue_attributes.return_value = {
             "Attributes": {
@@ -472,8 +502,8 @@ class TestQueueOperations:
 
     @pytest.mark.asyncio
     async def test_get_queue_attributes_client_error(
-        self, sqs_service, mock_sqs_client
-    ):
+        self, sqs_service: SQSMessagingService, mock_sqs_client: MagicMock
+    ) -> None:
         """Test getting queue attributes with error."""
         mock_sqs_client.get_queue_attributes.side_effect = ClientError(
             {"Error": {"Code": "QueueDoesNotExist", "Message": "Queue not found"}},
@@ -486,7 +516,9 @@ class TestQueueOperations:
         assert "Failed to get queue attributes" in str(exc_info.value)
 
     @pytest.mark.asyncio
-    async def test_purge_queue_success(self, sqs_service, mock_sqs_client):
+    async def test_purge_queue_success(
+        self, sqs_service: SQSMessagingService, mock_sqs_client: MagicMock
+    ) -> None:
         """Test purging queue."""
         await sqs_service.purge_queue()
 
@@ -495,7 +527,9 @@ class TestQueueOperations:
         )
 
     @pytest.mark.asyncio
-    async def test_purge_queue_client_error(self, sqs_service, mock_sqs_client):
+    async def test_purge_queue_client_error(
+        self, sqs_service: SQSMessagingService, mock_sqs_client: MagicMock
+    ) -> None:
         """Test purging queue with error."""
         mock_sqs_client.purge_queue.side_effect = ClientError(
             {"Error": {"Code": "PurgeQueueInProgress", "Message": "Purge in progress"}},
@@ -511,7 +545,7 @@ class TestQueueOperations:
 class TestMessagingError:
     """Test MessagingError exception."""
 
-    def test_messaging_error_creation(self):
+    def test_messaging_error_creation(self) -> None:
         """Test MessagingError initialization."""
         error = MessagingError("Test error", queue_url="test-queue")
 
@@ -523,7 +557,7 @@ class TestMessagingError:
 class TestHealthDataMessageTypes:
     """Test HealthDataMessageTypes constants."""
 
-    def test_message_types(self):
+    def test_message_types(self) -> None:
         """Test message type constants."""
         assert HealthDataMessageTypes.HEALTH_DATA_UPLOADED == "health_data_uploaded"
         assert HealthDataMessageTypes.ANALYSIS_REQUESTED == "analysis_requested"

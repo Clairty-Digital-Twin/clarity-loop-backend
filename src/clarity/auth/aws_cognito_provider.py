@@ -17,6 +17,7 @@ import requests
 
 from clarity.core.exceptions import (
     AuthenticationError,
+    EmailNotVerifiedError,
     InvalidCredentialsError,
     UserAlreadyExistsError,
 )
@@ -312,6 +313,10 @@ class CognitoAuthProvider(IAuthProvider):
                 logger.warning("Invalid credentials for: %s", email)
                 msg = "Invalid email or password"
                 raise InvalidCredentialsError(msg) from e
+            elif error_code == "UserNotConfirmedException":
+                logger.warning("Email not verified for: %s", email)
+                msg = "Email not verified. Please check your email for verification link."
+                raise EmailNotVerifiedError(msg) from e
             logger.exception("Authentication failed")
             msg = f"Authentication failed: {e!s}"
             raise AuthenticationError(msg) from e

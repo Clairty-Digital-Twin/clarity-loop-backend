@@ -176,6 +176,17 @@ async def login(
             password=credentials.password,
         )
 
+    except EmailNotVerifiedError as e:
+        raise HTTPException(
+            status_code=403,
+            detail=ProblemDetail(
+                type="email_not_verified",
+                title="Email Not Verified",
+                detail=str(e),
+                status=403,
+                instance=f"https://api.clarity.health/requests/{id(e)}",
+            ).model_dump(),
+        ) from e
     except (InvalidCredentialsError, CoreAuthError) as e:
         # Both InvalidCredentialsError from the service layer and CoreAuthError
         # from the provider layer indicate a client-side authentication failure.
@@ -189,17 +200,6 @@ async def login(
                 title="Invalid Credentials",
                 detail="Invalid email or password.",
                 status=401,
-                instance=f"https://api.clarity.health/requests/{id(e)}",
-            ).model_dump(),
-        ) from e
-    except EmailNotVerifiedError as e:
-        raise HTTPException(
-            status_code=403,
-            detail=ProblemDetail(
-                type="email_not_verified",
-                title="Email Not Verified",
-                detail=str(e),
-                status=403,
                 instance=f"https://api.clarity.health/requests/{id(e)}",
             ).model_dump(),
         ) from e

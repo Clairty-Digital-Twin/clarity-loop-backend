@@ -11,7 +11,6 @@ from datetime import UTC, datetime, timedelta
 from unittest.mock import Mock, patch
 from uuid import uuid4
 
-
 from clarity.ml.analysis_pipeline import (
     MIN_FEATURE_VECTOR_LENGTH,
     MIN_METRICS_FOR_TIME_SPAN,

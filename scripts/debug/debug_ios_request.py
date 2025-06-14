@@ -33,15 +33,13 @@ async def debug_login(request: Request):
             body_json = json.loads(body_str)
 
             # Return success response to keep iOS app happy
-            return JSONResponse(
-                {
-                    "access_token": "debug_token",
-                    "refresh_token": "debug_refresh",
-                    "token_type": "bearer",
-                    "expires_in": 3600,
-                    "scope": "full_access",
-                }
-            )
+            return JSONResponse({
+                "access_token": "debug_token",
+                "refresh_token": "debug_refresh",
+                "token_type": "bearer",
+                "expires_in": 3600,
+                "scope": "full_access",
+            })
 
         except json.JSONDecodeError as e:
             return JSONResponse(

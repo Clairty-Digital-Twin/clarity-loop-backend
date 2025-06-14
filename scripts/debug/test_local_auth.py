@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Test authentication locally to verify fix before deployment."""
+
 import asyncio
 import json
 import os

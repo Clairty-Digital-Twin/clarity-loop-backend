@@ -665,9 +665,9 @@ class TestDataPreprocessingAndPredictions:
         """Test comprehensive postprocessing of model predictions."""
         # Mock model outputs
         mock_outputs = {
-            "sleep_metrics": torch.tensor(
-                [[0.85, 0.15, 0.45, 0.75, 0.60, 0.20, 0.35, 0.90]]
-            ),
+            "sleep_metrics": torch.tensor([
+                [0.85, 0.15, 0.45, 0.75, 0.60, 0.20, 0.35, 0.90]
+            ]),
             "circadian_score": torch.tensor([[0.82]]),
             "depression_risk": torch.tensor([[0.25]]),
             "embeddings": torch.randn(1, 96),
@@ -1008,7 +1008,8 @@ class TestResilienceAndErrorRecovery:
         # Create data with NaN values
         corrupted_data = [
             ActigraphyDataPoint(
-                timestamp=datetime.now(UTC), value=float("nan")  # Invalid value
+                timestamp=datetime.now(UTC),
+                value=float("nan"),  # Invalid value
             )
         ]
 

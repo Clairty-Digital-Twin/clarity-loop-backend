@@ -267,7 +267,6 @@ async def update_user(
         raise HTTPException(status_code=400, detail="User ID not found in token")
 
     try:
-
         # Build update kwargs
         update_kwargs: dict[str, Any] = {}
         if updates.display_name is not None:
@@ -335,7 +334,6 @@ async def logout(
         )
 
     try:
-
         # Now try to authenticate - if we have auth header
         if auth_header:
             try:
@@ -421,7 +419,6 @@ async def refresh_token(
         )
 
     try:
-
         # Use Cognito's refresh token flow
         client = auth_provider.cognito_client
 

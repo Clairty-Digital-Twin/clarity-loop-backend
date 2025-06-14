@@ -66,7 +66,6 @@ class TestDependencyContainerInitialization:
             patch.object(container, "_initialize_repository") as mock_repo,
             patch.object(container, "_initialize_gemini_service") as mock_gemini,
         ):
-
             await container.initialize()
 
             assert container._initialized is True
@@ -98,7 +97,6 @@ class TestDependencyContainerInitialization:
             "_initialize_auth_provider",
             side_effect=Exception("Auth init failed"),
         ):
-
             with pytest.raises(
                 ConfigurationError, match="Container initialization failed"
             ):
@@ -195,7 +193,6 @@ class TestAuthProviderInitialization:
             "clarity.core.container_aws.CognitoAuthProvider",
             side_effect=Exception("Cognito init failed"),
         ):
-
             await container._initialize_auth_provider()
 
             assert isinstance(container._auth_provider, MockAuthProvider)
@@ -278,7 +275,6 @@ class TestRepositoryInitialization:
             "clarity.core.container_aws.DynamoDBHealthDataRepository",
             side_effect=Exception("DynamoDB init failed"),
         ):
-
             await container._initialize_repository()
 
             assert isinstance(
@@ -341,7 +337,6 @@ class TestGeminiServiceInitialization:
             "clarity.core.container_aws.GeminiService",
             side_effect=Exception("Gemini init failed"),
         ):
-
             await container._initialize_gemini_service()
 
             assert container._gemini_service is None
@@ -527,7 +522,6 @@ class TestProductionScenarios:
             ) as mock_dynamo,
             patch("clarity.core.container_aws.GeminiService") as mock_gemini,
         ):
-
             mock_auth = Mock(spec=CognitoAuthProvider)
             mock_repo = Mock(spec=DynamoDBHealthDataRepository)
             mock_gemini_instance = Mock(spec=GeminiService)
@@ -569,7 +563,6 @@ class TestProductionScenarios:
                 side_effect=Exception("AI service unavailable"),
             ),
         ):
-
             await container.initialize()
 
             # Should fallback to mock services in development
@@ -624,7 +617,6 @@ class TestProductionScenarios:
                 side_effect=Exception("Gemini unavailable"),
             ),
         ):
-
             mock_auth = Mock(spec=CognitoAuthProvider)
             mock_cognito.return_value = mock_auth
 
@@ -654,7 +646,6 @@ class TestProductionScenarios:
                 "clarity.core.container_aws.service_initialization_duration"
             ) as mock_duration,
         ):
-
             mock_duration.labels.return_value.time.return_value.__enter__ = Mock()
             mock_duration.labels.return_value.time.return_value.__exit__ = Mock()
 

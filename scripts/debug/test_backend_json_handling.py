@@ -55,7 +55,6 @@ async def test_json_handling() -> None:
     """Test backend JSON handling."""
     async with httpx.AsyncClient() as client:
         for test in test_cases:
-
             # Prepare request data
             if "raw" in test:
                 # Use raw JSON string

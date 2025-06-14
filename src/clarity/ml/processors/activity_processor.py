@@ -183,66 +183,56 @@ class ActivityProcessor:
 
         # 5. Other Activity Features
         if flights_climbed:
-            features.append(
-                {
-                    "feature_name": "total_flights_climbed",
-                    "value": sum(flights_climbed),
-                    "unit": "flights",
-                    "description": "Total flights of stairs climbed",
-                }
-            )
+            features.append({
+                "feature_name": "total_flights_climbed",
+                "value": sum(flights_climbed),
+                "unit": "flights",
+                "description": "Total flights of stairs climbed",
+            })
 
         if active_minutes:
-            features.extend(
-                (
-                    {
-                        "feature_name": "total_active_minutes",
-                        "value": sum(active_minutes),
-                        "unit": "minutes",
-                        "description": "Total minutes of active movement",
-                    },
-                    {
-                        "feature_name": "average_daily_active_minutes",
-                        "value": np.mean(active_minutes),
-                        "unit": "minutes/day",
-                        "description": "Average active minutes per day",
-                    },
-                )
-            )
+            features.extend((
+                {
+                    "feature_name": "total_active_minutes",
+                    "value": sum(active_minutes),
+                    "unit": "minutes",
+                    "description": "Total minutes of active movement",
+                },
+                {
+                    "feature_name": "average_daily_active_minutes",
+                    "value": np.mean(active_minutes),
+                    "unit": "minutes/day",
+                    "description": "Average active minutes per day",
+                },
+            ))
 
         # 6. Fitness Level Features
         if vo2_max_values:
             latest_vo2_max = vo2_max_values[-1]  # Most recent value
-            features.append(
-                {
-                    "feature_name": "latest_vo2_max",
-                    "value": latest_vo2_max,
-                    "unit": "mL/kg/min",
-                    "description": "Most recent VO₂ max measurement (cardio fitness)",
-                }
-            )
+            features.append({
+                "feature_name": "latest_vo2_max",
+                "value": latest_vo2_max,
+                "unit": "mL/kg/min",
+                "description": "Most recent VO₂ max measurement (cardio fitness)",
+            })
 
         if resting_hr_values:
-            features.append(
-                {
-                    "feature_name": "average_resting_heart_rate",
-                    "value": np.mean(resting_hr_values),
-                    "unit": "bpm",
-                    "description": "Average resting heart rate",
-                }
-            )
+            features.append({
+                "feature_name": "average_resting_heart_rate",
+                "value": np.mean(resting_hr_values),
+                "unit": "bpm",
+                "description": "Average resting heart rate",
+            })
 
         # 7. Activity Consistency Score
         if steps and len(steps) > 1:
             consistency_score = self._calculate_consistency_score(steps)
-            features.append(
-                {
-                    "feature_name": "activity_consistency_score",
-                    "value": consistency_score,
-                    "unit": "score",
-                    "description": "Activity consistency (0=inconsistent, 1=very consistent)",
-                }
-            )
+            features.append({
+                "feature_name": "activity_consistency_score",
+                "value": consistency_score,
+                "unit": "score",
+                "description": "Activity consistency (0=inconsistent, 1=very consistent)",
+            })
 
         return features
 

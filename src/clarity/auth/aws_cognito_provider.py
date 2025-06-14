@@ -252,9 +252,10 @@ class CognitoAuthProvider(IAuthProvider):
 
             attributes: list[AttributeTypeTypeDef] = []
             if "display_name" in kwargs:
-                attributes.append(
-                    {"Name": "name", "Value": str(kwargs["display_name"])}
-                )
+                attributes.append({
+                    "Name": "name",
+                    "Value": str(kwargs["display_name"]),
+                })
             if "email" in kwargs:
                 attributes.append({"Name": "email", "Value": str(kwargs["email"])})
 

@@ -175,15 +175,15 @@ class PATMultiHeadAttention(nn.Module):
 
         # Separate Q, K, V projections for each head (non-standard)
         # Each head: embed_dim → head_dim (typically 96 → 96)
-        self.query_projections = nn.ModuleList(
-            [nn.Linear(embed_dim, head_dim, bias=True) for _ in range(num_heads)]
-        )
-        self.key_projections = nn.ModuleList(
-            [nn.Linear(embed_dim, head_dim, bias=True) for _ in range(num_heads)]
-        )
-        self.value_projections = nn.ModuleList(
-            [nn.Linear(embed_dim, head_dim, bias=True) for _ in range(num_heads)]
-        )
+        self.query_projections = nn.ModuleList([
+            nn.Linear(embed_dim, head_dim, bias=True) for _ in range(num_heads)
+        ])
+        self.key_projections = nn.ModuleList([
+            nn.Linear(embed_dim, head_dim, bias=True) for _ in range(num_heads)
+        ])
+        self.value_projections = nn.ModuleList([
+            nn.Linear(embed_dim, head_dim, bias=True) for _ in range(num_heads)
+        ])
 
         # Output projection
         self.output_projection = nn.Linear(head_dim * num_heads, embed_dim)
@@ -308,12 +308,10 @@ class PATEncoder(nn.Module):
         self.positional_encoding = PATPositionalEncoding(embed_dim, self.num_patches)
 
         # Transformer encoder layers
-        self.transformer_layers = nn.ModuleList(
-            [
-                PATTransformerBlock(embed_dim, num_heads, embed_dim, ff_dim, dropout)
-                for _ in range(num_layers)
-            ]
-        )
+        self.transformer_layers = nn.ModuleList([
+            PATTransformerBlock(embed_dim, num_heads, embed_dim, ff_dim, dropout)
+            for _ in range(num_layers)
+        ])
 
         self.dropout = nn.Dropout(dropout)
 

@@ -83,9 +83,11 @@ async def test_process_health_data_message(subscriber: AnalysisSubscriber):
     mock_request.json.return_value = {
         "message": {
             "data": base64.b64encode(
-                json.dumps(
-                    {"user_id": user_id, "upload_id": upload_id, "gcs_path": gcs_path}
-                ).encode("utf-8")
+                json.dumps({
+                    "user_id": user_id,
+                    "upload_id": upload_id,
+                    "gcs_path": gcs_path,
+                }).encode("utf-8")
             ).decode("utf-8")
         }
     }

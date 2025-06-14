@@ -907,7 +907,6 @@ class DynamoDBHealthDataRepository(IHealthDataRepository):
             raise ConnectionError(msg)
 
         try:
-
             logger.info("DynamoDBHealthDataRepository initialized successfully")
 
         except Exception as e:

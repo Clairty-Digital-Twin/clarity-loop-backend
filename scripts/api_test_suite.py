@@ -33,9 +33,14 @@ else:
         print("Installing required packages...")
         import subprocess
 
-        subprocess.check_call(
-            [sys.executable, "-m", "pip", "install", "aiohttp", "colorama"]
-        )
+        subprocess.check_call([
+            sys.executable,
+            "-m",
+            "pip",
+            "install",
+            "aiohttp",
+            "colorama",
+        ])
         import aiohttp
         import colorama
         from colorama import Fore, Style
@@ -129,30 +134,26 @@ class APITester:
                 except aiohttp.ContentTypeError:
                     data = {"text": await response.text()}
 
-                self.results.append(
-                    {
-                        "endpoint": endpoint,
-                        "method": method,
-                        "status": response.status,
-                        "response_time": response_time,
-                        "success": HTTP_OK <= response.status < HTTP_REDIRECT_THRESHOLD,
-                    }
-                )
+                self.results.append({
+                    "endpoint": endpoint,
+                    "method": method,
+                    "status": response.status,
+                    "response_time": response_time,
+                    "success": HTTP_OK <= response.status < HTTP_REDIRECT_THRESHOLD,
+                })
 
                 return response.status, data
 
         except (TimeoutError, aiohttp.ClientError) as e:
             response_time = time.time() - start_time
-            self.results.append(
-                {
-                    "endpoint": endpoint,
-                    "method": method,
-                    "status": 0,
-                    "response_time": response_time,
-                    "success": False,
-                    "error": str(e),
-                }
-            )
+            self.results.append({
+                "endpoint": endpoint,
+                "method": method,
+                "status": 0,
+                "response_time": response_time,
+                "success": False,
+                "error": str(e),
+            })
             return 0, {"error": str(e)}
 
     async def test_health_endpoints(self) -> None:
@@ -412,9 +413,14 @@ if __name__ == "__main__":
         import subprocess
         import sys
 
-        subprocess.check_call(
-            [sys.executable, "-m", "pip", "install", "aiohttp", "colorama"]
-        )
+        subprocess.check_call([
+            sys.executable,
+            "-m",
+            "pip",
+            "install",
+            "aiohttp",
+            "colorama",
+        ])
         import aiohttp
         import colorama
 

@@ -117,7 +117,6 @@ class DependencyContainer:
                 raise ConfigurationError(msg)
 
             try:
-
                 # Initialize Cognito auth provider
                 self._auth_provider = CognitoAuthProvider(
                     region=self.settings.cognito_region or self.settings.aws_region,

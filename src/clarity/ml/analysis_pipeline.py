@@ -47,9 +47,9 @@ class AnalysisResults:
     def __init__(self) -> None:
         self.cardio_features: list[float] = []
         self.respiratory_features: list[float] = []
-        self.activity_features: list[dict[str, Any]] = (
-            []
-        )  # 🔥 ADDED: Basic activity features
+        self.activity_features: list[
+            dict[str, Any]
+        ] = []  # 🔥 ADDED: Basic activity features
         self.activity_embedding: list[float] = []
         self.sleep_features: dict[str, Any] = {}  # 🚀 GENIUS: Sleep features
         self.fused_vector: list[float] = []

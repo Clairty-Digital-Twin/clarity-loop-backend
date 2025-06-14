@@ -212,18 +212,22 @@ class TestReceiveMessages:
                 {
                     "MessageId": "msg-1",
                     "ReceiptHandle": "receipt-1",
-                    "Body": json.dumps(
-                        {"id": "1", "type": "test", "data": {"key": "value1"}}
-                    ),
+                    "Body": json.dumps({
+                        "id": "1",
+                        "type": "test",
+                        "data": {"key": "value1"},
+                    }),
                     "MessageAttributes": {"attr1": {"StringValue": "val1"}},
                     "Attributes": {"SentTimestamp": "1234567890"},
                 },
                 {
                     "MessageId": "msg-2",
                     "ReceiptHandle": "receipt-2",
-                    "Body": json.dumps(
-                        {"id": "2", "type": "test", "data": {"key": "value2"}}
-                    ),
+                    "Body": json.dumps({
+                        "id": "2",
+                        "type": "test",
+                        "data": {"key": "value2"},
+                    }),
                     "MessageAttributes": {},
                     "Attributes": {},
                 },

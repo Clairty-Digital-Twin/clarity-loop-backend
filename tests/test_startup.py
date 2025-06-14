@@ -86,9 +86,9 @@ class TestApplicationStartup:
 
         config_duration = time.perf_counter() - start_time
 
-        assert (
-            config_duration < 0.5
-        ), f"Config initialization too slow: {config_duration:.2f}s"
+        assert config_duration < 0.5, (
+            f"Config initialization too slow: {config_duration:.2f}s"
+        )
 
     @staticmethod
     def test_dependency_injection_speed() -> None:
@@ -176,9 +176,9 @@ class TestFullStartupCycle:
 
             lifecycle_duration = time.perf_counter() - start_time
 
-            assert (
-                lifecycle_duration < 3.0
-            ), f"Lifecycle too slow: {lifecycle_duration:.2f}s"
+            assert lifecycle_duration < 3.0, (
+                f"Lifecycle too slow: {lifecycle_duration:.2f}s"
+            )
 
         except (RuntimeError, ImportError, TimeoutError, ConnectionError) as e:
             pytest.fail(f"Complete application lifecycle should not fail: {e}")

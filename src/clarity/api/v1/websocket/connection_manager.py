@@ -43,9 +43,9 @@ class ConnectionManager:
         self.user_connections: dict[str, list[WebSocket]] = defaultdict(
             list
         )  # user_id -> [websockets]
-        self.connection_info: dict[WebSocket, ConnectionInfo] = (
-            {}
-        )  # websocket -> connection info
+        self.connection_info: dict[
+            WebSocket, ConnectionInfo
+        ] = {}  # websocket -> connection info
         self.rooms: dict[str, set[str]] = defaultdict(set)  # room_id -> {user_ids}
 
         # Performance and security settings

@@ -183,9 +183,9 @@ class TestAsyncInferenceEngineInference:
             ]
 
             # Process requests concurrently
-            results = await asyncio.gather(
-                *[engine.predict_async(request) for request in requests]
-            )
+            results = await asyncio.gather(*[
+                engine.predict_async(request) for request in requests
+            ])
 
             assert len(results) == 3
             for i, result in enumerate(results):

@@ -126,19 +126,17 @@ class TestJWKSHandling:
     async def test_get_jwks_success(self, mock_urlopen):
         """Test successful JWKS retrieval."""
         mock_response = Mock()
-        mock_response.read.return_value = json.dumps(
-            {
-                "keys": [
-                    {
-                        "kid": "key1",
-                        "kty": "RSA",
-                        "use": "sig",
-                        "n": "sample_n",
-                        "e": "AQAB",
-                    }
-                ]
-            }
-        ).encode()
+        mock_response.read.return_value = json.dumps({
+            "keys": [
+                {
+                    "kid": "key1",
+                    "kty": "RSA",
+                    "use": "sig",
+                    "n": "sample_n",
+                    "e": "AQAB",
+                }
+            ]
+        }).encode()
         mock_response.__enter__ = Mock(return_value=mock_response)
         mock_response.__exit__ = Mock(return_value=None)
         mock_urlopen.return_value = mock_response
@@ -246,7 +244,6 @@ class TestTokenVerification:
             ),
             patch("jose.jwt.decode", return_value=mock_payload),
         ):
-
             result = await provider.verify_token("mock_token")
 
             assert result["user_id"] == "user123"
@@ -271,7 +268,6 @@ class TestTokenVerification:
             ),
             patch("jose.jwt.decode", return_value=mock_payload),
         ):
-
             provider._initialized = False
             await provider.verify_token("mock_token")
 
@@ -316,7 +312,6 @@ class TestTokenVerification:
             ),
             patch("jose.jwt.decode", return_value=mock_payload),
         ):
-
             await provider.verify_token("test_token")
 
             # Token should not be cached
@@ -356,7 +351,6 @@ class TestTokenVerification:
             ),
             patch("jose.jwt.decode", side_effect=JWTError("Invalid token")),
         ):
-
             with pytest.raises(AuthError, match="Invalid Cognito token"):
                 await provider.verify_token("invalid_token")
 
@@ -514,7 +508,6 @@ class TestUserInfoRetrieval:
                 return_value={"UserAttributes": []},
             ),
         ):
-
             provider._initialized = False
             await provider.get_user_info("testuser")
 
@@ -683,7 +676,6 @@ class TestUserContextCreation:
                 "role": "patient",
             },
         ) as mock_create:
-
             context = await provider.get_or_create_user_context(cognito_user_info)
 
             assert context.user_id == "newuser123"
@@ -849,7 +841,6 @@ class TestProductionIntegrationScenarios:
                 },
             ),
         ):
-
             # Verify token
             user_info = await provider.verify_token("valid_jwt_token")
             assert user_info["user_id"] == "user123"
@@ -886,7 +877,6 @@ class TestProductionIntegrationScenarios:
             patch("jose.jwt.get_unverified_header", return_value={"kid": "test_key"}),
             patch("jose.jwt.decode", return_value=mock_payload),
         ):
-
             # Simulate concurrent calls
             import asyncio
 

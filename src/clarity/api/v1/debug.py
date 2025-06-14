@@ -118,15 +118,13 @@ async def echo_login_request(request: Request) -> JSONResponse:
         logger.warning(f"Body string: {body_str}")
 
         # Return mock auth response to keep client happy
-        return JSONResponse(
-            {
-                "access_token": "debug_token",
-                "refresh_token": "debug_refresh",
-                "token_type": "bearer",
-                "expires_in": 3600,
-                "scope": "full_access",
-            }
-        )
+        return JSONResponse({
+            "access_token": "debug_token",
+            "refresh_token": "debug_refresh",
+            "token_type": "bearer",
+            "expires_in": 3600,
+            "scope": "full_access",
+        })
     except Exception as e:
         logger.exception(f"Echo error: {e}")
         return JSONResponse(status_code=400, content={"error": str(e)})

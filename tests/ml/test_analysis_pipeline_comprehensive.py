@@ -7,23 +7,18 @@ Focuses on real functionality without over-mocking.
 
 from __future__ import annotations
 
-import asyncio
 from datetime import UTC, datetime, timedelta
-from decimal import Decimal
-from unittest.mock import AsyncMock, MagicMock, Mock, patch
+from unittest.mock import Mock, patch
 from uuid import uuid4
 
-import pytest
 
 from clarity.ml.analysis_pipeline import (
     MIN_FEATURE_VECTOR_LENGTH,
     MIN_METRICS_FOR_TIME_SPAN,
     AnalysisResults,
     HealthAnalysisPipeline,
-    _convert_raw_data_to_metrics,
     _get_healthkit_type_mapping,
     get_analysis_pipeline,
-    run_analysis_pipeline,
 )
 from clarity.models.health_data import (
     ActivityData,

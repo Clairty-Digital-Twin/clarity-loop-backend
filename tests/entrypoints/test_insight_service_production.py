@@ -7,7 +7,7 @@ CORS configuration, service mounting, and startup functionality.
 from __future__ import annotations
 
 import os
-from unittest.mock import Mock, patch
+from unittest.mock import patch
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware

@@ -11,7 +11,7 @@ from datetime import UTC, datetime
 import logging
 import time
 from typing import Never
-from unittest.mock import Mock, patch
+from unittest.mock import Mock
 
 import pytest
 

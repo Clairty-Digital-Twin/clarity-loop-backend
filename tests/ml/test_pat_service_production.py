@@ -8,11 +8,9 @@ and comprehensive error handling for the Dartmouth PAT implementation.
 from __future__ import annotations
 
 from datetime import UTC, datetime
-import hashlib
-import json
 from pathlib import Path
 import tempfile
-from unittest.mock import AsyncMock, MagicMock, Mock, mock_open, patch
+from unittest.mock import Mock, patch
 from uuid import uuid4
 
 import numpy as np
@@ -23,7 +21,6 @@ from torch import nn
 from clarity.core.exceptions import DataValidationError
 from clarity.ml.pat_service import (
     EXPECTED_MODEL_CHECKSUMS,
-    MODEL_SIGNATURE_KEY,
     PAT_CONFIGS,
     ActigraphyAnalysis,
     ActigraphyInput,

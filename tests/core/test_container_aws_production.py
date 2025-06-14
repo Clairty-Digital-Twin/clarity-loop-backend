@@ -6,7 +6,6 @@ fallback strategies, error handling, and dependency management.
 
 from __future__ import annotations
 
-import asyncio
 from unittest.mock import AsyncMock, Mock, patch
 
 from fastapi import FastAPI

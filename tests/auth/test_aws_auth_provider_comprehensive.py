@@ -6,10 +6,10 @@ user context creation, error handling, and role-based permissions.
 
 from __future__ import annotations
 
-from datetime import UTC, datetime
+from datetime import datetime
 import json
 import time
-from unittest.mock import AsyncMock, MagicMock, Mock, patch
+from unittest.mock import AsyncMock, Mock, patch
 from urllib.error import URLError
 
 from botocore.exceptions import ClientError
@@ -17,7 +17,7 @@ from jose import JWTError
 import pytest
 
 from clarity.auth.aws_auth_provider import CognitoAuthProvider
-from clarity.models.auth import AuthError, Permission, UserRole, UserStatus
+from clarity.models.auth import AuthError, Permission, UserRole
 
 
 class TestCognitoAuthProviderInitialization:

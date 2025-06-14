@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from datetime import UTC, datetime
-from typing import Any
 from unittest.mock import AsyncMock, Mock, patch
 import uuid
 
@@ -16,9 +15,7 @@ from clarity.models.health_data import (
     HealthDataUpload,
     HealthMetric,
     HealthMetricType,
-    MentalHealthIndicator,
     ProcessingStatus,
-    SleepData,
 )
 from clarity.ports.data_ports import IHealthDataRepository
 from clarity.services.health_data_service import (

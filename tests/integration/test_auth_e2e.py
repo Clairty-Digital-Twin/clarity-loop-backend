@@ -1,7 +1,5 @@
 """End-to-end integration test for authentication with frontend."""
 
-from datetime import datetime
-import json
 import os
 import socket
 

@@ -7,15 +7,12 @@ health data storage, caching, audit logging, batch operations, and error handlin
 from __future__ import annotations
 
 import asyncio
-from datetime import UTC, datetime, timedelta
-import json
+from datetime import UTC, datetime
 import time
-from unittest.mock import AsyncMock, MagicMock, Mock, patch
+from unittest.mock import AsyncMock, Mock, patch
 from uuid import UUID
 
-import boto3
 from botocore.exceptions import ClientError
-from moto import mock_aws
 import pytest
 
 from clarity.services.dynamodb_service import (

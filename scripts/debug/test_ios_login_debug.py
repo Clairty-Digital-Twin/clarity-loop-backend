@@ -1,11 +1,9 @@
 #!/usr/bin/env python3
 """Enhanced debug script to test iOS login issues."""
 
-import asyncio
-from datetime import datetime
 import json
 
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, EmailStr
 import uvicorn

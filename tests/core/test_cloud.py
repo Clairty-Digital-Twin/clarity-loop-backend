@@ -6,7 +6,6 @@ import os
 from unittest.mock import Mock, patch
 
 import boto3
-import pytest
 
 from clarity.core.cloud import (
     gemini_api_key,

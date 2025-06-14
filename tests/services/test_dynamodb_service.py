@@ -2,11 +2,9 @@
 
 from __future__ import annotations
 
-import asyncio
-from datetime import UTC, datetime, timedelta
-import json
+from datetime import UTC, datetime
 import time
-from unittest.mock import AsyncMock, MagicMock, Mock, patch
+from unittest.mock import MagicMock, patch
 import uuid
 
 from botocore.exceptions import ClientError

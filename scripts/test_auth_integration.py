@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """Integration test for authentication endpoint."""
 
-from datetime import datetime
 import json
 
 import requests

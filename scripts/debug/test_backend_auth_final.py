@@ -2,8 +2,6 @@
 """Final comprehensive test of backend authentication."""
 
 import asyncio
-from datetime import datetime
-import json
 
 import httpx
 

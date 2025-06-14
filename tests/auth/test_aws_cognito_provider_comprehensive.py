@@ -7,10 +7,7 @@ user management, authentication flows, and error handling scenarios.
 from __future__ import annotations
 
 from datetime import UTC, datetime
-import json
-import time
-from unittest.mock import AsyncMock, MagicMock, Mock, patch
-from urllib.error import URLError
+from unittest.mock import Mock, patch
 
 from botocore.exceptions import ClientError
 from jose import JWTError
@@ -590,7 +587,7 @@ class TestUserManagement:
         self.provider.cognito_client.admin_update_user_attributes.return_value = {}
 
         # Mock get_user for return value
-        from datetime import datetime, timezone
+        from datetime import datetime
 
         mock_user = User(
             uid="user123",
@@ -620,7 +617,7 @@ class TestUserManagement:
     @pytest.mark.asyncio
     async def test_update_user_no_attributes(self):
         """Test user update with no attributes to update."""
-        from datetime import datetime, timezone
+        from datetime import datetime
 
         mock_user = User(
             uid="user123",

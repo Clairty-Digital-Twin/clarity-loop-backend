@@ -2,11 +2,9 @@
 
 from __future__ import annotations
 
-import asyncio
 from datetime import UTC, datetime
 import json
-from typing import Any
-from unittest.mock import AsyncMock, MagicMock, Mock, patch
+from unittest.mock import MagicMock, patch
 import uuid
 
 from botocore.exceptions import ClientError
@@ -18,8 +16,6 @@ from clarity.models.health_data import (
     HealthDataUpload,
     HealthMetric,
     HealthMetricType,
-    MentalHealthIndicator,
-    SleepData,
 )
 from clarity.services.s3_storage_service import (
     S3DownloadError,
@@ -214,7 +210,7 @@ class TestUploadRawHealthData:
         user_id = valid_health_data.user_id
 
         with patch("clarity.services.s3_storage_service.datetime") as mock_datetime:
-            from datetime import datetime, timezone
+            from datetime import datetime
 
             mock_date = datetime(2024, 1, 15, 12, 0, 0, tzinfo=UTC)
             mock_datetime.now.return_value = mock_date
@@ -315,7 +311,7 @@ class TestUploadAnalysisResults:
             "metrics": {"heart_rate_avg": 72, "steps_total": 8500},
         }
 
-        from datetime import datetime, timezone
+        from datetime import datetime
 
         mock_date = datetime(2024, 1, 15, 12, 0, 0, tzinfo=UTC)
 

@@ -22,13 +22,13 @@ from clarity.services.dynamodb_service import (
 
 
 @pytest.fixture
-def mock_dynamodb_resource():
+def mock_dynamodb_resource() -> MagicMock:
     """Mock DynamoDB resource."""
     return MagicMock()
 
 
 @pytest.fixture
-def mock_table():
+def mock_table() -> MagicMock:
     """Mock DynamoDB table."""
     table = MagicMock()
     table.put_item = MagicMock()
@@ -42,7 +42,7 @@ def mock_table():
 
 
 @pytest.fixture
-def dynamodb_service(mock_dynamodb_resource, mock_table):
+def dynamodb_service(mock_dynamodb_resource: MagicMock, mock_table: MagicMock) -> DynamoDBService:
     """Create DynamoDB service with mocked resource."""
     service = DynamoDBService(
         region="us-east-1",
@@ -57,7 +57,7 @@ def dynamodb_service(mock_dynamodb_resource, mock_table):
     mock_audit_table.put_item = MagicMock()
 
     # Return different mocks based on table name
-    def get_table(table_name):
+    def get_table(table_name: str) -> MagicMock:
         if "audit" in table_name:
             return mock_audit_table
         return mock_table
@@ -67,7 +67,7 @@ def dynamodb_service(mock_dynamodb_resource, mock_table):
 
 
 @pytest.fixture
-def dynamodb_service_no_cache(mock_dynamodb_resource, mock_table):
+def dynamodb_service_no_cache(mock_dynamodb_resource: MagicMock, mock_table: MagicMock) -> DynamoDBService:
     """Create DynamoDB service without caching."""
     service = DynamoDBService(
         region="us-east-1",
@@ -80,7 +80,7 @@ def dynamodb_service_no_cache(mock_dynamodb_resource, mock_table):
 
 
 @pytest.fixture
-def valid_health_data():
+def valid_health_data() -> Dict[str, Any]:
     """Create valid health data."""
     return {
         "user_id": str(uuid.uuid4()),
@@ -106,7 +106,7 @@ def valid_health_data():
 class TestDynamoDBServiceInit:
     """Test DynamoDB service initialization."""
 
-    def test_init_default_params(self):
+    def test_init_default_params(self) -> None:
         """Test initialization with default parameters."""
         with patch("boto3.resource") as mock_boto_resource:
             service = DynamoDBService()
@@ -123,7 +123,7 @@ class TestDynamoDBServiceInit:
                 endpoint_url=None,
             )
 
-    def test_init_custom_params(self):
+    def test_init_custom_params(self) -> None:
         """Test initialization with custom parameters."""
         with patch("boto3.resource") as mock_boto_resource:
             service = DynamoDBService(
@@ -146,7 +146,7 @@ class TestDynamoDBServiceInit:
                 endpoint_url="http://localhost:8000",
             )
 
-    def test_table_names(self, dynamodb_service):
+    def test_table_names(self, dynamodb_service: DynamoDBService) -> None:
         """Test table name generation."""
         assert dynamodb_service.tables["health_data"] == "test_health_data"
         assert dynamodb_service.tables["processing_jobs"] == "test_processing_jobs"
@@ -157,12 +157,12 @@ class TestDynamoDBServiceInit:
 class TestCachingMethods:
     """Test caching functionality."""
 
-    def test_cache_key_generation(self, dynamodb_service):
+    def test_cache_key_generation(self, dynamodb_service: DynamoDBService) -> None:
         """Test cache key generation."""
         key = dynamodb_service._cache_key("test_table", "item123")
         assert key == "test_table:item123"
 
-    def test_is_cache_valid_enabled(self, dynamodb_service):
+    def test_is_cache_valid_enabled(self, dynamodb_service: DynamoDBService) -> None:
         """Test cache validity check when enabled."""
         # Fresh cache entry
         cache_entry = {
@@ -178,7 +178,7 @@ class TestCachingMethods:
         }
         assert dynamodb_service._is_cache_valid(old_entry) is False
 
-    def test_is_cache_valid_disabled(self, dynamodb_service_no_cache):
+    def test_is_cache_valid_disabled(self, dynamodb_service_no_cache: DynamoDBService) -> None:
         """Test cache validity check when disabled."""
         cache_entry = {
             "data": {"test": "data"},
@@ -192,14 +192,14 @@ class TestValidateHealthData:
 
     @pytest.mark.asyncio
     async def test_validate_health_data_success(
-        self, dynamodb_service, valid_health_data
-    ):
+        self, dynamodb_service: DynamoDBService, valid_health_data: Dict[str, Any]
+    ) -> None:
         """Test successful health data validation."""
         # Should not raise
         await dynamodb_service._validate_health_data(valid_health_data)
 
     @pytest.mark.asyncio
-    async def test_validate_health_data_missing_field(self, dynamodb_service):
+    async def test_validate_health_data_missing_field(self, dynamodb_service: DynamoDBService) -> None:
         """Test validation with missing required field."""
         invalid_data = {
             "user_id": str(uuid.uuid4()),
@@ -212,7 +212,7 @@ class TestValidateHealthData:
             await dynamodb_service._validate_health_data(invalid_data)
 
     @pytest.mark.asyncio
-    async def test_validate_health_data_invalid_user_id(self, dynamodb_service):
+    async def test_validate_health_data_invalid_user_id(self, dynamodb_service: DynamoDBService) -> None:
         """Test validation with invalid user_id format."""
         invalid_data = {
             "user_id": "not-a-uuid",
@@ -224,7 +224,7 @@ class TestValidateHealthData:
             await dynamodb_service._validate_health_data(invalid_data)
 
     @pytest.mark.asyncio
-    async def test_validate_health_data_empty_metrics(self, dynamodb_service):
+    async def test_validate_health_data_empty_metrics(self, dynamodb_service: DynamoDBService) -> None:
         """Test validation with empty metrics list."""
         invalid_data = {
             "user_id": str(uuid.uuid4()),
@@ -238,7 +238,7 @@ class TestValidateHealthData:
             await dynamodb_service._validate_health_data(invalid_data)
 
     @pytest.mark.asyncio
-    async def test_validate_health_data_invalid_metrics_type(self, dynamodb_service):
+    async def test_validate_health_data_invalid_metrics_type(self, dynamodb_service: DynamoDBService) -> None:
         """Test validation with invalid metrics type."""
         invalid_data = {
             "user_id": str(uuid.uuid4()),
@@ -304,8 +304,8 @@ class TestPutItem:
 
     @pytest.mark.asyncio
     async def test_put_item_success(
-        self, dynamodb_service, mock_table, valid_health_data
-    ):
+        self, dynamodb_service: DynamoDBService, mock_table: MagicMock, valid_health_data: Dict[str, Any]
+    ) -> None:
         """Test successful item creation."""
         item_id = await dynamodb_service.put_item(
             table_name="test_health_data",  # Use full table name
@@ -325,7 +325,7 @@ class TestPutItem:
         assert stored_item["id"] == valid_health_data["user_id"]
 
     @pytest.mark.asyncio
-    async def test_put_item_generate_id(self, dynamodb_service, mock_table):
+    async def test_put_item_generate_id(self, dynamodb_service: DynamoDBService, mock_table: MagicMock) -> None:
         """Test put_item with generated ID."""
         item_data = {
             "metrics": [{"test": "data"}],
@@ -345,7 +345,7 @@ class TestPutItem:
         assert call_args["Item"]["id"] == str(test_uuid)
 
     @pytest.mark.asyncio
-    async def test_put_item_validation_failure(self, dynamodb_service):
+    async def test_put_item_validation_failure(self, dynamodb_service: DynamoDBService) -> None:
         """Test put_item with validation failure."""
         invalid_data = {
             "user_id": "not-a-uuid",  # Invalid UUID format
@@ -361,8 +361,8 @@ class TestPutItem:
 
     @pytest.mark.asyncio
     async def test_put_item_client_error(
-        self, dynamodb_service, mock_table, valid_health_data
-    ):
+        self, dynamodb_service: DynamoDBService, mock_table: MagicMock, valid_health_data: Dict[str, Any]
+    ) -> None:
         """Test put_item with ClientError."""
         mock_table.put_item.side_effect = ClientError(
             {"Error": {"Code": "ResourceNotFoundException"}}, "PutItem"
@@ -379,7 +379,7 @@ class TestGetItem:
     """Test get_item functionality."""
 
     @pytest.mark.asyncio
-    async def test_get_item_success_cached(self, dynamodb_service, mock_table):
+    async def test_get_item_success_cached(self, dynamodb_service: DynamoDBService, mock_table: MagicMock) -> None:
         """Test successful item retrieval from cache."""
         # Pre-populate cache
         cache_key = dynamodb_service._cache_key("test_table", "item123")
@@ -396,7 +396,7 @@ class TestGetItem:
         mock_table.get_item.assert_not_called()
 
     @pytest.mark.asyncio
-    async def test_get_item_success_from_db(self, dynamodb_service, mock_table):
+    async def test_get_item_success_from_db(self, dynamodb_service: DynamoDBService, mock_table: MagicMock) -> None:
         """Test successful item retrieval from database."""
         mock_table.get_item.return_value = {
             "Item": {"id": "item123", "test": "db_data"}
@@ -413,7 +413,7 @@ class TestGetItem:
         assert dynamodb_service._cache[cache_key]["data"] == result
 
     @pytest.mark.asyncio
-    async def test_get_item_not_found(self, dynamodb_service, mock_table):
+    async def test_get_item_not_found(self, dynamodb_service: DynamoDBService, mock_table: MagicMock) -> None:
         """Test get_item when item doesn't exist."""
         mock_table.get_item.return_value = {}  # No Item key
 
@@ -422,7 +422,7 @@ class TestGetItem:
         assert result is None
 
     @pytest.mark.asyncio
-    async def test_get_item_no_cache(self, dynamodb_service_no_cache, mock_table):
+    async def test_get_item_no_cache(self, dynamodb_service_no_cache: DynamoDBService, mock_table: MagicMock) -> None:
         """Test get_item without caching."""
         mock_table.get_item.return_value = {"Item": {"id": "item123", "test": "data"}}
 
@@ -439,7 +439,7 @@ class TestDeleteItem:
     """Test delete_item functionality."""
 
     @pytest.mark.asyncio
-    async def test_delete_item_success(self, dynamodb_service, mock_table):
+    async def test_delete_item_success(self, dynamodb_service: DynamoDBService, mock_table: MagicMock) -> None:
         """Test successful item deletion."""
         # Pre-populate cache
         cache_key = dynamodb_service._cache_key("test_table", "item123")
@@ -458,7 +458,7 @@ class TestDeleteItem:
         assert cache_key not in dynamodb_service._cache
 
     @pytest.mark.asyncio
-    async def test_delete_item_not_found(self, dynamodb_service, mock_table):
+    async def test_delete_item_not_found(self, dynamodb_service: DynamoDBService, mock_table: MagicMock) -> None:
         """Test delete_item when item doesn't exist."""
         # Delete should succeed even if item doesn't exist
         result = await dynamodb_service.delete_item("test_table", {"id": "missing123"})
@@ -466,7 +466,7 @@ class TestDeleteItem:
         assert result is True
 
     @pytest.mark.asyncio
-    async def test_delete_item_other_error(self, dynamodb_service, mock_table):
+    async def test_delete_item_other_error(self, dynamodb_service: DynamoDBService, mock_table: MagicMock) -> None:
         """Test delete_item with other errors."""
         mock_table.delete_item.side_effect = ClientError(
             {"Error": {"Code": "ValidationException"}}, "DeleteItem"
@@ -480,7 +480,7 @@ class TestQueryItems:
     """Test query_items functionality."""
 
     @pytest.mark.asyncio
-    async def test_query_items_success(self, dynamodb_service, mock_table):
+    async def test_query_items_success(self, dynamodb_service: DynamoDBService, mock_table: MagicMock) -> None:
         """Test successful query operation."""
         mock_table.query.return_value = {
             "Items": [
@@ -509,7 +509,7 @@ class TestQueryItems:
         assert call_args["Limit"] == 10
 
     @pytest.mark.asyncio
-    async def test_query_items_with_filter(self, dynamodb_service, mock_table):
+    async def test_query_items_with_filter(self, dynamodb_service: DynamoDBService, mock_table: MagicMock) -> None:
         """Test query with filter expression."""
         mock_table.query.return_value = {"Items": [], "Count": 0}
 
@@ -525,7 +525,7 @@ class TestQueryItems:
         assert call_args["ScanIndexForward"] is False
 
     @pytest.mark.asyncio
-    async def test_query_items_empty_result(self, dynamodb_service, mock_table):
+    async def test_query_items_empty_result(self, dynamodb_service: DynamoDBService, mock_table: MagicMock) -> None:
         """Test query with no results."""
         mock_table.query.return_value = {"Items": [], "Count": 0}
 
@@ -542,7 +542,7 @@ class TestUpdateItem:
     """Test update_item functionality."""
 
     @pytest.mark.asyncio
-    async def test_update_item_success(self, dynamodb_service, mock_table):
+    async def test_update_item_success(self, dynamodb_service: DynamoDBService, mock_table: MagicMock) -> None:
         """Test successful item update."""
         mock_table.update_item.return_value = {
             "Attributes": {
@@ -572,7 +572,7 @@ class TestUpdateItem:
         assert cache_key not in dynamodb_service._cache
 
     @pytest.mark.asyncio
-    async def test_update_item_not_found(self, dynamodb_service, mock_table):
+    async def test_update_item_not_found(self, dynamodb_service: DynamoDBService, mock_table: MagicMock) -> None:
         """Test update_item when item doesn't exist."""
         mock_table.update_item.side_effect = ClientError(
             {"Error": {"Code": "ConditionalCheckFailedException"}}, "UpdateItem"
@@ -592,7 +592,7 @@ class TestBatchOperations:
     """Test batch operations."""
 
     @pytest.mark.asyncio
-    async def test_batch_write_items_success(self, dynamodb_service, mock_table):
+    async def test_batch_write_items_success(self, dynamodb_service: DynamoDBService, mock_table: MagicMock) -> None:
         """Test successful batch write."""
         items = [
             {"id": "1", "data": "test1"},
@@ -605,14 +605,14 @@ class TestBatchOperations:
         assert mock_table.batch_writer.called
 
     @pytest.mark.asyncio
-    async def test_batch_write_items_empty_list(self, dynamodb_service):
+    async def test_batch_write_items_empty_list(self, dynamodb_service: DynamoDBService) -> None:
         """Test batch write with empty list."""
         # Should not raise any exception
         await dynamodb_service.batch_write_items("test_table", [])
         # Should not attempt any writes
 
     @pytest.mark.asyncio
-    async def test_batch_write_items_error(self, dynamodb_service, mock_table):
+    async def test_batch_write_items_error(self, dynamodb_service: DynamoDBService, mock_table: MagicMock) -> None:
         """Test batch write with error."""
         mock_batch_writer = MagicMock()
         mock_batch_writer.__enter__.side_effect = ClientError(
@@ -628,7 +628,7 @@ class TestHealthDataRepository:
     """Test IHealthDataRepository implementation."""
 
     @pytest.mark.asyncio
-    async def test_save_health_data_success(self, dynamodb_service, mock_table):
+    async def test_save_health_data_success(self, dynamodb_service: DynamoDBService, mock_table: MagicMock) -> None:
         """Test saving health data."""
         user_id = str(uuid.uuid4())
         processing_id = str(uuid.uuid4())
@@ -656,7 +656,7 @@ class TestHealthDataRepository:
         assert mock_table.put_item.called
 
     @pytest.mark.asyncio
-    async def test_get_processing_status_success(self, dynamodb_service, mock_table):
+    async def test_get_processing_status_success(self, dynamodb_service: DynamoDBService, mock_table: MagicMock) -> None:
         """Test getting processing status."""
         mock_table.get_item.return_value = {
             "Item": {
@@ -680,7 +680,7 @@ class TestHealthDataRepository:
         assert result["total_metrics"] == 10
 
     @pytest.mark.asyncio
-    async def test_get_user_health_data_success(self, dynamodb_service, mock_table):
+    async def test_get_user_health_data_success(self, dynamodb_service: DynamoDBService, mock_table: MagicMock) -> None:
         """Test getting user health data."""
         mock_table.query.return_value = {
             "Items": [
@@ -708,7 +708,7 @@ class TestHealthDataRepository:
         assert result["pagination"]["offset"] == 0
 
     @pytest.mark.asyncio
-    async def test_delete_health_data_success(self, dynamodb_service, mock_table):
+    async def test_delete_health_data_success(self, dynamodb_service: DynamoDBService, mock_table: MagicMock) -> None:
         """Test deleting health data."""
         # Mock query to return items to delete
         mock_table.query.return_value = {
@@ -738,7 +738,7 @@ class TestHealthCheck:
     """Test health check functionality."""
 
     @pytest.mark.asyncio
-    async def test_health_check_success(self, dynamodb_service, mock_table):
+    async def test_health_check_success(self, dynamodb_service: DynamoDBService, mock_table: MagicMock) -> None:
         """Test successful health check."""
         mock_table.load = MagicMock()
 
@@ -751,7 +751,7 @@ class TestHealthCheck:
         assert "timestamp" in result
 
     @pytest.mark.asyncio
-    async def test_health_check_failure(self, dynamodb_service, mock_table):
+    async def test_health_check_failure(self, dynamodb_service: DynamoDBService, mock_table: MagicMock) -> None:
         """Test health check with failure."""
         mock_table.load = MagicMock(side_effect=Exception("Connection error"))
 
@@ -768,30 +768,30 @@ class TestHealthCheck:
 class TestExceptionClasses:
     """Test custom exception classes."""
 
-    def test_dynamodb_error(self):
+    def test_dynamodb_error(self) -> None:
         """Test DynamoDBError exception."""
         error = DynamoDBError("Test error")
         assert str(error) == "Test error"
 
-    def test_document_not_found_error(self):
+    def test_document_not_found_error(self) -> None:
         """Test DocumentNotFoundError exception."""
         error = DocumentNotFoundError("Document not found")
         assert str(error) == "Document not found"
         assert isinstance(error, DynamoDBError)
 
-    def test_dynamodb_permission_error(self):
+    def test_dynamodb_permission_error(self) -> None:
         """Test DynamoDBPermissionError exception."""
         error = DynamoDBPermissionError("Permission denied")
         assert str(error) == "Permission denied"
         assert isinstance(error, DynamoDBError)
 
-    def test_dynamodb_validation_error(self):
+    def test_dynamodb_validation_error(self) -> None:
         """Test DynamoDBValidationError exception."""
         error = DynamoDBValidationError("Validation failed")
         assert str(error) == "Validation failed"
         assert isinstance(error, DynamoDBError)
 
-    def test_dynamodb_connection_error(self):
+    def test_dynamodb_connection_error(self) -> None:
         """Test DynamoDBConnectionError exception."""
         error = DynamoDBConnectionError("Connection failed")
         assert str(error) == "Connection failed"

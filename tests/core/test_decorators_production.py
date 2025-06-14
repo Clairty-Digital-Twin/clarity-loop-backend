@@ -270,11 +270,11 @@ class TestRetryOnFailureDecorator:
 
         caplog.set_level(logging.WARNING, logger="clarity.core.decorators")
 
-        caplog.set_level(logging.WARNING, logger="clarity.core.decorators")
-
-        with caplog.at_level(logging.WARNING):
-            with pytest.raises(ValueError, match="Always fails"):
-                always_failing_function()
+        with (
+            caplog.at_level(logging.WARNING),
+            pytest.raises(ValueError, match="Always fails"),
+        ):
+            always_failing_function()
 
         assert call_count == 3  # Initial call + 2 retries
         log_messages = [record.message for record in caplog.records]
@@ -460,11 +460,11 @@ class TestAuditTrailDecorator:
 
         caplog.set_level(logging.INFO, logger="clarity.core.decorators")
 
-        caplog.set_level(logging.INFO, logger="clarity.core.decorators")
-
-        with caplog.at_level(logging.INFO):
-            with pytest.raises(PermissionError, match="Access denied"):
-                failing_operation()
+        with (
+            caplog.at_level(logging.INFO),
+            pytest.raises(PermissionError, match="Access denied"),
+        ):
+            failing_operation()
 
         log_messages = [record.message for record in caplog.records]
         assert any("failed" in msg for msg in log_messages)

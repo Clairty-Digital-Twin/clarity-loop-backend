@@ -2,11 +2,8 @@
 
 from __future__ import annotations
 
-from datetime import UTC, datetime
 import json
-from typing import Any
-from unittest.mock import AsyncMock, MagicMock, patch
-import uuid
+from unittest.mock import MagicMock, patch
 
 from botocore.exceptions import ClientError
 import pytest

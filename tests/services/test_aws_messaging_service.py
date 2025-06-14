@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from datetime import UTC
 import json
 from unittest.mock import MagicMock, patch
 

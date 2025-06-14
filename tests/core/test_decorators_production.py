@@ -678,7 +678,7 @@ class TestProductionScenarios:
         @validate_input(validate_api_request, "Invalid API request format")
         @audit_trail("api_request", user_id_param="user_id")
         def handle_api_request(
-            request_data: dict[str, Any], _user_id: str | None = None
+            request_data: dict[str, Any], user_id: str | None = None
         ) -> dict[str, str]:
             return {
                 "status": "processed",

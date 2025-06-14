@@ -16,15 +16,16 @@ from clarity.core.constants import (
     AUTH_SCOPE_FULL_ACCESS,
     AUTH_TOKEN_DEFAULT_EXPIRY_SECONDS,
 )
-from clarity.core.exceptions import AuthenticationError as CoreAuthError, ProblemDetail
-from clarity.models.auth import TokenResponse, UserLoginRequest
-from clarity.ports.auth_ports import IAuthProvider
-from clarity.services.cognito_auth_service import (
+from clarity.core.exceptions import (
+    AuthenticationError as CoreAuthError,
     EmailNotVerifiedError,
     InvalidCredentialsError,
+    ProblemDetail,
     UserAlreadyExistsError,
     UserNotFoundError,
 )
+from clarity.models.auth import TokenResponse, UserLoginRequest
+from clarity.ports.auth_ports import IAuthProvider
 
 # Configure logger
 logger = logging.getLogger(__name__)

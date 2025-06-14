@@ -19,7 +19,7 @@ from clarity.core.constants import (
     AUTH_SCOPE_FULL_ACCESS,
 )
 from clarity.models.user import User
-from clarity.services.cognito_auth_service import (
+from clarity.core.exceptions import (
     EmailNotVerifiedError,
     InvalidCredentialsError,
     UserAlreadyExistsError,

@@ -505,6 +505,22 @@ class AuthenticationError(ClarityBaseError):
         super().__init__(message, error_code="AUTHENTICATION_ERROR", **kwargs)
 
 
+class UserNotFoundError(AuthenticationError):
+    """Raised when user is not found."""
+
+
+class InvalidCredentialsError(AuthenticationError):
+    """Raised when credentials are invalid."""
+
+
+class UserAlreadyExistsError(AuthenticationError):
+    """Raised when user already exists."""
+
+
+class EmailNotVerifiedError(AuthenticationError):
+    """Raised when email is not verified."""
+
+
 class AuthorizationError(ClarityBaseError):
     """Base class for authorization errors."""
 

@@ -15,10 +15,13 @@ from jose import JWTError, jwk, jwt
 from jose.utils import base64url_decode
 import requests
 
-from clarity.core.exceptions import AuthenticationError
+from clarity.core.exceptions import (
+    AuthenticationError,
+    InvalidCredentialsError,
+    UserAlreadyExistsError,
+)
 from clarity.models.user import User
 from clarity.ports.auth_ports import IAuthProvider
-from clarity.services.cognito_auth_service import InvalidCredentialsError
 
 if TYPE_CHECKING:
     from mypy_boto3_cognito_idp.type_defs import AttributeTypeTypeDef
@@ -216,7 +219,7 @@ class CognitoAuthProvider(IAuthProvider):
             if error_code == "UsernameExistsException":
                 logger.warning("User already exists: %s", email)
                 msg = "User already exists"
-                raise AuthenticationError(msg) from e
+                raise UserAlreadyExistsError(msg) from e
             logger.exception("Failed to create user")
             msg = f"Failed to create user: {e!s}"
             raise AuthenticationError(msg) from e

@@ -135,28 +135,27 @@ class TestAuthenticationE2E:
         """Summary of authentication fix."""
         summary = """
         AUTHENTICATION FIX SUMMARY:
-        
+
         1. ROOT CAUSE: Local .env file had wrong Cognito configuration
            - Wrong region: us-east-2 (should be us-east-1)
            - Wrong user pool ID: us-east-2_xqTJHGxmY (should be us-east-1_efXaR5EcP)
            - Wrong client ID: 6s5j0f1aiqddqsutrgvg6mjkfr (should be 7sm7ckrkovg78b03n1595euc71)
-        
+
         2. VERIFIED:
            - Remote backend on ECS already has correct configuration
            - Cognito user pool exists and is properly configured
            - App client has USER_PASSWORD_AUTH enabled
            - No client secret is configured (correct for public clients)
            - Frontend sends correct JSON structure with snake_case
-        
+
         3. FIXED:
            - Updated .env and .env.aws with correct Cognito values
            - Created test user for verification
            - Confirmed authentication works end-to-end
-        
+
         4. RESULT:
            - Authentication now working successfully
            - Frontend can login and receive JWT tokens
            - Backend properly validates credentials via Cognito
         """
-        print(summary)
         assert True  # This test always passes, just prints summary

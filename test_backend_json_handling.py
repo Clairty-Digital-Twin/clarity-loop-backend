@@ -51,28 +51,20 @@ test_cases = [
 ]
 
 
-async def test_json_handling():
+async def test_json_handling() -> None:
     """Test backend JSON handling."""
-    print("=" * 60)
-    print("BACKEND JSON HANDLING TEST")
-    print("=" * 60)
-
     async with httpx.AsyncClient() as client:
-        for i, test in enumerate(test_cases):
-            print(f"\nTest {i + 1}: {test['name']}")
-            print("-" * 40)
+        for test in test_cases:
 
             # Prepare request data
             if "raw" in test:
                 # Use raw JSON string
                 data = test["raw"]
                 headers = {"Content-Type": "application/json"}
-                print(f"Raw JSON: {data}")
             else:
                 # Use payload dict
                 data = json.dumps(test["payload"])
                 headers = {"Content-Type": "application/json"}
-                print(f"JSON: {data}")
 
             try:
                 # Send to login endpoint
@@ -80,22 +72,15 @@ async def test_json_handling():
                     f"{BASE_URL}/api/v1/auth/login", content=data, headers=headers
                 )
 
-                print(f"Status: {response.status_code}")
                 if response.status_code == 200:
-                    print("✅ SUCCESS")
-                else:
-                    print(f"❌ FAILED: {response.text[:200]}")
+                    pass
 
             except Exception as e:
-                print(f"❌ ERROR: {e}")
+                pass
 
 
-async def test_debug_endpoint():
+async def test_debug_endpoint() -> None:
     """Test the debug endpoint to see raw request details."""
-    print("\n" + "=" * 60)
-    print("DEBUG ENDPOINT TEST")
-    print("=" * 60)
-
     # Create a problematic payload similar to what iOS might send
     test_payload = {
         "email": "test@example.com",
@@ -115,10 +100,6 @@ async def test_debug_endpoint():
 
         if response.status_code == 200:
             data = response.json()
-            print("Debug Response:")
-            print(json.dumps(data, indent=2))
-        else:
-            print(f"Debug endpoint failed: {response.status_code}")
 
 
 if __name__ == "__main__":

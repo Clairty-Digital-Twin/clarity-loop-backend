@@ -13,7 +13,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 
-def test_cognito_auth():
+def test_cognito_auth() -> None:
     """Test Cognito authentication with minimal setup."""
     # Get configuration from environment
     region = os.getenv("COGNITO_REGION", "us-east-2")

@@ -7,7 +7,7 @@
   "containerDefinitions": [
     {
       "name": "clarity-backend",
-      "image": "124355672559.dkr.ecr.us-east-1.amazonaws.com/clarity-backend:auth-fix-20250614",
+      "image": "124355672559.dkr.ecr.us-east-1.amazonaws.com/clarity-backend:auth-fix-v3-20250614-103040",
       "portMappings": [
         {
           "containerPort": 8000,

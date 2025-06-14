@@ -2,18 +2,12 @@
   "family": "clarity-backend",
   "networkMode": "awsvpc",
   "requiresCompatibilities": ["FARGATE"],
-  "cpu": "1024",
-  "memory": "4096",
-  "executionRoleArn": "arn:aws:iam::124355672559:role/ecsTaskExecutionRole",
-  "taskRoleArn": "arn:aws:iam::124355672559:role/clarity-backend-task-role",
-  "runtimePlatform": {
-    "cpuArchitecture": "X86_64",
-    "operatingSystemFamily": "LINUX"
-  },
+  "cpu": "4096",
+  "memory": "16384",
   "containerDefinitions": [
     {
       "name": "clarity-backend",
-      "image": "124355672559.dkr.ecr.us-east-1.amazonaws.com/clarity-backend:fixed-amd64-20250613-121748",
+      "image": "124355672559.dkr.ecr.us-east-1.amazonaws.com/clarity-backend:auth-fix-20250614",
       "portMappings": [
         {
           "containerPort": 8000,
@@ -22,50 +16,23 @@
       ],
       "essential": true,
       "environment": [
-        {
-          "name": "ENVIRONMENT",
-          "value": "production"
-        },
-        {
-          "name": "PORT",
-          "value": "8000"
-        },
-        {
-          "name": "AWS_DEFAULT_REGION",
-          "value": "us-east-1"
-        },
-        {
-          "name": "COGNITO_USER_POOL_ID",
-          "value": "us-east-1_efXaR5EcP"
-        },
-        {
-          "name": "COGNITO_CLIENT_ID",
-          "value": "7sm7ckrkovg78b03n1595euc71"
-        },
-        {
-          "name": "COGNITO_REGION",
-          "value": "us-east-1"
-        },
-        {
-          "name": "DYNAMODB_TABLE_NAME",
-          "value": "clarity-health-data"
-        },
-        {
-          "name": "S3_BUCKET_NAME",
-          "value": "clarity-health-uploads"
-        },
-        {
-          "name": "ENABLE_AUTH",
-          "value": "true"
-        },
-        {
-          "name": "DEBUG",
-          "value": "false"
-        },
-        {
-          "name": "SKIP_EXTERNAL_SERVICES",
-          "value": "true"
-        }
+        {"name": "PORT", "value": "8000"},
+        {"name": "ENVIRONMENT", "value": "production"},
+        {"name": "ENABLE_AUTH", "value": "true"},
+        {"name": "CORS_ALLOWED_ORIGINS", "value": "https://api.clarity.health,http://localhost:3000,http://localhost:8000,https://clarity.health"},
+        {"name": "CORS_ALLOW_CREDENTIALS", "value": "true"},
+        {"name": "AWS_REGION", "value": "us-east-1"},
+        {"name": "COGNITO_REGION", "value": "us-east-1"},
+        {"name": "COGNITO_USER_POOL_ID", "value": "us-east-1_efXaR5EcP"},
+        {"name": "COGNITO_CLIENT_ID", "value": "7sm7ckrkovg78b03n1595euc71"},
+        {"name": "DYNAMODB_TABLE_NAME", "value": "clarity-health-data"},
+        {"name": "DYNAMODB_INSIGHTS_TABLE", "value": "clarity-ai-insights"},
+        {"name": "DYNAMODB_USERS_TABLE", "value": "clarity-users"},
+        {"name": "DYNAMODB_SESSIONS_TABLE", "value": "clarity-user-sessions"},
+        {"name": "S3_BUCKET_NAME", "value": "clarity-health-data-storage"},
+        {"name": "SQS_QUEUE_NAME", "value": "clarity-insights-queue"},
+        {"name": "SNS_TOPIC_ARN", "value": "arn:aws:sns:us-east-1:124355672559:clarity-insights-topic"},
+        {"name": "LOG_LEVEL", "value": "INFO"}
       ],
       "logConfiguration": {
         "logDriver": "awslogs",
@@ -78,10 +45,11 @@
       "healthCheck": {
         "command": ["CMD-SHELL", "curl -f http://localhost:8000/health || exit 1"],
         "interval": 30,
-        "timeout": 10,
-        "retries": 3,
-        "startPeriod": 60
+        "timeout": 5,
+        "retries": 3
       }
     }
-  ]
+  ],
+  "executionRoleArn": "arn:aws:iam::124355672559:role/ecsTaskExecutionRole",
+  "taskRoleArn": "arn:aws:iam::124355672559:role/clarity-backend-task-role"
 }

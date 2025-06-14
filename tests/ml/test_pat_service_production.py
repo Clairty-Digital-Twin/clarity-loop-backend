@@ -715,8 +715,12 @@ class TestDataPreprocessingAndPredictions:
 
         assert len(insights) > 0
         # Should contain balanced insights for moderate metrics
-        insight_text = " ".join(insights).lower()
         assert len(insights) >= 2  # Should have multiple insights
+        
+        # Verify insights contain relevant keywords
+        insight_text = " ".join(insights).lower()
+        # Check that we have content about sleep or circadian rhythm
+        assert any(word in insight_text for word in ["sleep", "circadian", "rhythm", "pattern"])
 
 
 class TestErrorHandlingAndValidation:

@@ -688,11 +688,11 @@ class TestAuthentication:
 
         assert result is not None
         assert (
-            result["access_token"] == "access_token_123"
+            result["access_token"] == "access_token_123"  # noqa: S105 - Test token value
         )
         assert result["id_token"] == "id_token_123"  # noqa: S105 - Test token value
         assert (
-            result["refresh_token"] == "refresh_token_123"
+            result["refresh_token"] == "refresh_token_123"  # noqa: S105 - Test token value
         )
         assert result["expires_in"] == "3600"
 
@@ -982,7 +982,7 @@ class TestProductionScenarios:
 
         tokens = await self.provider.authenticate("test@example.com", "password123")
         assert (
-            tokens["access_token"] == "access_token_123"
+            tokens["access_token"] == "access_token_123"  # noqa: S105 - Test token value
         )
 
         # Verify token

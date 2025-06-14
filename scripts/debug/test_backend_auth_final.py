@@ -35,6 +35,9 @@ async def test_authentication() -> None:
 
             if response.status_code == 200:
                 data = response.json()
+                print(f"Authentication successful: {data}")
+            else:
+                print(f"Authentication failed with status {response.status_code}: {response.text}")
 
         except Exception as e:
             # Log authentication errors for debugging

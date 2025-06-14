@@ -81,7 +81,7 @@ class TestHealthDataPublisherInit:
         with patch(
             "clarity.services.messaging.publisher.AWSMessagingService"
         ) as mock_aws:
-            publisher = HealthDataPublisher()
+            _ = HealthDataPublisher()  # Publisher is created to test initialization
 
             mock_aws.assert_called_once_with(
                 region="us-east-1",

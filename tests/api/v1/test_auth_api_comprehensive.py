@@ -342,7 +342,7 @@ class TestRefreshToken:
         assert response.status_code == 200
         data = response.json()
         assert (
-            data["access_token"] == "new-access-token"
+            data["access_token"] == "new-access-token"  # noqa: S105 - Test token value
         )
         assert data["expires_in"] == 3600
 

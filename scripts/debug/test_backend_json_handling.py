@@ -72,7 +72,9 @@ async def test_json_handling() -> None:
                 )
 
                 if response.status_code == 200:
-                    pass
+                    print(f"✓ {test['name']}: Success")
+                else:
+                    print(f"✗ {test['name']}: Failed with status {response.status_code}")
 
             except Exception as e:
                 # Log JSON handling errors for debugging
@@ -100,6 +102,9 @@ async def test_debug_endpoint() -> None:
 
         if response.status_code == 200:
             data = response.json()
+            print(f"Debug endpoint response: {json.dumps(data, indent=2)}")
+        else:
+            print(f"Debug endpoint failed with status {response.status_code}")
 
 
 if __name__ == "__main__":

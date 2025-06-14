@@ -62,7 +62,7 @@ class TestCognitoAuthProviderInitialization:
         )
         assert provider.cognito_client == mock_client
 
-    def test_cognito_auth_provider_default_region(self):
+    def test_cognito_auth_provider_default_region(self) -> None:
         """Test default region handling."""
         provider = CognitoAuthProvider(
             user_pool_id="us-east-1_ABC123", client_id="client123"
@@ -499,7 +499,7 @@ class TestUserManagement:
 
     @patch.dict("os.environ", {"ENVIRONMENT": "production"})
     @pytest.mark.asyncio
-    async def test_create_user_success_production(self):
+    async def test_create_user_success_production(self) -> None:
         """Test successful user creation in production."""
         mock_response = {"UserSub": "new-user-123"}
         self.provider.cognito_client.sign_up.return_value = mock_response
@@ -518,7 +518,7 @@ class TestUserManagement:
         self.provider.cognito_client.admin_confirm_sign_up.assert_not_called()
 
     @pytest.mark.asyncio
-    async def test_create_user_already_exists(self):
+    async def test_create_user_already_exists(self) -> None:
         """Test user creation when user already exists."""
         error = ClientError(
             {"Error": {"Code": "UsernameExistsException", "Message": "User exists"}},
@@ -530,7 +530,7 @@ class TestUserManagement:
             await self.provider.create_user("existing@example.com", "password123")
 
     @pytest.mark.asyncio
-    async def test_create_user_client_error(self):
+    async def test_create_user_client_error(self) -> None:
         """Test user creation with other client error."""
         error = ClientError(
             {
@@ -547,7 +547,7 @@ class TestUserManagement:
             await self.provider.create_user("test@example.com", "password123")
 
     @pytest.mark.asyncio
-    async def test_create_user_unexpected_error(self):
+    async def test_create_user_unexpected_error(self) -> None:
         """Test user creation with unexpected error."""
         self.provider.cognito_client.sign_up.side_effect = Exception("Network error")
 
@@ -555,7 +555,7 @@ class TestUserManagement:
             await self.provider.create_user("test@example.com", "password123")
 
     @pytest.mark.asyncio
-    async def test_delete_user_success(self):
+    async def test_delete_user_success(self) -> None:
         """Test successful user deletion."""
         self.provider.cognito_client.admin_delete_user.return_value = {}
 
@@ -567,7 +567,7 @@ class TestUserManagement:
         )
 
     @pytest.mark.asyncio
-    async def test_delete_user_client_error(self):
+    async def test_delete_user_client_error(self) -> None:
         """Test user deletion with client error."""
         error = ClientError(
             {"Error": {"Code": "UserNotFoundException", "Message": "User not found"}},
@@ -580,7 +580,7 @@ class TestUserManagement:
         assert result is False
 
     @pytest.mark.asyncio
-    async def test_delete_user_unexpected_error(self):
+    async def test_delete_user_unexpected_error(self) -> None:
         """Test user deletion with unexpected error."""
         self.provider.cognito_client.admin_delete_user.side_effect = Exception(
             "Network error"
@@ -591,7 +591,7 @@ class TestUserManagement:
         assert result is False
 
     @pytest.mark.asyncio
-    async def test_update_user_success(self):
+    async def test_update_user_success(self) -> None:
         """Test successful user update."""
         self.provider.cognito_client.admin_update_user_attributes.return_value = {}
 
@@ -622,7 +622,7 @@ class TestUserManagement:
         assert {"Name": "email", "Value": "updated@example.com"} in attributes
 
     @pytest.mark.asyncio
-    async def test_update_user_no_attributes(self):
+    async def test_update_user_no_attributes(self) -> None:
         """Test user update with no attributes to update."""
         mock_user = User(
             uid="user123",
@@ -640,7 +640,7 @@ class TestUserManagement:
         self.provider.cognito_client.admin_update_user_attributes.assert_not_called()
 
     @pytest.mark.asyncio
-    async def test_update_user_client_error(self):
+    async def test_update_user_client_error(self) -> None:
         """Test user update with client error."""
         error = ClientError(
             {"Error": {"Code": "UserNotFoundException", "Message": "User not found"}},
@@ -653,7 +653,7 @@ class TestUserManagement:
         assert result is None
 
     @pytest.mark.asyncio
-    async def test_update_user_unexpected_error(self):
+    async def test_update_user_unexpected_error(self) -> None:
         """Test user update with unexpected error."""
         self.provider.cognito_client.admin_update_user_attributes.side_effect = (
             Exception("Network error")
@@ -667,13 +667,13 @@ class TestUserManagement:
 class TestAuthentication:
     """Test authentication functionality."""
 
-    def setup_method(self):
+    def setup_method(self) -> None:
         """Set up test fixtures."""
         self.provider = CognitoAuthProvider("us-east-1_ABC123", "client123")
         self.provider.cognito_client = Mock()
 
     @pytest.mark.asyncio
-    async def test_authenticate_success(self):
+    async def test_authenticate_success(self) -> None:
         """Test successful authentication."""
         mock_response = {
             "AuthenticationResult": {
@@ -698,7 +698,7 @@ class TestAuthentication:
         assert result["expires_in"] == "3600"
 
     @pytest.mark.asyncio
-    async def test_authenticate_challenge_required(self):
+    async def test_authenticate_challenge_required(self) -> None:
         """Test authentication with challenge required."""
         mock_response = {
             "ChallengeName": "SMS_MFA",
@@ -711,7 +711,7 @@ class TestAuthentication:
         assert result is None
 
     @pytest.mark.asyncio
-    async def test_authenticate_unexpected_response(self):
+    async def test_authenticate_unexpected_response(self) -> None:
         """Test authentication with unexpected response format."""
         mock_response = {"SomeOtherField": "value"}
         self.provider.cognito_client.initiate_auth.return_value = mock_response
@@ -721,7 +721,7 @@ class TestAuthentication:
         assert result is None
 
     @pytest.mark.asyncio
-    async def test_authenticate_invalid_credentials(self):
+    async def test_authenticate_invalid_credentials(self) -> None:
         """Test authentication with invalid credentials."""
         error = ClientError(
             {
@@ -738,7 +738,7 @@ class TestAuthentication:
             await self.provider.authenticate("test@example.com", "wrongpassword")
 
     @pytest.mark.asyncio
-    async def test_authenticate_client_error(self):
+    async def test_authenticate_client_error(self) -> None:
         """Test authentication with other client error."""
         error = ClientError(
             {"Error": {"Code": "UserNotFoundException", "Message": "User not found"}},
@@ -750,7 +750,7 @@ class TestAuthentication:
             await self.provider.authenticate("test@example.com", "password123")
 
     @pytest.mark.asyncio
-    async def test_authenticate_unexpected_error(self):
+    async def test_authenticate_unexpected_error(self) -> None:
         """Test authentication with unexpected error."""
         self.provider.cognito_client.initiate_auth.side_effect = Exception(
             "Network error"
@@ -763,13 +763,13 @@ class TestAuthentication:
 class TestProviderLifecycle:
     """Test provider initialization and cleanup."""
 
-    def setup_method(self):
+    def setup_method(self) -> None:
         """Set up test fixtures."""
         self.provider = CognitoAuthProvider("us-east-1_ABC123", "client123")
 
     @patch.object(CognitoAuthProvider, "jwks")
     @pytest.mark.asyncio
-    async def test_initialize_success(self, mock_jwks):
+    async def test_initialize_success(self, mock_jwks: MagicMock) -> None:
         """Test successful provider initialization."""
         mock_jwks.return_value = {"keys": []}
 
@@ -779,7 +779,7 @@ class TestProviderLifecycle:
 
     @patch("clarity.auth.aws_cognito_provider.requests.get")
     @pytest.mark.asyncio
-    async def test_initialize_failure(self, mock_requests_get):
+    async def test_initialize_failure(self, mock_requests_get: MagicMock) -> None:
         """Test provider initialization failure."""
         mock_requests_get.side_effect = Exception("JWKS fetch failed")
 
@@ -787,7 +787,7 @@ class TestProviderLifecycle:
             await self.provider.initialize()
 
     @pytest.mark.asyncio
-    async def test_shutdown(self):
+    async def test_shutdown(self) -> None:
         """Test provider shutdown."""
         self.provider._jwks_cache = {"keys": []}
 
@@ -796,7 +796,7 @@ class TestProviderLifecycle:
         assert self.provider._jwks_cache is None
 
     @pytest.mark.asyncio
-    async def test_cleanup(self):
+    async def test_cleanup(self) -> None:
         """Test provider cleanup."""
         self.provider._jwks_cache = {"keys": []}
 
@@ -805,7 +805,7 @@ class TestProviderLifecycle:
         assert self.provider._jwks_cache is None
 
     @pytest.mark.asyncio
-    async def test_get_user_info_success(self):
+    async def test_get_user_info_success(self) -> None:
         """Test successful get_user_info."""
         mock_user = User(
             uid="user123",
@@ -826,7 +826,7 @@ class TestProviderLifecycle:
         assert result["metadata"]["status"] == "CONFIRMED"
 
     @pytest.mark.asyncio
-    async def test_get_user_info_user_not_found(self):
+    async def test_get_user_info_user_not_found(self) -> None:
         """Test get_user_info when user not found."""
         with patch.object(self.provider, "get_user", return_value=None):
             result = await self.provider.get_user_info("nonexistent")
@@ -845,7 +845,7 @@ class TestGetCognitoProviderFunction:
             "COGNITO_REGION": "us-west-2",
         },
     )
-    def test_get_cognito_provider_success(self):
+    def test_get_cognito_provider_success(self) -> None:
         """Test successful provider creation from environment."""
         provider = get_cognito_provider()
 
@@ -863,7 +863,7 @@ class TestGetCognitoProviderFunction:
         },
         clear=True,  # Clear all env vars to ensure clean test
     )
-    def test_get_cognito_provider_aws_region_fallback(self):
+    def test_get_cognito_provider_aws_region_fallback(self) -> None:
         """Test provider creation with AWS_REGION fallback."""
         # Clear LRU cache to prevent test isolation issues
         get_cognito_provider.cache_clear()
@@ -879,7 +879,7 @@ class TestGetCognitoProviderFunction:
             "COGNITO_CLIENT_ID": "test-client-123",
         },
     )
-    def test_get_cognito_provider_default_region(self):
+    def test_get_cognito_provider_default_region(self) -> None:
         """Test provider creation with default region."""
         # Clear LRU cache to prevent test isolation issues
         get_cognito_provider.cache_clear()
@@ -889,7 +889,7 @@ class TestGetCognitoProviderFunction:
         assert provider.region == "us-east-1"
 
     @patch.dict("os.environ", {"COGNITO_CLIENT_ID": "test-client-123"}, clear=True)
-    def test_get_cognito_provider_missing_pool_id(self):
+    def test_get_cognito_provider_missing_pool_id(self) -> None:
         """Test provider creation with missing user pool ID."""
         # Clear LRU cache to prevent test isolation issues
         get_cognito_provider.cache_clear()
@@ -898,7 +898,7 @@ class TestGetCognitoProviderFunction:
             get_cognito_provider()
 
     @patch.dict("os.environ", {"COGNITO_USER_POOL_ID": "test-pool-123"}, clear=True)
-    def test_get_cognito_provider_missing_client_id(self):
+    def test_get_cognito_provider_missing_client_id(self) -> None:
         """Test provider creation with missing client ID."""
         # Clear LRU cache to prevent test isolation issues
         get_cognito_provider.cache_clear()
@@ -907,7 +907,7 @@ class TestGetCognitoProviderFunction:
             get_cognito_provider()
 
     @patch.dict("os.environ", {}, clear=True)
-    def test_get_cognito_provider_no_config(self):
+    def test_get_cognito_provider_no_config(self) -> None:
         """Test provider creation with no configuration."""
         # Clear LRU cache to prevent test isolation issues
         get_cognito_provider.cache_clear()
@@ -919,13 +919,13 @@ class TestGetCognitoProviderFunction:
 class TestProductionScenarios:
     """Test realistic production scenarios."""
 
-    def setup_method(self):
+    def setup_method(self) -> None:
         """Set up test fixtures."""
         self.provider = CognitoAuthProvider("us-east-1_ABC123", "client123")
         self.provider.cognito_client = Mock()
 
     @pytest.mark.asyncio
-    async def test_complete_user_lifecycle(self):
+    async def test_complete_user_lifecycle(self) -> None:
         """Test complete user lifecycle: create, get, update, delete."""
         # Create user
         create_response = {"UserSub": "user123"}
@@ -968,7 +968,7 @@ class TestProductionScenarios:
         assert result is True
 
     @pytest.mark.asyncio
-    async def test_authentication_flow_with_token_verification(self):
+    async def test_authentication_flow_with_token_verification(self) -> None:
         """Test complete authentication flow with token verification."""
         # Authenticate
         auth_response = {
@@ -998,7 +998,7 @@ class TestProductionScenarios:
             assert claims["sub"] == "user123"
 
     @pytest.mark.asyncio
-    async def test_error_handling_chain(self):
+    async def test_error_handling_chain(self) -> None:
         """Test error handling across multiple operations."""
         # Test authentication failure leading to user creation
         auth_error = ClientError(
@@ -1019,7 +1019,7 @@ class TestProductionScenarios:
         assert user.uid == "newuser123"
 
     @pytest.mark.asyncio
-    async def test_concurrent_jwks_access(self):
+    async def test_concurrent_jwks_access(self) -> None:
         """Test concurrent access to JWKS cache."""
         # Mock JWKS fetch
         with patch("clarity.auth.aws_cognito_provider.requests.get") as mock_get:
@@ -1043,7 +1043,7 @@ class TestProductionScenarios:
             assert mock_get.call_count <= 2  # Allow for some race conditions
 
     @pytest.mark.asyncio
-    async def test_provider_resilience_to_network_issues(self):
+    async def test_provider_resilience_to_network_issues(self) -> None:
         """Test provider resilience to network issues."""
         # Test JWKS fetch with network issues
         with patch("clarity.auth.aws_cognito_provider.requests.get") as mock_get:

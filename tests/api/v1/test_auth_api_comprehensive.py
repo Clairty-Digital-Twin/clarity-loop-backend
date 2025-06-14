@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from unittest.mock import AsyncMock, MagicMock, Mock, patch
 import uuid
+from typing import Any, Generator
 
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
@@ -26,7 +27,7 @@ from clarity.models.user import User
 
 
 @pytest.fixture
-def mock_cognito_provider():
+def mock_cognito_provider() -> Mock:
     """Create a properly mocked Cognito provider."""
     provider = Mock(spec=CognitoAuthProvider)
     provider.authenticate = AsyncMock()
@@ -45,7 +46,7 @@ def mock_cognito_provider():
 
 
 @pytest.fixture
-def test_user():
+def test_user() -> User:
     """Create test user."""
     return User(
         uid=str(uuid.uuid4()),
@@ -55,7 +56,7 @@ def test_user():
 
 
 @pytest.fixture
-def auth_tokens():
+def auth_tokens() -> dict[str, Any]:
     """Create test auth tokens."""
     return {
         "access_token": "test-access-token",
@@ -65,7 +66,7 @@ def auth_tokens():
 
 
 @pytest.fixture
-def app(mock_cognito_provider):
+def app(mock_cognito_provider: Mock) -> FastAPI:
     """Create a real FastAPI app that uses the actual auth router."""
     app = FastAPI()
 
@@ -79,7 +80,7 @@ def app(mock_cognito_provider):
 
 
 @pytest.fixture
-def client(app):
+def client(app: FastAPI) -> TestClient:
     """Create test client with real app."""
     return TestClient(app)
 
@@ -89,8 +90,8 @@ class TestUserRegistration:
 
     @pytest.mark.asyncio
     async def test_register_success(
-        self, client, mock_cognito_provider, test_user, auth_tokens
-    ):
+        self, client: TestClient, mock_cognito_provider: Mock, test_user: User, auth_tokens: dict[str, Any]
+    ) -> None:
         """Test successful user registration."""
         mock_cognito_provider.create_user.return_value = test_user
         mock_cognito_provider.authenticate.return_value = auth_tokens
@@ -113,7 +114,7 @@ class TestUserRegistration:
         assert data["scope"] == AUTH_SCOPE_FULL_ACCESS
 
     @pytest.mark.asyncio
-    async def test_register_user_already_exists(self, client, mock_cognito_provider):
+    async def test_register_user_already_exists(self, client: TestClient, mock_cognito_provider: Mock) -> None:
         """Test registration when user already exists."""
         mock_cognito_provider.create_user.side_effect = UserAlreadyExistsError(
             "User already exists"
@@ -131,7 +132,7 @@ class TestUserRegistration:
         assert "User already exists" in response.json()["detail"]
 
     @pytest.mark.asyncio
-    async def test_register_validation_error(self, client):
+    async def test_register_validation_error(self, client: TestClient) -> None:
         """Test registration with invalid data."""
         response = client.post(
             "/api/v1/auth/register",
@@ -144,7 +145,7 @@ class TestUserRegistration:
         assert response.status_code == 422
 
     @pytest.mark.asyncio
-    async def test_register_create_user_fails(self, client, mock_cognito_provider):
+    async def test_register_create_user_fails(self, client: TestClient, mock_cognito_provider: Mock) -> None:
         """Test registration when user creation fails."""
         mock_cognito_provider.create_user.return_value = None
 
@@ -164,7 +165,7 @@ class TestUserLogin:
     """Test user login endpoint with real code."""
 
     @pytest.mark.asyncio
-    async def test_login_success(self, client, mock_cognito_provider, auth_tokens):
+    async def test_login_success(self, client: TestClient, mock_cognito_provider: Mock, auth_tokens: dict[str, Any]) -> None:
         """Test successful login."""
         mock_cognito_provider.authenticate.return_value = auth_tokens
 
@@ -183,7 +184,7 @@ class TestUserLogin:
         assert data["token_type"] == AUTH_HEADER_TYPE_BEARER
 
     @pytest.mark.asyncio
-    async def test_login_invalid_credentials(self, client, mock_cognito_provider):
+    async def test_login_invalid_credentials(self, client: TestClient, mock_cognito_provider: Mock) -> None:
         """Test login with invalid credentials."""
         mock_cognito_provider.authenticate.side_effect = InvalidCredentialsError(
             "Invalid email or password"
@@ -200,7 +201,7 @@ class TestUserLogin:
         assert response.status_code == 401
 
     @pytest.mark.asyncio
-    async def test_login_email_not_verified(self, client, mock_cognito_provider):
+    async def test_login_email_not_verified(self, client: TestClient, mock_cognito_provider: Mock) -> None:
         """Test login with unverified email."""
         mock_cognito_provider.authenticate.side_effect = EmailNotVerifiedError(
             "Email not verified"
@@ -220,7 +221,7 @@ class TestUserLogin:
 class TestCurrentUser:
     """Test current user endpoint with real code."""
 
-    def test_get_current_user_success(self, app):
+    def test_get_current_user_success(self, app: FastAPI) -> None:
         """Test successful get current user."""
         current_user = {
             "uid": "user-123",
@@ -251,7 +252,7 @@ class TestUpdateUser:
     """Test update user endpoint with real code."""
 
     @pytest.mark.asyncio
-    async def test_update_user_success(self, app, mock_cognito_provider, test_user):
+    async def test_update_user_success(self, app: FastAPI, mock_cognito_provider: Mock, test_user: User) -> None:
         """Test successful user update."""
         current_user = {
             "uid": test_user.uid,
@@ -286,7 +287,7 @@ class TestUpdateUser:
 class TestLogout:
     """Test logout endpoint with real code."""
 
-    def test_logout_success(self, client):
+    def test_logout_success(self, client: TestClient) -> None:
         """Test successful logout."""
         with patch("clarity.api.v1.auth.get_user_func") as mock_get_user:
             mock_get_user.return_value = {"uid": "user-123"}
@@ -300,7 +301,7 @@ class TestLogout:
         data = response.json()
         assert data["message"] == "Successfully logged out"
 
-    def test_logout_no_auth(self, client):
+    def test_logout_no_auth(self, client: TestClient) -> None:
         """Test logout without auth."""
         response = client.post("/api/v1/auth/logout")
 
@@ -310,7 +311,7 @@ class TestLogout:
 class TestHealthCheck:
     """Test health check endpoint with real code."""
 
-    def test_health_check_success(self, client):
+    def test_health_check_success(self, client: TestClient) -> None:
         """Test successful health check."""
         response = client.get("/api/v1/auth/health")
 
@@ -324,7 +325,7 @@ class TestRefreshToken:
     """Test refresh token endpoint with real code."""
 
     @pytest.mark.asyncio
-    async def test_refresh_token_success(self, client, mock_cognito_provider):
+    async def test_refresh_token_success(self, client: TestClient, mock_cognito_provider: Mock) -> None:
         """Test successful token refresh."""
         mock_cognito_provider.cognito_client.initiate_auth.return_value = {
             "AuthenticationResult": {
@@ -345,7 +346,7 @@ class TestRefreshToken:
         )
         assert data["expires_in"] == 3600
 
-    def test_refresh_token_missing(self, client):
+    def test_refresh_token_missing(self, client: TestClient) -> None:
         """Test refresh without token."""
         response = client.post("/api/v1/auth/refresh")
 

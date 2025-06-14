@@ -102,6 +102,7 @@ credentials/
 service-account*.json
 firebase-admin*.json
 gcp-credentials*.json
+.mcp.json
 secrets/
 .gcp/
 .firebase/

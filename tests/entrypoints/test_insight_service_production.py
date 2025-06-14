@@ -8,7 +8,8 @@ from __future__ import annotations
 
 import importlib
 import os
-from unittest.mock import patch
+from unittest.mock import patch, Mock, MagicMock
+from typing import Any
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -21,17 +22,17 @@ from clarity.entrypoints.insight_service import app, main
 class TestInsightServiceApp:
     """Test insight service FastAPI app configuration."""
 
-    def test_app_is_fastapi_instance(self):
+    def test_app_is_fastapi_instance(self) -> None:
         """Test that app is a FastAPI instance."""
         assert isinstance(app, FastAPI)
 
-    def test_app_metadata_configuration(self):
+    def test_app_metadata_configuration(self) -> None:
         """Test FastAPI app metadata is properly configured."""
         assert app.title == "CLARITY Insight Service"
         assert app.description == "AI-powered health insight generation service"
         assert app.version == "1.0.0"
 
-    def test_cors_middleware_configured(self):
+    def test_cors_middleware_configured(self) -> None:
         """Test that CORS middleware is properly configured."""
         # Check that CORSMiddleware is in the middleware stack
         cors_middleware_found = False
@@ -42,13 +43,13 @@ class TestInsightServiceApp:
 
         assert cors_middleware_found, "CORS middleware not found"
 
-    def test_insight_app_mounted(self):
+    def test_insight_app_mounted(self) -> None:
         """Test that insight app is mounted at root path."""
         # Check if app has routes mounted - this verifies the mounting occurred
         assert len(app.routes) > 0, "No routes found - mounting may have failed"
 
     @patch("clarity.entrypoints.insight_service.insight_app")
-    def test_app_mount_with_mock_insight_app(self, mock_insight_app):
+    def test_app_mount_with_mock_insight_app(self, mock_insight_app: MagicMock) -> None:
         """Test app mounting with mocked insight app."""
         # Import and create a fresh app to test mounting
         # Reload the module to ensure fresh import
@@ -65,7 +66,7 @@ class TestInsightServiceMain:
 
     @patch("clarity.entrypoints.insight_service.uvicorn.run")
     @patch.dict(os.environ, {}, clear=True)
-    def test_main_default_configuration(self, mock_uvicorn_run):
+    def test_main_default_configuration(self, mock_uvicorn_run: MagicMock) -> None:
         """Test main function with default configuration."""
         main()
 
@@ -81,7 +82,7 @@ class TestInsightServiceMain:
     @patch.dict(
         os.environ, {"HOST": "0.0.0.0", "PORT": "9000"}, clear=True
     )
-    def test_main_custom_host_port(self, mock_uvicorn_run):
+    def test_main_custom_host_port(self, mock_uvicorn_run: MagicMock) -> None:
         """Test main function with custom host and port from environment."""
         main()
 
@@ -95,7 +96,7 @@ class TestInsightServiceMain:
 
     @patch("clarity.entrypoints.insight_service.uvicorn.run")
     @patch.dict(os.environ, {"ENVIRONMENT": "development"}, clear=True)
-    def test_main_development_environment(self, mock_uvicorn_run):
+    def test_main_development_environment(self, mock_uvicorn_run: MagicMock) -> None:
         """Test main function with development environment."""
         main()
 
@@ -109,7 +110,7 @@ class TestInsightServiceMain:
 
     @patch("clarity.entrypoints.insight_service.uvicorn.run")
     @patch.dict(os.environ, {"ENVIRONMENT": "production"}, clear=True)
-    def test_main_production_environment(self, mock_uvicorn_run):
+    def test_main_production_environment(self, mock_uvicorn_run: MagicMock) -> None:
         """Test main function with production environment."""
         main()
 
@@ -123,14 +124,14 @@ class TestInsightServiceMain:
 
     @patch("clarity.entrypoints.insight_service.uvicorn.run")
     @patch.dict(os.environ, {"PORT": "invalid"}, clear=True)
-    def test_main_invalid_port_environment(self, mock_uvicorn_run):
+    def test_main_invalid_port_environment(self, mock_uvicorn_run: MagicMock) -> None:
         """Test main function with invalid port environment variable."""
         with pytest.raises(ValueError):
             main()
 
     @patch("clarity.entrypoints.insight_service.uvicorn.run")
     @patch.dict(os.environ, {"PORT": "8080"}, clear=True)
-    def test_main_port_as_string(self, mock_uvicorn_run):
+    def test_main_port_as_string(self, mock_uvicorn_run: MagicMock) -> None:
         """Test main function correctly converts port string to integer."""
         main()
 
@@ -144,7 +145,7 @@ class TestInsightServiceMain:
 
     @patch("clarity.entrypoints.insight_service.logger")
     @patch("clarity.entrypoints.insight_service.uvicorn.run")
-    def test_main_logging_output(self, mock_uvicorn_run, mock_logger):
+    def test_main_logging_output(self, mock_uvicorn_run: MagicMock, mock_logger: MagicMock) -> None:
         """Test that main function logs startup information."""
         main()
 
@@ -158,7 +159,7 @@ class TestInsightServiceMain:
         {"HOST": "192.168.1.100", "PORT": "3000", "ENVIRONMENT": "staging"},
         clear=True,
     )
-    def test_main_comprehensive_configuration(self, mock_uvicorn_run):
+    def test_main_comprehensive_configuration(self, mock_uvicorn_run: MagicMock) -> None:
         """Test main function with comprehensive environment configuration."""
         main()
 
@@ -175,7 +176,7 @@ class TestInsightServiceLogging:
     """Test insight service logging configuration."""
 
     @patch("clarity.entrypoints.insight_service.logging.basicConfig")
-    def test_logging_configuration(self, mock_basic_config):
+    def test_logging_configuration(self, mock_basic_config: MagicMock) -> None:
         """Test that logging is properly configured on module import."""
         # Reload the module to trigger logging configuration
         importlib.reload(clarity.entrypoints.insight_service)
@@ -207,7 +208,7 @@ class TestInsightServiceIntegration:
         assert app1 is app2
 
     @patch("clarity.entrypoints.insight_service.insight_app")
-    def test_module_import_dependencies(self, mock_insight_app):
+    def test_module_import_dependencies(self, mock_insight_app: MagicMock) -> None:
         """Test that all required dependencies are properly imported."""
         # This test ensures all imports work correctly
         # Check that key components are available
@@ -239,7 +240,7 @@ class TestInsightServiceIntegration:
         assert len(app.routes) > 0  # Should have mounted routes
 
     @patch("clarity.entrypoints.insight_service.uvicorn.run")
-    def test_main_function_can_be_called_directly(self, mock_uvicorn_run):
+    def test_main_function_can_be_called_directly(self, mock_uvicorn_run: MagicMock) -> None:
         """Test that main function can be called directly without issues."""
         # This simulates running the script directly
         try:
@@ -265,7 +266,7 @@ class TestInsightServiceProductionScenarios:
         },
         clear=True,
     )
-    def test_production_deployment_configuration(self, mock_uvicorn_run):
+    def test_production_deployment_configuration(self, mock_uvicorn_run: MagicMock) -> None:
         """Test configuration for production deployment."""
         main()
 
@@ -283,7 +284,7 @@ class TestInsightServiceProductionScenarios:
         {"HOST": "localhost", "PORT": "8082", "ENVIRONMENT": "development"},
         clear=True,
     )
-    def test_development_environment_configuration(self, mock_uvicorn_run):
+    def test_development_environment_configuration(self, mock_uvicorn_run: MagicMock) -> None:
         """Test configuration for development environment."""
         main()
 

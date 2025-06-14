@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from unittest.mock import AsyncMock, Mock, patch
 import uuid
+from typing import Any, Generator
 
 import pytest
 
@@ -17,7 +18,7 @@ from clarity.services.messaging.publisher import (
 
 
 @pytest.fixture
-def mock_messaging_service():
+def mock_messaging_service() -> Mock:
     """Mock AWS messaging service."""
     mock = Mock()
     mock.publish_health_data_upload = AsyncMock(return_value="msg-123")
@@ -28,7 +29,7 @@ def mock_messaging_service():
 
 
 @pytest.fixture
-def publisher(mock_messaging_service):
+def publisher(mock_messaging_service: Mock) -> Generator[HealthDataPublisher, None, None]:
     """Create publisher with mocked dependencies."""
     with patch("clarity.services.messaging.publisher.AWSMessagingService") as mock_aws:
         mock_aws.return_value = mock_messaging_service
@@ -39,7 +40,7 @@ def publisher(mock_messaging_service):
 class TestHealthDataModels:
     """Test Pydantic models."""
 
-    def test_health_data_event(self):
+    def test_health_data_event(self) -> None:
         """Test HealthDataEvent model."""
         event = HealthDataEvent(
             user_id="user-123",
@@ -55,7 +56,7 @@ class TestHealthDataModels:
         assert event.event_type == "health_data_upload"
         assert event.metadata == {"source": "mobile"}
 
-    def test_insight_request_event(self):
+    def test_insight_request_event(self) -> None:
         """Test InsightRequestEvent model."""
         event = InsightRequestEvent(
             user_id="user-123",
@@ -75,7 +76,7 @@ class TestHealthDataModels:
 class TestHealthDataPublisherInit:
     """Test publisher initialization."""
 
-    def test_init_default_env(self):
+    def test_init_default_env(self) -> None:
         """Test initialization with default environment."""
         with patch(
             "clarity.services.messaging.publisher.AWSMessagingService"
@@ -98,7 +99,7 @@ class TestHealthDataPublisherInit:
             "CLARITY_INSIGHT_QUEUE": "custom-insight-queue",
         },
     )
-    def test_init_custom_env(self):
+    def test_init_custom_env(self) -> None:
         """Test initialization with custom environment variables."""
         with patch(
             "clarity.services.messaging.publisher.AWSMessagingService"
@@ -124,8 +125,8 @@ class TestPublishHealthDataUpload:
 
     @pytest.mark.asyncio
     async def test_publish_health_data_upload_success(
-        self, publisher, mock_messaging_service
-    ):
+        self, publisher: HealthDataPublisher, mock_messaging_service: Mock
+    ) -> None:
         """Test successful health data upload publishing."""
         user_id = str(uuid.uuid4())
         upload_id = str(uuid.uuid4())
@@ -149,8 +150,8 @@ class TestPublishHealthDataUpload:
 
     @pytest.mark.asyncio
     async def test_publish_health_data_upload_no_metadata(
-        self, publisher, mock_messaging_service
-    ):
+        self, publisher: HealthDataPublisher, mock_messaging_service: Mock
+    ) -> None:
         """Test publishing without metadata."""
         message_id = await publisher.publish_health_data_upload(
             user_id="user-123",
@@ -168,8 +169,8 @@ class TestPublishHealthDataUpload:
 
     @pytest.mark.asyncio
     async def test_publish_health_data_upload_error(
-        self, publisher, mock_messaging_service
-    ):
+        self, publisher: HealthDataPublisher, mock_messaging_service: Mock
+    ) -> None:
         """Test publishing with error."""
         mock_messaging_service.publish_health_data_upload.side_effect = Exception(
             "SQS error"
@@ -188,8 +189,8 @@ class TestPublishInsightRequest:
 
     @pytest.mark.asyncio
     async def test_publish_insight_request_success(
-        self, publisher, mock_messaging_service
-    ):
+        self, publisher: HealthDataPublisher, mock_messaging_service: Mock
+    ) -> None:
         """Test successful insight request publishing."""
         user_id = str(uuid.uuid4())
         upload_id = str(uuid.uuid4())
@@ -217,8 +218,8 @@ class TestPublishInsightRequest:
 
     @pytest.mark.asyncio
     async def test_publish_insight_request_no_metadata(
-        self, publisher, mock_messaging_service
-    ):
+        self, publisher: HealthDataPublisher, mock_messaging_service: Mock
+    ) -> None:
         """Test publishing without metadata."""
         message_id = await publisher.publish_insight_request(
             user_id="user-123",
@@ -236,8 +237,8 @@ class TestPublishInsightRequest:
 
     @pytest.mark.asyncio
     async def test_publish_insight_request_error(
-        self, publisher, mock_messaging_service
-    ):
+        self, publisher: HealthDataPublisher, mock_messaging_service: Mock
+    ) -> None:
         """Test publishing with error."""
         mock_messaging_service.publish_insight_request.side_effect = Exception(
             "SQS error"
@@ -255,14 +256,14 @@ class TestHealthCheckAndClose:
     """Test health check and close methods."""
 
     @pytest.mark.asyncio
-    async def test_health_check(self, publisher, mock_messaging_service):
+    async def test_health_check(self, publisher: HealthDataPublisher, mock_messaging_service: Mock) -> None:
         """Test health check."""
         result = await publisher.health_check()
 
         assert result == {"status": "healthy"}
         mock_messaging_service.health_check.assert_called_once()
 
-    def test_close(self, publisher, mock_messaging_service):
+    def test_close(self, publisher: HealthDataPublisher, mock_messaging_service: Mock) -> None:
         """Test close method."""
         publisher.close()
 
@@ -273,7 +274,7 @@ class TestGetPublisher:
     """Test get_publisher singleton function."""
 
     @pytest.mark.asyncio
-    async def test_get_publisher_singleton(self):
+    async def test_get_publisher_singleton(self) -> None:
         """Test get_publisher returns singleton."""
         # Reset global state
         clarity.services.messaging.publisher._publisher = None
@@ -285,7 +286,7 @@ class TestGetPublisher:
             assert publisher1 is publisher2
 
     @pytest.mark.asyncio
-    async def test_get_publisher_creates_instance(self):
+    async def test_get_publisher_creates_instance(self) -> None:
         """Test get_publisher creates new instance when needed."""
         # Reset global state
         clarity.services.messaging.publisher._publisher = None
@@ -304,8 +305,8 @@ class TestLoggingIntegration:
 
     @pytest.mark.asyncio
     async def test_publish_health_data_logs_success(
-        self, publisher, mock_messaging_service
-    ):
+        self, publisher: HealthDataPublisher, mock_messaging_service: Mock
+    ) -> None:
         """Test successful publish logs info."""
         # Patch the logger in the instance instead of the module
         with patch.object(publisher, "logger") as mock_logger:
@@ -325,8 +326,8 @@ class TestLoggingIntegration:
 
     @pytest.mark.asyncio
     async def test_publish_health_data_logs_error(
-        self, publisher, mock_messaging_service
-    ):
+        self, publisher: HealthDataPublisher, mock_messaging_service: Mock
+    ) -> None:
         """Test failed publish logs exception."""
         mock_messaging_service.publish_health_data_upload.side_effect = Exception(
             "Test error"

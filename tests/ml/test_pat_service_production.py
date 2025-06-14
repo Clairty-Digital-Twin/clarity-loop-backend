@@ -12,8 +12,9 @@ import hashlib
 import hmac
 from pathlib import Path
 import tempfile
-from unittest.mock import Mock, patch
+from unittest.mock import Mock, patch, MagicMock
 from uuid import uuid4
+from typing import Any
 
 import numpy as np
 import pytest
@@ -463,7 +464,7 @@ class TestPATModelServiceInitialization:
         assert service.preprocessor == mock_preprocessor
 
     @patch("torch.cuda.is_available")
-    def test_service_device_selection_cuda_available(self, mock_cuda):
+    def test_service_device_selection_cuda_available(self, mock_cuda: MagicMock) -> None:
         """Test device selection when CUDA is available."""
         mock_cuda.return_value = True
         service = PATModelService()
@@ -471,7 +472,7 @@ class TestPATModelServiceInitialization:
         assert service.device == "cuda"
 
     @patch("torch.cuda.is_available")
-    def test_service_device_selection_cuda_unavailable(self, mock_cuda):
+    def test_service_device_selection_cuda_unavailable(self, mock_cuda: MagicMock) -> None:
         """Test device selection when CUDA is unavailable."""
         mock_cuda.return_value = False
         service = PATModelService()
@@ -483,7 +484,7 @@ class TestModelLoadingAndSecurity:
     """Test model loading and security features."""
 
     @patch("pathlib.Path.exists")
-    async def test_load_model_success(self, mock_exists):
+    async def test_load_model_success(self, mock_exists: MagicMock) -> None:
         """Test successful model loading."""
         mock_exists.return_value = False  # No weights file, use random init
 
@@ -497,7 +498,7 @@ class TestModelLoadingAndSecurity:
 
     @patch("pathlib.Path.exists")
     @patch.object(PATModelService, "_load_pretrained_weights")
-    async def test_load_model_with_weights(self, mock_load_weights, mock_exists):
+    async def test_load_model_with_weights(self, mock_load_weights: MagicMock, mock_exists: MagicMock) -> None:
         """Test model loading with existing weights file."""
         mock_exists.return_value = True
         mock_load_weights.return_value = None
@@ -583,7 +584,7 @@ class TestModelLoadingAndSecurity:
             temp_path.unlink()  # Clean up
 
     @patch.object(PATModelService, "_calculate_file_checksum")
-    def test_verify_model_integrity_success(self, mock_checksum):
+    def test_verify_model_integrity_success(self, mock_checksum: MagicMock) -> None:
         """Test successful model integrity verification."""
         mock_checksum.return_value = EXPECTED_MODEL_CHECKSUMS["small"]
 
@@ -593,7 +594,7 @@ class TestModelLoadingAndSecurity:
         assert result is True
 
     @patch.object(PATModelService, "_calculate_file_checksum")
-    def test_verify_model_integrity_failure(self, mock_checksum):
+    def test_verify_model_integrity_failure(self, mock_checksum: MagicMock) -> None:
         """Test failed model integrity verification."""
         mock_checksum.return_value = "invalid_checksum"
 
@@ -613,7 +614,7 @@ class TestModelLoadingAndSecurity:
 class TestDataPreprocessingAndPredictions:
     """Test data preprocessing and prediction functionality."""
 
-    def setup_method(self, method):
+    def setup_method(self, method: Any) -> None:
         """Set up test fixtures."""
         self.service = PATModelService(model_size="small")
 
@@ -721,7 +722,7 @@ class TestDataPreprocessingAndPredictions:
 class TestErrorHandlingAndValidation:
     """Test comprehensive error handling and validation."""
 
-    def setup_method(self, method):
+    def setup_method(self, method: Any) -> None:
         """Set up test fixtures."""
         self.service = PATModelService()
 
@@ -779,7 +780,7 @@ class TestErrorHandlingAndValidation:
 class TestHealthCheckAndServiceManagement:
     """Test health check and service management functionality."""
 
-    def setup_method(self, method):
+    def setup_method(self, method: Any) -> None:
         """Set up test fixtures."""
         self.service = PATModelService()
 
@@ -855,7 +856,7 @@ class TestHealthCheckAndServiceManagement:
 class TestIntegrationScenarios:
     """Test integration scenarios and realistic usage patterns."""
 
-    def setup_method(self, method):
+    def setup_method(self, method: Any) -> None:
         """Set up test fixtures."""
         self.service = PATModelService(model_size="small")
 
@@ -981,15 +982,15 @@ class TestGetPATServiceFunction:
 class TestResilienceAndErrorRecovery:
     """Test resilience and error recovery scenarios."""
 
-    def setup_method(self, method):
+    def setup_method(self, method: Any) -> None:
         """Set up test fixtures."""
         self.service = PATModelService()
 
     @patch("torch.cuda.is_available")
     @patch("torch.cuda.device_count")
     def test_device_fallback_on_cuda_error(
-        self, mock_device_count, mock_cuda_available
-    ):
+        self, mock_device_count: MagicMock, mock_cuda_available: MagicMock
+    ) -> None:
         """Test device fallback when CUDA has issues."""
         mock_cuda_available.return_value = True
         mock_device_count.return_value = 0  # No CUDA devices

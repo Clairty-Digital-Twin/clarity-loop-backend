@@ -9,8 +9,9 @@ from __future__ import annotations
 import asyncio
 from datetime import UTC, datetime
 import time
-from unittest.mock import AsyncMock, Mock, patch
+from unittest.mock import AsyncMock, Mock, patch, MagicMock
 from uuid import UUID
+from typing import Any
 
 from botocore.exceptions import ClientError
 import pytest
@@ -30,7 +31,7 @@ class TestDynamoDBServiceInitialization:
     """Test DynamoDB service initialization and configuration."""
 
     @patch("clarity.services.dynamodb_service.boto3.resource")
-    def test_dynamodb_service_basic_initialization(self, mock_boto3):
+    def test_dynamodb_service_basic_initialization(self, mock_boto3: MagicMock) -> None:
         """Test basic DynamoDB service initialization."""
         mock_resource = Mock()
         mock_boto3.return_value = mock_resource
@@ -62,7 +63,7 @@ class TestDynamoDBServiceInitialization:
         )
 
     @patch("clarity.services.dynamodb_service.boto3.resource")
-    def test_dynamodb_service_with_endpoint_url(self, mock_boto3):
+    def test_dynamodb_service_with_endpoint_url(self, mock_boto3: MagicMock) -> None:
         """Test DynamoDB service initialization with custom endpoint."""
         mock_resource = Mock()
         mock_boto3.return_value = mock_resource
@@ -77,7 +78,7 @@ class TestDynamoDBServiceInitialization:
         )
 
     @patch("clarity.services.dynamodb_service.boto3.resource")
-    def test_dynamodb_service_default_configuration(self, mock_boto3):
+    def test_dynamodb_service_default_configuration(self, mock_boto3: MagicMock) -> None:
         """Test DynamoDB service with default configuration."""
         mock_resource = Mock()
         mock_boto3.return_value = mock_resource
@@ -693,7 +694,7 @@ class TestQueryOperations:
 class TestBatchOperations:
     """Test DynamoDB batch operations."""
 
-    def setup_method(self, method):
+    def setup_method(self, method: Any) -> None:
         """Set up test fixtures."""
         # Mock the boto3 resource and table
         self.mock_resource = Mock()
@@ -719,7 +720,7 @@ class TestBatchOperations:
         self.service = DynamoDBService(region="us-east-1", table_prefix="test_")
         self.table_name = self.service.tables["health_data"]
 
-    def teardown_method(self, method):
+    def teardown_method(self, method: Any) -> None:
         """Clean up test fixtures."""
         self.patcher.stop()
 

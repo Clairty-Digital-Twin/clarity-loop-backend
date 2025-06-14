@@ -4,7 +4,8 @@ from __future__ import annotations
 
 import base64
 import json
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock, patch, MagicMock, Mock
+from typing import Any
 
 from fastapi import HTTPException
 from fastapi.testclient import TestClient
@@ -20,21 +21,21 @@ from clarity.services.messaging.insight_subscriber import (
 
 
 @pytest.fixture
-def mock_storage_client():
+def mock_storage_client() -> MagicMock:
     """Mock Google Cloud Storage client."""
     with patch("clarity.services.messaging.insight_subscriber.storage.Client") as mock:
         yield mock
 
 
 @pytest.fixture
-def mock_gemini_service():
+def mock_gemini_service() -> MagicMock:
     """Mock Gemini service."""
     with patch("clarity.services.messaging.insight_subscriber.GeminiService") as mock:
         yield mock
 
 
 @pytest.fixture
-def insight_subscriber(mock_storage_client, mock_gemini_service):
+def insight_subscriber(mock_storage_client: MagicMock, mock_gemini_service: MagicMock) -> InsightSubscriber:
     """Create insight subscriber with mocked dependencies."""
     # Reset singleton
     InsightSubscriberSingleton._instance = None
@@ -43,7 +44,7 @@ def insight_subscriber(mock_storage_client, mock_gemini_service):
 
 
 @pytest.fixture
-def test_client():
+def test_client() -> TestClient:
     """Create test client for FastAPI app."""
     return TestClient(insight_app)
 
@@ -74,7 +75,7 @@ def valid_pubsub_message():
 class TestInsightSubscriberInit:
     """Test InsightSubscriber initialization."""
 
-    def test_init_default(self, mock_storage_client, mock_gemini_service):
+    def test_init_default(self, mock_storage_client: MagicMock, mock_gemini_service: MagicMock) -> None:
         """Test initialization with default values."""
         # Clear any existing environment variable
         with patch.dict("os.environ", {}, clear=True):
@@ -85,7 +86,7 @@ class TestInsightSubscriberInit:
             mock_storage_client.assert_called_once()
             mock_gemini_service.assert_called_once()
 
-    def test_init_with_environment(self, mock_storage_client, mock_gemini_service):
+    def test_init_with_environment(self, mock_storage_client: MagicMock, mock_gemini_service: MagicMock) -> None:
         """Test initialization with environment variables."""
         with patch.dict(
             "os.environ",
@@ -105,8 +106,8 @@ class TestProcessInsightRequest:
 
     @pytest.mark.asyncio
     async def test_process_insight_request_success(
-        self, insight_subscriber, valid_pubsub_message
-    ):
+        self, insight_subscriber: InsightSubscriber, valid_pubsub_message: dict[str, Any]
+    ) -> None:
         """Test successful insight request processing."""
         # Mock request
         mock_request = AsyncMock()
@@ -165,8 +166,8 @@ class TestProcessInsightRequest:
 
     @pytest.mark.asyncio
     async def test_process_insight_request_production_auth(
-        self, insight_subscriber, valid_pubsub_message
-    ):
+        self, insight_subscriber: InsightSubscriber, valid_pubsub_message: dict[str, Any]
+    ) -> None:
         """Test insight request processing with production authentication."""
         insight_subscriber.environment = "production"
 
@@ -200,7 +201,7 @@ class TestProcessInsightRequest:
         assert result["status"] == "success"
 
     @pytest.mark.asyncio
-    async def test_process_insight_request_error(self, insight_subscriber):
+    async def test_process_insight_request_error(self, insight_subscriber: InsightSubscriber) -> None:
         """Test insight request processing with error."""
         # Mock request that fails
         mock_request = AsyncMock()
@@ -218,7 +219,7 @@ class TestVerifyPubsubToken:
     """Test Pub/Sub token verification."""
 
     @pytest.mark.asyncio
-    async def test_verify_token_missing_header(self, insight_subscriber):
+    async def test_verify_token_missing_header(self, insight_subscriber: InsightSubscriber) -> None:
         """Test token verification with missing header."""
         mock_request = AsyncMock()
         mock_request.headers = {}
@@ -230,7 +231,7 @@ class TestVerifyPubsubToken:
         assert exc_info.value.detail == "Missing authorization header"
 
     @pytest.mark.asyncio
-    async def test_verify_token_valid_bearer(self, insight_subscriber):
+    async def test_verify_token_valid_bearer(self, insight_subscriber: InsightSubscriber) -> None:
         """Test token verification with valid bearer token."""
         mock_request = AsyncMock()
         mock_request.headers = {"authorization": "Bearer valid-token"}
@@ -239,7 +240,7 @@ class TestVerifyPubsubToken:
         await insight_subscriber._verify_pubsub_token(mock_request)
 
     @pytest.mark.asyncio
-    async def test_verify_token_invalid_format(self, insight_subscriber):
+    async def test_verify_token_invalid_format(self, insight_subscriber: InsightSubscriber) -> None:
         """Test token verification with invalid format."""
         mock_request = AsyncMock()
         mock_request.headers = {"authorization": "Bearer "}
@@ -251,7 +252,7 @@ class TestVerifyPubsubToken:
         assert "Invalid" in exc_info.value.detail  # Allow either error message format
 
     @pytest.mark.asyncio
-    async def test_verify_token_exception(self, insight_subscriber):
+    async def test_verify_token_exception(self, insight_subscriber: InsightSubscriber) -> None:
         """Test token verification with unexpected exception."""
         mock_request = AsyncMock()
         # Pass authorization that will trigger the token extraction but be empty
@@ -270,7 +271,7 @@ class TestVerifyPubsubToken:
 class TestExtractMessageData:
     """Test message data extraction."""
 
-    def test_extract_message_data_valid(self, insight_subscriber, valid_pubsub_message):
+    def test_extract_message_data_valid(self, insight_subscriber: InsightSubscriber, valid_pubsub_message: dict[str, Any]) -> None:
         """Test extracting valid message data."""
         message_data = insight_subscriber._extract_message_data(valid_pubsub_message)
 
@@ -279,7 +280,7 @@ class TestExtractMessageData:
         assert "analysis_results" in message_data
         assert message_data["analysis_results"]["heart_rate"]["average"] == 72
 
-    def test_extract_message_data_missing_message(self, insight_subscriber):
+    def test_extract_message_data_missing_message(self, insight_subscriber: InsightSubscriber) -> None:
         """Test extracting data from invalid message structure."""
         with pytest.raises(HTTPException) as exc_info:
             insight_subscriber._extract_message_data({})
@@ -287,7 +288,7 @@ class TestExtractMessageData:
         assert exc_info.value.status_code == 400
         assert "Invalid message format" in str(exc_info.value.detail)
 
-    def test_extract_message_data_invalid_base64(self, insight_subscriber):
+    def test_extract_message_data_invalid_base64(self, insight_subscriber: InsightSubscriber) -> None:
         """Test extracting data with invalid base64."""
         pubsub_body = {
             "message": {
@@ -301,7 +302,7 @@ class TestExtractMessageData:
         assert exc_info.value.status_code == 400
         assert "Invalid message format" in str(exc_info.value.detail)
 
-    def test_extract_message_data_invalid_json(self, insight_subscriber):
+    def test_extract_message_data_invalid_json(self, insight_subscriber: InsightSubscriber) -> None:
         """Test extracting data with invalid JSON."""
         pubsub_body = {
             "message": {
@@ -315,7 +316,7 @@ class TestExtractMessageData:
         assert exc_info.value.status_code == 400
         assert "Invalid message format" in str(exc_info.value.detail)
 
-    def test_extract_message_data_missing_field(self, insight_subscriber):
+    def test_extract_message_data_missing_field(self, insight_subscriber: InsightSubscriber) -> None:
         """Test extracting data with missing required field."""
         message_data = {
             "user_id": "test-user",
@@ -339,7 +340,7 @@ class TestStoreInsights:
     """Test insight storage."""
 
     @pytest.mark.asyncio
-    async def test_store_insights(self, insight_subscriber):
+    async def test_store_insights(self, insight_subscriber: InsightSubscriber) -> None:
         """Test storing insights (placeholder implementation)."""
         # Currently just logs, so verify it doesn't raise
         await insight_subscriber._store_insights(
@@ -352,7 +353,7 @@ class TestStoreInsights:
 class TestHelperMethods:
     """Test helper methods."""
 
-    def test_raise_invalid_token_error(self):
+    def test_raise_invalid_token_error(self) -> None:
         """Test _raise_invalid_token_error method."""
         with pytest.raises(HTTPException) as exc_info:
             InsightSubscriber._raise_invalid_token_error()
@@ -360,7 +361,7 @@ class TestHelperMethods:
         assert exc_info.value.status_code == 401
         assert "Invalid" in exc_info.value.detail  # Allow either error message format
 
-    def test_raise_missing_field_error(self):
+    def test_raise_missing_field_error(self) -> None:
         """Test _raise_missing_field_error method."""
         with pytest.raises(ValueError) as exc_info:
             InsightSubscriber._raise_missing_field_error("test_field")
@@ -371,7 +372,7 @@ class TestHelperMethods:
 class TestInsightSubscriberSingleton:
     """Test InsightSubscriberSingleton."""
 
-    def test_singleton_get_instance(self, mock_storage_client, mock_gemini_service):
+    def test_singleton_get_instance(self, mock_storage_client: MagicMock, mock_gemini_service: MagicMock) -> None:
         """Test singleton pattern."""
         # Reset singleton
         InsightSubscriberSingleton._instance = None
@@ -384,7 +385,7 @@ class TestInsightSubscriberSingleton:
         instance2 = InsightSubscriberSingleton.get_instance()
         assert instance2 is instance1
 
-    def test_get_insight_subscriber(self, mock_storage_client, mock_gemini_service):
+    def test_get_insight_subscriber(self, mock_storage_client: MagicMock, mock_gemini_service: MagicMock) -> None:
         """Test get_insight_subscriber function."""
         # Reset singleton
         InsightSubscriberSingleton._instance = None
@@ -398,8 +399,8 @@ class TestFastAPIEndpoints:
 
     @pytest.mark.asyncio
     async def test_process_insight_task_endpoint(
-        self, test_client, valid_pubsub_message
-    ):
+        self, test_client: TestClient, valid_pubsub_message: dict[str, Any]
+    ) -> None:
         """Test /process-task endpoint."""
         with patch(
             "clarity.services.messaging.insight_subscriber.get_insight_subscriber"
@@ -416,7 +417,7 @@ class TestFastAPIEndpoints:
             assert response.status_code == 200
             assert response.json()["status"] == "success"
 
-    def test_health_check_endpoint(self, test_client):
+    def test_health_check_endpoint(self, test_client: TestClient) -> None:
         """Test /health endpoint."""
         response = test_client.get("/health")
 

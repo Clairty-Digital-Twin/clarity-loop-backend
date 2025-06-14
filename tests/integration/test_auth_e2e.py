@@ -2,6 +2,7 @@
 
 import os
 import socket
+from typing import Any
 
 import boto3
 from botocore.exceptions import ClientError
@@ -34,7 +35,7 @@ class TestAuthenticationE2E:
         return {"email": "test@example.com", "password": "TestPassword123!"}
 
     @pytest.fixture
-    def frontend_login_payload(self, test_user_credentials):
+    def frontend_login_payload(self, test_user_credentials: dict[str, str]) -> dict[str, Any]:
         """Frontend login payload exactly as iOS app sends it."""
         return {
             "email": test_user_credentials["email"],
@@ -52,7 +53,7 @@ class TestAuthenticationE2E:
         os.getenv("CI") == "true" or not os.getenv("RUN_INTEGRATION_TESTS"),
         reason="Requires live Cognito credentials",
     )
-    async def test_login_success(self, frontend_login_payload):
+    async def test_login_success(self, frontend_login_payload: dict[str, Any]) -> None:
         """Test successful login with frontend payload."""
         async with httpx.AsyncClient() as client:
             response = await client.post(
@@ -87,7 +88,7 @@ class TestAuthenticationE2E:
     @pytest.mark.skipif(
         os.getenv("CI") == "true", reason="Requires live Cognito credentials"
     )
-    async def test_login_invalid_credentials(self, frontend_login_payload):
+    async def test_login_invalid_credentials(self, frontend_login_payload: dict[str, Any]) -> None:
         """Test login with invalid credentials."""
         # Skip if service is unreachable
         if not _service_up(self.BASE_URL):

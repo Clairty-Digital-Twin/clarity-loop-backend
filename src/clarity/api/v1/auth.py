@@ -7,6 +7,7 @@ import logging
 from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel, EmailStr, Field
 
 from clarity.auth.aws_cognito_provider import CognitoAuthProvider
@@ -121,6 +122,12 @@ async def register(
             status_code=400,
             detail=str(e),
         ) from e
+    except EmailNotVerifiedError as e:
+        # Return 202 Accepted when email verification is required
+        return JSONResponse(
+            status_code=202,
+            content={"requires_email_verification": True}
+        )
     except Exception as e:
         logger.exception("Registration failed")
         raise HTTPException(

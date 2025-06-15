@@ -57,7 +57,7 @@ run_test() {
 
 # Test 1: Health Check
 run_test "Health Check" "200" \
-    "curl -s -o /dev/null -w '%{http_code}' -X GET '${API_URL}/health'"
+    "curl -s -o /dev/null -w '%{http_code}' -X GET '${BASE_URL}/health'"
 
 # Test 2: Registration with valid password
 run_test "Registration - Valid Password" "201" \

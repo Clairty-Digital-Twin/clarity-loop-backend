@@ -2,12 +2,17 @@
 # Production-ready Docker image with all ML dependencies
 FROM python:3.11-slim
 
-# Install system dependencies
+# Install system dependencies including AWS CLI
 RUN apt-get update && apt-get install -y \
     --no-install-recommends \
     curl \
     gcc \
     python3-dev \
+    unzip \
+    && curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip" \
+    && unzip awscliv2.zip \
+    && ./aws/install \
+    && rm -rf awscliv2.zip aws \
     && rm -rf /var/lib/apt/lists/*
 
 # Set working directory

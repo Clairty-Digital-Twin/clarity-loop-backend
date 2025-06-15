@@ -46,31 +46,22 @@ AWS ECS Fargate ONLY supports `linux/amd64` platform. Building for any other pla
 
 ## Deployment Process
 
-1. **Build Docker Image (ALWAYS with platform flag)**:
-   ```bash
-   docker build --platform linux/amd64 -t clarity-backend:tag-name .
-   ```
+**USE THE CANONICAL DEPLOYMENT SCRIPT**:
+```bash
+cd ops/
+./deploy.sh          # Deploy existing task definition
+./deploy.sh --build  # Build new image and deploy
+```
 
-2. **Tag for ECR**:
-   ```bash
-   docker tag clarity-backend:tag-name 124355672559.dkr.ecr.us-east-1.amazonaws.com/clarity-backend:tag-name
-   ```
+The script handles:
+1. Building for linux/amd64 platform (CRITICAL!)
+2. Tagging and pushing to ECR
+3. Updating task definition
+4. Deploying to ECS
+5. Waiting for stability
+6. Health verification
 
-3. **Push to ECR**:
-   ```bash
-   docker push 124355672559.dkr.ecr.us-east-1.amazonaws.com/clarity-backend:tag-name
-   ```
-
-4. **Update Task Definition**:
-   ```bash
-   # Update ops/ecs-task-definition.json with new image tag
-   aws ecs register-task-definition --cli-input-json file://ops/ecs-task-definition.json --region us-east-1
-   ```
-
-5. **Update Service**:
-   ```bash
-   aws ecs update-service --cluster clarity-backend-cluster --service clarity-backend-service --task-definition clarity-backend:REVISION --region us-east-1
-   ```
+**Current Production Image**: `production-final` (also tagged as `latest`)
 
 ## Authentication Fix Status
 
@@ -137,6 +128,6 @@ mypy src/
 
 ## Last Updated
 
-- Date: June 14, 2025
+- Date: June 15, 2025
 - By: Claude (AI Assistant)
-- Reason: Documented critical platform requirements after deployment failure due to wrong architecture
+- Reason: Successfully deployed to production, cleaned up old resources, and consolidated deployment process

@@ -83,6 +83,7 @@ build_and_push() {
     
     # Build for linux/amd64 (CRITICAL FOR ECS!)
     echo -e "${BLUE}Building for linux/amd64...${NC}"
+    echo -e "${RED}⚠️  CRITICAL: Always build for linux/amd64 platform for AWS ECS${NC}"
     docker build --platform linux/amd64 -t clarity-backend:$TAG .
     
     # Tag for ECR

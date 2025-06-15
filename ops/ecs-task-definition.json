@@ -41,6 +41,12 @@
         {"name": "PAT_M_CHECKSUM", "value": "855e482b79707bf1b71a27c7a6a07691b49df69e40b08f54b33d178680f04ba7"},
         {"name": "PAT_L_CHECKSUM", "value": "e8ebef52e34a6f1ea92bbe3f752afcd1ae427b9efbe0323856e873f12c989521"}
       ],
+      "secrets": [
+        {
+          "name": "GEMINI_API_KEY",
+          "valueFrom": "arn:aws:secretsmanager:us-east-1:124355672559:secret:clarity/gemini-api-key:GEMINI_API_KEY::"
+        }
+      ],
       "logConfiguration": {
         "logDriver": "awslogs",
         "options": {

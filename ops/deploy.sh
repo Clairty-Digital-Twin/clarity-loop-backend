@@ -102,9 +102,23 @@ build_and_push() {
     echo -e "${BLUE}Building for linux/amd64...${NC}"
     echo -e "${RED}⚠️  CRITICAL: Always build for linux/amd64 platform for AWS ECS${NC}"
     
-    # Use buildx with explicit push for better reliability
-    echo -e "${YELLOW}Building with docker buildx for linux/amd64...${NC}"
-    docker buildx build --platform linux/amd64 --progress=plain --push -t $FULL_IMAGE .
+    # Setup buildx if not already done
+    docker buildx create --use --name clarity-builder --driver docker-container 2>/dev/null || true
+    
+    # Use buildx with caching for faster builds
+    echo -e "${YELLOW}Building with docker buildx for linux/amd64 with cache...${NC}"
+    
+    # Build with cache and push
+    docker buildx build \
+        --platform linux/amd64 \
+        --cache-from type=registry,ref=$ECR_REPO:buildcache \
+        --cache-to type=registry,ref=$ECR_REPO:buildcache,mode=max \
+        --build-arg BUILDKIT_INLINE_CACHE=1 \
+        --progress=plain \
+        --push \
+        -t $FULL_IMAGE \
+        -t $ECR_REPO:latest \
+        .
     
     # Verify the image was pushed
     echo -e "${BLUE}Verifying image in ECR...${NC}"
@@ -251,6 +265,34 @@ verify_deployment() {
 main() {
     echo -e "${BLUE}Starting deployment at $(date)${NC}"
     
+    # Parse command line arguments first
+    BUILD_MODE=false
+    TAG=""
+    
+    # Process arguments
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            --build)
+                BUILD_MODE=true
+                shift
+                ;;
+            --tag)
+                if [ -z "${2:-}" ]; then
+                    echo -e "${RED}--tag requires a value${NC}"
+                    echo "Usage: $0 [--build] [--tag TAG]"
+                    exit 1
+                fi
+                TAG="$2"
+                shift 2
+                ;;
+            *)
+                echo -e "${RED}Unknown option: $1${NC}"
+                echo "Usage: $0 [--build] [--tag TAG]"
+                exit 1
+                ;;
+        esac
+    done
+    
     # Check prerequisites
     check_prerequisites
     
@@ -258,12 +300,20 @@ main() {
     validate_task_definition
     
     # Build and push if requested
-    if [ "${1:-}" == "--build" ]; then
+    if [ "$BUILD_MODE" = true ]; then
         TAG=$(build_and_push)
         echo -e "${GREEN}✅ Built and pushed tag: $TAG${NC}"
+    elif [ -n "$TAG" ]; then
+        echo -e "${YELLOW}Using provided tag: $TAG${NC}"
+        # Verify the tag exists in ECR
+        aws ecr describe-images --repository-name clarity-backend --image-ids imageTag=$TAG --region $REGION >/dev/null 2>&1
+        if [ $? -ne 0 ]; then
+            echo -e "${RED}❌ Image with tag '$TAG' not found in ECR${NC}"
+            exit 1
+        fi
     else
-        # If not building, use latest or provided tag
-        TAG="${TAG:-latest}"
+        # Default to latest
+        TAG="latest"
         echo -e "${YELLOW}Using existing image with tag: $TAG${NC}"
     fi
     

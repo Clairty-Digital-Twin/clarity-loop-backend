@@ -18,13 +18,18 @@ RUN apt-get update && apt-get install -y \
 # Set working directory
 WORKDIR /app
 
-# Copy the entire project for proper package installation
+# Copy only dependency files first for better caching
 COPY pyproject.toml LICENSE README.md ./
-COPY src/ ./src/
 
-# Install dependencies and the package
+# Install dependencies first (this layer will be cached if deps don't change)
 RUN pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir -e .
+    pip install --no-cache-dir toml && \
+    python -c "import toml; deps = toml.load('pyproject.toml')['project']['dependencies']; print('\n'.join(deps))" > requirements.txt && \
+    pip install --no-cache-dir -r requirements.txt
+
+# Now copy source code and install in editable mode
+COPY src/ ./src/
+RUN pip install --no-cache-dir -e .
 
 # Copy Gunicorn configuration and scripts
 COPY gunicorn.aws.conf.py ./

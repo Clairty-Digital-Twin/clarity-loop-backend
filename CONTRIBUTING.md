@@ -66,7 +66,7 @@ Perfect for new contributors or those with 120 days of coding experience!
 - Fix typos and improve documentation clarity
 - Add code comments and docstrings
 - Update README examples and setup instructions
-- Improve test coverage (currently 57%, targeting 85%)
+- Improve test coverage (currently 76%, targeting 85%)
 
 **Research Validation:**
 

@@ -1,16 +1,20 @@
-# 🔗 CLARITY Epic Integration: Psychiatric Digital Twins in Clinical Practice
+# 🔗 CLARITY Epic Integration: Future Vision for Psychiatric Digital Twins
 
 ## Overview
 
-CLARITY's Epic integration transforms mental health care by embedding **objective, continuous psychiatric monitoring** directly into Epic's clinical workflows. Using the breakthrough PAT (Pretrained Actigraphy Transformer) model, we deliver real-time depression risk prediction, sleep pattern analysis, and digital biomarkers for mental health—all seamlessly integrated into Epic's 350+ million patient ecosystem.
+This document outlines CLARITY's **future integration roadmap** with Epic's clinical ecosystem. Based on Epic's official FHIR capabilities documented at [fhir.epic.com](https://fhir.epic.com/), we've designed a comprehensive integration strategy that could transform mental health care by embedding **objective, continuous psychiatric monitoring** directly into Epic's workflows serving 350+ million patients.
 
-## 🧠 Psychiatric Integration Architecture
+**🚨 Implementation Status: PLANNED - Not Yet Built**
 
-### Epic Ecosystem for Mental Health
+This integration represents our development roadmap and contribution opportunities for full-stack developers interested in healthcare interoperability.
+
+## 🧠 Proposed Psychiatric Integration Architecture
+
+### Epic Ecosystem Integration Vision
 
 ```mermaid
 graph TB
-    subgraph "Epic Psychiatric Workflow"
+    subgraph "Epic Clinical Workflow (Future)"
         A[Epic EHR - Psych Module] --> B[Epic FHIR Server]
         B --> C[CDS Hooks - Mental Health]
         B --> D[SMART Apps - Psychiatry]
@@ -18,44 +22,48 @@ graph TB
         A --> F[Epic Showroom - Behavioral Health]
     end
     
-    subgraph "CLARITY Psychiatric Platform"
+    subgraph "CLARITY Psychiatric Platform (In Development)"
         G[PAT Model Engine] --> H[Depression Risk Prediction]
         G --> I[Sleep Analysis]
         G --> J[Circadian Assessment]
         G --> K[Activity Fragmentation]
     end
     
-    subgraph "Digital Biomarker Sources"
+    subgraph "Digital Biomarker Sources (Operational)"
         L[Apple Watch/HealthKit] --> G
         M[Fitbit/Wearables] --> G
         N[Sleep Sensors] --> G
         O[Activity Trackers] --> G
     end
     
-    B --> G
-    C --> G
-    D --> G
-    G --> B
-    G --> C
+    B -.-> G
+    C -.-> G
+    D -.-> G
+    G -.-> B
+    G -.-> C
 ```
 
-## 🔌 Psychiatric FHIR Integration
+*Note: Solid lines represent current capabilities, dotted lines represent planned integrations*
 
-### Mental Health FHIR Resources
+## 🔌 Planned FHIR Integration
 
-**Primary Resources for Psychiatric Care:**
-- `Patient` - Demographics and psychiatric history
-- `Observation` - Digital biomarkers (sleep, activity, mood indicators)
-- `Condition` - Mental health diagnoses (Depression, Bipolar, Anxiety)
-- `MedicationRequest` - Psychiatric medications and dosing
-- `QuestionnaireResponse` - PHQ-9, GAD-7, mood ratings
-- `Goal` - Treatment goals and recovery metrics
-- `CarePlan` - Psychiatric treatment plans
+### Epic-Compatible Mental Health FHIR Resources
 
-### Continuous Psychiatric Monitoring
+Based on Epic's [official FHIR documentation](https://fhir.epic.com/), we would implement:
+
+**Supported Epic FHIR Resources for Psychiatric Care:**
+- `Patient` - Demographics and psychiatric history (Epic: Read, Search, Create)
+- `Observation` - Digital biomarkers for sleep, activity, mood indicators (Epic: Read, Search, Create)
+- `Condition` - Mental health diagnoses (Epic: Read, Search, Create - Problems)
+- `MedicationRequest` - Psychiatric medications (Epic: Read, Search)
+- `QuestionnaireResponse` - PHQ-9, GAD-7, mood ratings (Epic: Read, Search, Create)
+- `Goal` - Treatment goals and recovery metrics (Epic: Read, Search, Create)
+- `CarePlan` - Psychiatric treatment plans (Epic: Read, Search)
+
+### Proposed Continuous Psychiatric Monitoring
 
 ```json
-// Example: Depression Risk Observation from PAT Model
+// Future: Depression Risk Observation from PAT Model
 {
   "resourceType": "Observation",
   "status": "final",
@@ -87,13 +95,6 @@ graph TB
     "system": "http://unitsofmeasure.org",
     "code": "{score}"
   },
-  "interpretation": [{
-    "coding": [{
-      "system": "http://terminology.hl7.org/CodeSystem/v3-ObservationInterpretation",
-      "code": "H",
-      "display": "High"
-    }]
-  }],
   "component": [
     {
       "code": {
@@ -107,78 +108,48 @@ graph TB
         "value": 68.3,
         "unit": "%"
       }
-    },
-    {
-      "code": {
-        "coding": [{
-          "system": "http://clarity.ai/codes",
-          "code": "circadian-rhythm-score",
-          "display": "Circadian Rhythm Regularity"
-        }]
-      },
-      "valueQuantity": {
-        "value": 0.42,
-        "unit": "score"
-      }
-    },
-    {
-      "code": {
-        "coding": [{
-          "system": "http://clarity.ai/codes",
-          "code": "activity-fragmentation",
-          "display": "Activity Fragmentation Index"
-        }]
-      },
-      "valueQuantity": {
-        "value": 0.89,
-        "unit": "index"
-      }
     }
   ]
 }
 ```
 
-## 🚨 Psychiatric CDS Hooks
+## 🚨 Proposed CDS Hooks Integration
 
-### Custom Mental Health Decision Support
+Epic supports CDS Hooks for clinical decision support. Our planned implementation would include:
 
-#### `patient-depression-risk-alert`
-Triggered when CLARITY detects elevated depression risk through digital biomarkers.
+### `patient-depression-risk-alert` (Development Target)
 
 ```json
 {
-  "hook": "patient-depression-risk-alert",
+  "hook": "patient-view",
   "title": "CLARITY Psychiatric Alert",
   "description": "Depression risk prediction based on continuous digital biomarkers",
   "id": "clarity-depression-alert",
   "prefetch": {
     "patient": "Patient/{{context.patientId}}",
-    "mental-health-conditions": "Condition?patient={{context.patientId}}&category=mental-health&status=active",
-    "psychiatric-medications": "MedicationRequest?patient={{context.patientId}}&category=psychiatric&status=active",
-    "recent-mood-assessments": "QuestionnaireResponse?patient={{context.patientId}}&questionnaire=PHQ-9&_sort=-authored&_count=5",
-    "sleep-observations": "Observation?patient={{context.patientId}}&code=sleep-efficiency&_sort=-date&_count=30"
+    "conditions": "Condition?patient={{context.patientId}}&category=encounter-diagnosis",
+    "medications": "MedicationRequest?patient={{context.patientId}}&status=active"
   }
 }
 ```
 
-**Depression Risk CDS Card:**
+**Planned CDS Card Response:**
 ```json
 {
   "cards": [{
     "uuid": "clarity-depression-001",
     "summary": "⚠️ CLARITY Alert: Elevated Depression Risk Detected",
-    "detail": "Patient's digital biomarkers indicate increased depression risk (score: 0.68/1.0):\n• Sleep efficiency declined 22% over 14 days\n• Circadian rhythm disruption (score: 0.42)\n• Activity fragmentation increased 45%\n\nThis pattern correlates with onset of major depressive episodes 2-4 weeks before clinical symptoms.",
+    "detail": "Patient's digital biomarkers indicate increased depression risk:\n• Sleep efficiency declined 22% over 14 days\n• Circadian rhythm disruption detected\n\nConsider psychiatric evaluation.",
     "indicator": "warning",
     "source": {
       "label": "CLARITY Psychiatric Digital Twin",
-      "url": "https://clarity.ai/evidence/depression-prediction",
-      "icon": "https://clarity.ai/icons/brain-alert.png"
+      "url": "https://clarity.ai/evidence/depression-prediction"
     },
     "suggestions": [{
-      "label": "Schedule urgent psychiatric evaluation",
+      "label": "Schedule psychiatric evaluation",
       "actions": [{
         "type": "create",
-        "description": "Schedule urgent psychiatric follow-up based on digital biomarkers",
+        "description": "Schedule psychiatric follow-up based on digital biomarkers",
         "resource": {
           "resourceType": "Appointment",
           "status": "proposed",
@@ -188,78 +159,7 @@ Triggered when CLARITY detects elevated depression risk through digital biomarke
               "code": "394913002",
               "display": "Psychiatry"
             }]
-          }],
-          "priority": {
-            "coding": [{
-              "system": "http://terminology.hl7.org/CodeSystem/appointmentpriority",
-              "code": "urgent"
-            }]
-          },
-          "subject": {
-            "reference": "Patient/{{context.patientId}}"
-          }
-        }
-      }]
-    }, {
-      "label": "Order PHQ-9 assessment",
-      "actions": [{
-        "type": "create",
-        "description": "Validate digital biomarkers with clinical assessment",
-        "resource": {
-          "resourceType": "ServiceRequest",
-          "status": "draft",
-          "intent": "order",
-          "code": {
-            "coding": [{
-              "system": "http://loinc.org",
-              "code": "44249-1",
-              "display": "PHQ-9 quick depression assessment panel"
-            }]
-          },
-          "subject": {
-            "reference": "Patient/{{context.patientId}}"
-          }
-        }
-      }]
-    }],
-    "links": [{
-      "label": "View detailed CLARITY psychiatric analysis",
-      "url": "https://clarity.ai/patient/{{context.patientId}}/psychiatric-dashboard",
-      "type": "smart",
-      "appContext": "{\"analysisType\":\"depression-risk\",\"timeframe\":\"30d\"}"
-    }]
-  }]
-}
-```
-
-#### `patient-bipolar-episode-prediction`
-Early warning system for manic/depressive episodes in bipolar disorder.
-
-```json
-{
-  "cards": [{
-    "uuid": "clarity-bipolar-001",
-    "summary": "🔄 CLARITY Alert: Potential Manic Episode Approaching",
-    "detail": "Digital biomarkers suggest early manic phase:\n• Sleep onset latency decreased to <5 minutes (hypomanic indicator)\n• Activity fragmentation increased 40% in 72 hours\n• Circadian phase advance detected\n\nHistorical pattern suggests full mania within 5-7 days.",
-    "indicator": "critical",
-    "suggestions": [{
-      "label": "Consider mood stabilizer adjustment",
-      "actions": [{
-        "type": "create",
-        "description": "Proactive medication adjustment to prevent mania",
-        "resource": {
-          "resourceType": "MedicationRequest",
-          "status": "draft",
-          "intent": "plan",
-          "medicationCodeableConcept": {
-            "coding": [{
-              "system": "http://www.nlm.nih.gov/research/umls/rxnorm",
-              "code": "lithium-carbonate"
-            }]
-          },
-          "subject": {
-            "reference": "Patient/{{context.patientId}}"
-          }
+          }]
         }
       }]
     }]
@@ -267,164 +167,153 @@ Early warning system for manic/depressive episodes in bipolar disorder.
 }
 ```
 
-## 📱 SMART on FHIR Psychiatric Apps
+## 📱 Future SMART on FHIR Apps
 
-### **CLARITY Psychiatric Provider Dashboard**
-Embedded within Epic's psychiatric module:
+### Planned Provider Dashboard
 
-- **Depression Risk Timeline**: 30-day depression risk trends
-- **Sleep Architecture Analysis**: REM, deep sleep, circadian patterns
-- **Medication Response Tracking**: Objective treatment effectiveness
-- **Mood Episode Prediction**: Early warning for bipolar episodes
-- **Treatment Optimization**: Data-driven medication adjustments
+Epic supports SMART on FHIR apps that could be embedded within Epic's interface:
 
-### **MyChart Mental Health Integration**
-Patient-facing psychiatric self-management:
+**Psychiatric Provider Dashboard Features (Development Target):**
+- Depression risk timeline visualization
+- Sleep architecture analysis without sleep studies
+- Medication response tracking through objective data
+- Mood episode prediction for bipolar patients
+- Treatment optimization recommendations
 
-- **Personal Depression Monitoring**: Objective risk trends
-- **Sleep Health Dashboard**: Sleep efficiency and circadian insights
-- **Treatment Progress**: Medication response visualization
-- **Shared Decision Making**: Discuss digital biomarkers with providers
-- **Crisis Prevention**: Early warning notifications
+### Planned MyChart Integration
 
-## 📊 Psychiatric Data Flow
+**Patient-Facing Features (Development Target):**
+- Personal depression monitoring dashboard
+- Sleep health insights
+- Treatment progress visualization
+- Shared decision-making tools with providers
 
-### Continuous Mental Health Monitoring Pipeline
+## 📊 Future Data Flow Architecture
+
+### Planned Integration Pipeline
 
 ```mermaid
 sequenceDiagram
     participant W as Apple Watch
-    participant C as CLARITY PAT Engine
+    participant C as CLARITY Platform
     participant E as Epic FHIR Server
     participant P as Psychiatric Provider
-    participant CDS as Mental Health CDS
     
     W->>C: Continuous actigraphy data
     C->>C: PAT model analysis
-    C->>C: Depression risk calculation
-    C->>E: Store psychiatric observations
-    
-    alt High depression risk detected
-        C->>CDS: Trigger depression alert
-        CDS->>P: Display psychiatric alert
-        P->>E: Provider action (urgent appointment)
-    end
-    
-    alt Bipolar episode predicted
-        C->>CDS: Trigger bipolar warning
-        CDS->>P: Medication adjustment alert
-        P->>E: Update treatment plan
-    end
-    
-    C->>E: Update psychiatric digital twin
-    E->>P: Real-time dashboard updates
+    Note over C: Future: Real-time processing
+    C->>E: POST FHIR Observations
+    Note over E: Epic polling-based updates
+    E->>P: Updated patient dashboard
+    P->>E: Clinical actions
 ```
 
-### Epic Toolbox: Psychiatric Digital Biomarkers
+*Note: Epic uses polling rather than real-time webhooks for data updates*
 
-**Toolbox Category**: Behavioral Health - Digital Biomarkers
+## 🔐 Planned Security & Compliance
 
-**Description**: CLARITY creates continuous digital representations of patients' mental health using validated actigraphy analysis. The platform integrates seamlessly with Epic's psychiatric workflows to provide early depression detection, bipolar episode prediction, and objective treatment response monitoring.
-
-**Integration Features**:
-- Real-time psychiatric risk assessment
-- CDS Hooks for mental health decision support
-- SMART on FHIR apps for provider and patient dashboards
-- FHIR Observations for continuous mental health monitoring
-
-## 🔐 Psychiatric Data Security
-
-### Mental Health HIPAA Compliance
-Enhanced privacy protections for psychiatric data:
-
-- **42 CFR Part 2 Compliance**: Extra protections for mental health records
-- **State Privacy Laws**: Compliance with mental health privacy regulations
-- **Patient Consent Management**: Granular consent for digital biomarker sharing
-- **Data Minimization**: Only essential psychiatric data exposed to Epic
-
-### OAuth Scopes for Psychiatric Integration
+### Epic OAuth 2.0 Integration (Development Target)
 
 ```javascript
-// CLARITY Psychiatric SMART App Registration
+// Future: CLARITY SMART App Registration
 {
   "client_id": "clarity-psychiatric-twin",
   "client_name": "CLARITY Psychiatric Digital Twin",
   "redirect_uris": [
     "https://clarity.ai/smart/psychiatric/callback"
   ],
-  "scope": "patient/Patient.read patient/Observation.write patient/Condition.read patient/MedicationRequest.read patient/QuestionnaireResponse.read user/Practitioner.read",
+  "scope": "patient/Patient.read patient/Observation.write patient/Condition.read",
   "launch_uri": "https://clarity.ai/smart/psychiatric/launch",
   "fhir_versions": ["4.0.1"],
   "grant_types": ["authorization_code"],
-  "response_types": ["code"],
-  "category": "behavioral-health"
+  "response_types": ["code"]
 }
 ```
 
-## 🚀 Deployment Strategy for Psychiatric Care
+## 🚀 Development Roadmap
 
-### Phase 1: Epic Psychiatric Module Integration
-1. **Behavioral Health SMART App**
-   - Depression risk dashboard for psychiatrists
-   - Bipolar episode prediction interface
-   - Sleep disorder analysis tools
+### Phase 1: Foundation (Q2 2025 Target)
+- [ ] Epic FHIR client implementation
+- [ ] OAuth 2.0 authentication flow
+- [ ] Basic FHIR Observation creation
+- [ ] SMART on FHIR launcher
 
-2. **Epic Showroom - Behavioral Health Category**
-   - Featured in psychiatric and sleep medicine categories
-   - Integration with Epic's mental health quality measures
-   - Clinical evidence and ROI documentation
+### Phase 2: Clinical Integration (Q3 2025 Target)
+- [ ] CDS Hooks service development
+- [ ] Provider dashboard SMART app
+- [ ] MyChart patient portal integration
+- [ ] Clinical workflow optimization
 
-### Phase 2: Health System Psychiatric Pilots
-1. **Target Psychiatric Programs**
-   - Major academic medical centers with psychiatric residencies
-   - Large behavioral health networks
-   - Integrated delivery systems with strong Epic implementations
+### Phase 3: Advanced Features (Q4 2025 Target)
+- [ ] Real-time depression monitoring
+- [ ] Bipolar episode prediction
+- [ ] Medication adherence tracking
+- [ ] Population health analytics
 
-2. **Clinical Integration Support**
-   - Psychiatric workflow optimization
-   - Provider training on digital biomarkers
-   - Quality measure alignment
+## 📈 Technical Implementation Specifications
 
-### Phase 3: Scale Across Epic Behavioral Health Network
-1. **Epic Partnership Expansion**
-   - Direct integration with Epic's behavioral health team
-   - Co-development of psychiatric decision support tools
-   - Joint research initiatives on digital mental health
-
-## 📈 Psychiatric Technical Specifications
-
-### Performance Requirements for Mental Health
+### Performance Targets for Mental Health Integration
 - **Depression Risk Calculation**: <100ms response time
-- **Continuous Monitoring**: 24/7 patient data processing
-- **Alert Generation**: <30 seconds from risk detection to provider notification
-- **Data Throughput**: 1M+ psychiatric observations per day
+- **Data Sync with Epic**: Every 15 minutes (Epic's recommended polling frequency)
+- **CDS Response Time**: <200ms for clinical decision support
+- **SMART App Load Time**: <3 seconds
 
-### Clinical Validation Metrics
-- **Depression Detection**: 85% sensitivity, 90% specificity
-- **Bipolar Episode Prediction**: 7-10 day advance warning
-- **Treatment Response**: 60% faster detection than clinical scales
-- **False Positive Rate**: <5% for critical alerts
+### Clinical Validation Targets
+- **Depression Detection**: Target 85% sensitivity, 90% specificity
+- **False Positive Rate**: Target <5% for critical alerts
+- **Clinical Correlation**: Target correlation with PHQ-9 scores >0.7
 
-## 🎯 Psychiatric Success Metrics
+## 🎯 Aspirational Success Metrics
 
-### Clinical Outcomes
+### Future Clinical Impact Goals
 - **40% reduction** in psychiatric emergency department visits
-- **60% improvement** in depression screening accuracy
-- **3x faster** antidepressant response detection
-- **25% reduction** in psychiatric hospitalizations
+- **60% improvement** in depression screening accuracy compared to PHQ-9 alone
+- **3x faster** antidepressant response detection vs. current 4-6 week standard
+- **25% reduction** in psychiatric hospitalizations through early intervention
 
-### Provider Experience
-- **90% psychiatrist satisfaction** with objective data
+### Provider Experience Targets
+- **90% psychiatrist satisfaction** with objective data integration
 - **50% reduction** in diagnostic uncertainty
-- **75% provider adoption** within 6 months
+- **75% provider adoption** within 6 months post-launch
 - **Improved clinical confidence** in treatment decisions
 
-### Health System Impact
-- **$3,200 annual savings** per psychiatric patient
-- **Improved Joint Commission** behavioral health metrics
-- **Enhanced patient safety** through early intervention
-- **Better outcomes** for value-based psychiatric contracts
+### Health System ROI Projections
+- **$3,200 annual savings** per psychiatric patient through reduced hospitalizations
+- **Improved quality measures** for behavioral health accreditation
+- **Enhanced patient safety** through early intervention capabilities
+- **Better outcomes** for value-based psychiatric care contracts
+
+## 💡 Contribution Opportunities
+
+### For Full-Stack Developers
+
+**Epic Integration Development:**
+- Implement Epic FHIR client using their official API
+- Build OAuth 2.0 authentication flow
+- Create SMART on FHIR launcher and embedded apps
+- Develop CDS Hooks service endpoints
+
+**Frontend Development:**
+- React-based SMART apps for Epic integration
+- Provider dashboard for psychiatric monitoring
+- Patient portal components for MyChart
+- Real-time data visualization components
+
+**Backend Development:**
+- FHIR resource mapping and transformation
+- CDS Hooks webhook handling
+- Epic API rate limiting and error handling
+- Clinical data validation and processing
+
+### Technical Stack for Epic Integration
+- **FHIR Client**: HAPI FHIR or custom implementation
+- **Authentication**: Epic's OAuth 2.0 with SMART context
+- **Frontend**: React/TypeScript for SMART apps
+- **Backend**: FastAPI with Epic FHIR integration
+- **Database**: FHIR-compliant data modeling
 
 ---
 
-This psychiatric-focused Epic integration positions CLARITY as the **essential digital biomarker platform for mental health**, transforming how providers deliver evidence-based psychiatric care through continuous, objective monitoring integrated seamlessly into Epic's clinical workflows. 
+This Epic integration roadmap positions CLARITY as a **future platform for psychiatric digital twins** - providing a clear development path for transforming evidence-based mental health care through Epic's clinical ecosystem. 
+
+**🔥 Ready to contribute?** This represents a significant full-stack development opportunity combining healthcare interoperability, AI/ML, and real-world clinical impact. 

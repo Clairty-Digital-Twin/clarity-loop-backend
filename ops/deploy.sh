@@ -84,7 +84,20 @@ build_and_push() {
     # Build for linux/amd64 (CRITICAL FOR ECS!)
     echo -e "${BLUE}Building for linux/amd64...${NC}"
     echo -e "${RED}⚠️  CRITICAL: Always build for linux/amd64 platform for AWS ECS${NC}"
-    docker build --platform linux/amd64 -t clarity-backend:$TAG .
+    
+    # Use buildx for cross-platform build
+    if ! docker buildx version >/dev/null 2>&1; then
+        echo -e "${RED}❌ Docker buildx not found. Cannot build for linux/amd64${NC}"
+        exit 1
+    fi
+    
+    # Ensure we have a builder that can handle linux/amd64
+    if ! docker buildx ls | grep -q "linux/amd64"; then
+        echo -e "${YELLOW}Creating buildx builder for linux/amd64...${NC}"
+        docker buildx create --use --name clarity-builder --platform linux/amd64
+    fi
+    
+    docker buildx build --platform linux/amd64 --load -t clarity-backend:$TAG .
     
     # Tag for ECR
     docker tag clarity-backend:$TAG $FULL_IMAGE

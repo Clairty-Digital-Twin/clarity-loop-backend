@@ -49,19 +49,20 @@ AWS ECS Fargate ONLY supports `linux/amd64` platform. Building for any other pla
 **USE THE CANONICAL DEPLOYMENT SCRIPT**:
 ```bash
 cd ops/
-./deploy.sh          # Deploy existing task definition
+./deploy.sh          # Deploy existing image
 ./deploy.sh --build  # Build new image and deploy
 ```
 
 The script handles:
-1. Building for linux/amd64 platform (CRITICAL!)
-2. Tagging and pushing to ECR
-3. Updating task definition
-4. Deploying to ECS
-5. Waiting for stability
-6. Health verification
+1. ECR login
+2. Building for linux/amd64 platform (CRITICAL!)
+3. Git commit-based tagging
+4. Pushing to ECR with verification
+5. Task definition with S3 permissions
+6. Service update and stability wait
+7. Smoke test validation
 
-**Current Production Image**: `production-final` (also tagged as `latest`)
+**CRITICAL**: The ECS task role must have S3 access for ML models!
 
 ## Authentication Fix Status
 

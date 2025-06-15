@@ -83,6 +83,10 @@ build_and_push() {
     
     echo -e "${BLUE}Using git commit tag: $TAG${NC}"
     
+    # Login to ECR first
+    echo -e "${BLUE}Logging in to ECR...${NC}"
+    aws ecr get-login-password --region $REGION | docker login --username AWS --password-stdin $ECR_REPO
+    
     # Build for linux/amd64 (CRITICAL FOR ECS!)
     echo -e "${BLUE}Building for linux/amd64...${NC}"
     echo -e "${RED}⚠️  CRITICAL: Always build for linux/amd64 platform for AWS ECS${NC}"
@@ -91,16 +95,13 @@ build_and_push() {
     echo -e "${YELLOW}Building with docker buildx for linux/amd64...${NC}"
     docker buildx build --platform linux/amd64 --progress=plain --push -t $FULL_IMAGE .
     
-    # Tag for ECR
-    docker tag clarity-backend:$TAG $FULL_IMAGE
-    
-    # Login to ECR
-    echo -e "${BLUE}Logging in to ECR...${NC}"
-    aws ecr get-login-password --region $REGION | docker login --username AWS --password-stdin $ECR_REPO
-    
-    # Push to ECR
-    echo -e "${BLUE}Pushing to ECR...${NC}"
-    docker push $FULL_IMAGE
+    # Verify the image was pushed
+    echo -e "${BLUE}Verifying image in ECR...${NC}"
+    aws ecr describe-images --repository-name clarity-backend --image-ids imageTag=$TAG --region $REGION >/dev/null 2>&1
+    if [ $? -ne 0 ]; then
+        echo -e "${RED}❌ Image not found in ECR. Build may have failed.${NC}"
+        exit 1
+    fi
     
     echo -e "${GREEN}✅ Image pushed: $FULL_IMAGE${NC}"
     
@@ -258,6 +259,19 @@ main() {
     
     # Verify deployment
     verify_deployment
+    
+    # Run smoke tests
+    echo -e "\n${YELLOW}Running smoke tests...${NC}"
+    if [ -f "./scripts/smoke-test-auth.sh" ]; then
+        if ./scripts/smoke-test-auth.sh https://clarity.novamindnyc.com; then
+            echo -e "${GREEN}✅ Smoke tests passed${NC}"
+        else
+            echo -e "${RED}❌ Smoke tests failed${NC}"
+            exit 1
+        fi
+    else
+        echo -e "${YELLOW}⚠️  No smoke test script found${NC}"
+    fi
     
     echo -e "\n${GREEN}🎉 Deployment completed successfully!${NC}"
     echo -e "${BLUE}Deployment finished at $(date)${NC}"

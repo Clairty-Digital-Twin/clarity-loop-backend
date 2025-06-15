@@ -481,7 +481,7 @@ class TestUserManagement:
 
         user = await self.provider.create_user(
             email="new@example.com",
-            password="password123",
+            password="password123",  # noqa: S106 - Test password for unit tests
             display_name="New User",
         )
 
@@ -1031,7 +1031,7 @@ class TestProductionScenarios:
             mock_get.return_value = mock_response
 
             # Simulate concurrent access
-            async def access_jwks():
+            async def access_jwks() -> dict[str, Any]:
                 await asyncio.sleep(0)  # Make it properly async
                 return self.provider.jwks
 

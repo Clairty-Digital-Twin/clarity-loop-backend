@@ -54,7 +54,7 @@ class TestLogExecutionDecorator:
         """Test logging with arguments and result included."""
 
         @log_execution(include_args=True, include_result=True)
-        def test_function(x: int, y: int, _z: str | None = None) -> int:
+        def test_function(x: int, y: int, _z: str | None = None) -> int:  # noqa: PT019
             return x + y
 
         caplog.set_level(logging.INFO, logger="clarity.core.decorators")

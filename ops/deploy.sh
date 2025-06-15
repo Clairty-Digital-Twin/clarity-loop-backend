@@ -77,17 +77,19 @@ validate_task_definition() {
 build_and_push() {
     echo -e "\n${YELLOW}Building Docker image...${NC}"
     
-    # Generate tag with timestamp
-    TAG="v$(date +%Y%m%d-%H%M%S)"
+    # Generate tag from git commit
+    TAG=$(git rev-parse --short HEAD)
     FULL_IMAGE="$ECR_REPO:$TAG"
+    
+    echo -e "${BLUE}Using git commit tag: $TAG${NC}"
     
     # Build for linux/amd64 (CRITICAL FOR ECS!)
     echo -e "${BLUE}Building for linux/amd64...${NC}"
     echo -e "${RED}⚠️  CRITICAL: Always build for linux/amd64 platform for AWS ECS${NC}"
     
-    # Build directly with docker (not buildx) for better ARM Mac compatibility
-    echo -e "${YELLOW}Building with docker build (not buildx) for stability...${NC}"
-    docker build --platform linux/amd64 -t clarity-backend:$TAG .
+    # Use buildx with explicit push for better reliability
+    echo -e "${YELLOW}Building with docker buildx for linux/amd64...${NC}"
+    docker buildx build --platform linux/amd64 --progress=plain --push -t $FULL_IMAGE .
     
     # Tag for ECR
     docker tag clarity-backend:$TAG $FULL_IMAGE

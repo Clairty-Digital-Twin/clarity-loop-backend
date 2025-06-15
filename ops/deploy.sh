@@ -124,13 +124,43 @@ build_and_push() {
 register_task_definition() {
     echo -e "\n${YELLOW}Registering task definition...${NC}"
     
-    TASK_DEF_ARN=$(aws ecs register-task-definition \
-        --cli-input-json file://ops/ecs-task-definition.json \
+    # Get the latest tag or use provided tag
+    if [ -z "${TAG:-}" ]; then
+        TAG="latest"
+        echo -e "${YELLOW}No TAG specified, using 'latest'${NC}"
+    fi
+    
+    # Replace IMAGE_PLACEHOLDER with actual image
+    IMAGE="$ECR_REPO:$TAG"
+    echo -e "${BLUE}Using image: $IMAGE${NC}"
+    
+    # Create task definition JSON with the correct image
+    TASK_DEF_JSON=$(cat ops/ecs-task-definition.json | sed "s|IMAGE_PLACEHOLDER|$IMAGE|g")
+    
+    # Register task definition with the updated JSON
+    TASK_DEF_ARN=$(echo "$TASK_DEF_JSON" | aws ecs register-task-definition \
+        --cli-input-json file:///dev/stdin \
         --region $REGION \
         --query 'taskDefinition.taskDefinitionArn' \
         --output text)
     
+    # Verify the image in the registered task definition
+    REGISTERED_IMAGE=$(aws ecs describe-task-definition \
+        --task-definition "$TASK_DEF_ARN" \
+        --region $REGION \
+        --query 'taskDefinition.containerDefinitions[0].image' \
+        --output text)
+    
     echo -e "${GREEN}✅ Task definition registered: $TASK_DEF_ARN${NC}"
+    echo -e "${GREEN}✅ Using image: $REGISTERED_IMAGE${NC}"
+    
+    # Sanity check
+    if [[ "$REGISTERED_IMAGE" != *"$TAG"* ]]; then
+        echo -e "${RED}❌ ERROR: Task definition is not using expected tag '$TAG'${NC}"
+        echo -e "${RED}❌ Registered image: $REGISTERED_IMAGE${NC}"
+        exit 1
+    fi
+    
     echo "$TASK_DEF_ARN"
 }
 
@@ -220,7 +250,14 @@ main() {
     if [ "${1:-}" == "--build" ]; then
         TAG=$(build_and_push)
         echo -e "${GREEN}✅ Built and pushed tag: $TAG${NC}"
+    else
+        # If not building, use latest or provided tag
+        TAG="${TAG:-latest}"
+        echo -e "${YELLOW}Using existing image with tag: $TAG${NC}"
     fi
+    
+    # Export TAG so register_task_definition can use it
+    export TAG
     
     # Register task definition
     TASK_DEF_ARN=$(register_task_definition)

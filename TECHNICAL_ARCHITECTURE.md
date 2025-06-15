@@ -152,6 +152,9 @@ async def analyze_patient_actigraphy(patient_data: ActigraphyInput) -> Actigraph
     sanitize_patient_data(patient_data)              # Remove PII from processing
     
     # 2. Preprocessing for PAT Model
+    # NOTE: PAT processes exactly 7 days (10,080 minutes) at a time.
+    # For multi-week inputs, only the most recent complete week is analyzed.
+    # This "latest-week-wins" approach ensures real-time relevance.
     tensor = preprocessor.preprocess_for_pat_model(
         data_points=patient_data.data_points,
         target_length=10080  # 1 week standardization

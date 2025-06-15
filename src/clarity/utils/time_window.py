@@ -146,7 +146,9 @@ def pad_to_week(
     pad_value : float, optional
         Value to use for padding (default: 0.0)
     pad_side : {"left", "right"}
-        Side to pad on (default: "left" for older data)
+        Side to pad on (default: "left" for older data).
+        "left" padding preserves the most recent data at the end,
+        consistent with the latest-week-wins semantics
 
     Returns:
     -------
@@ -165,7 +167,7 @@ def pad_to_week(
         )
 
     if arr.shape[0] == minutes_per_week:
-        return arr.astype(np.float32)
+        return np.ascontiguousarray(arr, dtype=np.float32)
 
     # Calculate padding needed
     pad_length = minutes_per_week - arr.shape[0]
@@ -185,7 +187,7 @@ def pad_to_week(
     else:
         result = np.concatenate([arr, padding], axis=0)
 
-    typed_result: npt.NDArray[np.float32] = result.astype(np.float32)
+    typed_result: npt.NDArray[np.float32] = np.ascontiguousarray(result, dtype=np.float32)
     return typed_result
 
 

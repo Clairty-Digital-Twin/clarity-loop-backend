@@ -1,5 +1,14 @@
 # Pre-Deployment Checklist for Clarity Backend
 
+## 🚨 CRITICAL REMINDERS - READ THIS FIRST!
+
+### Things That FUCKED US UP Before:
+1. **WRONG DOCKER PLATFORM**: Building for arm64 instead of linux/amd64
+2. **MISSING IAM PERMISSIONS**: Task role needs DynamoDB, S3, and Cognito access
+3. **INSUFFICIENT MEMORY**: Task needs 2GB RAM minimum (not 1GB)
+4. **WRONG TASK DEFINITION**: Missing environment variables
+5. **WRONG ECS CLUSTER**: Use `clarity-backend-cluster` NOT `clarity-cluster`
+
 ## 🔍 Verification Steps Before Deployment
 
 ### 1. Local Testing (MANDATORY)
@@ -104,9 +113,18 @@ aws logs tail /ecs/clarity-backend --since 5m --region us-east-1
 ## ⚠️ Common Issues to Avoid
 
 1. **Wrong Docker Platform**: ALWAYS use `--platform linux/amd64`
-2. **Missing Environment Variables**: Ensure Cognito credentials are set
+   - AWS ECS Fargate ONLY supports linux/amd64
+   - Error: `CannotPullContainerError: image Manifest does not contain descriptor matching platform`
+2. **Missing Environment Variables**: Ensure ALL env vars are in task definition
+   - Check with: `aws ecs describe-task-definition --task-definition clarity-backend --region us-east-1`
 3. **Password Policy**: Cognito requires uppercase + lowercase + numbers
 4. **500 vs 400 Errors**: Password validation should return 400, not 500
+5. **IAM Permissions**: Task role MUST have:
+   - `AmazonDynamoDBFullAccess`
+   - `AmazonS3ReadOnlyAccess` (for ML models)
+   - `AmazonCognitoPowerUser`
+6. **Memory Issues**: Task MUST have 2048 MB memory (not 1024)
+   - OOM kills will cause continuous task restarts
 
 ## 🚨 Rollback Procedure
 
@@ -130,6 +148,22 @@ aws ecs update-service \
   --region us-east-1
 ```
 
+## 🔐 Current Production Configuration
+
+### ECS Resources:
+- **Cluster**: `clarity-backend-cluster` ✅ ACTIVE
+- **Service**: `clarity-backend-service`
+- **Task Definition**: `clarity-backend:51` (2GB RAM)
+- **Task Role**: `arn:aws:iam::124355672559:role/clarity-backend-task-role`
+
+### Cognito Resources:
+- **User Pool ID**: `us-east-1_efXaR5EcP`
+- **Client ID**: `7sm7ckrkovg78b03n1595euc71`
+
+### S3 ML Models:
+- **Bucket**: `clarity-ml-models-124355672559`
+- **Models**: PAT-S, PAT-M, PAT-L with checksums
+
 ## ✅ Deployment Success Criteria
 
 - [ ] All unit tests pass
@@ -140,7 +174,18 @@ aws ecs update-service \
 - [ ] Production smoke tests pass
 - [ ] No 500 errors in CloudWatch logs
 - [ ] Frontend can successfully register/login users
+- [ ] Task has 2GB memory allocated
+- [ ] Task role has all required permissions
+- [ ] All environment variables are present
+
+## 🛠️ Validation Tools
+
+```bash
+# Run this BEFORE deploying to catch configuration issues
+cd ops/
+./validate-config.sh
+```
 
 ---
 
-Last Updated: June 15, 2025
+Last Updated: June 15, 2025 (After deployment hell)

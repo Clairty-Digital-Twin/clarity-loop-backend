@@ -116,6 +116,11 @@ async def register(
             status_code=409,
             detail=str(e),
         ) from e
+    except InvalidCredentialsError as e:
+        raise HTTPException(
+            status_code=400,
+            detail=str(e),
+        ) from e
     except Exception as e:
         logger.exception("Registration failed")
         raise HTTPException(

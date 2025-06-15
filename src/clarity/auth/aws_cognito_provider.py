@@ -221,6 +221,10 @@ class CognitoAuthProvider(IAuthProvider):
                 logger.warning("User already exists: %s", email)
                 msg = "User already exists"
                 raise UserAlreadyExistsError(msg) from e
+            elif error_code == "InvalidPasswordException":
+                logger.warning("Invalid password for user: %s", email)
+                msg = e.response["Error"]["Message"]
+                raise InvalidCredentialsError(msg) from e
             logger.exception("Failed to create user")
             msg = f"Failed to create user: {e!s}"
             raise AuthenticationError(msg) from e

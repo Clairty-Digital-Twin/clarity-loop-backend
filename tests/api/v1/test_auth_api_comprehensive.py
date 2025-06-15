@@ -151,6 +151,26 @@ class TestUserRegistration:
         assert response.status_code == 422
 
     @pytest.mark.asyncio
+    async def test_register_invalid_password(
+        self, client: TestClient, mock_cognito_provider: Mock
+    ) -> None:
+        """Test registration with password that doesn't meet Cognito policy."""
+        mock_cognito_provider.create_user.side_effect = InvalidCredentialsError(
+            "Password did not conform with policy: Password must have uppercase characters"
+        )
+
+        response = client.post(
+            "/api/v1/auth/register",
+            json={
+                "email": "test@example.com",
+                "password": "password123",  # No uppercase
+            },
+        )
+
+        assert response.status_code == 400
+        assert "Password must have uppercase characters" in response.json()["detail"]
+
+    @pytest.mark.asyncio
     async def test_register_create_user_fails(
         self, client: TestClient, mock_cognito_provider: Mock
     ) -> None:

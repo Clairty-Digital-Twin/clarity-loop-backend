@@ -85,19 +85,9 @@ build_and_push() {
     echo -e "${BLUE}Building for linux/amd64...${NC}"
     echo -e "${RED}⚠️  CRITICAL: Always build for linux/amd64 platform for AWS ECS${NC}"
     
-    # Use buildx for cross-platform build
-    if ! docker buildx version >/dev/null 2>&1; then
-        echo -e "${RED}❌ Docker buildx not found. Cannot build for linux/amd64${NC}"
-        exit 1
-    fi
-    
-    # Ensure we have a builder that can handle linux/amd64
-    if ! docker buildx ls | grep -q "linux/amd64"; then
-        echo -e "${YELLOW}Creating buildx builder for linux/amd64...${NC}"
-        docker buildx create --use --name clarity-builder --platform linux/amd64
-    fi
-    
-    docker buildx build --platform linux/amd64 --load -t clarity-backend:$TAG .
+    # Build directly with docker (not buildx) for better ARM Mac compatibility
+    echo -e "${YELLOW}Building with docker build (not buildx) for stability...${NC}"
+    docker build --platform linux/amd64 -t clarity-backend:$TAG .
     
     # Tag for ECR
     docker tag clarity-backend:$TAG $FULL_IMAGE
@@ -112,11 +102,7 @@ build_and_push() {
     
     echo -e "${GREEN}✅ Image pushed: $FULL_IMAGE${NC}"
     
-    # Update task definition with new image
-    echo -e "${BLUE}Updating task definition...${NC}"
-    jq ".containerDefinitions[0].image = \"$FULL_IMAGE\"" ops/ecs-task-definition.json > ops/ecs-task-definition-temp.json
-    mv ops/ecs-task-definition-temp.json ops/ecs-task-definition.json
-    
+    # Return just the tag for later use
     echo "$TAG"
 }
 

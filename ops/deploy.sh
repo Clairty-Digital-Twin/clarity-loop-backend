@@ -4,6 +4,14 @@
 
 set -euo pipefail
 
+# Get the directory where this script is located
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+# Get the project root directory (parent of ops/)
+PROJECT_ROOT="$( cd "$SCRIPT_DIR/.." && pwd )"
+
+# Change to project root to ensure all paths work correctly
+cd "$PROJECT_ROOT"
+
 # Color codes for output
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -55,8 +63,11 @@ validate_task_definition() {
     echo -e "\n${YELLOW}Validating task definition...${NC}"
     
     # Check Cognito configuration
-    USER_POOL_ID=$(jq -r '.containerDefinitions[0].environment[] | select(.name=="COGNITO_USER_POOL_ID") | .value' ops/ecs-task-definition.json)
-    CLIENT_ID=$(jq -r '.containerDefinitions[0].environment[] | select(.name=="COGNITO_CLIENT_ID") | .value' ops/ecs-task-definition.json)
+    # Task definition is always in ops/ directory relative to project root
+    TASK_DEF_PATH="ops/ecs-task-definition.json"
+    
+    USER_POOL_ID=$(jq -r '.containerDefinitions[0].environment[] | select(.name=="COGNITO_USER_POOL_ID") | .value' "$TASK_DEF_PATH")
+    CLIENT_ID=$(jq -r '.containerDefinitions[0].environment[] | select(.name=="COGNITO_CLIENT_ID") | .value' "$TASK_DEF_PATH")
     
     if [ "$USER_POOL_ID" != "$EXPECTED_USER_POOL_ID" ]; then
         echo -e "${RED}❌ Invalid User Pool ID: $USER_POOL_ID${NC}"
@@ -111,27 +122,37 @@ build_and_push() {
 
 # Function to register task definition
 register_task_definition() {
-    echo -e "\n${YELLOW}Registering task definition...${NC}"
+    echo -e "\n${YELLOW}Registering task definition...${NC}" >&2
     
     # Get the latest tag or use provided tag
     if [ -z "${TAG:-}" ]; then
         TAG="latest"
-        echo -e "${YELLOW}No TAG specified, using 'latest'${NC}"
+        echo -e "${YELLOW}No TAG specified, using 'latest'${NC}" >&2
     fi
     
     # Replace IMAGE_PLACEHOLDER with actual image
     IMAGE="$ECR_REPO:$TAG"
-    echo -e "${BLUE}Using image: $IMAGE${NC}"
+    echo -e "${BLUE}Using image: $IMAGE${NC}" >&2
     
     # Create task definition JSON with the correct image
-    TASK_DEF_JSON=$(cat ops/ecs-task-definition.json | sed "s|IMAGE_PLACEHOLDER|$IMAGE|g")
+    # Task definition is always in ops/ directory relative to project root
+    TASK_DEF_PATH="ops/ecs-task-definition.json"
+    
+    TASK_DEF_JSON=$(cat "$TASK_DEF_PATH" | sed "s|IMAGE_PLACEHOLDER|$IMAGE|g")
     
     # Register task definition with the updated JSON
-    TASK_DEF_ARN=$(echo "$TASK_DEF_JSON" | aws ecs register-task-definition \
-        --cli-input-json file:///dev/stdin \
+    # Write to temp file to avoid stdin issues
+    TEMP_TASK_DEF="/tmp/task-definition-$(date +%s).json"
+    echo "$TASK_DEF_JSON" > "$TEMP_TASK_DEF"
+    
+    TASK_DEF_ARN=$(aws ecs register-task-definition \
+        --cli-input-json "file://$TEMP_TASK_DEF" \
         --region $REGION \
         --query 'taskDefinition.taskDefinitionArn' \
         --output text)
+    
+    # Clean up temp file
+    rm -f "$TEMP_TASK_DEF"
     
     # Verify the image in the registered task definition
     REGISTERED_IMAGE=$(aws ecs describe-task-definition \
@@ -140,16 +161,17 @@ register_task_definition() {
         --query 'taskDefinition.containerDefinitions[0].image' \
         --output text)
     
-    echo -e "${GREEN}✅ Task definition registered: $TASK_DEF_ARN${NC}"
-    echo -e "${GREEN}✅ Using image: $REGISTERED_IMAGE${NC}"
+    echo -e "${GREEN}✅ Task definition registered: $TASK_DEF_ARN${NC}" >&2
+    echo -e "${GREEN}✅ Using image: $REGISTERED_IMAGE${NC}" >&2
     
     # Sanity check
     if [[ "$REGISTERED_IMAGE" != *"$TAG"* ]]; then
-        echo -e "${RED}❌ ERROR: Task definition is not using expected tag '$TAG'${NC}"
-        echo -e "${RED}❌ Registered image: $REGISTERED_IMAGE${NC}"
+        echo -e "${RED}❌ ERROR: Task definition is not using expected tag '$TAG'${NC}" >&2
+        echo -e "${RED}❌ Registered image: $REGISTERED_IMAGE${NC}" >&2
         exit 1
     fi
     
+    # Return only the ARN
     echo "$TASK_DEF_ARN"
 }
 

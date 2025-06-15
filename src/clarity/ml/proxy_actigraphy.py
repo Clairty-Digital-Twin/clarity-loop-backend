@@ -59,6 +59,7 @@ from clarity.core.exceptions import (
 )
 from clarity.core.types import FloatArray, LoggerProtocol, NHANESStats, StepCount
 from clarity.ml.nhanes_stats import lookup_norm_stats
+from clarity.utils.time_window import prepare_for_pat_inference
 
 logger: LoggerProtocol = logging.getLogger(__name__)
 
@@ -437,14 +438,22 @@ class ProxyActigraphyTransformer:
 
             logger.info("Padded %d minutes with circadian-aware values", padding_needed)
 
-        elif len(steps_array) > MINUTES_PER_WEEK:
-            # Take the most recent week of data
-            steps_array = steps_array[-MINUTES_PER_WEEK:]
+        elif len(steps_array) >= MINUTES_PER_WEEK:
+            # Use canonical truncation approach for consistency
+            # This handles both > MINUTES_PER_WEEK and == MINUTES_PER_WEEK cases
+            original_length = len(steps_array)
+            steps_array = prepare_for_pat_inference(steps_array, MINUTES_PER_WEEK)
             padding_mask = np.zeros(MINUTES_PER_WEEK, dtype=bool)
-            logger.info("Truncated to most recent %d minutes", MINUTES_PER_WEEK)
-        else:
-            # Exactly one week - no padding needed
-            padding_mask = np.zeros(MINUTES_PER_WEEK, dtype=bool)
+            if original_length > MINUTES_PER_WEEK:
+                logger.info(
+                    "Truncated from %d to most recent %d minutes using canonical approach",
+                    original_length,
+                    MINUTES_PER_WEEK,
+                )
+            else:
+                logger.info(
+                    "Data already at target length of %d minutes", MINUTES_PER_WEEK
+                )
 
         # Handle missing data (represented as NaN or very large values)
         nan_mask = np.isnan(steps_array) | (

@@ -14,6 +14,8 @@ import numpy as np
 from pydantic import BaseModel, Field
 import torch
 
+from clarity.utils.time_window import prepare_for_pat_inference
+
 if TYPE_CHECKING:
     from clarity.models.health_data import HealthMetric
 
@@ -66,20 +68,10 @@ class StandardActigraphyPreprocessor:
             if std_val > 0:
                 activity_data = (activity_data - mean_val) / std_val
 
-        # Resize to target length
-        if len(activity_data) != target_length:
-            # Simple interpolation/padding
-            if len(activity_data) > target_length:
-                # Down-sample
-                indices = np.linspace(
-                    0, len(activity_data) - 1, target_length, dtype=int
-                )
-                activity_data = activity_data[indices]
-            else:
-                # Pad with zeros
-                padded = np.zeros(target_length, dtype=np.float32)
-                padded[: len(activity_data)] = activity_data
-                activity_data = padded
+        # Resize to target length using canonical approach
+        # This now uses truncation for long sequences (keeping most recent data)
+        # and padding for short sequences
+        activity_data = prepare_for_pat_inference(activity_data, target_length)
 
         # Convert to tensor (PAT expects 1D sequence, service adds batch dim)
         return torch.FloatTensor(activity_data)

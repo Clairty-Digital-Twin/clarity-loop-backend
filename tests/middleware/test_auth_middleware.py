@@ -1,12 +1,13 @@
 """Tests for authentication middleware."""
 
-import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
+
+import pytest
 from starlette.requests import Request
 from starlette.responses import Response
 
 from clarity.middleware.auth_middleware import CognitoAuthMiddleware
-from clarity.models.auth import UserContext, UserRole, Permission
+from clarity.models.auth import Permission, UserContext, UserRole
 
 
 @pytest.fixture
@@ -50,12 +51,12 @@ class TestCognitoAuthMiddleware:
         # Arrange
         mock_request.url.path = "/health"
         call_next = AsyncMock(return_value=Response("OK"))
-        
+
         middleware = CognitoAuthMiddleware(mock_app)
-        
+
         # Act
         response = await middleware.dispatch(mock_request, call_next)
-        
+
         # Assert
         assert response.body == b"OK"
         assert mock_request.state.user is None
@@ -66,13 +67,13 @@ class TestCognitoAuthMiddleware:
         """Test request without Authorization header."""
         # Arrange
         call_next = AsyncMock(return_value=Response("OK"))
-        
+
         with patch.dict("os.environ", {"ENABLE_AUTH": "true"}):
             middleware = CognitoAuthMiddleware(mock_app)
-        
+
         # Act
         response = await middleware.dispatch(mock_request, call_next)
-        
+
         # Assert
         assert response.body == b"OK"
         assert mock_request.state.user is None
@@ -84,13 +85,13 @@ class TestCognitoAuthMiddleware:
         # Arrange
         mock_request.headers = {"Authorization": "Invalid token"}
         call_next = AsyncMock(return_value=Response("OK"))
-        
+
         with patch.dict("os.environ", {"ENABLE_AUTH": "true"}):
             middleware = CognitoAuthMiddleware(mock_app)
-        
+
         # Act
         response = await middleware.dispatch(mock_request, call_next)
-        
+
         # Assert
         assert response.body == b"OK"
         assert mock_request.state.user is None
@@ -102,50 +103,59 @@ class TestCognitoAuthMiddleware:
         # Arrange
         mock_request.headers = {"Authorization": "Bearer test-token"}
         call_next = AsyncMock(return_value=Response("OK"))
-        
+
         with patch.dict("os.environ", {"ENABLE_AUTH": "false"}):
             middleware = CognitoAuthMiddleware(mock_app)
-        
+
         # Act
         response = await middleware.dispatch(mock_request, call_next)
-        
+
         # Assert
         assert response.body == b"OK"
         assert mock_request.state.user is None
         call_next.assert_called_once_with(mock_request)
 
     @pytest.mark.asyncio
-    async def test_valid_token_authentication(self, mock_app, mock_request, mock_user_context):
+    async def test_valid_token_authentication(
+        self, mock_app, mock_request, mock_user_context
+    ):
         """Test successful authentication with valid token."""
         # Arrange
         mock_request.headers = {"Authorization": "Bearer valid-token"}
         call_next = AsyncMock(return_value=Response("OK"))
-        
-        with patch.dict("os.environ", {
-            "ENABLE_AUTH": "true",
-            "COGNITO_USER_POOL_ID": "test-pool",
-            "COGNITO_CLIENT_ID": "test-client"
-        }):
+
+        with patch.dict(
+            "os.environ",
+            {
+                "ENABLE_AUTH": "true",
+                "COGNITO_USER_POOL_ID": "test-pool",
+                "COGNITO_CLIENT_ID": "test-client",
+            },
+        ):
             middleware = CognitoAuthMiddleware(mock_app)
-            
+
             # Mock the auth provider
             mock_auth_provider = MagicMock()
             mock_auth_provider._initialized = True
-            mock_auth_provider.verify_token = AsyncMock(return_value={
-                "user_id": "test-user-123",
-                "email": "test@example.com",
-                "verified": True
-            })
+            mock_auth_provider.verify_token = AsyncMock(
+                return_value={
+                    "user_id": "test-user-123",
+                    "email": "test@example.com",
+                    "verified": True,
+                }
+            )
             mock_auth_provider.get_or_create_user_context = AsyncMock(
                 return_value=mock_user_context
             )
-            
+
             middleware.auth_provider = mock_auth_provider
-        
+
         # Act
-        with patch("clarity.middleware.auth_middleware.set_user_context") as mock_set_context:
+        with patch(
+            "clarity.middleware.auth_middleware.set_user_context"
+        ) as mock_set_context:
             response = await middleware.dispatch(mock_request, call_next)
-        
+
         # Assert
         assert response.body == b"OK"
         assert mock_request.state.user == mock_user_context
@@ -159,24 +169,29 @@ class TestCognitoAuthMiddleware:
         # Arrange
         mock_request.headers = {"Authorization": "Bearer invalid-token"}
         call_next = AsyncMock(return_value=Response("OK"))
-        
-        with patch.dict("os.environ", {
-            "ENABLE_AUTH": "true",
-            "COGNITO_USER_POOL_ID": "test-pool",
-            "COGNITO_CLIENT_ID": "test-client"
-        }):
+
+        with patch.dict(
+            "os.environ",
+            {
+                "ENABLE_AUTH": "true",
+                "COGNITO_USER_POOL_ID": "test-pool",
+                "COGNITO_CLIENT_ID": "test-client",
+            },
+        ):
             middleware = CognitoAuthMiddleware(mock_app)
-            
+
             # Mock the auth provider
             mock_auth_provider = MagicMock()
             mock_auth_provider._initialized = True
-            mock_auth_provider.verify_token = AsyncMock(side_effect=Exception("Invalid token"))
-            
+            mock_auth_provider.verify_token = AsyncMock(
+                side_effect=Exception("Invalid token")
+            )
+
             middleware.auth_provider = mock_auth_provider
-        
+
         # Act
         response = await middleware.dispatch(mock_request, call_next)
-        
+
         # Assert
         assert response.body == b"OK"
         assert mock_request.state.user is None

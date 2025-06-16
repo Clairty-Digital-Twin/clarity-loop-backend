@@ -90,7 +90,7 @@ class HealthResponse(BaseModel):
 async def register(
     user_data: UserRegister,
     auth_provider: IAuthProvider = Depends(get_auth_provider),
-) -> TokenResponse:
+) -> TokenResponse | JSONResponse:
     """Register a new user."""
     # Validate auth provider before try block
     if not isinstance(auth_provider, CognitoAuthProvider):
@@ -125,8 +125,7 @@ async def register(
     except EmailNotVerifiedError:
         # Return 202 Accepted when email verification is required
         return JSONResponse(
-            status_code=202,
-            content={"requires_email_verification": True}
+            status_code=202, content={"requires_email_verification": True}
         )
     except Exception as e:
         logger.exception("Registration failed")

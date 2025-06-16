@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import logging
 import os
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, cast
 
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
@@ -50,25 +50,25 @@ class CognitoAuthMiddleware(BaseHTTPMiddleware):
 
     def __init__(self, app: ASGIApp) -> None:
         """Initialize the authentication middleware.
-        
+
         Args:
             app: The ASGI application
         """
         super().__init__(app)
-        
+
         # Get configuration from environment
         self.enable_auth = os.getenv("ENABLE_AUTH", "true").lower() == "true"
         self.user_pool_id = os.getenv("COGNITO_USER_POOL_ID", "")
         self.client_id = os.getenv("COGNITO_CLIENT_ID", "")
         self.region = os.getenv("COGNITO_REGION", "us-east-1")
-        
+
         # Initialize auth provider if enabled
         self.auth_provider: CognitoAuthProvider | None = None
         if self.enable_auth and self.user_pool_id and self.client_id:
             try:
                 # Initialize DynamoDB service for user management
                 dynamodb_service = DynamoDBService()
-                
+
                 # Initialize Cognito auth provider with DynamoDB
                 self.auth_provider = CognitoAuthProvider(
                     user_pool_id=self.user_pool_id,
@@ -85,52 +85,54 @@ class CognitoAuthMiddleware(BaseHTTPMiddleware):
 
     async def dispatch(self, request: Request, call_next: Any) -> Response:
         """Process the request and validate JWT token if present.
-        
+
         Args:
             request: The incoming request
             call_next: The next middleware or route handler
-            
+
         Returns:
             The response from the next handler
         """
         # Initialize request state
         request.state.user = None
-        
+
         # Skip auth for public paths
         if request.url.path in PUBLIC_PATHS:
-            return await call_next(request)
-        
+            return cast(Response, await call_next(request))
+
         # Skip auth if disabled
         if not self.enable_auth or not self.auth_provider:
-            return await call_next(request)
-        
+            return cast(Response, await call_next(request))
+
         # Extract token from Authorization header
         auth_header = request.headers.get("Authorization", "")
         if not auth_header.startswith("Bearer "):
             # No auth header, continue without user context
-            return await call_next(request)
-        
+            return cast(Response, await call_next(request))
+
         token = auth_header[7:]  # Remove "Bearer " prefix
-        
+
         try:
             # Initialize auth provider if needed
             if not self.auth_provider._initialized:
                 await self.auth_provider.initialize()
-            
+
             # Verify token
             user_info = await self.auth_provider.verify_token(token)
             if user_info:
                 # Get or create full user context (includes DynamoDB sync)
-                user_context = await self.auth_provider.get_or_create_user_context(user_info)
-                
+                user_context = await self.auth_provider.get_or_create_user_context(
+                    user_info
+                )
+
                 # Set user context in request state
                 request.state.user = user_context
-                
+
                 # Also set in contextvars for Modal compatibility
                 set_user_context(user_context)
-                
+
                 logger.debug("User authenticated: %s", user_context.user_id)
-            
+
         except AuthError as e:
             # Log authentication errors but continue
             # The dependency will handle returning 401
@@ -138,6 +140,6 @@ class CognitoAuthMiddleware(BaseHTTPMiddleware):
         except Exception as e:
             # Log unexpected errors but continue
             logger.error("Unexpected error during authentication: %s", e)
-        
+
         # Continue to the next handler
-        return await call_next(request)
+        return cast(Response, await call_next(request))

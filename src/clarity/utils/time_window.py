@@ -72,7 +72,6 @@ def slice_to_weeks(
         return []
 
     # For 2D arrays, ensure we're slicing along time axis (axis 0)
-    original_shape = arr.shape
     if arr.ndim == 2:
         # Preserve number of channels/features
         n_features = arr.shape[1]
@@ -123,9 +122,7 @@ def slice_to_weeks(
         logger.debug("Returning all %d week chunks", len(chunks))
         return chunks
     if keep not in ("latest", "all"):
-        raise ValueError(
-            f"Invalid keep parameter: {keep}. Must be 'latest' or 'all'"
-        )
+        raise ValueError(f"Invalid keep parameter: {keep}. Must be 'latest' or 'all'")
     return chunks
 
 
@@ -187,7 +184,9 @@ def pad_to_week(
     else:
         result = np.concatenate([arr, padding], axis=0)
 
-    typed_result: npt.NDArray[np.float32] = np.ascontiguousarray(result, dtype=np.float32)
+    typed_result: npt.NDArray[np.float32] = np.ascontiguousarray(
+        result, dtype=np.float32
+    )
     return typed_result
 
 

@@ -73,10 +73,12 @@ class StandardActigraphyPreprocessor:
         # and padding for short sequences
         original_length = len(activity_data)
         activity_data = prepare_for_pat_inference(activity_data, target_length)
-        
+
         if original_length != target_length:
             logger.debug(
-                "Resized actigraphy data: %d -> %d points", original_length, target_length
+                "Resized actigraphy data: %d -> %d points",
+                original_length,
+                target_length,
             )
 
         # Convert to tensor (PAT expects 1D sequence, service adds batch dim)

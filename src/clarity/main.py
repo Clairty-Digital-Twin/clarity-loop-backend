@@ -132,6 +132,12 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Add authentication middleware
+from clarity.middleware.auth_middleware import CognitoAuthMiddleware
+
+app.add_middleware(CognitoAuthMiddleware)
+logger.info("✅ Added authentication middleware")
+
 # Add request logging middleware in development
 if ENVIRONMENT == "development":
     from clarity.middleware.request_logger import RequestLoggingMiddleware

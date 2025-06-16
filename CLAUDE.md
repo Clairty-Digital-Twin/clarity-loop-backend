@@ -71,6 +71,18 @@ The authentication 500 error has been fixed in the code:
 - Exception classes have proper error codes
 - Code is correct in `src/clarity/auth/aws_cognito_provider.py`
 
+## Authentication Middleware
+
+**NEW**: Authentication middleware has been implemented to handle JWT token validation:
+- Located at `src/clarity/middleware/auth_middleware.py`
+- Automatically validates Bearer tokens from Authorization headers
+- Populates `request.state.user` with authenticated user context
+- Integrates with AWS Cognito for token verification
+- Creates/updates user records in DynamoDB automatically
+- Supports both `request.state` and `contextvars` for Modal compatibility
+- Public endpoints (health, docs, auth routes) don't require authentication
+- Authentication can be disabled with `ENABLE_AUTH=false` environment variable
+
 ## Test Suite Status
 
 Current test failures that need fixing:

@@ -122,7 +122,7 @@ async def register(
             status_code=400,
             detail=str(e),
         ) from e
-    except EmailNotVerifiedError as e:
+    except EmailNotVerifiedError:
         # Return 202 Accepted when email verification is required
         return JSONResponse(
             status_code=202,
@@ -469,6 +469,244 @@ async def refresh_token(
                 type="refresh_error",
                 title="Token Refresh Failed",
                 detail="Failed to refresh access token",
+                status=500,
+                instance=f"https://api.clarity.health/requests/{id(e)}",
+            ).model_dump(),
+        ) from e
+
+
+class EmailConfirmationRequest(BaseModel):
+    """Email confirmation request model."""
+
+    email: EmailStr = Field(..., description="User email address")
+    code: str = Field(..., description="6-digit confirmation code from email")
+
+
+class ResendConfirmationRequest(BaseModel):
+    """Resend confirmation code request model."""
+
+    email: EmailStr = Field(..., description="User email address")
+
+
+class ForgotPasswordRequest(BaseModel):
+    """Forgot password request model."""
+
+    email: EmailStr = Field(..., description="User email address")
+
+
+class ResetPasswordRequest(BaseModel):
+    """Reset password request model."""
+
+    email: EmailStr = Field(..., description="User email address")
+    code: str = Field(..., description="6-digit reset code from email")
+    new_password: str = Field(..., min_length=8, description="New password")
+
+
+class StatusResponse(BaseModel):
+    """Generic status response model."""
+
+    status: str = Field(..., description="Operation status")
+
+
+@router.post("/confirm-email", response_model=StatusResponse)
+async def confirm_email(
+    request: EmailConfirmationRequest,
+    auth_provider: IAuthProvider = Depends(get_auth_provider),
+) -> StatusResponse:
+    """Confirm user email with verification code from Cognito."""
+    if not isinstance(auth_provider, CognitoAuthProvider):
+        raise HTTPException(
+            status_code=500, detail="Invalid authentication provider configuration"
+        )
+
+    try:
+        # Use Cognito client to confirm sign up
+        auth_provider.cognito_client.confirm_sign_up(
+            ClientId=auth_provider.client_id,
+            Username=request.email,
+            ConfirmationCode=request.code,
+        )
+
+        return StatusResponse(status="confirmed")
+
+    except auth_provider.cognito_client.exceptions.CodeMismatchException as e:
+        raise HTTPException(
+            status_code=400,
+            detail=ProblemDetail(
+                type="invalid_code",
+                title="Invalid Confirmation Code",
+                detail="The confirmation code is incorrect or expired",
+                status=400,
+                instance=f"https://api.clarity.health/requests/{id(request)}",
+            ).model_dump(),
+        ) from e
+    except auth_provider.cognito_client.exceptions.UserNotFoundException as e:
+        raise HTTPException(
+            status_code=404,
+            detail=ProblemDetail(
+                type="user_not_found",
+                title="User Not Found",
+                detail="No user found with this email address",
+                status=404,
+                instance=f"https://api.clarity.health/requests/{id(request)}",
+            ).model_dump(),
+        ) from e
+    except Exception as e:
+        logger.exception("Email confirmation failed")
+        raise HTTPException(
+            status_code=500,
+            detail=ProblemDetail(
+                type="confirmation_error",
+                title="Confirmation Failed",
+                detail="Failed to confirm email address",
+                status=500,
+                instance=f"https://api.clarity.health/requests/{id(e)}",
+            ).model_dump(),
+        ) from e
+
+
+@router.post("/resend-confirmation", response_model=StatusResponse)
+async def resend_confirmation(
+    request: ResendConfirmationRequest,
+    auth_provider: IAuthProvider = Depends(get_auth_provider),
+) -> StatusResponse:
+    """Resend email confirmation code."""
+    if not isinstance(auth_provider, CognitoAuthProvider):
+        raise HTTPException(
+            status_code=500, detail="Invalid authentication provider configuration"
+        )
+
+    try:
+        # Use Cognito client to resend confirmation code
+        auth_provider.cognito_client.resend_confirmation_code(
+            ClientId=auth_provider.client_id,
+            Username=request.email,
+        )
+
+        return StatusResponse(status="sent")
+
+    except auth_provider.cognito_client.exceptions.UserNotFoundException as e:
+        raise HTTPException(
+            status_code=404,
+            detail=ProblemDetail(
+                type="user_not_found",
+                title="User Not Found",
+                detail="No user found with this email address",
+                status=404,
+                instance=f"https://api.clarity.health/requests/{id(request)}",
+            ).model_dump(),
+        ) from e
+    except Exception as e:
+        logger.exception("Resend confirmation failed")
+        raise HTTPException(
+            status_code=500,
+            detail=ProblemDetail(
+                type="resend_error",
+                title="Resend Failed",
+                detail="Failed to resend confirmation code",
+                status=500,
+                instance=f"https://api.clarity.health/requests/{id(e)}",
+            ).model_dump(),
+        ) from e
+
+
+@router.post("/forgot-password", response_model=StatusResponse)
+async def forgot_password(
+    request: ForgotPasswordRequest,
+    auth_provider: IAuthProvider = Depends(get_auth_provider),
+) -> StatusResponse:
+    """Initiate password reset process."""
+    if not isinstance(auth_provider, CognitoAuthProvider):
+        raise HTTPException(
+            status_code=500, detail="Invalid authentication provider configuration"
+        )
+
+    try:
+        # Use Cognito client to initiate forgot password
+        auth_provider.cognito_client.forgot_password(
+            ClientId=auth_provider.client_id,
+            Username=request.email,
+        )
+
+        return StatusResponse(status="sent")
+
+    except auth_provider.cognito_client.exceptions.UserNotFoundException as e:
+        raise HTTPException(
+            status_code=404,
+            detail=ProblemDetail(
+                type="user_not_found",
+                title="User Not Found",
+                detail="No user found with this email address",
+                status=404,
+                instance=f"https://api.clarity.health/requests/{id(request)}",
+            ).model_dump(),
+        ) from e
+    except Exception as e:
+        logger.exception("Forgot password failed")
+        raise HTTPException(
+            status_code=500,
+            detail=ProblemDetail(
+                type="forgot_password_error",
+                title="Password Reset Failed",
+                detail="Failed to initiate password reset",
+                status=500,
+                instance=f"https://api.clarity.health/requests/{id(e)}",
+            ).model_dump(),
+        ) from e
+
+
+@router.post("/reset-password", response_model=StatusResponse)
+async def reset_password(
+    request: ResetPasswordRequest,
+    auth_provider: IAuthProvider = Depends(get_auth_provider),
+) -> StatusResponse:
+    """Reset password with confirmation code."""
+    if not isinstance(auth_provider, CognitoAuthProvider):
+        raise HTTPException(
+            status_code=500, detail="Invalid authentication provider configuration"
+        )
+
+    try:
+        # Use Cognito client to confirm forgot password
+        auth_provider.cognito_client.confirm_forgot_password(
+            ClientId=auth_provider.client_id,
+            Username=request.email,
+            ConfirmationCode=request.code,
+            Password=request.new_password,
+        )
+
+        return StatusResponse(status="reset")
+
+    except auth_provider.cognito_client.exceptions.CodeMismatchException as e:
+        raise HTTPException(
+            status_code=400,
+            detail=ProblemDetail(
+                type="invalid_code",
+                title="Invalid Reset Code",
+                detail="The reset code is incorrect or expired",
+                status=400,
+                instance=f"https://api.clarity.health/requests/{id(request)}",
+            ).model_dump(),
+        ) from e
+    except auth_provider.cognito_client.exceptions.UserNotFoundException as e:
+        raise HTTPException(
+            status_code=404,
+            detail=ProblemDetail(
+                type="user_not_found",
+                title="User Not Found",
+                detail="No user found with this email address",
+                status=404,
+                instance=f"https://api.clarity.health/requests/{id(request)}",
+            ).model_dump(),
+        ) from e
+    except Exception as e:
+        logger.exception("Password reset failed")
+        raise HTTPException(
+            status_code=500,
+            detail=ProblemDetail(
+                type="reset_password_error",
+                title="Password Reset Failed",
+                detail="Failed to reset password",
                 status=500,
                 instance=f"https://api.clarity.health/requests/{id(e)}",
             ).model_dump(),

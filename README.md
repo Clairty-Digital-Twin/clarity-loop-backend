@@ -90,7 +90,7 @@ flowchart TD
 **Pre-production status as of June 12, 2025**
 
 **API Endpoints**: 44 routes across authentication, data processing, and analysis  
-**Test Coverage**: 57% code coverage (building toward 85% target)  
+**Test Coverage**: 75% code coverage (building toward 85% target)  
 **Production Deployment**: AWS ECS with CloudFormation infrastructure (pre-MVP phase)
 
 ```mermaid

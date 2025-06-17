@@ -21,8 +21,7 @@ jobs:
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v4
       with:
-        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        role-to-assume: arn:aws:iam::${{ vars.AWS_ACCOUNT_ID }}:role/GitHubActionsDeploy
         aws-region: ${{ env.AWS_REGION }}
 
     - name: Set up Docker Buildx
@@ -33,9 +32,33 @@ jobs:
       uses: aws-actions/amazon-ecr-login@v2
 
     - name: Build and push Docker image
+      env:
+        DOCKER_BUILDKIT: 1
       run: |
         cd ${{ github.workspace }}
-        ./ops/deploy.sh --build
+        
+        # Get ECR registry
+        ECR_REGISTRY="${{ steps.login-ecr.outputs.registry }}"
+        ECR_REPOSITORY="clarity-backend"
+        IMAGE_TAG="${{ github.sha }}"
+        
+        # Build for linux/amd64 platform (CRITICAL for ECS!)
+        echo "Building Docker image for linux/amd64..."
+        docker build \
+          --platform linux/amd64 \
+          --build-arg BUILDKIT_INLINE_CACHE=1 \
+          -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG \
+          -t $ECR_REGISTRY/$ECR_REPOSITORY:latest \
+          -f Dockerfile.aws \
+          .
+        
+        # Push to ECR
+        echo "Pushing to ECR..."
+        docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+        docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
+        
+        # Deploy using the new image
+        ./ops/deploy.sh --tag $IMAGE_TAG
 
     - name: Deploy completed
       run: |

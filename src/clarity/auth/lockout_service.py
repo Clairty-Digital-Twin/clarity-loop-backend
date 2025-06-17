@@ -95,27 +95,27 @@ class AccountLockoutService:
             
             # Add the new failed attempt
             self._user_attempts[username]['attempts'].append((current_time, ip_address))
+        
+        # Check if we should lock the account
+        attempt_count = len(self._user_attempts[username]['attempts'])
+        
+        if attempt_count >= self.max_attempts:
+            # Lock the account
+            locked_until = current_time + self.lockout_duration
+            self._user_attempts[username]['locked_until'] = locked_until
             
-            # Check if we should lock the account
-            attempt_count = len(self._user_attempts[username]['attempts'])
-            
-            if attempt_count >= self.max_attempts:
-                # Lock the account
-                locked_until = current_time + self.lockout_duration
-                self._user_attempts[username]['locked_until'] = locked_until
-                
-                logger.warning(
-                    f"Account locked: username={username}, "
-                    f"attempts={attempt_count}, "
-                    f"locked_until={locked_until.isoformat()}, "
-                    f"ip={ip_address}"
-                )
-            else:
-                logger.info(
-                    f"Failed attempt recorded: username={username}, "
-                    f"attempts={attempt_count}/{self.max_attempts}, "
-                    f"ip={ip_address}"
-                )
+            logger.warning(
+                f"Account locked: username={username}, "
+                f"attempts={attempt_count}, "
+                f"locked_until={locked_until.isoformat()}, "
+                f"ip={ip_address}"
+            )
+        else:
+            logger.info(
+                f"Failed attempt recorded: username={username}, "
+                f"attempts={attempt_count}/{self.max_attempts}, "
+                f"ip={ip_address}"
+            )
     
     async def is_account_locked(self, username: str) -> bool:
         """

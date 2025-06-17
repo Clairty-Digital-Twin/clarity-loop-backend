@@ -5,7 +5,9 @@
 set -e
 
 # Configuration
-ALB_URL="http://clarity-alb-1762715656.us-east-1.elb.amazonaws.com"
+ALB_NAME="clarity-alb"
+ALB_DNS=$(aws elbv2 describe-load-balancers --names "$ALB_NAME" --query 'LoadBalancers[0].DNSName' --output text --region us-east-1)
+ALB_URL="http://$ALB_DNS"
 TEST_ENDPOINT="/health"
 RATE_LIMIT=100
 

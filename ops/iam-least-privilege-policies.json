@@ -1,0 +1,215 @@
+{
+  "ecsTaskExecutionRole": {
+    "PolicyName": "ClarityECSExecutionPolicy",
+    "PolicyDocument": {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Sid": "ECRAccess",
+          "Effect": "Allow",
+          "Action": [
+            "ecr:GetAuthorizationToken",
+            "ecr:BatchCheckLayerAvailability",
+            "ecr:GetDownloadUrlForLayer",
+            "ecr:BatchGetImage"
+          ],
+          "Resource": "*",
+          "Condition": {
+            "StringEquals": {
+              "aws:RequestedRegion": "us-east-1"
+            }
+          }
+        },
+        {
+          "Sid": "ECRRepositoryAccess",
+          "Effect": "Allow",
+          "Action": [
+            "ecr:BatchCheckLayerAvailability",
+            "ecr:GetDownloadUrlForLayer",
+            "ecr:BatchGetImage"
+          ],
+          "Resource": "arn:aws:ecr:us-east-1:124355672559:repository/clarity-backend"
+        },
+        {
+          "Sid": "CloudWatchLogsAccess",
+          "Effect": "Allow",
+          "Action": [
+            "logs:CreateLogStream",
+            "logs:PutLogEvents"
+          ],
+          "Resource": "arn:aws:logs:us-east-1:124355672559:log-group:/ecs/clarity-backend:*"
+        },
+        {
+          "Sid": "SecretsManagerAccess",
+          "Effect": "Allow",
+          "Action": [
+            "secretsmanager:GetSecretValue"
+          ],
+          "Resource": [
+            "arn:aws:secretsmanager:us-east-1:124355672559:secret:clarity/gemini-api-key-*",
+            "arn:aws:secretsmanager:us-east-1:124355672559:secret:clarity/cognito-config-*"
+          ]
+        }
+      ]
+    }
+  },
+  "clarity-backend-task-role": {
+    "PolicyName": "ClarityApplicationPolicy",
+    "PolicyDocument": {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Sid": "DynamoDBTableAccess",
+          "Effect": "Allow",
+          "Action": [
+            "dynamodb:GetItem",
+            "dynamodb:PutItem",
+            "dynamodb:UpdateItem",
+            "dynamodb:DeleteItem",
+            "dynamodb:Query",
+            "dynamodb:Scan",
+            "dynamodb:BatchGetItem",
+            "dynamodb:BatchWriteItem",
+            "dynamodb:DescribeTable",
+            "dynamodb:DescribeTimeToLive"
+          ],
+          "Resource": [
+            "arn:aws:dynamodb:us-east-1:124355672559:table/clarity-health-data",
+            "arn:aws:dynamodb:us-east-1:124355672559:table/clarity-health-data/index/*"
+          ]
+        },
+        {
+          "Sid": "S3HealthDataAccess",
+          "Effect": "Allow",
+          "Action": [
+            "s3:GetObject",
+            "s3:PutObject",
+            "s3:DeleteObject"
+          ],
+          "Resource": "arn:aws:s3:::clarity-health-data-storage/*",
+          "Condition": {
+            "StringEquals": {
+              "s3:x-amz-server-side-encryption": "AES256"
+            }
+          }
+        },
+        {
+          "Sid": "S3HealthDataListAccess",
+          "Effect": "Allow",
+          "Action": [
+            "s3:ListBucket",
+            "s3:GetBucketLocation",
+            "s3:GetBucketVersioning"
+          ],
+          "Resource": "arn:aws:s3:::clarity-health-data-storage"
+        },
+        {
+          "Sid": "S3MLModelsReadAccess",
+          "Effect": "Allow",
+          "Action": [
+            "s3:GetObject",
+            "s3:GetObjectVersion"
+          ],
+          "Resource": "arn:aws:s3:::clarity-ml-models-124355672559/*"
+        },
+        {
+          "Sid": "S3MLModelsListAccess",
+          "Effect": "Allow",
+          "Action": [
+            "s3:ListBucket",
+            "s3:GetBucketLocation"
+          ],
+          "Resource": "arn:aws:s3:::clarity-ml-models-124355672559"
+        },
+        {
+          "Sid": "CognitoUserPoolAccess",
+          "Effect": "Allow",
+          "Action": [
+            "cognito-idp:AdminGetUser",
+            "cognito-idp:AdminCreateUser",
+            "cognito-idp:AdminUpdateUserAttributes",
+            "cognito-idp:AdminDeleteUser",
+            "cognito-idp:AdminSetUserPassword",
+            "cognito-idp:AdminConfirmSignUp",
+            "cognito-idp:ListUsers",
+            "cognito-idp:AdminListGroupsForUser",
+            "cognito-idp:AdminAddUserToGroup",
+            "cognito-idp:AdminRemoveUserFromGroup"
+          ],
+          "Resource": "arn:aws:cognito-idp:us-east-1:124355672559:userpool/us-east-1_efXaR5EcP"
+        },
+        {
+          "Sid": "CloudWatchLogsAccess",
+          "Effect": "Allow",
+          "Action": [
+            "logs:CreateLogStream",
+            "logs:PutLogEvents",
+            "logs:DescribeLogStreams"
+          ],
+          "Resource": "arn:aws:logs:us-east-1:124355672559:log-group:/ecs/clarity-backend:*"
+        },
+        {
+          "Sid": "CloudWatchMetricsAccess",
+          "Effect": "Allow",
+          "Action": [
+            "cloudwatch:PutMetricData"
+          ],
+          "Resource": "*",
+          "Condition": {
+            "StringEquals": {
+              "cloudwatch:namespace": ["Clarity/Auth", "Clarity/Application"]
+            }
+          }
+        },
+        {
+          "Sid": "KMSAccessForDynamoDB",
+          "Effect": "Allow",
+          "Action": [
+            "kms:Decrypt",
+            "kms:Encrypt",
+            "kms:ReEncrypt*",
+            "kms:GenerateDataKey*",
+            "kms:DescribeKey"
+          ],
+          "Resource": "arn:aws:kms:us-east-1:124355672559:key/30b1e1f5-c97b-4268-88cc-ed79b4af5992",
+          "Condition": {
+            "StringEquals": {
+              "kms:ViaService": "dynamodb.us-east-1.amazonaws.com"
+            }
+          }
+        }
+      ]
+    }
+  },
+  "trust-policies": {
+    "ecsTaskExecutionRole": {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Effect": "Allow",
+          "Principal": {
+            "Service": "ecs-tasks.amazonaws.com"
+          },
+          "Action": "sts:AssumeRole"
+        }
+      ]
+    },
+    "clarity-backend-task-role": {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Effect": "Allow",
+          "Principal": {
+            "Service": "ecs-tasks.amazonaws.com"
+          },
+          "Action": "sts:AssumeRole",
+          "Condition": {
+            "StringEquals": {
+              "aws:SourceAccount": "124355672559"
+            }
+          }
+        }
+      ]
+    }
+  }
+}

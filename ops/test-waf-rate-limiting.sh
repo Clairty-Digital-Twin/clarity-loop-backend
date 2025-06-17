@@ -17,15 +17,17 @@ echo "Target: $ALB_URL$TEST_ENDPOINT"
 echo "Rate Limit: $RATE_LIMIT requests per 5 minutes"
 echo "=================================================================="
 
-# Test 1: Normal Request (should succeed)
+# Test 1: Normal Request (should redirect to HTTPS)
 echo ""
-echo "TEST 1: Normal Request (should succeed)"
-echo "----------------------------------------"
+echo "TEST 1: Normal Request (should redirect to HTTPS)"
+echo "-------------------------------------------------"
 RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" "$ALB_URL$TEST_ENDPOINT")
-if [ "$RESPONSE" = "200" ]; then
-    echo "✅ Normal request succeeded: HTTP $RESPONSE"
+if [ "$RESPONSE" = "301" ]; then
+    echo "✅ HTTP→HTTPS redirect working: HTTP $RESPONSE (EXPECTED)"
+elif [ "$RESPONSE" = "200" ]; then
+    echo "✅ Direct response: HTTP $RESPONSE"
 else
-    echo "❌ Normal request failed: HTTP $RESPONSE"
+    echo "❌ Unexpected response: HTTP $RESPONSE"
 fi
 
 # Test 2: SQL Injection Attempt (should be blocked)

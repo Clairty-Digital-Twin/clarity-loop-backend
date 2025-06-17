@@ -1,0 +1,47 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "DenyInsecureConnections",
+      "Effect": "Deny",
+      "Principal": "*",
+      "Action": "s3:*",
+      "Resource": [
+        "arn:aws:s3:::clarity-ml-models-124355672559",
+        "arn:aws:s3:::clarity-ml-models-124355672559/*"
+      ],
+      "Condition": {
+        "Bool": {
+          "aws:SecureTransport": "false"
+        }
+      }
+    },
+    {
+      "Sid": "AllowReadOnlyAccess",
+      "Effect": "Allow",
+      "Principal": {
+        "AWS": "arn:aws:iam::124355672559:role/clarity-backend-task-role"
+      },
+      "Action": [
+        "s3:GetObject",
+        "s3:ListBucket"
+      ],
+      "Resource": [
+        "arn:aws:s3:::clarity-ml-models-124355672559",
+        "arn:aws:s3:::clarity-ml-models-124355672559/*"
+      ]
+    },
+    {
+      "Sid": "DenyPublicRead",
+      "Effect": "Deny",
+      "Principal": "*",
+      "Action": "s3:GetObject",
+      "Resource": "arn:aws:s3:::clarity-ml-models-124355672559/*",
+      "Condition": {
+        "StringNotEquals": {
+          "aws:userid": "AIDACKCEVSQ6C2EXAMPLE"
+        }
+      }
+    }
+  ]
+} 

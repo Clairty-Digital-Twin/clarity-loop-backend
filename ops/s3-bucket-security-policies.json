@@ -1,0 +1,118 @@
+{
+  "health_data_bucket_policy": {
+    "Version": "2012-10-17",
+    "Statement": [
+      {
+        "Sid": "DenyInsecureConnections",
+        "Effect": "Deny",
+        "Principal": "*",
+        "Action": "s3:*",
+        "Resource": [
+          "arn:aws:s3:::clarity-health-data-storage",
+          "arn:aws:s3:::clarity-health-data-storage/*"
+        ],
+        "Condition": {
+          "Bool": {
+            "aws:SecureTransport": "false"
+          }
+        }
+      },
+      {
+        "Sid": "AllowApplicationAccess",
+        "Effect": "Allow",
+        "Principal": {
+          "AWS": "arn:aws:iam::124355672559:role/clarity-backend-task-role"
+        },
+        "Action": [
+          "s3:GetObject",
+          "s3:PutObject",
+          "s3:DeleteObject",
+          "s3:ListBucket"
+        ],
+        "Resource": [
+          "arn:aws:s3:::clarity-health-data-storage",
+          "arn:aws:s3:::clarity-health-data-storage/*"
+        ],
+        "Condition": {
+          "StringEquals": {
+            "s3:x-amz-server-side-encryption": "AES256"
+          }
+        }
+      },
+      {
+        "Sid": "DenyUnencryptedObjectUploads",
+        "Effect": "Deny",
+        "Principal": "*",
+        "Action": "s3:PutObject",
+        "Resource": "arn:aws:s3:::clarity-health-data-storage/*",
+        "Condition": {
+          "StringNotEquals": {
+            "s3:x-amz-server-side-encryption": "AES256"
+          }
+        }
+      },
+      {
+        "Sid": "RequireHIPAACompliantMetadata",
+        "Effect": "Deny",
+        "Principal": "*",
+        "Action": "s3:PutObject",
+        "Resource": "arn:aws:s3:::clarity-health-data-storage/*",
+        "Condition": {
+          "Null": {
+            "s3:x-amz-meta-compliance": "true"
+          }
+        }
+      }
+    ]
+  },
+  "ml_models_bucket_policy": {
+    "Version": "2012-10-17",
+    "Statement": [
+      {
+        "Sid": "DenyInsecureConnections",
+        "Effect": "Deny",
+        "Principal": "*",
+        "Action": "s3:*",
+        "Resource": [
+          "arn:aws:s3:::clarity-ml-models-124355672559",
+          "arn:aws:s3:::clarity-ml-models-124355672559/*"
+        ],
+        "Condition": {
+          "Bool": {
+            "aws:SecureTransport": "false"
+          }
+        }
+      },
+      {
+        "Sid": "AllowReadOnlyAccess",
+        "Effect": "Allow",
+        "Principal": {
+          "AWS": "arn:aws:iam::124355672559:role/clarity-backend-task-role"
+        },
+        "Action": [
+          "s3:GetObject",
+          "s3:ListBucket"
+        ],
+        "Resource": [
+          "arn:aws:s3:::clarity-ml-models-124355672559",
+          "arn:aws:s3:::clarity-ml-models-124355672559/*"
+        ]
+      },
+      {
+        "Sid": "DenyPublicAccess",
+        "Effect": "Deny",
+        "Principal": "*",
+        "Action": "s3:*",
+        "Resource": [
+          "arn:aws:s3:::clarity-ml-models-124355672559",
+          "arn:aws:s3:::clarity-ml-models-124355672559/*"
+        ],
+        "Condition": {
+          "StringNotEquals": {
+            "aws:PrincipalArn": "arn:aws:iam::124355672559:role/clarity-backend-task-role"
+          }
+        }
+      }
+    ]
+  }
+} 

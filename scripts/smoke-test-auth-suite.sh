@@ -45,10 +45,10 @@ run_test() {
     
     if [ "$response_code" = "$expected_code" ]; then
         echo -e "${GREEN}✓ PASS${NC} (Expected: $expected_code, Got: $response_code)"
-        ((PASSED++))
+        PASSED=$((PASSED + 1))
     else
         echo -e "${RED}✗ FAIL${NC} (Expected: $expected_code, Got: $response_code)"
-        ((FAILED++))
+        FAILED=$((FAILED + 1))
         
         # If we got a 500 error, try to get the response body for debugging
         if [ "$response_code" = "500" ]; then

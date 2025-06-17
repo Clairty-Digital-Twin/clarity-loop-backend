@@ -77,7 +77,10 @@ class AccountLockoutService:
     async def _redis_is_locked(self, user: str) -> bool:
         key = self._key(user)
         ttl = await self._r.ttl(key)
-        return ttl > 0 and await self._r.hget(key, "locked") == b"1"
+        if ttl <= 0:
+            return False
+        locked_value = await self._r.hget(key, "locked")
+        return locked_value == b"1"
 
     async def _redis_register_failure(self, user: str):
         key = self._key(user)

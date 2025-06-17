@@ -1,0 +1,35 @@
+{
+    "ResourceArn": "arn:aws:wafv2:us-east-1:124355672559:regional/webacl/clarity-backend-rate-limiting/c690043c-9688-44fe-adb2-9883ccd8776b",
+    "LogDestinationConfigs": [
+        "arn:aws:logs:us-east-1:124355672559:log-group:aws-waf-logs-clarity-backend"
+    ],
+    "RedactedFields": [
+        {
+            "SingleHeader": {
+                "Name": "authorization"
+            }
+        },
+        {
+            "SingleHeader": {
+                "Name": "cookie"
+            }
+        }
+    ],
+    "ManagedByFirewallManager": false,
+    "LoggingFilter": {
+        "DefaultBehavior": "KEEP",
+        "Filters": [
+            {
+                "Behavior": "KEEP",
+                "Conditions": [
+                    {
+                        "ActionCondition": {
+                            "Action": "BLOCK"
+                        }
+                    }
+                ],
+                "Requirement": "MEETS_ANY"
+            }
+        ]
+    }
+} 

@@ -1,0 +1,56 @@
+{
+  "Rules": [
+    {
+      "ID": "HealthDataLifecycle",
+      "Status": "Enabled",
+      "Filter": {
+        "Prefix": "raw_data/"
+      },
+      "Transitions": [
+        {
+          "Days": 30,
+          "StorageClass": "STANDARD_IA"
+        },
+        {
+          "Days": 90,
+          "StorageClass": "GLACIER"
+        },
+        {
+          "Days": 365,
+          "StorageClass": "DEEP_ARCHIVE"
+        }
+      ],
+      "Expiration": {
+        "Days": 2555
+      }
+    },
+    {
+      "ID": "ProcessedDataLifecycle",
+      "Status": "Enabled",
+      "Filter": {
+        "Prefix": "analysis_results/"
+      },
+      "Transitions": [
+        {
+          "Days": 7,
+          "StorageClass": "STANDARD_IA"
+        },
+        {
+          "Days": 30,
+          "StorageClass": "GLACIER"
+        }
+      ],
+      "Expiration": {
+        "Days": 2555
+      }
+    },
+    {
+      "ID": "DeleteIncompleteMultipartUploads",
+      "Status": "Enabled",
+      "Filter": {},
+      "AbortIncompleteMultipartUpload": {
+        "DaysAfterInitiation": 1
+      }
+    }
+  ]
+} 

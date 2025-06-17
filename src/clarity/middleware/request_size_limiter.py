@@ -9,7 +9,8 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING
 
-from fastapi import HTTPException, Request, Response, status
+from fastapi import Request, Response, status
+from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
 
 if TYPE_CHECKING:
@@ -88,11 +89,11 @@ class RequestSizeLimiterMiddleware(BaseHTTPMiddleware):
             call_next: Next middleware/endpoint in chain
             
         Returns:
-            HTTP response
-            
-        Raises:
-            HTTPException: 413 Payload Too Large if request exceeds limits
+            HTTP response (413 if payload too large, otherwise normal response)
         """
+        # Debug logging to see if middleware is called
+        logger.info(f"🔍 Request Size Limiter: {request.method} {request.url.path}")
+        
         # Only check requests with bodies (POST, PUT, PATCH)
         if request.method in {"POST", "PUT", "PATCH"}:
             # Check Content-Length header first (fastest check)
@@ -112,14 +113,15 @@ class RequestSizeLimiterMiddleware(BaseHTTPMiddleware):
                             size_mb, limit_mb, request.method, request.url.path
                         )
                         
-                        # Return 413 Payload Too Large
-                        raise HTTPException(
+                        # Return 413 Payload Too Large directly as JSONResponse
+                        return JSONResponse(
                             status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
-                            detail={
+                            content={
                                 "error": "Request payload too large",
                                 "max_size_mb": round(limit_mb, 2),
                                 "received_size_mb": round(size_mb, 2),
-                                "content_type": request.headers.get("content-type", "unknown")
+                                "content_type": request.headers.get("content-type", "unknown"),
+                                "message": f"Request size {size_mb:.1f}MB exceeds {limit_mb:.1f}MB limit"
                             },
                             headers={"Retry-After": "3600"}  # Suggest retry in 1 hour
                         )

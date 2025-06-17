@@ -80,7 +80,7 @@ class TestAccountLockoutService:
         # Create lockout service with very short timeout for testing
         short_timeout_service = AccountLockoutService(
             max_attempts=3,
-            lockout_duration_minutes=0.01  # 0.6 seconds for testing
+            lockout_duration=timedelta(seconds=0.6)  # 0.6 seconds for testing
         )
         
         # Trigger lockout
@@ -172,7 +172,7 @@ class TestAccountLockoutService:
         # Create service with custom settings
         custom_service = AccountLockoutService(
             max_attempts=3,
-            lockout_duration_minutes=30
+            lockout_duration=timedelta(minutes=30)
         )
         
         email = "test@example.com"

@@ -97,7 +97,7 @@ if command -v aws &> /dev/null; then
         --region us-east-1 \
         --resource-arn $(aws elbv2 describe-load-balancers \
             --region us-east-1 \
-            --names clarity-alb-1762715656 \
+            --names clarity-alb \
             --query 'LoadBalancers[0].LoadBalancerArn' \
             --output text) \
         --query 'WebACL.Name' \

@@ -14,6 +14,7 @@ from pydantic import BaseModel, EmailStr, Field
 from clarity.auth.aws_cognito_provider import CognitoAuthProvider
 from clarity.auth.dependencies import get_auth_provider, get_current_user
 from clarity.auth.dependencies import get_current_user as get_user_func
+from clarity.auth.lockout_service import AccountLockoutService, AccountLockoutError
 from clarity.core.constants import (
     AUTH_HEADER_TYPE_BEARER,
     AUTH_SCOPE_FULL_ACCESS,
@@ -37,6 +38,9 @@ logger = logging.getLogger(__name__)
 
 # Create router
 router = APIRouter()
+
+# Initialize lockout service
+lockout_service = AccountLockoutService()
 
 
 class UserRegister(BaseModel):
@@ -181,6 +185,9 @@ async def login(
     auth_provider: IAuthProvider = Depends(get_auth_provider),
 ) -> TokenResponse:
     """Authenticate user and return access token."""
+    # Get client IP for lockout tracking
+    client_ip = request.client.host if request.client else "unknown"
+    
     # Debug logging for request body
     try:
         body_bytes = await request.body()
@@ -189,8 +196,26 @@ async def login(
         logger.warning("  Body length: %d bytes", len(body_bytes))
         logger.warning("  Body as string: %s", body_bytes.decode("utf-8"))
         logger.warning("  Parsed credentials: email=%s", credentials.email)
+        logger.warning("  Client IP: %s", client_ip)
     except Exception as e:
         logger.exception("Failed to log request body: %s", e)
+
+    # Check for account lockout BEFORE attempting authentication
+    try:
+        await lockout_service.check_lockout(credentials.email)
+        logger.debug("✅ Account lockout check passed for %s", credentials.email)
+    except AccountLockoutError as e:
+        logger.warning("🔒 Account locked: %s", e)
+        raise HTTPException(
+            status_code=429,
+            detail=ProblemDetail(
+                type="account_locked",
+                title="Account Temporarily Locked",
+                detail=str(e),
+                status=429,
+                instance=f"https://api.clarity.health/requests/{id(e)}",
+            ).model_dump(),
+        ) from e
 
     # Validate auth provider before try block
     if not isinstance(auth_provider, CognitoAuthProvider):
@@ -204,6 +229,10 @@ async def login(
             email=credentials.email,
             password=credentials.password,
         )
+        
+        # Authentication successful - reset failed attempts
+        await lockout_service.reset_attempts(credentials.email)
+        logger.info("✅ Login successful for %s, lockout attempts reset", credentials.email)
 
     except EmailNotVerifiedError as e:
         raise HTTPException(
@@ -224,6 +253,15 @@ async def login(
         logger.warning(
             "Authentication failed for user: %s. Returning 401.", credentials.email
         )
+        
+        # Track failed attempt for lockout protection
+        try:
+            await lockout_service.record_failed_attempt(credentials.email, client_ip)
+            logger.info("🚨 Failed login attempt recorded for %s from %s", credentials.email, client_ip)
+        except Exception as lockout_error:
+            # Don't let lockout service errors block the auth response
+            logger.exception("Failed to record lockout attempt: %s", lockout_error)
+        
         raise HTTPException(
             status_code=401,
             detail=ProblemDetail(

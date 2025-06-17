@@ -6,11 +6,11 @@ from fastapi import FastAPI
 from fastapi.openapi.utils import get_openapi
 
 
-def custom_openapi(app: FastAPI) -> Dict[str, Any]:
+def custom_openapi(app: FastAPI) -> dict[str, Any]:
     """Generate custom OpenAPI schema with security schemes and enhancements."""
     if app.openapi_schema:
         return app.openapi_schema
-    
+
     openapi_schema = get_openapi(
         title=app.title,
         version=app.version,
@@ -21,7 +21,7 @@ def custom_openapi(app: FastAPI) -> Dict[str, Any]:
         contact=app.contact,
         license_info=app.license_info,
     )
-    
+
     # Add security schemes
     openapi_schema["components"]["securitySchemes"] = {
         "BearerAuth": {
@@ -37,16 +37,16 @@ def custom_openapi(app: FastAPI) -> Dict[str, Any]:
             "description": "API Key authentication for service-to-service communication"
         }
     }
-    
+
     # Add global security (can be overridden per endpoint)
     openapi_schema["security"] = [{"BearerAuth": []}]
-    
+
     # Add common response schemas
     if "components" not in openapi_schema:
         openapi_schema["components"] = {}
     if "schemas" not in openapi_schema["components"]:
         openapi_schema["components"]["schemas"] = {}
-    
+
     # Add error response schema
     openapi_schema["components"]["schemas"]["ErrorResponse"] = {
         "type": "object",
@@ -69,7 +69,7 @@ def custom_openapi(app: FastAPI) -> Dict[str, Any]:
         },
         "required": ["error"]
     }
-    
+
     # Add paginated response schema
     openapi_schema["components"]["schemas"]["PaginationMeta"] = {
         "type": "object",
@@ -97,21 +97,21 @@ def custom_openapi(app: FastAPI) -> Dict[str, Any]:
         },
         "required": ["total", "page", "per_page", "total_pages"]
     }
-    
+
     # Process all paths to add common error responses and fix issues
     for path, methods in openapi_schema.get("paths", {}).items():
         for method, operation in methods.items():
             if not isinstance(operation, dict):
                 continue
-                
+
             # Add operationId if missing
             if "operationId" not in operation:
                 operation["operationId"] = f"{method}_{path.replace('/', '_').strip('_')}"
-            
+
             # Add common error responses
             if "responses" not in operation:
                 operation["responses"] = {}
-            
+
             # Add 401 for authenticated endpoints
             if path not in ['/', '/health', '/metrics'] and not path.startswith('/api/v1/auth/'):
                 if "401" not in operation["responses"]:
@@ -127,7 +127,7 @@ def custom_openapi(app: FastAPI) -> Dict[str, Any]:
                             }
                         }
                     }
-                
+
                 if "403" not in operation["responses"]:
                     operation["responses"]["403"] = {
                         "description": "Forbidden - Insufficient permissions",
@@ -141,7 +141,7 @@ def custom_openapi(app: FastAPI) -> Dict[str, Any]:
                             }
                         }
                     }
-            
+
             # Add 500 for all endpoints
             if "500" not in operation["responses"]:
                 operation["responses"]["500"] = {
@@ -156,7 +156,7 @@ def custom_openapi(app: FastAPI) -> Dict[str, Any]:
                         }
                     }
                 }
-            
+
             # Set security for endpoints
             if path in ['/', '/health', '/metrics', '/docs', '/redoc', '/openapi.json'] or path.startswith('/api/v1/auth/'):
                 # Public endpoints
@@ -164,7 +164,7 @@ def custom_openapi(app: FastAPI) -> Dict[str, Any]:
             elif "security" not in operation:
                 # Protected endpoints use default security
                 operation["security"] = [{"BearerAuth": []}]
-    
+
     # Cache the schema
     app.openapi_schema = openapi_schema
     return openapi_schema

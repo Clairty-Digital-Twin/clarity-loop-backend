@@ -83,38 +83,39 @@ class AccountLockoutService:
             username: The username that failed to authenticate
             ip_address: Optional IP address of the attempt
         """
-        current_time = datetime.now()
-        
-        # Initialize user data if needed
-        if username not in self._user_attempts:
-            self._user_attempts[username] = {'attempts': []}
-        
-        # Clean up old attempts first
-        self._cleanup_old_attempts(username)
-        
-        # Add the new failed attempt
-        self._user_attempts[username]['attempts'].append((current_time, ip_address))
-        
-        # Check if we should lock the account
-        attempt_count = len(self._user_attempts[username]['attempts'])
-        
-        if attempt_count >= self.max_attempts:
-            # Lock the account
-            locked_until = current_time + self.lockout_duration
-            self._user_attempts[username]['locked_until'] = locked_until
+        async with self._lock:
+            current_time = datetime.now()
             
-            logger.warning(
-                f"Account locked: username={username}, "
-                f"attempts={attempt_count}, "
-                f"locked_until={locked_until.isoformat()}, "
-                f"ip={ip_address}"
-            )
-        else:
-            logger.info(
-                f"Failed attempt recorded: username={username}, "
-                f"attempts={attempt_count}/{self.max_attempts}, "
-                f"ip={ip_address}"
-            )
+            # Initialize user data if needed
+            if username not in self._user_attempts:
+                self._user_attempts[username] = {'attempts': []}
+            
+            # Clean up old attempts first
+            self._cleanup_old_attempts(username)
+            
+            # Add the new failed attempt
+            self._user_attempts[username]['attempts'].append((current_time, ip_address))
+            
+            # Check if we should lock the account
+            attempt_count = len(self._user_attempts[username]['attempts'])
+            
+            if attempt_count >= self.max_attempts:
+                # Lock the account
+                locked_until = current_time + self.lockout_duration
+                self._user_attempts[username]['locked_until'] = locked_until
+                
+                logger.warning(
+                    f"Account locked: username={username}, "
+                    f"attempts={attempt_count}, "
+                    f"locked_until={locked_until.isoformat()}, "
+                    f"ip={ip_address}"
+                )
+            else:
+                logger.info(
+                    f"Failed attempt recorded: username={username}, "
+                    f"attempts={attempt_count}/{self.max_attempts}, "
+                    f"ip={ip_address}"
+                )
     
     async def is_account_locked(self, username: str) -> bool:
         """
@@ -194,7 +195,7 @@ class AccountLockoutService:
         if is_locked:
             locked_until = user_data['locked_until']
             result['unlock_time'] = locked_until
-            result['time_remaining_seconds'] = int((locked_until - datetime.utcnow()).total_seconds())
+            result['time_remaining_seconds'] = int((locked_until - datetime.now()).total_seconds())
         
         return result
     

@@ -306,10 +306,13 @@ main() {
     elif [ -n "$TAG" ]; then
         echo -e "${YELLOW}Using provided tag: $TAG${NC}"
         # Verify the tag exists in ECR
-        aws ecr describe-images --repository-name clarity-backend --image-ids imageTag=$TAG --region $REGION >/dev/null 2>&1
-        if [ $? -ne 0 ]; then
+        echo -e "${BLUE}Verifying image tag in ECR...${NC}"
+        IMAGE_EXISTS=$(aws ecr list-images --repository-name clarity-backend --region $REGION --filter tagStatus=TAGGED --query "imageIds[?imageTag=='$TAG']" --output text)
+        if [ -z "$IMAGE_EXISTS" ]; then
             echo -e "${RED}❌ Image with tag '$TAG' not found in ECR${NC}"
             exit 1
+        else
+            echo -e "${GREEN}✅ Image tag verified in ECR${NC}"
         fi
     else
         # Default to latest

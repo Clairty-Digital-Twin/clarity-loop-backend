@@ -39,22 +39,33 @@ class AccountLockoutService:
     def __init__(
         self,
         max_attempts: int = 5,
-        lockout_duration_minutes: int = 15,
-        attempt_window_minutes: int = 60
+        lockout_duration: timedelta = timedelta(minutes=15),
+        attempt_window: timedelta = timedelta(minutes=15),
     ):
+        """
+        Initialize the account lockout service.
+        
+        Args:
+            max_attempts: Maximum failed attempts before lockout
+            lockout_duration: How long to lock the account
+            attempt_window: Time window to consider for counting attempts
+        """
         self.max_attempts = max_attempts
-        self.lockout_duration = timedelta(minutes=lockout_duration_minutes)
-        self.attempt_window = timedelta(minutes=attempt_window_minutes)
+        self.lockout_duration = lockout_duration
+        self.attempt_window = attempt_window
         
         # In-memory storage for failed attempts and lockouts
         # Format: {username: {'attempts': [(timestamp, ip), ...], 'locked_until': datetime}}
         self._user_attempts: Dict[str, Dict[str, Any]] = {}
         
+        # Add the missing async lock for thread safety
+        self._lock = asyncio.Lock()
+        
         logger.info(
             f"AccountLockoutService initialized: "
             f"max_attempts={max_attempts}, "
-            f"lockout_duration={lockout_duration_minutes}min, "
-            f"attempt_window={attempt_window_minutes}min"
+            f"lockout_duration={lockout_duration.total_seconds() / 60}min, "
+            f"attempt_window={attempt_window.total_seconds() / 60}min"
         )
     
     def _cleanup_old_attempts(self, username: str) -> None:
@@ -93,29 +104,33 @@ class AccountLockoutService:
             # Clean up old attempts first
             self._cleanup_old_attempts(username)
             
+            # Re-initialize if cleanup removed the user (can happen if no recent attempts)
+            if username not in self._user_attempts:
+                self._user_attempts[username] = {'attempts': []}
+            
             # Add the new failed attempt
             self._user_attempts[username]['attempts'].append((current_time, ip_address))
-        
-        # Check if we should lock the account
-        attempt_count = len(self._user_attempts[username]['attempts'])
-        
-        if attempt_count >= self.max_attempts:
-            # Lock the account
-            locked_until = current_time + self.lockout_duration
-            self._user_attempts[username]['locked_until'] = locked_until
             
-            logger.warning(
-                f"Account locked: username={username}, "
-                f"attempts={attempt_count}, "
-                f"locked_until={locked_until.isoformat()}, "
-                f"ip={ip_address}"
-            )
-        else:
-            logger.info(
-                f"Failed attempt recorded: username={username}, "
-                f"attempts={attempt_count}/{self.max_attempts}, "
-                f"ip={ip_address}"
-            )
+            # Check if we should lock the account
+            attempt_count = len(self._user_attempts[username]['attempts'])
+            
+            if attempt_count >= self.max_attempts:
+                # Lock the account
+                locked_until = current_time + self.lockout_duration
+                self._user_attempts[username]['locked_until'] = locked_until
+                
+                logger.warning(
+                    f"Account locked: username={username}, "
+                    f"attempts={attempt_count}, "
+                    f"locked_until={locked_until.isoformat()}, "
+                    f"ip={ip_address}"
+                )
+            else:
+                logger.info(
+                    f"Failed attempt recorded: username={username}, "
+                    f"attempts={attempt_count}/{self.max_attempts}, "
+                    f"ip={ip_address}"
+                )
     
     async def is_account_locked(self, username: str) -> bool:
         """

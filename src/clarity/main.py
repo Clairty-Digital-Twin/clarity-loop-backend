@@ -180,14 +180,21 @@ app = FastAPI(
     }
 )
 
-# Add CORS middleware
+# Add CORS middleware with SECURE configuration - NO WILDCARDS
+from clarity.core.config import get_settings
+
+settings = get_settings()
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_origins=settings.get_cors_origins(),                    # ✅ EXPLICIT ORIGINS ONLY
+    allow_credentials=settings.cors_allow_credentials,            # ✅ SAFE WITH EXPLICIT ORIGINS  
+    allow_methods=settings.cors_allowed_methods,                  # ✅ SPECIFIC METHODS ONLY
+    allow_headers=settings.cors_allowed_headers,                  # ✅ SPECIFIC HEADERS ONLY
+    max_age=settings.cors_max_age,                               # ✅ CACHE PREFLIGHT REQUESTS
 )
+
+logger.info("🔒 CORS Security: Hardened configuration applied - NO wildcards allowed")
 
 # Add security headers middleware
 from clarity.middleware.security_headers import SecurityHeadersMiddleware

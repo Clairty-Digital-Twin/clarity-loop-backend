@@ -80,9 +80,32 @@ class Settings(BaseSettings):
     )  # Changed from 0.0.0.0 to fix S104
     port: int = Field(default=8080, alias="PORT")
     log_level: str = Field(default="INFO", alias="LOG_LEVEL")
-    cors_origins: list[str] = Field(
+    
+    # CORS Security Settings - HARDENED CONFIGURATION
+    cors_allowed_origins: list[str] = Field(
         default_factory=lambda: ["http://localhost:3000", "http://localhost:8080"],
-        alias="CORS_ORIGINS",
+        alias="CORS_ALLOWED_ORIGINS",
+        description="Explicitly allowed origins for CORS - no wildcards for security"
+    )
+    cors_allow_credentials: bool = Field(
+        default=True, 
+        alias="CORS_ALLOW_CREDENTIALS",
+        description="Allow credentials in CORS requests (secure with explicit origins)"
+    )
+    cors_allowed_methods: list[str] = Field(
+        default_factory=lambda: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+        alias="CORS_ALLOWED_METHODS",
+        description="Explicitly allowed HTTP methods - no wildcards"
+    )
+    cors_allowed_headers: list[str] = Field(
+        default_factory=lambda: ["Authorization", "Content-Type", "Accept", "X-Requested-With"],
+        alias="CORS_ALLOWED_HEADERS", 
+        description="Explicitly allowed headers - no wildcards"
+    )
+    cors_max_age: int = Field(
+        default=86400,
+        alias="CORS_MAX_AGE",
+        description="Cache preflight requests for 24 hours (86400 seconds)"
     )
 
     # External service flags
@@ -229,6 +252,38 @@ class Settings(BaseSettings):
             "   • Cognito User Pool: %s", self.cognito_user_pool_id or "Not set"
         )
         logger.info("   • DynamoDB table: %s", self.dynamodb_table_name or "Not set")
+
+    def get_cors_origins(self) -> list[str]:
+        """Parse and validate CORS allowed origins.
+        
+        Parses comma-separated CORS_ALLOWED_ORIGINS environment variable
+        and validates that no wildcards are used for security.
+        
+        Returns:
+            List of explicitly allowed origin URLs
+            
+        Raises:
+            ValueError: If wildcards are detected in origins (security violation)
+        """
+        origins = self.cors_allowed_origins
+        
+        # If origins is a single string (from env var), split by comma
+        if isinstance(origins, str):
+            origins = [origin.strip() for origin in origins.split(",") if origin.strip()]
+        
+        # Security validation: no wildcards allowed
+        for origin in origins:
+            if "*" in origin:
+                msg = (
+                    f"Security violation: Wildcard origin '{origin}' detected. "
+                    f"CORS origins must be explicitly specified for security."
+                )
+                raise ValueError(msg)
+        
+        # Log CORS configuration for security audit
+        logger.info("🔒 CORS Security: Allowed origins configured: %s", origins)
+        
+        return origins
 
     def get_middleware_config(self) -> MiddlewareConfig:
         """Get middleware configuration based on environment.

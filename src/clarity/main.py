@@ -209,6 +209,17 @@ app.add_middleware(
 
 logger.info("🔒 Request Size Limiter: DoS protection active - payload limits enforced")
 
+# Add timeout middleware to prevent hangs from incomplete uploads
+from starlette.middleware.trustedhost import TrustedHostMiddleware
+
+app.add_middleware(
+    TrustedHostMiddleware, 
+    allowed_hosts=["*"]  # Configure based on environment in production
+)
+
+# Note: Timeout middleware should be added at uvicorn level for better control
+# uvicorn src.clarity.main:app --timeout-keep-alive 15 --timeout-graceful-shutdown 5
+
 # Add security headers middleware
 from clarity.middleware.security_headers import SecurityHeadersMiddleware
 

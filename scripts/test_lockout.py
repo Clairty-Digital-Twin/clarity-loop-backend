@@ -60,12 +60,14 @@ async def test_lockout_demo():
     print("📊 Checking lockout status...")
     status = await lockout_service.get_lockout_status(test_email)
     if status:
-        print(f"  Username: {status['username']}")
+        print(f"  Email: {test_email}")
         print(f"  Locked: {status['locked']}")
-        print(f"  Attempts: {status['attempts']}")
+        print(f"  Attempts: {status['attempts']}/{status['max_attempts']}")
         if status['locked']:
             print(f"  Unlock time: {status['unlock_time']}")
             print(f"  Time remaining: {status['time_remaining_seconds']} seconds")
+    else:
+        print(f"  No lockout data for {test_email}")
     print()
     
     # Test 4: Wait for lockout to expire (optional - uncomment for full demo)

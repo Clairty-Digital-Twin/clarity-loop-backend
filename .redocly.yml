@@ -1,0 +1,46 @@
+# Redocly configuration for OpenAPI validation
+apiDefinitions:
+  main: openapi.json
+
+rules:
+  # Core OpenAPI rules
+  spec: error
+  no-empty-servers: error
+  operation-4xx-response: error
+  operation-operationId-unique: error
+  operation-parameters-unique: error
+  path-parameters-defined: error
+  
+  # Security rules
+  security-defined: error
+  
+  # Clarity-specific rules
+  operation-operationId: error
+  operation-summary: warn
+  tag-description: warn
+  no-unresolved-refs: error
+  no-unused-components: warn
+  
+  # Path rules
+  paths-kebab-case: error
+  no-ambiguous-paths: error
+  
+  # Schema rules  
+  boolean-parameter-prefixes: off  # We use 'enable_' prefix
+  
+  # Disable rules that conflict with FastAPI
+  operation-operationId-url-safe: off  # FastAPI generates these
+  operation-tags: off  # We use dynamic tags
+
+theme:
+  openapi:
+    showExtensions: true
+    nativeScrollbars: false
+    scrollYOffset: 50
+    
+features.openapi:
+  showConsole: true
+  
+decorators:
+  external-docs:
+    url: https://clarity.novamindnyc.com/docs

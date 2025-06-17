@@ -152,6 +152,54 @@ jobs:
           flags: unittests
           name: codecov-umbrella
 
+  # 📄 OpenAPI Validation
+  openapi:
+    name: 📄 OpenAPI Validation
+    runs-on: ubuntu-latest
+    needs: lint
+    steps:
+      - name: 📦 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🐍 Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+
+      - name: 🔧 Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: 📋 Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -e .[dev]
+          npm ci
+
+      - name: 📝 Generate OpenAPI spec
+        env:
+          SKIP_AWS_INIT: true
+          ENABLE_AUTH: false
+        run: python3 scripts/generate_openapi.py
+
+      - name: 🎯 Validate with Spectral
+        run: npx @stoplight/spectral-cli lint openapi.json --ruleset .spectral.yml
+
+      - name: 🔴 Validate with Redocly
+        run: npx @redocly/cli lint openapi.json
+
+      - name: 📋 Validate schema structure
+        run: npx @apidevtools/swagger-cli validate openapi.json
+
+      - name: 📤 Upload OpenAPI spec
+        uses: actions/upload-artifact@v3
+        with:
+          name: openapi-spec
+          path: openapi.json
+
   # 🔍 Type Checking
   type-check:
     name: 🔍 Type Check
@@ -209,7 +257,7 @@ jobs:
   build:
     name: 🏗️ Build & Security Scan
     runs-on: ubuntu-latest
-    needs: [test, type-check]
+    needs: [test, type-check, openapi]
     steps:
       - name: 📦 Checkout code
         uses: actions/checkout@v4

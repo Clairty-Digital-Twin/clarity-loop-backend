@@ -121,6 +121,63 @@ app = FastAPI(
     description="Production AWS-native health data platform with comprehensive API endpoints",
     version="0.2.0",
     lifespan=lifespan,
+    openapi_tags=[
+        {
+            "name": "authentication",
+            "description": "User authentication and authorization endpoints"
+        },
+        {
+            "name": "health-data",
+            "description": "Health data management and retrieval"
+        },
+        {
+            "name": "healthkit",
+            "description": "Apple HealthKit data integration"
+        },
+        {
+            "name": "pat-analysis",
+            "description": "Physical Activity Test (PAT) analysis endpoints"
+        },
+        {
+            "name": "ai-insights",
+            "description": "AI-powered health insights generation"
+        },
+        {
+            "name": "metrics",
+            "description": "Health metrics and statistics"
+        },
+        {
+            "name": "websocket",
+            "description": "WebSocket real-time communication"
+        },
+        {
+            "name": "debug",
+            "description": "Debug endpoints (development only)"
+        },
+        {
+            "name": "test",
+            "description": "Test endpoints for API validation"
+        }
+    ],
+    servers=[
+        {
+            "url": "http://clarity-alb-1762715656.us-east-1.elb.amazonaws.com",
+            "description": "Production server (AWS ALB)"
+        },
+        {
+            "url": "http://localhost:8000",
+            "description": "Local development server"
+        }
+    ],
+    contact={
+        "name": "CLARITY Support",
+        "email": "support@clarity.novamindnyc.com",
+        "url": "https://clarity.novamindnyc.com"
+    },
+    license_info={
+        "name": "Proprietary",
+        "url": "https://clarity.novamindnyc.com/license"
+    }
 )
 
 # Add CORS middleware
@@ -151,9 +208,13 @@ if ENVIRONMENT == "development":
 
 # Import the CLEAN AWS router - no duplicates
 from clarity.api.v1.router import api_router as v1_router  # noqa: E402
+from clarity.core.openapi import custom_openapi  # noqa: E402
 
 # Include ONLY the clean router - professional single source of truth
-app.include_router(v1_router, prefix="/api/v1", tags=["API v1"])
+app.include_router(v1_router, prefix="/api/v1")
+
+# Set custom OpenAPI schema
+app.openapi = lambda: custom_openapi(app)  # type: ignore[method-assign]
 
 logger.info("✅ Included CLEAN router - professional endpoint structure")
 

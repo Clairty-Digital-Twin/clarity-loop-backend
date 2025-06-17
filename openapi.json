@@ -3,13 +3,31 @@
   "info": {
     "title": "CLARITY Digital Twin Platform",
     "description": "Production AWS-native health data platform with comprehensive API endpoints",
+    "contact": {
+      "name": "CLARITY Support",
+      "url": "https://clarity.novamindnyc.com/",
+      "email": "support@clarity.novamindnyc.com"
+    },
+    "license": {
+      "name": "Proprietary",
+      "url": "https://clarity.novamindnyc.com/license"
+    },
     "version": "0.2.0"
   },
+  "servers": [
+    {
+      "url": "http://clarity-alb-1762715656.us-east-1.elb.amazonaws.com",
+      "description": "Production server (AWS ALB)"
+    },
+    {
+      "url": "http://localhost:8000",
+      "description": "Local development server"
+    }
+  ],
   "paths": {
     "/api/v1/auth/register": {
       "post": {
         "tags": [
-          "API v1",
           "authentication"
         ],
         "summary": "Register",
@@ -45,14 +63,28 @@
                 }
               }
             }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": "An unexpected error occurred",
+                  "code": "INTERNAL_001"
+                }
+              }
+            }
           }
-        }
+        },
+        "security": []
       }
     },
     "/api/v1/auth/login": {
       "post": {
         "tags": [
-          "API v1",
           "authentication"
         ],
         "summary": "Login",
@@ -88,14 +120,28 @@
                 }
               }
             }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": "An unexpected error occurred",
+                  "code": "INTERNAL_001"
+                }
+              }
+            }
           }
-        }
+        },
+        "security": []
       }
     },
     "/api/v1/auth/me": {
       "get": {
         "tags": [
-          "API v1",
           "authentication"
         ],
         "summary": "Get Current User Info",
@@ -111,12 +157,26 @@
                 }
               }
             }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": "An unexpected error occurred",
+                  "code": "INTERNAL_001"
+                }
+              }
+            }
           }
-        }
+        },
+        "security": []
       },
       "put": {
         "tags": [
-          "API v1",
           "authentication"
         ],
         "summary": "Update User",
@@ -152,14 +212,28 @@
                 }
               }
             }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": "An unexpected error occurred",
+                  "code": "INTERNAL_001"
+                }
+              }
+            }
           }
-        }
+        },
+        "security": []
       }
     },
     "/api/v1/auth/logout": {
       "post": {
         "tags": [
-          "API v1",
           "authentication"
         ],
         "summary": "Logout",
@@ -175,14 +249,28 @@
                 }
               }
             }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": "An unexpected error occurred",
+                  "code": "INTERNAL_001"
+                }
+              }
+            }
           }
-        }
+        },
+        "security": []
       }
     },
     "/api/v1/auth/health": {
       "get": {
         "tags": [
-          "API v1",
           "authentication"
         ],
         "summary": "Auth Health",
@@ -198,14 +286,28 @@
                 }
               }
             }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": "An unexpected error occurred",
+                  "code": "INTERNAL_001"
+                }
+              }
+            }
           }
-        }
+        },
+        "security": []
       }
     },
     "/api/v1/auth/refresh": {
       "post": {
         "tags": [
-          "API v1",
           "authentication"
         ],
         "summary": "Refresh Token",
@@ -221,14 +323,28 @@
                 }
               }
             }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": "An unexpected error occurred",
+                  "code": "INTERNAL_001"
+                }
+              }
+            }
           }
-        }
+        },
+        "security": []
       }
     },
     "/api/v1/auth/confirm-email": {
       "post": {
         "tags": [
-          "API v1",
           "authentication"
         ],
         "summary": "Confirm Email",
@@ -264,14 +380,28 @@
                 }
               }
             }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": "An unexpected error occurred",
+                  "code": "INTERNAL_001"
+                }
+              }
+            }
           }
-        }
+        },
+        "security": []
       }
     },
     "/api/v1/auth/resend-confirmation": {
       "post": {
         "tags": [
-          "API v1",
           "authentication"
         ],
         "summary": "Resend Confirmation",
@@ -307,14 +437,28 @@
                 }
               }
             }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": "An unexpected error occurred",
+                  "code": "INTERNAL_001"
+                }
+              }
+            }
           }
-        }
+        },
+        "security": []
       }
     },
     "/api/v1/auth/forgot-password": {
       "post": {
         "tags": [
-          "API v1",
           "authentication"
         ],
         "summary": "Forgot Password",
@@ -350,14 +494,28 @@
                 }
               }
             }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": "An unexpected error occurred",
+                  "code": "INTERNAL_001"
+                }
+              }
+            }
           }
-        }
+        },
+        "security": []
       }
     },
     "/api/v1/auth/reset-password": {
       "post": {
         "tags": [
-          "API v1",
           "authentication"
         ],
         "summary": "Reset Password",
@@ -393,14 +551,28 @@
                 }
               }
             }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": "An unexpected error occurred",
+                  "code": "INTERNAL_001"
+                }
+              }
+            }
           }
-        }
+        },
+        "security": []
       }
     },
     "/api/v1/health-data/health": {
       "get": {
         "tags": [
-          "API v1",
           "health-data",
           "health-data"
         ],
@@ -421,29 +593,75 @@
           },
           "503": {
             "description": "Service is unhealthy"
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or missing authentication",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": "Invalid or expired token",
+                  "code": "AUTH_001"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - Insufficient permissions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": "Insufficient permissions for this operation",
+                  "code": "AUTH_002"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": "An unexpected error occurred",
+                  "code": "INTERNAL_001"
+                }
+              }
+            }
           }
-        }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
       }
     },
-    "/api/v1/health-data/upload": {
+    "/api/v1/health-data/": {
       "post": {
         "tags": [
-          "API v1",
           "health-data",
           "health-data"
         ],
         "summary": "Upload Health Data",
         "description": "Upload health metrics for processing and analysis by the CLARITY digital twin platform.\n\n    **Features:**\n    - Supports multiple data types (heart rate, sleep, activity, etc.)\n    - Real-time validation and processing\n    - HIPAA-compliant secure storage\n    - Automatic data quality checks\n\n    **Example Request:**\n    ```json\n    {\n        \"user_id\": \"user_123\",\n        \"data_type\": \"heart_rate\",\n        \"measurements\": [\n            {\n                \"timestamp\": \"2025-01-15T10:30:00Z\",\n                \"value\": 72.5,\n                \"unit\": \"bpm\"\n            }\n        ],\n        \"source\": \"apple_watch\",\n        \"device_info\": {\n            \"model\": \"Apple Watch Series 9\",\n            \"os_version\": \"10.0\"\n        }\n    }\n    ```",
-        "operationId": "upload_health_data_api_v1_health_data_upload_post",
+        "operationId": "upload_health_data_api_v1_health_data__post",
         "requestBody": {
+          "required": true,
           "content": {
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/HealthDataUpload"
               }
             }
-          },
-          "required": true
+          }
         },
         "responses": {
           "201": {
@@ -474,70 +692,44 @@
                 }
               }
             }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or missing authentication",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": "Invalid or expired token",
+                  "code": "AUTH_001"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": "An unexpected error occurred",
+                  "code": "INTERNAL_001"
+                }
+              }
+            }
           }
-        }
-      }
-    },
-    "/api/v1/health-data/processing/{processing_id}": {
-      "get": {
-        "tags": [
-          "API v1",
-          "health-data",
-          "health-data"
-        ],
-        "summary": "Get Processing Status",
-        "description": "Check the processing status of a health data upload using its processing ID.\n\n    **Status Values:**\n    - `pending`: Upload received, processing queued\n    - `processing`: Data currently being analyzed\n    - `completed`: Processing finished successfully\n    - `failed`: Processing encountered an error\n    - `cancelled`: Processing was cancelled\n\n    **Response includes:**\n    - Current processing stage\n    - Progress percentage (if available)\n    - Estimated completion time\n    - Error details (if failed)",
-        "operationId": "get_processing_status_api_v1_health_data_processing__processing_id__get",
-        "parameters": [
+        },
+        "security": [
           {
-            "name": "processing_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid",
-              "title": "Processing Id"
-            }
+            "BearerAuth": []
           }
-        ],
-        "responses": {
-          "200": {
-            "description": "Processing status retrieved successfully",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "title": "Response Get Processing Status Api V1 Health Data Processing  Processing Id  Get"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Processing job not found"
-          },
-          "403": {
-            "description": "Access denied - can only view own processing jobs"
-          },
-          "503": {
-            "description": "Service temporarily unavailable"
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/health-data/": {
+        ]
+      },
       "get": {
         "tags": [
-          "API v1",
           "health-data",
           "health-data"
         ],
@@ -700,14 +892,134 @@
                 }
               }
             }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or missing authentication",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": "Invalid or expired token",
+                  "code": "AUTH_001"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": "An unexpected error occurred",
+                  "code": "INTERNAL_001"
+                }
+              }
+            }
           }
-        }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/health-data/processing/{processing_id}": {
+      "get": {
+        "tags": [
+          "health-data",
+          "health-data"
+        ],
+        "summary": "Get Processing Status",
+        "description": "Check the processing status of a health data upload using its processing ID.\n\n    **Status Values:**\n    - `pending`: Upload received, processing queued\n    - `processing`: Data currently being analyzed\n    - `completed`: Processing finished successfully\n    - `failed`: Processing encountered an error\n    - `cancelled`: Processing was cancelled\n\n    **Response includes:**\n    - Current processing stage\n    - Progress percentage (if available)\n    - Estimated completion time\n    - Error details (if failed)",
+        "operationId": "get_processing_status_api_v1_health_data_processing__processing_id__get",
+        "parameters": [
+          {
+            "name": "processing_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Processing Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Processing status retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Get Processing Status Api V1 Health Data Processing  Processing Id  Get"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Processing job not found"
+          },
+          "403": {
+            "description": "Access denied - can only view own processing jobs"
+          },
+          "503": {
+            "description": "Service temporarily unavailable"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or missing authentication",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": "Invalid or expired token",
+                  "code": "AUTH_001"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": "An unexpected error occurred",
+                  "code": "INTERNAL_001"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
       }
     },
     "/api/v1/health-data/{processing_id}": {
       "delete": {
         "tags": [
-          "API v1",
           "health-data",
           "health-data"
         ],
@@ -759,20 +1071,52 @@
                 }
               }
             }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or missing authentication",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": "Invalid or expired token",
+                  "code": "AUTH_001"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": "An unexpected error occurred",
+                  "code": "INTERNAL_001"
+                }
+              }
+            }
           }
-        }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
       }
     },
-    "/api/v1/healthkit/upload": {
+    "/api/v1/healthkit/": {
       "post": {
         "tags": [
-          "API v1",
           "healthkit",
           "healthkit"
         ],
-        "summary": "Upload Healthkit Data",
-        "description": "Upload HealthKit data for asynchronous processing.\n\nThis endpoint:\n1. Authenticates the request via AWS Cognito\n2. Validates user authorization\n3. Stores raw data to GCS\n4. Publishes Pub/Sub message for processing\n5. Returns immediate acknowledgment\n\nArgs:\n    request: HealthKit upload data\n    current_user: Authenticated user context from AWS Cognito\n\nReturns:\n    Upload acknowledgment with tracking ID\n\nRaises:\n    HTTPException: For authentication/authorization failures",
-        "operationId": "upload_healthkit_data_api_v1_healthkit_upload_post",
+        "summary": "Upload HealthKit Data",
+        "description": "Upload HealthKit data for asynchronous processing",
+        "operationId": "upload_healthkit_data_api_v1_healthkit__post",
         "requestBody": {
           "content": {
             "application/json": {
@@ -803,14 +1147,60 @@
                 }
               }
             }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or missing authentication",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": "Invalid or expired token",
+                  "code": "AUTH_001"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - Insufficient permissions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": "Insufficient permissions for this operation",
+                  "code": "AUTH_002"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": "An unexpected error occurred",
+                  "code": "INTERNAL_001"
+                }
+              }
+            }
           }
-        }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
       }
     },
     "/api/v1/healthkit/status/{upload_id}": {
       "get": {
         "tags": [
-          "API v1",
           "healthkit",
           "healthkit"
         ],
@@ -849,20 +1239,66 @@
                 }
               }
             }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or missing authentication",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": "Invalid or expired token",
+                  "code": "AUTH_001"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - Insufficient permissions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": "Insufficient permissions for this operation",
+                  "code": "AUTH_002"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": "An unexpected error occurred",
+                  "code": "INTERNAL_001"
+                }
+              }
+            }
           }
-        }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
       }
     },
-    "/api/v1/pat/analyze-step-data": {
+    "/api/v1/pat/step-analysis": {
       "post": {
         "tags": [
-          "API v1",
           "pat-analysis",
           "pat-analysis"
         ],
         "summary": "Analyze Apple HealthKit Step Data",
         "description": "Submit Apple HealthKit step count data for PAT analysis using proxy actigraphy transformation",
-        "operationId": "analyze_step_data_api_v1_pat_analyze_step_data_post",
+        "operationId": "analyze_step_data_api_v1_pat_step_analysis_post",
         "requestBody": {
           "content": {
             "application/json": {
@@ -893,20 +1329,66 @@
                 }
               }
             }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or missing authentication",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": "Invalid or expired token",
+                  "code": "AUTH_001"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - Insufficient permissions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": "Insufficient permissions for this operation",
+                  "code": "AUTH_002"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": "An unexpected error occurred",
+                  "code": "INTERNAL_001"
+                }
+              }
+            }
           }
-        }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
       }
     },
-    "/api/v1/pat/analyze": {
+    "/api/v1/pat/analysis": {
       "post": {
         "tags": [
-          "API v1",
           "pat-analysis",
           "pat-analysis"
         ],
         "summary": "Analyze Direct Actigraphy Data",
         "description": "Submit preprocessed actigraphy data for PAT analysis",
-        "operationId": "analyze_actigraphy_data_api_v1_pat_analyze_post",
+        "operationId": "analyze_actigraphy_data_api_v1_pat_analysis_post",
         "requestBody": {
           "content": {
             "application/json": {
@@ -937,14 +1419,60 @@
                 }
               }
             }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or missing authentication",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": "Invalid or expired token",
+                  "code": "AUTH_001"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - Insufficient permissions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": "Insufficient permissions for this operation",
+                  "code": "AUTH_002"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": "An unexpected error occurred",
+                  "code": "INTERNAL_001"
+                }
+              }
+            }
           }
-        }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
       }
     },
     "/api/v1/pat/analysis/{processing_id}": {
       "get": {
         "tags": [
-          "API v1",
           "pat-analysis",
           "pat-analysis"
         ],
@@ -988,14 +1516,60 @@
                 }
               }
             }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or missing authentication",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": "Invalid or expired token",
+                  "code": "AUTH_001"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - Insufficient permissions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": "Insufficient permissions for this operation",
+                  "code": "AUTH_002"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": "An unexpected error occurred",
+                  "code": "INTERNAL_001"
+                }
+              }
+            }
           }
-        }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
       }
     },
     "/api/v1/pat/health": {
       "get": {
         "tags": [
-          "API v1",
           "pat-analysis",
           "pat-analysis"
         ],
@@ -1012,14 +1586,60 @@
                 }
               }
             }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or missing authentication",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": "Invalid or expired token",
+                  "code": "AUTH_001"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - Insufficient permissions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": "Insufficient permissions for this operation",
+                  "code": "AUTH_002"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": "An unexpected error occurred",
+                  "code": "INTERNAL_001"
+                }
+              }
+            }
           }
-        }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
       }
     },
     "/api/v1/pat/models/info": {
       "get": {
         "tags": [
-          "API v1",
           "pat-analysis",
           "pat-analysis"
         ],
@@ -1037,20 +1657,66 @@
                 }
               }
             }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or missing authentication",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": "Invalid or expired token",
+                  "code": "AUTH_001"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - Insufficient permissions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": "Insufficient permissions for this operation",
+                  "code": "AUTH_002"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": "An unexpected error occurred",
+                  "code": "INTERNAL_001"
+                }
+              }
+            }
           }
-        }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
       }
     },
-    "/api/v1/insights/generate": {
+    "/api/v1/insights/": {
       "post": {
         "tags": [
-          "API v1",
           "ai-insights",
           "ai-insights"
         ],
         "summary": "Generate Health Insights",
         "description": "Generate AI-powered health insights from analysis results using Gemini 2.5 Pro",
-        "operationId": "generate_insights_api_v1_insights_generate_post",
+        "operationId": "generate_insights_api_v1_insights__post",
         "requestBody": {
           "content": {
             "application/json": {
@@ -1081,14 +1747,60 @@
                 }
               }
             }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or missing authentication",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": "Invalid or expired token",
+                  "code": "AUTH_001"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - Insufficient permissions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": "Insufficient permissions for this operation",
+                  "code": "AUTH_002"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": "An unexpected error occurred",
+                  "code": "INTERNAL_001"
+                }
+              }
+            }
           }
-        }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
       }
     },
     "/api/v1/insights/{insight_id}": {
       "get": {
         "tags": [
-          "API v1",
           "ai-insights",
           "ai-insights"
         ],
@@ -1126,14 +1838,60 @@
                 }
               }
             }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or missing authentication",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": "Invalid or expired token",
+                  "code": "AUTH_001"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - Insufficient permissions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": "Insufficient permissions for this operation",
+                  "code": "AUTH_002"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": "An unexpected error occurred",
+                  "code": "INTERNAL_001"
+                }
+              }
+            }
           }
-        }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
       }
     },
     "/api/v1/insights/history/{user_id}": {
       "get": {
         "tags": [
-          "API v1",
           "ai-insights",
           "ai-insights"
         ],
@@ -1191,14 +1949,60 @@
                 }
               }
             }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or missing authentication",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": "Invalid or expired token",
+                  "code": "AUTH_001"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - Insufficient permissions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": "Insufficient permissions for this operation",
+                  "code": "AUTH_002"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": "An unexpected error occurred",
+                  "code": "INTERNAL_001"
+                }
+              }
+            }
           }
-        }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
       }
     },
     "/api/v1/insights/status": {
       "get": {
         "tags": [
-          "API v1",
           "ai-insights",
           "ai-insights"
         ],
@@ -1215,14 +2019,60 @@
                 }
               }
             }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or missing authentication",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": "Invalid or expired token",
+                  "code": "AUTH_001"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - Insufficient permissions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": "Insufficient permissions for this operation",
+                  "code": "AUTH_002"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": "An unexpected error occurred",
+                  "code": "INTERNAL_001"
+                }
+              }
+            }
           }
-        }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
       }
     },
     "/api/v1/metrics/metrics": {
       "get": {
         "tags": [
-          "API v1",
           "metrics",
           "metrics"
         ],
@@ -1232,14 +2082,60 @@
         "responses": {
           "200": {
             "description": "Successful Response"
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or missing authentication",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": "Invalid or expired token",
+                  "code": "AUTH_001"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - Insufficient permissions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": "Insufficient permissions for this operation",
+                  "code": "AUTH_002"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": "An unexpected error occurred",
+                  "code": "INTERNAL_001"
+                }
+              }
+            }
           }
-        }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
       }
     },
     "/api/v1/ws/chat/stats": {
       "get": {
         "tags": [
-          "API v1",
           "websocket"
         ],
         "summary": "Get Chat Stats",
@@ -1256,14 +2152,60 @@
                 }
               }
             }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or missing authentication",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": "Invalid or expired token",
+                  "code": "AUTH_001"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - Insufficient permissions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": "Insufficient permissions for this operation",
+                  "code": "AUTH_002"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": "An unexpected error occurred",
+                  "code": "INTERNAL_001"
+                }
+              }
+            }
           }
-        }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
       }
     },
     "/api/v1/ws/chat/users/{room_id}": {
       "get": {
         "tags": [
-          "API v1",
           "websocket"
         ],
         "summary": "Get Room Users",
@@ -1301,14 +2243,60 @@
                 }
               }
             }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or missing authentication",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": "Invalid or expired token",
+                  "code": "AUTH_001"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - Insufficient permissions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": "Insufficient permissions for this operation",
+                  "code": "AUTH_002"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": "An unexpected error occurred",
+                  "code": "INTERNAL_001"
+                }
+              }
+            }
           }
-        }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
       }
     },
     "/api/v1/debug/debug/capture-raw-request": {
       "post": {
         "tags": [
-          "API v1",
           "debug",
           "debug"
         ],
@@ -1326,14 +2314,60 @@
                 }
               }
             }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or missing authentication",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": "Invalid or expired token",
+                  "code": "AUTH_001"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - Insufficient permissions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": "Insufficient permissions for this operation",
+                  "code": "AUTH_002"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": "An unexpected error occurred",
+                  "code": "INTERNAL_001"
+                }
+              }
+            }
           }
-        }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
       }
     },
     "/api/v1/debug/debug/echo-login": {
       "post": {
         "tags": [
-          "API v1",
           "debug",
           "debug"
         ],
@@ -1348,20 +2382,66 @@
                 "schema": {}
               }
             }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or missing authentication",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": "Invalid or expired token",
+                  "code": "AUTH_001"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - Insufficient permissions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": "Insufficient permissions for this operation",
+                  "code": "AUTH_002"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": "An unexpected error occurred",
+                  "code": "INTERNAL_001"
+                }
+              }
+            }
           }
-        }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
       }
     },
-    "/api/v1/test/test/ping": {
+    "/api/v1/test/ping": {
       "get": {
         "tags": [
-          "API v1",
           "test",
           "test"
         ],
         "summary": "Simple Ping",
         "description": "Dead simple endpoint to test if anything works.",
-        "operationId": "simple_ping_api_v1_test_test_ping_get",
+        "operationId": "simple_ping_api_v1_test_ping_get",
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -1369,24 +2449,70 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "title": "Response Simple Ping Api V1 Test Test Ping Get"
+                  "title": "Response Simple Ping Api V1 Test Ping Get"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or missing authentication",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": "Invalid or expired token",
+                  "code": "AUTH_001"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - Insufficient permissions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": "Insufficient permissions for this operation",
+                  "code": "AUTH_002"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": "An unexpected error occurred",
+                  "code": "INTERNAL_001"
                 }
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
       }
     },
-    "/api/v1/test/test/check-middleware": {
+    "/api/v1/test/check-middleware": {
       "get": {
         "tags": [
-          "API v1",
           "test",
           "test"
         ],
         "summary": "Check Middleware",
         "description": "Check if middleware sets user.",
-        "operationId": "check_middleware_api_v1_test_test_check_middleware_get",
+        "operationId": "check_middleware_api_v1_test_check_middleware_get",
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -1394,19 +2520,63 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "title": "Response Check Middleware Api V1 Test Test Check Middleware Get"
+                  "title": "Response Check Middleware Api V1 Test Check Middleware Get"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or missing authentication",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": "Invalid or expired token",
+                  "code": "AUTH_001"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - Insufficient permissions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": "Insufficient permissions for this operation",
+                  "code": "AUTH_002"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": "An unexpected error occurred",
+                  "code": "INTERNAL_001"
                 }
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
       }
     },
     "/api/v1/": {
       "get": {
-        "tags": [
-          "API v1"
-        ],
         "summary": "Api Info",
         "description": "Get API information.",
         "operationId": "api_info_api_v1__get",
@@ -1421,8 +2591,55 @@
                 }
               }
             }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or missing authentication",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": "Invalid or expired token",
+                  "code": "AUTH_001"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - Insufficient permissions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": "Insufficient permissions for this operation",
+                  "code": "AUTH_002"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": "An unexpected error occurred",
+                  "code": "INTERNAL_001"
+                }
+              }
+            }
           }
-        }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
       }
     },
     "/": {
@@ -1441,8 +2658,23 @@
                 }
               }
             }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": "An unexpected error occurred",
+                  "code": "INTERNAL_001"
+                }
+              }
+            }
           }
-        }
+        },
+        "security": []
       }
     },
     "/health": {
@@ -1461,8 +2693,23 @@
                 }
               }
             }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": "An unexpected error occurred",
+                  "code": "INTERNAL_001"
+                }
+              }
+            }
           }
-        }
+        },
+        "security": []
       }
     }
   },
@@ -3567,7 +4814,118 @@
           "type"
         ],
         "title": "ValidationError"
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "string",
+            "description": "Error message",
+            "example": "Invalid credentials"
+          },
+          "code": {
+            "type": "string",
+            "description": "Error code",
+            "example": "AUTH_001"
+          },
+          "details": {
+            "type": "object",
+            "description": "Additional error details",
+            "additionalProperties": true
+          }
+        },
+        "required": [
+          "error"
+        ]
+      },
+      "PaginationMeta": {
+        "type": "object",
+        "properties": {
+          "total": {
+            "type": "integer",
+            "description": "Total number of items",
+            "example": 100
+          },
+          "page": {
+            "type": "integer",
+            "description": "Current page number",
+            "example": 1
+          },
+          "per_page": {
+            "type": "integer",
+            "description": "Items per page",
+            "example": 20
+          },
+          "total_pages": {
+            "type": "integer",
+            "description": "Total number of pages",
+            "example": 5
+          }
+        },
+        "required": [
+          "total",
+          "page",
+          "per_page",
+          "total_pages"
+        ]
+      }
+    },
+    "securitySchemes": {
+      "BearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "JWT Bearer token authentication. Get token from /api/v1/auth/login"
+      },
+      "ApiKeyAuth": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "X-API-Key",
+        "description": "API Key authentication for service-to-service communication"
       }
     }
-  }
+  },
+  "tags": [
+    {
+      "name": "authentication",
+      "description": "User authentication and authorization endpoints"
+    },
+    {
+      "name": "health-data",
+      "description": "Health data management and retrieval"
+    },
+    {
+      "name": "healthkit",
+      "description": "Apple HealthKit data integration"
+    },
+    {
+      "name": "pat-analysis",
+      "description": "Physical Activity Test (PAT) analysis endpoints"
+    },
+    {
+      "name": "ai-insights",
+      "description": "AI-powered health insights generation"
+    },
+    {
+      "name": "metrics",
+      "description": "Health metrics and statistics"
+    },
+    {
+      "name": "websocket",
+      "description": "WebSocket real-time communication"
+    },
+    {
+      "name": "debug",
+      "description": "Debug endpoints (development only)"
+    },
+    {
+      "name": "test",
+      "description": "Test endpoints for API validation"
+    }
+  ],
+  "security": [
+    {
+      "BearerAuth": []
+    }
+  ]
 }

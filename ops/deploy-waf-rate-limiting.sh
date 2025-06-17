@@ -4,16 +4,15 @@
 
 set -e  # Exit on any error
 
+# Load centralized configuration
+source "$(dirname "$0")/env.sh"
+
 # Configuration
-AWS_REGION="us-east-1"
-AWS_ACCOUNT_ID="124355672559"
-ALB_NAME="clarity-alb"
-WAF_NAME="clarity-backend-rate-limiting"
 WAF_CONFIG_FILE="ops/aws-waf-rate-limiting.json"
 
 echo "🔒 Deploying AWS WAF Rate Limiting for Clarity Digital Twin Backend"
 echo "=================================="
-echo "Region: $AWS_REGION"
+echo "Region: $REGION"
 echo "ALB: $ALB_NAME"
 echo "WAF Name: $WAF_NAME"
 echo "=================================="
@@ -29,11 +28,7 @@ echo "✅ AWS CLI configured"
 
 # Step 2: Get ALB ARN
 echo "2. Finding Application Load Balancer ARN..."
-ALB_ARN=$(aws elbv2 describe-load-balancers \
-    --region $AWS_REGION \
-    --names $ALB_NAME \
-    --query 'LoadBalancers[0].LoadBalancerArn' \
-    --output text)
+# ALB_ARN already loaded from env.sh
 
 if [ "$ALB_ARN" = "None" ] || [ -z "$ALB_ARN" ]; then
     echo "❌ ERROR: Could not find ALB with name: $ALB_NAME"
@@ -43,39 +38,27 @@ if [ "$ALB_ARN" = "None" ] || [ -z "$ALB_ARN" ]; then
 fi
 echo "✅ Found ALB: $ALB_ARN"
 
-# Step 3: Check if WAF Web ACL already exists
+# Step 3: Get or create WAF Web ACL (IDEMPOTENT)
 echo "3. Checking for existing WAF Web ACL..."
-EXISTING_WAF=$(aws wafv2 list-web-acls \
-    --region $AWS_REGION \
+WAF_ARN=$(aws wafv2 list-web-acls \
+    --region $REGION \
     --scope REGIONAL \
-    --query "WebACLs[?Name=='$WAF_NAME'].Id" \
+    --query "WebACLs[?Name=='$WAF_NAME'].ARN | [0]" \
     --output text)
 
-if [ ! -z "$EXISTING_WAF" ]; then
-    echo "⚠️  WAF Web ACL '$WAF_NAME' already exists with ID: $EXISTING_WAF"
-    read -p "Do you want to delete and recreate it? (y/N): " confirm
-    if [ "$confirm" = "y" ] || [ "$confirm" = "Y" ]; then
-        echo "Deleting existing WAF Web ACL..."
-        aws wafv2 delete-web-acl \
-            --region $AWS_REGION \
-            --scope REGIONAL \
-            --id $EXISTING_WAF \
-            --lock-token $(aws wafv2 get-web-acl --region $AWS_REGION --scope REGIONAL --id $EXISTING_WAF --query 'LockToken' --output text)
-        echo "✅ Deleted existing WAF Web ACL"
-    else
-        echo "❌ Aborted. Existing WAF Web ACL not modified."
-        exit 1
-    fi
+if [ "$WAF_ARN" = "None" ] || [ -z "$WAF_ARN" ]; then
+    echo "4. Creating new WAF Web ACL..."
+    WAF_RESULT=$(aws wafv2 create-web-acl \
+        --region $AWS_REGION \
+        --cli-input-json file://$WAF_CONFIG_FILE)
+    
+    WAF_ID=$(echo $WAF_RESULT | jq -r '.Summary.Id')
+    WAF_ARN=$(echo $WAF_RESULT | jq -r '.Summary.ARN')
+    echo "✅ Created WAF: $WAF_ID"
+else
+    echo "✅ WAF already exists: $WAF_ARN"
+    WAF_ID=$(echo "$WAF_ARN" | sed 's/.*\///')
 fi
-
-# Step 4: Create WAF Web ACL
-echo "4. Creating WAF Web ACL with rate limiting rules..."
-WAF_RESULT=$(aws wafv2 create-web-acl \
-    --region $AWS_REGION \
-    --cli-input-json file://$WAF_CONFIG_FILE)
-
-WAF_ID=$(echo $WAF_RESULT | jq -r '.Summary.Id')
-WAF_ARN=$(echo $WAF_RESULT | jq -r '.Summary.ARN')
 
 if [ -z "$WAF_ID" ] || [ "$WAF_ID" = "null" ]; then
     echo "❌ ERROR: Failed to create WAF Web ACL"

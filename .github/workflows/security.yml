@@ -1,0 +1,61 @@
+name: Security Smoke Test
+
+on:
+  push:
+    branches: [ main, development ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  waf-smoke-test:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+      
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v2
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: us-east-1
+        
+    - name: WAF Association Check
+      run: |
+        ALB_ARN=$(aws elbv2 describe-load-balancers \
+          --names clarity-alb \
+          --query 'LoadBalancers[0].LoadBalancerArn' \
+          --output text --region us-east-1)
+        
+        WAF_NAME=$(aws wafv2 get-web-acl-for-resource \
+          --resource-arn "$ALB_ARN" \
+          --region us-east-1 \
+          --query 'WebACL.Name' \
+          --output text)
+        
+        if [ "$WAF_NAME" = "clarity-backend-rate-limiting" ]; then
+          echo "✅ WAF attached to ALB"
+        else
+          echo "❌ WAF not attached"
+          exit 1
+        fi
+        
+    - name: Attack Blocking Test
+      run: |
+        ALB_DNS=$(aws elbv2 describe-load-balancers \
+          --names clarity-alb \
+          --query 'LoadBalancers[0].DNSName' \
+          --output text --region us-east-1)
+        
+        # Test SQL injection blocking
+        RESPONSE=$(curl -s -k -o /dev/null -w "%{http_code}" \
+          "https://$ALB_DNS/health?id=1%27%20OR%201=1--")
+        
+        if [ "$RESPONSE" = "403" ]; then
+          echo "✅ SQL injection blocked"
+        else
+          echo "❌ SQL injection not blocked (got $RESPONSE)"
+          exit 1
+        fi 

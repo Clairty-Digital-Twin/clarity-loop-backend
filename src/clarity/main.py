@@ -192,7 +192,7 @@ settings = get_settings()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.get_cors_origins(),                    # ✅ EXPLICIT ORIGINS ONLY
+            allow_origins=settings.cors_allowed_origins,                  # ✅ EXPLICIT ORIGINS ONLY
     allow_credentials=settings.cors_allow_credentials,            # ✅ SAFE WITH EXPLICIT ORIGINS  
     allow_methods=settings.cors_allowed_methods,                  # ✅ SPECIFIC METHODS ONLY
     allow_headers=settings.cors_allowed_headers,                  # ✅ SPECIFIC HEADERS ONLY

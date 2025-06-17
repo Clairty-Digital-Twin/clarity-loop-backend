@@ -9,9 +9,9 @@ from __future__ import annotations
 from dataclasses import dataclass
 from functools import lru_cache
 import logging
-from typing import Self
+from typing import Self, Any
 
-from pydantic import Field, model_validator
+from pydantic import Field, model_validator, field_validator
 from pydantic_settings import BaseSettings
 
 # Configure logger
@@ -275,37 +275,36 @@ class Settings(BaseSettings):
         )
         logger.info("   • DynamoDB table: %s", self.dynamodb_table_name or "Not set")
 
-    def get_cors_origins(self) -> list[str]:
-        """Parse and validate CORS allowed origins.
-        
-        Parses comma-separated CORS_ALLOWED_ORIGINS environment variable
-        and validates that no wildcards are used for security.
-        
-        Returns:
-            List of explicitly allowed origin URLs
+    @field_validator('cors_allowed_origins', mode='before')
+    @classmethod
+    def parse_cors_origins(cls, v: Any) -> list[str]:
+        """Parse CORS origins from environment variable (comma-separated string or list)."""
+        if isinstance(v, str):
+            # Split comma-separated string and strip whitespace
+            origins = [origin.strip() for origin in v.split(",") if origin.strip()]
             
-        Raises:
-            ValueError: If wildcards are detected in origins (security violation)
-        """
-        origins = self.cors_allowed_origins
-        
-        # If origins is a single string (from env var), split by comma
-        if isinstance(origins, str):
-            origins = [origin.strip() for origin in origins.split(",") if origin.strip()]
-        
-        # Security validation: no wildcards allowed
-        for origin in origins:
-            if "*" in origin:
-                msg = (
-                    f"Security violation: Wildcard origin '{origin}' detected. "
-                    f"CORS origins must be explicitly specified for security."
-                )
-                raise ValueError(msg)
-        
-        # Log CORS configuration for security audit
-        logger.info("🔒 CORS Security: Allowed origins configured: %s", origins)
-        
-        return origins
+            # Security validation: no wildcards allowed
+            for origin in origins:
+                if "*" in origin:
+                    msg = (
+                        f"Security violation: Wildcard origin '{origin}' detected. "
+                        f"CORS origins must be explicitly specified for security."
+                    )
+                    raise ValueError(msg)
+            
+            return origins
+        elif isinstance(v, list):
+            # Already a list - validate for wildcards
+            for origin in v:
+                if "*" in str(origin):
+                    msg = (
+                        f"Security violation: Wildcard origin '{origin}' detected. "
+                        f"CORS origins must be explicitly specified for security."
+                    )
+                    raise ValueError(msg)
+            return v
+        else:
+            return v
 
     def get_middleware_config(self) -> MiddlewareConfig:
         """Get middleware configuration based on environment.

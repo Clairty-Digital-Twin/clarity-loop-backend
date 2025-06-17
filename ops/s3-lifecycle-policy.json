@@ -32,11 +32,11 @@
       },
       "Transitions": [
         {
-          "Days": 7,
+          "Days": 30,
           "StorageClass": "STANDARD_IA"
         },
         {
-          "Days": 30,
+          "Days": 60,
           "StorageClass": "GLACIER"
         }
       ],

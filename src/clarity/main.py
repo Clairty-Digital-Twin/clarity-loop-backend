@@ -189,6 +189,17 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Add security headers middleware
+from clarity.middleware.security_headers import SecurityHeadersMiddleware
+
+app.add_middleware(
+    SecurityHeadersMiddleware,
+    enable_hsts=True,  # Enforce HTTPS with HSTS
+    enable_csp=True,   # Enable Content Security Policy
+    cache_control="no-store, private",  # Prevent caching of sensitive data
+)
+logger.info("✅ Added security headers middleware")
+
 # Add authentication middleware
 from clarity.middleware.auth_middleware import CognitoAuthMiddleware
 

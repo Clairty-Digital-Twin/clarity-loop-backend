@@ -107,6 +107,28 @@ class Settings(BaseSettings):
         alias="CORS_MAX_AGE",
         description="Cache preflight requests for 24 hours (86400 seconds)"
     )
+    
+    # Request Size Limits - DoS Protection
+    max_request_size: int = Field(
+        default=10 * 1024 * 1024,  # 10MB
+        alias="MAX_REQUEST_SIZE",
+        description="Maximum request body size in bytes (default 10MB)"
+    )
+    max_json_size: int = Field(
+        default=5 * 1024 * 1024,   # 5MB
+        alias="MAX_JSON_SIZE", 
+        description="Maximum JSON payload size in bytes (default 5MB)"
+    )
+    max_upload_size: int = Field(
+        default=50 * 1024 * 1024,  # 50MB
+        alias="MAX_UPLOAD_SIZE",
+        description="Maximum file upload size in bytes (default 50MB)"
+    )
+    max_form_size: int = Field(
+        default=1024 * 1024,       # 1MB
+        alias="MAX_FORM_SIZE",
+        description="Maximum form data size in bytes (default 1MB)"
+    )
 
     # External service flags
     skip_external_services: bool = Field(default=False, alias="SKIP_EXTERNAL_SERVICES")

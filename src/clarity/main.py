@@ -196,6 +196,19 @@ app.add_middleware(
 
 logger.info("🔒 CORS Security: Hardened configuration applied - NO wildcards allowed")
 
+# Add request size limiter middleware - PREVENT DoS ATTACKS
+from clarity.middleware.request_size_limiter import RequestSizeLimiterMiddleware
+
+app.add_middleware(
+    RequestSizeLimiterMiddleware,
+    max_request_size=settings.max_request_size,          # ✅ 10MB general limit
+    max_json_size=settings.max_json_size,                # ✅ 5MB JSON limit  
+    max_upload_size=settings.max_upload_size,            # ✅ 50MB upload limit
+    max_form_size=settings.max_form_size,                # ✅ 1MB form limit
+)
+
+logger.info("🔒 Request Size Limiter: DoS protection active - payload limits enforced")
+
 # Add security headers middleware
 from clarity.middleware.security_headers import SecurityHeadersMiddleware
 

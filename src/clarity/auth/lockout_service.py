@@ -62,7 +62,7 @@ class AccountLockoutService:
         if username not in self._user_attempts:
             return
             
-        cutoff_time = datetime.utcnow() - self.attempt_window
+        cutoff_time = datetime.now() - self.attempt_window
         user_data = self._user_attempts[username]
         
         # Keep only recent attempts
@@ -83,7 +83,7 @@ class AccountLockoutService:
             username: The username that failed to authenticate
             ip_address: Optional IP address of the attempt
         """
-        current_time = datetime.utcnow()
+        current_time = datetime.now()
         
         # Initialize user data if needed
         if username not in self._user_attempts:
@@ -136,7 +136,7 @@ class AccountLockoutService:
             return False
         
         # Check if lockout has expired
-        if datetime.utcnow() >= locked_until:
+        if datetime.now() >= locked_until:
             # Lockout expired, clean up
             del user_data['locked_until']
             user_data['attempts'] = []  # Reset attempts after lockout expires
@@ -162,8 +162,41 @@ class AccountLockoutService:
             'username': username,
             'locked_until': locked_until,
             'attempts_count': len(user_data['attempts']),
-            'time_remaining_seconds': int((locked_until - datetime.utcnow()).total_seconds())
+            'time_remaining_seconds': int((locked_until - datetime.now()).total_seconds())
         }
+    
+    async def get_lockout_status(self, username: str) -> Optional[Dict[str, Any]]:
+        """
+        Get lockout status for a user, including attempt count even if not locked.
+        
+        Returns:
+            Dictionary with status info or None if no attempts recorded
+        """
+        if username not in self._user_attempts:
+            return None
+        
+        # Clean up old attempts first
+        self._cleanup_old_attempts(username)
+        
+        user_data = self._user_attempts[username]
+        attempts = len(user_data['attempts'])
+        
+        if attempts == 0 and 'locked_until' not in user_data:
+            return None
+        
+        is_locked = await self.is_account_locked(username)
+        result = {
+            'attempts': attempts,
+            'locked': is_locked,
+            'max_attempts': self.max_attempts
+        }
+        
+        if is_locked:
+            locked_until = user_data['locked_until']
+            result['unlock_time'] = locked_until
+            result['time_remaining_seconds'] = int((locked_until - datetime.utcnow()).total_seconds())
+        
+        return result
     
     async def reset_attempts(self, username: str) -> None:
         """
@@ -177,7 +210,7 @@ class AccountLockoutService:
             self._user_attempts[username] = {'attempts': []}
             logger.info(f"Reset failed attempts for user: {username}")
     
-    async def check_and_enforce_lockout(self, username: str) -> None:
+    async def check_lockout(self, username: str) -> None:
         """
         Check if account is locked and raise exception if so.
         
@@ -190,6 +223,18 @@ class AccountLockoutService:
         if await self.is_account_locked(username):
             lockout_info = await self.get_lockout_info(username)
             raise AccountLockoutError(username, lockout_info['locked_until'])
+    
+    async def check_and_enforce_lockout(self, username: str) -> None:
+        """
+        Alias for check_lockout for backward compatibility.
+        
+        Args:
+            username: The username to check
+            
+        Raises:
+            AccountLockoutError: If the account is currently locked
+        """
+        await self.check_lockout(username)
     
     async def get_attempt_count(self, username: str) -> int:
         """Get the current number of failed attempts for a user."""

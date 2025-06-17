@@ -300,7 +300,7 @@ make install && make dev
 ### API Usage
 
 1. Export Apple Health data
-2. POST to `/api/v1/healthkit/upload`
+2. POST to `/api/v1/healthkit`
 3. Process data through ML pipeline
 4. Retrieve insights via `/api/v1/insights/*`
 

@@ -224,7 +224,7 @@ FORMAT: Natural language, avoid medical diagnosis
 
 ```bash
 # 1. Upload HealthKit data
-curl -X POST http://localhost:8000/api/v1/healthkit/upload \
+curl -X POST http://localhost:8000/api/v1/healthkit \
   -H "Authorization: Bearer ${TEST_TOKEN}" \
   -H "Content-Type: application/json" \
   -d @tests/fixtures/healthkit_24h_sample.json
@@ -298,7 +298,7 @@ curl http://localhost:8080/v1/projects/test-project/databases/(default)/document
 
 ```bash
 # 2a. Invalid HealthKit data
-curl -X POST http://localhost:8000/api/v1/healthkit/upload \
+curl -X POST http://localhost:8000/api/v1/healthkit \
   -H "Authorization: Bearer ${TEST_TOKEN}" \
   -d '{"invalid": "data"}'
 
@@ -308,7 +308,7 @@ curl -X POST http://localhost:8000/api/v1/healthkit/upload \
 ```bash
 # 2b. ML service temporarily unavailable
 # Stop ML service: docker-compose stop ml-service
-curl -X POST http://localhost:8000/api/v1/healthkit/upload \
+curl -X POST http://localhost:8000/api/v1/healthkit \
   -d @tests/fixtures/healthkit_24h_sample.json
 
 # Expected: 202 Accepted, queued for retry
@@ -329,7 +329,7 @@ curl -X POST http://localhost:8000/api/v1/healthkit/upload \
 ```bash
 # 3a. Concurrent uploads
 for i in {1..10}; do
-  curl -X POST http://localhost:8000/api/v1/healthkit/upload \
+  curl -X POST http://localhost:8000/api/v1/healthkit \
     -H "Authorization: Bearer test-user-${i}" \
     -d @tests/fixtures/healthkit_24h_sample.json &
 done
@@ -340,7 +340,7 @@ wait
 
 ```bash
 # 3b. Large data upload (7 days of data)
-curl -X POST http://localhost:8000/api/v1/healthkit/upload \
+curl -X POST http://localhost:8000/api/v1/healthkit \
   -d @tests/fixtures/healthkit_7d_sample.json
 
 # Expected: Successful processing within 2 minutes
@@ -353,7 +353,7 @@ curl -X POST http://localhost:8000/api/v1/healthkit/upload \
 
 ```bash
 # 4a. No authentication token
-curl -X POST http://localhost:8000/api/v1/healthkit/upload \
+curl -X POST http://localhost:8000/api/v1/healthkit \
   -d @tests/fixtures/healthkit_24h_sample.json
 
 # Expected: 401 Unauthorized
@@ -361,7 +361,7 @@ curl -X POST http://localhost:8000/api/v1/healthkit/upload \
 
 ```bash
 # 4b. Invalid token
-curl -X POST http://localhost:8000/api/v1/healthkit/upload \
+curl -X POST http://localhost:8000/api/v1/healthkit \
   -H "Authorization: Bearer invalid-token" \
   -d @tests/fixtures/healthkit_24h_sample.json
 
@@ -601,7 +601,7 @@ def validate_gemini_insights(response, expected_structure):
 ab -n 100 -c 10 -H "Authorization: Bearer ${TEST_TOKEN}" \
    -p tests/fixtures/healthkit_24h_sample.json \
    -T application/json \
-   http://localhost:8000/api/v1/healthkit/upload
+   http://localhost:8000/api/v1/healthkit
 
 # Expected: 95th percentile < 500ms
 ```

@@ -58,18 +58,18 @@ DELETE /api/v1/health-data/{id}  # Delete health record
 
 ### **HealthKit Upload Endpoint** (Requires Authentication)
 ```bash
-POST /api/v1/healthkit/upload    # Upload HealthKit data export
+POST /api/v1/healthkit           # Upload HealthKit data export
 ```
 
 ### **PAT Analysis Endpoints** (Requires Authentication)
 ```bash
-POST /api/v1/pat/analyze         # Run PAT analysis on health data
+POST /api/v1/pat/analysis        # Run PAT analysis on health data
 GET  /api/v1/pat/results/{id}    # Get PAT analysis results
 ```
 
 ### **Insights Endpoints** (Requires Authentication)
 ```bash
-POST /api/v1/insights/generate   # Generate AI insights
+POST /api/v1/insights            # Generate AI insights
 GET  /api/v1/insights/{id}       # Get specific insight
 ```
 

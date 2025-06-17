@@ -48,7 +48,7 @@ CLARITY is a sophisticated health data platform that creates a "digital twin" of
 
 ### Health Data (10 endpoints)
 
-- `/api/v1/health-data/upload` - Upload health metrics
+- `/api/v1/health-data` - Upload health metrics
 - `/api/v1/health-data/` - List health data (paginated)
 - `/api/v1/health-data/{processing_id}` - Get/Delete specific data
 - `/api/v1/health-data/processing/{id}/status` - Processing status
@@ -57,14 +57,14 @@ CLARITY is a sophisticated health data platform that creates a "digital twin" of
 
 ### HealthKit Integration (4 endpoints)
 
-- `/api/v1/healthkit/upload` - Upload HealthKit data batches
+- `/api/v1/healthkit` - Upload HealthKit data batches
 - `/api/v1/healthkit/status/{upload_id}` - Check upload status
 - `/api/v1/healthkit/sync` - Sync HealthKit data
 - `/api/v1/healthkit/categories` - Get supported data categories
 
 ### AI Insights (6 endpoints)
 
-- `/api/v1/insights/generate` - Generate health insights
+- `/api/v1/insights` - Generate health insights
 - `/api/v1/insights/chat` - Interactive health chat
 - `/api/v1/insights/summary` - Daily/weekly summaries
 - `/api/v1/insights/recommendations` - Personalized recommendations
@@ -73,7 +73,7 @@ CLARITY is a sophisticated health data platform that creates a "digital twin" of
 
 ### PAT Analysis (5 endpoints)
 
-- `/api/v1/pat/analyze` - Run PAT analysis on movement data
+- `/api/v1/pat/analysis` - Run PAT analysis on movement data
 - `/api/v1/pat/status/{analysis_id}` - Check analysis status
 - `/api/v1/pat/results/{analysis_id}` - Get analysis results
 - `/api/v1/pat/batch` - Batch movement analysis

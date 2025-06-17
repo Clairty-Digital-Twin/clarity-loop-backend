@@ -25,14 +25,14 @@ GET  /api/v1/auth/me
 
 ### Health Data
 ```
-POST /api/v1/health-data/upload
+POST /api/v1/health-data
 GET  /api/v1/health-data/
 ```
 
 ### AI Analysis  
 ```
-POST /api/v1/pat/analyze-step-data
-POST /api/v1/insights/generate
+POST /api/v1/pat/step-analysis
+POST /api/v1/insights
 ```
 
 ### WebSocket

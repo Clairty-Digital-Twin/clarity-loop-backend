@@ -485,7 +485,7 @@ All errors follow RFC 7807 Problem Details format for consistency.
 ### 11.2 Data Upload Flow
 1. Authenticate user
 2. Prepare health data in correct format
-3. POST to `/api/v1/health-data/upload`
+3. POST to `/api/v1/health-data`
 4. Poll processing status endpoint
 5. Retrieve results when ready
 

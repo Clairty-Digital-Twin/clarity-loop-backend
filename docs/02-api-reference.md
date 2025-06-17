@@ -160,7 +160,7 @@ Get user profile information.
 
 ## Health Data Endpoints
 
-### POST `/api/v1/health-data/upload`
+### POST `/api/v1/health-data`
 
 Upload processed health metrics.
 
@@ -269,7 +269,7 @@ Get status of data processing job.
 
 ## HealthKit Integration Endpoints
 
-### POST `/api/v1/healthkit/upload`
+### POST `/api/v1/healthkit`
 
 Upload raw HealthKit data export.
 
@@ -384,7 +384,7 @@ Get supported HealthKit data categories.
 
 ## AI Insights Endpoints
 
-### POST `/api/v1/insights/generate`
+### POST `/api/v1/insights`
 
 Generate health insights from user's data.
 
@@ -572,7 +572,7 @@ Get health alerts and warnings.
 
 ## PAT Analysis Endpoints
 
-### POST `/api/v1/pat/analyze`
+### POST `/api/v1/pat/analysis`
 
 Run PAT transformer analysis on movement data.
 

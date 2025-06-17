@@ -208,11 +208,11 @@ Your Swift app connects to these Clarity Loop endpoints:
 - `GET /api/v1/auth/me` - Verify token
 
 ### Health Data  
-- `POST /api/v1/health-data/upload` - Upload metrics
+- `POST /api/v1/health-data` - Upload metrics
 - `GET /api/v1/health-data/` - Download latest
 
 ### AI Analysis
-- `POST /api/v1/pat/analyze-step-data` - Request analysis
+- `POST /api/v1/pat/step-analysis` - Request analysis
 - `GET /api/v1/insights/{id}` - Get insights
 
 ### WebSocket

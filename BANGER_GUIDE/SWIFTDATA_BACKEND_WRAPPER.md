@@ -258,7 +258,7 @@ final class ClarityAPIClient {
     private let session = URLSession.shared
     
     func uploadHealthMetric(_ metric: HealthMetricDTO) async throws -> HealthMetricResponse {
-        let url = baseURL.appendingPathComponent("health-data/upload")
+        let url = baseURL.appendingPathComponent("health-data")
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")

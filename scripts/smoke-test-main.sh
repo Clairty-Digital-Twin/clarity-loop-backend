@@ -24,7 +24,7 @@ TOTAL_FAILED=0
 
 # Run auth smoke tests
 echo -e "\n${YELLOW}Auth Smoke Tests:${NC}"
-if "$SCRIPT_DIR/smoke-test-auth.sh" "$BASE_URL"; then
+if "$SCRIPT_DIR/smoke-test-auth-suite.sh" "$BASE_URL"; then
     echo -e "${GREEN}✓ Auth tests passed${NC}"
 else
     echo -e "${RED}✗ Auth tests failed${NC}"

@@ -37,8 +37,11 @@ run_test() {
     
     echo -n "Testing $test_name... "
     
+    # Add timeout and connection settings to curl command
+    enhanced_curl_cmd="${curl_cmd/curl -s/curl -s --connect-timeout 10 --max-time 30}"
+    
     # Execute curl and capture response code
-    response_code=$(eval "$curl_cmd")
+    response_code=$(eval "$enhanced_curl_cmd")
     
     if [ "$response_code" = "$expected_code" ]; then
         echo -e "${GREEN}✓ PASS${NC} (Expected: $expected_code, Got: $response_code)"
@@ -50,7 +53,7 @@ run_test() {
         # If we got a 500 error, try to get the response body for debugging
         if [ "$response_code" = "500" ]; then
             echo -e "${YELLOW}  Response body:${NC}"
-            eval "${curl_cmd//-o \/dev\/null -w '%{http_code}'/-s}" | jq . 2>/dev/null || echo "  (Could not parse response)"
+            eval "${enhanced_curl_cmd//-o \/dev\/null -w '%{http_code}'/-s}" | jq . 2>/dev/null || echo "  (Could not parse response)"
         fi
     fi
 }
@@ -60,7 +63,7 @@ run_test "Health Check" "200" \
     "curl -s -o /dev/null -w '%{http_code}' -X GET '${BASE_URL}/health'"
 
 # Test 2: Registration with valid password
-run_test "Registration - Valid Password" "201" \
+run_test "Registration - Valid Password" "202" \
     "curl -s -o /dev/null -w '%{http_code}' \
     -X POST '${API_URL}/auth/register' \
     -H 'Content-Type: application/json' \
@@ -80,8 +83,8 @@ run_test "Registration - Duplicate Email" "409" \
     -H 'Content-Type: application/json' \
     -d '{\"email\":\"${TEST_EMAIL}\",\"display_name\":\"Test User\",\"password\":\"${GOOD_PASSWORD}\"}'"
 
-# Test 5: Login with correct credentials
-run_test "Login - Valid Credentials" "200" \
+# Test 5: Login with correct credentials (but unconfirmed email)
+run_test "Login - Unconfirmed Email" "403" \
     "curl -s -o /dev/null -w '%{http_code}' \
     -X POST '${API_URL}/auth/login' \
     -H 'Content-Type: application/json' \

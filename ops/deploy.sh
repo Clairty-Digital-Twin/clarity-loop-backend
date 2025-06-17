@@ -337,8 +337,8 @@ main() {
     
     # Run smoke tests
     echo -e "\n${YELLOW}Running smoke tests...${NC}"
-    if [ -f "./scripts/smoke-test-auth.sh" ]; then
-        if ./scripts/smoke-test-auth.sh https://clarity.novamindnyc.com; then
+    if [ -f "./scripts/smoke-test-main.sh" ]; then
+        if ./scripts/smoke-test-main.sh https://clarity.novamindnyc.com; then
             echo -e "${GREEN}✅ Smoke tests passed${NC}"
         else
             echo -e "${RED}❌ Smoke tests failed${NC}"

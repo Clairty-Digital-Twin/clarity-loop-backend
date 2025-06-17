@@ -73,6 +73,11 @@ async def lifespan(_app: FastAPI) -> AsyncGenerator[None, None]:  # noqa: RUF029
     logger.info("Cognito Region: %s", COGNITO_REGION)
     logger.info("Auth Enabled: %s", ENABLE_AUTH)
 
+    # Initialize lockout service with Redis URL from environment
+    from clarity.auth.lockout_service import get_lockout_service
+    lockout_service = get_lockout_service()
+    logger.info("✅ Account lockout service initialized")
+
     # Initialize DynamoDB table (skip if explicitly disabled or credentials unavailable)
     if SKIP_AWS_INIT:
         logger.info("🔧 AWS initialization skipped via SKIP_AWS_INIT flag")

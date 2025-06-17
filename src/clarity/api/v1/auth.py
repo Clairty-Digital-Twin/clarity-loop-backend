@@ -7,6 +7,7 @@ import logging
 import os
 from typing import Any
 
+import boto3
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, EmailStr, Field
@@ -41,6 +42,10 @@ router = APIRouter()
 
 # Initialize lockout service
 lockout_service = AccountLockoutService()
+
+# Initialize CloudWatch client
+cloudwatch = boto3.client('cloudwatch', region_name=os.getenv("AWS_REGION", "us-east-1"))
+USER_POOL_ID = os.getenv("COGNITO_USER_POOL_ID", "")
 
 
 class UserRegister(BaseModel):

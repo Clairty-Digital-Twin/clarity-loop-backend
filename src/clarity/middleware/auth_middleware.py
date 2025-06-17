@@ -33,7 +33,7 @@ PUBLIC_PATHS = {
     "/openapi.json",
     "/redoc",
     "/api/v1",
-    "/api/v1/auth/register",
+    # NOTE: /api/v1/auth/register removed - now requires ENABLE_SELF_SIGNUP=true
     "/api/v1/auth/login",
     "/api/v1/auth/refresh",
     "/api/v1/auth/health",

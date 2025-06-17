@@ -19,6 +19,7 @@
         {"name": "PORT", "value": "8000"},
         {"name": "ENVIRONMENT", "value": "production"},
         {"name": "ENABLE_AUTH", "value": "true"},
+        {"name": "ENABLE_SELF_SIGNUP", "value": "false"},
         {"name": "CORS_ALLOWED_ORIGINS", "value": "https://api.clarity.health,http://localhost:3000,http://localhost:8000,https://clarity.health"},
         {"name": "CORS_ALLOW_CREDENTIALS", "value": "true"},
         {"name": "AWS_REGION", "value": "us-east-1"},

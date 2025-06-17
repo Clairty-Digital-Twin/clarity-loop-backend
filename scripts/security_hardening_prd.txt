@@ -1,0 +1,234 @@
+# Clarity Digital Twin Backend - Security Hardening PRD
+
+## Executive Summary
+
+Implement comprehensive security hardening for the Clarity Digital Twin backend to prevent financial risks from automated attacks, secure AWS infrastructure, and establish production-ready security posture before frontend launch.
+
+## Problem Statement
+
+Our ALB hostname is publicly discoverable by automated scanners. While current security vulnerabilities in dependencies have been resolved, we lack critical security controls that could lead to:
+
+1. **Financial Risk**: Automated bot signup spam causing MAU billing explosion and SMS/email verification costs
+2. **Security Risk**: Brute-force attacks, DDoS potential, and inadequate security headers
+3. **Compliance Risk**: Missing HIPAA-ready security controls for health data processing
+
+## Goals
+
+### Primary Goals
+1. **Immediate Financial Protection**: Prevent cost explosion from automated attacks
+2. **Infrastructure Security**: Implement AWS-native security controls (WAF, Cognito configuration)
+3. **Application Security**: Add security middleware with proper headers, rate limiting, and CORS hardening
+4. **Testing & Deployment**: Ensure all changes are properly tested and deployed to AWS
+
+### Success Metrics
+- Zero unauthorized user registrations
+- Rate limiting blocks > 100 requests/5min per IP
+- Security headers pass Mozilla Observatory scan
+- All tests pass with 100% backward compatibility
+- Successful AWS deployment with no downtime
+
+## Technical Requirements
+
+### 1. AWS Cognito Security Hardening
+- **Disable self-signup** in Cognito User Pool to prevent automated user creation
+- **Configure account lockout policies** (5 failed attempts, 15-minute lockout)
+- **Enable advanced security features** (adaptive authentication, risk detection)
+- **Audit existing user pool configuration** for security gaps
+
+### 2. AWS WAF Implementation
+- **Rate limiting rule**: Block IPs exceeding 100 requests per 5 minutes
+- **Geographic restrictions**: Block traffic from high-risk countries (optional)
+- **Common attack protection**: SQL injection, XSS, known bad inputs
+- **Bot control**: Basic bot detection and filtering
+- **Integration with ALB**: Attach WAF to existing Application Load Balancer
+
+### 3. Application Security Middleware
+- **Security headers middleware**: HSTS, CSP, X-Frame-Options, X-Content-Type-Options
+- **Rate limiting middleware**: Per-user and per-IP limits for authenticated endpoints
+- **CORS hardening**: Replace `allow_origins=["*"]` with specific domains
+- **Request size limits**: Prevent large payload attacks
+- **Error handling security**: Ensure no sensitive data leaks in error responses
+
+### 4. Infrastructure Security
+- **DynamoDB encryption at rest**: Enable customer-managed KMS encryption
+- **S3 bucket security audit**: Verify encryption and access policies
+- **IAM role audit**: Implement least-privilege access
+- **VPC security groups**: Audit and tighten network access rules
+
+### 5. Monitoring & Alerting
+- **WAF metrics**: Monitor blocked requests and attack patterns
+- **Authentication alerts**: Failed login attempts, suspicious patterns
+- **Cost monitoring**: Set up billing alerts for unexpected MAU/SMS spikes
+- **Security dashboards**: CloudWatch dashboard for security metrics
+
+## Technical Stack Requirements
+
+### Backend Framework
+- **FastAPI**: Existing framework, add security middleware
+- **Python 3.11+**: Current version, maintain compatibility
+- **Dependencies**: All security vulnerabilities already resolved
+
+### AWS Services
+- **AWS WAF v2**: For application firewall and rate limiting
+- **Amazon Cognito**: Enhanced configuration, no migration needed
+- **AWS CloudWatch**: For monitoring and alerting
+- **AWS KMS**: For encryption key management
+- **AWS Systems Manager**: For secure parameter storage
+
+### Security Libraries
+- **slowapi**: For application-level rate limiting
+- **python-jose**: Already updated to secure version (3.5.0)
+- **cryptography**: Current version maintained
+- **structlog**: Enhanced security logging
+
+## Implementation Phases
+
+### Phase 1: Immediate Protection (Tonight)
+1. Disable Cognito self-signup via AWS Console
+2. Create and attach basic WAF rate limiting rule
+3. Quick CORS hardening for known domains
+4. Deploy and verify protection
+
+### Phase 2: Comprehensive Security (Tomorrow)
+1. Implement security headers middleware
+2. Add application-level rate limiting with slowapi
+3. Enhanced WAF rules (bot protection, geo-blocking)
+4. DynamoDB encryption configuration
+5. Comprehensive testing suite
+
+### Phase 3: Monitoring & Compliance
+1. Security monitoring dashboard
+2. Automated alerting setup
+3. Security audit logging
+4. HIPAA compliance documentation
+
+## Security Considerations
+
+### Authentication & Authorization
+- Maintain existing JWT token validation
+- Enhance session management security
+- Add suspicious activity detection
+- Implement account lockout protection
+
+### Data Protection
+- Enable encryption at rest for all data stores
+- Implement field-level encryption for PII
+- Secure API key management with AWS Secrets Manager
+- Audit data access patterns
+
+### Network Security
+- WAF protection against common attacks
+- Rate limiting at multiple layers (WAF + application)
+- Secure HTTPS enforcement (already implemented via ALB)
+- VPC security group optimization
+
+### Compliance
+- HIPAA-ready logging and audit trails
+- Data retention and deletion policies
+- Access control documentation
+- Security incident response procedures
+
+## Testing Requirements
+
+### Automated Testing
+- **Unit tests**: All new middleware and security functions
+- **Integration tests**: Authentication flows with new security controls
+- **Security tests**: Rate limiting, header validation, error handling
+- **Performance tests**: Ensure security middleware doesn't impact performance
+
+### Manual Testing
+- **Penetration testing**: Basic automated attack simulation
+- **WAF testing**: Verify rate limiting and blocking rules
+- **User experience**: Ensure legitimate users are not impacted
+- **Monitoring verification**: Confirm all alerts and dashboards work
+
+### Deployment Testing
+- **Staging deployment**: Full security configuration in staging environment
+- **Production deployment**: Blue-green deployment with rollback plan
+- **Post-deployment verification**: Security scan and functionality check
+
+## Rollback Plan
+
+### Immediate Rollback Triggers
+- Authentication failures for legitimate users
+- Application performance degradation > 20%
+- False positive rate limiting blocking valid traffic
+- Any AWS service failures or misconfigurations
+
+### Rollback Procedures
+1. **WAF rollback**: Disable or modify rules via AWS Console
+2. **Application rollback**: Previous Docker image deployment
+3. **Cognito rollback**: Re-enable self-signup if needed
+4. **Monitoring**: Real-time alerts during rollback process
+
+## Cost Considerations
+
+### AWS Costs
+- **WAF**: ~$5-10/month for basic rules and requests
+- **CloudWatch**: ~$2-5/month for additional metrics
+- **KMS**: ~$1/month per key for encryption
+- **Cognito**: No additional cost for security features
+
+### Operational Costs
+- **Development time**: 1-2 engineer days
+- **Testing time**: 4-6 hours comprehensive testing
+- **Deployment time**: 2-3 hours with verification
+
+### Cost Savings
+- **Prevented MAU spam**: Potentially hundreds of dollars monthly
+- **Prevented SMS/email costs**: $0.0075 per SMS, $0.10 per email
+- **Prevented DDoS costs**: ALB data processing savings
+
+## Success Criteria
+
+### Functional Requirements
+- [ ] Self-signup disabled in Cognito
+- [ ] WAF rules active and blocking excessive requests
+- [ ] Security headers implemented and validated
+- [ ] Rate limiting working at application level
+- [ ] CORS properly configured for known domains
+- [ ] All existing functionality preserved
+
+### Security Requirements
+- [ ] Mozilla Observatory security grade A or A+
+- [ ] Rate limiting blocks > 100 req/5min successfully
+- [ ] No new security vulnerabilities introduced
+- [ ] Encryption enabled for all data at rest
+- [ ] Security monitoring and alerting functional
+
+### Performance Requirements
+- [ ] Response time increase < 10ms for security middleware
+- [ ] Authentication flow maintains current performance
+- [ ] No false positives in rate limiting
+- [ ] 99.9% uptime maintained through deployment
+
+## Timeline
+
+### Day 1 (Immediate)
+- 30 minutes: Cognito self-signup disable
+- 45 minutes: Basic WAF rate limiting rule
+- 15 minutes: Quick CORS fix
+- 30 minutes: Deploy and verify
+
+### Day 2 (Comprehensive)
+- 2 hours: Security headers middleware implementation
+- 2 hours: Application rate limiting with slowapi
+- 1 hour: Enhanced WAF rules
+- 2 hours: DynamoDB encryption setup
+- 3 hours: Comprehensive testing
+- 1 hour: Production deployment
+
+### Day 3 (Monitoring)
+- 2 hours: Security dashboard setup
+- 1 hour: Alerting configuration
+- 1 hour: Documentation and handoff
+
+## Documentation Requirements
+
+- Security configuration documentation
+- Deployment runbook updates
+- Monitoring and alerting procedures
+- Incident response procedures
+- Security testing procedures
+
+This PRD ensures we build a production-ready, secure, and cost-effective solution that protects against automated attacks while maintaining system performance and user experience. 

@@ -72,6 +72,7 @@ class Settings(BaseSettings):
     # Security settings
     secret_key: str = Field(default="dev-secret-key", alias="SECRET_KEY")
     enable_auth: bool = Field(default=True, alias="ENABLE_AUTH")
+    enable_self_signup: bool = Field(default=False, alias="ENABLE_SELF_SIGNUP")
 
     # Server settings
     host: str = Field(

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import logging
+import os
 from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, Request
@@ -92,6 +93,20 @@ async def register(
     auth_provider: IAuthProvider = Depends(get_auth_provider),
 ) -> TokenResponse | JSONResponse:
     """Register a new user."""
+    # Check if self-signup is enabled
+    enable_self_signup = os.getenv("ENABLE_SELF_SIGNUP", "false").lower() == "true"
+    if not enable_self_signup:
+        raise HTTPException(
+            status_code=403,
+            detail=ProblemDetail(
+                type="self_signup_disabled",
+                title="Self Sign-up Disabled",
+                detail="Self-registration is currently disabled. Please contact an administrator to create an account.",
+                status=403,
+                instance="https://api.clarity.health/auth/register",
+            ).model_dump(),
+        )
+    
     # Validate auth provider before try block
     if not isinstance(auth_provider, CognitoAuthProvider):
         raise HTTPException(

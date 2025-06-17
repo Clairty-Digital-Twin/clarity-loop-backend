@@ -23,7 +23,7 @@ COPY src/ ./src/
 ENV PIP_DEFAULT_TIMEOUT=1000
 RUN pip install --no-cache-dir --upgrade pip && \
     pip config set global.timeout 1000 && \
-    pip install --no-cache-dir --user -e .
+    pip install --no-cache-dir --user .
 
 # Stage 2: Runtime
 FROM python:3.11-slim
@@ -49,14 +49,9 @@ WORKDIR /app
 # Copy Python packages from builder
 COPY --from=builder --chown=clarity:clarity /root/.local /home/clarity/.local
 
-# Copy application code and install package
+# Copy application code
 COPY --chown=clarity:clarity pyproject.toml LICENSE README.md ./
 COPY --chown=clarity:clarity src/ ./src/
-
-# Install the package in editable mode as the clarity user
-USER clarity
-RUN pip install --user -e .
-USER root
 COPY --chown=clarity:clarity gunicorn.aws.conf.py ./
 COPY --chown=clarity:clarity scripts/download_models.sh scripts/entrypoint.sh ./scripts/
 

@@ -1,0 +1,14 @@
+# Security vulnerability fixes based on pip-audit results
+gunicorn>=23.0.0  # Fix for request smuggling CVE
+protobuf>=5.29.5  # Fix for DoS via recursive parsing
+python-jose>=3.4.0  # Fix for algorithm confusion and JWT bomb
+requests>=2.32.4  # Fix for credential leaking
+sentry-sdk>=2.8.0  # Fix for environment variable exposure
+
+# Current problematic versions to avoid:
+# gunicorn==22.0.0 (has request smuggling vulnerability)
+# protobuf==5.29.4 (has DoS vulnerability) 
+# python-jose==3.3.0 (has JWT vulnerabilities)
+# requests==2.32.3 (has credential leak vulnerability)
+# sentry-sdk==2.7.1 (has env var exposure)
+# py==1.11.0 (has ReDoS vulnerability - may need to check if this is actually used) 

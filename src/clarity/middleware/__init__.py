@@ -7,10 +7,22 @@ such as authentication, logging, and error handling.
 from clarity.middleware.auth_middleware import CognitoAuthMiddleware
 from clarity.middleware.request_logger import RequestLoggingMiddleware
 from clarity.middleware.security_headers import SecurityHeadersMiddleware, setup_security_headers
+from clarity.middleware.rate_limiting import (
+    RateLimitingMiddleware,
+    setup_rate_limiting,
+    get_user_id_or_ip,
+    get_ip_only,
+    rate_limit,
+)
 
 __all__ = [
     "CognitoAuthMiddleware",
     "RequestLoggingMiddleware",
     "SecurityHeadersMiddleware",
     "setup_security_headers",
+    "RateLimitingMiddleware",
+    "setup_rate_limiting",
+    "get_user_id_or_ip",
+    "get_ip_only",
+    "rate_limit",
 ]

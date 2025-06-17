@@ -23,6 +23,8 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from google.cloud import storage
+from slowapi import Limiter
+from clarity.middleware.rate_limiting import get_user_id_or_ip
 
 from clarity.auth.dependencies import AuthenticatedUser
 from clarity.core.exceptions import (
@@ -52,6 +54,9 @@ logger = logging.getLogger(__name__)
 
 # Initialize router
 router = APIRouter(tags=["health-data"])
+
+# Create rate limiter for health data endpoints
+health_limiter = Limiter(key_func=get_user_id_or_ip)
 
 
 @router.get("/health", summary="Health Check")
@@ -223,7 +228,9 @@ def get_config_provider() -> IConfigProvider:
     status_code=status.HTTP_201_CREATED,
     include_in_schema=False,  # Don't show duplicate in OpenAPI docs
 )
+@health_limiter.limit("100/hour")  # Rate limit: 100 uploads per hour per user
 async def upload_health_data(
+    request: Request,
     health_data: HealthDataUpload,
     current_user: AuthenticatedUser,
     service: HealthDataService = Depends(get_health_data_service),

@@ -11,6 +11,8 @@ import boto3
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, EmailStr, Field
+from slowapi import Limiter
+from slowapi.util import get_remote_address
 
 from clarity.auth.aws_cognito_provider import CognitoAuthProvider
 from clarity.auth.dependencies import get_auth_provider, get_current_user
@@ -46,6 +48,9 @@ lockout_service = AccountLockoutService()
 # Initialize CloudWatch client
 cloudwatch = boto3.client('cloudwatch', region_name=os.getenv("AWS_REGION", "us-east-1"))
 USER_POOL_ID = os.getenv("COGNITO_USER_POOL_ID", "")
+
+# Create rate limiter for auth endpoints
+auth_limiter = Limiter(key_func=get_remote_address)
 
 
 class UserRegister(BaseModel):
@@ -97,7 +102,9 @@ class HealthResponse(BaseModel):
 
 
 @router.post("/register", response_model=TokenResponse)
+@auth_limiter.limit("5/hour")  # Very strict limit for registration
 async def register(
+    request: Request,
     user_data: UserRegister,
     auth_provider: IAuthProvider = Depends(get_auth_provider),
 ) -> TokenResponse | JSONResponse:
@@ -184,6 +191,7 @@ async def register(
 
 
 @router.post("/login", response_model=TokenResponse)
+@auth_limiter.limit("10/minute")  # Stricter rate limit for login endpoint
 async def login(
     request: Request,
     credentials: UserLoginRequest,

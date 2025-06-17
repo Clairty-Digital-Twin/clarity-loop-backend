@@ -19,8 +19,10 @@ from typing import Any, cast
 import uuid
 
 from boto3.dynamodb.conditions import Key
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request, status
 from pydantic import BaseModel, Field, validator
+from slowapi import Limiter
+from clarity.middleware.rate_limiting import get_user_id_or_ip
 
 from clarity.auth.dependencies import AuthenticatedUser
 from clarity.ml.inference_engine import AsyncInferenceEngine, get_inference_engine
@@ -36,6 +38,9 @@ logger = logging.getLogger(__name__)
 
 # Create API router
 router = APIRouter(tags=["pat-analysis"])
+
+# Create rate limiter for AI endpoints (more restrictive due to resource intensity)
+ai_limiter = Limiter(key_func=get_user_id_or_ip)
 
 
 # 🔥 FIXED: Response model for PAT analysis results - moved before usage
@@ -145,7 +150,9 @@ async def get_pat_inference_engine() -> AsyncInferenceEngine:
     response_model=AnalysisResponse,
     include_in_schema=False,  # Don't show duplicate in OpenAPI docs
 )
+@ai_limiter.limit("20/hour")  # AI endpoints are resource-intensive
 async def analyze_step_data(
+    req: Request,
     request: StepDataRequest,
     _background_tasks: BackgroundTasks,
     current_user: AuthenticatedUser,

@@ -242,6 +242,14 @@ from clarity.middleware.auth_middleware import CognitoAuthMiddleware
 app.add_middleware(CognitoAuthMiddleware)
 logger.info("✅ Added authentication middleware")
 
+# Add rate limiting middleware
+from clarity.middleware.rate_limiting import setup_rate_limiting
+
+# Get Redis URL from environment for distributed rate limiting
+redis_url = os.getenv("REDIS_URL")
+limiter = setup_rate_limiting(app, redis_url=redis_url)
+logger.info("✅ Added rate limiting middleware")
+
 # Add request logging middleware in development
 if ENVIRONMENT == "development":
     from clarity.middleware.request_logger import RequestLoggingMiddleware

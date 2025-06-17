@@ -49,9 +49,14 @@ WORKDIR /app
 # Copy Python packages from builder
 COPY --from=builder --chown=clarity:clarity /root/.local /home/clarity/.local
 
-# Copy application code
+# Copy application code and install package
 COPY --chown=clarity:clarity pyproject.toml LICENSE README.md ./
 COPY --chown=clarity:clarity src/ ./src/
+
+# Install the package in editable mode as the clarity user
+USER clarity
+RUN pip install --user -e .
+USER root
 COPY --chown=clarity:clarity gunicorn.aws.conf.py ./
 COPY --chown=clarity:clarity scripts/download_models.sh scripts/entrypoint.sh ./scripts/
 

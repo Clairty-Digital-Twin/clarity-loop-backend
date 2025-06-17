@@ -87,9 +87,17 @@ class HealthKitUploadResponse(BaseModel):
 
 
 @router.post(
-    "/upload",
+    "/",
     response_model=HealthKitUploadResponse,
     status_code=status.HTTP_202_ACCEPTED,
+    summary="Upload HealthKit Data",
+    description="Upload HealthKit data for asynchronous processing",
+)
+@router.post(
+    "",
+    response_model=HealthKitUploadResponse,
+    status_code=status.HTTP_202_ACCEPTED,
+    include_in_schema=False,  # Don't show duplicate in OpenAPI docs
 )
 async def upload_healthkit_data(
     request: HealthKitUploadRequest,

@@ -6,7 +6,7 @@ from typing import Any
 
 from fastapi import APIRouter, Request
 
-router = APIRouter(prefix="/test", tags=["test"])
+router = APIRouter(tags=["test"])
 
 
 @router.get("/ping")

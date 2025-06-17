@@ -135,10 +135,15 @@ async def get_pat_inference_engine() -> AsyncInferenceEngine:
 
 
 @router.post(
-    "/analyze-step-data",
+    "/step-analysis",
     response_model=AnalysisResponse,
     summary="Analyze Apple HealthKit Step Data",
     description="Submit Apple HealthKit step count data for PAT analysis using proxy actigraphy transformation",
+)
+@router.post(
+    "/step-analysis/",
+    response_model=AnalysisResponse,
+    include_in_schema=False,  # Don't show duplicate in OpenAPI docs
 )
 async def analyze_step_data(
     request: StepDataRequest,
@@ -234,10 +239,15 @@ async def analyze_step_data(
 
 
 @router.post(
-    "/analyze",
+    "/analysis",
     response_model=AnalysisResponse,
     summary="Analyze Direct Actigraphy Data",
     description="Submit preprocessed actigraphy data for PAT analysis",
+)
+@router.post(
+    "/analysis/",
+    response_model=AnalysisResponse,
+    include_in_schema=False,  # Don't show duplicate in OpenAPI docs
 )
 async def analyze_actigraphy_data(
     request: DirectActigraphyRequest,

@@ -126,7 +126,7 @@ class TestE2EHealthDataFlow:
 
         # When: Making complete E2E health data upload request
         response = client.post(
-            "/api/v1/health-data/upload",
+            "/api/v1/health-data",
             json=complete_health_data_payload,
             headers=headers,
         )
@@ -175,7 +175,7 @@ class TestE2EHealthDataFlow:
 
         # When: Sending invalid data through complete stack
         response = client.post(
-            "/api/v1/health-data/upload", json=invalid_payload, headers=headers
+            "/api/v1/health-data", json=invalid_payload, headers=headers
         )
 
         # Then: Business rules should be enforced somewhere in the stack
@@ -236,7 +236,7 @@ class TestE2EHealthDataFlow:
 
         # When: Sending malformed request through complete stack
         response = client.post(
-            "/api/v1/health-data/upload",
+            "/api/v1/health-data",
             content=malformed_payload,  # Not JSON
             headers={"Content-Type": "application/json"},
         )
@@ -292,7 +292,7 @@ class TestE2ECleanArchitecturePrinciples:
             "client_timestamp": "invalid-date",
         }
 
-        response = client.post("/api/v1/health-data/upload", json=invalid_data)
+        response = client.post("/api/v1/health-data", json=invalid_data)
 
         # Then: Business rules should be enforced regardless of web framework
         assert response.status_code in {400, 401, 422, 500}
@@ -396,7 +396,7 @@ class TestE2EPerformanceAndReliability:
         client = TestClient(app)
 
         # When: Making request that causes error
-        response1 = client.post("/api/v1/health-data/upload", json={})
+        response1 = client.post("/api/v1/health-data", json={})
 
         # Should handle error gracefully
         assert response1.status_code >= 400

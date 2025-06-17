@@ -194,7 +194,7 @@ class TestUploadHealthDataNoDependencies:
     ) -> None:
         """Test upload with default behavior when dependencies not explicitly configured."""
         response = client.post(
-            "/api/v1/health-data/upload",
+            "/api/v1/health-data",
             json=valid_health_data_upload.model_dump(mode="json"),
             headers={"Authorization": "Bearer test-token"},
         )
@@ -216,7 +216,7 @@ class TestUploadHealthDataWithDependencies:
         valid_health_data_upload.user_id = uuid.uuid4()
 
         response = client_with_dependencies.post(
-            "/api/v1/health-data/upload",
+            "/api/v1/health-data",
             json=valid_health_data_upload.model_dump(mode="json"),
             headers={"Authorization": "Bearer test-token"},
         )
@@ -236,7 +236,7 @@ class TestUploadHealthDataWithDependencies:
         }
 
         response = client_with_dependencies.post(
-            "/api/v1/health-data/upload",
+            "/api/v1/health-data",
             json=invalid_upload,
             headers={"Authorization": "Bearer test-token"},
         )
@@ -268,7 +268,7 @@ class TestUploadHealthDataWithDependencies:
         }
 
         response = client_with_dependencies.post(
-            "/api/v1/health-data/upload",
+            "/api/v1/health-data",
             json=upload,
             headers={"Authorization": "Bearer test-token"},
         )
@@ -309,7 +309,7 @@ class TestUploadHealthDataWithDependencies:
             )
 
             response = client_with_dependencies.post(
-                "/api/v1/health-data/upload",
+                "/api/v1/health-data",
                 json=valid_health_data_upload.model_dump(mode="json"),
                 headers={"Authorization": "Bearer test-token"},
             )

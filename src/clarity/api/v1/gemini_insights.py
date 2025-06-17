@@ -236,11 +236,17 @@ def create_error_response(
 
 
 @router.post(
-    "/generate",
+    "/",
     response_model=InsightGenerationResponse,
     status_code=status.HTTP_200_OK,
     summary="Generate Health Insights",
     description="Generate AI-powered health insights from analysis results using Gemini 2.5 Pro",
+)
+@router.post(
+    "",
+    response_model=InsightGenerationResponse,
+    status_code=status.HTTP_200_OK,
+    include_in_schema=False,  # Don't show duplicate in OpenAPI docs
 )
 async def generate_insights(
     insight_request: InsightGenerationRequest,

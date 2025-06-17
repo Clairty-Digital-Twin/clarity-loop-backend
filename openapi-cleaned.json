@@ -1,0 +1,4843 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "CLARITY Digital Twin Platform",
+    "description": "Production AWS-native health data platform with comprehensive API endpoints",
+    "version": "0.2.0",
+    "x-logo": {
+      "url": "https://clarity.novamindnyc.com/logo.png",
+      "altText": "CLARITY Logo"
+    },
+    "contact": {
+      "name": "CLARITY Support",
+      "email": "support@clarity.novamindnyc.com",
+      "url": "https://clarity.novamindnyc.com"
+    },
+    "license": {
+      "name": "Proprietary",
+      "url": "https://clarity.novamindnyc.com/license"
+    }
+  },
+  "paths": {
+    "/api/v1/auth/register": {
+      "post": {
+        "tags": [
+          "authentication"
+        ],
+        "summary": "Register",
+        "description": "Register a new user.",
+        "operationId": "register_api_v1_auth_register_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserRegister"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TokenResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or missing authentication",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - Insufficient permissions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": []
+      }
+    },
+    "/api/v1/auth/login": {
+      "post": {
+        "tags": [
+          "authentication"
+        ],
+        "summary": "Login",
+        "description": "Authenticate user and return access token.",
+        "operationId": "login_api_v1_auth_login_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserLoginRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TokenResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or missing authentication",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - Insufficient permissions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": []
+      }
+    },
+    "/api/v1/auth/me": {
+      "get": {
+        "tags": [
+          "authentication"
+        ],
+        "summary": "Get Current User Info",
+        "description": "Get current user information.",
+        "operationId": "get_current_user_info_api_v1_auth_me_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserInfoResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or missing authentication",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - Insufficient permissions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": []
+      },
+      "put": {
+        "tags": [
+          "authentication"
+        ],
+        "summary": "Update User",
+        "description": "Update current user information.",
+        "operationId": "update_user_api_v1_auth_me_put",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserUpdateResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or missing authentication",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - Insufficient permissions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": []
+      }
+    },
+    "/api/v1/auth/logout": {
+      "post": {
+        "tags": [
+          "authentication"
+        ],
+        "summary": "Logout",
+        "description": "Logout user (invalidate token if supported).",
+        "operationId": "logout_api_v1_auth_logout_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LogoutResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or missing authentication",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - Insufficient permissions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": []
+      }
+    },
+    "/api/v1/auth/health": {
+      "get": {
+        "tags": [
+          "authentication"
+        ],
+        "summary": "Auth Health",
+        "description": "Auth service health check.",
+        "operationId": "auth_health_api_v1_auth_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or missing authentication",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - Insufficient permissions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": []
+      }
+    },
+    "/api/v1/auth/refresh": {
+      "post": {
+        "tags": [
+          "authentication"
+        ],
+        "summary": "Refresh Token",
+        "description": "Refresh access token using refresh token.",
+        "operationId": "refresh_token_api_v1_auth_refresh_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TokenResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or missing authentication",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - Insufficient permissions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": []
+      }
+    },
+    "/api/v1/auth/confirm-email": {
+      "post": {
+        "tags": [
+          "authentication"
+        ],
+        "summary": "Confirm Email",
+        "description": "Confirm user email with verification code from Cognito.",
+        "operationId": "confirm_email_api_v1_auth_confirm_email_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EmailConfirmationRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StatusResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or missing authentication",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - Insufficient permissions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": []
+      }
+    },
+    "/api/v1/auth/resend-confirmation": {
+      "post": {
+        "tags": [
+          "authentication"
+        ],
+        "summary": "Resend Confirmation",
+        "description": "Resend email confirmation code.",
+        "operationId": "resend_confirmation_api_v1_auth_resend_confirmation_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResendConfirmationRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StatusResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or missing authentication",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - Insufficient permissions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": []
+      }
+    },
+    "/api/v1/auth/forgot-password": {
+      "post": {
+        "tags": [
+          "authentication"
+        ],
+        "summary": "Forgot Password",
+        "description": "Initiate password reset process.",
+        "operationId": "forgot_password_api_v1_auth_forgot_password_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ForgotPasswordRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StatusResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or missing authentication",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - Insufficient permissions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": []
+      }
+    },
+    "/api/v1/auth/reset-password": {
+      "post": {
+        "tags": [
+          "authentication"
+        ],
+        "summary": "Reset Password",
+        "description": "Reset password with confirmation code.",
+        "operationId": "reset_password_api_v1_auth_reset_password_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResetPasswordRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StatusResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or missing authentication",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - Insufficient permissions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": []
+      }
+    },
+    "/api/v1/health-data/health": {
+      "get": {
+        "tags": [
+          "health-data",
+          "health-data"
+        ],
+        "summary": "Health Data Service Status",
+        "description": "Health check endpoint for the health data service with detailed status information.\n\n    **Status Indicators:**\n    - `healthy`: Service fully operational\n    - `degraded`: Service operational with reduced functionality\n    - `unhealthy`: Service experiencing issues\n\n    **Includes:**\n    - Database connectivity status\n    - Cache status\n    - Processing queue status\n    - Performance metrics",
+        "operationId": "health_check_detailed_api_v1_health_data_health_get",
+        "responses": {
+          "200": {
+            "description": "Service is healthy",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Health Check Detailed Api V1 Health Data Health Get"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Service is unhealthy"
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or missing authentication",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - Insufficient permissions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/health-data/upload": {
+      "post": {
+        "tags": [
+          "health-data",
+          "health-data"
+        ],
+        "summary": "Upload Health Data",
+        "description": "Upload health metrics for processing and analysis by the CLARITY digital twin platform.\n\n    **Features:**\n    - Supports multiple data types (heart rate, sleep, activity, etc.)\n    - Real-time validation and processing\n    - HIPAA-compliant secure storage\n    - Automatic data quality checks\n\n    **Example Request:**\n    ```json\n    {\n        \"user_id\": \"user_123\",\n        \"data_type\": \"heart_rate\",\n        \"measurements\": [\n            {\n                \"timestamp\": \"2025-01-15T10:30:00Z\",\n                \"value\": 72.5,\n                \"unit\": \"bpm\"\n            }\n        ],\n        \"source\": \"apple_watch\",\n        \"device_info\": {\n            \"model\": \"Apple Watch Series 9\",\n            \"os_version\": \"10.0\"\n        }\n    }\n    ```",
+        "operationId": "upload_health_data_api_v1_health_data_upload_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HealthDataUpload"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Health data uploaded successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthDataResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error - invalid data format"
+          },
+          "403": {
+            "description": "Authorization denied - cannot upload data for another user"
+          },
+          "503": {
+            "description": "Service temporarily unavailable"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or missing authentication",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/health-data/processing/{processing_id}": {
+      "get": {
+        "tags": [
+          "health-data",
+          "health-data"
+        ],
+        "summary": "Get Processing Status",
+        "description": "Check the processing status of a health data upload using its processing ID.\n\n    **Status Values:**\n    - `pending`: Upload received, processing queued\n    - `processing`: Data currently being analyzed\n    - `completed`: Processing finished successfully\n    - `failed`: Processing encountered an error\n    - `cancelled`: Processing was cancelled\n\n    **Response includes:**\n    - Current processing stage\n    - Progress percentage (if available)\n    - Estimated completion time\n    - Error details (if failed)",
+        "operationId": "get_processing_status_api_v1_health_data_processing__processing_id__get",
+        "parameters": [
+          {
+            "name": "processing_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Processing Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Processing status retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Get Processing Status Api V1 Health Data Processing  Processing Id  Get"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Processing job not found"
+          },
+          "403": {
+            "description": "Access denied - can only view own processing jobs"
+          },
+          "503": {
+            "description": "Service temporarily unavailable"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or missing authentication",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/health-data": {
+      "get": {
+        "tags": [
+          "health-data",
+          "health-data"
+        ],
+        "summary": "List Health Data",
+        "description": "Retrieve paginated health data with advanced filtering and sorting options.\n\n    **Pagination:**\n    - Cursor-based pagination for consistent results\n    - HAL-style navigation links\n    - Configurable page sizes (1-1000 items)\n\n    **Filtering:**\n    - Filter by data type (heart_rate, sleep, activity, etc.)\n    - Date range filtering with timezone support\n    - Source device filtering\n\n    **Sorting:**\n    - Default: Most recent first\n    - Customizable sort orders\n\n    **Example Response:**\n    ```json\n    {\n        \"data\": [\n            {\n                \"id\": \"data_123\",\n                \"timestamp\": \"2025-01-15T10:30:00Z\",\n                \"data_type\": \"heart_rate\",\n                \"value\": 72.5,\n                \"unit\": \"bpm\"\n            }\n        ],\n        \"pagination\": {\n            \"page_size\": 50,\n            \"has_next\": true,\n            \"has_previous\": false,\n            \"next_cursor\": \"eyJpZCI6IjEyMyJ9\"\n        },\n        \"links\": {\n            \"self\": \"https://api.clarity.health/api/v1/health-data?limit=50\",\n            \"next\": \"https://api.clarity.health/api/v1/health-data?limit=50&cursor=eyJpZCI6IjEyMyJ9\",\n            \"first\": \"https://api.clarity.health/api/v1/health-data?limit=50\"\n        }\n    }\n    ```",
+        "operationId": "list_health_data_api_v1_health_data__get",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 1000,
+              "minimum": 1,
+              "description": "Number of items per page",
+              "default": 50,
+              "title": "Limit"
+            },
+            "description": "Number of items per page"
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Pagination cursor",
+              "title": "Cursor"
+            },
+            "description": "Pagination cursor"
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Offset (alternative to cursor)",
+              "title": "Offset"
+            },
+            "description": "Offset (alternative to cursor)"
+          },
+          {
+            "name": "data_type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by data type (heart_rate, sleep, etc.)",
+              "title": "Data Type"
+            },
+            "description": "Filter by data type (heart_rate, sleep, etc.)"
+          },
+          {
+            "name": "start_date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter from date (ISO 8601)",
+              "title": "Start Date"
+            },
+            "description": "Filter from date (ISO 8601)"
+          },
+          {
+            "name": "end_date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter to date (ISO 8601)",
+              "title": "End Date"
+            },
+            "description": "Filter to date (ISO 8601)"
+          },
+          {
+            "name": "source",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by data source (apple_watch, fitbit, etc.)",
+              "title": "Source"
+            },
+            "description": "Filter by data source (apple_watch, fitbit, etc.)"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Health data retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedResponse_dict_str__Any__"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid pagination or filter parameters"
+          },
+          "403": {
+            "description": "Access denied - can only view own data"
+          },
+          "503": {
+            "description": "Service temporarily unavailable"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or missing authentication",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/health-data/{processing_id}": {
+      "delete": {
+        "tags": [
+          "health-data",
+          "health-data"
+        ],
+        "summary": "Delete Health Data",
+        "description": "Delete health data by processing ID with proper authorization checks.\n\n    **Security:**\n    - Users can only delete their own data\n    - Soft delete with audit trail\n    - GDPR/CCPA compliance support\n\n    **Note:** This action cannot be undone. Consider data export before deletion.",
+        "operationId": "delete_health_data_api_v1_health_data__processing_id__delete",
+        "parameters": [
+          {
+            "name": "processing_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Processing Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Health data deleted successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "title": "Response Delete Health Data Api V1 Health Data  Processing Id  Delete"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Processing job not found"
+          },
+          "403": {
+            "description": "Access denied - can only delete own data"
+          },
+          "503": {
+            "description": "Service temporarily unavailable"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or missing authentication",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/healthkit/upload": {
+      "post": {
+        "tags": [
+          "healthkit",
+          "healthkit"
+        ],
+        "summary": "Upload Healthkit Data",
+        "description": "Upload HealthKit data for asynchronous processing.\n\nThis endpoint:\n1. Authenticates the request via AWS Cognito\n2. Validates user authorization\n3. Stores raw data to GCS\n4. Publishes Pub/Sub message for processing\n5. Returns immediate acknowledgment\n\nArgs:\n    request: HealthKit upload data\n    current_user: Authenticated user context from AWS Cognito\n\nReturns:\n    Upload acknowledgment with tracking ID\n\nRaises:\n    HTTPException: For authentication/authorization failures",
+        "operationId": "upload_healthkit_data_api_v1_healthkit_upload_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HealthKitUploadRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthKitUploadResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or missing authentication",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - Insufficient permissions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/healthkit/status/{upload_id}": {
+      "get": {
+        "tags": [
+          "healthkit",
+          "healthkit"
+        ],
+        "summary": "Get Upload Status",
+        "description": "Get status of a HealthKit upload.\n\nArgs:\n    upload_id: The upload ID to check\n    current_user: Authenticated user context from AWS Cognito\n\nReturns:\n    Upload status information",
+        "operationId": "get_upload_status_api_v1_healthkit_status__upload_id__get",
+        "parameters": [
+          {
+            "name": "upload_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Upload Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Get Upload Status Api V1 Healthkit Status  Upload Id  Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or missing authentication",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - Insufficient permissions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/pat/analyze-step-data": {
+      "post": {
+        "tags": [
+          "pat-analysis",
+          "pat-analysis"
+        ],
+        "summary": "Analyze Apple HealthKit Step Data",
+        "description": "Submit Apple HealthKit step count data for PAT analysis using proxy actigraphy transformation",
+        "operationId": "analyze_step_data_api_v1_pat_analyze_step_data_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StepDataRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnalysisResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or missing authentication",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - Insufficient permissions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/pat/analyze": {
+      "post": {
+        "tags": [
+          "pat-analysis",
+          "pat-analysis"
+        ],
+        "summary": "Analyze Direct Actigraphy Data",
+        "description": "Submit preprocessed actigraphy data for PAT analysis",
+        "operationId": "analyze_actigraphy_data_api_v1_pat_analyze_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DirectActigraphyRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnalysisResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or missing authentication",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - Insufficient permissions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/pat/analysis/{processing_id}": {
+      "get": {
+        "tags": [
+          "pat-analysis",
+          "pat-analysis"
+        ],
+        "summary": "Get PAT Analysis Results",
+        "description": "Retrieve PAT (Pretrained Actigraphy Transformer) analysis results for a specific processing ID.\n\n    **Returns:**\n    - PAT model embeddings and predictions\n    - Activity pattern analysis\n    - Sleep quality metrics\n    - Circadian rhythm insights\n    - Processing metadata and status\n\n    **Status Values:**\n    - `completed`: Analysis finished successfully\n    - `processing`: Analysis still running\n    - `failed`: Analysis encountered an error\n    - `not_found`: No analysis found for this ID",
+        "operationId": "get_pat_analysis_api_v1_pat_analysis__processing_id__get",
+        "parameters": [
+          {
+            "name": "processing_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Processing Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Analysis results retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PATAnalysisResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Analysis not found"
+          },
+          "503": {
+            "description": "Service temporarily unavailable"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or missing authentication",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - Insufficient permissions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/pat/health": {
+      "get": {
+        "tags": [
+          "pat-analysis",
+          "pat-analysis"
+        ],
+        "summary": "PAT Service Health Check",
+        "description": "Check the health status of the PAT analysis service",
+        "operationId": "health_check_api_v1_pat_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthCheckResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or missing authentication",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - Insufficient permissions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/pat/models/info": {
+      "get": {
+        "tags": [
+          "pat-analysis",
+          "pat-analysis"
+        ],
+        "summary": "Get PAT Model Information",
+        "description": "Get information about the available PAT models and current configuration",
+        "operationId": "get_model_info_api_v1_pat_models_info_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Get Model Info Api V1 Pat Models Info Get"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or missing authentication",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - Insufficient permissions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/insights/generate": {
+      "post": {
+        "tags": [
+          "ai-insights",
+          "ai-insights"
+        ],
+        "summary": "Generate Health Insights",
+        "description": "Generate AI-powered health insights from analysis results using Gemini 2.5 Pro",
+        "operationId": "generate_insights_api_v1_insights_generate_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InsightGenerationRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InsightGenerationResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or missing authentication",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - Insufficient permissions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/insights/{insight_id}": {
+      "get": {
+        "tags": [
+          "ai-insights",
+          "ai-insights"
+        ],
+        "summary": "Get Cached Insight",
+        "description": "Retrieve a previously generated insight by ID",
+        "operationId": "get_insight_api_v1_insights__insight_id__get",
+        "parameters": [
+          {
+            "name": "insight_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Insight Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InsightGenerationResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or missing authentication",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - Insufficient permissions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/insights/history/{user_id}": {
+      "get": {
+        "tags": [
+          "ai-insights",
+          "ai-insights"
+        ],
+        "summary": "Get Insight History",
+        "description": "Retrieve insight generation history for a user",
+        "operationId": "get_insight_history_api_v1_insights_history__user_id__get",
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "User Id"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 10,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 0,
+              "title": "Offset"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InsightHistoryResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or missing authentication",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - Insufficient permissions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/insights/status": {
+      "get": {
+        "tags": [
+          "ai-insights",
+          "ai-insights"
+        ],
+        "summary": "Service Health Status",
+        "description": "Check the health status of the Gemini insights service",
+        "operationId": "get_service_status_api_v1_insights_status_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServiceStatusResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or missing authentication",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - Insufficient permissions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/metrics/metrics": {
+      "get": {
+        "tags": [
+          "metrics",
+          "metrics"
+        ],
+        "summary": "Prometheus Metrics",
+        "description": "Expose application metrics for Prometheus scraping",
+        "operationId": "get_metrics_api_v1_metrics_metrics_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response"
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or missing authentication",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - Insufficient permissions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/ws/chat/stats": {
+      "get": {
+        "tags": [
+          "websocket"
+        ],
+        "summary": "Get Chat Stats",
+        "description": "Get current chat statistics.",
+        "operationId": "get_chat_stats_api_v1_ws_chat_stats_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Get Chat Stats Api V1 Ws Chat Stats Get"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or missing authentication",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - Insufficient permissions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/ws/chat/users/{room_id}": {
+      "get": {
+        "tags": [
+          "websocket"
+        ],
+        "summary": "Get Room Users",
+        "description": "Get list of users in a specific room.",
+        "operationId": "get_room_users_api_v1_ws_chat_users__room_id__get",
+        "parameters": [
+          {
+            "name": "room_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Room Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Get Room Users Api V1 Ws Chat Users  Room Id  Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or missing authentication",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - Insufficient permissions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/debug/debug/capture-raw-request": {
+      "post": {
+        "tags": [
+          "debug",
+          "debug"
+        ],
+        "summary": "Capture Raw Request",
+        "description": "Capture and analyze raw request body to debug JSON parsing issues.",
+        "operationId": "capture_raw_request_api_v1_debug_debug_capture_raw_request_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Capture Raw Request Api V1 Debug Debug Capture Raw Request Post"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or missing authentication",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - Insufficient permissions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/debug/debug/echo-login": {
+      "post": {
+        "tags": [
+          "debug",
+          "debug"
+        ],
+        "summary": "Echo Login Request",
+        "description": "Echo back the exact login request for debugging.",
+        "operationId": "echo_login_request_api_v1_debug_debug_echo_login_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or missing authentication",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - Insufficient permissions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/test/ping": {
+      "get": {
+        "tags": [
+          "test",
+          "test"
+        ],
+        "summary": "Simple Ping",
+        "description": "Dead simple endpoint to test if anything works.",
+        "operationId": "simple_ping_api_v1_test_test_ping_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Simple Ping Api V1 Test Test Ping Get"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or missing authentication",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - Insufficient permissions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/test/check-middleware": {
+      "get": {
+        "tags": [
+          "test",
+          "test"
+        ],
+        "summary": "Check Middleware",
+        "description": "Check if middleware sets user.",
+        "operationId": "check_middleware_api_v1_test_test_check_middleware_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Check Middleware Api V1 Test Test Check Middleware Get"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or missing authentication",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - Insufficient permissions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1": {
+      "get": {
+        "tags": [
+          "default"
+        ],
+        "summary": "Api Info",
+        "description": "Get API information.",
+        "operationId": "api_info_api_v1__get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Api Info Api V1  Get"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or missing authentication",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - Insufficient permissions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
+    "/": {
+      "get": {
+        "summary": "Root",
+        "description": "Root endpoint.",
+        "operationId": "root__get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Root  Get"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or missing authentication",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - Insufficient permissions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": []
+      }
+    },
+    "/health": {
+      "get": {
+        "summary": "Health Check",
+        "description": "Health check endpoint.",
+        "operationId": "health_check_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Health Check Health Get"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or missing authentication",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - Insufficient permissions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": []
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "ActigraphyAnalysis": {
+        "properties": {
+          "user_id": {
+            "type": "string",
+            "title": "User Id"
+          },
+          "analysis_timestamp": {
+            "type": "string",
+            "title": "Analysis Timestamp"
+          },
+          "sleep_efficiency": {
+            "type": "number",
+            "title": "Sleep Efficiency",
+            "description": "Sleep efficiency percentage (0-100)"
+          },
+          "sleep_onset_latency": {
+            "type": "number",
+            "title": "Sleep Onset Latency",
+            "description": "Time to fall asleep (minutes)"
+          },
+          "wake_after_sleep_onset": {
+            "type": "number",
+            "title": "Wake After Sleep Onset",
+            "description": "WASO minutes"
+          },
+          "total_sleep_time": {
+            "type": "number",
+            "title": "Total Sleep Time",
+            "description": "Total sleep time (hours)"
+          },
+          "circadian_rhythm_score": {
+            "type": "number",
+            "title": "Circadian Rhythm Score",
+            "description": "Circadian regularity (0-1)"
+          },
+          "activity_fragmentation": {
+            "type": "number",
+            "title": "Activity Fragmentation",
+            "description": "Activity fragmentation index"
+          },
+          "depression_risk_score": {
+            "type": "number",
+            "title": "Depression Risk Score",
+            "description": "Depression risk (0-1)"
+          },
+          "sleep_stages": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Sleep Stages",
+            "description": "Predicted sleep stages"
+          },
+          "confidence_score": {
+            "type": "number",
+            "title": "Confidence Score",
+            "description": "Model confidence (0-1)"
+          },
+          "clinical_insights": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Clinical Insights",
+            "description": "Clinical interpretations"
+          },
+          "embedding": {
+            "items": {
+              "type": "number"
+            },
+            "type": "array",
+            "title": "Embedding",
+            "description": "PAT model embedding vector (128-dim)"
+          }
+        },
+        "type": "object",
+        "required": [
+          "user_id",
+          "analysis_timestamp",
+          "sleep_efficiency",
+          "sleep_onset_latency",
+          "wake_after_sleep_onset",
+          "total_sleep_time",
+          "circadian_rhythm_score",
+          "activity_fragmentation",
+          "depression_risk_score",
+          "sleep_stages",
+          "confidence_score",
+          "clinical_insights",
+          "embedding"
+        ],
+        "title": "ActigraphyAnalysis",
+        "description": "Output model for PAT analysis results."
+      },
+      "ActivityData": {
+        "properties": {
+          "steps": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 100000.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Steps",
+            "description": "Step count"
+          },
+          "distance": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 100.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Distance",
+            "description": "Distance in kilometers"
+          },
+          "active_energy": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 5000.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Active Energy",
+            "description": "Active energy burned in kcal"
+          },
+          "exercise_minutes": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 1440.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Exercise Minutes",
+            "description": "Exercise time in minutes"
+          },
+          "flights_climbed": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 500.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Flights Climbed",
+            "description": "Flights of stairs climbed"
+          },
+          "vo2_max": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 80.0,
+                "minimum": 10.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vo2 Max",
+            "description": "VO\u2082 max in mL/kg/min"
+          },
+          "active_minutes": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 1440.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Active Minutes",
+            "description": "Total active minutes"
+          },
+          "resting_heart_rate": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 120.0,
+                "minimum": 30.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Resting Heart Rate",
+            "description": "Resting heart rate in BPM"
+          }
+        },
+        "type": "object",
+        "title": "ActivityData",
+        "description": "Activity and exercise data."
+      },
+      "AnalysisResponse": {
+        "properties": {
+          "analysis_id": {
+            "type": "string",
+            "title": "Analysis Id",
+            "description": "Unique analysis identifier"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "description": "Analysis status: processing, completed, failed"
+          },
+          "analysis": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ActigraphyAnalysis"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Analysis results (available when status=completed)"
+          },
+          "processing_time_ms": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Processing Time Ms",
+            "description": "Processing time in milliseconds"
+          },
+          "message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Message",
+            "description": "Status message or error description"
+          },
+          "cached": {
+            "type": "boolean",
+            "title": "Cached",
+            "description": "Whether result was retrieved from cache",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "analysis_id",
+          "status"
+        ],
+        "title": "AnalysisResponse",
+        "description": "Response for analysis requests."
+      },
+      "BiometricData": {
+        "properties": {
+          "heart_rate": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 300.0,
+                "minimum": 30.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Heart Rate",
+            "description": "Heart rate in BPM"
+          },
+          "blood_pressure_systolic": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 250.0,
+                "minimum": 70.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Blood Pressure Systolic",
+            "description": "Systolic BP in mmHg"
+          },
+          "blood_pressure_diastolic": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 150.0,
+                "minimum": 40.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Blood Pressure Diastolic",
+            "description": "Diastolic BP in mmHg"
+          },
+          "oxygen_saturation": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 100.0,
+                "minimum": 70.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Oxygen Saturation",
+            "description": "Blood oxygen saturation in %"
+          },
+          "heart_rate_variability": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 200.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Heart Rate Variability",
+            "description": "HRV in milliseconds"
+          },
+          "respiratory_rate": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 60.0,
+                "minimum": 5.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Respiratory Rate",
+            "description": "Respiratory rate in breaths per minute"
+          },
+          "body_temperature": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 42.0,
+                "minimum": 35.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Body Temperature",
+            "description": "Body temperature in Celsius"
+          },
+          "blood_glucose": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 500.0,
+                "minimum": 50.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Blood Glucose",
+            "description": "Blood glucose in mg/dL"
+          }
+        },
+        "type": "object",
+        "title": "BiometricData",
+        "description": "Biometric measurements data."
+      },
+      "DirectActigraphyRequest": {
+        "properties": {
+          "data_points": {
+            "items": {
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Data Points",
+            "description": "Actigraphy data points with timestamp and value"
+          },
+          "sampling_rate": {
+            "type": "number",
+            "exclusiveMinimum": 0.0,
+            "title": "Sampling Rate",
+            "description": "Samples per minute",
+            "default": 1.0
+          },
+          "duration_hours": {
+            "type": "integer",
+            "maximum": 168.0,
+            "minimum": 1.0,
+            "title": "Duration Hours",
+            "description": "Duration in hours",
+            "default": 24
+          }
+        },
+        "type": "object",
+        "required": [
+          "data_points"
+        ],
+        "title": "DirectActigraphyRequest",
+        "description": "Request for direct actigraphy data analysis."
+      },
+      "EmailConfirmationRequest": {
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "title": "Email",
+            "description": "User email address"
+          },
+          "code": {
+            "type": "string",
+            "title": "Code",
+            "description": "6-digit confirmation code from email"
+          }
+        },
+        "type": "object",
+        "required": [
+          "email",
+          "code"
+        ],
+        "title": "EmailConfirmationRequest",
+        "description": "Email confirmation request model."
+      },
+      "ForgotPasswordRequest": {
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "title": "Email",
+            "description": "User email address"
+          }
+        },
+        "type": "object",
+        "required": [
+          "email"
+        ],
+        "title": "ForgotPasswordRequest",
+        "description": "Forgot password request model."
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "HealthCheckResponse": {
+        "properties": {
+          "service": {
+            "type": "string",
+            "title": "Service"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "timestamp": {
+            "type": "string",
+            "title": "Timestamp"
+          },
+          "version": {
+            "type": "string",
+            "title": "Version",
+            "default": "1.0.0"
+          },
+          "inference_engine": {
+            "type": "object",
+            "title": "Inference Engine"
+          },
+          "pat_model": {
+            "type": "object",
+            "title": "Pat Model"
+          }
+        },
+        "type": "object",
+        "required": [
+          "service",
+          "status",
+          "timestamp",
+          "inference_engine",
+          "pat_model"
+        ],
+        "title": "HealthCheckResponse",
+        "description": "PAT service health check response."
+      },
+      "HealthDataResponse": {
+        "properties": {
+          "processing_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Processing Id",
+            "description": "Unique processing identifier"
+          },
+          "status": {
+            "$ref": "#/components/schemas/ProcessingStatus",
+            "description": "Current processing status"
+          },
+          "accepted_metrics": {
+            "type": "integer",
+            "title": "Accepted Metrics",
+            "description": "Number of metrics accepted for processing"
+          },
+          "rejected_metrics": {
+            "type": "integer",
+            "title": "Rejected Metrics",
+            "description": "Number of metrics rejected",
+            "default": 0
+          },
+          "validation_errors": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Validation Errors",
+            "description": "Validation errors encountered"
+          },
+          "estimated_processing_time": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Estimated Processing Time",
+            "description": "Estimated processing time in seconds"
+          },
+          "sync_token": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sync Token",
+            "description": "New synchronization token for next upload"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "description": "Human-readable status message",
+            "examples": [
+              "Health data uploaded successfully and is being processed"
+            ]
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Timestamp",
+            "description": "Response timestamp (UTC)"
+          }
+        },
+        "type": "object",
+        "required": [
+          "status",
+          "accepted_metrics",
+          "message"
+        ],
+        "title": "HealthDataResponse",
+        "description": "Response for health data upload requests.",
+        "example": {
+          "accepted_metrics": 5,
+          "estimated_processing_time": 30,
+          "message": "Health data uploaded successfully and is being processed",
+          "processing_id": "123e4567-e89b-12d3-a456-426614174000",
+          "rejected_metrics": 0,
+          "status": "processing",
+          "timestamp": "2024-01-15T10:30:00Z",
+          "validation_errors": []
+        }
+      },
+      "HealthDataUpload": {
+        "properties": {
+          "user_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "User Id",
+            "description": "Authenticated user identifier"
+          },
+          "metrics": {
+            "items": {
+              "$ref": "#/components/schemas/HealthMetric"
+            },
+            "type": "array",
+            "maxItems": 100,
+            "minItems": 1,
+            "title": "Metrics",
+            "description": "Health metrics to upload"
+          },
+          "upload_source": {
+            "type": "string",
+            "title": "Upload Source",
+            "description": "Source of the upload (e.g., 'apple_health', 'fitbit', 'manual')",
+            "examples": [
+              "apple_health"
+            ]
+          },
+          "client_timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Client Timestamp",
+            "description": "Client-side upload timestamp (UTC)"
+          },
+          "sync_token": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sync Token",
+            "description": "Synchronization token for incremental uploads"
+          }
+        },
+        "type": "object",
+        "required": [
+          "user_id",
+          "metrics",
+          "upload_source",
+          "client_timestamp"
+        ],
+        "title": "HealthDataUpload",
+        "description": "Clinical-grade health data upload request."
+      },
+      "HealthInsightResponse": {
+        "properties": {
+          "user_id": {
+            "type": "string",
+            "title": "User Id"
+          },
+          "narrative": {
+            "type": "string",
+            "title": "Narrative",
+            "description": "Human-readable health narrative"
+          },
+          "key_insights": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Key Insights",
+            "description": "Key insights extracted"
+          },
+          "recommendations": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Recommendations",
+            "description": "Actionable recommendations"
+          },
+          "confidence_score": {
+            "type": "number",
+            "title": "Confidence Score",
+            "description": "Confidence in the insights (0-1)"
+          },
+          "generated_at": {
+            "type": "string",
+            "title": "Generated At",
+            "description": "Timestamp of generation"
+          }
+        },
+        "type": "object",
+        "required": [
+          "user_id",
+          "narrative",
+          "key_insights",
+          "recommendations",
+          "confidence_score",
+          "generated_at"
+        ],
+        "title": "HealthInsightResponse",
+        "description": "Response containing generated health insights."
+      },
+      "HealthKitSample": {
+        "properties": {
+          "identifier": {
+            "type": "string",
+            "title": "Identifier"
+          },
+          "type": {
+            "type": "string",
+            "title": "Type"
+          },
+          "value": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "object"
+              }
+            ],
+            "title": "Value"
+          },
+          "unit": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Unit"
+          },
+          "start_date": {
+            "type": "string",
+            "title": "Start Date"
+          },
+          "end_date": {
+            "type": "string",
+            "title": "End Date"
+          },
+          "source_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Name"
+          },
+          "device": {
+            "anyOf": [
+              {
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Device"
+          },
+          "metadata": {
+            "type": "object",
+            "title": "Metadata"
+          }
+        },
+        "type": "object",
+        "required": [
+          "identifier",
+          "type",
+          "value",
+          "start_date",
+          "end_date"
+        ],
+        "title": "HealthKitSample",
+        "description": "Individual HealthKit sample."
+      },
+      "HealthKitUploadRequest": {
+        "properties": {
+          "user_id": {
+            "type": "string",
+            "title": "User Id"
+          },
+          "quantity_samples": {
+            "items": {
+              "$ref": "#/components/schemas/HealthKitSample"
+            },
+            "type": "array",
+            "title": "Quantity Samples"
+          },
+          "category_samples": {
+            "items": {
+              "$ref": "#/components/schemas/HealthKitSample"
+            },
+            "type": "array",
+            "title": "Category Samples"
+          },
+          "workouts": {
+            "items": {
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Workouts"
+          },
+          "correlation_samples": {
+            "items": {
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Correlation Samples"
+          },
+          "upload_metadata": {
+            "type": "object",
+            "title": "Upload Metadata"
+          },
+          "sync_token": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sync Token"
+          }
+        },
+        "type": "object",
+        "required": [
+          "user_id"
+        ],
+        "title": "HealthKitUploadRequest",
+        "description": "HealthKit data upload request."
+      },
+      "HealthKitUploadResponse": {
+        "properties": {
+          "upload_id": {
+            "type": "string",
+            "title": "Upload Id"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "queued_at": {
+            "type": "string",
+            "title": "Queued At"
+          },
+          "samples_received": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "Samples Received"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          }
+        },
+        "type": "object",
+        "required": [
+          "upload_id",
+          "status",
+          "queued_at",
+          "samples_received",
+          "message"
+        ],
+        "title": "HealthKitUploadResponse",
+        "description": "Response for HealthKit upload."
+      },
+      "HealthMetric": {
+        "properties": {
+          "metric_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Metric Id",
+            "description": "Unique identifier for this metric"
+          },
+          "metric_type": {
+            "$ref": "#/components/schemas/HealthMetricType",
+            "description": "Type of health metric"
+          },
+          "biometric_data": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/BiometricData"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "sleep_data": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SleepData"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "activity_data": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ActivityData"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "mental_health_data": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/MentalHealthIndicator"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "device_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Device Id",
+            "description": "Identifier of the source device"
+          },
+          "raw_data": {
+            "anyOf": [
+              {
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Raw Data",
+            "description": "Raw data from the source device"
+          },
+          "metadata": {
+            "anyOf": [
+              {
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Metadata",
+            "description": "Additional metadata about the measurement"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At",
+            "description": "Record creation timestamp (UTC)"
+          }
+        },
+        "type": "object",
+        "required": [
+          "metric_type"
+        ],
+        "title": "HealthMetric",
+        "description": "Unified health metric container."
+      },
+      "HealthMetricType": {
+        "type": "string",
+        "enum": [
+          "heart_rate",
+          "heart_rate_variability",
+          "blood_pressure",
+          "blood_oxygen",
+          "respiratory_rate",
+          "sleep_analysis",
+          "activity_level",
+          "stress_indicators",
+          "mood_assessment",
+          "cognitive_metrics",
+          "environmental",
+          "body_temperature",
+          "blood_glucose"
+        ],
+        "title": "HealthMetricType",
+        "description": "Types of health metrics supported by the digital twin."
+      },
+      "HealthResponse": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "description": "Service health status"
+          },
+          "service": {
+            "type": "string",
+            "title": "Service",
+            "description": "Service name"
+          },
+          "version": {
+            "type": "string",
+            "title": "Version",
+            "description": "Service version"
+          }
+        },
+        "type": "object",
+        "required": [
+          "status",
+          "service",
+          "version"
+        ],
+        "title": "HealthResponse",
+        "description": "Health check response model."
+      },
+      "InsightGenerationRequest": {
+        "properties": {
+          "analysis_results": {
+            "type": "object",
+            "title": "Analysis Results",
+            "description": "PAT analysis results or health data metrics"
+          },
+          "context": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Context",
+            "description": "Additional context for insights generation"
+          },
+          "insight_type": {
+            "type": "string",
+            "title": "Insight Type",
+            "description": "Type of insight to generate (comprehensive, brief, detailed)",
+            "default": "comprehensive"
+          },
+          "include_recommendations": {
+            "type": "boolean",
+            "title": "Include Recommendations",
+            "description": "Include actionable recommendations",
+            "default": true
+          },
+          "language": {
+            "type": "string",
+            "title": "Language",
+            "description": "Language code for insights",
+            "default": "en"
+          }
+        },
+        "type": "object",
+        "required": [
+          "analysis_results"
+        ],
+        "title": "InsightGenerationRequest",
+        "description": "Request for generating health insights."
+      },
+      "InsightGenerationResponse": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success"
+          },
+          "data": {
+            "$ref": "#/components/schemas/HealthInsightResponse"
+          },
+          "metadata": {
+            "type": "object",
+            "title": "Metadata"
+          }
+        },
+        "type": "object",
+        "required": [
+          "success",
+          "data",
+          "metadata"
+        ],
+        "title": "InsightGenerationResponse",
+        "description": "Response for insight generation."
+      },
+      "InsightHistoryResponse": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success"
+          },
+          "data": {
+            "type": "object",
+            "title": "Data"
+          },
+          "metadata": {
+            "type": "object",
+            "title": "Metadata"
+          }
+        },
+        "type": "object",
+        "required": [
+          "success",
+          "data",
+          "metadata"
+        ],
+        "title": "InsightHistoryResponse",
+        "description": "Response for insight history."
+      },
+      "LogoutResponse": {
+        "properties": {
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "description": "Logout status message"
+          }
+        },
+        "type": "object",
+        "required": [
+          "message"
+        ],
+        "title": "LogoutResponse",
+        "description": "Logout response model."
+      },
+      "MentalHealthIndicator": {
+        "properties": {
+          "mood_score": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/MoodScale"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Standardized mood assessment"
+          },
+          "stress_level": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 10.0,
+                "minimum": 1.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Stress Level",
+            "description": "Stress level on 1-10 scale",
+            "examples": [
+              3.5
+            ]
+          },
+          "anxiety_level": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 10.0,
+                "minimum": 1.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Anxiety Level",
+            "description": "Anxiety level on 1-10 scale",
+            "examples": [
+              2.8
+            ]
+          },
+          "energy_level": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 10.0,
+                "minimum": 1.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Energy Level",
+            "description": "Energy level on 1-10 scale",
+            "examples": [
+              7.2
+            ]
+          },
+          "focus_rating": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 10.0,
+                "minimum": 1.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Focus Rating",
+            "description": "Focus/concentration rating on 1-10 scale",
+            "examples": [
+              6.5
+            ]
+          },
+          "social_interaction_minutes": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 1440.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Social Interaction Minutes",
+            "description": "Minutes of social interaction",
+            "examples": [
+              120
+            ]
+          },
+          "meditation_minutes": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 480.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Meditation Minutes",
+            "description": "Minutes of meditation/mindfulness",
+            "examples": [
+              15
+            ]
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 1000
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes",
+            "description": "Free-form notes about mental state"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Timestamp",
+            "description": "Assessment timestamp (UTC)"
+          }
+        },
+        "type": "object",
+        "title": "MentalHealthIndicator",
+        "description": "Mental health and mood indicators."
+      },
+      "MoodScale": {
+        "type": "string",
+        "enum": [
+          "very_low",
+          "low",
+          "neutral",
+          "good",
+          "excellent"
+        ],
+        "title": "MoodScale",
+        "description": "Standardized mood assessment scale."
+      },
+      "PATAnalysisResponse": {
+        "properties": {
+          "processing_id": {
+            "type": "string",
+            "title": "Processing Id",
+            "description": "Processing ID for the analysis"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "description": "Status: completed, processing, failed, not_found"
+          },
+          "message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Message",
+            "description": "Status message"
+          },
+          "analysis_date": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Analysis Date",
+            "description": "When analysis was completed"
+          },
+          "pat_features": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "number"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pat Features",
+            "description": "PAT model features"
+          },
+          "activity_embedding": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "number"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Activity Embedding",
+            "description": "Activity embedding vector"
+          },
+          "metadata": {
+            "anyOf": [
+              {
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Metadata",
+            "description": "Additional metadata"
+          }
+        },
+        "type": "object",
+        "required": [
+          "processing_id",
+          "status"
+        ],
+        "title": "PATAnalysisResponse",
+        "description": "Response model for PAT analysis results."
+      },
+      "PaginatedResponse_dict_str__Any__": {
+        "properties": {
+          "data": {
+            "items": {
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Data",
+            "description": "Array of items for this page"
+          },
+          "pagination": {
+            "$ref": "#/components/schemas/PaginationInfo",
+            "description": "Pagination metadata"
+          },
+          "links": {
+            "$ref": "#/components/schemas/PaginationLinks",
+            "description": "Navigation links following HAL specification"
+          }
+        },
+        "type": "object",
+        "required": [
+          "data",
+          "pagination",
+          "links"
+        ],
+        "title": "PaginatedResponse[dict[str, Any]]"
+      },
+      "PaginationInfo": {
+        "properties": {
+          "total_count": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Total Count",
+            "description": "Total number of items (if efficiently calculable)",
+            "examples": [
+              15420
+            ]
+          },
+          "page_size": {
+            "type": "integer",
+            "maximum": 1000.0,
+            "minimum": 1.0,
+            "title": "Page Size",
+            "description": "Number of items per page",
+            "examples": [
+              50
+            ]
+          },
+          "has_next": {
+            "type": "boolean",
+            "title": "Has Next",
+            "description": "Whether there are more items available",
+            "examples": [
+              true
+            ]
+          },
+          "has_previous": {
+            "type": "boolean",
+            "title": "Has Previous",
+            "description": "Whether there are previous items available",
+            "examples": [
+              false
+            ]
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Cursor",
+            "description": "Cursor for fetching the next page",
+            "examples": [
+              "eyJpZCI6MTU0MjAsInRpbWVzdGFtcCI6IjIwMjUtMDEtMTVUMTA6MzA6MDBaIn0="
+            ]
+          },
+          "previous_cursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Previous Cursor",
+            "description": "Cursor for fetching the previous page",
+            "examples": [
+              "eyJpZCI6MTUzNzAsInRpbWVzdGFtcCI6IjIwMjUtMDEtMTVUMDk6MzA6MDBaIn0="
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "page_size",
+          "has_next",
+          "has_previous"
+        ],
+        "title": "PaginationInfo",
+        "description": "Pagination metadata for API responses."
+      },
+      "PaginationLinks": {
+        "properties": {
+          "self": {
+            "type": "string",
+            "title": "Self",
+            "description": "Link to current page",
+            "examples": [
+              "https://api.clarity.health/health-data?limit=50&cursor=abc123"
+            ]
+          },
+          "first": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "First",
+            "description": "Link to first page",
+            "examples": [
+              "https://api.clarity.health/health-data?limit=50"
+            ]
+          },
+          "previous": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Previous",
+            "description": "Link to previous page",
+            "examples": [
+              "https://api.clarity.health/health-data?limit=50&cursor=xyz789"
+            ]
+          },
+          "next": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next",
+            "description": "Link to next page",
+            "examples": [
+              "https://api.clarity.health/health-data?limit=50&cursor=def456"
+            ]
+          },
+          "last": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last",
+            "description": "Link to last page (if total count is known)",
+            "examples": [
+              "https://api.clarity.health/health-data?limit=50&cursor=last123"
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "self"
+        ],
+        "title": "PaginationLinks",
+        "description": "HAL-style pagination links for navigation."
+      },
+      "ProcessingStatus": {
+        "type": "string",
+        "enum": [
+          "received",
+          "processing",
+          "completed",
+          "failed",
+          "requires_review"
+        ],
+        "title": "ProcessingStatus",
+        "description": "Processing status for health data uploads."
+      },
+      "ResendConfirmationRequest": {
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "title": "Email",
+            "description": "User email address"
+          }
+        },
+        "type": "object",
+        "required": [
+          "email"
+        ],
+        "title": "ResendConfirmationRequest",
+        "description": "Resend confirmation code request model."
+      },
+      "ResetPasswordRequest": {
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "title": "Email",
+            "description": "User email address"
+          },
+          "code": {
+            "type": "string",
+            "title": "Code",
+            "description": "6-digit reset code from email"
+          },
+          "new_password": {
+            "type": "string",
+            "minLength": 8,
+            "title": "New Password",
+            "description": "New password"
+          }
+        },
+        "type": "object",
+        "required": [
+          "email",
+          "code",
+          "new_password"
+        ],
+        "title": "ResetPasswordRequest",
+        "description": "Reset password request model."
+      },
+      "ServiceStatusResponse": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success"
+          },
+          "data": {
+            "type": "object",
+            "title": "Data"
+          },
+          "metadata": {
+            "type": "object",
+            "title": "Metadata"
+          }
+        },
+        "type": "object",
+        "required": [
+          "success",
+          "data",
+          "metadata"
+        ],
+        "title": "ServiceStatusResponse",
+        "description": "Response for service status."
+      },
+      "SleepData": {
+        "properties": {
+          "total_sleep_minutes": {
+            "type": "integer",
+            "exclusiveMinimum": 0.0,
+            "title": "Total Sleep Minutes",
+            "description": "Total sleep duration in minutes",
+            "examples": [
+              480
+            ]
+          },
+          "sleep_efficiency": {
+            "type": "number",
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Sleep Efficiency",
+            "description": "Sleep efficiency as a ratio (0-1)",
+            "examples": [
+              0.85
+            ]
+          },
+          "time_to_sleep_minutes": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 180.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Time To Sleep Minutes",
+            "description": "Time to fall asleep in minutes",
+            "examples": [
+              12
+            ]
+          },
+          "wake_count": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 50.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Wake Count",
+            "description": "Number of times awakened during sleep",
+            "examples": [
+              2
+            ]
+          },
+          "sleep_stages": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "integer"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sleep Stages",
+            "description": "Minutes spent in each sleep stage",
+            "examples": [
+              {
+                "awake": 30,
+                "deep": 120,
+                "light": 240,
+                "rem": 90
+              }
+            ]
+          },
+          "sleep_start": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Sleep Start",
+            "description": "Sleep start time (UTC)"
+          },
+          "sleep_end": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Sleep End",
+            "description": "Sleep end time (UTC)"
+          }
+        },
+        "type": "object",
+        "required": [
+          "total_sleep_minutes",
+          "sleep_efficiency",
+          "sleep_start",
+          "sleep_end"
+        ],
+        "title": "SleepData",
+        "description": "Comprehensive sleep analysis data."
+      },
+      "SleepStage": {
+        "type": "string",
+        "enum": [
+          "awake",
+          "light",
+          "deep",
+          "rem"
+        ],
+        "title": "SleepStage",
+        "description": "Sleep stages for detailed sleep analysis."
+      },
+      "StatusResponse": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "description": "Operation status"
+          }
+        },
+        "type": "object",
+        "required": [
+          "status"
+        ],
+        "title": "StatusResponse",
+        "description": "Generic status response model."
+      },
+      "StepDataRequest": {
+        "properties": {
+          "step_counts": {
+            "items": {
+              "type": "integer"
+            },
+            "type": "array",
+            "maxItems": 20160,
+            "minItems": 1,
+            "title": "Step Counts",
+            "description": "Minute-by-minute step counts (10,080 values for 1 week)"
+          },
+          "timestamps": {
+            "items": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "type": "array",
+            "title": "Timestamps",
+            "description": "Corresponding timestamps for each step count"
+          },
+          "user_metadata": {
+            "anyOf": [
+              {
+                "type": "object",
+                "maxProperties": 50
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "User Metadata",
+            "description": "Optional user demographics (age_group, sex, etc.) - limited size"
+          }
+        },
+        "type": "object",
+        "required": [
+          "step_counts",
+          "timestamps"
+        ],
+        "title": "StepDataRequest",
+        "description": "Request for Apple HealthKit step data analysis."
+      },
+      "TokenResponse": {
+        "properties": {
+          "access_token": {
+            "type": "string",
+            "title": "Access Token",
+            "description": "JWT access token"
+          },
+          "refresh_token": {
+            "type": "string",
+            "title": "Refresh Token",
+            "description": "Refresh token"
+          },
+          "token_type": {
+            "type": "string",
+            "enum": [
+              "bearer"
+            ],
+            "const": "bearer",
+            "title": "Token Type",
+            "description": "Token type",
+            "default": "bearer"
+          },
+          "expires_in": {
+            "type": "integer",
+            "title": "Expires In",
+            "description": "Token expiration time in seconds"
+          },
+          "scope": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scope",
+            "description": "Token scope"
+          }
+        },
+        "type": "object",
+        "required": [
+          "access_token",
+          "refresh_token",
+          "expires_in"
+        ],
+        "title": "TokenResponse",
+        "description": "Response model for token-based authentication."
+      },
+      "UserInfoResponse": {
+        "properties": {
+          "user_id": {
+            "type": "string",
+            "title": "User Id",
+            "description": "Unique user identifier"
+          },
+          "email": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Email",
+            "description": "User email address"
+          },
+          "email_verified": {
+            "type": "boolean",
+            "title": "Email Verified",
+            "description": "Email verification status"
+          },
+          "display_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Display Name",
+            "description": "User display name"
+          },
+          "auth_provider": {
+            "type": "string",
+            "title": "Auth Provider",
+            "description": "Authentication provider"
+          }
+        },
+        "type": "object",
+        "required": [
+          "user_id",
+          "email_verified",
+          "auth_provider"
+        ],
+        "title": "UserInfoResponse",
+        "description": "User information response model."
+      },
+      "UserLoginRequest": {
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "title": "Email",
+            "description": "User email address"
+          },
+          "password": {
+            "type": "string",
+            "title": "Password",
+            "description": "User password"
+          },
+          "remember_me": {
+            "type": "boolean",
+            "title": "Remember Me",
+            "description": "Remember user for extended session",
+            "default": false
+          },
+          "device_info": {
+            "anyOf": [
+              {
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Device Info",
+            "description": "Optional device information for security tracking"
+          }
+        },
+        "type": "object",
+        "required": [
+          "email",
+          "password"
+        ],
+        "title": "UserLoginRequest",
+        "description": "Request model for user login."
+      },
+      "UserRegister": {
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "title": "Email",
+            "description": "User email address"
+          },
+          "password": {
+            "type": "string",
+            "minLength": 8,
+            "title": "Password",
+            "description": "User password"
+          },
+          "display_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Display Name",
+            "description": "Optional display name"
+          }
+        },
+        "type": "object",
+        "required": [
+          "email",
+          "password"
+        ],
+        "title": "UserRegister",
+        "description": "User registration request model."
+      },
+      "UserUpdate": {
+        "properties": {
+          "display_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Display Name",
+            "description": "Display name to update"
+          },
+          "email": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Email",
+            "description": "New email address"
+          }
+        },
+        "type": "object",
+        "title": "UserUpdate",
+        "description": "User update request model."
+      },
+      "UserUpdateResponse": {
+        "properties": {
+          "user_id": {
+            "type": "string",
+            "title": "User Id",
+            "description": "Unique user identifier"
+          },
+          "email": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Email",
+            "description": "User email address"
+          },
+          "display_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Display Name",
+            "description": "User display name"
+          },
+          "updated": {
+            "type": "boolean",
+            "title": "Updated",
+            "description": "Update success status"
+          }
+        },
+        "type": "object",
+        "required": [
+          "user_id",
+          "updated"
+        ],
+        "title": "UserUpdateResponse",
+        "description": "User update response model."
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "string",
+            "description": "Error message"
+          },
+          "code": {
+            "type": "string",
+            "description": "Error code"
+          },
+          "details": {
+            "type": "object",
+            "description": "Additional error details",
+            "additionalProperties": true
+          }
+        },
+        "required": [
+          "error"
+        ]
+      }
+    },
+    "securitySchemes": {
+      "BearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "JWT Bearer token authentication"
+      },
+      "ApiKeyAuth": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "X-API-Key",
+        "description": "API Key authentication"
+      }
+    }
+  },
+  "security": [
+    {
+      "BearerAuth": []
+    }
+  ],
+  "servers": [
+    {
+      "url": "http://clarity-alb-1762715656.us-east-1.elb.amazonaws.com",
+      "description": "Production server (AWS ALB)"
+    },
+    {
+      "url": "http://localhost:8000",
+      "description": "Local development server"
+    }
+  ],
+  "tags": [
+    {
+      "name": "authentication",
+      "description": "User authentication and authorization endpoints"
+    },
+    {
+      "name": "health-data",
+      "description": "Health data management and retrieval"
+    },
+    {
+      "name": "healthkit",
+      "description": "Apple HealthKit data integration"
+    },
+    {
+      "name": "pat-analysis",
+      "description": "Physical Activity Test (PAT) analysis endpoints"
+    },
+    {
+      "name": "ai-insights",
+      "description": "AI-powered health insights generation"
+    },
+    {
+      "name": "metrics",
+      "description": "Health metrics and statistics"
+    },
+    {
+      "name": "websocket",
+      "description": "WebSocket real-time communication"
+    },
+    {
+      "name": "debug",
+      "description": "Debug endpoints (development only)"
+    },
+    {
+      "name": "test",
+      "description": "Test endpoints for API validation"
+    }
+  ]
+}

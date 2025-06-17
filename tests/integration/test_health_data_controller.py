@@ -113,7 +113,7 @@ class TestHealthDataController:
 
         # When: Making upload request
         response = client.post(
-            "/api/v1/health-data/upload",
+            "/api/v1/health-data",
             json=valid_health_data_payload,
             headers=valid_auth_headers,
         )
@@ -142,7 +142,7 @@ class TestHealthDataController:
         }
 
         response = client.post(
-            "/api/v1/health-data/upload",
+            "/api/v1/health-data",
             json=invalid_payload,
             headers=valid_auth_headers,
         )
@@ -315,7 +315,7 @@ class TestControllerAdapterPattern:
         }
 
         response = client.post(
-            "/api/v1/health-data/upload",
+            "/api/v1/health-data",
             json=json_payload,
             headers={"Authorization": "Bearer test-token"},
         )
@@ -479,7 +479,7 @@ class TestControllerErrorHandling:
 
         # When: Service raises error
         response = client.post(
-            "/api/v1/health-data/upload",
+            "/api/v1/health-data",
             json={"invalid": "data"},
             headers={"Authorization": "Bearer test-token"},
         )
@@ -501,7 +501,7 @@ class TestControllerErrorHandling:
 
         # When: Sending invalid JSON structure
         response = client.post(
-            "/api/v1/health-data/upload",
+            "/api/v1/health-data",
             json={},  # Empty object (missing required fields)
             headers={"Authorization": "Bearer test-token"},
         )
@@ -522,7 +522,7 @@ class TestControllerErrorHandling:
 
         # When: Making request without auth header
         response = client.post(
-            "/api/v1/health-data/upload",
+            "/api/v1/health-data",
             json={"user_id": str(uuid4()), "metrics": [], "upload_source": "test"},
         )
 

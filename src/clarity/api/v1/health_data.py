@@ -173,7 +173,7 @@ def get_config_provider() -> IConfigProvider:
 
 
 @router.post(
-    "/upload",
+    "/",
     summary="Upload Health Data",
     description="""
     Upload health metrics for processing and analysis by the CLARITY digital twin platform.
@@ -214,6 +214,14 @@ def get_config_provider() -> IConfigProvider:
         },
         503: {"description": "Service temporarily unavailable"},
     },
+)
+@router.post(
+    "",
+    summary="Upload Health Data",
+    description="Upload health data (canonical endpoint without trailing slash)",
+    response_model=HealthDataResponse,
+    status_code=status.HTTP_201_CREATED,
+    include_in_schema=False,  # Don't show duplicate in OpenAPI docs
 )
 async def upload_health_data(
     health_data: HealthDataUpload,

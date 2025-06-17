@@ -4,16 +4,19 @@
 
 set -e
 
+# Load centralized configuration
+source "$(dirname "$0")/env.sh"
+
 # Configuration
-ALB_NAME="clarity-alb"
-ALB_DNS=$(aws elbv2 describe-load-balancers --names "$ALB_NAME" --query 'LoadBalancers[0].DNSName' --output text --region us-east-1)
-ALB_URL="http://$ALB_DNS"
 TEST_ENDPOINT="/health"
 RATE_LIMIT=100
+HTTP_URL="http://$ALB_DNS"
+HTTPS_URL="https://$ALB_DNS"
 
 echo "🧪 Testing AWS WAF Rate Limiting for Clarity Digital Twin Backend"
 echo "=================================================================="
-echo "Target: $ALB_URL$TEST_ENDPOINT"
+echo "HTTP Target: $HTTP_URL$TEST_ENDPOINT"
+echo "HTTPS Target: $HTTPS_URL$TEST_ENDPOINT" 
 echo "Rate Limit: $RATE_LIMIT requests per 5 minutes"
 echo "=================================================================="
 

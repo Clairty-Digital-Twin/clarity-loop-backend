@@ -263,6 +263,23 @@ async def login(
         try:
             await lockout_service.record_failed_attempt(credentials.email, client_ip)
             logger.info("🚨 Failed login attempt recorded for %s from %s", credentials.email, client_ip)
+            
+            # Check if account just got locked and emit CloudWatch metric
+            if await lockout_service.is_locked(credentials.email):
+                try:
+                    cloudwatch.put_metric_data(
+                        Namespace="Clarity/Auth",
+                        MetricData=[{
+                            "MetricName": "AccountLockout",
+                            "Dimensions": [{"Name": "UserPoolId", "Value": USER_POOL_ID}],
+                            "Value": 1,
+                            "Unit": "Count"
+                        }]
+                    )
+                    logger.warning("📊 CloudWatch metric emitted: Account lockout for %s", credentials.email)
+                except Exception as metric_error:
+                    logger.exception("Failed to emit CloudWatch metric: %s", metric_error)
+                    
         except Exception as lockout_error:
             # Don't let lockout service errors block the auth response
             logger.exception("Failed to record lockout attempt: %s", lockout_error)

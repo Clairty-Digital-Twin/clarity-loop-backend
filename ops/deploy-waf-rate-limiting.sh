@@ -7,7 +7,7 @@ set -e  # Exit on any error
 # Configuration
 AWS_REGION="us-east-1"
 AWS_ACCOUNT_ID="124355672559"
-ALB_NAME="clarity-alb-1762715656"
+ALB_NAME="clarity-alb"
 WAF_NAME="clarity-backend-rate-limiting"
 WAF_CONFIG_FILE="ops/aws-waf-rate-limiting.json"
 

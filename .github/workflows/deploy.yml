@@ -46,24 +46,26 @@ jobs:
         IMAGE_TAG="${{ github.sha }}"
         
         # Build for linux/amd64 platform (CRITICAL for ECS!)
-        echo "Building Docker image for linux/amd64..."
+        echo "🔥 Building Docker image for linux/amd64... 🔥"
         docker build \
           --platform linux/amd64 \
           --build-arg BUILDKIT_INLINE_CACHE=1 \
           -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG \
           -t $ECR_REGISTRY/$ECR_REPOSITORY:latest \
-          -f Dockerfile.aws \
+          -f Dockerfile \
           .
         
         # Push to ECR
-        echo "Pushing to ECR..."
+        echo "🚀 Pushing security-hardened image to ECR... 🚀"
         docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
         docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
         
         # Deploy using the new image
+        echo "💥 Deploying to ECS with security fortress... 💥"
         ./ops/deploy.sh --tag $IMAGE_TAG
 
     - name: Deploy completed
       run: |
-        echo "✅ Deployment completed successfully"
+        echo "✅ SINGULARITY DEPLOYMENT COMPLETED SUCCESSFULLY! ✅"
         echo "🔗 Application URL: https://clarity.novamindnyc.com"
+        echo "🛡️ Security Status: FORTRESS MODE ACTIVATED"

@@ -2,8 +2,8 @@
   "family": "clarity-backend",
   "networkMode": "awsvpc",
   "requiresCompatibilities": ["FARGATE"],
-  "cpu": "4096",
-  "memory": "16384",
+  "cpu": "1024",
+  "memory": "3072",
   "containerDefinitions": [
     {
       "name": "clarity-backend",

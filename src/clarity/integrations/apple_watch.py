@@ -14,11 +14,10 @@ import operator
 from typing import TYPE_CHECKING, Any
 
 import numpy as np
+import numpy.typing as npt
 import pandas as pd  # type: ignore[import-untyped]
 from scipy.interpolate import interp1d
 import scipy.signal
-
-import numpy.typing as npt
 
 from clarity.core.exceptions import ProcessingError
 from clarity.integrations.healthkit import HealthDataBatch, HealthDataPoint

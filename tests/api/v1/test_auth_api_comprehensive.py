@@ -79,7 +79,7 @@ def app(mock_cognito_provider: Mock) -> FastAPI:
     
     # Also mock the lockout service to prevent test interference
     from clarity.auth.dependencies import get_lockout_service
-    mock_lockout = Mock()
+    mock_lockout = AsyncMock()  # Use AsyncMock for async methods
     mock_lockout.check_account.return_value = None  # No lockout
     mock_lockout.check_lockout.return_value = None  # No lockout  
     mock_lockout.record_failed_attempt.return_value = None

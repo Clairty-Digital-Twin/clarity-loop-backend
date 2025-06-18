@@ -372,31 +372,48 @@ class ClarityConfig(BaseSettings):
         cognito_config["client_id"] = values.get("COGNITO_CLIENT_ID") or os.getenv("COGNITO_CLIENT_ID", "")
         cognito_config["region"] = values.get("COGNITO_REGION") or os.getenv("COGNITO_REGION", aws_config["region"])
 
-        # Extract DynamoDB config
-        dynamodb_config["table_name"] = values.get(
-            "DYNAMODB_TABLE_NAME", "clarity-health-data"
+        # Extract DynamoDB config - check both values and env vars
+        dynamodb_config["table_name"] = (
+            values.get("DYNAMODB_TABLE_NAME") or 
+            os.getenv("DYNAMODB_TABLE_NAME", "clarity-health-data")
         )
-        dynamodb_config["endpoint_url"] = values.get("DYNAMODB_ENDPOINT_URL", "")
-
-        # Extract S3 config
-        s3_config["bucket_name"] = values.get(
-            "S3_BUCKET_NAME", "clarity-health-uploads"
+        dynamodb_config["endpoint_url"] = (
+            values.get("DYNAMODB_ENDPOINT_URL") or 
+            os.getenv("DYNAMODB_ENDPOINT_URL", "")
         )
-        s3_config["ml_models_bucket"] = values.get(
-            "S3_ML_MODELS_BUCKET", "clarity-ml-models-124355672559"
+
+        # Extract S3 config - check both values and env vars
+        s3_config["bucket_name"] = (
+            values.get("S3_BUCKET_NAME") or 
+            os.getenv("S3_BUCKET_NAME", "clarity-health-uploads")
         )
-        s3_config["endpoint_url"] = values.get("S3_ENDPOINT_URL", "")
+        s3_config["ml_models_bucket"] = (
+            values.get("S3_ML_MODELS_BUCKET") or 
+            os.getenv("S3_ML_MODELS_BUCKET", "clarity-ml-models-124355672559")
+        )
+        s3_config["endpoint_url"] = (
+            values.get("S3_ENDPOINT_URL") or 
+            os.getenv("S3_ENDPOINT_URL", "")
+        )
 
-        # Extract Gemini config
-        gemini_config["api_key"] = values.get("GEMINI_API_KEY", "")
-        gemini_config["model"] = values.get("GEMINI_MODEL", "gemini-1.5-flash")
-        gemini_config["temperature"] = float(values.get("GEMINI_TEMPERATURE", "0.7"))
-        gemini_config["max_tokens"] = int(values.get("GEMINI_MAX_TOKENS", "1000"))
+        # Extract Gemini config - check both values and env vars
+        gemini_config["api_key"] = values.get("GEMINI_API_KEY") or os.getenv("GEMINI_API_KEY", "")
+        gemini_config["model"] = values.get("GEMINI_MODEL") or os.getenv("GEMINI_MODEL", "gemini-1.5-flash")
+        gemini_config["temperature"] = float(
+            values.get("GEMINI_TEMPERATURE") or os.getenv("GEMINI_TEMPERATURE", "0.7")
+        )
+        gemini_config["max_tokens"] = int(
+            values.get("GEMINI_MAX_TOKENS") or os.getenv("GEMINI_MAX_TOKENS", "1000")
+        )
 
-        # Extract security config
-        security_config["secret_key"] = values.get("SECRET_KEY", os.getenv("SECRET_KEY", "dev-secret-key"))
-        cors_origins_str = values.get(
-            "CORS_ALLOWED_ORIGINS", os.getenv("CORS_ALLOWED_ORIGINS", "http://localhost:3000,http://localhost:8080")
+        # Extract security config - check both values and env vars
+        security_config["secret_key"] = (
+            values.get("SECRET_KEY") or 
+            os.getenv("SECRET_KEY", "dev-secret-key")
+        )
+        cors_origins_str = (
+            values.get("CORS_ALLOWED_ORIGINS") or 
+            os.getenv("CORS_ALLOWED_ORIGINS", "http://localhost:3000,http://localhost:8080")
         )
         # Pass raw string - SecurityConfig will parse and validate it
         security_config["cors_origins"] = cors_origins_str

@@ -163,17 +163,20 @@ class TestIntegration:
         # Add test endpoints
         @app.get("/test/unlimited")
         async def unlimited():
-            return {"message": "success"}
+            from fastapi.responses import JSONResponse
+            return JSONResponse({"message": "success"})
 
         @app.get("/test/limited")
         @limiter.limit("2/minute")
         async def limited(request: Request):
-            return {"message": "success"}
+            from fastapi.responses import JSONResponse
+            return JSONResponse({"message": "success"})
 
         @app.get("/test/auth")
         @limiter.limit("5/minute", key_func=get_ip_only)
         async def auth_endpoint(request: Request):
-            return {"message": "success"}
+            from fastapi.responses import JSONResponse
+            return JSONResponse({"message": "success"})
 
         return app
 

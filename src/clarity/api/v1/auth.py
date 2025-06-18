@@ -15,7 +15,7 @@ from slowapi.util import get_remote_address
 from clarity.auth.aws_cognito_provider import CognitoAuthProvider
 from clarity.auth.dependencies import get_auth_provider, get_current_user
 from clarity.auth.dependencies import get_current_user as get_user_func
-from clarity.auth.lockout_service import AccountLockoutError, AccountLockoutService
+from clarity.auth.lockout_service import AccountLockoutError, AccountLockoutService, get_lockout_service
 from clarity.core.constants import (
     AUTH_HEADER_TYPE_BEARER,
     AUTH_SCOPE_FULL_ACCESS,
@@ -40,8 +40,7 @@ logger = logging.getLogger(__name__)
 # Create router
 router = APIRouter()
 
-# Initialize lockout service
-lockout_service = AccountLockoutService()
+# Lockout service will be injected as a dependency
 
 # Initialize CloudWatch client
 cloudwatch = boto3.client(
@@ -107,6 +106,7 @@ async def register(
     request: Request,
     user_data: UserRegister,
     auth_provider: IAuthProvider = Depends(get_auth_provider),
+    lockout_service: AccountLockoutService = Depends(get_lockout_service),
 ) -> TokenResponse | JSONResponse:
     """Register a new user."""
     # Check if self-signup is enabled
@@ -196,6 +196,7 @@ async def login(
     request: Request,
     credentials: UserLoginRequest,
     auth_provider: IAuthProvider = Depends(get_auth_provider),
+    lockout_service: AccountLockoutService = Depends(get_lockout_service),
 ) -> TokenResponse:
     """Authenticate user and return access token."""
     # Get client IP for lockout tracking

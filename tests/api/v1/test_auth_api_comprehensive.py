@@ -68,6 +68,10 @@ def auth_tokens() -> dict[str, Any]:
 @pytest.fixture
 def app(mock_cognito_provider: Mock) -> FastAPI:
     """Create a real FastAPI app that uses the actual auth router."""
+    # Enable self-signup for tests
+    import os
+    os.environ["ENABLE_SELF_SIGNUP"] = "true"
+    
     app = FastAPI()
 
     # Override ONLY the auth provider dependency - let everything else be real
@@ -77,8 +81,10 @@ def app(mock_cognito_provider: Mock) -> FastAPI:
     from clarity.auth.dependencies import get_lockout_service
     mock_lockout = Mock()
     mock_lockout.check_account.return_value = None  # No lockout
+    mock_lockout.check_lockout.return_value = None  # No lockout  
     mock_lockout.record_failed_attempt.return_value = None
     mock_lockout.reset_attempts.return_value = None
+    mock_lockout.is_locked.return_value = False
     app.dependency_overrides[get_lockout_service] = lambda: mock_lockout
 
     # Include the REAL auth router

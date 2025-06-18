@@ -10,12 +10,14 @@ import os
 import sys
 
 # Add the src directory to the path so we can import clarity modules
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
 from clarity.auth.lockout_service import AccountLockoutError, AccountLockoutService
 
 
-async def test_lockout_demo(test_email: str = "demo@example.com", wrong_password: str = "WrongP@ssword"):
+async def test_lockout_demo(
+    test_email: str = "demo@example.com", wrong_password: str = "WrongP@ssword"
+):
     """Demonstrate the lockout service functionality."""
     print("🔒 Account Lockout Service Demo")
     print("=" * 50)
@@ -31,7 +33,7 @@ async def test_lockout_demo(test_email: str = "demo@example.com", wrong_password
     lockout_service = AccountLockoutService(
         max_attempts=3,  # Lock after 3 attempts
         lockout_duration=timedelta(minutes=1),  # Lock for 1 minute for demo
-        redis_url=redis_url
+        redis_url=redis_url,
     )
 
     test_ip = "192.168.1.100"
@@ -55,7 +57,9 @@ async def test_lockout_demo(test_email: str = "demo@example.com", wrong_password
                 print(f"  🔒 Account is locked before attempt {attempt}")
                 break
 
-            print(f"  Attempt {attempt}: Account not locked, simulating failed login...")
+            print(
+                f"  Attempt {attempt}: Account not locked, simulating failed login..."
+            )
             await lockout_service.register_failure(test_email)
             print(f"  ❌ Failed attempt {attempt} recorded")
 
@@ -119,8 +123,15 @@ if __name__ == "__main__":
     import argparse
 
     parser = argparse.ArgumentParser(description="Test account lockout functionality")
-    parser.add_argument("email", nargs="?", default="demo@example.com", help="Email to test with")
-    parser.add_argument("password", nargs="?", default="WrongP@ssword", help="Wrong password to test with")
+    parser.add_argument(
+        "email", nargs="?", default="demo@example.com", help="Email to test with"
+    )
+    parser.add_argument(
+        "password",
+        nargs="?",
+        default="WrongP@ssword",
+        help="Wrong password to test with",
+    )
 
     args = parser.parse_args()
 

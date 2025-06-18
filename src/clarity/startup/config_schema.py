@@ -22,6 +22,7 @@ logger = logging.getLogger(__name__)
 
 class Environment(str, Enum):
     """Valid environment values."""
+
     DEVELOPMENT = "development"
     TESTING = "testing"
     STAGING = "staging"
@@ -30,6 +31,7 @@ class Environment(str, Enum):
 
 class LogLevel(str, Enum):
     """Valid log levels."""
+
     DEBUG = "DEBUG"
     INFO = "INFO"
     WARNING = "WARNING"
@@ -240,14 +242,17 @@ class SecurityConfig(BaseModel):
     @classmethod
     def validate_secret_key(cls, v: str) -> str:
         """Validate secret key strength."""
-        if v == "dev-secret-key" and os.getenv("ENVIRONMENT", "").lower() == "production":
+        if (
+            v == "dev-secret-key"
+            and os.getenv("ENVIRONMENT", "").lower() == "production"
+        ):
             raise ValueError("Must set custom SECRET_KEY in production")
         return v
 
 
 class ClarityConfig(BaseSettings):
     """Comprehensive CLARITY configuration with bulletproof validation.
-    
+
     This configuration schema validates all environment variables and service
     configurations before startup, providing clear error messages for any issues.
     """
@@ -256,79 +261,51 @@ class ClarityConfig(BaseSettings):
     environment: Environment = Field(
         default=Environment.DEVELOPMENT,
         description="Application environment",
-        alias="ENVIRONMENT"
+        alias="ENVIRONMENT",
     )
-    debug: bool = Field(
-        default=False,
-        description="Enable debug mode",
-        alias="DEBUG"
-    )
+    debug: bool = Field(default=False, description="Enable debug mode", alias="DEBUG")
     testing: bool = Field(
-        default=False,
-        description="Enable testing mode",
-        alias="TESTING"
+        default=False, description="Enable testing mode", alias="TESTING"
     )
     log_level: LogLevel = Field(
-        default=LogLevel.INFO,
-        description="Logging level",
-        alias="LOG_LEVEL"
+        default=LogLevel.INFO, description="Logging level", alias="LOG_LEVEL"
     )
 
     # Server settings
-    host: str = Field(
-        default="127.0.0.1",
-        description="Server host",
-        alias="HOST"
-    )
+    host: str = Field(default="127.0.0.1", description="Server host", alias="HOST")
     port: int = Field(
-        default=8000,
-        description="Server port",
-        ge=1024,
-        le=65535,
-        alias="PORT"
+        default=8000, description="Server port", ge=1024, le=65535, alias="PORT"
     )
 
     # Feature flags
     enable_auth: bool = Field(
-        default=True,
-        description="Enable authentication",
-        alias="ENABLE_AUTH"
+        default=True, description="Enable authentication", alias="ENABLE_AUTH"
     )
     skip_external_services: bool = Field(
         default=False,
         description="Skip external service initialization (use mocks)",
-        alias="SKIP_EXTERNAL_SERVICES"
+        alias="SKIP_EXTERNAL_SERVICES",
     )
     skip_aws_init: bool = Field(
         default=False,
         description="Skip AWS service initialization",
-        alias="SKIP_AWS_INIT"
+        alias="SKIP_AWS_INIT",
     )
 
     # Service configurations
-    aws: AWSConfig = Field(
-        default_factory=AWSConfig,
-        description="AWS configuration"
-    )
+    aws: AWSConfig = Field(default_factory=AWSConfig, description="AWS configuration")
     cognito: CognitoConfig = Field(
-        default_factory=CognitoConfig,
-        description="Cognito configuration"
+        default_factory=CognitoConfig, description="Cognito configuration"
     )
     dynamodb: DynamoDBConfig = Field(
-        default_factory=DynamoDBConfig,
-        description="DynamoDB configuration"
+        default_factory=DynamoDBConfig, description="DynamoDB configuration"
     )
-    s3: S3Config = Field(
-        default_factory=S3Config,
-        description="S3 configuration"
-    )
+    s3: S3Config = Field(default_factory=S3Config, description="S3 configuration")
     gemini: GeminiConfig = Field(
-        default_factory=GeminiConfig,
-        description="Gemini AI configuration"
+        default_factory=GeminiConfig, description="Gemini AI configuration"
     )
     security: SecurityConfig = Field(
-        default_factory=SecurityConfig,
-        description="Security configuration"
+        default_factory=SecurityConfig, description="Security configuration"
     )
 
     # Startup settings
@@ -337,14 +314,14 @@ class ClarityConfig(BaseSettings):
         description="Startup timeout in seconds",
         gt=0,
         le=300,
-        alias="STARTUP_TIMEOUT"
+        alias="STARTUP_TIMEOUT",
     )
     health_check_timeout: int = Field(
         default=5,
         description="Health check timeout per service",
         gt=0,
         le=30,
-        alias="HEALTH_CHECK_TIMEOUT"
+        alias="HEALTH_CHECK_TIMEOUT",
     )
 
     # Validation error tracking
@@ -355,10 +332,10 @@ class ClarityConfig(BaseSettings):
         env_file_encoding="utf-8",
         case_sensitive=False,
         env_nested_delimiter="__",  # Allow AWS__REGION format
-        extra="allow"
+        extra="allow",
     )
 
-    @model_validator(mode='before')
+    @model_validator(mode="before")
     @classmethod
     def extract_nested_config(cls, values: dict[str, Any]) -> dict[str, Any]:
         """Extract nested configuration from environment variables."""
@@ -381,12 +358,18 @@ class ClarityConfig(BaseSettings):
         cognito_config["region"] = values.get("COGNITO_REGION", aws_config["region"])
 
         # Extract DynamoDB config
-        dynamodb_config["table_name"] = values.get("DYNAMODB_TABLE_NAME", "clarity-health-data")
+        dynamodb_config["table_name"] = values.get(
+            "DYNAMODB_TABLE_NAME", "clarity-health-data"
+        )
         dynamodb_config["endpoint_url"] = values.get("DYNAMODB_ENDPOINT_URL", "")
 
         # Extract S3 config
-        s3_config["bucket_name"] = values.get("S3_BUCKET_NAME", "clarity-health-uploads")
-        s3_config["ml_models_bucket"] = values.get("S3_ML_MODELS_BUCKET", "clarity-ml-models-124355672559")
+        s3_config["bucket_name"] = values.get(
+            "S3_BUCKET_NAME", "clarity-health-uploads"
+        )
+        s3_config["ml_models_bucket"] = values.get(
+            "S3_ML_MODELS_BUCKET", "clarity-ml-models-124355672559"
+        )
         s3_config["endpoint_url"] = values.get("S3_ENDPOINT_URL", "")
 
         # Extract Gemini config
@@ -397,10 +380,18 @@ class ClarityConfig(BaseSettings):
 
         # Extract security config
         security_config["secret_key"] = values.get("SECRET_KEY", "dev-secret-key")
-        cors_origins = values.get("CORS_ALLOWED_ORIGINS", "http://localhost:3000,http://localhost:8080")
-        security_config["cors_origins"] = [o.strip() for o in cors_origins.split(",") if o.strip()]
-        security_config["max_request_size"] = int(values.get("MAX_REQUEST_SIZE", str(10 * 1024 * 1024)))
-        security_config["rate_limit_requests"] = int(values.get("RATE_LIMIT_REQUESTS", "100"))
+        cors_origins = values.get(
+            "CORS_ALLOWED_ORIGINS", "http://localhost:3000,http://localhost:8080"
+        )
+        security_config["cors_origins"] = [
+            o.strip() for o in cors_origins.split(",") if o.strip()
+        ]
+        security_config["max_request_size"] = int(
+            values.get("MAX_REQUEST_SIZE", str(10 * 1024 * 1024))
+        )
+        security_config["rate_limit_requests"] = int(
+            values.get("RATE_LIMIT_REQUESTS", "100")
+        )
 
         # Update values with nested configs
         values["aws"] = aws_config
@@ -412,8 +403,8 @@ class ClarityConfig(BaseSettings):
 
         return values
 
-    @model_validator(mode='after')
-    def validate_environment_requirements(self) -> 'ClarityConfig':
+    @model_validator(mode="after")
+    def validate_environment_requirements(self) -> "ClarityConfig":
         """Validate environment-specific requirements."""
         env = self.environment
         skip_external = self.skip_external_services
@@ -425,9 +416,13 @@ class ClarityConfig(BaseSettings):
         if env == Environment.PRODUCTION and not skip_external:
             if enable_auth:
                 if not self.cognito.user_pool_id:
-                    validation_errors.append("COGNITO_USER_POOL_ID required in production with auth enabled")
+                    validation_errors.append(
+                        "COGNITO_USER_POOL_ID required in production with auth enabled"
+                    )
                 if not self.cognito.client_id:
-                    validation_errors.append("COGNITO_CLIENT_ID required in production with auth enabled")
+                    validation_errors.append(
+                        "COGNITO_CLIENT_ID required in production with auth enabled"
+                    )
 
             # Check AWS region
             if not self.aws.region:
@@ -493,7 +488,7 @@ class ClarityConfig(BaseSettings):
     @classmethod
     def validate_from_env(cls) -> tuple[ClarityConfig | None, list[str]]:
         """Validate configuration from environment variables.
-        
+
         Returns:
             Tuple of (config, errors). Config is None if validation fails.
         """

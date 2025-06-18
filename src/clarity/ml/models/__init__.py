@@ -52,7 +52,6 @@ __all__ = [
     "ModelAlias",
     "LEGACY_PAT_MODELS",
     "initialize_legacy_models",
-
     # Manager
     "ModelManager",
     "ModelLoadConfig",
@@ -60,7 +59,6 @@ __all__ = [
     "LoadedModel",
     "ModelPerformanceMetrics",
     "get_model_manager",
-
     # Progressive Loader
     "ProgressiveLoadingService",
     "ProgressiveLoadingConfig",
@@ -68,13 +66,12 @@ __all__ = [
     "ModelAvailabilityStatus",
     "get_progressive_service",
     "progressive_loading_lifespan",
-
     # Local Server
     "LocalModelServer",
     "ModelServerConfig",
     "PredictionRequest",
     "PredictionResponse",
-    "MockPATModel"
+    "MockPATModel",
 ]
 
 

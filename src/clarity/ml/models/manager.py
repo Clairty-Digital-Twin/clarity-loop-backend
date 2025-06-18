@@ -25,15 +25,17 @@ logger = logging.getLogger(__name__)
 
 class LoadingStrategy(str, Enum):
     """Model loading strategies"""
-    EAGER = "eager"        # Load immediately on startup
-    LAZY = "lazy"          # Load on first request
+
+    EAGER = "eager"  # Load immediately on startup
+    LAZY = "lazy"  # Load on first request
     PROGRESSIVE = "progressive"  # Load in background with fallback
-    ON_DEMAND = "on_demand"     # Load only when specifically requested
+    ON_DEMAND = "on_demand"  # Load only when specifically requested
 
 
 @dataclass
 class ModelLoadConfig:
     """Configuration for model loading behavior"""
+
     strategy: LoadingStrategy = LoadingStrategy.PROGRESSIVE
     timeout_seconds: int = 300
     max_memory_mb: int = 2048
@@ -45,6 +47,7 @@ class ModelLoadConfig:
 
 class ModelPerformanceMetrics(BaseModel):
     """Real-time model performance tracking"""
+
     model_id: str
     version: str
     total_inferences: int = 0
@@ -60,15 +63,16 @@ class ModelPerformanceMetrics(BaseModel):
 class LoadedModel:
     """Wrapper for loaded model with metadata and performance tracking"""
 
-    def __init__(self, metadata: ModelMetadata, model_instance: Any, config: ModelLoadConfig):
+    def __init__(
+        self, metadata: ModelMetadata, model_instance: Any, config: ModelLoadConfig
+    ):
         self.metadata = metadata
         self.model_instance = model_instance
         self.config = config
         self.status = ModelStatus.AVAILABLE
         self.load_time = time.time()
         self.metrics = ModelPerformanceMetrics(
-            model_id=metadata.model_id,
-            version=metadata.version
+            model_id=metadata.model_id, version=metadata.version
         )
         self._lock = asyncio.Lock()
 
@@ -81,23 +85,29 @@ class LoadedModel:
 
             try:
                 # Execute the actual prediction
-                if hasattr(self.model_instance, 'predict_async'):
+                if hasattr(self.model_instance, "predict_async"):
                     result = await self.model_instance.predict_async(*args, **kwargs)
                 elif asyncio.iscoroutinefunction(self.model_instance.predict):
                     result = await self.model_instance.predict(*args, **kwargs)
                 else:
                     # Run synchronous prediction in thread pool
                     loop = asyncio.get_event_loop()
-                    result = await loop.run_in_executor(None, self.model_instance.predict, *args, **kwargs)
+                    result = await loop.run_in_executor(
+                        None, self.model_instance.predict, *args, **kwargs
+                    )
 
                 # Update metrics
                 latency_ms = (time.time() - start_time) * 1000
                 self.metrics.total_inferences += 1
                 self.metrics.total_latency_ms += latency_ms
-                self.metrics.avg_latency_ms = self.metrics.total_latency_ms / self.metrics.total_inferences
+                self.metrics.avg_latency_ms = (
+                    self.metrics.total_latency_ms / self.metrics.total_inferences
+                )
 
                 if self.config.enable_monitoring:
-                    logger.debug(f"Inference completed for {self.metadata.unique_id}: {latency_ms:.2f}ms")
+                    logger.debug(
+                        f"Inference completed for {self.metadata.unique_id}: {latency_ms:.2f}ms"
+                    )
 
                 return result
 
@@ -118,10 +128,10 @@ class LoadedModel:
 
 class ModelManager:
     """Revolutionary ML Model Manager
-    
+
     Features:
     - Progressive model loading with fallback strategies
-    - Intelligent caching and memory management  
+    - Intelligent caching and memory management
     - Real-time performance monitoring
     - Hot-swappable model versions
     - Local development mode support
@@ -132,7 +142,7 @@ class ModelManager:
         self,
         registry: ModelRegistry | None = None,
         config: ModelRegistryConfig | None = None,
-        load_config: ModelLoadConfig | None = None
+        load_config: ModelLoadConfig | None = None,
     ):
         self.registry = registry or ModelRegistry(config or ModelRegistryConfig())
         self.load_config = load_config or ModelLoadConfig()
@@ -155,16 +165,14 @@ class ModelManager:
         elif self.load_config.strategy == LoadingStrategy.PROGRESSIVE:
             await self._start_progressive_loading()
 
-        logger.info(f"ModelManager initialized with {len(self.loaded_models)} models loaded")
+        logger.info(
+            f"ModelManager initialized with {len(self.loaded_models)} models loaded"
+        )
 
     async def get_model(
-        self,
-        model_id: str,
-        version: str = "latest",
-        timeout: int | None = None
+        self, model_id: str, version: str = "latest", timeout: int | None = None
     ) -> LoadedModel | None:
-        """Get loaded model, loading it if necessary
-        """
+        """Get loaded model, loading it if necessary"""
         unique_id = f"{model_id}:{version if version != 'latest' else await self._resolve_latest_version(model_id)}"
 
         # Check if already loaded
@@ -177,7 +185,9 @@ class ModelManager:
         if unique_id in self.loading_tasks:
             try:
                 timeout_val = timeout or self.load_config.timeout_seconds
-                loaded_model = await asyncio.wait_for(self.loading_tasks[unique_id], timeout=timeout_val)
+                loaded_model = await asyncio.wait_for(
+                    self.loading_tasks[unique_id], timeout=timeout_val
+                )
                 return loaded_model
             except TimeoutError:
                 logger.error(f"Model loading timeout for {unique_id}")
@@ -217,23 +227,24 @@ class ModelManager:
             return False
 
     async def swap_model_version(
-        self,
-        model_id: str,
-        old_version: str,
-        new_version: str
+        self, model_id: str, old_version: str, new_version: str
     ) -> bool:
         """Hot-swap model version for A/B testing"""
         try:
             # Load new version
             new_model = await self.get_model(model_id, new_version)
             if not new_model:
-                logger.error(f"Failed to load new model version {model_id}:{new_version}")
+                logger.error(
+                    f"Failed to load new model version {model_id}:{new_version}"
+                )
                 return False
 
             # Unload old version
             await self.unload_model(model_id, old_version)
 
-            logger.info(f"Successfully swapped {model_id} from {old_version} to {new_version}")
+            logger.info(
+                f"Successfully swapped {model_id} from {old_version} to {new_version}"
+            )
             return True
 
         except Exception as e:
@@ -255,7 +266,7 @@ class ModelManager:
             "loaded_models": len(self.loaded_models),
             "loading_tasks": len(self.loading_tasks),
             "total_memory_mb": 0.0,
-            "models": {}
+            "models": {},
         }
 
         for unique_id, loaded_model in self.loaded_models.items():
@@ -268,7 +279,7 @@ class ModelManager:
                 "total_inferences": metrics.total_inferences,
                 "avg_latency_ms": metrics.avg_latency_ms,
                 "error_rate": metrics.error_count / max(metrics.total_inferences, 1),
-                "memory_usage_mb": metrics.memory_usage_mb
+                "memory_usage_mb": metrics.memory_usage_mb,
             }
 
             health_status["models"][unique_id] = model_health
@@ -329,7 +340,9 @@ class ModelManager:
             # Create model instance using appropriate factory
             model_instance = await self._create_model_instance(metadata)
             if not model_instance:
-                logger.error(f"Failed to create model instance for {metadata.unique_id}")
+                logger.error(
+                    f"Failed to create model instance for {metadata.unique_id}"
+                )
                 return None
 
             # Create loaded model wrapper
@@ -340,7 +353,9 @@ class ModelManager:
                 await self._warm_up_model(loaded_model)
 
             load_time = time.time() - start_time
-            logger.info(f"Successfully loaded model {metadata.unique_id} in {load_time:.2f}s")
+            logger.info(
+                f"Successfully loaded model {metadata.unique_id} in {load_time:.2f}s"
+            )
 
             return loaded_model
 
@@ -378,10 +393,14 @@ class ModelManager:
             # For now, just update the timestamp
             loaded_model.metrics.last_used = time.time()
 
-            logger.info(f"Model warm-up completed for {loaded_model.metadata.unique_id}")
+            logger.info(
+                f"Model warm-up completed for {loaded_model.metadata.unique_id}"
+            )
 
         except Exception as e:
-            logger.warning(f"Model warm-up failed for {loaded_model.metadata.unique_id}: {e}")
+            logger.warning(
+                f"Model warm-up failed for {loaded_model.metadata.unique_id}: {e}"
+            )
 
     async def _resolve_latest_version(self, model_id: str) -> str:
         """Resolve 'latest' alias to actual version"""
@@ -412,7 +431,9 @@ class ModelManager:
         results = await asyncio.gather(*load_tasks, return_exceptions=True)
 
         successful_loads = sum(1 for r in results if isinstance(r, LoadedModel))
-        logger.info(f"Eager loading completed: {successful_loads}/{len(all_models)} models loaded")
+        logger.info(
+            f"Eager loading completed: {successful_loads}/{len(all_models)} models loaded"
+        )
 
     async def _start_progressive_loading(self):
         """Start progressive loading in background"""
@@ -432,7 +453,9 @@ class ModelManager:
                         await self._load_model(alias_obj.model_id, alias_obj.version)
                         await asyncio.sleep(1)  # Brief pause between loads
                 except Exception as e:
-                    logger.warning(f"Failed to load priority model with alias {alias}: {e}")
+                    logger.warning(
+                        f"Failed to load priority model with alias {alias}: {e}"
+                    )
 
             logger.info("Progressive loading of priority models completed")
 
@@ -461,7 +484,9 @@ class ModelManager:
                     pat_service.config["model_path"] = metadata.local_path
 
                 # Load the model
-                await asyncio.get_event_loop().run_in_executor(None, pat_service.load_model)
+                await asyncio.get_event_loop().run_in_executor(
+                    None, pat_service.load_model
+                )
 
                 return pat_service
 
@@ -476,7 +501,7 @@ class ModelManager:
 @asynccontextmanager
 async def get_model_manager(
     config: ModelRegistryConfig | None = None,
-    load_config: ModelLoadConfig | None = None
+    load_config: ModelLoadConfig | None = None,
 ):
     """Context manager for model manager lifecycle"""
     manager = ModelManager(config=config, load_config=load_config)
@@ -487,5 +512,5 @@ async def get_model_manager(
     finally:
         # Cleanup resources
         for unique_id in list(manager.loaded_models.keys()):
-            await manager.unload_model(*unique_id.split(':', 1))
+            await manager.unload_model(*unique_id.split(":", 1))
         logger.info("ModelManager cleanup completed")

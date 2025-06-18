@@ -53,6 +53,7 @@ class TestCircuitBreakerState:
 
         # Wait for recovery timeout
         import time
+
         time.sleep(0.2)
 
         # Should transition to half-open
@@ -103,7 +104,9 @@ class TestServiceHealthChecker:
         with patch("boto3.client") as mock_client:
             mock_cognito = Mock()
             # Simulate timeout by making the call hang
-            mock_cognito.describe_user_pool.side_effect = lambda **kwargs: asyncio.sleep(10)
+            mock_cognito.describe_user_pool.side_effect = (
+                lambda **kwargs: asyncio.sleep(10)
+            )
             mock_client.return_value = mock_cognito
 
             result = await self.health_checker.check_cognito_health(
@@ -287,7 +290,12 @@ class TestServiceHealthChecker:
     async def test_circuit_breaker_integration(self) -> None:
         """Test circuit breaker integration with health checks."""
         client_error = ClientError(
-            error_response={"Error": {"Code": "ServiceUnavailable", "Message": "Service unavailable"}},
+            error_response={
+                "Error": {
+                    "Code": "ServiceUnavailable",
+                    "Message": "Service unavailable",
+                }
+            },
             operation_name="DescribeUserPool",
         )
 
@@ -342,9 +350,11 @@ class TestServiceHealthChecker:
         mock_config.health_check_timeout = 5
 
         # Mock all the health check methods
-        with patch.object(self.health_checker, "check_cognito_health") as mock_cognito, \
-             patch.object(self.health_checker, "check_dynamodb_health") as mock_dynamodb, \
-             patch.object(self.health_checker, "check_s3_health") as mock_s3:
+        with (
+            patch.object(self.health_checker, "check_cognito_health") as mock_cognito,
+            patch.object(self.health_checker, "check_dynamodb_health") as mock_dynamodb,
+            patch.object(self.health_checker, "check_s3_health") as mock_s3,
+        ):
 
             mock_cognito.return_value = HealthCheckResult(
                 service_name="cognito",
@@ -388,8 +398,12 @@ class TestServiceHealthChecker:
         assert self.health_checker.get_overall_health(results) == ServiceStatus.DEGRADED
 
         # One unhealthy
-        results["cognito"] = HealthCheckResult("cognito", ServiceStatus.UNHEALTHY, "Failed")
-        assert self.health_checker.get_overall_health(results) == ServiceStatus.UNHEALTHY
+        results["cognito"] = HealthCheckResult(
+            "cognito", ServiceStatus.UNHEALTHY, "Failed"
+        )
+        assert (
+            self.health_checker.get_overall_health(results) == ServiceStatus.UNHEALTHY
+        )
 
         # All skipped
         results = {

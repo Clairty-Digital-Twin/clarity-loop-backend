@@ -44,7 +44,9 @@ router = APIRouter()
 lockout_service = AccountLockoutService()
 
 # Initialize CloudWatch client
-cloudwatch = boto3.client('cloudwatch', region_name=os.getenv("AWS_REGION", "us-east-1"))
+cloudwatch = boto3.client(
+    "cloudwatch", region_name=os.getenv("AWS_REGION", "us-east-1")
+)
 USER_POOL_ID = os.getenv("COGNITO_USER_POOL_ID", "")
 
 # Create rate limiter for auth endpoints
@@ -243,7 +245,9 @@ async def login(
 
         # Authentication successful - reset failed attempts
         await lockout_service.reset_attempts(credentials.email)
-        logger.info("✅ Login successful for %s, lockout attempts reset", credentials.email)
+        logger.info(
+            "✅ Login successful for %s, lockout attempts reset", credentials.email
+        )
 
     except EmailNotVerifiedError as e:
         raise HTTPException(
@@ -268,23 +272,36 @@ async def login(
         # Track failed attempt for lockout protection
         try:
             await lockout_service.record_failed_attempt(credentials.email, client_ip)
-            logger.info("🚨 Failed login attempt recorded for %s from %s", credentials.email, client_ip)
+            logger.info(
+                "🚨 Failed login attempt recorded for %s from %s",
+                credentials.email,
+                client_ip,
+            )
 
             # Check if account just got locked and emit CloudWatch metric
             if await lockout_service.is_locked(credentials.email):
                 try:
                     cloudwatch.put_metric_data(
                         Namespace="Clarity/Auth",
-                        MetricData=[{
-                            "MetricName": "AccountLockout",
-                            "Dimensions": [{"Name": "UserPoolId", "Value": USER_POOL_ID}],
-                            "Value": 1,
-                            "Unit": "Count"
-                        }]
+                        MetricData=[
+                            {
+                                "MetricName": "AccountLockout",
+                                "Dimensions": [
+                                    {"Name": "UserPoolId", "Value": USER_POOL_ID}
+                                ],
+                                "Value": 1,
+                                "Unit": "Count",
+                            }
+                        ],
                     )
-                    logger.warning("📊 CloudWatch metric emitted: Account lockout for %s", credentials.email)
+                    logger.warning(
+                        "📊 CloudWatch metric emitted: Account lockout for %s",
+                        credentials.email,
+                    )
                 except Exception as metric_error:
-                    logger.exception("Failed to emit CloudWatch metric: %s", metric_error)
+                    logger.exception(
+                        "Failed to emit CloudWatch metric: %s", metric_error
+                    )
 
         except Exception as lockout_error:
             # Don't let lockout service errors block the auth response

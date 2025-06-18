@@ -85,49 +85,54 @@ class Settings(BaseSettings):
     cors_allowed_origins: str = Field(
         default="http://localhost:3000,http://localhost:8080",
         alias="CORS_ALLOWED_ORIGINS",
-        description="Explicitly allowed origins for CORS - no wildcards for security"
+        description="Explicitly allowed origins for CORS - no wildcards for security",
     )
     cors_allow_credentials: bool = Field(
         default=True,
         alias="CORS_ALLOW_CREDENTIALS",
-        description="Allow credentials in CORS requests (secure with explicit origins)"
+        description="Allow credentials in CORS requests (secure with explicit origins)",
     )
     cors_allowed_methods: list[str] = Field(
         default_factory=lambda: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
         alias="CORS_ALLOWED_METHODS",
-        description="Explicitly allowed HTTP methods - no wildcards"
+        description="Explicitly allowed HTTP methods - no wildcards",
     )
     cors_allowed_headers: list[str] = Field(
-        default_factory=lambda: ["Authorization", "Content-Type", "Accept", "X-Requested-With"],
+        default_factory=lambda: [
+            "Authorization",
+            "Content-Type",
+            "Accept",
+            "X-Requested-With",
+        ],
         alias="CORS_ALLOWED_HEADERS",
-        description="Explicitly allowed headers - no wildcards"
+        description="Explicitly allowed headers - no wildcards",
     )
     cors_max_age: int = Field(
         default=86400,
         alias="CORS_MAX_AGE",
-        description="Cache preflight requests for 24 hours (86400 seconds)"
+        description="Cache preflight requests for 24 hours (86400 seconds)",
     )
 
     # Request Size Limits - DoS Protection
     max_request_size: int = Field(
         default=10 * 1024 * 1024,  # 10MB
         alias="MAX_REQUEST_SIZE",
-        description="Maximum request body size in bytes (default 10MB)"
+        description="Maximum request body size in bytes (default 10MB)",
     )
     max_json_size: int = Field(
-        default=5 * 1024 * 1024,   # 5MB
+        default=5 * 1024 * 1024,  # 5MB
         alias="MAX_JSON_SIZE",
-        description="Maximum JSON payload size in bytes (default 5MB)"
+        description="Maximum JSON payload size in bytes (default 5MB)",
     )
     max_upload_size: int = Field(
         default=50 * 1024 * 1024,  # 50MB
         alias="MAX_UPLOAD_SIZE",
-        description="Maximum file upload size in bytes (default 50MB)"
+        description="Maximum file upload size in bytes (default 50MB)",
     )
     max_form_size: int = Field(
-        default=1024 * 1024,       # 1MB
+        default=1024 * 1024,  # 1MB
         alias="MAX_FORM_SIZE",
-        description="Maximum form data size in bytes (default 1MB)"
+        description="Maximum form data size in bytes (default 1MB)",
     )
 
     # External service flags
@@ -221,7 +226,9 @@ class Settings(BaseSettings):
         elif self.environment.lower() == "production":
             # Skip validation if external services are disabled
             if self.skip_external_services:
-                logger.warning("⚠️ Production mode with SKIP_EXTERNAL_SERVICES=true - using mock services")
+                logger.warning(
+                    "⚠️ Production mode with SKIP_EXTERNAL_SERVICES=true - using mock services"
+                )
                 return self
 
             required_for_production: list[str] = []
@@ -285,7 +292,11 @@ class Settings(BaseSettings):
         """Parse CORS origins from comma-separated string to list."""
         if isinstance(self.cors_allowed_origins, str):
             # Split comma-separated string and strip whitespace
-            origins = [origin.strip() for origin in self.cors_allowed_origins.split(",") if origin.strip()]
+            origins = [
+                origin.strip()
+                for origin in self.cors_allowed_origins.split(",")
+                if origin.strip()
+            ]
 
             # Security validation: no wildcards allowed
             for origin in origins:

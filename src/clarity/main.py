@@ -73,6 +73,7 @@ async def lifespan(_app: FastAPI) -> AsyncGenerator[None, None]:
 
     # Initialize lockout service with Redis URL from environment
     from clarity.auth.lockout_service import get_lockout_service
+
     lockout_service = get_lockout_service()
     logger.info("✅ Account lockout service initialized")
 
@@ -87,7 +88,7 @@ async def lifespan(_app: FastAPI) -> AsyncGenerator[None, None]:
             is_local_dev=(ENVIRONMENT == "development"),
             enable_efs_cache=(ENVIRONMENT == "production" and not SKIP_AWS_INIT),
             critical_models=["pat:latest"],
-            preload_models=["pat:stable", "pat:fast"]
+            preload_models=["pat:stable", "pat:fast"],
         )
 
         progressive_service = await get_progressive_service(progressive_config)
@@ -143,12 +144,17 @@ async def lifespan(_app: FastAPI) -> AsyncGenerator[None, None]:
     if progressive_service:
         try:
             # Graceful shutdown of model management
-            if hasattr(progressive_service, 'model_manager') and progressive_service.model_manager:
+            if (
+                hasattr(progressive_service, "model_manager")
+                and progressive_service.model_manager
+            ):
                 # Unload models to free memory
                 for model_id in ["pat:latest", "pat:stable", "pat:fast"]:
                     model_parts = model_id.split(":", 1)
                     if len(model_parts) == 2:
-                        await progressive_service.model_manager.unload_model(model_parts[0], model_parts[1])
+                        await progressive_service.model_manager.unload_model(
+                            model_parts[0], model_parts[1]
+                        )
             logger.info("✅ ML model management shutdown completed")
         except Exception as e:
             logger.warning("⚠️  Error during ML model cleanup: %s", str(e))
@@ -169,60 +175,36 @@ app = FastAPI(
     openapi_tags=[
         {
             "name": "authentication",
-            "description": "User authentication and authorization endpoints"
+            "description": "User authentication and authorization endpoints",
         },
-        {
-            "name": "health-data",
-            "description": "Health data management and retrieval"
-        },
-        {
-            "name": "healthkit",
-            "description": "Apple HealthKit data integration"
-        },
+        {"name": "health-data", "description": "Health data management and retrieval"},
+        {"name": "healthkit", "description": "Apple HealthKit data integration"},
         {
             "name": "pat-analysis",
-            "description": "Physical Activity Test (PAT) analysis endpoints"
+            "description": "Physical Activity Test (PAT) analysis endpoints",
         },
-        {
-            "name": "ai-insights",
-            "description": "AI-powered health insights generation"
-        },
-        {
-            "name": "metrics",
-            "description": "Health metrics and statistics"
-        },
-        {
-            "name": "websocket",
-            "description": "WebSocket real-time communication"
-        },
-        {
-            "name": "debug",
-            "description": "Debug endpoints (development only)"
-        },
-        {
-            "name": "test",
-            "description": "Test endpoints for API validation"
-        }
+        {"name": "ai-insights", "description": "AI-powered health insights generation"},
+        {"name": "metrics", "description": "Health metrics and statistics"},
+        {"name": "websocket", "description": "WebSocket real-time communication"},
+        {"name": "debug", "description": "Debug endpoints (development only)"},
+        {"name": "test", "description": "Test endpoints for API validation"},
     ],
     servers=[
         {
             "url": "http://clarity-alb-1762715656.us-east-1.elb.amazonaws.com",
-            "description": "Production server (AWS ALB)"
+            "description": "Production server (AWS ALB)",
         },
-        {
-            "url": "http://localhost:8000",
-            "description": "Local development server"
-        }
+        {"url": "http://localhost:8000", "description": "Local development server"},
     ],
     contact={
         "name": "CLARITY Support",
         "email": "support@clarity.novamindnyc.com",
-        "url": "https://clarity.novamindnyc.com"
+        "url": "https://clarity.novamindnyc.com",
     },
     license_info={
         "name": "Proprietary",
-        "url": "https://clarity.novamindnyc.com/license"
-    }
+        "url": "https://clarity.novamindnyc.com/license",
+    },
 )
 
 # Add CORS middleware with SECURE configuration - NO WILDCARDS
@@ -232,11 +214,11 @@ settings = get_settings()
 
 app.add_middleware(
     CORSMiddleware,
-            allow_origins=settings.get_cors_origins,                     # ✅ EXPLICIT ORIGINS ONLY
-    allow_credentials=settings.cors_allow_credentials,            # ✅ SAFE WITH EXPLICIT ORIGINS
-    allow_methods=settings.cors_allowed_methods,                  # ✅ SPECIFIC METHODS ONLY
-    allow_headers=settings.cors_allowed_headers,                  # ✅ SPECIFIC HEADERS ONLY
-    max_age=settings.cors_max_age,                               # ✅ CACHE PREFLIGHT REQUESTS
+    allow_origins=settings.get_cors_origins,  # ✅ EXPLICIT ORIGINS ONLY
+    allow_credentials=settings.cors_allow_credentials,  # ✅ SAFE WITH EXPLICIT ORIGINS
+    allow_methods=settings.cors_allowed_methods,  # ✅ SPECIFIC METHODS ONLY
+    allow_headers=settings.cors_allowed_headers,  # ✅ SPECIFIC HEADERS ONLY
+    max_age=settings.cors_max_age,  # ✅ CACHE PREFLIGHT REQUESTS
 )
 
 logger.info("🔒 CORS Security: Hardened configuration applied - NO wildcards allowed")
@@ -246,10 +228,10 @@ from clarity.middleware.request_size_limiter import RequestSizeLimiterMiddleware
 
 app.add_middleware(
     RequestSizeLimiterMiddleware,
-    max_request_size=settings.max_request_size,          # ✅ 10MB general limit
-    max_json_size=settings.max_json_size,                # ✅ 5MB JSON limit
-    max_upload_size=settings.max_upload_size,            # ✅ 50MB upload limit
-    max_form_size=settings.max_form_size,                # ✅ 1MB form limit
+    max_request_size=settings.max_request_size,  # ✅ 10MB general limit
+    max_json_size=settings.max_json_size,  # ✅ 5MB JSON limit
+    max_upload_size=settings.max_upload_size,  # ✅ 50MB upload limit
+    max_form_size=settings.max_form_size,  # ✅ 1MB form limit
 )
 
 logger.info("🔒 Request Size Limiter: DoS protection active - payload limits enforced")
@@ -259,7 +241,7 @@ from starlette.middleware.trustedhost import TrustedHostMiddleware
 
 app.add_middleware(
     TrustedHostMiddleware,
-    allowed_hosts=["*"]  # Configure based on environment in production
+    allowed_hosts=["*"],  # Configure based on environment in production
 )
 
 # Note: Timeout middleware should be added at uvicorn level for better control
@@ -271,7 +253,7 @@ from clarity.middleware.security_headers import SecurityHeadersMiddleware
 app.add_middleware(
     SecurityHeadersMiddleware,
     enable_hsts=True,  # Enforce HTTPS with HSTS
-    enable_csp=True,   # Enable Content Security Policy
+    enable_csp=True,  # Enable Content Security Policy
     cache_control="no-store, private",  # Prevent caching of sensitive data
 )
 logger.info("✅ Added security headers middleware")
@@ -366,21 +348,22 @@ async def health_check() -> dict[str, Any]:
     }
 
     # Add ML model status if available
-    if hasattr(app.state, 'progressive_service') and app.state.progressive_service:
+    if hasattr(app.state, "progressive_service") and app.state.progressive_service:
         try:
             model_health = await app.state.progressive_service.health_check()
             health_status["ml_models"] = {
                 "enabled": True,
                 "status": model_health.get("status", "unknown"),
-                "phase": model_health.get("progressive_loading", {}).get("current_phase", "unknown"),
-                "loaded_models": model_health.get("model_manager", {}).get("loaded_models", 0),
+                "phase": model_health.get("progressive_loading", {}).get(
+                    "current_phase", "unknown"
+                ),
+                "loaded_models": model_health.get("model_manager", {}).get(
+                    "loaded_models", 0
+                ),
             }
             health_status["features"]["ml_models"] = True
         except Exception as e:
-            health_status["ml_models"] = {
-                "enabled": False,
-                "error": str(e)
-            }
+            health_status["ml_models"] = {"enabled": False, "error": str(e)}
 
     return health_status
 

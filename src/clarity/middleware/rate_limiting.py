@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 
 def get_user_id_or_ip(request: Request) -> str:
     """Extract user ID from authenticated requests, fallback to IP address.
-    
+
     This key function provides per-user rate limiting for authenticated users
     and per-IP rate limiting for anonymous users.
     """
@@ -49,7 +49,7 @@ async def custom_rate_limit_exceeded_handler(
     request: Request, exc: RateLimitExceeded
 ) -> JSONResponse:
     """Custom handler for rate limit exceeded errors.
-    
+
     Returns a standardized error response with rate limit headers.
     """
     logger.warning(
@@ -78,7 +78,7 @@ async def custom_rate_limit_exceeded_handler(
 
 class RateLimitingMiddleware:
     """Rate limiting middleware configuration.
-    
+
     Provides methods to create and configure rate limiters with
     different strategies for various endpoint types.
     """
@@ -86,11 +86,11 @@ class RateLimitingMiddleware:
     # Default rate limits
     DEFAULT_LIMITS = {
         "global": "1000/hour",  # Global limit per key
-        "auth": "20/hour",      # Authentication endpoints
+        "auth": "20/hour",  # Authentication endpoints
         "health": "100/minute",  # Health data endpoints
-        "ai": "50/hour",        # AI/ML endpoints (resource intensive)
-        "read": "200/minute",   # General read operations
-        "write": "60/minute",   # General write operations
+        "ai": "50/hour",  # AI/ML endpoints (resource intensive)
+        "read": "200/minute",  # General read operations
+        "write": "60/minute",  # General write operations
     }
 
     @staticmethod
@@ -100,12 +100,12 @@ class RateLimitingMiddleware:
         storage_uri: str | None = None,
     ) -> Limiter:
         """Create a configured rate limiter instance.
-        
+
         Args:
             key_func: Function to extract rate limit key from request
             default_limits: Default rate limits to apply
             storage_uri: Redis URI for distributed rate limiting
-            
+
         Returns:
             Configured Limiter instance
         """
@@ -147,18 +147,16 @@ class RateLimitingMiddleware:
 
 def setup_rate_limiting(app: Any, redis_url: str | None = None) -> Limiter:
     """Set up rate limiting for a FastAPI application.
-    
+
     Args:
         app: FastAPI application instance
         redis_url: Optional Redis URL for distributed rate limiting
-        
+
     Returns:
         Configured Limiter instance
     """
     # Create the main limiter
-    limiter = RateLimitingMiddleware.create_limiter(
-        storage_uri=redis_url
-    )
+    limiter = RateLimitingMiddleware.create_limiter(storage_uri=redis_url)
 
     # Attach limiter to app state
     app.state.limiter = limiter
@@ -175,7 +173,9 @@ def setup_rate_limiting(app: Any, redis_url: str | None = None) -> Limiter:
 # Usage: @rate_limit("5/minute")
 def rate_limit(limit_string: str):
     """Decorator to apply rate limiting to an endpoint."""
+
     def decorator(func):
         # This will be properly bound when the limiter is attached to the app
         return func
+
     return decorator

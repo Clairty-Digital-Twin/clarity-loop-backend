@@ -19,7 +19,9 @@ class TestAuthLockoutIntegration:
         return TestClient(app)
 
     @pytest.mark.asyncio
-    async def test_lockout_triggers_after_failed_attempts(self, client: TestClient) -> None:
+    async def test_lockout_triggers_after_failed_attempts(
+        self, client: TestClient
+    ) -> None:
         """Test that lockout service is called during failed login attempts."""
         # Mock the auth provider to always return invalid credentials
         with patch("clarity.api.v1.auth.get_auth_provider") as mock_get_provider:
@@ -35,10 +37,7 @@ class TestAuthLockoutIntegration:
                 # Attempt login with bad credentials
                 response = client.post(
                     "/api/v1/auth/login",
-                    json={
-                        "email": "test@example.com",
-                        "password": "wrongpassword"
-                    }
+                    json={"email": "test@example.com", "password": "wrongpassword"},
                 )
 
                 # Should return 401 for invalid credentials
@@ -54,17 +53,13 @@ class TestAuthLockoutIntegration:
         # Mock the lockout service to raise lockout error
         with patch("clarity.api.v1.auth.lockout_service") as mock_lockout:
             mock_lockout.check_lockout.side_effect = AccountLockoutError(
-                "test@example.com",
-                datetime.now() + timedelta(minutes=15)
+                "test@example.com", datetime.now() + timedelta(minutes=15)
             )
 
             # Attempt login
             response = client.post(
                 "/api/v1/auth/login",
-                json={
-                    "email": "test@example.com",
-                    "password": "anypassword"
-                }
+                json={"email": "test@example.com", "password": "anypassword"},
             )
 
             # Should return 429 for account locked
@@ -82,7 +77,7 @@ class TestAuthLockoutIntegration:
                 "token_type": "bearer",
                 "expires_in": 3600,
                 "user_id": "user123",
-                "email": "test@example.com"
+                "email": "test@example.com",
             }
             mock_get_provider.return_value = mock_provider
 
@@ -94,10 +89,7 @@ class TestAuthLockoutIntegration:
                 # Successful login
                 response = client.post(
                     "/api/v1/auth/login",
-                    json={
-                        "email": "test@example.com",
-                        "password": "correctpassword"
-                    }
+                    json={"email": "test@example.com", "password": "correctpassword"},
                 )
 
                 # Should return 200 for successful login

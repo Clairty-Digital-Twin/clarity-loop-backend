@@ -35,11 +35,11 @@ settings = get_settings()
 
 app.add_middleware(
     CORSMiddleware,
-            allow_origins=settings.get_cors_origins,           # ✅ EXPLICIT ORIGINS ONLY
-    allow_credentials=True,                             # ✅ SAFE WITH EXPLICIT ORIGINS
-    allow_methods=["GET", "POST", "PUT", "DELETE"],     # ✅ SPECIFIC METHODS ONLY
-    allow_headers=["Authorization", "Content-Type"],    # ✅ SPECIFIC HEADERS ONLY
-    max_age=86400,                                      # ✅ 24hr PREFLIGHT CACHE
+    allow_origins=settings.get_cors_origins,  # ✅ EXPLICIT ORIGINS ONLY
+    allow_credentials=True,  # ✅ SAFE WITH EXPLICIT ORIGINS
+    allow_methods=["GET", "POST", "PUT", "DELETE"],  # ✅ SPECIFIC METHODS ONLY
+    allow_headers=["Authorization", "Content-Type"],  # ✅ SPECIFIC HEADERS ONLY
+    max_age=86400,  # ✅ 24hr PREFLIGHT CACHE
 )
 
 # Mount the insight app

@@ -17,13 +17,17 @@ class TestAccountLockoutService:
         return AccountLockoutService()
 
     @pytest.mark.asyncio
-    async def test_no_lockout_initially(self, lockout_service: AccountLockoutService) -> None:
+    async def test_no_lockout_initially(
+        self, lockout_service: AccountLockoutService
+    ) -> None:
         """Test that new accounts are not locked."""
         # Should not raise exception
         await lockout_service.check_lockout("test@example.com")
 
     @pytest.mark.asyncio
-    async def test_record_failed_attempts(self, lockout_service: AccountLockoutService) -> None:
+    async def test_record_failed_attempts(
+        self, lockout_service: AccountLockoutService
+    ) -> None:
         """Test recording failed login attempts."""
         email = "test@example.com"
         ip = "192.168.1.1"
@@ -36,7 +40,9 @@ class TestAccountLockoutService:
         await lockout_service.check_lockout(email)
 
     @pytest.mark.asyncio
-    async def test_account_lockout_after_max_attempts(self, lockout_service: AccountLockoutService) -> None:
+    async def test_account_lockout_after_max_attempts(
+        self, lockout_service: AccountLockoutService
+    ) -> None:
         """Test that account gets locked after max failed attempts."""
         email = "test@example.com"
         ip = "192.168.1.1"
@@ -53,7 +59,9 @@ class TestAccountLockoutService:
         assert email in str(exc_info.value)
 
     @pytest.mark.asyncio
-    async def test_reset_attempts_after_success(self, lockout_service: AccountLockoutService) -> None:
+    async def test_reset_attempts_after_success(
+        self, lockout_service: AccountLockoutService
+    ) -> None:
         """Test that successful login resets failed attempts."""
         email = "test@example.com"
         ip = "192.168.1.1"
@@ -81,7 +89,7 @@ class TestAccountLockoutService:
         # Create lockout service with very short timeout for testing
         short_timeout_service = AccountLockoutService(
             max_attempts=3,
-            lockout_duration=timedelta(seconds=0.6)  # 0.6 seconds for testing
+            lockout_duration=timedelta(seconds=0.6),  # 0.6 seconds for testing
         )
 
         # Trigger lockout
@@ -99,7 +107,9 @@ class TestAccountLockoutService:
         await short_timeout_service.check_lockout(email)
 
     @pytest.mark.asyncio
-    async def test_different_users_independent(self, lockout_service: AccountLockoutService) -> None:
+    async def test_different_users_independent(
+        self, lockout_service: AccountLockoutService
+    ) -> None:
         """Test that lockouts are per-user."""
         email1 = "user1@example.com"
         email2 = "user2@example.com"
@@ -137,7 +147,9 @@ class TestAccountLockoutService:
             await lockout_service.check_lockout(email)
 
     @pytest.mark.asyncio
-    async def test_get_lockout_status(self, lockout_service: AccountLockoutService) -> None:
+    async def test_get_lockout_status(
+        self, lockout_service: AccountLockoutService
+    ) -> None:
         """Test getting lockout status without raising exceptions."""
         email = "test@example.com"
         ip = "192.168.1.1"
@@ -172,8 +184,7 @@ class TestAccountLockoutService:
         """Test lockout service with custom configuration."""
         # Create service with custom settings
         custom_service = AccountLockoutService(
-            max_attempts=3,
-            lockout_duration=timedelta(minutes=30)
+            max_attempts=3, lockout_duration=timedelta(minutes=30)
         )
 
         email = "test@example.com"
@@ -193,7 +204,9 @@ class TestAccountLockoutService:
         assert "locked" in error_msg.lower()
 
     @pytest.mark.asyncio
-    async def test_concurrent_access(self, lockout_service: AccountLockoutService) -> None:
+    async def test_concurrent_access(
+        self, lockout_service: AccountLockoutService
+    ) -> None:
         """Test that the service handles concurrent access safely."""
         email = "test@example.com"
         ip = "192.168.1.1"

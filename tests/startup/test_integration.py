@@ -32,6 +32,7 @@ class TestStartupIntegration:
         with patch.dict(os.environ, env_vars, clear=True):
             # Use string output to capture progress
             import io
+
             output = io.StringIO()
             reporter = StartupProgressReporter(output=output, enable_colors=False)
 
@@ -67,6 +68,7 @@ class TestStartupIntegration:
 
         with patch.dict(os.environ, env_vars, clear=True):
             import io
+
             output = io.StringIO()
             reporter = StartupProgressReporter(output=output, enable_colors=False)
 
@@ -102,6 +104,7 @@ class TestStartupIntegration:
 
         with patch.dict(os.environ, env_vars, clear=True):
             import io
+
             output = io.StringIO()
             reporter = StartupProgressReporter(output=output, enable_colors=False)
 
@@ -119,7 +122,10 @@ class TestStartupIntegration:
 
             # Check that errors are captured
             error_text = " ".join(orchestrator.startup_errors)
-            assert "production" in error_text.lower() or "configuration" in error_text.lower()
+            assert (
+                "production" in error_text.lower()
+                or "configuration" in error_text.lower()
+            )
 
     @pytest.mark.asyncio
     async def test_timeout_handling(self) -> None:
@@ -136,6 +142,7 @@ class TestStartupIntegration:
 
         with patch.dict(os.environ, env_vars, clear=True):
             import io
+
             output = io.StringIO()
             reporter = StartupProgressReporter(output=output, enable_colors=False)
 
@@ -146,19 +153,28 @@ class TestStartupIntegration:
             )
 
             # Mock the health checker to be slow
-            with patch.object(orchestrator.health_checker, "check_all_services", side_effect=slow_check):
+            with patch.object(
+                orchestrator.health_checker,
+                "check_all_services",
+                side_effect=slow_check,
+            ):
                 success, config = await orchestrator.orchestrate_startup()
 
                 assert success is False
 
                 # Check output contains timeout message
                 output_text = output.getvalue()
-                assert "timed out" in output_text.lower() or "timeout" in output_text.lower()
+                assert (
+                    "timed out" in output_text.lower()
+                    or "timeout" in output_text.lower()
+                )
 
     def test_cli_script_execution(self) -> None:
         """Test CLI script can be executed."""
         # Test the startup validator script
-        script_path = Path(__file__).parent.parent.parent / "scripts" / "startup_validator.py"
+        script_path = (
+            Path(__file__).parent.parent.parent / "scripts" / "startup_validator.py"
+        )
 
         # Verify script exists and is executable
         assert script_path.exists()
@@ -172,11 +188,16 @@ class TestStartupIntegration:
             [sys.executable, str(script_path), "--help"],
             capture_output=True,
             text=True,
-            timeout=10, check=False,
+            timeout=10,
+            check=False,
         )
 
         # Should not crash and should show help
-        assert result.returncode == 0 or "usage:" in result.stdout.lower() or "help" in result.stdout.lower()
+        assert (
+            result.returncode == 0
+            or "usage:" in result.stdout.lower()
+            or "help" in result.stdout.lower()
+        )
 
     @pytest.mark.asyncio
     async def test_error_catalog_integration(self) -> None:
@@ -228,6 +249,7 @@ class TestStartupIntegration:
         for scenario in failure_scenarios:
             with patch.dict(os.environ, scenario["env"], clear=True):
                 import io
+
                 output = io.StringIO()
                 reporter = StartupProgressReporter(output=output, enable_colors=False)
 
@@ -249,7 +271,9 @@ class TestStartupIntegration:
                         assert len(orchestrator.startup_errors) > 0 or config is None
 
                 except Exception as e:
-                    pytest.fail(f"Scenario '{scenario['name']}' crashed with unhandled exception: {e}")
+                    pytest.fail(
+                        f"Scenario '{scenario['name']}' crashed with unhandled exception: {e}"
+                    )
 
     @pytest.mark.asyncio
     async def test_progress_reporting_completeness(self) -> None:
@@ -261,6 +285,7 @@ class TestStartupIntegration:
 
         with patch.dict(os.environ, env_vars, clear=True):
             import io
+
             output = io.StringIO()
             reporter = StartupProgressReporter(output=output, enable_colors=False)
 
@@ -285,7 +310,9 @@ class TestStartupIntegration:
             ]
 
             for phase in expected_phases:
-                assert phase in output_text, f"Expected phase '{phase}' not found in output"
+                assert (
+                    phase in output_text
+                ), f"Expected phase '{phase}' not found in output"
 
     def test_startup_summary_accuracy(self) -> None:
         """Test startup summary provides accurate information."""
@@ -298,6 +325,7 @@ class TestStartupIntegration:
 
         with patch.dict(os.environ, env_vars, clear=True):
             import io
+
             output = io.StringIO()
             reporter = StartupProgressReporter(output=output, enable_colors=False)
 
@@ -309,6 +337,7 @@ class TestStartupIntegration:
 
             # Manually load config to test summary
             from clarity.startup.config_schema import ClarityConfig
+
             config, _ = ClarityConfig.validate_from_env()
             orchestrator.config = config
 

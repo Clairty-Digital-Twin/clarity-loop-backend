@@ -25,7 +25,9 @@ logger = logging.getLogger(__name__)
 class StartupError(Exception):
     """Startup-specific error with detailed context."""
 
-    def __init__(self, message: str, phase: str, details: dict[str, Any] | None = None) -> None:
+    def __init__(
+        self, message: str, phase: str, details: dict[str, Any] | None = None
+    ) -> None:
         super().__init__(message)
         self.phase = phase
         self.details = details or {}
@@ -33,7 +35,7 @@ class StartupError(Exception):
 
 class StartupOrchestrator:
     """Orchestrates bulletproof application startup.
-    
+
     Provides zero-crash guarantee by validating all configuration and external
     services before attempting to start the application.
     """
@@ -46,7 +48,7 @@ class StartupOrchestrator:
         reporter: StartupProgressReporter | None = None,
     ) -> None:
         """Initialize startup orchestrator.
-        
+
         Args:
             dry_run: If True, only validate configuration without starting services
             skip_services: Set of service names to skip during health checks
@@ -63,12 +65,14 @@ class StartupOrchestrator:
         self.health_results: dict[str, Any] = {}
         self.startup_errors: list[str] = []
 
-    async def orchestrate_startup(self, app_name: str = "CLARITY Digital Twin") -> tuple[bool, ClarityConfig | None]:
+    async def orchestrate_startup(
+        self, app_name: str = "CLARITY Digital Twin"
+    ) -> tuple[bool, ClarityConfig | None]:
         """Orchestrate complete startup process.
-        
+
         Args:
             app_name: Application name for display
-            
+
         Returns:
             Tuple of (success, config). Config is None if startup fails.
         """
@@ -78,33 +82,43 @@ class StartupOrchestrator:
             # Phase 1: Pre-flight configuration validation
             success = await self._validate_configuration()
             if not success:
-                self.reporter.report_startup_complete(False, "Configuration validation failed")
+                self.reporter.report_startup_complete(
+                    False, "Configuration validation failed"
+                )
                 return False, None
 
             # Phase 2: Service health checks
             if not self.dry_run:
                 success = await self._check_service_health()
                 if not success:
-                    self.reporter.report_startup_complete(False, "Service health checks failed")
+                    self.reporter.report_startup_complete(
+                        False, "Service health checks failed"
+                    )
                     return False, None
 
             # Phase 3: Initialize services (if not dry run)
             if not self.dry_run:
                 success = await self._initialize_services()
                 if not success:
-                    self.reporter.report_startup_complete(False, "Service initialization failed")
+                    self.reporter.report_startup_complete(
+                        False, "Service initialization failed"
+                    )
                     return False, None
 
             # Success!
             if self.dry_run:
-                self.reporter.report_startup_complete(True, "Dry-run completed successfully")
+                self.reporter.report_startup_complete(
+                    True, "Dry-run completed successfully"
+                )
             else:
                 self.reporter.report_startup_complete(True, "All systems operational")
 
             return True, self.config
 
         except TimeoutError:
-            self.reporter.report_startup_complete(False, f"Startup timed out after {self.timeout}s")
+            self.reporter.report_startup_complete(
+                False, f"Startup timed out after {self.timeout}s"
+            )
             return False, None
         except Exception as e:
             logger.exception("Unexpected startup error")
@@ -122,7 +136,9 @@ class StartupOrchestrator:
             self.config, validation_errors = ClarityConfig.validate_from_env()
 
             if validation_errors:
-                self.reporter.fail_step(step, f"Found {len(validation_errors)} configuration error(s)")
+                self.reporter.fail_step(
+                    step, f"Found {len(validation_errors)} configuration error(s)"
+                )
                 self.startup_errors.extend(validation_errors)
 
                 # Report detailed validation errors
@@ -143,16 +159,23 @@ class StartupOrchestrator:
                 if self.config.is_production():
                     prod_errors = self._validate_production_requirements()
                     if prod_errors:
-                        self.reporter.fail_step(env_step, f"Production validation failed: {len(prod_errors)} error(s)")
+                        self.reporter.fail_step(
+                            env_step,
+                            f"Production validation failed: {len(prod_errors)} error(s)",
+                        )
                         self.startup_errors.extend(prod_errors)
                         return False
 
-                self.reporter.complete_step(env_step, f"Environment: {self.config.environment.value}")
+                self.reporter.complete_step(
+                    env_step, f"Environment: {self.config.environment.value}"
+                )
 
                 # Report final configuration summary
                 summary_step = self.reporter.start_step("Configuration summary")
                 summary = self.config.get_startup_summary()
-                self.reporter.complete_step(summary_step, "Configuration valid", summary)
+                self.reporter.complete_step(
+                    summary_step, "Configuration valid", summary
+                )
 
                 return True
 
@@ -197,14 +220,16 @@ class StartupOrchestrator:
 
         try:
             # Run health checks with timeout
-            health_check_timeout = min(self.config.health_check_timeout, self.timeout / 2)
+            health_check_timeout = min(
+                self.config.health_check_timeout, self.timeout / 2
+            )
 
             self.health_results = await asyncio.wait_for(
                 self.health_checker.check_all_services(
                     self.config,
                     skip_services=self.skip_services,
                 ),
-                timeout=health_check_timeout
+                timeout=health_check_timeout,
             )
 
             # Report health check results
@@ -217,7 +242,9 @@ class StartupOrchestrator:
                 # Check if we can proceed with degraded functionality
                 if self.config.should_use_mock_services():
                     degraded_step = self.reporter.start_step("Enabling degraded mode")
-                    self.reporter.complete_step(degraded_step, "Proceeding with mock services")
+                    self.reporter.complete_step(
+                        degraded_step, "Proceeding with mock services"
+                    )
                     return True
                 return False
 
@@ -225,7 +252,9 @@ class StartupOrchestrator:
 
         except TimeoutError:
             step = self.reporter.start_step("Service health timeout")
-            self.reporter.fail_step(step, f"Health checks timed out after {health_check_timeout}s")
+            self.reporter.fail_step(
+                step, f"Health checks timed out after {health_check_timeout}s"
+            )
             return False
         except Exception as e:
             step = self.reporter.start_step("Service health check error")
@@ -241,14 +270,18 @@ class StartupOrchestrator:
 
         try:
             # Initialize dependency container
-            container_step = self.reporter.start_step("Initializing dependency container")
+            container_step = self.reporter.start_step(
+                "Initializing dependency container"
+            )
 
             # Import here to avoid circular imports
             from clarity.core.container_aws import initialize_container
 
             container = await initialize_container(self.config)
 
-            self.reporter.complete_step(container_step, "Container initialized successfully")
+            self.reporter.complete_step(
+                container_step, "Container initialized successfully"
+            )
 
             # Additional service initialization steps can be added here
 
@@ -285,15 +318,18 @@ class StartupOrchestrator:
         critical_services = {"cognito", "dynamodb", "s3"}
 
         for service_name, result in self.health_results.items():
-            if (service_name in critical_services and
-                result.status == ServiceStatus.UNHEALTHY and
-                not self.config.should_use_mock_services()):
+            if (
+                service_name in critical_services
+                and result.status == ServiceStatus.UNHEALTHY
+                and not self.config.should_use_mock_services()
+            ):
                 return False
 
         return True
 
 
 # CLI entry point functions
+
 
 async def validate_config_only(dry_run: bool = True) -> bool:
     """Validate configuration only (CLI entry point)."""
@@ -325,23 +361,18 @@ def main() -> int:
     parser.add_argument(
         "--dry-run",
         action="store_true",
-        help="Validate configuration and services without starting"
+        help="Validate configuration and services without starting",
     )
     parser.add_argument(
         "--config-only",
         action="store_true",
-        help="Validate configuration only (skip service checks)"
+        help="Validate configuration only (skip service checks)",
     )
     parser.add_argument(
-        "--skip-services",
-        nargs="*",
-        help="Services to skip during health checks"
+        "--skip-services", nargs="*", help="Services to skip during health checks"
     )
     parser.add_argument(
-        "--timeout",
-        type=float,
-        default=30.0,
-        help="Startup timeout in seconds"
+        "--timeout", type=float, default=30.0, help="Startup timeout in seconds"
     )
 
     args = parser.parse_args()
@@ -349,7 +380,7 @@ def main() -> int:
     # Set up logging
     logging.basicConfig(
         level=logging.INFO,
-        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     )
 
     try:

@@ -81,7 +81,10 @@ class TestSecurityHeadersMiddleware:
         # Check specific header values
         assert response.headers["X-Content-Type-Options"] == "nosniff"
         assert response.headers["X-Frame-Options"] == "DENY"
-        assert response.headers["Content-Security-Policy"] == 'default-src "none"; frame-ancestors "none";'
+        assert (
+            response.headers["Content-Security-Policy"]
+            == 'default-src "none"; frame-ancestors "none";'
+        )
         assert response.headers["X-XSS-Protection"] == "1; mode=block"
         assert response.headers["Referrer-Policy"] == "strict-origin-when-cross-origin"
         assert response.headers["Cache-Control"] == "no-store, private"

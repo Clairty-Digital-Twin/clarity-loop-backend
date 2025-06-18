@@ -20,6 +20,7 @@ logger = logging.getLogger(__name__)
 
 class ProgressPhase(str, Enum):
     """Startup progress phases."""
+
     INITIALIZING = "initializing"
     VALIDATING_CONFIG = "validating_config"
     CHECKING_SERVICES = "checking_services"
@@ -32,6 +33,7 @@ class ProgressPhase(str, Enum):
 @dataclass
 class ProgressStep:
     """Individual progress step."""
+
     name: str
     phase: ProgressPhase
     status: str = "pending"  # pending, running, completed, failed
@@ -53,7 +55,9 @@ class ProgressStep:
         self.status = "running"
         self.start_time = time.time()
 
-    def complete(self, message: str = "", details: dict[str, Any] | None = None) -> None:
+    def complete(
+        self, message: str = "", details: dict[str, Any] | None = None
+    ) -> None:
         """Mark step as completed."""
         self.status = "completed"
         self.end_time = time.time()
@@ -62,7 +66,12 @@ class ProgressStep:
         if details:
             self.details.update(details)
 
-    def fail(self, message: str, error: Exception | None = None, details: dict[str, Any] | None = None) -> None:
+    def fail(
+        self,
+        message: str,
+        error: Exception | None = None,
+        details: dict[str, Any] | None = None,
+    ) -> None:
         """Mark step as failed."""
         self.status = "failed"
         self.end_time = time.time()
@@ -75,31 +84,41 @@ class ProgressStep:
 class StartupProgressReporter:
     """Reports startup progress with clear status messages."""
 
-    def __init__(self, output: TextIO | None = None, enable_colors: bool = True) -> None:
+    def __init__(
+        self, output: TextIO | None = None, enable_colors: bool = True
+    ) -> None:
         """Initialize progress reporter.
-        
+
         Args:
             output: Output stream (defaults to stdout)
             enable_colors: Whether to use colored output
         """
         self.output = output or sys.stdout
-        self.enable_colors = enable_colors and hasattr(sys.stdout, "isatty") and sys.stdout.isatty()
+        self.enable_colors = (
+            enable_colors and hasattr(sys.stdout, "isatty") and sys.stdout.isatty()
+        )
         self.steps: list[ProgressStep] = []
         self.current_phase = ProgressPhase.INITIALIZING
         self.start_time = time.time()
         self.end_time: float | None = None
 
         # Color codes
-        self.colors = {
-            "reset": "\033[0m",
-            "bold": "\033[1m",
-            "green": "\033[32m",
-            "yellow": "\033[33m",
-            "red": "\033[31m",
-            "blue": "\033[34m",
-            "cyan": "\033[36m",
-            "gray": "\033[90m",
-        } if self.enable_colors else dict.fromkeys(["reset", "bold", "green", "yellow", "red", "blue", "cyan", "gray"], "")
+        self.colors = (
+            {
+                "reset": "\033[0m",
+                "bold": "\033[1m",
+                "green": "\033[32m",
+                "yellow": "\033[33m",
+                "red": "\033[31m",
+                "blue": "\033[34m",
+                "cyan": "\033[36m",
+                "gray": "\033[90m",
+            }
+            if self.enable_colors
+            else dict.fromkeys(
+                ["reset", "bold", "green", "yellow", "red", "blue", "cyan", "gray"], ""
+            )
+        )
 
     def _colorize(self, text: str, color: str) -> str:
         """Apply color to text if colors are enabled."""
@@ -176,7 +195,12 @@ class StartupProgressReporter:
         self._print(display_message)
         return step
 
-    def complete_step(self, step: ProgressStep, message: str = "", details: dict[str, Any] | None = None) -> None:
+    def complete_step(
+        self,
+        step: ProgressStep,
+        message: str = "",
+        details: dict[str, Any] | None = None,
+    ) -> None:
         """Mark step as completed."""
         step.complete(message, details)
 
@@ -193,7 +217,13 @@ class StartupProgressReporter:
         self._print(display_message)
         logger.info(f"Completed: {step.name} in {step.duration_ms:.0f}ms")
 
-    def fail_step(self, step: ProgressStep, message: str, error: Exception | None = None, details: dict[str, Any] | None = None) -> None:
+    def fail_step(
+        self,
+        step: ProgressStep,
+        message: str,
+        error: Exception | None = None,
+        details: dict[str, Any] | None = None,
+    ) -> None:
         """Mark step as failed."""
         step.fail(message, error, details)
 
@@ -222,16 +252,22 @@ class StartupProgressReporter:
 
     def report_health_checks(self, results: dict[str, HealthCheckResult]) -> None:
         """Report health check results."""
-        self.start_phase(ProgressPhase.CHECKING_SERVICES, "Running service health checks")
+        self.start_phase(
+            ProgressPhase.CHECKING_SERVICES, "Running service health checks"
+        )
 
         for service_name, result in results.items():
             step = self.start_step(f"Health check: {service_name}")
 
             if result.status == ServiceStatus.HEALTHY:
-                self.complete_step(step, result.message, {
-                    "response_time": f"{result.response_time_ms:.0f}ms",
-                    **result.details
-                })
+                self.complete_step(
+                    step,
+                    result.message,
+                    {
+                        "response_time": f"{result.response_time_ms:.0f}ms",
+                        **result.details,
+                    },
+                )
             elif result.status == ServiceStatus.DEGRADED:
                 # Treat degraded as completed with warning
                 step.complete(result.message, result.details)
@@ -243,7 +279,9 @@ class StartupProgressReporter:
             else:
                 self.fail_step(step, result.message, result.error, result.details)
 
-    def report_config_validation(self, config: Any, validation_errors: list[str]) -> None:
+    def report_config_validation(
+        self, config: Any, validation_errors: list[str]
+    ) -> None:
         """Report configuration validation results."""
         self.start_phase(ProgressPhase.VALIDATING_CONFIG, "Validating configuration")
 
@@ -302,7 +340,8 @@ class StartupProgressReporter:
             "failed_steps": len(failed_steps),
             "skipped_steps": len(skipped_steps),
             "final_phase": self.current_phase.value,
-            "success": len(failed_steps) == 0 and self.current_phase == ProgressPhase.READY,
+            "success": len(failed_steps) == 0
+            and self.current_phase == ProgressPhase.READY,
         }
 
     def print_startup_summary(self) -> None:
@@ -316,13 +355,18 @@ class StartupProgressReporter:
         self._print(f"  ❌ Failed: {summary['failed_steps']}")
         self._print(f"  ⏭️  Skipped: {summary['skipped_steps']}")
 
-        if summary['failed_steps'] > 0:
+        if summary["failed_steps"] > 0:
             self._print(f"\n{self._colorize('Failed Steps:', 'red')}")
             for step in self.steps:
                 if step.status == "failed":
                     self._print(f"  • {step.name}: {step.message}")
 
-    def create_dry_run_report(self, config: Any, health_results: dict[str, HealthCheckResult], validation_errors: list[str]) -> str:
+    def create_dry_run_report(
+        self,
+        config: Any,
+        health_results: dict[str, HealthCheckResult],
+        validation_errors: list[str],
+    ) -> str:
         """Create dry-run report."""
         lines = []
         lines.append("🔍 CLARITY Startup Dry-Run Report")
@@ -338,7 +382,9 @@ class StartupProgressReporter:
 
         # Validation results
         if validation_errors:
-            lines.append(f"❌ Configuration Validation: {len(validation_errors)} error(s)")
+            lines.append(
+                f"❌ Configuration Validation: {len(validation_errors)} error(s)"
+            )
             for error in validation_errors:
                 lines.append(f"  • {error}")
         else:
@@ -364,7 +410,8 @@ class StartupProgressReporter:
 
         # Overall assessment
         overall_healthy = all(
-            result.status in (ServiceStatus.HEALTHY, ServiceStatus.SKIPPED, ServiceStatus.DEGRADED)
+            result.status
+            in (ServiceStatus.HEALTHY, ServiceStatus.SKIPPED, ServiceStatus.DEGRADED)
             for result in health_results.values()
         )
 

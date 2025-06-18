@@ -25,6 +25,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class ModelInferenceMetric:
     """Single inference metric record"""
+
     model_id: str
     version: str
     timestamp: float
@@ -39,6 +40,7 @@ class ModelInferenceMetric:
 @dataclass
 class ModelHealthMetric:
     """Model health status metric"""
+
     model_id: str
     version: str
     timestamp: float
@@ -53,6 +55,7 @@ class ModelHealthMetric:
 
 class ModelMonitoringConfig(BaseModel):
     """Configuration for model monitoring"""
+
     enable_prometheus: bool = True
     prometheus_port: int = 8091
 
@@ -81,7 +84,7 @@ class ModelMonitoringConfig(BaseModel):
 
 class ModelMonitoringService:
     """Comprehensive ML Model Monitoring Service
-    
+
     Features:
     - Real-time inference metrics collection
     - Model health monitoring and alerting
@@ -96,12 +99,20 @@ class ModelMonitoringService:
         self.model_manager: ModelManager | None = None
 
         # Metrics storage
-        self.inference_metrics: deque[ModelInferenceMetric] = deque(maxlen=self.config.max_inference_records)
-        self.health_metrics: deque[ModelHealthMetric] = deque(maxlen=self.config.max_health_records)
+        self.inference_metrics: deque[ModelInferenceMetric] = deque(
+            maxlen=self.config.max_inference_records
+        )
+        self.health_metrics: deque[ModelHealthMetric] = deque(
+            maxlen=self.config.max_health_records
+        )
 
         # Time-series data for trends
-        self.latency_trends: dict[str, deque[float]] = defaultdict(lambda: deque(maxlen=100))
-        self.error_trends: dict[str, deque[float]] = defaultdict(lambda: deque(maxlen=100))
+        self.latency_trends: dict[str, deque[float]] = defaultdict(
+            lambda: deque(maxlen=100)
+        )
+        self.error_trends: dict[str, deque[float]] = defaultdict(
+            lambda: deque(maxlen=100)
+        )
 
         # Prometheus metrics
         self.prometheus_metrics = self._setup_prometheus_metrics()
@@ -122,7 +133,9 @@ class ModelMonitoringService:
         if self.config.enable_prometheus:
             try:
                 start_http_server(self.config.prometheus_port)
-                logger.info(f"Prometheus metrics server started on port {self.config.prometheus_port}")
+                logger.info(
+                    f"Prometheus metrics server started on port {self.config.prometheus_port}"
+                )
             except Exception as e:
                 logger.error(f"Failed to start Prometheus server: {e}")
 
@@ -156,7 +169,7 @@ class ModelMonitoringService:
         error_type: str | None = None,
         input_size: int | None = None,
         output_size: int | None = None,
-        memory_usage_mb: float | None = None
+        memory_usage_mb: float | None = None,
     ):
         """Record an inference event"""
         if not self.config.collect_inference_metrics:
@@ -171,7 +184,7 @@ class ModelMonitoringService:
             error_type=error_type,
             input_size=input_size,
             output_size=output_size,
-            memory_usage_mb=memory_usage_mb
+            memory_usage_mb=memory_usage_mb,
         )
 
         self.inference_metrics.append(metric)
@@ -180,21 +193,21 @@ class ModelMonitoringService:
         model_key = f"{model_id}:{version}"
 
         if self.prometheus_metrics:
-            self.prometheus_metrics['inference_count'].labels(
+            self.prometheus_metrics["inference_count"].labels(
                 model_id=model_id,
                 version=version,
-                status="success" if success else "error"
+                status="success" if success else "error",
             ).inc()
 
-            self.prometheus_metrics['inference_latency'].labels(
-                model_id=model_id,
-                version=version
-            ).observe(latency_ms / 1000.0)  # Convert to seconds
+            self.prometheus_metrics["inference_latency"].labels(
+                model_id=model_id, version=version
+            ).observe(
+                latency_ms / 1000.0
+            )  # Convert to seconds
 
             if memory_usage_mb:
-                self.prometheus_metrics['memory_usage'].labels(
-                    model_id=model_id,
-                    version=version
+                self.prometheus_metrics["memory_usage"].labels(
+                    model_id=model_id, version=version
                 ).set(memory_usage_mb)
 
         # Update trends
@@ -205,10 +218,7 @@ class ModelMonitoringService:
         asyncio.create_task(self._check_inference_alerts(model_id, version, metric))
 
     async def get_model_metrics(
-        self,
-        model_id: str,
-        version: str = "latest",
-        window_minutes: int | None = None
+        self, model_id: str, version: str = "latest", window_minutes: int | None = None
     ) -> dict[str, Any]:
         """Get comprehensive metrics for a specific model"""
         window_minutes = window_minutes or self.config.metrics_window_minutes
@@ -218,13 +228,19 @@ class ModelMonitoringService:
 
         # Filter metrics within time window
         inference_metrics = [
-            m for m in self.inference_metrics
-            if m.model_id == model_id and m.version == version and m.timestamp >= window_start
+            m
+            for m in self.inference_metrics
+            if m.model_id == model_id
+            and m.version == version
+            and m.timestamp >= window_start
         ]
 
         health_metrics = [
-            m for m in self.health_metrics
-            if m.model_id == model_id and m.version == version and m.timestamp >= window_start
+            m
+            for m in self.health_metrics
+            if m.model_id == model_id
+            and m.version == version
+            and m.timestamp >= window_start
         ]
 
         if not inference_metrics:
@@ -240,10 +256,14 @@ class ModelMonitoringService:
         p95_latency = sorted(latencies)[int(len(latencies) * 0.95)] if latencies else 0
         p99_latency = sorted(latencies)[int(len(latencies) * 0.99)] if latencies else 0
 
-        success_rate = successful_inferences / total_inferences if total_inferences > 0 else 0
+        success_rate = (
+            successful_inferences / total_inferences if total_inferences > 0 else 0
+        )
 
         # Memory usage
-        memory_usage = [m.memory_usage_mb for m in inference_metrics if m.memory_usage_mb]
+        memory_usage = [
+            m.memory_usage_mb for m in inference_metrics if m.memory_usage_mb
+        ]
         avg_memory = sum(memory_usage) / len(memory_usage) if memory_usage else 0
 
         # Error breakdown
@@ -268,28 +288,31 @@ class ModelMonitoringService:
                 "avg_latency_ms": avg_latency,
                 "p95_latency_ms": p95_latency,
                 "p99_latency_ms": p99_latency,
-                "avg_memory_mb": avg_memory
+                "avg_memory_mb": avg_memory,
             },
             "errors": dict(error_types),
-            "trends": {
-                "latency": latency_trend,
-                "error_rate": error_trend
-            },
+            "trends": {"latency": latency_trend, "error_rate": error_trend},
             "health_checks": len(health_metrics),
-            "alerts": self.alert_state.get(model_key, {})
+            "alerts": self.alert_state.get(model_key, {}),
         }
 
-    async def get_all_models_metrics(self, window_minutes: int | None = None) -> dict[str, Any]:
+    async def get_all_models_metrics(
+        self, window_minutes: int | None = None
+    ) -> dict[str, Any]:
         """Get metrics for all monitored models"""
         metrics = {}
 
         # Get unique model combinations
         model_combinations = set()
-        model_combinations.update((metric.model_id, metric.version) for metric in self.inference_metrics)
+        model_combinations.update(
+            (metric.model_id, metric.version) for metric in self.inference_metrics
+        )
 
         for model_id, version in model_combinations:
             model_key = f"{model_id}:{version}"
-            metrics[model_key] = await self.get_model_metrics(model_id, version, window_minutes)
+            metrics[model_key] = await self.get_model_metrics(
+                model_id, version, window_minutes
+            )
 
         return metrics
 
@@ -304,19 +327,19 @@ class ModelMonitoringService:
         # Calculate system metrics
         total_inferences = len(self.inference_metrics)
         recent_inferences = sum(
-            1 for m in self.inference_metrics
+            1
+            for m in self.inference_metrics
             if m.timestamp >= time.time() - 300  # Last 5 minutes
         )
 
         success_rate = (
             sum(1 for m in self.inference_metrics if m.success) / total_inferences
-            if total_inferences > 0 else 0
+            if total_inferences > 0
+            else 0
         )
 
         # Active alerts
-        active_alerts = sum(
-            len(alerts) for alerts in self.alert_state.values()
-        )
+        active_alerts = sum(len(alerts) for alerts in self.alert_state.values())
 
         return {
             "system_status": manager_health.get("status", "unknown"),
@@ -326,14 +349,14 @@ class ModelMonitoringService:
                 "total_inferences": total_inferences,
                 "recent_inferences_5min": recent_inferences,
                 "overall_success_rate": success_rate,
-                "active_alerts": active_alerts
+                "active_alerts": active_alerts,
             },
             "monitoring": {
                 "prometheus_enabled": self.config.enable_prometheus,
                 "prometheus_port": self.config.prometheus_port,
                 "collection_enabled": self.config.collect_inference_metrics,
-                "health_monitoring": self.config.collect_health_metrics
-            }
+                "health_monitoring": self.config.collect_health_metrics,
+            },
         }
 
     def _setup_prometheus_metrics(self) -> dict[str, Any] | None:
@@ -343,31 +366,28 @@ class ModelMonitoringService:
 
         try:
             return {
-                'inference_count': Counter(
-                    'model_inference_total',
-                    'Total number of model inferences',
-                    ['model_id', 'version', 'status']
+                "inference_count": Counter(
+                    "model_inference_total",
+                    "Total number of model inferences",
+                    ["model_id", "version", "status"],
                 ),
-                'inference_latency': Histogram(
-                    'model_inference_latency_seconds',
-                    'Model inference latency in seconds',
-                    ['model_id', 'version'],
-                    buckets=[0.01, 0.05, 0.1, 0.5, 1.0, 2.0, 5.0, 10.0]
+                "inference_latency": Histogram(
+                    "model_inference_latency_seconds",
+                    "Model inference latency in seconds",
+                    ["model_id", "version"],
+                    buckets=[0.01, 0.05, 0.1, 0.5, 1.0, 2.0, 5.0, 10.0],
                 ),
-                'memory_usage': Gauge(
-                    'model_memory_usage_mb',
-                    'Model memory usage in MB',
-                    ['model_id', 'version']
+                "memory_usage": Gauge(
+                    "model_memory_usage_mb",
+                    "Model memory usage in MB",
+                    ["model_id", "version"],
                 ),
-                'model_health': Gauge(
-                    'model_health_status',
-                    'Model health status (1=healthy, 0=unhealthy)',
-                    ['model_id', 'version']
+                "model_health": Gauge(
+                    "model_health_status",
+                    "Model health status (1=healthy, 0=unhealthy)",
+                    ["model_id", "version"],
                 ),
-                'system_info': Info(
-                    'model_system_info',
-                    'Model system information'
-                )
+                "system_info": Info("model_system_info", "Model system information"),
             }
         except Exception as e:
             logger.error(f"Failed to setup Prometheus metrics: {e}")
@@ -390,23 +410,29 @@ class ModelMonitoringService:
                                 model_id=model_name,
                                 version=version,
                                 timestamp=time.time(),
-                                status="healthy" if model_data.get("error_rate", 1.0) < self.config.error_rate_threshold else "unhealthy",
+                                status=(
+                                    "healthy"
+                                    if model_data.get("error_rate", 1.0)
+                                    < self.config.error_rate_threshold
+                                    else "unhealthy"
+                                ),
                                 uptime_seconds=model_data.get("uptime_seconds", 0),
                                 total_inferences=model_data.get("total_inferences", 0),
                                 success_rate=1.0 - model_data.get("error_rate", 0),
                                 avg_latency_ms=model_data.get("avg_latency_ms", 0),
                                 memory_usage_mb=model_data.get("memory_usage_mb", 0),
-                                error_count=model_data.get("error_count", 0)
+                                error_count=model_data.get("error_count", 0),
                             )
 
                             self.health_metrics.append(metric)
 
                             # Update Prometheus health metric
                             if self.prometheus_metrics:
-                                health_value = 1.0 if metric.status == "healthy" else 0.0
-                                self.prometheus_metrics['model_health'].labels(
-                                    model_id=model_name,
-                                    version=version
+                                health_value = (
+                                    1.0 if metric.status == "healthy" else 0.0
+                                )
+                                self.prometheus_metrics["model_health"].labels(
+                                    model_id=model_name, version=version
                                 ).set(health_value)
 
                 await asyncio.sleep(self.config.health_check_interval_seconds)
@@ -423,11 +449,15 @@ class ModelMonitoringService:
                 if self.prometheus_metrics and self.model_manager:
                     system_info = await self.get_system_overview()
 
-                    self.prometheus_metrics['system_info'].info({
-                        'status': system_info.get('system_status', 'unknown'),
-                        'loaded_models': str(system_info.get('loaded_models', 0)),
-                        'total_memory_mb': str(system_info.get('total_memory_mb', 0))
-                    })
+                    self.prometheus_metrics["system_info"].info(
+                        {
+                            "status": system_info.get("system_status", "unknown"),
+                            "loaded_models": str(system_info.get("loaded_models", 0)),
+                            "total_memory_mb": str(
+                                system_info.get("total_memory_mb", 0)
+                            ),
+                        }
+                    )
 
                 await asyncio.sleep(60)  # Update every minute
 
@@ -435,7 +465,9 @@ class ModelMonitoringService:
                 logger.error(f"System monitoring error: {e}")
                 await asyncio.sleep(60)
 
-    async def _check_inference_alerts(self, model_id: str, version: str, metric: ModelInferenceMetric):
+    async def _check_inference_alerts(
+        self, model_id: str, version: str, metric: ModelInferenceMetric
+    ):
         """Check for inference-related alerts"""
         if not self.config.enable_alerting:
             return
@@ -450,38 +482,53 @@ class ModelMonitoringService:
 
         # Check latency threshold
         if metric.latency_ms > self.config.latency_threshold_ms:
-            alerts.append({
-                "type": "high_latency",
-                "severity": "warning",
-                "message": f"High latency detected: {metric.latency_ms:.2f}ms > {self.config.latency_threshold_ms}ms",
-                "timestamp": metric.timestamp
-            })
+            alerts.append(
+                {
+                    "type": "high_latency",
+                    "severity": "warning",
+                    "message": f"High latency detected: {metric.latency_ms:.2f}ms > {self.config.latency_threshold_ms}ms",
+                    "timestamp": metric.timestamp,
+                }
+            )
 
         # Check memory threshold
-        if metric.memory_usage_mb and metric.memory_usage_mb > self.config.memory_threshold_mb:
-            alerts.append({
-                "type": "high_memory",
-                "severity": "warning",
-                "message": f"High memory usage: {metric.memory_usage_mb:.2f}MB > {self.config.memory_threshold_mb}MB",
-                "timestamp": metric.timestamp
-            })
+        if (
+            metric.memory_usage_mb
+            and metric.memory_usage_mb > self.config.memory_threshold_mb
+        ):
+            alerts.append(
+                {
+                    "type": "high_memory",
+                    "severity": "warning",
+                    "message": f"High memory usage: {metric.memory_usage_mb:.2f}MB > {self.config.memory_threshold_mb}MB",
+                    "timestamp": metric.timestamp,
+                }
+            )
 
         # Check error rate (over recent window)
         recent_errors = [
-            m for m in self.inference_metrics
-            if (m.model_id == model_id and m.version == version and
-                m.timestamp >= time.time() - 300)  # Last 5 minutes
+            m
+            for m in self.inference_metrics
+            if (
+                m.model_id == model_id
+                and m.version == version
+                and m.timestamp >= time.time() - 300
+            )  # Last 5 minutes
         ]
 
         if len(recent_errors) >= 10:  # Minimum sample size
-            error_rate = sum(1 for m in recent_errors if not m.success) / len(recent_errors)
+            error_rate = sum(1 for m in recent_errors if not m.success) / len(
+                recent_errors
+            )
             if error_rate > self.config.error_rate_threshold:
-                alerts.append({
-                    "type": "high_error_rate",
-                    "severity": "critical",
-                    "message": f"High error rate: {error_rate:.2%} > {self.config.error_rate_threshold:.2%}",
-                    "timestamp": metric.timestamp
-                })
+                alerts.append(
+                    {
+                        "type": "high_error_rate",
+                        "severity": "critical",
+                        "message": f"High error rate: {error_rate:.2%} > {self.config.error_rate_threshold:.2%}",
+                        "timestamp": metric.timestamp,
+                    }
+                )
 
         # Update alert state
         for alert in alerts:
@@ -501,15 +548,16 @@ class ModelMonitoringService:
                 "model": model_key,
                 "alert": alert,
                 "timestamp": datetime.utcnow().isoformat(),
-                "service": "clarity-model-monitoring"
+                "service": "clarity-model-monitoring",
             }
 
-            async with aiohttp.ClientSession() as session:
-                async with session.post(self.config.alert_webhook_url, json=payload) as response:
-                    if response.status != 200:
-                        logger.warning(f"Alert webhook failed: {response.status}")
-                    else:
-                        logger.info(f"Alert sent for {model_key}: {alert['type']}")
+            async with aiohttp.ClientSession() as session, session.post(
+                self.config.alert_webhook_url, json=payload
+            ) as response:
+                if response.status != 200:
+                    logger.warning(f"Alert webhook failed: {response.status}")
+                else:
+                    logger.info(f"Alert sent for {model_key}: {alert['type']}")
 
         except Exception as e:
             logger.error(f"Failed to send alert webhook: {e}")
@@ -518,6 +566,7 @@ class ModelMonitoringService:
 # Decorator for automatic inference monitoring
 def monitor_inference(monitoring_service: ModelMonitoringService):
     """Decorator to automatically monitor model inferences"""
+
     def decorator(func):
         async def wrapper(self, *args, **kwargs):
             start_time = time.time()
@@ -535,16 +584,17 @@ def monitor_inference(monitoring_service: ModelMonitoringService):
                 latency_ms = (time.time() - start_time) * 1000
 
                 # Extract model info
-                model_id = getattr(self, 'model_id', 'unknown')
-                version = getattr(self, 'version', 'unknown')
+                model_id = getattr(self, "model_id", "unknown")
+                version = getattr(self, "version", "unknown")
 
                 monitoring_service.record_inference(
                     model_id=model_id,
                     version=version,
                     latency_ms=latency_ms,
                     success=success,
-                    error_type=error_type
+                    error_type=error_type,
                 )
 
         return wrapper
+
     return decorator

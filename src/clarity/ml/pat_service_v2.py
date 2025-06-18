@@ -28,7 +28,7 @@ logger = logging.getLogger(__name__)
 
 class PATServiceV2:
     """Revolutionary PAT Service with Progressive Loading
-    
+
     This service provides the same interface as the legacy PAT service but with:
     - Progressive model loading
     - Intelligent caching
@@ -42,7 +42,7 @@ class PATServiceV2:
         model_size: str = "medium",
         enable_monitoring: bool = True,
         progressive_config: ProgressiveLoadingConfig | None = None,
-        monitoring_config: ModelMonitoringConfig | None = None
+        monitoring_config: ModelMonitoringConfig | None = None,
     ):
         self.model_size = model_size
         self.enable_monitoring = enable_monitoring
@@ -62,9 +62,9 @@ class PATServiceV2:
 
         # Model mapping
         self.size_to_version = {
-            "small": "1.0.0",   # PAT-S
+            "small": "1.0.0",  # PAT-S
             "medium": "1.1.0",  # PAT-M
-            "large": "1.2.0"    # PAT-L
+            "large": "1.2.0",  # PAT-L
         }
 
         logger.info(f"PAT Service V2 initialized with model size: {model_size}")
@@ -73,12 +73,16 @@ class PATServiceV2:
         """Initialize the PAT service with progressive loading"""
         try:
             # Get progressive loading service
-            self.progressive_service = await get_progressive_service(self.progressive_config)
+            self.progressive_service = await get_progressive_service(
+                self.progressive_config
+            )
 
             # Initialize monitoring if enabled
             if self.enable_monitoring:
                 self.monitoring_service = ModelMonitoringService(self.monitoring_config)
-                await self.monitoring_service.initialize(self.progressive_service.model_manager)
+                await self.monitoring_service.initialize(
+                    self.progressive_service.model_manager
+                )
 
             # Load the requested model
             await self._load_model()
@@ -101,13 +105,13 @@ class PATServiceV2:
         try:
             # Get the model (will load if not already loaded)
             self.current_model = await self.progressive_service.get_model(
-                model_id="pat",
-                version=version,
-                critical=True
+                model_id="pat", version=version, critical=True
             )
 
             if self.current_model:
-                logger.info(f"Successfully loaded PAT model: {self.current_model.metadata.unique_id}")
+                logger.info(
+                    f"Successfully loaded PAT model: {self.current_model.metadata.unique_id}"
+                )
             else:
                 logger.warning(f"Failed to load PAT model: pat:{version}")
 
@@ -126,14 +130,14 @@ class PATServiceV2:
     async def predict(
         self,
         actigraphy_data: list[float] | dict[str, Any],
-        options: dict[str, Any] | None = None
+        options: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         """Make prediction using the loaded model
-        
+
         Args:
             actigraphy_data: Input actigraphy data
             options: Additional prediction options
-            
+
         Returns:
             Prediction results
         """
@@ -145,7 +149,9 @@ class PATServiceV2:
         # Try using the progressive model first
         if self.current_model:
             try:
-                result = await self._predict_with_progressive_model(actigraphy_data, options)
+                result = await self._predict_with_progressive_model(
+                    actigraphy_data, options
+                )
 
                 # Record monitoring metrics
                 if self.monitoring_service:
@@ -154,7 +160,7 @@ class PATServiceV2:
                         model_id="pat",
                         version=self.current_model.metadata.version,
                         latency_ms=latency_ms,
-                        success=True
+                        success=True,
                     )
 
                 return result
@@ -170,7 +176,7 @@ class PATServiceV2:
                         version=self.current_model.metadata.version,
                         latency_ms=latency_ms,
                         success=False,
-                        error_type=type(e).__name__
+                        error_type=type(e).__name__,
                     )
 
         # Fallback to legacy service
@@ -188,7 +194,7 @@ class PATServiceV2:
     async def _predict_with_progressive_model(
         self,
         actigraphy_data: list[float] | dict[str, Any],
-        options: dict[str, Any] | None = None
+        options: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         """Make prediction using the progressive model"""
         # Prepare input data
@@ -213,7 +219,7 @@ class PATServiceV2:
             "model_id": self.current_model.metadata.model_id,
             "version": self.current_model.metadata.version,
             "model_size": self.model_size,
-            "service_version": "v2"
+            "service_version": "v2",
         }
 
         return result
@@ -221,7 +227,7 @@ class PATServiceV2:
     async def _predict_with_fallback(
         self,
         actigraphy_data: list[float] | dict[str, Any],
-        options: dict[str, Any] | None = None
+        options: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         """Make prediction using fallback legacy service"""
         # This would call the legacy service
@@ -232,20 +238,20 @@ class PATServiceV2:
                     {"stage": "deep", "duration_minutes": 120, "confidence": 0.75},
                     {"stage": "rem", "duration_minutes": 90, "confidence": 0.70},
                     {"stage": "light", "duration_minutes": 180, "confidence": 0.85},
-                    {"stage": "wake", "duration_minutes": 30, "confidence": 0.90}
+                    {"stage": "wake", "duration_minutes": 30, "confidence": 0.90},
                 ],
                 "sleep_metrics": {
                     "total_sleep_time": 420,
                     "sleep_efficiency": 0.85,
-                    "wake_episodes": 2
-                }
+                    "wake_episodes": 2,
+                },
             },
             "model_info": {
                 "model_id": "pat",
                 "version": "fallback",
                 "model_size": self.model_size,
-                "service_version": "v2_fallback"
-            }
+                "service_version": "v2_fallback",
+            },
         }
 
     async def get_model_status(self) -> dict[str, Any]:
@@ -255,7 +261,7 @@ class PATServiceV2:
                 "status": "not_initialized",
                 "model_id": "pat",
                 "version": self.size_to_version.get(self.model_size, "unknown"),
-                "service_version": "v2"
+                "service_version": "v2",
             }
 
         version = self.size_to_version.get(self.model_size, "latest")
@@ -269,14 +275,14 @@ class PATServiceV2:
                 "is_critical": model_status.is_critical,
                 "load_time_seconds": model_status.load_time_seconds,
                 "error_message": model_status.error_message,
-                "service_version": "v2"
+                "service_version": "v2",
             }
 
         return {
             "status": "unknown",
             "model_id": "pat",
             "version": version,
-            "service_version": "v2"
+            "service_version": "v2",
         }
 
     async def get_performance_metrics(self) -> dict[str, Any]:
@@ -319,13 +325,19 @@ class PATServiceV2:
 
             # Unload current model
             if self.current_model:
-                await self.progressive_service.model_manager.unload_model("pat", old_version)
+                await self.progressive_service.model_manager.unload_model(
+                    "pat", old_version
+                )
 
             # Load new model
-            self.current_model = await self.progressive_service.get_model("pat", target_version)
+            self.current_model = await self.progressive_service.get_model(
+                "pat", target_version
+            )
 
             if self.current_model:
-                logger.info(f"Successfully reloaded PAT model: {self.current_model.metadata.unique_id}")
+                logger.info(
+                    f"Successfully reloaded PAT model: {self.current_model.metadata.unique_id}"
+                )
                 return True
             logger.error(f"Failed to reload PAT model: pat:{target_version}")
             return False
@@ -341,7 +353,7 @@ class PATServiceV2:
             "initialized": self.is_initialized,
             "monitoring_enabled": self.enable_monitoring,
             "model_size": self.model_size,
-            "timestamp": time.time()
+            "timestamp": time.time(),
         }
 
         # Model status
@@ -360,10 +372,12 @@ class PATServiceV2:
 
         # Determine overall health
         is_healthy = (
-            self.is_initialized and
-            model_status.get("status") in ["available", "loading"] and
-            (not self.progressive_service or
-             app_status.get("overall_status") in ["healthy", "partial"])
+            self.is_initialized
+            and model_status.get("status") in ["available", "loading"]
+            and (
+                not self.progressive_service
+                or app_status.get("overall_status") in ["healthy", "partial"]
+            )
         )
 
         status["overall_health"] = "healthy" if is_healthy else "unhealthy"
@@ -380,7 +394,9 @@ class PATServiceV2:
                 # Unload model
                 version = self.size_to_version.get(self.model_size, "latest")
                 if self.progressive_service:
-                    await self.progressive_service.model_manager.unload_model("pat", version)
+                    await self.progressive_service.model_manager.unload_model(
+                        "pat", version
+                    )
 
             logger.info("PAT Service V2 shutdown completed")
 
@@ -393,16 +409,16 @@ async def create_pat_service(
     model_size: str = "medium",
     enable_monitoring: bool = True,
     progressive_config: ProgressiveLoadingConfig | None = None,
-    monitoring_config: ModelMonitoringConfig | None = None
+    monitoring_config: ModelMonitoringConfig | None = None,
 ) -> PATServiceV2:
     """Factory function to create and initialize a PAT Service V2 instance
-    
+
     Args:
         model_size: Model size (small, medium, large)
         enable_monitoring: Enable performance monitoring
         progressive_config: Progressive loading configuration
         monitoring_config: Monitoring configuration
-        
+
     Returns:
         Initialized PAT Service V2 instance
     """
@@ -410,7 +426,7 @@ async def create_pat_service(
         model_size=model_size,
         enable_monitoring=enable_monitoring,
         progressive_config=progressive_config,
-        monitoring_config=monitoring_config
+        monitoring_config=monitoring_config,
     )
 
     await service.initialize()

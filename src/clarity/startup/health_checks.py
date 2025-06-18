@@ -21,6 +21,7 @@ logger = logging.getLogger(__name__)
 
 class ServiceStatus(str, Enum):
     """Service health status."""
+
     HEALTHY = "healthy"
     DEGRADED = "degraded"
     UNHEALTHY = "unhealthy"
@@ -31,6 +32,7 @@ class ServiceStatus(str, Enum):
 @dataclass
 class HealthCheckResult:
     """Result of a service health check."""
+
     service_name: str
     status: ServiceStatus
     message: str
@@ -51,6 +53,7 @@ class HealthCheckResult:
 @dataclass
 class CircuitBreakerState:
     """Circuit breaker state for a service."""
+
     failure_count: int = 0
     last_failure_time: float = 0.0
     state: str = "closed"  # closed, open, half-open
@@ -88,7 +91,7 @@ class ServiceHealthChecker:
 
     def __init__(self, timeout: float = 5.0) -> None:
         """Initialize health checker.
-        
+
         Args:
             timeout: Default timeout for health checks in seconds
         """
@@ -130,11 +133,8 @@ class ServiceHealthChecker:
             # Test connectivity by describing user pool
             actual_timeout = timeout or self.timeout
             response = await asyncio.wait_for(
-                asyncio.to_thread(
-                    client.describe_user_pool,
-                    UserPoolId=user_pool_id
-                ),
-                timeout=actual_timeout
+                asyncio.to_thread(client.describe_user_pool, UserPoolId=user_pool_id),
+                timeout=actual_timeout,
             )
 
             response_time = (time.time() - start_time) * 1000
@@ -257,11 +257,8 @@ class ServiceHealthChecker:
             # Test connectivity by describing table
             actual_timeout = timeout or self.timeout
             response = await asyncio.wait_for(
-                asyncio.to_thread(
-                    client.describe_table,
-                    TableName=table_name
-                ),
-                timeout=actual_timeout
+                asyncio.to_thread(client.describe_table, TableName=table_name),
+                timeout=actual_timeout,
             )
 
             response_time = (time.time() - start_time) * 1000
@@ -402,11 +399,8 @@ class ServiceHealthChecker:
             # Test connectivity by getting bucket location
             actual_timeout = timeout or self.timeout
             response = await asyncio.wait_for(
-                asyncio.to_thread(
-                    client.head_bucket,
-                    Bucket=bucket_name
-                ),
-                timeout=actual_timeout
+                asyncio.to_thread(client.head_bucket, Bucket=bucket_name),
+                timeout=actual_timeout,
             )
 
             response_time = (time.time() - start_time) * 1000
@@ -490,11 +484,11 @@ class ServiceHealthChecker:
         skip_services: set[str] | None = None,
     ) -> dict[str, HealthCheckResult]:
         """Check health of all configured services.
-        
+
         Args:
             config: Application configuration
             skip_services: Set of service names to skip
-            
+
         Returns:
             Dictionary of service names to health check results
         """
@@ -505,7 +499,9 @@ class ServiceHealthChecker:
         service_requirements = config.get_service_requirements()
 
         # Check Cognito
-        if "cognito" not in skip_services and service_requirements.get("cognito", False):
+        if "cognito" not in skip_services and service_requirements.get(
+            "cognito", False
+        ):
             results["cognito"] = await self.check_cognito_health(
                 region=config.cognito.region or config.aws.region,
                 user_pool_id=config.cognito.user_pool_id,
@@ -520,7 +516,9 @@ class ServiceHealthChecker:
             )
 
         # Check DynamoDB
-        if "dynamodb" not in skip_services and service_requirements.get("dynamodb", False):
+        if "dynamodb" not in skip_services and service_requirements.get(
+            "dynamodb", False
+        ):
             results["dynamodb"] = await self.check_dynamodb_health(
                 table_name=config.dynamodb.table_name,
                 region=config.aws.region,
@@ -559,7 +557,9 @@ class ServiceHealthChecker:
 
         return results
 
-    def get_overall_health(self, results: dict[str, HealthCheckResult]) -> ServiceStatus:
+    def get_overall_health(
+        self, results: dict[str, HealthCheckResult]
+    ) -> ServiceStatus:
         """Determine overall system health from individual service results."""
         if not results:
             return ServiceStatus.UNKNOWN

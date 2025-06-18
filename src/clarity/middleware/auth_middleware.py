@@ -13,6 +13,7 @@ from typing import TYPE_CHECKING, Any, cast
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 from starlette.responses import Response
+from starlette.types import ASGIApp
 
 from clarity.auth.aws_auth_provider import CognitoAuthProvider
 from clarity.auth.modal_auth_fix import set_user_context
@@ -20,7 +21,7 @@ from clarity.models.auth import AuthError, UserContext
 from clarity.services.dynamodb_service import DynamoDBService
 
 if TYPE_CHECKING:
-    from starlette.types import ASGIApp
+    pass  # Only for type stubs now
 
 logger = logging.getLogger(__name__)
 

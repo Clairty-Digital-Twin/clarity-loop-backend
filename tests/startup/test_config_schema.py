@@ -122,7 +122,9 @@ class TestClarityConfig:
                 "should_fail": True,
             },
             {
-                "env": {"CORS_ALLOWED_ORIGINS": "not-a-url,also-not-a-url"},  # Invalid URLs
+                "env": {
+                    "CORS_ALLOWED_ORIGINS": "not-a-url,also-not-a-url"
+                },  # Invalid URLs
                 "should_fail": True,
             },
         ]

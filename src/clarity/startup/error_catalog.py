@@ -12,6 +12,7 @@ from typing import Dict, List, Optional
 
 class ErrorCategory(str, Enum):
     """Error categories for organization."""
+
     CONFIGURATION = "configuration"
     CREDENTIALS = "credentials"
     NETWORKING = "networking"
@@ -23,15 +24,17 @@ class ErrorCategory(str, Enum):
 
 class ErrorSeverity(str, Enum):
     """Error severity levels."""
+
     CRITICAL = "critical"  # Prevents startup
-    HIGH = "high"         # Major functionality affected
-    MEDIUM = "medium"     # Some functionality affected
-    LOW = "low"          # Minor issues or warnings
+    HIGH = "high"  # Major functionality affected
+    MEDIUM = "medium"  # Some functionality affected
+    LOW = "low"  # Minor issues or warnings
 
 
 @dataclass
 class ErrorSolution:
     """Suggested solution for an error."""
+
     description: str
     steps: list[str]
     documentation_links: list[str] = None
@@ -44,6 +47,7 @@ class ErrorSolution:
 @dataclass
 class StartupErrorInfo:
     """Comprehensive error information."""
+
     code: str
     title: str
     description: str
@@ -88,7 +92,7 @@ class StartupErrorCatalog:
                         "Set the variable in your environment or .env file",
                         "Verify the variable value is not empty",
                         "Restart the application",
-                    ]
+                    ],
                 ),
                 ErrorSolution(
                     description="Use SKIP_EXTERNAL_SERVICES for development",
@@ -96,9 +100,9 @@ class StartupErrorCatalog:
                         "Set SKIP_EXTERNAL_SERVICES=true in development",
                         "This will use mock services instead of real ones",
                         "Only use this for development/testing",
-                    ]
+                    ],
                 ),
-            ]
+            ],
         )
 
         errors["CONFIG_002"] = StartupErrorInfo(
@@ -121,9 +125,9 @@ class StartupErrorCatalog:
                         "Refer to the configuration schema for valid formats",
                         "Update the environment variable with a valid value",
                         "Restart the application",
-                    ]
+                    ],
                 ),
-            ]
+            ],
         )
 
         errors["CONFIG_003"] = StartupErrorInfo(
@@ -145,9 +149,9 @@ class StartupErrorCatalog:
                         "Configure specific CORS origins (no wildcards)",
                         "Use production-grade credentials",
                         "Enable all security features",
-                    ]
+                    ],
                 ),
-            ]
+            ],
         )
 
         # Credential Errors
@@ -171,7 +175,7 @@ class StartupErrorCatalog:
                         "For local: Set AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY",
                         "For local: Run 'aws configure' to set up credentials",
                         "Verify credentials with 'aws sts get-caller-identity'",
-                    ]
+                    ],
                 ),
                 ErrorSolution(
                     description="Use development mode with mock services",
@@ -179,9 +183,9 @@ class StartupErrorCatalog:
                         "Set SKIP_EXTERNAL_SERVICES=true",
                         "Set ENVIRONMENT=development",
                         "This will use mock services instead of AWS",
-                    ]
+                    ],
                 ),
-            ]
+            ],
         )
 
         errors["CRED_002"] = StartupErrorInfo(
@@ -207,9 +211,9 @@ class StartupErrorCatalog:
                     ],
                     documentation_links=[
                         "https://docs.aws.amazon.com/IAM/latest/UserGuide/troubleshoot_access-denied.html"
-                    ]
+                    ],
                 ),
-            ]
+            ],
         )
 
         # Service Connectivity Errors
@@ -234,7 +238,7 @@ class StartupErrorCatalog:
                         "Verify DNS resolution",
                         "Check firewall rules",
                         "Increase timeout if needed",
-                    ]
+                    ],
                 ),
                 ErrorSolution(
                     description="Enable graceful degradation",
@@ -242,9 +246,9 @@ class StartupErrorCatalog:
                         "Set SKIP_EXTERNAL_SERVICES=true temporarily",
                         "Use mock services until connectivity is restored",
                         "Monitor service status pages",
-                    ]
+                    ],
                 ),
-            ]
+            ],
         )
 
         # Resource Errors
@@ -269,7 +273,7 @@ class StartupErrorCatalog:
                         "Ensure resource is in the correct region",
                         "Create resource if it doesn't exist",
                         "Check cross-account permissions if applicable",
-                    ]
+                    ],
                 ),
                 ErrorSolution(
                     description="Use deployment scripts",
@@ -277,9 +281,9 @@ class StartupErrorCatalog:
                         "Run infrastructure deployment scripts",
                         "Use terraform or CloudFormation templates",
                         "Verify all resources are created",
-                    ]
+                    ],
                 ),
-            ]
+            ],
         )
 
         errors["RES_002"] = StartupErrorInfo(
@@ -302,9 +306,9 @@ class StartupErrorCatalog:
                         "Wait for table to reach ACTIVE state",
                         "Monitor CloudWatch metrics",
                         "Increase startup timeout if needed",
-                    ]
+                    ],
                 ),
-            ]
+            ],
         )
 
         # Dependency Errors
@@ -328,7 +332,7 @@ class StartupErrorCatalog:
                         "Check dependency health endpoints",
                         "Verify network connectivity to dependency",
                         "Check for configuration mismatches",
-                    ]
+                    ],
                 ),
                 ErrorSolution(
                     description="Enable graceful degradation",
@@ -336,9 +340,9 @@ class StartupErrorCatalog:
                         "Configure circuit breakers",
                         "Use fallback mechanisms",
                         "Enable mock services temporarily",
-                    ]
+                    ],
                 ),
-            ]
+            ],
         )
 
         # Environment Errors
@@ -362,9 +366,9 @@ class StartupErrorCatalog:
                         "Check environment-specific configurations",
                         "Use appropriate configuration for each environment",
                         "Validate configuration against environment requirements",
-                    ]
+                    ],
                 ),
-            ]
+            ],
         )
 
         return errors
@@ -373,11 +377,15 @@ class StartupErrorCatalog:
         """Get error information by code."""
         return self.errors.get(error_code)
 
-    def find_errors_by_category(self, category: ErrorCategory) -> list[StartupErrorInfo]:
+    def find_errors_by_category(
+        self, category: ErrorCategory
+    ) -> list[StartupErrorInfo]:
         """Find all errors in a specific category."""
         return [error for error in self.errors.values() if error.category == category]
 
-    def find_errors_by_severity(self, severity: ErrorSeverity) -> list[StartupErrorInfo]:
+    def find_errors_by_severity(
+        self, severity: ErrorSeverity
+    ) -> list[StartupErrorInfo]:
         """Find all errors with specific severity."""
         return [error for error in self.errors.values() if error.severity == severity]
 
@@ -386,21 +394,34 @@ class StartupErrorCatalog:
         error_message_lower = error_message.lower()
 
         # Simple keyword matching for error categorization
-        if "credentials" in error_message_lower or "unauthorized" in error_message_lower:
+        if (
+            "credentials" in error_message_lower
+            or "unauthorized" in error_message_lower
+        ):
             return "CRED_001"
-        if "not found" in error_message_lower and ("table" in error_message_lower or "bucket" in error_message_lower):
+        if "not found" in error_message_lower and (
+            "table" in error_message_lower or "bucket" in error_message_lower
+        ):
             return "RES_001"
         if "timeout" in error_message_lower:
             return "NET_001"
-        if "configuration" in error_message_lower or "environment" in error_message_lower:
+        if (
+            "configuration" in error_message_lower
+            or "environment" in error_message_lower
+        ):
             return "CONFIG_001"
-        if "permission" in error_message_lower or "access denied" in error_message_lower:
+        if (
+            "permission" in error_message_lower
+            or "access denied" in error_message_lower
+        ):
             return "CRED_002"
         if "table status" in error_message_lower:
             return "RES_002"
         return None
 
-    def format_error_help(self, error_code: str, context: dict[str, str] | None = None) -> str:
+    def format_error_help(
+        self, error_code: str, context: dict[str, str] | None = None
+    ) -> str:
         """Format comprehensive error help message."""
         error_info = self.get_error_info(error_code)
         if not error_info:

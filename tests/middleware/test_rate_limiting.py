@@ -2,7 +2,7 @@
 
 Tests various rate limiting scenarios including:
 - Per-IP rate limiting
-- Per-user rate limiting  
+- Per-user rate limiting
 - Rate limit headers
 - Different endpoint limits
 - Error handling
@@ -46,10 +46,7 @@ def mock_request():
 @pytest.fixture
 def authenticated_request(mock_request):
     """Create a mock authenticated request."""
-    mock_request.state.user = {
-        "uid": "user123",
-        "email": "test@example.com"
-    }
+    mock_request.state.user = {"uid": "user123", "email": "test@example.com"}
     return mock_request
 
 
@@ -130,6 +127,7 @@ class TestRateLimitExceededHandler:
 
         # Check response body
         import json
+
         body = json.loads(response.body)
         assert body["type"] == "rate_limit_exceeded"
         assert body["title"] == "Too Many Requests"

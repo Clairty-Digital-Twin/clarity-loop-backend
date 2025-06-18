@@ -28,14 +28,14 @@ def custom_openapi(app: FastAPI) -> dict[str, Any]:
             "type": "http",
             "scheme": "bearer",
             "bearerFormat": "JWT",
-            "description": "JWT Bearer token authentication. Get token from /api/v1/auth/login"
+            "description": "JWT Bearer token authentication. Get token from /api/v1/auth/login",
         },
         "ApiKeyAuth": {
             "type": "apiKey",
             "in": "header",
             "name": "X-API-Key",
-            "description": "API Key authentication for service-to-service communication"
-        }
+            "description": "API Key authentication for service-to-service communication",
+        },
     }
 
     # Add global security (can be overridden per endpoint)
@@ -54,20 +54,20 @@ def custom_openapi(app: FastAPI) -> dict[str, Any]:
             "error": {
                 "type": "string",
                 "description": "Error message",
-                "example": "Invalid credentials"
+                "example": "Invalid credentials",
             },
             "code": {
                 "type": "string",
                 "description": "Error code",
-                "example": "AUTH_001"
+                "example": "AUTH_001",
             },
             "details": {
                 "type": "object",
                 "description": "Additional error details",
-                "additionalProperties": True
-            }
+                "additionalProperties": True,
+            },
         },
-        "required": ["error"]
+        "required": ["error"],
     }
 
     # Add paginated response schema
@@ -77,25 +77,25 @@ def custom_openapi(app: FastAPI) -> dict[str, Any]:
             "total": {
                 "type": "integer",
                 "description": "Total number of items",
-                "example": 100
+                "example": 100,
             },
             "page": {
                 "type": "integer",
                 "description": "Current page number",
-                "example": 1
+                "example": 1,
             },
             "per_page": {
                 "type": "integer",
                 "description": "Items per page",
-                "example": 20
+                "example": 20,
             },
             "total_pages": {
                 "type": "integer",
                 "description": "Total number of pages",
-                "example": 5
-            }
+                "example": 5,
+            },
         },
-        "required": ["total", "page", "per_page", "total_pages"]
+        "required": ["total", "page", "per_page", "total_pages"],
     }
 
     # Process all paths to add common error responses and fix issues
@@ -106,26 +106,32 @@ def custom_openapi(app: FastAPI) -> dict[str, Any]:
 
             # Add operationId if missing
             if "operationId" not in operation:
-                operation["operationId"] = f"{method}_{path.replace('/', '_').strip('_')}"
+                operation["operationId"] = (
+                    f"{method}_{path.replace('/', '_').strip('_')}"
+                )
 
             # Add common error responses
             if "responses" not in operation:
                 operation["responses"] = {}
 
             # Add 401 for authenticated endpoints
-            if path not in ['/', '/health', '/metrics'] and not path.startswith('/api/v1/auth/'):
+            if path not in ["/", "/health", "/metrics"] and not path.startswith(
+                "/api/v1/auth/"
+            ):
                 if "401" not in operation["responses"]:
                     operation["responses"]["401"] = {
                         "description": "Unauthorized - Invalid or missing authentication",
                         "content": {
                             "application/json": {
-                                "schema": {"$ref": "#/components/schemas/ErrorResponse"},
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                },
                                 "example": {
                                     "error": "Invalid or expired token",
-                                    "code": "AUTH_001"
-                                }
+                                    "code": "AUTH_001",
+                                },
                             }
-                        }
+                        },
                     }
 
                 if "403" not in operation["responses"]:
@@ -133,13 +139,15 @@ def custom_openapi(app: FastAPI) -> dict[str, Any]:
                         "description": "Forbidden - Insufficient permissions",
                         "content": {
                             "application/json": {
-                                "schema": {"$ref": "#/components/schemas/ErrorResponse"},
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                },
                                 "example": {
                                     "error": "Insufficient permissions for this operation",
-                                    "code": "AUTH_002"
-                                }
+                                    "code": "AUTH_002",
+                                },
                             }
-                        }
+                        },
                     }
 
             # Add 500 for all endpoints
@@ -151,14 +159,21 @@ def custom_openapi(app: FastAPI) -> dict[str, Any]:
                             "schema": {"$ref": "#/components/schemas/ErrorResponse"},
                             "example": {
                                 "error": "An unexpected error occurred",
-                                "code": "INTERNAL_001"
-                            }
+                                "code": "INTERNAL_001",
+                            },
                         }
-                    }
+                    },
                 }
 
             # Set security for endpoints
-            if path in ['/', '/health', '/metrics', '/docs', '/redoc', '/openapi.json'] or path.startswith('/api/v1/auth/'):
+            if path in [
+                "/",
+                "/health",
+                "/metrics",
+                "/docs",
+                "/redoc",
+                "/openapi.json",
+            ] or path.startswith("/api/v1/auth/"):
                 # Public endpoints
                 operation["security"] = []
             elif "security" not in operation:

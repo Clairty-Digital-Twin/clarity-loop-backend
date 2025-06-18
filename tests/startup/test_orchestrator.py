@@ -83,9 +83,15 @@ class TestStartupOrchestrator:
             ),
         }
 
-        with patch.dict(os.environ, env_vars, clear=True), \
-             patch.object(self.orchestrator.health_checker, "check_all_services") as mock_check, \
-             patch.object(self.orchestrator.health_checker, "get_overall_health") as mock_overall:
+        with (
+            patch.dict(os.environ, env_vars, clear=True),
+            patch.object(
+                self.orchestrator.health_checker, "check_all_services"
+            ) as mock_check,
+            patch.object(
+                self.orchestrator.health_checker, "get_overall_health"
+            ) as mock_overall,
+        ):
 
             mock_check.return_value = mock_health_results
             mock_overall.return_value = ServiceStatus.UNHEALTHY
@@ -140,9 +146,15 @@ class TestStartupOrchestrator:
             ),
         }
 
-        with patch.dict(os.environ, env_vars, clear=True), \
-             patch.object(self.orchestrator.health_checker, "check_all_services") as mock_check, \
-             patch.object(self.orchestrator.health_checker, "get_overall_health") as mock_overall:
+        with (
+            patch.dict(os.environ, env_vars, clear=True),
+            patch.object(
+                self.orchestrator.health_checker, "check_all_services"
+            ) as mock_check,
+            patch.object(
+                self.orchestrator.health_checker, "get_overall_health"
+            ) as mock_overall,
+        ):
 
             mock_check.return_value = mock_health_results
             mock_overall.return_value = ServiceStatus.DEGRADED
@@ -171,8 +183,14 @@ class TestStartupOrchestrator:
             await asyncio.sleep(1.0)  # Longer than timeout
             return {}
 
-        with patch.dict(os.environ, env_vars, clear=True), \
-             patch.object(timeout_orchestrator.health_checker, "check_all_services", side_effect=slow_health_check):
+        with (
+            patch.dict(os.environ, env_vars, clear=True),
+            patch.object(
+                timeout_orchestrator.health_checker,
+                "check_all_services",
+                side_effect=slow_health_check,
+            ),
+        ):
 
             success, config = await timeout_orchestrator.orchestrate_startup()
 
@@ -199,9 +217,15 @@ class TestStartupOrchestrator:
             ),
         }
 
-        with patch.dict(os.environ, env_vars, clear=True), \
-             patch.object(skip_orchestrator.health_checker, "check_all_services") as mock_check, \
-             patch.object(skip_orchestrator.health_checker, "get_overall_health") as mock_overall:
+        with (
+            patch.dict(os.environ, env_vars, clear=True),
+            patch.object(
+                skip_orchestrator.health_checker, "check_all_services"
+            ) as mock_check,
+            patch.object(
+                skip_orchestrator.health_checker, "get_overall_health"
+            ) as mock_overall,
+        ):
 
             mock_check.return_value = mock_health_results
             mock_overall.return_value = ServiceStatus.HEALTHY
@@ -256,7 +280,7 @@ class TestStartupOrchestrator:
         env_vars = {
             "ENVIRONMENT": "production",
             "SECRET_KEY": "dev-secret-key",  # Invalid for production
-            "CORS_ALLOWED_ORIGINS": "*",    # Invalid for production
+            "CORS_ALLOWED_ORIGINS": "*",  # Invalid for production
         }
 
         with patch.dict(os.environ, env_vars, clear=True):
@@ -276,8 +300,10 @@ class TestStartupOrchestrator:
             "SKIP_EXTERNAL_SERVICES": "true",
         }
 
-        with patch.dict(os.environ, env_vars, clear=True), \
-             patch("clarity.core.container_aws.initialize_container") as mock_init:
+        with (
+            patch.dict(os.environ, env_vars, clear=True),
+            patch("clarity.core.container_aws.initialize_container") as mock_init,
+        ):
 
             mock_container = Mock()
             mock_init.return_value = mock_container
@@ -299,8 +325,10 @@ class TestStartupOrchestrator:
             "SKIP_EXTERNAL_SERVICES": "true",
         }
 
-        with patch.dict(os.environ, env_vars, clear=True), \
-             patch("clarity.core.container_aws.initialize_container") as mock_init:
+        with (
+            patch.dict(os.environ, env_vars, clear=True),
+            patch("clarity.core.container_aws.initialize_container") as mock_init,
+        ):
 
             mock_init.side_effect = Exception("Container initialization failed")
 
@@ -350,7 +378,7 @@ class TestStartupError:
             details={
                 "missing_vars": ["SECRET_KEY", "COGNITO_USER_POOL_ID"],
                 "environment": "production",
-            }
+            },
         )
 
         assert str(error) == "Configuration validation failed"

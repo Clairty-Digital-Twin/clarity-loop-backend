@@ -26,8 +26,7 @@ if TYPE_CHECKING:
 
 # Configure logging early
 logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
@@ -38,14 +37,16 @@ _startup_successful = False
 
 async def bulletproof_startup() -> tuple[bool, ClarityConfig | None]:
     """Execute bulletproof startup sequence.
-    
+
     Returns:
         Tuple of (success, config). Config is None if startup fails.
     """
     global _app_config, _startup_successful
 
     # Check for dry-run mode
-    dry_run = "--dry-run" in sys.argv or os.getenv("STARTUP_DRY_RUN", "").lower() == "true"
+    dry_run = (
+        "--dry-run" in sys.argv or os.getenv("STARTUP_DRY_RUN", "").lower() == "true"
+    )
 
     # Create startup orchestrator
     reporter = StartupProgressReporter()
@@ -81,6 +82,7 @@ async def bulletproof_startup() -> tuple[bool, ClarityConfig | None]:
 
         # Print error help if possible
         from clarity.startup.error_catalog import error_catalog
+
         suggested_code = error_catalog.suggest_error_code(str(e))
         if suggested_code:
             print(error_catalog.format_error_help(suggested_code))
@@ -106,6 +108,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     # Initialize container with validated config
     try:
         from clarity.core.container_aws import initialize_container
+
         await initialize_container(config)
         logger.info("✅ Dependency container initialized")
     except Exception as e:
@@ -128,11 +131,23 @@ def create_bulletproof_app() -> FastAPI:
         version="0.3.0",
         lifespan=lifespan,
         openapi_tags=[
-            {"name": "authentication", "description": "User authentication and authorization"},
-            {"name": "health-data", "description": "Health data management and retrieval"},
+            {
+                "name": "authentication",
+                "description": "User authentication and authorization",
+            },
+            {
+                "name": "health-data",
+                "description": "Health data management and retrieval",
+            },
             {"name": "healthkit", "description": "Apple HealthKit data integration"},
-            {"name": "pat-analysis", "description": "Physical Activity Test (PAT) analysis"},
-            {"name": "ai-insights", "description": "AI-powered health insights generation"},
+            {
+                "name": "pat-analysis",
+                "description": "Physical Activity Test (PAT) analysis",
+            },
+            {
+                "name": "ai-insights",
+                "description": "AI-powered health insights generation",
+            },
             {"name": "metrics", "description": "Health metrics and statistics"},
             {"name": "websocket", "description": "WebSocket real-time communication"},
             {"name": "debug", "description": "Debug endpoints (development only)"},
@@ -141,22 +156,19 @@ def create_bulletproof_app() -> FastAPI:
         servers=[
             {
                 "url": "http://clarity-alb-1762715656.us-east-1.elb.amazonaws.com",
-                "description": "Production server (AWS ALB)"
+                "description": "Production server (AWS ALB)",
             },
-            {
-                "url": "http://localhost:8000",
-                "description": "Local development server"
-            }
+            {"url": "http://localhost:8000", "description": "Local development server"},
         ],
         contact={
             "name": "CLARITY Support",
             "email": "support@clarity.novamindnyc.com",
-            "url": "https://clarity.novamindnyc.com"
+            "url": "https://clarity.novamindnyc.com",
         },
         license_info={
             "name": "Proprietary",
-            "url": "https://clarity.novamindnyc.com/license"
-        }
+            "url": "https://clarity.novamindnyc.com/license",
+        },
     )
 
     # Configure middleware after startup validation
@@ -173,13 +185,19 @@ def create_bulletproof_app() -> FastAPI:
             allow_origins=_app_config.security.cors_origins,
             allow_credentials=True,
             allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-            allow_headers=["Authorization", "Content-Type", "Accept", "X-Requested-With"],
+            allow_headers=[
+                "Authorization",
+                "Content-Type",
+                "Accept",
+                "X-Requested-With",
+            ],
             max_age=86400,
         )
         logger.info("✅ CORS middleware configured")
 
         # Add request size limiter middleware
         from clarity.middleware.request_size_limiter import RequestSizeLimiterMiddleware
+
         app.add_middleware(
             RequestSizeLimiterMiddleware,
             max_request_size=_app_config.security.max_request_size,
@@ -191,6 +209,7 @@ def create_bulletproof_app() -> FastAPI:
 
         # Add security headers middleware
         from clarity.middleware.security_headers import SecurityHeadersMiddleware
+
         app.add_middleware(
             SecurityHeadersMiddleware,
             enable_hsts=True,
@@ -202,11 +221,13 @@ def create_bulletproof_app() -> FastAPI:
         # Add authentication middleware if enabled
         if _app_config.enable_auth:
             from clarity.middleware.auth_middleware import CognitoAuthMiddleware
+
             app.add_middleware(CognitoAuthMiddleware)
             logger.info("✅ Authentication middleware configured")
 
         # Add rate limiting middleware
         from clarity.middleware.rate_limiting import setup_rate_limiting
+
         redis_url = os.getenv("REDIS_URL")
         setup_rate_limiting(app, redis_url=redis_url)
         logger.info("✅ Rate limiting middleware configured")
@@ -214,6 +235,7 @@ def create_bulletproof_app() -> FastAPI:
         # Add request logging in development
         if _app_config.is_development():
             from clarity.middleware.request_logger import RequestLoggingMiddleware
+
             app.add_middleware(RequestLoggingMiddleware)
             logger.info("✅ Request logging middleware configured")
 
@@ -251,7 +273,9 @@ def create_bulletproof_app() -> FastAPI:
             "bulletproof_startup": _startup_successful,
             "features": {
                 "cognito_auth": _app_config.enable_auth if _app_config else False,
-                "mock_services": _app_config.should_use_mock_services() if _app_config else True,
+                "mock_services": (
+                    _app_config.should_use_mock_services() if _app_config else True
+                ),
                 "aws_region": _app_config.aws.region if _app_config else "unknown",
                 "startup_validation": True,
             },

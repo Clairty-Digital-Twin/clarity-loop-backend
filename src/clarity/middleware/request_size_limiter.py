@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 
 class RequestSizeLimiterMiddleware(BaseHTTPMiddleware):
     """Middleware to enforce request body size limits for DoS protection.
-    
+
     Prevents attackers from overwhelming the server with massive request payloads.
     Configurable limits based on content type and environment settings.
     """
@@ -30,16 +30,16 @@ class RequestSizeLimiterMiddleware(BaseHTTPMiddleware):
         self,
         app,
         max_request_size: int = 10 * 1024 * 1024,  # 10MB default
-        max_json_size: int = 5 * 1024 * 1024,      # 5MB for JSON payloads
-        max_upload_size: int = 50 * 1024 * 1024,   # 50MB for file uploads
-        max_form_size: int = 1024 * 1024,          # 1MB for form data
+        max_json_size: int = 5 * 1024 * 1024,  # 5MB for JSON payloads
+        max_upload_size: int = 50 * 1024 * 1024,  # 50MB for file uploads
+        max_form_size: int = 1024 * 1024,  # 1MB for form data
     ) -> None:
         """Initialize request size limiter.
-        
+
         Args:
             app: FastAPI application
             max_request_size: Default maximum request size in bytes
-            max_json_size: Maximum size for JSON payloads in bytes  
+            max_json_size: Maximum size for JSON payloads in bytes
             max_upload_size: Maximum size for file uploads in bytes
             max_form_size: Maximum size for form data in bytes
         """
@@ -50,17 +50,28 @@ class RequestSizeLimiterMiddleware(BaseHTTPMiddleware):
         self.max_form_size = max_form_size
 
         # Log configuration for security audit
-        logger.info("🔒 Request Size Limiter: Default max size: %d MB", max_request_size // (1024 * 1024))
-        logger.info("🔒 Request Size Limiter: JSON max size: %d MB", max_json_size // (1024 * 1024))
-        logger.info("🔒 Request Size Limiter: Upload max size: %d MB", max_upload_size // (1024 * 1024))
-        logger.info("🔒 Request Size Limiter: Form max size: %d KB", max_form_size // 1024)
+        logger.info(
+            "🔒 Request Size Limiter: Default max size: %d MB",
+            max_request_size // (1024 * 1024),
+        )
+        logger.info(
+            "🔒 Request Size Limiter: JSON max size: %d MB",
+            max_json_size // (1024 * 1024),
+        )
+        logger.info(
+            "🔒 Request Size Limiter: Upload max size: %d MB",
+            max_upload_size // (1024 * 1024),
+        )
+        logger.info(
+            "🔒 Request Size Limiter: Form max size: %d KB", max_form_size // 1024
+        )
 
     def _get_size_limit(self, request: Request) -> int:
         """Determine the appropriate size limit based on request content type.
-        
+
         Args:
             request: Incoming HTTP request
-            
+
         Returns:
             Maximum allowed size in bytes for this request type
         """
@@ -82,11 +93,11 @@ class RequestSizeLimiterMiddleware(BaseHTTPMiddleware):
         self, request: Request, call_next: RequestResponseEndpoint
     ) -> Response:
         """Check request size before processing.
-        
+
         Args:
             request: Incoming HTTP request
             call_next: Next middleware/endpoint in chain
-            
+
         Returns:
             HTTP response (413 if payload too large, otherwise normal response)
         """
@@ -109,7 +120,10 @@ class RequestSizeLimiterMiddleware(BaseHTTPMiddleware):
                         # Log security incident
                         logger.warning(
                             "🚨 Request size limit exceeded: %.2f MB > %.2f MB limit for %s %s",
-                            size_mb, limit_mb, request.method, request.url.path
+                            size_mb,
+                            limit_mb,
+                            request.method,
+                            request.url.path,
                         )
 
                         # Return 413 Payload Too Large directly as JSONResponse
@@ -119,10 +133,12 @@ class RequestSizeLimiterMiddleware(BaseHTTPMiddleware):
                                 "error": "Request payload too large",
                                 "max_size_mb": round(limit_mb, 2),
                                 "received_size_mb": round(size_mb, 2),
-                                "content_type": request.headers.get("content-type", "unknown"),
-                                "message": f"Request size {size_mb:.1f}MB exceeds {limit_mb:.1f}MB limit"
+                                "content_type": request.headers.get(
+                                    "content-type", "unknown"
+                                ),
+                                "message": f"Request size {size_mb:.1f}MB exceeds {limit_mb:.1f}MB limit",
                             },
-                            headers={"Retry-After": "3600"}  # Suggest retry in 1 hour
+                            headers={"Retry-After": "3600"},  # Suggest retry in 1 hour
                         )
 
                 except ValueError:

@@ -23,6 +23,7 @@ if __name__ == "__main__":
 
     # Set permissions for script
     import stat
+
     script_path = Path(__file__)
     script_path.chmod(script_path.stat().st_mode | stat.S_IEXEC)
 

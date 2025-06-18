@@ -34,7 +34,7 @@ class AccountLockoutError(AuthenticationError):
 class AccountLockoutService:
     """Account lockout service with Redis persistence and in-memory fallback."""
 
-    _PREFIX = "lockout:v1:"          # key namespace
+    _PREFIX = "lockout:v1:"  # key namespace
 
     def __init__(
         self,
@@ -50,7 +50,9 @@ class AccountLockoutService:
 
         logger.info(
             "🔒 AccountLockoutService initialized: max_attempts=%d, lockout_duration=%s, persistence=%s",
-            self.max_attempts, lockout_duration, "Redis" if self._r else "in-memory"
+            self.max_attempts,
+            lockout_duration,
+            "Redis" if self._r else "in-memory",
         )
 
     # ---------- public API ----------
@@ -117,18 +119,21 @@ class AccountLockoutService:
         """Alias for is_locked for backward compatibility."""
         return await self.is_locked(username)
 
-    async def record_failed_attempt(self, username: str, ip_address: str | None = None) -> None:
+    async def record_failed_attempt(
+        self, username: str, ip_address: str | None = None
+    ) -> None:
         """Alias for register_failure for backward compatibility."""
         await self.register_failure(username)
         if await self.is_locked(username):
             logger.warning(
                 "🔒 Account locked: username=%s, max_attempts=%d, ip=%s",
-                username, self.max_attempts, ip_address
+                username,
+                self.max_attempts,
+                ip_address,
             )
         else:
             logger.info(
-                "🚨 Failed attempt recorded: username=%s, ip=%s",
-                username, ip_address
+                "🚨 Failed attempt recorded: username=%s, ip=%s", username, ip_address
             )
 
     async def reset_attempts(self, username: str) -> None:

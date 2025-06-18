@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 
 class SecurityHeadersMiddleware(BaseHTTPMiddleware):
     """Middleware to add security headers to all responses.
-    
+
     Implements industry-standard security headers to protect against common attacks:
     - XSS attacks
     - Clickjacking
@@ -42,7 +42,7 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         cache_control: str = "no-store, private",
     ) -> None:
         """Initialize security headers middleware.
-        
+
         Args:
             app: The ASGI application
             enable_hsts: Whether to enable HTTP Strict Transport Security
@@ -64,16 +64,16 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         logger.info(
             "SecurityHeadersMiddleware initialized - HSTS: %s, CSP: %s",
             self.enable_hsts,
-            self.enable_csp
+            self.enable_csp,
         )
 
     async def dispatch(self, request: Request, call_next) -> Response:
         """Process the request and add security headers to the response.
-        
+
         Args:
             request: The incoming request
             call_next: The next middleware or endpoint handler
-            
+
         Returns:
             Response with security headers added
         """
@@ -87,7 +87,7 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
 
     def _add_security_headers(self, response: Response) -> None:
         """Add security headers to the response.
-        
+
         Args:
             response: The response object to add headers to
         """
@@ -133,13 +133,13 @@ def setup_security_headers(
     cache_control: str = "no-store, private",
 ) -> SecurityHeadersMiddleware:
     """Setup security headers middleware with sensible defaults.
-    
+
     Args:
         app: The ASGI application
         enable_hsts: Whether to enable HSTS (default: True)
         enable_csp: Whether to enable CSP (default: True)
         cache_control: Cache control policy (default: no-store, private)
-        
+
     Returns:
         Configured SecurityHeadersMiddleware instance
     """

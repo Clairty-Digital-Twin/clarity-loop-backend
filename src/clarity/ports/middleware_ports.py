@@ -8,11 +8,11 @@ Business logic layer depends on this abstraction, not concrete implementations.
 
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING
+from collections.abc import Awaitable
+from fastapi import Request, Response
 
 if TYPE_CHECKING:
-    from collections.abc import Awaitable
-
-    from fastapi import Request, Response
+    pass  # Only for type stubs now
 
 
 class IMiddleware(ABC):

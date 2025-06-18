@@ -8,8 +8,10 @@ from typing import TYPE_CHECKING, ParamSpec, TypeVar, cast
 
 from fastapi import HTTPException, status
 
+from clarity.models.user import User
+
 if TYPE_CHECKING:
-    from clarity.models.user import User
+    pass  # Only for type stubs now
 
 P = ParamSpec("P")
 T = TypeVar("T")
@@ -24,7 +26,7 @@ def require_auth(
         @wraps(func)
         async def wrapper(*args: P.args, **kwargs: P.kwargs) -> T:
             # Extract user from kwargs (injected by dependency)
-            user = cast("User | None", kwargs.get("current_user"))
+            user = cast(User | None, kwargs.get("current_user"))
             if not user:
                 raise HTTPException(
                     status_code=status.HTTP_401_UNAUTHORIZED,
@@ -59,7 +61,7 @@ def require_permission(
         @wraps(func)
         async def wrapper(*args: P.args, **kwargs: P.kwargs) -> T:
             # Extract user from kwargs (injected by dependency)
-            user = cast("User | None", kwargs.get("current_user"))
+            user = cast(User | None, kwargs.get("current_user"))
             if not user:
                 raise HTTPException(
                     status_code=status.HTTP_401_UNAUTHORIZED,
@@ -84,7 +86,7 @@ def require_role(
         @wraps(func)
         async def wrapper(*args: P.args, **kwargs: P.kwargs) -> T:
             # Extract user from kwargs (injected by dependency)
-            user = cast("User | None", kwargs.get("current_user"))
+            user = cast(User | None, kwargs.get("current_user"))
             if not user:
                 raise HTTPException(
                     status_code=status.HTTP_401_UNAUTHORIZED,

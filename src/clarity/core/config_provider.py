@@ -9,10 +9,11 @@ concrete implementation of IConfigProvider interface for dependency injection.
 import os
 from typing import TYPE_CHECKING
 
+from clarity.core.config_aws import MiddlewareConfig, Settings
 from clarity.ports.config_ports import IConfigProvider
 
 if TYPE_CHECKING:
-    from clarity.core.config_aws import MiddlewareConfig, Settings
+    pass  # Only for type stubs now
 
 
 class ConfigProvider(IConfigProvider):

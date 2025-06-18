@@ -19,11 +19,10 @@ from scipy.interpolate import interp1d
 import scipy.signal
 
 from clarity.core.exceptions import ProcessingError
+from clarity.integrations.healthkit import HealthDataBatch, HealthDataPoint
 
 if TYPE_CHECKING:
     import numpy.typing as npt
-
-    from clarity.integrations.healthkit import HealthDataBatch, HealthDataPoint
 
 logger = logging.getLogger(__name__)
 

@@ -24,8 +24,10 @@ from clarity.core.exceptions import (
 from clarity.models.user import User
 from clarity.ports.auth_ports import IAuthProvider
 
+from mypy_boto3_cognito_idp.type_defs import AttributeTypeTypeDef
+
 if TYPE_CHECKING:
-    from mypy_boto3_cognito_idp.type_defs import AttributeTypeTypeDef
+    pass  # Only for type stubs now
 
 logger = logging.getLogger(__name__)
 

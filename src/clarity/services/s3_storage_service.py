@@ -16,12 +16,11 @@ from typing import TYPE_CHECKING, Any
 import boto3
 from botocore.exceptions import ClientError
 
+from clarity.models.health_data import HealthDataUpload
+from clarity.ports.storage import CloudStoragePort
+
 if TYPE_CHECKING:
     from mypy_boto3_s3 import S3Client
-
-    from clarity.models.health_data import HealthDataUpload
-
-from clarity.ports.storage import CloudStoragePort
 
 # Configure logger
 logger = logging.getLogger(__name__)

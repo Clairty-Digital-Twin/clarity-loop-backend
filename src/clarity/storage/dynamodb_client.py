@@ -8,19 +8,16 @@ import logging
 from typing import TYPE_CHECKING, Any, TypeAlias
 
 import boto3
-from boto3.dynamodb.conditions import Key
+from boto3.dynamodb.conditions import ConditionBase, Key
 from botocore.exceptions import ClientError
 
 from clarity.core.exceptions import ServiceError
-from clarity.models.health_data import ProcessingStatus
+from clarity.models.health_data import HealthMetric, ProcessingStatus
 from clarity.ports.data_ports import IHealthDataRepository
 
 if TYPE_CHECKING:
-    from boto3.dynamodb.conditions import ConditionBase
     from mypy_boto3_dynamodb import DynamoDBServiceResource
     from mypy_boto3_dynamodb.service_resource import Table
-
-    from clarity.models.health_data import HealthMetric
 
 # Type aliases for clarity
 DynamoDBItem: TypeAlias = dict[str, Any]

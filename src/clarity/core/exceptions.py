@@ -20,9 +20,6 @@ from fastapi import HTTPException, Request
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 
-if TYPE_CHECKING:
-    from fastapi import Request
-
 # Module-level logger for exception handling
 logger = logging.getLogger(__name__)
 

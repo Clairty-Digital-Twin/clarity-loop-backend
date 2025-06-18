@@ -22,10 +22,7 @@ from typing import TYPE_CHECKING
 import numpy as np
 from pydantic import BaseModel, Field
 
-from clarity.models.health_data import SleepStage
-
-if TYPE_CHECKING:
-    from clarity.models.health_data import HealthMetric, SleepData
+from clarity.models.health_data import HealthMetric, SleepData, SleepStage
 
 logger = logging.getLogger(__name__)
 

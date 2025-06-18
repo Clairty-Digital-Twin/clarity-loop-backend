@@ -367,10 +367,10 @@ class ClarityConfig(BaseSettings):
         aws_config["secret_access_key"] = values.get("AWS_SECRET_ACCESS_KEY", "")
         aws_config["session_token"] = values.get("AWS_SESSION_TOKEN", "")
 
-        # Extract Cognito config
-        cognito_config["user_pool_id"] = values.get("COGNITO_USER_POOL_ID", "")
-        cognito_config["client_id"] = values.get("COGNITO_CLIENT_ID", "")
-        cognito_config["region"] = values.get("COGNITO_REGION", aws_config["region"])
+        # Extract Cognito config - check both values and env vars
+        cognito_config["user_pool_id"] = values.get("COGNITO_USER_POOL_ID") or os.getenv("COGNITO_USER_POOL_ID", "")
+        cognito_config["client_id"] = values.get("COGNITO_CLIENT_ID") or os.getenv("COGNITO_CLIENT_ID", "")
+        cognito_config["region"] = values.get("COGNITO_REGION") or os.getenv("COGNITO_REGION", aws_config["region"])
 
         # Extract DynamoDB config
         dynamodb_config["table_name"] = values.get(

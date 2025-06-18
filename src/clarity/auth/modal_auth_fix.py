@@ -9,8 +9,10 @@ This module provides a workaround using Python's contextvars for thread-local st
 import contextvars
 from typing import TYPE_CHECKING
 
+from clarity.models.auth import UserContext
+
 if TYPE_CHECKING:
-    from clarity.models.auth import UserContext
+    pass  # Only for type stubs now
 
 # Thread-local storage for user context
 _user_context: contextvars.ContextVar[UserContext | None] = contextvars.ContextVar(

@@ -10,11 +10,12 @@ import logging
 from typing import TYPE_CHECKING
 
 from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.requests import Request
+from starlette.responses import Response
+from starlette.types import ASGIApp
 
 if TYPE_CHECKING:
-    from starlette.requests import Request
-    from starlette.responses import Response
-    from starlette.types import ASGIApp, Receive, Scope, Send
+    from starlette.types import Receive, Scope, Send
 
 logger = logging.getLogger(__name__)
 

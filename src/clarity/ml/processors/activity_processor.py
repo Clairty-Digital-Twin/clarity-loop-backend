@@ -18,6 +18,7 @@ need direct answers to questions like "How many steps did I walk this week?"
 
 # removed – breaks FastAPI
 
+from collections.abc import Sequence
 from datetime import UTC, datetime
 import logging
 from typing import TYPE_CHECKING, Any
@@ -27,7 +28,7 @@ import numpy as np
 from clarity.models.health_data import ActivityData, HealthMetric
 
 if TYPE_CHECKING:
-    from collections.abc import Sequence
+    pass  # Only for type stubs now
 
 logger = logging.getLogger(__name__)
 

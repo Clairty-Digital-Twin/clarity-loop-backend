@@ -33,14 +33,13 @@ from clarity.core.constants import (
 )
 from clarity.core.exceptions import InferenceError, InferenceTimeoutError
 from clarity.core.security import create_secure_cache_key
+from clarity.core.types import LoggerProtocol
 from clarity.ml.pat_service import (
     ActigraphyAnalysis,
     ActigraphyInput,
     get_pat_service,
 )
 from clarity.utils.decorators import resilient_prediction
-
-from clarity.core.types import LoggerProtocol
 
 if TYPE_CHECKING:
     from collections.abc import Callable

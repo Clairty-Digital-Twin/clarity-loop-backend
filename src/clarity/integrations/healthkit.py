@@ -11,6 +11,7 @@ from dataclasses import asdict, dataclass
 from datetime import UTC, datetime, timedelta
 from enum import StrEnum
 import logging
+import types
 from typing import TYPE_CHECKING, Any, Self
 
 import httpx
@@ -24,7 +25,7 @@ from clarity.core.exceptions import (
 )
 
 if TYPE_CHECKING:
-    import types
+    pass  # Only for type stubs now
 
 # Configure logger
 logger = logging.getLogger(__name__)

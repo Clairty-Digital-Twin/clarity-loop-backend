@@ -7,6 +7,7 @@ zero-crash guarantee and crystal-clear error feedback.
 from __future__ import annotations
 
 import asyncio
+from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 import logging
 import os
@@ -22,7 +23,7 @@ from clarity.startup.orchestrator import StartupOrchestrator
 from clarity.startup.progress_reporter import StartupProgressReporter
 
 if TYPE_CHECKING:
-    from collections.abc import AsyncGenerator
+    pass  # Only for type stubs now
 
 # Configure logging early
 logging.basicConfig(

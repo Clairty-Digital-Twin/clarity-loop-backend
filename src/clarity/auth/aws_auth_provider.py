@@ -16,7 +16,6 @@ import urllib.request
 import boto3
 from botocore.exceptions import ClientError
 from jose import JWTError, jwt
-
 from mypy_boto3_cognito_idp import CognitoIdentityProviderClient
 
 if TYPE_CHECKING:

@@ -13,6 +13,7 @@ import boto3
 from botocore.exceptions import ClientError
 from jose import JWTError, jwk, jwt
 from jose.utils import base64url_decode
+from mypy_boto3_cognito_idp.type_defs import AttributeTypeTypeDef
 import requests
 
 from clarity.core.exceptions import (
@@ -23,8 +24,6 @@ from clarity.core.exceptions import (
 )
 from clarity.models.user import User
 from clarity.ports.auth_ports import IAuthProvider
-
-from mypy_boto3_cognito_idp.type_defs import AttributeTypeTypeDef
 
 if TYPE_CHECKING:
     pass  # Only for type stubs now

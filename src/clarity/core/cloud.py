@@ -9,7 +9,6 @@ import os
 from typing import TYPE_CHECKING
 
 import boto3
-
 from mypy_boto3_cognito_idp import CognitoIdentityProviderClient
 from mypy_boto3_dynamodb import DynamoDBServiceResource
 

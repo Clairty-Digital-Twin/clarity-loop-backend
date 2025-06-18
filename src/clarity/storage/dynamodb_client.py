@@ -10,13 +10,12 @@ from typing import TYPE_CHECKING, Any, TypeAlias
 import boto3
 from boto3.dynamodb.conditions import ConditionBase, Key
 from botocore.exceptions import ClientError
+from mypy_boto3_dynamodb import DynamoDBServiceResource
+from mypy_boto3_dynamodb.service_resource import Table
 
 from clarity.core.exceptions import ServiceError
 from clarity.models.health_data import HealthMetric, ProcessingStatus
 from clarity.ports.data_ports import IHealthDataRepository
-
-from mypy_boto3_dynamodb import DynamoDBServiceResource
-from mypy_boto3_dynamodb.service_resource import Table
 
 if TYPE_CHECKING:
     pass  # Only for type stubs now

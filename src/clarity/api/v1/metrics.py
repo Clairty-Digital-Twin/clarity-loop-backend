@@ -23,6 +23,8 @@ except ImportError:
     psutil = None
 
 
+import types
+
 from fastapi import APIRouter, Response
 from prometheus_client import (
     CONTENT_TYPE_LATEST,
@@ -33,7 +35,7 @@ from prometheus_client import (
 )
 
 if TYPE_CHECKING:
-    import types
+    pass  # Only for type stubs now
 
 logger = logging.getLogger(__name__)
 

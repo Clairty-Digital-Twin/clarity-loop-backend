@@ -17,9 +17,10 @@ from uuid import UUID
 
 import boto3
 from botocore.exceptions import ClientError
+from mypy_boto3_dynamodb.service_resource import DynamoDBServiceResource
 
 if TYPE_CHECKING:
-    from mypy_boto3_dynamodb.service_resource import DynamoDBServiceResource
+    pass  # Only for type stubs now
 
 from clarity.ports.data_ports import IHealthDataRepository
 

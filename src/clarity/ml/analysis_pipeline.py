@@ -15,11 +15,12 @@ from typing import TYPE_CHECKING, Any
 import numpy as np
 
 from clarity.ml.fusion_transformer import get_fusion_service
-from clarity.ml.pat_service import ActigraphyInput, get_pat_service
+from clarity.ml.pat_service import ActigraphyAnalysis, ActigraphyInput, get_pat_service
+from clarity.ml.processors.sleep_processor import SleepFeatures
 
 if TYPE_CHECKING:
-    from clarity.ml.pat_service import ActigraphyAnalysis
-    from clarity.ml.processors.sleep_processor import SleepFeatures
+    pass  # Only for type stubs now
+
 from clarity.ml.preprocessing import HealthDataPreprocessor
 from clarity.ml.processors.activity_processor import ActivityProcessor
 from clarity.ml.processors.cardio_processor import CardioProcessor

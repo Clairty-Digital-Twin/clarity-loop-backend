@@ -217,8 +217,13 @@ class Settings(BaseSettings):
                     self.skip_external_services,
                 )
 
-        # In production, require critical credentials
+        # In production, require critical credentials (unless skipping external services)
         elif self.environment.lower() == "production":
+            # Skip validation if external services are disabled
+            if self.skip_external_services:
+                logger.warning("⚠️ Production mode with SKIP_EXTERNAL_SERVICES=true - using mock services")
+                return self
+                
             required_for_production: list[str] = []
 
             if self.enable_auth and not self.cognito_user_pool_id:

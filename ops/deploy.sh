@@ -152,7 +152,8 @@ register_task_definition() {
     # Task definition is always in ops/ directory relative to project root
     TASK_DEF_PATH="ops/ecs-task-definition.json"
     
-    TASK_DEF_JSON=$(cat "$TASK_DEF_PATH" | sed "s|IMAGE_PLACEHOLDER|$IMAGE|g")
+    # Use jq instead of sed for reliable JSON manipulation
+    TASK_DEF_JSON=$(cat "$TASK_DEF_PATH" | jq --arg image "$IMAGE" '.containerDefinitions[0].image = $image')
     
     # Register task definition with the updated JSON
     # Write to temp file to avoid stdin issues

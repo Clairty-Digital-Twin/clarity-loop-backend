@@ -82,8 +82,8 @@ class Settings(BaseSettings):
     log_level: str = Field(default="INFO", alias="LOG_LEVEL")
     
     # CORS Security Settings - HARDENED CONFIGURATION
-    cors_allowed_origins: list[str] = Field(
-        default_factory=lambda: ["http://localhost:3000", "http://localhost:8080"],
+    cors_allowed_origins: str = Field(
+        default="http://localhost:3000,http://localhost:8080",
         alias="CORS_ALLOWED_ORIGINS",
         description="Explicitly allowed origins for CORS - no wildcards for security"
     )
@@ -275,13 +275,12 @@ class Settings(BaseSettings):
         )
         logger.info("   • DynamoDB table: %s", self.dynamodb_table_name or "Not set")
 
-    @field_validator('cors_allowed_origins', mode='before')
-    @classmethod
-    def parse_cors_origins(cls, v: Any) -> list[str]:
-        """Parse CORS origins from environment variable (comma-separated string or list)."""
-        if isinstance(v, str):
+    @property
+    def get_cors_origins(self) -> list[str]:
+        """Parse CORS origins from comma-separated string to list."""
+        if isinstance(self.cors_allowed_origins, str):
             # Split comma-separated string and strip whitespace
-            origins = [origin.strip() for origin in v.split(",") if origin.strip()]
+            origins = [origin.strip() for origin in self.cors_allowed_origins.split(",") if origin.strip()]
             
             # Security validation: no wildcards allowed
             for origin in origins:
@@ -293,18 +292,9 @@ class Settings(BaseSettings):
                     raise ValueError(msg)
             
             return origins
-        elif isinstance(v, list):
-            # Already a list - validate for wildcards
-            for origin in v:
-                if "*" in str(origin):
-                    msg = (
-                        f"Security violation: Wildcard origin '{origin}' detected. "
-                        f"CORS origins must be explicitly specified for security."
-                    )
-                    raise ValueError(msg)
-            return v
         else:
-            return v
+            # Fallback to default if not a string
+            return ["http://localhost:3000", "http://localhost:8080"]
 
     def get_middleware_config(self) -> MiddlewareConfig:
         """Get middleware configuration based on environment.

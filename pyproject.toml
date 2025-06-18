@@ -70,6 +70,7 @@ dependencies = [
     # HTTP and networking
     "httpx>=0.27.0,<0.28.0",
     "requests>=2.32.4,<3.0.0",  # Security fix: credential leaking vulnerability
+    "aiohttp>=3.10.0,<4.0.0",  # For model management HTTP client/server
     "aiofiles>=24.1.0,<25.0.0",
     "websockets>=13.1,<14.0.0",
 
@@ -170,6 +171,7 @@ test = [
 [project.scripts]
 clarity-server = "clarity.main:main"
 clarity-cli = "clarity.cli:main"
+clarity-models = "clarity.ml.models.cli:main"
 
 [project.urls]
 Homepage = "https://github.com/clarity-loop/clarity-loop-backend"

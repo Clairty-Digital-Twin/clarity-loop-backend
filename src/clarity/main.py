@@ -76,6 +76,34 @@ async def lifespan(_app: FastAPI) -> AsyncGenerator[None, None]:  # noqa: RUF029
     lockout_service = get_lockout_service()
     logger.info("✅ Account lockout service initialized")
 
+    # Initialize Progressive ML Model Loading Service
+    progressive_service = None
+    try:
+        from clarity.ml.models import get_progressive_service, ProgressiveLoadingConfig
+        
+        # Configure progressive loading based on environment
+        progressive_config = ProgressiveLoadingConfig(
+            is_production=(ENVIRONMENT == "production"),
+            is_local_dev=(ENVIRONMENT == "development"),
+            enable_efs_cache=(ENVIRONMENT == "production" and not SKIP_AWS_INIT),
+            critical_models=["pat:latest"],
+            preload_models=["pat:stable", "pat:fast"]
+        )
+        
+        progressive_service = await get_progressive_service(progressive_config)
+        
+        # Wait for critical models to be ready (non-blocking for app startup)
+        logger.info("🚀 Progressive model loading started - critical models loading...")
+        
+        # Store service in app state for access by endpoints
+        _app.state.progressive_service = progressive_service
+        
+        logger.info("✅ ML Model management system initialized")
+        
+    except Exception as e:
+        logger.error("❌ Failed to initialize ML model management: %s", str(e))
+        logger.info("🔧 Continuing without ML models - health insights may be limited")
+
     # Initialize DynamoDB table (skip if explicitly disabled or credentials unavailable)
     if SKIP_AWS_INIT:
         logger.info("🔧 AWS initialization skipped via SKIP_AWS_INIT flag")
@@ -110,6 +138,20 @@ async def lifespan(_app: FastAPI) -> AsyncGenerator[None, None]:  # noqa: RUF029
                 )
 
     yield
+
+    # Cleanup during shutdown
+    if progressive_service:
+        try:
+            # Graceful shutdown of model management
+            if hasattr(progressive_service, 'model_manager') and progressive_service.model_manager:
+                # Unload models to free memory
+                for model_id in ["pat:latest", "pat:stable", "pat:fast"]:
+                    model_parts = model_id.split(":", 1)
+                    if len(model_parts) == 2:
+                        await progressive_service.model_manager.unload_model(model_parts[0], model_parts[1])
+            logger.info("✅ ML model management shutdown completed")
+        except Exception as e:
+            logger.warning("⚠️  Error during ML model cleanup: %s", str(e))
 
     logger.info("Shutting down CLARITY backend")
 
@@ -308,8 +350,8 @@ async def root() -> dict[str, Any]:
 
 @app.get("/health")
 async def health_check() -> dict[str, Any]:
-    """Health check endpoint."""
-    return {
+    """Health check endpoint with ML model status."""
+    health_status = {
         "status": "healthy",
         "service": "clarity-backend-aws-full",
         "environment": ENVIRONMENT,
@@ -319,8 +361,28 @@ async def health_check() -> dict[str, Any]:
             "api_key_auth": bool(API_KEY),
             "dynamodb": bool(DYNAMODB_TABLE),
             "gemini_insights": bool(model),
+            "ml_models": False,
         },
     }
+    
+    # Add ML model status if available
+    if hasattr(app.state, 'progressive_service') and app.state.progressive_service:
+        try:
+            model_health = await app.state.progressive_service.health_check()
+            health_status["ml_models"] = {
+                "enabled": True,
+                "status": model_health.get("status", "unknown"),
+                "phase": model_health.get("progressive_loading", {}).get("current_phase", "unknown"),
+                "loaded_models": model_health.get("model_manager", {}).get("loaded_models", 0),
+            }
+            health_status["features"]["ml_models"] = True
+        except Exception as e:
+            health_status["ml_models"] = {
+                "enabled": False,
+                "error": str(e)
+            }
+    
+    return health_status
 
 
 # Add Prometheus metrics

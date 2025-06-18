@@ -1,0 +1,25 @@
+#!/usr/bin/env python3
+"""
+Clarity Models CLI Tool
+
+Executable wrapper for the Clarity ML model management CLI.
+"""
+
+import sys
+import os
+import asyncio
+from pathlib import Path
+
+# Add the src directory to Python path
+src_dir = Path(__file__).parent.parent / "src"
+sys.path.insert(0, str(src_dir))
+
+try:
+    from clarity.ml.models.cli import main
+except ImportError as e:
+    print(f"Error importing Clarity ML models CLI: {e}")
+    print("Make sure you're running from the project root directory.")
+    sys.exit(1)
+
+if __name__ == "__main__":
+    main()

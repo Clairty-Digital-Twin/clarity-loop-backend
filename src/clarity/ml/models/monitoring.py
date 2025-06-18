@@ -551,9 +551,10 @@ class ModelMonitoringService:
                 "service": "clarity-model-monitoring",
             }
 
-            async with aiohttp.ClientSession() as session, session.post(
-                self.config.alert_webhook_url, json=payload
-            ) as response:
+            async with (
+                aiohttp.ClientSession() as session,
+                session.post(self.config.alert_webhook_url, json=payload) as response,
+            ):
                 if response.status != 200:
                     logger.warning(f"Alert webhook failed: {response.status}")
                 else:

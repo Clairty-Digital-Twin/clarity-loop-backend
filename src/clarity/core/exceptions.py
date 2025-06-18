@@ -16,7 +16,7 @@ import logging
 from typing import TYPE_CHECKING, Any
 from uuid import uuid4
 
-from fastapi import HTTPException
+from fastapi import HTTPException, Request
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 

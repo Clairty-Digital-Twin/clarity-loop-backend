@@ -30,9 +30,11 @@ class TestAuthLockoutIntegration:
             mock_get_provider.return_value = mock_provider
 
             # Mock the lockout service to track calls
-            with patch("clarity.api.v1.auth.lockout_service") as mock_lockout:
+            with patch("clarity.api.v1.auth.get_lockout_service") as mock_get_lockout:
+                mock_lockout = AsyncMock()
                 mock_lockout.check_lockout = AsyncMock()
                 mock_lockout.record_failed_attempt = AsyncMock()
+                mock_get_lockout.return_value = mock_lockout
 
                 # Attempt login with bad credentials
                 response = client.post(
@@ -51,10 +53,12 @@ class TestAuthLockoutIntegration:
     async def test_lockout_blocks_login_attempt(self, client: TestClient) -> None:
         """Test that lockout exception blocks login attempts."""
         # Mock the lockout service to raise lockout error
-        with patch("clarity.api.v1.auth.lockout_service") as mock_lockout:
+        with patch("clarity.api.v1.auth.get_lockout_service") as mock_get_lockout:
+            mock_lockout = AsyncMock()
             mock_lockout.check_lockout.side_effect = AccountLockoutError(
                 "test@example.com", datetime.now() + timedelta(minutes=15)
             )
+            mock_get_lockout.return_value = mock_lockout
 
             # Attempt login
             response = client.post(
@@ -69,11 +73,15 @@ class TestAuthLockoutIntegration:
     @pytest.mark.asyncio
     async def test_successful_login_resets_attempts(self, client: TestClient) -> None:
         """Test that successful login resets failed attempts."""
-        # Mock successful authentication
+        # Enable self-signup and mock successful authentication
+        import os
+        os.environ["ENABLE_SELF_SIGNUP"] = "true"
+        
         with patch("clarity.api.v1.auth.get_auth_provider") as mock_get_provider:
             mock_provider = AsyncMock()
             mock_provider.authenticate.return_value = {
                 "access_token": "fake_token",
+                "refresh_token": "fake_refresh_token",
                 "token_type": "bearer",
                 "expires_in": 3600,
                 "user_id": "user123",

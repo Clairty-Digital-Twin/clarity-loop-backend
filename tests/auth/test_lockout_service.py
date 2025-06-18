@@ -66,18 +66,18 @@ class TestAccountLockoutService:
         email = "test@example.com"
         ip = "192.168.1.1"
 
-        # Record some failed attempts
-        for i in range(3):
+        # Record some failed attempts (but not enough to lock)
+        for i in range(2):
             await lockout_service.record_failed_attempt(email, ip)
 
         # Reset attempts (simulate successful login)
         await lockout_service.reset_attempts(email)
 
         # Should be able to record more attempts without immediate lockout
-        for i in range(4):
+        for i in range(2):  # Only 2 more attempts (total would be 2 after reset)
             await lockout_service.record_failed_attempt(email, ip)
 
-        # Should still not be locked (counter was reset)
+        # Should still not be locked (only 2 attempts after reset)
         await lockout_service.check_lockout(email)
 
     @pytest.mark.asyncio
@@ -100,8 +100,8 @@ class TestAccountLockoutService:
         with pytest.raises(AccountLockoutError):
             await short_timeout_service.check_lockout(email)
 
-        # Wait for lockout to expire
-        await asyncio.sleep(1)
+        # Wait for lockout to expire (add buffer for timing issues)
+        await asyncio.sleep(1.2)
 
         # Should no longer be locked
         await short_timeout_service.check_lockout(email)

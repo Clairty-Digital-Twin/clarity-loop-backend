@@ -64,7 +64,7 @@ class TestStartupOrchestrator:
             "ENVIRONMENT": "production",
             "SECRET_KEY": "production-secret-key-with-sufficient-length",
             "COGNITO_USER_POOL_ID": "us-east-1_validpool",
-            "COGNITO_CLIENT_ID": "valid-client-id-12345678",
+            "COGNITO_CLIENT_ID": "valid-client-id-12345678901234567890",
             "CORS_ALLOWED_ORIGINS": "https://app.example.com",
             "SKIP_EXTERNAL_SERVICES": "false",
         }

@@ -77,7 +77,7 @@ class TestClarityConfig:
             "ENVIRONMENT": "production",
             "SECRET_KEY": "production-secret-key-with-sufficient-length",
             "COGNITO_USER_POOL_ID": "us-east-1_validpool",
-            "COGNITO_CLIENT_ID": "valid-client-id-12345678",
+            "COGNITO_CLIENT_ID": "valid-client-id-12345678901234567890",
             "CORS_ALLOWED_ORIGINS": "https://app.example.com,https://api.example.com",
         }
 
@@ -93,7 +93,8 @@ class TestClarityConfig:
         env_vars = {
             "ENVIRONMENT": "production",
             "ENABLE_AUTH": "true",
-            # Missing required production fields
+            "SECRET_KEY": "production-secret",  # Provide this to get past SECRET_KEY validation
+            # Missing required Cognito fields for production with auth enabled
         }
 
         with patch.dict(os.environ, env_vars, clear=True):
@@ -163,7 +164,7 @@ class TestClarityConfig:
             "SKIP_EXTERNAL_SERVICES": "false",
             "SECRET_KEY": "production-secret-key",  # Required for production
             "COGNITO_USER_POOL_ID": "us-east-1_test",  # Required for production
-            "COGNITO_CLIENT_ID": "test-client",  # Required for production
+            "COGNITO_CLIENT_ID": "test-client-id-12345678901234567890",  # Required for production (20+ chars)
         }
 
         with patch.dict(os.environ, env_vars, clear=True):

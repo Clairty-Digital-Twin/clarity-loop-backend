@@ -100,7 +100,7 @@ class AccountLockoutService:
     async def _mem_is_locked(self, user: str) -> bool:
         async with self._lock:
             rec = self._mem.get(user)
-            return rec and rec.get("locked_until", 0) > time.time()
+            return bool(rec and rec.get("locked_until", 0) > time.time())
 
     async def _mem_register_failure(self, user: str):
         async with self._lock:

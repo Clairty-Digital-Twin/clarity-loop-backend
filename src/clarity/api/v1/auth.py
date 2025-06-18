@@ -15,7 +15,7 @@ from slowapi.util import get_remote_address
 from clarity.auth.aws_cognito_provider import CognitoAuthProvider
 from clarity.auth.dependencies import get_auth_provider, get_current_user
 from clarity.auth.dependencies import get_current_user as get_user_func
-from clarity.auth.lockout_service import AccountLockoutService, AccountLockoutError
+from clarity.auth.lockout_service import AccountLockoutError, AccountLockoutService
 from clarity.core.constants import (
     AUTH_HEADER_TYPE_BEARER,
     AUTH_SCOPE_FULL_ACCESS,
@@ -120,7 +120,7 @@ async def register(
                 instance="https://api.clarity.health/auth/register",
             ).model_dump(),
         )
-    
+
     # Validate auth provider before try block
     if not isinstance(auth_provider, CognitoAuthProvider):
         raise HTTPException(
@@ -198,7 +198,7 @@ async def login(
     """Authenticate user and return access token."""
     # Get client IP for lockout tracking
     client_ip = request.client.host if request.client else "unknown"
-    
+
     # Debug logging for request body
     try:
         body_bytes = await request.body()
@@ -240,7 +240,7 @@ async def login(
             email=credentials.email,
             password=credentials.password,
         )
-        
+
         # Authentication successful - reset failed attempts
         await lockout_service.reset_attempts(credentials.email)
         logger.info("✅ Login successful for %s, lockout attempts reset", credentials.email)
@@ -264,12 +264,12 @@ async def login(
         logger.warning(
             "Authentication failed for user: %s. Returning 401.", credentials.email
         )
-        
+
         # Track failed attempt for lockout protection
         try:
             await lockout_service.record_failed_attempt(credentials.email, client_ip)
             logger.info("🚨 Failed login attempt recorded for %s from %s", credentials.email, client_ip)
-            
+
             # Check if account just got locked and emit CloudWatch metric
             if await lockout_service.is_locked(credentials.email):
                 try:
@@ -285,11 +285,11 @@ async def login(
                     logger.warning("📊 CloudWatch metric emitted: Account lockout for %s", credentials.email)
                 except Exception as metric_error:
                     logger.exception("Failed to emit CloudWatch metric: %s", metric_error)
-                    
+
         except Exception as lockout_error:
             # Don't let lockout service errors block the auth response
             logger.exception("Failed to record lockout attempt: %s", lockout_error)
-        
+
         raise HTTPException(
             status_code=401,
             detail=ProblemDetail(

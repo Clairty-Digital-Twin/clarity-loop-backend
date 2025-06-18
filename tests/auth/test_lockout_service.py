@@ -1,10 +1,11 @@
 """Tests for Account Lockout Service."""
 
 import asyncio
-import pytest
 from datetime import datetime, timedelta
 
-from clarity.auth.lockout_service import AccountLockoutService, AccountLockoutError
+import pytest
+
+from clarity.auth.lockout_service import AccountLockoutError, AccountLockoutService
 
 
 class TestAccountLockoutService:
@@ -26,11 +27,11 @@ class TestAccountLockoutService:
         """Test recording failed login attempts."""
         email = "test@example.com"
         ip = "192.168.1.1"
-        
+
         # Record multiple failed attempts
         for i in range(3):
             await lockout_service.record_failed_attempt(email, ip)
-        
+
         # Should still be able to check (not locked yet)
         await lockout_service.check_lockout(email)
 
@@ -39,15 +40,15 @@ class TestAccountLockoutService:
         """Test that account gets locked after max failed attempts."""
         email = "test@example.com"
         ip = "192.168.1.1"
-        
+
         # Record max failed attempts (5 by default)
         for i in range(5):
             await lockout_service.record_failed_attempt(email, ip)
-        
+
         # Next check should raise lockout error
         with pytest.raises(AccountLockoutError) as exc_info:
             await lockout_service.check_lockout(email)
-        
+
         assert "too many failed login attempts" in str(exc_info.value).lower()
         assert email in str(exc_info.value)
 
@@ -56,18 +57,18 @@ class TestAccountLockoutService:
         """Test that successful login resets failed attempts."""
         email = "test@example.com"
         ip = "192.168.1.1"
-        
+
         # Record some failed attempts
         for i in range(3):
             await lockout_service.record_failed_attempt(email, ip)
-        
+
         # Reset attempts (simulate successful login)
         await lockout_service.reset_attempts(email)
-        
+
         # Should be able to record more attempts without immediate lockout
         for i in range(4):
             await lockout_service.record_failed_attempt(email, ip)
-        
+
         # Should still not be locked (counter was reset)
         await lockout_service.check_lockout(email)
 
@@ -76,24 +77,24 @@ class TestAccountLockoutService:
         """Test that lockout expires after timeout period."""
         email = "test@example.com"
         ip = "192.168.1.1"
-        
+
         # Create lockout service with very short timeout for testing
         short_timeout_service = AccountLockoutService(
             max_attempts=3,
             lockout_duration=timedelta(seconds=0.6)  # 0.6 seconds for testing
         )
-        
+
         # Trigger lockout
         for i in range(3):
             await short_timeout_service.record_failed_attempt(email, ip)
-        
+
         # Should be locked
         with pytest.raises(AccountLockoutError):
             await short_timeout_service.check_lockout(email)
-        
+
         # Wait for lockout to expire
         await asyncio.sleep(1)
-        
+
         # Should no longer be locked
         await short_timeout_service.check_lockout(email)
 
@@ -103,15 +104,15 @@ class TestAccountLockoutService:
         email1 = "user1@example.com"
         email2 = "user2@example.com"
         ip = "192.168.1.1"
-        
+
         # Lock first user
         for i in range(5):
             await lockout_service.record_failed_attempt(email1, ip)
-        
+
         # First user should be locked
         with pytest.raises(AccountLockoutError):
             await lockout_service.check_lockout(email1)
-        
+
         # Second user should not be affected
         await lockout_service.check_lockout(email2)
 
@@ -121,16 +122,16 @@ class TestAccountLockoutService:
         email = "test@example.com"
         ip1 = "192.168.1.1"
         ip2 = "10.0.0.1"
-        
+
         # Record attempts from different IPs
         await lockout_service.record_failed_attempt(email, ip1)
         await lockout_service.record_failed_attempt(email, ip2)
         await lockout_service.record_failed_attempt(email, ip1)
-        
+
         # Should track all attempts regardless of IP
         await lockout_service.record_failed_attempt(email, ip2)
         await lockout_service.record_failed_attempt(email, ip1)
-        
+
         # Should be locked after 5 total attempts
         with pytest.raises(AccountLockoutError):
             await lockout_service.check_lockout(email)
@@ -140,25 +141,25 @@ class TestAccountLockoutService:
         """Test getting lockout status without raising exceptions."""
         email = "test@example.com"
         ip = "192.168.1.1"
-        
+
         # Initially no lockout
         status = await lockout_service.get_lockout_status(email)
         assert status is None
-        
+
         # Add some failed attempts
         for i in range(3):
             await lockout_service.record_failed_attempt(email, ip)
-        
+
         # Should show attempts but no lockout
         status = await lockout_service.get_lockout_status(email)
         assert status is not None
         assert status["attempts"] == 3
         assert status["locked"] is False
-        
+
         # Trigger lockout
         for i in range(2):
             await lockout_service.record_failed_attempt(email, ip)
-        
+
         # Should show locked status
         status = await lockout_service.get_lockout_status(email)
         assert status is not None
@@ -174,18 +175,18 @@ class TestAccountLockoutService:
             max_attempts=3,
             lockout_duration=timedelta(minutes=30)
         )
-        
+
         email = "test@example.com"
         ip = "192.168.1.1"
-        
+
         # Should lock after 3 attempts instead of 5
         for i in range(3):
             await custom_service.record_failed_attempt(email, ip)
-        
+
         # Should be locked
         with pytest.raises(AccountLockoutError) as exc_info:
             await custom_service.check_lockout(email)
-        
+
         # Check that lockout duration is 30 minutes
         error_msg = str(exc_info.value)
         # The exact time format may vary, but should indicate 30 minutes from now
@@ -196,7 +197,7 @@ class TestAccountLockoutService:
         """Test that the service handles concurrent access safely."""
         email = "test@example.com"
         ip = "192.168.1.1"
-        
+
         # Simulate concurrent failed attempts
         tasks = []
         for i in range(10):
@@ -204,10 +205,10 @@ class TestAccountLockoutService:
                 lockout_service.record_failed_attempt(email, f"192.168.1.{i}")
             )
             tasks.append(task)
-        
+
         # Wait for all attempts to complete
         await asyncio.gather(*tasks)
-        
+
         # Should be locked after all attempts
         with pytest.raises(AccountLockoutError):
             await lockout_service.check_lockout(email)
@@ -218,10 +219,10 @@ class TestAccountLockoutService:
         # Empty email should not crash
         await lockout_service.record_failed_attempt("", "192.168.1.1")
         await lockout_service.check_lockout("")
-        
+
         # None values should not crash
         await lockout_service.record_failed_attempt("test@example.com", None)
-        
+
         # Very long email should not crash
         long_email = "a" * 1000 + "@example.com"
         await lockout_service.record_failed_attempt(long_email, "192.168.1.1")

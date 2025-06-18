@@ -7,8 +7,9 @@ Business logic layer depends on this abstraction, not concrete implementations.
 # removed – breaks FastAPI
 
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING
 from collections.abc import Awaitable
+from typing import TYPE_CHECKING
+
 from fastapi import Request, Response
 
 if TYPE_CHECKING:

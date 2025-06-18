@@ -22,9 +22,9 @@ from boto3.dynamodb.conditions import Key
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request, status
 from pydantic import BaseModel, Field, validator
 from slowapi import Limiter
-from clarity.middleware.rate_limiting import get_user_id_or_ip
 
 from clarity.auth.dependencies import AuthenticatedUser
+from clarity.middleware.rate_limiting import get_user_id_or_ip
 from clarity.ml.inference_engine import AsyncInferenceEngine, get_inference_engine
 from clarity.ml.pat_service import ActigraphyAnalysis, ActigraphyInput
 from clarity.ml.preprocessing import ActigraphyDataPoint

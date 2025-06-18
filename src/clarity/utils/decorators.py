@@ -2,9 +2,9 @@
 
 # removed – breaks FastAPI
 
+from collections.abc import Awaitable, Callable
 import functools
 import logging
-from collections.abc import Awaitable, Callable
 from typing import TYPE_CHECKING, ParamSpec, TypeVar
 
 from circuitbreaker import (

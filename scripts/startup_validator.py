@@ -7,8 +7,8 @@ without actually starting the application.
 
 import asyncio
 import os
-import sys
 from pathlib import Path
+import sys
 
 # Add src to path for imports
 src_path = Path(__file__).parent.parent / "src"
@@ -20,10 +20,10 @@ if __name__ == "__main__":
     # Add default dry-run flag if not specified
     if not any(arg in sys.argv for arg in ["--dry-run", "--config-only", "--help"]):
         sys.argv.append("--dry-run")
-    
+
     # Set permissions for script
     import stat
     script_path = Path(__file__)
     script_path.chmod(script_path.stat().st_mode | stat.S_IEXEC)
-    
+
     sys.exit(main())

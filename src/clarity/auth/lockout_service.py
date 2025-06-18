@@ -1,17 +1,16 @@
-"""
-Account Lockout Protection Service
+"""Account Lockout Protection Service
 
 Provides brute force protection by tracking failed login attempts
 and temporarily locking accounts after too many failures.
 """
 
-import os
 import asyncio
-import time
+from datetime import datetime, timedelta
 import json
-from datetime import timedelta, datetime
-from typing import Optional
 import logging
+import os
+import time
+from typing import Optional
 
 import redis.asyncio as redis
 
@@ -22,7 +21,7 @@ logger = logging.getLogger(__name__)
 
 class AccountLockoutError(AuthenticationError):
     """Raised when an account is temporarily locked due to too many failed attempts."""
-    
+
     def __init__(self, username: str, unlock_time: datetime):
         self.username = username
         self.unlock_time = unlock_time
@@ -34,21 +33,21 @@ class AccountLockoutError(AuthenticationError):
 
 class AccountLockoutService:
     """Account lockout service with Redis persistence and in-memory fallback."""
-    
+
     _PREFIX = "lockout:v1:"          # key namespace
 
     def __init__(
         self,
         max_attempts: int = 3,
         lockout_duration: timedelta = timedelta(minutes=15),
-        redis_url: Optional[str] = None,
+        redis_url: str | None = None,
     ):
         self.max_attempts = max_attempts
         self.lockout_secs = int(lockout_duration.total_seconds())
         self._mem: dict[str, dict] = {}
         self._lock = asyncio.Lock()
         self._r = redis.from_url(redis_url) if redis_url else None
-        
+
         logger.info(
             "🔒 AccountLockoutService initialized: max_attempts=%d, lockout_duration=%s, persistence=%s",
             self.max_attempts, lockout_duration, "Redis" if self._r else "in-memory"
@@ -117,8 +116,8 @@ class AccountLockoutService:
     async def is_account_locked(self, username: str) -> bool:
         """Alias for is_locked for backward compatibility."""
         return await self.is_locked(username)
-    
-    async def record_failed_attempt(self, username: str, ip_address: Optional[str] = None) -> None:
+
+    async def record_failed_attempt(self, username: str, ip_address: str | None = None) -> None:
         """Alias for register_failure for backward compatibility."""
         await self.register_failure(username)
         if await self.is_locked(username):
@@ -131,12 +130,12 @@ class AccountLockoutService:
                 "🚨 Failed attempt recorded: username=%s, ip=%s",
                 username, ip_address
             )
-    
+
     async def reset_attempts(self, username: str) -> None:
         """Alias for reset for backward compatibility."""
         await self.reset(username)
         logger.info("✅ Reset failed attempts for user: %s", username)
-    
+
     async def check_lockout(self, username: str) -> None:
         """Check if account is locked and raise exception if so."""
         if await self.is_locked(username):
@@ -146,7 +145,7 @@ class AccountLockoutService:
 
 
 # Global instance - will be initialized in main.py with Redis URL from env
-lockout_service: Optional[AccountLockoutService] = None
+lockout_service: AccountLockoutService | None = None
 
 
 def get_lockout_service() -> AccountLockoutService:

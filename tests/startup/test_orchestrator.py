@@ -5,17 +5,18 @@ from __future__ import annotations
 import asyncio
 import os
 from unittest.mock import AsyncMock, Mock, patch
+
 import pytest
 
-from clarity.startup.orchestrator import StartupOrchestrator, StartupError
 from clarity.startup.config_schema import ClarityConfig, Environment
-from clarity.startup.health_checks import ServiceStatus, HealthCheckResult
+from clarity.startup.health_checks import HealthCheckResult, ServiceStatus
+from clarity.startup.orchestrator import StartupError, StartupOrchestrator
 from clarity.startup.progress_reporter import StartupProgressReporter
 
 
 class TestStartupOrchestrator:
     """Test startup orchestrator functionality."""
-    
+
     def setup_method(self) -> None:
         """Set up test fixtures."""
         self.reporter = StartupProgressReporter(enable_colors=False)
@@ -23,7 +24,7 @@ class TestStartupOrchestrator:
             timeout=5.0,
             reporter=self.reporter,
         )
-    
+
     @pytest.mark.asyncio
     async def test_successful_startup_development(self) -> None:
         """Test successful startup in development mode."""
@@ -31,15 +32,15 @@ class TestStartupOrchestrator:
             "ENVIRONMENT": "development",
             "SKIP_EXTERNAL_SERVICES": "true",
         }
-        
+
         with patch.dict(os.environ, env_vars, clear=True):
             success, config = await self.orchestrator.orchestrate_startup()
-            
+
             assert success is True
             assert config is not None
             assert config.environment == Environment.DEVELOPMENT
             assert config.should_use_mock_services() is True
-    
+
     @pytest.mark.asyncio
     async def test_configuration_validation_failure(self) -> None:
         """Test startup failure due to configuration validation."""
@@ -48,14 +49,14 @@ class TestStartupOrchestrator:
             "ENABLE_AUTH": "true",
             # Missing required production settings
         }
-        
+
         with patch.dict(os.environ, env_vars, clear=True):
             success, config = await self.orchestrator.orchestrate_startup()
-            
+
             assert success is False
             assert config is None
             assert len(self.orchestrator.startup_errors) > 0
-    
+
     @pytest.mark.asyncio
     async def test_service_health_check_failure(self) -> None:
         """Test startup failure due to service health check failures."""
@@ -67,7 +68,7 @@ class TestStartupOrchestrator:
             "CORS_ALLOWED_ORIGINS": "https://app.example.com",
             "SKIP_EXTERNAL_SERVICES": "false",
         }
-        
+
         # Mock health checker to return unhealthy services
         mock_health_results = {
             "cognito": HealthCheckResult(
@@ -81,42 +82,42 @@ class TestStartupOrchestrator:
                 message="Table not found",
             ),
         }
-        
+
         with patch.dict(os.environ, env_vars, clear=True), \
              patch.object(self.orchestrator.health_checker, "check_all_services") as mock_check, \
              patch.object(self.orchestrator.health_checker, "get_overall_health") as mock_overall:
-            
+
             mock_check.return_value = mock_health_results
             mock_overall.return_value = ServiceStatus.UNHEALTHY
-            
+
             success, config = await self.orchestrator.orchestrate_startup()
-            
+
             assert success is False
             assert config is not None  # Config loads but health checks fail
-    
+
     @pytest.mark.asyncio
     async def test_dry_run_mode(self) -> None:
         """Test dry-run mode functionality."""
         env_vars = {
             "ENVIRONMENT": "development",
         }
-        
+
         dry_run_orchestrator = StartupOrchestrator(
             dry_run=True,
             reporter=self.reporter,
         )
-        
+
         with patch.dict(os.environ, env_vars, clear=True):
             success, config = await dry_run_orchestrator.orchestrate_startup()
-            
+
             assert success is True
             assert config is not None
-            
+
             # Should be able to create dry-run report
             report = dry_run_orchestrator.create_dry_run_report()
             assert "Dry-Run Report" in report
             assert config.environment.value in report
-    
+
     @pytest.mark.asyncio
     async def test_service_health_with_degraded_services(self) -> None:
         """Test startup with degraded services."""
@@ -124,7 +125,7 @@ class TestStartupOrchestrator:
             "ENVIRONMENT": "development",
             "SKIP_EXTERNAL_SERVICES": "false",
         }
-        
+
         # Mock health checker to return degraded services
         mock_health_results = {
             "cognito": HealthCheckResult(
@@ -138,20 +139,20 @@ class TestStartupOrchestrator:
                 message="Active",
             ),
         }
-        
+
         with patch.dict(os.environ, env_vars, clear=True), \
              patch.object(self.orchestrator.health_checker, "check_all_services") as mock_check, \
              patch.object(self.orchestrator.health_checker, "get_overall_health") as mock_overall:
-            
+
             mock_check.return_value = mock_health_results
             mock_overall.return_value = ServiceStatus.DEGRADED
-            
+
             success, config = await self.orchestrator.orchestrate_startup()
-            
+
             # Should succeed with degraded services in development
             assert success is True
             assert config is not None
-    
+
     @pytest.mark.asyncio
     async def test_startup_timeout(self) -> None:
         """Test startup timeout handling."""
@@ -159,24 +160,24 @@ class TestStartupOrchestrator:
             timeout=0.1,  # Very short timeout
             reporter=self.reporter,
         )
-        
+
         env_vars = {
             "ENVIRONMENT": "development",
             "SKIP_EXTERNAL_SERVICES": "false",
         }
-        
+
         # Mock a slow health check
         async def slow_health_check(*args, **kwargs):
             await asyncio.sleep(1.0)  # Longer than timeout
             return {}
-        
+
         with patch.dict(os.environ, env_vars, clear=True), \
              patch.object(timeout_orchestrator.health_checker, "check_all_services", side_effect=slow_health_check):
-            
+
             success, config = await timeout_orchestrator.orchestrate_startup()
-            
+
             assert success is False
-    
+
     @pytest.mark.asyncio
     async def test_skip_services(self) -> None:
         """Test skipping specific services during health checks."""
@@ -184,12 +185,12 @@ class TestStartupOrchestrator:
             "ENVIRONMENT": "development",
             "SKIP_EXTERNAL_SERVICES": "false",
         }
-        
+
         skip_orchestrator = StartupOrchestrator(
             skip_services={"cognito", "s3"},
             reporter=self.reporter,
         )
-        
+
         mock_health_results = {
             "dynamodb": HealthCheckResult(
                 service_name="dynamodb",
@@ -197,47 +198,47 @@ class TestStartupOrchestrator:
                 message="Active",
             ),
         }
-        
+
         with patch.dict(os.environ, env_vars, clear=True), \
              patch.object(skip_orchestrator.health_checker, "check_all_services") as mock_check, \
              patch.object(skip_orchestrator.health_checker, "get_overall_health") as mock_overall:
-            
+
             mock_check.return_value = mock_health_results
             mock_overall.return_value = ServiceStatus.HEALTHY
-            
+
             success, config = await skip_orchestrator.orchestrate_startup()
-            
+
             assert success is True
             assert config is not None
-            
+
             # Verify skip_services was passed to health checker
             mock_check.assert_called_once()
             call_args = mock_check.call_args
             assert call_args[1]["skip_services"] == {"cognito", "s3"}
-    
+
     def test_should_startup_succeed_prediction(self) -> None:
         """Test startup success prediction."""
         # No config loaded
         assert self.orchestrator.should_startup_succeed() is False
-        
+
         # Config loaded but has errors
         self.orchestrator.startup_errors = ["Some error"]
         assert self.orchestrator.should_startup_succeed() is False
-        
+
         # Create valid config
         env_vars = {
             "ENVIRONMENT": "development",
             "SKIP_EXTERNAL_SERVICES": "true",
         }
-        
+
         with patch.dict(os.environ, env_vars, clear=True):
             config, errors = ClarityConfig.validate_from_env()
             self.orchestrator.config = config
             self.orchestrator.startup_errors = []
-            
+
             # Should succeed with valid config and no errors
             assert self.orchestrator.should_startup_succeed() is True
-            
+
             # Add unhealthy critical service
             self.orchestrator.health_results = {
                 "cognito": HealthCheckResult(
@@ -246,10 +247,10 @@ class TestStartupOrchestrator:
                     message="Failed",
                 ),
             }
-            
+
             # Should still succeed because we're using mock services
             assert self.orchestrator.should_startup_succeed() is True
-    
+
     def test_production_validation_requirements(self) -> None:
         """Test production validation requirements."""
         env_vars = {
@@ -257,16 +258,16 @@ class TestStartupOrchestrator:
             "SECRET_KEY": "dev-secret-key",  # Invalid for production
             "CORS_ALLOWED_ORIGINS": "*",    # Invalid for production
         }
-        
+
         with patch.dict(os.environ, env_vars, clear=True):
             config, errors = ClarityConfig.validate_from_env()
-            
+
             if config:
                 # Test production requirements validation
                 prod_errors = self.orchestrator._validate_production_requirements()
                 assert len(prod_errors) > 0
                 assert any("SECRET_KEY" in error for error in prod_errors)
-    
+
     @pytest.mark.asyncio
     async def test_service_initialization(self) -> None:
         """Test service initialization phase."""
@@ -274,22 +275,22 @@ class TestStartupOrchestrator:
             "ENVIRONMENT": "development",
             "SKIP_EXTERNAL_SERVICES": "true",
         }
-        
+
         with patch.dict(os.environ, env_vars, clear=True), \
              patch("clarity.core.container_aws.initialize_container") as mock_init:
-            
+
             mock_container = Mock()
             mock_init.return_value = mock_container
-            
+
             # Set up orchestrator with valid config
             config, _ = ClarityConfig.validate_from_env()
             self.orchestrator.config = config
-            
+
             success = await self.orchestrator._initialize_services()
-            
+
             assert success is True
             mock_init.assert_called_once_with(config)
-    
+
     @pytest.mark.asyncio
     async def test_service_initialization_failure(self) -> None:
         """Test service initialization failure handling."""
@@ -297,27 +298,27 @@ class TestStartupOrchestrator:
             "ENVIRONMENT": "development",
             "SKIP_EXTERNAL_SERVICES": "true",
         }
-        
+
         with patch.dict(os.environ, env_vars, clear=True), \
              patch("clarity.core.container_aws.initialize_container") as mock_init:
-            
+
             mock_init.side_effect = Exception("Container initialization failed")
-            
+
             # Set up orchestrator with valid config
             config, _ = ClarityConfig.validate_from_env()
             self.orchestrator.config = config
-            
+
             success = await self.orchestrator._initialize_services()
-            
+
             assert success is False
-    
+
     def test_create_dry_run_report(self) -> None:
         """Test dry-run report creation."""
         env_vars = {
             "ENVIRONMENT": "development",
             "AWS_REGION": "us-west-2",
         }
-        
+
         with patch.dict(os.environ, env_vars, clear=True):
             config, _ = ClarityConfig.validate_from_env()
             self.orchestrator.config = config
@@ -328,9 +329,9 @@ class TestStartupOrchestrator:
                     message="Auth disabled",
                 ),
             }
-            
+
             report = self.orchestrator.create_dry_run_report()
-            
+
             assert "Dry-Run Report" in report
             assert "development" in report
             assert "us-west-2" in report
@@ -340,7 +341,7 @@ class TestStartupOrchestrator:
 
 class TestStartupError:
     """Test startup error handling."""
-    
+
     def test_startup_error_creation(self) -> None:
         """Test startup error creation with context."""
         error = StartupError(
@@ -351,7 +352,7 @@ class TestStartupError:
                 "environment": "production",
             }
         )
-        
+
         assert str(error) == "Configuration validation failed"
         assert error.phase == "validation"
         assert "SECRET_KEY" in error.details["missing_vars"]

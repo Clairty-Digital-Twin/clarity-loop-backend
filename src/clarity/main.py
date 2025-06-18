@@ -64,7 +64,7 @@ else:
 
 
 @asynccontextmanager
-async def lifespan(_app: FastAPI) -> AsyncGenerator[None, None]:  # noqa: RUF029
+async def lifespan(_app: FastAPI) -> AsyncGenerator[None, None]:
     """Application lifespan manager."""
     logger.info("Starting CLARITY Digital Twin backend in %s mode", ENVIRONMENT)
     logger.info("AWS Region: %s", AWS_REGION)
@@ -79,8 +79,8 @@ async def lifespan(_app: FastAPI) -> AsyncGenerator[None, None]:  # noqa: RUF029
     # Initialize Progressive ML Model Loading Service
     progressive_service = None
     try:
-        from clarity.ml.models import get_progressive_service, ProgressiveLoadingConfig
-        
+        from clarity.ml.models import ProgressiveLoadingConfig, get_progressive_service
+
         # Configure progressive loading based on environment
         progressive_config = ProgressiveLoadingConfig(
             is_production=(ENVIRONMENT == "production"),
@@ -89,17 +89,17 @@ async def lifespan(_app: FastAPI) -> AsyncGenerator[None, None]:  # noqa: RUF029
             critical_models=["pat:latest"],
             preload_models=["pat:stable", "pat:fast"]
         )
-        
+
         progressive_service = await get_progressive_service(progressive_config)
-        
+
         # Wait for critical models to be ready (non-blocking for app startup)
         logger.info("🚀 Progressive model loading started - critical models loading...")
-        
+
         # Store service in app state for access by endpoints
         _app.state.progressive_service = progressive_service
-        
+
         logger.info("✅ ML Model management system initialized")
-        
+
     except Exception as e:
         logger.error("❌ Failed to initialize ML model management: %s", str(e))
         logger.info("🔧 Continuing without ML models - health insights may be limited")
@@ -233,7 +233,7 @@ settings = get_settings()
 app.add_middleware(
     CORSMiddleware,
             allow_origins=settings.get_cors_origins,                     # ✅ EXPLICIT ORIGINS ONLY
-    allow_credentials=settings.cors_allow_credentials,            # ✅ SAFE WITH EXPLICIT ORIGINS  
+    allow_credentials=settings.cors_allow_credentials,            # ✅ SAFE WITH EXPLICIT ORIGINS
     allow_methods=settings.cors_allowed_methods,                  # ✅ SPECIFIC METHODS ONLY
     allow_headers=settings.cors_allowed_headers,                  # ✅ SPECIFIC HEADERS ONLY
     max_age=settings.cors_max_age,                               # ✅ CACHE PREFLIGHT REQUESTS
@@ -247,7 +247,7 @@ from clarity.middleware.request_size_limiter import RequestSizeLimiterMiddleware
 app.add_middleware(
     RequestSizeLimiterMiddleware,
     max_request_size=settings.max_request_size,          # ✅ 10MB general limit
-    max_json_size=settings.max_json_size,                # ✅ 5MB JSON limit  
+    max_json_size=settings.max_json_size,                # ✅ 5MB JSON limit
     max_upload_size=settings.max_upload_size,            # ✅ 50MB upload limit
     max_form_size=settings.max_form_size,                # ✅ 1MB form limit
 )
@@ -258,7 +258,7 @@ logger.info("🔒 Request Size Limiter: DoS protection active - payload limits e
 from starlette.middleware.trustedhost import TrustedHostMiddleware
 
 app.add_middleware(
-    TrustedHostMiddleware, 
+    TrustedHostMiddleware,
     allowed_hosts=["*"]  # Configure based on environment in production
 )
 
@@ -364,7 +364,7 @@ async def health_check() -> dict[str, Any]:
             "ml_models": False,
         },
     }
-    
+
     # Add ML model status if available
     if hasattr(app.state, 'progressive_service') and app.state.progressive_service:
         try:
@@ -381,7 +381,7 @@ async def health_check() -> dict[str, Any]:
                 "enabled": False,
                 "error": str(e)
             }
-    
+
     return health_status
 
 

@@ -48,7 +48,7 @@ class RequestSizeLimiterMiddleware(BaseHTTPMiddleware):
         self.max_json_size = max_json_size
         self.max_upload_size = max_upload_size
         self.max_form_size = max_form_size
-        
+
         # Log configuration for security audit
         logger.info("🔒 Request Size Limiter: Default max size: %d MB", max_request_size // (1024 * 1024))
         logger.info("🔒 Request Size Limiter: JSON max size: %d MB", max_json_size // (1024 * 1024))
@@ -65,19 +65,18 @@ class RequestSizeLimiterMiddleware(BaseHTTPMiddleware):
             Maximum allowed size in bytes for this request type
         """
         content_type = request.headers.get("content-type", "").lower()
-        
+
         # File upload endpoints - higher limit
         if "multipart/form-data" in content_type:
             return self.max_upload_size
-        # JSON API endpoints - moderate limit    
-        elif "application/json" in content_type:
+        # JSON API endpoints - moderate limit
+        if "application/json" in content_type:
             return self.max_json_size
         # Form data - lower limit
-        elif "application/x-www-form-urlencoded" in content_type:
+        if "application/x-www-form-urlencoded" in content_type:
             return self.max_form_size
         # Default limit for unknown content types
-        else:
-            return self.max_request_size
+        return self.max_request_size
 
     async def dispatch(
         self, request: Request, call_next: RequestResponseEndpoint
@@ -93,7 +92,7 @@ class RequestSizeLimiterMiddleware(BaseHTTPMiddleware):
         """
         # Debug logging to see if middleware is called
         logger.info(f"🔍 Request Size Limiter: {request.method} {request.url.path}")
-        
+
         # Only check requests with bodies (POST, PUT, PATCH)
         if request.method in {"POST", "PUT", "PATCH"}:
             # Check Content-Length header first (fastest check)
@@ -102,17 +101,17 @@ class RequestSizeLimiterMiddleware(BaseHTTPMiddleware):
                 try:
                     size = int(content_length)
                     limit = self._get_size_limit(request)
-                    
+
                     if size > limit:
                         limit_mb = limit / (1024 * 1024)
                         size_mb = size / (1024 * 1024)
-                        
+
                         # Log security incident
                         logger.warning(
                             "🚨 Request size limit exceeded: %.2f MB > %.2f MB limit for %s %s",
                             size_mb, limit_mb, request.method, request.url.path
                         )
-                        
+
                         # Return 413 Payload Too Large directly as JSONResponse
                         return JSONResponse(
                             status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
@@ -125,10 +124,10 @@ class RequestSizeLimiterMiddleware(BaseHTTPMiddleware):
                             },
                             headers={"Retry-After": "3600"}  # Suggest retry in 1 hour
                         )
-                        
+
                 except ValueError:
                     # Invalid Content-Length header
                     logger.warning("Invalid Content-Length header: %s", content_length)
-        
+
         # Process request normally if size is acceptable
-        return await call_next(request) 
+        return await call_next(request)

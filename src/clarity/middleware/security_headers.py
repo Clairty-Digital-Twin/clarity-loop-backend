@@ -58,7 +58,7 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         self.enable_csp = enable_csp
         self.csp_policy = csp_policy or 'default-src "none"; frame-ancestors "none";'
         self.cache_control = cache_control
-        
+
         # Log configuration
         logger.info(
             "SecurityHeadersMiddleware initialized - HSTS: %s, CSP: %s",
@@ -78,10 +78,10 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         """
         # Process the request
         response = await call_next(request)
-        
+
         # Add security headers
         self._add_security_headers(response)
-        
+
         return response
 
     def _add_security_headers(self, response: Response) -> None:
@@ -99,23 +99,23 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
 
         # Prevent MIME type sniffing
         response.headers["X-Content-Type-Options"] = "nosniff"
-        
+
         # Prevent clickjacking
         response.headers["X-Frame-Options"] = "DENY"
-        
+
         # Content Security Policy (API-specific)
         if self.enable_csp:
             response.headers["Content-Security-Policy"] = self.csp_policy
-        
+
         # XSS Protection (legacy but still useful)
         response.headers["X-XSS-Protection"] = "1; mode=block"
-        
+
         # Control referrer information
         response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
-        
+
         # Prevent caching of sensitive data
         response.headers["Cache-Control"] = self.cache_control
-        
+
         # Permissions Policy - Deny access to browser features
         response.headers["Permissions-Policy"] = (
             "camera=(), microphone=(), geolocation=(), "
@@ -147,4 +147,4 @@ def setup_security_headers(
         enable_hsts=enable_hsts,
         enable_csp=enable_csp,
         cache_control=cache_control,
-    ) 
+    )

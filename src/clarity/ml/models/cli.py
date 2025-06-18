@@ -101,7 +101,7 @@ async def list(ctx):
     for model_id, model_versions in grouped_models.items():
         for i, model in enumerate(sorted(model_versions, key=lambda x: x.version)):
             size_mb = model.size_bytes / (1024 * 1024)
-            status = "Available" if Path(model.local_path).exists() if model.local_path else "Not Downloaded"
+            status = "Available" if model.local_path and Path(model.local_path).exists() else "Not Downloaded"
             
             table.add_row(
                 model_id if i == 0 else "",

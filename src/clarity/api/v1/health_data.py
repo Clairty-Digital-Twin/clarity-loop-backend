@@ -24,7 +24,6 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from google.cloud import storage
 from slowapi import Limiter
-from clarity.middleware.rate_limiting import get_user_id_or_ip
 
 from clarity.auth.dependencies import AuthenticatedUser
 from clarity.core.exceptions import (
@@ -39,6 +38,7 @@ from clarity.core.pagination import (
     PaginationBuilder,
     validate_pagination_params,
 )
+from clarity.middleware.rate_limiting import get_user_id_or_ip
 from clarity.models.health_data import HealthDataResponse, HealthDataUpload
 from clarity.ports.auth_ports import IAuthProvider
 from clarity.ports.config_ports import IConfigProvider

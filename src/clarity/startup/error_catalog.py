@@ -33,9 +33,9 @@ class ErrorSeverity(str, Enum):
 class ErrorSolution:
     """Suggested solution for an error."""
     description: str
-    steps: List[str]
-    documentation_links: List[str] = None
-    
+    steps: list[str]
+    documentation_links: list[str] = None
+
     def __post_init__(self) -> None:
         if self.documentation_links is None:
             self.documentation_links = []
@@ -49,10 +49,10 @@ class StartupErrorInfo:
     description: str
     category: ErrorCategory
     severity: ErrorSeverity
-    solutions: List[ErrorSolution]
-    common_causes: List[str]
-    related_errors: List[str] = None
-    
+    solutions: list[ErrorSolution]
+    common_causes: list[str]
+    related_errors: list[str] = None
+
     def __post_init__(self) -> None:
         if self.related_errors is None:
             self.related_errors = []
@@ -60,14 +60,14 @@ class StartupErrorInfo:
 
 class StartupErrorCatalog:
     """Catalog of startup errors with solutions."""
-    
+
     def __init__(self) -> None:
-        self.errors: Dict[str, StartupErrorInfo] = self._build_error_catalog()
-    
-    def _build_error_catalog(self) -> Dict[str, StartupErrorInfo]:
+        self.errors: dict[str, StartupErrorInfo] = self._build_error_catalog()
+
+    def _build_error_catalog(self) -> dict[str, StartupErrorInfo]:
         """Build comprehensive error catalog."""
         errors = {}
-        
+
         # Configuration Errors
         errors["CONFIG_001"] = StartupErrorInfo(
             code="CONFIG_001",
@@ -100,9 +100,9 @@ class StartupErrorCatalog:
                 ),
             ]
         )
-        
+
         errors["CONFIG_002"] = StartupErrorInfo(
-            code="CONFIG_002", 
+            code="CONFIG_002",
             title="Invalid Configuration Value",
             description="An environment variable has an invalid value or format.",
             category=ErrorCategory.CONFIGURATION,
@@ -125,7 +125,7 @@ class StartupErrorCatalog:
                 ),
             ]
         )
-        
+
         errors["CONFIG_003"] = StartupErrorInfo(
             code="CONFIG_003",
             title="Production Security Requirements",
@@ -149,7 +149,7 @@ class StartupErrorCatalog:
                 ),
             ]
         )
-        
+
         # Credential Errors
         errors["CRED_001"] = StartupErrorInfo(
             code="CRED_001",
@@ -183,7 +183,7 @@ class StartupErrorCatalog:
                 ),
             ]
         )
-        
+
         errors["CRED_002"] = StartupErrorInfo(
             code="CRED_002",
             title="Insufficient AWS Permissions",
@@ -200,7 +200,7 @@ class StartupErrorCatalog:
                 ErrorSolution(
                     description="Update IAM permissions",
                     steps=[
-                        "Check AWS CloudTrail for denied API calls", 
+                        "Check AWS CloudTrail for denied API calls",
                         "Add required permissions to IAM policy",
                         "Verify resource ARNs are correct",
                         "Test permissions with AWS CLI",
@@ -211,7 +211,7 @@ class StartupErrorCatalog:
                 ),
             ]
         )
-        
+
         # Service Connectivity Errors
         errors["NET_001"] = StartupErrorInfo(
             code="NET_001",
@@ -246,7 +246,7 @@ class StartupErrorCatalog:
                 ),
             ]
         )
-        
+
         # Resource Errors
         errors["RES_001"] = StartupErrorInfo(
             code="RES_001",
@@ -281,7 +281,7 @@ class StartupErrorCatalog:
                 ),
             ]
         )
-        
+
         errors["RES_002"] = StartupErrorInfo(
             code="RES_002",
             title="DynamoDB Table Not Ready",
@@ -306,7 +306,7 @@ class StartupErrorCatalog:
                 ),
             ]
         )
-        
+
         # Dependency Errors
         errors["DEP_001"] = StartupErrorInfo(
             code="DEP_001",
@@ -340,7 +340,7 @@ class StartupErrorCatalog:
                 ),
             ]
         )
-        
+
         # Environment Errors
         errors["ENV_001"] = StartupErrorInfo(
             code="ENV_001",
@@ -366,47 +366,46 @@ class StartupErrorCatalog:
                 ),
             ]
         )
-        
+
         return errors
-    
-    def get_error_info(self, error_code: str) -> Optional[StartupErrorInfo]:
+
+    def get_error_info(self, error_code: str) -> StartupErrorInfo | None:
         """Get error information by code."""
         return self.errors.get(error_code)
-    
-    def find_errors_by_category(self, category: ErrorCategory) -> List[StartupErrorInfo]:
+
+    def find_errors_by_category(self, category: ErrorCategory) -> list[StartupErrorInfo]:
         """Find all errors in a specific category."""
         return [error for error in self.errors.values() if error.category == category]
-    
-    def find_errors_by_severity(self, severity: ErrorSeverity) -> List[StartupErrorInfo]:
+
+    def find_errors_by_severity(self, severity: ErrorSeverity) -> list[StartupErrorInfo]:
         """Find all errors with specific severity."""
         return [error for error in self.errors.values() if error.severity == severity]
-    
-    def suggest_error_code(self, error_message: str) -> Optional[str]:
+
+    def suggest_error_code(self, error_message: str) -> str | None:
         """Suggest error code based on error message content."""
         error_message_lower = error_message.lower()
-        
+
         # Simple keyword matching for error categorization
         if "credentials" in error_message_lower or "unauthorized" in error_message_lower:
             return "CRED_001"
-        elif "not found" in error_message_lower and ("table" in error_message_lower or "bucket" in error_message_lower):
+        if "not found" in error_message_lower and ("table" in error_message_lower or "bucket" in error_message_lower):
             return "RES_001"
-        elif "timeout" in error_message_lower:
+        if "timeout" in error_message_lower:
             return "NET_001"
-        elif "configuration" in error_message_lower or "environment" in error_message_lower:
+        if "configuration" in error_message_lower or "environment" in error_message_lower:
             return "CONFIG_001"
-        elif "permission" in error_message_lower or "access denied" in error_message_lower:
+        if "permission" in error_message_lower or "access denied" in error_message_lower:
             return "CRED_002"
-        elif "table status" in error_message_lower:
+        if "table status" in error_message_lower:
             return "RES_002"
-        else:
-            return None
-    
-    def format_error_help(self, error_code: str, context: Optional[Dict[str, str]] = None) -> str:
+        return None
+
+    def format_error_help(self, error_code: str, context: dict[str, str] | None = None) -> str:
         """Format comprehensive error help message."""
         error_info = self.get_error_info(error_code)
         if not error_info:
             return f"Unknown error code: {error_code}"
-        
+
         lines = []
         lines.append(f"🚨 {error_info.title} ({error_info.code})")
         lines.append("=" * 60)
@@ -415,31 +414,31 @@ class StartupErrorCatalog:
         lines.append(f"📊 Severity: {error_info.severity.value.upper()}")
         lines.append(f"🏷️  Category: {error_info.category.value.title()}")
         lines.append("")
-        
+
         if error_info.common_causes:
             lines.append("🔍 Common Causes:")
             for cause in error_info.common_causes:
                 lines.append(f"  • {cause}")
             lines.append("")
-        
+
         if error_info.solutions:
             lines.append("💡 Solutions:")
             for i, solution in enumerate(error_info.solutions, 1):
                 lines.append(f"\n  {i}. {solution.description}")
                 for step in solution.steps:
                     lines.append(f"     • {step}")
-                
+
                 if solution.documentation_links:
                     lines.append("     📖 Documentation:")
                     for link in solution.documentation_links:
                         lines.append(f"        {link}")
-        
+
         if context:
             lines.append("")
             lines.append("🔧 Context:")
             for key, value in context.items():
                 lines.append(f"  • {key}: {value}")
-        
+
         if error_info.related_errors:
             lines.append("")
             lines.append("🔗 Related Errors:")
@@ -447,7 +446,7 @@ class StartupErrorCatalog:
                 related_error = self.get_error_info(related_code)
                 if related_error:
                     lines.append(f"  • {related_code}: {related_error.title}")
-        
+
         return "\n".join(lines)
 
 

@@ -7,18 +7,18 @@ zero-crash guarantee and crystal-clear error feedback.
 from __future__ import annotations
 
 import asyncio
+from contextlib import asynccontextmanager
 import logging
 import os
 import sys
-from contextlib import asynccontextmanager
 from typing import TYPE_CHECKING, Any
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from prometheus_client import make_asgi_app
 
-from clarity.startup.orchestrator import StartupOrchestrator
 from clarity.startup.config_schema import ClarityConfig
+from clarity.startup.orchestrator import StartupOrchestrator
 from clarity.startup.progress_reporter import StartupProgressReporter
 
 if TYPE_CHECKING:
@@ -43,10 +43,10 @@ async def bulletproof_startup() -> tuple[bool, ClarityConfig | None]:
         Tuple of (success, config). Config is None if startup fails.
     """
     global _app_config, _startup_successful
-    
+
     # Check for dry-run mode
     dry_run = "--dry-run" in sys.argv or os.getenv("STARTUP_DRY_RUN", "").lower() == "true"
-    
+
     # Create startup orchestrator
     reporter = StartupProgressReporter()
     orchestrator = StartupOrchestrator(
@@ -54,38 +54,37 @@ async def bulletproof_startup() -> tuple[bool, ClarityConfig | None]:
         timeout=float(os.getenv("STARTUP_TIMEOUT", "30")),
         reporter=reporter,
     )
-    
+
     try:
         # Execute startup orchestration
         success, config = await orchestrator.orchestrate_startup("CLARITY Digital Twin")
-        
+
         if success and config:
             _app_config = config
             _startup_successful = True
-            
+
             if dry_run:
                 # Print dry-run report and exit
                 print(orchestrator.create_dry_run_report())
                 sys.exit(0)
-            
+
             return True, config
-        else:
-            _startup_successful = False
-            if dry_run:
-                print(orchestrator.create_dry_run_report())
-                sys.exit(1)
-            return False, None
-            
+        _startup_successful = False
+        if dry_run:
+            print(orchestrator.create_dry_run_report())
+            sys.exit(1)
+        return False, None
+
     except Exception as e:
         logger.exception("Bulletproof startup failed")
         _startup_successful = False
-        
+
         # Print error help if possible
         from clarity.startup.error_catalog import error_catalog
         suggested_code = error_catalog.suggest_error_code(str(e))
         if suggested_code:
             print(error_catalog.format_error_help(suggested_code))
-        
+
         return False, None
 
 
@@ -93,17 +92,17 @@ async def bulletproof_startup() -> tuple[bool, ClarityConfig | None]:
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     """Application lifespan manager with bulletproof startup."""
     global _app_config, _startup_successful
-    
+
     # Execute bulletproof startup
     logger.info("🚀 Executing bulletproof startup sequence...")
     success, config = await bulletproof_startup()
-    
+
     if not success or not config:
         logger.error("❌ Startup failed - application cannot start")
         raise RuntimeError("Bulletproof startup failed - check logs for details")
-    
+
     logger.info("✅ Bulletproof startup completed successfully")
-    
+
     # Initialize container with validated config
     try:
         from clarity.core.container_aws import initialize_container
@@ -112,16 +111,16 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     except Exception as e:
         logger.exception("❌ Failed to initialize dependency container")
         raise RuntimeError(f"Container initialization failed: {e}") from e
-    
+
     yield
-    
+
     logger.info("🔄 Shutting down CLARITY backend")
 
 
 def create_bulletproof_app() -> FastAPI:
     """Create FastAPI app with bulletproof startup."""
     global _app_config
-    
+
     # Create FastAPI app
     app = FastAPI(
         title="CLARITY Digital Twin Platform",
@@ -159,7 +158,7 @@ def create_bulletproof_app() -> FastAPI:
             "url": "https://clarity.novamindnyc.com/license"
         }
     )
-    
+
     # Configure middleware after startup validation
     @app.on_event("startup")
     async def configure_middleware() -> None:
@@ -167,7 +166,7 @@ def create_bulletproof_app() -> FastAPI:
         if not _app_config or not _startup_successful:
             logger.error("Cannot configure middleware - startup not successful")
             return
-        
+
         # Add CORS middleware with validated configuration
         app.add_middleware(
             CORSMiddleware,
@@ -178,7 +177,7 @@ def create_bulletproof_app() -> FastAPI:
             max_age=86400,
         )
         logger.info("✅ CORS middleware configured")
-        
+
         # Add request size limiter middleware
         from clarity.middleware.request_size_limiter import RequestSizeLimiterMiddleware
         app.add_middleware(
@@ -189,7 +188,7 @@ def create_bulletproof_app() -> FastAPI:
             max_form_size=1024 * 1024,  # 1MB
         )
         logger.info("✅ Request size limiter configured")
-        
+
         # Add security headers middleware
         from clarity.middleware.security_headers import SecurityHeadersMiddleware
         app.add_middleware(
@@ -199,32 +198,32 @@ def create_bulletproof_app() -> FastAPI:
             cache_control="no-store, private",
         )
         logger.info("✅ Security headers middleware configured")
-        
+
         # Add authentication middleware if enabled
         if _app_config.enable_auth:
             from clarity.middleware.auth_middleware import CognitoAuthMiddleware
             app.add_middleware(CognitoAuthMiddleware)
             logger.info("✅ Authentication middleware configured")
-        
+
         # Add rate limiting middleware
         from clarity.middleware.rate_limiting import setup_rate_limiting
         redis_url = os.getenv("REDIS_URL")
         setup_rate_limiting(app, redis_url=redis_url)
         logger.info("✅ Rate limiting middleware configured")
-        
+
         # Add request logging in development
         if _app_config.is_development():
             from clarity.middleware.request_logger import RequestLoggingMiddleware
             app.add_middleware(RequestLoggingMiddleware)
             logger.info("✅ Request logging middleware configured")
-    
+
     # Include API routers
     from clarity.api.v1.router import api_router as v1_router
     from clarity.core.openapi import custom_openapi
-    
+
     app.include_router(v1_router, prefix="/api/v1")
     app.openapi = lambda: custom_openapi(app)  # type: ignore[method-assign]
-    
+
     # Add core endpoints
     @app.get("/")
     async def root() -> dict[str, Any]:
@@ -240,7 +239,7 @@ def create_bulletproof_app() -> FastAPI:
             "api_docs": "/docs",
             "bulletproof_startup": _startup_successful,
         }
-    
+
     @app.get("/health")
     async def health_check() -> dict[str, Any]:
         """Enhanced health check with startup validation status."""
@@ -257,7 +256,7 @@ def create_bulletproof_app() -> FastAPI:
                 "startup_validation": True,
             },
         }
-    
+
     @app.get("/startup-status")
     async def startup_status() -> dict[str, Any]:
         """Detailed startup status endpoint."""
@@ -266,7 +265,7 @@ def create_bulletproof_app() -> FastAPI:
                 "startup_successful": False,
                 "error": "Configuration not loaded",
             }
-        
+
         return {
             "startup_successful": _startup_successful,
             "configuration": _app_config.get_startup_summary(),
@@ -279,11 +278,11 @@ def create_bulletproof_app() -> FastAPI:
                 "error_catalog": True,
             },
         }
-    
+
     # Add Prometheus metrics
     metrics_app = make_asgi_app()
     app.mount("/metrics", metrics_app)
-    
+
     logger.info("✅ CLARITY app created with bulletproof startup")
     return app
 
@@ -297,12 +296,12 @@ async def validate_startup() -> int:
     """CLI entry point for startup validation."""
     reporter = StartupProgressReporter()
     orchestrator = StartupOrchestrator(dry_run=True, reporter=reporter)
-    
+
     success, config = await orchestrator.orchestrate_startup()
-    
+
     if config:
         print(orchestrator.create_dry_run_report())
-    
+
     return 0 if success else 1
 
 
@@ -310,16 +309,16 @@ def main() -> int:
     """Main CLI entry point."""
     if "--validate" in sys.argv or "--dry-run" in sys.argv:
         return asyncio.run(validate_startup())
-    
+
     # Normal startup with uvicorn
     import uvicorn
-    
+
     # Get configuration
     host = os.getenv("HOST", "127.0.0.1")
     port = int(os.getenv("PORT", "8000"))
-    
+
     logger.info(f"Starting CLARITY with bulletproof startup on {host}:{port}")
-    
+
     uvicorn.run(app, host=host, port=port)
     return 0
 

@@ -9,9 +9,9 @@ production-ready deployment across development, staging, and production.
 from dataclasses import dataclass
 from functools import lru_cache
 import logging
-from typing import Self, Any
+from typing import Any, Self
 
-from pydantic import Field, model_validator, field_validator
+from pydantic import Field, field_validator, model_validator
 from pydantic_settings import BaseSettings
 
 # Configure logger
@@ -80,7 +80,7 @@ class Settings(BaseSettings):
     )  # Changed from 0.0.0.0 to fix S104
     port: int = Field(default=8080, alias="PORT")
     log_level: str = Field(default="INFO", alias="LOG_LEVEL")
-    
+
     # CORS Security Settings - HARDENED CONFIGURATION
     cors_allowed_origins: str = Field(
         default="http://localhost:3000,http://localhost:8080",
@@ -88,7 +88,7 @@ class Settings(BaseSettings):
         description="Explicitly allowed origins for CORS - no wildcards for security"
     )
     cors_allow_credentials: bool = Field(
-        default=True, 
+        default=True,
         alias="CORS_ALLOW_CREDENTIALS",
         description="Allow credentials in CORS requests (secure with explicit origins)"
     )
@@ -99,7 +99,7 @@ class Settings(BaseSettings):
     )
     cors_allowed_headers: list[str] = Field(
         default_factory=lambda: ["Authorization", "Content-Type", "Accept", "X-Requested-With"],
-        alias="CORS_ALLOWED_HEADERS", 
+        alias="CORS_ALLOWED_HEADERS",
         description="Explicitly allowed headers - no wildcards"
     )
     cors_max_age: int = Field(
@@ -107,7 +107,7 @@ class Settings(BaseSettings):
         alias="CORS_MAX_AGE",
         description="Cache preflight requests for 24 hours (86400 seconds)"
     )
-    
+
     # Request Size Limits - DoS Protection
     max_request_size: int = Field(
         default=10 * 1024 * 1024,  # 10MB
@@ -116,7 +116,7 @@ class Settings(BaseSettings):
     )
     max_json_size: int = Field(
         default=5 * 1024 * 1024,   # 5MB
-        alias="MAX_JSON_SIZE", 
+        alias="MAX_JSON_SIZE",
         description="Maximum JSON payload size in bytes (default 5MB)"
     )
     max_upload_size: int = Field(
@@ -223,7 +223,7 @@ class Settings(BaseSettings):
             if self.skip_external_services:
                 logger.warning("⚠️ Production mode with SKIP_EXTERNAL_SERVICES=true - using mock services")
                 return self
-                
+
             required_for_production: list[str] = []
 
             if self.enable_auth and not self.cognito_user_pool_id:
@@ -286,7 +286,7 @@ class Settings(BaseSettings):
         if isinstance(self.cors_allowed_origins, str):
             # Split comma-separated string and strip whitespace
             origins = [origin.strip() for origin in self.cors_allowed_origins.split(",") if origin.strip()]
-            
+
             # Security validation: no wildcards allowed
             for origin in origins:
                 if "*" in origin:
@@ -295,11 +295,10 @@ class Settings(BaseSettings):
                         f"CORS origins must be explicitly specified for security."
                     )
                     raise ValueError(msg)
-            
+
             return origins
-        else:
-            # Fallback to default if not a string
-            return ["http://localhost:3000", "http://localhost:8080"]
+        # Fallback to default if not a string
+        return ["http://localhost:3000", "http://localhost:8080"]
 
     def get_middleware_config(self) -> MiddlewareConfig:
         """Get middleware configuration based on environment.

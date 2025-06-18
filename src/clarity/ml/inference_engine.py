@@ -37,22 +37,21 @@ from clarity.core.types import LoggerProtocol
 from clarity.ml.pat_service import (
     ActigraphyAnalysis,
     ActigraphyInput,
+    PATModelService,
     get_pat_service,
 )
 from clarity.utils.decorators import resilient_prediction
 
-if TYPE_CHECKING:
-    from collections.abc import Callable
+from collections.abc import Callable
+from clarity.core.types import CacheStorage
 
-    from clarity.core.types import CacheStorage
-    from clarity.ml.pat_service import (
-        PATModelService,
-    )
+if TYPE_CHECKING:
+    pass  # Only for type stubs now
 
 logger: LoggerProtocol = logging.getLogger(__name__)
 
 # Global inference engine instance
-_inference_engine: AsyncInferenceEngine | None = None
+_inference_engine: "AsyncInferenceEngine | None" = None
 
 
 class InferenceRequest(BaseModel):

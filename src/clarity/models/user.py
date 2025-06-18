@@ -1,6 +1,6 @@
 """User models for the CLARITY Digital Twin Platform."""
 
-from __future__ import annotations
+# removed – breaks FastAPI
 
 from datetime import datetime
 from typing import Any

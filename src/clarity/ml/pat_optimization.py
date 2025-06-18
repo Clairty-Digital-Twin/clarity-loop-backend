@@ -7,7 +7,7 @@ This module provides optimization features including:
 - Batch processing for multiple requests
 """
 
-from __future__ import annotations
+# removed – breaks FastAPI
 
 import asyncio
 import contextlib

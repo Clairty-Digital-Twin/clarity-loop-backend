@@ -12,7 +12,7 @@ Implements enterprise-grade security, validation, and HIPAA compliance.
 Following Robert C. Martin's Clean Architecture with proper dependency injection.
 """
 
-from __future__ import annotations
+# removed – breaks FastAPI
 
 from datetime import UTC, datetime
 import json

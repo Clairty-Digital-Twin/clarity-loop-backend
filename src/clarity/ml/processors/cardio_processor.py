@@ -4,7 +4,7 @@ Extracts cardiovascular features from heart rate and heart rate variability data
 Implements domain-specific preprocessing and feature extraction for cardiac health.
 """
 
-from __future__ import annotations
+# removed – breaks FastAPI
 
 import logging
 from typing import TYPE_CHECKING

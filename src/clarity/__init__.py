@@ -4,7 +4,7 @@ A paradigm-shattering psychiatry and wellness AI/ML analytics system that establ
 entirely new standards for clinical data systems.
 """
 
-from __future__ import annotations
+# removed – breaks FastAPI
 
 __version__ = "0.1.0"
 __author__ = "Clarity Team"

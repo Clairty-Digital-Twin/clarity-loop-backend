@@ -1,6 +1,6 @@
 """Container compatibility module - aliases to container_aws."""
 
-from __future__ import annotations
+# removed – breaks FastAPI
 
 from typing import TYPE_CHECKING
 

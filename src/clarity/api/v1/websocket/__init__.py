@@ -1,6 +1,6 @@
 """WebSocket API module for real-time communication."""
 
-from __future__ import annotations
+# removed – breaks FastAPI
 
 from clarity.api.v1.websocket.chat_handler import router as chat_router
 

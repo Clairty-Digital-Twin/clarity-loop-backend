@@ -14,7 +14,7 @@ This implementation follows clean code principles with proper separation of conc
 dependency injection, and comprehensive error handling.
 """
 
-from __future__ import annotations
+# removed – breaks FastAPI
 
 import asyncio
 from functools import wraps

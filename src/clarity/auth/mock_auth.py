@@ -5,7 +5,7 @@ a mock implementation of IAuthProvider interface for development and testing.
 Implements Liskov Substitution Principle - can substitute real auth provider.
 """
 
-from __future__ import annotations
+# removed – breaks FastAPI
 
 from typing import Any
 

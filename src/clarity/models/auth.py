@@ -4,7 +4,7 @@ Pydantic models for authentication request/response validation.
 Supports user registration, login, token management, and role-based access control.
 """
 
-from __future__ import annotations
+# removed – breaks FastAPI
 
 from dataclasses import dataclass, field
 from datetime import UTC, datetime

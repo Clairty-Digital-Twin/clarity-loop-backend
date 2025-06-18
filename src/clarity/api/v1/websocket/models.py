@@ -1,6 +1,6 @@
 """WebSocket data models for structured communication."""
 
-from __future__ import annotations
+# removed – breaks FastAPI
 
 from datetime import UTC, datetime
 from enum import StrEnum

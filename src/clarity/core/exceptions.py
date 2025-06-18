@@ -10,7 +10,7 @@ The exception hierarchy is designed to be:
 - Self-documenting through clear names and messages
 """
 
-from __future__ import annotations
+# removed – breaks FastAPI
 
 import logging
 from typing import TYPE_CHECKING, Any

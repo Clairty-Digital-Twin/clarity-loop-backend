@@ -4,7 +4,7 @@ Prevents denial-of-service attacks by enforcing request body size limits
 across all endpoints. Configurable limits based on content type and environment.
 """
 
-from __future__ import annotations
+# removed – breaks FastAPI
 
 import logging
 from typing import TYPE_CHECKING

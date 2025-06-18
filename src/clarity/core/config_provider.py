@@ -4,7 +4,7 @@ Following Clean Architecture and SOLID principles, this module provides
 concrete implementation of IConfigProvider interface for dependency injection.
 """
 
-from __future__ import annotations
+# removed – breaks FastAPI
 
 import os
 from typing import TYPE_CHECKING

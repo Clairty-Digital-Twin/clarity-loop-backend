@@ -10,7 +10,7 @@ Endpoints:
 - GET /health - Service health check
 """
 
-from __future__ import annotations
+# removed – breaks FastAPI
 
 from datetime import UTC, datetime
 import logging

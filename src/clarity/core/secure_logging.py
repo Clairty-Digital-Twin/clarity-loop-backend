@@ -4,7 +4,7 @@ Provides logging functions that automatically sanitize health data
 to prevent accidental PHI exposure in logs.
 """
 
-from __future__ import annotations
+# removed – breaks FastAPI
 
 from typing import TYPE_CHECKING
 

@@ -1,6 +1,6 @@
 """Resilience and utility decorators for the CLARITY platform."""
 
-from __future__ import annotations
+# removed – breaks FastAPI
 
 import functools
 import logging

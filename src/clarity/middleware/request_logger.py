@@ -1,6 +1,6 @@
 """Request logging middleware for debugging."""
 
-from __future__ import annotations
+# removed – breaks FastAPI
 
 import json
 import logging

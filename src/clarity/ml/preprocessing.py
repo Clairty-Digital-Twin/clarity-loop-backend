@@ -4,7 +4,7 @@ This service handles the preprocessing of health data for ML model input,
 following the Strategy pattern for different preprocessing approaches.
 """
 
-from __future__ import annotations
+# removed – breaks FastAPI
 
 from datetime import datetime
 import logging

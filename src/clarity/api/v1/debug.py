@@ -1,6 +1,6 @@
 """Debug endpoints for request inspection."""
 
-from __future__ import annotations
+# removed – breaks FastAPI
 
 import json
 import logging

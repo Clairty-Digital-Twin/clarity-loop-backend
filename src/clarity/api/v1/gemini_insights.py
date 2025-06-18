@@ -7,7 +7,7 @@ Endpoints include generating health insights, retrieving cached results,
 and health status monitoring with proper authentication.
 """
 
-from __future__ import annotations
+# removed – breaks FastAPI
 
 from datetime import UTC, datetime
 import logging

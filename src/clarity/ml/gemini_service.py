@@ -4,7 +4,7 @@ This service integrates with Google's Vertex AI Gemini 2.5 Pro model
 to generate human-like health insights and narratives from ML analysis results.
 """
 
-from __future__ import annotations
+# removed – breaks FastAPI
 
 from datetime import UTC, datetime
 import json

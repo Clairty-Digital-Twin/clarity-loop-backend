@@ -11,7 +11,7 @@ Reference:
 - Population-based normalization for sleep/activity analysis
 """
 
-from __future__ import annotations
+# removed – breaks FastAPI
 
 from functools import lru_cache
 import logging

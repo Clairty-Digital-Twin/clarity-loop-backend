@@ -11,7 +11,7 @@ Exposes custom application metrics including:
 Designed for production monitoring and alerting.
 """
 
-from __future__ import annotations
+# removed – breaks FastAPI
 
 import logging
 import time

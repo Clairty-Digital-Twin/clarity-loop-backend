@@ -1,6 +1,6 @@
 """AWS-compatible Clarity backend - CLEAN version with routers only."""
 
-from __future__ import annotations
+# removed – breaks FastAPI
 
 from contextlib import asynccontextmanager
 import logging

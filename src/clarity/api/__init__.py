@@ -7,7 +7,7 @@ The API is organized into versioned modules:
 - v1/: Version 1 API endpoints
 """
 
-from __future__ import annotations
+# removed – breaks FastAPI
 
 __version__ = "0.1.0"
 __author__ = "CLARITY Digital Twin Platform"

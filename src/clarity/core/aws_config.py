@@ -1,6 +1,6 @@
 """AWS-specific configuration for CLARITY backend."""
 
-from __future__ import annotations
+# removed – breaks FastAPI
 
 from pydantic import Field
 from pydantic_settings import BaseSettings

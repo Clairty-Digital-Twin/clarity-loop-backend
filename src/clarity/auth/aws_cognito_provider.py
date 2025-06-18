@@ -1,6 +1,6 @@
 """AWS Cognito Authentication Provider."""
 
-from __future__ import annotations
+# removed – breaks FastAPI
 
 from datetime import UTC, datetime
 from functools import lru_cache

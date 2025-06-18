@@ -4,7 +4,7 @@ Enterprise-grade AWS messaging service for async health data processing.
 Replaces Google Pub/Sub with AWS-native solution using SQS and SNS.
 """
 
-from __future__ import annotations
+# removed – breaks FastAPI
 
 import asyncio
 from datetime import UTC, datetime

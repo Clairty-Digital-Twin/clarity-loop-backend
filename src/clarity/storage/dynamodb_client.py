@@ -1,6 +1,6 @@
 """AWS DynamoDB implementation for health data storage."""
 
-from __future__ import annotations
+# removed – breaks FastAPI
 
 from datetime import UTC, datetime
 from decimal import Decimal

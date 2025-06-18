@@ -1,6 +1,6 @@
 """SIMPLE TEST ENDPOINT - NO FANCY IMPORTS."""
 
-from __future__ import annotations
+# removed – breaks FastAPI
 
 from typing import Any
 

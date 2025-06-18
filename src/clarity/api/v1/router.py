@@ -1,6 +1,6 @@
 """Main API v1 router - AWS Clean version."""
 
-from __future__ import annotations
+# removed – breaks FastAPI
 
 import logging
 import os

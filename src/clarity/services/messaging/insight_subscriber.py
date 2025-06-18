@@ -3,7 +3,7 @@
 Handles Pub/Sub messages for AI-powered health insight generation using Gemini.
 """
 
-from __future__ import annotations
+# removed – breaks FastAPI
 
 import base64
 import json

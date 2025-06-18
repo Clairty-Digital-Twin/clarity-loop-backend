@@ -4,7 +4,7 @@ Defines the contract for middleware components following Clean Architecture.
 Business logic layer depends on this abstraction, not concrete implementations.
 """
 
-from __future__ import annotations
+# removed – breaks FastAPI
 
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING

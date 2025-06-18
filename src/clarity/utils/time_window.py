@@ -4,7 +4,7 @@ This module provides a canonical implementation for slicing time series data
 into fixed-length windows, particularly for the PAT model's 7-day requirement.
 """
 
-from __future__ import annotations
+# removed – breaks FastAPI
 
 import logging
 from typing import TYPE_CHECKING, Any

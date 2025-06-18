@@ -7,7 +7,7 @@ This module contains AI/ML services including:
 - Real-time inference capabilities
 """
 
-from __future__ import annotations
+# removed – breaks FastAPI
 
 from clarity.ml.analysis_pipeline import HealthAnalysisPipeline
 from clarity.ml.fusion_transformer import FusionTransformer, HealthFusionService

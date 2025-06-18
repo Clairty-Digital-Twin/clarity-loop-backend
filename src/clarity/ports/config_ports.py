@@ -11,6 +11,12 @@ from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from clarity.core.config_aws import MiddlewareConfig
+else:
+    # For runtime, we need the actual import
+    try:
+        from clarity.core.config_aws import MiddlewareConfig
+    except ImportError:
+        MiddlewareConfig = Any
 
 
 class IConfigProvider(ABC):

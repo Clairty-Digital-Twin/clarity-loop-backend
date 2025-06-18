@@ -13,8 +13,10 @@ from pathlib import Path
 from typing import Any, ClassVar
 from urllib.parse import urlparse
 
-from pydantic import BaseModel, BaseSettings, Field, validator, root_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
+from pydantic_settings import BaseSettings
 from pydantic.color import Color
+from pydantic import ConfigDict
 
 logger = logging.getLogger(__name__)
 
@@ -59,7 +61,8 @@ class AWSConfig(BaseModel):
         repr=False,
     )
     
-    @validator("region")
+    @field_validator("region")
+    @classmethod
     def validate_region(cls, v: str) -> str:
         """Validate AWS region format."""
         if not v:
@@ -89,14 +92,16 @@ class CognitoConfig(BaseModel):
         min_length=0,
     )
     
-    @validator("user_pool_id")
+    @field_validator("user_pool_id")
+    @classmethod
     def validate_user_pool_id(cls, v: str) -> str:
         """Validate Cognito User Pool ID format."""
         if v and not v.startswith(("us-", "eu-", "ap-", "ca-", "sa-")):
             raise ValueError(f"Invalid Cognito User Pool ID format: {v}")
         return v
     
-    @validator("client_id") 
+    @field_validator("client_id") 
+    @classmethod
     def validate_client_id(cls, v: str) -> str:
         """Validate Cognito Client ID format."""
         if v and len(v) < 20:
@@ -117,7 +122,8 @@ class DynamoDBConfig(BaseModel):
         description="DynamoDB endpoint URL (for local testing)",
     )
     
-    @validator("table_name")
+    @field_validator("table_name")
+    @classmethod
     def validate_table_name(cls, v: str) -> str:
         """Validate DynamoDB table name."""
         if not v:
@@ -127,7 +133,8 @@ class DynamoDBConfig(BaseModel):
             raise ValueError(f"Invalid DynamoDB table name: {v}")
         return v
     
-    @validator("endpoint_url")
+    @field_validator("endpoint_url")
+    @classmethod
     def validate_endpoint_url(cls, v: str) -> str:
         """Validate DynamoDB endpoint URL."""
         if v:
@@ -155,7 +162,8 @@ class S3Config(BaseModel):
         description="S3 endpoint URL (for local testing)",
     )
     
-    @validator("bucket_name", "ml_models_bucket")
+    @field_validator("bucket_name", "ml_models_bucket")
+    @classmethod
     def validate_bucket_name(cls, v: str) -> str:
         """Validate S3 bucket name."""
         if not v:
@@ -216,7 +224,8 @@ class SecurityConfig(BaseModel):
         gt=0,
     )
     
-    @validator("cors_origins")
+    @field_validator("cors_origins")
+    @classmethod
     def validate_cors_origins(cls, v: list[str]) -> list[str]:
         """Validate CORS origins."""
         for origin in v:
@@ -228,7 +237,8 @@ class SecurityConfig(BaseModel):
                     raise ValueError(f"Invalid CORS origin URL: {origin}")
         return v
     
-    @validator("secret_key")
+    @field_validator("secret_key")
+    @classmethod
     def validate_secret_key(cls, v: str) -> str:
         """Validate secret key strength."""
         if v == "dev-secret-key" and os.getenv("ENVIRONMENT", "").lower() == "production":
@@ -246,45 +256,54 @@ class ClarityConfig(BaseSettings):
     # Environment and basic settings
     environment: Environment = Field(
         default=Environment.DEVELOPMENT,
-        description="Application environment"
+        description="Application environment",
+        alias="ENVIRONMENT"
     )
     debug: bool = Field(
         default=False,
-        description="Enable debug mode"
+        description="Enable debug mode",
+        alias="DEBUG"
     )
     testing: bool = Field(
         default=False,  
-        description="Enable testing mode"
+        description="Enable testing mode",
+        alias="TESTING"
     )
     log_level: LogLevel = Field(
         default=LogLevel.INFO,
-        description="Logging level"
+        description="Logging level",
+        alias="LOG_LEVEL"
     )
     
     # Server settings
     host: str = Field(
         default="127.0.0.1",
-        description="Server host"
+        description="Server host",
+        alias="HOST"
     )
     port: int = Field(
         default=8000,
         description="Server port",
         ge=1024,
         le=65535,
+        alias="PORT"
     )
     
     # Feature flags
     enable_auth: bool = Field(
         default=True,
-        description="Enable authentication"
+        description="Enable authentication",
+        alias="ENABLE_AUTH"
     )
     skip_external_services: bool = Field(
         default=False,
-        description="Skip external service initialization (use mocks)"
+        description="Skip external service initialization (use mocks)",
+        alias="SKIP_EXTERNAL_SERVICES"
     )
     skip_aws_init: bool = Field(
         default=False,
-        description="Skip AWS service initialization"
+        description="Skip AWS service initialization",
+        alias="SKIP_AWS_INIT"
     )
     
     # Service configurations
@@ -319,40 +338,29 @@ class ClarityConfig(BaseSettings):
         description="Startup timeout in seconds",
         gt=0,
         le=300,
+        alias="STARTUP_TIMEOUT"
     )
     health_check_timeout: int = Field(
         default=5,
         description="Health check timeout per service",
         gt=0,
         le=30,
+        alias="HEALTH_CHECK_TIMEOUT"
     )
     
     # Validation error tracking
     _validation_errors: ClassVar[list[str]] = []
     
-    class Config:
-        env_file = ".env"
-        env_file_encoding = "utf-8"
-        case_sensitive = False
-        env_nested_delimiter = "__"  # Allow AWS__REGION format
-        extra = "allow"
-        
-        # Custom field aliases for backward compatibility
-        fields = {
-            "environment": {"env": "ENVIRONMENT"},
-            "debug": {"env": "DEBUG"},
-            "testing": {"env": "TESTING"},
-            "log_level": {"env": "LOG_LEVEL"},
-            "host": {"env": "HOST"},
-            "port": {"env": "PORT"},
-            "enable_auth": {"env": "ENABLE_AUTH"},
-            "skip_external_services": {"env": "SKIP_EXTERNAL_SERVICES"},
-            "skip_aws_init": {"env": "SKIP_AWS_INIT"},
-            "startup_timeout": {"env": "STARTUP_TIMEOUT"},
-            "health_check_timeout": {"env": "HEALTH_CHECK_TIMEOUT"},
-        }
+    model_config = ConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8",
+        case_sensitive=False,
+        env_nested_delimiter="__",  # Allow AWS__REGION format
+        extra="allow"
+    )
     
-    @root_validator(pre=True)
+    @model_validator(mode='before')
+    @classmethod
     def extract_nested_config(cls, values: dict[str, Any]) -> dict[str, Any]:
         """Extract nested configuration from environment variables."""
         aws_config = {}
@@ -405,49 +413,45 @@ class ClarityConfig(BaseSettings):
         
         return values
     
-    @root_validator
-    def validate_environment_requirements(cls, values: dict[str, Any]) -> dict[str, Any]:
+    @model_validator(mode='after')
+    def validate_environment_requirements(self) -> 'ClarityConfig':
         """Validate environment-specific requirements."""
-        env = values.get("environment", Environment.DEVELOPMENT)
-        skip_external = values.get("skip_external_services", False)
-        enable_auth = values.get("enable_auth", True)
+        env = self.environment
+        skip_external = self.skip_external_services
+        enable_auth = self.enable_auth
         
         validation_errors = []
         
         # Production requirements
         if env == Environment.PRODUCTION and not skip_external:
-            cognito_config = values.get("cognito", {})
             if enable_auth:
-                if not cognito_config.get("user_pool_id"):
+                if not self.cognito.user_pool_id:
                     validation_errors.append("COGNITO_USER_POOL_ID required in production with auth enabled")
-                if not cognito_config.get("client_id"):
+                if not self.cognito.client_id:
                     validation_errors.append("COGNITO_CLIENT_ID required in production with auth enabled")
             
             # Check AWS region
-            aws_config = values.get("aws", {})
-            if not aws_config.get("region"):
+            if not self.aws.region:
                 validation_errors.append("AWS_REGION required in production")
             
             # Check required buckets
-            s3_config = values.get("s3", {})
-            if not s3_config.get("bucket_name"):
+            if not self.s3.bucket_name:
                 validation_errors.append("S3_BUCKET_NAME required in production")
-            if not s3_config.get("ml_models_bucket"):
+            if not self.s3.ml_models_bucket:
                 validation_errors.append("S3_ML_MODELS_BUCKET required in production")
             
             # Check secret key
-            security_config = values.get("security", {})
-            if security_config.get("secret_key") == "dev-secret-key":
+            if self.security.secret_key == "dev-secret-key":
                 validation_errors.append("Custom SECRET_KEY required in production")
         
         # Store validation errors for reporting
-        cls._validation_errors = validation_errors
+        type(self)._validation_errors = validation_errors
         
         if validation_errors:
             error_msg = "\n".join([f"  • {error}" for error in validation_errors])
             raise ValueError(f"Configuration validation failed:\n{error_msg}")
         
-        return values
+        return self
     
     def is_development(self) -> bool:
         """Check if running in development mode."""

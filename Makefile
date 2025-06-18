@@ -45,13 +45,27 @@ venv: ## 🐍 Create virtual environment
 
 # ===== DEVELOPMENT =====
 
-dev: ## 🔥 Start development server with hot reload
-	@echo "$(BLUE)Starting development server...$(RESET)"
+dev: ## 🔥 Start ultimate development environment (recommended)
+	@echo "$(BLUE)🚀 Starting Ultimate Development Environment...$(RESET)"
+	@echo "$(YELLOW)This includes hot-reload, LocalStack, and all dev tools$(RESET)"
+	docker-compose -f docker-compose.dev.yml up --build
+
+dev-simple: ## ⚡ Start simple development server with hot reload
+	@echo "$(BLUE)Starting simple development server...$(RESET)"
 	uvicorn clarity.main:app --host 0.0.0.0 --port 8080 --reload --log-level debug
 
-dev-docker: ## 🐳 Start development environment with Docker Compose
-	@echo "$(BLUE)Starting development environment...$(RESET)"
+dev-docker: ## 🐳 Start basic development environment with Docker Compose
+	@echo "$(BLUE)Starting basic development environment...$(RESET)"
 	docker-compose up --build
+
+dev-stop: ## 🛑 Stop ultimate development environment
+	@echo "$(BLUE)Stopping development environment...$(RESET)"
+	docker-compose -f docker-compose.dev.yml down
+
+dev-clean: ## 🧹 Clean development environment and rebuild
+	@echo "$(BLUE)Cleaning and rebuilding development environment...$(RESET)"
+	docker-compose -f docker-compose.dev.yml down -v
+	docker-compose -f docker-compose.dev.yml up --build
 
 jupyter: ## 📊 Start Jupyter Lab for ML experimentation
 	@echo "$(BLUE)Starting Jupyter Lab...$(RESET)"

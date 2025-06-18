@@ -1,0 +1,14 @@
+{
+  "Servers": {
+    "1": {
+      "Name": "Clarity Development DB",
+      "Group": "Development",
+      "Host": "postgres-dev",
+      "Port": 5432,
+      "MaintenanceDB": "clarity_dev",
+      "Username": "clarity_dev",
+      "PassFile": "/tmp/pgpassfile",
+      "SSLMode": "prefer"
+    }
+  }
+}

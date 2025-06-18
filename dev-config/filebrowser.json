@@ -1,0 +1,10 @@
+{
+  "port": 80,
+  "baseURL": "",
+  "address": "0.0.0.0",
+  "log": "stdout",
+  "database": "/database.db",
+  "root": "/srv",
+  "username": "dev",
+  "password": "dev123"
+}

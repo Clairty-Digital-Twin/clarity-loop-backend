@@ -1,0 +1,59 @@
+# Jupyter Lab Development Environment
+# Optimized for ML experimentation and data exploration
+
+FROM jupyter/scipy-notebook:latest
+
+USER root
+
+# Install additional system dependencies
+RUN apt-get update && apt-get install -y \
+    --no-install-recommends \
+    gcc \
+    g++ \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+USER jovyan
+
+# Copy requirements
+COPY pyproject.toml /tmp/
+
+# Install Python dependencies
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir \
+    # Core ML libraries
+    torch>=2.7.0 \
+    transformers>=4.52.4 \
+    numpy>=1.26.0 \
+    scikit-learn>=1.5.0 \
+    matplotlib>=3.9.0 \
+    seaborn>=0.13.0 \
+    plotly>=5.24.0 \
+    pandas>=2.2.0 \
+    scipy>=1.14.0 \
+    # Jupyter extensions
+    jupyterlab-widgets \
+    ipywidgets \
+    jupyter-dash \
+    # Development tools
+    httpx \
+    requests \
+    python-dotenv \
+    rich \
+    # Clarity-specific dependencies
+    fastapi \
+    pydantic \
+    boto3 \
+    redis
+
+# Install JupyterLab extensions
+RUN jupyter labextension install @jupyter-widgets/jupyterlab-manager
+
+# Set up working directory
+WORKDIR /home/jovyan/work
+
+# Expose port
+EXPOSE 8888
+
+# Start JupyterLab
+CMD ["start-notebook.sh", "--NotebookApp.token=dev123", "--NotebookApp.password=''"]

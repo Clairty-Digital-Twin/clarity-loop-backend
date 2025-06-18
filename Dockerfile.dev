@@ -1,0 +1,96 @@
+# CLARITY Digital Twin - Development Docker Image
+# Optimized for hot-reload, debugging, and local development
+# 🔥 BLAZING FAST DEVELOPMENT EXPERIENCE
+
+FROM python:3.11-slim
+
+# Install development dependencies and tools
+RUN apt-get update && apt-get install -y \
+    --no-install-recommends \
+    # Build tools
+    gcc \
+    python3-dev \
+    # Network tools
+    curl \
+    wget \
+    net-tools \
+    # Development utilities
+    git \
+    vim \
+    htop \
+    tree \
+    # Hot-reload file watching
+    inotify-tools \
+    # Performance monitoring
+    strace \
+    tcpdump \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create development user (non-root for security)
+RUN groupadd -r clarity && useradd -r -g clarity -u 1000 -s /bin/bash clarity
+
+WORKDIR /app
+
+# Install Python development dependencies first (better caching)
+COPY pyproject.toml LICENSE README.md ./
+RUN pip install --no-cache-dir --upgrade pip setuptools wheel && \
+    pip install --no-cache-dir -e .[dev] && \
+    # Install additional development tools
+    pip install --no-cache-dir \
+        watchdog[watchmedo] \
+        python-dotenv \
+        ipython \
+        rich \
+        typer \
+        httpx \
+        pytest-xvfb \
+        pytest-html
+
+# Create necessary directories and set permissions
+RUN mkdir -p \
+    /app/src \
+    /app/tests \
+    /app/logs \
+    /app/dev-data \
+    /app/.cache \
+    /app/models/pat \
+    && chown -R clarity:clarity /app
+
+# Copy application code (will be overridden by volume mounts in dev)
+COPY --chown=clarity:clarity src/ ./src/
+COPY --chown=clarity:clarity scripts/ ./scripts/
+COPY --chown=clarity:clarity dev-scripts/ ./dev-scripts/
+
+# Make scripts executable
+RUN chmod +x ./scripts/*.sh ./dev-scripts/*.sh 2>/dev/null || true
+
+# Switch to development user
+USER clarity
+
+# Set environment variables for development
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONPATH="/app/src:/app" \
+    PORT=8000 \
+    ENVIRONMENT=development \
+    LOG_LEVEL=debug \
+    HOT_RELOAD=true \
+    ENABLE_DEBUG_ROUTES=true \
+    ENABLE_DEV_CORS=true \
+    # Rich terminal output
+    FORCE_COLOR=1 \
+    PYTHONIOENCODING=utf-8 \
+    TERM=xterm-256color
+
+# Expose port
+EXPOSE 8000
+
+# Health check with shorter intervals for development
+HEALTHCHECK --interval=10s --timeout=5s --start-period=10s --retries=3 \
+    CMD curl -f http://localhost:8000/health || exit 1
+
+# Development entrypoint with hot-reload
+ENTRYPOINT ["/app/dev-scripts/dev-entrypoint.sh"]
+
+# Default command: start with hot-reload
+CMD ["dev"]

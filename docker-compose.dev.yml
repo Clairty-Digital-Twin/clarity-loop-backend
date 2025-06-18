@@ -1,0 +1,319 @@
+version: '3.8'
+
+services:
+  # =============================================================================
+  # MAIN APPLICATION WITH HOT-RELOAD
+  # =============================================================================
+  clarity-backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    ports:
+      - "8000:8000"
+    environment:
+      # Core Configuration
+      - ENVIRONMENT=development
+      - PORT=8000
+      - LOG_LEVEL=debug
+      - PYTHONUNBUFFERED=1
+      - ENABLE_AUTH=false  # Use local auth for development
+      
+      # LocalStack AWS Services
+      - AWS_ENDPOINT_URL=http://localstack:4566
+      - AWS_DEFAULT_REGION=us-east-1
+      - AWS_ACCESS_KEY_ID=test
+      - AWS_SECRET_ACCESS_KEY=test
+      
+      # Local Service URLs
+      - DYNAMODB_ENDPOINT_URL=http://localstack:4566
+      - S3_ENDPOINT_URL=http://localstack:4566
+      - COGNITO_ENDPOINT_URL=http://localstack:4566
+      - REDIS_URL=redis://redis:6379
+      
+      # Service Configuration
+      - DYNAMODB_TABLE_PREFIX=clarity-dev
+      - S3_BUCKET_NAME=clarity-dev-bucket
+      - COGNITO_USER_POOL_ID=us-east-1_DevPool123
+      - COGNITO_CLIENT_ID=dev-client-123
+      - GEMINI_API_KEY=${GEMINI_API_KEY:-dev-dummy-key}
+      
+      # Development Features
+      - ENABLE_DEBUG_ROUTES=true
+      - ENABLE_DEV_CORS=true
+      - ENABLE_REQUEST_LOGGING=true
+      - HOT_RELOAD=true
+    volumes:
+      # Hot-reload source code mounting
+      - ./src:/app/src:cached
+      - ./tests:/app/tests:cached
+      - ./scripts:/app/scripts:cached
+      - ./pyproject.toml:/app/pyproject.toml:cached
+      
+      # Logs and data persistence
+      - ./logs:/app/logs
+      - ./dev-data:/app/dev-data
+      - dev-cache:/app/.cache
+    depends_on:
+      - localstack
+      - redis
+      - postgres-dev
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - clarity-dev-network
+    restart: unless-stopped
+
+  # =============================================================================
+  # LOCALSTACK - AWS SERVICES EMULATION
+  # =============================================================================
+  localstack:
+    image: localstack/localstack:3.0
+    ports:
+      - "4566:4566"     # LocalStack endpoint
+      - "4510-4559:4510-4559"  # External service ports
+    environment:
+      - SERVICES=s3,dynamodb,cognito-idp,sqs,sns,lambda,iam,sts
+      - DEBUG=1
+      - LOCALSTACK_API_KEY=${LOCALSTACK_API_KEY:-}
+      - DOCKER_HOST=unix:///var/run/docker.sock
+      - HOSTNAME_EXTERNAL=localstack
+      - DATA_DIR=/tmp/localstack/data
+      - PERSISTENCE=1
+      - AWS_DEFAULT_REGION=us-east-1
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock"
+      - "localstack-data:/tmp/localstack"
+      - "./dev-scripts/localstack-init.sh:/etc/localstack/init/ready.d/init.sh"
+    networks:
+      - clarity-dev-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4566/_localstack/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  # =============================================================================
+  # DATABASE SERVICES
+  # =============================================================================
+  postgres-dev:
+    image: postgres:15-alpine
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_DB=clarity_dev
+      - POSTGRES_USER=clarity_dev
+      - POSTGRES_PASSWORD=dev_password_123
+      - POSTGRES_INITDB_ARGS=--encoding=UTF-8 --lc-collate=C --lc-ctype=C
+    volumes:
+      - postgres-dev-data:/var/lib/postgresql/data
+      - ./dev-scripts/postgres-init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - clarity-dev-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U clarity_dev -d clarity_dev"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis-dev-data:/data
+    networks:
+      - clarity-dev-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    restart: unless-stopped
+
+  # =============================================================================
+  # DEVELOPMENT TOOLS & OBSERVABILITY
+  # =============================================================================
+  
+  # API Documentation with Swagger UI
+  swagger-ui:
+    image: swaggerapi/swagger-ui:latest
+    ports:
+      - "8001:8080"
+    environment:
+      - SWAGGER_JSON_URL=http://localhost:8000/openapi.json
+      - API_URL=http://localhost:8000/openapi.json
+    networks:
+      - clarity-dev-network
+    depends_on:
+      - clarity-backend
+
+  # Database Administration Tool
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    ports:
+      - "8002:80"
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=dev@clarity.com
+      - PGADMIN_DEFAULT_PASSWORD=dev123
+      - PGADMIN_CONFIG_SERVER_MODE=False
+    volumes:
+      - pgadmin-data:/var/lib/pgadmin
+      - ./dev-scripts/pgadmin-servers.json:/pgadmin4/servers.json
+    networks:
+      - clarity-dev-network
+    depends_on:
+      - postgres-dev
+
+  # Redis Administration Tool
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    ports:
+      - "8003:8081"
+    environment:
+      - REDIS_HOSTS=local:redis:6379
+      - HTTP_USER=dev
+      - HTTP_PASSWORD=dev123
+    networks:
+      - clarity-dev-network
+    depends_on:
+      - redis
+
+  # Log Aggregation and Viewing
+  fluentd:
+    image: fluent/fluentd:latest
+    ports:
+      - "24224:24224"
+      - "9880:9880"
+    volumes:
+      - ./dev-config/fluentd.conf:/fluentd/etc/fluent.conf
+      - ./logs:/var/log/clarity
+    networks:
+      - clarity-dev-network
+
+  # Metrics and Monitoring Dashboard
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./dev-config/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus-data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--web.enable-lifecycle'
+    networks:
+      - clarity-dev-network
+
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=dev123
+      - GF_INSTALL_PLUGINS=grafana-clock-panel,grafana-simple-json-datasource
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./dev-config/grafana-dashboards:/etc/grafana/provisioning/dashboards
+      - ./dev-config/grafana-datasources:/etc/grafana/provisioning/datasources
+    networks:
+      - clarity-dev-network
+    depends_on:
+      - prometheus
+
+  # File Browser for Development Files
+  filebrowser:
+    image: filebrowser/filebrowser:latest
+    ports:
+      - "8004:80"
+    volumes:
+      - .:/srv
+      - ./dev-data/filebrowser.db:/database.db
+      - ./dev-config/filebrowser.json:/config.json
+    networks:
+      - clarity-dev-network
+
+  # Mail Catcher for Email Testing
+  mailhog:
+    image: mailhog/mailhog:latest
+    ports:
+      - "1025:1025"  # SMTP
+      - "8025:8025"  # Web UI
+    networks:
+      - clarity-dev-network
+
+  # =============================================================================
+  # DEVELOPMENT SERVICES
+  # =============================================================================
+
+  # Jupyter Lab for ML Experimentation
+  jupyter:
+    build:
+      context: .
+      dockerfile: Dockerfile.jupyter
+    ports:
+      - "8888:8888"
+    environment:
+      - JUPYTER_TOKEN=dev123
+      - JUPYTER_ENABLE_LAB=yes
+    volumes:
+      - ./notebooks:/home/jovyan/work/notebooks
+      - ./src:/home/jovyan/work/src
+      - ./models:/home/jovyan/work/models
+      - ./dev-data:/home/jovyan/work/data
+    networks:
+      - clarity-dev-network
+    depends_on:
+      - clarity-backend
+
+  # Development Proxy/Load Balancer
+  traefik:
+    image: traefik:v3.0
+    ports:
+      - "80:80"
+      - "8080:8080"  # Traefik dashboard
+    command:
+      - --api.insecure=true
+      - --providers.docker=true
+      - --providers.docker.exposedbydefault=false
+      - --entrypoints.web.address=:80
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - clarity-dev-network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.traefik.rule=Host(`traefik.localhost`)"
+      - "traefik.http.services.traefik.loadbalancer.server.port=8080"
+
+networks:
+  clarity-dev-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
+
+volumes:
+  localstack-data:
+    driver: local
+  postgres-dev-data:
+    driver: local
+  redis-dev-data:
+    driver: local
+  prometheus-data:
+    driver: local
+  grafana-data:
+    driver: local
+  pgadmin-data:
+    driver: local
+  dev-cache:
+    driver: local

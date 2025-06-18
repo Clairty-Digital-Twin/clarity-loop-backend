@@ -1,0 +1,33 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+rule_files:
+  # - "first_rules.yml"
+  # - "second_rules.yml"
+
+scrape_configs:
+  # The job name is added as a label `job=<job_name>` to any timeseries scraped from this config.
+  - job_name: "prometheus"
+    static_configs:
+      - targets: ["localhost:9090"]
+
+  - job_name: "clarity-backend"
+    static_configs:
+      - targets: ["clarity-backend:8000"]
+    metrics_path: "/metrics"
+    scrape_interval: 5s
+    scrape_timeout: 3s
+
+  - job_name: "redis"
+    static_configs:
+      - targets: ["redis:6379"]
+
+  - job_name: "postgres"
+    static_configs:
+      - targets: ["postgres-dev:5432"]
+
+  - job_name: "localstack"
+    static_configs:
+      - targets: ["localstack:4566"]
+    metrics_path: "/_localstack/health"

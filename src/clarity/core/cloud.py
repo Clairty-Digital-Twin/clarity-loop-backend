@@ -10,9 +10,11 @@ from typing import TYPE_CHECKING
 
 import boto3
 
+from mypy_boto3_cognito_idp import CognitoIdentityProviderClient
+from mypy_boto3_dynamodb import DynamoDBServiceResource
+
 if TYPE_CHECKING:
-    from mypy_boto3_cognito_idp import CognitoIdentityProviderClient
-    from mypy_boto3_dynamodb import DynamoDBServiceResource
+    pass  # Only for type stubs now
 
 
 def get_aws_session(region_name: str = "us-east-1") -> boto3.Session:

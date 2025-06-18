@@ -18,11 +18,13 @@ import pandas as pd  # type: ignore[import-untyped]
 from scipy.interpolate import interp1d
 import scipy.signal
 
+import numpy.typing as npt
+
 from clarity.core.exceptions import ProcessingError
 from clarity.integrations.healthkit import HealthDataBatch, HealthDataPoint
 
 if TYPE_CHECKING:
-    import numpy.typing as npt
+    pass  # Only for type stubs now
 
 logger = logging.getLogger(__name__)
 

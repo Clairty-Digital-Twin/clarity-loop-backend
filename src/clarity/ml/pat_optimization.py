@@ -20,11 +20,13 @@ from typing import TYPE_CHECKING, Any
 import torch
 from torch.nn.utils import prune
 
+from pathlib import Path
+
 from clarity.ml.pat_service import ActigraphyAnalysis, ActigraphyInput, PATModelService
 from clarity.ml.preprocessing import ActigraphyDataPoint
 
 if TYPE_CHECKING:
-    from pathlib import Path
+    pass  # Only for type stubs now
 
 logger = logging.getLogger(__name__)
 

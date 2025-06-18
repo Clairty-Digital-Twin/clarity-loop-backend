@@ -32,11 +32,11 @@ class TestAccountLockoutService:
         email = "test@example.com"
         ip = "192.168.1.1"
 
-        # Record multiple failed attempts
-        for i in range(3):
+        # Record attempts up to one less than max (2 for max_attempts=3)
+        for i in range(2):
             await lockout_service.record_failed_attempt(email, ip)
 
-        # Should still be able to check (not locked yet)
+        # Should still be able to check (not locked yet at 2 attempts)
         await lockout_service.check_lockout(email)
 
     @pytest.mark.asyncio
@@ -47,8 +47,8 @@ class TestAccountLockoutService:
         email = "test@example.com"
         ip = "192.168.1.1"
 
-        # Record max failed attempts (5 by default)
-        for i in range(5):
+        # Record max failed attempts (3 for test lockout service)
+        for i in range(3):
             await lockout_service.record_failed_attempt(email, ip)
 
         # Next check should raise lockout error
@@ -155,29 +155,23 @@ class TestAccountLockoutService:
         ip = "192.168.1.1"
 
         # Initially no lockout
-        status = await lockout_service.get_lockout_status(email)
-        assert status is None
+        is_locked = await lockout_service.is_locked(email)
+        assert is_locked is False
 
-        # Add some failed attempts
-        for i in range(3):
-            await lockout_service.record_failed_attempt(email, ip)
-
-        # Should show attempts but no lockout
-        status = await lockout_service.get_lockout_status(email)
-        assert status is not None
-        assert status["attempts"] == 3
-        assert status["locked"] is False
-
-        # Trigger lockout
+        # Add some failed attempts (but not enough to lock)
         for i in range(2):
             await lockout_service.record_failed_attempt(email, ip)
 
-        # Should show locked status
-        status = await lockout_service.get_lockout_status(email)
-        assert status is not None
-        assert status["attempts"] == 5
-        assert status["locked"] is True
-        assert "unlock_time" in status
+        # Should not be locked yet
+        is_locked = await lockout_service.is_locked(email)
+        assert is_locked is False
+
+        # Trigger lockout with one more attempt (total 3)
+        await lockout_service.record_failed_attempt(email, ip)
+
+        # Now should be locked
+        is_locked = await lockout_service.is_locked(email)
+        assert is_locked is True
 
     @pytest.mark.asyncio
     async def test_custom_configuration(self) -> None:

@@ -63,7 +63,7 @@ class TestClarityConfig:
 
             assert config is not None
             assert len(errors) == 0
-            assert config.aws.region == "us-east-1"  # Changed to match deployment region
+            assert config.aws.region == "eu-west-1"  # Should match the env var set above
             assert config.cognito.user_pool_id == "eu-west-1_test123"
             assert config.cognito.client_id == "test-client-id-12345"
             assert config.dynamodb.table_name == "test-table"

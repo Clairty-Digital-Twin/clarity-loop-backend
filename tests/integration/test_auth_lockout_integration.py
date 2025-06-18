@@ -81,10 +81,12 @@ class TestAuthLockoutIntegration:
             }
             mock_get_provider.return_value = mock_provider
 
-            # Mock the lockout service
-            with patch("clarity.api.v1.auth.lockout_service") as mock_lockout:
+            # Mock the lockout service dependency
+            with patch("clarity.api.v1.auth.get_lockout_service") as mock_get_lockout:
+                mock_lockout = AsyncMock()
                 mock_lockout.check_lockout = AsyncMock()
                 mock_lockout.reset_attempts = AsyncMock()
+                mock_get_lockout.return_value = mock_lockout
 
                 # Successful login
                 response = client.post(

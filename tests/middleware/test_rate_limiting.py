@@ -15,6 +15,7 @@ from fastapi import FastAPI, Request
 from fastapi.testclient import TestClient
 import pytest
 from slowapi.errors import RateLimitExceeded
+from starlette.requests import Request as StarletteRequest
 
 from clarity.middleware.rate_limiting import (
     RateLimitingMiddleware,
@@ -116,9 +117,15 @@ class TestRateLimitExceededHandler:
     @pytest.mark.asyncio
     async def test_rate_limit_exceeded_handler(self, mock_request):
         """Test handling of rate limit exceeded errors."""
-        exc = RateLimitExceeded("Too many requests")
-        exc.detail = "test_key"
-        exc.limit = "5/minute"
+        # Clean Code: Create a mock limit object
+        from unittest.mock import MagicMock
+        mock_limit = MagicMock()
+        mock_limit.limit = "5/minute"
+        
+        # Create exception with mock limit
+        exc = RateLimitExceeded(mock_limit)
+        exc.detail = "test_key"  # Add detail for our handler
+        exc.limit = "5/minute"  # Ensure limit is accessible
 
         response = await custom_rate_limit_exceeded_handler(mock_request, exc)
 
@@ -144,6 +151,14 @@ class TestIntegration:
 
         # Set up rate limiting
         limiter = setup_rate_limiting(app)
+        
+        # Add the middleware to the app
+        from slowapi import _rate_limit_exceeded_handler
+        from slowapi.middleware import SlowAPIMiddleware
+        
+        # Add SlowAPI middleware
+        app.add_middleware(SlowAPIMiddleware)
+        app.state.limiter = limiter
 
         # Add test endpoints
         @app.get("/test/unlimited")

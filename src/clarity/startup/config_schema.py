@@ -339,6 +339,10 @@ class ClarityConfig(BaseSettings):
     @classmethod
     def extract_nested_config(cls, values: dict[str, Any]) -> dict[str, Any]:
         """Extract nested configuration from environment variables."""
+        # Debug: log what values we receive
+        import os
+        
+        # For Pydantic BaseSettings, we need to check both the values dict and env vars
         aws_config = {}
         cognito_config = {}
         dynamodb_config = {}
@@ -346,8 +350,8 @@ class ClarityConfig(BaseSettings):
         gemini_config = {}
         security_config = {}
 
-        # Extract AWS config
-        aws_config["region"] = values.get("AWS_REGION", "us-east-1")
+        # Extract AWS config - check env vars directly since BaseSettings might not pass them
+        aws_config["region"] = values.get("AWS_REGION") or os.getenv("AWS_REGION", "us-east-1")
         aws_config["access_key_id"] = values.get("AWS_ACCESS_KEY_ID", "")
         aws_config["secret_access_key"] = values.get("AWS_SECRET_ACCESS_KEY", "")
         aws_config["session_token"] = values.get("AWS_SESSION_TOKEN", "")

@@ -72,6 +72,14 @@ def app(mock_cognito_provider: Mock) -> FastAPI:
 
     # Override ONLY the auth provider dependency - let everything else be real
     app.dependency_overrides[get_auth_provider] = lambda: mock_cognito_provider
+    
+    # Also mock the lockout service to prevent test interference
+    from clarity.auth.dependencies import get_lockout_service
+    mock_lockout = Mock()
+    mock_lockout.check_account.return_value = None  # No lockout
+    mock_lockout.record_failed_attempt.return_value = None
+    mock_lockout.reset_attempts.return_value = None
+    app.dependency_overrides[get_lockout_service] = lambda: mock_lockout
 
     # Include the REAL auth router
     app.include_router(router, prefix="/api/v1/auth")

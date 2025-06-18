@@ -2,10 +2,13 @@
 
 import asyncio
 from datetime import datetime, timedelta
+import logging
 
 import pytest
 
 from clarity.auth.lockout_service import AccountLockoutError, AccountLockoutService
+
+logger = logging.getLogger(__name__)
 
 
 class TestAccountLockoutService:
@@ -89,10 +92,13 @@ class TestAccountLockoutService:
         # Create lockout service with very short timeout for testing
         short_timeout_service = AccountLockoutService(
             max_attempts=3,
-            lockout_duration=timedelta(seconds=0.6),  # 0.6 seconds for testing
+            lockout_duration=timedelta(seconds=1),  # 1 second for testing
         )
 
-        # Trigger lockout
+        # Log for debugging
+        logger.info(f"Service initialized with max_attempts={short_timeout_service.max_attempts}")
+
+        # Trigger lockout - record exactly 3 attempts
         for i in range(3):
             await short_timeout_service.record_failed_attempt(email, ip)
 
@@ -101,7 +107,7 @@ class TestAccountLockoutService:
             await short_timeout_service.check_lockout(email)
 
         # Wait for lockout to expire (add buffer for timing issues)
-        await asyncio.sleep(1.2)
+        await asyncio.sleep(1.5)
 
         # Should no longer be locked
         await short_timeout_service.check_lockout(email)

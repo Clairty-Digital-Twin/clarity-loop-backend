@@ -86,7 +86,8 @@ class TestAuthenticationE2E:
     @pytest.mark.asyncio
     @pytest.mark.integration
     @pytest.mark.skipif(
-        os.getenv("CI") == "true", reason="Requires live Cognito credentials"
+        os.getenv("CI") == "true" or not os.getenv("RUN_INTEGRATION_TESTS"),
+        reason="Requires live Cognito credentials"
     )
     async def test_login_invalid_credentials(
         self, frontend_login_payload: dict[str, Any]

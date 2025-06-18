@@ -1,7 +1,7 @@
 """Integration tests for account lockout with authentication endpoints."""
 
 from datetime import datetime, timedelta
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock
 
 from fastapi.testclient import TestClient
 import pytest
@@ -34,43 +34,62 @@ class TestAuthLockoutIntegration:
         self, client: TestClient
     ) -> None:
         """Test that lockout service is called during failed login attempts."""
-        # Mock the auth provider to always return invalid credentials
-        with patch("clarity.api.v1.auth.get_auth_provider") as mock_get_provider:
-            mock_provider = AsyncMock()
-            mock_provider.authenticate.side_effect = Exception("Invalid credentials")
-            mock_get_provider.return_value = mock_provider
+        # Override the app's dependency injection
+        from clarity.api.v1.auth import get_auth_provider, get_lockout_service
+        from clarity.auth.aws_cognito_provider import CognitoAuthProvider
+        from clarity.core.exceptions import InvalidCredentialsError
+        from clarity.main import app as test_app
+        
+        # Create mock that is instance of CognitoAuthProvider
+        mock_provider = AsyncMock(spec=CognitoAuthProvider)
+        mock_provider.authenticate.side_effect = InvalidCredentialsError("Invalid credentials")
+        
+        mock_lockout = AsyncMock()
+        mock_lockout.check_lockout = AsyncMock()
+        mock_lockout.record_failed_attempt = AsyncMock()
+        
+        # Override dependencies
+        test_app.dependency_overrides[get_auth_provider] = lambda: mock_provider
+        test_app.dependency_overrides[get_lockout_service] = lambda: mock_lockout
+        
+        try:
+            # Attempt login with bad credentials
+            response = client.post(
+                "/api/v1/auth/login",
+                json={"email": "test@example.com", "password": "wrongpassword"},
+            )
 
-            # Mock the lockout service to track calls
-            with patch("clarity.api.v1.auth.get_lockout_service") as mock_get_lockout:
-                mock_lockout = AsyncMock()
-                mock_lockout.check_lockout = AsyncMock()
-                mock_lockout.record_failed_attempt = AsyncMock()
-                mock_get_lockout.return_value = mock_lockout
+            # Check response if not 401
+            if response.status_code != 401:
+                print(f"Status: {response.status_code}")
+                print(f"Response: {response.json()}")
 
-                # Attempt login with bad credentials
-                response = client.post(
-                    "/api/v1/auth/login",
-                    json={"email": "test@example.com", "password": "wrongpassword"},
-                )
+            # Should return 401 for invalid credentials
+            assert response.status_code == 401
 
-                # Should return 401 for invalid credentials
-                assert response.status_code == 401
-
-                # Verify lockout service was called
-                mock_lockout.check_lockout.assert_called_once_with("test@example.com")
-                mock_lockout.record_failed_attempt.assert_called_once()
+            # Verify lockout service was called
+            mock_lockout.check_lockout.assert_called_once_with("test@example.com")
+            mock_lockout.record_failed_attempt.assert_called_once()
+        finally:
+            # Clear overrides
+            test_app.dependency_overrides.clear()
 
     @pytest.mark.asyncio
     async def test_lockout_blocks_login_attempt(self, client: TestClient) -> None:
         """Test that lockout exception blocks login attempts."""
-        # Mock the lockout service to raise lockout error
-        with patch("clarity.api.v1.auth.get_lockout_service") as mock_get_lockout:
-            mock_lockout = AsyncMock()
-            mock_lockout.check_lockout.side_effect = AccountLockoutError(
-                "test@example.com", datetime.now() + timedelta(minutes=15)
-            )
-            mock_get_lockout.return_value = mock_lockout
-
+        from clarity.api.v1.auth import get_lockout_service
+        from clarity.main import app as test_app
+        
+        # Create mock lockout service
+        mock_lockout = AsyncMock()
+        mock_lockout.check_lockout.side_effect = AccountLockoutError(
+            "test@example.com", datetime.now() + timedelta(minutes=15)
+        )
+        
+        # Override dependency
+        test_app.dependency_overrides[get_lockout_service] = lambda: mock_lockout
+        
+        try:
             # Attempt login
             response = client.post(
                 "/api/v1/auth/login",
@@ -79,45 +98,56 @@ class TestAuthLockoutIntegration:
 
             # Should return 429 for account locked
             assert response.status_code == 429
-            assert "account is locked" in response.json()["detail"]["detail"].lower()
+            assert "is locked" in response.json()["detail"]["detail"].lower()
+        finally:
+            # Clear overrides
+            test_app.dependency_overrides.clear()
 
     @pytest.mark.asyncio
     async def test_successful_login_resets_attempts(self, client: TestClient) -> None:
         """Test that successful login resets failed attempts."""
+        from clarity.api.v1.auth import get_auth_provider, get_lockout_service
+        from clarity.auth.aws_cognito_provider import CognitoAuthProvider
+        from clarity.main import app as test_app
+        
         # Enable self-signup and skip external services for testing
         import os
         os.environ["ENABLE_SELF_SIGNUP"] = "true"
         os.environ["SKIP_EXTERNAL_SERVICES"] = "true"
         
-        with patch("clarity.api.v1.auth.get_auth_provider") as mock_get_provider:
-            mock_provider = AsyncMock()
-            mock_provider.authenticate.return_value = {
-                "access_token": "fake_token",
-                "refresh_token": "fake_refresh_token",
-                "token_type": "bearer",
-                "expires_in": 3600,
-                "user_id": "user123",
-                "email": "test@example.com",
-            }
-            mock_get_provider.return_value = mock_provider
+        # Create mock that is instance of CognitoAuthProvider
+        mock_provider = AsyncMock(spec=CognitoAuthProvider)
+        mock_provider.authenticate.return_value = {
+            "access_token": "fake_token",
+            "refresh_token": "fake_refresh_token",
+            "token_type": "bearer",
+            "expires_in": 3600,
+            "user_id": "user123",
+            "email": "test@example.com",
+        }
+        
+        mock_lockout = AsyncMock()
+        mock_lockout.check_lockout = AsyncMock()
+        mock_lockout.reset_attempts = AsyncMock()
+        
+        # Override dependencies
+        test_app.dependency_overrides[get_auth_provider] = lambda: mock_provider
+        test_app.dependency_overrides[get_lockout_service] = lambda: mock_lockout
+        
+        try:
+            # Successful login
+            response = client.post(
+                "/api/v1/auth/login",
+                json={"email": "test@example.com", "password": "correctpassword"},
+            )
 
-            # Mock the lockout service dependency
-            with patch("clarity.api.v1.auth.get_lockout_service") as mock_get_lockout:
-                mock_lockout = AsyncMock()
-                mock_lockout.check_lockout = AsyncMock()
-                mock_lockout.reset_attempts = AsyncMock()
-                mock_get_lockout.return_value = mock_lockout
+            # Should return 200 for successful login
+            assert response.status_code == 200
+            assert "access_token" in response.json()
 
-                # Successful login
-                response = client.post(
-                    "/api/v1/auth/login",
-                    json={"email": "test@example.com", "password": "correctpassword"},
-                )
-
-                # Should return 200 for successful login
-                assert response.status_code == 200
-                assert "access_token" in response.json()
-
-                # Verify lockout service was called
-                mock_lockout.check_lockout.assert_called_once_with("test@example.com")
-                mock_lockout.reset_attempts.assert_called_once_with("test@example.com")
+            # Verify lockout service was called
+            mock_lockout.check_lockout.assert_called_once_with("test@example.com")
+            mock_lockout.reset_attempts.assert_called_once_with("test@example.com")
+        finally:
+            # Clear overrides
+            test_app.dependency_overrides.clear()

@@ -14,10 +14,8 @@ from operator import itemgetter
 from typing import TYPE_CHECKING, Any
 import uuid
 
+from clarity.models.health_data import HealthMetric
 from clarity.ports.data_ports import IHealthDataRepository
-
-if TYPE_CHECKING:
-    from clarity.models.health_data import HealthMetric
 
 logger = logging.getLogger(__name__)
 

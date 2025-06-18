@@ -24,10 +24,10 @@ from typing import TYPE_CHECKING, Any
 
 import numpy as np
 
+from clarity.models.health_data import ActivityData, HealthMetric
+
 if TYPE_CHECKING:
     from collections.abc import Sequence
-
-    from clarity.models.health_data import ActivityData, HealthMetric
 
 logger = logging.getLogger(__name__)
 

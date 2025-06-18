@@ -4,6 +4,7 @@
 
 import functools
 import logging
+from collections.abc import Awaitable, Callable
 from typing import TYPE_CHECKING, ParamSpec, TypeVar
 
 from circuitbreaker import (
@@ -13,9 +14,6 @@ from circuitbreaker import (
 from prometheus_client import Counter
 
 from clarity.core.exceptions import DataValidationError, ServiceUnavailableProblem
-
-if TYPE_CHECKING:
-    from collections.abc import Awaitable, Callable
 
 # Import health data service error at module level to avoid circular imports
 try:

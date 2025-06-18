@@ -10,9 +10,7 @@ import logging
 from typing import TYPE_CHECKING, Any
 
 import numpy as np
-
-if TYPE_CHECKING:
-    import numpy.typing as npt
+import numpy.typing as npt
 
 from clarity.core.constants import MINUTES_PER_WEEK
 

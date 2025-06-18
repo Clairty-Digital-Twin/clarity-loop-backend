@@ -156,10 +156,14 @@ class TestClarityConfig:
 
     def test_service_requirements(self) -> None:
         """Test service requirements calculation."""
-        # Test with auth enabled
+        # Test with auth enabled in production (real services)
         env_vars = {
+            "ENVIRONMENT": "production",  # Force production to avoid dev mock services
             "ENABLE_AUTH": "true",
             "SKIP_EXTERNAL_SERVICES": "false",
+            "SECRET_KEY": "production-secret-key",  # Required for production
+            "COGNITO_USER_POOL_ID": "us-east-1_test",  # Required for production
+            "COGNITO_CLIENT_ID": "test-client",  # Required for production
         }
 
         with patch.dict(os.environ, env_vars, clear=True):

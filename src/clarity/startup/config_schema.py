@@ -214,6 +214,16 @@ class SecurityConfig(BaseModel):
         default_factory=lambda: ["http://localhost:3000", "http://localhost:8080"],
         description="CORS allowed origins",
     )
+    
+    @model_validator(mode="before")
+    @classmethod
+    def parse_cors_origins(cls, values: dict[str, Any]) -> dict[str, Any]:
+        """Parse CORS origins from comma-separated string."""
+        if "cors_origins" in values and isinstance(values["cors_origins"], str):
+            values["cors_origins"] = [
+                o.strip() for o in values["cors_origins"].split(",") if o.strip()
+            ]
+        return values
     max_request_size: int = Field(
         default=10 * 1024 * 1024,  # 10MB
         description="Maximum request size in bytes",
@@ -333,6 +343,7 @@ class ClarityConfig(BaseSettings):
         case_sensitive=False,
         env_nested_delimiter="__",  # Allow AWS__REGION format
         extra="allow",
+        populate_by_name=True,
     )
 
     @model_validator(mode="before")
@@ -383,13 +394,12 @@ class ClarityConfig(BaseSettings):
         gemini_config["max_tokens"] = int(values.get("GEMINI_MAX_TOKENS", "1000"))
 
         # Extract security config
-        security_config["secret_key"] = values.get("SECRET_KEY", "dev-secret-key")
-        cors_origins = values.get(
-            "CORS_ALLOWED_ORIGINS", "http://localhost:3000,http://localhost:8080"
+        security_config["secret_key"] = values.get("SECRET_KEY", os.getenv("SECRET_KEY", "dev-secret-key"))
+        cors_origins_str = values.get(
+            "CORS_ALLOWED_ORIGINS", os.getenv("CORS_ALLOWED_ORIGINS", "http://localhost:3000,http://localhost:8080")
         )
-        security_config["cors_origins"] = [
-            o.strip() for o in cors_origins.split(",") if o.strip()
-        ]
+        # Pass raw string - SecurityConfig will parse and validate it
+        security_config["cors_origins"] = cors_origins_str
         security_config["max_request_size"] = int(
             values.get("MAX_REQUEST_SIZE", str(10 * 1024 * 1024))
         )

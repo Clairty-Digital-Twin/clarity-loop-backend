@@ -344,7 +344,7 @@ class TestStartupOrchestrator:
         """Test dry-run report creation."""
         env_vars = {
             "ENVIRONMENT": "development",
-            "AWS_REGION": "us-west-2",
+            "AWS_REGION": "us-east-1",
         }
 
         with patch.dict(os.environ, env_vars, clear=True):
@@ -362,7 +362,7 @@ class TestStartupOrchestrator:
 
             assert "Dry-Run Report" in report
             assert "development" in report
-            assert "us-west-2" in report
+            assert "us-east-1" in report
             assert "cognito" in report
             assert "STARTUP SHOULD SUCCEED" in report or "All checks passed" in report
 

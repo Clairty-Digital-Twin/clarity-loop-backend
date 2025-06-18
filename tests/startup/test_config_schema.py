@@ -28,7 +28,7 @@ class TestClarityConfig:
         """Test environment variable parsing."""
         env_vars = {
             "ENVIRONMENT": "production",
-            "AWS_REGION": "us-west-2",
+            "AWS_REGION": "us-east-1",
             "PORT": "8080",
             "ENABLE_AUTH": "false",
             "DEBUG": "true",
@@ -40,7 +40,7 @@ class TestClarityConfig:
             assert config is not None
             assert len(errors) == 0
             assert config.environment == Environment.PRODUCTION
-            assert config.aws.region == "us-west-2"
+            assert config.aws.region == "us-east-1"
             assert config.port == 8080
             assert config.enable_auth is False
             assert config.debug is True
@@ -187,7 +187,7 @@ class TestClarityConfig:
         env_vars = {
             "ENVIRONMENT": "development",
             "ENABLE_AUTH": "true",
-            "AWS_REGION": "us-west-2",
+            "AWS_REGION": "us-east-1",
         }
 
         with patch.dict(os.environ, env_vars, clear=True):
@@ -198,7 +198,7 @@ class TestClarityConfig:
 
             assert summary["environment"] == "development"
             assert summary["auth_enabled"] is True
-            assert summary["aws_region"] == "us-west-2"
+            assert summary["aws_region"] == "us-east-1"
             assert "required_services" in summary
             assert "startup_timeout" in summary
 

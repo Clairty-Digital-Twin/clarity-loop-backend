@@ -13,7 +13,7 @@ from pathlib import Path
 from typing import Any, ClassVar
 from urllib.parse import urlparse
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
+from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator, model_validator
 from pydantic.color import Color
 from pydantic_settings import BaseSettings
 
@@ -493,8 +493,16 @@ class ClarityConfig(BaseSettings):
             Tuple of (config, errors). Config is None if validation fails.
         """
         try:
+            # Use Pydantic's proper environment loading by creating instance with no args
+            # This will read from environment variables using the aliases defined in fields
             config = cls()
             return config, []
+        except ValidationError as e:
+            errors = []
+            for error in e.errors():
+                field_path = ".".join(str(loc) for loc in error["loc"])
+                errors.append(f"{field_path}: {error['msg']}")
+            return None, errors
         except Exception as e:
             errors = getattr(cls, "_validation_errors", [])
             if not errors:

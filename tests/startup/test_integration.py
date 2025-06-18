@@ -318,7 +318,7 @@ class TestStartupIntegration:
         """Test startup summary provides accurate information."""
         env_vars = {
             "ENVIRONMENT": "development",
-            "AWS_REGION": "us-west-2",
+            "AWS_REGION": "us-east-1",
             "DEBUG": "true",
             "ENABLE_AUTH": "false",
         }
@@ -344,7 +344,7 @@ class TestStartupIntegration:
             summary = config.get_startup_summary() if config else {}
 
             assert summary["environment"] == "development"
-            assert summary["aws_region"] == "us-west-2"
+            assert summary["aws_region"] == "us-east-1"
             assert summary["auth_enabled"] is False
             assert summary["mock_services"] is True
 

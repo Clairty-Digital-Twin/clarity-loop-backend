@@ -7,6 +7,7 @@ Implements domain-specific preprocessing and feature extraction for cardiac heal
 # removed – breaks FastAPI
 
 import logging
+from datetime import datetime
 from typing import TYPE_CHECKING
 
 import numpy as np
@@ -14,7 +15,7 @@ import pandas as pd  # type: ignore[import-untyped]
 from pydantic import BaseModel, Field
 
 if TYPE_CHECKING:
-    from datetime import datetime
+    pass  # Only for type stubs now
 
 logger = logging.getLogger(__name__)
 

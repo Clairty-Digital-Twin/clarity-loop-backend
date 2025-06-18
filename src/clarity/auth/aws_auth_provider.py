@@ -17,8 +17,10 @@ import boto3
 from botocore.exceptions import ClientError
 from jose import JWTError, jwt
 
+from mypy_boto3_cognito_idp import CognitoIdentityProviderClient
+
 if TYPE_CHECKING:
-    from mypy_boto3_cognito_idp import CognitoIdentityProviderClient
+    pass  # Only for type stubs now
 
 from clarity.models.auth import (
     AuthError,

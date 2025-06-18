@@ -16,7 +16,18 @@ class TestAuthLockoutIntegration:
     @pytest.fixture
     def client(self) -> TestClient:
         """Create test client."""
-        return TestClient(app)
+        # Force mock services for integration tests
+        import os
+        original_skip = os.environ.get("SKIP_EXTERNAL_SERVICES")
+        os.environ["SKIP_EXTERNAL_SERVICES"] = "true"
+        
+        yield TestClient(app)
+        
+        # Restore original value
+        if original_skip is None:
+            os.environ.pop("SKIP_EXTERNAL_SERVICES", None)
+        else:
+            os.environ["SKIP_EXTERNAL_SERVICES"] = original_skip
 
     @pytest.mark.asyncio
     async def test_lockout_triggers_after_failed_attempts(
@@ -73,9 +84,10 @@ class TestAuthLockoutIntegration:
     @pytest.mark.asyncio
     async def test_successful_login_resets_attempts(self, client: TestClient) -> None:
         """Test that successful login resets failed attempts."""
-        # Enable self-signup and mock successful authentication
+        # Enable self-signup and skip external services for testing
         import os
         os.environ["ENABLE_SELF_SIGNUP"] = "true"
+        os.environ["SKIP_EXTERNAL_SERVICES"] = "true"
         
         with patch("clarity.api.v1.auth.get_auth_provider") as mock_get_provider:
             mock_provider = AsyncMock()

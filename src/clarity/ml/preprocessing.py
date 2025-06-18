@@ -14,10 +14,11 @@ import numpy as np
 from pydantic import BaseModel, Field
 import torch
 
+from clarity.models.health_data import HealthMetric
 from clarity.utils.time_window import prepare_for_pat_inference
 
 if TYPE_CHECKING:
-    from clarity.models.health_data import HealthMetric
+    pass  # Only for type stubs now
 
 logger = logging.getLogger(__name__)
 

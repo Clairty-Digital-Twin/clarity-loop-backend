@@ -97,6 +97,29 @@ dependencies = [
     "circuitbreaker>=2.0.0,<3.0.0",
     "sentry-sdk>=2.8.0,<3.0.0",  # Security fix: environment variable exposure vulnerability
     "protobuf>=5.29.5,<6.0.0",  # Security fix: DoS via recursive parsing vulnerability
+    
+    # OpenTelemetry stack
+    "opentelemetry-api>=1.27.0,<2.0.0",
+    "opentelemetry-sdk>=1.27.0,<2.0.0",
+    "opentelemetry-auto-instrumentation>=0.48b0,<1.0.0",
+    "opentelemetry-instrumentation-fastapi>=0.48b0,<1.0.0",
+    "opentelemetry-instrumentation-requests>=0.48b0,<1.0.0",
+    "opentelemetry-instrumentation-httpx>=0.48b0,<1.0.0",
+    "opentelemetry-instrumentation-boto3sqs>=0.48b0,<1.0.0",
+    "opentelemetry-instrumentation-botocore>=0.48b0,<1.0.0",
+    "opentelemetry-instrumentation-redis>=0.48b0,<1.0.0",
+    "opentelemetry-instrumentation-asyncpg>=0.48b0,<1.0.0",
+    "opentelemetry-exporter-jaeger>=1.27.0,<2.0.0",
+    "opentelemetry-exporter-prometheus>=0.48b0,<1.0.0",
+    "opentelemetry-exporter-otlp>=1.27.0,<2.0.0",
+    "opentelemetry-propagator-b3>=1.27.0,<2.0.0",
+    "opentelemetry-propagator-jaeger>=1.27.0,<2.0.0",
+    "opentelemetry-semantic-conventions>=0.48b0,<1.0.0",
+    
+    # Enhanced metrics and monitoring
+    "psutil>=6.1.0,<7.0.0",  # System metrics
+    "py-cpuinfo>=9.0.0,<10.0.0",  # CPU information
+    "GPUtil>=1.4.0,<2.0.0",  # GPU metrics if available
 
     # Configuration and environment
     "python-dotenv>=1.0.0,<2.0.0",

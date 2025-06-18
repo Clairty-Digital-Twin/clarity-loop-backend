@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: clarity-observability
+  labels:
+    name: clarity-observability
+    app.kubernetes.io/name: clarity-observability
+    app.kubernetes.io/part-of: clarity-platform

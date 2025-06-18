@@ -1,0 +1,169 @@
+groups:
+- name: clarity-backend-alerts
+  rules:
+  # High Error Rate Alert
+  - alert: HighErrorRate
+    expr: rate(clarity_http_requests_total{status_code=~"5.."}[5m]) > 0.01
+    for: 2m
+    labels:
+      severity: critical
+      service: clarity-backend
+    annotations:
+      summary: "High error rate detected"
+      description: "Clarity backend is experiencing {{ $value | humanizePercentage }} error rate for the last 5 minutes"
+      runbook_url: "https://docs.clarity.com/runbooks/high-error-rate"
+
+  # Slow Response Time Alert
+  - alert: SlowResponseTime
+    expr: histogram_quantile(0.99, rate(clarity_http_request_duration_seconds_bucket[5m])) > 1.0
+    for: 5m
+    labels:
+      severity: warning
+      service: clarity-backend
+    annotations:
+      summary: "Slow response time detected"
+      description: "99th percentile response time is {{ $value }}s for the last 5 minutes"
+      runbook_url: "https://docs.clarity.com/runbooks/slow-response-time"
+
+  # High Memory Usage Alert
+  - alert: HighMemoryUsage
+    expr: clarity_process_memory_usage_bytes > 1073741824  # 1GB
+    for: 10m
+    labels:
+      severity: warning
+      service: clarity-backend
+    annotations:
+      summary: "High memory usage detected"
+      description: "Clarity backend is using {{ $value | humanizeBytes }} of memory"
+      runbook_url: "https://docs.clarity.com/runbooks/high-memory-usage"
+
+  # High CPU Usage Alert
+  - alert: HighCPUUsage
+    expr: clarity_process_cpu_usage_percent > 80
+    for: 10m
+    labels:
+      severity: warning
+      service: clarity-backend
+    annotations:
+      summary: "High CPU usage detected"
+      description: "Clarity backend CPU usage is {{ $value }}%"
+      runbook_url: "https://docs.clarity.com/runbooks/high-cpu-usage"
+
+  # ML Model Error Rate Alert
+  - alert: MLModelHighErrorRate
+    expr: rate(clarity_ml_predictions_total{status="error"}[10m]) > 0.05
+    for: 5m
+    labels:
+      severity: critical
+      service: clarity-backend
+      component: ml-models
+    annotations:
+      summary: "ML model error rate too high"
+      description: "ML model error rate is {{ $value | humanizePercentage }} for the last 10 minutes"
+      runbook_url: "https://docs.clarity.com/runbooks/ml-model-errors"
+
+  # Service Down Alert
+  - alert: ServiceDown
+    expr: up{job="clarity-backend"} == 0
+    for: 1m
+    labels:
+      severity: critical
+      service: clarity-backend
+    annotations:
+      summary: "Clarity backend service is down"
+      description: "Clarity backend has been down for more than 1 minute"
+      runbook_url: "https://docs.clarity.com/runbooks/service-down"
+
+  # Database Connection Issues
+  - alert: DatabaseConnectionErrors
+    expr: increase(clarity_database_connection_errors_total[5m]) > 5
+    for: 2m
+    labels:
+      severity: critical
+      service: clarity-backend
+      component: database
+    annotations:
+      summary: "Database connection errors detected"
+      description: "{{ $value }} database connection errors in the last 5 minutes"
+      runbook_url: "https://docs.clarity.com/runbooks/database-connection-errors"
+
+  # Low Disk Space Alert
+  - alert: LowDiskSpace
+    expr: (node_filesystem_free_bytes{mountpoint="/"} / node_filesystem_size_bytes{mountpoint="/"}) * 100 < 10
+    for: 5m
+    labels:
+      severity: warning
+      service: system
+    annotations:
+      summary: "Low disk space detected"
+      description: "Disk space is {{ $value }}% full"
+      runbook_url: "https://docs.clarity.com/runbooks/low-disk-space"
+
+  # High Request Rate Alert
+  - alert: HighRequestRate
+    expr: rate(clarity_http_requests_total[5m]) > 100
+    for: 5m
+    labels:
+      severity: info
+      service: clarity-backend
+    annotations:
+      summary: "High request rate detected"
+      description: "Request rate is {{ $value }} requests/second"
+      runbook_url: "https://docs.clarity.com/runbooks/high-request-rate"
+
+  # Security: High Failed Authentication Rate
+  - alert: HighAuthFailureRate
+    expr: rate(clarity_auth_failures_total[5m]) > 0.1
+    for: 2m
+    labels:
+      severity: warning
+      service: clarity-backend
+      component: security
+    annotations:
+      summary: "High authentication failure rate"
+      description: "Authentication failure rate is {{ $value | humanizePercentage }}"
+      runbook_url: "https://docs.clarity.com/runbooks/high-auth-failure-rate"
+
+- name: infrastructure-alerts
+  rules:
+  # Container Resource Alerts
+  - alert: ContainerHighCPU
+    expr: rate(container_cpu_usage_seconds_total{name=~"clarity.*"}[5m]) * 100 > 80
+    for: 5m
+    labels:
+      severity: warning
+      service: infrastructure
+    annotations:
+      summary: "Container high CPU usage"
+      description: "Container {{ $labels.name }} CPU usage is {{ $value }}%"
+
+  - alert: ContainerHighMemory
+    expr: (container_memory_usage_bytes{name=~"clarity.*"} / container_spec_memory_limit_bytes{name=~"clarity.*"}) * 100 > 90
+    for: 5m
+    labels:
+      severity: warning
+      service: infrastructure
+    annotations:
+      summary: "Container high memory usage"
+      description: "Container {{ $labels.name }} memory usage is {{ $value }}%"
+
+  # Redis Alerts
+  - alert: RedisDown
+    expr: up{job="redis"} == 0
+    for: 1m
+    labels:
+      severity: critical
+      service: redis
+    annotations:
+      summary: "Redis is down"
+      description: "Redis has been down for more than 1 minute"
+
+  - alert: RedisHighMemoryUsage
+    expr: redis_memory_used_bytes / redis_memory_max_bytes * 100 > 90
+    for: 5m
+    labels:
+      severity: warning
+      service: redis
+    annotations:
+      summary: "Redis high memory usage"
+      description: "Redis memory usage is {{ $value }}%"

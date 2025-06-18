@@ -14,6 +14,7 @@ from clarity.api.v1.gemini_insights import router as insights_router
 from clarity.api.v1.health_data import router as health_data_router
 from clarity.api.v1.healthkit_upload import router as healthkit_router
 from clarity.api.v1.metrics import router as metrics_router
+from clarity.api.v1.observability import router as observability_router
 from clarity.api.v1.pat_analysis import router as pat_router
 from clarity.api.v1.test import router as test_router
 from clarity.api.v1.websocket.chat_handler import router as websocket_router
@@ -68,6 +69,11 @@ api_router.include_router(
 )
 
 api_router.include_router(
+    observability_router,
+    tags=["observability"],
+)
+
+api_router.include_router(
     websocket_router,
     prefix="/ws",
     tags=["websocket"],
@@ -102,6 +108,7 @@ async def api_info() -> dict[str, Any]:
             "pat_analysis": "/api/v1/pat",
             "insights": "/api/v1/insights",
             "metrics": "/api/v1/metrics",
+            "observability": "/api/v1/observability",
             "websocket": "/api/v1/ws",
         },
     }

@@ -1,0 +1,85 @@
+server:
+  http_listen_port: 9080
+  grpc_listen_port: 0
+
+positions:
+  filename: /tmp/positions.yaml
+
+clients:
+  - url: http://loki:3100/loki/api/v1/push
+
+scrape_configs:
+  # Clarity Backend Application Logs
+  - job_name: clarity-backend
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: clarity-backend
+          service: clarity-backend
+          environment: development
+          __path__: /var/log/clarity/*.log
+    
+    pipeline_stages:
+      # Parse JSON logs
+      - json:
+          expressions:
+            timestamp: timestamp
+            level: level
+            logger: logger
+            message: message
+            correlation_id: correlation_id
+            service: service
+      
+      # Set timestamp
+      - timestamp:
+          source: timestamp
+          format: RFC3339Nano
+      
+      # Set log level
+      - labels:
+          level:
+          logger:
+          correlation_id:
+          service:
+
+  # Docker Container Logs
+  - job_name: docker
+    docker_sd_configs:
+      - host: unix:///var/run/docker.sock
+        refresh_interval: 5s
+    
+    relabel_configs:
+      - source_labels: ['__meta_docker_container_name']
+        regex: '/(.+)'
+        target_label: 'container'
+      - source_labels: ['__meta_docker_container_log_stream']
+        target_label: 'stream'
+    
+    pipeline_stages:
+      - json:
+          expressions:
+            timestamp: time
+            message: log
+      - timestamp:
+          source: timestamp
+          format: RFC3339Nano
+
+  # System Logs
+  - job_name: syslog
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: syslog
+          __path__: /var/log/syslog
+    
+    pipeline_stages:
+      - regex:
+          expression: '^(?P<timestamp>\S+\s+\d+\s+\d+:\d+:\d+)\s+(?P<hostname>\S+)\s+(?P<service>\S+):\s+(?P<message>.*)$'
+      - timestamp:
+          source: timestamp
+          format: Jan 2 15:04:05
+      - labels:
+          hostname:
+          service:

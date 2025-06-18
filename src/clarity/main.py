@@ -5,6 +5,7 @@
 from contextlib import asynccontextmanager
 import logging
 import os
+import sys
 from typing import TYPE_CHECKING, Any
 
 import boto3
@@ -17,7 +18,7 @@ from prometheus_client import make_asgi_app
 if TYPE_CHECKING:
     from collections.abc import AsyncGenerator
 
-# Configure logging
+# Configure logging (will be enhanced by observability setup)
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
@@ -72,6 +73,57 @@ async def lifespan(_app: FastAPI) -> AsyncGenerator[None, None]:  # noqa: RUF029
     logger.info("AWS Region: %s", AWS_REGION)
     logger.info("Cognito Region: %s", COGNITO_REGION)
     logger.info("Auth Enabled: %s", ENABLE_AUTH)
+    
+    # Setup comprehensive observability stack
+    from clarity.observability import setup_observability
+    from clarity.observability.logging import setup_structured_logging
+    from clarity.observability.metrics import get_metrics
+    from clarity.observability.alerting import get_alert_manager, SlackNotificationChannel
+    
+    # Setup structured logging
+    setup_structured_logging(
+        level=os.getenv("LOG_LEVEL", "INFO"),
+        json_logs=ENVIRONMENT == "production",
+        enable_rich=ENVIRONMENT == "development",
+    )
+    logger.info("✅ Structured logging configured")
+    
+    # Setup OpenTelemetry instrumentation
+    setup_observability(
+        service_name="clarity-backend",
+        service_version="0.2.0",
+        environment=ENVIRONMENT,
+        jaeger_endpoint=os.getenv("JAEGER_ENDPOINT"),
+        otlp_endpoint=os.getenv("OTEL_EXPORTER_OTLP_ENDPOINT"),
+        enable_console_export=ENVIRONMENT == "development",
+    )
+    logger.info("✅ OpenTelemetry instrumentation configured")
+    
+    # Initialize metrics and set app info
+    metrics = get_metrics()
+    metrics.set_app_info(
+        version="0.2.0",
+        environment=ENVIRONMENT,
+        aws_region=AWS_REGION,
+        python_version=f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}"
+    )
+    logger.info("✅ Metrics collection initialized")
+    
+    # Setup alerting channels
+    alert_manager = get_alert_manager()
+    
+    # Add Slack notification if webhook is configured
+    slack_webhook = os.getenv("SLACK_WEBHOOK_URL")
+    if slack_webhook:
+        slack_channel = SlackNotificationChannel(
+            name="slack_alerts",
+            webhook_url=slack_webhook,
+            channel=os.getenv("SLACK_CHANNEL", "#alerts")
+        )
+        alert_manager.add_notification_channel(slack_channel)
+        logger.info("✅ Slack alerts configured")
+    
+    logger.info("🔍 Clarity Observability Stack fully initialized")
 
     # Initialize lockout service with Redis URL from environment
     from clarity.auth.lockout_service import get_lockout_service
@@ -249,6 +301,15 @@ from clarity.middleware.rate_limiting import setup_rate_limiting
 redis_url = os.getenv("REDIS_URL")
 limiter = setup_rate_limiting(app, redis_url=redis_url)
 logger.info("✅ Added rate limiting middleware")
+
+# Add observability middleware
+from clarity.observability.middleware import ObservabilityMiddleware, SystemMetricsMiddleware
+from clarity.observability.correlation import CorrelationMiddleware
+
+app.add_middleware(ObservabilityMiddleware)
+app.add_middleware(SystemMetricsMiddleware, update_interval=30)
+app.add_middleware(CorrelationMiddleware)
+logger.info("✅ Added comprehensive observability middleware")
 
 # Add request logging middleware in development
 if ENVIRONMENT == "development":

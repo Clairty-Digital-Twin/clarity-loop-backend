@@ -11,8 +11,18 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from collections.abc import Awaitable
-
     from fastapi import Request, Response
+else:
+    # For runtime, we need the actual imports
+    try:
+        from collections.abc import Awaitable
+        from fastapi import Request, Response
+    except ImportError:
+        # Fallback if FastAPI is not available
+        Request = Any
+        Response = Any
+        Awaitable = Any
+        from typing import Any
 
 
 class IMiddleware(ABC):

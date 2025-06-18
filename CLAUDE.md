@@ -1,146 +1,246 @@
-# CLAUDE.md - CRITICAL PROJECT INFORMATION
+# Claude Code Configuration
 
-## 🚨 CRITICAL: Docker Build Platform Requirements
+## Build Commands
+- `npm run build`: Build the project
+- `npm run test`: Run the full test suite
+- `npm run lint`: Run ESLint and format checks
+- `npm run typecheck`: Run TypeScript type checking
+- `./claude-flow --help`: Show all available commands
 
-**ALWAYS BUILD DOCKER IMAGES FOR linux/amd64 PLATFORM FOR AWS ECS DEPLOYMENT**
+## Claude-Flow Complete Command Reference
 
+### Core System Commands
+- `./claude-flow start [--ui] [--port 3000] [--host localhost]`: Start orchestration system with optional web UI
+- `./claude-flow status`: Show comprehensive system status
+- `./claude-flow monitor`: Real-time system monitoring dashboard
+- `./claude-flow config <subcommand>`: Configuration management (show, get, set, init, validate)
+
+### Agent Management
+- `./claude-flow agent spawn <type> [--name <name>]`: Create AI agents (researcher, coder, analyst, etc.)
+- `./claude-flow agent list`: List all active agents
+- `./claude-flow spawn <type>`: Quick agent spawning (alias for agent spawn)
+
+### Task Orchestration
+- `./claude-flow task create <type> [description]`: Create and manage tasks
+- `./claude-flow task list`: View active task queue
+- `./claude-flow workflow <file>`: Execute workflow automation files
+
+### Memory Management
+- `./claude-flow memory store <key> <data>`: Store persistent data across sessions
+- `./claude-flow memory get <key>`: Retrieve stored information
+- `./claude-flow memory list`: List all memory keys
+- `./claude-flow memory export <file>`: Export memory to file
+- `./claude-flow memory import <file>`: Import memory from file
+- `./claude-flow memory stats`: Memory usage statistics
+- `./claude-flow memory cleanup`: Clean unused memory entries
+
+### SPARC Development Modes
+- `./claude-flow sparc "<task>"`: Run orchestrator mode (default)
+- `./claude-flow sparc run <mode> "<task>"`: Run specific SPARC mode
+- `./claude-flow sparc tdd "<feature>"`: Test-driven development mode
+- `./claude-flow sparc modes`: List all 17 available SPARC modes
+
+Available SPARC modes: orchestrator, coder, researcher, tdd, architect, reviewer, debugger, tester, analyzer, optimizer, documenter, designer, innovator, swarm-coordinator, memory-manager, batch-executor, workflow-manager
+
+### Swarm Coordination
+- `./claude-flow swarm "<objective>" [options]`: Multi-agent swarm coordination
+- `--strategy`: research, development, analysis, testing, optimization, maintenance
+- `--mode`: centralized, distributed, hierarchical, mesh, hybrid
+- `--max-agents <n>`: Maximum number of agents (default: 5)
+- `--parallel`: Enable parallel execution
+- `--monitor`: Real-time monitoring
+- `--output <format>`: json, sqlite, csv, html
+
+### MCP Server Integration
+- `./claude-flow mcp start [--port 3000] [--host localhost]`: Start MCP server
+- `./claude-flow mcp status`: Show MCP server status
+- `./claude-flow mcp tools`: List available MCP tools
+
+### Claude Integration
+- `./claude-flow claude auth`: Authenticate with Claude API
+- `./claude-flow claude models`: List available Claude models
+- `./claude-flow claude chat`: Interactive chat mode
+
+### Session Management
+- `./claude-flow session`: Manage terminal sessions
+- `./claude-flow repl`: Start interactive REPL mode
+
+### Enterprise Features
+- `./claude-flow project <subcommand>`: Project management (Enterprise)
+- `./claude-flow deploy <subcommand>`: Deployment operations (Enterprise)
+- `./claude-flow cloud <subcommand>`: Cloud infrastructure management (Enterprise)
+- `./claude-flow security <subcommand>`: Security and compliance tools (Enterprise)
+- `./claude-flow analytics <subcommand>`: Analytics and insights (Enterprise)
+
+### Project Initialization
+- `./claude-flow init`: Initialize Claude-Flow project
+- `./claude-flow init --sparc`: Initialize with full SPARC development environment
+
+## Quick Start Workflows
+
+### Research Workflow
 ```bash
-# ✅ CORRECT - Always use this:
-docker build --platform linux/amd64 -t image-name .
+# Start a research swarm with distributed coordination
+./claude-flow swarm "Research modern web frameworks" --strategy research --mode distributed --parallel --monitor
 
-# ❌ WRONG - Never use these:
-docker build -t image-name .  # Uses host platform (arm64 on Mac)
-docker buildx build --load -t image-name .  # May default to wrong platform
+# Or use SPARC researcher mode for focused research
+./claude-flow sparc run researcher "Analyze React vs Vue vs Angular performance characteristics"
+
+# Store findings in memory for later use
+./claude-flow memory store "research_findings" "Key insights from framework analysis"
 ```
 
-## Why This Matters
-
-AWS ECS Fargate ONLY supports `linux/amd64` platform. Building for any other platform (like `arm64` on Apple Silicon Macs) will result in:
-- Error: `CannotPullContainerError: image Manifest does not contain descriptor matching platform 'linux/amd64'`
-- Task fails to start
-- Service shows 0 running tasks
-- Application is DOWN
-
-## Active AWS Resources
-
-### ECS Cluster
-- **Active Cluster**: `clarity-backend-cluster` (NOT `clarity-cluster` which is INACTIVE)
-- **Service**: `clarity-backend-service`
-- **Task Definition**: `clarity-backend`
-
-### Load Balancer
-- **ALB URL**: http://clarity-alb-1762715656.us-east-1.elb.amazonaws.com
-- **Target Group**: `clarity-targets`
-- **ACM Certificate ARN**: `arn:aws:acm:us-east-1:124355672559:certificate/183ffae7-82d7-4259-a773-f52bb05c46d8` ✅ ISSUED
-- **Domains**: clarity.novamindnyc.com, novamindnyc.com
-
-### ECR Repository
-- **Repository**: `124355672559.dkr.ecr.us-east-1.amazonaws.com/clarity-backend`
-
-### ML Models S3 Bucket
-- **Bucket**: `clarity-ml-models-124355672559`
-- **PAT Model Checksums**:
-  - PAT-S: `df8d9f0f66bab088d2d4870cb2df4342745940c732d008cd3d74687be4ee99be`
-  - PAT-M: `855e482b79707bf1b71a27c7a6a07691b49df69e40b08f54b33d178680f04ba7`
-  - PAT-L: `e8ebef52e34a6f1ea92bbe3f752afcd1ae427b9efbe0323856e873f12c989521`
-
-## Deployment Process
-
-**USE THE CANONICAL DEPLOYMENT SCRIPT**:
+### Development Workflow
 ```bash
-cd ops/
-./deploy.sh          # Deploy existing image
-./deploy.sh --build  # Build new image and deploy
+# Start orchestration system with web UI
+./claude-flow start --ui --port 3000
+
+# Run TDD workflow for new feature
+./claude-flow sparc tdd "User authentication system with JWT tokens"
+
+# Development swarm for complex projects
+./claude-flow swarm "Build e-commerce API with payment integration" --strategy development --mode hierarchical --max-agents 8 --monitor
+
+# Check system status
+./claude-flow status
 ```
 
-The script handles:
-1. ECR login
-2. Building for linux/amd64 platform (CRITICAL!)
-3. Git commit-based tagging
-4. Pushing to ECR with verification
-5. Task definition with S3 permissions
-6. Service update and stability wait
-7. Smoke test validation
-
-**CRITICAL**: The ECS task role must have S3 access for ML models!
-
-## Authentication Fix Status
-
-The authentication 500 error has been fixed in the code:
-- `InvalidCredentialsError` is properly raised for wrong credentials (returns 401)
-- Exception classes have proper error codes
-- Code is correct in `src/clarity/auth/aws_cognito_provider.py`
-
-## Authentication Middleware
-
-**NEW**: Authentication middleware has been implemented to handle JWT token validation:
-- Located at `src/clarity/middleware/auth_middleware.py`
-- Automatically validates Bearer tokens from Authorization headers
-- Populates `request.state.user` with authenticated user context
-- Integrates with AWS Cognito for token verification
-- Creates/updates user records in DynamoDB automatically
-- Supports both `request.state` and `contextvars` for Modal compatibility
-- Public endpoints (health, docs, auth routes) don't require authentication
-- Authentication can be disabled with `ENABLE_AUTH=false` environment variable
-
-## Test Suite Status
-
-Current test failures that need fixing:
-1. Async/coroutine mock issues in health data tests
-2. Mock context manager issues in DynamoDB tests
-3. AWS region configuration test
-4. Decimal serialization test precision
-5. PAT model path security test expectations
-6. Integration tests need to handle service unavailable (503)
-7. Email verification test expectation
-
-## Important Commands
-
-### Check Service Status
+### Analysis Workflow
 ```bash
-aws ecs describe-services --cluster clarity-backend-cluster --services clarity-backend-service --region us-east-1
+# Analyze codebase performance
+./claude-flow sparc run analyzer "Identify performance bottlenecks in current codebase"
+
+# Data analysis swarm
+./claude-flow swarm "Analyze user behavior patterns from logs" --strategy analysis --mode mesh --parallel --output sqlite
+
+# Store analysis results
+./claude-flow memory store "performance_analysis" "Bottlenecks identified in database queries"
 ```
 
-### Check Latest Task Failure
+### Maintenance Workflow
 ```bash
-# Get latest task ARN
-TASK_ARN=$(aws ecs list-tasks --cluster clarity-backend-cluster --service-name clarity-backend-service --region us-east-1 --query 'taskArns[0]' --output text)
+# System maintenance with safety controls
+./claude-flow swarm "Update dependencies and security patches" --strategy maintenance --mode centralized --monitor
 
-# Describe task to see failure reason
-aws ecs describe-tasks --cluster clarity-backend-cluster --tasks $TASK_ARN --region us-east-1
+# Security review
+./claude-flow sparc run reviewer "Security audit of authentication system"
+
+# Export maintenance logs
+./claude-flow memory export maintenance_log.json
 ```
 
-### Run Tests Locally
+## Integration Patterns
+
+### Memory-Driven Coordination
+Use Memory to coordinate information across multiple SPARC modes and swarm operations:
+
 ```bash
-# Run all tests
-pytest
+# Store architecture decisions
+./claude-flow memory store "system_architecture" "Microservices with API Gateway pattern"
 
-# Run with coverage
-pytest --cov=src/clarity --cov-report=term-missing
-
-# Run specific test file
-pytest tests/services/test_health_data_service.py -v
+# All subsequent operations can reference this decision
+./claude-flow sparc run coder "Implement user service based on system_architecture in memory"
+./claude-flow sparc run tester "Create integration tests for microservices architecture"
 ```
 
-### Lint and Type Check
-```bash
-# Lint
-ruff check src/ tests/
+### Multi-Stage Development
+Coordinate complex development through staged execution:
 
-# Type check
-mypy src/
+```bash
+# Stage 1: Research and planning
+./claude-flow sparc run researcher "Research authentication best practices"
+./claude-flow sparc run architect "Design authentication system architecture"
+
+# Stage 2: Implementation
+./claude-flow sparc tdd "User registration and login functionality"
+./claude-flow sparc run coder "Implement JWT token management"
+
+# Stage 3: Testing and deployment
+./claude-flow sparc run tester "Comprehensive security testing"
+./claude-flow swarm "Deploy authentication system" --strategy maintenance --mode centralized
 ```
 
-## Common Pitfalls to Avoid
+### Enterprise Integration
+For enterprise environments with additional tooling:
 
-1. **Never** forget the `--platform linux/amd64` flag when building Docker images
-2. **Always** verify the correct ECS cluster name (`clarity-backend-cluster`)
-3. **Always** run tests before deploying
-4. **Never** deploy without checking the task failure reasons if deployment fails
-5. **Always** update this file with new critical information
+```bash
+# Project management integration
+./claude-flow project create "authentication-system"
+./claude-flow project switch "authentication-system"
 
-## Last Updated
+# Security compliance
+./claude-flow security scan
+./claude-flow security audit
 
-- Date: June 15, 2025
-- By: Claude (AI Assistant)
-- Reason: Successfully deployed to production, cleaned up old resources, and consolidated deployment process
+# Analytics and monitoring
+./claude-flow analytics dashboard
+./claude-flow deploy production --monitor
+```
+
+## Advanced Batch Tool Patterns
+
+### TodoWrite Coordination
+Always use TodoWrite for complex task coordination:
+
+```javascript
+TodoWrite([
+  {
+    id: "architecture_design",
+    content: "Design system architecture and component interfaces",
+    status: "pending",
+    priority: "high",
+    dependencies: [],
+    estimatedTime: "60min",
+    assignedAgent: "architect"
+  },
+  {
+    id: "frontend_development", 
+    content: "Develop React components and user interface",
+    status: "pending",
+    priority: "medium",
+    dependencies: ["architecture_design"],
+    estimatedTime: "120min",
+    assignedAgent: "frontend_team"
+  }
+]);
+```
+
+### Task and Memory Integration
+Launch coordinated agents with shared memory:
+
+```javascript
+// Store architecture in memory
+Task("System Architect", "Design architecture and store specs in Memory");
+
+// Other agents use memory for coordination
+Task("Frontend Team", "Develop UI using Memory architecture specs");
+Task("Backend Team", "Implement APIs according to Memory specifications");
+```
+
+## Code Style Preferences
+- Use ES modules (import/export) syntax
+- Destructure imports when possible
+- Use TypeScript for all new code
+- Follow existing naming conventions
+- Add JSDoc comments for public APIs
+- Use async/await instead of Promise chains
+- Prefer const/let over var
+
+## Workflow Guidelines
+- Always run typecheck after making code changes
+- Run tests before committing changes
+- Use meaningful commit messages
+- Create feature branches for new functionality
+- Ensure all tests pass before merging
+
+## Important Notes
+- **Use TodoWrite extensively** for all complex task coordination
+- **Leverage Task tool** for parallel agent execution on independent work
+- **Store all important information in Memory** for cross-agent coordination
+- **Use batch file operations** whenever reading/writing multiple files
+- **Check .claude/commands/** for detailed command documentation
+- **All swarm operations include automatic batch tool coordination**
+- **Monitor progress** with TodoRead during long-running operations
+- **Enable parallel execution** with --parallel flags for maximum efficiency
+
+This configuration ensures optimal use of Claude Code's batch tools for swarm orchestration and parallel task execution with full Claude-Flow capabilities.

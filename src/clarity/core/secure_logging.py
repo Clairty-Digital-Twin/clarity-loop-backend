@@ -6,12 +6,13 @@ to prevent accidental PHI exposure in logs.
 
 # removed – breaks FastAPI
 
+import logging
 from typing import TYPE_CHECKING
 
-if TYPE_CHECKING:
-    import logging
+from clarity.models.health_data import HealthDataUpload, HealthMetric
 
-    from clarity.models.health_data import HealthDataUpload, HealthMetric
+if TYPE_CHECKING:
+    pass  # Only for type stubs now
 
 # Constants for sanitization
 MAX_COMPLEX_VALUE_LENGTH = 100

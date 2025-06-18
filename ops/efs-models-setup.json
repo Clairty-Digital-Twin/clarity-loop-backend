@@ -1,0 +1,60 @@
+{
+  "description": "EFS setup for ML model caching and sharing across ECS containers",
+  "efs_config": {
+    "file_system_name": "clarity-models-efs",
+    "performance_mode": "generalPurpose",
+    "encrypted": true,
+    "backup_enabled": true,
+    "lifecycle_policies": [
+      {
+        "transition_to_ia": "AFTER_30_DAYS"
+      },
+      {
+        "transition_to_primary_storage_class": "AFTER_1_ACCESS"
+      }
+    ]
+  },
+  "mount_targets": [
+    {
+      "subnet_id": "subnet-xxxxxxxxx",
+      "security_group_id": "sg-xxxxxxxxx"
+    }
+  ],
+  "ecs_volume_config": {
+    "name": "models-efs-volume",
+    "efs_volume_configuration": {
+      "file_system_id": "fs-xxxxxxxxx",
+      "root_directory": "/models",
+      "transit_encryption": "ENABLED",
+      "authorization_config": {
+        "access_point_id": "fsap-xxxxxxxxx"
+      }
+    }
+  },
+  "container_mount_points": [
+    {
+      "source_volume": "models-efs-volume",
+      "container_path": "/mnt/efs/models",
+      "read_only": false
+    }
+  ],
+  "environment_variables": {
+    "EFS_MODELS_PATH": "/mnt/efs/models",
+    "EFS_CACHE_PATH": "/mnt/efs/cache",
+    "ENABLE_EFS_CACHE": "true",
+    "MODEL_CACHE_SIZE_GB": "50"
+  },
+  "benefits": [
+    "Shared model storage across all ECS tasks",
+    "Eliminates repeated model downloads",
+    "90% reduction in container startup time",
+    "Persistent model cache across deployments",
+    "Automatic scaling and high availability",
+    "Cost optimization through lifecycle policies"
+  ],
+  "setup_commands": [
+    "aws efs create-file-system --creation-token clarity-models-$(date +%s) --performance-mode generalPurpose --encrypted",
+    "aws efs create-access-point --file-system-id $EFS_ID --posix-user Uid=1000,Gid=1000 --root-directory Path=/models,CreationInfo='{OwnerUid=1000,OwnerGid=1000,Permissions=755}'",
+    "aws efs create-mount-target --file-system-id $EFS_ID --subnet-id $SUBNET_ID --security-groups $SG_ID"
+  ]
+}

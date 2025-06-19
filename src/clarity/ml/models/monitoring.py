@@ -401,8 +401,8 @@ class ModelMonitoringService:
 
     async def _health_monitoring_loop(self) -> None:
         """Background health monitoring loop."""
-        while True:
-            try:  # noqa: PLR1702 - Background monitoring loop
+        while True:  # noqa: PLR1702 - Background monitoring loop
+            try:
                 if self.model_manager:
                     health_data = await self.model_manager.health_check()
 

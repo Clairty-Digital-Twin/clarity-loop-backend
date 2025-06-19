@@ -335,7 +335,7 @@ class ModelRegistry:
 
                     # Open file for writing (append mode if resuming)
                     mode = "ab" if start_byte > 0 else "wb"
-                    async with aiofiles.open(partial_path, mode) as f:
+                    async with aiofiles.open(str(partial_path), mode) as f:
                         downloaded = start_byte
                         last_update = time.time()
 

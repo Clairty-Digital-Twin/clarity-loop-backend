@@ -9,7 +9,7 @@ Implements OWASP recommended security headers for API protection.
 import logging
 from typing import TYPE_CHECKING, Any
 
-from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
 from starlette.requests import Request
 from starlette.responses import Response
 from starlette.types import ASGIApp
@@ -67,7 +67,7 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
             self.enable_csp,
         )
 
-    async def dispatch(self, request: Request, call_next: Any) -> Response:
+    async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
         """Process the request and add security headers to the response.
 
         Args:
@@ -83,7 +83,7 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         # Add security headers
         self._add_security_headers(response)
 
-        return response
+        return response  # type: Response
 
     def _add_security_headers(self, response: Response) -> None:
         """Add security headers to the response.

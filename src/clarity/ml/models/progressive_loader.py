@@ -81,7 +81,7 @@ class ProgressiveLoadingService:
     - Performance monitoring: Track loading times and availability
     """
 
-    def __init__(self, config: ProgressiveLoadingConfig | None = None):
+    def __init__(self, config: ProgressiveLoadingConfig | None = None) -> None:
         self.config = config or ProgressiveLoadingConfig()
         self.model_manager: ModelManager | None = None
         self.current_phase = ApplicationPhase.INIT
@@ -187,7 +187,7 @@ class ProgressiveLoadingService:
         uptime_seconds = time.time() - self.startup_time
 
         # Count models by status
-        status_counts = {}
+        status_counts: dict[str, int] = {}
         critical_ready = 0
         critical_total = 0
 
@@ -383,7 +383,7 @@ class ProgressiveLoadingService:
 
                 start_time = time.time()
                 try:
-                    success = await self.model_manager.preload_model(model_id, version)
+                    success = await self.model_manager.preload_model(model_id, version) if self.model_manager else False
                     load_time = time.time() - start_time
 
                     if success:
@@ -448,6 +448,8 @@ class ProgressiveLoadingService:
         self._record_phase_transition(ApplicationPhase.MODELS_LOADING)
 
         # Load all registered models
+        if not self.model_manager:
+            return
         all_models = await self.model_manager.registry.list_models()
 
         load_tasks = []
@@ -486,7 +488,8 @@ class ProgressiveLoadingService:
     def _parse_model_spec(self, model_spec: str) -> tuple[str, str]:
         """Parse model specification string (e.g., 'pat:latest' -> ('pat', 'latest'))."""
         if ":" in model_spec:
-            return model_spec.split(":", 1)
+            parts = model_spec.split(":", 1)
+            return parts[0], parts[1]
         return model_spec, "latest"
 
     def _record_phase_transition(self, phase: ApplicationPhase) -> None:

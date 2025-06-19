@@ -266,7 +266,7 @@ class ModelMonitoringService:
         avg_memory = sum(memory_usage) / len(memory_usage) if memory_usage else 0
 
         # Error breakdown
-        error_types = defaultdict(int)
+        error_types: defaultdict[str, int] = defaultdict(int)
         for m in inference_metrics:
             if not m.success and m.error_type:
                 error_types[m.error_type] += 1
@@ -302,7 +302,7 @@ class ModelMonitoringService:
         metrics = {}
 
         # Get unique model combinations
-        model_combinations = set()
+        model_combinations: set[tuple[str, str]] = set()
         model_combinations.update(
             (metric.model_id, metric.version) for metric in self.inference_metrics
         )
@@ -550,6 +550,9 @@ class ModelMonitoringService:
                 "service": "clarity-model-monitoring",
             }
 
+            if not self.config.alert_webhook_url:
+                return
+                
             async with (
                 aiohttp.ClientSession() as session,
                 session.post(self.config.alert_webhook_url, json=payload) as response,

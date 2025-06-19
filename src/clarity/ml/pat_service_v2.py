@@ -41,7 +41,7 @@ class PATServiceV2:
         enable_monitoring: bool = True,
         progressive_config: ProgressiveLoadingConfig | None = None,
         monitoring_config: ModelMonitoringConfig | None = None,
-    ):
+    ) -> None:
         self.model_size = model_size
         self.enable_monitoring = enable_monitoring
 
@@ -76,7 +76,7 @@ class PATServiceV2:
             )
 
             # Initialize monitoring if enabled
-            if self.enable_monitoring:
+            if self.enable_monitoring and self.progressive_service and self.progressive_service.model_manager:
                 self.monitoring_service = ModelMonitoringService(self.monitoring_config)
                 await self.monitoring_service.initialize(
                     self.progressive_service.model_manager
@@ -102,9 +102,10 @@ class PATServiceV2:
 
         try:
             # Get the model (will load if not already loaded)
-            self.current_model = await self.progressive_service.get_model(
-                model_id="pat", version=version, critical=True
-            )
+            if self.progressive_service:
+                self.current_model = await self.progressive_service.get_model(
+                    model_id="pat", version=version, critical=True
+                )
 
             if self.current_model:
                 logger.info(
@@ -206,6 +207,8 @@ class PATServiceV2:
             input_data.update(options)
 
         # Use the model's predict method
+        if not self.current_model:
+            raise RuntimeError("No model loaded")
         result = await self.current_model.predict(**input_data)
 
         # Ensure consistent output format
@@ -213,12 +216,13 @@ class PATServiceV2:
             result = {"predictions": result}
 
         # Add metadata
-        result["model_info"] = {
-            "model_id": self.current_model.metadata.model_id,
-            "version": self.current_model.metadata.version,
-            "model_size": self.model_size,
-            "service_version": "v2",
-        }
+        if self.current_model:
+            result["model_info"] = {
+                "model_id": self.current_model.metadata.model_id,
+                "version": self.current_model.metadata.version,
+                "model_size": self.model_size,
+                "service_version": "v2",
+            }
 
         return result
 
@@ -322,7 +326,7 @@ class PATServiceV2:
             target_version = new_version or old_version
 
             # Unload current model
-            if self.current_model:
+            if self.current_model and self.progressive_service and self.progressive_service.model_manager:
                 await self.progressive_service.model_manager.unload_model(
                     "pat", old_version
                 )
@@ -391,7 +395,7 @@ class PATServiceV2:
             if self.current_model:
                 # Unload model
                 version = self.size_to_version.get(self.model_size, "latest")
-                if self.progressive_service:
+                if self.progressive_service and self.progressive_service.model_manager:
                     await self.progressive_service.model_manager.unload_model(
                         "pat", version
                     )

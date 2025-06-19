@@ -12,6 +12,7 @@ from typing import TYPE_CHECKING
 from fastapi import Request, Response, status
 from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
+from starlette.types import ASGIApp
 
 if TYPE_CHECKING:
     pass
@@ -28,7 +29,7 @@ class RequestSizeLimiterMiddleware(BaseHTTPMiddleware):
 
     def __init__(
         self,
-        app,
+        app: ASGIApp,
         max_request_size: int = 10 * 1024 * 1024,  # 10MB default
         max_json_size: int = 5 * 1024 * 1024,  # 5MB for JSON payloads
         max_upload_size: int = 50 * 1024 * 1024,  # 50MB for file uploads

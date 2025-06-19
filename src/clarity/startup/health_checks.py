@@ -114,9 +114,9 @@ class ServiceHealthChecker:
         """Check AWS Cognito health."""
         service_name = "cognito"
         start_time = time.time()
+        circuit_breaker = self._get_circuit_breaker(service_name)
 
         try:
-            circuit_breaker = self._get_circuit_breaker(service_name)
 
             if not circuit_breaker.should_attempt_request():
                 return HealthCheckResult(
@@ -163,7 +163,6 @@ class ServiceHealthChecker:
             )
 
         except TimeoutError:
-            circuit_breaker = self._get_circuit_breaker(service_name)
             circuit_breaker.record_failure()
             return HealthCheckResult(
                 service_name=service_name,
@@ -234,10 +233,9 @@ class ServiceHealthChecker:
         """Check DynamoDB health."""
         service_name = "dynamodb"
         start_time = time.time()
+        circuit_breaker = self._get_circuit_breaker(service_name)
 
         try:
-            circuit_breaker = self._get_circuit_breaker(service_name)
-
             if not circuit_breaker.should_attempt_request():
                 return HealthCheckResult(
                     service_name=service_name,
@@ -306,7 +304,6 @@ class ServiceHealthChecker:
             )
 
         except TimeoutError:
-            circuit_breaker = self._get_circuit_breaker(service_name)
             circuit_breaker.record_failure()
             return HealthCheckResult(
                 service_name=service_name,
@@ -376,10 +373,9 @@ class ServiceHealthChecker:
         """Check S3 bucket health."""
         service_name = "s3"
         start_time = time.time()
+        circuit_breaker = self._get_circuit_breaker(service_name)
 
         try:
-            circuit_breaker = self._get_circuit_breaker(service_name)
-
             if not circuit_breaker.should_attempt_request():
                 return HealthCheckResult(
                     service_name=service_name,
@@ -418,7 +414,6 @@ class ServiceHealthChecker:
             )
 
         except TimeoutError:
-            circuit_breaker = self._get_circuit_breaker(service_name)
             circuit_breaker.record_failure()
             return HealthCheckResult(
                 service_name=service_name,

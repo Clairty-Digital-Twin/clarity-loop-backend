@@ -282,8 +282,12 @@ class ModelManager:
                 "memory_usage_mb": metrics.memory_usage_mb,
             }
 
-            health_status["models"][unique_id] = model_health
-            health_status["total_memory_mb"] += metrics.memory_usage_mb
+            models = health_status["models"]
+            assert isinstance(models, dict)
+            models[unique_id] = model_health
+            total_mem = health_status["total_memory_mb"]
+            assert isinstance(total_mem, (int, float))
+            health_status["total_memory_mb"] = total_mem + metrics.memory_usage_mb
 
         return health_status
 
@@ -336,6 +340,9 @@ class ModelManager:
 
                 # Refresh metadata to get updated local path
                 metadata = await self.registry.get_model(model_id, version)
+                if not metadata:
+                    logger.error(f"Failed to refresh metadata for {model_id}:{version}")
+                    return None
 
             # Create model instance using appropriate factory
             model_instance = await self._create_model_instance(metadata)
@@ -484,7 +491,8 @@ class ModelManager:
                     pat_service.config["model_path"] = metadata.local_path
 
                 # Load the model
-                await asyncio.get_event_loop().run_in_executor(
+                loop = asyncio.get_event_loop()
+                await loop.run_in_executor(
                     None, pat_service.load_model
                 )
 

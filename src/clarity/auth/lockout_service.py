@@ -42,7 +42,7 @@ class AccountLockoutService:
     ) -> None:
         self.max_attempts = max_attempts
         self.lockout_secs = int(lockout_duration.total_seconds())
-        self._mem: dict[str, dict] = {}
+        self._mem: dict[str, dict[str, Any]] = {}
         self._lock = asyncio.Lock()
         self._r = redis.from_url(redis_url) if redis_url else None
 
@@ -66,7 +66,7 @@ class AccountLockoutService:
             await self._mem_register_failure(user)
 
     async def reset(self, user: str) -> None:
-        if self._r:
+        if self._r is not None:
             await self._r.delete(self._key(user))
         else:
             async with self._lock:
@@ -74,6 +74,7 @@ class AccountLockoutService:
 
     # ---------- Redis impl ----------
     async def _redis_is_locked(self, user: str) -> bool:
+        assert self._r is not None
         key = self._key(user)
         ttl = await self._r.ttl(key)
         if ttl <= 0:
@@ -82,6 +83,7 @@ class AccountLockoutService:
         return locked_value == b"1"
 
     async def _redis_register_failure(self, user: str) -> None:
+        assert self._r is not None
         key = self._key(user)
         pipe = self._r.pipeline()
         pipe.hincrby(key, "attempts", 1)
@@ -110,7 +112,7 @@ class AccountLockoutService:
                 rec["locked_until"] = 0
                 return False
 
-            return locked_until > current_time
+            return bool(locked_until > current_time)
 
     async def _mem_register_failure(self, user: str) -> None:
         async with self._lock:

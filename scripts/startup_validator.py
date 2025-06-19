@@ -5,8 +5,6 @@ Command-line tool for validating CLARITY startup configuration and services
 without actually starting the application.
 """
 
-import asyncio
-import os
 from pathlib import Path
 import sys
 

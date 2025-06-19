@@ -3,7 +3,6 @@
 
 from collections import OrderedDict
 import json
-import re
 
 
 def clean_openapi_spec():

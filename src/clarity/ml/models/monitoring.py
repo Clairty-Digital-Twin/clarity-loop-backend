@@ -6,6 +6,7 @@ Supports Prometheus metrics, custom dashboards, and real-time performance tracki
 
 import asyncio
 from collections import defaultdict, deque
+from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import datetime
 import logging

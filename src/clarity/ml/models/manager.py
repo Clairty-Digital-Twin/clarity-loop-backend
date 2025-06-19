@@ -12,7 +12,7 @@ from enum import Enum
 import logging
 from pathlib import Path
 import time
-from typing import Any
+from typing import Any, AsyncGenerator
 
 from pydantic import BaseModel
 import torch
@@ -65,7 +65,7 @@ class LoadedModel:
 
     def __init__(
         self, metadata: ModelMetadata, model_instance: Any, config: ModelLoadConfig
-    ):
+    ) -> None:
         self.metadata = metadata
         self.model_instance = model_instance
         self.config = config
@@ -120,7 +120,7 @@ class LoadedModel:
         """Get current performance metrics."""
         return self.metrics
 
-    def update_memory_usage(self):
+    def update_memory_usage(self) -> None:
         """Update memory usage statistics."""
         if torch.cuda.is_available():
             self.metrics.memory_usage_mb = torch.cuda.memory_allocated() / (1024 * 1024)
@@ -143,7 +143,7 @@ class ModelManager:
         registry: ModelRegistry | None = None,
         config: ModelRegistryConfig | None = None,
         load_config: ModelLoadConfig | None = None,
-    ):
+    ) -> None:
         self.registry = registry or ModelRegistry(config or ModelRegistryConfig())
         self.load_config = load_config or ModelLoadConfig()
         self.loaded_models: dict[str, LoadedModel] = {}
@@ -156,7 +156,7 @@ class ModelManager:
 
         logger.info("ModelManager initialized with progressive loading enabled")
 
-    async def initialize(self):
+    async def initialize(self) -> None:
         """Initialize model manager and start progressive loading."""
         await self.registry.initialize()
 
@@ -287,7 +287,7 @@ class ModelManager:
 
         return health_status
 
-    def register_model_factory(self, model_type: str, factory: Callable):
+    def register_model_factory(self, model_type: str, factory: Callable) -> None:
         """Register a factory function for creating model instances."""
         self.model_factories[model_type] = factory
         logger.info(f"Registered model factory for type: {model_type}")
@@ -384,7 +384,7 @@ class ModelManager:
             logger.error(f"Model factory failed for {metadata.unique_id}: {e}")
             return None
 
-    async def _warm_up_model(self, loaded_model: LoadedModel):
+    async def _warm_up_model(self, loaded_model: LoadedModel) -> None:
         """Warm up model with dummy predictions."""
         try:
             logger.info(f"Warming up model {loaded_model.metadata.unique_id}...")
@@ -418,7 +418,7 @@ class ModelManager:
         latest = max(models, key=lambda m: m.version)
         return latest.version
 
-    async def _load_all_models(self):
+    async def _load_all_models(self) -> None:
         """Load all registered models (eager loading)."""
         all_models = await self.registry.list_models()
         load_tasks = []
@@ -435,11 +435,11 @@ class ModelManager:
             f"Eager loading completed: {successful_loads}/{len(all_models)} models loaded"
         )
 
-    async def _start_progressive_loading(self):
+    async def _start_progressive_loading(self) -> None:
         """Start progressive loading in background."""
         asyncio.create_task(self._progressive_loading_task())
 
-    async def _progressive_loading_task(self):
+    async def _progressive_loading_task(self) -> None:
         """Background task for progressive model loading."""
         try:
             # Load critical models first (based on aliases)
@@ -462,7 +462,7 @@ class ModelManager:
         except Exception as e:
             logger.error(f"Progressive loading task failed: {e}")
 
-    def _register_default_factories(self):
+    def _register_default_factories(self) -> None:
         """Register default model factories."""
 
         async def pat_model_factory(metadata: ModelMetadata) -> PATModelService:
@@ -502,7 +502,7 @@ class ModelManager:
 async def get_model_manager(
     config: ModelRegistryConfig | None = None,
     load_config: ModelLoadConfig | None = None,
-):
+) -> AsyncGenerator[ModelManager, None]:
     """Context manager for model manager lifecycle."""
     manager = ModelManager(config=config, load_config=load_config)
 

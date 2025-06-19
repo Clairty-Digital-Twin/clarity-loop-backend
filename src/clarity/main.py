@@ -6,7 +6,7 @@ from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 import logging
 import os
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 import boto3
 from botocore.exceptions import BotoCoreError, ClientError, NoCredentialsError

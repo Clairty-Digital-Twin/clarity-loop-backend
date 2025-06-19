@@ -6,11 +6,9 @@ and temporarily locking accounts after too many failures.
 
 import asyncio
 from datetime import datetime, timedelta
-import json
 import logging
 import os
 import time
-from typing import Optional
 
 import redis.asyncio as redis
 

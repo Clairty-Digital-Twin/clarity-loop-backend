@@ -4,9 +4,7 @@
 This demonstrates the rate limiting middleware in action.
 """
 
-import asyncio
 import time
-from typing import Any
 
 import requests
 

@@ -13,7 +13,7 @@ The exception hierarchy is designed to be:
 # removed – breaks FastAPI
 
 import logging
-from typing import TYPE_CHECKING, Any
+from typing import Any
 from uuid import uuid4
 
 from fastapi import HTTPException, Request

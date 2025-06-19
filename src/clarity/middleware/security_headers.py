@@ -15,7 +15,7 @@ from starlette.responses import Response
 from starlette.types import ASGIApp
 
 if TYPE_CHECKING:
-    from starlette.types import Receive, Scope, Send
+    from starlette.types import Send
 
 logger = logging.getLogger(__name__)
 

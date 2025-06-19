@@ -1,6 +1,6 @@
 """Custom OpenAPI schema generation."""
 
-from typing import Any, Dict
+from typing import Any
 
 from fastapi import FastAPI
 from fastapi.openapi.utils import get_openapi

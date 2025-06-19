@@ -17,7 +17,7 @@ from starlette.types import ASGIApp
 
 from clarity.auth.aws_auth_provider import CognitoAuthProvider
 from clarity.auth.modal_auth_fix import set_user_context
-from clarity.models.auth import AuthError, UserContext
+from clarity.models.auth import AuthError
 from clarity.services.dynamodb_service import DynamoDBService
 
 if TYPE_CHECKING:

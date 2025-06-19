@@ -152,8 +152,8 @@ async def get_pat_inference_engine() -> AsyncInferenceEngine:
 )
 @ai_limiter.limit("20/hour")  # AI endpoints are resource-intensive
 async def analyze_step_data(
-    _req: Request,
-    request: StepDataRequest,
+    request: Request,
+    step_request: StepDataRequest,
     _background_tasks: BackgroundTasks,
     current_user: AuthenticatedUser,
     inference_engine: AsyncInferenceEngine = Depends(get_pat_inference_engine),
@@ -166,6 +166,7 @@ async def analyze_step_data(
     2. PAT model inference
     3. Clinical insight generation
     """
+    _ = request  # Used by rate limiter
     analysis_id = str(uuid.uuid4())
 
     try:
@@ -182,9 +183,9 @@ async def analyze_step_data(
             user_id=current_user.user_id,
             upload_id=analysis_id,
             step_counts=[
-                float(count) for count in request.step_counts
+                float(count) for count in step_request.step_counts
             ],  # Convert to float
-            timestamps=request.timestamps,
+            timestamps=step_request.timestamps,
         )
 
         # Generate proxy actigraphy vector
@@ -197,7 +198,7 @@ async def analyze_step_data(
         # Convert to ActigraphyDataPoint format for PAT model
         actigraphy_points = [
             ActigraphyDataPoint(
-                timestamp=request.timestamps[i], value=float(proxy_result.vector[i])
+                timestamp=step_request.timestamps[i], value=float(proxy_result.vector[i])
             )
             for i in range(len(proxy_result.vector))
         ]

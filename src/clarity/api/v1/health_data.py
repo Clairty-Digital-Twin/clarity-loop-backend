@@ -230,12 +230,13 @@ def get_config_provider() -> IConfigProvider:
 )
 @health_limiter.limit("100/hour")  # Rate limit: 100 uploads per hour per user
 async def upload_health_data(
-    _request: Request,
+    request: Request,
     health_data: HealthDataUpload,
     current_user: AuthenticatedUser,
     service: HealthDataService = Depends(get_health_data_service),
 ) -> HealthDataResponse:
     """🔥 Upload health data with enterprise-grade processing."""
+    _ = request  # Used by rate limiter
     try:
         logger.info("Health data upload requested by user: %s", current_user.user_id)
 

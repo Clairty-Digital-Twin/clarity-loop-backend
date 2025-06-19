@@ -436,10 +436,10 @@ class TestAuditTrailDecorator:
         @audit_trail(
             "delete_document", user_id_param="user_id", resource_id_param="doc_id"
         )
-        def delete_document(_user_id: str, _doc_id: str) -> dict[str, bool]:
+        def delete_document(user_id: str, doc_id: str) -> dict[str, bool]:
+            _ = user_id  # Used by decorator
+            _ = doc_id   # Used by decorator
             return {"deleted": True}
-
-        caplog.set_level(logging.INFO, logger="clarity.core.decorators")
 
         caplog.set_level(logging.INFO, logger="clarity.core.decorators")
 
@@ -476,7 +476,8 @@ class TestAuditTrailDecorator:
         """Test audit trail with async functions."""
 
         @audit_trail("async_operation", user_id_param="user_id")
-        async def async_operation(_user_id: str) -> dict[str, bool]:
+        async def async_operation(user_id: str) -> dict[str, bool]:
+            _ = user_id  # Used by decorator
             await asyncio.sleep(0.001)
             return {"completed": True}
 
@@ -678,8 +679,9 @@ class TestProductionScenarios:
         @validate_input(validate_api_request, "Invalid API request format")
         @audit_trail("api_request", user_id_param="user_id")
         def handle_api_request(
-            request_data: dict[str, Any], _user_id: str | None = None
+            request_data: dict[str, Any], user_id: str | None = None
         ) -> dict[str, str]:
+            _ = user_id  # Used by decorator
             return {
                 "status": "processed",
                 "action": request_data["action"],

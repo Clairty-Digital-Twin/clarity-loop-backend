@@ -163,12 +163,14 @@ class TestIntegration:
 
         @app.get("/test/limited")
         @limiter.limit("2/minute")
-        async def limited(_request: Request) -> JSONResponse:
+        async def limited(request: Request) -> JSONResponse:
+            _ = request  # Used by rate limiter
             return JSONResponse({"message": "success"})
 
         @app.get("/test/auth")
         @limiter.limit("5/minute", key_func=get_ip_only)
-        async def auth_endpoint(_request: Request) -> JSONResponse:
+        async def auth_endpoint(request: Request) -> JSONResponse:
+            _ = request  # Used by rate limiter
             return JSONResponse({"message": "success"})
 
         return app

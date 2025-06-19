@@ -76,7 +76,8 @@ class AccountLockoutService:
     # ---------- Redis impl ----------
     async def _redis_is_locked(self, user: str) -> bool:
         if self._r is None:
-            raise RuntimeError("Redis client not initialized")
+            msg = "Redis client not initialized"
+            raise RuntimeError(msg)
         key = self._key(user)
         ttl = await self._r.ttl(key)
         if ttl <= 0:
@@ -86,7 +87,8 @@ class AccountLockoutService:
 
     async def _redis_register_failure(self, user: str) -> None:
         if self._r is None:
-            raise RuntimeError("Redis client not initialized")
+            msg = "Redis client not initialized"
+            raise RuntimeError(msg)
         key = self._key(user)
         pipe = self._r.pipeline()
         pipe.hincrby(key, "attempts", 1)

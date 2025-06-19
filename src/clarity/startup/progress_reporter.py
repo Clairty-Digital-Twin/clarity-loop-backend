@@ -7,7 +7,7 @@ indicators and detailed status messages.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from enum import Enum
+from enum import Enum, StrEnum
 import logging
 import sys
 import time
@@ -18,7 +18,7 @@ from clarity.startup.health_checks import HealthCheckResult, ServiceStatus
 logger = logging.getLogger(__name__)
 
 
-class ProgressPhase(str, Enum):
+class ProgressPhase(StrEnum):
     """Startup progress phases."""
 
     INITIALIZING = "initializing"
@@ -385,8 +385,7 @@ class StartupProgressReporter:
             lines.append(
                 f"❌ Configuration Validation: {len(validation_errors)} error(s)"
             )
-            for error in validation_errors:
-                lines.append(f"  • {error}")
+            lines.extend(f"  • {error}" for error in validation_errors)
         else:
             lines.append("✅ Configuration Validation: All valid")
         lines.append("")
@@ -411,7 +410,7 @@ class StartupProgressReporter:
         # Overall assessment
         overall_healthy = all(
             result.status
-            in (ServiceStatus.HEALTHY, ServiceStatus.SKIPPED, ServiceStatus.DEGRADED)
+            in {ServiceStatus.HEALTHY, ServiceStatus.SKIPPED, ServiceStatus.DEGRADED}
             for result in health_results.values()
         )
 

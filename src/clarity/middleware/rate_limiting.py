@@ -71,11 +71,9 @@ async def custom_rate_limit_exceeded_handler(
     )
 
     # Add rate limit headers if available
-    response = request.app.state.limiter._inject_headers(
+    return request.app.state.limiter._inject_headers(
         response, request.state.view_rate_limit
     )
-
-    return response
 
 
 class RateLimitingMiddleware:

@@ -18,7 +18,7 @@ from src.clarity.main import app
 openapi_spec = app.openapi()
 
 # Write to file
-with open("openapi.json", "w") as f:
+with open("openapi.json", "w", encoding="utf-8") as f:
     json.dump(openapi_spec, f, indent=2)
 
 print("OpenAPI spec generated: openapi.json")

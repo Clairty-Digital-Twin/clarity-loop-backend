@@ -178,7 +178,7 @@ class TestClarityConfig:
         }
 
         with patch.dict(os.environ, env_vars, clear=True):
-            config, errors = ClarityConfig.validate_from_env()
+            config, _errors = ClarityConfig.validate_from_env()
             assert config is not None
 
             # Clean Code: Extract test data setup and assertions
@@ -199,7 +199,7 @@ class TestClarityConfig:
         }
 
         with patch.dict(os.environ, env_vars, clear=True):
-            config, errors = ClarityConfig.validate_from_env()
+            config, _errors = ClarityConfig.validate_from_env()
             assert config is not None
 
             # Clean Code: Clear intent
@@ -225,7 +225,7 @@ class TestClarityConfig:
         }
 
         with patch.dict(os.environ, env_vars, clear=True):
-            config, errors = ClarityConfig.validate_from_env()
+            config, _errors = ClarityConfig.validate_from_env()
             assert config is not None
 
             summary = config.get_startup_summary()

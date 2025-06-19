@@ -8,7 +8,7 @@ import json
 def clean_openapi_spec() -> None:
     """Clean and enhance the OpenAPI spec."""
     # Load the generated spec
-    with open("openapi.json") as f:
+    with open("openapi.json", encoding="utf-8") as f:
         spec = json.load(f)
 
     # 1. Add security schemes
@@ -64,7 +64,7 @@ def clean_openapi_spec() -> None:
                     operation["tags"] = ["default"]
 
             # Add security to authenticated endpoints
-            if path not in ["/", "/health", "/metrics"] and not path.startswith(
+            if path not in {"/", "/health", "/metrics"} and not path.startswith(
                 "/api/v1/auth/"
             ):
                 if "security" not in operation:
@@ -179,7 +179,7 @@ def clean_openapi_spec() -> None:
     ]
 
     # Write cleaned spec
-    with open("openapi-cleaned.json", "w") as f:
+    with open("openapi-cleaned.json", "w", encoding="utf-8") as f:
         json.dump(spec, f, indent=2)
 
     print("✅ OpenAPI spec cleaned and saved to openapi-cleaned.json")
@@ -188,7 +188,7 @@ def clean_openapi_spec() -> None:
     try:
         import yaml
 
-        with open("openapi-cleaned.yaml", "w") as f:
+        with open("openapi-cleaned.yaml", "w", encoding="utf-8") as f:
             yaml.dump(spec, f, default_flow_style=False, sort_keys=False)
         print("✅ YAML version saved to openapi-cleaned.yaml")
     except ImportError:

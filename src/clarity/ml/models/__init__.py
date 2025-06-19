@@ -8,14 +8,14 @@ This package provides a comprehensive ML model management solution with:
 - CLI management tools
 """
 
-from .local_server import (
+from clarity.ml.models.local_server import (
     LocalModelServer,
     MockPATModel,
     ModelServerConfig,
     PredictionRequest,
     PredictionResponse,
 )
-from .manager import (
+from clarity.ml.models.manager import (
     LoadedModel,
     LoadingStrategy,
     ModelLoadConfig,
@@ -23,7 +23,7 @@ from .manager import (
     ModelPerformanceMetrics,
     get_model_manager,
 )
-from .progressive_loader import (
+from clarity.ml.models.progressive_loader import (
     ApplicationPhase,
     ModelAvailabilityStatus,
     ProgressiveLoadingConfig,
@@ -31,7 +31,7 @@ from .progressive_loader import (
     get_progressive_service,
     progressive_loading_lifespan,
 )
-from .registry import (
+from clarity.ml.models.registry import (
     LEGACY_PAT_MODELS,
     ModelAlias,
     ModelMetadata,
@@ -43,35 +43,35 @@ from .registry import (
 )
 
 __all__ = [
+    "LEGACY_PAT_MODELS",
+    "ApplicationPhase",
+    "LoadedModel",
+    "LoadingStrategy",
+    # Local Server
+    "LocalModelServer",
+    "MockPATModel",
+    "ModelAlias",
+    "ModelAvailabilityStatus",
+    "ModelLoadConfig",
+    # Manager
+    "ModelManager",
+    "ModelMetadata",
+    "ModelPerformanceMetrics",
     # Registry
     "ModelRegistry",
     "ModelRegistryConfig",
-    "ModelMetadata",
+    "ModelServerConfig",
     "ModelStatus",
     "ModelTier",
-    "ModelAlias",
-    "LEGACY_PAT_MODELS",
-    "initialize_legacy_models",
-    # Manager
-    "ModelManager",
-    "ModelLoadConfig",
-    "LoadingStrategy",
-    "LoadedModel",
-    "ModelPerformanceMetrics",
-    "get_model_manager",
-    # Progressive Loader
-    "ProgressiveLoadingService",
-    "ProgressiveLoadingConfig",
-    "ApplicationPhase",
-    "ModelAvailabilityStatus",
-    "get_progressive_service",
-    "progressive_loading_lifespan",
-    # Local Server
-    "LocalModelServer",
-    "ModelServerConfig",
     "PredictionRequest",
     "PredictionResponse",
-    "MockPATModel",
+    "ProgressiveLoadingConfig",
+    # Progressive Loader
+    "ProgressiveLoadingService",
+    "get_model_manager",
+    "get_progressive_service",
+    "initialize_legacy_models",
+    "progressive_loading_lifespan",
 ]
 
 

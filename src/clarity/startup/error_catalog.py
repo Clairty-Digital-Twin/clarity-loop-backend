@@ -6,10 +6,10 @@ Comprehensive catalog of startup errors with clear messages and solutions.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from enum import Enum
+from enum import Enum, StrEnum
 
 
-class ErrorCategory(str, Enum):
+class ErrorCategory(StrEnum):
     """Error categories for organization."""
 
     CONFIGURATION = "configuration"
@@ -21,7 +21,7 @@ class ErrorCategory(str, Enum):
     ENVIRONMENT = "environment"
 
 
-class ErrorSeverity(str, Enum):
+class ErrorSeverity(StrEnum):
     """Error severity levels."""
 
     CRITICAL = "critical"  # Prevents startup
@@ -419,41 +419,30 @@ class StartupErrorCatalog:
             return f"Unknown error code: {error_code}"
 
         lines = []
-        lines.append(f"🚨 {error_info.title} ({error_info.code})")
-        lines.append("=" * 60)
-        lines.append("")
-        lines.append(f"📝 Description: {error_info.description}")
-        lines.append(f"📊 Severity: {error_info.severity.value.upper()}")
-        lines.append(f"🏷️  Category: {error_info.category.value.title()}")
-        lines.append("")
+        lines.extend((f"🚨 {error_info.title} ({error_info.code})", "=" * 60, "", f"📝 Description: {error_info.description}", f"📊 Severity: {error_info.severity.value.upper()}", f"🏷️  Category: {error_info.category.value.title()}", ""))
 
         if error_info.common_causes:
             lines.append("🔍 Common Causes:")
-            for cause in error_info.common_causes:
-                lines.append(f"  • {cause}")
+            lines.extend(f"  • {cause}" for cause in error_info.common_causes)
             lines.append("")
 
         if error_info.solutions:
             lines.append("💡 Solutions:")
             for i, solution in enumerate(error_info.solutions, 1):
                 lines.append(f"\n  {i}. {solution.description}")
-                for step in solution.steps:
-                    lines.append(f"     • {step}")
+                lines.extend(f"     • {step}" for step in solution.steps)
 
                 if solution.documentation_links:
                     lines.append("     📖 Documentation:")
-                    for link in solution.documentation_links:
-                        lines.append(f"        {link}")
+                    lines.extend(f"        {link}" for link in solution.documentation_links)
 
         if context:
-            lines.append("")
-            lines.append("🔧 Context:")
+            lines.extend(("", "🔧 Context:"))
             for key, value in context.items():
                 lines.append(f"  • {key}: {value}")
 
         if error_info.related_errors:
-            lines.append("")
-            lines.append("🔗 Related Errors:")
+            lines.extend(("", "🔗 Related Errors:"))
             for related_code in error_info.related_errors:
                 related_error = self.get_error_info(related_code)
                 if related_error:

@@ -13,8 +13,7 @@ from clarity.models.auth import Permission, UserContext, UserRole
 @pytest.fixture
 def mock_app():
     """Create a mock ASGI application."""
-    app = MagicMock()
-    return app
+    return MagicMock()
 
 
 @pytest.fixture

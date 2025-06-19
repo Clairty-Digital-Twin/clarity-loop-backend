@@ -16,7 +16,7 @@ from typing import Any, TypeVar
 from prometheus_client import Counter, Gauge, Histogram, Info, start_http_server
 from pydantic import BaseModel
 
-from .manager import ModelManager
+from clarity.ml.models.manager import ModelManager
 
 logger = logging.getLogger(__name__)
 
@@ -137,7 +137,7 @@ class ModelMonitoringService:
                     self.config.prometheus_port
                 )
             except Exception as e:
-                logger.error("Failed to start Prometheus server: %s", e)
+                logger.exception("Failed to start Prometheus server: %s", e)
 
         # Start monitoring tasks
         if self.config.collect_health_metrics:
@@ -390,7 +390,7 @@ class ModelMonitoringService:
                 "system_info": Info("model_system_info", "Model system information"),
             }
         except Exception as e:
-            logger.error("Failed to setup Prometheus metrics: %s", e)
+            logger.exception("Failed to setup Prometheus metrics: %s", e)
             return None
 
     async def _health_monitoring_loop(self) -> None:
@@ -438,7 +438,7 @@ class ModelMonitoringService:
                 await asyncio.sleep(self.config.health_check_interval_seconds)
 
             except Exception as e:
-                logger.error("Health monitoring error: %s", e)
+                logger.exception("Health monitoring error: %s", e)
                 await asyncio.sleep(self.config.health_check_interval_seconds)
 
     async def _system_monitoring_loop(self) -> None:
@@ -462,7 +462,7 @@ class ModelMonitoringService:
                 await asyncio.sleep(60)  # Update every minute
 
             except Exception as e:
-                logger.error("System monitoring error: %s", e)
+                logger.exception("System monitoring error: %s", e)
                 await asyncio.sleep(60)
 
     async def _check_inference_alerts(
@@ -564,7 +564,7 @@ class ModelMonitoringService:
                     logger.info("Alert sent for %s: %s", model_key, alert['type'])
 
         except Exception as e:
-            logger.error("Failed to send alert webhook: %s", e)
+            logger.exception("Failed to send alert webhook: %s", e)
 
 
 # Decorator for automatic inference monitoring

@@ -23,8 +23,8 @@ from rich.progress import (
 )
 from rich.table import Table
 
-from .local_server import LocalModelServer, ModelServerConfig
-from .registry import (
+from clarity.ml.models.local_server import LocalModelServer, ModelServerConfig
+from clarity.ml.models.registry import (
     ModelMetadata,
     ModelRegistry,
     ModelRegistryConfig,
@@ -355,7 +355,7 @@ async def predict(ctx: click.Context, url: str, model_id: str, version: str, inp
     """Make prediction using local server."""
     # Load input data
     if input_file:
-        with open(input_file) as f:
+        with open(input_file, encoding="utf-8") as f:
             inputs = json.load(f)
     else:
         # Use sample data

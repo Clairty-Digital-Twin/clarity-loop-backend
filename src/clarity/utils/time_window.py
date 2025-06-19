@@ -63,7 +63,8 @@ def slice_to_weeks(
     """
     # Input validation
     if arr.ndim > 2:
-        raise ValueError(f"Expected 1-D or 2-D array, got {arr.ndim}-D")
+        msg = f"Expected 1-D or 2-D array, got {arr.ndim}-D"
+        raise ValueError(msg)
 
     if arr.size == 0:
         logger.warning("Empty array provided to slice_to_weeks")
@@ -119,8 +120,9 @@ def slice_to_weeks(
     if keep == "all":
         logger.debug("Returning all %d week chunks", len(chunks))
         return chunks
-    if keep not in ("latest", "all"):
-        raise ValueError(f"Invalid keep parameter: {keep}. Must be 'latest' or 'all'")
+    if keep not in {"latest", "all"}:
+        msg = f"Invalid keep parameter: {keep}. Must be 'latest' or 'all'"
+        raise ValueError(msg)
     return chunks
 
 
@@ -156,9 +158,12 @@ def pad_to_week(
         If input array is longer than minutes_per_week
     """
     if arr.shape[0] > minutes_per_week:
-        raise ValueError(
+        msg = (
             f"Input array has {arr.shape[0]} samples, "
             f"exceeds target length {minutes_per_week}"
+        )
+        raise ValueError(
+            msg
         )
 
     if arr.shape[0] == minutes_per_week:

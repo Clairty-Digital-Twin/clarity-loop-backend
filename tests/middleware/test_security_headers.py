@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import Never
+
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from starlette.responses import Response
@@ -252,8 +254,9 @@ class TestSecurityHeadersMiddleware:
             return Response(content=str(exc), status_code=500)
 
         @app.get("/error")
-        async def error_endpoint():
-            raise ValueError("Test error")
+        async def error_endpoint() -> Never:
+            msg = "Test error"
+            raise ValueError(msg)
 
         client = TestClient(app)
 

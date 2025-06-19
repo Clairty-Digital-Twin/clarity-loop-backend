@@ -14,8 +14,8 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 import uvicorn
 
-from .manager import LoadingStrategy, ModelLoadConfig, ModelManager
-from .registry import (
+from clarity.ml.models.manager import LoadingStrategy, ModelLoadConfig, ModelManager
+from clarity.ml.models.registry import (
     LEGACY_PAT_MODELS,
     ModelRegistry,
     ModelRegistryConfig,
@@ -84,7 +84,7 @@ class MockPATModel:
         await asyncio.sleep(0.05)  # Simulate processing time
 
         # Generate mock actigraphy analysis results
-        mock_results = {
+        return {
             "sleep_stages": [
                 {"stage": "deep", "duration_minutes": 120, "confidence": 0.85},
                 {"stage": "rem", "duration_minutes": 90, "confidence": 0.78},
@@ -109,8 +109,6 @@ class MockPATModel:
                 "processing_time_ms": 50,
             },
         }
-
-        return mock_results
 
 
 class LocalModelServer:
@@ -210,8 +208,7 @@ class LocalModelServer:
             if not self.model_manager:
                 return JSONResponse({"status": "starting"}, status_code=503)
 
-            health = await self.model_manager.health_check()
-            return health
+            return await self.model_manager.health_check()
 
         @self.app.get("/models", response_model=list[dict[str, Any]])
         async def list_models() -> list[dict[str, Any]]:
@@ -416,7 +413,7 @@ class LocalModelServer:
             import random
 
             # Generate mock actigraphy data
-            mock_data = {
+            return {
                 "actigraphy_data": {
                     "timestamps": [f"2024-01-01T{i:02d}:00:00Z" for i in range(24)],
                     "activity_counts": [random.randint(0, 1000) for _ in range(24)],  # noqa: S311
@@ -429,8 +426,6 @@ class LocalModelServer:
                     "duration_hours": 24,
                 },
             }
-
-            return mock_data
 
     def _setup_cors(self) -> None:
         """Setup CORS for frontend development."""
@@ -459,7 +454,7 @@ async def create_placeholder_models(models_dir: Path) -> None:
     """Create placeholder models for local development."""
     models_dir.mkdir(parents=True, exist_ok=True)
 
-    for model_id, _ in LEGACY_PAT_MODELS.items():
+    for model_id in LEGACY_PAT_MODELS:
         model_file = models_dir / f"{model_id}.h5"
 
         if not model_file.exists():

@@ -293,7 +293,7 @@ class TestIntegrationWithPAT:
         accumulated_data = []
 
         # Day 1-5: Not enough data
-        for day in range(5):
+        for _day in range(5):
             daily_data = np.random.rand(1440)  # 1 day
             accumulated_data.extend(daily_data)
 
@@ -305,7 +305,7 @@ class TestIntegrationWithPAT:
             assert np.sum(prepared == 0.0) > 0  # Has padding
 
         # Day 8: More than 1 week
-        for day in range(5, 8):
+        for _day in range(5, 8):
             daily_data = np.random.rand(1440)
             accumulated_data.extend(daily_data)
 
@@ -364,5 +364,7 @@ class TestEdgeCases:
         prepared = prepare_for_pat_inference(arr)
 
         assert np.isnan(prepared[100])
-        assert np.isinf(prepared[200]) and prepared[200] > 0
-        assert np.isinf(prepared[300]) and prepared[300] < 0
+        assert np.isinf(prepared[200])
+        assert prepared[200] > 0
+        assert np.isinf(prepared[300])
+        assert prepared[300] < 0

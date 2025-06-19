@@ -6,7 +6,7 @@ Validates all environment variables and service configurations before startup.
 
 from __future__ import annotations
 
-from enum import Enum
+from enum import Enum, StrEnum
 import logging
 import os
 from typing import Any, ClassVar
@@ -24,7 +24,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 logger = logging.getLogger(__name__)
 
 
-class Environment(str, Enum):
+class Environment(StrEnum):
     """Valid environment values."""
 
     DEVELOPMENT = "development"
@@ -33,7 +33,7 @@ class Environment(str, Enum):
     PRODUCTION = "production"
 
 
-class LogLevel(str, Enum):
+class LogLevel(StrEnum):
     """Valid log levels."""
 
     DEBUG = "DEBUG"
@@ -71,10 +71,12 @@ class AWSConfig(BaseModel):
     def validate_region(cls, v: str) -> str:
         """Validate AWS region format."""
         if not v:
-            raise ValueError("AWS region cannot be empty")
+            msg = "AWS region cannot be empty"
+            raise ValueError(msg)
         # Basic AWS region format validation
         if len(v.split("-")) < 3:
-            raise ValueError(f"Invalid AWS region format: {v}")
+            msg = f"Invalid AWS region format: {v}"
+            raise ValueError(msg)
         return v
 
 
@@ -102,7 +104,8 @@ class CognitoConfig(BaseModel):
     def validate_user_pool_id(cls, v: str) -> str:
         """Validate Cognito User Pool ID format."""
         if v and not v.startswith(("us-", "eu-", "ap-", "ca-", "sa-")):
-            raise ValueError(f"Invalid Cognito User Pool ID format: {v}")
+            msg = f"Invalid Cognito User Pool ID format: {v}"
+            raise ValueError(msg)
         return v
 
     @field_validator("client_id")
@@ -110,7 +113,8 @@ class CognitoConfig(BaseModel):
     def validate_client_id(cls, v: str) -> str:
         """Validate Cognito Client ID format."""
         if v and len(v) < 20:
-            raise ValueError(f"Cognito Client ID appears invalid: {v}")
+            msg = f"Cognito Client ID appears invalid: {v}"
+            raise ValueError(msg)
         return v
 
 
@@ -132,10 +136,12 @@ class DynamoDBConfig(BaseModel):
     def validate_table_name(cls, v: str) -> str:
         """Validate DynamoDB table name."""
         if not v:
-            raise ValueError("DynamoDB table name cannot be empty")
+            msg = "DynamoDB table name cannot be empty"
+            raise ValueError(msg)
         # Basic table name validation
         if not v.replace("-", "").replace("_", "").isalnum():
-            raise ValueError(f"Invalid DynamoDB table name: {v}")
+            msg = f"Invalid DynamoDB table name: {v}"
+            raise ValueError(msg)
         return v
 
     @field_validator("endpoint_url")
@@ -145,7 +151,8 @@ class DynamoDBConfig(BaseModel):
         if v:
             parsed = urlparse(v)
             if not parsed.scheme or not parsed.netloc:
-                raise ValueError(f"Invalid DynamoDB endpoint URL: {v}")
+                msg = f"Invalid DynamoDB endpoint URL: {v}"
+                raise ValueError(msg)
         return v
 
 
@@ -172,10 +179,12 @@ class S3Config(BaseModel):
     def validate_bucket_name(cls, v: str) -> str:
         """Validate S3 bucket name."""
         if not v:
-            raise ValueError("S3 bucket name cannot be empty")
+            msg = "S3 bucket name cannot be empty"
+            raise ValueError(msg)
         # Basic S3 bucket name validation
         if not v.replace("-", "").replace(".", "").isalnum():
-            raise ValueError(f"Invalid S3 bucket name: {v}")
+            msg = f"Invalid S3 bucket name: {v}"
+            raise ValueError(msg)
         return v
 
 
@@ -246,11 +255,13 @@ class SecurityConfig(BaseModel):
         """Validate CORS origins."""
         for origin in v:
             if "*" in origin and origin != "*":
-                raise ValueError(f"Invalid CORS origin with partial wildcard: {origin}")
+                msg = f"Invalid CORS origin with partial wildcard: {origin}"
+                raise ValueError(msg)
             if origin != "*":
                 parsed = urlparse(origin)
                 if not parsed.scheme or not parsed.netloc:
-                    raise ValueError(f"Invalid CORS origin URL: {origin}")
+                    msg = f"Invalid CORS origin URL: {origin}"
+                    raise ValueError(msg)
         return v
 
     @field_validator("secret_key")
@@ -261,7 +272,8 @@ class SecurityConfig(BaseModel):
             v == "dev-secret-key"
             and os.getenv("ENVIRONMENT", "").lower() == "production"
         ):
-            raise ValueError("Must set custom SECRET_KEY in production")
+            msg = "Must set custom SECRET_KEY in production"
+            raise ValueError(msg)
         return v
 
 
@@ -483,7 +495,8 @@ class ClarityConfig(BaseSettings):
 
         if validation_errors:
             error_msg = "\n".join([f"  • {error}" for error in validation_errors])
-            raise ValueError(f"Configuration validation failed:\n{error_msg}")
+            msg = f"Configuration validation failed:\n{error_msg}"
+            raise ValueError(msg)
 
         return self
 
@@ -558,10 +571,12 @@ def load_config() -> ClarityConfig:
         logger.error("Configuration validation failed:")
         for error in errors:
             logger.error("  • %s", error)
-        raise ValueError("Configuration validation failed - see logs for details")
+        msg = "Configuration validation failed - see logs for details"
+        raise ValueError(msg)
 
     if config is None:
-        raise ValueError("Failed to load configuration")
+        msg = "Failed to load configuration"
+        raise ValueError(msg)
 
     logger.info("Configuration loaded successfully")
     return config

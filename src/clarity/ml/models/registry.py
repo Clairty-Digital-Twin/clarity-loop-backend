@@ -7,10 +7,11 @@ and intelligent caching capabilities to replace the legacy S3-download approach.
 import asyncio
 from dataclasses import asdict, dataclass, field
 from datetime import UTC, datetime
-from enum import Enum
+from enum import Enum, StrEnum
 import hashlib
 import json
 import logging
+import operator
 from pathlib import Path
 import time
 from typing import Any
@@ -23,7 +24,7 @@ from pydantic import BaseModel, Field
 logger = logging.getLogger(__name__)
 
 
-class ModelStatus(str, Enum):
+class ModelStatus(StrEnum):
     """Model availability status."""
 
     UNKNOWN = "unknown"
@@ -33,7 +34,7 @@ class ModelStatus(str, Enum):
     DEPRECATED = "deprecated"
 
 
-class ModelTier(str, Enum):
+class ModelTier(StrEnum):
     """Model performance/size tiers."""
 
     SMALL = "small"
@@ -124,7 +125,7 @@ class ModelRegistry:
     - Model lineage and metadata tracking
     """
 
-    def __init__(self, config: ModelRegistryConfig | None = None):
+    def __init__(self, config: ModelRegistryConfig | None = None) -> None:
         self.config = config or ModelRegistryConfig()
         self.models: dict[str, ModelMetadata] = {}
         self.aliases: dict[str, ModelAlias] = {}
@@ -156,7 +157,7 @@ class ModelRegistry:
                 logger.info("Registered model %s", metadata.unique_id)
                 return True
             except (OSError, ValueError) as e:
-                logger.error("Failed to register model %s: %s", metadata.unique_id, e)
+                logger.exception("Failed to register model %s: %s", metadata.unique_id, e)
                 return False
 
     async def get_model(
@@ -196,7 +197,7 @@ class ModelRegistry:
                 logger.info("Created alias %s -> %s", alias, unique_id)
                 return True
             except (OSError, ValueError) as e:
-                logger.error("Failed to create alias %s: %s", alias, e)
+                logger.exception("Failed to create alias %s: %s", alias, e)
                 return False
 
     async def download_model(
@@ -253,7 +254,7 @@ class ModelRegistry:
             return False
 
         except (aiohttp.ClientError, OSError) as e:
-            logger.error("Download failed for model %s: %s", metadata.unique_id, e)
+            logger.exception("Download failed for model %s: %s", metadata.unique_id, e)
             self.download_progress[download_id]["status"] = "failed"
             return False
 
@@ -309,7 +310,7 @@ class ModelRegistry:
                     logger.warning("Checksum mismatch for %s", metadata.unique_id)
                     return False
             except OSError as e:
-                logger.error(
+                logger.exception(
                     "Checksum verification failed for %s: %s", metadata.unique_id, e
                 )
                 return False
@@ -408,7 +409,7 @@ class ModelRegistry:
                 return True
 
             except (aiohttp.ClientError, OSError) as e:
-                logger.error("Download error: %s", e)
+                logger.exception("Download error: %s", e)
                 return False
 
     async def _calculate_checksum(self, file_path: Path) -> str:
@@ -442,7 +443,7 @@ class ModelRegistry:
             logger.info("Loaded registry with %d models", len(self.models))
 
         except (OSError, ValueError) as e:
-            logger.error("Failed to load registry: %s", e)
+            logger.exception("Failed to load registry: %s", e)
 
     async def _save_registry(self) -> None:
         """Save registry to disk."""
@@ -462,7 +463,7 @@ class ModelRegistry:
             logger.debug("Registry saved to %s", self.config.registry_file)
 
         except (OSError, ValueError) as e:
-            logger.error("Failed to save registry: %s", e)
+            logger.exception("Failed to save registry: %s", e)
 
     async def _cleanup_cache(self, max_size_gb: float | None = None) -> int:
         """Clean up cache directory to stay within size limits."""
@@ -487,7 +488,7 @@ class ModelRegistry:
             return 0
 
         # Sort by modification time (oldest first)
-        cache_files.sort(key=lambda x: x[2])
+        cache_files.sort(key=operator.itemgetter(2))
 
         # Remove files until under limit
         removed_count = 0
@@ -501,7 +502,7 @@ class ModelRegistry:
                 if total_size <= max_size_bytes:
                     break
             except OSError as e:
-                logger.error("Failed to remove cache file %s: %s", file_path, e)
+                logger.exception("Failed to remove cache file %s: %s", file_path, e)
 
         logger.info(
             "Cache cleanup: removed %d files, size now %.2fGB",
@@ -551,7 +552,7 @@ LEGACY_PAT_MODELS = {
 
 async def initialize_legacy_models(registry: ModelRegistry) -> None:
     """Initialize registry with existing legacy PAT models."""
-    for _model_id, metadata in LEGACY_PAT_MODELS.items():
+    for metadata in LEGACY_PAT_MODELS.values():
         await registry.register_model(metadata)
 
     # Create semantic aliases

@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import asyncio
 from dataclasses import dataclass, field
-from enum import Enum
+from enum import Enum, StrEnum
 import logging
 import time
 from typing import Any
@@ -19,7 +19,7 @@ from botocore.exceptions import ClientError, NoCredentialsError
 logger = logging.getLogger(__name__)
 
 
-class ServiceStatus(str, Enum):
+class ServiceStatus(StrEnum):
     """Service health status."""
 
     HEALTHY = "healthy"
@@ -47,7 +47,7 @@ class HealthCheckResult:
 
     def is_usable(self) -> bool:
         """Check if service is usable (healthy or degraded)."""
-        return self.status in (ServiceStatus.HEALTHY, ServiceStatus.DEGRADED)
+        return self.status in {ServiceStatus.HEALTHY, ServiceStatus.DEGRADED}
 
 
 @dataclass
@@ -179,10 +179,10 @@ class ServiceHealthChecker:
             error_message = e.response.get("Error", {}).get("Message", str(e))
 
             # Some errors indicate service availability issues
-            if error_code in ("ResourceNotFoundException", "UserPoolNotFound"):
+            if error_code in {"ResourceNotFoundException", "UserPoolNotFound"}:
                 status = ServiceStatus.UNHEALTHY
                 message = f"Cognito User Pool not found: {user_pool_id}"
-            elif error_code in ("UnauthorizedOperation", "AccessDenied"):
+            elif error_code in {"UnauthorizedOperation", "AccessDenied"}:
                 status = ServiceStatus.DEGRADED
                 message = f"Cognito access denied - check permissions: {error_message}"
             else:
@@ -268,7 +268,7 @@ class ServiceHealthChecker:
                     },
                     response_time_ms=response_time,
                 )
-            if table_status in ("CREATING", "UPDATING"):
+            if table_status in {"CREATING", "UPDATING"}:
                 return HealthCheckResult(
                     service_name=service_name,
                     status=ServiceStatus.DEGRADED,
@@ -322,7 +322,7 @@ class ServiceHealthChecker:
             if error_code == "ResourceNotFoundException":
                 status = ServiceStatus.UNHEALTHY
                 message = f"DynamoDB table not found: {table_name}"
-            elif error_code in ("UnauthorizedOperation", "AccessDenied"):
+            elif error_code in {"UnauthorizedOperation", "AccessDenied"}:
                 status = ServiceStatus.DEGRADED
                 message = f"DynamoDB access denied - check permissions: {error_message}"
             else:
@@ -432,7 +432,7 @@ class ServiceHealthChecker:
             if error_code == "NoSuchBucket":
                 status = ServiceStatus.UNHEALTHY
                 message = f"S3 bucket not found: {bucket_name}"
-            elif error_code in ("AccessDenied", "Forbidden"):
+            elif error_code in {"AccessDenied", "Forbidden"}:
                 status = ServiceStatus.DEGRADED
                 message = f"S3 access denied - check permissions: {error_message}"
             else:

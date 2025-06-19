@@ -157,7 +157,7 @@ class TestStartupIntegration:
                 "check_all_services",
                 side_effect=slow_check,
             ):
-                success, config = await orchestrator.orchestrate_startup()
+                success, _config = await orchestrator.orchestrate_startup()
 
                 assert success is False
 
@@ -294,7 +294,7 @@ class TestStartupIntegration:
                 reporter=reporter,
             )
 
-            success, config = await orchestrator.orchestrate_startup()
+            success, _config = await orchestrator.orchestrate_startup()
 
             assert success is True
 

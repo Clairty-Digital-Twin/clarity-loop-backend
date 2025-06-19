@@ -115,7 +115,7 @@ def custom_openapi(app: FastAPI) -> dict[str, Any]:
                 operation["responses"] = {}
 
             # Add 401 for authenticated endpoints
-            if path not in ["/", "/health", "/metrics"] and not path.startswith(
+            if path not in {"/", "/health", "/metrics"} and not path.startswith(
                 "/api/v1/auth/"
             ):
                 if "401" not in operation["responses"]:
@@ -166,14 +166,14 @@ def custom_openapi(app: FastAPI) -> dict[str, Any]:
                 }
 
             # Set security for endpoints
-            if path in [
+            if path in {
                 "/",
                 "/health",
                 "/metrics",
                 "/docs",
                 "/redoc",
                 "/openapi.json",
-            ] or path.startswith("/api/v1/auth/"):
+            } or path.startswith("/api/v1/auth/"):
                 # Public endpoints
                 operation["security"] = []
             elif "security" not in operation:

@@ -64,8 +64,7 @@ class TestAuthLockoutIntegration:
 
             # Check response if not 401
             if response.status_code != 401:
-                print(f"Status: {response.status_code}")
-                print(f"Response: {response.json()}")
+                pass
 
             # Should return 401 for invalid credentials
             assert response.status_code == 401

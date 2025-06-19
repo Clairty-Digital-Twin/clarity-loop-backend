@@ -9,17 +9,14 @@ import logging
 import time
 from typing import Any
 
-from .models import (
+from clarity.ml.models import (
     LoadedModel,
     ProgressiveLoadingConfig,
     ProgressiveLoadingService,
     get_progressive_service,
 )
-from .models.monitoring import (
-    ModelMonitoringConfig,
-    ModelMonitoringService,
-)
-from .pat_service import PATModelService  # Legacy service for fallback
+from clarity.ml.models.monitoring import ModelMonitoringConfig, ModelMonitoringService
+from clarity.ml.pat_service import PATModelService  # Legacy service for fallback
 
 logger = logging.getLogger(__name__)
 
@@ -90,7 +87,7 @@ class PATServiceV2:
             return True
 
         except (RuntimeError, AttributeError) as e:
-            logger.error("Failed to initialize PAT Service V2: %s", e)
+            logger.exception("Failed to initialize PAT Service V2: %s", e)
 
             # Fallback to legacy service
             await self._initialize_fallback()
@@ -115,7 +112,7 @@ class PATServiceV2:
                 logger.warning("Failed to load PAT model: pat:%s", version)
 
         except (RuntimeError, AttributeError) as e:
-            logger.error("Error loading PAT model: %s", e)
+            logger.exception("Error loading PAT model: %s", e)
 
     async def _initialize_fallback(self) -> None:
         """Initialize fallback legacy service."""
@@ -124,7 +121,7 @@ class PATServiceV2:
             # Note: Legacy service initialization would happen here
             logger.info("Fallback to legacy PAT service initialized")
         except (RuntimeError, AttributeError) as e:
-            logger.error("Failed to initialize fallback service: %s", e)
+            logger.exception("Failed to initialize fallback service: %s", e)
 
     async def predict(
         self,
@@ -141,7 +138,8 @@ class PATServiceV2:
             Prediction results
         """
         if not self.is_initialized:
-            raise RuntimeError("PAT Service V2 not initialized")
+            msg = "PAT Service V2 not initialized"
+            raise RuntimeError(msg)
 
         start_time = time.time()
 
@@ -165,7 +163,7 @@ class PATServiceV2:
                 return result
 
             except (RuntimeError, ValueError, TypeError) as e:
-                logger.error("Prediction failed with progressive model: %s", e)
+                logger.exception("Prediction failed with progressive model: %s", e)
 
                 # Record error
                 if self.monitoring_service:
@@ -185,10 +183,11 @@ class PATServiceV2:
                 # Note: Legacy service prediction would be called here
                 return await self._predict_with_fallback(actigraphy_data, options)
             except Exception as e:
-                logger.error("Fallback prediction also failed: %s", e)
+                logger.exception("Fallback prediction also failed: %s", e)
                 raise
 
-        raise RuntimeError("No available models for prediction")
+        msg = "No available models for prediction"
+        raise RuntimeError(msg)
 
     async def _predict_with_progressive_model(
         self,
@@ -208,7 +207,8 @@ class PATServiceV2:
 
         # Use the model's predict method
         if not self.current_model:
-            raise RuntimeError("No model loaded")
+            msg = "No model loaded"
+            raise RuntimeError(msg)
         raw_result = await self.current_model.predict(**input_data)
 
         # Ensure consistent output format
@@ -315,7 +315,7 @@ class PATServiceV2:
             return True
 
         except (RuntimeError, ValueError) as e:
-            logger.error("Model warm-up failed: %s", e)
+            logger.exception("Model warm-up failed: %s", e)
             return False
 
     async def reload_model(self, new_version: str | None = None) -> bool:
@@ -347,7 +347,7 @@ class PATServiceV2:
             return False
 
         except (RuntimeError, AttributeError) as e:
-            logger.error("Model reload failed: %s", e)
+            logger.exception("Model reload failed: %s", e)
             return False
 
     async def health_check(self) -> dict[str, Any]:
@@ -377,10 +377,10 @@ class PATServiceV2:
         # Determine overall health
         is_healthy = (
             self.is_initialized
-            and model_status.get("status") in ["available", "loading"]
+            and model_status.get("status") in {"available", "loading"}
             and (
                 not self.progressive_service
-                or app_status.get("overall_status") in ["healthy", "partial"]
+                or app_status.get("overall_status") in {"healthy", "partial"}
             )
         )
 
@@ -405,7 +405,7 @@ class PATServiceV2:
             logger.info("PAT Service V2 shutdown completed")
 
         except (RuntimeError, AttributeError) as e:
-            logger.error("Error during PAT Service V2 shutdown: %s", e)
+            logger.exception("Error during PAT Service V2 shutdown: %s", e)
 
 
 # Factory function for creating PAT service instances

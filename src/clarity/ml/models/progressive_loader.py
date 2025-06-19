@@ -7,7 +7,7 @@ replacing the legacy S3 download approach with progressive loading strategies.
 import asyncio
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
-from enum import Enum
+from enum import Enum, StrEnum
 import logging
 import os
 import time
@@ -15,13 +15,22 @@ from typing import Any
 
 from pydantic import BaseModel
 
-from .manager import LoadedModel, LoadingStrategy, ModelLoadConfig, ModelManager
-from .registry import ModelRegistry, ModelRegistryConfig, initialize_legacy_models
+from clarity.ml.models.manager import (
+    LoadedModel,
+    LoadingStrategy,
+    ModelLoadConfig,
+    ModelManager,
+)
+from clarity.ml.models.registry import (
+    ModelRegistry,
+    ModelRegistryConfig,
+    initialize_legacy_models,
+)
 
 logger = logging.getLogger(__name__)
 
 
-class ApplicationPhase(str, Enum):
+class ApplicationPhase(StrEnum):
     """Application startup phases."""
 
     INIT = "init"  # Basic initialization
@@ -123,7 +132,7 @@ class ProgressiveLoadingService:
             return True
 
         except Exception as e:
-            logger.error("Failed to initialize progressive loading service: %s", e)
+            logger.exception("Failed to initialize progressive loading service: %s", e)
             return False
 
     async def get_model(
@@ -171,7 +180,7 @@ class ProgressiveLoadingService:
             return None
 
         except Exception as e:
-            logger.error("Failed to get model %s: %s", unique_id, e)
+            logger.exception("Failed to get model %s: %s", unique_id, e)
             self.model_status[unique_id].status = "failed"
             self.model_status[unique_id].error_message = str(e)
             return None
@@ -203,7 +212,7 @@ class ProgressiveLoadingService:
 
         # Determine overall application status
         overall_status = "healthy"
-        if self.current_phase in [ApplicationPhase.INIT, ApplicationPhase.CORE_READY]:
+        if self.current_phase in {ApplicationPhase.INIT, ApplicationPhase.CORE_READY}:
             overall_status = "starting"
         elif critical_ready < critical_total:
             overall_status = "degraded"
@@ -277,7 +286,7 @@ class ProgressiveLoadingService:
 
             # Determine health status
             is_healthy = (
-                app_status["overall_status"] in ["healthy", "partial"]
+                app_status["overall_status"] in {"healthy", "partial"}
                 and manager_health["status"] == "healthy"
             )
 
@@ -289,7 +298,7 @@ class ProgressiveLoadingService:
             }
 
         except Exception as e:
-            logger.error("Health check failed: %s", e)
+            logger.exception("Health check failed: %s", e)
             return {"status": "unhealthy", "error": str(e)}
 
     def _detect_environment(self) -> None:
@@ -400,7 +409,7 @@ class ProgressiveLoadingService:
                 except Exception as e:
                     self.model_status[unique_id].status = "failed"
                     self.model_status[unique_id].error_message = str(e)
-                    logger.error("Error loading model %s: %s", unique_id, e)
+                    logger.exception("Error loading model %s: %s", unique_id, e)
 
         # Start loading critical models first
         critical_tasks = []
@@ -443,7 +452,7 @@ class ProgressiveLoadingService:
             self._record_phase_transition(ApplicationPhase.FULLY_READY)
             logger.info("All model preloading completed")
         except Exception as e:
-            logger.error("Error in background preloading: %s", e)
+            logger.exception("Error in background preloading: %s", e)
 
     async def _start_eager_loading(self) -> None:
         """Start eager loading of all models."""

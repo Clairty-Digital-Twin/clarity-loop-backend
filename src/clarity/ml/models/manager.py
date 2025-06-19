@@ -8,7 +8,7 @@ import asyncio
 from collections.abc import AsyncGenerator, Callable
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
-from enum import Enum
+from enum import Enum, StrEnum
 import logging
 from pathlib import Path
 import time
@@ -17,13 +17,18 @@ from typing import Any
 from pydantic import BaseModel
 import torch
 
-from ..pat_service import PATModelService  # Legacy service for compatibility
-from .registry import ModelMetadata, ModelRegistry, ModelRegistryConfig, ModelStatus
+from clarity.ml.models.registry import (
+    ModelMetadata,
+    ModelRegistry,
+    ModelRegistryConfig,
+    ModelStatus,
+)
+from clarity.ml.pat_service import PATModelService  # Legacy service for compatibility
 
 logger = logging.getLogger(__name__)
 
 
-class LoadingStrategy(str, Enum):
+class LoadingStrategy(StrEnum):
     """Model loading strategies."""
 
     EAGER = "eager"  # Load immediately on startup
@@ -115,7 +120,7 @@ class LoadedModel:
 
             except Exception as e:
                 self.metrics.error_count += 1
-                logger.error("Prediction failed for %s: %s", self.metadata.unique_id, e)
+                logger.exception("Prediction failed for %s: %s", self.metadata.unique_id, e)
                 raise
 
     def get_metrics(self) -> ModelPerformanceMetrics:
@@ -188,10 +193,9 @@ class ModelManager:
             try:
                 timeout_val = timeout or self.load_config.timeout_seconds
                 task = self.loading_tasks[unique_id]
-                loaded_model = await asyncio.wait_for(task, timeout=timeout_val)  # type: ignore[arg-type]
-                return loaded_model
+                return await asyncio.wait_for(task, timeout=timeout_val)  # type: ignore[arg-type]
             except TimeoutError:
-                logger.error("Model loading timeout for %s", unique_id)
+                logger.exception("Model loading timeout for %s", unique_id)
                 return None
 
         # Start loading
@@ -207,7 +211,7 @@ class ModelManager:
             model = await self.get_model(model_id, version)
             return model is not None
         except Exception as e:
-            logger.error("Failed to preload model %s:%s: %s", model_id, version, e)
+            logger.exception("Failed to preload model %s:%s: %s", model_id, version, e)
             return False
 
     async def unload_model(self, model_id: str, version: str = "latest") -> bool:
@@ -249,7 +253,7 @@ class ModelManager:
             return True
 
         except Exception as e:
-            logger.error("Model version swap failed: %s", e)
+            logger.exception("Model version swap failed: %s", e)
             return False
 
     async def get_all_metrics(self) -> dict[str, ModelPerformanceMetrics]:
@@ -285,11 +289,13 @@ class ModelManager:
 
             models = health_status["models"]
             if not isinstance(models, dict):
-                raise TypeError("health_status['models'] must be a dict")
+                msg = "health_status['models'] must be a dict"
+                raise TypeError(msg)
             models[unique_id] = model_health
             total_mem = health_status["total_memory_mb"]
             if not isinstance(total_mem, (int, float)):
-                raise TypeError("health_status['total_memory_mb'] must be numeric")
+                msg = "health_status['total_memory_mb'] must be numeric"
+                raise TypeError(msg)
             health_status["total_memory_mb"] = total_mem + metrics.memory_usage_mb
 
         return health_status
@@ -370,7 +376,7 @@ class ModelManager:
             return loaded_model
 
         except Exception as e:
-            logger.error("Failed to load model %s:%s: %s", model_id, version, e)
+            logger.exception("Failed to load model %s:%s: %s", model_id, version, e)
             return None
 
     async def _create_model_instance(self, metadata: ModelMetadata) -> Any:
@@ -391,7 +397,7 @@ class ModelManager:
             return factory(metadata)
 
         except Exception as e:
-            logger.error("Model factory failed for %s: %s", metadata.unique_id, e)
+            logger.exception("Model factory failed for %s: %s", metadata.unique_id, e)
             return None
 
     async def _warm_up_model(self, loaded_model: LoadedModel) -> None:
@@ -470,7 +476,7 @@ class ModelManager:
             logger.info("Progressive loading of priority models completed")
 
         except Exception as e:
-            logger.error("Progressive loading task failed: %s", e)
+            logger.exception("Progressive loading task failed: %s", e)
 
     def _register_default_factories(self) -> None:
         """Register default model factories."""
@@ -499,7 +505,7 @@ class ModelManager:
                 return pat_service
 
             except Exception as e:
-                logger.error("PAT model factory failed: %s", e)
+                logger.exception("PAT model factory failed: %s", e)
                 raise
 
         # Register PAT model factory

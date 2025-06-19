@@ -96,7 +96,7 @@ class TestStartupOrchestrator:
             mock_check.return_value = mock_health_results
             mock_overall.return_value = ServiceStatus.UNHEALTHY
 
-            success, config = await self.orchestrator.orchestrate_startup()
+            success, _config = await self.orchestrator.orchestrate_startup()
 
             assert success is False
             # When startup fails, config might be None or not based on implementation
@@ -193,7 +193,7 @@ class TestStartupOrchestrator:
             ),
         ):
 
-            success, config = await timeout_orchestrator.orchestrate_startup()
+            success, _config = await timeout_orchestrator.orchestrate_startup()
 
             assert success is False
 
@@ -257,7 +257,7 @@ class TestStartupOrchestrator:
         }
 
         with patch.dict(os.environ, env_vars, clear=True):
-            config, errors = ClarityConfig.validate_from_env()
+            config, _errors = ClarityConfig.validate_from_env()
             self.orchestrator.config = config
             self.orchestrator.startup_errors = []
 
@@ -285,7 +285,7 @@ class TestStartupOrchestrator:
         }
 
         with patch.dict(os.environ, env_vars, clear=True):
-            config, errors = ClarityConfig.validate_from_env()
+            config, _errors = ClarityConfig.validate_from_env()
 
             if config:
                 # Test production requirements validation

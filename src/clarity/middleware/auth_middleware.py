@@ -79,7 +79,7 @@ class CognitoAuthMiddleware(BaseHTTPMiddleware):
                 )
                 logger.info("Authentication middleware initialized with Cognito")
             except Exception as e:
-                logger.error("Failed to initialize auth provider: %s", e)
+                logger.exception("Failed to initialize auth provider: %s", e)
                 self.auth_provider = None
         else:
             logger.warning("Authentication disabled or not configured")
@@ -140,7 +140,7 @@ class CognitoAuthMiddleware(BaseHTTPMiddleware):
             logger.warning("Authentication failed: %s", e)
         except Exception as e:
             # Log unexpected errors but continue
-            logger.error("Unexpected error during authentication: %s", e)
+            logger.exception("Unexpected error during authentication: %s", e)
 
         # Continue to the next handler
         return cast(Response, await call_next(request))

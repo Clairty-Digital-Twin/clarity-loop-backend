@@ -102,7 +102,8 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
 
     if not success or not config:
         logger.error("❌ Startup failed - application cannot start")
-        raise RuntimeError("Bulletproof startup failed - check logs for details")
+        msg = "Bulletproof startup failed - check logs for details"
+        raise RuntimeError(msg)
 
     logger.info("✅ Bulletproof startup completed successfully")
 
@@ -114,7 +115,8 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
         logger.info("✅ Dependency container initialized")
     except Exception as e:
         logger.exception("❌ Failed to initialize dependency container")
-        raise RuntimeError(f"Container initialization failed: {e}") from e
+        msg = f"Container initialization failed: {e}"
+        raise RuntimeError(msg) from e
 
     yield
 

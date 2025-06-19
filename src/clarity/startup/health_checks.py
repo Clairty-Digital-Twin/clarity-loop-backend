@@ -11,10 +11,10 @@ from dataclasses import dataclass, field
 from enum import Enum
 import logging
 import time
-from typing import Any, Dict, Optional
+from typing import Any
 
 import boto3
-from botocore.exceptions import BotoCoreError, ClientError, NoCredentialsError
+from botocore.exceptions import ClientError, NoCredentialsError
 
 logger = logging.getLogger(__name__)
 

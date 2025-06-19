@@ -8,7 +8,6 @@ import asyncio
 from collections import defaultdict, deque
 from dataclasses import dataclass
 from datetime import datetime
-import json
 import logging
 import time
 from typing import Any

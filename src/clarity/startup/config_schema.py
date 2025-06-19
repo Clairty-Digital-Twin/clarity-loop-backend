@@ -9,7 +9,6 @@ from __future__ import annotations
 from enum import Enum
 import logging
 import os
-from pathlib import Path
 from typing import Any, ClassVar
 from urllib.parse import urlparse
 
@@ -21,7 +20,6 @@ from pydantic import (
     field_validator,
     model_validator,
 )
-from pydantic.color import Color
 from pydantic_settings import BaseSettings
 
 logger = logging.getLogger(__name__)

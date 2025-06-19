@@ -7,11 +7,10 @@ It provides backward compatibility while leveraging the new progressive loading 
 import asyncio
 import logging
 import time
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 from .models import (
     LoadedModel,
-    ModelAvailabilityStatus,
     ProgressiveLoadingConfig,
     ProgressiveLoadingService,
     get_progressive_service,
@@ -19,7 +18,6 @@ from .models import (
 from .models.monitoring import (
     ModelMonitoringConfig,
     ModelMonitoringService,
-    monitor_inference,
 )
 from .pat_service import PATModelService  # Legacy service for fallback
 

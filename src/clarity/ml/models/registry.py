@@ -11,10 +11,9 @@ from enum import Enum
 import hashlib
 import json
 import logging
-import os
 from pathlib import Path
 import time
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 from urllib.parse import urlparse
 
 import aiofiles

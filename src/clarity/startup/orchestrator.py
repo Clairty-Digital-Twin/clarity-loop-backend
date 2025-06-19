@@ -8,10 +8,8 @@ from __future__ import annotations
 
 import asyncio
 import logging
-import os
 import sys
-import time
-from typing import Any, Dict, List, Optional, Set
+from typing import Any, Set
 
 from fastapi import FastAPI
 

@@ -5,13 +5,12 @@ replacing the legacy S3 download approach with progressive loading strategies.
 """
 
 import asyncio
-from collections.abc import Callable
 from contextlib import asynccontextmanager
 from enum import Enum
 import logging
 import os
 import time
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from pydantic import BaseModel
 

@@ -17,7 +17,6 @@ References sleep research standards from AASM, NSRR, and MESA studies.
 # removed – breaks FastAPI
 
 import logging
-from typing import TYPE_CHECKING
 
 import numpy as np
 from pydantic import BaseModel, Field

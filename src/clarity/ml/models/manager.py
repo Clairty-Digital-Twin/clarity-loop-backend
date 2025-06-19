@@ -120,7 +120,9 @@ class LoadedModel:
 
             except Exception as e:
                 self.metrics.error_count += 1
-                logger.exception("Prediction failed for %s: %s", self.metadata.unique_id, e)
+                logger.exception(
+                    "Prediction failed for %s: %s", self.metadata.unique_id, e
+                )
                 raise
 
     def get_metrics(self) -> ModelPerformanceMetrics:
@@ -248,7 +250,10 @@ class ModelManager:
             await self.unload_model(model_id, old_version)
 
             logger.info(
-                "Successfully swapped %s from %s to %s", model_id, old_version, new_version
+                "Successfully swapped %s from %s to %s",
+                model_id,
+                old_version,
+                new_version,
             )
             return True
 
@@ -300,7 +305,9 @@ class ModelManager:
 
         return health_status
 
-    def register_model_factory(self, model_type: str, factory: Callable[[ModelMetadata], Any]) -> None:
+    def register_model_factory(
+        self, model_type: str, factory: Callable[[ModelMetadata], Any]
+    ) -> None:
         """Register a factory function for creating model instances."""
         self.model_factories[model_type] = factory
         logger.info("Registered model factory for type: %s", model_type)
@@ -350,7 +357,9 @@ class ModelManager:
                 # Refresh metadata to get updated local path
                 metadata = await self.registry.get_model(model_id, version)
                 if not metadata:
-                    logger.error("Failed to refresh metadata for %s:%s", model_id, version)
+                    logger.error(
+                        "Failed to refresh metadata for %s:%s", model_id, version
+                    )
                     return None
 
             # Create model instance using appropriate factory
@@ -448,7 +457,9 @@ class ModelManager:
 
         successful_loads = sum(1 for r in results if isinstance(r, LoadedModel))
         logger.info(
-            "Eager loading completed: %d/%d models loaded", successful_loads, len(all_models)
+            "Eager loading completed: %d/%d models loaded",
+            successful_loads,
+            len(all_models),
         )
 
     async def _start_progressive_loading(self) -> None:

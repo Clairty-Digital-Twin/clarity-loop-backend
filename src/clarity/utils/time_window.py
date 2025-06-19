@@ -162,9 +162,7 @@ def pad_to_week(
             f"Input array has {arr.shape[0]} samples, "
             f"exceeds target length {minutes_per_week}"
         )
-        raise ValueError(
-            msg
-        )
+        raise ValueError(msg)
 
     if arr.shape[0] == minutes_per_week:
         return np.ascontiguousarray(arr, dtype=np.float32)

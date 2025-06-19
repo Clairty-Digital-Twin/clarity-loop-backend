@@ -419,7 +419,17 @@ class StartupErrorCatalog:
             return f"Unknown error code: {error_code}"
 
         lines = []
-        lines.extend((f"🚨 {error_info.title} ({error_info.code})", "=" * 60, "", f"📝 Description: {error_info.description}", f"📊 Severity: {error_info.severity.value.upper()}", f"🏷️  Category: {error_info.category.value.title()}", ""))
+        lines.extend(
+            (
+                f"🚨 {error_info.title} ({error_info.code})",
+                "=" * 60,
+                "",
+                f"📝 Description: {error_info.description}",
+                f"📊 Severity: {error_info.severity.value.upper()}",
+                f"🏷️  Category: {error_info.category.value.title()}",
+                "",
+            )
+        )
 
         if error_info.common_causes:
             lines.append("🔍 Common Causes:")
@@ -434,7 +444,9 @@ class StartupErrorCatalog:
 
                 if solution.documentation_links:
                     lines.append("     📖 Documentation:")
-                    lines.extend(f"        {link}" for link in solution.documentation_links)
+                    lines.extend(
+                        f"        {link}" for link in solution.documentation_links
+                    )
 
         if context:
             lines.extend(("", "🔧 Context:"))

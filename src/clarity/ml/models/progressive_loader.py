@@ -105,7 +105,7 @@ class ProgressiveLoadingService:
 
         logger.info(
             "Progressive loading service initialized for %s",
-            'production' if self.config.is_production else 'development'
+            "production" if self.config.is_production else "development",
         )
 
     async def initialize(self) -> bool:
@@ -334,7 +334,7 @@ class ProgressiveLoadingService:
         logger.info(
             "Environment detected: production=%s, local_dev=%s",
             is_prod_env,
-            is_local_dev
+            is_local_dev,
         )
 
     async def _setup_model_infrastructure(self) -> None:
@@ -380,7 +380,9 @@ class ProgressiveLoadingService:
         # Create semaphore for controlling parallel loads
         semaphore = asyncio.Semaphore(self.config.max_parallel_loads)
 
-        async def load_model_with_semaphore(model_spec: str, is_critical: bool = False) -> None:
+        async def load_model_with_semaphore(
+            model_spec: str, is_critical: bool = False
+        ) -> None:
             async with semaphore:
                 model_id, version = self._parse_model_spec(model_spec)
                 unique_id = f"{model_id}:{version}"
@@ -395,7 +397,11 @@ class ProgressiveLoadingService:
 
                 start_time = time.time()
                 try:
-                    success = await self.model_manager.preload_model(model_id, version) if self.model_manager else False
+                    success = (
+                        await self.model_manager.preload_model(model_id, version)
+                        if self.model_manager
+                        else False
+                    )
                     load_time = time.time() - start_time
 
                     if success:
@@ -508,9 +514,7 @@ class ProgressiveLoadingService:
         """Record phase transition timing."""
         self.phase_transitions[phase] = time.time() - self.startup_time
         logger.info(
-            "Application phase: %s (%.2fs)",
-            phase.value,
-            self.phase_transitions[phase]
+            "Application phase: %s (%.2fs)", phase.value, self.phase_transitions[phase]
         )
 
 
@@ -532,7 +536,9 @@ async def get_progressive_service(
 
 
 @asynccontextmanager
-async def progressive_loading_lifespan(config: ProgressiveLoadingConfig | None = None) -> AsyncGenerator[ProgressiveLoadingService, None]:
+async def progressive_loading_lifespan(
+    config: ProgressiveLoadingConfig | None = None,
+) -> AsyncGenerator[ProgressiveLoadingService, None]:
     """Context manager for progressive loading service lifecycle."""
     service = await get_progressive_service(config)
     try:

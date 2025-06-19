@@ -42,7 +42,9 @@ console = Console()
 )
 @click.option("--verbose", "-v", is_flag=True, help="Verbose output")
 @click.pass_context
-def cli(ctx: click.Context, config_file: str | None, models_dir: str, verbose: bool) -> None:
+def cli(
+    ctx: click.Context, config_file: str | None, models_dir: str, verbose: bool
+) -> None:
     """Clarity ML Model Management CLI."""
     ctx.ensure_object(dict)
     ctx.obj["config_file"] = config_file
@@ -135,7 +137,9 @@ async def list_models(ctx: click.Context) -> None:
 @click.option("--version", default="latest", help="Model version")
 @click.option("--source-url", help="Source URL for download")
 @click.pass_context
-async def download(ctx: click.Context, model_id: str, version: str, source_url: str | None) -> None:
+async def download(
+    ctx: click.Context, model_id: str, version: str, source_url: str | None
+) -> None:
     """Download a model."""
     models_dir = ctx.obj["models_dir"]
 
@@ -202,7 +206,16 @@ async def download(ctx: click.Context, model_id: str, version: str, source_url: 
 @click.option("--tags", help="Comma-separated tags")
 @click.pass_context
 async def register(
-    ctx: click.Context, model_id: str, name: str, version: str, tier: str, source_url: str, checksum: str, size: int, description: str | None, tags: str | None
+    ctx: click.Context,
+    model_id: str,
+    name: str,
+    version: str,
+    tier: str,
+    source_url: str,
+    checksum: str,
+    size: int,
+    description: str | None,
+    tags: str | None,
 ) -> None:
     """Register a new model."""
     models_dir = ctx.obj["models_dir"]
@@ -320,7 +333,9 @@ Registry File: {config.registry_file}
     "--create-mocks/--no-create-mocks", default=True, help="Create mock models"
 )
 @click.pass_context
-async def serve(ctx: click.Context, host: str, port: int, auto_load: bool, create_mocks: bool) -> None:
+async def serve(
+    ctx: click.Context, host: str, port: int, auto_load: bool, create_mocks: bool
+) -> None:
     """Start local model server."""
     models_dir = ctx.obj["models_dir"]
 
@@ -351,7 +366,9 @@ async def serve(ctx: click.Context, host: str, port: int, auto_load: bool, creat
 @click.option("--version", default="latest", help="Model version")
 @click.option("--input-file", type=click.Path(exists=True), help="Input JSON file")
 @click.pass_context
-async def predict(ctx: click.Context, url: str, model_id: str, version: str, input_file: str | None) -> None:
+async def predict(
+    ctx: click.Context, url: str, model_id: str, version: str, input_file: str | None
+) -> None:
     """Make prediction using local server."""
     # Load input data
     if input_file:
@@ -501,8 +518,10 @@ def main() -> None:
     for command in cli.commands.values():
         if asyncio.iscoroutinefunction(command.callback):
             original_callback = command.callback
-            command.callback = lambda *args, cb=original_callback, **kwargs: asyncio.run(
-                cb(*args, **kwargs)
+            command.callback = (
+                lambda *args, cb=original_callback, **kwargs: asyncio.run(
+                    cb(*args, **kwargs)
+                )
             )
 
     cli()

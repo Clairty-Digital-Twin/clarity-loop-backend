@@ -136,7 +136,9 @@ class ModelRegistry:
         self.config.base_path.mkdir(parents=True, exist_ok=True)
         self.config.cache_dir.mkdir(parents=True, exist_ok=True)
 
-        logger.info("Initialized ModelRegistry with base_path=%s", self.config.base_path)
+        logger.info(
+            "Initialized ModelRegistry with base_path=%s", self.config.base_path
+        )
 
     async def initialize(self) -> None:
         """Initialize registry by loading existing metadata."""
@@ -157,7 +159,9 @@ class ModelRegistry:
                 logger.info("Registered model %s", metadata.unique_id)
                 return True
             except (OSError, ValueError) as e:
-                logger.exception("Failed to register model %s: %s", metadata.unique_id, e)
+                logger.exception(
+                    "Failed to register model %s: %s", metadata.unique_id, e
+                )
                 return False
 
     async def get_model(
@@ -385,7 +389,9 @@ class ModelRegistry:
                                     progress = downloaded / metadata.size_bytes * 100
                                     elapsed = (
                                         now
-                                        - self.download_progress[download_id]["start_time"]
+                                        - self.download_progress[download_id][
+                                            "start_time"
+                                        ]
                                     )
                                     speed_mbps = (
                                         (downloaded / (1024 * 1024)) / elapsed

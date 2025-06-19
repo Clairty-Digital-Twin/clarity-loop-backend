@@ -423,10 +423,14 @@ class ClarityConfig(BaseSettings):
         gemini_config["model"] = values.get("GEMINI_MODEL") or os.getenv(
             "GEMINI_MODEL", "gemini-1.5-flash"
         )
-        temp_val = values.get("GEMINI_TEMPERATURE") or os.getenv("GEMINI_TEMPERATURE", "0.7")
+        temp_val = values.get("GEMINI_TEMPERATURE") or os.getenv(
+            "GEMINI_TEMPERATURE", "0.7"
+        )
         gemini_config["temperature"] = float(str(temp_val))
 
-        tokens_val = values.get("GEMINI_MAX_TOKENS") or os.getenv("GEMINI_MAX_TOKENS", "1000")
+        tokens_val = values.get("GEMINI_MAX_TOKENS") or os.getenv(
+            "GEMINI_MAX_TOKENS", "1000"
+        )
         gemini_config["max_tokens"] = int(str(tokens_val))
 
         # Extract security config - check both values and env vars

@@ -134,7 +134,7 @@ class ModelMonitoringService:
                 start_http_server(self.config.prometheus_port)
                 logger.info(
                     "Prometheus metrics server started on port %s",
-                    self.config.prometheus_port
+                    self.config.prometheus_port,
                 )
             except Exception as e:
                 logger.exception("Failed to start Prometheus server: %s", e)
@@ -561,14 +561,14 @@ class ModelMonitoringService:
                 if response.status != 200:
                     logger.warning("Alert webhook failed: %s", response.status)
                 else:
-                    logger.info("Alert sent for %s: %s", model_key, alert['type'])
+                    logger.info("Alert sent for %s: %s", model_key, alert["type"])
 
         except Exception as e:
             logger.exception("Failed to send alert webhook: %s", e)
 
 
 # Decorator for automatic inference monitoring
-T = TypeVar('T', bound=Callable[..., Awaitable[Any]])
+T = TypeVar("T", bound=Callable[..., Awaitable[Any]])
 
 
 def monitor_inference(

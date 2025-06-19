@@ -73,7 +73,11 @@ class PATServiceV2:
             )
 
             # Initialize monitoring if enabled
-            if self.enable_monitoring and self.progressive_service and self.progressive_service.model_manager:
+            if (
+                self.enable_monitoring
+                and self.progressive_service
+                and self.progressive_service.model_manager
+            ):
                 self.monitoring_service = ModelMonitoringService(self.monitoring_config)
                 await self.monitoring_service.initialize(
                     self.progressive_service.model_manager
@@ -106,7 +110,8 @@ class PATServiceV2:
 
             if self.current_model:
                 logger.info(
-                    "Successfully loaded PAT model: %s", self.current_model.metadata.unique_id
+                    "Successfully loaded PAT model: %s",
+                    self.current_model.metadata.unique_id,
                 )
             else:
                 logger.warning("Failed to load PAT model: pat:%s", version)
@@ -328,7 +333,11 @@ class PATServiceV2:
             target_version = new_version or old_version
 
             # Unload current model
-            if self.current_model and self.progressive_service and self.progressive_service.model_manager:
+            if (
+                self.current_model
+                and self.progressive_service
+                and self.progressive_service.model_manager
+            ):
                 await self.progressive_service.model_manager.unload_model(
                     "pat", old_version
                 )
@@ -340,7 +349,8 @@ class PATServiceV2:
 
             if self.current_model:
                 logger.info(
-                    "Successfully reloaded PAT model: %s", self.current_model.metadata.unique_id
+                    "Successfully reloaded PAT model: %s",
+                    self.current_model.metadata.unique_id,
                 )
                 return True
             logger.error("Failed to reload PAT model: pat:%s", target_version)

@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
-import pytest
 from starlette.responses import Response
 
 from clarity.middleware.security_headers import (

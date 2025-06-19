@@ -11,7 +11,7 @@ Following Clean Architecture and SOLID principles.
 from datetime import UTC, datetime
 import logging
 from operator import itemgetter
-from typing import TYPE_CHECKING, Any
+from typing import Any
 import uuid
 
 from clarity.models.health_data import HealthMetric

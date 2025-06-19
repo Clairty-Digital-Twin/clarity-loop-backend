@@ -7,7 +7,7 @@ into fixed-length windows, particularly for the PAT model's 7-day requirement.
 # removed – breaks FastAPI
 
 import logging
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 import numpy as np
 import numpy.typing as npt

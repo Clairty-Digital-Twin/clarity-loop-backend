@@ -5,7 +5,7 @@
 from collections.abc import Awaitable, Callable
 import functools
 import logging
-from typing import TYPE_CHECKING, ParamSpec, TypeVar
+from typing import ParamSpec, TypeVar
 
 from circuitbreaker import (
     CircuitBreaker,

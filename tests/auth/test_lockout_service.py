@@ -1,7 +1,7 @@
 """Tests for Account Lockout Service."""
 
 import asyncio
-from datetime import datetime, timedelta
+from datetime import timedelta
 import logging
 
 import pytest

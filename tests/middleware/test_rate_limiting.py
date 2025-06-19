@@ -8,14 +8,12 @@ Tests various rate limiting scenarios including:
 - Error handling
 """
 
-import asyncio
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import MagicMock
 
 from fastapi import FastAPI, Request
 from fastapi.testclient import TestClient
 import pytest
 from slowapi.errors import RateLimitExceeded
-from starlette.requests import Request as StarletteRequest
 
 from clarity.middleware.rate_limiting import (
     RateLimitingMiddleware,
@@ -154,7 +152,6 @@ class TestIntegration:
         limiter = setup_rate_limiting(app)
 
         # Add the middleware to the app
-        from slowapi import _rate_limit_exceeded_handler
         from slowapi.middleware import SlowAPIMiddleware
 
         # Add SlowAPI middleware

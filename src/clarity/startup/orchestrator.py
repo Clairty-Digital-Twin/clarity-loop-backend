@@ -9,11 +9,9 @@ from __future__ import annotations
 import asyncio
 import logging
 import sys
-from typing import Any, Set
+from typing import Any
 
-from fastapi import FastAPI
-
-from clarity.startup.config_schema import ClarityConfig, load_config
+from clarity.startup.config_schema import ClarityConfig
 from clarity.startup.health_checks import ServiceHealthChecker, ServiceStatus
 from clarity.startup.progress_reporter import ProgressPhase, StartupProgressReporter
 

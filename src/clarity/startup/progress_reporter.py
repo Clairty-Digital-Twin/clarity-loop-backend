@@ -11,7 +11,7 @@ from enum import Enum
 import logging
 import sys
 import time
-from typing import Any, Dict, List, Optional, TextIO
+from typing import Any, TextIO
 
 from clarity.startup.health_checks import HealthCheckResult, ServiceStatus
 

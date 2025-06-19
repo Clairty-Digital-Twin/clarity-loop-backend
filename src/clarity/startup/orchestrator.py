@@ -108,7 +108,9 @@ class StartupOrchestrator:
                     success=True, message="Dry-run completed successfully"
                 )
             else:
-                self.reporter.report_startup_complete(success=True, message="All systems operational")
+                self.reporter.report_startup_complete(
+                    success=True, message="All systems operational"
+                )
 
             return True, self.config
 
@@ -119,7 +121,9 @@ class StartupOrchestrator:
             return False, None
         except Exception as e:
             logger.exception("Unexpected startup error")
-            self.reporter.report_startup_complete(success=False, message=f"Unexpected error: {e!s}")
+            self.reporter.report_startup_complete(
+                success=False, message=f"Unexpected error: {e!s}"
+            )
             return False, None
 
     async def _validate_configuration(self) -> bool:

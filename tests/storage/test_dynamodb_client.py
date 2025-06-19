@@ -252,7 +252,9 @@ class TestSerializationMethods:
 
         assert result["string"] == "test"
         assert isinstance(result["decimal"], float)
-        assert result["decimal"] == 3.14  # Should match the input decimal value  # noqa: FURB152
+        assert (
+            result["decimal"] == math.pi
+        )  # Should match the input decimal value
         assert result["int"] == 42
         assert result["list"][1] == 1.5
         assert result["dict"]["nested"] == 2.5

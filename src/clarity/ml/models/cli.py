@@ -43,7 +43,10 @@ console = Console()
 @click.option("--verbose", "-v", is_flag=True, help="Verbose output")
 @click.pass_context
 def cli(
-    ctx: click.Context, config_file: str | None, models_dir: str, verbose: bool  # noqa: FBT001
+    ctx: click.Context,
+    config_file: str | None,
+    models_dir: str,
+    verbose: bool,  # noqa: FBT001
 ) -> None:
     """Clarity ML Model Management CLI."""
     ctx.ensure_object(dict)
@@ -334,7 +337,11 @@ Registry File: {config.registry_file}
 )
 @click.pass_context
 async def serve(
-    ctx: click.Context, host: str, port: int, auto_load: bool, create_mocks: bool  # noqa: FBT001
+    ctx: click.Context,
+    host: str,
+    port: int,
+    auto_load: bool,
+    create_mocks: bool,  # noqa: FBT001
 ) -> None:
     """Start local model server."""
     models_dir = ctx.obj["models_dir"]

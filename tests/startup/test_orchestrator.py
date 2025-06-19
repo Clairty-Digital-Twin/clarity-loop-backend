@@ -181,7 +181,7 @@ class TestStartupOrchestrator:
         }
 
         # Mock a slow health check
-        async def slow_health_check(*args: Any, **kwargs: Any) -> dict[str, Any]:
+        async def slow_health_check(*_args: Any, **_kwargs: Any) -> dict[str, Any]:
             await asyncio.sleep(1.0)  # Longer than timeout
             return {}
 

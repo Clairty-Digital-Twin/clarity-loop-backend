@@ -135,7 +135,7 @@ class TestStartupIntegration:
         }
 
         # Mock a very slow health check
-        async def slow_check(*args: Any, **kwargs: Any) -> dict[str, Any]:
+        async def slow_check(*_args: Any, **_kwargs: Any) -> dict[str, Any]:
             await asyncio.sleep(2.0)  # Longer than timeout
             return {}
 

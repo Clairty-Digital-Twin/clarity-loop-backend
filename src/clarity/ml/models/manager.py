@@ -195,7 +195,7 @@ class ModelManager:
             try:
                 timeout_val = timeout or self.load_config.timeout_seconds
                 task = self.loading_tasks[unique_id]
-                return await asyncio.wait_for(task, timeout=timeout_val)  # type: ignore[arg-type]
+                return await asyncio.wait_for(task, timeout=timeout_val)
             except TimeoutError:
                 logger.exception("Model loading timeout for %s", unique_id)
                 return None

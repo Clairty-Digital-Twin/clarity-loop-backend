@@ -95,7 +95,7 @@ class TestAuthenticationE2E:
         """Test login with invalid credentials."""
         # Skip if service is unreachable
         if not _service_up(self.BASE_URL):
-            pytest.skip(f"⏭  {self.BASE_URL} unreachable – skipping integration test")
+            pytest.skip(f"⏭  {self.BASE_URL} unreachable - skipping integration test")
 
         frontend_login_payload["password"] = (
             "WrongPassword123!"  # noqa: S105 - Test invalid password

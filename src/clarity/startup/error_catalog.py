@@ -418,7 +418,7 @@ class StartupErrorCatalog:
         if not error_info:
             return f"Unknown error code: {error_code}"
 
-        lines = []
+        lines: list[str] = []
         lines.extend(
             (
                 f"🚨 {error_info.title} ({error_info.code})",

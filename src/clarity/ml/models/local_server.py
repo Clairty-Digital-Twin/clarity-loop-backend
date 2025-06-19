@@ -71,7 +71,7 @@ class ModelStatusResponse(BaseModel):
 class MockPATModel:
     """Mock PAT model for local development."""
 
-    def __init__(self, model_size: str = "medium"):
+    def __init__(self, model_size: str = "medium") -> None:
         self.model_size = model_size
         self.config = {
             "small": {"features": 64, "layers": 4},
@@ -116,7 +116,7 @@ class MockPATModel:
 class LocalModelServer:
     """Local ML Model Development Server."""
 
-    def __init__(self, config: ModelServerConfig | None = None):
+    def __init__(self, config: ModelServerConfig | None = None) -> None:
         self.config = config or ModelServerConfig()
         self.app = FastAPI(
             title="Clarity ML Model Server",
@@ -133,7 +133,7 @@ class LocalModelServer:
         if self.config.enable_cors:
             self._setup_cors()
 
-    async def startup_event(self):
+    async def startup_event(self) -> None:
         """Initialize model manager and load models."""
         try:
             # Ensure models directory exists
@@ -177,7 +177,7 @@ class LocalModelServer:
             logger.error(f"Failed to start model server: {e}")
             raise
 
-    async def _setup_mock_models(self):
+    async def _setup_mock_models(self) -> None:
         """Setup mock models for local development."""
         for model_id, metadata in LEGACY_PAT_MODELS.items():
             size_map = {"PAT-S": "small", "PAT-M": "medium", "PAT-L": "large"}
@@ -186,15 +186,15 @@ class LocalModelServer:
             self.mock_models[metadata.unique_id] = MockPATModel(size)
             logger.info(f"Created mock model: {metadata.unique_id}")
 
-    def _setup_routes(self):
+    def _setup_routes(self) -> None:
         """Setup FastAPI routes."""
 
         @self.app.on_event("startup")
-        async def startup():
+        async def startup() -> None:
             await self.startup_event()
 
         @self.app.get("/")
-        async def root():
+        async def root() -> dict[str, Any]:
             return {
                 "service": "Clarity ML Model Server",
                 "version": "1.0.0",
@@ -205,7 +205,7 @@ class LocalModelServer:
             }
 
         @self.app.get("/health")
-        async def health_check():
+        async def health_check() -> dict[str, Any] | JSONResponse:
             """Health check endpoint."""
             if not self.model_manager:
                 return JSONResponse({"status": "starting"}, status_code=503)
@@ -214,7 +214,7 @@ class LocalModelServer:
             return health
 
         @self.app.get("/models", response_model=list[dict[str, Any]])
-        async def list_models():
+        async def list_models() -> list[dict[str, Any]]:
             """List all available models."""
             if not self.model_manager:
                 raise HTTPException(
@@ -225,7 +225,7 @@ class LocalModelServer:
             return [model.to_dict() for model in models]
 
         @self.app.get("/models/{model_id}", response_model=list[dict[str, Any]])
-        async def get_model_versions(model_id: str):
+        async def get_model_versions(model_id: str) -> list[dict[str, Any]]:
             """Get all versions of a specific model."""
             if not self.model_manager:
                 raise HTTPException(
@@ -243,7 +243,9 @@ class LocalModelServer:
         @self.app.get(
             "/models/{model_id}/{version}/status", response_model=ModelStatusResponse
         )
-        async def get_model_status(model_id: str, version: str = "latest"):
+        async def get_model_status(
+            model_id: str, version: str = "latest"
+        ) -> ModelStatusResponse:
             """Get status of a specific model version."""
             if not self.model_manager:
                 raise HTTPException(
@@ -284,7 +286,7 @@ class LocalModelServer:
             model_id: str,
             version: str = "latest",
             background_tasks: BackgroundTasks = None,
-        ):
+        ) -> dict[str, Any]:
             """Load a specific model version."""
             if not self.model_manager:
                 raise HTTPException(
@@ -309,7 +311,9 @@ class LocalModelServer:
             }
 
         @self.app.post("/models/{model_id}/{version}/unload")
-        async def unload_model(model_id: str, version: str = "latest"):
+        async def unload_model(
+            model_id: str, version: str = "latest"
+        ) -> dict[str, Any]:
             """Unload a specific model version."""
             if not self.model_manager:
                 raise HTTPException(
@@ -324,7 +328,7 @@ class LocalModelServer:
             }
 
         @self.app.post("/predict", response_model=PredictionResponse)
-        async def predict(request: PredictionRequest):
+        async def predict(request: PredictionRequest) -> PredictionResponse:
             """Make prediction using specified model."""
             if not self.model_manager:
                 raise HTTPException(
@@ -379,7 +383,7 @@ class LocalModelServer:
             )
 
         @self.app.get("/metrics")
-        async def get_metrics():
+        async def get_metrics() -> dict[str, Any]:
             """Get performance metrics for all models."""
             if not self.model_manager:
                 raise HTTPException(
@@ -391,7 +395,7 @@ class LocalModelServer:
         @self.app.get("/download-progress/{model_id}")
         async def get_download_progress(
             model_id: str, version: str = Query(default="latest")
-        ):
+        ) -> dict[str, Any]:
             """Get download progress for a model."""
             if not self.model_manager:
                 raise HTTPException(
@@ -407,7 +411,7 @@ class LocalModelServer:
             return progress
 
         @self.app.post("/create-mock-data")
-        async def create_mock_data():
+        async def create_mock_data() -> dict[str, Any]:
             """Create mock training data for testing."""
             import random
 
@@ -428,7 +432,7 @@ class LocalModelServer:
 
             return mock_data
 
-    def _setup_cors(self):
+    def _setup_cors(self) -> None:
         """Setup CORS for frontend development."""
         from fastapi.middleware.cors import CORSMiddleware
 
@@ -440,7 +444,7 @@ class LocalModelServer:
             allow_headers=["*"],
         )
 
-    def run(self):
+    def run(self) -> None:
         """Run the local model server."""
         uvicorn.run(
             self.app,
@@ -451,7 +455,7 @@ class LocalModelServer:
 
 
 # CLI interface for local model server
-async def create_placeholder_models(models_dir: Path):
+async def create_placeholder_models(models_dir: Path) -> None:
     """Create placeholder models for local development."""
     models_dir.mkdir(parents=True, exist_ok=True)
 

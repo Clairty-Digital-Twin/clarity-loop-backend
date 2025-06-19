@@ -92,7 +92,7 @@ class ModelMonitoringService:
     - Custom dashboards and reporting
     """
 
-    def __init__(self, config: ModelMonitoringConfig | None = None):
+    def __init__(self, config: ModelMonitoringConfig | None = None) -> None:
         self.config = config or ModelMonitoringConfig()
         self.model_manager: ModelManager | None = None
 
@@ -123,7 +123,7 @@ class ModelMonitoringService:
 
         logger.info("Model monitoring service initialized")
 
-    async def initialize(self, model_manager: ModelManager):
+    async def initialize(self, model_manager: ModelManager) -> None:
         """Initialize monitoring service with model manager."""
         self.model_manager = model_manager
 
@@ -150,7 +150,7 @@ class ModelMonitoringService:
 
         logger.info("Model monitoring service started")
 
-    async def shutdown(self):
+    async def shutdown(self) -> None:
         """Shutdown monitoring service."""
         for task in self.monitoring_tasks:
             task.cancel()
@@ -168,7 +168,7 @@ class ModelMonitoringService:
         input_size: int | None = None,
         output_size: int | None = None,
         memory_usage_mb: float | None = None,
-    ):
+    ) -> None:
         """Record an inference event."""
         if not self.config.collect_inference_metrics:
             return
@@ -391,7 +391,7 @@ class ModelMonitoringService:
             logger.error(f"Failed to setup Prometheus metrics: {e}")
             return None
 
-    async def _health_monitoring_loop(self):
+    async def _health_monitoring_loop(self) -> None:
         """Background health monitoring loop."""
         while True:
             try:
@@ -439,7 +439,7 @@ class ModelMonitoringService:
                 logger.error(f"Health monitoring error: {e}")
                 await asyncio.sleep(self.config.health_check_interval_seconds)
 
-    async def _system_monitoring_loop(self):
+    async def _system_monitoring_loop(self) -> None:
         """Background system monitoring loop."""
         while True:
             try:
@@ -465,7 +465,7 @@ class ModelMonitoringService:
 
     async def _check_inference_alerts(
         self, model_id: str, version: str, metric: ModelInferenceMetric
-    ):
+    ) -> None:
         """Check for inference-related alerts."""
         if not self.config.enable_alerting:
             return
@@ -537,7 +537,7 @@ class ModelMonitoringService:
             if self.config.alert_webhook_url:
                 asyncio.create_task(self._send_alert_webhook(model_key, alert))
 
-    async def _send_alert_webhook(self, model_key: str, alert: dict[str, Any]):
+    async def _send_alert_webhook(self, model_key: str, alert: dict[str, Any]) -> None:
         """Send alert to webhook."""
         try:
             import aiohttp
@@ -563,11 +563,13 @@ class ModelMonitoringService:
 
 
 # Decorator for automatic inference monitoring
-def monitor_inference(monitoring_service: ModelMonitoringService):
+def monitor_inference(
+    monitoring_service: ModelMonitoringService,
+) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
     """Decorator to automatically monitor model inferences."""
 
-    def decorator(func):
-        async def wrapper(self, *args, **kwargs):
+    def decorator(func: Callable[..., Any]) -> Callable[..., Any]:
+        async def wrapper(self, *args, **kwargs) -> Any:
             start_time = time.time()
             success = False
             error_type = None

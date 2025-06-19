@@ -101,7 +101,7 @@ async def lifespan(_app: FastAPI) -> AsyncGenerator[None, None]:
 
         logger.info("✅ ML Model management system initialized")
 
-    except Exception as e:
+    except (ImportError, RuntimeError, AttributeError) as e:
         logger.error("❌ Failed to initialize ML model management: %s", str(e))
         logger.info("🔧 Continuing without ML models - health insights may be limited")
 
@@ -156,7 +156,7 @@ async def lifespan(_app: FastAPI) -> AsyncGenerator[None, None]:
                             model_parts[0], model_parts[1]
                         )
             logger.info("✅ ML model management shutdown completed")
-        except Exception as e:
+        except (RuntimeError, AttributeError) as e:
             logger.warning("⚠️  Error during ML model cleanup: %s", str(e))
 
     logger.info("Shutting down CLARITY backend")
@@ -362,7 +362,7 @@ async def health_check() -> dict[str, Any]:
                 ),
             }
             health_status["features"]["ml_models"] = True
-        except Exception as e:
+        except (RuntimeError, AttributeError) as e:
             health_status["ml_models"] = {"enabled": False, "error": str(e)}
 
     return health_status

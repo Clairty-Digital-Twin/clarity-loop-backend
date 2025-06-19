@@ -1,4 +1,4 @@
-"""Revolutionary ML Model Registry & Management System
+"""Revolutionary ML Model Registry & Management System.
 
 This module provides a comprehensive model registry with versioning, metadata tracking,
 and intelligent caching capabilities to replace the legacy S3-download approach.
@@ -24,7 +24,7 @@ logger = logging.getLogger(__name__)
 
 
 class ModelStatus(str, Enum):
-    """Model availability status"""
+    """Model availability status."""
 
     UNKNOWN = "unknown"
     DOWNLOADING = "downloading"
@@ -34,7 +34,7 @@ class ModelStatus(str, Enum):
 
 
 class ModelTier(str, Enum):
-    """Model performance/size tiers"""
+    """Model performance/size tiers."""
 
     SMALL = "small"
     MEDIUM = "medium"
@@ -44,7 +44,7 @@ class ModelTier(str, Enum):
 
 @dataclass
 class ModelMetadata:
-    """Complete model metadata with versioning and lineage"""
+    """Complete model metadata with versioning and lineage."""
 
     model_id: str
     name: str
@@ -76,11 +76,11 @@ class ModelMetadata:
 
     @property
     def unique_id(self) -> str:
-        """Generate unique identifier for this model version"""
+        """Generate unique identifier for this model version."""
         return f"{self.model_id}:{self.version}"
 
     def to_dict(self) -> dict[str, Any]:
-        """Convert to dictionary for JSON serialization"""
+        """Convert to dictionary for JSON serialization."""
         data = asdict(self)
         data["created_at"] = self.created_at.isoformat() if self.created_at else None
         data["updated_at"] = self.updated_at.isoformat() if self.updated_at else None
@@ -88,7 +88,7 @@ class ModelMetadata:
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> "ModelMetadata":
-        """Create from dictionary"""
+        """Create from dictionary."""
         if data.get("created_at"):
             data["created_at"] = datetime.fromisoformat(data["created_at"])
         if data.get("updated_at"):
@@ -97,7 +97,7 @@ class ModelMetadata:
 
 
 class ModelAlias(BaseModel):
-    """Model alias for semantic versioning (latest, stable, experimental)"""
+    """Model alias for semantic versioning (latest, stable, experimental)."""
 
     alias: str = Field(..., description="Alias name (e.g., 'latest', 'stable')")
     model_id: str = Field(..., description="Target model ID")
@@ -106,7 +106,7 @@ class ModelAlias(BaseModel):
 
 
 class ModelRegistryConfig(BaseModel):
-    """Configuration for model registry"""
+    """Configuration for model registry."""
 
     base_path: Path = Field(default=Path("/app/models"))
     cache_dir: Path = Field(default=Path("/tmp/clarity_models"))
@@ -119,7 +119,7 @@ class ModelRegistryConfig(BaseModel):
 
 
 class ModelRegistry:
-    """Revolutionary ML Model Registry
+    """Revolutionary ML Model Registry.
 
     Features:
     - Version management with semantic aliases
@@ -144,7 +144,7 @@ class ModelRegistry:
         logger.info(f"Initialized ModelRegistry with base_path={self.config.base_path}")
 
     async def initialize(self):
-        """Initialize registry by loading existing metadata"""
+        """Initialize registry by loading existing metadata."""
         await self._load_registry()
         await self._cleanup_cache()
         logger.info(
@@ -152,7 +152,7 @@ class ModelRegistry:
         )
 
     async def register_model(self, metadata: ModelMetadata) -> bool:
-        """Register a new model in the registry"""
+        """Register a new model in the registry."""
         async with self._lock:
             try:
                 self.models[metadata.unique_id] = metadata
@@ -166,7 +166,7 @@ class ModelRegistry:
     async def get_model(
         self, model_id: str, version: str = "latest"
     ) -> ModelMetadata | None:
-        """Get model metadata by ID and version"""
+        """Get model metadata by ID and version."""
         # Check if version is an alias
         if version in self.aliases:
             alias = self.aliases[version]
@@ -177,13 +177,13 @@ class ModelRegistry:
         return self.models.get(unique_id)
 
     async def list_models(self, model_id: str | None = None) -> list[ModelMetadata]:
-        """List all models, optionally filtered by model_id"""
+        """List all models, optionally filtered by model_id."""
         if model_id:
             return [m for m in self.models.values() if m.model_id == model_id]
         return list(self.models.values())
 
     async def create_alias(self, alias: str, model_id: str, version: str) -> bool:
-        """Create or update a model alias"""
+        """Create or update a model alias."""
         async with self._lock:
             try:
                 unique_id = f"{model_id}:{version}"
@@ -210,7 +210,7 @@ class ModelRegistry:
         source_url: str | None = None,
         force: bool = False,
     ) -> bool:
-        """Download model with intelligent caching and resume capability"""
+        """Download model with intelligent caching and resume capability."""
         metadata = await self.get_model(model_id, version)
         if not metadata:
             logger.error(f"Model {model_id}:{version} not found in registry")
@@ -264,7 +264,7 @@ class ModelRegistry:
     async def get_download_progress(
         self, model_id: str, version: str = "latest"
     ) -> dict[str, Any] | None:
-        """Get current download progress for a model"""
+        """Get current download progress for a model."""
         unique_id = f"{model_id}:{version}"
         for progress in self.download_progress.values():
             if progress["model_id"] == unique_id:
@@ -272,12 +272,12 @@ class ModelRegistry:
         return None
 
     async def cleanup_cache(self, max_size_gb: float | None = None) -> int:
-        """Clean up cache to stay within size limits"""
+        """Clean up cache to stay within size limits."""
         max_size = max_size_gb or self.config.max_cache_size_gb
         return await self._cleanup_cache(max_size)
 
     def _get_model_cache_path(self, metadata: ModelMetadata) -> Path:
-        """Get local cache path for a model"""
+        """Get local cache path for a model."""
         # Use hierarchical structure: cache_dir/model_id/version/model_file
         model_dir = self.config.cache_dir / metadata.model_id / metadata.version
         model_dir.mkdir(parents=True, exist_ok=True)
@@ -290,7 +290,7 @@ class ModelRegistry:
         return model_dir / filename
 
     async def _is_model_cached(self, metadata: ModelMetadata, local_path: Path) -> bool:
-        """Check if model is properly cached with valid checksum"""
+        """Check if model is properly cached with valid checksum."""
         if not local_path.exists():
             return False
 
@@ -320,7 +320,7 @@ class ModelRegistry:
     async def _download_with_resume(
         self, url: str, local_path: Path, metadata: ModelMetadata, download_id: str
     ) -> bool:
-        """Download file with resume capability and progress tracking"""
+        """Download file with resume capability and progress tracking."""
         # Check if partial file exists
         partial_path = local_path.with_suffix(local_path.suffix + ".partial")
         start_byte = 0
@@ -385,7 +385,7 @@ class ModelRegistry:
                 return False
 
     async def _calculate_checksum(self, file_path: Path) -> str:
-        """Calculate SHA-256 checksum of file"""
+        """Calculate SHA-256 checksum of file."""
         hash_sha256 = hashlib.sha256()
         async with aiofiles.open(file_path, "rb") as f:
             while chunk := await f.read(8192):
@@ -393,7 +393,7 @@ class ModelRegistry:
         return hash_sha256.hexdigest()
 
     async def _load_registry(self):
-        """Load registry from disk"""
+        """Load registry from disk."""
         if not self.config.registry_file.exists():
             logger.info("No existing registry found, starting fresh")
             return
@@ -418,7 +418,7 @@ class ModelRegistry:
             logger.error(f"Failed to load registry: {e}")
 
     async def _save_registry(self):
-        """Save registry to disk"""
+        """Save registry to disk."""
         try:
             data = {
                 "models": [model.to_dict() for model in self.models.values()],
@@ -438,7 +438,7 @@ class ModelRegistry:
             logger.error(f"Failed to save registry: {e}")
 
     async def _cleanup_cache(self, max_size_gb: float = None) -> int:
-        """Clean up cache directory to stay within size limits"""
+        """Clean up cache directory to stay within size limits."""
         if max_size_gb is None:
             max_size_gb = self.config.max_cache_size_gb
 
@@ -521,7 +521,7 @@ LEGACY_PAT_MODELS = {
 
 
 async def initialize_legacy_models(registry: ModelRegistry) -> None:
-    """Initialize registry with existing legacy PAT models"""
+    """Initialize registry with existing legacy PAT models."""
     for model_id, metadata in LEGACY_PAT_MODELS.items():
         await registry.register_model(metadata)
 

@@ -1,4 +1,4 @@
-"""Revolutionary ML Model Manager
+"""Revolutionary ML Model Manager.
 
 High-level model management with progressive loading, caching, and monitoring.
 This replaces the legacy monolithic PAT service approach.
@@ -24,7 +24,7 @@ logger = logging.getLogger(__name__)
 
 
 class LoadingStrategy(str, Enum):
-    """Model loading strategies"""
+    """Model loading strategies."""
 
     EAGER = "eager"  # Load immediately on startup
     LAZY = "lazy"  # Load on first request
@@ -34,7 +34,7 @@ class LoadingStrategy(str, Enum):
 
 @dataclass
 class ModelLoadConfig:
-    """Configuration for model loading behavior"""
+    """Configuration for model loading behavior."""
 
     strategy: LoadingStrategy = LoadingStrategy.PROGRESSIVE
     timeout_seconds: int = 300
@@ -46,7 +46,7 @@ class ModelLoadConfig:
 
 
 class ModelPerformanceMetrics(BaseModel):
-    """Real-time model performance tracking"""
+    """Real-time model performance tracking."""
 
     model_id: str
     version: str
@@ -61,7 +61,7 @@ class ModelPerformanceMetrics(BaseModel):
 
 
 class LoadedModel:
-    """Wrapper for loaded model with metadata and performance tracking"""
+    """Wrapper for loaded model with metadata and performance tracking."""
 
     def __init__(
         self, metadata: ModelMetadata, model_instance: Any, config: ModelLoadConfig
@@ -77,7 +77,7 @@ class LoadedModel:
         self._lock = asyncio.Lock()
 
     async def predict(self, *args, **kwargs) -> Any:
-        """Execute prediction with performance tracking"""
+        """Execute prediction with performance tracking."""
         start_time = time.time()
 
         async with self._lock:
@@ -117,17 +117,17 @@ class LoadedModel:
                 raise
 
     def get_metrics(self) -> ModelPerformanceMetrics:
-        """Get current performance metrics"""
+        """Get current performance metrics."""
         return self.metrics
 
     def update_memory_usage(self):
-        """Update memory usage statistics"""
+        """Update memory usage statistics."""
         if torch.cuda.is_available():
             self.metrics.memory_usage_mb = torch.cuda.memory_allocated() / (1024 * 1024)
 
 
 class ModelManager:
-    """Revolutionary ML Model Manager
+    """Revolutionary ML Model Manager.
 
     Features:
     - Progressive model loading with fallback strategies
@@ -157,7 +157,7 @@ class ModelManager:
         logger.info("ModelManager initialized with progressive loading enabled")
 
     async def initialize(self):
-        """Initialize model manager and start progressive loading"""
+        """Initialize model manager and start progressive loading."""
         await self.registry.initialize()
 
         if self.load_config.strategy == LoadingStrategy.EAGER:
@@ -172,7 +172,7 @@ class ModelManager:
     async def get_model(
         self, model_id: str, version: str = "latest", timeout: int | None = None
     ) -> LoadedModel | None:
-        """Get loaded model, loading it if necessary"""
+        """Get loaded model, loading it if necessary."""
         unique_id = f"{model_id}:{version if version != 'latest' else await self._resolve_latest_version(model_id)}"
 
         # Check if already loaded
@@ -201,7 +201,7 @@ class ModelManager:
         return loaded_model
 
     async def preload_model(self, model_id: str, version: str = "latest") -> bool:
-        """Preload model in background"""
+        """Preload model in background."""
         try:
             model = await self.get_model(model_id, version)
             return model is not None
@@ -210,7 +210,7 @@ class ModelManager:
             return False
 
     async def unload_model(self, model_id: str, version: str = "latest") -> bool:
-        """Unload model from memory"""
+        """Unload model from memory."""
         unique_id = f"{model_id}:{version if version != 'latest' else await self._resolve_latest_version(model_id)}"
 
         async with self._lock:
@@ -229,7 +229,7 @@ class ModelManager:
     async def swap_model_version(
         self, model_id: str, old_version: str, new_version: str
     ) -> bool:
-        """Hot-swap model version for A/B testing"""
+        """Hot-swap model version for A/B testing."""
         try:
             # Load new version
             new_model = await self.get_model(model_id, new_version)
@@ -252,7 +252,7 @@ class ModelManager:
             return False
 
     async def get_all_metrics(self) -> dict[str, ModelPerformanceMetrics]:
-        """Get performance metrics for all loaded models"""
+        """Get performance metrics for all loaded models."""
         metrics = {}
         for unique_id, loaded_model in self.loaded_models.items():
             loaded_model.update_memory_usage()
@@ -260,7 +260,7 @@ class ModelManager:
         return metrics
 
     async def health_check(self) -> dict[str, Any]:
-        """Comprehensive health check for all models"""
+        """Comprehensive health check for all models."""
         health_status = {
             "status": "healthy",
             "loaded_models": len(self.loaded_models),
@@ -288,12 +288,12 @@ class ModelManager:
         return health_status
 
     def register_model_factory(self, model_type: str, factory: Callable):
-        """Register a factory function for creating model instances"""
+        """Register a factory function for creating model instances."""
         self.model_factories[model_type] = factory
         logger.info(f"Registered model factory for type: {model_type}")
 
     async def _load_model(self, model_id: str, version: str) -> LoadedModel | None:
-        """Load a specific model version"""
+        """Load a specific model version."""
         unique_id = f"{model_id}:{version if version != 'latest' else await self._resolve_latest_version(model_id)}"
 
         if unique_id in self.loading_tasks:
@@ -314,7 +314,7 @@ class ModelManager:
             self.loading_tasks.pop(unique_id, None)
 
     async def _load_model_task(self, model_id: str, version: str) -> LoadedModel | None:
-        """Actual model loading task"""
+        """Actual model loading task."""
         start_time = time.time()
 
         try:
@@ -364,7 +364,7 @@ class ModelManager:
             return None
 
     async def _create_model_instance(self, metadata: ModelMetadata) -> Any | None:
-        """Create model instance using registered factories"""
+        """Create model instance using registered factories."""
         # Determine model type from metadata or model_id
         model_type = metadata.model_id
 
@@ -385,7 +385,7 @@ class ModelManager:
             return None
 
     async def _warm_up_model(self, loaded_model: LoadedModel):
-        """Warm up model with dummy predictions"""
+        """Warm up model with dummy predictions."""
         try:
             logger.info(f"Warming up model {loaded_model.metadata.unique_id}...")
 
@@ -403,7 +403,7 @@ class ModelManager:
             )
 
     async def _resolve_latest_version(self, model_id: str) -> str:
-        """Resolve 'latest' alias to actual version"""
+        """Resolve 'latest' alias to actual version."""
         # Check if 'latest' alias exists
         latest_model = await self.registry.get_model(model_id, "latest")
         if latest_model:
@@ -419,7 +419,7 @@ class ModelManager:
         return latest.version
 
     async def _load_all_models(self):
-        """Load all registered models (eager loading)"""
+        """Load all registered models (eager loading)."""
         all_models = await self.registry.list_models()
         load_tasks = []
 
@@ -436,11 +436,11 @@ class ModelManager:
         )
 
     async def _start_progressive_loading(self):
-        """Start progressive loading in background"""
+        """Start progressive loading in background."""
         asyncio.create_task(self._progressive_loading_task())
 
     async def _progressive_loading_task(self):
-        """Background task for progressive model loading"""
+        """Background task for progressive model loading."""
         try:
             # Load critical models first (based on aliases)
             priority_aliases = ["latest", "stable", "fast"]
@@ -463,10 +463,10 @@ class ModelManager:
             logger.error(f"Progressive loading task failed: {e}")
 
     def _register_default_factories(self):
-        """Register default model factories"""
+        """Register default model factories."""
 
         async def pat_model_factory(metadata: ModelMetadata) -> PATModelService:
-            """Factory for PAT models using legacy service"""
+            """Factory for PAT models using legacy service."""
             try:
                 # Determine model size from metadata
                 model_size = "small"  # default
@@ -503,7 +503,7 @@ async def get_model_manager(
     config: ModelRegistryConfig | None = None,
     load_config: ModelLoadConfig | None = None,
 ):
-    """Context manager for model manager lifecycle"""
+    """Context manager for model manager lifecycle."""
     manager = ModelManager(config=config, load_config=load_config)
 
     try:

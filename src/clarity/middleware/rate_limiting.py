@@ -1,4 +1,4 @@
-"""Rate Limiting Middleware
+"""Rate Limiting Middleware.
 
 Provides application-level rate limiting using slowapi to protect against
 abuse and ensure fair resource usage across users.
@@ -31,12 +31,12 @@ def get_user_id_or_ip(request: Request) -> str:
         # Try different user ID fields that might be present
         user_id = user.get("uid") or user.get("user_id") or user.get("sub")
         if user_id:
-            logger.debug(f"Rate limiting by user ID: {user_id}")
+            logger.debug("Rate limiting by user ID: %s", user_id)
             return f"user:{user_id}"
 
     # Fallback to IP address for unauthenticated requests
     ip_address = get_remote_address(request)
-    logger.debug(f"Rate limiting by IP address: {ip_address}")
+    logger.debug("Rate limiting by IP address: %s", ip_address)
     return f"ip:{ip_address}"
 
 

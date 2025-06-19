@@ -1,4 +1,4 @@
-"""Local ML Model Development Server
+"""Local ML Model Development Server.
 
 FastAPI-based local server for ML model development without AWS dependencies.
 Provides REST API for model management, serving, and testing.
@@ -26,7 +26,7 @@ logger = logging.getLogger(__name__)
 
 
 class ModelServerConfig(BaseModel):
-    """Configuration for local model server"""
+    """Configuration for local model server."""
 
     host: str = "0.0.0.0"
     port: int = 8900
@@ -40,7 +40,7 @@ class ModelServerConfig(BaseModel):
 
 
 class PredictionRequest(BaseModel):
-    """Request model for predictions"""
+    """Request model for predictions."""
 
     model_id: str
     version: str = "latest"
@@ -49,7 +49,7 @@ class PredictionRequest(BaseModel):
 
 
 class PredictionResponse(BaseModel):
-    """Response model for predictions"""
+    """Response model for predictions."""
 
     model_id: str
     version: str
@@ -59,7 +59,7 @@ class PredictionResponse(BaseModel):
 
 
 class ModelStatusResponse(BaseModel):
-    """Response model for model status"""
+    """Response model for model status."""
 
     model_id: str
     version: str
@@ -69,7 +69,7 @@ class ModelStatusResponse(BaseModel):
 
 
 class MockPATModel:
-    """Mock PAT model for local development"""
+    """Mock PAT model for local development."""
 
     def __init__(self, model_size: str = "medium"):
         self.model_size = model_size
@@ -80,7 +80,7 @@ class MockPATModel:
         }.get(model_size, {"features": 128, "layers": 8})
 
     async def predict_async(self, data: dict[str, Any]) -> dict[str, Any]:
-        """Mock prediction that simulates PAT model outputs"""
+        """Mock prediction that simulates PAT model outputs."""
         await asyncio.sleep(0.05)  # Simulate processing time
 
         # Generate mock actigraphy analysis results
@@ -114,7 +114,7 @@ class MockPATModel:
 
 
 class LocalModelServer:
-    """Local ML Model Development Server"""
+    """Local ML Model Development Server."""
 
     def __init__(self, config: ModelServerConfig | None = None):
         self.config = config or ModelServerConfig()
@@ -134,7 +134,7 @@ class LocalModelServer:
             self._setup_cors()
 
     async def startup_event(self):
-        """Initialize model manager and load models"""
+        """Initialize model manager and load models."""
         try:
             # Ensure models directory exists
             self.config.models_dir.mkdir(parents=True, exist_ok=True)
@@ -178,7 +178,7 @@ class LocalModelServer:
             raise
 
     async def _setup_mock_models(self):
-        """Setup mock models for local development"""
+        """Setup mock models for local development."""
         for model_id, metadata in LEGACY_PAT_MODELS.items():
             size_map = {"PAT-S": "small", "PAT-M": "medium", "PAT-L": "large"}
             size = size_map.get(model_id, "medium")
@@ -187,7 +187,7 @@ class LocalModelServer:
             logger.info(f"Created mock model: {metadata.unique_id}")
 
     def _setup_routes(self):
-        """Setup FastAPI routes"""
+        """Setup FastAPI routes."""
 
         @self.app.on_event("startup")
         async def startup():
@@ -206,7 +206,7 @@ class LocalModelServer:
 
         @self.app.get("/health")
         async def health_check():
-            """Health check endpoint"""
+            """Health check endpoint."""
             if not self.model_manager:
                 return JSONResponse({"status": "starting"}, status_code=503)
 
@@ -215,7 +215,7 @@ class LocalModelServer:
 
         @self.app.get("/models", response_model=list[dict[str, Any]])
         async def list_models():
-            """List all available models"""
+            """List all available models."""
             if not self.model_manager:
                 raise HTTPException(
                     status_code=503, detail="Model manager not initialized"
@@ -226,7 +226,7 @@ class LocalModelServer:
 
         @self.app.get("/models/{model_id}", response_model=list[dict[str, Any]])
         async def get_model_versions(model_id: str):
-            """Get all versions of a specific model"""
+            """Get all versions of a specific model."""
             if not self.model_manager:
                 raise HTTPException(
                     status_code=503, detail="Model manager not initialized"
@@ -244,7 +244,7 @@ class LocalModelServer:
             "/models/{model_id}/{version}/status", response_model=ModelStatusResponse
         )
         async def get_model_status(model_id: str, version: str = "latest"):
-            """Get status of a specific model version"""
+            """Get status of a specific model version."""
             if not self.model_manager:
                 raise HTTPException(
                     status_code=503, detail="Model manager not initialized"
@@ -285,7 +285,7 @@ class LocalModelServer:
             version: str = "latest",
             background_tasks: BackgroundTasks = None,
         ):
-            """Load a specific model version"""
+            """Load a specific model version."""
             if not self.model_manager:
                 raise HTTPException(
                     status_code=503, detail="Model manager not initialized"
@@ -310,7 +310,7 @@ class LocalModelServer:
 
         @self.app.post("/models/{model_id}/{version}/unload")
         async def unload_model(model_id: str, version: str = "latest"):
-            """Unload a specific model version"""
+            """Unload a specific model version."""
             if not self.model_manager:
                 raise HTTPException(
                     status_code=503, detail="Model manager not initialized"
@@ -325,7 +325,7 @@ class LocalModelServer:
 
         @self.app.post("/predict", response_model=PredictionResponse)
         async def predict(request: PredictionRequest):
-            """Make prediction using specified model"""
+            """Make prediction using specified model."""
             if not self.model_manager:
                 raise HTTPException(
                     status_code=503, detail="Model manager not initialized"
@@ -380,7 +380,7 @@ class LocalModelServer:
 
         @self.app.get("/metrics")
         async def get_metrics():
-            """Get performance metrics for all models"""
+            """Get performance metrics for all models."""
             if not self.model_manager:
                 raise HTTPException(
                     status_code=503, detail="Model manager not initialized"
@@ -392,7 +392,7 @@ class LocalModelServer:
         async def get_download_progress(
             model_id: str, version: str = Query(default="latest")
         ):
-            """Get download progress for a model"""
+            """Get download progress for a model."""
             if not self.model_manager:
                 raise HTTPException(
                     status_code=503, detail="Model manager not initialized"
@@ -408,7 +408,7 @@ class LocalModelServer:
 
         @self.app.post("/create-mock-data")
         async def create_mock_data():
-            """Create mock training data for testing"""
+            """Create mock training data for testing."""
             import random
 
             # Generate mock actigraphy data
@@ -429,7 +429,7 @@ class LocalModelServer:
             return mock_data
 
     def _setup_cors(self):
-        """Setup CORS for frontend development"""
+        """Setup CORS for frontend development."""
         from fastapi.middleware.cors import CORSMiddleware
 
         self.app.add_middleware(
@@ -441,7 +441,7 @@ class LocalModelServer:
         )
 
     def run(self):
-        """Run the local model server"""
+        """Run the local model server."""
         uvicorn.run(
             self.app,
             host=self.config.host,
@@ -452,7 +452,7 @@ class LocalModelServer:
 
 # CLI interface for local model server
 async def create_placeholder_models(models_dir: Path):
-    """Create placeholder models for local development"""
+    """Create placeholder models for local development."""
     models_dir.mkdir(parents=True, exist_ok=True)
 
     for model_id, metadata in LEGACY_PAT_MODELS.items():

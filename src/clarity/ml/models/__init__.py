@@ -1,4 +1,4 @@
-"""Revolutionary ML Model Management System
+"""Revolutionary ML Model Management System.
 
 This package provides a comprehensive ML model management solution with:
 - Intelligent model registry with versioning

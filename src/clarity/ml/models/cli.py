@@ -1,4 +1,4 @@
-"""Clarity Models CLI Tool
+"""Clarity Models CLI Tool.
 
 Command-line interface for ML model management, deployment, and monitoring.
 """
@@ -42,7 +42,7 @@ console = Console()
 @click.option("--verbose", "-v", is_flag=True, help="Verbose output")
 @click.pass_context
 def cli(ctx, config_file, models_dir, verbose):
-    """Clarity ML Model Management CLI"""
+    """Clarity ML Model Management CLI."""
     ctx.ensure_object(dict)
     ctx.obj["config_file"] = config_file
     ctx.obj["models_dir"] = Path(models_dir)
@@ -57,7 +57,7 @@ def cli(ctx, config_file, models_dir, verbose):
 @cli.command()
 @click.pass_context
 async def init(ctx) -> None:
-    """Initialize model registry"""
+    """Initialize model registry."""
     models_dir = ctx.obj["models_dir"]
 
     with console.status("[bold green]Initializing model registry..."):
@@ -79,7 +79,7 @@ async def init(ctx) -> None:
 @cli.command()
 @click.pass_context
 async def list(ctx) -> None:
-    """List all models in registry"""
+    """List all models in registry."""
     models_dir = ctx.obj["models_dir"]
 
     config = ModelRegistryConfig(base_path=models_dir)
@@ -135,7 +135,7 @@ async def list(ctx) -> None:
 @click.option("--source-url", help="Source URL for download")
 @click.pass_context
 async def download(ctx, model_id, version, source_url) -> None:
-    """Download a model"""
+    """Download a model."""
     models_dir = ctx.obj["models_dir"]
 
     config = ModelRegistryConfig(base_path=models_dir)
@@ -203,7 +203,7 @@ async def download(ctx, model_id, version, source_url) -> None:
 async def register(
     ctx, model_id, name, version, tier, source_url, checksum, size, description, tags
 ) -> None:
-    """Register a new model"""
+    """Register a new model."""
     models_dir = ctx.obj["models_dir"]
 
     config = ModelRegistryConfig(base_path=models_dir)
@@ -237,7 +237,7 @@ async def register(
 @click.argument("version")
 @click.pass_context
 async def alias(ctx, alias, model_id, version) -> None:
-    """Create model alias"""
+    """Create model alias."""
     models_dir = ctx.obj["models_dir"]
 
     config = ModelRegistryConfig(base_path=models_dir)
@@ -257,7 +257,7 @@ async def alias(ctx, alias, model_id, version) -> None:
 @cli.command()
 @click.pass_context
 async def status(ctx) -> None:
-    """Show model registry status"""
+    """Show model registry status."""
     models_dir = ctx.obj["models_dir"]
 
     config = ModelRegistryConfig(base_path=models_dir)
@@ -320,7 +320,7 @@ Registry File: {config.registry_file}
 )
 @click.pass_context
 async def serve(ctx, host, port, auto_load, create_mocks) -> None:
-    """Start local model server"""
+    """Start local model server."""
     models_dir = ctx.obj["models_dir"]
 
     config = ModelServerConfig(
@@ -351,7 +351,7 @@ async def serve(ctx, host, port, auto_load, create_mocks) -> None:
 @click.option("--input-file", type=click.Path(exists=True), help="Input JSON file")
 @click.pass_context
 async def predict(ctx, url, model_id, version, input_file) -> None:
-    """Make prediction using local server"""
+    """Make prediction using local server."""
     # Load input data
     if input_file:
         with open(input_file) as f:
@@ -394,7 +394,7 @@ async def predict(ctx, url, model_id, version, input_file) -> None:
 @click.option("--url", default="http://localhost:8900", help="Server URL")
 @click.pass_context
 async def monitor(ctx, url) -> None:
-    """Monitor local server metrics"""
+    """Monitor local server metrics."""
     console.print(f"[green]Monitoring server at {url}[/green]")
     console.print("[yellow]Press Ctrl+C to stop[/yellow]")
 
@@ -471,7 +471,7 @@ async def monitor(ctx, url) -> None:
 )
 @click.pass_context
 async def cleanup(ctx, max_size_gb):
-    """Clean up model cache"""
+    """Clean up model cache."""
     models_dir = ctx.obj["models_dir"]
 
     config = ModelRegistryConfig(base_path=models_dir)
@@ -490,7 +490,7 @@ async def cleanup(ctx, max_size_gb):
 
 
 def main():
-    """Main CLI entry point"""
+    """Main CLI entry point."""
 
     # Convert sync CLI to async
     def async_cli():

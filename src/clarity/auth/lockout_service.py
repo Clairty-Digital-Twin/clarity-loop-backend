@@ -1,4 +1,4 @@
-"""Account Lockout Protection Service
+"""Account Lockout Protection Service.
 
 Provides brute force protection by tracking failed login attempts
 and temporarily locking accounts after too many failures.

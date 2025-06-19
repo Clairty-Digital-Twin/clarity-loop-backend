@@ -1,4 +1,4 @@
-"""PAT Service V2 - Revolutionary Model Management Integration
+"""PAT Service V2 - Revolutionary Model Management Integration.
 
 This is the new PAT service that integrates with the revolutionary model management system.
 It provides backward compatibility while leveraging the new progressive loading capabilities.
@@ -25,7 +25,7 @@ logger = logging.getLogger(__name__)
 
 
 class PATServiceV2:
-    """Revolutionary PAT Service with Progressive Loading
+    """Revolutionary PAT Service with Progressive Loading.
 
     This service provides the same interface as the legacy PAT service but with:
     - Progressive model loading
@@ -68,7 +68,7 @@ class PATServiceV2:
         logger.info(f"PAT Service V2 initialized with model size: {model_size}")
 
     async def initialize(self) -> bool:
-        """Initialize the PAT service with progressive loading"""
+        """Initialize the PAT service with progressive loading."""
         try:
             # Get progressive loading service
             self.progressive_service = await get_progressive_service(
@@ -97,7 +97,7 @@ class PATServiceV2:
             return False
 
     async def _load_model(self):
-        """Load the requested model"""
+        """Load the requested model."""
         version = self.size_to_version.get(self.model_size, "latest")
 
         try:
@@ -117,7 +117,7 @@ class PATServiceV2:
             logger.error(f"Error loading PAT model: {e}")
 
     async def _initialize_fallback(self):
-        """Initialize fallback legacy service"""
+        """Initialize fallback legacy service."""
         try:
             self.fallback_service = PATModelService(model_size=self.model_size)
             # Note: Legacy service initialization would happen here
@@ -130,7 +130,7 @@ class PATServiceV2:
         actigraphy_data: list[float] | dict[str, Any],
         options: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
-        """Make prediction using the loaded model
+        """Make prediction using the loaded model.
 
         Args:
             actigraphy_data: Input actigraphy data
@@ -194,7 +194,7 @@ class PATServiceV2:
         actigraphy_data: list[float] | dict[str, Any],
         options: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
-        """Make prediction using the progressive model"""
+        """Make prediction using the progressive model."""
         # Prepare input data
         if isinstance(actigraphy_data, list):
             input_data = {"actigraphy_data": actigraphy_data}
@@ -227,7 +227,7 @@ class PATServiceV2:
         actigraphy_data: list[float] | dict[str, Any],
         options: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
-        """Make prediction using fallback legacy service"""
+        """Make prediction using fallback legacy service."""
         # This would call the legacy service
         # For now, return a mock response
         return {
@@ -253,7 +253,7 @@ class PATServiceV2:
         }
 
     async def get_model_status(self) -> dict[str, Any]:
-        """Get current model status"""
+        """Get current model status."""
         if not self.progressive_service:
             return {
                 "status": "not_initialized",
@@ -284,7 +284,7 @@ class PATServiceV2:
         }
 
     async def get_performance_metrics(self) -> dict[str, Any]:
-        """Get performance metrics for the current model"""
+        """Get performance metrics for the current model."""
         if not self.monitoring_service:
             return {"error": "Monitoring not enabled"}
 
@@ -292,7 +292,7 @@ class PATServiceV2:
         return await self.monitoring_service.get_model_metrics("pat", version)
 
     async def warm_up(self, sample_count: int = 5) -> bool:
-        """Warm up the model with sample predictions"""
+        """Warm up the model with sample predictions."""
         if not self.current_model:
             logger.warning("No model loaded for warm-up")
             return False
@@ -313,7 +313,7 @@ class PATServiceV2:
             return False
 
     async def reload_model(self, new_version: str | None = None) -> bool:
-        """Reload the model with a new version"""
+        """Reload the model with a new version."""
         if not self.progressive_service:
             return False
 
@@ -345,7 +345,7 @@ class PATServiceV2:
             return False
 
     async def health_check(self) -> dict[str, Any]:
-        """Comprehensive health check"""
+        """Comprehensive health check."""
         status = {
             "service": "PAT Service V2",
             "initialized": self.is_initialized,
@@ -383,7 +383,7 @@ class PATServiceV2:
         return status
 
     async def shutdown(self):
-        """Shutdown the PAT service"""
+        """Shutdown the PAT service."""
         try:
             if self.monitoring_service:
                 await self.monitoring_service.shutdown()
@@ -409,7 +409,7 @@ async def create_pat_service(
     progressive_config: ProgressiveLoadingConfig | None = None,
     monitoring_config: ModelMonitoringConfig | None = None,
 ) -> PATServiceV2:
-    """Factory function to create and initialize a PAT Service V2 instance
+    """Factory function to create and initialize a PAT Service V2 instance.
 
     Args:
         model_size: Model size (small, medium, large)
@@ -436,7 +436,7 @@ _global_pat_service: PATServiceV2 | None = None
 
 
 async def get_pat_service(model_size: str = "medium") -> PATServiceV2:
-    """Get or create global PAT service instance"""
+    """Get or create global PAT service instance."""
     global _global_pat_service
 
     if _global_pat_service is None or _global_pat_service.model_size != model_size:

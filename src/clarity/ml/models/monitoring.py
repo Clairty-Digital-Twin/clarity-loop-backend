@@ -1,4 +1,4 @@
-"""ML Model Performance Monitoring Service
+"""ML Model Performance Monitoring Service.
 
 Provides comprehensive monitoring, metrics collection, and alerting for ML models.
 Supports Prometheus metrics, custom dashboards, and real-time performance tracking.
@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class ModelInferenceMetric:
-    """Single inference metric record"""
+    """Single inference metric record."""
 
     model_id: str
     version: str
@@ -37,7 +37,7 @@ class ModelInferenceMetric:
 
 @dataclass
 class ModelHealthMetric:
-    """Model health status metric"""
+    """Model health status metric."""
 
     model_id: str
     version: str
@@ -52,7 +52,7 @@ class ModelHealthMetric:
 
 
 class ModelMonitoringConfig(BaseModel):
-    """Configuration for model monitoring"""
+    """Configuration for model monitoring."""
 
     enable_prometheus: bool = True
     prometheus_port: int = 8091
@@ -81,7 +81,7 @@ class ModelMonitoringConfig(BaseModel):
 
 
 class ModelMonitoringService:
-    """Comprehensive ML Model Monitoring Service
+    """Comprehensive ML Model Monitoring Service.
 
     Features:
     - Real-time inference metrics collection
@@ -124,7 +124,7 @@ class ModelMonitoringService:
         logger.info("Model monitoring service initialized")
 
     async def initialize(self, model_manager: ModelManager):
-        """Initialize monitoring service with model manager"""
+        """Initialize monitoring service with model manager."""
         self.model_manager = model_manager
 
         # Start Prometheus server if enabled
@@ -151,7 +151,7 @@ class ModelMonitoringService:
         logger.info("Model monitoring service started")
 
     async def shutdown(self):
-        """Shutdown monitoring service"""
+        """Shutdown monitoring service."""
         for task in self.monitoring_tasks:
             task.cancel()
 
@@ -169,7 +169,7 @@ class ModelMonitoringService:
         output_size: int | None = None,
         memory_usage_mb: float | None = None,
     ):
-        """Record an inference event"""
+        """Record an inference event."""
         if not self.config.collect_inference_metrics:
             return
 
@@ -218,7 +218,7 @@ class ModelMonitoringService:
     async def get_model_metrics(
         self, model_id: str, version: str = "latest", window_minutes: int | None = None
     ) -> dict[str, Any]:
-        """Get comprehensive metrics for a specific model"""
+        """Get comprehensive metrics for a specific model."""
         window_minutes = window_minutes or self.config.metrics_window_minutes
         window_start = time.time() - (window_minutes * 60)
 
@@ -297,7 +297,7 @@ class ModelMonitoringService:
     async def get_all_models_metrics(
         self, window_minutes: int | None = None
     ) -> dict[str, Any]:
-        """Get metrics for all monitored models"""
+        """Get metrics for all monitored models."""
         metrics = {}
 
         # Get unique model combinations
@@ -315,7 +315,7 @@ class ModelMonitoringService:
         return metrics
 
     async def get_system_overview(self) -> dict[str, Any]:
-        """Get system-wide monitoring overview"""
+        """Get system-wide monitoring overview."""
         if not self.model_manager:
             return {"error": "Model manager not available"}
 
@@ -358,7 +358,7 @@ class ModelMonitoringService:
         }
 
     def _setup_prometheus_metrics(self) -> dict[str, Any] | None:
-        """Setup Prometheus metrics"""
+        """Setup Prometheus metrics."""
         if not self.config.enable_prometheus:
             return None
 
@@ -392,7 +392,7 @@ class ModelMonitoringService:
             return None
 
     async def _health_monitoring_loop(self):
-        """Background health monitoring loop"""
+        """Background health monitoring loop."""
         while True:
             try:
                 if self.model_manager:
@@ -440,7 +440,7 @@ class ModelMonitoringService:
                 await asyncio.sleep(self.config.health_check_interval_seconds)
 
     async def _system_monitoring_loop(self):
-        """Background system monitoring loop"""
+        """Background system monitoring loop."""
         while True:
             try:
                 # Update system info in Prometheus
@@ -466,7 +466,7 @@ class ModelMonitoringService:
     async def _check_inference_alerts(
         self, model_id: str, version: str, metric: ModelInferenceMetric
     ):
-        """Check for inference-related alerts"""
+        """Check for inference-related alerts."""
         if not self.config.enable_alerting:
             return
 
@@ -538,7 +538,7 @@ class ModelMonitoringService:
                 asyncio.create_task(self._send_alert_webhook(model_key, alert))
 
     async def _send_alert_webhook(self, model_key: str, alert: dict[str, Any]):
-        """Send alert to webhook"""
+        """Send alert to webhook."""
         try:
             import aiohttp
 
@@ -564,7 +564,7 @@ class ModelMonitoringService:
 
 # Decorator for automatic inference monitoring
 def monitor_inference(monitoring_service: ModelMonitoringService):
-    """Decorator to automatically monitor model inferences"""
+    """Decorator to automatically monitor model inferences."""
 
     def decorator(func):
         async def wrapper(self, *args, **kwargs):

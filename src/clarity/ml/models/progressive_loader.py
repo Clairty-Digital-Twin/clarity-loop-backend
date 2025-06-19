@@ -1,4 +1,4 @@
-"""Progressive ML Model Loading Service
+"""Progressive ML Model Loading Service.
 
 This service handles intelligent model loading for the main application,
 replacing the legacy S3 download approach with progressive loading strategies.
@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 
 
 class ApplicationPhase(str, Enum):
-    """Application startup phases"""
+    """Application startup phases."""
 
     INIT = "init"  # Basic initialization
     CORE_READY = "core_ready"  # Core services ready
@@ -31,7 +31,7 @@ class ApplicationPhase(str, Enum):
 
 
 class ProgressiveLoadingConfig(BaseModel):
-    """Configuration for progressive loading service"""
+    """Configuration for progressive loading service."""
 
     # Environment detection
     is_production: bool = True
@@ -58,7 +58,7 @@ class ProgressiveLoadingConfig(BaseModel):
 
 
 class ModelAvailabilityStatus(BaseModel):
-    """Status of model availability"""
+    """Status of model availability."""
 
     model_id: str
     version: str
@@ -69,7 +69,7 @@ class ModelAvailabilityStatus(BaseModel):
 
 
 class ProgressiveLoadingService:
-    """Progressive ML Model Loading Service
+    """Progressive ML Model Loading Service.
 
     This service provides intelligent model loading with the following features:
     - Progressive loading: Start app quickly, load models in background
@@ -98,7 +98,7 @@ class ProgressiveLoadingService:
         )
 
     async def initialize(self) -> bool:
-        """Initialize the progressive loading service"""
+        """Initialize the progressive loading service."""
         try:
             self.current_phase = ApplicationPhase.INIT
 
@@ -131,7 +131,7 @@ class ProgressiveLoadingService:
         timeout: int | None = None,
         critical: bool = False,
     ) -> LoadedModel | None:
-        """Get a model, loading it if necessary
+        """Get a model, loading it if necessary.
 
         Args:
             model_id: Model identifier
@@ -175,14 +175,14 @@ class ProgressiveLoadingService:
             return None
 
     async def preload_model(self, model_id: str, version: str = "latest") -> bool:
-        """Preload a model in the background"""
+        """Preload a model in the background."""
         if not self.model_manager:
             return False
 
         return await self.model_manager.preload_model(model_id, version)
 
     async def get_application_status(self) -> dict[str, Any]:
-        """Get comprehensive application and model status"""
+        """Get comprehensive application and model status."""
         uptime_seconds = time.time() - self.startup_time
 
         # Count models by status
@@ -230,16 +230,16 @@ class ProgressiveLoadingService:
     async def get_model_status(
         self, model_id: str, version: str = "latest"
     ) -> ModelAvailabilityStatus | None:
-        """Get status of a specific model"""
+        """Get status of a specific model."""
         unique_id = f"{model_id}:{version}"
         return self.model_status.get(unique_id)
 
     async def get_all_model_status(self) -> list[ModelAvailabilityStatus]:
-        """Get status of all tracked models"""
+        """Get status of all tracked models."""
         return list(self.model_status.values())
 
     async def wait_for_critical_models(self, timeout: int = 300) -> bool:
-        """Wait for critical models to be ready"""
+        """Wait for critical models to be ready."""
         start_time = time.time()
 
         while time.time() - start_time < timeout:
@@ -265,7 +265,7 @@ class ProgressiveLoadingService:
         return False
 
     async def health_check(self) -> dict[str, Any]:
-        """Comprehensive health check"""
+        """Comprehensive health check."""
         if not self.model_manager:
             return {"status": "unhealthy", "reason": "model_manager_not_initialized"}
 
@@ -291,7 +291,7 @@ class ProgressiveLoadingService:
             return {"status": "unhealthy", "error": str(e)}
 
     def _detect_environment(self):
-        """Auto-detect deployment environment"""
+        """Auto-detect deployment environment."""
         # Check for common production environment indicators
         is_prod_env = any(
             [
@@ -325,7 +325,7 @@ class ProgressiveLoadingService:
         )
 
     async def _setup_model_infrastructure(self):
-        """Setup model registry and manager"""
+        """Setup model registry and manager."""
         # Configure paths based on environment
         if self.config.is_production and self.config.enable_efs_cache:
             # Use EFS mount in production
@@ -355,12 +355,12 @@ class ProgressiveLoadingService:
         await self.model_manager.initialize()
 
     async def _initialize_model_registry(self):
-        """Initialize model registry with legacy models"""
+        """Initialize model registry with legacy models."""
         if self.model_manager:
             await initialize_legacy_models(self.model_manager.registry)
 
     async def _start_progressive_loading(self):
-        """Start progressive model loading"""
+        """Start progressive model loading."""
         self.current_phase = ApplicationPhase.MODELS_LOADING
         self._record_phase_transition(ApplicationPhase.MODELS_LOADING)
 
@@ -432,7 +432,7 @@ class ProgressiveLoadingService:
             asyncio.create_task(self._finish_preloading(preload_tasks))
 
     async def _finish_preloading(self, preload_tasks: list[asyncio.Task]):
-        """Finish preloading non-critical models in background"""
+        """Finish preloading non-critical models in background."""
         try:
             await asyncio.gather(*preload_tasks, return_exceptions=True)
             self.current_phase = ApplicationPhase.FULLY_READY
@@ -442,7 +442,7 @@ class ProgressiveLoadingService:
             logger.error(f"Error in background preloading: {e}")
 
     async def _start_eager_loading(self):
-        """Start eager loading of all models"""
+        """Start eager loading of all models."""
         self.current_phase = ApplicationPhase.MODELS_LOADING
         self._record_phase_transition(ApplicationPhase.MODELS_LOADING)
 
@@ -483,13 +483,13 @@ class ProgressiveLoadingService:
         self._record_phase_transition(ApplicationPhase.FULLY_READY)
 
     def _parse_model_spec(self, model_spec: str) -> tuple[str, str]:
-        """Parse model specification string (e.g., 'pat:latest' -> ('pat', 'latest'))"""
+        """Parse model specification string (e.g., 'pat:latest' -> ('pat', 'latest'))."""
         if ":" in model_spec:
             return model_spec.split(":", 1)
         return model_spec, "latest"
 
     def _record_phase_transition(self, phase: ApplicationPhase):
-        """Record phase transition timing"""
+        """Record phase transition timing."""
         self.phase_transitions[phase] = time.time() - self.startup_time
         logger.info(
             f"Application phase: {phase.value} ({self.phase_transitions[phase]:.2f}s)"
@@ -503,7 +503,7 @@ _progressive_service: ProgressiveLoadingService | None = None
 async def get_progressive_service(
     config: ProgressiveLoadingConfig | None = None,
 ) -> ProgressiveLoadingService:
-    """Get or create the global progressive loading service"""
+    """Get or create the global progressive loading service."""
     global _progressive_service
 
     if _progressive_service is None:
@@ -515,7 +515,7 @@ async def get_progressive_service(
 
 @asynccontextmanager
 async def progressive_loading_lifespan(config: ProgressiveLoadingConfig | None = None):
-    """Context manager for progressive loading service lifecycle"""
+    """Context manager for progressive loading service lifecycle."""
     service = await get_progressive_service(config)
     try:
         yield service

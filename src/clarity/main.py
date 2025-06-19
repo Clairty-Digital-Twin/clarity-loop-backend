@@ -224,7 +224,7 @@ app.add_middleware(
 logger.info("🔒 CORS Security: Hardened configuration applied - NO wildcards allowed")
 
 # Add request size limiter middleware - PREVENT DoS ATTACKS
-from clarity.middleware.request_size_limiter import (
+from clarity.middleware.request_size_limiter import (  # noqa: E402
     RequestSizeLimiterMiddleware,
 )
 

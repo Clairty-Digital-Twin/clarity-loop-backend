@@ -14,7 +14,6 @@ from urllib.parse import urlparse
 
 from pydantic import (
     BaseModel,
-    ConfigDict,
     Field,
     ValidationError,
     field_validator,
@@ -476,7 +475,7 @@ class ClarityConfig(BaseSettings):
                 validation_errors.append("S3_ML_MODELS_BUCKET required in production")
 
             # Check secret key
-            if self.security.secret_key == "dev-secret-key":
+            if self.security.secret_key == "dev-secret-key":  # noqa: S105
                 validation_errors.append("Custom SECRET_KEY required in production")
 
         # Store validation errors for reporting

@@ -133,10 +133,11 @@ class ModelMonitoringService:
             try:
                 start_http_server(self.config.prometheus_port)
                 logger.info(
-                    f"Prometheus metrics server started on port {self.config.prometheus_port}"
+                    "Prometheus metrics server started on port %s",
+                    self.config.prometheus_port
                 )
             except Exception as e:
-                logger.error(f"Failed to start Prometheus server: {e}")
+                logger.error("Failed to start Prometheus server: %s", e)
 
         # Start monitoring tasks
         if self.config.collect_health_metrics:
@@ -389,7 +390,7 @@ class ModelMonitoringService:
                 "system_info": Info("model_system_info", "Model system information"),
             }
         except Exception as e:
-            logger.error(f"Failed to setup Prometheus metrics: {e}")
+            logger.error("Failed to setup Prometheus metrics: %s", e)
             return None
 
     async def _health_monitoring_loop(self) -> None:
@@ -437,7 +438,7 @@ class ModelMonitoringService:
                 await asyncio.sleep(self.config.health_check_interval_seconds)
 
             except Exception as e:
-                logger.error(f"Health monitoring error: {e}")
+                logger.error("Health monitoring error: %s", e)
                 await asyncio.sleep(self.config.health_check_interval_seconds)
 
     async def _system_monitoring_loop(self) -> None:
@@ -461,7 +462,7 @@ class ModelMonitoringService:
                 await asyncio.sleep(60)  # Update every minute
 
             except Exception as e:
-                logger.error(f"System monitoring error: {e}")
+                logger.error("System monitoring error: %s", e)
                 await asyncio.sleep(60)
 
     async def _check_inference_alerts(
@@ -558,12 +559,12 @@ class ModelMonitoringService:
                 session.post(self.config.alert_webhook_url, json=payload) as response,
             ):
                 if response.status != 200:
-                    logger.warning(f"Alert webhook failed: {response.status}")
+                    logger.warning("Alert webhook failed: %s", response.status)
                 else:
-                    logger.info(f"Alert sent for {model_key}: {alert['type']}")
+                    logger.info("Alert sent for %s: %s", model_key, alert['type'])
 
         except Exception as e:
-            logger.error(f"Failed to send alert webhook: {e}")
+            logger.error("Failed to send alert webhook: %s", e)
 
 
 # Decorator for automatic inference monitoring

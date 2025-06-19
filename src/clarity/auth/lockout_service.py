@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 class AccountLockoutError(AuthenticationError):
     """Raised when an account is temporarily locked due to too many failed attempts."""
 
-    def __init__(self, username: str, unlock_time: datetime):
+    def __init__(self, username: str, unlock_time: datetime) -> None:
         self.username = username
         self.unlock_time = unlock_time
         super().__init__(
@@ -39,7 +39,7 @@ class AccountLockoutService:
         max_attempts: int = 3,
         lockout_duration: timedelta = timedelta(minutes=15),
         redis_url: str | None = None,
-    ):
+    ) -> None:
         self.max_attempts = max_attempts
         self.lockout_secs = int(lockout_duration.total_seconds())
         self._mem: dict[str, dict] = {}
@@ -81,7 +81,7 @@ class AccountLockoutService:
         locked_value = await self._r.hget(key, "locked")
         return locked_value == b"1"
 
-    async def _redis_register_failure(self, user: str):
+    async def _redis_register_failure(self, user: str) -> None:
         key = self._key(user)
         pipe = self._r.pipeline()
         pipe.hincrby(key, "attempts", 1)
@@ -112,7 +112,7 @@ class AccountLockoutService:
 
             return locked_until > current_time
 
-    async def _mem_register_failure(self, user: str):
+    async def _mem_register_failure(self, user: str) -> None:
         async with self._lock:
             rec = self._mem.setdefault(user, {"attempts": [], "locked_until": 0})
 

@@ -171,7 +171,7 @@ def setup_rate_limiting(app: Any, redis_url: str | None = None) -> Limiter:
 
 # Export common rate limit decorators for easy use
 # Usage: @rate_limit("5/minute")
-def rate_limit(limit_string: str):
+def rate_limit(limit_string: str) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
     """Decorator to apply rate limiting to an endpoint."""
 
     def decorator(func):

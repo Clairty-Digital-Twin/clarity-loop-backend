@@ -5,7 +5,7 @@ from collections import OrderedDict
 import json
 
 
-def clean_openapi_spec():
+def clean_openapi_spec() -> None:
     """Clean and enhance the OpenAPI spec."""
     # Load the generated spec
     with open("openapi.json") as f:

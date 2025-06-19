@@ -17,7 +17,7 @@ from clarity.auth.lockout_service import AccountLockoutError, AccountLockoutServ
 
 async def test_lockout_demo(
     test_email: str = "demo@example.com", wrong_password: str = "WrongP@ssword"
-):
+) -> None:
     """Demonstrate the lockout service functionality."""
     print("🔒 Account Lockout Service Demo")
     print("=" * 50)

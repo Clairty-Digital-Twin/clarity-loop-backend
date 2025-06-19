@@ -422,6 +422,7 @@ class PATServiceV2:
 # Factory function for creating PAT service instances
 async def create_pat_service(
     model_size: str = "medium",
+    *,
     enable_monitoring: bool = True,
     progressive_config: ProgressiveLoadingConfig | None = None,
     monitoring_config: ModelMonitoringConfig | None = None,

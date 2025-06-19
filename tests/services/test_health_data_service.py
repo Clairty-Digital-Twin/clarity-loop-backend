@@ -61,7 +61,7 @@ def health_data_service(
 @pytest.fixture
 def health_data_service_no_storage(mock_repository: Mock) -> HealthDataService:
     """Create health data service without cloud storage."""
-    with patch("clarity.services.health_data_service._HAS_S3", False):
+    with patch("clarity.services.health_data_service._HAS_S3", False):  # noqa: FBT003
         return HealthDataService(
             repository=mock_repository,
             cloud_storage=None,
@@ -119,7 +119,7 @@ class TestHealthDataServiceInit:
         assert service.cloud_storage == mock_cloud_storage
         assert service.raw_data_bucket == "clarity-healthkit-raw-data"
 
-    @patch("clarity.services.health_data_service._HAS_S3", False)
+    @patch("clarity.services.health_data_service._HAS_S3", False)  # noqa: FBT003
     def test_init_without_cloud_storage(self, mock_repository: Mock) -> None:
         """Test initialization without cloud storage."""
         service = HealthDataService(

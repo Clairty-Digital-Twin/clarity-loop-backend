@@ -35,8 +35,6 @@ class TestStartupIntegration:
 
         with patch.dict(os.environ, env_vars, clear=True):
             # Use string output to capture progress
-            import io
-
             output = io.StringIO()
             reporter = StartupProgressReporter(output=output, enable_colors=False)
 
@@ -71,8 +69,6 @@ class TestStartupIntegration:
         }
 
         with patch.dict(os.environ, env_vars, clear=True):
-            import io
-
             output = io.StringIO()
             reporter = StartupProgressReporter(output=output, enable_colors=False)
 
@@ -107,8 +103,6 @@ class TestStartupIntegration:
         }
 
         with patch.dict(os.environ, env_vars, clear=True):
-            import io
-
             output = io.StringIO()
             reporter = StartupProgressReporter(output=output, enable_colors=False)
 
@@ -145,8 +139,6 @@ class TestStartupIntegration:
             return {}
 
         with patch.dict(os.environ, env_vars, clear=True):
-            import io
-
             output = io.StringIO()
             reporter = StartupProgressReporter(output=output, enable_colors=False)
 
@@ -248,8 +240,6 @@ class TestStartupIntegration:
 
         for scenario in failure_scenarios:
             with patch.dict(os.environ, scenario["env"], clear=True):
-                import io
-
                 output = io.StringIO()
                 reporter = StartupProgressReporter(output=output, enable_colors=False)
 
@@ -284,8 +274,6 @@ class TestStartupIntegration:
         }
 
         with patch.dict(os.environ, env_vars, clear=True):
-            import io
-
             output = io.StringIO()
             reporter = StartupProgressReporter(output=output, enable_colors=False)
 
@@ -324,8 +312,6 @@ class TestStartupIntegration:
         }
 
         with patch.dict(os.environ, env_vars, clear=True):
-            import io
-
             output = io.StringIO()
             reporter = StartupProgressReporter(output=output, enable_colors=False)
 
@@ -336,8 +322,6 @@ class TestStartupIntegration:
             )
 
             # Manually load config to test summary
-            from clarity.startup.config_schema import ClarityConfig
-
             config, _ = ClarityConfig.validate_from_env()
             orchestrator.config = config
 

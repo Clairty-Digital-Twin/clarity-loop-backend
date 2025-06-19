@@ -449,7 +449,7 @@ class ProgressiveLoadingService:
 
         # Continue preload tasks in background
         if preload_tasks:
-            asyncio.create_task(self._finish_preloading(preload_tasks))
+            self._preload_task = asyncio.create_task(self._finish_preloading(preload_tasks))
 
     async def _finish_preloading(self, preload_tasks: list[asyncio.Task[Any]]) -> None:
         """Finish preloading non-critical models in background."""
@@ -527,7 +527,7 @@ async def get_progressive_service(
     config: ProgressiveLoadingConfig | None = None,
 ) -> ProgressiveLoadingService:
     """Get or create the global progressive loading service."""
-    global _progressive_service
+    global _progressive_service  # noqa: PLW0603 - Singleton pattern
 
     if _progressive_service is None:
         _progressive_service = ProgressiveLoadingService(config)

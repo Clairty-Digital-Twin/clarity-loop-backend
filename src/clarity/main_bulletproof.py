@@ -94,7 +94,7 @@ async def bulletproof_startup() -> tuple[bool, ClarityConfig | None]:
 @asynccontextmanager
 async def lifespan(_app: FastAPI) -> AsyncGenerator[None, None]:
     """Application lifespan manager with bulletproof startup."""
-    global _app_config, _startup_successful
+    global _app_config, _startup_successful  # noqa: PLW0602 - Read-only access
 
     # Execute bulletproof startup
     logger.info("🚀 Executing bulletproof startup sequence...")
@@ -125,7 +125,7 @@ async def lifespan(_app: FastAPI) -> AsyncGenerator[None, None]:
 
 def create_bulletproof_app() -> FastAPI:
     """Create FastAPI app with bulletproof startup."""
-    global _app_config
+    global _app_config  # noqa: PLW0602 - Read-only access
 
     # Create FastAPI app
     app = FastAPI(

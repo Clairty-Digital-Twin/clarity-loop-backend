@@ -221,7 +221,7 @@ class ModelMonitoringService:
         self.error_trends[model_key].append(0.0 if success else 1.0)
 
         # Check for alerts
-        asyncio.create_task(self._check_inference_alerts(model_id, version, metric))
+        self._alert_task = asyncio.create_task(self._check_inference_alerts(model_id, version, metric))
 
     async def get_model_metrics(
         self, model_id: str, version: str = "latest", window_minutes: int | None = None
@@ -409,7 +409,7 @@ class ModelMonitoringService:
                     # Record health metrics for each model
                     for model_id, model_data in health_data.get("models", {}).items():
                         model_parts = model_id.split(":", 1)
-                        if len(model_parts) == 2:
+                        if len(model_parts) == MODEL_ID_PARTS:
                             model_name, version = model_parts
 
                             metric = ModelHealthMetric(
@@ -522,7 +522,7 @@ class ModelMonitoringService:
             )  # Last 5 minutes
         ]
 
-        if len(recent_errors) >= 10:  # Minimum sample size
+        if len(recent_errors) >= MIN_ERROR_SAMPLE_SIZE:
             error_rate = sum(1 for m in recent_errors if not m.success) / len(
                 recent_errors
             )
@@ -543,7 +543,7 @@ class ModelMonitoringService:
 
             # Send webhook if configured
             if self.config.alert_webhook_url:
-                asyncio.create_task(self._send_alert_webhook(model_key, alert))
+                self._webhook_task = asyncio.create_task(self._send_alert_webhook(model_key, alert))
 
     async def _send_alert_webhook(self, model_key: str, alert: dict[str, Any]) -> None:
         """Send alert to webhook."""

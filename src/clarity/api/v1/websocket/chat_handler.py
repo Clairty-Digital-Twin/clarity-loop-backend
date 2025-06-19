@@ -233,7 +233,7 @@ class WebSocketChatHandler:
 
 
 @router.websocket("/{room_id}")
-async def websocket_chat_endpoint(  # noqa: PLR1702
+async def websocket_chat_endpoint(  # noqa: PLR1702 - WebSocket handler complexity
     websocket: WebSocket,
     room_id: str = "general",
     token: str | None = Query(...),

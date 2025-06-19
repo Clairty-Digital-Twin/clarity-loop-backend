@@ -464,7 +464,7 @@ class ModelManager:
 
     async def _start_progressive_loading(self) -> None:
         """Start progressive loading in background."""
-        asyncio.create_task(self._progressive_loading_task())
+        self._loading_task = asyncio.create_task(self._progressive_loading_task())
 
     async def _progressive_loading_task(self) -> None:
         """Background task for progressive model loading."""

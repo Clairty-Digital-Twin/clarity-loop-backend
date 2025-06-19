@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import os
+from typing import Any, Dict
 from unittest.mock import Mock, patch
 
 import pytest
@@ -180,7 +181,7 @@ class TestStartupOrchestrator:
         }
 
         # Mock a slow health check
-        async def slow_health_check(*args, **kwargs):
+        async def slow_health_check(*args: Any, **kwargs: Any) -> dict[str, Any]:
             await asyncio.sleep(1.0)  # Longer than timeout
             return {}
 

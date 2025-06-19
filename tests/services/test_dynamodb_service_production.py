@@ -1030,7 +1030,7 @@ class TestProductionScenarios:
         self.mock_table.get_item.return_value = {"Item": mock_item}
 
         # Simulate concurrent access
-        async def get_same_item():
+        async def get_same_item() -> dict[str, Any]:
             return await self.service.get_item("test_table", {"id": "item_123"})
 
         # Run multiple concurrent requests
@@ -1052,7 +1052,7 @@ class TestProductionScenarios:
 
         audit_calls = []
 
-        async def mock_audit_log(*args, **kwargs) -> None:
+        async def mock_audit_log(*args: Any, **kwargs: Any) -> None:
             await asyncio.sleep(0)  # Make it properly async
             audit_calls.append((args, kwargs))
 

@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
-from typing import Never
+from typing import Any, Dict, Never
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.testclient import TestClient
 from starlette.responses import Response
 
@@ -31,11 +31,11 @@ def create_test_app(
     )
 
     @app.get("/test")
-    async def test_endpoint():
+    async def test_endpoint() -> dict[str, str]:
         return {"message": "test"}
 
     @app.get("/health")
-    async def health_endpoint():
+    async def health_endpoint() -> dict[str, str]:
         return {"status": "healthy"}
 
     return app
@@ -155,7 +155,7 @@ class TestSecurityHeadersMiddleware:
         app = create_test_app()
 
         @app.post("/test")
-        async def post_endpoint():
+        async def post_endpoint() -> dict[str, str]:
             return {"message": "posted"}
 
         client = TestClient(app)
@@ -200,7 +200,7 @@ class TestSecurityHeadersMiddleware:
         )
 
         @app.get("/test")
-        async def test_endpoint():
+        async def test_endpoint() -> dict[str, str]:
             return {"message": "test"}
 
         client = TestClient(app)
@@ -222,7 +222,7 @@ class TestSecurityHeadersMiddleware:
         )
 
         @app.get("/test")
-        async def test_endpoint():
+        async def test_endpoint() -> dict[str, str]:
             return {"message": "test"}
 
         client = TestClient(app)
@@ -250,11 +250,11 @@ class TestSecurityHeadersMiddleware:
 
         # Add exception handler to return proper 500 response
         @app.exception_handler(ValueError)
-        async def value_error_handler(request, exc):
+        async def value_error_handler(request: Request, exc: ValueError) -> Response:
             return Response(content=str(exc), status_code=500)
 
         @app.get("/error", response_model=None)
-        async def error_endpoint():
+        async def error_endpoint() -> Never:
             msg = "Test error"
             raise ValueError(msg)
 

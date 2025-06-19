@@ -8,6 +8,7 @@ import os
 from pathlib import Path
 import subprocess
 import sys
+from typing import Any, Dict
 from unittest.mock import patch
 
 import pytest
@@ -134,7 +135,7 @@ class TestStartupIntegration:
         }
 
         # Mock a very slow health check
-        async def slow_check(*args, **kwargs):
+        async def slow_check(*args: Any, **kwargs: Any) -> dict[str, Any]:
             await asyncio.sleep(2.0)  # Longer than timeout
             return {}
 

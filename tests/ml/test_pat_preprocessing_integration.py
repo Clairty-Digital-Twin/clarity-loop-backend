@@ -186,7 +186,7 @@ class TestPreprocessingIntegration:
         assert tensor.shape == (10080,)
 
     @pytest.mark.parametrize("noise_level", [0.1, 1.0, 10.0])
-    def test_robustness_to_noise(self, noise_level):
+    def test_robustness_to_noise(self, noise_level: float) -> None:
         """Test that preprocessing is robust to different noise levels."""
         # Create base signal
         base_signal = [

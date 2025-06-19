@@ -1,5 +1,6 @@
 """Tests for authentication middleware."""
 
+from typing import Any
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -45,7 +46,7 @@ class TestCognitoAuthMiddleware:
     """Test cases for Cognito authentication middleware."""
 
     @pytest.mark.asyncio
-    async def test_public_path_bypass(self, mock_app, mock_request):
+    async def test_public_path_bypass(self, mock_app: Any, mock_request: Any) -> None:
         """Test that public paths bypass authentication."""
         # Arrange
         mock_request.url.path = "/health"
@@ -62,7 +63,7 @@ class TestCognitoAuthMiddleware:
         call_next.assert_called_once_with(mock_request)
 
     @pytest.mark.asyncio
-    async def test_no_auth_header(self, mock_app, mock_request):
+    async def test_no_auth_header(self, mock_app: Any, mock_request: Any) -> None:
         """Test request without Authorization header."""
         # Arrange
         call_next = AsyncMock(return_value=Response("OK"))
@@ -79,7 +80,9 @@ class TestCognitoAuthMiddleware:
         call_next.assert_called_once_with(mock_request)
 
     @pytest.mark.asyncio
-    async def test_invalid_auth_header_format(self, mock_app, mock_request):
+    async def test_invalid_auth_header_format(
+        self, mock_app: Any, mock_request: Any
+    ) -> None:
         """Test request with invalid Authorization header format."""
         # Arrange
         mock_request.headers = {"Authorization": "Invalid token"}
@@ -97,7 +100,7 @@ class TestCognitoAuthMiddleware:
         call_next.assert_called_once_with(mock_request)
 
     @pytest.mark.asyncio
-    async def test_auth_disabled(self, mock_app, mock_request):
+    async def test_auth_disabled(self, mock_app: Any, mock_request: Any) -> None:
         """Test when authentication is disabled."""
         # Arrange
         mock_request.headers = {"Authorization": "Bearer test-token"}
@@ -116,8 +119,8 @@ class TestCognitoAuthMiddleware:
 
     @pytest.mark.asyncio
     async def test_valid_token_authentication(
-        self, mock_app, mock_request, mock_user_context
-    ):
+        self, mock_app: Any, mock_request: Any, mock_user_context: UserContext
+    ) -> None:
         """Test successful authentication with valid token."""
         # Arrange
         mock_request.headers = {"Authorization": "Bearer valid-token"}
@@ -163,7 +166,9 @@ class TestCognitoAuthMiddleware:
         call_next.assert_called_once_with(mock_request)
 
     @pytest.mark.asyncio
-    async def test_invalid_token_authentication(self, mock_app, mock_request):
+    async def test_invalid_token_authentication(
+        self, mock_app: Any, mock_request: Any
+    ) -> None:
         """Test authentication with invalid token."""
         # Arrange
         mock_request.headers = {"Authorization": "Bearer invalid-token"}

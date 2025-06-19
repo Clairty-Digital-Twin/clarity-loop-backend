@@ -9,6 +9,7 @@ Tests various rate limiting scenarios including:
 """
 
 import json
+from typing import Any
 from unittest.mock import MagicMock
 
 from fastapi import FastAPI, Request
@@ -46,7 +47,7 @@ def mock_request():
 
 
 @pytest.fixture
-def authenticated_request(mock_request):
+def authenticated_request(mock_request: Any) -> Any:
     """Create a mock authenticated request."""
     mock_request.state.user = {"uid": "user123", "email": "test@example.com"}
     return mock_request
@@ -55,22 +56,22 @@ def authenticated_request(mock_request):
 class TestKeyFunctions:
     """Test rate limiting key extraction functions."""
 
-    def test_get_ip_only(self, mock_request):
+    def test_get_ip_only(self, mock_request: Any) -> None:
         """Test IP-only key extraction."""
         key = get_ip_only(mock_request)
         assert key == "ip:192.168.1.1"
 
-    def test_get_user_id_or_ip_with_user(self, authenticated_request):
+    def test_get_user_id_or_ip_with_user(self, authenticated_request: Any) -> None:
         """Test user ID extraction for authenticated requests."""
         key = get_user_id_or_ip(authenticated_request)
         assert key == "user:user123"
 
-    def test_get_user_id_or_ip_without_user(self, mock_request):
+    def test_get_user_id_or_ip_without_user(self, mock_request: Any) -> None:
         """Test fallback to IP for unauthenticated requests."""
         key = get_user_id_or_ip(mock_request)
         assert key == "ip:192.168.1.1"
 
-    def test_get_user_id_with_different_fields(self, mock_request):
+    def test_get_user_id_with_different_fields(self, mock_request: Any) -> None:
         """Test user ID extraction with different field names."""
         # Test with user_id field
         mock_request.state.user = {"user_id": "user456"}
@@ -116,7 +117,7 @@ class TestRateLimitExceededHandler:
     """Test custom rate limit exceeded error handler."""
 
     @pytest.mark.asyncio
-    async def test_rate_limit_exceeded_handler(self, mock_request):
+    async def test_rate_limit_exceeded_handler(self, mock_request: Any) -> None:
         """Test handling of rate limit exceeded errors."""
         # Clean Code: Create a mock limit object
         mock_limit = MagicMock()
@@ -157,33 +158,33 @@ class TestIntegration:
 
         # Add test endpoints
         @app.get("/test/unlimited")
-        async def unlimited():
+        async def unlimited() -> JSONResponse:
             return JSONResponse({"message": "success"})
 
         @app.get("/test/limited")
         @limiter.limit("2/minute")
-        async def limited(request: Request):
+        async def limited(request: Request) -> JSONResponse:
             return JSONResponse({"message": "success"})
 
         @app.get("/test/auth")
         @limiter.limit("5/minute", key_func=get_ip_only)
-        async def auth_endpoint(request: Request):
+        async def auth_endpoint(request: Request) -> JSONResponse:
             return JSONResponse({"message": "success"})
 
         return app
 
     @pytest.fixture
-    def client(self, app):
+    def client(self, app: FastAPI) -> TestClient:
         """Create test client."""
         return TestClient(app)
 
-    def test_unlimited_endpoint(self, client):
+    def test_unlimited_endpoint(self, client: TestClient) -> None:
         """Test endpoint without rate limiting."""
         for _ in range(10):
             response = client.get("/test/unlimited")
             assert response.status_code == 200
 
-    def test_limited_endpoint_within_limit(self, client):
+    def test_limited_endpoint_within_limit(self, client: TestClient) -> None:
         """Test rate limited endpoint within limits."""
         # First two requests should succeed
         for _ in range(2):
@@ -192,7 +193,7 @@ class TestIntegration:
             assert "X-RateLimit-Limit" in response.headers
             assert "X-RateLimit-Remaining" in response.headers
 
-    def test_limited_endpoint_exceeds_limit(self, client):
+    def test_limited_endpoint_exceeds_limit(self, client: TestClient) -> None:
         """Test rate limited endpoint exceeding limits."""
         # First two requests succeed
         for _ in range(2):
@@ -204,7 +205,7 @@ class TestIntegration:
         assert response.status_code == 429
         assert response.json()["type"] == "rate_limit_exceeded"
 
-    def test_rate_limit_headers(self, client):
+    def test_rate_limit_headers(self, client: TestClient) -> None:
         """Test rate limit headers in responses."""
         response = client.get("/test/limited")
         assert response.status_code == 200

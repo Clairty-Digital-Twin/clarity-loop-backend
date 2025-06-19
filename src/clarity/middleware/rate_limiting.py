@@ -98,7 +98,7 @@ class RateLimitingMiddleware:
     @staticmethod
     def create_limiter(
         key_func: Callable[[Request], str] = get_user_id_or_ip,
-        default_limits: list[Union[str, Callable[..., str]]] | None = None,
+        default_limits: list[str | Callable[..., str]] | None = None,
         storage_uri: str | None = None,
     ) -> Limiter:
         """Create a configured rate limiter instance.

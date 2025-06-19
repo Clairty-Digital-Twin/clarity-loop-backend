@@ -143,7 +143,10 @@ async def get_pat_inference_engine() -> AsyncInferenceEngine:
     "/step-analysis",
     response_model=AnalysisResponse,
     summary="Analyze Apple HealthKit Step Data",
-    description="Submit Apple HealthKit step count data for PAT analysis using proxy actigraphy transformation",
+    description=(
+        "Submit Apple HealthKit step count data for PAT analysis "
+        "using proxy actigraphy transformation"
+    ),
 )
 @router.post(
     "/step-analysis/",

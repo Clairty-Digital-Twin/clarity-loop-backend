@@ -370,13 +370,12 @@ class StartupProgressReporter:
         validation_errors: list[str],
     ) -> str:
         """Create dry-run report."""
-        lines = []
-        lines.append("🔍 CLARITY Startup Dry-Run Report")
-        lines.append("=" * 50)
-        lines.append("")
-
-        # Configuration summary
-        lines.append("📋 Configuration Summary:")
+        lines = [
+            "🔍 CLARITY Startup Dry-Run Report",
+            "=" * 50,
+            "",
+            "📋 Configuration Summary:",
+        ]
         summary = config.get_startup_summary()
         for key, value in summary.items():
             lines.append(f"  • {key}: {value}")
@@ -390,10 +389,7 @@ class StartupProgressReporter:
             lines.extend(f"  • {error}" for error in validation_errors)
         else:
             lines.append("✅ Configuration Validation: All valid")
-        lines.append("")
-
-        # Health check results
-        lines.append("🔍 Service Health Checks:")
+        lines.extend(("", "🔍 Service Health Checks:"))
         for service_name, result in health_results.items():
             status_symbol = {
                 ServiceStatus.HEALTHY: "✅",

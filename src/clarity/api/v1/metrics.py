@@ -179,7 +179,11 @@ async def get_metrics() -> Response:
         logger.exception("Failed to generate metrics")
         # Return empty metrics rather than failing
         return Response(
-            content="# HELP clarity_metrics_error Metrics generation error\n# TYPE clarity_metrics_error gauge\nclarity_metrics_error 1\n",
+            content=(
+                "# HELP clarity_metrics_error Metrics generation error\n"
+                "# TYPE clarity_metrics_error gauge\n"
+                "clarity_metrics_error 1\n"
+            ),
             media_type=CONTENT_TYPE_LATEST,
         )
 

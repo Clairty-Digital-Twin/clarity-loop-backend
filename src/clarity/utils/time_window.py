@@ -19,6 +19,9 @@ logger = logging.getLogger(__name__)
 # Re-export the constant for convenience
 WEEK_MINUTES = MINUTES_PER_WEEK
 
+# Maximum dimensions for array validation
+MAX_DIMENSIONS = 2
+
 
 def slice_to_weeks(
     arr: npt.NDArray[np.floating[Any]] | npt.NDArray[np.integer[Any]],
@@ -62,7 +65,8 @@ def slice_to_weeks(
     3
     """
     # Input validation
-    if arr.ndim > 2:
+    MAX_DIMENSIONS = 2
+    if arr.ndim > MAX_DIMENSIONS:
         msg = f"Expected 1-D or 2-D array, got {arr.ndim}-D"
         raise ValueError(msg)
 
@@ -71,11 +75,7 @@ def slice_to_weeks(
         return []
 
     # For 2D arrays, ensure we're slicing along time axis (axis 0)
-    if arr.ndim == 2:
-        # Preserve number of channels/features
-        n_features = arr.shape[1]
-    else:
-        n_features = None
+    n_features = arr.shape[1] if arr.ndim == 2 else None
 
     # Get the time dimension
     n_samples = arr.shape[0]
@@ -171,7 +171,7 @@ def pad_to_week(
     pad_length = minutes_per_week - arr.shape[0]
 
     # Handle multi-dimensional arrays
-    if arr.ndim == 2:
+    if arr.ndim == MAX_DIMENSIONS:
         pad_shape: tuple[int, ...] = (pad_length, arr.shape[1])
     else:
         pad_shape = (pad_length,)

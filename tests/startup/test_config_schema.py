@@ -71,7 +71,7 @@ class TestClarityConfig:
             assert config.dynamodb.table_name == "test-table"
             assert config.s3.bucket_name == "test-bucket"
             assert config.gemini.api_key == "test-gemini-key"
-            assert config.security.secret_key == "test-secret-key-12345"
+            assert config.security.secret_key == "test-secret-key-12345"  # noqa: S105
 
     def test_production_validation_success(self) -> None:
         """Test successful production environment validation."""
@@ -106,7 +106,6 @@ class TestClarityConfig:
             assert len(errors) > 0
 
             # Check for specific production errors
-            error_text = " ".join(errors)
             # Clean Code: Be explicit about what we're testing
             assert any(
                 "COGNITO_USER_POOL_ID" in err or "cognito.user_pool_id" in err
@@ -275,9 +274,10 @@ class TestLoadConfig:
             # Missing required production settings
         }
 
-        with patch.dict(os.environ, env_vars, clear=True):
-            with pytest.raises(ValueError, match="Configuration validation failed"):
-                load_config()
+        with patch.dict(os.environ, env_vars, clear=True), pytest.raises(
+            ValueError, match="Configuration validation failed"
+        ):
+            load_config()
 
 
 if __name__ == "__main__":

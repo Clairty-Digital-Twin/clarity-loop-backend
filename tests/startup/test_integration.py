@@ -6,7 +6,7 @@ import asyncio
 import io
 import os
 from pathlib import Path
-import subprocess
+import subprocess  # noqa: S404
 import sys
 from typing import Any
 from unittest.mock import patch
@@ -179,7 +179,7 @@ class TestStartupIntegration:
         # Test import works
 
         # Run script with --help to test basic functionality
-        result = subprocess.run(
+        result = subprocess.run(  # noqa: S603
             [sys.executable, str(script_path), "--help"],
             capture_output=True,
             text=True,

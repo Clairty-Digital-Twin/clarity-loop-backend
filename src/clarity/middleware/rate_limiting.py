@@ -53,8 +53,10 @@ async def custom_rate_limit_exceeded_handler(
     Returns a standardized error response with rate limit headers.
     """
     logger.warning(
-        f"Rate limit exceeded for {request.url.path} - "
-        f"Key: {exc.detail}, Limit: {getattr(exc, 'limit', 'unknown')}"
+        "Rate limit exceeded for %s - Key: %s, Limit: %s",
+        request.url.path,
+        exc.detail,
+        getattr(exc, 'limit', 'unknown')
     )
 
     response = JSONResponse(

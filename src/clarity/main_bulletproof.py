@@ -110,7 +110,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     try:
         from clarity.core.container_aws import initialize_container
 
-        await initialize_container(config)
+        await initialize_container(None)  # Uses default settings
         logger.info("✅ Dependency container initialized")
     except Exception as e:
         logger.exception("❌ Failed to initialize dependency container")

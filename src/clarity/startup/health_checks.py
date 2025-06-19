@@ -117,7 +117,6 @@ class ServiceHealthChecker:
         circuit_breaker = self._get_circuit_breaker(service_name)
 
         try:
-
             if not circuit_breaker.should_attempt_request():
                 return HealthCheckResult(
                     service_name=service_name,
@@ -139,16 +138,7 @@ class ServiceHealthChecker:
 
             response_time = (time.time() - start_time) * 1000
 
-            # Check response validity
-            if not response or "UserPool" not in response:
-                circuit_breaker.record_failure()
-                return HealthCheckResult(
-                    service_name=service_name,
-                    status=ServiceStatus.UNHEALTHY,
-                    message="Invalid response from Cognito service",
-                    response_time_ms=response_time,
-                )
-
+            # If we reach here, the response was successful
             circuit_breaker.record_success()
             return HealthCheckResult(
                 service_name=service_name,

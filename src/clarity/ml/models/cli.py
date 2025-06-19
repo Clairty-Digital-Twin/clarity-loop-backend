@@ -313,7 +313,7 @@ Registry File: {config.registry_file}
 
 
 @cli.command()
-@click.option("--host", default="0.0.0.0", help="Server host")
+@click.option("--host", default="0.0.0.0", help="Server host")  # noqa: S104
 @click.option("--port", type=int, default=8900, help="Server port")
 @click.option("--auto-load/--no-auto-load", default=True, help="Auto-load models")
 @click.option(

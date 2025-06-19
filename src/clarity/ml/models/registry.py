@@ -135,14 +135,16 @@ class ModelRegistry:
         self.config.base_path.mkdir(parents=True, exist_ok=True)
         self.config.cache_dir.mkdir(parents=True, exist_ok=True)
 
-        logger.info(f"Initialized ModelRegistry with base_path={self.config.base_path}")
+        logger.info("Initialized ModelRegistry with base_path=%s", self.config.base_path)
 
     async def initialize(self) -> None:
         """Initialize registry by loading existing metadata."""
         await self._load_registry()
         await self._cleanup_cache()
         logger.info(
-            f"Registry initialized with {len(self.models)} models and {len(self.aliases)} aliases"
+            "Registry initialized with %d models and %d aliases",
+            len(self.models),
+            len(self.aliases),
         )
 
     async def register_model(self, metadata: ModelMetadata) -> bool:
@@ -151,10 +153,10 @@ class ModelRegistry:
             try:
                 self.models[metadata.unique_id] = metadata
                 await self._save_registry()
-                logger.info(f"Registered model {metadata.unique_id}")
+                logger.info("Registered model %s", metadata.unique_id)
                 return True
             except (OSError, ValueError) as e:
-                logger.error(f"Failed to register model {metadata.unique_id}: {e}")
+                logger.error("Failed to register model %s: %s", metadata.unique_id, e)
                 return False
 
     async def get_model(
@@ -183,7 +185,7 @@ class ModelRegistry:
                 unique_id = f"{model_id}:{version}"
                 if unique_id not in self.models:
                     logger.error(
-                        f"Cannot create alias {alias}: model {unique_id} not found"
+                        "Cannot create alias %s: model %s not found", alias, unique_id
                     )
                     return False
 
@@ -191,10 +193,10 @@ class ModelRegistry:
                     alias=alias, model_id=model_id, version=version
                 )
                 await self._save_registry()
-                logger.info(f"Created alias {alias} -> {unique_id}")
+                logger.info("Created alias %s -> %s", alias, unique_id)
                 return True
             except (OSError, ValueError) as e:
-                logger.error(f"Failed to create alias {alias}: {e}")
+                logger.error("Failed to create alias %s: %s", alias, e)
                 return False
 
     async def download_model(
@@ -207,19 +209,19 @@ class ModelRegistry:
         """Download model with intelligent caching and resume capability."""
         metadata = await self.get_model(model_id, version)
         if not metadata:
-            logger.error(f"Model {model_id}:{version} not found in registry")
+            logger.error("Model %s:%s not found in registry", model_id, version)
             return False
 
         # Use provided URL or metadata URL
         url = source_url or metadata.source_url
         if not url:
-            logger.error(f"No source URL available for model {metadata.unique_id}")
+            logger.error("No source URL available for model %s", metadata.unique_id)
             return False
 
         # Check if already cached and valid
         local_path = self._get_model_cache_path(metadata)
         if not force and await self._is_model_cached(metadata, local_path):
-            logger.info(f"Model {metadata.unique_id} already cached at {local_path}")
+            logger.info("Model %s already cached at %s", metadata.unique_id, local_path)
             return True
 
         # Start download with progress tracking
@@ -245,13 +247,13 @@ class ModelRegistry:
                 await self.register_model(metadata)
 
                 self.download_progress[download_id]["status"] = "completed"
-                logger.info(f"Successfully downloaded model {metadata.unique_id}")
+                logger.info("Successfully downloaded model %s", metadata.unique_id)
                 return True
             self.download_progress[download_id]["status"] = "failed"
             return False
 
         except (aiohttp.ClientError, OSError) as e:
-            logger.error(f"Download failed for model {metadata.unique_id}: {e}")
+            logger.error("Download failed for model %s: %s", metadata.unique_id, e)
             self.download_progress[download_id]["status"] = "failed"
             return False
 
@@ -292,7 +294,10 @@ class ModelRegistry:
         file_size = local_path.stat().st_size
         if file_size != metadata.size_bytes:
             logger.warning(
-                f"Size mismatch for {metadata.unique_id}: expected={metadata.size_bytes}, actual={file_size}"
+                "Size mismatch for %s: expected=%d, actual=%d",
+                metadata.unique_id,
+                metadata.size_bytes,
+                file_size,
             )
             return False
 
@@ -301,11 +306,11 @@ class ModelRegistry:
             try:
                 file_checksum = await self._calculate_checksum(local_path)
                 if file_checksum != metadata.checksum_sha256:
-                    logger.warning(f"Checksum mismatch for {metadata.unique_id}")
+                    logger.warning("Checksum mismatch for %s", metadata.unique_id)
                     return False
             except OSError as e:
                 logger.error(
-                    f"Checksum verification failed for {metadata.unique_id}: {e}"
+                    "Checksum verification failed for %s: %s", metadata.unique_id, e
                 )
                 return False
 
@@ -320,7 +325,7 @@ class ModelRegistry:
         start_byte = 0
         if partial_path.exists():
             start_byte = partial_path.stat().st_size
-            logger.info(f"Resuming download from byte {start_byte}")
+            logger.info("Resuming download from byte %d", start_byte)
 
         headers = {}
         if start_byte > 0:
@@ -334,48 +339,76 @@ class ModelRegistry:
                     response.raise_for_status()
 
                     # Open file for writing (append mode if resuming)
-                    mode = "ab" if start_byte > 0 else "wb"
-                    async with aiofiles.open(str(partial_path), mode) as f:
-                        downloaded = start_byte
-                        last_update = time.time()
+                    if start_byte > 0:
+                        async with aiofiles.open(str(partial_path), "ab") as f:
+                            downloaded = start_byte
+                            last_update = time.time()
 
-                        async for chunk in response.content.iter_chunked(
-                            8192
-                        ):  # 8KB chunks
-                            await f.write(chunk)
-                            downloaded += len(chunk)
+                            async for chunk in response.content.iter_chunked(
+                                8192
+                            ):  # 8KB chunks
+                                await f.write(chunk)
+                                downloaded += len(chunk)
 
-                            # Update progress every second
-                            now = time.time()
-                            if now - last_update >= 1.0:
+                                # Update progress
                                 progress = downloaded / metadata.size_bytes * 100
-                                elapsed = (
-                                    now
-                                    - self.download_progress[download_id]["start_time"]
-                                )
-                                speed_mbps = (
-                                    (downloaded / (1024 * 1024)) / elapsed
-                                    if elapsed > 0
-                                    else 0
-                                )
+                                current_time = time.time()
 
-                                self.download_progress[download_id].update(
-                                    {
-                                        "status": "downloading",
-                                        "progress": progress,
-                                        "downloaded_bytes": downloaded,
-                                        "speed_mbps": speed_mbps,
-                                    }
-                                )
-                                last_update = now
+                                # Report progress every 1 second
+                                if current_time - last_update >= 1.0:
+                                    download_info = self.download_progress[download_id]
+                                    download_info["downloaded_bytes"] = downloaded
+                                    download_info["total_bytes"] = metadata.size_bytes
+                                    download_info["progress_percent"] = progress
+                                    last_update = current_time
+
+                                    logger.debug(
+                                        "Download progress for %s: %.1f%%",
+                                        metadata.unique_id,
+                                        progress,
+                                    )
+                    else:
+                        async with aiofiles.open(str(partial_path), "wb") as f:
+                            downloaded = start_byte
+                            last_update = time.time()
+
+                            async for chunk in response.content.iter_chunked(
+                                8192
+                            ):  # 8KB chunks
+                                await f.write(chunk)
+                                downloaded += len(chunk)
+
+                                # Update progress every second
+                                now = time.time()
+                                if now - last_update >= 1.0:
+                                    progress = downloaded / metadata.size_bytes * 100
+                                    elapsed = (
+                                        now
+                                        - self.download_progress[download_id]["start_time"]
+                                    )
+                                    speed_mbps = (
+                                        (downloaded / (1024 * 1024)) / elapsed
+                                        if elapsed > 0
+                                        else 0
+                                    )
+
+                                    self.download_progress[download_id].update(
+                                        {
+                                            "status": "downloading",
+                                            "progress": progress,
+                                            "downloaded_bytes": downloaded,
+                                            "speed_mbps": speed_mbps,
+                                        }
+                                    )
+                                    last_update = now
 
                 # Move completed file to final location
                 partial_path.rename(local_path)
-                logger.info(f"Download completed: {local_path}")
+                logger.info("Download completed: %s", local_path)
                 return True
 
             except (aiohttp.ClientError, OSError) as e:
-                logger.error(f"Download error: {e}")
+                logger.error("Download error: %s", e)
                 return False
 
     async def _calculate_checksum(self, file_path: Path) -> str:
@@ -406,10 +439,10 @@ class ModelRegistry:
                 alias = ModelAlias(**alias_data)
                 self.aliases[alias.alias] = alias
 
-            logger.info(f"Loaded registry with {len(self.models)} models")
+            logger.info("Loaded registry with %d models", len(self.models))
 
         except (OSError, ValueError) as e:
-            logger.error(f"Failed to load registry: {e}")
+            logger.error("Failed to load registry: %s", e)
 
     async def _save_registry(self) -> None:
         """Save registry to disk."""
@@ -426,10 +459,10 @@ class ModelRegistry:
                 await f.write(json.dumps(data, indent=2))
 
             temp_file.rename(self.config.registry_file)
-            logger.debug(f"Registry saved to {self.config.registry_file}")
+            logger.debug("Registry saved to %s", self.config.registry_file)
 
         except (OSError, ValueError) as e:
-            logger.error(f"Failed to save registry: {e}")
+            logger.error("Failed to save registry: %s", e)
 
     async def _cleanup_cache(self, max_size_gb: float | None = None) -> int:
         """Clean up cache directory to stay within size limits."""
@@ -450,7 +483,7 @@ class ModelRegistry:
                 total_size += size
 
         if total_size <= max_size_bytes:
-            logger.debug(f"Cache size {total_size / (1024**3):.2f}GB within limit")
+            logger.debug("Cache size %.2fGB within limit", total_size / (1024**3))
             return 0
 
         # Sort by modification time (oldest first)
@@ -463,15 +496,17 @@ class ModelRegistry:
                 file_path.unlink()
                 total_size -= size
                 removed_count += 1
-                logger.debug(f"Removed cached file: {file_path}")
+                logger.debug("Removed cached file: %s", file_path)
 
                 if total_size <= max_size_bytes:
                     break
             except OSError as e:
-                logger.error(f"Failed to remove cache file {file_path}: {e}")
+                logger.error("Failed to remove cache file %s: %s", file_path, e)
 
         logger.info(
-            f"Cache cleanup: removed {removed_count} files, size now {total_size / (1024**3):.2f}GB"
+            "Cache cleanup: removed %d files, size now %.2fGB",
+            removed_count,
+            total_size / (1024**3),
         )
         return removed_count
 

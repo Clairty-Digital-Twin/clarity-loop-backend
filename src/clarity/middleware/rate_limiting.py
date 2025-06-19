@@ -4,9 +4,9 @@ Provides application-level rate limiting using slowapi to protect against
 abuse and ensure fair resource usage across users.
 """
 
-from collections.abc import Callable, Sequence
+from collections.abc import Callable
 import logging
-from typing import Any
+from typing import Any, Union
 
 from fastapi import Request
 from fastapi.responses import JSONResponse
@@ -98,7 +98,7 @@ class RateLimitingMiddleware:
     @staticmethod
     def create_limiter(
         key_func: Callable[[Request], str] = get_user_id_or_ip,
-        default_limits: Sequence[str] | None = None,
+        default_limits: list[Union[str, Callable[..., str]]] | None = None,
         storage_uri: str | None = None,
     ) -> Limiter:
         """Create a configured rate limiter instance.
@@ -124,8 +124,9 @@ class RateLimitingMiddleware:
         )
 
         logger.info(
-            f"🚦 Rate limiter initialized with defaults: {default_limits}, "
-            f"storage: {'Redis' if storage_uri else 'In-memory'}"
+            "🚦 Rate limiter initialized with defaults: %s, storage: %s",
+            default_limits,
+            "Redis" if storage_uri else "In-memory",
         )
 
         return limiter

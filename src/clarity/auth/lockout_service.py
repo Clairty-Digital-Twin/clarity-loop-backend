@@ -9,6 +9,7 @@ from datetime import datetime, timedelta
 import logging
 import os
 import time
+from typing import Any
 
 import redis.asyncio as redis
 
@@ -74,7 +75,8 @@ class AccountLockoutService:
 
     # ---------- Redis impl ----------
     async def _redis_is_locked(self, user: str) -> bool:
-        assert self._r is not None
+        if self._r is None:
+            raise RuntimeError("Redis client not initialized")
         key = self._key(user)
         ttl = await self._r.ttl(key)
         if ttl <= 0:
@@ -83,7 +85,8 @@ class AccountLockoutService:
         return locked_value == b"1"
 
     async def _redis_register_failure(self, user: str) -> None:
-        assert self._r is not None
+        if self._r is None:
+            raise RuntimeError("Redis client not initialized")
         key = self._key(user)
         pipe = self._r.pipeline()
         pipe.hincrby(key, "attempts", 1)

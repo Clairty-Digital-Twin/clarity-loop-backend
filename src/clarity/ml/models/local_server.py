@@ -170,11 +170,11 @@ class LocalModelServer:
                 await self._setup_mock_models()
 
             logger.info(
-                f"Local model server started on {self.config.host}:{self.config.port}"
+                "Local model server started on %s:%s", self.config.host, self.config.port
             )
 
         except Exception as e:
-            logger.exception(f"Failed to start model server: {e}")
+            logger.exception("Failed to start model server: %s", e)
             raise
 
     async def _setup_mock_models(self) -> None:
@@ -184,7 +184,7 @@ class LocalModelServer:
             size = size_map.get(model_id, "medium")
 
             self.mock_models[metadata.unique_id] = MockPATModel(size)
-            logger.info(f"Created mock model: {metadata.unique_id}")
+            logger.info("Created mock model: %s", metadata.unique_id)
 
     def _setup_routes(self) -> None:
         """Setup FastAPI routes."""
@@ -356,7 +356,7 @@ class LocalModelServer:
                         model_info=loaded_model.metadata.to_dict(),
                     )
                 except Exception as e:
-                    logger.exception(f"Prediction failed: {e}")
+                    logger.exception("Prediction failed: %s", e)
                     raise HTTPException(
                         status_code=500, detail=f"Prediction failed: {e!s}"
                     )
@@ -467,7 +467,7 @@ async def create_placeholder_models(models_dir: Path) -> None:
             with open(model_file, "wb") as f:
                 f.write(b"PLACEHOLDER_MODEL_DATA" * 1000)  # ~20KB file
 
-            logger.info(f"Created placeholder model: {model_file}")
+            logger.info("Created placeholder model: %s", model_file)
 
 
 if __name__ == "__main__":

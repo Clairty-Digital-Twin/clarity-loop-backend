@@ -12,7 +12,7 @@ from enum import Enum
 import logging
 from pathlib import Path
 import time
-from typing import Any, TypeVar
+from typing import Any
 
 from pydantic import BaseModel
 import torch
@@ -106,14 +106,16 @@ class LoadedModel:
 
                 if self.config.enable_monitoring:
                     logger.debug(
-                        f"Inference completed for {self.metadata.unique_id}: {latency_ms:.2f}ms"
+                        "Inference completed for %s: %.2fms",
+                        self.metadata.unique_id,
+                        latency_ms,
                     )
 
                 return result
 
             except Exception as e:
                 self.metrics.error_count += 1
-                logger.error(f"Prediction failed for {self.metadata.unique_id}: {e}")
+                logger.error("Prediction failed for %s: %s", self.metadata.unique_id, e)
                 raise
 
     def get_metrics(self) -> ModelPerformanceMetrics:
@@ -166,7 +168,7 @@ class ModelManager:
             await self._start_progressive_loading()
 
         logger.info(
-            f"ModelManager initialized with {len(self.loaded_models)} models loaded"
+            "ModelManager initialized with %d models loaded", len(self.loaded_models)
         )
 
     async def get_model(
@@ -185,20 +187,19 @@ class ModelManager:
         if unique_id in self.loading_tasks:
             try:
                 timeout_val = timeout or self.load_config.timeout_seconds
-                loaded_model = await asyncio.wait_for(
-                    self.loading_tasks[unique_id], timeout=timeout_val
-                )
+                task = self.loading_tasks[unique_id]
+                loaded_model = await asyncio.wait_for(task, timeout=timeout_val)  # type: ignore[arg-type]
                 return loaded_model
             except TimeoutError:
-                logger.error(f"Model loading timeout for {unique_id}")
+                logger.error("Model loading timeout for %s", unique_id)
                 return None
 
         # Start loading
-        loaded_model = await self._load_model(model_id, version)
-        if loaded_model:
-            loaded_model.metrics.cache_misses += 1
+        loaded_model_or_none = await self._load_model(model_id, version)
+        if loaded_model_or_none:
+            loaded_model_or_none.metrics.cache_misses += 1
 
-        return loaded_model
+        return loaded_model_or_none
 
     async def preload_model(self, model_id: str, version: str = "latest") -> bool:
         """Preload model in background."""
@@ -206,7 +207,7 @@ class ModelManager:
             model = await self.get_model(model_id, version)
             return model is not None
         except Exception as e:
-            logger.error(f"Failed to preload model {model_id}:{version}: {e}")
+            logger.error("Failed to preload model %s:%s: %s", model_id, version, e)
             return False
 
     async def unload_model(self, model_id: str, version: str = "latest") -> bool:
@@ -215,13 +216,13 @@ class ModelManager:
 
         async with self._lock:
             if unique_id in self.loaded_models:
-                loaded_model = self.loaded_models.pop(unique_id)
+                self.loaded_models.pop(unique_id)
 
                 # Clean up GPU memory if using CUDA
                 if torch.cuda.is_available():
                     torch.cuda.empty_cache()
 
-                logger.info(f"Unloaded model {unique_id}")
+                logger.info("Unloaded model %s", unique_id)
                 return True
 
             return False
@@ -235,7 +236,7 @@ class ModelManager:
             new_model = await self.get_model(model_id, new_version)
             if not new_model:
                 logger.error(
-                    f"Failed to load new model version {model_id}:{new_version}"
+                    "Failed to load new model version %s:%s", model_id, new_version
                 )
                 return False
 
@@ -243,12 +244,12 @@ class ModelManager:
             await self.unload_model(model_id, old_version)
 
             logger.info(
-                f"Successfully swapped {model_id} from {old_version} to {new_version}"
+                "Successfully swapped %s from %s to %s", model_id, old_version, new_version
             )
             return True
 
         except Exception as e:
-            logger.error(f"Model version swap failed: {e}")
+            logger.error("Model version swap failed: %s", e)
             return False
 
     async def get_all_metrics(self) -> dict[str, ModelPerformanceMetrics]:
@@ -283,10 +284,12 @@ class ModelManager:
             }
 
             models = health_status["models"]
-            assert isinstance(models, dict)
+            if not isinstance(models, dict):
+                raise TypeError("health_status['models'] must be a dict")
             models[unique_id] = model_health
             total_mem = health_status["total_memory_mb"]
-            assert isinstance(total_mem, (int, float))
+            if not isinstance(total_mem, (int, float)):
+                raise TypeError("health_status['total_memory_mb'] must be numeric")
             health_status["total_memory_mb"] = total_mem + metrics.memory_usage_mb
 
         return health_status
@@ -294,7 +297,7 @@ class ModelManager:
     def register_model_factory(self, model_type: str, factory: Callable[[ModelMetadata], Any]) -> None:
         """Register a factory function for creating model instances."""
         self.model_factories[model_type] = factory
-        logger.info(f"Registered model factory for type: {model_type}")
+        logger.info("Registered model factory for type: %s", model_type)
 
     async def _load_model(self, model_id: str, version: str) -> LoadedModel | None:
         """Load a specific model version."""
@@ -325,30 +328,30 @@ class ModelManager:
             # Get model metadata
             metadata = await self.registry.get_model(model_id, version)
             if not metadata:
-                logger.error(f"Model metadata not found: {model_id}:{version}")
+                logger.error("Model metadata not found: %s:%s", model_id, version)
                 return None
 
-            logger.info(f"Loading model {metadata.unique_id}...")
+            logger.info("Loading model %s...", metadata.unique_id)
 
             # Download model if not cached
             if not metadata.local_path or not Path(metadata.local_path).exists():
-                logger.info(f"Downloading model {metadata.unique_id}...")
+                logger.info("Downloading model %s...", metadata.unique_id)
                 success = await self.registry.download_model(model_id, version)
                 if not success:
-                    logger.error(f"Failed to download model {metadata.unique_id}")
+                    logger.error("Failed to download model %s", metadata.unique_id)
                     return None
 
                 # Refresh metadata to get updated local path
                 metadata = await self.registry.get_model(model_id, version)
                 if not metadata:
-                    logger.error(f"Failed to refresh metadata for {model_id}:{version}")
+                    logger.error("Failed to refresh metadata for %s:%s", model_id, version)
                     return None
 
             # Create model instance using appropriate factory
             model_instance = await self._create_model_instance(metadata)
             if not model_instance:
                 logger.error(
-                    f"Failed to create model instance for {metadata.unique_id}"
+                    "Failed to create model instance for %s", metadata.unique_id
                 )
                 return None
 
@@ -361,13 +364,13 @@ class ModelManager:
 
             load_time = time.time() - start_time
             logger.info(
-                f"Successfully loaded model {metadata.unique_id} in {load_time:.2f}s"
+                "Successfully loaded model %s in %.2fs", metadata.unique_id, load_time
             )
 
             return loaded_model
 
         except Exception as e:
-            logger.error(f"Failed to load model {model_id}:{version}: {e}")
+            logger.error("Failed to load model %s:%s: %s", model_id, version, e)
             return None
 
     async def _create_model_instance(self, metadata: ModelMetadata) -> Any:
@@ -376,7 +379,7 @@ class ModelManager:
         model_type = metadata.model_id
 
         if model_type not in self.model_factories:
-            logger.error(f"No factory registered for model type: {model_type}")
+            logger.error("No factory registered for model type: %s", model_type)
             return None
 
         try:
@@ -388,25 +391,25 @@ class ModelManager:
             return factory(metadata)
 
         except Exception as e:
-            logger.error(f"Model factory failed for {metadata.unique_id}: {e}")
+            logger.error("Model factory failed for %s: %s", metadata.unique_id, e)
             return None
 
     async def _warm_up_model(self, loaded_model: LoadedModel) -> None:
         """Warm up model with dummy predictions."""
         try:
-            logger.info(f"Warming up model {loaded_model.metadata.unique_id}...")
+            logger.info("Warming up model %s...", loaded_model.metadata.unique_id)
 
             # This would be model-specific warm-up logic
             # For now, just update the timestamp
             loaded_model.metrics.last_used = time.time()
 
             logger.info(
-                f"Model warm-up completed for {loaded_model.metadata.unique_id}"
+                "Model warm-up completed for %s", loaded_model.metadata.unique_id
             )
 
         except Exception as e:
             logger.warning(
-                f"Model warm-up failed for {loaded_model.metadata.unique_id}: {e}"
+                "Model warm-up failed for %s: %s", loaded_model.metadata.unique_id, e
             )
 
     async def _resolve_latest_version(self, model_id: str) -> str:
@@ -439,7 +442,7 @@ class ModelManager:
 
         successful_loads = sum(1 for r in results if isinstance(r, LoadedModel))
         logger.info(
-            f"Eager loading completed: {successful_loads}/{len(all_models)} models loaded"
+            "Eager loading completed: %d/%d models loaded", successful_loads, len(all_models)
         )
 
     async def _start_progressive_loading(self) -> None:
@@ -461,13 +464,13 @@ class ModelManager:
                         await asyncio.sleep(1)  # Brief pause between loads
                 except Exception as e:
                     logger.warning(
-                        f"Failed to load priority model with alias {alias}: {e}"
+                        "Failed to load priority model with alias %s: %s", alias, e
                     )
 
             logger.info("Progressive loading of priority models completed")
 
         except Exception as e:
-            logger.error(f"Progressive loading task failed: {e}")
+            logger.error("Progressive loading task failed: %s", e)
 
     def _register_default_factories(self) -> None:
         """Register default model factories."""
@@ -490,16 +493,13 @@ class ModelManager:
                     # Update the config to use our cached model
                     pat_service.config["model_path"] = metadata.local_path
 
-                # Load the model
-                loop = asyncio.get_event_loop()
-                await loop.run_in_executor(
-                    None, pat_service.load_model
-                )
+                # Load the model asynchronously
+                await pat_service.load_model()
 
                 return pat_service
 
             except Exception as e:
-                logger.error(f"PAT model factory failed: {e}")
+                logger.error("PAT model factory failed: %s", e)
                 raise
 
         # Register PAT model factory

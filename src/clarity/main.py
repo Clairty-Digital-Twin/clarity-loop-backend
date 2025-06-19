@@ -74,7 +74,7 @@ async def lifespan(_app: FastAPI) -> AsyncGenerator[None, None]:
     # Initialize lockout service with Redis URL from environment
     from clarity.auth.lockout_service import get_lockout_service
 
-    lockout_service = get_lockout_service()
+    get_lockout_service()  # Initialize the lockout service
     logger.info("✅ Account lockout service initialized")
 
     # Initialize Progressive ML Model Loading Service

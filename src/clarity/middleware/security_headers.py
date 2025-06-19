@@ -7,7 +7,7 @@ Implements OWASP recommended security headers for API protection.
 # removed – breaks FastAPI
 
 import logging
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
 from starlette.requests import Request
@@ -83,7 +83,7 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         # Add security headers
         self._add_security_headers(response)
 
-        return response  # type: Response
+        return response
 
     def _add_security_headers(self, response: Response) -> None:
         """Add security headers to the response.

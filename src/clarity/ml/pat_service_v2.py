@@ -209,11 +209,13 @@ class PATServiceV2:
         # Use the model's predict method
         if not self.current_model:
             raise RuntimeError("No model loaded")
-        result = await self.current_model.predict(**input_data)
+        raw_result = await self.current_model.predict(**input_data)
 
         # Ensure consistent output format
-        if not isinstance(result, dict):
-            result = {"predictions": result}
+        if isinstance(raw_result, dict):
+            result: dict[str, Any] = raw_result
+        else:
+            result = {"predictions": raw_result}
 
         # Add metadata
         if self.current_model:

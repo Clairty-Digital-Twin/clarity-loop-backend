@@ -103,7 +103,7 @@ class RequestSizeLimiterMiddleware(BaseHTTPMiddleware):
             HTTP response (413 if payload too large, otherwise normal response)
         """
         # Debug logging to see if middleware is called
-        logger.info(f"🔍 Request Size Limiter: {request.method} {request.url.path}")
+        logger.info("🔍 Request Size Limiter: %s %s", request.method, request.url.path)
 
         # Only check requests with bodies (POST, PUT, PATCH)
         if request.method in {"POST", "PUT", "PATCH"}:

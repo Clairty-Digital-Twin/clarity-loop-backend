@@ -37,11 +37,7 @@ class ErrorSolution:
 
     description: str
     steps: list[str]
-    documentation_links: list[str] = None
-
-    def __post_init__(self) -> None:
-        if self.documentation_links is None:
-            self.documentation_links = []
+    documentation_links: list[str] = field(default_factory=list)
 
 
 @dataclass
@@ -55,11 +51,7 @@ class StartupErrorInfo:
     severity: ErrorSeverity
     solutions: list[ErrorSolution]
     common_causes: list[str]
-    related_errors: list[str] = None
-
-    def __post_init__(self) -> None:
-        if self.related_errors is None:
-            self.related_errors = []
+    related_errors: list[str] = field(default_factory=list)
 
 
 class StartupErrorCatalog:

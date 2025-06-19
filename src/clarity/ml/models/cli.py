@@ -7,9 +7,7 @@ import asyncio
 import builtins
 import json
 from pathlib import Path
-import sys
 import time
-from typing import Any, Dict, List, Optional
 
 import aiohttp
 import click
@@ -23,10 +21,8 @@ from rich.progress import (
     TimeElapsedColumn,
 )
 from rich.table import Table
-from rich.tree import Tree
 
 from .local_server import LocalModelServer, ModelServerConfig
-from .manager import LoadingStrategy, ModelLoadConfig, ModelManager
 from .registry import (
     ModelMetadata,
     ModelRegistry,

@@ -6,7 +6,7 @@ abuse and ensure fair resource usage across users.
 
 from collections.abc import Callable
 import logging
-from typing import Any, Optional
+from typing import Any
 
 from fastapi import Request
 from fastapi.responses import JSONResponse

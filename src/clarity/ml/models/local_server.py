@@ -5,22 +5,18 @@ Provides REST API for model management, serving, and testing.
 """
 
 import asyncio
-import json
 import logging
-import os
 from pathlib import Path
-import tempfile
-from typing import Any, Dict, List, Optional
+from typing import Any
 
-from fastapi import BackgroundTasks, Depends, FastAPI, HTTPException, Query
-from fastapi.responses import JSONResponse, StreamingResponse
+from fastapi import BackgroundTasks, FastAPI, HTTPException, Query
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 import uvicorn
 
-from .manager import LoadedModel, LoadingStrategy, ModelLoadConfig, ModelManager
+from .manager import LoadingStrategy, ModelLoadConfig, ModelManager
 from .registry import (
     LEGACY_PAT_MODELS,
-    ModelMetadata,
     ModelRegistry,
     ModelRegistryConfig,
     initialize_legacy_models,
@@ -414,8 +410,6 @@ class LocalModelServer:
         async def create_mock_data():
             """Create mock training data for testing"""
             import random
-
-            import numpy as np
 
             # Generate mock actigraphy data
             mock_data = {

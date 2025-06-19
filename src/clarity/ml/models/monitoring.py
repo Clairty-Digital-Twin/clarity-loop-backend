@@ -6,18 +6,17 @@ Supports Prometheus metrics, custom dashboards, and real-time performance tracki
 
 import asyncio
 from collections import defaultdict, deque
-from collections.abc import Callable
-from dataclasses import asdict, dataclass
-from datetime import datetime, timedelta
+from dataclasses import dataclass
+from datetime import datetime
 import json
 import logging
 import time
-from typing import Any, Deque, Dict, List, Optional
+from typing import Any
 
 from prometheus_client import Counter, Gauge, Histogram, Info, start_http_server
 from pydantic import BaseModel
 
-from .manager import LoadedModel, ModelManager, ModelPerformanceMetrics
+from .manager import ModelManager
 
 logger = logging.getLogger(__name__)
 

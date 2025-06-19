@@ -14,7 +14,7 @@ from fastapi import Depends, HTTPException, Request, status
 from fastapi.security import HTTPBearer
 
 from clarity.auth.aws_cognito_provider import get_cognito_provider
-from clarity.auth.lockout_service import get_lockout_service
+from clarity.auth.lockout_service import get_lockout_service  # noqa: F401
 from clarity.auth.modal_auth_fix import get_user_context
 from clarity.models.auth import UserContext
 from clarity.models.user import User

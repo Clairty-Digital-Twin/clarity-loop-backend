@@ -119,9 +119,10 @@ class TestRateLimitExceededHandler:
         """Test handling of rate limit exceeded errors."""
         # Clean Code: Create a mock limit object
         from unittest.mock import MagicMock
+
         mock_limit = MagicMock()
         mock_limit.limit = "5/minute"
-        
+
         # Create exception with mock limit
         exc = RateLimitExceeded(mock_limit)
         exc.detail = "test_key"  # Add detail for our handler
@@ -151,11 +152,11 @@ class TestIntegration:
 
         # Set up rate limiting
         limiter = setup_rate_limiting(app)
-        
+
         # Add the middleware to the app
         from slowapi import _rate_limit_exceeded_handler
         from slowapi.middleware import SlowAPIMiddleware
-        
+
         # Add SlowAPI middleware
         app.add_middleware(SlowAPIMiddleware)
         app.state.limiter = limiter
@@ -164,18 +165,21 @@ class TestIntegration:
         @app.get("/test/unlimited")
         async def unlimited():
             from fastapi.responses import JSONResponse
+
             return JSONResponse({"message": "success"})
 
         @app.get("/test/limited")
         @limiter.limit("2/minute")
         async def limited(request: Request):
             from fastapi.responses import JSONResponse
+
             return JSONResponse({"message": "success"})
 
         @app.get("/test/auth")
         @limiter.limit("5/minute", key_func=get_ip_only)
         async def auth_endpoint(request: Request):
             from fastapi.responses import JSONResponse
+
             return JSONResponse({"message": "success"})
 
         return app

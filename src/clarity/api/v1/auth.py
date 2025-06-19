@@ -15,7 +15,11 @@ from slowapi.util import get_remote_address
 from clarity.auth.aws_cognito_provider import CognitoAuthProvider
 from clarity.auth.dependencies import get_auth_provider, get_current_user
 from clarity.auth.dependencies import get_current_user as get_user_func
-from clarity.auth.lockout_service import AccountLockoutError, AccountLockoutService, get_lockout_service
+from clarity.auth.lockout_service import (
+    AccountLockoutError,
+    AccountLockoutService,
+    get_lockout_service,
+)
 from clarity.core.constants import (
     AUTH_HEADER_TYPE_BEARER,
     AUTH_SCOPE_FULL_ACCESS,

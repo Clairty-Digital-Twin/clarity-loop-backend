@@ -13,7 +13,14 @@ from pathlib import Path
 from typing import Any, ClassVar
 from urllib.parse import urlparse
 
-from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator, model_validator
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    ValidationError,
+    field_validator,
+    model_validator,
+)
 from pydantic.color import Color
 from pydantic_settings import BaseSettings
 
@@ -214,7 +221,7 @@ class SecurityConfig(BaseModel):
         default_factory=lambda: ["http://localhost:3000", "http://localhost:8080"],
         description="CORS allowed origins",
     )
-    
+
     @model_validator(mode="before")
     @classmethod
     def parse_cors_origins(cls, values: dict[str, Any]) -> dict[str, Any]:
@@ -224,6 +231,7 @@ class SecurityConfig(BaseModel):
                 o.strip() for o in values["cors_origins"].split(",") if o.strip()
             ]
         return values
+
     max_request_size: int = Field(
         default=10 * 1024 * 1024,  # 10MB
         description="Maximum request size in bytes",
@@ -352,7 +360,7 @@ class ClarityConfig(BaseSettings):
         """Extract nested configuration from environment variables."""
         # Debug: log what values we receive
         import os
-        
+
         # For Pydantic BaseSettings, we need to check both the values dict and env vars
         aws_config = {}
         cognito_config = {}
@@ -362,43 +370,50 @@ class ClarityConfig(BaseSettings):
         security_config = {}
 
         # Extract AWS config - check env vars directly since BaseSettings might not pass them
-        aws_config["region"] = values.get("AWS_REGION") or os.getenv("AWS_REGION", "us-east-1")
+        aws_config["region"] = values.get("AWS_REGION") or os.getenv(
+            "AWS_REGION", "us-east-1"
+        )
         aws_config["access_key_id"] = values.get("AWS_ACCESS_KEY_ID", "")
         aws_config["secret_access_key"] = values.get("AWS_SECRET_ACCESS_KEY", "")
         aws_config["session_token"] = values.get("AWS_SESSION_TOKEN", "")
 
         # Extract Cognito config - check both values and env vars
-        cognito_config["user_pool_id"] = values.get("COGNITO_USER_POOL_ID") or os.getenv("COGNITO_USER_POOL_ID", "")
-        cognito_config["client_id"] = values.get("COGNITO_CLIENT_ID") or os.getenv("COGNITO_CLIENT_ID", "")
-        cognito_config["region"] = values.get("COGNITO_REGION") or os.getenv("COGNITO_REGION", aws_config["region"])
+        cognito_config["user_pool_id"] = values.get(
+            "COGNITO_USER_POOL_ID"
+        ) or os.getenv("COGNITO_USER_POOL_ID", "")
+        cognito_config["client_id"] = values.get("COGNITO_CLIENT_ID") or os.getenv(
+            "COGNITO_CLIENT_ID", ""
+        )
+        cognito_config["region"] = values.get("COGNITO_REGION") or os.getenv(
+            "COGNITO_REGION", aws_config["region"]
+        )
 
         # Extract DynamoDB config - check both values and env vars
-        dynamodb_config["table_name"] = (
-            values.get("DYNAMODB_TABLE_NAME") or 
-            os.getenv("DYNAMODB_TABLE_NAME", "clarity-health-data")
+        dynamodb_config["table_name"] = values.get("DYNAMODB_TABLE_NAME") or os.getenv(
+            "DYNAMODB_TABLE_NAME", "clarity-health-data"
         )
-        dynamodb_config["endpoint_url"] = (
-            values.get("DYNAMODB_ENDPOINT_URL") or 
-            os.getenv("DYNAMODB_ENDPOINT_URL", "")
-        )
+        dynamodb_config["endpoint_url"] = values.get(
+            "DYNAMODB_ENDPOINT_URL"
+        ) or os.getenv("DYNAMODB_ENDPOINT_URL", "")
 
         # Extract S3 config - check both values and env vars
-        s3_config["bucket_name"] = (
-            values.get("S3_BUCKET_NAME") or 
-            os.getenv("S3_BUCKET_NAME", "clarity-health-uploads")
+        s3_config["bucket_name"] = values.get("S3_BUCKET_NAME") or os.getenv(
+            "S3_BUCKET_NAME", "clarity-health-uploads"
         )
-        s3_config["ml_models_bucket"] = (
-            values.get("S3_ML_MODELS_BUCKET") or 
-            os.getenv("S3_ML_MODELS_BUCKET", "clarity-ml-models-124355672559")
+        s3_config["ml_models_bucket"] = values.get("S3_ML_MODELS_BUCKET") or os.getenv(
+            "S3_ML_MODELS_BUCKET", "clarity-ml-models-124355672559"
         )
-        s3_config["endpoint_url"] = (
-            values.get("S3_ENDPOINT_URL") or 
-            os.getenv("S3_ENDPOINT_URL", "")
+        s3_config["endpoint_url"] = values.get("S3_ENDPOINT_URL") or os.getenv(
+            "S3_ENDPOINT_URL", ""
         )
 
         # Extract Gemini config - check both values and env vars
-        gemini_config["api_key"] = values.get("GEMINI_API_KEY") or os.getenv("GEMINI_API_KEY", "")
-        gemini_config["model"] = values.get("GEMINI_MODEL") or os.getenv("GEMINI_MODEL", "gemini-1.5-flash")
+        gemini_config["api_key"] = values.get("GEMINI_API_KEY") or os.getenv(
+            "GEMINI_API_KEY", ""
+        )
+        gemini_config["model"] = values.get("GEMINI_MODEL") or os.getenv(
+            "GEMINI_MODEL", "gemini-1.5-flash"
+        )
         gemini_config["temperature"] = float(
             values.get("GEMINI_TEMPERATURE") or os.getenv("GEMINI_TEMPERATURE", "0.7")
         )
@@ -407,13 +422,11 @@ class ClarityConfig(BaseSettings):
         )
 
         # Extract security config - check both values and env vars
-        security_config["secret_key"] = (
-            values.get("SECRET_KEY") or 
-            os.getenv("SECRET_KEY", "dev-secret-key")
+        security_config["secret_key"] = values.get("SECRET_KEY") or os.getenv(
+            "SECRET_KEY", "dev-secret-key"
         )
-        cors_origins_str = (
-            values.get("CORS_ALLOWED_ORIGINS") or 
-            os.getenv("CORS_ALLOWED_ORIGINS", "http://localhost:3000,http://localhost:8080")
+        cors_origins_str = values.get("CORS_ALLOWED_ORIGINS") or os.getenv(
+            "CORS_ALLOWED_ORIGINS", "http://localhost:3000,http://localhost:8080"
         )
         # Pass raw string - SecurityConfig will parse and validate it
         security_config["cors_origins"] = cors_origins_str

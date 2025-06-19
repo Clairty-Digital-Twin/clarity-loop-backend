@@ -96,7 +96,9 @@ class TestAccountLockoutService:
         )
 
         # Log for debugging
-        logger.info(f"Service initialized with max_attempts={short_timeout_service.max_attempts}")
+        logger.info(
+            f"Service initialized with max_attempts={short_timeout_service.max_attempts}"
+        )
 
         # Trigger lockout - record exactly 3 attempts
         for i in range(3):

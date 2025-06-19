@@ -102,29 +102,29 @@ class AccountLockoutService:
             rec = self._mem.get(user)
             if not rec:
                 return False
-            
+
             current_time = time.time()
             locked_until = rec.get("locked_until", 0)
-            
+
             # If lockout has expired, clean up
             if locked_until > 0 and locked_until <= current_time:
                 rec["attempts"] = []
                 rec["locked_until"] = 0
                 return False
-            
+
             return locked_until > current_time
 
     async def _mem_register_failure(self, user: str):
         async with self._lock:
             rec = self._mem.setdefault(user, {"attempts": [], "locked_until": 0})
-            
+
             # Clean up expired attempts
             current_time = time.time()
             if rec["locked_until"] > 0 and rec["locked_until"] <= current_time:
                 # Lockout has expired, reset attempts
                 rec["attempts"] = []
                 rec["locked_until"] = 0
-            
+
             rec["attempts"].append(current_time)
             if len(rec["attempts"]) >= self.max_attempts:
                 rec["locked_until"] = current_time + self.lockout_secs

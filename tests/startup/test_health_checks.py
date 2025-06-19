@@ -104,7 +104,7 @@ class TestServiceHealthChecker:
         with patch("boto3.client") as mock_client:
             mock_cognito = Mock()
             # Simulate timeout by raising asyncio.TimeoutError
-            mock_cognito.describe_user_pool.side_effect = asyncio.TimeoutError(
+            mock_cognito.describe_user_pool.side_effect = TimeoutError(
                 "Operation timed out"
             )
             mock_client.return_value = mock_cognito

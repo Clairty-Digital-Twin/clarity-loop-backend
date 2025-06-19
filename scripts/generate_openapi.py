@@ -4,9 +4,10 @@
 import json
 import os
 import sys
+from pathlib import Path
 
 # Add src to path
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+sys.path.insert(0, str(Path(__file__).parent.parent))
 
 # Set required env vars to avoid AWS initialization
 os.environ["SKIP_AWS_INIT"] = "true"
@@ -18,7 +19,7 @@ from src.clarity.main import app
 openapi_spec = app.openapi()
 
 # Write to file
-with open("openapi.json", "w", encoding="utf-8") as f:
+with Path("openapi.json").open("w", encoding="utf-8") as f:
     json.dump(openapi_spec, f, indent=2)
 
 print("OpenAPI spec generated: openapi.json")

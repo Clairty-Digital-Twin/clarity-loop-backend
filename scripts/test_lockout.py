@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Test script to demonstrate account lockout functionality.
+
 This script simulates multiple failed login attempts to test the lockout service.
 Works with both Redis and in-memory backends.
 """
@@ -8,17 +9,19 @@ import asyncio
 from datetime import timedelta
 import os
 import sys
+from pathlib import Path
 
 # Add the src directory to the path so we can import clarity modules
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
+sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
 from clarity.auth.lockout_service import AccountLockoutError, AccountLockoutService
 
 
-async def test_lockout_demo(
-    test_email: str = "demo@example.com", _wrong_password: str = "WrongP@ssword"
-) -> None:
+async def test_lockout_demo() -> None:
     """Demonstrate the lockout service functionality."""
+    test_email = "demo@example.com"
+    _wrong_password = "WrongP@ssword"
+    
     print("🔒 Account Lockout Service Demo")
     print("=" * 50)
 

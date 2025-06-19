@@ -3,12 +3,18 @@
 
 from collections import OrderedDict
 import json
+from pathlib import Path
+
+try:
+    import yaml
+except ImportError:
+    yaml = None
 
 
 def clean_openapi_spec() -> None:
     """Clean and enhance the OpenAPI spec."""
     # Load the generated spec
-    with open("openapi.json", encoding="utf-8") as f:
+    with Path("openapi.json").open(encoding="utf-8") as f:
         spec = json.load(f)
 
     # 1. Add security schemes
@@ -36,7 +42,8 @@ def clean_openapi_spec() -> None:
     # 3. Clean up paths and tags
     cleaned_paths = OrderedDict()
 
-    for path, methods in spec["paths"].items():
+    for original_path, methods in spec["paths"].items():
+        path = original_path
         # Skip if path is malformed
         if not path:
             continue
@@ -179,19 +186,17 @@ def clean_openapi_spec() -> None:
     ]
 
     # Write cleaned spec
-    with open("openapi-cleaned.json", "w", encoding="utf-8") as f:
+    with Path("openapi-cleaned.json").open("w", encoding="utf-8") as f:
         json.dump(spec, f, indent=2)
 
     print("✅ OpenAPI spec cleaned and saved to openapi-cleaned.json")
 
     # Also create YAML version
-    try:
-        import yaml
-
-        with open("openapi-cleaned.yaml", "w", encoding="utf-8") as f:
+    if yaml is not None:
+        with Path("openapi-cleaned.yaml").open("w", encoding="utf-8") as f:
             yaml.dump(spec, f, default_flow_style=False, sort_keys=False)
         print("✅ YAML version saved to openapi-cleaned.yaml")
-    except ImportError:
+    else:
         print("⚠️  PyYAML not installed, skipping YAML generation")
 
 

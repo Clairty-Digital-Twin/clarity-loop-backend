@@ -8,7 +8,7 @@ import os
 from pathlib import Path
 import subprocess
 import sys
-from typing import Any, Dict
+from typing import Any
 from unittest.mock import patch
 
 import pytest

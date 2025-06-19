@@ -12,7 +12,7 @@ import sys
 src_path = Path(__file__).parent.parent / "src"
 sys.path.insert(0, str(src_path))
 
-from clarity.startup.orchestrator import main
+from clarity.startup.orchestrator import main  # noqa: E402
 
 if __name__ == "__main__":
     # Add default dry-run flag if not specified

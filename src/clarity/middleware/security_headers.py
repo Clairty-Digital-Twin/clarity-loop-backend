@@ -34,6 +34,7 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
     def __init__(
         self,
         app: ASGIApp,
+        *,
         enable_hsts: bool = True,
         hsts_max_age: int = 31536000,  # 1 year
         hsts_include_subdomains: bool = True,
@@ -130,6 +131,7 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
 # Convenience function for easy registration
 def setup_security_headers(
     app: ASGIApp,
+    *,
     enable_hsts: bool = True,
     enable_csp: bool = True,
     cache_control: str = "no-store, private",

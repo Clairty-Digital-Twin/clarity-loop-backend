@@ -140,6 +140,7 @@ class ProgressiveLoadingService:
         model_id: str,
         version: str = "latest",
         timeout: int | None = None,
+        *,
         critical: bool = False,
     ) -> LoadedModel | None:
         """Get a model, loading it if necessary.
@@ -381,7 +382,7 @@ class ProgressiveLoadingService:
         semaphore = asyncio.Semaphore(self.config.max_parallel_loads)
 
         async def load_model_with_semaphore(
-            model_spec: str, is_critical: bool = False
+            model_spec: str, *, is_critical: bool = False
         ) -> None:
             async with semaphore:
                 model_id, version = self._parse_model_spec(model_spec)

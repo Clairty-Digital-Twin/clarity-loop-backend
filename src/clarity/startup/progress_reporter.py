@@ -85,7 +85,7 @@ class StartupProgressReporter:
     """Reports startup progress with clear status messages."""
 
     def __init__(
-        self, output: TextIO | None = None, enable_colors: bool = True
+        self, output: TextIO | None = None, *, enable_colors: bool = True
     ) -> None:
         """Initialize progress reporter.
 
@@ -299,7 +299,7 @@ class StartupProgressReporter:
             summary = config.get_startup_summary()
             self.complete_step(step, "All configuration valid", summary)
 
-    def report_startup_complete(self, success: bool = True, message: str = "") -> None:
+    def report_startup_complete(self, *, success: bool = True, message: str = "") -> None:
         """Report startup completion."""
         self.end_time = time.time()
         total_duration = (self.end_time - self.start_time) * 1000

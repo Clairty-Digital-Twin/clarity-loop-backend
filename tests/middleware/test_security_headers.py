@@ -15,6 +15,7 @@ from clarity.middleware.security_headers import (
 
 
 def create_test_app(
+    *,
     enable_hsts: bool = True,
     enable_csp: bool = True,
     cache_control: str = "no-store, private",

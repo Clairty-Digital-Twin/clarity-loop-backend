@@ -35,6 +35,7 @@ class PATServiceV2:
     def __init__(
         self,
         model_size: str = "medium",
+        *,
         enable_monitoring: bool = True,
         progressive_config: ProgressiveLoadingConfig | None = None,
         monitoring_config: ModelMonitoringConfig | None = None,

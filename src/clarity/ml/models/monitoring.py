@@ -165,6 +165,7 @@ class ModelMonitoringService:
         model_id: str,
         version: str,
         latency_ms: float,
+        *,
         success: bool,
         error_type: str | None = None,
         input_size: int | None = None,

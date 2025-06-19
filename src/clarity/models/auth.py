@@ -158,7 +158,7 @@ class UserRegistrationRequest(BaseModel):
 
     @field_validator("terms_accepted", "privacy_policy_accepted")
     @classmethod
-    def validate_acceptance(cls, v: bool) -> bool:
+    def validate_acceptance(cls, v: bool) -> bool:  # noqa: FBT001
         """Validate that terms and privacy policy are accepted."""
         if not v:
             msg = "Terms and privacy policy must be accepted"

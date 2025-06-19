@@ -38,6 +38,7 @@ class StartupOrchestrator:
 
     def __init__(
         self,
+        *,
         dry_run: bool = False,
         skip_services: set[str] | None = None,
         timeout: float = 30.0,
@@ -79,7 +80,7 @@ class StartupOrchestrator:
             success = await self._validate_configuration()
             if not success:
                 self.reporter.report_startup_complete(
-                    False, "Configuration validation failed"
+                    success=False, message="Configuration validation failed"
                 )
                 return False, None
 
@@ -88,7 +89,7 @@ class StartupOrchestrator:
                 success = await self._check_service_health()
                 if not success:
                     self.reporter.report_startup_complete(
-                        False, "Service health checks failed"
+                        success=False, message="Service health checks failed"
                     )
                     return False, None
 
@@ -97,28 +98,28 @@ class StartupOrchestrator:
                 success = await self._initialize_services()
                 if not success:
                     self.reporter.report_startup_complete(
-                        False, "Service initialization failed"
+                        success=False, message="Service initialization failed"
                     )
                     return False, None
 
             # Success!
             if self.dry_run:
                 self.reporter.report_startup_complete(
-                    True, "Dry-run completed successfully"
+                    success=True, message="Dry-run completed successfully"
                 )
             else:
-                self.reporter.report_startup_complete(True, "All systems operational")
+                self.reporter.report_startup_complete(success=True, message="All systems operational")
 
             return True, self.config
 
         except TimeoutError:
             self.reporter.report_startup_complete(
-                False, f"Startup timed out after {self.timeout}s"
+                success=False, message=f"Startup timed out after {self.timeout}s"
             )
             return False, None
         except Exception as e:
             logger.exception("Unexpected startup error")
-            self.reporter.report_startup_complete(False, f"Unexpected error: {e!s}")
+            self.reporter.report_startup_complete(success=False, message=f"Unexpected error: {e!s}")
             return False, None
 
     async def _validate_configuration(self) -> bool:
@@ -327,7 +328,7 @@ class StartupOrchestrator:
 # CLI entry point functions
 
 
-async def validate_config_only(dry_run: bool = True) -> bool:
+async def validate_config_only(*, dry_run: bool = True) -> bool:
     """Validate configuration only (CLI entry point)."""
     orchestrator = StartupOrchestrator(dry_run=dry_run)
     success, config = await orchestrator.orchestrate_startup()

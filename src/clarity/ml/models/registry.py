@@ -209,6 +209,7 @@ class ModelRegistry:
         model_id: str,
         version: str = "latest",
         source_url: str | None = None,
+        *,
         force: bool = False,
     ) -> bool:
         """Download model with intelligent caching and resume capability."""

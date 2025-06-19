@@ -107,10 +107,10 @@ class HealthResponse(BaseModel):
 @router.post("/register", response_model=TokenResponse)
 @auth_limiter.limit("5/hour")  # Very strict limit for registration
 async def register(
-    request: Request,
+    _request: Request,
     user_data: UserRegister,
     auth_provider: IAuthProvider = Depends(get_auth_provider),
-    lockout_service: AccountLockoutService = Depends(get_lockout_service),
+    _lockout_service: AccountLockoutService = Depends(get_lockout_service),
 ) -> TokenResponse | JSONResponse:
     """Register a new user."""
     # Check if self-signup is enabled

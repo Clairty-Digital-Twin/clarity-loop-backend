@@ -17,12 +17,12 @@ async def test_require_auth_no_user() -> None:
 
     @require_auth()
     async def dummy_endpoint(  # noqa: RUF029
-        current_user: User | None = None,
+        _current_user: User | None = None,
     ) -> str:
         return "OK"
 
     with pytest.raises(HTTPException) as excinfo:
-        await dummy_endpoint(current_user=None)
+        await dummy_endpoint(_current_user=None)
 
     assert excinfo.value.status_code == status.HTTP_401_UNAUTHORIZED
     assert excinfo.value.detail == "Authentication required"
@@ -35,11 +35,11 @@ async def test_require_auth_with_user() -> None:
 
     @require_auth()
     async def dummy_endpoint(  # noqa: RUF029
-        current_user: User | None = None,
+        _current_user: User | None = None,
     ) -> str:
         return "OK"
 
-    result = await dummy_endpoint(current_user=mock_user)
+    result = await dummy_endpoint(_current_user=mock_user)
     assert result == "OK"
 
 
@@ -49,12 +49,12 @@ async def test_require_permission_no_user() -> None:
 
     @require_permission("some_permission")
     async def dummy_endpoint(  # noqa: RUF029
-        current_user: User | None = None,
+        _current_user: User | None = None,
     ) -> str:
         return "OK"
 
     with pytest.raises(HTTPException) as excinfo:
-        await dummy_endpoint(current_user=None)
+        await dummy_endpoint(_current_user=None)
 
     assert excinfo.value.status_code == status.HTTP_401_UNAUTHORIZED
     assert excinfo.value.detail == "Authentication required"
@@ -67,11 +67,11 @@ async def test_require_permission_with_user() -> None:
 
     @require_permission("some_permission")
     async def dummy_endpoint(  # noqa: RUF029
-        current_user: User | None = None,
+        _current_user: User | None = None,
     ) -> str:
         return "OK"
 
-    result = await dummy_endpoint(current_user=mock_user)
+    result = await dummy_endpoint(_current_user=mock_user)
     assert result == "OK"
 
 
@@ -81,12 +81,12 @@ async def test_require_role_no_user() -> None:
 
     @require_role("some_role")
     async def dummy_endpoint(  # noqa: RUF029
-        current_user: User | None = None,
+        _current_user: User | None = None,
     ) -> str:
         return "OK"
 
     with pytest.raises(HTTPException) as excinfo:
-        await dummy_endpoint(current_user=None)
+        await dummy_endpoint(_current_user=None)
 
     assert excinfo.value.status_code == status.HTTP_401_UNAUTHORIZED
     assert excinfo.value.detail == "Authentication required"
@@ -99,9 +99,9 @@ async def test_require_role_with_user() -> None:
 
     @require_role("some_role")
     async def dummy_endpoint(  # noqa: RUF029
-        current_user: User | None = None,
+        _current_user: User | None = None,
     ) -> str:
         return "OK"
 
-    result = await dummy_endpoint(current_user=mock_user)
+    result = await dummy_endpoint(_current_user=mock_user)
     assert result == "OK"

@@ -92,7 +92,7 @@ async def bulletproof_startup() -> tuple[bool, ClarityConfig | None]:
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
+async def lifespan(_app: FastAPI) -> AsyncGenerator[None, None]:
     """Application lifespan manager with bulletproof startup."""
     global _app_config, _startup_successful
 

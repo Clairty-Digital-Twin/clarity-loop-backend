@@ -152,7 +152,7 @@ async def get_pat_inference_engine() -> AsyncInferenceEngine:
 )
 @ai_limiter.limit("20/hour")  # AI endpoints are resource-intensive
 async def analyze_step_data(
-    req: Request,
+    _req: Request,
     request: StepDataRequest,
     _background_tasks: BackgroundTasks,
     current_user: AuthenticatedUser,

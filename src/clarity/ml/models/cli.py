@@ -367,7 +367,7 @@ async def serve(
 @click.option("--input-file", type=click.Path(exists=True), help="Input JSON file")
 @click.pass_context
 async def predict(
-    ctx: click.Context, url: str, model_id: str, version: str, input_file: str | None
+    _ctx: click.Context, url: str, model_id: str, version: str, input_file: str | None
 ) -> None:
     """Make prediction using local server."""
     # Load input data
@@ -411,7 +411,7 @@ async def predict(
 @cli.command()
 @click.option("--url", default="http://localhost:8900", help="Server URL")
 @click.pass_context
-async def monitor(ctx: click.Context, url: str) -> None:
+async def monitor(_ctx: click.Context, url: str) -> None:
     """Monitor local server metrics."""
     console.print(f"[green]Monitoring server at {url}[/green]")
     console.print("[yellow]Press Ctrl+C to stop[/yellow]")

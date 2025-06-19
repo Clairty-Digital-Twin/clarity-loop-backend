@@ -343,7 +343,7 @@ async def serve(  # noqa: RUF029 - Click async handler
     ctx: click.Context,
     host: str,
     port: int,
-    auto_load: bool,
+    auto_load: bool,  # noqa: FBT001
     create_mocks: bool,  # noqa: FBT001
 ) -> None:
     """Start local model server."""
@@ -397,8 +397,7 @@ async def predict(
     console.print(f"[blue]Model:[/blue] {model_id}:{version}")
 
     try:
-        async with aiohttp.ClientSession() as session:
-            async with session.post(f"{url}/predict", json=request_data) as response:
+        async with aiohttp.ClientSession() as session, session.post(f"{url}/predict", json=request_data) as response:
                 if response.status == HTTP_OK:
                     result = await response.json()
 
@@ -426,7 +425,7 @@ async def monitor(_ctx: click.Context, url: str) -> None:
     console.print(f"[green]Monitoring server at {url}[/green]")
     console.print("[yellow]Press Ctrl+C to stop[/yellow]")
 
-    try:
+    try:  # noqa: PLR1702 - Monitoring loop complexity
         while True:
             try:
                 async with aiohttp.ClientSession() as session:

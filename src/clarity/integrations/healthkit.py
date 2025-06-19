@@ -125,7 +125,7 @@ class HealthDataBatch(BaseModel):
     def validate_count_matches(
         cls,
         v: int,
-        values: dict[str, Any],
+        values: dict[str, Any],  # noqa: ARG003 - Pydantic validator pattern
     ) -> int:
         """Validate total count (for multi-modal batches, may not match data_points)."""
         return v

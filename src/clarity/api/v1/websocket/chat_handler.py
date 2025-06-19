@@ -233,7 +233,7 @@ class WebSocketChatHandler:
 
 
 @router.websocket("/{room_id}")
-async def websocket_chat_endpoint(  # noqa: PLR1702 - WebSocket handler complexity
+async def websocket_chat_endpoint(
     websocket: WebSocket,
     room_id: str = "general",
     token: str | None = Query(...),
@@ -266,7 +266,7 @@ async def websocket_chat_endpoint(  # noqa: PLR1702 - WebSocket handler complexi
     await connection_manager.connect(websocket, user_id, username, room_id)
     logger.info("User %s (%s) connected to room %s", user_id, username, room_id)
 
-    try:
+    try:  # noqa: PLR1702 - WebSocket handler complexity
         while True:
             try:
                 raw_message = await websocket.receive_text()

@@ -23,6 +23,10 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 logger = logging.getLogger(__name__)
 
+# Constants
+AWS_REGION_MIN_PARTS = 3
+COGNITO_CLIENT_ID_MIN_LENGTH = 20
+
 
 class Environment(StrEnum):
     """Valid environment values."""
@@ -74,7 +78,7 @@ class AWSConfig(BaseModel):
             msg = "AWS region cannot be empty"
             raise ValueError(msg)
         # Basic AWS region format validation
-        if len(v.split("-")) < 3:
+        if len(v.split("-")) < AWS_REGION_MIN_PARTS:
             msg = f"Invalid AWS region format: {v}"
             raise ValueError(msg)
         return v
@@ -112,7 +116,7 @@ class CognitoConfig(BaseModel):
     @classmethod
     def validate_client_id(cls, v: str) -> str:
         """Validate Cognito Client ID format."""
-        if v and len(v) < 20:
+        if v and len(v) < COGNITO_CLIENT_ID_MIN_LENGTH:
             msg = f"Cognito Client ID appears invalid: {v}"
             raise ValueError(msg)
         return v

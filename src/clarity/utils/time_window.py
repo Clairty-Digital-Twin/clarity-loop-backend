@@ -36,7 +36,7 @@ def slice_to_weeks(
     Parameters
     ----------
     arr : numpy array
-        Input time series data (shape: N×C or N,)
+        Input time series data (shape: NxC or N,)
     minutes_per_week : int, optional
         Number of minutes in a week (default: 10,080)
     keep : {"latest", "all"}
@@ -75,7 +75,7 @@ def slice_to_weeks(
         return []
 
     # For 2D arrays, ensure we're slicing along time axis (axis 0)
-    n_features = arr.shape[1] if arr.ndim == 2 else None
+    n_features = arr.shape[1] if arr.ndim == MAX_DIMENSIONS else None
 
     # Get the time dimension
     n_samples = arr.shape[0]

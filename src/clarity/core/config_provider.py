@@ -16,7 +16,7 @@ if TYPE_CHECKING:
     pass  # Only for type stubs now
 
 
-class ConfigProvider(IConfigProvider):
+class ConfigProvider(IConfigProvider):  # noqa: PLR0904 - Feature-rich config provider
     """Concrete implementation of configuration provider.
 
     Follows Single Responsibility Principle - only handles configuration access.

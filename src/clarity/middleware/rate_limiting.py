@@ -6,7 +6,7 @@ abuse and ensure fair resource usage across users.
 
 from collections.abc import Callable
 import logging
-from typing import Any
+from typing import Any, ClassVar
 
 from fastapi import Request
 from fastapi.responses import JSONResponse
@@ -84,7 +84,7 @@ class RateLimitingMiddleware:
     """
 
     # Default rate limits
-    DEFAULT_LIMITS = {
+    DEFAULT_LIMITS: ClassVar[dict[str, str]] = {
         "global": "1000/hour",  # Global limit per key
         "auth": "20/hour",  # Authentication endpoints
         "health": "100/minute",  # Health data endpoints

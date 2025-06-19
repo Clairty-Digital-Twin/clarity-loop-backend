@@ -285,7 +285,7 @@ class LocalModelServer:
         async def load_model(
             model_id: str,
             version: str = "latest",
-            background_tasks: BackgroundTasks = None,
+            background_tasks: BackgroundTasks | None = None,
         ) -> dict[str, Any]:
             """Load a specific model version."""
             if not self.model_manager:

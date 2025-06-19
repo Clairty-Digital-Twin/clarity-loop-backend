@@ -96,7 +96,7 @@ class PATServiceV2:
             await self._initialize_fallback()
             return False
 
-    async def _load_model(self):
+    async def _load_model(self) -> None:
         """Load the requested model."""
         version = self.size_to_version.get(self.model_size, "latest")
 
@@ -116,7 +116,7 @@ class PATServiceV2:
         except (RuntimeError, AttributeError) as e:
             logger.error(f"Error loading PAT model: {e}")
 
-    async def _initialize_fallback(self):
+    async def _initialize_fallback(self) -> None:
         """Initialize fallback legacy service."""
         try:
             self.fallback_service = PATModelService(model_size=self.model_size)
@@ -382,7 +382,7 @@ class PATServiceV2:
 
         return status
 
-    async def shutdown(self):
+    async def shutdown(self) -> None:
         """Shutdown the PAT service."""
         try:
             if self.monitoring_service:

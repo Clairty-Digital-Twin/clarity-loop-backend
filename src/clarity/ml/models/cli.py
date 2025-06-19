@@ -8,6 +8,7 @@ import builtins
 import json
 from pathlib import Path
 import time
+from typing import Any
 
 import aiohttp
 import click
@@ -41,7 +42,7 @@ console = Console()
 )
 @click.option("--verbose", "-v", is_flag=True, help="Verbose output")
 @click.pass_context
-def cli(ctx, config_file, models_dir, verbose):
+def cli(ctx: click.Context, config_file: str | None, models_dir: str, verbose: bool) -> None:
     """Clarity ML Model Management CLI."""
     ctx.ensure_object(dict)
     ctx.obj["config_file"] = config_file
@@ -56,7 +57,7 @@ def cli(ctx, config_file, models_dir, verbose):
 
 @cli.command()
 @click.pass_context
-async def init(ctx) -> None:
+async def init(ctx: click.Context) -> None:
     """Initialize model registry."""
     models_dir = ctx.obj["models_dir"]
 
@@ -78,7 +79,7 @@ async def init(ctx) -> None:
 
 @cli.command()
 @click.pass_context
-async def list(ctx) -> None:
+async def list(ctx: click.Context) -> None:
     """List all models in registry."""
     models_dir = ctx.obj["models_dir"]
 
@@ -134,7 +135,7 @@ async def list(ctx) -> None:
 @click.option("--version", default="latest", help="Model version")
 @click.option("--source-url", help="Source URL for download")
 @click.pass_context
-async def download(ctx, model_id, version, source_url) -> None:
+async def download(ctx: click.Context, model_id: str, version: str, source_url: str | None) -> None:
     """Download a model."""
     models_dir = ctx.obj["models_dir"]
 
@@ -201,7 +202,7 @@ async def download(ctx, model_id, version, source_url) -> None:
 @click.option("--tags", help="Comma-separated tags")
 @click.pass_context
 async def register(
-    ctx, model_id, name, version, tier, source_url, checksum, size, description, tags
+    ctx: click.Context, model_id: str, name: str, version: str, tier: str, source_url: str, checksum: str, size: int, description: str | None, tags: str | None
 ) -> None:
     """Register a new model."""
     models_dir = ctx.obj["models_dir"]
@@ -236,7 +237,7 @@ async def register(
 @click.argument("model_id")
 @click.argument("version")
 @click.pass_context
-async def alias(ctx, alias, model_id, version) -> None:
+async def alias(ctx: click.Context, alias: str, model_id: str, version: str) -> None:
     """Create model alias."""
     models_dir = ctx.obj["models_dir"]
 
@@ -256,7 +257,7 @@ async def alias(ctx, alias, model_id, version) -> None:
 
 @cli.command()
 @click.pass_context
-async def status(ctx) -> None:
+async def status(ctx: click.Context) -> None:
     """Show model registry status."""
     models_dir = ctx.obj["models_dir"]
 
@@ -319,7 +320,7 @@ Registry File: {config.registry_file}
     "--create-mocks/--no-create-mocks", default=True, help="Create mock models"
 )
 @click.pass_context
-async def serve(ctx, host, port, auto_load, create_mocks) -> None:
+async def serve(ctx: click.Context, host: str, port: int, auto_load: bool, create_mocks: bool) -> None:
     """Start local model server."""
     models_dir = ctx.obj["models_dir"]
 
@@ -350,7 +351,7 @@ async def serve(ctx, host, port, auto_load, create_mocks) -> None:
 @click.option("--version", default="latest", help="Model version")
 @click.option("--input-file", type=click.Path(exists=True), help="Input JSON file")
 @click.pass_context
-async def predict(ctx, url, model_id, version, input_file) -> None:
+async def predict(ctx: click.Context, url: str, model_id: str, version: str, input_file: str | None) -> None:
     """Make prediction using local server."""
     # Load input data
     if input_file:
@@ -393,7 +394,7 @@ async def predict(ctx, url, model_id, version, input_file) -> None:
 @cli.command()
 @click.option("--url", default="http://localhost:8900", help="Server URL")
 @click.pass_context
-async def monitor(ctx, url) -> None:
+async def monitor(ctx: click.Context, url: str) -> None:
     """Monitor local server metrics."""
     console.print(f"[green]Monitoring server at {url}[/green]")
     console.print("[yellow]Press Ctrl+C to stop[/yellow]")
@@ -470,7 +471,7 @@ async def monitor(ctx, url) -> None:
     "--max-size-gb", type=float, default=10.0, help="Maximum cache size in GB"
 )
 @click.pass_context
-async def cleanup(ctx, max_size_gb):
+async def cleanup(ctx: click.Context, max_size_gb: float) -> None:
     """Clean up model cache."""
     models_dir = ctx.obj["models_dir"]
 
@@ -489,11 +490,11 @@ async def cleanup(ctx, max_size_gb):
         )
 
 
-def main():
+def main() -> None:
     """Main CLI entry point."""
 
     # Convert sync CLI to async
-    def async_cli():
+    def async_cli() -> Any:
         return asyncio.run(cli())
 
     # Replace click commands with async versions

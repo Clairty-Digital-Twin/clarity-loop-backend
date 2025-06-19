@@ -159,7 +159,7 @@ class ModelRegistry:
                 await self._save_registry()
                 logger.info(f"Registered model {metadata.unique_id}")
                 return True
-            except Exception as e:
+            except (OSError, IOError, ValueError) as e:
                 logger.error(f"Failed to register model {metadata.unique_id}: {e}")
                 return False
 
@@ -199,7 +199,7 @@ class ModelRegistry:
                 await self._save_registry()
                 logger.info(f"Created alias {alias} -> {unique_id}")
                 return True
-            except Exception as e:
+            except (OSError, IOError, ValueError) as e:
                 logger.error(f"Failed to create alias {alias}: {e}")
                 return False
 
@@ -256,7 +256,7 @@ class ModelRegistry:
             self.download_progress[download_id]["status"] = "failed"
             return False
 
-        except Exception as e:
+        except (aiohttp.ClientError, OSError, IOError) as e:
             logger.error(f"Download failed for model {metadata.unique_id}: {e}")
             self.download_progress[download_id]["status"] = "failed"
             return False
@@ -309,7 +309,7 @@ class ModelRegistry:
                 if file_checksum != metadata.checksum_sha256:
                     logger.warning(f"Checksum mismatch for {metadata.unique_id}")
                     return False
-            except Exception as e:
+            except (OSError, IOError) as e:
                 logger.error(
                     f"Checksum verification failed for {metadata.unique_id}: {e}"
                 )
@@ -380,7 +380,7 @@ class ModelRegistry:
                 logger.info(f"Download completed: {local_path}")
                 return True
 
-            except Exception as e:
+            except (aiohttp.ClientError, OSError, IOError) as e:
                 logger.error(f"Download error: {e}")
                 return False
 
@@ -414,7 +414,7 @@ class ModelRegistry:
 
             logger.info(f"Loaded registry with {len(self.models)} models")
 
-        except Exception as e:
+        except (OSError, IOError, ValueError) as e:
             logger.error(f"Failed to load registry: {e}")
 
     async def _save_registry(self):
@@ -434,7 +434,7 @@ class ModelRegistry:
             temp_file.rename(self.config.registry_file)
             logger.debug(f"Registry saved to {self.config.registry_file}")
 
-        except Exception as e:
+        except (OSError, IOError, ValueError) as e:
             logger.error(f"Failed to save registry: {e}")
 
     async def _cleanup_cache(self, max_size_gb: float = None) -> int:
@@ -473,7 +473,7 @@ class ModelRegistry:
 
                 if total_size <= max_size_bytes:
                     break
-            except Exception as e:
+            except (OSError, IOError) as e:
                 logger.error(f"Failed to remove cache file {file_path}: {e}")
 
         logger.info(

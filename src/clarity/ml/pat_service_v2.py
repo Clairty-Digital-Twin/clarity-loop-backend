@@ -89,7 +89,7 @@ class PATServiceV2:
             logger.info("PAT Service V2 initialized successfully")
             return True
 
-        except Exception as e:
+        except (RuntimeError, AttributeError) as e:
             logger.error(f"Failed to initialize PAT Service V2: {e}")
 
             # Fallback to legacy service
@@ -113,7 +113,7 @@ class PATServiceV2:
             else:
                 logger.warning(f"Failed to load PAT model: pat:{version}")
 
-        except Exception as e:
+        except (RuntimeError, AttributeError) as e:
             logger.error(f"Error loading PAT model: {e}")
 
     async def _initialize_fallback(self):
@@ -122,7 +122,7 @@ class PATServiceV2:
             self.fallback_service = PATModelService(model_size=self.model_size)
             # Note: Legacy service initialization would happen here
             logger.info("Fallback to legacy PAT service initialized")
-        except Exception as e:
+        except (RuntimeError, AttributeError) as e:
             logger.error(f"Failed to initialize fallback service: {e}")
 
     async def predict(
@@ -163,7 +163,7 @@ class PATServiceV2:
 
                 return result
 
-            except Exception as e:
+            except (RuntimeError, ValueError, TypeError) as e:
                 logger.error(f"Prediction failed with progressive model: {e}")
 
                 # Record error
@@ -308,7 +308,7 @@ class PATServiceV2:
             logger.info(f"Model warm-up completed with {sample_count} samples")
             return True
 
-        except Exception as e:
+        except (RuntimeError, ValueError) as e:
             logger.error(f"Model warm-up failed: {e}")
             return False
 
@@ -340,7 +340,7 @@ class PATServiceV2:
             logger.error(f"Failed to reload PAT model: pat:{target_version}")
             return False
 
-        except Exception as e:
+        except (RuntimeError, AttributeError) as e:
             logger.error(f"Model reload failed: {e}")
             return False
 
@@ -398,7 +398,7 @@ class PATServiceV2:
 
             logger.info("PAT Service V2 shutdown completed")
 
-        except Exception as e:
+        except (RuntimeError, AttributeError) as e:
             logger.error(f"Error during PAT Service V2 shutdown: {e}")
 
 

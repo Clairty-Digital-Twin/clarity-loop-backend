@@ -455,7 +455,7 @@ _global_pat_service: PATServiceV2 | None = None
 
 async def get_pat_service(model_size: str = "medium") -> PATServiceV2:
     """Get or create global PAT service instance."""
-    global _global_pat_service
+    global _global_pat_service  # noqa: PLW0603 - Singleton pattern
 
     if _global_pat_service is None or _global_pat_service.model_size != model_size:
         _global_pat_service = await create_pat_service(model_size)

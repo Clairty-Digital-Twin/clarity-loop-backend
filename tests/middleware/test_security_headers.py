@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any, Dict, Never
+from typing import Never
 
 from fastapi import FastAPI, Request
 from fastapi.testclient import TestClient

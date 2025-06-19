@@ -56,7 +56,7 @@ async def custom_rate_limit_exceeded_handler(
         "Rate limit exceeded for %s - Key: %s, Limit: %s",
         request.url.path,
         exc.detail,
-        getattr(exc, 'limit', 'unknown')
+        getattr(exc, "limit", "unknown"),
     )
 
     response = JSONResponse(

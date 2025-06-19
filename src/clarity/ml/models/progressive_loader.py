@@ -5,6 +5,7 @@ replacing the legacy S3 download approach with progressive loading strategies.
 """
 
 import asyncio
+from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 from enum import Enum
 import logging
@@ -85,7 +86,7 @@ class ProgressiveLoadingService:
         self.model_manager: ModelManager | None = None
         self.current_phase = ApplicationPhase.INIT
         self.model_status: dict[str, ModelAvailabilityStatus] = {}
-        self.loading_tasks: dict[str, asyncio.Task] = {}
+        self.loading_tasks: dict[str, asyncio.Task[Any]] = {}
         self.startup_time = time.time()
         self.phase_transitions: dict[ApplicationPhase, float] = {}
         self._lock = asyncio.Lock()
@@ -290,7 +291,7 @@ class ProgressiveLoadingService:
             logger.error(f"Health check failed: {e}")
             return {"status": "unhealthy", "error": str(e)}
 
-    def _detect_environment(self):
+    def _detect_environment(self) -> None:
         """Auto-detect deployment environment."""
         # Check for common production environment indicators
         is_prod_env = any(
@@ -324,7 +325,7 @@ class ProgressiveLoadingService:
             f"Environment detected: production={is_prod_env}, local_dev={is_local_dev}"
         )
 
-    async def _setup_model_infrastructure(self):
+    async def _setup_model_infrastructure(self) -> None:
         """Setup model registry and manager."""
         # Configure paths based on environment
         if self.config.is_production and self.config.enable_efs_cache:
@@ -354,12 +355,12 @@ class ProgressiveLoadingService:
 
         await self.model_manager.initialize()
 
-    async def _initialize_model_registry(self):
+    async def _initialize_model_registry(self) -> None:
         """Initialize model registry with legacy models."""
         if self.model_manager:
             await initialize_legacy_models(self.model_manager.registry)
 
-    async def _start_progressive_loading(self):
+    async def _start_progressive_loading(self) -> None:
         """Start progressive model loading."""
         self.current_phase = ApplicationPhase.MODELS_LOADING
         self._record_phase_transition(ApplicationPhase.MODELS_LOADING)
@@ -367,7 +368,7 @@ class ProgressiveLoadingService:
         # Create semaphore for controlling parallel loads
         semaphore = asyncio.Semaphore(self.config.max_parallel_loads)
 
-        async def load_model_with_semaphore(model_spec: str, is_critical: bool = False):
+        async def load_model_with_semaphore(model_spec: str, is_critical: bool = False) -> None:
             async with semaphore:
                 model_id, version = self._parse_model_spec(model_spec)
                 unique_id = f"{model_id}:{version}"
@@ -431,7 +432,7 @@ class ProgressiveLoadingService:
         if preload_tasks:
             asyncio.create_task(self._finish_preloading(preload_tasks))
 
-    async def _finish_preloading(self, preload_tasks: list[asyncio.Task]):
+    async def _finish_preloading(self, preload_tasks: list[asyncio.Task[Any]]) -> None:
         """Finish preloading non-critical models in background."""
         try:
             await asyncio.gather(*preload_tasks, return_exceptions=True)
@@ -441,7 +442,7 @@ class ProgressiveLoadingService:
         except Exception as e:
             logger.error(f"Error in background preloading: {e}")
 
-    async def _start_eager_loading(self):
+    async def _start_eager_loading(self) -> None:
         """Start eager loading of all models."""
         self.current_phase = ApplicationPhase.MODELS_LOADING
         self._record_phase_transition(ApplicationPhase.MODELS_LOADING)
@@ -488,7 +489,7 @@ class ProgressiveLoadingService:
             return model_spec.split(":", 1)
         return model_spec, "latest"
 
-    def _record_phase_transition(self, phase: ApplicationPhase):
+    def _record_phase_transition(self, phase: ApplicationPhase) -> None:
         """Record phase transition timing."""
         self.phase_transitions[phase] = time.time() - self.startup_time
         logger.info(
@@ -514,7 +515,7 @@ async def get_progressive_service(
 
 
 @asynccontextmanager
-async def progressive_loading_lifespan(config: ProgressiveLoadingConfig | None = None):
+async def progressive_loading_lifespan(config: ProgressiveLoadingConfig | None = None) -> AsyncGenerator[ProgressiveLoadingService, None]:
     """Context manager for progressive loading service lifecycle."""
     service = await get_progressive_service(config)
     try:

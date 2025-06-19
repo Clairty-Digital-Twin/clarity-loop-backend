@@ -333,7 +333,7 @@ async def root() -> dict[str, Any]:
 @app.get("/health")
 async def health_check() -> dict[str, Any]:
     """Health check endpoint with ML model status."""
-    health_status = {
+    health_status: dict[str, Any] = {
         "status": "healthy",
         "service": "clarity-backend-aws-full",
         "environment": ENVIRONMENT,

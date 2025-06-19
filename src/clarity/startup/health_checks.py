@@ -394,7 +394,7 @@ class ServiceHealthChecker:
             if endpoint_url:
                 client_kwargs["endpoint_url"] = endpoint_url
 
-            client = boto3.client("s3", **client_kwargs)
+            client = boto3.client("s3", **client_kwargs)  # type: ignore[call-overload]
 
             # Test connectivity by getting bucket location
             actual_timeout = timeout or self.timeout

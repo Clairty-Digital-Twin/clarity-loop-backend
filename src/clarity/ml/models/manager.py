@@ -12,7 +12,7 @@ from enum import Enum
 import logging
 from pathlib import Path
 import time
-from typing import Any
+from typing import Any, TypeVar
 
 from pydantic import BaseModel
 import torch
@@ -76,7 +76,7 @@ class LoadedModel:
         )
         self._lock = asyncio.Lock()
 
-    async def predict(self, *args, **kwargs) -> Any:
+    async def predict(self, *args: Any, **kwargs: Any) -> Any:
         """Execute prediction with performance tracking."""
         start_time = time.time()
 
@@ -147,8 +147,8 @@ class ModelManager:
         self.registry = registry or ModelRegistry(config or ModelRegistryConfig())
         self.load_config = load_config or ModelLoadConfig()
         self.loaded_models: dict[str, LoadedModel] = {}
-        self.loading_tasks: dict[str, asyncio.Task] = {}
-        self.model_factories: dict[str, Callable] = {}
+        self.loading_tasks: dict[str, asyncio.Task[LoadedModel | None]] = {}
+        self.model_factories: dict[str, Callable[[ModelMetadata], Any]] = {}
         self._lock = asyncio.Lock()
 
         # Register default model factories
@@ -287,7 +287,7 @@ class ModelManager:
 
         return health_status
 
-    def register_model_factory(self, model_type: str, factory: Callable) -> None:
+    def register_model_factory(self, model_type: str, factory: Callable[[ModelMetadata], Any]) -> None:
         """Register a factory function for creating model instances."""
         self.model_factories[model_type] = factory
         logger.info(f"Registered model factory for type: {model_type}")
@@ -363,7 +363,7 @@ class ModelManager:
             logger.error(f"Failed to load model {model_id}:{version}: {e}")
             return None
 
-    async def _create_model_instance(self, metadata: ModelMetadata) -> Any | None:
+    async def _create_model_instance(self, metadata: ModelMetadata) -> Any:
         """Create model instance using registered factories."""
         # Determine model type from metadata or model_id
         model_type = metadata.model_id
@@ -465,7 +465,7 @@ class ModelManager:
     def _register_default_factories(self) -> None:
         """Register default model factories."""
 
-        async def pat_model_factory(metadata: ModelMetadata) -> PATModelService:
+        async def pat_model_factory(metadata: ModelMetadata) -> Any:
             """Factory for PAT models using legacy service."""
             try:
                 # Determine model size from metadata

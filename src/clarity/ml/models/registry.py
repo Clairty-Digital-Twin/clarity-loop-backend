@@ -5,8 +5,8 @@ and intelligent caching capabilities to replace the legacy S3-download approach.
 """
 
 import asyncio
-from dataclasses import asdict, dataclass
-from datetime import datetime
+from dataclasses import asdict, dataclass, field
+from datetime import UTC, datetime
 from enum import Enum
 import hashlib
 import json
@@ -53,26 +53,20 @@ class ModelMetadata:
     size_bytes: int
     checksum_sha256: str
     checksum_hmac: str | None = None
-    created_at: datetime = None
-    updated_at: datetime = None
+    created_at: datetime | None = None
+    updated_at: datetime | None = None
     description: str = ""
-    tags: list[str] = None
+    tags: list[str] = field(default_factory=list)
     source_url: str = ""
     local_path: str = ""
-    performance_metrics: dict[str, float] = None
-    dependencies: list[str] = None
+    performance_metrics: dict[str, float] = field(default_factory=dict)
+    dependencies: list[str] = field(default_factory=list)
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if self.created_at is None:
-            self.created_at = datetime.utcnow()
+            self.created_at = datetime.now(UTC)
         if self.updated_at is None:
             self.updated_at = self.created_at
-        if self.tags is None:
-            self.tags = []
-        if self.performance_metrics is None:
-            self.performance_metrics = {}
-        if self.dependencies is None:
-            self.dependencies = []
 
     @property
     def unique_id(self) -> str:
@@ -143,7 +137,7 @@ class ModelRegistry:
 
         logger.info(f"Initialized ModelRegistry with base_path={self.config.base_path}")
 
-    async def initialize(self):
+    async def initialize(self) -> None:
         """Initialize registry by loading existing metadata."""
         await self._load_registry()
         await self._cleanup_cache()
@@ -247,7 +241,7 @@ class ModelRegistry:
             if success:
                 # Update metadata with local path
                 metadata.local_path = str(local_path)
-                metadata.updated_at = datetime.utcnow()
+                metadata.updated_at = datetime.now(UTC)
                 await self.register_model(metadata)
 
                 self.download_progress[download_id]["status"] = "completed"
@@ -392,7 +386,7 @@ class ModelRegistry:
                 hash_sha256.update(chunk)
         return hash_sha256.hexdigest()
 
-    async def _load_registry(self):
+    async def _load_registry(self) -> None:
         """Load registry from disk."""
         if not self.config.registry_file.exists():
             logger.info("No existing registry found, starting fresh")
@@ -417,13 +411,13 @@ class ModelRegistry:
         except (OSError, ValueError) as e:
             logger.error(f"Failed to load registry: {e}")
 
-    async def _save_registry(self):
+    async def _save_registry(self) -> None:
         """Save registry to disk."""
         try:
             data = {
                 "models": [model.to_dict() for model in self.models.values()],
                 "aliases": [alias.dict() for alias in self.aliases.values()],
-                "updated_at": datetime.utcnow().isoformat(),
+                "updated_at": datetime.now(UTC).isoformat(),
             }
 
             # Write to temporary file first, then rename for atomicity
@@ -437,7 +431,7 @@ class ModelRegistry:
         except (OSError, ValueError) as e:
             logger.error(f"Failed to save registry: {e}")
 
-    async def _cleanup_cache(self, max_size_gb: float = None) -> int:
+    async def _cleanup_cache(self, max_size_gb: float | None = None) -> int:
         """Clean up cache directory to stay within size limits."""
         if max_size_gb is None:
             max_size_gb = self.config.max_cache_size_gb

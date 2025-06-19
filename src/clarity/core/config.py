@@ -290,26 +290,23 @@ class Settings(BaseSettings):
     @property
     def get_cors_origins(self) -> list[str]:
         """Parse CORS origins from comma-separated string to list."""
-        if isinstance(self.cors_allowed_origins, str):
-            # Split comma-separated string and strip whitespace
-            origins = [
-                origin.strip()
-                for origin in self.cors_allowed_origins.split(",")
-                if origin.strip()
-            ]
+        # Split comma-separated string and strip whitespace
+        origins = [
+            origin.strip()
+            for origin in self.cors_allowed_origins.split(",")
+            if origin.strip()
+        ]
 
-            # Security validation: no wildcards allowed
-            for origin in origins:
-                if "*" in origin:
-                    msg = (
-                        f"Security violation: Wildcard origin '{origin}' detected. "
-                        f"CORS origins must be explicitly specified for security."
-                    )
-                    raise ValueError(msg)
+        # Security validation: no wildcards allowed
+        for origin in origins:
+            if "*" in origin:
+                msg = (
+                    f"Security violation: Wildcard origin '{origin}' detected. "
+                    f"CORS origins must be explicitly specified for security."
+                )
+                raise ValueError(msg)
 
-            return origins
-        # Fallback to default if not a string
-        return ["http://localhost:3000", "http://localhost:8080"]
+        return origins
 
     def get_middleware_config(self) -> MiddlewareConfig:
         """Get middleware configuration based on environment.

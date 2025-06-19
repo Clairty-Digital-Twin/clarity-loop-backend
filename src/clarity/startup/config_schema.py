@@ -20,7 +20,7 @@ from pydantic import (
     field_validator,
     model_validator,
 )
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 logger = logging.getLogger(__name__)
 
@@ -343,7 +343,7 @@ class ClarityConfig(BaseSettings):
     # Validation error tracking
     _validation_errors: ClassVar[list[str]] = []
 
-    model_config = ConfigDict(
+    model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",
         case_sensitive=False,
@@ -412,12 +412,11 @@ class ClarityConfig(BaseSettings):
         gemini_config["model"] = values.get("GEMINI_MODEL") or os.getenv(
             "GEMINI_MODEL", "gemini-1.5-flash"
         )
-        gemini_config["temperature"] = float(
-            values.get("GEMINI_TEMPERATURE") or os.getenv("GEMINI_TEMPERATURE", "0.7")
-        )
-        gemini_config["max_tokens"] = int(
-            values.get("GEMINI_MAX_TOKENS") or os.getenv("GEMINI_MAX_TOKENS", "1000")
-        )
+        temp_val = values.get("GEMINI_TEMPERATURE") or os.getenv("GEMINI_TEMPERATURE", "0.7")
+        gemini_config["temperature"] = float(str(temp_val))
+        
+        tokens_val = values.get("GEMINI_MAX_TOKENS") or os.getenv("GEMINI_MAX_TOKENS", "1000")
+        gemini_config["max_tokens"] = int(str(tokens_val))
 
         # Extract security config - check both values and env vars
         security_config["secret_key"] = values.get("SECRET_KEY") or os.getenv(

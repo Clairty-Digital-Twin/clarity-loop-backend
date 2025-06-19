@@ -273,7 +273,7 @@ class StartupOrchestrator:
             # Import here to avoid circular imports
             from clarity.core.container_aws import initialize_container
 
-            container = await initialize_container(None)  # Uses default settings
+            container = await initialize_container(self.config)
 
             self.reporter.complete_step(
                 container_step, "Container initialized successfully"

@@ -77,9 +77,9 @@ async def init(ctx: click.Context) -> None:
     console.print("[blue]Info:[/blue] Added legacy PAT models (PAT-S, PAT-M, PAT-L)")
 
 
-@cli.command()
+@cli.command(name="list")
 @click.pass_context
-async def list(ctx: click.Context) -> None:
+async def list_models(ctx: click.Context) -> None:
     """List all models in registry."""
     models_dir = ctx.obj["models_dir"]
 
@@ -501,8 +501,8 @@ def main() -> None:
     for command in cli.commands.values():
         if asyncio.iscoroutinefunction(command.callback):
             original_callback = command.callback
-            command.callback = lambda *args, **kwargs: asyncio.run(
-                original_callback(*args, **kwargs)
+            command.callback = lambda *args, cb=original_callback, **kwargs: asyncio.run(
+                cb(*args, **kwargs)
             )
 
     cli()

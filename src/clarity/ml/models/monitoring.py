@@ -552,7 +552,7 @@ class ModelMonitoringService:
 
             if not self.config.alert_webhook_url:
                 return
-                
+
             async with (
                 aiohttp.ClientSession() as session,
                 session.post(self.config.alert_webhook_url, json=payload) as response,

@@ -67,13 +67,13 @@ async def bulletproof_startup() -> tuple[bool, ClarityConfig | None]:
 
             if dry_run:
                 # Print dry-run report and exit
-                print(orchestrator.create_dry_run_report())
+                print(orchestrator.create_dry_run_report())  # noqa: T201
                 sys.exit(0)
 
             return True, config
         _startup_successful = False
         if dry_run:
-            print(orchestrator.create_dry_run_report())
+            print(orchestrator.create_dry_run_report())  # noqa: T201
             sys.exit(1)
         return False, None
 
@@ -86,7 +86,7 @@ async def bulletproof_startup() -> tuple[bool, ClarityConfig | None]:
 
         suggested_code = error_catalog.suggest_error_code(str(e))
         if suggested_code:
-            print(error_catalog.format_error_help(suggested_code))
+            print(error_catalog.format_error_help(suggested_code))  # noqa: T201
 
         return False, None
 
@@ -325,7 +325,7 @@ async def validate_startup() -> int:
     success, config = await orchestrator.orchestrate_startup()
 
     if config:
-        print(orchestrator.create_dry_run_report())
+        print(orchestrator.create_dry_run_report())  # noqa: T201
 
     return 0 if success else 1
 

@@ -28,7 +28,7 @@ logger = logging.getLogger(__name__)
 class ModelServerConfig(BaseModel):
     """Configuration for local model server."""
 
-    host: str = "0.0.0.0"
+    host: str = "0.0.0.0"  # noqa: S104
     port: int = 8900
     log_level: str = "info"
     enable_cors: bool = True
@@ -359,7 +359,7 @@ class LocalModelServer:
                     logger.exception("Prediction failed: %s", e)
                     raise HTTPException(
                         status_code=500, detail=f"Prediction failed: {e!s}"
-                    )
+                    ) from e
 
             # Fallback to mock model for development
             unique_id = f"{request.model_id}:{request.version}"
@@ -419,8 +419,8 @@ class LocalModelServer:
             mock_data = {
                 "actigraphy_data": {
                     "timestamps": [f"2024-01-01T{i:02d}:00:00Z" for i in range(24)],
-                    "activity_counts": [random.randint(0, 1000) for _ in range(24)],
-                    "light_levels": [random.randint(0, 10000) for _ in range(24)],
+                    "activity_counts": [random.randint(0, 1000) for _ in range(24)],  # noqa: S311
+                    "light_levels": [random.randint(0, 10000) for _ in range(24)],  # noqa: S311
                 },
                 "metadata": {
                     "subject_id": "test_001",
@@ -459,7 +459,7 @@ async def create_placeholder_models(models_dir: Path) -> None:
     """Create placeholder models for local development."""
     models_dir.mkdir(parents=True, exist_ok=True)
 
-    for model_id, metadata in LEGACY_PAT_MODELS.items():
+    for model_id, _ in LEGACY_PAT_MODELS.items():
         model_file = models_dir / f"{model_id}.h5"
 
         if not model_file.exists():
@@ -474,7 +474,7 @@ if __name__ == "__main__":
     import argparse
 
     parser = argparse.ArgumentParser(description="Clarity Local Model Server")
-    parser.add_argument("--host", default="0.0.0.0", help="Server host")
+    parser.add_argument("--host", default="0.0.0.0", help="Server host")  # noqa: S104
     parser.add_argument("--port", type=int, default=8900, help="Server port")
     parser.add_argument(
         "--models-dir", type=Path, default="./local_models", help="Models directory"

@@ -103,7 +103,7 @@ class ModelRegistryConfig(BaseModel):
     """Configuration for model registry."""
 
     base_path: Path = Field(default=Path("/app/models"))
-    cache_dir: Path = Field(default=Path("/tmp/clarity_models"))
+    cache_dir: Path = Field(default=Path("/tmp/clarity_models"))  # noqa: S108
     registry_file: Path = Field(default=Path("/app/models/registry.json"))
     max_cache_size_gb: float = Field(default=10.0)
     download_timeout_seconds: int = Field(default=300)

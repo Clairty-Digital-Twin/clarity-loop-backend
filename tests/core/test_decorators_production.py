@@ -438,7 +438,7 @@ class TestAuditTrailDecorator:
         )
         def delete_document(user_id: str, doc_id: str) -> dict[str, bool]:
             _ = user_id  # Used by decorator
-            _ = doc_id   # Used by decorator
+            _ = doc_id  # Used by decorator
             return {"deleted": True}
 
         caplog.set_level(logging.INFO, logger="clarity.core.decorators")

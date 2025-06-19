@@ -201,7 +201,8 @@ async def analyze_step_data(
         # Convert to ActigraphyDataPoint format for PAT model
         actigraphy_points = [
             ActigraphyDataPoint(
-                timestamp=step_request.timestamps[i], value=float(proxy_result.vector[i])
+                timestamp=step_request.timestamps[i],
+                value=float(proxy_result.vector[i]),
             )
             for i in range(len(proxy_result.vector))
         ]

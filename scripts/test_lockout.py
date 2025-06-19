@@ -8,8 +8,8 @@ Works with both Redis and in-memory backends.
 import asyncio
 from datetime import timedelta
 import os
-import sys
 from pathlib import Path
+import sys
 
 # Add the src directory to the path so we can import clarity modules
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
@@ -21,7 +21,7 @@ async def test_lockout_demo() -> None:
     """Demonstrate the lockout service functionality."""
     test_email = "demo@example.com"
     _wrong_password = "WrongP@ssword"
-    
+
     print("🔒 Account Lockout Service Demo")
     print("=" * 50)
 

@@ -274,8 +274,9 @@ class TestLoadConfig:
             # Missing required production settings
         }
 
-        with patch.dict(os.environ, env_vars, clear=True), pytest.raises(
-            ValueError, match="Configuration validation failed"
+        with (
+            patch.dict(os.environ, env_vars, clear=True),
+            pytest.raises(ValueError, match="Configuration validation failed"),
         ):
             load_config()
 

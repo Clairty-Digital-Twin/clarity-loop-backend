@@ -565,8 +565,7 @@ async def list_health_data(
     responses={
         410: {
             "description": (
-                "Endpoint permanently removed - "
-                "use GET /health-data/ instead"
+                "Endpoint permanently removed - " "use GET /health-data/ instead"
             )
         },
     },

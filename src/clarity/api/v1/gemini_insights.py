@@ -240,7 +240,10 @@ def create_error_response(
     response_model=InsightGenerationResponse,
     status_code=status.HTTP_200_OK,
     summary="Generate Health Insights",
-    description="Generate AI-powered health insights from analysis results using Gemini 2.5 Pro",
+    description=(
+        "Generate AI-powered health insights from analysis results "
+        "using Gemini 2.5 Pro"
+    ),
 )
 @router.post(
     "",
@@ -324,7 +327,8 @@ async def generate_insights(
         processing_time = (datetime.now(UTC) - start_time).total_seconds() * 1000
 
         logger.info(
-            "✅ Insights generated successfully for user %s (request: %s, time: %.2fms)",
+            "✅ Insights generated successfully for user %s "
+            "(request: %s, time: %.2fms)",
             current_user.user_id,
             request_id,
             processing_time,

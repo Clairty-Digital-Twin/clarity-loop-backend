@@ -7,7 +7,7 @@ indicators and detailed status messages.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from enum import Enum, StrEnum
+from enum import StrEnum
 import logging
 import sys
 import time

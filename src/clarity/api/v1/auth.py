@@ -122,7 +122,10 @@ async def register(
             detail=ProblemDetail(
                 type="self_signup_disabled",
                 title="Self Sign-up Disabled",
-                detail="Self-registration is currently disabled. Please contact an administrator to create an account.",
+                detail=(
+                    "Self-registration is currently disabled. "
+                    "Please contact an administrator to create an account."
+                ),
                 status=403,
                 instance="https://api.clarity.health/auth/register",
             ).model_dump(),
@@ -455,7 +458,8 @@ async def logout(
             try:
                 _ = get_user_func(request)
             except Exception as auth_err:
-                # Auth failed but we have a request, so it's an auth error not validation
+                # Auth failed but we have a request,
+                # so it's an auth error not validation
                 raise HTTPException(
                     status_code=401,
                     detail=ProblemDetail(
@@ -551,7 +555,8 @@ async def refresh_token(
                 result = response["AuthenticationResult"]
                 return TokenResponse(
                     access_token=result["AccessToken"],
-                    refresh_token=refresh_token_str,  # Cognito doesn't rotate refresh tokens
+                    # Cognito doesn't rotate refresh tokens
+                    refresh_token=refresh_token_str,
                     token_type=AUTH_HEADER_TYPE_BEARER,
                     expires_in=result.get(
                         "ExpiresIn", AUTH_TOKEN_DEFAULT_EXPIRY_SECONDS

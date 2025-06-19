@@ -552,12 +552,16 @@ async def list_health_data(
     "/query",
     summary="Query Health Data (Removed)",
     description="""
-    **REMOVED:** This legacy endpoint has been permanently removed. Use `GET /health-data/` instead.
+    **REMOVED:** This legacy endpoint has been permanently removed.
+    Use `GET /health-data/` instead.
     """,
     status_code=410,
     responses={
         410: {
-            "description": "Endpoint permanently removed - use GET /health-data/ instead"
+            "description": (
+                "Endpoint permanently removed - "
+                "use GET /health-data/ instead"
+            )
         },
     },
     include_in_schema=False,  # Hide from OpenAPI docs

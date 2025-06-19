@@ -174,7 +174,7 @@ class LocalModelServer:
             )
 
         except Exception as e:
-            logger.error(f"Failed to start model server: {e}")
+            logger.exception(f"Failed to start model server: {e}")
             raise
 
     async def _setup_mock_models(self) -> None:
@@ -356,7 +356,7 @@ class LocalModelServer:
                         model_info=loaded_model.metadata.to_dict(),
                     )
                 except Exception as e:
-                    logger.error(f"Prediction failed: {e}")
+                    logger.exception(f"Prediction failed: {e}")
                     raise HTTPException(
                         status_code=500, detail=f"Prediction failed: {e!s}"
                     )

@@ -102,7 +102,7 @@ async def lifespan(_app: FastAPI) -> AsyncGenerator[None, None]:
         logger.info("✅ ML Model management system initialized")
 
     except (ImportError, RuntimeError, AttributeError) as e:
-        logger.error("❌ Failed to initialize ML model management: %s", str(e))
+        logger.exception("❌ Failed to initialize ML model management: %s", str(e))
         logger.info("🔧 Continuing without ML models - health insights may be limited")
 
     # Initialize DynamoDB table (skip if explicitly disabled or credentials unavailable)

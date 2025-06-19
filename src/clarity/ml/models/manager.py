@@ -5,14 +5,14 @@ This replaces the legacy monolithic PAT service approach.
 """
 
 import asyncio
-from collections.abc import Callable
+from collections.abc import AsyncGenerator, Callable
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
 from enum import Enum
 import logging
 from pathlib import Path
 import time
-from typing import Any, AsyncGenerator
+from typing import Any
 
 from pydantic import BaseModel
 import torch

@@ -6,12 +6,12 @@ Supports Prometheus metrics, custom dashboards, and real-time performance tracki
 
 import asyncio
 from collections import defaultdict, deque
-from collections.abc import Callable
+from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
 from datetime import datetime
 import logging
 import time
-from typing import Any
+from typing import Any, TypeVar
 
 from prometheus_client import Counter, Gauge, Histogram, Info, start_http_server
 from pydantic import BaseModel
@@ -106,10 +106,10 @@ class ModelMonitoringService:
         )
 
         # Time-series data for trends
-        self.latency_trends: dict[str, deque[float]] = defaultdict(
+        self.latency_trends: defaultdict[str, deque[float]] = defaultdict(
             lambda: deque(maxlen=100)
         )
-        self.error_trends: dict[str, deque[float]] = defaultdict(
+        self.error_trends: defaultdict[str, deque[float]] = defaultdict(
             lambda: deque(maxlen=100)
         )
 
@@ -117,7 +117,7 @@ class ModelMonitoringService:
         self.prometheus_metrics = self._setup_prometheus_metrics()
 
         # Monitoring tasks
-        self.monitoring_tasks: list[asyncio.Task] = []
+        self.monitoring_tasks: list[asyncio.Task[None]] = []
 
         # Alert state tracking
         self.alert_state: dict[str, dict[str, Any]] = {}
@@ -564,13 +564,16 @@ class ModelMonitoringService:
 
 
 # Decorator for automatic inference monitoring
+T = TypeVar('T', bound=Callable[..., Awaitable[Any]])
+
+
 def monitor_inference(
     monitoring_service: ModelMonitoringService,
-) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
+) -> Callable[[T], T]:
     """Decorator to automatically monitor model inferences."""
 
-    def decorator(func: Callable[..., Any]) -> Callable[..., Any]:
-        async def wrapper(self, *args, **kwargs) -> Any:
+    def decorator(func: T) -> T:
+        async def wrapper(self: Any, *args: Any, **kwargs: Any) -> Any:
             start_time = time.time()
             success = False
             error_type = None
@@ -597,6 +600,6 @@ def monitor_inference(
                     error_type=error_type,
                 )
 
-        return wrapper
+        return wrapper  # type: ignore[return-value]
 
     return decorator

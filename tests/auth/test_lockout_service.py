@@ -211,7 +211,6 @@ class TestAccountLockoutService:
     ) -> None:
         """Test that the service handles concurrent access safely."""
         email = "test@example.com"
-        ip = "192.168.1.1"
 
         # Simulate concurrent failed attempts
         tasks = []

@@ -45,7 +45,7 @@ def get_ip_only(request: Request) -> str:
     return f"ip:{get_remote_address(request)}"
 
 
-async def custom_rate_limit_exceeded_handler(
+async def custom_rate_limit_exceeded_handler(  # noqa: RUF029 - FastAPI handler
     request: Request, exc: RateLimitExceeded
 ) -> JSONResponse:
     """Custom handler for rate limit exceeded errors.
@@ -71,7 +71,7 @@ async def custom_rate_limit_exceeded_handler(
     )
 
     # Add rate limit headers if available
-    return request.app.state.limiter._inject_headers(  # type: ignore[no-any-return]
+    return request.app.state.limiter._inject_headers(  # type: ignore[no-any-return]  # noqa: SLF001
         response, request.state.view_rate_limit
     )
 

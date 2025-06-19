@@ -53,7 +53,7 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
                     )
 
                 # Store body for the endpoint to use
-                request._body = body_bytes
+                request._body = body_bytes  # noqa: SLF001
 
             except Exception as e:
                 logger.exception("  Failed to read request body: %s", e)

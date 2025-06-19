@@ -8,7 +8,7 @@ import asyncio
 from collections.abc import AsyncGenerator, Callable
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
-from enum import Enum, StrEnum
+from enum import StrEnum
 import logging
 from pathlib import Path
 import time
@@ -422,7 +422,7 @@ class ModelManager:
                 "Model warm-up completed for %s", loaded_model.metadata.unique_id
             )
 
-        except Exception as e:
+        except (ValueError, TypeError, RuntimeError) as e:
             logger.warning(
                 "Model warm-up failed for %s: %s", loaded_model.metadata.unique_id, e
             )
@@ -479,7 +479,7 @@ class ModelManager:
                         alias_obj = self.registry.aliases[alias]
                         await self._load_model(alias_obj.model_id, alias_obj.version)
                         await asyncio.sleep(1)  # Brief pause between loads
-                except Exception as e:
+                except (ValueError, TypeError, RuntimeError, KeyError) as e:
                     logger.warning(
                         "Failed to load priority model with alias %s: %s", alias, e
                     )

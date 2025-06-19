@@ -51,7 +51,7 @@ async def test_require_permission_no_user() -> None:
 
     @require_permission("some_permission")
     async def dummy_endpoint(  # noqa: RUF029
-        current_user: User | None = None,
+        current_user: User | None = None,  # noqa: ARG001
     ) -> str:
         return "OK"
 
@@ -69,7 +69,7 @@ async def test_require_permission_with_user() -> None:
 
     @require_permission("some_permission")
     async def dummy_endpoint(  # noqa: RUF029
-        current_user: User | None = None,
+        current_user: User | None = None,  # noqa: ARG001
     ) -> str:
         return "OK"
 
@@ -83,7 +83,7 @@ async def test_require_role_no_user() -> None:
 
     @require_role("some_role")
     async def dummy_endpoint(  # noqa: RUF029
-        current_user: User | None = None,
+        current_user: User | None = None,  # noqa: ARG001
     ) -> str:
         return "OK"
 
@@ -101,7 +101,7 @@ async def test_require_role_with_user() -> None:
 
     @require_role("some_role")
     async def dummy_endpoint(  # noqa: RUF029
-        current_user: User | None = None,
+        current_user: User | None = None,  # noqa: ARG001
     ) -> str:
         return "OK"
 

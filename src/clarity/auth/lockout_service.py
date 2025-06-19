@@ -5,7 +5,7 @@ and temporarily locking accounts after too many failures.
 """
 
 import asyncio
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 import logging
 import os
 import time
@@ -170,7 +170,7 @@ class AccountLockoutService:
         """Check if account is locked and raise exception if so."""
         if await self.is_locked(username):
             # Calculate unlock time (approximate)
-            unlock_time = datetime.now(timezone.utc) + timedelta(
+            unlock_time = datetime.now(UTC) + timedelta(
                 seconds=self.lockout_secs
             )
             raise AccountLockoutError(username, unlock_time)

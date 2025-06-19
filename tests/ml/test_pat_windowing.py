@@ -90,7 +90,7 @@ class TestSliceToWeeks:
     def test_2d_array(self):
         """Test handling of 2D arrays (multi-channel data)."""
         # 2 weeks of 3-channel data
-        arr = np.random.rand(20_160, 3)
+        arr = np.random.rand(20_160, 3)  # noqa: NPY002
         chunks = slice_to_weeks(arr, keep="latest")
 
         assert len(chunks) == 1
@@ -236,7 +236,7 @@ class TestIntegrationWithPAT:
         ]
 
         for length, description in test_cases:
-            arr = np.random.rand(length)
+            arr = np.random.rand(length)  # noqa: NPY002
             prepared = prepare_for_pat_inference(arr)
 
             # All should produce exactly 10,080 samples
@@ -260,9 +260,8 @@ class TestIntegrationWithPAT:
         test_lengths = [1000, 10_080, 20_000, 50_000]
 
         for length in test_lengths:
-            arr = np.random.rand(length)
+            arr = np.random.rand(length)  # noqa: NPY002
             prepared = prepare_for_pat_inference(arr)
-
             # Simulate adding batch dimension as done in pat_service.py
             input_tensor = np.expand_dims(prepared, 0)
 
@@ -272,8 +271,7 @@ class TestIntegrationWithPAT:
     def test_multi_week_analysis_scenario(self):
         """Test scenario where we might want to analyze multiple weeks."""
         # 3 weeks of data
-        data = np.random.rand(30_240)
-
+        data = np.random.rand(30_240)  # noqa: NPY002
         # Get all weeks
         all_weeks = slice_to_weeks(data, keep="all")
         assert len(all_weeks) == 3
@@ -294,7 +292,7 @@ class TestIntegrationWithPAT:
 
         # Day 1-5: Not enough data
         for _day in range(5):
-            daily_data = np.random.rand(1440)  # 1 day
+            daily_data = np.random.rand(1440)  # 1 day  # noqa: NPY002
             accumulated_data.extend(daily_data)
 
             arr = np.array(accumulated_data)
@@ -306,7 +304,7 @@ class TestIntegrationWithPAT:
 
         # Day 8: More than 1 week
         for _day in range(5, 8):
-            daily_data = np.random.rand(1440)
+            daily_data = np.random.rand(1440)  # noqa: NPY002
             accumulated_data.extend(daily_data)
 
         arr = np.array(accumulated_data)

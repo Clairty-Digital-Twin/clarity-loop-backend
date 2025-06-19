@@ -194,7 +194,7 @@ class LocalModelServer:
             await self.startup_event()
 
         @self.app.get("/")
-        async def root() -> dict[str, Any]:
+        async def root() -> dict[str, Any]:  # noqa: RUF029
             return {
                 "service": "Clarity ML Model Server",
                 "version": "1.0.0",
@@ -410,19 +410,19 @@ class LocalModelServer:
             return progress
 
         @self.app.post("/create-mock-data")
-        async def create_mock_data() -> dict[str, Any]:
+        async def create_mock_data() -> dict[str, Any]:  # noqa: RUF029
             """Create mock training data for testing."""
-            import random
+            import random  # noqa: PLC0415
 
             # Generate mock actigraphy data
             return {
                 "actigraphy_data": {
                     "timestamps": [f"2024-01-01T{i:02d}:00:00Z" for i in range(24)],
                     "activity_counts": [
-                        random.randint(0, 1000) for _ in range(24)
+                        random.randint(0, 1000) for _ in range(24)  # noqa: S311
                     ],
                     "light_levels": [
-                        random.randint(0, 10000) for _ in range(24)
+                        random.randint(0, 10000) for _ in range(24)  # noqa: S311
                     ],
                 },
                 "metadata": {
@@ -435,7 +435,7 @@ class LocalModelServer:
 
     def _setup_cors(self) -> None:
         """Setup CORS for frontend development."""
-        from fastapi.middleware.cors import CORSMiddleware
+        from fastapi.middleware.cors import CORSMiddleware  # noqa: PLC0415
 
         self.app.add_middleware(
             CORSMiddleware,
@@ -456,7 +456,7 @@ class LocalModelServer:
 
 
 # CLI interface for local model server
-async def create_placeholder_models(models_dir: Path) -> None:
+async def create_placeholder_models(models_dir: Path) -> None:  # noqa: RUF029
     """Create placeholder models for local development."""
     models_dir.mkdir(parents=True, exist_ok=True)
 
@@ -465,7 +465,7 @@ async def create_placeholder_models(models_dir: Path) -> None:
 
         if not model_file.exists():
             # Create a small placeholder file
-            with open(model_file, "wb") as f:
+            with model_file.open("wb") as f:
                 f.write(b"PLACEHOLDER_MODEL_DATA" * 1000)  # ~20KB file
 
             logger.info("Created placeholder model: %s", model_file)

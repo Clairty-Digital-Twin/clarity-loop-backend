@@ -42,9 +42,9 @@ async def capture_raw_request(request: Request) -> dict[str, Any]:
             response["body_info"]["decoded_success"] = True
 
             # Analyze character at position 55 if it exists
-            DEBUG_POSITION = 55  # Position to analyze for debugging
-            if len(body_str) > DEBUG_POSITION:
-                char_at_55 = body_str[DEBUG_POSITION]
+            debug_position = 55  # Position to analyze for debugging
+            if len(body_str) > debug_position:
+                char_at_55 = body_str[debug_position]
                 response["body_info"]["position_55"] = {
                     "character": char_at_55,
                     "ascii_code": ord(char_at_55),

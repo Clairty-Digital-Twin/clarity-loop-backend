@@ -80,7 +80,10 @@ async def lifespan(_app: FastAPI) -> AsyncGenerator[None, None]:
     # Initialize Progressive ML Model Loading Service
     progressive_service = None
     try:
-        from clarity.ml.models import ProgressiveLoadingConfig, get_progressive_service
+        from clarity.ml.models import (  # noqa: PLC0415
+            ProgressiveLoadingConfig,
+            get_progressive_service,
+        )
 
         # Configure progressive loading based on environment
         progressive_config = ProgressiveLoadingConfig(
@@ -151,7 +154,8 @@ async def lifespan(_app: FastAPI) -> AsyncGenerator[None, None]:
                 # Unload models to free memory
                 for model_id in ["pat:latest", "pat:stable", "pat:fast"]:
                     model_parts = model_id.split(":", 1)
-                    if len(model_parts) == 2:
+                    model_id_parts = 2  # Expected parts in model:version format
+                    if len(model_parts) == model_id_parts:
                         await progressive_service.model_manager.unload_model(
                             model_parts[0], model_parts[1]
                         )

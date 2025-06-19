@@ -7,7 +7,7 @@ replacing the legacy S3 download approach with progressive loading strategies.
 import asyncio
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
-from enum import Enum, StrEnum
+from enum import StrEnum
 import logging
 import os
 import time

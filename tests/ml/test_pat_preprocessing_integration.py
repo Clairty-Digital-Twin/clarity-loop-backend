@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from concurrent.futures import ThreadPoolExecutor
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from unittest.mock import patch
 
 import numpy as np
@@ -33,7 +33,7 @@ class TestPreprocessingIntegration:
         # Create 2 weeks of data
         data_points = [
             ActigraphyDataPoint(
-                timestamp=datetime.now() - timedelta(minutes=20160 - i),
+                timestamp=datetime.now(UTC) - timedelta(minutes=20160 - i),
                 value=float(i),  # Ascending values to test truncation
             )
             for i in range(20160)  # 2 weeks
@@ -68,7 +68,7 @@ class TestPreprocessingIntegration:
         # Create 3 weeks of synthetic data
         data_points = [
             ActigraphyDataPoint(
-                timestamp=datetime.now() - timedelta(minutes=30240 - i),
+                timestamp=datetime.now(UTC) - timedelta(minutes=30240 - i),
                 value=100.0 + 10.0 * np.sin(2 * np.pi * i / 1440),  # Daily pattern
             )
             for i in range(30240)  # 3 weeks
@@ -97,10 +97,10 @@ class TestPreprocessingIntegration:
         transformer = ProxyActigraphyTransformer()
 
         # Test with exactly 2 weeks of step data
-        now = datetime.now()
+        now = datetime.now(UTC)
         # Use realistic step counts (0-200 steps per minute with some variation)
         step_counts = [
-            50.0 + 30.0 * np.sin(2 * np.pi * i / 1440) + 20.0 * np.random.random()
+            50.0 + 30.0 * np.sin(2 * np.pi * i / 1440) + 20.0 * np.random.random()  # noqa: NPY002
             for i in range(20160)  # 2 weeks with daily pattern
         ]
         step_data = StepCountData(
@@ -140,7 +140,7 @@ class TestPreprocessingIntegration:
         for num_points, description in test_cases:
             data_points = [
                 ActigraphyDataPoint(
-                    timestamp=datetime.now() - timedelta(minutes=num_points - i),
+                    timestamp=datetime.now(UTC) - timedelta(minutes=num_points - i),
                     value=float(i % 1440),  # Daily pattern
                 )
                 for i in range(num_points)
@@ -174,7 +174,7 @@ class TestPreprocessingIntegration:
         preprocessor = HealthDataPreprocessor()
 
         # Single point
-        single_point = [ActigraphyDataPoint(timestamp=datetime.now(), value=100.0)]
+        single_point = [ActigraphyDataPoint(timestamp=datetime.now(UTC), value=100.0)]
         tensor = preprocessor.preprocess_for_pat_model(
             single_point, target_length=10080
         )
@@ -191,7 +191,7 @@ class TestPreprocessingIntegration:
         # Create base signal
         base_signal = [
             ActigraphyDataPoint(
-                timestamp=datetime.now() - timedelta(minutes=10080 - i),
+                timestamp=datetime.now(UTC) - timedelta(minutes=10080 - i),
                 value=100.0 + 50.0 * np.sin(2 * np.pi * i / 1440),
             )
             for i in range(10080)
@@ -204,7 +204,7 @@ class TestPreprocessingIntegration:
         noisy_signal = [
             ActigraphyDataPoint(
                 timestamp=point.timestamp,
-                value=point.value + np.random.normal(0, noise_level),
+                value=point.value + np.random.normal(0, noise_level),  # noqa: NPY002
             )
             for point in base_signal
         ]
@@ -237,7 +237,7 @@ class TestPreprocessingIntegration:
         def preprocess_data(length: int) -> torch.Tensor:
             data_points = [
                 ActigraphyDataPoint(
-                    timestamp=datetime.now() - timedelta(minutes=length - i),
+                    timestamp=datetime.now(UTC) - timedelta(minutes=length - i),
                     value=float(i),
                 )
                 for i in range(length)
@@ -273,7 +273,7 @@ class TestPreprocessingIntegration:
 
             data_points = [
                 ActigraphyDataPoint(
-                    timestamp=datetime.now() - timedelta(minutes=10080 - i),
+                    timestamp=datetime.now(UTC) - timedelta(minutes=10080 - i),
                     value=values[i],
                 )
                 for i in range(10080)

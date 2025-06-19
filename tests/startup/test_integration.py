@@ -261,7 +261,7 @@ class TestStartupIntegration:
                         # Should have captured the error
                         assert len(orchestrator.startup_errors) > 0 or config is None
 
-                except Exception as e:
+                except Exception as e:  # noqa: BLE001
                     pytest.fail(
                         f"Scenario '{scenario['name']}' crashed with unhandled exception: {e}"
                     )

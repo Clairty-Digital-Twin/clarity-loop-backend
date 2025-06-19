@@ -6,7 +6,7 @@ Validates all environment variables and service configurations before startup.
 
 from __future__ import annotations
 
-from enum import Enum, StrEnum
+from enum import StrEnum
 import logging
 import os
 from typing import Any, ClassVar
@@ -368,7 +368,7 @@ class ClarityConfig(BaseSettings):
     def extract_nested_config(cls, values: dict[str, Any]) -> dict[str, Any]:
         """Extract nested configuration from environment variables."""
         # Debug: log what values we receive
-        import os
+        import os  # noqa: PLC0415 - Debug logging
 
         # For Pydantic BaseSettings, we need to check both the values dict and env vars
         aws_config = {}
@@ -495,7 +495,7 @@ class ClarityConfig(BaseSettings):
                 validation_errors.append("Custom SECRET_KEY required in production")
 
         # Store validation errors for reporting
-        type(self)._validation_errors = validation_errors
+        type(self)._validation_errors = validation_errors  # noqa: SLF001
 
         if validation_errors:
             error_msg = "\n".join([f"  • {error}" for error in validation_errors])
@@ -560,7 +560,7 @@ class ClarityConfig(BaseSettings):
                 field_path = ".".join(str(loc) for loc in error["loc"])
                 errors.append(f"{field_path}: {error['msg']}")
             return None, errors
-        except Exception as e:
+        except (ValueError, TypeError, RuntimeError) as e:
             errors = getattr(cls, "_validation_errors", [])
             if not errors:
                 errors = [str(e)]

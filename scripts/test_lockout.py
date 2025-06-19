@@ -11,6 +11,8 @@ import os
 from pathlib import Path
 import sys
 
+import requests
+
 # Add the src directory to the path so we can import clarity modules
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
@@ -20,7 +22,7 @@ from clarity.auth.lockout_service import AccountLockoutError, AccountLockoutServ
 async def test_lockout_demo() -> None:
     """Demonstrate the lockout service functionality."""
     test_email = "demo@example.com"
-    _wrong_password = "WrongP@ssword"
+    _wrong_password = "WrongP@ssword"  # noqa: S105 - Hardcoded password for demo
 
     print("🔒 Account Lockout Service Demo")
     print("=" * 50)
@@ -39,7 +41,7 @@ async def test_lockout_demo() -> None:
         redis_url=redis_url,
     )
 
-    test_ip = "192.168.1.100"
+    # Future enhancement: IP-based lockout testing
 
     print(f"Testing with email: {test_email}")
     print("Max attempts before lockout: 3")
@@ -71,7 +73,7 @@ async def test_lockout_demo() -> None:
                 print(f"  🔒 Account locked after {attempt} attempts!")
                 break
 
-        except Exception as e:
+        except (requests.RequestException, ValueError, KeyError) as e:
             print(f"  ❌ Error during attempt {attempt}: {e}")
             break
         print()

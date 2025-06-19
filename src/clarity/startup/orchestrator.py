@@ -276,7 +276,7 @@ class StartupOrchestrator:
             )
 
             # Import here to avoid circular imports
-            from clarity.core.container_aws import initialize_container
+            from clarity.core.container_aws import initialize_container  # noqa: PLC0415
 
             await initialize_container(self.config)  # type: ignore[arg-type]
 
@@ -356,7 +356,7 @@ async def full_startup_check() -> bool:
 
 def main() -> int:
     """Main CLI entry point."""
-    import argparse
+    import argparse  # noqa: PLC0415 - Main function import
 
     parser = argparse.ArgumentParser(description="CLARITY Startup Validation")
     parser.add_argument(

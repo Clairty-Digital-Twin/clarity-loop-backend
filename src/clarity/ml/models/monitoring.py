@@ -8,7 +8,7 @@ import asyncio
 from collections import defaultdict, deque
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import UTC, datetime
 import logging
 import time
 from typing import Any, TypeVar
@@ -19,6 +19,11 @@ from pydantic import BaseModel
 from clarity.ml.models.manager import ModelManager
 
 logger = logging.getLogger(__name__)
+
+# Constants
+MODEL_ID_PARTS = 2  # Expected parts in model:version format
+MIN_ERROR_SAMPLE_SIZE = 10  # Minimum errors for rate calculation
+HTTP_OK = 200  # HTTP success status code
 
 
 @dataclass
@@ -543,12 +548,12 @@ class ModelMonitoringService:
     async def _send_alert_webhook(self, model_key: str, alert: dict[str, Any]) -> None:
         """Send alert to webhook."""
         try:
-            import aiohttp
+            import aiohttp  # noqa: PLC0415
 
             payload = {
                 "model": model_key,
                 "alert": alert,
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(UTC).isoformat(),
                 "service": "clarity-model-monitoring",
             }
 
@@ -559,7 +564,7 @@ class ModelMonitoringService:
                 aiohttp.ClientSession() as session,
                 session.post(self.config.alert_webhook_url, json=payload) as response,
             ):
-                if response.status != 200:
+                if response.status != HTTP_OK:
                     logger.warning("Alert webhook failed: %s", response.status)
                 else:
                     logger.info("Alert sent for %s: %s", model_key, alert["type"])

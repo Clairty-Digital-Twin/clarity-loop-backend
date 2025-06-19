@@ -8,8 +8,13 @@ import time
 
 import requests
 
+# Constants
+RATE_LIMIT_STATUS_CODE = 429
 
-def test_rate_limiting(base_url: str = "http://localhost:8000") -> None:
+
+def test_rate_limiting(base_url: str | None = None) -> None:  # noqa: PT028
+    if base_url is None:
+        base_url = "http://localhost:8000"
     """Test rate limiting on various endpoints."""
     print("🔥 Rate Limiting Test Script")
     print("=" * 50)
@@ -35,11 +40,11 @@ def test_rate_limiting(base_url: str = "http://localhost:8000") -> None:
                 remaining = response.headers.get("X-RateLimit-Remaining", "?")
                 print(f"   Rate Limit: {remaining}/{limit} remaining")
 
-            if response.status_code == 429:
+            if response.status_code == RATE_LIMIT_STATUS_CODE:
                 print(f"   ❌ Rate limit exceeded: {response.json()}")
                 break
 
-        except Exception as e:
+        except (requests.RequestException, ValueError, KeyError) as e:
             print(f"   Error: {e}")
 
         # Small delay between requests
@@ -50,20 +55,22 @@ def test_rate_limiting(base_url: str = "http://localhost:8000") -> None:
 
     for i in range(5):
         try:
-            response = requests.get(health_url)
+            response = requests.get(health_url, timeout=10)
             print(f"   Request {i + 1}: Status {response.status_code}")
-        except Exception as e:
+        except (requests.RequestException, ValueError, KeyError) as e:
             print(f"   Error: {e}")
 
     print("\n✅ Rate limiting test complete!")
 
 
-def test_rate_limit_headers(base_url: str = "http://localhost:8000") -> None:
+def test_rate_limit_headers(base_url: str | None = None) -> None:  # noqa: PT028
+    if base_url is None:
+        base_url = "http://localhost:8000"
     """Test rate limit headers in responses."""
     print("\n3. Checking rate limit headers...")
 
     # Make a request to a rate-limited endpoint
-    response = requests.get(f"{base_url}/api/v1/health-data/health")
+    response = requests.get(f"{base_url}/api/v1/health-data/health", timeout=10)
 
     print(f"   Status: {response.status_code}")
     print("   Headers:")

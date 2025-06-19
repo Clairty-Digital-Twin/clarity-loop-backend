@@ -65,8 +65,8 @@ def slice_to_weeks(
     3
     """
     # Input validation
-    MAX_DIMENSIONS = 2
-    if arr.ndim > MAX_DIMENSIONS:
+    max_dimensions = 2
+    if arr.ndim > max_dimensions:
         msg = f"Expected 1-D or 2-D array, got {arr.ndim}-D"
         raise ValueError(msg)
 

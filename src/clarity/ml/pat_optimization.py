@@ -232,7 +232,7 @@ class PATPerformanceOptimizer:
             raise RuntimeError(msg)
 
         # Preprocess input data
-        input_tensor = self.pat_service._preprocess_actigraphy_data(
+        input_tensor = self.pat_service._preprocess_actigraphy_data(  # noqa: SLF001
             input_data.data_points
         )
         input_tensor = input_tensor.unsqueeze(0)  # Add batch dimension
@@ -259,7 +259,7 @@ class PATPerformanceOptimizer:
         }
 
         # Post-process results
-        return self.pat_service._postprocess_predictions(
+        return self.pat_service._postprocess_predictions(  # noqa: SLF001
             outputs_dict, input_data.user_id
         )
 

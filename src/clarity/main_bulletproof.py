@@ -42,7 +42,7 @@ async def bulletproof_startup() -> tuple[bool, ClarityConfig | None]:
     Returns:
         Tuple of (success, config). Config is None if startup fails.
     """
-    global _app_config, _startup_successful
+    global _app_config, _startup_successful  # noqa: PLW0603 - Module state management
 
     # Check for dry-run mode
     dry_run = (
@@ -82,7 +82,7 @@ async def bulletproof_startup() -> tuple[bool, ClarityConfig | None]:
         _startup_successful = False
 
         # Print error help if possible
-        from clarity.startup.error_catalog import error_catalog
+        from clarity.startup.error_catalog import error_catalog  # noqa: PLC0415
 
         suggested_code = error_catalog.suggest_error_code(str(e))
         if suggested_code:
@@ -109,7 +109,7 @@ async def lifespan(_app: FastAPI) -> AsyncGenerator[None, None]:
 
     # Initialize container with validated config
     try:
-        from clarity.core.container_aws import initialize_container
+        from clarity.core.container_aws import initialize_container  # noqa: PLC0415
 
         await initialize_container(None)  # Uses default settings
         logger.info("✅ Dependency container initialized")
@@ -176,7 +176,7 @@ def create_bulletproof_app() -> FastAPI:
 
     # Configure middleware after startup validation
     @app.on_event("startup")
-    async def configure_middleware() -> None:
+    def configure_middleware() -> None:
         """Configure middleware after startup validation."""
         if not _app_config or not _startup_successful:
             logger.error("Cannot configure middleware - startup not successful")

@@ -7,7 +7,7 @@ and intelligent caching capabilities to replace the legacy S3-download approach.
 import asyncio
 from dataclasses import asdict, dataclass, field
 from datetime import UTC, datetime
-from enum import Enum, StrEnum
+from enum import StrEnum
 import hashlib
 import json
 import logging

@@ -36,7 +36,8 @@ def mock_gemini_service() -> MagicMock:
 
 @pytest.fixture
 def insight_subscriber(
-    mock_storage_client: MagicMock, mock_gemini_service: MagicMock
+    mock_storage_client: MagicMock,  # noqa: ARG001
+    mock_gemini_service: MagicMock,  # noqa: ARG001
 ) -> InsightSubscriber:
     """Create insight subscriber with mocked dependencies."""
     # Reset singleton

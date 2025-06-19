@@ -1,15 +1,18 @@
 #!/usr/bin/env python3
 """Test script to verify security headers are working."""
 
-import subprocess
+import subprocess  # noqa: S404 - Required for testing
 import sys
 import time
 
 import requests
 
+# Constants
+MAX_DISPLAY_LENGTH = 60
+
 # Start the server in the background
 print("Starting server...")
-server_process = subprocess.Popen(
+server_process = subprocess.Popen(  # noqa: S603 - Testing script
     [
         sys.executable,
         "-m",
@@ -30,7 +33,7 @@ time.sleep(3)
 
 try:
     # Test the health endpoint
-    response = requests.get("http://localhost:8001/health")
+    response = requests.get("http://localhost:8001/health", timeout=10)
     print(f"Response status: {response.status_code}")
     print(f"Response body: {response.json()}")
     print("\nSecurity Headers:")
@@ -50,7 +53,7 @@ try:
     for header in headers_to_check:
         if header in response.headers:
             value = response.headers[header]
-            display_value = f"{value[:60]}..." if len(value) > 60 else value
+            display_value = f"{value[:MAX_DISPLAY_LENGTH]}..." if len(value) > MAX_DISPLAY_LENGTH else value
             print(f"✅ {header}: {display_value}")
             found_count += 1
         else:
@@ -59,13 +62,13 @@ try:
     print(f"\nTotal headers found: {found_count}/{len(headers_to_check)}")
 
     # Test the root endpoint
-    response = requests.get("http://localhost:8001/")
+    response = requests.get("http://localhost:8001/", timeout=10)
     print(f"\nRoot endpoint status: {response.status_code}")
     print(
         f'Has security headers: {"Yes" if "X-Content-Type-Options" in response.headers else "No"}'
     )
 
-except Exception as e:
+except (requests.RequestException, ValueError, KeyError) as e:
     print(f"Error: {e}")
 
 finally:

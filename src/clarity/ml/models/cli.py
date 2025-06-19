@@ -34,6 +34,9 @@ from clarity.ml.models.registry import (
 
 console = Console()
 
+# HTTP Status codes
+HTTP_OK = 200
+
 
 @click.group()
 @click.option("--config-file", type=click.Path(), help="Configuration file path")
@@ -55,7 +58,7 @@ def cli(
     ctx.obj["verbose"] = verbose
 
     if verbose:
-        import logging
+        import logging  # noqa: PLC0415
 
         logging.basicConfig(level=logging.DEBUG)
 
@@ -336,7 +339,7 @@ Registry File: {config.registry_file}
     "--create-mocks/--no-create-mocks", default=True, help="Create mock models"
 )
 @click.pass_context
-async def serve(
+async def serve(  # noqa: RUF029 - Click async handler
     ctx: click.Context,
     host: str,
     port: int,
@@ -379,7 +382,7 @@ async def predict(
     """Make prediction using local server."""
     # Load input data
     if input_file:
-        with open(input_file, encoding="utf-8") as f:
+        with Path(input_file).open(encoding="utf-8") as f:
             inputs = json.load(f)
     else:
         # Use sample data
@@ -396,7 +399,7 @@ async def predict(
     try:
         async with aiohttp.ClientSession() as session:
             async with session.post(f"{url}/predict", json=request_data) as response:
-                if response.status == 200:
+                if response.status == HTTP_OK:
                     result = await response.json()
 
                     console.print("[green]✓[/green] Prediction successful")
@@ -411,7 +414,7 @@ async def predict(
                     error = await response.text()
                     console.print(f"[red]✗[/red] Prediction failed: {error}")
 
-    except (aiohttp.ClientError, asyncio.TimeoutError) as e:
+    except (TimeoutError, aiohttp.ClientError) as e:
         console.print(f"[red]✗[/red] Request failed: {e}")
 
 
@@ -429,14 +432,14 @@ async def monitor(_ctx: click.Context, url: str) -> None:
                 async with aiohttp.ClientSession() as session:
                     # Get health status
                     async with session.get(f"{url}/health") as response:
-                        if response.status == 200:
+                        if response.status == HTTP_OK:
                             health = await response.json()
                         else:
                             health = {"status": "error"}
 
                     # Get metrics
                     async with session.get(f"{url}/metrics") as response:
-                        if response.status == 200:
+                        if response.status == HTTP_OK:
                             metrics = await response.json()
                         else:
                             metrics = {}
@@ -481,7 +484,7 @@ async def monitor(_ctx: click.Context, url: str) -> None:
 
                 console.print(f"\n[dim]Last updated: {time.strftime('%H:%M:%S')}[/dim]")
 
-            except Exception as e:
+            except (ValueError, TypeError, KeyError, RuntimeError) as e:
                 console.print(f"[red]Monitoring error: {e}[/red]")
 
             await asyncio.sleep(2)

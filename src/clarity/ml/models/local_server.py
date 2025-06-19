@@ -418,8 +418,8 @@ class LocalModelServer:
             return {
                 "actigraphy_data": {
                     "timestamps": [f"2024-01-01T{i:02d}:00:00Z" for i in range(24)],
-                    "activity_counts": [random.randint(0, 1000) for _ in range(24)],
-                    "light_levels": [random.randint(0, 10000) for _ in range(24)],
+                    "activity_counts": [random.randint(0, 1000) for _ in range(24)],  # noqa: S311
+                    "light_levels": [random.randint(0, 10000) for _ in range(24)],  # noqa: S311
                 },
                 "metadata": {
                     "subject_id": "test_001",

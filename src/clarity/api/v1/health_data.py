@@ -79,7 +79,10 @@ _LEGACY_END_DATE_QUERY = Query(None, description="Filter to date")
 # Helper functions to fix linting issues (TRY300/TRY301)
 def _raise_authorization_error(user_id: str) -> NoReturn:
     """Raise authorization error for user data access."""
-    error_msg = f"Cannot upload health data for user '{user_id}'. Users can only upload their own data."
+    error_msg = (
+        f"Cannot upload health data for user '{user_id}'. "
+        "Users can only upload their own data."
+    )
     raise AuthorizationProblem(detail=error_msg)
 
 
@@ -181,7 +184,8 @@ def get_config_provider() -> IConfigProvider:
     "/",
     summary="Upload Health Data",
     description="""
-    Upload health metrics for processing and analysis by the CLARITY digital twin platform.
+    Upload health metrics for processing and analysis by the CLARITY
+    digital twin platform.
 
     **Features:**
     - Supports multiple data types (heart rate, sleep, activity, etc.)
@@ -291,7 +295,9 @@ async def upload_health_data(
             await publisher.publish_health_data_upload(
                 user_id=current_user.user_id,
                 upload_id=str(response.processing_id),
-                s3_path=gcs_path,  # Note: Using gcs_path value but naming it s3_path for compatibility
+                # Note: Using gcs_path value but naming it s3_path
+                # for compatibility
+                s3_path=gcs_path,
                 metadata={
                     "source": health_data.upload_source,
                     "metrics_count": len(health_data.metrics),

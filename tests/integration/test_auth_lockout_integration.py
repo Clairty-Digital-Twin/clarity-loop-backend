@@ -1,13 +1,18 @@
 """Integration tests for account lockout with authentication endpoints."""
 
 from datetime import datetime, timedelta
+import os
 from unittest.mock import AsyncMock
 
 from fastapi.testclient import TestClient
 import pytest
 
+from clarity.api.v1.auth import get_auth_provider, get_lockout_service
+from clarity.auth.aws_cognito_provider import CognitoAuthProvider
 from clarity.auth.lockout_service import AccountLockoutError
+from clarity.core.exceptions import InvalidCredentialsError
 from clarity.main import app
+from clarity.main import app as test_app
 
 
 class TestAuthLockoutIntegration:
@@ -17,8 +22,6 @@ class TestAuthLockoutIntegration:
     def client(self) -> TestClient:
         """Create test client."""
         # Force mock services for integration tests
-        import os
-
         original_skip = os.environ.get("SKIP_EXTERNAL_SERVICES")
         os.environ["SKIP_EXTERNAL_SERVICES"] = "true"
 
@@ -36,11 +39,6 @@ class TestAuthLockoutIntegration:
     ) -> None:
         """Test that lockout service is called during failed login attempts."""
         # Override the app's dependency injection
-        from clarity.api.v1.auth import get_auth_provider, get_lockout_service
-        from clarity.auth.aws_cognito_provider import CognitoAuthProvider
-        from clarity.core.exceptions import InvalidCredentialsError
-        from clarity.main import app as test_app
-
         # Create mock that is instance of CognitoAuthProvider
         mock_provider = AsyncMock(spec=CognitoAuthProvider)
         mock_provider.authenticate.side_effect = InvalidCredentialsError(
@@ -79,9 +77,6 @@ class TestAuthLockoutIntegration:
     @pytest.mark.asyncio
     async def test_lockout_blocks_login_attempt(self, client: TestClient) -> None:
         """Test that lockout exception blocks login attempts."""
-        from clarity.api.v1.auth import get_lockout_service
-        from clarity.main import app as test_app
-
         # Create mock lockout service
         mock_lockout = AsyncMock()
         mock_lockout.check_lockout.side_effect = AccountLockoutError(
@@ -109,12 +104,6 @@ class TestAuthLockoutIntegration:
     async def test_successful_login_resets_attempts(self, client: TestClient) -> None:
         """Test that successful login resets failed attempts."""
         # Enable self-signup and skip external services for testing
-        import os
-
-        from clarity.api.v1.auth import get_auth_provider, get_lockout_service
-        from clarity.auth.aws_cognito_provider import CognitoAuthProvider
-        from clarity.main import app as test_app
-
         os.environ["ENABLE_SELF_SIGNUP"] = "true"
         os.environ["SKIP_EXTERNAL_SERVICES"] = "true"
 

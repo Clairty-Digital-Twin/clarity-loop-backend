@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timedelta
 from unittest.mock import patch
 
@@ -15,7 +16,13 @@ from clarity.ml.preprocessing import (
     HealthDataPreprocessor,
     StandardActigraphyPreprocessor,
 )
-from clarity.ml.proxy_actigraphy import ProxyActigraphyTransformer
+from clarity.ml.proxy_actigraphy import ProxyActigraphyTransformer, StepCountData
+from clarity.utils.time_window import (
+    WEEK_MINUTES,
+    pad_to_week,
+    prepare_for_pat_inference,
+    slice_to_weeks,
+)
 
 
 class TestPreprocessingIntegration:
@@ -87,12 +94,6 @@ class TestPreprocessingIntegration:
 
     def test_proxy_actigraphy_consistency(self):
         """Test that proxy actigraphy transformation is consistent with new approach."""
-        from datetime import datetime, timedelta
-
-        from clarity.ml.proxy_actigraphy import (
-            StepCountData,
-        )
-
         transformer = ProxyActigraphyTransformer()
 
         # Test with exactly 2 weeks of step data
@@ -231,8 +232,6 @@ class TestPreprocessingIntegration:
 
     def test_concurrent_preprocessing(self):
         """Test that preprocessing works correctly when called concurrently."""
-        from concurrent.futures import ThreadPoolExecutor
-
         preprocessor = HealthDataPreprocessor()
 
         def preprocess_data(length: int) -> torch.Tensor:
@@ -292,13 +291,6 @@ class TestPreprocessingIntegration:
     def test_time_window_import_availability(self):
         """Verify that the time_window module is properly imported."""
         # This should not raise ImportError
-        from clarity.utils.time_window import (
-            WEEK_MINUTES,
-            pad_to_week,
-            prepare_for_pat_inference,
-            slice_to_weeks,
-        )
-
         # Verify the functions exist and have correct signatures
         assert callable(slice_to_weeks)
         assert callable(pad_to_week)

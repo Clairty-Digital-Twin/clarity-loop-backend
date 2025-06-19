@@ -3,12 +3,17 @@
 from __future__ import annotations
 
 import asyncio
+import io
 import os
 from pathlib import Path
+import subprocess
+import sys
 from unittest.mock import patch
 
 import pytest
 
+from clarity.startup.config_schema import ClarityConfig
+from clarity.startup.error_catalog import error_catalog
 from clarity.startup.orchestrator import StartupOrchestrator
 from clarity.startup.progress_reporter import StartupProgressReporter
 
@@ -179,8 +184,6 @@ class TestStartupIntegration:
         assert script_path.exists()
 
         # Test import works
-        import subprocess
-        import sys
 
         # Run script with --help to test basic functionality
         result = subprocess.run(
@@ -201,8 +204,6 @@ class TestStartupIntegration:
     @pytest.mark.asyncio
     async def test_error_catalog_integration(self) -> None:
         """Test error catalog integration with startup system."""
-        from clarity.startup.error_catalog import error_catalog
-
         # Test error code suggestion
         error_message = "Cognito credentials not found"
         suggested_code = error_catalog.suggest_error_code(error_message)

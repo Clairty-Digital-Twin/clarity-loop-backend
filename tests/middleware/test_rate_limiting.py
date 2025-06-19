@@ -8,12 +8,15 @@ Tests various rate limiting scenarios including:
 - Error handling
 """
 
+import json
 from unittest.mock import MagicMock
 
 from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
 from fastapi.testclient import TestClient
 import pytest
 from slowapi.errors import RateLimitExceeded
+from slowapi.middleware import SlowAPIMiddleware
 
 from clarity.middleware.rate_limiting import (
     RateLimitingMiddleware,
@@ -116,8 +119,6 @@ class TestRateLimitExceededHandler:
     async def test_rate_limit_exceeded_handler(self, mock_request):
         """Test handling of rate limit exceeded errors."""
         # Clean Code: Create a mock limit object
-        from unittest.mock import MagicMock
-
         mock_limit = MagicMock()
         mock_limit.limit = "5/minute"
 
@@ -132,8 +133,6 @@ class TestRateLimitExceededHandler:
         assert response.headers["content-type"] == "application/json"
 
         # Check response body
-        import json
-
         body = json.loads(response.body)
         assert body["type"] == "rate_limit_exceeded"
         assert body["title"] == "Too Many Requests"
@@ -152,8 +151,6 @@ class TestIntegration:
         limiter = setup_rate_limiting(app)
 
         # Add the middleware to the app
-        from slowapi.middleware import SlowAPIMiddleware
-
         # Add SlowAPI middleware
         app.add_middleware(SlowAPIMiddleware)
         app.state.limiter = limiter
@@ -161,22 +158,16 @@ class TestIntegration:
         # Add test endpoints
         @app.get("/test/unlimited")
         async def unlimited():
-            from fastapi.responses import JSONResponse
-
             return JSONResponse({"message": "success"})
 
         @app.get("/test/limited")
         @limiter.limit("2/minute")
         async def limited(request: Request):
-            from fastapi.responses import JSONResponse
-
             return JSONResponse({"message": "success"})
 
         @app.get("/test/auth")
         @limiter.limit("5/minute", key_func=get_ip_only)
         async def auth_endpoint(request: Request):
-            from fastapi.responses import JSONResponse
-
             return JSONResponse({"message": "success"})
 
         return app

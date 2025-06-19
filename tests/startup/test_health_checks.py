@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio  # noqa: F401 - needed for pytest.mark.asyncio
+import time
 from unittest.mock import Mock, patch
 
 from botocore.exceptions import ClientError, NoCredentialsError
@@ -52,8 +53,6 @@ class TestCircuitBreakerState:
         assert cb.should_attempt_request() is False
 
         # Wait for recovery timeout
-        import time
-
         time.sleep(0.2)
 
         # Should transition to half-open

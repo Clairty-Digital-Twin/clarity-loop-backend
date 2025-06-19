@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 from typing import Any
 from unittest.mock import AsyncMock, MagicMock, Mock, patch
 import uuid
@@ -13,7 +14,7 @@ import pytest
 # Import the REAL modules we want to test
 from clarity.api.v1.auth import router
 from clarity.auth.aws_cognito_provider import CognitoAuthProvider
-from clarity.auth.dependencies import get_auth_provider
+from clarity.auth.dependencies import get_auth_provider, get_lockout_service
 from clarity.core.constants import (
     AUTH_HEADER_TYPE_BEARER,
     AUTH_SCOPE_FULL_ACCESS,
@@ -69,8 +70,6 @@ def auth_tokens() -> dict[str, Any]:
 def app(mock_cognito_provider: Mock) -> FastAPI:
     """Create a real FastAPI app that uses the actual auth router."""
     # Enable self-signup for tests
-    import os
-
     os.environ["ENABLE_SELF_SIGNUP"] = "true"
 
     app = FastAPI()
@@ -79,8 +78,6 @@ def app(mock_cognito_provider: Mock) -> FastAPI:
     app.dependency_overrides[get_auth_provider] = lambda: mock_cognito_provider
 
     # Also mock the lockout service to prevent test interference
-    from clarity.auth.dependencies import get_lockout_service
-
     mock_lockout = AsyncMock()  # Use AsyncMock for async methods
     mock_lockout.check_account.return_value = None  # No lockout
     mock_lockout.check_lockout.return_value = None  # No lockout

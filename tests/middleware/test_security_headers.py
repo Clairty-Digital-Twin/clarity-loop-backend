@@ -253,8 +253,8 @@ class TestSecurityHeadersMiddleware:
         async def value_error_handler(request, exc):
             return Response(content=str(exc), status_code=500)
 
-        @app.get("/error")
-        async def error_endpoint() -> Never:
+        @app.get("/error", response_model=None)
+        async def error_endpoint():
             msg = "Test error"
             raise ValueError(msg)
 

@@ -384,7 +384,7 @@ class ServiceHealthChecker:
 
             # Test connectivity by getting bucket location
             actual_timeout = timeout or self.timeout
-            response = await asyncio.wait_for(
+            await asyncio.wait_for(
                 asyncio.to_thread(client.head_bucket, Bucket=bucket_name),
                 timeout=actual_timeout,
             )

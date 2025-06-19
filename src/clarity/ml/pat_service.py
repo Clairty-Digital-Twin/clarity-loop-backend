@@ -668,7 +668,7 @@ class PATModelService(IMLModelService):
             return state_dict
 
         # At this point, Mypy knows h5py is not None due to the _has_h5py check
-        assert h5py is not None  # nosec B101
+        assert h5py is not None  # noqa: S101
 
         try:
             with h5py.File(h5_path, "r") as h5_file:
@@ -1062,7 +1062,7 @@ class PATModelService(IMLModelService):
             if not self.is_loaded or not self.model:
                 self._raise_model_not_loaded_error()
 
-            assert (  # nosec B101
+            assert (  # noqa: S101
                 self.model is not None
             ), "Model must be loaded at this point"
 

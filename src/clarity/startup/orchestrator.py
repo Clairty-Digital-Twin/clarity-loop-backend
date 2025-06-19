@@ -191,7 +191,7 @@ class StartupOrchestrator:
             return ["Configuration not loaded"]
 
         # Security validations
-        if self.config.security.secret_key == "dev-secret-key":
+        if self.config.security.secret_key == "dev-secret-key":  # noqa: S105
             errors.append("Production requires custom SECRET_KEY")
 
         # CORS validations
@@ -273,7 +273,7 @@ class StartupOrchestrator:
             # Import here to avoid circular imports
             from clarity.core.container_aws import initialize_container
 
-            container = await initialize_container(None)  # Use default settings
+            await initialize_container(self.config)  # type: ignore[arg-type]
 
             self.reporter.complete_step(
                 container_step, "Container initialized successfully"
@@ -333,7 +333,7 @@ async def validate_config_only(dry_run: bool = True) -> bool:
     success, config = await orchestrator.orchestrate_startup()
 
     if dry_run and config:
-        print(orchestrator.create_dry_run_report())
+        print(orchestrator.create_dry_run_report())  # noqa: T201
 
     return success
 
@@ -344,7 +344,7 @@ async def full_startup_check() -> bool:
     success, config = await orchestrator.orchestrate_startup()
 
     if config:
-        print(orchestrator.create_dry_run_report())
+        print(orchestrator.create_dry_run_report())  # noqa: T201
 
     return success
 
@@ -392,15 +392,15 @@ def main() -> int:
             success, config = asyncio.run(orchestrator.orchestrate_startup())
 
             if args.dry_run and config:
-                print("\n" + orchestrator.create_dry_run_report())
+                print("\n" + orchestrator.create_dry_run_report())  # noqa: T201
 
         return 0 if success else 1
 
     except KeyboardInterrupt:
-        print("\n❌ Startup validation cancelled")
+        print("\n❌ Startup validation cancelled")  # noqa: T201
         return 130
     except Exception as e:
-        print(f"❌ Unexpected error: {e}")
+        print(f"❌ Unexpected error: {e}")  # noqa: T201
         logger.exception("Unexpected error in startup validation")
         return 1
 

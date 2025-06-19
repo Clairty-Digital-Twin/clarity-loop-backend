@@ -171,7 +171,7 @@ class StartupProgressReporter:
             display_message = f"{emoji} {self._colorize(phase_name, 'bold')}"
 
         self._print(f"\n{display_message}")
-        logger.info(f"Startup phase: {phase_name}")
+        logger.info("Startup phase: %s", phase_name)
 
     def add_step(self, name: str, phase: ProgressPhase | None = None) -> ProgressStep:
         """Add a new progress step."""
@@ -215,7 +215,7 @@ class StartupProgressReporter:
             display_message += f" {self._colorize(duration_str, 'gray')}"
 
         self._print(display_message)
-        logger.info(f"Completed: {step.name} in {step.duration_ms:.0f}ms")
+        logger.info("Completed: %s in %.0fms", step.name, step.duration_ms)
 
     def fail_step(
         self,
@@ -234,9 +234,9 @@ class StartupProgressReporter:
 
         if error:
             self._print(f"    {self._colorize('Error:', 'red')} {error!s}")
-            logger.error(f"Step failed: {step.name} - {message}", exc_info=error)
+            logger.error("Step failed: %s - %s", step.name, message, exc_info=error)
         else:
-            logger.error(f"Step failed: {step.name} - {message}")
+            logger.error("Step failed: %s - %s", step.name, message)
 
     def skip_step(self, step: ProgressStep, reason: str) -> None:
         """Mark step as skipped."""
@@ -248,7 +248,7 @@ class StartupProgressReporter:
         display_message = f"  {symbol} {self._colorize(step.name, 'yellow')}: {self._colorize(reason, 'gray')}"
 
         self._print(display_message)
-        logger.info(f"Skipped: {step.name} - {reason}")
+        logger.info("Skipped: %s - %s", step.name, reason)
 
     def report_health_checks(self, results: dict[str, HealthCheckResult]) -> None:
         """Report health check results."""
@@ -311,7 +311,7 @@ class StartupProgressReporter:
             if message:
                 status_msg += f": {message}"
             self._print(f"\n{status_msg}")
-            logger.info(f"Startup completed successfully in {total_duration:.0f}ms")
+            logger.info("Startup completed successfully in %.0fms", total_duration)
         else:
             self.current_phase = ProgressPhase.FAILED
             emoji = self._get_phase_emoji(ProgressPhase.FAILED)
@@ -319,7 +319,7 @@ class StartupProgressReporter:
             if message:
                 status_msg += f": {message}"
             self._print(f"\n{status_msg}")
-            logger.error(f"Startup failed after {total_duration:.0f}ms: {message}")
+            logger.error("Startup failed after %.0fms: %s", total_duration, message)
 
         self._print(f"{self._colorize('=' * 60, 'gray')}\n")
 

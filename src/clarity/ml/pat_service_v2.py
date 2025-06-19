@@ -307,7 +307,7 @@ class PATServiceV2:
             # Generate sample data for warm-up
             sample_data = [0.1] * 1000  # 1000 sample points
 
-            for i in range(sample_count):
+            for _i in range(sample_count):
                 await self.predict(sample_data)
                 await asyncio.sleep(0.1)  # Small delay between warm-up calls
 

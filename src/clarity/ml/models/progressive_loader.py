@@ -476,7 +476,7 @@ class ProgressiveLoadingService:
         )
 
         # Update status
-        for (task, unique_id), result in zip(load_tasks, results, strict=False):
+        for (_task, unique_id), result in zip(load_tasks, results, strict=False):
             if isinstance(result, Exception):
                 self.model_status[unique_id].status = "failed"
                 self.model_status[unique_id].error_message = str(result)

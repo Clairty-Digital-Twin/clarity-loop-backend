@@ -557,7 +557,7 @@ def load_config() -> ClarityConfig:
     if errors:
         logger.error("Configuration validation failed:")
         for error in errors:
-            logger.error(f"  • {error}")
+            logger.error("  • %s", error)
         raise ValueError("Configuration validation failed - see logs for details")
 
     if config is None:

@@ -174,7 +174,7 @@ def setup_rate_limiting(app: Any, redis_url: str | None = None) -> Limiter:
 def rate_limit(limit_string: str) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
     """Decorator to apply rate limiting to an endpoint."""
 
-    def decorator(func):
+    def decorator(func: Callable[..., Any]) -> Callable[..., Any]:
         # This will be properly bound when the limiter is attached to the app
         return func
 

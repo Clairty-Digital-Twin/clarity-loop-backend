@@ -56,7 +56,7 @@ def cli(ctx, config_file, models_dir, verbose):
 
 @cli.command()
 @click.pass_context
-async def init(ctx):
+async def init(ctx) -> None:
     """Initialize model registry"""
     models_dir = ctx.obj["models_dir"]
 
@@ -78,7 +78,7 @@ async def init(ctx):
 
 @cli.command()
 @click.pass_context
-async def list(ctx):
+async def list(ctx) -> None:
     """List all models in registry"""
     models_dir = ctx.obj["models_dir"]
 
@@ -134,7 +134,7 @@ async def list(ctx):
 @click.option("--version", default="latest", help="Model version")
 @click.option("--source-url", help="Source URL for download")
 @click.pass_context
-async def download(ctx, model_id, version, source_url):
+async def download(ctx, model_id, version, source_url) -> None:
     """Download a model"""
     models_dir = ctx.obj["models_dir"]
 
@@ -202,7 +202,7 @@ async def download(ctx, model_id, version, source_url):
 @click.pass_context
 async def register(
     ctx, model_id, name, version, tier, source_url, checksum, size, description, tags
-):
+) -> None:
     """Register a new model"""
     models_dir = ctx.obj["models_dir"]
 
@@ -236,7 +236,7 @@ async def register(
 @click.argument("model_id")
 @click.argument("version")
 @click.pass_context
-async def alias(ctx, alias, model_id, version):
+async def alias(ctx, alias, model_id, version) -> None:
     """Create model alias"""
     models_dir = ctx.obj["models_dir"]
 
@@ -256,7 +256,7 @@ async def alias(ctx, alias, model_id, version):
 
 @cli.command()
 @click.pass_context
-async def status(ctx):
+async def status(ctx) -> None:
     """Show model registry status"""
     models_dir = ctx.obj["models_dir"]
 
@@ -319,7 +319,7 @@ Registry File: {config.registry_file}
     "--create-mocks/--no-create-mocks", default=True, help="Create mock models"
 )
 @click.pass_context
-async def serve(ctx, host, port, auto_load, create_mocks):
+async def serve(ctx, host, port, auto_load, create_mocks) -> None:
     """Start local model server"""
     models_dir = ctx.obj["models_dir"]
 
@@ -350,7 +350,7 @@ async def serve(ctx, host, port, auto_load, create_mocks):
 @click.option("--version", default="latest", help="Model version")
 @click.option("--input-file", type=click.Path(exists=True), help="Input JSON file")
 @click.pass_context
-async def predict(ctx, url, model_id, version, input_file):
+async def predict(ctx, url, model_id, version, input_file) -> None:
     """Make prediction using local server"""
     # Load input data
     if input_file:
@@ -393,7 +393,7 @@ async def predict(ctx, url, model_id, version, input_file):
 @cli.command()
 @click.option("--url", default="http://localhost:8900", help="Server URL")
 @click.pass_context
-async def monitor(ctx, url):
+async def monitor(ctx, url) -> None:
     """Monitor local server metrics"""
     console.print(f"[green]Monitoring server at {url}[/green]")
     console.print("[yellow]Press Ctrl+C to stop[/yellow]")

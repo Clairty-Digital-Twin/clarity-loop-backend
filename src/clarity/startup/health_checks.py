@@ -252,7 +252,7 @@ class ServiceHealthChecker:
             if endpoint_url:
                 client_kwargs["endpoint_url"] = endpoint_url
 
-            client = boto3.client("dynamodb", **client_kwargs)
+            client = boto3.client("dynamodb", **client_kwargs)  # type: ignore[call-overload]
 
             # Test connectivity by describing table
             actual_timeout = timeout or self.timeout

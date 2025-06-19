@@ -551,7 +551,7 @@ LEGACY_PAT_MODELS = {
 
 async def initialize_legacy_models(registry: ModelRegistry) -> None:
     """Initialize registry with existing legacy PAT models."""
-    for model_id, metadata in LEGACY_PAT_MODELS.items():
+    for _model_id, metadata in LEGACY_PAT_MODELS.items():
         await registry.register_model(metadata)
 
     # Create semantic aliases

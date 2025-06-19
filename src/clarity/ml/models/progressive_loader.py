@@ -95,7 +95,8 @@ class ProgressiveLoadingService:
         self._detect_environment()
 
         logger.info(
-            f"Progressive loading service initialized for {'production' if self.config.is_production else 'development'}"
+            "Progressive loading service initialized for %s",
+            'production' if self.config.is_production else 'development'
         )
 
     async def initialize(self) -> bool:
@@ -122,7 +123,7 @@ class ProgressiveLoadingService:
             return True
 
         except Exception as e:
-            logger.error(f"Failed to initialize progressive loading service: {e}")
+            logger.error("Failed to initialize progressive loading service: %s", e)
             return False
 
     async def get_model(
@@ -170,7 +171,7 @@ class ProgressiveLoadingService:
             return None
 
         except Exception as e:
-            logger.error(f"Failed to get model {unique_id}: {e}")
+            logger.error("Failed to get model %s: %s", unique_id, e)
             self.model_status[unique_id].status = "failed"
             self.model_status[unique_id].error_message = str(e)
             return None
@@ -262,7 +263,7 @@ class ProgressiveLoadingService:
 
             await asyncio.sleep(1)
 
-        logger.warning(f"Critical models not ready within {timeout} seconds")
+        logger.warning("Critical models not ready within %s seconds", timeout)
         return False
 
     async def health_check(self) -> dict[str, Any]:
@@ -288,7 +289,7 @@ class ProgressiveLoadingService:
             }
 
         except Exception as e:
-            logger.error(f"Health check failed: {e}")
+            logger.error("Health check failed: %s", e)
             return {"status": "unhealthy", "error": str(e)}
 
     def _detect_environment(self) -> None:
@@ -322,7 +323,9 @@ class ProgressiveLoadingService:
             self.config.enable_efs_cache = False
 
         logger.info(
-            f"Environment detected: production={is_prod_env}, local_dev={is_local_dev}"
+            "Environment detected: production=%s, local_dev=%s",
+            is_prod_env,
+            is_local_dev
         )
 
     async def _setup_model_infrastructure(self) -> None:
@@ -389,15 +392,15 @@ class ProgressiveLoadingService:
                     if success:
                         self.model_status[unique_id].status = "available"
                         self.model_status[unique_id].load_time_seconds = load_time
-                        logger.info(f"Loaded model {unique_id} in {load_time:.2f}s")
+                        logger.info("Loaded model %s in %.2fs", unique_id, load_time)
                     else:
                         self.model_status[unique_id].status = "failed"
-                        logger.error(f"Failed to load model {unique_id}")
+                        logger.error("Failed to load model %s", unique_id)
 
                 except Exception as e:
                     self.model_status[unique_id].status = "failed"
                     self.model_status[unique_id].error_message = str(e)
-                    logger.error(f"Error loading model {unique_id}: {e}")
+                    logger.error("Error loading model %s: %s", unique_id, e)
 
         # Start loading critical models first
         critical_tasks = []
@@ -440,7 +443,7 @@ class ProgressiveLoadingService:
             self._record_phase_transition(ApplicationPhase.FULLY_READY)
             logger.info("All model preloading completed")
         except Exception as e:
-            logger.error(f"Error in background preloading: {e}")
+            logger.error("Error in background preloading: %s", e)
 
     async def _start_eager_loading(self) -> None:
         """Start eager loading of all models."""
@@ -469,7 +472,7 @@ class ProgressiveLoadingService:
 
         # Wait for all models to load
         results = await asyncio.gather(
-            *[task for task, _ in load_tasks], return_exceptions=True
+            *[task for task, _metadata in load_tasks], return_exceptions=True
         )
 
         # Update status
@@ -496,7 +499,9 @@ class ProgressiveLoadingService:
         """Record phase transition timing."""
         self.phase_transitions[phase] = time.time() - self.startup_time
         logger.info(
-            f"Application phase: {phase.value} ({self.phase_transitions[phase]:.2f}s)"
+            "Application phase: %s (%.2fs)",
+            phase.value,
+            self.phase_transitions[phase]
         )
 
 

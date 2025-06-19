@@ -65,7 +65,7 @@ class PATServiceV2:
             "large": "1.2.0",  # PAT-L
         }
 
-        logger.info(f"PAT Service V2 initialized with model size: {model_size}")
+        logger.info("PAT Service V2 initialized with model size: %s", model_size)
 
     async def initialize(self) -> bool:
         """Initialize the PAT service with progressive loading."""
@@ -90,7 +90,7 @@ class PATServiceV2:
             return True
 
         except (RuntimeError, AttributeError) as e:
-            logger.error(f"Failed to initialize PAT Service V2: {e}")
+            logger.error("Failed to initialize PAT Service V2: %s", e)
 
             # Fallback to legacy service
             await self._initialize_fallback()
@@ -109,13 +109,13 @@ class PATServiceV2:
 
             if self.current_model:
                 logger.info(
-                    f"Successfully loaded PAT model: {self.current_model.metadata.unique_id}"
+                    "Successfully loaded PAT model: %s", self.current_model.metadata.unique_id
                 )
             else:
-                logger.warning(f"Failed to load PAT model: pat:{version}")
+                logger.warning("Failed to load PAT model: pat:%s", version)
 
         except (RuntimeError, AttributeError) as e:
-            logger.error(f"Error loading PAT model: {e}")
+            logger.error("Error loading PAT model: %s", e)
 
     async def _initialize_fallback(self) -> None:
         """Initialize fallback legacy service."""
@@ -124,7 +124,7 @@ class PATServiceV2:
             # Note: Legacy service initialization would happen here
             logger.info("Fallback to legacy PAT service initialized")
         except (RuntimeError, AttributeError) as e:
-            logger.error(f"Failed to initialize fallback service: {e}")
+            logger.error("Failed to initialize fallback service: %s", e)
 
     async def predict(
         self,
@@ -165,7 +165,7 @@ class PATServiceV2:
                 return result
 
             except (RuntimeError, ValueError, TypeError) as e:
-                logger.error(f"Prediction failed with progressive model: {e}")
+                logger.error("Prediction failed with progressive model: %s", e)
 
                 # Record error
                 if self.monitoring_service:
@@ -185,7 +185,7 @@ class PATServiceV2:
                 # Note: Legacy service prediction would be called here
                 return await self._predict_with_fallback(actigraphy_data, options)
             except Exception as e:
-                logger.error(f"Fallback prediction also failed: {e}")
+                logger.error("Fallback prediction also failed: %s", e)
                 raise
 
         raise RuntimeError("No available models for prediction")
@@ -311,11 +311,11 @@ class PATServiceV2:
                 await self.predict(sample_data)
                 await asyncio.sleep(0.1)  # Small delay between warm-up calls
 
-            logger.info(f"Model warm-up completed with {sample_count} samples")
+            logger.info("Model warm-up completed with %s samples", sample_count)
             return True
 
         except (RuntimeError, ValueError) as e:
-            logger.error(f"Model warm-up failed: {e}")
+            logger.error("Model warm-up failed: %s", e)
             return False
 
     async def reload_model(self, new_version: str | None = None) -> bool:
@@ -340,14 +340,14 @@ class PATServiceV2:
 
             if self.current_model:
                 logger.info(
-                    f"Successfully reloaded PAT model: {self.current_model.metadata.unique_id}"
+                    "Successfully reloaded PAT model: %s", self.current_model.metadata.unique_id
                 )
                 return True
-            logger.error(f"Failed to reload PAT model: pat:{target_version}")
+            logger.error("Failed to reload PAT model: pat:%s", target_version)
             return False
 
         except (RuntimeError, AttributeError) as e:
-            logger.error(f"Model reload failed: {e}")
+            logger.error("Model reload failed: %s", e)
             return False
 
     async def health_check(self) -> dict[str, Any]:
@@ -405,7 +405,7 @@ class PATServiceV2:
             logger.info("PAT Service V2 shutdown completed")
 
         except (RuntimeError, AttributeError) as e:
-            logger.error(f"Error during PAT Service V2 shutdown: {e}")
+            logger.error("Error during PAT Service V2 shutdown: %s", e)
 
 
 # Factory function for creating PAT service instances

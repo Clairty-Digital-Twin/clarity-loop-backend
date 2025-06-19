@@ -310,7 +310,7 @@ class ProgressiveLoadingService:
                 os.getenv("ENVIRONMENT") == "production",
                 os.getenv("AWS_EXECUTION_ENV"),  # AWS Lambda/ECS
                 os.getenv("ECS_CONTAINER_METADATA_URI"),  # ECS
-                os.path.exists("/app"),  # Container environment
+                Path("/app").exists(),  # Container environment
             ]
         )
 
@@ -320,7 +320,7 @@ class ProgressiveLoadingService:
                 os.getenv("ENVIRONMENT") == "development",
                 os.getenv("FLASK_ENV") == "development",
                 os.getenv("FASTAPI_ENV") == "development",
-                not is_prod_env and os.path.exists("./src"),
+                not is_prod_env and Path("./src").exists(),
             ]
         )
 

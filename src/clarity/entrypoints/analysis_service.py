@@ -29,7 +29,7 @@ app = FastAPI(
 )
 
 # Configure CORS - HARDENED SECURITY (NO WILDCARDS!)
-from clarity.core.config import get_settings
+from clarity.core.config import get_settings  # noqa: E402
 
 settings = get_settings()
 

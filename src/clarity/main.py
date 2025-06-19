@@ -208,7 +208,7 @@ app = FastAPI(
 )
 
 # Add CORS middleware with SECURE configuration - NO WILDCARDS
-from clarity.core.config import get_settings
+from clarity.core.config import get_settings  # noqa: E402
 
 settings = get_settings()
 
@@ -224,7 +224,9 @@ app.add_middleware(
 logger.info("🔒 CORS Security: Hardened configuration applied - NO wildcards allowed")
 
 # Add request size limiter middleware - PREVENT DoS ATTACKS
-from clarity.middleware.request_size_limiter import RequestSizeLimiterMiddleware
+from clarity.middleware.request_size_limiter import (
+    RequestSizeLimiterMiddleware,
+)
 
 app.add_middleware(
     RequestSizeLimiterMiddleware,
@@ -237,7 +239,7 @@ app.add_middleware(
 logger.info("🔒 Request Size Limiter: DoS protection active - payload limits enforced")
 
 # Add timeout middleware to prevent hangs from incomplete uploads
-from starlette.middleware.trustedhost import TrustedHostMiddleware
+from starlette.middleware.trustedhost import TrustedHostMiddleware  # noqa: E402
 
 app.add_middleware(
     TrustedHostMiddleware,
@@ -248,7 +250,7 @@ app.add_middleware(
 # uvicorn src.clarity.main:app --timeout-keep-alive 15 --timeout-graceful-shutdown 5
 
 # Add security headers middleware
-from clarity.middleware.security_headers import SecurityHeadersMiddleware
+from clarity.middleware.security_headers import SecurityHeadersMiddleware  # noqa: E402
 
 app.add_middleware(
     SecurityHeadersMiddleware,
@@ -259,13 +261,13 @@ app.add_middleware(
 logger.info("✅ Added security headers middleware")
 
 # Add authentication middleware
-from clarity.middleware.auth_middleware import CognitoAuthMiddleware
+from clarity.middleware.auth_middleware import CognitoAuthMiddleware  # noqa: E402
 
 app.add_middleware(CognitoAuthMiddleware)
 logger.info("✅ Added authentication middleware")
 
 # Add rate limiting middleware
-from clarity.middleware.rate_limiting import setup_rate_limiting
+from clarity.middleware.rate_limiting import setup_rate_limiting  # noqa: E402
 
 # Get Redis URL from environment for distributed rate limiting
 redis_url = os.getenv("REDIS_URL")

@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-import asyncio
-from unittest.mock import AsyncMock, Mock, patch
+import asyncio  # noqa: F401 - needed for pytest.mark.asyncio
+from unittest.mock import Mock, patch
 
 from botocore.exceptions import ClientError, NoCredentialsError
 import pytest

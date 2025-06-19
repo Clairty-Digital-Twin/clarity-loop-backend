@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from datetime import datetime, timedelta
-from unittest.mock import Mock, patch
+from unittest.mock import patch
 
 import numpy as np
 import pytest
@@ -231,7 +231,6 @@ class TestPreprocessingIntegration:
 
     def test_concurrent_preprocessing(self):
         """Test that preprocessing works correctly when called concurrently."""
-        import asyncio
         from concurrent.futures import ThreadPoolExecutor
 
         preprocessor = HealthDataPreprocessor()

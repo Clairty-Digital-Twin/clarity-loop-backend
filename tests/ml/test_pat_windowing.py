@@ -9,7 +9,6 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from clarity.core.constants import MINUTES_PER_WEEK
 from clarity.utils.time_window import (
     WEEK_MINUTES,
     pad_to_week,

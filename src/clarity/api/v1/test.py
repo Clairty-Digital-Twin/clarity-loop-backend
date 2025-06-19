@@ -1,6 +1,6 @@
 """SIMPLE TEST ENDPOINT - NO FANCY IMPORTS."""
 
-# removed – breaks FastAPI
+# removed - breaks FastAPI
 
 from typing import Any
 

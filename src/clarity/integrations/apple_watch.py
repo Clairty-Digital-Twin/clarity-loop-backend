@@ -4,7 +4,7 @@ Specialized processing and transformation of Apple Watch data
 for optimal integration with PAT (Pretrained Actigraphy Transformer) models.
 """
 
-# removed – breaks FastAPI
+# removed - breaks FastAPI
 
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta

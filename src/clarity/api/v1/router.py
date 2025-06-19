@@ -1,6 +1,6 @@
 """Main API v1 router - AWS Clean version."""
 
-# removed – breaks FastAPI
+# removed - breaks FastAPI
 
 import logging
 import os

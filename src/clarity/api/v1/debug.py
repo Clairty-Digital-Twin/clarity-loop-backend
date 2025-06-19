@@ -1,6 +1,6 @@
 """Debug endpoints for request inspection."""
 
-# removed – breaks FastAPI
+# removed - breaks FastAPI
 
 import json
 import logging

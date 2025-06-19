@@ -10,7 +10,7 @@ The exception hierarchy is designed to be:
 - Self-documenting through clear names and messages
 """
 
-# removed – breaks FastAPI
+# removed - breaks FastAPI
 
 import logging
 from typing import Any

@@ -1,6 +1,6 @@
 """WebSocket connection management with advanced features."""
 
-# removed – breaks FastAPI
+# removed - breaks FastAPI
 
 import asyncio
 from collections import defaultdict

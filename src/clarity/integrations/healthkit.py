@@ -4,7 +4,7 @@ Handles OAuth 2.0 authorization, data fetching, and normalization
 for Apple Watch health metrics including activity, sleep, and heart rate.
 """
 
-# removed – breaks FastAPI
+# removed - breaks FastAPI
 
 import asyncio
 from dataclasses import asdict, dataclass

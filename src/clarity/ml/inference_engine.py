@@ -14,7 +14,7 @@ This implementation follows clean code principles with proper separation of conc
 dependency injection, and comprehensive error handling.
 """
 
-# removed – breaks FastAPI
+# removed - breaks FastAPI
 
 import asyncio
 from collections.abc import Callable

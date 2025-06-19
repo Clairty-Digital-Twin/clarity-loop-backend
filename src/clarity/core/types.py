@@ -8,7 +8,7 @@ Types are organized by domain and usage patterns for better discoverability
 and maintainability.
 """
 
-# removed – breaks FastAPI
+# removed - breaks FastAPI
 
 from collections.abc import Awaitable, Callable, Mapping, Sequence
 from datetime import datetime

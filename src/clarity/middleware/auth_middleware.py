@@ -4,7 +4,7 @@ This middleware validates Cognito JWT tokens and populates request.state.user
 with the authenticated user context.
 """
 
-# removed – breaks FastAPI
+# removed - breaks FastAPI
 
 import logging
 import os

@@ -3,7 +3,7 @@
 This module provides centralized access to AWS credentials and API keys.
 """
 
-# removed – breaks FastAPI
+# removed - breaks FastAPI
 
 import os
 from typing import TYPE_CHECKING

@@ -7,4 +7,4 @@ This module contains standalone service entry points for:
 Each service runs as a separate process/container in production.
 """
 
-# removed – breaks FastAPI
+# removed - breaks FastAPI

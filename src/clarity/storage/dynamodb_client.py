@@ -1,6 +1,6 @@
 """AWS DynamoDB implementation for health data storage."""
 
-# removed – breaks FastAPI
+# removed - breaks FastAPI
 
 from datetime import UTC, datetime
 from decimal import Decimal

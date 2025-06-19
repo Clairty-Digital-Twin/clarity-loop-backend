@@ -3,7 +3,7 @@
 This module configures all AWS service dependencies and their initialization.
 """
 
-# removed – breaks FastAPI
+# removed - breaks FastAPI
 
 import logging
 from typing import Any

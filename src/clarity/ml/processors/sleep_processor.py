@@ -14,7 +14,7 @@ Features extracted align with clinical sleep medicine standards:
 References sleep research standards from AASM, NSRR, and MESA studies.
 """
 
-# removed – breaks FastAPI
+# removed - breaks FastAPI
 
 import logging
 

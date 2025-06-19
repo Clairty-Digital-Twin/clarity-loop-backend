@@ -1,6 +1,6 @@
 """WebSocket chat handler for real-time health insights and communication."""
 
-# removed – breaks FastAPI
+# removed - breaks FastAPI
 
 from datetime import UTC, datetime
 import json

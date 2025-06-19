@@ -1,6 +1,6 @@
 """Authentication decorators and utilities for API endpoints."""
 
-# removed – breaks FastAPI
+# removed - breaks FastAPI
 
 from collections.abc import Awaitable, Callable
 from functools import wraps

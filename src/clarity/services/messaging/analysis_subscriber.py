@@ -3,7 +3,7 @@
 Handles Pub/Sub messages for health data analysis processing.
 """
 
-# removed – breaks FastAPI
+# removed - breaks FastAPI
 
 import base64
 import json

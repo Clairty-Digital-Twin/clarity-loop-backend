@@ -4,7 +4,7 @@ Combines multiple health modality features into a unified health state vector
 using transformer-based attention mechanisms for cross-modal interactions.
 """
 
-# removed – breaks FastAPI
+# removed - breaks FastAPI
 
 import logging
 

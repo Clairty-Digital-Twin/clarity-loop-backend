@@ -3,7 +3,7 @@
 This module provides AWS Cognito integration with AWS-native solutions.
 """
 
-# removed – breaks FastAPI
+# removed - breaks FastAPI
 
 from datetime import UTC, datetime
 import json

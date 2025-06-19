@@ -4,7 +4,7 @@ Modal doesn't properly propagate request.state between middleware and route hand
 This module provides a workaround using Python's contextvars for thread-local storage.
 """
 
-# removed – breaks FastAPI
+# removed - breaks FastAPI
 
 import contextvars
 from typing import TYPE_CHECKING

@@ -1,6 +1,6 @@
 """Resilience and utility decorators for the CLARITY platform."""
 
-# removed – breaks FastAPI
+# removed - breaks FastAPI
 
 from collections.abc import Awaitable, Callable
 import functools

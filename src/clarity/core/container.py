@@ -1,6 +1,6 @@
 """Container compatibility module - aliases to container_aws."""
 
-# removed – breaks FastAPI
+# removed - breaks FastAPI
 
 from typing import TYPE_CHECKING
 

@@ -3,7 +3,7 @@
 Environment-based configuration using Pydantic settings for AWS deployment.
 """
 
-# removed – breaks FastAPI
+# removed - breaks FastAPI
 
 from dataclasses import dataclass
 from functools import lru_cache

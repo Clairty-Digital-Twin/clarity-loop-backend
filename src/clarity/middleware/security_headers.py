@@ -4,7 +4,7 @@ This middleware adds security headers to all HTTP responses to enhance security 
 Implements OWASP recommended security headers for API protection.
 """
 
-# removed – breaks FastAPI
+# removed - breaks FastAPI
 
 import logging
 from typing import TYPE_CHECKING

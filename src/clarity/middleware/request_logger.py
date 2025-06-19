@@ -1,6 +1,6 @@
 """Request logging middleware for debugging."""
 
-# removed – breaks FastAPI
+# removed - breaks FastAPI
 
 import json
 import logging

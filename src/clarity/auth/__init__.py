@@ -3,7 +3,7 @@
 AWS Cognito-based authentication and authorization for enterprise healthcare applications.
 """
 
-# removed – breaks FastAPI
+# removed - breaks FastAPI
 
 from clarity.auth.decorators import require_auth
 from clarity.auth.dependencies import (

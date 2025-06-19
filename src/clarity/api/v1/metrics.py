@@ -11,7 +11,7 @@ Exposes custom application metrics including:
 Designed for production monitoring and alerting.
 """
 
-# removed – breaks FastAPI
+# removed - breaks FastAPI
 
 import logging
 import time

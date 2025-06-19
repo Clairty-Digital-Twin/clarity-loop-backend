@@ -17,7 +17,7 @@ Available routers:
 - debug: Development and debugging endpoints (dev only)
 """
 
-# removed – breaks FastAPI
+# removed - breaks FastAPI
 
 __version__ = "1.0.0"
 

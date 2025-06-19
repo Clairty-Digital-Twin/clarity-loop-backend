@@ -5,7 +5,7 @@ following Robert C. Martin's principles and security best practices.
 Uses AWS Cognito for authentication backend.
 """
 
-# removed – breaks FastAPI
+# removed - breaks FastAPI
 
 import logging
 from typing import Annotated, Any, cast

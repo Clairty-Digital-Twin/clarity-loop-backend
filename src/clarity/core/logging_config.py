@@ -4,7 +4,7 @@ HIPAA-compliant structured logging with audit trail support and
 configurable log levels for development and production environments.
 """
 
-# removed – breaks FastAPI
+# removed - breaks FastAPI
 
 import logging
 import logging.config

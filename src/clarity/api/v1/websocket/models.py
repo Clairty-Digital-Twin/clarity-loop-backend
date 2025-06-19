@@ -1,6 +1,6 @@
 """WebSocket data models for structured communication."""
 
-# removed – breaks FastAPI
+# removed - breaks FastAPI
 
 from datetime import UTC, datetime
 from enum import StrEnum

@@ -6,7 +6,7 @@ Provides enterprise-grade health data handling with HIPAA compliance features.
 Following Robert C. Martin's Clean Architecture principles.
 """
 
-# removed – breaks FastAPI
+# removed - breaks FastAPI
 
 from datetime import UTC, datetime
 import json

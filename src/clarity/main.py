@@ -1,6 +1,6 @@
 """AWS-compatible Clarity backend - CLEAN version with routers only."""
 
-# removed – breaks FastAPI
+# removed - breaks FastAPI
 
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager

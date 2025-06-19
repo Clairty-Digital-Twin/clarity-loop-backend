@@ -21,7 +21,7 @@ HIPAA-compliant data models for the revolutionary psychiatry digital twin platfo
 These models establish new standards for clinical data validation and processing.
 """
 
-# removed – breaks FastAPI
+# removed - breaks FastAPI
 
 # Use lazy imports to avoid circular dependencies during package installation
 # This is a common pattern for packages with complex interdependencies

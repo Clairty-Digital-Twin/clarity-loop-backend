@@ -4,7 +4,7 @@ Publishes health data processing events to AWS SQS/SNS for async processing.
 Replaces Google Pub/Sub with enterprise-grade AWS messaging.
 """
 
-# removed – breaks FastAPI
+# removed - breaks FastAPI
 
 import logging
 import os

@@ -14,7 +14,7 @@ ARCHITECTURE SPECIFICATIONS (from Dartmouth source):
 - All models: ff_dim=256, dropout=0.1, key_dim=embed_dim (non-standard attention)
 """
 
-# removed – breaks FastAPI
+# removed - breaks FastAPI
 
 from datetime import UTC, datetime
 import hashlib

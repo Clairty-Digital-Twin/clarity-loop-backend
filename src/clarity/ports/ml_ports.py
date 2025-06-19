@@ -4,7 +4,7 @@ Defines the contract for ML model services following Clean Architecture.
 Business logic layer depends on this abstraction, not concrete implementations.
 """
 
-# removed – breaks FastAPI
+# removed - breaks FastAPI
 
 from abc import ABC, abstractmethod
 

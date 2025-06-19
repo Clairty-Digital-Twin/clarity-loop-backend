@@ -4,7 +4,7 @@ This file demonstrates how to properly integrate the WebSocket connection manage
 with FastAPI's lifespan events for production use.
 """
 
-# removed – breaks FastAPI
+# removed - breaks FastAPI
 
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager

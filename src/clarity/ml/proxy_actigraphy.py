@@ -19,7 +19,7 @@ This implementation follows clean code principles with proper separation of conc
 comprehensive error handling, and extensive validation.
 """
 
-# removed – breaks FastAPI
+# removed - breaks FastAPI
 
 from datetime import datetime
 import logging

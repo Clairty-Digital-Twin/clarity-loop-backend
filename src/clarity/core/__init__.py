@@ -1,3 +1,3 @@
 """CLARITY Core Configuration Module."""
 
-# removed – breaks FastAPI
+# removed - breaks FastAPI

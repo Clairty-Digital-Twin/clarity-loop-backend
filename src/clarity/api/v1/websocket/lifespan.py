@@ -1,6 +1,6 @@
 """FastAPI lifespan management for WebSocket features."""
 
-# removed – breaks FastAPI
+# removed - breaks FastAPI
 
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager

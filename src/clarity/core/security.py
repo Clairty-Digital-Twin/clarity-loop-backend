@@ -7,7 +7,7 @@ All functions use cryptographically secure algorithms and are designed to be
 resistant to common attacks while maintaining good performance.
 """
 
-# removed – breaks FastAPI
+# removed - breaks FastAPI
 
 import hashlib
 import secrets

@@ -1,6 +1,6 @@
 """AWS SQS messaging service for asynchronous processing."""
 
-# removed – breaks FastAPI
+# removed - breaks FastAPI
 
 from datetime import UTC, datetime
 import json

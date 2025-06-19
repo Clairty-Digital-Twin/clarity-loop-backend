@@ -4,7 +4,7 @@ Comprehensive pagination with cursor-based and offset-based support.
 Designed to scale from thousands to millions of records.
 """
 
-# removed – breaks FastAPI
+# removed - breaks FastAPI
 
 import base64
 import json

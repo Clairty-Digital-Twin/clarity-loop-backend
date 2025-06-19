@@ -6,7 +6,7 @@ following the Single Responsibility Principle and making the codebase more maint
 Constants are organized by domain and feature area for clarity and discoverability.
 """
 
-# removed – breaks FastAPI
+# removed - breaks FastAPI
 
 from typing import Final
 

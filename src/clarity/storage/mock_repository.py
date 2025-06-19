@@ -6,7 +6,7 @@ and testing without requiring external dependencies.
 Following Clean Architecture and SOLID principles.
 """
 
-# removed – breaks FastAPI
+# removed - breaks FastAPI
 
 from datetime import UTC, datetime
 import logging

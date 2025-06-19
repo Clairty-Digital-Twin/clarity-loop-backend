@@ -19,6 +19,7 @@ async def test_require_auth_no_user() -> None:
     async def dummy_endpoint(  # noqa: RUF029
         current_user: User | None = None,
     ) -> str:
+        _ = current_user  # Used by decorator
         return "OK"
 
     with pytest.raises(HTTPException) as excinfo:
@@ -37,6 +38,7 @@ async def test_require_auth_with_user() -> None:
     async def dummy_endpoint(  # noqa: RUF029
         current_user: User | None = None,
     ) -> str:
+        _ = current_user  # Used by decorator
         return "OK"
 
     result = await dummy_endpoint(current_user=mock_user)

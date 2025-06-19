@@ -411,7 +411,7 @@ async def predict(
                     error = await response.text()
                     console.print(f"[red]✗[/red] Prediction failed: {error}")
 
-    except Exception as e:
+    except (aiohttp.ClientError, asyncio.TimeoutError) as e:
         console.print(f"[red]✗[/red] Request failed: {e}")
 
 

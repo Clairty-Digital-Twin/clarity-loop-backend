@@ -15,6 +15,8 @@ from fastapi.middleware.cors import CORSMiddleware
 import google.generativeai as genai
 from prometheus_client import make_asgi_app
 
+from clarity.auth.lockout_service import get_lockout_service
+
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -72,8 +74,6 @@ async def lifespan(_app: FastAPI) -> AsyncGenerator[None, None]:
     logger.info("Auth Enabled: %s", ENABLE_AUTH)
 
     # Initialize lockout service with Redis URL from environment
-    from clarity.auth.lockout_service import get_lockout_service
-
     get_lockout_service()  # Initialize the lockout service
     logger.info("✅ Account lockout service initialized")
 

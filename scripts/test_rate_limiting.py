@@ -24,6 +24,7 @@ def test_rate_limiting(base_url: str = "http://localhost:8000") -> None:
                 login_url,
                 json={"email": "test@example.com", "password": "wrongpass"},
                 headers={"Content-Type": "application/json"},
+                timeout=10,
             )
 
             print(f"   Request {i + 1}: Status {response.status_code}")

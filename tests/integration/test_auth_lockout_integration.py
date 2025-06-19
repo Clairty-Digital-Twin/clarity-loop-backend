@@ -1,6 +1,6 @@
 """Integration tests for account lockout with authentication endpoints."""
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import os
 from unittest.mock import AsyncMock
 
@@ -80,7 +80,7 @@ class TestAuthLockoutIntegration:
         # Create mock lockout service
         mock_lockout = AsyncMock()
         mock_lockout.check_lockout.side_effect = AccountLockoutError(
-            "test@example.com", datetime.now() + timedelta(minutes=15)
+            "test@example.com", datetime.now(timezone.utc) + timedelta(minutes=15)
         )
 
         # Override dependency

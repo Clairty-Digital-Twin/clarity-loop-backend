@@ -5,7 +5,7 @@ and temporarily locking accounts after too many failures.
 """
 
 import asyncio
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import logging
 import os
 import time
@@ -170,7 +170,9 @@ class AccountLockoutService:
         """Check if account is locked and raise exception if so."""
         if await self.is_locked(username):
             # Calculate unlock time (approximate)
-            unlock_time = datetime.now() + timedelta(seconds=self.lockout_secs)
+            unlock_time = datetime.now(timezone.utc) + timedelta(
+                seconds=self.lockout_secs
+            )
             raise AccountLockoutError(username, unlock_time)
 
 
@@ -180,7 +182,7 @@ lockout_service: AccountLockoutService | None = None
 
 def get_lockout_service() -> AccountLockoutService:
     """Get the global lockout service instance."""
-    global lockout_service
+    global lockout_service  # noqa: PLW0603
     if lockout_service is None:
         # Initialize with environment variables
         redis_url = os.getenv("REDIS_URL")

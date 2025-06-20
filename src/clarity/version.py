@@ -5,7 +5,7 @@ from importlib import metadata
 
 def get_version() -> str:
     """Get the current version of the application.
-    
+
     Returns:
         str: Version string from package metadata, or fallback value
     """

@@ -196,7 +196,7 @@ class TestFullStartupCycle:
             lifecycle_duration = time.perf_counter() - start_time
 
             assert (
-                lifecycle_duration < 10.0
+                lifecycle_duration < 3.0
             ), f"Lifecycle too slow: {lifecycle_duration:.2f}s"
 
         except (RuntimeError, ImportError, TimeoutError, ConnectionError) as e:

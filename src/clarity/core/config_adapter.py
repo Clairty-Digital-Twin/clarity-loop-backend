@@ -1,55 +1,59 @@
 """Adapter to convert between ClarityConfig and Settings."""
 
+import os
+
 from clarity.core.config_aws import Settings
 from clarity.startup.config_schema import ClarityConfig
 
 
 def clarity_config_to_settings(config: ClarityConfig) -> Settings:
     """Convert ClarityConfig to Settings for DI container initialization.
-    
+
     Args:
         config: ClarityConfig instance from startup
-        
+
     Returns:
         Settings instance compatible with AWS container
     """
-    # Map ClarityConfig fields to Settings
-    settings_dict = {
-        # Environment settings
-        "environment": config.environment,
-        "debug": config.debug,
-        "testing": config.is_testing,
-        
-        # Security settings
-        "secret_key": config.security.secret_key,
-        "enable_auth": config.enable_auth,
-        
-        # Server settings
-        "host": "127.0.0.1",  # Default as not in ClarityConfig
-        "port": 8080,  # Default as not in ClarityConfig
-        "log_level": config.log_level,
-        "cors_origins": config.security.cors_origins,
-        
-        # External service flags
-        "skip_external_services": config.skip_external_services,
-        
-        # Startup configuration
-        "startup_timeout": int(config.health_check.startup_timeout),
-        
-        # AWS settings (from ClarityConfig.aws)
-        "aws_region": config.aws.region,
-        "cognito_user_pool_id": config.aws.cognito_user_pool_id,
-        "cognito_client_id": config.aws.cognito_client_id,
-        "cognito_region": config.aws.region,
-        "dynamodb_table_name": config.aws.dynamodb_table_name,
-        "s3_bucket_name": config.aws.s3_bucket_name,
-        
-        # Gemini settings
-        "gemini_api_key": config.ml.gemini_api_key,
-        "gemini_model": config.ml.gemini_model,
-        "gemini_temperature": config.ml.gemini_temperature,
-        "gemini_max_tokens": config.ml.gemini_max_tokens,
+    # Temporarily set environment variables from ClarityConfig
+    # This allows Settings to pick them up via Pydantic BaseSettings
+    env_overrides = {
+        "ENVIRONMENT": config.environment,
+        "DEBUG": str(config.debug),
+        "TESTING": str(config.is_testing()),
+        "SECRET_KEY": config.security.secret_key,
+        "ENABLE_AUTH": str(config.enable_auth),
+        "LOG_LEVEL": config.log_level,
+        "CORS_ORIGINS": '["' + '","'.join(config.security.cors_origins) + '"]',
+        "SKIP_EXTERNAL_SERVICES": str(config.skip_external_services),
+        "STARTUP_TIMEOUT": str(config.startup_timeout),
+        "AWS_REGION": config.aws.region,
+        "COGNITO_USER_POOL_ID": config.cognito.user_pool_id,
+        "COGNITO_CLIENT_ID": config.cognito.client_id,
+        "COGNITO_REGION": config.cognito.region or config.aws.region,
+        "DYNAMODB_TABLE_NAME": config.dynamodb.table_name,
+        "S3_BUCKET_NAME": config.s3.bucket_name,
+        "GEMINI_API_KEY": config.gemini.api_key or "",
+        "GEMINI_MODEL": config.gemini.model,
+        "GEMINI_TEMPERATURE": str(config.gemini.temperature),
+        "GEMINI_MAX_TOKENS": str(config.gemini.max_tokens),
     }
-    
-    # Create Settings instance
-    return Settings(**settings_dict)
+
+    # Save current environment
+    original_env = {k: os.environ.get(k) for k in env_overrides}
+
+    try:
+        # Set environment variables
+        for key, value in env_overrides.items():
+            if value is not None:
+                os.environ[key] = value
+
+        # Create Settings instance (will read from environment)
+        return Settings()
+    finally:
+        # Restore original environment
+        for key, original_value in original_env.items():
+            if original_value is None:
+                os.environ.pop(key, None)
+            else:
+                os.environ[key] = original_value

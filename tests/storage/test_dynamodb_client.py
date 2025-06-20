@@ -202,7 +202,7 @@ class TestSerializationMethods:
         data = {
             "string": "test",
             "int": 42,
-            "float": 3.14,
+            "float": math.pi,
             "bool": True,
             "none": None,
             "list": ["a", 1, 2.5],

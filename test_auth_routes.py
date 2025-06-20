@@ -7,6 +7,7 @@ from fastapi.testclient import TestClient
 # Test 1: Direct import and check
 print("=== Test 1: Direct router import ===")
 from clarity.api.v1.auth import router as auth_router
+
 print(f"Auth router imported: {auth_router}")
 print(f"Router routes: {[r.path for r in auth_router.routes]}")
 
@@ -24,6 +25,7 @@ print(f"Health check response: {response.status_code}")
 # Test 3: Import and use api_router
 print("\n=== Test 3: Full API router ===")
 from clarity.api.v1.router import api_router
+
 app2 = FastAPI()
 app2.include_router(api_router, prefix="/api/v1")
 client2 = TestClient(app2)
@@ -36,11 +38,14 @@ print(f"Health check response via API router: {response.status_code}")
 # Test 4: Use create_app
 print("\n=== Test 4: Using create_app ===")
 from clarity.main import create_app
+
 app3 = create_app()
 client3 = TestClient(app3)
 
 # Check what routes are registered
-print(f"Main app routes: {[(r.path, r.methods) for r in app3.routes if '/auth' in r.path]}")
+print(
+    f"Main app routes: {[(r.path, r.methods) for r in app3.routes if '/auth' in r.path]}"
+)
 
 # Test health endpoint
 response = client3.get("/api/v1/auth/health")
@@ -51,6 +56,7 @@ print("\n=== Test 5: Testing with/without lifespan ===")
 # Create app without lifespan
 app4 = FastAPI()
 from clarity.api.v1.router import api_router as v1_router
+
 app4.include_router(v1_router, prefix="/api/v1")
 
 # Test with regular client
@@ -60,5 +66,5 @@ print(f"Without lifespan: {response.status_code}")
 
 # Test with app context
 with TestClient(app3) as client5:
-    response = client5.get("/api/v1/auth/health") 
+    response = client5.get("/api/v1/auth/health")
     print(f"With TestClient context manager: {response.status_code}")

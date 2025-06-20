@@ -9,7 +9,8 @@ This document captures **professional ML testing best practices** discovered thr
 > *"In software, we typically mock dependencies like APIs; in ML, we want to test the actual model (sometimes)."*  
 > — Eugene Yan, Principal Applied Scientist at Amazon
 
-### Why This Matters:
+### Why This Matters
+
 - **Traditional Software**: We write code that contains logic → Mock dependencies, test logic
 - **Machine Learning**: We write code that learns logic → Test the learned logic itself
 - **ML models are "blobs of learned logic"** that need behavioral validation
@@ -17,6 +18,7 @@ This document captures **professional ML testing best practices** discovered thr
 ## 🏗️ ML Testing Architecture
 
 ### 1. **Pre-Train Tests** (Use Lightweight/Random Weights)
+
 ```python
 # ✅ Good: Test model architecture with random weights
 from transformers import AutoConfig, AutoModelForSequenceClassification
@@ -28,12 +30,14 @@ def test_model_output_shape():
 ```
 
 **Use For:**
+
 - Output shape validation
 - Device movement (CPU ↔ GPU)
 - Basic model initialization
 - Architecture verification
 
 ### 2. **Post-Train Tests** (Use Actual Models)
+
 ```python
 # ✅ Good: Test actual trained model behavior
 def test_model_behavioral_consistency():
@@ -46,6 +50,7 @@ def test_model_behavioral_consistency():
 ```
 
 **Use For:**
+
 - Behavioral testing (invariance, directional expectations)
 - Integration testing
 - End-to-end pipeline validation
@@ -53,25 +58,29 @@ def test_model_behavioral_consistency():
 
 ## 🏥 Health Check Status Design Patterns
 
-### Industry Standard Status Hierarchy:
+### Industry Standard Status Hierarchy
+
 1. **"healthy"**: Service fully operational with valid model
 2. **"unhealthy"**: Service running but model has issues (missing weights, failed load)
 3. **"not_loaded"**: Service not initialized or model not attempted to load
 
-### Professional Approach:
+### Professional Approach
+
 - **"unhealthy" is MORE informative than "not_loaded"**
 - Tests should validate **actual service behavior**, not impose arbitrary expectations
 - Health checks should provide **detailed error information**
 
 ## 📚 Research Sources
 
-### Primary References:
+### Primary References
+
 1. **"Don't Mock Machine Learning Models In Unit Tests"** - Eugene Yan (Amazon)
 2. **"Testing in Machine Learning: A Comprehensive Guide"** - Towards AI
 3. **"Effective Testing for Machine Learning Systems"** - PyTorch Lightning
 4. **"Testing Machine Learning Systems: Code, Data and Models"** - Made With ML
 
-### Key Insights:
+### Key Insights
+
 - **Use small, simple data samples** for unit tests
 - **Test against actual models for critical behaviors**
 - **Don't test external libraries** (assume they work)
@@ -80,7 +89,8 @@ def test_model_behavioral_consistency():
 
 ## 🎯 Current Issue: PAT Service Health Check
 
-### Problem Context:
+### Problem Context
+
 ```python
 # ❌ Current test expectation:
 assert health["status"] == "not_loaded"
@@ -89,39 +99,46 @@ assert health["status"] == "not_loaded"
 assert health["status"] == "unhealthy"  # More descriptive!
 ```
 
-### Root Cause:
+### Root Cause
+
 - PAT service loads with random weights when model file missing
 - Service correctly reports "unhealthy" (can't find proper weights)
 - Test incorrectly expects "not_loaded" (service did attempt to load)
 
-### Professional Solution:
+### Professional Solution
+
 **Update test expectation to match service's designed behavior**
 
 ## 🚀 Implementation Guidelines
 
-### Testing Strategy by Component:
+### Testing Strategy by Component
 
-#### Data Pipeline Tests:
+#### Data Pipeline Tests
+
 - ✅ Test preprocessing functions with synthetic data
 - ✅ Validate data transformations and shapes
 - ✅ Check for data leakage and integrity
 
-#### Model Training Tests:
+#### Model Training Tests
+
 - ✅ Verify loss decreases with training batches
 - ✅ Test model can overfit on small sample
 - ✅ Validate model saves/loads correctly
 
-#### Model Service Tests:
+#### Model Service Tests
+
 - ✅ Test actual model inference behavior
 - ✅ Validate health check responses
 - ✅ Test error handling and edge cases
 
-#### Integration Tests:
+#### Integration Tests
+
 - ✅ End-to-end pipeline validation
 - ✅ Model server startup and shutdown
 - ✅ Batch inference processing
 
-### Pytest Markers for ML:
+### Pytest Markers for ML
+
 ```python
 @pytest.mark.training    # Compute-intensive training tests
 @pytest.mark.inference   # Model inference tests
@@ -137,7 +154,8 @@ assert health["status"] == "unhealthy"  # More descriptive!
 
 ## 🔧 Tools and Frameworks
 
-### Recommended Stack:
+### Recommended Stack
+
 - **pytest**: Core testing framework
 - **pytest-mock**: For non-ML dependencies
 - **pytest-cov**: Coverage reporting
@@ -145,7 +163,8 @@ assert health["status"] == "unhealthy"  # More descriptive!
 - **Great Expectations**: Data validation
 - **MLflow**: Model tracking and validation
 
-### Test Organization:
+### Test Organization
+
 ```
 tests/
 ├── unit/           # Individual component tests
@@ -167,4 +186,4 @@ tests/
 
 **Status**: ✅ Research Complete | 📋 Documentation Complete | 🎯 Ready for Implementation
 
-**Next Steps**: Apply these practices to fix current PAT service health check test and establish ML testing standards across the project. 
+**Next Steps**: Apply these practices to fix current PAT service health check test and establish ML testing standards across the project.

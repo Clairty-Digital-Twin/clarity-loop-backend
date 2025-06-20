@@ -422,5 +422,13 @@ directory = "htmlcov"
 # Bandit security linting
 [tool.bandit]
 exclude_dirs = ["tests", "migrations"]
-tests = ["B201", "B301"]
-skips = ["B101", "B601"]
+# Skip these checks that have legitimate uses with noqa comments
+skips = [
+    "B101",  # assert_used - needed for type narrowing
+    "B104",  # hardcoded_bind_all_interfaces - needed for model server
+    "B105",  # hardcoded_password_string - dev-secret-key is clearly marked
+    "B108",  # hardcoded_tmp_directory - /tmp/clarity_models is intentional
+    "B310",  # urllib_urlopen - JWKS URL is validated
+    "B311",  # random - used only for mock data generation
+    "B601",  # paramiko_calls
+]

@@ -1,10 +1,11 @@
 # 🎯 BACKEND AUTH REQUIREMENTS GUIDE
 
-## Goal: Ensure backend is the single source of truth for auth.
+## Goal: Ensure backend is the single source of truth for auth
 
 ## ✅ TASKS CHECKLIST
 
 ### 1. Confirm `/api/v1/auth/login` Implementation
+
 ```python
 # In src/clarity/api/v1/auth.py
 @router.post("/login", response_model=TokenResponse)
@@ -41,6 +42,7 @@ async def login(
 ```
 
 ### 2. Implement `/api/v1/auth/refresh` Endpoint
+
 ```python
 @router.post("/refresh", response_model=TokenResponse)
 async def refresh_token(
@@ -75,6 +77,7 @@ async def refresh_token(
 ```
 
 ### 3. Create Frontend Integration Documentation
+
 ```markdown
 # docs/FRONTEND_INTEGRATION.md
 
@@ -101,6 +104,7 @@ Request:
 ```
 
 Response:
+
 ```json
 {
   "access_token": "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9...",
@@ -112,9 +116,11 @@ Response:
 ```
 
 ### Refresh Token Endpoint
+
 **POST** `/api/v1/auth/refresh`
 
 Request:
+
 ```json
 {
   "refresh_token": "eyJjdHkiOiJKV1QiLCJlbmMiOiJBMjU2R0NNIiw..."
@@ -126,6 +132,7 @@ Response: Same as login endpoint
 ### Example cURL Commands
 
 Login:
+
 ```bash
 curl -X POST "http://clarity-alb-1762715656.us-east-1.elb.amazonaws.com/api/v1/auth/login" \
   -H "Content-Type: application/json" \
@@ -142,6 +149,7 @@ curl -X POST "http://clarity-alb-1762715656.us-east-1.elb.amazonaws.com/api/v1/a
 ```
 
 Refresh:
+
 ```bash
 curl -X POST "http://clarity-alb-1762715656.us-east-1.elb.amazonaws.com/api/v1/auth/refresh" \
   -H "Content-Type: application/json" \
@@ -149,6 +157,7 @@ curl -X POST "http://clarity-alb-1762715656.us-east-1.elb.amazonaws.com/api/v1/a
     "refresh_token": "your-refresh-token-here"
   }'
 ```
+
 ```
 
 ### 4. Optional: Implement Logout Endpoint
@@ -179,6 +188,7 @@ async def logout(
 ```
 
 ### 5. Add Integration Tests
+
 ```python
 # tests/test_auth_endpoints.py
 import pytest
@@ -230,6 +240,7 @@ async def test_refresh_token_success(async_client: AsyncClient):
 ## 📋 VERIFICATION STEPS
 
 1. **Test login endpoint**
+
    ```bash
    # Should return tokens
    curl -X POST http://localhost:8000/api/v1/auth/login \

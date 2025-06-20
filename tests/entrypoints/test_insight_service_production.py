@@ -92,7 +92,7 @@ class TestInsightServiceMain:
 
         mock_uvicorn_run.assert_called_once_with(
             "clarity.entrypoints.insight_service:app",
-            host="0.0.0.0",  # noqa: S104 - Test expects bind all interfaces
+            host="127.0.0.1",  # Secure binding to localhost
             port=9000,
             reload=False,
             log_level="info",
@@ -284,7 +284,7 @@ class TestInsightServiceProductionScenarios:
 
         mock_uvicorn_run.assert_called_once_with(
             "clarity.entrypoints.insight_service:app",
-            host="0.0.0.0",  # noqa: S104 - Listen on all interfaces (production requirement)
+            host="127.0.0.1",  # Secure binding to localhost
             port=80,  # Standard HTTP port
             reload=False,  # No reload in production
             log_level="info",

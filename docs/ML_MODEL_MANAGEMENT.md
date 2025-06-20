@@ -44,35 +44,41 @@ graph TB
 ## 🔧 Key Components
 
 ### 1. Model Registry (`registry.py`)
+
 - **Version Management**: Semantic versioning with checksums
 - **Metadata Tracking**: Model lineage, performance metrics, dependencies
 - **Alias System**: `latest`, `stable`, `experimental` aliases
 - **Integrity Verification**: SHA-256 checksums with HMAC signatures
 
 ### 2. Model Manager (`manager.py`)
+
 - **Progressive Loading**: Critical models first, others in background
 - **Memory Management**: Intelligent caching with size limits
 - **Performance Tracking**: Real-time inference metrics
 - **Hot Swapping**: Zero-downtime model updates
 
 ### 3. Progressive Loader (`progressive_loader.py`)
+
 - **Application Phases**: `init` → `core_ready` → `models_loading` → `models_ready` → `fully_ready`
 - **Environment Detection**: Automatic production vs development configuration
 - **Graceful Degradation**: Continue serving with available models
 
 ### 4. Local Development Server (`local_server.py`)
+
 - **FastAPI-based**: REST API for model development
 - **Mock Models**: Simulate PAT model responses
 - **Hot Reloading**: Real-time model updates during development
 - **CORS Support**: Frontend development integration
 
 ### 5. CLI Tool (`cli.py`)
+
 - **Model Management**: Download, register, list models
 - **Local Server**: Start development server
 - **Monitoring**: Real-time metrics dashboard
 - **Aliases**: Create and manage semantic versions
 
 ### 6. Monitoring Service (`monitoring.py`)
+
 - **Prometheus Metrics**: Inference latency, error rates, memory usage
 - **Real-time Alerting**: Webhook notifications for issues
 - **Performance Trends**: Historical analysis and anomaly detection
@@ -107,6 +113,7 @@ clarity-models predict pat --input-file sample_data.json
 ## 🔄 Migration from Legacy System
 
 ### Before (Legacy)
+
 ```python
 # Old approach - blocks startup
 from clarity.ml.pat_service import PATModelService
@@ -117,6 +124,7 @@ prediction = service.predict(data)
 ```
 
 ### After (Revolutionary)
+
 ```python
 # New approach - progressive loading
 from clarity.ml.pat_service_v2 import get_pat_service
@@ -280,6 +288,7 @@ python scripts/load_test_models.py
 ### Common Issues
 
 #### 1. Models Not Loading
+
 ```bash
 # Check model status
 clarity-models status
@@ -292,6 +301,7 @@ clarity-models download pat --force
 ```
 
 #### 2. EFS Mount Issues
+
 ```bash
 # Verify EFS mount
 df -h | grep efs
@@ -304,6 +314,7 @@ touch /mnt/efs/models/test.txt
 ```
 
 #### 3. Memory Issues
+
 ```bash
 # Check memory usage
 clarity-models monitor
@@ -325,16 +336,19 @@ clarity-models serve --log-level debug
 ## 🎯 Performance Tuning
 
 ### Memory Optimization
+
 - **Model Quantization**: Reduce model size by 50-75%
 - **Lazy Loading**: Load only required model components
 - **Memory Pooling**: Reuse memory across predictions
 
 ### Network Optimization
+
 - **Resume Downloads**: Restart interrupted transfers
 - **Parallel Loading**: Load multiple models concurrently
 - **Compression**: Reduce transfer time
 
 ### Caching Strategy
+
 - **LRU Eviction**: Remove least recently used models
 - **Preloading**: Load popular models proactively
 - **Size Limits**: Prevent cache overflow
@@ -342,11 +356,13 @@ clarity-models serve --log-level debug
 ## 🔐 Security
 
 ### Model Integrity
+
 - **SHA-256 Checksums**: Verify model authenticity
 - **HMAC Signatures**: Prevent tampering
 - **Path Validation**: Prevent directory traversal
 
 ### Access Control
+
 - **IAM Roles**: Fine-grained S3 permissions
 - **EFS Security**: Encrypted in transit and at rest
 - **Network Isolation**: VPC-only access
@@ -354,6 +370,7 @@ clarity-models serve --log-level debug
 ## 🚀 Future Enhancements
 
 ### Planned Features
+
 - [ ] **ONNX Runtime**: 10x faster inference
 - [ ] **Model Quantization**: Automatic size optimization
 - [ ] **P2P Sharing**: Direct container-to-container transfer
@@ -362,6 +379,7 @@ clarity-models serve --log-level debug
 - [ ] **Auto-scaling**: Dynamic model loading based on demand
 
 ### Roadmap
+
 - **Q1 2024**: ONNX integration and quantization
 - **Q2 2024**: P2P sharing and delta updates  
 - **Q3 2024**: Multi-region deployment
@@ -370,7 +388,8 @@ clarity-models serve --log-level debug
 ## 📞 Support
 
 For issues and questions:
-- 📧 Email: support@clarity.novamindnyc.com
+
+- 📧 Email: <support@clarity.novamindnyc.com>
 - 🐛 Issues: [GitHub Issues](https://github.com/clarity-loop/clarity-loop-backend/issues)
 - 📖 Docs: [Documentation](https://docs.clarityloop.com)
 

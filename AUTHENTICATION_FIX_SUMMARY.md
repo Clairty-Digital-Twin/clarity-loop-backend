@@ -8,8 +8,9 @@ The authentication error `"USER_SRP_AUTH is not enabled for the client"` was **N
 
 ## 📋 Diagnostic Results
 
-### ✅ What's Working Correctly:
-1. **AWS Cognito Configuration**: 
+### ✅ What's Working Correctly
+
+1. **AWS Cognito Configuration**:
    - ✅ USER_SRP_AUTH is properly enabled
    - ✅ Client ID: `7sm7ckrkovg78b03n1595euc71`
    - ✅ User Pool ID: `us-east-1_efXaR5EcP`
@@ -24,25 +25,30 @@ The authentication error `"USER_SRP_AUTH is not enabled for the client"` was **N
    - ✅ Valid certificate for `clarity.novamindnyc.com`
    - ✅ Issued by Amazon RSA 2048 M02
 
-### ❌ What Was Wrong:
+### ❌ What Was Wrong
+
 1. **iOS App Backend URL**: Using `http://clarity-alb-1762715656.us-east-1.elb.amazonaws.com`
 2. **Load Balancer Redirect**: HTTP requests get 301 redirected to HTTPS
 3. **SSL Certificate Mismatch**: Certificate is for `clarity.novamindnyc.com`, not the ELB domain
 
 ## 🎯 The Fix
 
-### For iOS App Configuration:
+### For iOS App Configuration
+
 Change the backend URL from:
+
 ```
 ❌ http://clarity-alb-1762715656.us-east-1.elb.amazonaws.com
 ```
 
 To:
+
 ```
 ✅ https://clarity.novamindnyc.com
 ```
 
-### Verification Commands:
+### Verification Commands
+
 ```bash
 # ❌ This returns 301 redirect
 curl http://clarity-alb-1762715656.us-east-1.elb.amazonaws.com/health
@@ -61,6 +67,7 @@ curl -X POST https://clarity.novamindnyc.com/api/v1/auth/login \
 Update your iOS app configuration to use the correct backend URL:
 
 ### Option 1: Environment Configuration
+
 ```swift
 struct AppConfig {
     static let apiBaseURL = "https://clarity.novamindnyc.com"
@@ -72,6 +79,7 @@ struct AppConfig {
 ```
 
 ### Option 2: Amplify Configuration (if using)
+
 ```json
 {
   "api": {
@@ -89,17 +97,20 @@ struct AppConfig {
 
 ## 🔍 Technical Details
 
-### Load Balancer Behavior:
+### Load Balancer Behavior
+
 - AWS ALB is configured to redirect HTTP (port 80) to HTTPS (port 443)
 - This causes a 301 redirect response instead of reaching the backend
 - iOS apps don't automatically follow redirects for authentication requests
 
-### SSL Certificate:
+### SSL Certificate
+
 - Certificate Subject: `CN=clarity.novamindnyc.com`
 - Valid from: June 14, 2025 to July 13, 2026
 - Issuer: Amazon RSA 2048 M02
 
-### Backend Health Check Response:
+### Backend Health Check Response
+
 ```json
 {
   "status": "healthy",
@@ -125,6 +136,7 @@ struct AppConfig {
 ## 🎉 Expected Result
 
 After updating the iOS app with the correct HTTPS URL:
+
 - ✅ Authentication requests will reach the backend properly
 - ✅ Cognito USER_SRP_AUTH will work correctly
 - ✅ Users can successfully log in and register
@@ -132,4 +144,4 @@ After updating the iOS app with the correct HTTPS URL:
 
 ---
 
-**Summary**: The Cognito configuration was correct all along. The issue was simply using the wrong backend URL in the iOS app. Change from HTTP ELB URL to HTTPS domain URL and everything will work perfectly! 
+**Summary**: The Cognito configuration was correct all along. The issue was simply using the wrong backend URL in the iOS app. Change from HTTP ELB URL to HTTPS domain URL and everything will work perfectly!

@@ -377,7 +377,7 @@ class ModelRegistry:
         """Stream response content to file with progress tracking."""
         mode = "ab" if start_byte > 0 else "wb"
 
-        async with aiofiles.open(str(file_path), mode) as f:
+        async with aiofiles.open(str(file_path), mode) as f:  # type: ignore[call-overload]
             downloaded = start_byte
             last_update = time.time()
 

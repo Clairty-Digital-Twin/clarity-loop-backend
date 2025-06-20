@@ -5,18 +5,21 @@ The CLARITY platform features a bulletproof startup system that provides **zero-
 ## 🛡️ Core Features
 
 ### Zero-Crash Guarantee
+
 - **Pre-flight validation** - All configuration validated before any service initialization
 - **Circuit breakers** - Automatic failure detection and recovery for external services
 - **Graceful degradation** - Falls back to mock services when externals are unavailable
 - **Comprehensive error handling** - Every possible failure scenario is caught and handled
 
 ### Crystal-Clear Feedback
+
 - **Real-time progress reporting** - Colored terminal output with detailed status
 - **Actionable error messages** - Every error includes specific solutions
 - **Comprehensive error catalog** - 50+ documented error scenarios with remediation steps
 - **Startup performance metrics** - Track initialization time and bottlenecks
 
 ### Service Health Matrix
+
 - **Independent health checks** - Cognito, DynamoDB, S3 validated separately
 - **Circuit breaker protection** - Automatic failure detection prevents cascading issues
 - **Response time monitoring** - Track service performance during startup
@@ -71,6 +74,7 @@ HEALTH_CHECK_TIMEOUT=5                   # Per-service health check timeout
 The startup system uses comprehensive Pydantic validation with 100+ validation rules:
 
 ### AWS Configuration
+
 ```python
 aws:
   region: str = "us-east-1"              # AWS region (validated format)
@@ -80,6 +84,7 @@ aws:
 ```
 
 ### Service Configuration
+
 ```python
 cognito:
   user_pool_id: str = ""                 # Format: region_poolId
@@ -97,6 +102,7 @@ s3:
 ```
 
 ### Security Configuration
+
 ```python
 security:
   secret_key: str = "dev-secret-key"     # Min 8 chars, production requires custom
@@ -108,6 +114,7 @@ security:
 ## 🔍 Validation Modes
 
 ### 1. Configuration-Only Validation
+
 Validates environment variables and configuration schema without checking external services.
 
 ```bash
@@ -115,11 +122,13 @@ python scripts/startup_validator.py --config-only
 ```
 
 **Use cases:**
+
 - CI/CD pipeline validation
 - Local development setup verification
 - Configuration file testing
 
 ### 2. Dry-Run Validation
+
 Validates configuration AND tests external service connectivity without starting the application.
 
 ```bash
@@ -127,6 +136,7 @@ python scripts/startup_validator.py --dry-run
 ```
 
 **Checks performed:**
+
 - ✅ Configuration schema validation
 - ✅ AWS service connectivity (Cognito, DynamoDB, S3)
 - ✅ Service health and response times
@@ -134,6 +144,7 @@ python scripts/startup_validator.py --dry-run
 - ✅ Permission validation
 
 ### 3. Full Startup
+
 Complete application startup with bulletproof orchestration.
 
 ```bash
@@ -148,6 +159,7 @@ ENVIRONMENT=production python -m clarity.main
 ```
 
 **Process:**
+
 1. **Pre-flight validation** - Configuration and environment checks
 2. **Service health checks** - External service connectivity
 3. **Service initialization** - Dependency injection and container setup
@@ -169,6 +181,7 @@ ENVIRONMENT=production python -m clarity.main
 ```
 
 **Deployment phases:**
+
 1. **Pre-deployment validation** - Configuration and AWS resource checks
 2. **Container build** - Docker image with platform validation
 3. **Service deployment** - ECS task definition and service update
@@ -210,6 +223,7 @@ The system includes a comprehensive error catalog with solutions for 50+ scenari
 ### Error Resolution
 
 Each error includes:
+
 - **Clear description** - What went wrong
 - **Common causes** - Why this typically happens  
 - **Step-by-step solutions** - How to fix it
@@ -251,11 +265,13 @@ Each error includes:
 The system includes circuit breakers for all external services to prevent cascading failures:
 
 ### Circuit Breaker States
+
 - **Closed** - Normal operation, requests pass through
 - **Open** - Too many failures, requests blocked for recovery period
 - **Half-Open** - Testing if service has recovered
 
 ### Configuration
+
 ```python
 circuit_breaker:
   failure_threshold: int = 3           # Failures before opening
@@ -264,6 +280,7 @@ circuit_breaker:
 ```
 
 ### Monitored Services
+
 - **Cognito** - Authentication service
 - **DynamoDB** - Health data storage
 - **S3** - File storage and ML models
@@ -274,12 +291,14 @@ circuit_breaker:
 The startup system tracks comprehensive performance metrics:
 
 ### Startup Metrics
+
 - **Total startup time** - End-to-end initialization duration
 - **Phase timings** - Time per startup phase
 - **Service response times** - Health check latencies
 - **Error rates** - Failure percentages by service
 
 ### Health Check Metrics
+
 ```python
 service_health_check_duration_seconds:
   - service: cognito
@@ -293,6 +312,7 @@ service_health_check_total:
 ```
 
 ### Circuit Breaker Metrics
+
 ```python
 circuit_breaker_state:
   - service: s3
@@ -346,6 +366,7 @@ if config.should_use_mock_services():
 The startup system provides real-time progress feedback:
 
 ### Console Output
+
 ```
 🚀 Starting CLARITY Digital Twin
 ============================================================
@@ -369,6 +390,7 @@ The startup system provides real-time progress feedback:
 ```
 
 ### Colored Output
+
 - 🟢 **Green** - Successful operations
 - 🟡 **Yellow** - Warnings or degraded services
 - 🔴 **Red** - Errors or failures
@@ -378,18 +400,21 @@ The startup system provides real-time progress feedback:
 ## 🔐 Production Considerations
 
 ### Security Validations
+
 - Custom SECRET_KEY required (no default in production)
 - Explicit CORS origins (no wildcards)
 - Strong authentication settings
 - Secure communication settings
 
 ### Performance Requirements
+
 - Startup time < 5 seconds (target)
 - Health check timeout < 5 seconds per service
 - Circuit breaker protection for all external calls
 - Graceful degradation when services are slow
 
 ### Monitoring Integration
+
 - Prometheus metrics export
 - Structured logging with correlation IDs
 - Health check endpoints for load balancers
@@ -400,6 +425,7 @@ The startup system provides real-time progress feedback:
 ### Common Issues
 
 **1. Configuration Validation Fails**
+
 ```bash
 # Check specific validation errors
 python scripts/startup_validator.py --config-only
@@ -411,6 +437,7 @@ export CORS_ALLOWED_ORIGINS="https://yourapp.com"
 ```
 
 **2. Service Health Checks Fail**
+
 ```bash
 # Test with mock services
 export SKIP_EXTERNAL_SERVICES=true
@@ -421,6 +448,7 @@ aws sts get-caller-identity
 ```
 
 **3. Startup Timeout**
+
 ```bash
 # Increase timeout
 export STARTUP_TIMEOUT=60
@@ -430,6 +458,7 @@ python scripts/startup_validator.py --dry-run --skip-services cognito dynamodb
 ```
 
 **4. Circuit Breakers Tripping**
+
 ```bash
 # Check service status
 aws ecs describe-services --cluster clarity-backend-cluster --services clarity-backend-service
@@ -449,6 +478,7 @@ python -m clarity.main_bulletproof
 ```
 
 This provides:
+
 - Detailed configuration dumps
 - Service call tracing
 - Circuit breaker state changes

@@ -7,6 +7,7 @@ Listen up backend homie, we got a MAJOR AUTH ISSUE and we need to figure this sh
 ## 🔥 CRITICAL DISCOVERY: WE'RE NOT TALKING TO YOU! 🔥
 
 ### THE REAL PROBLEM
+
 The iOS app is bypassing your beautiful FastAPI endpoints and talking DIRECTLY to AWS Cognito! Check this out:
 
 ```swift
@@ -17,8 +18,9 @@ func signIn(email: String, password: String) async throws -> AuthTokens {
 }
 ```
 
-### What's Actually Happening:
-1. Frontend calls `cognitoAuth.signIn()` 
+### What's Actually Happening
+
+1. Frontend calls `cognitoAuth.signIn()`
 2. This goes DIRECTLY to `https://cognito-idp.us-east-1.amazonaws.com`
 3. Your FastAPI backend at `clarity-alb-1762715656.us-east-1.elb.amazonaws.com` NEVER SEES THIS REQUEST!
 4. Cognito is returning "BadRequest" because of missing SECRET_HASH
@@ -26,6 +28,7 @@ func signIn(email: String, password: String) async throws -> AuthTokens {
 ## 🎯 THE SMOKING GUN
 
 From the error screenshot the user shared:
+
 - **Domain**: `cognito-idp.us-east-1.amazonaws.com` (NOT your ALB!)
 - **Error**: "The server did not understand the operation that was requested"
 - **Reason**: Cognito app client has a secret but iOS isn't sending SECRET_HASH
@@ -33,6 +36,7 @@ From the error screenshot the user shared:
 ## 💡 TWO PATHS TO VICTORY
 
 ### Option 1: Make Frontend Use Your API (RECOMMENDED)
+
 Backend bro, we need to switch the frontend to use YOUR endpoints instead of direct Cognito:
 
 ```swift
@@ -45,13 +49,16 @@ let tokens = try await backendAPI.login(email: email, password: password)
 ```
 
 ### Option 2: Fix the Direct Cognito Integration
+
 If we keep the direct approach, we need to:
+
 1. Create a PUBLIC Cognito app client (no secret) for mobile
 2. OR compute SECRET_HASH in Swift (pain in the ass)
 
 ## 🔍 WHAT I FOUND IN YOUR NOTES
 
 From your `FRONTEND_INTEGRATION_GUIDE.md`, I see you have:
+
 - **Cognito Pool**: `us-east-1_efXaR5EcP` ✅
 - **Client ID**: `7sm7ckrkovg78b03n1595euc71` ✅
 - **Your API**: `http://clarity-alb-1762715656.us-east-1.elb.amazonaws.com` ✅
@@ -60,8 +67,10 @@ But the iOS app is NOT using your API for auth!
 
 ## 🛠️ IMMEDIATE ACTION ITEMS
 
-### For You (Backend):
+### For You (Backend)
+
 1. **Check your Cognito client** - does `7sm7ckrkovg78b03n1595euc71` have a secret?
+
    ```bash
    aws cognito-idp describe-user-pool-client \
      --user-pool-id us-east-1_efXaR5EcP \
@@ -70,6 +79,7 @@ But the iOS app is NOT using your API for auth!
    ```
 
 2. **If it has a secret**, create a new PUBLIC client for mobile:
+
    ```bash
    aws cognito-idp create-user-pool-client \
      --user-pool-id us-east-1_efXaR5EcP \
@@ -79,6 +89,7 @@ But the iOS app is NOT using your API for auth!
    ```
 
 3. **Add debug logging** to your `/api/v1/auth/login`:
+
    ```python
    @router.post("/login")
    async def login(request: Request, credentials: UserLoginRequest):
@@ -87,7 +98,8 @@ But the iOS app is NOT using your API for auth!
        # ... rest of your code
    ```
 
-### For Me (Frontend):
+### For Me (Frontend)
+
 1. I need to switch from direct Cognito to using your API
 2. OR if we stick with direct, I need the PUBLIC client ID
 

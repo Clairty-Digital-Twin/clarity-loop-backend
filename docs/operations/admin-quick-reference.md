@@ -1,13 +1,15 @@
 # Admin Quick Reference - Security Operations
 
 ## 🚨 EMERGENCY CONTACTS
+
 - **Security Team**: [Contact Info]
-- **DevOps Team**: [Contact Info] 
+- **DevOps Team**: [Contact Info]
 - **On-Call Engineer**: [Contact Info]
 
 ## 🔐 DAILY SECURITY CHECKS
 
 ### Morning Checklist (5 minutes)
+
 ```bash
 # 1. Check WAF status
 aws wafv2 get-web-acl --scope=REGIONAL --id=clarity-backend-rate-limiting --region=us-east-1
@@ -22,6 +24,7 @@ curl -I https://$(aws elbv2 describe-load-balancers --names clarity-alb --query 
 ## 👤 USER ACCOUNT MANAGEMENT
 
 ### Create New User (2 minutes)
+
 ```bash
 # Method 1: AWS CLI (Recommended)
 aws cognito-idp admin-create-user \
@@ -34,6 +37,7 @@ aws cognito-idp admin-create-user \
 ```
 
 ### Reset User Password
+
 ```bash
 aws cognito-idp admin-set-user-password \
   --user-pool-id us-east-1_XXXXXXXXX \
@@ -46,6 +50,7 @@ aws cognito-idp admin-set-user-password \
 ## 🛡️ SECURITY MONITORING
 
 ### Check Rate Limiting (Real-time)
+
 ```bash
 # View recent WAF logs
 aws logs tail /aws/wafv2/clarity-backend-rate-limiting --follow --region us-east-1
@@ -59,6 +64,7 @@ aws logs filter-log-events \
 ```
 
 ### Security Headers Verification
+
 ```bash
 # Quick header check
 curl -s -I https://your-alb-dns/health | grep -E "(X-Content-Type|X-Frame|X-XSS|Strict-Transport|Content-Security|Referrer-Policy)"
@@ -67,6 +73,7 @@ curl -s -I https://your-alb-dns/health | grep -E "(X-Content-Type|X-Frame|X-XSS|
 ## 🚨 INCIDENT RESPONSE
 
 ### High Traffic Alert Response (< 2 minutes)
+
 1. **Assess**: `aws logs tail /aws/wafv2/clarity-backend-rate-limiting --follow`
 2. **Check**: Source IPs and patterns
 3. **Decide**: Legitimate traffic spike or attack?
@@ -74,6 +81,7 @@ curl -s -I https://your-alb-dns/health | grep -E "(X-Content-Type|X-Frame|X-XSS|
 5. **Document**: Log incident details
 
 ### Rate Limit Adjustment (Emergency)
+
 ```bash
 # Temporarily lower to 50 req/5min
 sed -i 's/"Limit": 100/"Limit": 50/' ops/aws-waf-rate-limiting.json
@@ -90,12 +98,14 @@ bash ops/deploy-waf-rate-limiting.sh
 ## 🔧 TROUBLESHOOTING
 
 ### "Users can't access the app"
+
 1. Check ALB status
 2. Verify WAF isn't over-blocking
 3. Test auth endpoint
 4. Check Cognito user pool
 
 ### "Rate limiting seems broken"
+
 1. Verify WAF association: `bash ops/test-waf-final.sh`
 2. Check CloudWatch logs
 3. Test with burst requests

@@ -91,7 +91,7 @@ lint: ## 🔍 Run all linting checks
 	ruff check .
 	black --check .
 	mypy src/clarity/
-	bandit -r src/clarity/
+	bandit -r src/clarity/ --configfile pyproject.toml
 	safety scan --ignore=51457 --ignore=64459 --ignore=64396 --offline
 	npm run lint:md
 
@@ -112,7 +112,7 @@ typecheck: ## 🔍 Run type checking with MyPy
 
 security: ## 🛡️ Run security checks
 	@echo "$(BLUE)Running security checks...$(RESET)"
-	bandit -r src/clarity/ -f json -o reports/bandit-report.json
+	bandit -r src/clarity/ --configfile pyproject.toml -f json -o reports/bandit-report.json
 	safety scan --ignore=51457 --ignore=64459 --ignore=64396 --offline --save-as json reports/safety-report.json
 	@echo "$(GREEN)✅ Security checks complete!$(RESET)"
 

@@ -4,7 +4,8 @@
 
 **Error**: `FeatureUnavailableInTierException - Threat Protection requires upgrade from ESSENTIALS tier`
 
-### Current Situation:
+### Current Situation
+
 - **Cognito User Pool Tier**: ESSENTIALS (Free tier)
 - **Advanced Security Features**: ❌ NOT AVAILABLE
 - **Account Lockout Protection**: ❌ REQUIRES UPGRADE
@@ -12,14 +13,16 @@
 
 ## 💰 PRICING ANALYSIS
 
-### ESSENTIALS Tier (Current - FREE):
+### ESSENTIALS Tier (Current - FREE)
+
 - ✅ Basic authentication
 - ✅ User management
 - ❌ **No Advanced Security Features**
 - ❌ **No Account Lockout**
 - ❌ **No Risk Detection**
 
-### PLUS Tier (Upgrade Required - PAID):
+### PLUS Tier (Upgrade Required - PAID)
+
 - ✅ All ESSENTIALS features
 - ✅ **Advanced Security Features**
 - ✅ **Account Lockout Protection**
@@ -30,17 +33,21 @@
 ## 🎯 SOLUTION OPTIONS
 
 ### Option 1: Upgrade to PLUS Tier (RECOMMENDED)
+
 **Pros**:
+
 - ✅ Native AWS lockout protection
 - ✅ Advanced threat detection
 - ✅ Zero code changes required
 - ✅ Enterprise-grade security
 
 **Cons**:
+
 - 💵 Additional cost (~$0.05/user/month)
 - 📋 Requires billing approval
 
 **Implementation**:
+
 ```bash
 # Upgrade user pool to PLUS tier
 aws cognito-idp update-user-pool \\
@@ -50,18 +57,22 @@ aws cognito-idp update-user-pool \\
 ```
 
 ### Option 2: Application-Level Lockout (ALTERNATIVE)
+
 **Pros**:
+
 - ✅ No additional AWS costs
 - ✅ Full control over lockout logic
 - ✅ Custom lockout policies
 
 **Cons**:
+
 - 🔧 Requires code development
 - 🗄️ Needs database for tracking attempts
 - ⚡ More complex implementation
 - 🐛 Potential for bugs
 
 **Implementation**:
+
 - Add failed attempt tracking to database
 - Implement lockout middleware
 - Create lockout duration management
@@ -70,6 +81,7 @@ aws cognito-idp update-user-pool \\
 ## 🚀 RECOMMENDED APPROACH
 
 ### Phase 1: Immediate (Application-Level)
+
 Since we need immediate protection and upgrading requires approval:
 
 1. **Implement Application-Level Lockout** (2-4 hours)
@@ -84,6 +96,7 @@ Since we need immediate protection and upgrading requires approval:
    - Dashboard for security monitoring
 
 ### Phase 2: Long-term (AWS Native)
+
 After getting approval for PLUS tier:
 
 1. **Upgrade to Cognito PLUS Tier**
@@ -93,17 +106,20 @@ After getting approval for PLUS tier:
 
 ## 📊 COST ANALYSIS
 
-### Current Users (Estimated):
+### Current Users (Estimated)
+
 - **Development**: ~10 users
 - **Staging**: ~25 users  
 - **Production**: ~100 users
 - **Total**: ~135 users
 
-### Monthly Cost (PLUS Tier):
+### Monthly Cost (PLUS Tier)
+
 - **135 users × $0.05** = **~$6.75/month**
 - **Annual Cost**: **~$81/year**
 
-### Security Value:
+### Security Value
+
 - **Prevents**: Brute force attacks, credential stuffing
 - **Compliance**: HIPAA, SOC2 requirements
 - **Risk Mitigation**: Potential data breach costs (thousands/millions)
@@ -113,10 +129,12 @@ After getting approval for PLUS tier:
 ## 🎯 IMMEDIATE ACTION PLAN
 
 ### Step 1: Document Current Limitation
+
 - ✅ Issue identified and documented
 - ✅ Solutions analyzed and proposed
 
 ### Step 2: Implement Application-Level Protection (TODAY)
+
 ```python
 # Add to src/clarity/auth/lockout_protection.py
 class AccountLockoutService:
@@ -135,23 +153,27 @@ class AccountLockoutService:
 ```
 
 ### Step 3: Request PLUS Tier Upgrade (THIS WEEK)
+
 - Business justification: Security compliance
 - Cost: $81/year for enterprise-grade protection
 - Timeline: 1-2 business days for approval
 
 ## 🚨 SECURITY IMPACT
 
-### Without Protection (Current State):
+### Without Protection (Current State)
+
 - ❌ **VULNERABLE** to brute force attacks
 - ❌ **COMPLIANCE RISK** for HIPAA/SOC2
 - ❌ **REPUTATION RISK** from potential breaches
 
-### With Application-Level Protection:
+### With Application-Level Protection
+
 - ✅ **IMMEDIATE** brute force protection
 - ✅ **COMPLIANCE** requirements met
 - ✅ **MONITORING** and alerting active
 
-### With PLUS Tier (Future):
+### With PLUS Tier (Future)
+
 - ✅ **ENTERPRISE-GRADE** AWS native protection
 - ✅ **ADVANCED** threat detection
 - ✅ **SIMPLIFIED** maintenance

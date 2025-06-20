@@ -1,6 +1,7 @@
 # 🚨 EMERGENCY RECOVERY PLAN - SENIOR ENGINEER APPROACH
 
 ## SITUATION ASSESSMENT
+
 - **Production is DOWN** since ~3 hours ago
 - **All deployments failing** due to import errors
 - **Too many PRs** creating confusion
@@ -9,11 +10,13 @@
 ## IMMEDIATE ACTION PLAN
 
 ### Option 1: Fix Forward (10 minutes)
+
 1. Check if PR #20 passes CI
 2. If YES: Merge it and deploy
 3. If NO: Go to Option 2
 
 ### Option 2: REVERT TO STABLE (Recommended)
+
 We need to go back to the last known working state.
 
 ```bash
@@ -30,6 +33,7 @@ git push origin emergency-revert:main --force-with-lease
 ```
 
 ### Option 3: NUCLEAR RESET
+
 If reverting is too complex:
 
 ```bash
@@ -49,10 +53,12 @@ git push origin stable-recovery:main --force-with-lease
 ## PROPER FIX APPROACH
 
 ### Step 1: Stabilize
+
 - Get ANYTHING working in production
 - Even if it means reverting everything
 
 ### Step 2: Test Locally
+
 ```bash
 # Test the current main
 SKIP_EXTERNAL_SERVICES=true python -m clarity.main
@@ -61,6 +67,7 @@ SKIP_EXTERNAL_SERVICES=true python -m clarity.main
 ```
 
 ### Step 3: Incremental Changes
+
 - ONE PR at a time
 - Test locally
 - Deploy to staging
@@ -77,11 +84,13 @@ SKIP_EXTERNAL_SERVICES=true python -m clarity.main
 ## DECISION TIME
 
 You have 3 options:
+
 1. Wait 5 more minutes for PR #20 to pass
 2. Revert everything to stable
 3. Nuclear reset to last known good
 
 As a senior engineer, I recommend **Option 2: REVERT** because:
+
 - Production has been down too long
 - Too many unknowns with the fixes
 - Need to restore service ASAP

@@ -3,12 +3,14 @@
 ## 🎯 **VERIFIED AWS INFRASTRUCTURE**
 
 ### **Production Endpoints**
+
 - **API Base URL**: `http://clarity-alb-1762715656.us-east-1.elb.amazonaws.com`
 - **Health Check**: `http://clarity-alb-1762715656.us-east-1.elb.amazonaws.com/health`
 - **API Docs**: `http://clarity-alb-1762715656.us-east-1.elb.amazonaws.com/docs`
 - **Region**: `us-east-1` (Virginia)
 
 ### **AWS Resources**
+
 ```bash
 # AWS Account ID: 124355672559
 # Region: us-east-1
@@ -19,6 +21,7 @@
 ## 🔐 **CORRECT COGNITO CONFIGURATION (VERIFIED)**
 
 ### **ACTUAL Production Cognito Settings**
+
 ```swift
 // CORRECT VALUES - VERIFIED TO EXIST
 let cognitoUserPoolId = "us-east-1_efXaR5EcP"
@@ -28,6 +31,7 @@ let cognitoIssuer = "https://cognito-idp.us-east-1.amazonaws.com/us-east-1_efXaR
 ```
 
 ### **⚠️ OLD/INCORRECT VALUES - DO NOT USE**
+
 ```swift
 // These values were in the ECS config but DO NOT EXIST
 // let cognitoUserPoolId = "us-east-1_1G5jYI8FO"  // DOESN'T EXIST
@@ -37,6 +41,7 @@ let cognitoIssuer = "https://cognito-idp.us-east-1.amazonaws.com/us-east-1_efXaR
 ## 📡 **API ENDPOINTS**
 
 ### **Authentication Endpoints**
+
 ```bash
 POST /api/v1/auth/register       # User registration
 POST /api/v1/auth/login          # User login
@@ -48,6 +53,7 @@ GET  /api/v1/auth/health         # Auth service health check
 ```
 
 ### **Health Data Endpoints** (Requires Authentication)
+
 ```bash
 POST /api/v1/health-data/create  # Upload health data
 GET  /api/v1/health-data/{id}    # Get specific health record
@@ -57,23 +63,27 @@ DELETE /api/v1/health-data/{id}  # Delete health record
 ```
 
 ### **HealthKit Upload Endpoint** (Requires Authentication)
+
 ```bash
 POST /api/v1/healthkit           # Upload HealthKit data export
 ```
 
 ### **PAT Analysis Endpoints** (Requires Authentication)
+
 ```bash
 POST /api/v1/pat/analysis        # Run PAT analysis on health data
 GET  /api/v1/pat/results/{id}    # Get PAT analysis results
 ```
 
 ### **Insights Endpoints** (Requires Authentication)
+
 ```bash
 POST /api/v1/insights            # Generate AI insights
 GET  /api/v1/insights/{id}       # Get specific insight
 ```
 
 ### **WebSocket Endpoint**
+
 ```bash
 WS /api/v1/ws/chat               # Real-time chat WebSocket
 ```
@@ -81,6 +91,7 @@ WS /api/v1/ws/chat               # Real-time chat WebSocket
 ## 🛠️ **AWS CLI COMMANDS FOR VERIFICATION**
 
 ### **Verify Cognito User Pool Exists**
+
 ```bash
 # This should return the user pool details
 aws cognito-idp describe-user-pool \
@@ -95,6 +106,7 @@ aws cognito-idp describe-user-pool-client \
 ```
 
 ### **Test Backend Connectivity**
+
 ```bash
 # Test health endpoint
 curl -X GET "http://clarity-alb-1762715656.us-east-1.elb.amazonaws.com/health"
@@ -109,6 +121,7 @@ curl -X GET "http://clarity-alb-1762715656.us-east-1.elb.amazonaws.com/api/v1/au
 ## 📱 **SWIFT CONFIGURATION (CORRECTED)**
 
 ### **Info.plist Configuration**
+
 ```xml
 <key>APIBaseURL</key>
 <string>http://clarity-alb-1762715656.us-east-1.elb.amazonaws.com</string>
@@ -121,6 +134,7 @@ curl -X GET "http://clarity-alb-1762715656.us-east-1.elb.amazonaws.com/api/v1/au
 ```
 
 ### **CognitoConfiguration.swift**
+
 ```swift
 import Foundation
 import AWSCognitoIdentityProvider
@@ -138,6 +152,7 @@ struct CognitoConfiguration {
 ```
 
 ### **AppConfig.swift**
+
 ```swift
 struct AppConfig {
     static let apiBaseURL = "http://clarity-alb-1762715656.us-east-1.elb.amazonaws.com"

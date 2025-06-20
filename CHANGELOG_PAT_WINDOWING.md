@@ -3,9 +3,11 @@
 ## [core] Unify PAT actigraphy windowing (2025-06-15)
 
 ### Overview
+
 Unified the PAT model's 7-day window handling across all code paths to ensure consistent behavior.
 
 ### Changes
+
 - **New `utils.time_window` module** with canonical implementations:
   - `slice_to_weeks()` - Splits data into 7-day chunks
   - `pad_to_week()` - Pads short data to exactly 7 days  
@@ -22,13 +24,16 @@ Unified the PAT model's 7-day window handling across all code paths to ensure co
   - Performance verified: <0.003ms per transformation
 
 ### Technical Details
+
 - Fixed inconsistency where preprocessing.py used downsampling while proxy_actigraphy.py used truncation
 - Added debug logging for data resizing operations
 - Improved memory layout with `np.ascontiguousarray` for better PyTorch compatibility
 - Updated documentation to clarify "latest-week-wins" semantics
 
 ### Migration Notes
+
 No breaking changes. The behavior change (truncation vs downsampling) should improve results by preserving actual data patterns rather than averaging them.
 
 ### Performance Impact
+
 Negligible - benchmarks show ~0.002-0.003ms per call for typical workloads.

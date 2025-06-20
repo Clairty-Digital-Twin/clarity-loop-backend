@@ -557,4 +557,4 @@ treatment_optimization = {
 
 ---
 
-This technical architecture positions CLARITY as the **definitive platform for psychiatric digital twins**, combining cutting-edge AI research with production-ready clinical integration to transform mental health care delivery at scale. 
+This technical architecture positions CLARITY as the **definitive platform for psychiatric digital twins**, combining cutting-edge AI research with production-ready clinical integration to transform mental health care delivery at scale.

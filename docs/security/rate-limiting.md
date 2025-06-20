@@ -7,6 +7,7 @@ CLARITY implements application-level rate limiting using the `slowapi` middlewar
 ## Architecture
 
 ### Middleware Stack Order
+
 1. CORS Middleware
 2. Security Headers
 3. Authentication Middleware
@@ -71,6 +72,7 @@ RATE_LIMIT_AI=50/hour
 ## Applied Rate Limits by Endpoint
 
 ### Authentication Endpoints
+
 ```python
 @router.post("/login")
 @auth_limiter.limit("10/minute")  # 10 login attempts per minute per IP
@@ -80,12 +82,14 @@ RATE_LIMIT_AI=50/hour
 ```
 
 ### Health Data Endpoints
+
 ```python
 @router.post("/health-data")
 @health_limiter.limit("100/hour") # 100 uploads per hour per user
 ```
 
 ### AI/ML Endpoints
+
 ```python
 @router.post("/pat/step-analysis")
 @ai_limiter.limit("20/hour")      # 20 AI analyses per hour per user
@@ -118,6 +122,7 @@ When rate limit is exceeded:
 ## Testing Rate Limits
 
 ### Manual Testing
+
 ```bash
 # Test login rate limit
 for i in {1..12}; do
@@ -130,6 +135,7 @@ done
 ```
 
 ### Automated Testing
+
 ```bash
 # Run rate limiting test script
 python scripts/test_rate_limiting.py
@@ -138,11 +144,13 @@ python scripts/test_rate_limiting.py
 ## Monitoring
 
 ### CloudWatch Metrics
+
 - `RateLimitExceeded` - Count of rate limit violations
 - `RateLimitByEndpoint` - Violations per endpoint
 - `RateLimitByUser` - Top users hitting limits
 
 ### Logs
+
 ```python
 # Rate limit exceeded
 WARNING: Rate limit exceeded for /api/v1/auth/login - Key: ip:192.168.1.1, Limit: 10/minute

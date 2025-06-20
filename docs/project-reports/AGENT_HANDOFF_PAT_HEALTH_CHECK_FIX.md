@@ -6,12 +6,14 @@ You are tasked with applying **professional ML testing best practices** to fix a
 
 ## 📋 CONTEXT & BACKGROUND
 
-### Current Status:
+### Current Status
+
 - **Test Failure**: `tests/ml/test_pat_service.py::TestPATModelServiceHealthCheck::test_health_check_unloaded_model`
 - **Error**: `AssertionError: assert 'unhealthy' == 'not_loaded'`
 - **Root Cause**: Test expectation doesn't match actual service design
 
-### Research Findings:
+### Research Findings
+
 - **Industry Best Practice**: "Don't Mock Machine Learning Models" (Amazon/Eugene Yan)
 - **Health Check Pattern**: "unhealthy" is MORE informative than "not_loaded"
 - **Service Behavior**: PAT service correctly reports "unhealthy" when weights missing
@@ -20,7 +22,8 @@ You are tasked with applying **professional ML testing best practices** to fix a
 
 **Fix the PAT service health check test to align with professional ML testing standards**
 
-### Exact Location:
+### Exact Location
+
 ```
 File: tests/ml/test_pat_service.py
 Class: TestPATModelServiceHealthCheck  
@@ -28,7 +31,8 @@ Method: test_health_check_unloaded_model
 Line: ~559 (approximately)
 ```
 
-### Current Failing Code:
+### Current Failing Code
+
 ```python
 def test_health_check_unloaded_model(self):
     """Test health check when model weights are not loaded."""
@@ -36,9 +40,11 @@ def test_health_check_unloaded_model(self):
     assert health["status"] == "not_loaded"  # ❌ This expectation is wrong
 ```
 
-### Expected Service Behavior:
+### Expected Service Behavior
+
 When PAT model weights file is missing:
-1. Service initializes successfully 
+
+1. Service initializes successfully
 2. Model loads with random weights (fallback behavior)
 3. Service reports status as "unhealthy" (more descriptive than "not_loaded")
 4. Health check includes detailed error information
@@ -46,6 +52,7 @@ When PAT model weights file is missing:
 ## 🔧 REQUIRED CHANGES
 
 ### 1. **Primary Fix: Update Test Expectation**
+
 ```python
 def test_health_check_unloaded_model(self):
     """Test health check when model weights are not loaded."""
@@ -60,7 +67,9 @@ def test_health_check_unloaded_model(self):
 ```
 
 ### 2. **Enhanced Test Documentation**
+
 Update the test docstring to reflect ML testing best practices:
+
 ```python
 def test_health_check_unloaded_model(self):
     """Test health check behavior when model weights file is missing.
@@ -73,6 +82,7 @@ def test_health_check_unloaded_model(self):
 ```
 
 ### 3. **Optional: Add Validation for Health Check Details**
+
 ```python
 def test_health_check_unloaded_model(self):
     """Test health check behavior when model weights file is missing."""
@@ -90,46 +100,54 @@ def test_health_check_unloaded_model(self):
 ## 🚀 EXECUTION STEPS
 
 ### Step 1: Locate and Examine the Test
+
 ```bash
 cd /Users/ray/Desktop/CLARITY-DIGITAL-TWIN/clarity-loop-backend
 python3 -m pytest tests/ml/test_pat_service.py::TestPATModelServiceHealthCheck::test_health_check_unloaded_model -xvs
 ```
 
 ### Step 2: Read the Current Test Implementation
+
 ```bash
 grep -A 10 -B 5 "test_health_check_unloaded_model" tests/ml/test_pat_service.py
 ```
 
 ### Step 3: Apply the Fix
+
 - Open `tests/ml/test_pat_service.py`
 - Find the `test_health_check_unloaded_model` method
 - Change `assert health["status"] == "not_loaded"` to `assert health["status"] == "unhealthy"`
 - Update docstring to reflect ML testing best practices
 
 ### Step 4: Verify the Fix
+
 ```bash
 python3 -m pytest tests/ml/test_pat_service.py::TestPATModelServiceHealthCheck::test_health_check_unloaded_model -xvs
 ```
 
 ### Step 5: Run Full PAT Service Test Suite
+
 ```bash
 python3 -m pytest tests/ml/test_pat_service.py -xvs
 ```
 
 ## 📊 SUCCESS CRITERIA
 
-### ✅ Test Must Pass:
+### ✅ Test Must Pass
+
 - No assertion errors
 - Test completes successfully
 - Log output shows expected service behavior
 
-### ✅ Verify Correct Behavior:
+### ✅ Verify Correct Behavior
+
 - Service logs show "PAT weights file not found" warning
 - Service initializes with random weights
 - Health check returns "unhealthy" status
 - Health details contain relevant error information
 
-### ✅ Professional Implementation:
+### ✅ Professional Implementation
+
 - Test follows ML testing best practices
 - Documentation explains the reasoning
 - No mocking of the ML model itself
@@ -154,13 +172,15 @@ python3 -m pytest --tb=no -q | tail -5
 
 ## 🚨 CRITICAL NOTES
 
-### DO NOT:
+### DO NOT
+
 - ❌ Mock the PAT model or service
 - ❌ Change the actual service behavior
 - ❌ Force the service to return "not_loaded"
 - ❌ Add complex workarounds
 
-### DO:
+### DO
+
 - ✅ Update test expectation to match service design
 - ✅ Follow ML testing best practices
 - ✅ Test actual service behavior
@@ -168,13 +188,15 @@ python3 -m pytest --tb=no -q | tail -5
 
 ## 📚 REFERENCE MATERIALS
 
-### Key Research Sources:
+### Key Research Sources
+
 1. `ML_TESTING_BEST_PRACTICES.md` (created in root directory)
 2. "Don't Mock Machine Learning Models In Unit Tests" - Eugene Yan
 3. PyTorch Lightning testing guidelines
 4. Made With ML testing framework
 
-### Service Logs to Expect:
+### Service Logs to Expect
+
 ```
 WARNING: PAT weights file not found at /path/to/weights.h5 - will use random initialization
 INFO: Initializing PAT model service (size: small, device: cpu)
@@ -183,6 +205,7 @@ INFO: Initializing PAT model service (size: small, device: cpu)
 ## 🎯 COMPLETION CONFIRMATION
 
 Once complete, provide:
+
 1. ✅ Confirmation that test now passes
 2. 📊 Before/after test output comparison  
 3. 🔍 Verification that service behavior is unchanged
@@ -194,4 +217,4 @@ Once complete, provide:
 
 **Priority**: 🔥 HIGH | **Complexity**: 🟢 LOW | **Impact**: 📈 HIGH
 
-**Estimated Time**: 5-10 minutes | **Risk Level**: 🟢 MINIMAL 
+**Estimated Time**: 5-10 minutes | **Risk Level**: 🟢 MINIMAL

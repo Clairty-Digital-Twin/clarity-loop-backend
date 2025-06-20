@@ -208,16 +208,19 @@ class DependencyContainer:
                     service=service_name, status="success"
                 ).inc()
 
-            except Exception:
+            except Exception as e:
                 logger.exception("Failed to initialize Gemini service")
                 service_initialization_counter.labels(
                     service=service_name, status="error"
                 ).inc()
 
-                if not self.settings.is_production():
-                    logger.warning("Continuing without Gemini service")
-                else:
-                    raise
+                # Always continue without Gemini service - it's not critical for core functionality
+                logger.warning(
+                    "Continuing without Gemini service. AI features will be unavailable. Error: %s", 
+                    str(e)
+                )
+                # Set to None so AI endpoints can handle gracefully
+                self._gemini_service = None
 
     async def shutdown(self) -> None:
         """Gracefully shutdown all services."""

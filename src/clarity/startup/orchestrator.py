@@ -276,9 +276,12 @@ class StartupOrchestrator:
             )
 
             # Import here to avoid circular imports
+            from clarity.core.config_adapter import clarity_config_to_settings  # noqa: PLC0415
             from clarity.core.container_aws import initialize_container  # noqa: PLC0415
 
-            await initialize_container(self.config)  # type: ignore[arg-type]
+            # Convert ClarityConfig to Settings for container initialization
+            settings = clarity_config_to_settings(self.config)
+            await initialize_container(settings)
 
             self.reporter.complete_step(
                 container_step, "Container initialized successfully"

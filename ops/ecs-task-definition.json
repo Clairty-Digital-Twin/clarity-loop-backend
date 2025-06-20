@@ -44,8 +44,16 @@
       ],
       "secrets": [
         {
+          "name": "GEMINI_API_KEY",
+          "valueFrom": "arn:aws:secretsmanager:us-east-1:124355672559:secret:clarity/gemini-api-key-nGOumD"
+        },
+        {
           "name": "GEMINI__API_KEY",
           "valueFrom": "arn:aws:secretsmanager:us-east-1:124355672559:secret:clarity/gemini-api-key-nGOumD"
+        },
+        {
+          "name": "SECRET_KEY",
+          "valueFrom": "arn:aws:secretsmanager:us-east-1:124355672559:secret:clarity/secret-key-j00HLA"
         },
         {
           "name": "SECURITY__SECRET_KEY",

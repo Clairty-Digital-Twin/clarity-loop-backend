@@ -1,9 +1,12 @@
 # CLARITY Digital Twin - AWS Production Docker Image
-# Optimized for ECS Fargate deployment with multi-stage build
+# BULLETPROOF Multi-Architecture Build for ECS Fargate
 # CRITICAL: Always build with --platform linux/amd64 for AWS ECS
 
 # Stage 1: Builder
-FROM python:3.11-slim AS builder
+FROM --platform=$BUILDPLATFORM python:3.11-slim AS builder
+
+ARG TARGETARCH
+ARG BUILDPLATFORM
 
 # Install build dependencies
 RUN apt-get update && apt-get install -y \
@@ -28,12 +31,23 @@ RUN pip install --no-cache-dir --upgrade pip wheel setuptools build && \
 # Stage 2: Runtime
 FROM python:3.11-slim
 
-# Install runtime dependencies including AWS CLI
+ARG TARGETARCH
+
+# Install runtime dependencies including AWS CLI (ARCHITECTURE-AWARE)
 RUN apt-get update && apt-get install -y \
     --no-install-recommends \
     curl \
     unzip \
-    && curl -fsSL "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip" \
+    && echo "Building for architecture: ${TARGETARCH}" \
+    && if [ "${TARGETARCH}" = "amd64" ]; then \
+         AWS_CLI_ARCH="x86_64"; \
+       elif [ "${TARGETARCH}" = "arm64" ]; then \
+         AWS_CLI_ARCH="aarch64"; \
+       else \
+         AWS_CLI_ARCH="x86_64"; \
+       fi \
+    && echo "Using AWS CLI architecture: ${AWS_CLI_ARCH}" \
+    && curl -fsSL "https://awscli.amazonaws.com/awscli-exe-linux-${AWS_CLI_ARCH}.zip" -o "awscliv2.zip" \
     && unzip -q awscliv2.zip \
     && ./aws/install \
     && rm -rf awscliv2.zip aws \
@@ -70,7 +84,8 @@ USER clarity
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
     PORT=8000 \
-    ENVIRONMENT=production
+    ENVIRONMENT=production \
+    AWS_PAGER=""
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \

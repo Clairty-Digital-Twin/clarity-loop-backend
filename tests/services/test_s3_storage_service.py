@@ -9,7 +9,7 @@ from typing import Any
 from unittest.mock import MagicMock, patch
 import uuid
 
-from botocore.exceptions import ClientError
+from botocore.exceptions import BotoCoreError, ClientError
 import pytest
 
 from clarity.models.health_data import (
@@ -723,7 +723,7 @@ class TestHealthCheck:
         self, s3_service: S3StorageService, mock_s3_client: MagicMock
     ) -> None:
         """Test health check with unexpected error."""
-        mock_s3_client.head_bucket.side_effect = Exception("Connection error")
+        mock_s3_client.head_bucket.side_effect = BotoCoreError()
 
         result = await s3_service.health_check()
 

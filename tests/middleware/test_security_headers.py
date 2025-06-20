@@ -251,7 +251,7 @@ class TestSecurityHeadersMiddleware:
 
         # Add exception handler to return proper 500 response
         @app.exception_handler(ValueError)
-        async def value_error_handler(_request: Request, exc: ValueError) -> Response:
+        def value_error_handler(_request: Request, exc: ValueError) -> Response:
             return Response(content=str(exc), status_code=500)
 
         @app.get("/error", response_model=None)

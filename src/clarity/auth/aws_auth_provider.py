@@ -557,3 +557,11 @@ class CognitoAuthProvider(IAuthProvider):
         self._jwks_cache = None
         logger.info("Cognito authentication provider cleanup complete")
         self._initialized = False
+
+    def is_initialized(self) -> bool:
+        """Check if the provider is initialized.
+
+        Returns:
+            True if initialized, False otherwise
+        """
+        return self._initialized

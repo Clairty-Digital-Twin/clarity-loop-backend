@@ -14,7 +14,7 @@ import logging
 from typing import TYPE_CHECKING, Any
 
 import boto3
-from botocore.exceptions import ClientError
+from botocore.exceptions import BotoCoreError, ClientError
 from mypy_boto3_s3 import S3Client
 
 from clarity.models.health_data import HealthDataUpload
@@ -585,10 +585,10 @@ class S3StorageService(CloudStoragePort):
                 "bucket": self.bucket_name,
                 "timestamp": datetime.now(UTC).isoformat(),
             }
-        except Exception as e:
+        except (BotoCoreError, ConnectionError, TimeoutError) as e:
             return {
                 "status": "unhealthy",
-                "error": str(e),
+                "error": f"Connection error: {e}",
                 "bucket": self.bucket_name,
                 "timestamp": datetime.now(UTC).isoformat(),
             }

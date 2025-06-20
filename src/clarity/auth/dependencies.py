@@ -242,9 +242,14 @@ def get_websocket_user(token: str, request: Request) -> UserContext:
     Raises:
         HTTPException: 401 if token is invalid
     """
-    # Set a fake authorization header for the middleware
-    # Note: Using private _list attribute is necessary for WebSocket auth
-    request.headers._list.append((b"authorization", f"Bearer {token}".encode()))
+    # WebSocket connections need special handling for auth
+    # Create a new headers object with the authorization token
+    from starlette.datastructures import Headers, MutableHeaders
+    
+    # Copy existing headers and add authorization
+    header_list = list(request.headers.raw)
+    header_list.append((b"authorization", f"Bearer {token}".encode()))
+    request._headers = Headers(raw=header_list)
 
     # The middleware will process this and set request.state.user
     # We can then retrieve it

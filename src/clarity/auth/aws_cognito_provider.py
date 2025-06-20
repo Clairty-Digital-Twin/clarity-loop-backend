@@ -367,6 +367,14 @@ class CognitoAuthProvider(IAuthProvider):
             }
         return None
 
+    def is_initialized(self) -> bool:
+        """Check if the provider is initialized.
+
+        Returns:
+            True - Cognito provider is ready once created
+        """
+        return True
+
 
 @lru_cache(maxsize=1)
 def get_cognito_provider() -> CognitoAuthProvider:

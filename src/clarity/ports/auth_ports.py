@@ -54,3 +54,11 @@ class IAuthProvider(ABC):
 
         Performs cleanup operations like closing connections, releasing resources, etc.
         """
+
+    @abstractmethod
+    def is_initialized(self) -> bool:
+        """Check if the provider is initialized.
+
+        Returns:
+            True if initialized, False otherwise
+        """

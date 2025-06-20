@@ -122,3 +122,11 @@ class MockAuthProvider(IAuthProvider):
             List of available mock users
         """
         return list(self._mock_users.values())
+
+    def is_initialized(self) -> bool:
+        """Check if the provider is initialized.
+
+        Returns:
+            True - mock provider is always ready
+        """
+        return True

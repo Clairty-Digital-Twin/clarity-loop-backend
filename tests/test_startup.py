@@ -51,10 +51,7 @@ class TestApplicationStartup:
     @staticmethod
     async def test_lifespan_context_manager() -> None:
         """Test that the lifespan context manager works without hanging."""
-        # Import here to avoid module-level execution issues
-        from fastapi import FastAPI
-
-        from clarity.main import lifespan
+        from clarity.main import lifespan  # noqa: PLC0415 - Avoid circular import
 
         # Create a fresh app without lifespan for testing
         test_app = FastAPI(
@@ -173,13 +170,9 @@ class TestFullStartupCycle:
     @staticmethod
     async def test_complete_app_lifecycle() -> None:
         """Test complete application creation, startup, and shutdown."""
-        # Import here to avoid module-level execution issues
-        from fastapi import FastAPI
-
-        from clarity.main import lifespan
+        from clarity.main import lifespan  # noqa: PLC0415 - Avoid circular import
 
         # Full application lifecycle test
-        start_time = time.perf_counter()
 
         try:
             # Create a fresh app without lifespan for testing
@@ -193,12 +186,7 @@ class TestFullStartupCycle:
                 # App should be ready for requests
                 assert isinstance(test_app, FastAPI)
 
-            lifecycle_duration = time.perf_counter() - start_time
-
-            # Log startup time for monitoring, but don't fail on arbitrary limits
-            # Real performance testing should be done with proper load testing tools
-            # in production-like environments, not unit tests
-            # Lifecycle duration: {lifecycle_duration:.2f}s - logged for monitoring
+            # Startup completed successfully - performance monitoring done elsewhere
 
         except (RuntimeError, ImportError, TimeoutError, ConnectionError) as e:
             pytest.fail(f"Complete application lifecycle should not fail: {e}")

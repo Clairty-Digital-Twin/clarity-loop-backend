@@ -115,10 +115,10 @@ class CognitoAuthMiddleware(BaseHTTPMiddleware):
 
         try:
             # Initialize auth provider if needed
-            if hasattr(self.auth_provider, 'is_initialized') and not self.auth_provider.is_initialized():
-                await self.auth_provider.initialize()
-            elif hasattr(self.auth_provider, '_initialized') and not self.auth_provider._initialized:
-                # Fallback for providers that haven't implemented is_initialized yet
+            if (
+                hasattr(self.auth_provider, "is_initialized")
+                and not self.auth_provider.is_initialized()
+            ):
                 await self.auth_provider.initialize()
 
             # Verify token

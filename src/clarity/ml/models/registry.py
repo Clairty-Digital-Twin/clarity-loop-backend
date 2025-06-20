@@ -344,71 +344,10 @@ class ModelRegistry:
                 async with session.get(url, headers=headers) as response:
                     response.raise_for_status()
 
-                    # Open file for writing (append mode if resuming)
-                    if start_byte > 0:
-                        async with aiofiles.open(str(partial_path), "ab") as f:
-                            downloaded = start_byte
-                            last_update = time.time()
-
-                            async for chunk in response.content.iter_chunked(
-                                8192
-                            ):  # 8KB chunks
-                                await f.write(chunk)
-                                downloaded += len(chunk)
-
-                                # Update progress
-                                progress = downloaded / metadata.size_bytes * 100
-                                current_time = time.time()
-
-                                # Report progress every 1 second
-                                if current_time - last_update >= 1.0:
-                                    download_info = self.download_progress[download_id]
-                                    download_info["downloaded_bytes"] = downloaded
-                                    download_info["total_bytes"] = metadata.size_bytes
-                                    download_info["progress_percent"] = progress
-                                    last_update = current_time
-
-                                    logger.debug(
-                                        "Download progress for %s: %.1f%%",
-                                        metadata.unique_id,
-                                        progress,
-                                    )
-                    else:
-                        async with aiofiles.open(str(partial_path), "wb") as f:
-                            downloaded = start_byte
-                            last_update = time.time()
-
-                            async for chunk in response.content.iter_chunked(
-                                8192
-                            ):  # 8KB chunks
-                                await f.write(chunk)
-                                downloaded += len(chunk)
-
-                                # Update progress every second
-                                now = time.time()
-                                if now - last_update >= 1.0:
-                                    progress = downloaded / metadata.size_bytes * 100
-                                    elapsed = (
-                                        now
-                                        - self.download_progress[download_id][
-                                            "start_time"
-                                        ]
-                                    )
-                                    speed_mbps = (
-                                        (downloaded / (1024 * 1024)) / elapsed
-                                        if elapsed > 0
-                                        else 0
-                                    )
-
-                                    self.download_progress[download_id].update(
-                                        {
-                                            "status": "downloading",
-                                            "progress": progress,
-                                            "downloaded_bytes": downloaded,
-                                            "speed_mbps": speed_mbps,
-                                        }
-                                    )
-                                    last_update = now
+                    # Stream download to file
+                    await self._stream_to_file(
+                        response, partial_path, start_byte, metadata, download_id
+                    )
 
                 # Move completed file to final location
                 partial_path.rename(local_path)
@@ -426,6 +365,51 @@ class ModelRegistry:
             while chunk := await f.read(8192):
                 hash_sha256.update(chunk)
         return hash_sha256.hexdigest()
+
+    async def _stream_to_file(
+        self,
+        response: aiohttp.ClientResponse,
+        file_path: Path,
+        start_byte: int,
+        metadata: ModelMetadata,
+        download_id: str,
+    ) -> None:
+        """Stream response content to file with progress tracking."""
+        mode = "ab" if start_byte > 0 else "wb"
+
+        async with aiofiles.open(str(file_path), mode) as f:
+            downloaded = start_byte
+            last_update = time.time()
+
+            async for chunk in response.content.iter_chunked(8192):
+                await f.write(chunk)
+                downloaded += len(chunk)
+
+                # Update progress every second
+                now = time.time()
+                if now - last_update >= 1.0:
+                    progress = downloaded / metadata.size_bytes * 100
+
+                    # Update download info
+                    download_info = self.download_progress[download_id]
+                    download_info["downloaded_bytes"] = downloaded
+                    download_info["total_bytes"] = metadata.size_bytes
+                    download_info["progress_percent"] = progress
+
+                    # Calculate speed if not resuming
+                    if start_byte == 0:
+                        elapsed = now - download_info["start_time"]
+                        speed_mbps = (
+                            (downloaded / (1024 * 1024)) / elapsed if elapsed > 0 else 0
+                        )
+                        download_info["speed_mbps"] = speed_mbps
+
+                    last_update = now
+                    logger.debug(
+                        "Download progress for %s: %.1f%%",
+                        metadata.unique_id,
+                        progress,
+                    )
 
     async def _load_registry(self) -> None:
         """Load registry from disk."""

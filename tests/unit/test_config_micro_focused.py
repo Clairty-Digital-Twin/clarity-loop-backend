@@ -58,7 +58,7 @@ class TestBasicConfigCreation:
         config = Settings()
 
         # Assert
-        assert config.environment in {"development", "production", "test"}
+        assert config.environment in {"development", "production", "testing"}
         assert config.log_level in {"DEBUG", "INFO", "WARNING", "ERROR"}
 
     @staticmethod

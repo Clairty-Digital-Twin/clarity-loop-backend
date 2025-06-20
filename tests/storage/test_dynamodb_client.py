@@ -202,7 +202,7 @@ class TestSerializationMethods:
         data = {
             "string": "test",
             "int": 42,
-            "float": math.pi,
+            "float": 3.14,
             "bool": True,
             "none": None,
             "list": ["a", 1, 2.5],
@@ -252,9 +252,7 @@ class TestSerializationMethods:
 
         assert result["string"] == "test"
         assert isinstance(result["decimal"], float)
-        assert (
-            result["decimal"] == math.pi
-        )
+        assert result["decimal"] == 3.14  # noqa: FURB152
         assert result["int"] == 42
         assert result["list"][1] == 1.5
         assert result["dict"]["nested"] == 2.5

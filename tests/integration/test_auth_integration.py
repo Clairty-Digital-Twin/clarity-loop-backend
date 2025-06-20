@@ -9,7 +9,7 @@ from __future__ import annotations
 from fastapi.testclient import TestClient
 import pytest
 
-from clarity.main import get_app
+from clarity.main import create_app
 
 
 class TestAuthenticationIntegration:
@@ -19,7 +19,7 @@ class TestAuthenticationIntegration:
     @staticmethod
     def client() -> TestClient:
         """Create test client."""
-        app = get_app()
+        app = create_app()
         return TestClient(app)
 
     @staticmethod

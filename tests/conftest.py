@@ -39,13 +39,14 @@ os.environ["SKIP_AWS_INIT"] = "true"
 
 
 # AWS test environment setup
-os.environ["AWS_DEFAULT_REGION"] = "us-east-1"
+os.environ["AWS_REGION"] = "us-east-1"  # Changed from AWS_DEFAULT_REGION
+os.environ["AWS_DEFAULT_REGION"] = "us-east-1"  # Keep both for compatibility
 os.environ["AWS_ACCESS_KEY_ID"] = "test-key-id"
 os.environ["AWS_SECRET_ACCESS_KEY"] = (
     "test-secret-key"  # noqa: S105 - Test AWS credentials
 )
-os.environ["COGNITO_USER_POOL_ID"] = "test-pool-id"
-os.environ["COGNITO_CLIENT_ID"] = "test-client-id"
+os.environ["COGNITO_USER_POOL_ID"] = "us-east-1_testpool123"  # Valid format
+os.environ["COGNITO_CLIENT_ID"] = "test-client-id-with-enough-length"  # 20+ chars
 os.environ["DYNAMODB_TABLE_PREFIX"] = "test"
 # Add SECRET_KEY for config validation
 os.environ["SECRET_KEY"] = "test-secret-key-for-testing"  # noqa: S105
@@ -255,12 +256,12 @@ def mock_environment_variables(monkeypatch: pytest.MonkeyPatch):
     """Mock environment variables for testing."""
     test_env = {
         "TESTING": "1",
-        "ENVIRONMENT": "test",
+        "ENVIRONMENT": "testing",
         "DEBUG": "true",
         "DATABASE_URL": "sqlite:///test.db",
         "AWS_REGION": "us-east-1",
-        "COGNITO_USER_POOL_ID": "test-pool",
-        "COGNITO_CLIENT_ID": "test-client",
+        "COGNITO_USER_POOL_ID": "us-east-1_testpool123",
+        "COGNITO_CLIENT_ID": "test-client-id-with-enough-length",
         "DYNAMODB_TABLE_PREFIX": "test",
         "JWT_SECRET_KEY": "test-secret-key-for-testing-only",  # This is a test secret
         "LOG_LEVEL": "DEBUG",

@@ -337,13 +337,9 @@ class ModelRegistry:
         if start_byte > 0:
             headers["Range"] = f"bytes={start_byte}-"
 
-        async with (
-            aiohttp.ClientSession(
-                timeout=aiohttp.ClientTimeout(
-                    total=self.config.download_timeout_seconds
-                )
-            ) as session
-        ):
+        async with aiohttp.ClientSession(
+            timeout=aiohttp.ClientTimeout(total=self.config.download_timeout_seconds)
+        ) as session:
             try:
                 async with session.get(url, headers=headers) as response:
                     response.raise_for_status()

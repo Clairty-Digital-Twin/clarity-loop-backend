@@ -100,7 +100,9 @@ class TestPreprocessingIntegration:
         now = datetime.now(UTC)
         # Use realistic step counts (0-200 steps per minute with some variation)
         step_counts = [
-            50.0 + 30.0 * np.sin(2 * np.pi * i / 1440) + 20.0 * np.random.random()  # noqa: NPY002
+            50.0
+            + 30.0 * np.sin(2 * np.pi * i / 1440)
+            + 20.0 * np.random.random()  # noqa: NPY002
             for i in range(20160)  # 2 weeks with daily pattern
         ]
         step_data = StepCountData(

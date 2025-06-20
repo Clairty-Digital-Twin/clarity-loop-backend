@@ -180,11 +180,11 @@ class StartupOrchestrator:
 
                 return True
 
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001 - Bulletproof startup
                 self.reporter.fail_step(env_step, "Environment validation failed", e)
                 return False
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - Bulletproof startup
             self.reporter.fail_step(step, "Configuration loading failed", e)
             return False
 
@@ -257,7 +257,7 @@ class StartupOrchestrator:
                 step, f"Health checks timed out after {health_check_timeout}s"
             )
             return False
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - Bulletproof startup
             step = self.reporter.start_step("Service health check error")
             self.reporter.fail_step(step, "Health check failed", e)
             return False
@@ -288,7 +288,7 @@ class StartupOrchestrator:
 
             return True
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - Bulletproof startup
             step = self.reporter.start_step("Service initialization error")
             self.reporter.fail_step(step, "Service initialization failed", e)
             return False

@@ -202,7 +202,7 @@ class ServiceHealthChecker:
                 error=e,
             )
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - Health check needs to catch all
             circuit_breaker = self._get_circuit_breaker(service_name)
             circuit_breaker.record_failure()
             return HealthCheckResult(
@@ -342,7 +342,7 @@ class ServiceHealthChecker:
                 error=e,
             )
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - Health check needs to catch all
             circuit_breaker = self._get_circuit_breaker(service_name)
             circuit_breaker.record_failure()
             return HealthCheckResult(
@@ -452,7 +452,7 @@ class ServiceHealthChecker:
                 error=e,
             )
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - Health check needs to catch all
             circuit_breaker = self._get_circuit_breaker(service_name)
             circuit_breaker.record_failure()
             return HealthCheckResult(

@@ -180,7 +180,7 @@ class TestGeminiAPIKey:
         """Test gemini_api_key when environment variable is empty string."""
         with patch.dict(os.environ, {"GEMINI_API_KEY": ""}):
             api_key = gemini_api_key()
-            assert api_key == ""
+            assert not api_key
 
     def test_gemini_api_key_whitespace(self):
         """Test gemini_api_key when environment variable contains whitespace."""

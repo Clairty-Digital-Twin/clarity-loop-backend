@@ -16,7 +16,7 @@ from clarity.ml.analysis_pipeline import (
     MIN_METRICS_FOR_TIME_SPAN,
     AnalysisResults,
     HealthAnalysisPipeline,
-    _get_healthkit_type_mapping,
+    _get_healthkit_type_mapping,  # noqa: PLC2701
     get_analysis_pipeline,
 )
 from clarity.ml.processors.sleep_processor import SleepFeatures

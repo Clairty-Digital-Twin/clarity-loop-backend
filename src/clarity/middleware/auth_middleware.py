@@ -115,7 +115,9 @@ class CognitoAuthMiddleware(BaseHTTPMiddleware):
 
         try:
             # Initialize auth provider if needed
-            if not self.auth_provider._initialized:  # noqa: SLF001 - Need to check initialization
+            if (
+                not self.auth_provider._initialized
+            ):
                 await self.auth_provider.initialize()
 
             # Verify token

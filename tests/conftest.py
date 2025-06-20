@@ -33,6 +33,9 @@ load_dotenv(".env.test")
 # Set testing environment
 os.environ["TESTING"] = "1"
 os.environ["ENVIRONMENT"] = "testing"
+# Skip external services in tests
+os.environ["SKIP_EXTERNAL_SERVICES"] = "true"
+os.environ["SKIP_AWS_INIT"] = "true"
 
 
 # AWS test environment setup
@@ -44,6 +47,8 @@ os.environ["AWS_SECRET_ACCESS_KEY"] = (
 os.environ["COGNITO_USER_POOL_ID"] = "test-pool-id"
 os.environ["COGNITO_CLIENT_ID"] = "test-client-id"
 os.environ["DYNAMODB_TABLE_PREFIX"] = "test"
+# Add SECRET_KEY for config validation
+os.environ["SECRET_KEY"] = "test-secret-key-for-testing"  # noqa: S105
 
 
 @pytest.fixture(scope="session")

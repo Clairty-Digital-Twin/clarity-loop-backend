@@ -397,21 +397,24 @@ async def predict(
     console.print(f"[blue]Model:[/blue] {model_id}:{version}")
 
     try:
-        async with aiohttp.ClientSession() as session, session.post(f"{url}/predict", json=request_data) as response:
-                if response.status == HTTP_OK:
-                    result = await response.json()
+        async with (
+            aiohttp.ClientSession() as session,
+            session.post(f"{url}/predict", json=request_data) as response,
+        ):
+            if response.status == HTTP_OK:
+                result = await response.json()
 
-                    console.print("[green]✓[/green] Prediction successful")
-                    console.print(f"[blue]Latency:[/blue] {result['latency_ms']:.2f}ms")
+                console.print("[green]✓[/green] Prediction successful")
+                console.print(f"[blue]Latency:[/blue] {result['latency_ms']:.2f}ms")
 
-                    # Display results in a nice format
-                    if "outputs" in result:
-                        outputs_json = json.dumps(result["outputs"], indent=2)
-                        console.print(Panel(outputs_json, title="Prediction Results"))
+                # Display results in a nice format
+                if "outputs" in result:
+                    outputs_json = json.dumps(result["outputs"], indent=2)
+                    console.print(Panel(outputs_json, title="Prediction Results"))
 
-                else:
-                    error = await response.text()
-                    console.print(f"[red]✗[/red] Prediction failed: {error}")
+            else:
+                error = await response.text()
+                console.print(f"[red]✗[/red] Prediction failed: {error}")
 
     except (TimeoutError, aiohttp.ClientError) as e:
         console.print(f"[red]✗[/red] Request failed: {e}")

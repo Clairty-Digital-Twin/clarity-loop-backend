@@ -522,7 +522,7 @@ class TestModelLoadingAndSecurity:
         service = PATModelService()
         service.config = {"invalid": "config"}  # This will cause errors
 
-        with pytest.raises(Exception, match=".*"):
+        with pytest.raises(Exception, match=r".*"):
             await service.load_model()
 
         assert service.is_loaded is False
@@ -882,7 +882,9 @@ class TestIntegrationScenarios:
         data_points = [
             ActigraphyDataPoint(
                 timestamp=datetime.now(UTC),
-                value=1.0 + 0.1 * np.sin(i * 0.1) + 0.05 * np.random.randn(),  # noqa: NPY002
+                value=1.0
+                + 0.1 * np.sin(i * 0.1)
+                + 0.05 * np.random.randn(),  # noqa: NPY002
             )
             for i in range(1000)
         ]
@@ -1044,7 +1046,9 @@ class TestResilienceAndErrorRecovery:
         realistic_data = [
             ActigraphyDataPoint(
                 timestamp=datetime.now(UTC),
-                value=1.0 + 0.1 * np.sin(i * 0.01) + 0.05 * np.random.randn(),  # noqa: NPY002
+                value=1.0
+                + 0.1 * np.sin(i * 0.01)
+                + 0.05 * np.random.randn(),  # noqa: NPY002
             )
             for i in range(5000)  # Smaller for testing, but realistic pattern
         ]

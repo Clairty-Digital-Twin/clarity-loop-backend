@@ -103,7 +103,7 @@ def sample_analysis_result() -> ActigraphyAnalysis:
     )
 
 
-class TestPATPerformanceOptimizer:
+class TestPATPerformanceOptimizer:  # noqa: PLR0904
     """Test PAT performance optimizer."""
 
     @staticmethod

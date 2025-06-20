@@ -585,7 +585,9 @@ class S3StorageService(CloudStoragePort):
                 "bucket": self.bucket_name,
                 "timestamp": datetime.now(UTC).isoformat(),
             }
-        except Exception as e:  # noqa: BLE001 - Need to catch all exceptions for health check
+        except (
+            Exception
+        ) as e:
             return {
                 "status": "unhealthy",
                 "error": str(e),

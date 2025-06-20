@@ -834,12 +834,12 @@ class TestHealthCheck:
 
         # Health check should still complete but may indicate issues
         # Implementation depends on how you want to handle health check failures
-        try:
+        # Test health check behavior - both success and failure are valid
+        import contextlib  # noqa: PLC0415 - Test-specific import
+
+        with contextlib.suppress(Exception):
             await self.service.health_check()
-        except Exception:  # noqa: BLE001, S110
-            # If health check raises exception, that's also valid behavior
-            # No action needed as we're testing that health check completes without crashing
-            pass
+            # If health check succeeds, good. If it raises, also valid for this test.
 
 
 class TestDynamoDBHealthDataRepository:

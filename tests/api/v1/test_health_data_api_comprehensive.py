@@ -102,7 +102,7 @@ def reset_health_data_dependencies():
     """Reset health data dependencies after each test to prevent state pollution."""
     yield
     # Clean up the global container after each test
-    from clarity.api.v1.health_data import _container  # noqa: PLC0415
+    from clarity.api.v1.health_data import _container  # noqa: PLC0415, PLC2701
 
     _container.auth_provider = None
     _container.repository = None

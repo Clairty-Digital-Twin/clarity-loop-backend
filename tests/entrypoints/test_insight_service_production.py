@@ -80,7 +80,10 @@ class TestInsightServiceMain:
     @patch("clarity.entrypoints.insight_service.uvicorn.run")
     @patch.dict(
         os.environ,
-        {"HOST": "0.0.0.0", "PORT": "9000"},
+        {
+            "HOST": "0.0.0.0",
+            "PORT": "9000",
+        },
         clear=True,
     )
     def test_main_custom_host_port(self, mock_uvicorn_run: MagicMock) -> None:

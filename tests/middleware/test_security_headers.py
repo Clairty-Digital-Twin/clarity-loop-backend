@@ -156,7 +156,7 @@ class TestSecurityHeadersMiddleware:
         app = create_test_app()
 
         @app.post("/test")
-        async def post_endpoint() -> dict[str, str]:
+        async def post_endpoint() -> dict[str, str]:  # noqa: RUF029 - Test handler
             return {"message": "posted"}
 
         client = TestClient(app)
@@ -251,7 +251,9 @@ class TestSecurityHeadersMiddleware:
 
         # Add exception handler to return proper 500 response
         @app.exception_handler(ValueError)
-        async def value_error_handler(_request: Request, exc: ValueError) -> Response:
+        async def value_error_handler(
+            _request: Request, exc: ValueError
+        ) -> Response:
             return Response(content=str(exc), status_code=500)
 
         @app.get("/error", response_model=None)

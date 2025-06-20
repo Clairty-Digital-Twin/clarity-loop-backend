@@ -53,7 +53,11 @@ try:
     for header in headers_to_check:
         if header in response.headers:
             value = response.headers[header]
-            display_value = f"{value[:MAX_DISPLAY_LENGTH]}..." if len(value) > MAX_DISPLAY_LENGTH else value
+            display_value = (
+                f"{value[:MAX_DISPLAY_LENGTH]}..."
+                if len(value) > MAX_DISPLAY_LENGTH
+                else value
+            )
             print(f"✅ {header}: {display_value}")
             found_count += 1
         else:

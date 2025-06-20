@@ -175,7 +175,7 @@ class TestMeasureExecutionTimeDecorator:
         def failing_function() -> Never:
             time.sleep(0.01)
             msg = "Timing test error"
-            raise Exception(msg)
+            raise Exception(msg)  # noqa: TRY002
 
         caplog.set_level(logging.INFO, logger="clarity.core.decorators")
 
@@ -288,7 +288,7 @@ class TestRetryOnFailureDecorator:
         def timing_function() -> Never:
             call_times.append(time.time())
             msg = "Timing test"
-            raise Exception(msg)
+            raise Exception(msg)  # noqa: TRY002
 
         with pytest.raises(Exception, match="Timing test"):
             timing_function()

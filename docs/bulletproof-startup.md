@@ -27,14 +27,17 @@ The CLARITY platform features a bulletproof startup system that provides **zero-
 ### Basic Usage
 
 ```bash
-# Start with bulletproof system
-python -m clarity.main_bulletproof
+# Start with bulletproof system (unified main.py)
+python -m clarity.main --bulletproof
+
+# Start in standard mode (default)
+python -m clarity.main
 
 # Validate configuration without starting
-python scripts/startup_validator.py --dry-run
+python -m clarity.main --validate
 
-# Validate configuration only
-python scripts/startup_validator.py --config-only
+# Use environment variable for startup mode
+STARTUP_MODE=bulletproof python -m clarity.main
 ```
 
 ### Environment Variables
@@ -134,7 +137,14 @@ python scripts/startup_validator.py --dry-run
 Complete application startup with bulletproof orchestration.
 
 ```bash
-python -m clarity.main_bulletproof
+# Using command line flag
+python -m clarity.main --bulletproof
+
+# Using environment variable
+STARTUP_MODE=bulletproof python -m clarity.main
+
+# Automatic in production
+ENVIRONMENT=production python -m clarity.main
 ```
 
 **Process:**

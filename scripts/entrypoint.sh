@@ -19,4 +19,5 @@ fi
 
 # Start the application
 echo "Starting Gunicorn server..."
+# Unified main.py automatically detects production environment and uses bulletproof mode
 exec gunicorn -c gunicorn.aws.conf.py clarity.main:app

@@ -450,7 +450,9 @@ class ProgressiveLoadingService:
 
         # Continue preload tasks in background
         if preload_tasks:
-            self._preload_task = asyncio.create_task(self._finish_preloading(preload_tasks))
+            self._preload_task = asyncio.create_task(
+                self._finish_preloading(preload_tasks)
+            )
 
     async def _finish_preloading(self, preload_tasks: list[asyncio.Task[Any]]) -> None:
         """Finish preloading non-critical models in background."""

@@ -170,9 +170,7 @@ class AccountLockoutService:
         """Check if account is locked and raise exception if so."""
         if await self.is_locked(username):
             # Calculate unlock time (approximate)
-            unlock_time = datetime.now(UTC) + timedelta(
-                seconds=self.lockout_secs
-            )
+            unlock_time = datetime.now(UTC) + timedelta(seconds=self.lockout_secs)
             raise AccountLockoutError(username, unlock_time)
 
 

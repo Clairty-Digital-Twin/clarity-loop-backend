@@ -199,7 +199,9 @@ def create_bulletproof_app() -> FastAPI:
         logger.info("✅ CORS middleware configured")
 
         # Add request size limiter middleware
-        from clarity.middleware.request_size_limiter import RequestSizeLimiterMiddleware
+        from clarity.middleware.request_size_limiter import (  # noqa: PLC0415
+            RequestSizeLimiterMiddleware,
+        )
 
         app.add_middleware(
             RequestSizeLimiterMiddleware,
@@ -211,7 +213,9 @@ def create_bulletproof_app() -> FastAPI:
         logger.info("✅ Request size limiter configured")
 
         # Add security headers middleware
-        from clarity.middleware.security_headers import SecurityHeadersMiddleware
+        from clarity.middleware.security_headers import (  # noqa: PLC0415
+            SecurityHeadersMiddleware,
+        )
 
         app.add_middleware(
             SecurityHeadersMiddleware,
@@ -223,13 +227,17 @@ def create_bulletproof_app() -> FastAPI:
 
         # Add authentication middleware if enabled
         if _app_config.enable_auth:
-            from clarity.middleware.auth_middleware import CognitoAuthMiddleware
+            from clarity.middleware.auth_middleware import (  # noqa: PLC0415
+                CognitoAuthMiddleware,
+            )
 
             app.add_middleware(CognitoAuthMiddleware)
             logger.info("✅ Authentication middleware configured")
 
         # Add rate limiting middleware
-        from clarity.middleware.rate_limiting import setup_rate_limiting
+        from clarity.middleware.rate_limiting import (  # noqa: PLC0415
+            setup_rate_limiting,
+        )
 
         redis_url = os.getenv("REDIS_URL")
         setup_rate_limiting(app, redis_url=redis_url)
@@ -237,14 +245,16 @@ def create_bulletproof_app() -> FastAPI:
 
         # Add request logging in development
         if _app_config.is_development():
-            from clarity.middleware.request_logger import RequestLoggingMiddleware
+            from clarity.middleware.request_logger import (  # noqa: PLC0415
+                RequestLoggingMiddleware,
+            )
 
             app.add_middleware(RequestLoggingMiddleware)
             logger.info("✅ Request logging middleware configured")
 
     # Include API routers
-    from clarity.api.v1.router import api_router as v1_router
-    from clarity.core.openapi import custom_openapi
+    from clarity.api.v1.router import api_router as v1_router  # noqa: PLC0415
+    from clarity.core.openapi import custom_openapi  # noqa: PLC0415
 
     app.include_router(v1_router, prefix="/api/v1")
     app.openapi = lambda: custom_openapi(app)  # type: ignore[method-assign]
@@ -338,7 +348,7 @@ def main() -> int:
         return asyncio.run(validate_startup())
 
     # Normal startup with uvicorn
-    import uvicorn
+    import uvicorn  # noqa: PLC0415
 
     # Get configuration
     host = os.getenv("HOST", "127.0.0.1")

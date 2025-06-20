@@ -221,7 +221,9 @@ class ModelMonitoringService:
         self.error_trends[model_key].append(0.0 if success else 1.0)
 
         # Check for alerts
-        self._alert_task = asyncio.create_task(self._check_inference_alerts(model_id, version, metric))
+        self._alert_task = asyncio.create_task(
+            self._check_inference_alerts(model_id, version, metric)
+        )
 
     async def get_model_metrics(
         self, model_id: str, version: str = "latest", window_minutes: int | None = None
@@ -543,7 +545,9 @@ class ModelMonitoringService:
 
             # Send webhook if configured
             if self.config.alert_webhook_url:
-                self._webhook_task = asyncio.create_task(self._send_alert_webhook(model_key, alert))
+                self._webhook_task = asyncio.create_task(
+                    self._send_alert_webhook(model_key, alert)
+                )
 
     async def _send_alert_webhook(self, model_key: str, alert: dict[str, Any]) -> None:
         """Send alert to webhook."""

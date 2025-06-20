@@ -18,11 +18,13 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from prometheus_client import make_asgi_app
 
+from clarity.core.config_adapter import clarity_config_to_settings
 from clarity.core.container_aws import get_container, initialize_container
 from clarity.core.openapi import custom_openapi
 from clarity.startup.config_schema import ClarityConfig
 from clarity.startup.orchestrator import StartupOrchestrator
 from clarity.startup.progress_reporter import StartupProgressReporter
+from clarity.version import get_version
 
 if TYPE_CHECKING:
     from clarity.core.container_aws import DependencyContainer
@@ -121,9 +123,9 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
 
     # Initialize dependency container
     try:
-        # initialize_container expects Settings, not ClarityConfig
-        # For now, pass None to use default settings
-        _container = await initialize_container(None)
+        # Convert ClarityConfig to Settings for container initialization
+        settings = clarity_config_to_settings(config)
+        _container = await initialize_container(settings)
         logger.info("✅ Dependency container initialized")
     except Exception as e:
         logger.exception("Failed to initialize container")
@@ -217,7 +219,7 @@ def create_app() -> FastAPI:
     app = FastAPI(
         title="CLARITY Digital Twin Platform",
         description="AI-powered health insights platform",
-        version="1.0.0",
+        version=get_version(),
         lifespan=lifespan,
         openapi_url="/api/v1/openapi.json",
         docs_url="/api/v1/docs",
@@ -236,7 +238,7 @@ def create_app() -> FastAPI:
         """Root endpoint."""
         return {
             "message": "CLARITY Digital Twin Platform API",
-            "version": "1.0.0",
+            "version": get_version(),
             "status": "operational",
         }
 
@@ -246,7 +248,7 @@ def create_app() -> FastAPI:
         """Basic health check endpoint."""
         container = get_container()
         status = "healthy" if container else "initializing"
-        return {"status": status, "version": "1.0.0"}
+        return {"status": status, "version": get_version()}
 
     return app
 

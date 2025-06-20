@@ -34,6 +34,7 @@
         {"name": "SQS_QUEUE_NAME", "value": "clarity-insights-queue"},
         {"name": "SNS_TOPIC_ARN", "value": "arn:aws:sns:us-east-1:124355672559:clarity-insights-topic"},
         {"name": "LOG_LEVEL", "value": "INFO"},
+        {"name": "SKIP_EXTERNAL_SERVICES", "value": "false"},
         {"name": "S3_ML_MODELS_BUCKET", "value": "clarity-ml-models-124355672559"},
         {"name": "PAT_S_MODEL_PATH", "value": "s3://clarity-ml-models-124355672559/pat/PAT-S_29k_weights.h5"},
         {"name": "PAT_M_MODEL_PATH", "value": "s3://clarity-ml-models-124355672559/pat/PAT-M_29k_weights.h5"},

@@ -147,7 +147,9 @@ class RequestSizeLimiterMiddleware(BaseHTTPMiddleware):
                         )
 
                         # Add security headers to the response
-                        SecurityHeadersMiddleware.add_security_headers_to_response(response)
+                        SecurityHeadersMiddleware.add_security_headers_to_response(
+                            response
+                        )
 
                         return response
 

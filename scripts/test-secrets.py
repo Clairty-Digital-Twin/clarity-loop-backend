@@ -18,7 +18,7 @@ print(f"\nSECRET_KEY exists: {'YES' if secret_key else 'NO'}")
 if secret_key:
     print(f"  - Length: {len(secret_key)}")
     print(f"  - First 5 chars: {secret_key[:5]}...")
-    dev_key = 'dev-secret-key'
+    dev_key = "dev-secret-key"
     print(f"  - Is '{dev_key}': {secret_key == dev_key}")
 
 print(f"\nGEMINI_API_KEY exists: {'YES' if gemini_key else 'NO'}")
@@ -31,10 +31,11 @@ print("\n" + "=" * 50)
 print("Testing configuration loading...")
 try:
     from clarity.startup.config_schema import ClarityConfig
+
     config = ClarityConfig()
     print("✅ Configuration loaded successfully!")
     print(f"  - Environment: {config.environment}")
-    dev_key = 'dev-secret-key'
+    dev_key = "dev-secret-key"
     print(f"  - Secret key is default: {config.security.secret_key == dev_key}")
 except Exception as e:  # noqa: BLE001
     print(f"❌ Configuration failed: {e}")

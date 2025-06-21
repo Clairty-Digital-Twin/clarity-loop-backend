@@ -303,7 +303,9 @@ def generic_exception_handler(_request: Request, exc: Exception) -> JSONResponse
     # Log the actual exception for debugging
     logger.error("Unhandled exception", exc_info=exc)
 
-    response = JSONResponse(status_code=500, content=problem.model_dump(exclude_none=True))
+    response = JSONResponse(
+        status_code=500, content=problem.model_dump(exclude_none=True)
+    )
 
     # Add security headers to the response
     SecurityHeadersMiddleware.add_security_headers_to_response(response)

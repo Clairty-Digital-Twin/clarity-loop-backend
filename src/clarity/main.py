@@ -161,10 +161,11 @@ def configure_middleware_from_env(app: FastAPI) -> None:
     environment = os.getenv("ENVIRONMENT", "development").lower()
     enable_auth = os.getenv("ENABLE_AUTH", "true").lower() == "true"
     cors_origins_str = os.getenv(
-        "CORS_ALLOWED_ORIGINS",
-        "http://localhost:3000,http://localhost:8000"
+        "CORS_ALLOWED_ORIGINS", "http://localhost:3000,http://localhost:8000"
     )
-    cors_origins = [origin.strip() for origin in cors_origins_str.split(",") if origin.strip()]
+    cors_origins = [
+        origin.strip() for origin in cors_origins_str.split(",") if origin.strip()
+    ]
     max_request_size = int(os.getenv("MAX_REQUEST_SIZE", "10485760"))  # 10MB default
 
     # NOTE: Middleware is executed in REVERSE order of registration
@@ -261,6 +262,7 @@ def create_app() -> FastAPI:
     # Mount static files for self-hosted Swagger UI
     # Get the directory where this file is located
     from pathlib import Path  # noqa: PLC0415
+
     static_dir = Path(__file__).parent / "static"
     app.mount("/static", StaticFiles(directory=str(static_dir)), name="static")
 

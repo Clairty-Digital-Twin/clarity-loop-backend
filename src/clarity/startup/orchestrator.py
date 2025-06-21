@@ -276,7 +276,7 @@ class StartupOrchestrator:
             )
 
             # Import here to avoid circular imports
-            from clarity.core.config_adapter import (
+            from clarity.core.config_adapter import (  # noqa: PLC0415
                 clarity_config_to_settings,
             )
             from clarity.core.container_aws import initialize_container  # noqa: PLC0415

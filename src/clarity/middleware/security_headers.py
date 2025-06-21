@@ -97,13 +97,13 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         *,
         strict: bool = True,
         cache_control: str = "no-store, private",
-        enable_csp: bool = True
+        enable_csp: bool = True,
     ) -> None:
         """Add security headers to any response object.
-        
+
         This static method can be used by exception handlers and other
         middleware that create responses directly.
-        
+
         Args:
             response: The response to add headers to
             strict: Whether to use strict CSP (True) or relaxed CSP (False)
@@ -119,7 +119,9 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         # Content Security Policy
         if enable_csp:
             if strict:
-                response.headers["Content-Security-Policy"] = 'default-src "none"; frame-ancestors "none";'
+                response.headers["Content-Security-Policy"] = (
+                    'default-src "none"; frame-ancestors "none";'
+                )
             else:
                 response.headers["Content-Security-Policy"] = (
                     "default-src 'self'; "

@@ -344,20 +344,22 @@ class TestGeminiServiceInitialization:
 
     @pytest.mark.asyncio
     async def test_initialize_gemini_service_failure_production(self):
-        """Test Gemini service failure in production raises exception."""
+        """Test Gemini service failure in production continues without service."""
         settings = Mock(spec=Settings)
         settings.is_production.return_value = True
+        settings.is_development.return_value = False
 
         container = DependencyContainer(settings)
 
-        with (
-            patch(
-                "clarity.core.container_aws.GeminiService",
-                side_effect=Exception("Gemini init failed"),
-            ),
-            pytest.raises(Exception, match="Gemini init failed"),
+        with patch(
+            "clarity.core.container_aws.GeminiService",
+            side_effect=Exception("Gemini init failed"),
         ):
+            # Should not raise exception, but set service to None
             await container._initialize_gemini_service()
+
+            # Verify the service is set to None after failure
+            assert container._gemini_service is None
 
 
 class TestContainerPropertyAccessors:

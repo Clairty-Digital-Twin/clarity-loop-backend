@@ -305,10 +305,15 @@ class TestStartupOrchestrator:
         with (
             patch.dict(os.environ, env_vars, clear=True),
             patch("clarity.core.container_aws.initialize_container") as mock_init,
+            patch(
+                "clarity.core.config_adapter.clarity_config_to_settings"
+            ) as mock_convert,
         ):
 
             mock_container = Mock()
             mock_init.return_value = mock_container
+            mock_settings = Mock()
+            mock_convert.return_value = mock_settings
 
             # Set up orchestrator with valid config
             config, _ = ClarityConfig.validate_from_env()
@@ -317,7 +322,8 @@ class TestStartupOrchestrator:
             success = await self.orchestrator._initialize_services()
 
             assert success is True
-            mock_init.assert_called_once_with(config)
+            mock_convert.assert_called_once_with(config)
+            mock_init.assert_called_once_with(mock_settings)
 
     @pytest.mark.asyncio
     async def test_service_initialization_failure(self) -> None:

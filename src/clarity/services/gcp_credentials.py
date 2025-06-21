@@ -19,42 +19,46 @@ class GCPCredentialsManager:
     _instance = None
     _credentials_file_path: str | None = None
 
-    def __new__(cls) -> 'GCPCredentialsManager':
+    def __new__(cls) -> "GCPCredentialsManager":
         if cls._instance is None:
             cls._instance = super().__new__(cls)
         return cls._instance
 
     def __init__(self) -> None:
         """Initialize the GCP credentials manager."""
-        if not hasattr(self, '_initialized'):
+        if not hasattr(self, "_initialized"):
             self._initialized = True
             self._setup_credentials()
 
     def _setup_credentials(self) -> None:
         """Set up GCP credentials from environment variables or local files."""
         # Check if credentials are already set via environment
-        if os.environ.get('GOOGLE_APPLICATION_CREDENTIALS'):
+        if os.environ.get("GOOGLE_APPLICATION_CREDENTIALS"):
             logger.info("Using existing GOOGLE_APPLICATION_CREDENTIALS")
             return
 
         # Check for credentials JSON in environment variable (from AWS Secrets Manager)
-        credentials_json = os.environ.get('GOOGLE_APPLICATION_CREDENTIALS_JSON')
+        credentials_json = os.environ.get("GOOGLE_APPLICATION_CREDENTIALS_JSON")
         if credentials_json:
-            logger.info("Found GOOGLE_APPLICATION_CREDENTIALS_JSON, creating temporary file")
+            logger.info(
+                "Found GOOGLE_APPLICATION_CREDENTIALS_JSON, creating temporary file"
+            )
             self._create_temp_credentials_file(credentials_json)
             return
 
         # Check for local credentials files (development)
         local_files = [
-            'gcp-service-account.json',
-            'service-account.json',
-            'gcp-credentials.json'
+            "gcp-service-account.json",
+            "service-account.json",
+            "gcp-credentials.json",
         ]
 
         for filename in local_files:
             if Path(filename).exists():
                 logger.info("Using local service account file: %s", filename)
-                os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = str(Path(filename).absolute())
+                os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = str(
+                    Path(filename).absolute()
+                )
                 return
 
         logger.warning("No GCP credentials found. Some features may not work.")
@@ -71,18 +75,20 @@ class GCPCredentialsManager:
 
             # Create a temporary file that won't be deleted on close
             with tempfile.NamedTemporaryFile(
-                mode='w',
-                suffix='.json',
-                prefix='gcp_credentials_',
+                mode="w",
+                suffix=".json",
+                prefix="gcp_credentials_",
                 delete=False,
-                encoding='utf-8'
+                encoding="utf-8",
             ) as temp_file:
                 json.dump(credentials_data, temp_file, indent=2)
                 self._credentials_file_path = temp_file.name
 
             # Set the environment variable to point to the temp file
-            os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = self._credentials_file_path
-            logger.info("Created temporary credentials file at: %s", self._credentials_file_path)
+            os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = self._credentials_file_path
+            logger.info(
+                "Created temporary credentials file at: %s", self._credentials_file_path
+            )
 
         except json.JSONDecodeError:
             logger.exception("Invalid JSON in GOOGLE_APPLICATION_CREDENTIALS_JSON")
@@ -97,7 +103,7 @@ class GCPCredentialsManager:
         Returns:
             Path to the credentials file or None if not set
         """
-        return os.environ.get('GOOGLE_APPLICATION_CREDENTIALS')
+        return os.environ.get("GOOGLE_APPLICATION_CREDENTIALS")
 
     def get_project_id(self) -> str | None:
         """Get the GCP project ID from the credentials.
@@ -110,9 +116,10 @@ class GCPCredentialsManager:
             return None
 
         try:
-            with Path(credentials_path).open(encoding='utf-8') as f:
+            with Path(credentials_path).open(encoding="utf-8") as f:
                 credentials_data = json.load(f)
-                return credentials_data.get('project_id')
+                project_id = credentials_data.get("project_id")
+                return project_id if isinstance(project_id, str) else None
         except Exception:
             logger.exception("Error reading project ID from credentials")
             return None
@@ -122,7 +129,10 @@ class GCPCredentialsManager:
         if self._credentials_file_path and Path(self._credentials_file_path).exists():
             try:
                 Path(self._credentials_file_path).unlink()
-                logger.info("Cleaned up temporary credentials file: %s", self._credentials_file_path)
+                logger.info(
+                    "Cleaned up temporary credentials file: %s",
+                    self._credentials_file_path,
+                )
             except Exception:
                 logger.exception("Error cleaning up credentials file")
 

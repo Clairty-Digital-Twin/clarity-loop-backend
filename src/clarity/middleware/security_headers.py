@@ -84,14 +84,15 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         response = await call_next(request)
 
         # Add security headers
-        self._add_security_headers(response)
+        self._add_security_headers(request, response)
 
         return response
 
-    def _add_security_headers(self, response: Response) -> None:
+    def _add_security_headers(self, request: Request, response: Response) -> None:
         """Add security headers to the response.
 
         Args:
+            request: The request object to check path
             response: The response object to add headers to
         """
         # HSTS - Enforce HTTPS (only if enabled)
@@ -109,7 +110,23 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
 
         # Content Security Policy (API-specific)
         if self.enable_csp:
-            response.headers["Content-Security-Policy"] = self.csp_policy
+            # Check if this is a Swagger UI or static file request
+            path = str(request.url.path)
+            if path.startswith(("/api/v1/docs", "/static/")):
+                # Relaxed CSP for Swagger UI to allow self-hosted assets
+                swagger_csp = (
+                    "default-src 'self'; "
+                    "script-src 'self' 'unsafe-inline'; "
+                    "style-src 'self' 'unsafe-inline'; "
+                    "img-src 'self' https://fastapi.tiangolo.com data:; "
+                    "font-src 'self' data:; "
+                    "connect-src 'self'; "
+                    "frame-ancestors 'none';"
+                )
+                response.headers["Content-Security-Policy"] = swagger_csp
+            else:
+                # Strict CSP for all other endpoints
+                response.headers["Content-Security-Policy"] = self.csp_policy
 
         # XSS Protection (legacy but still useful)
         response.headers["X-XSS-Protection"] = "1; mode=block"

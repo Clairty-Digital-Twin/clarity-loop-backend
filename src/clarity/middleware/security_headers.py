@@ -91,6 +91,58 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
 
         return response
 
+    @staticmethod
+    def add_security_headers_to_response(
+        response: Response, 
+        strict: bool = True,
+        cache_control: str = "no-store, private"
+    ) -> None:
+        """Add security headers to any response object.
+        
+        This static method can be used by exception handlers and other
+        middleware that create responses directly.
+        
+        Args:
+            response: The response to add headers to
+            strict: Whether to use strict CSP (True) or relaxed CSP (False)
+            cache_control: Cache control header value
+        """
+        # Prevent MIME type sniffing
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        
+        # Prevent clickjacking
+        response.headers["X-Frame-Options"] = "DENY"
+        
+        # Content Security Policy
+        if strict:
+            response.headers["Content-Security-Policy"] = 'default-src "none"; frame-ancestors "none";'
+        else:
+            response.headers["Content-Security-Policy"] = (
+                "default-src 'self'; "
+                "script-src 'self' 'unsafe-inline'; "
+                "style-src 'self' 'unsafe-inline'; "
+                "img-src 'self' data:; "
+                "font-src 'self' data:; "
+                "connect-src 'self'; "
+                "frame-ancestors 'none';"
+            )
+        
+        # XSS Protection (legacy but still useful)
+        response.headers["X-XSS-Protection"] = "1; mode=block"
+        
+        # Control referrer information
+        response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+        
+        # Prevent caching of sensitive data
+        response.headers["Cache-Control"] = cache_control
+        
+        # Permissions Policy
+        response.headers["Permissions-Policy"] = (
+            "camera=(), microphone=(), geolocation=(), "
+            "payment=(), usb=(), magnetometer=(), "
+            "accelerometer=(), gyroscope=()"
+        )
+
     def _add_security_headers(self, request: Request, response: Response) -> None:
         """Add security headers to the response.
 
@@ -98,54 +150,23 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
             request: The request object to check path
             response: The response object to add headers to
         """
-        # HSTS - Enforce HTTPS (only if enabled)
+        # Determine if this request needs relaxed CSP
+        path = str(request.url.path)
+        needs_relaxed_csp = path.startswith(DOCS_AND_STATIC_PATHS)
+        
+        # Use the static method to add most headers
+        self.add_security_headers_to_response(
+            response,
+            strict=not needs_relaxed_csp,
+            cache_control=self.cache_control
+        )
+        
+        # Add HSTS if enabled (this is instance-specific)
         if self.enable_hsts:
             hsts_value = f"max-age={self.hsts_max_age}"
             if self.hsts_include_subdomains:
                 hsts_value += "; includeSubDomains"
             response.headers["Strict-Transport-Security"] = hsts_value
-
-        # Prevent MIME type sniffing
-        response.headers["X-Content-Type-Options"] = "nosniff"
-
-        # Prevent clickjacking
-        response.headers["X-Frame-Options"] = "DENY"
-
-        # Content Security Policy (API-specific)
-        if self.enable_csp:
-            # Check if this is a Swagger UI or static file request
-            path = str(request.url.path)
-            if path.startswith(DOCS_AND_STATIC_PATHS):
-                # Relaxed CSP for Swagger UI to allow self-hosted assets
-                swagger_csp = (
-                    "default-src 'self'; "
-                    "script-src 'self' 'unsafe-inline'; "
-                    "style-src 'self' 'unsafe-inline'; "
-                    "img-src 'self' data:; "
-                    "font-src 'self' data:; "
-                    "connect-src 'self'; "
-                    "frame-ancestors 'none';"
-                )
-                response.headers["Content-Security-Policy"] = swagger_csp
-            else:
-                # Strict CSP for all other endpoints
-                response.headers["Content-Security-Policy"] = self.csp_policy
-
-        # XSS Protection (legacy but still useful)
-        response.headers["X-XSS-Protection"] = "1; mode=block"
-
-        # Control referrer information
-        response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
-
-        # Prevent caching of sensitive data
-        response.headers["Cache-Control"] = self.cache_control
-
-        # Permissions Policy - Deny access to browser features
-        response.headers["Permissions-Policy"] = (
-            "camera=(), microphone=(), geolocation=(), "
-            "payment=(), usb=(), magnetometer=(), "
-            "accelerometer=(), gyroscope=()"
-        )
 
 
 # Convenience function for easy registration

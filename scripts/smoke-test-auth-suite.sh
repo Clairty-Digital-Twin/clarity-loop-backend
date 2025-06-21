@@ -103,7 +103,13 @@ run_test "Registration - Duplicate Email" "$EXPECTED_DUP_CODE" \
     -d '{\"email\":\"${TEST_EMAIL}\",\"display_name\":\"Test User\",\"password\":\"${GOOD_PASSWORD}\"}'"
 
 # Test 5: Login with correct credentials (but unconfirmed email)
-run_test "Login - Unconfirmed Email" "403" \
+# In production, since registration is disabled, the user won't exist, so we get 401
+if [ "$ENVIRONMENT" = "production" ]; then
+    EXPECTED_LOGIN_CODE="401"
+else
+    EXPECTED_LOGIN_CODE="403"
+fi
+run_test "Login - Unconfirmed Email" "$EXPECTED_LOGIN_CODE" \
     "curl -s -o /dev/null -w '%{http_code}' \
     -X POST '${API_URL}/auth/login' \
     -H 'Content-Type: application/json' \

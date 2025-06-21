@@ -59,6 +59,10 @@ async def custom_rate_limit_exceeded_handler(  # noqa: RUF029 - FastAPI handler
         getattr(exc, "limit", "unknown"),
     )
 
+    from clarity.middleware.security_headers import (  # noqa: PLC0415
+        SecurityHeadersMiddleware,
+    )
+
     response = JSONResponse(
         status_code=429,
         content=ProblemDetail(
@@ -69,6 +73,9 @@ async def custom_rate_limit_exceeded_handler(  # noqa: RUF029 - FastAPI handler
             instance=f"https://api.clarity.health/requests/{id(exc)}",
         ).model_dump(),
     )
+
+    # Add security headers to the response
+    SecurityHeadersMiddleware.add_security_headers_to_response(response)
 
     # Add rate limit headers if available
     return request.app.state.limiter._inject_headers(  # type: ignore[no-any-return]  # noqa: SLF001

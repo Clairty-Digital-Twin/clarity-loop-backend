@@ -216,7 +216,7 @@ class DependencyContainer:
 
                 # Always continue without Gemini service - it's not critical for core functionality
                 logger.warning(
-                    "Continuing without Gemini service. AI features will be unavailable. Error: %s", 
+                    "Continuing without Gemini service. AI features will be unavailable. Error: %s",
                     str(e)
                 )
                 # Set to None so AI endpoints can handle gracefully

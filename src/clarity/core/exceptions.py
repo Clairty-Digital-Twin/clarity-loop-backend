@@ -270,17 +270,30 @@ def problem_detail_exception_handler(
     _request: Request, exc: ClarityAPIException
 ) -> JSONResponse:
     """Convert ClarityAPIException to RFC 7807 Problem Detail response."""
+    from clarity.middleware.security_headers import (  # noqa: PLC0415
+        SecurityHeadersMiddleware,
+    )
+
     problem = exc.to_problem_detail()
 
-    return JSONResponse(
+    response = JSONResponse(
         status_code=exc.status_code,
         content=problem.model_dump(exclude_none=True),
         headers=exc.headers or {},
     )
 
+    # Add security headers to the response
+    SecurityHeadersMiddleware.add_security_headers_to_response(response)
+
+    return response
+
 
 def generic_exception_handler(_request: Request, exc: Exception) -> JSONResponse:
     """Handle unexpected exceptions with Problem Details format."""
+    from clarity.middleware.security_headers import (  # noqa: PLC0415
+        SecurityHeadersMiddleware,
+    )
+
     trace_id = str(uuid4())
 
     problem = InternalServerProblem(
@@ -290,7 +303,12 @@ def generic_exception_handler(_request: Request, exc: Exception) -> JSONResponse
     # Log the actual exception for debugging
     logger.error("Unhandled exception", exc_info=exc)
 
-    return JSONResponse(status_code=500, content=problem.model_dump(exclude_none=True))
+    response = JSONResponse(status_code=500, content=problem.model_dump(exclude_none=True))
+
+    # Add security headers to the response
+    SecurityHeadersMiddleware.add_security_headers_to_response(response)
+
+    return response
 
 
 class ClarityBaseError(Exception):

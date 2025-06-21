@@ -166,28 +166,31 @@ def configure_middleware_from_env(app: FastAPI) -> None:
     )
     cors_origins = [origin.strip() for origin in cors_origins_str.split(",") if origin.strip()]
     max_request_size = int(os.getenv("MAX_REQUEST_SIZE", "10485760"))  # 10MB default
-    
-    # CORS
-    app.add_middleware(
-        CORSMiddleware,
-        allow_origins=cors_origins,
-        allow_credentials=True,
-        allow_methods=["*"],
-        allow_headers=["*"],
-        max_age=86400,
-    )
 
-    # Security headers
-    from clarity.middleware.security_headers import (  # noqa: PLC0415
-        SecurityHeadersMiddleware,
-    )
+    # NOTE: Middleware is executed in REVERSE order of registration
+    # So SecurityHeadersMiddleware should be added LAST to ensure it runs FIRST
 
-    app.add_middleware(
-        SecurityHeadersMiddleware,
-        enable_hsts=environment == "production",
-        enable_csp=True,
-        cache_control="no-store, private",
-    )
+    # Development middleware (runs last)
+    if environment == "development":
+        from clarity.middleware.request_logger import (  # noqa: PLC0415
+            RequestLoggingMiddleware,
+        )
+
+        app.add_middleware(RequestLoggingMiddleware)
+
+    # Auth middleware if enabled
+    if enable_auth:
+        from clarity.middleware.auth_middleware import (  # noqa: PLC0415
+            CognitoAuthMiddleware,
+        )
+
+        app.add_middleware(CognitoAuthMiddleware)
+
+    # Rate limiting
+    from clarity.middleware.rate_limiting import setup_rate_limiting  # noqa: PLC0415
+
+    redis_url = os.getenv("REDIS_URL")
+    setup_rate_limiting(app, redis_url=redis_url)
 
     # Request size limiter
     from clarity.middleware.request_size_limiter import (  # noqa: PLC0415
@@ -199,27 +202,27 @@ def configure_middleware_from_env(app: FastAPI) -> None:
         max_request_size=max_request_size,
     )
 
-    # Rate limiting
-    from clarity.middleware.rate_limiting import setup_rate_limiting  # noqa: PLC0415
+    # CORS
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=cors_origins,
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+        max_age=86400,
+    )
 
-    redis_url = os.getenv("REDIS_URL")
-    setup_rate_limiting(app, redis_url=redis_url)
+    # Security headers - MUST BE LAST (runs first on responses)
+    from clarity.middleware.security_headers import (  # noqa: PLC0415
+        SecurityHeadersMiddleware,
+    )
 
-    # Auth middleware if enabled
-    if enable_auth:
-        from clarity.middleware.auth_middleware import (  # noqa: PLC0415
-            CognitoAuthMiddleware,
-        )
-
-        app.add_middleware(CognitoAuthMiddleware)
-
-    # Development middleware
-    if environment == "development":
-        from clarity.middleware.request_logger import (  # noqa: PLC0415
-            RequestLoggingMiddleware,
-        )
-
-        app.add_middleware(RequestLoggingMiddleware)
+    app.add_middleware(
+        SecurityHeadersMiddleware,
+        enable_hsts=environment == "production",
+        enable_csp=True,
+        cache_control="no-store, private",
+    )
 
 
 def include_routers(app: FastAPI) -> None:

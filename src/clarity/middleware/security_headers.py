@@ -93,9 +93,11 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
 
     @staticmethod
     def add_security_headers_to_response(
-        response: Response, 
+        response: Response,
+        *,
         strict: bool = True,
-        cache_control: str = "no-store, private"
+        cache_control: str = "no-store, private",
+        enable_csp: bool = True
     ) -> None:
         """Add security headers to any response object.
         
@@ -106,36 +108,38 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
             response: The response to add headers to
             strict: Whether to use strict CSP (True) or relaxed CSP (False)
             cache_control: Cache control header value
+            enable_csp: Whether to add CSP header
         """
         # Prevent MIME type sniffing
         response.headers["X-Content-Type-Options"] = "nosniff"
-        
+
         # Prevent clickjacking
         response.headers["X-Frame-Options"] = "DENY"
-        
+
         # Content Security Policy
-        if strict:
-            response.headers["Content-Security-Policy"] = 'default-src "none"; frame-ancestors "none";'
-        else:
-            response.headers["Content-Security-Policy"] = (
-                "default-src 'self'; "
-                "script-src 'self' 'unsafe-inline'; "
-                "style-src 'self' 'unsafe-inline'; "
-                "img-src 'self' data:; "
-                "font-src 'self' data:; "
-                "connect-src 'self'; "
-                "frame-ancestors 'none';"
-            )
-        
+        if enable_csp:
+            if strict:
+                response.headers["Content-Security-Policy"] = 'default-src "none"; frame-ancestors "none";'
+            else:
+                response.headers["Content-Security-Policy"] = (
+                    "default-src 'self'; "
+                    "script-src 'self' 'unsafe-inline'; "
+                    "style-src 'self' 'unsafe-inline'; "
+                    "img-src 'self' data:; "
+                    "font-src 'self' data:; "
+                    "connect-src 'self'; "
+                    "frame-ancestors 'none';"
+                )
+
         # XSS Protection (legacy but still useful)
         response.headers["X-XSS-Protection"] = "1; mode=block"
-        
+
         # Control referrer information
         response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
-        
+
         # Prevent caching of sensitive data
         response.headers["Cache-Control"] = cache_control
-        
+
         # Permissions Policy
         response.headers["Permissions-Policy"] = (
             "camera=(), microphone=(), geolocation=(), "
@@ -153,14 +157,37 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         # Determine if this request needs relaxed CSP
         path = str(request.url.path)
         needs_relaxed_csp = path.startswith(DOCS_AND_STATIC_PATHS)
+
+        # If CSP is enabled, determine the policy to use
+        if self.enable_csp:
+            if needs_relaxed_csp:
+                # Use relaxed CSP for docs/static paths
+                csp_header = (
+                    "default-src 'self'; "
+                    "script-src 'self' 'unsafe-inline'; "
+                    "style-src 'self' 'unsafe-inline'; "
+                    "img-src 'self' data:; "
+                    "font-src 'self' data:; "
+                    "connect-src 'self'; "
+                    "frame-ancestors 'none';"
+                )
+            else:
+                # Use configured CSP policy for all other paths
+                csp_header = self.csp_policy
+            response.headers["Content-Security-Policy"] = csp_header
         
-        # Use the static method to add most headers
-        self.add_security_headers_to_response(
-            response,
-            strict=not needs_relaxed_csp,
-            cache_control=self.cache_control
+        # Add other security headers
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        response.headers["X-Frame-Options"] = "DENY"
+        response.headers["X-XSS-Protection"] = "1; mode=block"
+        response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+        response.headers["Cache-Control"] = self.cache_control
+        response.headers["Permissions-Policy"] = (
+            "camera=(), microphone=(), geolocation=(), "
+            "payment=(), usb=(), magnetometer=(), "
+            "accelerometer=(), gyroscope=()"
         )
-        
+
         # Add HSTS if enabled (this is instance-specific)
         if self.enable_hsts:
             hsts_value = f"max-age={self.hsts_max_age}"

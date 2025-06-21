@@ -127,8 +127,12 @@ class RequestSizeLimiterMiddleware(BaseHTTPMiddleware):
                             request.url.path,
                         )
 
-                        # Return 413 Payload Too Large directly as JSONResponse
-                        return JSONResponse(
+                        # Return 413 Payload Too Large with security headers
+                        from clarity.middleware.security_headers import (  # noqa: PLC0415
+                            SecurityHeadersMiddleware,
+                        )
+
+                        response = JSONResponse(
                             status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
                             content={
                                 "error": "Request payload too large",
@@ -141,6 +145,11 @@ class RequestSizeLimiterMiddleware(BaseHTTPMiddleware):
                             },
                             headers={"Retry-After": "3600"},  # Suggest retry in 1 hour
                         )
+
+                        # Add security headers to the response
+                        SecurityHeadersMiddleware.add_security_headers_to_response(response)
+
+                        return response
 
                 except ValueError:
                     # Invalid Content-Length header

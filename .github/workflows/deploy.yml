@@ -52,6 +52,7 @@ jobs:
           --cache-from type=registry,ref=$ECR_REGISTRY/$ECR_REPOSITORY:buildcache \
           --cache-to type=registry,ref=$ECR_REGISTRY/$ECR_REPOSITORY:buildcache,mode=max \
           --build-arg BUILDKIT_INLINE_CACHE=1 \
+          --max-parallelism 2 \
           --push \
           -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG \
           -t $ECR_REGISTRY/$ECR_REPOSITORY:latest \

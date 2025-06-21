@@ -16,6 +16,9 @@ from typing import TYPE_CHECKING
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.openapi.docs import get_swagger_ui_html
+from fastapi.responses import HTMLResponse
+from fastapi.staticfiles import StaticFiles
 from prometheus_client import make_asgi_app
 
 from clarity.core.config_adapter import clarity_config_to_settings
@@ -238,7 +241,7 @@ def create_app() -> FastAPI:
         version=get_version(),
         lifespan=lifespan,
         openapi_url="/api/v1/openapi.json",
-        docs_url="/api/v1/docs",
+        docs_url=None,  # Disable default docs to use custom self-hosted
         redoc_url="/api/v1/redoc",
     )
 
@@ -251,6 +254,23 @@ def create_app() -> FastAPI:
 
     # Include routers here so they're available immediately for tests
     include_routers(app)
+
+    # Mount static files for self-hosted Swagger UI
+    # Get the directory where this file is located
+    import pathlib
+    static_dir = pathlib.Path(__file__).parent / "static"
+    app.mount("/static", StaticFiles(directory=str(static_dir)), name="static")
+
+    # Custom Swagger UI with self-hosted assets
+    @app.get("/api/v1/docs", include_in_schema=False)
+    async def custom_swagger_ui() -> HTMLResponse:
+        """Serve Swagger UI with self-hosted assets to avoid CSP issues."""
+        return get_swagger_ui_html(
+            openapi_url="/api/v1/openapi.json",
+            title=f"{app.title} - Swagger UI",
+            swagger_js_url="/static/swagger-ui-bundle.js",
+            swagger_css_url="/static/swagger-ui.css",
+        )
 
     # Root endpoint
     @app.get("/", tags=["Root"])

@@ -45,6 +45,13 @@ jobs:
         ECR_REPOSITORY="clarity-backend"
         IMAGE_TAG="${{ github.sha }}"
         
+        # Configure buildkit for reduced parallelism to prevent timeouts
+        export BUILDKIT_CONFIG=/tmp/buildkit.toml
+        cat > $BUILDKIT_CONFIG << EOL
+        [worker.oci]
+          max-parallelism = 2
+        EOL
+        
         # Use buildx for efficient caching and multi-platform builds
         echo "🔥 Building optimized Docker image for linux/amd64... 🔥"
         docker buildx build \
@@ -52,7 +59,6 @@ jobs:
           --cache-from type=registry,ref=$ECR_REGISTRY/$ECR_REPOSITORY:buildcache \
           --cache-to type=registry,ref=$ECR_REGISTRY/$ECR_REPOSITORY:buildcache,mode=max \
           --build-arg BUILDKIT_INLINE_CACHE=1 \
-          --max-parallelism 2 \
           --push \
           -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG \
           -t $ECR_REGISTRY/$ECR_REPOSITORY:latest \

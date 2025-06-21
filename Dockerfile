@@ -67,7 +67,7 @@ RUN pip install --no-cache-dir --upgrade pip && \
     rm -rf /tmp/*.whl
 
 # Copy application code and scripts
-COPY --chown=clarity:clarity pyproject.toml LICENSE README.md ./
+COPY --chown=clarity:clarity pyproject.toml ./
 COPY --chown=clarity:clarity src/ ./src/
 COPY --chown=clarity:clarity gunicorn.aws.conf.py ./
 COPY --chown=clarity:clarity scripts/download_models.sh scripts/entrypoint.sh ./scripts/

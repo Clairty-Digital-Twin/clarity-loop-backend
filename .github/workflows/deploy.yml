@@ -45,23 +45,22 @@ jobs:
         ECR_REPOSITORY="clarity-backend"
         IMAGE_TAG="${{ github.sha }}"
         
-        # Build for linux/amd64 platform (CRITICAL for ECS!)
-        echo "🔥 Building Docker image for linux/amd64... 🔥"
-        docker build \
+        # Use buildx for efficient caching and multi-platform builds
+        echo "🔥 Building optimized Docker image for linux/amd64... 🔥"
+        docker buildx build \
           --platform linux/amd64 \
+          --cache-from type=registry,ref=$ECR_REGISTRY/$ECR_REPOSITORY:buildcache \
+          --cache-to type=registry,ref=$ECR_REGISTRY/$ECR_REPOSITORY:buildcache,mode=max \
           --build-arg BUILDKIT_INLINE_CACHE=1 \
+          --push \
           -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG \
           -t $ECR_REGISTRY/$ECR_REPOSITORY:latest \
-          -f Dockerfile \
           .
         
-        # Push to ECR
-        echo "🚀 Pushing security-hardened image to ECR... 🚀"
-        docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
-        docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
+        echo "✅ Image pushed successfully!"
         
         # Deploy using the new image
-        echo "💥 Deploying to ECS with security fortress... 💥"
+        echo "💥 Deploying to ECS... 💥"
         ./ops/deploy.sh --tag $IMAGE_TAG
 
     - name: Deploy completed

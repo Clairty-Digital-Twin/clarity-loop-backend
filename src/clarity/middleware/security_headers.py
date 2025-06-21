@@ -19,6 +19,9 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
+# Paths that require relaxed CSP for documentation/UI functionality
+DOCS_AND_STATIC_PATHS = ("/api/v1/docs", "/static/", "/docs", "/redoc")
+
 
 class SecurityHeadersMiddleware(BaseHTTPMiddleware):
     """Middleware to add security headers to all responses.
@@ -112,13 +115,13 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         if self.enable_csp:
             # Check if this is a Swagger UI or static file request
             path = str(request.url.path)
-            if path.startswith(("/api/v1/docs", "/static/")):
+            if path.startswith(DOCS_AND_STATIC_PATHS):
                 # Relaxed CSP for Swagger UI to allow self-hosted assets
                 swagger_csp = (
                     "default-src 'self'; "
                     "script-src 'self' 'unsafe-inline'; "
                     "style-src 'self' 'unsafe-inline'; "
-                    "img-src 'self' https://fastapi.tiangolo.com data:; "
+                    "img-src 'self' data:; "
                     "font-src 'self' data:; "
                     "connect-src 'self'; "
                     "frame-ancestors 'none';"

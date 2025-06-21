@@ -270,6 +270,7 @@ def create_app() -> FastAPI:
             title=f"{app.title} - Swagger UI",
             swagger_js_url="/static/swagger-ui-bundle.js",
             swagger_css_url="/static/swagger-ui.css",
+            swagger_favicon_url="/static/favicon.png",
         )
 
     # Root endpoint

@@ -59,6 +59,10 @@
         {
           "name": "SECURITY__SECRET_KEY",
           "valueFrom": "arn:aws:secretsmanager:us-east-1:124355672559:secret:clarity/secret-key-j00HLA"
+        },
+        {
+          "name": "GOOGLE_APPLICATION_CREDENTIALS_JSON",
+          "valueFrom": "arn:aws:secretsmanager:us-east-1:124355672559:secret:clarity/gcp-service-account-TxDX9f"
         }
       ],
       "logConfiguration": {

@@ -21,6 +21,7 @@ from prometheus_client import make_asgi_app
 from clarity.core.config_adapter import clarity_config_to_settings
 from clarity.core.container_aws import get_container, initialize_container
 from clarity.core.openapi import custom_openapi
+from clarity.services.gcp_credentials import initialize_gcp_credentials
 from clarity.startup.config_schema import ClarityConfig
 from clarity.startup.orchestrator import StartupOrchestrator
 from clarity.startup.progress_reporter import StartupProgressReporter
@@ -121,6 +122,14 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     _config = config
     logger.info("✅ Configuration loaded successfully")
 
+    # Initialize GCP credentials
+    try:
+        initialize_gcp_credentials()
+        logger.info("✅ GCP credentials initialized")
+    except Exception as e:
+        logger.warning(f"GCP credentials initialization warning: {e}")
+        # Non-fatal - some features may not work
+
     # Initialize dependency container
     try:
         # Convert ClarityConfig to Settings for container initialization
@@ -131,9 +140,6 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
         logger.exception("Failed to initialize container")
         msg = f"Container initialization failed: {e}"
         raise RuntimeError(msg) from e
-
-    # Configure middleware after container is ready
-    configure_middleware(app, config)
 
     logger.info("✅ CLARITY backend started successfully")
 
@@ -146,12 +152,22 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
         pass
 
 
-def configure_middleware(app: FastAPI, config: ClarityConfig) -> None:
-    """Configure all application middleware."""
+def configure_middleware_from_env(app: FastAPI) -> None:
+    """Configure middleware based on environment variables."""
+    # Get environment settings
+    environment = os.getenv("ENVIRONMENT", "development").lower()
+    enable_auth = os.getenv("ENABLE_AUTH", "true").lower() == "true"
+    cors_origins_str = os.getenv(
+        "CORS_ALLOWED_ORIGINS",
+        "http://localhost:3000,http://localhost:8000"
+    )
+    cors_origins = [origin.strip() for origin in cors_origins_str.split(",") if origin.strip()]
+    max_request_size = int(os.getenv("MAX_REQUEST_SIZE", "10485760"))  # 10MB default
+    
     # CORS
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=config.security.cors_origins,
+        allow_origins=cors_origins,
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
@@ -165,7 +181,7 @@ def configure_middleware(app: FastAPI, config: ClarityConfig) -> None:
 
     app.add_middleware(
         SecurityHeadersMiddleware,
-        enable_hsts=config.is_production(),
+        enable_hsts=environment == "production",
         enable_csp=True,
         cache_control="no-store, private",
     )
@@ -177,7 +193,7 @@ def configure_middleware(app: FastAPI, config: ClarityConfig) -> None:
 
     app.add_middleware(
         RequestSizeLimiterMiddleware,
-        max_request_size=config.security.max_request_size,
+        max_request_size=max_request_size,
     )
 
     # Rate limiting
@@ -187,7 +203,7 @@ def configure_middleware(app: FastAPI, config: ClarityConfig) -> None:
     setup_rate_limiting(app, redis_url=redis_url)
 
     # Auth middleware if enabled
-    if config.enable_auth:
+    if enable_auth:
         from clarity.middleware.auth_middleware import (  # noqa: PLC0415
             CognitoAuthMiddleware,
         )
@@ -195,7 +211,7 @@ def configure_middleware(app: FastAPI, config: ClarityConfig) -> None:
         app.add_middleware(CognitoAuthMiddleware)
 
     # Development middleware
-    if config.is_development():
+    if environment == "development":
         from clarity.middleware.request_logger import (  # noqa: PLC0415
             RequestLoggingMiddleware,
         )
@@ -225,6 +241,10 @@ def create_app() -> FastAPI:
         docs_url="/api/v1/docs",
         redoc_url="/api/v1/redoc",
     )
+
+    # Configure middleware based on environment variables
+    # This must happen before the app starts
+    configure_middleware_from_env(app)
 
     # Set custom OpenAPI schema
     app.openapi = lambda: custom_openapi(app)  # type: ignore[method-assign]

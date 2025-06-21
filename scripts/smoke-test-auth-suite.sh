@@ -64,7 +64,12 @@ run_test "Health Check" "200" \
 
 # Test 2: Registration with valid password
 # In production, registration may be disabled (403), so accept both 202 and 403
-EXPECTED_REG_CODE="${EXPECTED_REG_CODE:-202}"
+# Update: Accept 403 as valid in production environments
+if [ "$ENVIRONMENT" = "production" ]; then
+    EXPECTED_REG_CODE="403"
+else
+    EXPECTED_REG_CODE="${EXPECTED_REG_CODE:-202}"
+fi
 run_test "Registration - Valid Password" "$EXPECTED_REG_CODE" \
     "curl -s -o /dev/null -w '%{http_code}' \
     -X POST '${API_URL}/auth/register' \
@@ -72,14 +77,26 @@ run_test "Registration - Valid Password" "$EXPECTED_REG_CODE" \
     -d '{\"email\":\"${TEST_EMAIL}\",\"display_name\":\"Test User\",\"password\":\"${GOOD_PASSWORD}\"}'"
 
 # Test 3: Registration with weak password (no uppercase)
-run_test "Registration - Weak Password" "400" \
+# In production, registration is disabled so we expect 403 instead of 400
+if [ "$ENVIRONMENT" = "production" ]; then
+    EXPECTED_WEAK_CODE="403"
+else
+    EXPECTED_WEAK_CODE="400"
+fi
+run_test "Registration - Weak Password" "$EXPECTED_WEAK_CODE" \
     "curl -s -o /dev/null -w '%{http_code}' \
     -X POST '${API_URL}/auth/register' \
     -H 'Content-Type: application/json' \
     -d '{\"email\":\"test2-$(date +%s)@example.com\",\"display_name\":\"Test User\",\"password\":\"${WEAK_PASSWORD}\"}'"
 
 # Test 4: Registration with duplicate email
-run_test "Registration - Duplicate Email" "409" \
+# In production, registration is disabled so we expect 403 instead of 409
+if [ "$ENVIRONMENT" = "production" ]; then
+    EXPECTED_DUP_CODE="403"
+else
+    EXPECTED_DUP_CODE="409"
+fi
+run_test "Registration - Duplicate Email" "$EXPECTED_DUP_CODE" \
     "curl -s -o /dev/null -w '%{http_code}' \
     -X POST '${API_URL}/auth/register' \
     -H 'Content-Type: application/json' \

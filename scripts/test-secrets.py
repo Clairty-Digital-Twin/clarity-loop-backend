@@ -2,7 +2,6 @@
 """Test script to verify AWS Secrets Manager injection in ECS."""
 import os
 import sys
-import time
 
 print("Testing AWS Secrets Manager injection...")
 print("=" * 50)
@@ -19,7 +18,8 @@ print(f"\nSECRET_KEY exists: {'YES' if secret_key else 'NO'}")
 if secret_key:
     print(f"  - Length: {len(secret_key)}")
     print(f"  - First 5 chars: {secret_key[:5]}...")
-    print(f"  - Is 'dev-secret-key': {secret_key == 'dev-secret-key'}")
+    dev_key = 'dev-secret-key'
+    print(f"  - Is '{dev_key}': {secret_key == dev_key}")
 
 print(f"\nGEMINI_API_KEY exists: {'YES' if gemini_key else 'NO'}")
 if gemini_key:
@@ -34,9 +34,10 @@ try:
     config = ClarityConfig()
     print("✅ Configuration loaded successfully!")
     print(f"  - Environment: {config.environment}")
-    print(f"  - Secret key is default: {config.security.secret_key == 'dev-secret-key'}")
-except Exception as e:
+    dev_key = 'dev-secret-key'
+    print(f"  - Secret key is default: {config.security.secret_key == dev_key}")
+except Exception as e:  # noqa: BLE001
     print(f"❌ Configuration failed: {e}")
     sys.exit(1)
 
-print("\n✅ All tests passed!")
+print("\n✅ All tests passed!\n")

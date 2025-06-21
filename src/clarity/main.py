@@ -104,7 +104,7 @@ async def bulletproof_startup() -> tuple[bool, ClarityConfig | None]:
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
+async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:  # noqa: ARG001
     """Unified application lifespan manager."""
     global _config, _container  # noqa: PLW0603
 
@@ -129,8 +129,8 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     try:
         initialize_gcp_credentials()
         logger.info("✅ GCP credentials initialized")
-    except Exception as e:
-        logger.warning(f"GCP credentials initialization warning: {e}")
+    except Exception as e:  # noqa: BLE001
+        logger.warning("GCP credentials initialization warning: %s", e)
         # Non-fatal - some features may not work
 
     # Initialize dependency container
@@ -260,8 +260,8 @@ def create_app() -> FastAPI:
 
     # Mount static files for self-hosted Swagger UI
     # Get the directory where this file is located
-    import pathlib
-    static_dir = pathlib.Path(__file__).parent / "static"
+    from pathlib import Path  # noqa: PLC0415
+    static_dir = Path(__file__).parent / "static"
     app.mount("/static", StaticFiles(directory=str(static_dir)), name="static")
 
     # Custom Swagger UI with self-hosted assets

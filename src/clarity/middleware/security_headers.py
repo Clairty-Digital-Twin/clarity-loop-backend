@@ -175,7 +175,7 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
                 # Use configured CSP policy for all other paths
                 csp_header = self.csp_policy
             response.headers["Content-Security-Policy"] = csp_header
-        
+
         # Add other security headers
         response.headers["X-Content-Type-Options"] = "nosniff"
         response.headers["X-Frame-Options"] = "DENY"

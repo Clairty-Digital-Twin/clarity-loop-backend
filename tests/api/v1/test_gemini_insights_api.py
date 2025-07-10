@@ -456,7 +456,7 @@ class TestGenerateInsightsEndpoint:
         
         error = exc_info.value
         assert error.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR
-        assert "INSIGHT_GENERATION_ERROR" in str(error.detail)
+        assert "INSIGHT_GENERATION_FAILED" in str(error.detail)
 
     @pytest.mark.asyncio
     async def test_generate_insights_invalid_user(self, mock_gemini_service, sample_insight_request):

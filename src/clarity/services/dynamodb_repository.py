@@ -6,10 +6,11 @@ Each repository handles a specific entity type with focused responsibilities.
 
 from __future__ import annotations
 
-import logging
 from abc import ABC, abstractmethod
 from datetime import UTC, datetime
+import logging
 from typing import Any, Generic, TypeVar
+import uuid
 
 from clarity.services.dynamodb_connection import DynamoDBConnection
 
@@ -25,22 +26,18 @@ class IRepository(ABC, Generic[T]):
     @abstractmethod
     async def create(self, entity: T) -> str:
         """Create a new entity."""
-        pass
 
     @abstractmethod
     async def get(self, id: str) -> T | None:
         """Get entity by ID."""
-        pass
 
     @abstractmethod
     async def update(self, id: str, entity: T) -> bool:
         """Update an existing entity."""
-        pass
 
     @abstractmethod
     async def delete(self, id: str) -> bool:
         """Delete an entity."""
-        pass
 
 
 class BaseRepository(IRepository[T]):
@@ -83,7 +80,7 @@ class BaseRepository(IRepository[T]):
             logger.info("Created entity in %s: %s", self._table_name, entity.get("id"))
             return entity.get("id")
 
-        except Exception as e:
+        except Exception:
             logger.exception("Failed to create entity in %s", self._table_name)
             raise
 
@@ -103,7 +100,7 @@ class BaseRepository(IRepository[T]):
                 return response["Item"]
             return None
 
-        except Exception as e:
+        except Exception:
             logger.exception("Failed to get entity %s from %s", id, self._table_name)
             raise
 
@@ -140,7 +137,7 @@ class BaseRepository(IRepository[T]):
             logger.info("Updated entity %s in %s", id, self._table_name)
             return True
 
-        except Exception as e:
+        except Exception:
             logger.exception("Failed to update entity %s in %s", id, self._table_name)
             return False
 
@@ -159,7 +156,7 @@ class BaseRepository(IRepository[T]):
             logger.info("Deleted entity %s from %s", id, self._table_name)
             return True
 
-        except Exception as e:
+        except Exception:
             logger.exception("Failed to delete entity %s from %s", id, self._table_name)
             return False
 
@@ -198,7 +195,7 @@ class BaseRepository(IRepository[T]):
                 "Batch created %s entities in %s", len(entities), self._table_name
             )
 
-        except Exception as e:
+        except Exception:
             logger.exception("Failed to batch create entities in %s", self._table_name)
             raise
 
@@ -209,7 +206,7 @@ class HealthDataRepository(BaseRepository[dict]):
     Specific implementation for health data with additional methods.
     """
 
-    def __init__(self, connection: DynamoDBConnection):
+    def __init__(self, connection: DynamoDBConnection) -> None:
         """Initialize health data repository."""
         super().__init__(connection, "clarity_health_data")
 
@@ -226,7 +223,7 @@ class HealthDataRepository(BaseRepository[dict]):
 
             return response.get("Items", [])
 
-        except Exception as e:
+        except Exception:
             logger.exception("Failed to get health data for user %s", user_id)
             return []
 
@@ -248,7 +245,7 @@ class HealthDataRepository(BaseRepository[dict]):
 
             return response.get("Items", [])
 
-        except Exception as e:
+        except Exception:
             logger.exception("Failed to get health data by date range")
             return []
 
@@ -256,7 +253,7 @@ class HealthDataRepository(BaseRepository[dict]):
 class ProcessingJobRepository(BaseRepository[dict]):
     """Repository for processing job operations."""
 
-    def __init__(self, connection: DynamoDBConnection):
+    def __init__(self, connection: DynamoDBConnection) -> None:
         """Initialize processing job repository."""
         super().__init__(connection, "clarity_processing_jobs")
 
@@ -271,7 +268,7 @@ class ProcessingJobRepository(BaseRepository[dict]):
 
             return response.get("Items", [])
 
-        except Exception as e:
+        except Exception:
             logger.exception("Failed to get processing jobs by status %s", status)
             return []
 
@@ -284,7 +281,7 @@ class ProcessingJobRepository(BaseRepository[dict]):
 class UserProfileRepository(BaseRepository[dict]):
     """Repository for user profile operations."""
 
-    def __init__(self, connection: DynamoDBConnection):
+    def __init__(self, connection: DynamoDBConnection) -> None:
         """Initialize user profile repository."""
         super().__init__(connection, "clarity_user_profiles")
 
@@ -300,7 +297,7 @@ class UserProfileRepository(BaseRepository[dict]):
             items = response.get("Items", [])
             return items[0] if items else None
 
-        except Exception as e:
+        except Exception:
             logger.exception("Failed to get user by email %s", email)
             return None
 
@@ -311,7 +308,7 @@ class AuditLogRepository(BaseRepository[dict]):
     Follows Single Responsibility: Only handles audit logs.
     """
 
-    def __init__(self, connection: DynamoDBConnection):
+    def __init__(self, connection: DynamoDBConnection) -> None:
         """Initialize audit log repository."""
         super().__init__(connection, "clarity_audit_logs")
 
@@ -324,8 +321,6 @@ class AuditLogRepository(BaseRepository[dict]):
         metadata: dict[str, Any] | None = None,
     ) -> str:
         """Create an audit log entry."""
-        import uuid
-
         audit_entry = {
             "id": str(uuid.uuid4()),
             "operation": operation,
@@ -349,7 +344,7 @@ class AuditLogRepository(BaseRepository[dict]):
 
             return response.get("Items", [])
 
-        except Exception as e:
+        except Exception:
             logger.exception("Failed to get audit logs for item %s", item_id)
             return []
 
@@ -357,7 +352,7 @@ class AuditLogRepository(BaseRepository[dict]):
 class MLModelRepository(BaseRepository[dict]):
     """Repository for ML model metadata operations."""
 
-    def __init__(self, connection: DynamoDBConnection):
+    def __init__(self, connection: DynamoDBConnection) -> None:
         """Initialize ML model repository."""
         super().__init__(connection, "clarity_ml_models")
 
@@ -375,7 +370,7 @@ class MLModelRepository(BaseRepository[dict]):
             items = response.get("Items", [])
             return items[0] if items else None
 
-        except Exception as e:
+        except Exception:
             logger.exception("Failed to get latest model version for %s", model_type)
             return None
 
@@ -386,7 +381,7 @@ class RepositoryFactory:
     Follows Factory pattern for object creation.
     """
 
-    def __init__(self, connection: DynamoDBConnection):
+    def __init__(self, connection: DynamoDBConnection) -> None:
         """Initialize factory with shared connection."""
         self._connection = connection
 

@@ -6,12 +6,12 @@ Extracted from monolithic PATService for better separation of concerns.
 
 from __future__ import annotations
 
-import logging
-import time
 from dataclasses import dataclass
-from enum import Enum
+from enum import StrEnum
+import logging
 from pathlib import Path
-from typing import Any, Optional
+import time
+from typing import Any
 
 import torch
 from torch import nn
@@ -22,7 +22,7 @@ from clarity.services.s3_storage_service import S3StorageService
 logger = logging.getLogger(__name__)
 
 
-class ModelSize(str, Enum):
+class ModelSize(StrEnum):
     """PAT model size variants."""
 
     SMALL = "small"
@@ -89,8 +89,6 @@ class ModelVersion:
 class ModelLoadError(Exception):
     """Error loading model."""
 
-    pass
-
 
 class ModelCache:
     """Simple in-memory model cache with TTL.
@@ -98,12 +96,12 @@ class ModelCache:
     Follows Single Responsibility: Only caches models.
     """
 
-    def __init__(self, ttl_seconds: int = 3600):
+    def __init__(self, ttl_seconds: int = 3600) -> None:
         """Initialize cache with TTL."""
         self._cache: dict[str, tuple[Any, float]] = {}
         self._ttl = ttl_seconds
 
-    def get(self, key: str) -> Optional[Any]:
+    def get(self, key: str) -> Any | None:
         """Get model from cache if not expired."""
         if key not in self._cache:
             return None
@@ -136,10 +134,10 @@ class PATModelLoader:
     def __init__(
         self,
         model_dir: Path,
-        s3_service: Optional[S3StorageService] = None,
+        s3_service: S3StorageService | None = None,
         cache_ttl: int = 3600,
         enable_hot_swap: bool = False,
-    ):
+    ) -> None:
         """Initialize model loader.
 
         Args:
@@ -166,7 +164,7 @@ class PATModelLoader:
         )
 
     async def load_model(
-        self, size: ModelSize, version: Optional[str] = None, force_reload: bool = False
+        self, size: ModelSize, version: str | None = None, force_reload: bool = False
     ) -> nn.Module:
         """Load a PAT model with specified size and version.
 
@@ -246,7 +244,7 @@ class PATModelLoader:
         return versions[-1]
 
     async def _download_from_s3(
-        self, size: ModelSize, version: Optional[str], local_path: Path
+        self, size: ModelSize, version: str | None, local_path: Path
     ) -> None:
         """Download model from S3."""
         if not self.s3_service:

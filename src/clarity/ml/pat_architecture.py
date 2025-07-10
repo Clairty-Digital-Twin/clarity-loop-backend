@@ -8,12 +8,26 @@ from __future__ import annotations
 
 import logging
 import math
-from typing import Optional
+from dataclasses import dataclass
 
 import torch
 from torch import nn
 
 logger = logging.getLogger(__name__)
+
+
+@dataclass
+class ModelConfig:
+    """Configuration for PAT models."""
+
+    name: str
+    input_size: int
+    patch_size: int
+    embed_dim: int
+    num_layers: int
+    num_heads: int
+    ff_dim: int
+    dropout: float = 0.1
 
 
 class PositionalEncoding(nn.Module):
@@ -22,7 +36,7 @@ class PositionalEncoding(nn.Module):
     Follows Single Responsibility: Only handles positional encoding.
     """
 
-    def __init__(self, embed_dim: int, max_len: int = 5000):
+    def __init__(self, embed_dim: int, max_len: int = 5000) -> None:
         """Initialize positional encoding.
 
         Args:
@@ -61,7 +75,7 @@ class PatchEmbedding(nn.Module):
     Follows Single Responsibility: Only handles patch embedding.
     """
 
-    def __init__(self, patch_size: int, embed_dim: int):
+    def __init__(self, patch_size: int, embed_dim: int) -> None:
         """Initialize patch embedding.
 
         Args:
@@ -84,18 +98,17 @@ class PatchEmbedding(nn.Module):
         batch_size, seq_len = x.shape
 
         # Ensure sequence length is divisible by patch size
-        assert (
-            seq_len % self.patch_size == 0
-        ), f"Sequence length {seq_len} must be divisible by patch size {self.patch_size}"
+        if seq_len % self.patch_size != 0:
+            raise ValueError(
+                f"Sequence length {seq_len} must be divisible by patch size {self.patch_size}"
+            )
 
         # Reshape to patches
         num_patches = seq_len // self.patch_size
         x = x.view(batch_size, num_patches, self.patch_size)
 
         # Project patches to embeddings
-        embeddings = self.projection(x)
-
-        return embeddings
+        return self.projection(x)
 
 
 class TransformerBlock(nn.Module):
@@ -106,7 +119,7 @@ class TransformerBlock(nn.Module):
 
     def __init__(
         self, embed_dim: int, num_heads: int, ff_dim: int, dropout: float = 0.1
-    ):
+    ) -> None:
         """Initialize transformer block.
 
         Args:
@@ -152,9 +165,7 @@ class TransformerBlock(nn.Module):
 
         # Feed-forward with residual connection
         ff_output = self.ff(x)
-        x = self.norm2(x + self.dropout(ff_output))
-
-        return x
+        return self.norm2(x + self.dropout(ff_output))
 
 
 class PATModel(nn.Module):
@@ -164,7 +175,7 @@ class PATModel(nn.Module):
     Follows Open/Closed principle: Extensible but stable interface.
     """
 
-    def __init__(self, config: "ModelConfig"):
+    def __init__(self, config: "ModelConfig") -> None:
         """Initialize PAT model.
 
         Args:
@@ -230,9 +241,7 @@ class PATModel(nn.Module):
             x = block(x)
 
         # Final normalization
-        x = self.output_norm(x)
-
-        return x
+        return self.output_norm(x)
 
     def get_patch_embeddings(self, x: torch.Tensor) -> torch.Tensor:
         """Get patch-level embeddings for input.
@@ -257,6 +266,4 @@ class PATModel(nn.Module):
         patch_embeddings = self.forward(x, return_embeddings=True)
 
         # Mean pool across patches
-        sequence_embedding = patch_embeddings.mean(dim=1)
-
-        return sequence_embedding
+        return patch_embeddings.mean(dim=1)

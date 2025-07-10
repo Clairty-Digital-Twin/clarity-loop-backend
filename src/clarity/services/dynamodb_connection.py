@@ -9,10 +9,10 @@ Dependency Inversion: Depends on boto3 abstraction, not concrete implementation
 
 from __future__ import annotations
 
-import logging
-import time
 from dataclasses import dataclass, field
+import logging
 from threading import Lock, Semaphore
+import time
 from typing import Any, Optional
 
 import boto3
@@ -25,19 +25,13 @@ logger = logging.getLogger(__name__)
 class DynamoDBConnectionError(Exception):
     """Base exception for connection errors."""
 
-    pass
-
 
 class RetryableConnectionError(DynamoDBConnectionError):
     """Error that can be retried."""
 
-    pass
-
 
 class ConnectionPoolExhausted(DynamoDBConnectionError):
     """Connection pool has no available connections."""
-
-    pass
 
 
 @dataclass
@@ -48,7 +42,7 @@ class ConnectionConfig:
     """
 
     region: str
-    endpoint_url: Optional[str] = None
+    endpoint_url: str | None = None
     max_pool_size: int = 50
     connection_timeout: float = 30.0
     pool_timeout: float = 5.0
@@ -72,7 +66,7 @@ class ConnectionConfig:
         }
     )
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Validate configuration."""
         if not self.region:
             raise ValueError("region is required")
@@ -89,7 +83,7 @@ class HealthStatus:
     is_healthy: bool
     latency_ms: float
     last_check_time: float
-    error_message: Optional[str] = None
+    error_message: str | None = None
 
 
 @dataclass
@@ -119,7 +113,7 @@ class CircuitBreaker:
         self.state = self.CLOSED
         self._lock = Lock()
 
-    def call(self, func, *args, **kwargs):
+    def call(self, func: Any, *args: Any, **kwargs: Any) -> Any:
         """Execute function with circuit breaker protection."""
         with self._lock:
             if self.state == self.OPEN:
@@ -158,7 +152,7 @@ class DynamoDBConnection:
 
     def __init__(self, config: ConnectionConfig):
         self.config = config
-        self._resource: Optional[DynamoDBServiceResource] = None
+        self._resource: DynamoDBServiceResource | None = None
         self._connection_lock = Lock()
         self._pool = Semaphore(config.max_pool_size)
         self._active_connections = 0
@@ -245,8 +239,7 @@ class DynamoDBConnection:
                         )
                         time.sleep(delay)
                         continue
-                    else:
-                        raise RetryableConnectionError(f"Failed to connect: {e}")
+                    raise RetryableConnectionError(f"Failed to connect: {e}") from e
 
         raise RetryableConnectionError(
             f"Failed to connect after all attempts: {last_error}"
@@ -258,7 +251,7 @@ class DynamoDBConnection:
             "dynamodb", region_name=region, endpoint_url=self.config.endpoint_url
         )
 
-    def acquire_connection(self):
+    def acquire_connection(self) -> DynamoDBServiceResource:
         """Acquire connection from pool."""
         acquired = self._pool.acquire(timeout=self.config.pool_timeout)
         if not acquired:
@@ -270,7 +263,7 @@ class DynamoDBConnection:
 
         return self.get_resource()
 
-    def release_connection(self, connection):
+    def release_connection(self, connection: Any) -> None:
         """Release connection back to pool."""
         self._pool.release()
         with self._connection_lock:
@@ -313,7 +306,7 @@ class DynamoDBConnection:
             circuit_breaker_trips=self._metrics.circuit_breaker_trips,
         )
 
-    def _update_average_connection_time(self, new_time_ms: float):
+    def _update_average_connection_time(self, new_time_ms: float) -> None:
         """Update running average of connection time."""
         if self._metrics.successful_connections == 1:
             self._metrics.average_connection_time_ms = new_time_ms
@@ -325,7 +318,7 @@ class DynamoDBConnection:
                 (n - 1) * old_avg + new_time_ms
             ) / n
 
-    def shutdown(self, grace_period_seconds: float = 5.0):
+    def shutdown(self, grace_period_seconds: float = 5.0) -> None:
         """Gracefully shutdown connections."""
         logger.info("Shutting down DynamoDB connection manager...")
 

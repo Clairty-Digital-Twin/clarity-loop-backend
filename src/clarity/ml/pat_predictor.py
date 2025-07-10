@@ -6,15 +6,14 @@ Extracted from monolithic PATService for better separation of concerns.
 
 from __future__ import annotations
 
-import logging
-import time
 from collections import deque
 from dataclasses import dataclass
+import logging
+import time
 from typing import Any, Optional
 
 import numpy as np
 import torch
-from torch import nn
 
 from clarity.ml.pat_model_loader import ModelSize, PATModelLoader
 
@@ -35,10 +34,8 @@ class PredictionRequest:
 class PredictionResult:
     """Result from PAT prediction."""
 
-    embeddings: Optional[np.ndarray] = (
-        None  # Shape: (batch_size, num_patches, embed_dim)
-    )
-    sequence_embeddings: Optional[np.ndarray] = None  # Shape: (batch_size, embed_dim)
+    embeddings: np.ndarray | None = None  # Shape: (batch_size, num_patches, embed_dim)
+    sequence_embeddings: np.ndarray | None = None  # Shape: (batch_size, embed_dim)
     inference_time_ms: float = 0.0
     model_version: str = ""
     batch_size: int = 1
@@ -50,7 +47,7 @@ class PredictionCache:
     Follows Single Responsibility: Only caches predictions.
     """
 
-    def __init__(self, max_size: int = 1000):
+    def __init__(self, max_size: int = 1000) -> None:
         """Initialize cache with max size."""
         self._cache: dict[str, PredictionResult] = {}
         self._access_order: deque[str] = deque(maxlen=max_size)
@@ -62,9 +59,7 @@ class PredictionCache:
         data_hash = hash(data.tobytes())
         return f"{model_size.value}:{data_hash}"
 
-    def get(
-        self, data: np.ndarray, model_size: ModelSize
-    ) -> Optional[PredictionResult]:
+    def get(self, data: np.ndarray, model_size: ModelSize) -> PredictionResult | None:
         """Get cached prediction if available."""
         key = self._get_key(data, model_size)
 
@@ -97,7 +92,7 @@ class BatchProcessor:
     Follows Single Responsibility: Only handles batching logic.
     """
 
-    def __init__(self, max_batch_size: int = 32, batch_timeout_ms: int = 50):
+    def __init__(self, max_batch_size: int = 32, batch_timeout_ms: int = 50) -> None:
         """Initialize batch processor.
 
         Args:
@@ -107,9 +102,9 @@ class BatchProcessor:
         self.max_batch_size = max_batch_size
         self.batch_timeout_ms = batch_timeout_ms
         self._pending_batch: list[np.ndarray] = []
-        self._batch_start_time: Optional[float] = None
+        self._batch_start_time: float | None = None
 
-    def add_to_batch(self, data: np.ndarray) -> Optional[np.ndarray]:
+    def add_to_batch(self, data: np.ndarray) -> np.ndarray | None:
         """Add data to batch, return full batch if ready.
 
         Args:
@@ -162,7 +157,7 @@ class PATPredictor:
         cache_size: int = 1000,
         enable_batching: bool = True,
         max_batch_size: int = 32,
-    ):
+    ) -> None:
         """Initialize predictor.
 
         Args:
@@ -284,7 +279,7 @@ class PATPredictor:
             grouped[req.model_size].append((idx, req))
 
         # Process each group
-        results: list[Optional[PredictionResult]] = [None] * len(requests)
+        results: list[PredictionResult | None] = [None] * len(requests)
 
         for model_size, group in grouped.items():
             # Extract data and indices
@@ -386,5 +381,3 @@ class PATPredictor:
 
 class PredictionError(Exception):
     """Error during prediction."""
-
-    pass

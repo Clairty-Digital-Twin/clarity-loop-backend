@@ -120,15 +120,15 @@ security: ## 🛡️ Run security checks
 
 docs: ## 📚 Build documentation
 	@echo "$(BLUE)Building documentation...$(RESET)"
-	mkdocs build
+	cd docs && mkdocs build
 	@echo "$(GREEN)✅ Documentation built in site/$(RESET)"
 
 docs-serve: ## 🌐 Serve documentation locally
 	@echo "$(BLUE)Serving documentation at http://localhost:8000$(RESET)"
-	mkdocs serve
+	cd docs && mkdocs serve
 
 docs-deploy: ## 🚀 Deploy documentation to GitHub Pages
-	mkdocs gh-deploy --force
+	cd docs && mkdocs gh-deploy --force
 
 # ===== DOCKER OPERATIONS =====
 
@@ -223,7 +223,7 @@ health: ## ❤️ Check application health
 	curl -f http://localhost:8080/health || echo "$(RED)❌ Health check failed$(RESET)"
 
 setup-git-hooks: ## 🪝 Set up Git hooks for quality checks
-	pre-commit install
+	pre-commit install -c config/.pre-commit-config.yaml
 	@echo "$(GREEN)✅ Git hooks installed!$(RESET)"
 
 # ===== CI/CD HELPERS =====

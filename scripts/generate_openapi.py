@@ -19,7 +19,9 @@ from src.clarity.main import app
 openapi_spec = app.openapi()
 
 # Write to file
-with Path("openapi.json").open("w", encoding="utf-8") as f:
+output_path = Path("docs/api/openapi.json")
+output_path.parent.mkdir(parents=True, exist_ok=True)
+with output_path.open("w", encoding="utf-8") as f:
     json.dump(openapi_spec, f, indent=2)
 
-print("OpenAPI spec generated: openapi.json")
+print(f"OpenAPI spec generated: {output_path}")

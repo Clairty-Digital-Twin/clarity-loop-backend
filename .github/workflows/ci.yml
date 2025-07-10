@@ -186,19 +186,19 @@ jobs:
         run: python3 scripts/generate_openapi.py
 
       - name: 🎯 Validate with Spectral
-        run: npx @stoplight/spectral-cli lint openapi.json --ruleset .spectral.yml
+        run: npx @stoplight/spectral-cli lint docs/api/openapi.json --ruleset .spectral.yml
 
       - name: 🔴 Validate with Redocly
-        run: npx @redocly/cli lint openapi.json
+        run: npx @redocly/cli lint docs/api/openapi.json
 
       - name: 📋 Validate schema structure
-        run: npx @apidevtools/swagger-cli validate openapi.json
+        run: npx @apidevtools/swagger-cli validate docs/api/openapi.json
 
       - name: 📤 Upload OpenAPI spec
         uses: actions/upload-artifact@v3
         with:
           name: openapi-spec
-          path: openapi.json
+          path: docs/api/openapi.json
 
   # 🔍 Type Checking
   type-check:

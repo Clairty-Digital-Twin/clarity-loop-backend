@@ -5,7 +5,7 @@
 For quick manual deployments:
 
 ```bash
-./deploy-quick.sh
+./ops/deploy-quick.sh
 ```
 
 This will:

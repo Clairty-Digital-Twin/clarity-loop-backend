@@ -47,6 +47,12 @@ pyvenv.cfg
 .Trashes
 ehthumbs.db
 Thumbs.db
+.cursor/
+.roo/
+.roomodes
+.windsurfrules
+.taskmaster/
+.taskmasterconfig
 
 # ===== JUPYTER NOTEBOOKS =====
 .ipynb_checkpoints/

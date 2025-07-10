@@ -14,7 +14,8 @@ except ImportError:
 def clean_openapi_spec() -> None:
     """Clean and enhance the OpenAPI spec."""
     # Load the generated spec
-    with Path("openapi.json").open(encoding="utf-8") as f:
+    input_path = Path("docs/api/openapi.json")
+    with input_path.open(encoding="utf-8") as f:
         spec = json.load(f)
 
     # 1. Add security schemes
@@ -186,16 +187,19 @@ def clean_openapi_spec() -> None:
     ]
 
     # Write cleaned spec
-    with Path("openapi-cleaned.json").open("w", encoding="utf-8") as f:
+    output_json_path = Path("docs/api/openapi-cleaned.json")
+    output_json_path.parent.mkdir(parents=True, exist_ok=True)
+    with output_json_path.open("w", encoding="utf-8") as f:
         json.dump(spec, f, indent=2)
 
-    print("✅ OpenAPI spec cleaned and saved to openapi-cleaned.json")
+    print(f"✅ OpenAPI spec cleaned and saved to {output_json_path}")
 
     # Also create YAML version
     if yaml is not None:
-        with Path("openapi-cleaned.yaml").open("w", encoding="utf-8") as f:
+        output_yaml_path = Path("docs/api/openapi-cleaned.yaml")
+        with output_yaml_path.open("w", encoding="utf-8") as f:
             yaml.dump(spec, f, default_flow_style=False, sort_keys=False)
-        print("✅ YAML version saved to openapi-cleaned.yaml")
+        print(f"✅ YAML version saved to {output_yaml_path}")
     else:
         print("⚠️  PyYAML not installed, skipping YAML generation")
 

@@ -313,9 +313,9 @@ class TestPATPredictor:
         """Test prediction with embeddings returned."""
         # Setup
         mock_model_loader.load_model = AsyncMock(return_value=mock_model)
-        mock_model_loader._current_versions = {
-            ModelSize.MEDIUM: MagicMock(version="v1.0")
-        }
+        mock_model_loader.get_current_version = MagicMock(
+            return_value=MagicMock(version="v1.0")
+        )
 
         data = np.random.randn(1, 10080).astype(np.float32)
         request = PredictionRequest(data=data, return_embeddings=True)

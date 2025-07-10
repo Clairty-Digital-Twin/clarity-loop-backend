@@ -12,7 +12,7 @@ import hashlib
 import logging
 from pathlib import Path
 import time
-from typing import Any
+from typing import Any, cast
 
 import torch
 from torch import nn
@@ -117,7 +117,7 @@ class ModelCache:
     def clear(self) -> None:
         """Clear all cached models."""
         self._cache.clear()
-    
+
     def size(self) -> int:
         """Get number of cached models."""
         return len(self._cache)
@@ -190,7 +190,7 @@ class PATModelLoader:
                 cached_model = self._cache.get(cache_key)
                 if cached_model is not None:
                     logger.debug("Model loaded from cache: %s", cache_key)
-                    return cached_model  # type: ignore[no-any-return]
+                    return cast(nn.Module, cached_model)
 
             # Load model configuration
             config = get_model_config(size)
@@ -376,3 +376,7 @@ class PATModelLoader:
         """Clear model cache."""
         self._cache.clear()
         logger.info("Model cache cleared")
+
+    def get_current_version(self, size: ModelSize) -> ModelVersion | None:
+        """Get current version info for a model size."""
+        return self._current_versions.get(size)

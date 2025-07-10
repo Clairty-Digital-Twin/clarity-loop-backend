@@ -225,7 +225,7 @@ class PATPredictor:
             model = await self.model_loader.load_model(request.model_size)
 
             # Get current version
-            version_info = self.model_loader._current_versions.get(request.model_size)
+            version_info = self.model_loader.get_current_version(request.model_size)
             model_version = version_info.version if version_info else "unknown"
 
             # Prepare data

@@ -10,8 +10,12 @@ from abc import ABC, abstractmethod
 import asyncio
 from datetime import UTC, datetime
 import logging
-from typing import Any, Generic, TypeVar
+from typing import TYPE_CHECKING, Any, Generic, TypeVar, cast
 import uuid
+
+if TYPE_CHECKING:
+    from mypy_boto3_dynamodb import DynamoDBServiceResource
+    from mypy_boto3_dynamodb.service_resource import Table
 
 from clarity.services.dynamodb_connection import DynamoDBConnection
 
@@ -29,15 +33,15 @@ class IRepository(ABC, Generic[T]):
         """Create a new entity."""
 
     @abstractmethod
-    async def get(self, id: str) -> Any:
+    async def get(self, entity_id: str) -> Any:
         """Get entity by ID."""
 
     @abstractmethod
-    async def update(self, id: str, entity: Any) -> bool:
+    async def update(self, entity_id: str, entity: Any) -> bool:
         """Update an existing entity."""
 
     @abstractmethod
-    async def delete(self, id: str) -> bool:
+    async def delete(self, entity_id: str) -> bool:
         """Delete an entity."""
 
 
@@ -54,9 +58,9 @@ class BaseRepository(IRepository[T]):
         """
         self._connection = connection
         self._table_name = table_name
-        self._resource: Any = None
+        self._resource: DynamoDBServiceResource | None = None
 
-    def _get_table(self) -> Any:
+    def _get_table(self) -> Table:
         """Get DynamoDB table resource."""
         if self._resource is None:
             self._resource = self._connection.get_resource()
@@ -77,31 +81,34 @@ class BaseRepository(IRepository[T]):
             )
 
             logger.info("Created entity in %s: %s", self._table_name, entity.get("id"))
-            return entity.get("id", "")  # type: ignore[no-any-return]
+            result = entity.get("id", "")
+            return cast(str, result)
 
         except Exception:
             logger.exception("Failed to create entity in %s", self._table_name)
             raise
 
-    async def get(self, id: str) -> dict[str, Any] | None:
+    async def get(self, entity_id: str) -> dict[str, Any] | None:
         """Get entity by ID."""
         try:
             table = self._get_table()
 
             # Run synchronous operation in executor
             response = await asyncio.get_event_loop().run_in_executor(
-                None, lambda: table.get_item(Key={"id": id})
+                None, lambda: table.get_item(Key={"id": entity_id})
             )
 
             if "Item" in response:
-                return response["Item"]  # type: ignore[no-any-return]
+                return cast(dict[str, Any], response["Item"])
             return None
 
         except Exception:
-            logger.exception("Failed to get entity %s from %s", id, self._table_name)
+            logger.exception(
+                "Failed to get entity %s from %s", entity_id, self._table_name
+            )
             raise
 
-    async def update(self, id: str, updates: dict[str, Any]) -> bool:
+    async def update(self, entity_id: str, updates: dict[str, Any]) -> bool:
         """Update an existing entity."""
         try:
             # Build update expression
@@ -123,34 +130,38 @@ class BaseRepository(IRepository[T]):
             await asyncio.get_event_loop().run_in_executor(
                 None,
                 lambda: table.update_item(
-                    Key={"id": id},
+                    Key={"id": entity_id},
                     UpdateExpression=update_expression,
                     ExpressionAttributeValues=expression_values,
                 ),
             )
 
-            logger.info("Updated entity %s in %s", id, self._table_name)
+            logger.info("Updated entity %s in %s", entity_id, self._table_name)
             return True
 
         except Exception:
-            logger.exception("Failed to update entity %s in %s", id, self._table_name)
+            logger.exception(
+                "Failed to update entity %s in %s", entity_id, self._table_name
+            )
             return False
 
-    async def delete(self, id: str) -> bool:
+    async def delete(self, entity_id: str) -> bool:
         """Delete an entity."""
         try:
             table = self._get_table()
 
             # Run synchronous operation in executor
             await asyncio.get_event_loop().run_in_executor(
-                None, lambda: table.delete_item(Key={"id": id})
+                None, lambda: table.delete_item(Key={"id": entity_id})
             )
 
-            logger.info("Deleted entity %s from %s", id, self._table_name)
+            logger.info("Deleted entity %s from %s", entity_id, self._table_name)
             return True
 
         except Exception:
-            logger.exception("Failed to delete entity %s from %s", id, self._table_name)
+            logger.exception(
+                "Failed to delete entity %s from %s", entity_id, self._table_name
+            )
             return False
 
     async def batch_create(self, entities: list[dict[str, Any]]) -> None:
@@ -214,7 +225,8 @@ class HealthDataRepository(BaseRepository[dict[str, Any]]):
                 ScanIndexForward=False,  # Most recent first
             )
 
-            return response.get("Items", [])  # type: ignore[no-any-return]
+            items = response.get("Items", [])
+            return cast(list[dict[str, Any]], items)
 
         except Exception:
             logger.exception("Failed to get health data for user %s", user_id)
@@ -236,7 +248,8 @@ class HealthDataRepository(BaseRepository[dict[str, Any]]):
                 },
             )
 
-            return response.get("Items", [])  # type: ignore[no-any-return]
+            items = response.get("Items", [])
+            return cast(list[dict[str, Any]], items)
 
         except Exception:
             logger.exception("Failed to get health data by date range")
@@ -259,7 +272,8 @@ class ProcessingJobRepository(BaseRepository[dict[str, Any]]):
                 ExpressionAttributeValues={":status": status},
             )
 
-            return response.get("Items", [])  # type: ignore[no-any-return]
+            items = response.get("Items", [])
+            return cast(list[dict[str, Any]], items)
 
         except Exception:
             logger.exception("Failed to get processing jobs by status %s", status)
@@ -335,7 +349,8 @@ class AuditLogRepository(BaseRepository[dict[str, Any]]):
                 ExpressionAttributeValues={":item_id": item_id},
             )
 
-            return response.get("Items", [])  # type: ignore[no-any-return]
+            items = response.get("Items", [])
+            return cast(list[dict[str, Any]], items)
 
         except Exception:
             logger.exception("Failed to get audit logs for item %s", item_id)
@@ -379,13 +394,13 @@ class RepositoryFactory:
         self._connection = connection
 
         # Repository instances (lazy loaded)
-        self._repositories: dict[str, Any] = {}
+        self._repositories: dict[str, BaseRepository[Any]] = {}
 
     def get_health_data_repository(self) -> HealthDataRepository:
         """Get health data repository instance."""
         if "health_data" not in self._repositories:
             self._repositories["health_data"] = HealthDataRepository(self._connection)
-        return self._repositories["health_data"]  # type: ignore[no-any-return]
+        return cast(HealthDataRepository, self._repositories["health_data"])
 
     def get_processing_job_repository(self) -> ProcessingJobRepository:
         """Get processing job repository instance."""
@@ -393,22 +408,22 @@ class RepositoryFactory:
             self._repositories["processing_job"] = ProcessingJobRepository(
                 self._connection
             )
-        return self._repositories["processing_job"]  # type: ignore[no-any-return]
+        return cast(ProcessingJobRepository, self._repositories["processing_job"])
 
     def get_user_profile_repository(self) -> UserProfileRepository:
         """Get user profile repository instance."""
         if "user_profile" not in self._repositories:
             self._repositories["user_profile"] = UserProfileRepository(self._connection)
-        return self._repositories["user_profile"]  # type: ignore[no-any-return]
+        return cast(UserProfileRepository, self._repositories["user_profile"])
 
     def get_audit_log_repository(self) -> AuditLogRepository:
         """Get audit log repository instance."""
         if "audit_log" not in self._repositories:
             self._repositories["audit_log"] = AuditLogRepository(self._connection)
-        return self._repositories["audit_log"]  # type: ignore[no-any-return]
+        return cast(AuditLogRepository, self._repositories["audit_log"])
 
     def get_ml_model_repository(self) -> MLModelRepository:
         """Get ML model repository instance."""
         if "ml_model" not in self._repositories:
             self._repositories["ml_model"] = MLModelRepository(self._connection)
-        return self._repositories["ml_model"]  # type: ignore[no-any-return]
+        return cast(MLModelRepository, self._repositories["ml_model"])

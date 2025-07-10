@@ -30,7 +30,7 @@ class RetryableConnectionError(DynamoDBConnectionError):
     """Error that can be retried."""
 
 
-class ConnectionPoolExhausted(DynamoDBConnectionError):
+class ConnectionPoolExhaustedError(DynamoDBConnectionError):
     """Connection pool has no available connections."""
 
 
@@ -108,7 +108,7 @@ class CircuitBreaker:
     OPEN = "OPEN"
     HALF_OPEN = "HALF_OPEN"
 
-    def __init__(self, failure_threshold: int, recovery_timeout: float):
+    def __init__(self, failure_threshold: int, recovery_timeout: float) -> None:
         self.failure_threshold = failure_threshold
         self.recovery_timeout = recovery_timeout
         self.failure_count = 0
@@ -124,7 +124,7 @@ class CircuitBreaker:
                     self.state = self.HALF_OPEN
                 else:
                     msg = f"Circuit breaker is {self.state}"
-                    raise ConnectionPoolExhausted(msg)
+                    raise ConnectionPoolExhaustedError(msg)
 
         try:
             result = func(*args, **kwargs)
@@ -133,7 +133,7 @@ class CircuitBreaker:
                     self.state = self.CLOSED
                 self.failure_count = 0
             return result
-        except Exception as e:
+        except Exception:
             with self._lock:
                 self.failure_count += 1
                 self.last_failure_time = time.time()
@@ -154,7 +154,7 @@ class DynamoDBConnection:
     - Regional failover
     """
 
-    def __init__(self, config: ConnectionConfig):
+    def __init__(self, config: ConnectionConfig) -> None:
         self.config = config
         self._resource: DynamoDBServiceResource | None = None
         self._connection_lock = Lock()
@@ -224,17 +224,17 @@ class DynamoDBConnection:
                     logger.info("Connected to DynamoDB in region: %s", region)
                     return resource
 
-                except ConnectionPoolExhausted:
+                except ConnectionPoolExhaustedError:
                     # Circuit breaker is open, re-raise as-is
                     raise
                 except ClientError as e:
                     last_error = e
                     self._metrics.failed_connections += 1
 
-                    if e.response["Error"]["Code"] in [
+                    if e.response["Error"]["Code"] in {
                         "ServiceUnavailable",
                         "ThrottlingException",
-                    ]:
+                    }:
                         # Exponential backoff
                         delay = min(
                             self.config.retry_config["base_delay"]
@@ -260,7 +260,7 @@ class DynamoDBConnection:
         acquired = self._pool.acquire(timeout=self.config.pool_timeout)
         if not acquired:
             msg = "Connection pool timeout"
-            raise ConnectionPoolExhausted(msg)
+            raise ConnectionPoolExhaustedError(msg)
 
         with self._connection_lock:
             self._active_connections += 1
@@ -292,7 +292,9 @@ class DynamoDBConnection:
                 latency_ms=latency_ms,
                 last_check_time=self._last_health_check,
             )
-        except Exception as e:
+        except (
+            Exception
+        ) as e:  # noqa: BLE001 - Health check should catch all exceptions
             return HealthStatus(
                 is_healthy=False,
                 latency_ms=0.0,

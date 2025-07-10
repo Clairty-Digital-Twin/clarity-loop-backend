@@ -16,7 +16,7 @@ import pytest
 # This is intentional - RED phase of TDD
 from clarity.services.dynamodb_connection import (
     ConnectionConfig,
-    ConnectionPoolExhausted,
+    ConnectionPoolExhaustedError,
     DynamoDBConnection,
     RetryableConnectionError,
 )
@@ -106,7 +106,7 @@ class TestDynamoDBConnectionBehavior:
                 except RetryableConnectionError:
                     failure_count += 1
                     # Continue until circuit opens
-                except ConnectionPoolExhausted as e:
+                except ConnectionPoolExhaustedError as e:
                     circuit_opened = True
                     assert "Circuit breaker is OPEN" in str(e)
                     break
@@ -132,7 +132,7 @@ class TestDynamoDBConnectionBehavior:
         conn2 = connection.acquire_connection()
 
         # Try to acquire one more
-        with pytest.raises(ConnectionPoolExhausted):
+        with pytest.raises(ConnectionPoolExhaustedError):
             connection.acquire_connection()
 
         # Release one and try again

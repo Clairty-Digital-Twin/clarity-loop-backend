@@ -7,9 +7,8 @@ Endpoints include generating health insights, retrieving cached results,
 and health status monitoring with proper authentication.
 """
 
-# removed - breaks FastAPI
-
 from datetime import UTC, datetime
+from decimal import Decimal
 import logging
 import os
 from typing import Any, NoReturn
@@ -304,11 +303,12 @@ async def generate_insights(
             "pk": f"USER#{current_user.user_id}",
             "sk": f"INSIGHT#{timestamp.isoformat()}",
             "id": insight_id,
+            "data_id": insight_id,  # Add required data_id field for health data table compatibility
             "user_id": current_user.user_id,
             "narrative": insight_response.narrative,
             "key_insights": insight_response.key_insights,
             "recommendations": insight_response.recommendations,
-            "confidence_score": insight_response.confidence_score,
+            "confidence_score": Decimal(str(insight_response.confidence_score)),
             "generated_at": insight_response.generated_at,
             "created_at": timestamp.isoformat(),
         }
@@ -411,7 +411,7 @@ async def get_insight(
             narrative=insight_doc.get("narrative", ""),
             key_insights=insight_doc.get("key_insights", []),
             recommendations=insight_doc.get("recommendations", []),
-            confidence_score=insight_doc.get("confidence_score", 0.0),
+            confidence_score=float(insight_doc.get("confidence_score", 0.0)),
             generated_at=insight_doc.get("generated_at", datetime.now(UTC).isoformat()),
         )
 
@@ -522,7 +522,7 @@ async def get_insight_history(
                     else narrative
                 ),
                 "generated_at": insight.get("generated_at"),
-                "confidence_score": insight.get("confidence_score", 0.0),
+                "confidence_score": float(insight.get("confidence_score", 0.0)),
                 "key_insights_count": (
                     len(key_insights) if isinstance(key_insights, list) else 0
                 ),

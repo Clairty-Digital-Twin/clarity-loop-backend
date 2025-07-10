@@ -224,7 +224,9 @@ class TestDynamoDBSettings:
         assert config.dynamodb_table_name == "custom-table-name"
 
     @staticmethod
-    @patch.dict(os.environ, {"DYNAMODB_ENDPOINT_URL": "http://localhost:8000"}, clear=False)
+    @patch.dict(
+        os.environ, {"DYNAMODB_ENDPOINT_URL": "http://localhost:8000"}, clear=False
+    )
     def test_dynamodb_endpoint_url_from_env() -> None:
         """Test setting DynamoDB endpoint URL from environment variable."""
         # Act
@@ -298,17 +300,28 @@ class TestSQSSNSSettings:
     """Test SQS/SNS settings configuration - MICRO CHUNK 6."""
 
     @staticmethod
-    @patch.dict(os.environ, {"SQS_QUEUE_URL": "https://sqs.us-east-1.amazonaws.com/123456789/test-queue"}, clear=False)
+    @patch.dict(
+        os.environ,
+        {"SQS_QUEUE_URL": "https://sqs.us-east-1.amazonaws.com/123456789/test-queue"},
+        clear=False,
+    )
     def test_sqs_queue_url_from_env() -> None:
         """Test setting SQS queue URL from environment variable."""
         # Act
         config = AWSConfig()
 
         # Assert
-        assert config.sqs_queue_url == "https://sqs.us-east-1.amazonaws.com/123456789/test-queue"
+        assert (
+            config.sqs_queue_url
+            == "https://sqs.us-east-1.amazonaws.com/123456789/test-queue"
+        )
 
     @staticmethod
-    @patch.dict(os.environ, {"SNS_TOPIC_ARN": "arn:aws:sns:us-east-1:123456789:test-topic"}, clear=False)
+    @patch.dict(
+        os.environ,
+        {"SNS_TOPIC_ARN": "arn:aws:sns:us-east-1:123456789:test-topic"},
+        clear=False,
+    )
     def test_sns_topic_arn_from_env() -> None:
         """Test setting SNS topic ARN from environment variable."""
         # Act
@@ -332,8 +345,13 @@ class TestSQSSNSSettings:
         config = AWSConfig()
 
         # Assert
-        assert config.sqs_queue_url == "https://sqs.eu-west-1.amazonaws.com/987654321/production-queue"
-        assert config.sns_topic_arn == "arn:aws:sns:eu-west-1:987654321:production-topic"
+        assert (
+            config.sqs_queue_url
+            == "https://sqs.eu-west-1.amazonaws.com/987654321/production-queue"
+        )
+        assert (
+            config.sns_topic_arn == "arn:aws:sns:eu-west-1:987654321:production-topic"
+        )
 
 
 class TestGeminiSettings:
@@ -401,7 +419,7 @@ class TestPydanticModelBehavior:
         """Test Pydantic model Config settings."""
         # Act
         config = AWSConfig()
-        
+
         # Assert Config class exists and has proper settings
         assert "env_file" in config.model_config
         assert config.model_config["env_file"] == ".env"
@@ -491,7 +509,10 @@ class TestCompleteAWSConfiguration:
         assert config.cognito_region == "us-west-2"
         assert config.dynamodb_table_name == "production-health-data"
         assert config.s3_bucket_name == "production-uploads"
-        assert config.sqs_queue_url == "https://sqs.us-west-2.amazonaws.com/123456789/prod-queue"
+        assert (
+            config.sqs_queue_url
+            == "https://sqs.us-west-2.amazonaws.com/123456789/prod-queue"
+        )
         assert config.sns_topic_arn == "arn:aws:sns:us-west-2:123456789:prod-topic"
         assert config.gemini_api_key == "prod-gemini-key"
         assert config.gemini_model == "gemini-1.5-pro"
@@ -519,4 +540,4 @@ class TestCompleteAWSConfiguration:
         # Defaults should still apply
         assert config.aws_region == "us-east-1"
         assert config.dynamodb_table_name == "clarity-health-data"
-        assert config.s3_bucket_name == "clarity-health-uploads" 
+        assert config.s3_bucket_name == "clarity-health-uploads"

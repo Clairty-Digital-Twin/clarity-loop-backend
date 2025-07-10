@@ -101,7 +101,7 @@ class TestCachingFunctionality:
         """Set up test fixtures."""
         self.mock_resource = Mock()
         self.patcher = patch(
-            "clarity.services.dynamodb_service.boto3.resource",
+            "clarity.services.dynamodb_connection.boto3.resource",
             return_value=self.mock_resource,
         )
         self.patcher.start()
@@ -113,7 +113,7 @@ class TestCachingFunctionality:
 
     def test_cache_key_generation(self):
         """Test cache key generation."""
-        key = DynamoDBService._cache_key("test_table", "item_123")
+        key = self.service._cache_key("test_table", "item_123")
         assert key == "test_table:item_123"
 
     def test_cache_validity_check_valid(self):
@@ -238,7 +238,7 @@ class TestAuditLogging:
         self.mock_resource.Table.return_value = self.mock_table
 
         self.patcher = patch(
-            "clarity.services.dynamodb_service.boto3.resource",
+            "clarity.services.dynamodb_connection.boto3.resource",
             return_value=self.mock_resource,
         )
         self.patcher.start()
@@ -310,7 +310,7 @@ class TestItemOperations:
         self.mock_resource.Table.return_value = self.mock_table
 
         self.patcher = patch(
-            "clarity.services.dynamodb_service.boto3.resource",
+            "clarity.services.dynamodb_connection.boto3.resource",
             return_value=self.mock_resource,
         )
         self.patcher.start()
@@ -609,7 +609,7 @@ class TestQueryOperations:
         self.mock_resource.Table.return_value = self.mock_table
 
         self.patcher = patch(
-            "clarity.services.dynamodb_service.boto3.resource",
+            "clarity.services.dynamodb_connection.boto3.resource",
             return_value=self.mock_resource,
         )
         self.patcher.start()
@@ -713,7 +713,7 @@ class TestBatchOperations:
 
         # Patch boto3.resource
         self.patcher = patch(
-            "clarity.services.dynamodb_service.boto3.resource",
+            "clarity.services.dynamodb_connection.boto3.resource",
             return_value=self.mock_resource,
         )
         self.patcher.start()
@@ -779,7 +779,7 @@ class TestHealthCheck:
         self.mock_resource.Table.return_value = self.mock_table
 
         self.patcher = patch(
-            "clarity.services.dynamodb_service.boto3.resource",
+            "clarity.services.dynamodb_connection.boto3.resource",
             return_value=self.mock_resource,
         )
         self.patcher.start()
@@ -863,7 +863,7 @@ class TestDynamoDBHealthDataRepository:
         """Set up test fixtures."""
         self.mock_resource = Mock()
         self.patcher = patch(
-            "clarity.services.dynamodb_service.boto3.resource",
+            "clarity.services.dynamodb_connection.boto3.resource",
             return_value=self.mock_resource,
         )
         self.patcher.start()
@@ -958,7 +958,7 @@ class TestErrorHandling:
         """Set up test fixtures."""
         self.mock_resource = Mock()
         self.patcher = patch(
-            "clarity.services.dynamodb_service.boto3.resource",
+            "clarity.services.dynamodb_connection.boto3.resource",
             return_value=self.mock_resource,
         )
         self.patcher.start()
@@ -994,7 +994,7 @@ class TestProductionScenarios:
         self.mock_resource.Table.return_value = self.mock_table
 
         self.patcher = patch(
-            "clarity.services.dynamodb_service.boto3.resource",
+            "clarity.services.dynamodb_connection.boto3.resource",
             return_value=self.mock_resource,
         )
         self.patcher.start()

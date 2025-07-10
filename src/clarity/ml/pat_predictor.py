@@ -162,6 +162,7 @@ class PATPredictor:
     def __init__(
         self,
         model_loader: PATModelLoader,
+        *,
         enable_caching: bool = True,
         cache_size: int = 1000,
         enable_batching: bool = True,

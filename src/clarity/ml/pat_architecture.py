@@ -222,7 +222,7 @@ class PATModel(nn.Module):
             config.embed_dim,
         )
 
-    def forward(self, x: torch.Tensor, return_embeddings: bool = True) -> torch.Tensor:
+    def forward(self, x: torch.Tensor, *, return_embeddings: bool = True) -> torch.Tensor:
         """Forward pass through PAT model.
 
         Args:

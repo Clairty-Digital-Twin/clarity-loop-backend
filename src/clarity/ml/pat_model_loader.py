@@ -8,6 +8,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from enum import StrEnum
+import hashlib
 import logging
 from pathlib import Path
 import time
@@ -116,6 +117,10 @@ class ModelCache:
     def clear(self) -> None:
         """Clear all cached models."""
         self._cache.clear()
+    
+    def size(self) -> int:
+        """Get number of cached models."""
+        return len(self._cache)
 
 
 class PATModelLoader:
@@ -132,6 +137,7 @@ class PATModelLoader:
         model_dir: Path,
         s3_service: S3StorageService | None = None,
         cache_ttl: int = 3600,
+        *,
         enable_hot_swap: bool = False,
     ) -> None:
         """Initialize model loader.
@@ -160,7 +166,7 @@ class PATModelLoader:
         )
 
     async def load_model(
-        self, size: ModelSize, version: str | None = None, force_reload: bool = False
+        self, size: ModelSize, version: str | None = None, *, force_reload: bool = False
     ) -> nn.Module:
         """Load a PAT model with specified size and version.
 
@@ -260,8 +266,7 @@ class PATModelLoader:
             file_data = await self.s3_service.download_file(s3_key)
 
             # Write to local file
-            with open(local_path, "wb") as f:
-                f.write(file_data)
+            local_path.write_bytes(file_data)
 
         except Exception as e:
             msg = f"Failed to download model from S3: {s3_key}"
@@ -314,11 +319,8 @@ class PATModelLoader:
         self, size: ModelSize, version: str, model_path: Path
     ) -> None:
         """Update current version tracking."""
-        import hashlib
-
         # Calculate checksum
-        with open(model_path, "rb") as f:
-            checksum = hashlib.sha256(f.read()).hexdigest()
+        checksum = hashlib.sha256(model_path.read_bytes()).hexdigest()
 
         self._current_versions[size] = ModelVersion(
             version=version,
@@ -363,7 +365,7 @@ class PATModelLoader:
             / len(self._load_times)
             * 1000,
             "total_loads": len(self._load_times),
-            "cached_models": len(self._cache._cache),
+            "cached_models": self._cache.size(),
             "current_versions": {
                 size.value: version.version
                 for size, version in self._current_versions.items()

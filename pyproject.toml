@@ -166,6 +166,11 @@ test = [
     "httpx>=0.27.0",
     "factory-boy>=3.3.0",
     "faker>=30.0.0",
+    "moto[dynamodb2,s3,cognito-idp]>=5.0.0",
+    "pytest-timeout>=2.3.0",
+    "pytest-benchmark>=4.0.0",
+    "locust>=2.20.0",
+    "mutmut>=2.4.0",
 ]
 
 [project.scripts]

@@ -287,9 +287,6 @@ ops/terraform/*.tfstate*
 
 # Added by Task Master AI
 logs
-# Task files
-tasks.json
-tasks/ 
 # ===== DOCKER & CONTAINER ARTIFACTS =====
 *.tar.gz
 *.tar
@@ -298,3 +295,7 @@ docker-export/
 # ECS task definitions with account info
 ops/ecs-tasks/
 ops/ecr-images-to-delete.json
+
+# Task files
+# tasks.json
+# tasks/ 

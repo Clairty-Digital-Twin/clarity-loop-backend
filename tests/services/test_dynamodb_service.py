@@ -275,8 +275,9 @@ class TestAuditLog:
         self, dynamodb_service: DynamoDBService, mock_dynamodb_resource: MagicMock
     ) -> None:
         """Test successful audit log creation."""
-        # Get the mock audit table that was created by the fixture
-        mock_audit_table = mock_dynamodb_resource.Table("test_audit_logs")
+        # Mock the audit log repository method
+        mock_create_audit_log = MagicMock(return_value="audit123")
+        dynamodb_service._audit_log_repo.create_audit_log = mock_create_audit_log
 
         await dynamodb_service._audit_log(
             operation="test_operation",
@@ -286,29 +287,24 @@ class TestAuditLog:
             metadata={"action": "test"},
         )
 
-        # Verify table was called
-        mock_dynamodb_resource.Table.assert_called_with("test_audit_logs")
-        mock_audit_table.put_item.assert_called_once()
-
-        # Check audit entry
-        call_args = mock_audit_table.put_item.call_args[1]
-        audit_entry = call_args["Item"]
-        assert audit_entry["operation"] == "test_operation"
-        assert audit_entry["table"] == "test_table"
-        assert audit_entry["item_id"] == "item123"
-        assert audit_entry["user_id"] == "user456"
-        assert audit_entry["metadata"] == {"action": "test"}
-        assert "audit_id" in audit_entry
-        assert "timestamp" in audit_entry
+        # Verify repository method was called with correct parameters
+        mock_create_audit_log.assert_called_once_with(
+            operation="test_operation",
+            table="test_table",
+            item_id="item123",
+            user_id="user456",
+            metadata={"action": "test"}
+        )
 
     @pytest.mark.asyncio
     async def test_audit_log_failure(
         self, dynamodb_service: DynamoDBService, mock_dynamodb_resource: MagicMock
     ) -> None:
         """Test audit log creation failure (should not raise)."""
-        # Get the mock audit table that was created by the fixture
-        mock_audit_table = mock_dynamodb_resource.Table("test_audit_logs")
-        mock_audit_table.put_item.side_effect = Exception("Audit error")
+        # Make repository method raise an exception
+        dynamodb_service._audit_log_repo.create_audit_log = MagicMock(
+            side_effect=Exception("Audit error")
+        )
 
         # Should not raise exception
         await dynamodb_service._audit_log(
@@ -698,9 +694,17 @@ class TestHealthDataRepository:
             {"metric_id": "2", "type": "steps", "value": 5000},
         ]
 
-        # Create a health data repository instead
+        # Create a health data repository with mocked repositories
         repository = DynamoDBHealthDataRepository()
-        repository._dynamodb_service = dynamodb_service
+        
+        # Mock the repository methods that will be called
+        mock_processing_job_repo = MagicMock()
+        mock_processing_job_repo.create = MagicMock(return_value="job123")
+        mock_health_data_repo = MagicMock()
+        mock_health_data_repo.batch_create = MagicMock()
+        
+        repository._processing_job_repo = mock_processing_job_repo
+        repository._health_data_repo = mock_health_data_repo
 
         result = await repository.save_health_data(
             user_id=user_id,
@@ -711,8 +715,9 @@ class TestHealthDataRepository:
         )
 
         assert result is True
-        # Should have called put_item for processing job and batch_write for metrics
-        assert mock_table.put_item.called
+        # Should have called create for processing job and batch_create for metrics
+        assert mock_processing_job_repo.create.called
+        assert mock_health_data_repo.batch_create.called
 
     @pytest.mark.asyncio
     async def test_get_processing_status_success(
@@ -816,7 +821,15 @@ class TestHealthCheck:
         self, dynamodb_service: DynamoDBService, mock_table: MagicMock
     ) -> None:
         """Test health check with failure."""
-        mock_table.load = MagicMock(side_effect=Exception("Connection error"))
+        # Mock the connection manager's check_health to return unhealthy status
+        from clarity.services.dynamodb_connection import HealthStatus
+        mock_health_status = HealthStatus(
+            is_healthy=False,
+            latency_ms=0.0,
+            last_check_time=time.time(),
+            error_message="Connection error"
+        )
+        dynamodb_service._connection_manager.check_health = MagicMock(return_value=mock_health_status)
 
         result = await dynamodb_service.health_check()
 

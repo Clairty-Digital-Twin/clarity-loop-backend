@@ -23,6 +23,13 @@ if TYPE_CHECKING:
     pass  # Only for type stubs now
 
 from clarity.ports.data_ports import IHealthDataRepository
+from clarity.services.dynamodb_connection import DynamoDBConnection, ConnectionConfig
+from clarity.services.dynamodb_repository import (
+    RepositoryFactory,
+    HealthDataRepository,
+    ProcessingJobRepository,
+    AuditLogRepository,
+)
 
 # Configure logger
 logger = logging.getLogger(__name__)
@@ -52,6 +59,7 @@ class DynamoDBService:
     """Enterprise-grade DynamoDB service for health data operations.
 
     Provides comprehensive DynamoDB functionality for health data management.
+    Refactored to use DynamoDBConnection for better separation of concerns.
     """
 
     def __init__(
@@ -78,12 +86,27 @@ class DynamoDBService:
         self.enable_caching = enable_caching
         self.cache_ttl = cache_ttl
 
-        # Initialize DynamoDB client
-        self.dynamodb: DynamoDBServiceResource = boto3.resource(
-            "dynamodb",
-            region_name=region,
+        # Initialize connection manager with proper configuration
+        connection_config = ConnectionConfig(
+            region=region,
             endpoint_url=endpoint_url,
+            max_pool_size=50,
+            enable_metrics=True,
+            enable_auto_failover=False,  # Can be enabled for production
+            health_check_interval=60,
         )
+        self._connection_manager = DynamoDBConnection(connection_config)
+
+        # Initialize repository factory
+        self._repository_factory = RepositoryFactory(self._connection_manager)
+        
+        # Get repository instances
+        self._health_data_repo = self._repository_factory.get_health_data_repository()
+        self._processing_job_repo = self._repository_factory.get_processing_job_repository()
+        self._audit_log_repo = self._repository_factory.get_audit_log_repository()
+
+        # Use connection manager to get DynamoDB resource
+        self.dynamodb: DynamoDBServiceResource = self._connection_manager.get_resource()
 
         # Connection and caching
         self._cache: dict[str, dict[str, Any]] = {}
@@ -148,20 +171,13 @@ class DynamoDBService:
     ) -> None:
         """Create audit log entry for HIPAA compliance."""
         try:
-            audit_table = self.dynamodb.Table(self.tables["audit_logs"])
-            audit_entry = {
-                "audit_id": str(uuid.uuid4()),
-                "operation": operation,
-                "table": table,
-                "item_id": item_id,
-                "user_id": user_id,
-                "timestamp": datetime.now(UTC).isoformat(),
-                "metadata": metadata or {},
-                "source": "dynamodb_service",
-            }
-
-            await asyncio.get_event_loop().run_in_executor(
-                None, lambda: audit_table.put_item(Item=audit_entry)
+            # Use audit log repository
+            await self._audit_log_repo.create_audit_log(
+                operation=operation,
+                table=table,
+                item_id=item_id,
+                user_id=user_id,
+                metadata=metadata
             )
 
             logger.debug("Audit log created: %s on %s/%s", operation, table, item_id)
@@ -488,17 +504,33 @@ class DynamoDBService:
             Dict with health status information
         """
         try:
-            # Test connection by describing a table
-            table = self.dynamodb.Table(self.tables["health_data"])
-            await asyncio.get_event_loop().run_in_executor(None, table.load)
-
-            return {
-                "status": "healthy",
+            # Use connection manager's health check
+            health_status = self._connection_manager.check_health()
+            
+            # Get connection metrics
+            metrics = self._connection_manager.get_metrics()
+            
+            result = {
+                "status": "healthy" if health_status.is_healthy else "unhealthy",
                 "region": self.region,
                 "cache_enabled": self.enable_caching,
                 "cached_items": len(self._cache),
+                "connection_pool": {
+                    "active": metrics.active_connections,
+                    "total": metrics.total_connections,
+                    "successful": metrics.successful_connections,
+                    "failed": metrics.failed_connections,
+                    "avg_connection_time_ms": metrics.average_connection_time_ms,
+                },
+                "health_check_latency_ms": health_status.latency_ms,
                 "timestamp": datetime.now(UTC).isoformat(),
             }
+            
+            # Include error message if health check failed
+            if not health_status.is_healthy and health_status.error_message:
+                result["error"] = health_status.error_message
+                
+            return result
 
         except Exception as e:
             logger.exception("DynamoDB health check failed")
@@ -524,6 +556,22 @@ class DynamoDBHealthDataRepository(IHealthDataRepository):
             region: AWS region
             endpoint_url: Optional endpoint URL (for local DynamoDB)
         """
+        # Create connection and repository factory
+        connection_config = ConnectionConfig(
+            region=region,
+            endpoint_url=endpoint_url,
+            max_pool_size=50,
+            enable_metrics=True,
+        )
+        self._connection = DynamoDBConnection(connection_config)
+        self._repository_factory = RepositoryFactory(self._connection)
+        
+        # Get repository instances
+        self._health_data_repo = self._repository_factory.get_health_data_repository()
+        self._processing_job_repo = self._repository_factory.get_processing_job_repository()
+        self._audit_log_repo = self._repository_factory.get_audit_log_repository()
+        
+        # For backward compatibility
         self._dynamodb_service = DynamoDBService(
             region=region, endpoint_url=endpoint_url
         )
@@ -560,23 +608,19 @@ class DynamoDBHealthDataRepository(IHealthDataRepository):
         try:
             # Create processing document
             processing_doc = {
+                "id": processing_id,  # Repository expects 'id' field
                 "processing_id": processing_id,
                 "user_id": user_id,
                 "upload_source": upload_source,
                 "client_timestamp": client_timestamp.isoformat(),
-                "created_at": datetime.now(UTC).isoformat(),
                 "status": "processing",
                 "total_metrics": len(metrics),
                 "processed_metrics": 0,
                 "expires_at": (datetime.now(UTC) + timedelta(days=30)).isoformat(),
             }
 
-            # Store processing document
-            await self._dynamodb_service.put_item(
-                table_name=self._dynamodb_service.tables["processing_jobs"],
-                item=processing_doc,
-                user_id=user_id,
-            )
+            # Store processing document using repository
+            await self._processing_job_repo.create(processing_doc)
 
             # Store metrics in batch
             metric_items = []
@@ -593,16 +637,12 @@ class DynamoDBHealthDataRepository(IHealthDataRepository):
                     "processing_id": processing_id,
                     "metric_index": i,
                     "metric_data": metric_data,
-                    "created_at": datetime.now(UTC).isoformat(),
                     "expires_at": (datetime.now(UTC) + timedelta(days=30)).isoformat(),
                 }
                 metric_items.append(metric_doc)
 
-            # Batch write metrics
-            await self._dynamodb_service.batch_write_items(
-                table_name=self._dynamodb_service.tables["health_data"],
-                items=metric_items,
-            )
+            # Batch write metrics using repository
+            await self._health_data_repo.batch_create(metric_items)
 
             logger.info(
                 "Health data saved: %s with %s metrics", processing_id, len(metrics)

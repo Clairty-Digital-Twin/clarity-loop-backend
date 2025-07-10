@@ -5,7 +5,7 @@ from __future__ import annotations
 from datetime import UTC, datetime
 import time
 from typing import Any
-from unittest.mock import MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 import uuid
 
 from botocore.exceptions import ClientError
@@ -699,9 +699,9 @@ class TestHealthDataRepository:
         
         # Mock the repository methods that will be called
         mock_processing_job_repo = MagicMock()
-        mock_processing_job_repo.create = MagicMock(return_value="job123")
+        mock_processing_job_repo.create = AsyncMock(return_value="job123")
         mock_health_data_repo = MagicMock()
-        mock_health_data_repo.batch_create = MagicMock()
+        mock_health_data_repo.batch_create = AsyncMock()
         
         repository._processing_job_repo = mock_processing_job_repo
         repository._health_data_repo = mock_health_data_repo

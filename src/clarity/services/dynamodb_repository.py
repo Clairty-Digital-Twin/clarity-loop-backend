@@ -66,13 +66,18 @@ class BaseRepository(IRepository[T]):
     
     async def create(self, entity: dict[str, Any]) -> str:
         """Create a new entity with timestamps."""
+        import asyncio
         try:
             # Add timestamps
             entity["created_at"] = datetime.now(UTC).isoformat()
             entity["updated_at"] = datetime.now(UTC).isoformat()
             
             table = self._get_table()
-            table.put_item(Item=entity)
+            
+            # Run synchronous DynamoDB operation in executor
+            await asyncio.get_event_loop().run_in_executor(
+                None, lambda: table.put_item(Item=entity)
+            )
             
             logger.info("Created entity in %s: %s", self._table_name, entity.get("id"))
             return entity.get("id")
@@ -83,9 +88,14 @@ class BaseRepository(IRepository[T]):
     
     async def get(self, id: str) -> dict[str, Any] | None:
         """Get entity by ID."""
+        import asyncio
         try:
             table = self._get_table()
-            response = table.get_item(Key={"id": id})
+            
+            # Run synchronous operation in executor
+            response = await asyncio.get_event_loop().run_in_executor(
+                None, lambda: table.get_item(Key={"id": id})
+            )
             
             if "Item" in response:
                 return response["Item"]
@@ -97,6 +107,7 @@ class BaseRepository(IRepository[T]):
     
     async def update(self, id: str, updates: dict[str, Any]) -> bool:
         """Update an existing entity."""
+        import asyncio
         try:
             # Build update expression
             update_parts = []
@@ -112,10 +123,15 @@ class BaseRepository(IRepository[T]):
             update_expression = "SET " + ", ".join(update_parts)
             
             table = self._get_table()
-            table.update_item(
-                Key={"id": id},
-                UpdateExpression=update_expression,
-                ExpressionAttributeValues=expression_values
+            
+            # Run synchronous operation in executor
+            await asyncio.get_event_loop().run_in_executor(
+                None,
+                lambda: table.update_item(
+                    Key={"id": id},
+                    UpdateExpression=update_expression,
+                    ExpressionAttributeValues=expression_values
+                )
             )
             
             logger.info("Updated entity %s in %s", id, self._table_name)
@@ -127,9 +143,14 @@ class BaseRepository(IRepository[T]):
     
     async def delete(self, id: str) -> bool:
         """Delete an entity."""
+        import asyncio
         try:
             table = self._get_table()
-            table.delete_item(Key={"id": id})
+            
+            # Run synchronous operation in executor
+            await asyncio.get_event_loop().run_in_executor(
+                None, lambda: table.delete_item(Key={"id": id})
+            )
             
             logger.info("Deleted entity %s from %s", id, self._table_name)
             return True
@@ -143,6 +164,7 @@ class BaseRepository(IRepository[T]):
         
         Follows DynamoDB batch write limits (25 items per batch).
         """
+        import asyncio
         try:
             table = self._get_table()
             
@@ -152,15 +174,20 @@ class BaseRepository(IRepository[T]):
             for i in range(0, len(entities), batch_size):
                 batch_items = entities[i : i + batch_size]
                 
-                with table.batch_writer() as batch:
-                    for entity in batch_items:
-                        # Add timestamps if not present
-                        if "created_at" not in entity:
-                            entity["created_at"] = datetime.now(UTC).isoformat()
-                        if "updated_at" not in entity:
-                            entity["updated_at"] = datetime.now(UTC).isoformat()
-                        
-                        batch.put_item(Item=entity)
+                # Prepare batch items with timestamps
+                for entity in batch_items:
+                    if "created_at" not in entity:
+                        entity["created_at"] = datetime.now(UTC).isoformat()
+                    if "updated_at" not in entity:
+                        entity["updated_at"] = datetime.now(UTC).isoformat()
+                
+                # Run batch write in executor
+                def batch_write():
+                    with table.batch_writer() as batch:
+                        for entity in batch_items:
+                            batch.put_item(Item=entity)
+                
+                await asyncio.get_event_loop().run_in_executor(None, batch_write)
             
             logger.info("Batch created %s entities in %s", len(entities), self._table_name)
             

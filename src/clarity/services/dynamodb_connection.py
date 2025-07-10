@@ -214,6 +214,9 @@ class DynamoDBConnection:
                     logger.info("Connected to DynamoDB in region: %s", region)
                     return resource
                     
+                except ConnectionPoolExhausted:
+                    # Circuit breaker is open, re-raise as-is
+                    raise
                 except ClientError as e:
                     last_error = e
                     self._metrics.failed_connections += 1

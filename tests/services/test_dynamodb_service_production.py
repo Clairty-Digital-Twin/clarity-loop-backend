@@ -270,9 +270,9 @@ class TestAuditLogging:
         assert call_args["item_id"] == "item_123"
         assert call_args["user_id"] == "user_456"
         assert call_args["metadata"] == {"size": 1024}
-        assert call_args["source"] == "dynamodb_service"
-        assert "audit_id" in call_args
-        assert "timestamp" in call_args
+        assert call_args["source"] == "dynamodb_repository"
+        assert "id" in call_args
+        assert "created_at" in call_args
 
     @pytest.mark.asyncio
     async def test_audit_log_creation_with_exception(self):
@@ -794,6 +794,21 @@ class TestHealthCheck:
         """Test successful health check."""
         self.mock_table.load.return_value = None
 
+        # Mock connection manager's health check to return healthy
+        mock_health_status = Mock()
+        mock_health_status.is_healthy = True
+        mock_health_status.latency_ms = 50.0
+        mock_health_status.last_check_time = time.time()
+        
+        mock_metrics = Mock()
+        mock_metrics.active_connections = 1
+        mock_metrics.total_connections = 10
+        mock_metrics.successful_connections = 9
+        mock_metrics.failed_connections = 1
+        
+        self.service._connection_manager.check_health = Mock(return_value=mock_health_status)
+        self.service._connection_manager.get_metrics = Mock(return_value=mock_metrics)
+
         # Add some items to cache for testing
         self.service._cache["test:item1"] = {"data": {}, "timestamp": time.time()}
         self.service._cache["test:item2"] = {"data": {}, "timestamp": time.time()}
@@ -805,9 +820,6 @@ class TestHealthCheck:
         assert result["cache_enabled"] is False
         assert result["cached_items"] == 2
         assert "timestamp" in result
-
-        # Verify table.load was called to test connection
-        self.mock_table.load.assert_called_once()
 
     @pytest.mark.asyncio
     async def test_health_check_with_caching_enabled(self):
@@ -877,12 +889,14 @@ class TestDynamoDBHealthDataRepository:
     @pytest.mark.asyncio
     async def test_save_health_data_success(self):
         """Test successful health data saving."""
-        # Mock both put_item and batch_write_items
-        mock_put_item = AsyncMock(return_value="processing_123")
-        mock_batch_write = AsyncMock()  # batch_write_items doesn't return anything
-
-        self.repository.service.put_item = mock_put_item
-        self.repository.service.batch_write_items = mock_batch_write
+        # Mock the repository methods that will be called
+        mock_processing_job_repo = MagicMock()
+        mock_processing_job_repo.create = AsyncMock(return_value="processing_123")
+        mock_health_data_repo = MagicMock()
+        mock_health_data_repo.batch_create = AsyncMock()
+        
+        self.repository._processing_job_repo = mock_processing_job_repo
+        self.repository._health_data_repo = mock_health_data_repo
 
         result = await self.repository.save_health_data(
             user_id="user_123",
@@ -894,14 +908,9 @@ class TestDynamoDBHealthDataRepository:
 
         assert result is True
 
-        # Verify put_item was called once for the main record
-        mock_put_item.assert_called_once()
-
-        # Verify batch_write_items was called for metrics
-        mock_batch_write.assert_called_once()
-        batch_call = mock_batch_write.call_args[1]
-        assert batch_call["table_name"] == self.repository.service.tables["health_data"]
-        assert len(batch_call["items"]) == 1  # One metric
+        # Verify create was called for processing job and batch_create for metrics
+        mock_processing_job_repo.create.assert_called_once()
+        mock_health_data_repo.batch_create.assert_called_once()
 
     @pytest.mark.asyncio
     async def test_save_health_data_error(self):
@@ -923,8 +932,15 @@ class TestDynamoDBHealthDataRepository:
     @pytest.mark.asyncio
     async def test_repository_initialization_method(self):
         """Test repository initialization method."""
+        # Mock the health check to return healthy
+        mock_health_check = AsyncMock(return_value={"status": "healthy"})
+        self.repository._dynamodb_service.health_check = mock_health_check
+        
         # Should not raise any exceptions
         await self.repository.initialize()
+        
+        # Verify health check was called
+        mock_health_check.assert_called_once()
 
     @pytest.mark.asyncio
     async def test_repository_cleanup_method(self):

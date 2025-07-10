@@ -69,6 +69,7 @@ class TestBasicAWSConfigCreation:
         assert hasattr(config, "gemini_model")
 
     @staticmethod
+    @patch.dict(os.environ, {}, clear=True)
     def test_aws_config_default_values() -> None:
         """Test AWSConfig default values are correct."""
         # Act
@@ -402,7 +403,7 @@ class TestPydanticModelBehavior:
         config = AWSConfig()
         
         # Assert Config class exists and has proper settings
-        assert hasattr(config.model_config, "env_file")
+        assert "env_file" in config.model_config
         assert config.model_config["env_file"] == ".env"
         assert config.model_config["env_file_encoding"] == "utf-8"
 
@@ -465,10 +466,8 @@ class TestCompleteAWSConfiguration:
             "COGNITO_REGION": "us-west-2",
             # DynamoDB
             "DYNAMODB_TABLE_NAME": "production-health-data",
-            "DYNAMODB_ENDPOINT_URL": None,
             # S3
             "S3_BUCKET_NAME": "production-uploads",
-            "S3_ENDPOINT_URL": None,
             # SQS/SNS
             "SQS_QUEUE_URL": "https://sqs.us-west-2.amazonaws.com/123456789/prod-queue",
             "SNS_TOPIC_ARN": "arn:aws:sns:us-west-2:123456789:prod-topic",

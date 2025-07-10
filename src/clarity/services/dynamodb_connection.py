@@ -13,7 +13,7 @@ from dataclasses import dataclass, field
 import logging
 from threading import Lock, Semaphore
 import time
-from typing import Any, Optional
+from typing import Any
 
 import boto3
 from botocore.exceptions import ClientError
@@ -69,11 +69,14 @@ class ConnectionConfig:
     def __post_init__(self) -> None:
         """Validate configuration."""
         if not self.region:
-            raise ValueError("region is required")
+            msg = "region is required"
+            raise ValueError(msg)
         if self.max_pool_size <= 0:
-            raise ValueError("max_pool_size must be positive")
+            msg = "max_pool_size must be positive"
+            raise ValueError(msg)
         if self.connection_timeout <= 0:
-            raise ValueError("connection_timeout must be positive")
+            msg = "connection_timeout must be positive"
+            raise ValueError(msg)
 
 
 @dataclass
@@ -120,7 +123,8 @@ class CircuitBreaker:
                 if time.time() - self.last_failure_time > self.recovery_timeout:
                     self.state = self.HALF_OPEN
                 else:
-                    raise ConnectionPoolExhausted(f"Circuit breaker is {self.state}")
+                    msg = f"Circuit breaker is {self.state}"
+                    raise ConnectionPoolExhausted(msg)
 
         try:
             result = func(*args, **kwargs)
@@ -239,11 +243,11 @@ class DynamoDBConnection:
                         )
                         time.sleep(delay)
                         continue
-                    raise RetryableConnectionError(f"Failed to connect: {e}") from e
+                    msg = f"Failed to connect: {e}"
+                    raise RetryableConnectionError(msg) from e
 
-        raise RetryableConnectionError(
-            f"Failed to connect after all attempts: {last_error}"
-        )
+        msg = f"Failed to connect after all attempts: {last_error}"
+        raise RetryableConnectionError(msg)
 
     def _connect_to_region(self, region: str) -> DynamoDBServiceResource:
         """Connect to specific region."""
@@ -255,7 +259,8 @@ class DynamoDBConnection:
         """Acquire connection from pool."""
         acquired = self._pool.acquire(timeout=self.config.pool_timeout)
         if not acquired:
-            raise ConnectionPoolExhausted("Connection pool timeout")
+            msg = "Connection pool timeout"
+            raise ConnectionPoolExhausted(msg)
 
         with self._connection_lock:
             self._active_connections += 1

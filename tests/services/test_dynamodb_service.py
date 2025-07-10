@@ -293,7 +293,7 @@ class TestAuditLog:
             table="test_table",
             item_id="item123",
             user_id="user456",
-            metadata={"action": "test"}
+            metadata={"action": "test"},
         )
 
     @pytest.mark.asyncio
@@ -696,13 +696,13 @@ class TestHealthDataRepository:
 
         # Create a health data repository with mocked repositories
         repository = DynamoDBHealthDataRepository()
-        
+
         # Mock the repository methods that will be called
         mock_processing_job_repo = MagicMock()
         mock_processing_job_repo.create = AsyncMock(return_value="job123")
         mock_health_data_repo = MagicMock()
         mock_health_data_repo.batch_create = AsyncMock()
-        
+
         repository._processing_job_repo = mock_processing_job_repo
         repository._health_data_repo = mock_health_data_repo
 
@@ -823,13 +823,16 @@ class TestHealthCheck:
         """Test health check with failure."""
         # Mock the connection manager's check_health to return unhealthy status
         from clarity.services.dynamodb_connection import HealthStatus
+
         mock_health_status = HealthStatus(
             is_healthy=False,
             latency_ms=0.0,
             last_check_time=time.time(),
-            error_message="Connection error"
+            error_message="Connection error",
         )
-        dynamodb_service._connection_manager.check_health = MagicMock(return_value=mock_health_status)
+        dynamodb_service._connection_manager.check_health = MagicMock(
+            return_value=mock_health_status
+        )
 
         result = await dynamodb_service.health_check()
 

@@ -33,7 +33,7 @@ class ModelSize(StrEnum):
 
 def get_model_config(size: ModelSize) -> ArchModelConfig:
     """Get configuration for specific model size.
-    
+
     Based on Dartmouth specifications from arXiv:2411.15240
     """
     configs = {
@@ -184,7 +184,7 @@ class PATModelLoader:
                 cached_model = self._cache.get(cache_key)
                 if cached_model is not None:
                     logger.debug("Model loaded from cache: %s", cache_key)
-                    return cached_model
+                    return cached_model  # type: ignore[no-any-return]
 
             # Load model configuration
             config = get_model_config(size)
@@ -245,7 +245,8 @@ class PATModelLoader:
     ) -> None:
         """Download model from S3."""
         if not self.s3_service:
-            raise ModelLoadError("S3 service not configured")
+            msg = "S3 service not configured"
+            raise ModelLoadError(msg)
 
         s3_key = f"models/pat/{size.value}/v{version or 'latest'}.pth"
 
@@ -266,7 +267,9 @@ class PATModelLoader:
             msg = f"Failed to download model from S3: {s3_key}"
             raise ModelLoadError(msg) from e
 
-    def _load_model_weights(self, config: ArchModelConfig, model_path: Path) -> nn.Module:
+    def _load_model_weights(
+        self, config: ArchModelConfig, model_path: Path
+    ) -> nn.Module:
         """Load model weights from file."""
         if not model_path.exists():
             msg = f"Model file not found: {model_path}"
@@ -332,15 +335,16 @@ class PATModelLoader:
         """
         current = self._current_versions.get(size)
         if not current:
-            raise ModelLoadError("No current version to fallback from")
+            msg = "No current version to fallback from"
+            raise ModelLoadError(msg)
 
         # Extract version number
         try:
             current_num = int(current.version.replace("v", ""))
-            previous_version = f"v{current_num - 1}"
+            previous_version = f"{current_num - 1}"  # Don't include "v" prefix
 
             logger.warning(
-                "Falling back from %s to %s", current.version, previous_version
+                "Falling back from %s to v%s", current.version, previous_version
             )
 
             return await self.load_model(size, previous_version)

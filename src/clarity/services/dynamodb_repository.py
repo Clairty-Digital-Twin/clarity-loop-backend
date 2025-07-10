@@ -54,7 +54,7 @@ class BaseRepository(IRepository[T]):
         """
         self._connection = connection
         self._table_name = table_name
-        self._resource = None
+        self._resource: Any = None
 
     def _get_table(self) -> Any:
         """Get DynamoDB table resource."""
@@ -64,7 +64,6 @@ class BaseRepository(IRepository[T]):
 
     async def create(self, entity: dict[str, Any]) -> str:
         """Create a new entity with timestamps."""
-
         try:
             # Add timestamps
             entity["created_at"] = datetime.now(UTC).isoformat()
@@ -78,7 +77,7 @@ class BaseRepository(IRepository[T]):
             )
 
             logger.info("Created entity in %s: %s", self._table_name, entity.get("id"))
-            return entity.get("id", "")
+            return entity.get("id", "")  # type: ignore[no-any-return]
 
         except Exception:
             logger.exception("Failed to create entity in %s", self._table_name)
@@ -86,7 +85,6 @@ class BaseRepository(IRepository[T]):
 
     async def get(self, id: str) -> dict[str, Any] | None:
         """Get entity by ID."""
-
         try:
             table = self._get_table()
 
@@ -96,7 +94,7 @@ class BaseRepository(IRepository[T]):
             )
 
             if "Item" in response:
-                return response["Item"]
+                return response["Item"]  # type: ignore[no-any-return]
             return None
 
         except Exception:
@@ -105,7 +103,6 @@ class BaseRepository(IRepository[T]):
 
     async def update(self, id: str, updates: dict[str, Any]) -> bool:
         """Update an existing entity."""
-
         try:
             # Build update expression
             update_parts = []
@@ -141,7 +138,6 @@ class BaseRepository(IRepository[T]):
 
     async def delete(self, id: str) -> bool:
         """Delete an entity."""
-
         try:
             table = self._get_table()
 
@@ -162,7 +158,6 @@ class BaseRepository(IRepository[T]):
 
         Follows DynamoDB batch write limits (25 items per batch).
         """
-
         try:
             table = self._get_table()
 
@@ -185,7 +180,9 @@ class BaseRepository(IRepository[T]):
                         for entity in items:
                             batch.put_item(Item=entity)
 
-                await asyncio.get_event_loop().run_in_executor(None, batch_write, batch_items)
+                await asyncio.get_event_loop().run_in_executor(
+                    None, batch_write, batch_items
+                )
 
             logger.info(
                 "Batch created %s entities in %s", len(entities), self._table_name
@@ -217,7 +214,7 @@ class HealthDataRepository(BaseRepository[dict[str, Any]]):
                 ScanIndexForward=False,  # Most recent first
             )
 
-            return response.get("Items", [])
+            return response.get("Items", [])  # type: ignore[no-any-return]
 
         except Exception:
             logger.exception("Failed to get health data for user %s", user_id)
@@ -239,7 +236,7 @@ class HealthDataRepository(BaseRepository[dict[str, Any]]):
                 },
             )
 
-            return response.get("Items", [])
+            return response.get("Items", [])  # type: ignore[no-any-return]
 
         except Exception:
             logger.exception("Failed to get health data by date range")
@@ -262,7 +259,7 @@ class ProcessingJobRepository(BaseRepository[dict[str, Any]]):
                 ExpressionAttributeValues={":status": status},
             )
 
-            return response.get("Items", [])
+            return response.get("Items", [])  # type: ignore[no-any-return]
 
         except Exception:
             logger.exception("Failed to get processing jobs by status %s", status)
@@ -338,7 +335,7 @@ class AuditLogRepository(BaseRepository[dict[str, Any]]):
                 ExpressionAttributeValues={":item_id": item_id},
             )
 
-            return response.get("Items", [])
+            return response.get("Items", [])  # type: ignore[no-any-return]
 
         except Exception:
             logger.exception("Failed to get audit logs for item %s", item_id)
@@ -382,13 +379,13 @@ class RepositoryFactory:
         self._connection = connection
 
         # Repository instances (lazy loaded)
-        self._repositories: dict[str, BaseRepository[Any]] = {}
+        self._repositories: dict[str, Any] = {}
 
     def get_health_data_repository(self) -> HealthDataRepository:
         """Get health data repository instance."""
         if "health_data" not in self._repositories:
             self._repositories["health_data"] = HealthDataRepository(self._connection)
-        return self._repositories["health_data"]
+        return self._repositories["health_data"]  # type: ignore[no-any-return]
 
     def get_processing_job_repository(self) -> ProcessingJobRepository:
         """Get processing job repository instance."""
@@ -396,22 +393,22 @@ class RepositoryFactory:
             self._repositories["processing_job"] = ProcessingJobRepository(
                 self._connection
             )
-        return self._repositories["processing_job"]
+        return self._repositories["processing_job"]  # type: ignore[no-any-return]
 
     def get_user_profile_repository(self) -> UserProfileRepository:
         """Get user profile repository instance."""
         if "user_profile" not in self._repositories:
             self._repositories["user_profile"] = UserProfileRepository(self._connection)
-        return self._repositories["user_profile"]
+        return self._repositories["user_profile"]  # type: ignore[no-any-return]
 
     def get_audit_log_repository(self) -> AuditLogRepository:
         """Get audit log repository instance."""
         if "audit_log" not in self._repositories:
             self._repositories["audit_log"] = AuditLogRepository(self._connection)
-        return self._repositories["audit_log"]
+        return self._repositories["audit_log"]  # type: ignore[no-any-return]
 
     def get_ml_model_repository(self) -> MLModelRepository:
         """Get ML model repository instance."""
         if "ml_model" not in self._repositories:
             self._repositories["ml_model"] = MLModelRepository(self._connection)
-        return self._repositories["ml_model"]
+        return self._repositories["ml_model"]  # type: ignore[no-any-return]

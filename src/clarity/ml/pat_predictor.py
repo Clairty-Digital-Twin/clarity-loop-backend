@@ -10,7 +10,7 @@ from collections import deque
 from dataclasses import dataclass
 import logging
 import time
-from typing import TYPE_CHECKING, Any, Optional
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from numpy.typing import NDArray
@@ -37,8 +37,12 @@ class PredictionRequest:
 class PredictionResult:
     """Result from PAT prediction."""
 
-    embeddings: NDArray[np.float32] | None = None  # Shape: (batch_size, num_patches, embed_dim)
-    sequence_embeddings: NDArray[np.float32] | None = None  # Shape: (batch_size, embed_dim)
+    embeddings: NDArray[np.float32] | None = (
+        None  # Shape: (batch_size, num_patches, embed_dim)
+    )
+    sequence_embeddings: NDArray[np.float32] | None = (
+        None  # Shape: (batch_size, embed_dim)
+    )
     inference_time_ms: float = 0.0
     model_version: str = ""
     batch_size: int = 1
@@ -62,7 +66,9 @@ class PredictionCache:
         data_hash = hash(data.tobytes())
         return f"{model_size.value}:{data_hash}"
 
-    def get(self, data: NDArray[np.float32], model_size: ModelSize) -> PredictionResult | None:
+    def get(
+        self, data: NDArray[np.float32], model_size: ModelSize
+    ) -> PredictionResult | None:
         """Get cached prediction if available."""
         key = self._get_key(data, model_size)
 

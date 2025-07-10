@@ -30,7 +30,7 @@ from clarity.services.dynamodb_service import (
 class TestDynamoDBServiceInitialization:
     """Test DynamoDB service initialization and configuration."""
 
-    @patch("clarity.services.dynamodb_service.boto3.resource")
+    @patch("clarity.services.dynamodb_connection.boto3.resource")
     def test_dynamodb_service_basic_initialization(self, mock_boto3: MagicMock) -> None:
         """Test basic DynamoDB service initialization."""
         mock_resource = Mock()
@@ -62,7 +62,7 @@ class TestDynamoDBServiceInitialization:
             "dynamodb", region_name="us-west-2", endpoint_url=None
         )
 
-    @patch("clarity.services.dynamodb_service.boto3.resource")
+    @patch("clarity.services.dynamodb_connection.boto3.resource")
     def test_dynamodb_service_with_endpoint_url(self, mock_boto3: MagicMock) -> None:
         """Test DynamoDB service initialization with custom endpoint."""
         mock_resource = Mock()
@@ -77,7 +77,7 @@ class TestDynamoDBServiceInitialization:
             "dynamodb", region_name="us-east-1", endpoint_url="http://localhost:8000"
         )
 
-    @patch("clarity.services.dynamodb_service.boto3.resource")
+    @patch("clarity.services.dynamodb_connection.boto3.resource")
     def test_dynamodb_service_default_configuration(
         self, mock_boto3: MagicMock
     ) -> None:
@@ -799,14 +799,16 @@ class TestHealthCheck:
         mock_health_status.is_healthy = True
         mock_health_status.latency_ms = 50.0
         mock_health_status.last_check_time = time.time()
-        
+
         mock_metrics = Mock()
         mock_metrics.active_connections = 1
         mock_metrics.total_connections = 10
         mock_metrics.successful_connections = 9
         mock_metrics.failed_connections = 1
-        
-        self.service._connection_manager.check_health = Mock(return_value=mock_health_status)
+
+        self.service._connection_manager.check_health = Mock(
+            return_value=mock_health_status
+        )
         self.service._connection_manager.get_metrics = Mock(return_value=mock_metrics)
 
         # Add some items to cache for testing
@@ -894,7 +896,7 @@ class TestDynamoDBHealthDataRepository:
         mock_processing_job_repo.create = AsyncMock(return_value="processing_123")
         mock_health_data_repo = MagicMock()
         mock_health_data_repo.batch_create = AsyncMock()
-        
+
         self.repository._processing_job_repo = mock_processing_job_repo
         self.repository._health_data_repo = mock_health_data_repo
 
@@ -935,10 +937,10 @@ class TestDynamoDBHealthDataRepository:
         # Mock the health check to return healthy
         mock_health_check = AsyncMock(return_value={"status": "healthy"})
         self.repository._dynamodb_service.health_check = mock_health_check
-        
+
         # Should not raise any exceptions
         await self.repository.initialize()
-        
+
         # Verify health check was called
         mock_health_check.assert_called_once()
 

@@ -6,18 +6,18 @@ with proper setup, teardown, and helper utilities.
 
 from __future__ import annotations
 
+from collections.abc import AsyncGenerator, Generator
 import json
 import os
-from collections.abc import AsyncGenerator, Generator
 from typing import TYPE_CHECKING, Any
 from unittest.mock import patch
 
 import boto3
-import pytest
 from moto import mock_cognito_idp, mock_dynamodb, mock_s3
 from mypy_boto3_cognito_idp import CognitoIdentityProviderClient
 from mypy_boto3_dynamodb import DynamoDBClient, DynamoDBServiceResource
 from mypy_boto3_s3 import S3Client
+import pytest
 
 if TYPE_CHECKING:
     from mypy_boto3_dynamodb.service_resource import Table
@@ -83,7 +83,7 @@ def dynamodb_table(dynamodb_mock: DynamoDBServiceResource) -> Table:
         ],
         BillingMode="PAY_PER_REQUEST",
     )
-    
+
     # Wait for table to be active
     table.wait_until_exists()
     return table
@@ -107,7 +107,7 @@ def s3_bucket(s3_mock: S3Client) -> dict[str, Any]:
         Bucket=TEST_BUCKET_NAME,
         VersioningConfiguration={"Status": "Enabled"},
     )
-    
+
     # Add lifecycle configuration
     s3_mock.put_bucket_lifecycle_configuration(
         Bucket=TEST_BUCKET_NAME,
@@ -131,7 +131,7 @@ def s3_bucket(s3_mock: S3Client) -> dict[str, Any]:
             ]
         },
     )
-    
+
     return {
         "name": TEST_BUCKET_NAME,
         "client": s3_mock,
@@ -140,7 +140,9 @@ def s3_bucket(s3_mock: S3Client) -> dict[str, Any]:
 
 
 @pytest.fixture(scope="function")
-def cognito_mock(aws_credentials) -> Generator[CognitoIdentityProviderClient, None, None]:
+def cognito_mock(
+    aws_credentials,
+) -> Generator[CognitoIdentityProviderClient, None, None]:
     """Create a mocked Cognito Identity Provider client."""
     with mock_cognito_idp():
         yield boto3.client("cognito-idp", region_name=TEST_REGION)
@@ -176,9 +178,9 @@ def cognito_user_pool(cognito_mock: CognitoIdentityProviderClient) -> dict[str, 
             },
         ],
     )
-    
+
     user_pool_id = pool_response["UserPool"]["Id"]
-    
+
     # Create app client
     client_response = cognito_mock.create_user_pool_client(
         UserPoolId=user_pool_id,
@@ -190,7 +192,7 @@ def cognito_user_pool(cognito_mock: CognitoIdentityProviderClient) -> dict[str, 
             "ALLOW_REFRESH_TOKEN_AUTH",
         ],
     )
-    
+
     return {
         "user_pool_id": user_pool_id,
         "client_id": client_response["UserPoolClient"]["ClientId"],
@@ -206,7 +208,7 @@ def cognito_test_user(
     """Create a test user in Cognito."""
     username = "test@example.com"
     password = "TestPassword123!"
-    
+
     # Create user
     cognito_mock.admin_create_user(
         UserPoolId=cognito_user_pool["user_pool_id"],
@@ -219,7 +221,7 @@ def cognito_test_user(
         TemporaryPassword=password,
         MessageAction="SUPPRESS",
     )
-    
+
     # Set permanent password
     cognito_mock.admin_set_user_password(
         UserPoolId=cognito_user_pool["user_pool_id"],
@@ -227,7 +229,7 @@ def cognito_test_user(
         Password=password,
         Permanent=True,
     )
-    
+
     return {
         "username": username,
         "password": password,
@@ -286,7 +288,9 @@ def sample_s3_objects() -> list[dict[str, Any]]:
         },
         {
             "key": "data/users/test-user-123/health_data.json",
-            "body": json.dumps({"heart_rate": [72, 74, 71, 73], "timestamps": ["2024-01-01T00:00:00Z"]}),
+            "body": json.dumps(
+                {"heart_rate": [72, 74, 71, 73], "timestamps": ["2024-01-01T00:00:00Z"]}
+            ),
             "content_type": "application/json",
             "metadata": {"user_id": "test-user-123"},
         },
@@ -305,17 +309,19 @@ def sample_s3_objects() -> list[dict[str, Any]]:
 @pytest.fixture
 def dynamodb_batch_writer(dynamodb_table: Table):
     """Helper for batch writing to DynamoDB."""
+
     def write_items(items: list[dict[str, Any]]) -> None:
         with dynamodb_table.batch_writer() as batch:
             for item in items:
                 batch.put_item(Item=item)
-    
+
     return write_items
 
 
 @pytest.fixture
 def s3_batch_uploader(s3_mock: S3Client):
     """Helper for batch uploading to S3."""
+
     def upload_objects(objects: list[dict[str, Any]]) -> None:
         for obj in objects:
             s3_mock.put_object(
@@ -325,7 +331,7 @@ def s3_batch_uploader(s3_mock: S3Client):
                 ContentType=obj.get("content_type", "application/octet-stream"),
                 Metadata=obj.get("metadata", {}),
             )
-    
+
     return upload_objects
 
 
@@ -336,11 +342,11 @@ def s3_batch_uploader(s3_mock: S3Client):
 def mock_circuit_breaker():
     """Mock circuit breaker for testing resilience patterns."""
     from unittest.mock import MagicMock
-    
+
     breaker = MagicMock()
     breaker.call.side_effect = lambda func, *args, **kwargs: func(*args, **kwargs)
     breaker.state = "closed"
     breaker.failure_count = 0
     breaker.success_count = 0
-    
+
     return breaker

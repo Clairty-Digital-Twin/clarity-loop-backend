@@ -14,19 +14,19 @@ from locust.exception import RescheduleTask
 
 class ClarityAPIUser(HttpUser):
     """Simulates a typical CLARITY API user."""
-    
+
     wait_time = between(1, 3)  # Wait 1-3 seconds between tasks
-    
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.access_token = None
         self.user_id = None
         self.health_data_ids = []
-    
+
     def on_start(self):
         """Called when a simulated user starts."""
         self.login()
-    
+
     def login(self):
         """Authenticate and obtain access token."""
         response = self.client.post(
@@ -37,7 +37,7 @@ class ClarityAPIUser(HttpUser):
             },
             catch_response=True,
         )
-        
+
         if response.status_code == 200:
             data = response.json()
             self.access_token = data.get("access_token")
@@ -46,7 +46,7 @@ class ClarityAPIUser(HttpUser):
         else:
             response.failure(f"Login failed: {response.status_code}")
             raise RescheduleTask()
-    
+
     @property
     def auth_headers(self) -> dict[str, str]:
         """Get authorization headers."""
@@ -54,17 +54,17 @@ class ClarityAPIUser(HttpUser):
             "Authorization": f"Bearer {self.access_token}",
             "Content-Type": "application/json",
         }
-    
+
     @task(3)
     def check_health(self):
         """Health check endpoint - high frequency."""
         self.client.get("/health")
-    
+
     @task(5)
     def upload_health_data(self):
         """Upload health metrics."""
         metrics = self._generate_health_metrics()
-        
+
         with self.client.post(
             "/api/v1/health/metrics",
             json=metrics,
@@ -77,7 +77,7 @@ class ClarityAPIUser(HttpUser):
                 response.success()
             else:
                 response.failure(f"Upload failed: {response.status_code}")
-    
+
     @task(4)
     def get_recent_metrics(self):
         """Retrieve recent health metrics."""
@@ -90,13 +90,13 @@ class ClarityAPIUser(HttpUser):
                 response.success()
             else:
                 response.failure(f"Get metrics failed: {response.status_code}")
-    
+
     @task(2)
     def get_analysis(self):
         """Request health analysis."""
         if not self.health_data_ids:
             raise RescheduleTask()
-        
+
         with self.client.get(
             "/api/v1/analysis/latest",
             headers=self.auth_headers,
@@ -106,7 +106,7 @@ class ClarityAPIUser(HttpUser):
                 response.success()
             else:
                 response.failure(f"Analysis failed: {response.status_code}")
-    
+
     @task(1)
     def get_user_profile(self):
         """Retrieve user profile."""
@@ -119,7 +119,7 @@ class ClarityAPIUser(HttpUser):
                 response.success()
             else:
                 response.failure(f"Profile failed: {response.status_code}")
-    
+
     def _generate_health_metrics(self) -> dict[str, Any]:
         """Generate random health metrics."""
         return {
@@ -148,14 +148,14 @@ class ClarityAPIUser(HttpUser):
 
 class ClarityWebSocketUser(HttpUser):
     """Simulates WebSocket connections for real-time features."""
-    
+
     wait_time = between(5, 10)
-    
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.ws = None
         self.access_token = None
-    
+
     def on_start(self):
         """Initialize WebSocket connection."""
         # First authenticate via HTTP
@@ -163,7 +163,7 @@ class ClarityWebSocketUser(HttpUser):
         # Note: Locust doesn't natively support WebSocket
         # This is a placeholder for WebSocket load testing
         # Consider using locust-plugins for WebSocket support
-    
+
     def login(self):
         """Authenticate to get WebSocket token."""
         response = self.client.post(
@@ -173,11 +173,11 @@ class ClarityWebSocketUser(HttpUser):
                 "password": "TestPassword123!",
             },
         )
-        
+
         if response.status_code == 200:
             data = response.json()
             self.access_token = data.get("access_token")
-    
+
     @task
     def simulate_websocket_activity(self):
         """Simulate WebSocket-like activity via HTTP."""
@@ -195,18 +195,18 @@ class ClarityWebSocketUser(HttpUser):
 
 class ClarityHeavyUser(HttpUser):
     """Simulates power users with heavy API usage."""
-    
+
     wait_time = between(0.5, 2)  # More aggressive timing
-    
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.access_token = None
         self.batch_size = 50  # Larger batches
-    
+
     def on_start(self):
         """Initialize heavy user session."""
         self.login()
-    
+
     def login(self):
         """Authenticate as power user."""
         response = self.client.post(
@@ -216,24 +216,24 @@ class ClarityHeavyUser(HttpUser):
                 "password": "TestPassword123!",
             },
         )
-        
+
         if response.status_code == 200:
             data = response.json()
             self.access_token = data.get("access_token")
-    
+
     @task(5)
     def batch_upload(self):
         """Upload large batches of data."""
         metrics = []
         for _ in range(self.batch_size):
             metrics.extend(self._generate_health_metrics()["metrics"])
-        
+
         self.client.post(
             "/api/v1/health/metrics/batch",
             json={"metrics": metrics},
             headers={"Authorization": f"Bearer {self.access_token}"},
         )
-    
+
     @task(3)
     def complex_query(self):
         """Execute complex data queries."""
@@ -245,13 +245,13 @@ class ClarityHeavyUser(HttpUser):
             "aggregation": "daily",
             "include_analysis": "true",
         }
-        
+
         self.client.get(
             "/api/v1/health/metrics/aggregate",
             params=params,
             headers={"Authorization": f"Bearer {self.access_token}"},
         )
-    
+
     @task(2)
     def export_data(self):
         """Request data export."""
@@ -264,7 +264,7 @@ class ClarityHeavyUser(HttpUser):
             },
             headers={"Authorization": f"Bearer {self.access_token}"},
         )
-    
+
     @task(1)
     def ml_prediction(self):
         """Request ML predictions."""
@@ -276,7 +276,7 @@ class ClarityHeavyUser(HttpUser):
             },
             headers={"Authorization": f"Bearer {self.access_token}"},
         )
-    
+
     def _generate_health_metrics(self) -> dict[str, Any]:
         """Generate random health metrics."""
         return {
@@ -290,7 +290,7 @@ class ClarityHeavyUser(HttpUser):
                 for _ in range(10)
             ]
         }
-    
+
     def _generate_ml_features(self) -> list[float]:
         """Generate random ML features."""
         return [random.random() for _ in range(50)]

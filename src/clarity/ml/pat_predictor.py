@@ -10,7 +10,10 @@ from collections import deque
 from dataclasses import dataclass
 import logging
 import time
-from typing import Any, Optional
+from typing import TYPE_CHECKING, Any, Optional
+
+if TYPE_CHECKING:
+    from numpy.typing import NDArray
 
 import numpy as np
 import torch
@@ -24,7 +27,7 @@ logger = logging.getLogger(__name__)
 class PredictionRequest:
     """Request for PAT prediction."""
 
-    data: np.ndarray  # Shape: (batch_size, sequence_length)
+    data: NDArray[np.float32]  # Shape: (batch_size, sequence_length)
     model_size: ModelSize = ModelSize.MEDIUM
     return_embeddings: bool = True
     enable_batching: bool = True
@@ -34,8 +37,8 @@ class PredictionRequest:
 class PredictionResult:
     """Result from PAT prediction."""
 
-    embeddings: np.ndarray | None = None  # Shape: (batch_size, num_patches, embed_dim)
-    sequence_embeddings: np.ndarray | None = None  # Shape: (batch_size, embed_dim)
+    embeddings: NDArray[np.float32] | None = None  # Shape: (batch_size, num_patches, embed_dim)
+    sequence_embeddings: NDArray[np.float32] | None = None  # Shape: (batch_size, embed_dim)
     inference_time_ms: float = 0.0
     model_version: str = ""
     batch_size: int = 1
@@ -53,13 +56,13 @@ class PredictionCache:
         self._access_order: deque[str] = deque(maxlen=max_size)
         self._max_size = max_size
 
-    def _get_key(self, data: np.ndarray, model_size: ModelSize) -> str:
+    def _get_key(self, data: NDArray[np.float32], model_size: ModelSize) -> str:
         """Generate cache key from input data."""
         # Use hash of data for key
         data_hash = hash(data.tobytes())
         return f"{model_size.value}:{data_hash}"
 
-    def get(self, data: np.ndarray, model_size: ModelSize) -> PredictionResult | None:
+    def get(self, data: NDArray[np.float32], model_size: ModelSize) -> PredictionResult | None:
         """Get cached prediction if available."""
         key = self._get_key(data, model_size)
 
@@ -72,7 +75,7 @@ class PredictionCache:
         return None
 
     def set(
-        self, data: np.ndarray, model_size: ModelSize, result: PredictionResult
+        self, data: NDArray[np.float32], model_size: ModelSize, result: PredictionResult
     ) -> None:
         """Store prediction in cache."""
         key = self._get_key(data, model_size)
@@ -101,10 +104,10 @@ class BatchProcessor:
         """
         self.max_batch_size = max_batch_size
         self.batch_timeout_ms = batch_timeout_ms
-        self._pending_batch: list[np.ndarray] = []
+        self._pending_batch: list[NDArray[np.float32]] = []
         self._batch_start_time: float | None = None
 
-    def add_to_batch(self, data: np.ndarray) -> np.ndarray | None:
+    def add_to_batch(self, data: NDArray[np.float32]) -> NDArray[np.float32] | None:
         """Add data to batch, return full batch if ready.
 
         Args:
@@ -129,7 +132,7 @@ class BatchProcessor:
 
         return None
 
-    def _get_and_clear_batch(self) -> np.ndarray:
+    def _get_and_clear_batch(self) -> NDArray[np.float32]:
         """Get current batch and clear state."""
         if not self._pending_batch:
             return np.array([])
@@ -224,7 +227,8 @@ class PATPredictor:
             # Make prediction
             with torch.no_grad():
                 if request.return_embeddings:
-                    embeddings = model.get_patch_embeddings(input_tensor)
+                    # model is a nn.Module, call it directly
+                    embeddings = model(input_tensor)
                     sequence_embeddings = embeddings.mean(dim=1)  # Mean pool
 
                     result = PredictionResult(
@@ -236,7 +240,8 @@ class PATPredictor:
                     )
                 else:
                     # Just sequence embeddings
-                    sequence_embeddings = model.get_sequence_embedding(input_tensor)
+                    embeddings = model(input_tensor)
+                    sequence_embeddings = embeddings.mean(dim=1)  # Mean pool
 
                     result = PredictionResult(
                         sequence_embeddings=sequence_embeddings.cpu().numpy(),
@@ -256,7 +261,8 @@ class PATPredictor:
 
         except Exception as e:
             logger.exception("Prediction failed")
-            raise PredictionError(f"Prediction failed: {e}") from e
+            msg = f"Prediction failed: {e}"
+            raise PredictionError(msg) from e
 
     async def predict_batch(
         self, requests: list[PredictionRequest]
@@ -322,7 +328,7 @@ class PATPredictor:
 
         return [r for r in results if r is not None]
 
-    def _prepare_input(self, data: np.ndarray) -> torch.Tensor:
+    def _prepare_input(self, data: NDArray[np.float32]) -> torch.Tensor:
         """Prepare input data for model.
 
         Args:
@@ -346,7 +352,7 @@ class PATPredictor:
 
     def get_metrics(self) -> dict[str, Any]:
         """Get prediction metrics."""
-        metrics = {
+        metrics: dict[str, Any] = {
             "cache_enabled": self.enable_caching,
             "batch_enabled": self.enable_batching,
         }

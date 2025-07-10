@@ -16,7 +16,8 @@ from typing import Any
 import torch
 from torch import nn
 
-from clarity.ml.pat_architecture import PATModel  # Will create this next
+from clarity.ml.pat_architecture import ModelConfig as ArchModelConfig
+from clarity.ml.pat_architecture import PATModel
 from clarity.services.s3_storage_service import S3StorageService
 
 logger = logging.getLogger(__name__)
@@ -30,49 +31,44 @@ class ModelSize(StrEnum):
     LARGE = "large"
 
 
-@dataclass
-class ModelConfig:
-    """Configuration for PAT models.
-
+def get_model_config(size: ModelSize) -> ArchModelConfig:
+    """Get configuration for specific model size.
+    
     Based on Dartmouth specifications from arXiv:2411.15240
     """
-
-    name: str
-    num_layers: int
-    num_heads: int
-    embed_dim: int
-    patch_size: int
-    ff_dim: int = 256
-    dropout: float = 0.1
-    input_size: int = 10080  # 7 days at 1 minute intervals
-
-    @classmethod
-    def get_config(cls, size: ModelSize) -> ModelConfig:
-        """Get configuration for specific model size."""
-        configs = {
-            ModelSize.SMALL: cls(
-                name="PAT-S",
-                num_layers=1,
-                num_heads=6,
-                embed_dim=96,
-                patch_size=18,
-            ),
-            ModelSize.MEDIUM: cls(
-                name="PAT-M",
-                num_layers=2,
-                num_heads=12,
-                embed_dim=96,
-                patch_size=18,
-            ),
-            ModelSize.LARGE: cls(
-                name="PAT-L",
-                num_layers=4,
-                num_heads=12,
-                embed_dim=96,
-                patch_size=9,
-            ),
-        }
-        return configs[size]
+    configs = {
+        ModelSize.SMALL: ArchModelConfig(
+            name="PAT-S",
+            input_size=10080,  # 7 days at 1 minute intervals
+            patch_size=18,
+            embed_dim=96,
+            num_layers=1,
+            num_heads=6,
+            ff_dim=256,
+            dropout=0.1,
+        ),
+        ModelSize.MEDIUM: ArchModelConfig(
+            name="PAT-M",
+            input_size=10080,
+            patch_size=18,
+            embed_dim=96,
+            num_layers=2,
+            num_heads=12,
+            ff_dim=256,
+            dropout=0.1,
+        ),
+        ModelSize.LARGE: ArchModelConfig(
+            name="PAT-L",
+            input_size=10080,
+            patch_size=9,
+            embed_dim=96,
+            num_layers=4,
+            num_heads=12,
+            ff_dim=256,
+            dropout=0.1,
+        ),
+    }
+    return configs[size]
 
 
 @dataclass
@@ -191,7 +187,7 @@ class PATModelLoader:
                     return cached_model
 
             # Load model configuration
-            config = ModelConfig.get_config(size)
+            config = get_model_config(size)
 
             # Determine model path
             if version:
@@ -225,7 +221,8 @@ class PATModelLoader:
 
         except Exception as e:
             logger.exception("Failed to load model: %s", size.value)
-            raise ModelLoadError(f"Failed to load {size.value} model: {e}") from e
+            msg = f"Failed to load {size.value} model: {e}"
+            raise ModelLoadError(msg) from e
 
     def _get_versioned_path(self, size: ModelSize, version: str) -> Path:
         """Get path for specific model version."""
@@ -258,15 +255,22 @@ class PATModelLoader:
         local_path.parent.mkdir(parents=True, exist_ok=True)
 
         # Download from S3
-        success = await self.s3_service.download_file(s3_key, str(local_path))
+        try:
+            file_data = await self.s3_service.download_file(s3_key)
 
-        if not success:
-            raise ModelLoadError(f"Failed to download model from S3: {s3_key}")
+            # Write to local file
+            with open(local_path, "wb") as f:
+                f.write(file_data)
 
-    def _load_model_weights(self, config: ModelConfig, model_path: Path) -> nn.Module:
+        except Exception as e:
+            msg = f"Failed to download model from S3: {s3_key}"
+            raise ModelLoadError(msg) from e
+
+    def _load_model_weights(self, config: ArchModelConfig, model_path: Path) -> nn.Module:
         """Load model weights from file."""
         if not model_path.exists():
-            raise ModelLoadError(f"Model file not found: {model_path}")
+            msg = f"Model file not found: {model_path}"
+            raise ModelLoadError(msg)
 
         # Create model architecture
         model = PATModel(config)
@@ -280,11 +284,12 @@ class PATModelLoader:
             model.eval()  # Set to evaluation mode
 
         except Exception as e:
-            raise ModelLoadError(f"Failed to load weights: {e}") from e
+            msg = f"Failed to load weights: {e}"
+            raise ModelLoadError(msg) from e
 
         return model
 
-    def _validate_model(self, model: nn.Module, config: ModelConfig) -> None:
+    def _validate_model(self, model: nn.Module, config: ArchModelConfig) -> None:
         """Validate loaded model matches expected configuration."""
         # Run a test forward pass
         try:
@@ -295,10 +300,12 @@ class PATModelLoader:
                 # Validate output shape
                 expected_patches = config.input_size // config.patch_size
                 if output.shape != (1, expected_patches, config.embed_dim):
-                    raise ModelLoadError(f"Invalid output shape: {output.shape}")
+                    msg = f"Invalid output shape: {output.shape}"
+                    raise ModelLoadError(msg)
 
         except Exception as e:
-            raise ModelLoadError(f"Model validation failed: {e}") from e
+            msg = f"Model validation failed: {e}"
+            raise ModelLoadError(msg) from e
 
     def _update_current_version(
         self, size: ModelSize, version: str, model_path: Path
@@ -339,7 +346,8 @@ class PATModelLoader:
             return await self.load_model(size, previous_version)
 
         except Exception as e:
-            raise ModelLoadError(f"Fallback failed: {e}") from e
+            msg = f"Fallback failed: {e}"
+            raise ModelLoadError(msg) from e
 
     def get_metrics(self) -> dict[str, Any]:
         """Get model loading metrics."""

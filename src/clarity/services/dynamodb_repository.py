@@ -7,6 +7,7 @@ Each repository handles a specific entity type with focused responsibilities.
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
+import asyncio
 from datetime import UTC, datetime
 import logging
 from typing import Any, Generic, TypeVar
@@ -24,15 +25,15 @@ class IRepository(ABC, Generic[T]):
     """Base repository interface following Interface Segregation Principle."""
 
     @abstractmethod
-    async def create(self, entity: T) -> str:
+    async def create(self, entity: Any) -> str:
         """Create a new entity."""
 
     @abstractmethod
-    async def get(self, id: str) -> T | None:
+    async def get(self, id: str) -> Any:
         """Get entity by ID."""
 
     @abstractmethod
-    async def update(self, id: str, entity: T) -> bool:
+    async def update(self, id: str, entity: Any) -> bool:
         """Update an existing entity."""
 
     @abstractmethod
@@ -46,7 +47,7 @@ class BaseRepository(IRepository[T]):
     Follows DRY principle by providing common operations.
     """
 
-    def __init__(self, connection: DynamoDBConnection, table_name: str):
+    def __init__(self, connection: DynamoDBConnection, table_name: str) -> None:
         """Initialize repository with connection and table name.
 
         Uses Dependency Injection for loose coupling.
@@ -55,7 +56,7 @@ class BaseRepository(IRepository[T]):
         self._table_name = table_name
         self._resource = None
 
-    def _get_table(self):
+    def _get_table(self) -> Any:
         """Get DynamoDB table resource."""
         if self._resource is None:
             self._resource = self._connection.get_resource()
@@ -63,7 +64,6 @@ class BaseRepository(IRepository[T]):
 
     async def create(self, entity: dict[str, Any]) -> str:
         """Create a new entity with timestamps."""
-        import asyncio
 
         try:
             # Add timestamps
@@ -78,7 +78,7 @@ class BaseRepository(IRepository[T]):
             )
 
             logger.info("Created entity in %s: %s", self._table_name, entity.get("id"))
-            return entity.get("id")
+            return entity.get("id", "")
 
         except Exception:
             logger.exception("Failed to create entity in %s", self._table_name)
@@ -86,7 +86,6 @@ class BaseRepository(IRepository[T]):
 
     async def get(self, id: str) -> dict[str, Any] | None:
         """Get entity by ID."""
-        import asyncio
 
         try:
             table = self._get_table()
@@ -106,7 +105,6 @@ class BaseRepository(IRepository[T]):
 
     async def update(self, id: str, updates: dict[str, Any]) -> bool:
         """Update an existing entity."""
-        import asyncio
 
         try:
             # Build update expression
@@ -143,7 +141,6 @@ class BaseRepository(IRepository[T]):
 
     async def delete(self, id: str) -> bool:
         """Delete an entity."""
-        import asyncio
 
         try:
             table = self._get_table()
@@ -165,7 +162,6 @@ class BaseRepository(IRepository[T]):
 
         Follows DynamoDB batch write limits (25 items per batch).
         """
-        import asyncio
 
         try:
             table = self._get_table()
@@ -184,12 +180,12 @@ class BaseRepository(IRepository[T]):
                         entity["updated_at"] = datetime.now(UTC).isoformat()
 
                 # Run batch write in executor
-                def batch_write():
+                def batch_write(items: list[dict[str, Any]]) -> None:
                     with table.batch_writer() as batch:
-                        for entity in batch_items:
+                        for entity in items:
                             batch.put_item(Item=entity)
 
-                await asyncio.get_event_loop().run_in_executor(None, batch_write)
+                await asyncio.get_event_loop().run_in_executor(None, batch_write, batch_items)
 
             logger.info(
                 "Batch created %s entities in %s", len(entities), self._table_name
@@ -200,7 +196,7 @@ class BaseRepository(IRepository[T]):
             raise
 
 
-class HealthDataRepository(BaseRepository[dict]):
+class HealthDataRepository(BaseRepository[dict[str, Any]]):
     """Repository for health data operations.
 
     Specific implementation for health data with additional methods.
@@ -250,7 +246,7 @@ class HealthDataRepository(BaseRepository[dict]):
             return []
 
 
-class ProcessingJobRepository(BaseRepository[dict]):
+class ProcessingJobRepository(BaseRepository[dict[str, Any]]):
     """Repository for processing job operations."""
 
     def __init__(self, connection: DynamoDBConnection) -> None:
@@ -278,7 +274,7 @@ class ProcessingJobRepository(BaseRepository[dict]):
         return await self.update(job_id, updates)
 
 
-class UserProfileRepository(BaseRepository[dict]):
+class UserProfileRepository(BaseRepository[dict[str, Any]]):
     """Repository for user profile operations."""
 
     def __init__(self, connection: DynamoDBConnection) -> None:
@@ -302,7 +298,7 @@ class UserProfileRepository(BaseRepository[dict]):
             return None
 
 
-class AuditLogRepository(BaseRepository[dict]):
+class AuditLogRepository(BaseRepository[dict[str, Any]]):
     """Repository for audit log operations.
 
     Follows Single Responsibility: Only handles audit logs.
@@ -349,7 +345,7 @@ class AuditLogRepository(BaseRepository[dict]):
             return []
 
 
-class MLModelRepository(BaseRepository[dict]):
+class MLModelRepository(BaseRepository[dict[str, Any]]):
     """Repository for ML model metadata operations."""
 
     def __init__(self, connection: DynamoDBConnection) -> None:
@@ -386,7 +382,7 @@ class RepositoryFactory:
         self._connection = connection
 
         # Repository instances (lazy loaded)
-        self._repositories: dict[str, BaseRepository] = {}
+        self._repositories: dict[str, BaseRepository[Any]] = {}
 
     def get_health_data_repository(self) -> HealthDataRepository:
         """Get health data repository instance."""

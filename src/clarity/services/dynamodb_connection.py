@@ -204,7 +204,7 @@ class DynamoDBConnection:
             for attempt in range(self.config.retry_config["max_attempts"]):
                 try:
                     # Use circuit breaker
-                    resource = self._circuit_breaker.call(
+                    resource: DynamoDBServiceResource = self._circuit_breaker.call(
                         self._connect_to_region, region
                     )
 

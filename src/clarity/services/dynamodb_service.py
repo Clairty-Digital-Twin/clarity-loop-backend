@@ -15,7 +15,6 @@ from typing import TYPE_CHECKING, Any
 import uuid
 from uuid import UUID
 
-import boto3
 from botocore.exceptions import ClientError
 from mypy_boto3_dynamodb.service_resource import DynamoDBServiceResource
 
@@ -23,13 +22,8 @@ if TYPE_CHECKING:
     pass  # Only for type stubs now
 
 from clarity.ports.data_ports import IHealthDataRepository
-from clarity.services.dynamodb_connection import DynamoDBConnection, ConnectionConfig
-from clarity.services.dynamodb_repository import (
-    RepositoryFactory,
-    HealthDataRepository,
-    ProcessingJobRepository,
-    AuditLogRepository,
-)
+from clarity.services.dynamodb_connection import ConnectionConfig, DynamoDBConnection
+from clarity.services.dynamodb_repository import RepositoryFactory
 
 # Configure logger
 logger = logging.getLogger(__name__)

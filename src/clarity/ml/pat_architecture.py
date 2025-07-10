@@ -6,9 +6,9 @@ Based on Dartmouth specifications from arXiv:2411.15240.
 
 from __future__ import annotations
 
+from dataclasses import dataclass
 import logging
 import math
-from dataclasses import dataclass
 
 import torch
 from torch import nn
@@ -56,6 +56,7 @@ class PositionalEncoding(nn.Module):
         pe[:, 1::2] = torch.cos(position * div_term)
 
         self.register_buffer("pe", pe.unsqueeze(0))
+        self.pe: torch.Tensor  # Type annotation for mypy
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """Add positional encoding to input.
@@ -99,16 +100,16 @@ class PatchEmbedding(nn.Module):
 
         # Ensure sequence length is divisible by patch size
         if seq_len % self.patch_size != 0:
-            raise ValueError(
-                f"Sequence length {seq_len} must be divisible by patch size {self.patch_size}"
-            )
+            msg = f"Sequence length {seq_len} must be divisible by patch size {self.patch_size}"
+            raise ValueError(msg)
 
         # Reshape to patches
         num_patches = seq_len // self.patch_size
         x = x.view(batch_size, num_patches, self.patch_size)
 
         # Project patches to embeddings
-        return self.projection(x)
+        embeddings: torch.Tensor = self.projection(x)
+        return embeddings
 
 
 class TransformerBlock(nn.Module):
@@ -165,7 +166,8 @@ class TransformerBlock(nn.Module):
 
         # Feed-forward with residual connection
         ff_output = self.ff(x)
-        return self.norm2(x + self.dropout(ff_output))
+        output: torch.Tensor = self.norm2(x + self.dropout(ff_output))
+        return output
 
 
 class PATModel(nn.Module):
@@ -175,7 +177,7 @@ class PATModel(nn.Module):
     Follows Open/Closed principle: Extensible but stable interface.
     """
 
-    def __init__(self, config: "ModelConfig") -> None:
+    def __init__(self, config: ModelConfig) -> None:
         """Initialize PAT model.
 
         Args:
@@ -241,7 +243,8 @@ class PATModel(nn.Module):
             x = block(x)
 
         # Final normalization
-        return self.output_norm(x)
+        output: torch.Tensor = self.output_norm(x)
+        return output
 
     def get_patch_embeddings(self, x: torch.Tensor) -> torch.Tensor:
         """Get patch-level embeddings for input.

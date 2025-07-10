@@ -99,10 +99,12 @@ class DynamoDBService:
 
         # Initialize repository factory
         self._repository_factory = RepositoryFactory(self._connection_manager)
-        
+
         # Get repository instances
         self._health_data_repo = self._repository_factory.get_health_data_repository()
-        self._processing_job_repo = self._repository_factory.get_processing_job_repository()
+        self._processing_job_repo = (
+            self._repository_factory.get_processing_job_repository()
+        )
         self._audit_log_repo = self._repository_factory.get_audit_log_repository()
 
         # Use connection manager to get DynamoDB resource
@@ -177,7 +179,7 @@ class DynamoDBService:
                 table=table,
                 item_id=item_id,
                 user_id=user_id,
-                metadata=metadata
+                metadata=metadata,
             )
 
             logger.debug("Audit log created: %s on %s/%s", operation, table, item_id)
@@ -506,10 +508,10 @@ class DynamoDBService:
         try:
             # Use connection manager's health check
             health_status = self._connection_manager.check_health()
-            
+
             # Get connection metrics
             metrics = self._connection_manager.get_metrics()
-            
+
             result = {
                 "status": "healthy" if health_status.is_healthy else "unhealthy",
                 "region": self.region,
@@ -525,11 +527,11 @@ class DynamoDBService:
                 "health_check_latency_ms": health_status.latency_ms,
                 "timestamp": datetime.now(UTC).isoformat(),
             }
-            
+
             # Include error message if health check failed
             if not health_status.is_healthy and health_status.error_message:
                 result["error"] = health_status.error_message
-                
+
             return result
 
         except Exception as e:
@@ -565,12 +567,14 @@ class DynamoDBHealthDataRepository(IHealthDataRepository):
         )
         self._connection = DynamoDBConnection(connection_config)
         self._repository_factory = RepositoryFactory(self._connection)
-        
+
         # Get repository instances
         self._health_data_repo = self._repository_factory.get_health_data_repository()
-        self._processing_job_repo = self._repository_factory.get_processing_job_repository()
+        self._processing_job_repo = (
+            self._repository_factory.get_processing_job_repository()
+        )
         self._audit_log_repo = self._repository_factory.get_audit_log_repository()
-        
+
         # For backward compatibility
         self._dynamodb_service = DynamoDBService(
             region=region, endpoint_url=endpoint_url

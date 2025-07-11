@@ -90,13 +90,18 @@ jobs:
           jq --arg IMAGE "${{ steps.login-ecr.outputs.registry }}/clarity-backend:${{ github.sha }}" \
           '.containerDefinitions[0].image = $IMAGE | del(.taskDefinitionArn, .revision, .status, .requiresAttributes, .compatibilities, .registeredAt, .registeredBy)')
         
+        # Save task definition to temp file
+        echo "$NEW_TASK_DEF" > /tmp/new-task-def.json
+        
         # Register new task definition
-        NEW_TASK_ARN=$(echo $NEW_TASK_DEF | \
-          aws ecs register-task-definition \
-          --cli-input-json file:///dev/stdin \
+        NEW_TASK_ARN=$(aws ecs register-task-definition \
+          --cli-input-json file:///tmp/new-task-def.json \
           --query 'taskDefinition.taskDefinitionArn' \
           --output text \
           --region us-east-1)
+        
+        # Clean up temp file
+        rm -f /tmp/new-task-def.json
         
         echo "📋 New task definition: $NEW_TASK_ARN"
         

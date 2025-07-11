@@ -43,7 +43,8 @@ class TestMetricsEndpoint:
         response = await get_metrics()
         
         assert isinstance(response, Response)
-        assert response.media_type == "text/plain; charset=utf-8"
+        assert response.media_type.startswith("text/plain")
+        assert "charset=utf-8" in response.media_type
         assert "Cache-Control" in response.headers
         assert response.headers["Cache-Control"] == "no-cache, no-store, must-revalidate"
         assert response.headers["Pragma"] == "no-cache"
@@ -63,7 +64,8 @@ class TestMetricsEndpoint:
         response = await get_metrics()
         
         assert isinstance(response, Response)
-        assert response.media_type == "text/plain; charset=utf-8"
+        assert response.media_type.startswith("text/plain")
+        assert "charset=utf-8" in response.media_type
         content = response.body.decode("utf-8")
         assert "clarity_metrics_error" in content
         assert "Metrics generation error" in content

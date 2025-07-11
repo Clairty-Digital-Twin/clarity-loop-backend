@@ -51,7 +51,8 @@
       "Sid": "WAFReadAccess",
       "Effect": "Allow",
       "Action": [
-        "wafv2:GetWebACLForResource"
+        "wafv2:GetWebACLForResource",
+        "wafv2:GetWebACL"
       ],
       "Resource": "*"
     },

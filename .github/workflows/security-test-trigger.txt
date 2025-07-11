@@ -1,2 +1,3 @@
 Trigger security workflow test after v4 upgrade
 Date: 2025-07-11ELB permissions fixed
+WAF GetWebACL permission added

@@ -17,4 +17,3 @@ def test_create_application():
         
         assert result == mock_app
         assert result.title == "Clarity Loop Backend"
-EOF < /dev/null

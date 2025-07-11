@@ -1,0 +1,78 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": [
+        "dynamodb:GetItem",
+        "dynamodb:PutItem",
+        "dynamodb:Query",
+        "dynamodb:Scan",
+        "dynamodb:UpdateItem",
+        "dynamodb:DeleteItem",
+        "dynamodb:BatchGetItem",
+        "dynamodb:BatchWriteItem"
+      ],
+      "Resource": [
+        "arn:aws:dynamodb:us-east-1:124355672559:table/clarity-health-data",
+        "arn:aws:dynamodb:us-east-1:124355672559:table/clarity-ai-insights",
+        "arn:aws:dynamodb:us-east-1:124355672559:table/clarity-users",
+        "arn:aws:dynamodb:us-east-1:124355672559:table/clarity-user-sessions",
+        "arn:aws:dynamodb:us-east-1:124355672559:table/clarity-health-data/index/*",
+        "arn:aws:dynamodb:us-east-1:124355672559:table/clarity-ai-insights/index/*",
+        "arn:aws:dynamodb:us-east-1:124355672559:table/clarity-users/index/*",
+        "arn:aws:dynamodb:us-east-1:124355672559:table/clarity-user-sessions/index/*"
+      ]
+    },
+    {
+      "Effect": "Allow",
+      "Action": [
+        "s3:GetObject",
+        "s3:ListBucket",
+        "s3:GetBucketLocation"
+      ],
+      "Resource": [
+        "arn:aws:s3:::clarity-health-data-storage",
+        "arn:aws:s3:::clarity-health-data-storage/*",
+        "arn:aws:s3:::clarity-ml-models-124355672559",
+        "arn:aws:s3:::clarity-ml-models-124355672559/*"
+      ]
+    },
+    {
+      "Effect": "Allow",
+      "Action": [
+        "sqs:SendMessage",
+        "sqs:ReceiveMessage",
+        "sqs:DeleteMessage",
+        "sqs:GetQueueAttributes"
+      ],
+      "Resource": "arn:aws:sqs:us-east-1:124355672559:clarity-insights-queue"
+    },
+    {
+      "Effect": "Allow",
+      "Action": [
+        "sns:Publish"
+      ],
+      "Resource": "arn:aws:sns:us-east-1:124355672559:clarity-insights-topic"
+    },
+    {
+      "Effect": "Allow",
+      "Action": [
+        "cognito-idp:AdminGetUser",
+        "cognito-idp:AdminCreateUser",
+        "cognito-idp:AdminUpdateUserAttributes",
+        "cognito-idp:AdminSetUserPassword",
+        "cognito-idp:AdminInitiateAuth",
+        "cognito-idp:AdminRespondToAuthChallenge"
+      ],
+      "Resource": "arn:aws:cognito-idp:us-east-1:124355672559:userpool/us-east-1_efXaR5EcP"
+    },
+    {
+      "Effect": "Allow",
+      "Action": [
+        "secretsmanager:GetSecretValue"
+      ],
+      "Resource": "arn:aws:secretsmanager:us-east-1:124355672559:secret:clarity/gemini-api-key-*"
+    }
+  ]
+}

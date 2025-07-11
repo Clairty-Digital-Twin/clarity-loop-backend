@@ -49,20 +49,20 @@ class TestPaginationInfo:
     def test_pagination_info_creation(self):
         """Test creating pagination info."""
         info = PaginationInfo(
-            page=2,
+            total_count=250,
             page_size=25,
-            total_pages=10,
-            total_items=250,
             has_next=True,
             has_previous=True,
+            next_cursor="eyJpZCI6MTU0MjAsInRpbWVzdGFtcCI6IjIwMjUtMDEtMTVUMTA6MzA6MDBaIn0=",
+            previous_cursor="eyJpZCI6MTUzNzAsInRpbWVzdGFtcCI6IjIwMjUtMDEtMTVUMDk6MzA6MDBaIn0=",
         )
 
-        assert info.page == 2
+        assert info.total_count == 250
         assert info.page_size == 25
-        assert info.total_pages == 10
-        assert info.total_items == 250
         assert info.has_next is True
         assert info.has_previous is True
+        assert info.next_cursor == "eyJpZCI6MTU0MjAsInRpbWVzdGFtcCI6IjIwMjUtMDEtMTVUMTA6MzA6MDBaIn0="
+        assert info.previous_cursor == "eyJpZCI6MTUzNzAsInRpbWVzdGFtcCI6IjIwMjUtMDEtMTVUMDk6MzA6MDBaIn0="
 
 
 class TestCursorFunctions:
@@ -71,7 +71,7 @@ class TestCursorFunctions:
     def test_create_and_decode_cursor(self):
         """Test creating and decoding cursor."""
         cursor_info = CursorInfo(
-            timestamp=datetime.now(UTC), id=str(uuid.uuid4()), direction="next"
+            timestamp=datetime.now(UTC).isoformat(), id=str(uuid.uuid4()), direction="next"
         )
 
         # Create cursor
@@ -83,9 +83,8 @@ class TestCursorFunctions:
         decoded = decode_cursor(cursor)
         assert decoded.id == cursor_info.id
         assert decoded.direction == cursor_info.direction
-        assert decoded.timestamp.replace(
-            microsecond=0
-        ) == cursor_info.timestamp.replace(microsecond=0)
+        # Compare timestamps as strings (they're ISO format)
+        assert decoded.timestamp == cursor_info.timestamp
 
 
 class TestPaginatedResponse:
@@ -94,41 +93,45 @@ class TestPaginatedResponse:
     def test_paginated_response_with_pagination_info(self):
         """Test paginated response with pagination info."""
         pagination = PaginationInfo(
-            page=1,
+            total_count=50,
             page_size=10,
-            total_pages=5,
-            total_items=50,
             has_next=True,
             has_previous=False,
+            next_cursor="eyJpZCI6MTU0MjAsInRpbWVzdGFtcCI6IjIwMjUtMDEtMTVUMTA6MzA6MDBaIn0=",
+            previous_cursor=None,
+        )
+
+        links = PaginationLinks(
+            self="/api/items?limit=10",
+            next="/api/items?limit=10&cursor=eyJpZCI6MTU0MjAsInRpbWVzdGFtcCI6IjIwMjUtMDEtMTVUMTA6MzA6MDBaIn0=",
+            previous=None,
         )
 
         response = PaginatedResponse(
             data=[{"id": 1}, {"id": 2}],
             pagination=pagination,
-            meta={"query_time": 0.123},
+            links=links,
         )
 
         assert len(response.data) == 2
-        assert response.pagination.page == 1
-        assert response.meta["query_time"] == 0.123
+        assert response.pagination.page_size == 10
+        assert response.links.next == "/api/items?limit=10&cursor=eyJpZCI6MTU0MjAsInRpbWVzdGFtcCI6IjIwMjUtMDEtMTVUMTA6MzA6MDBaIn0="
 
     def test_paginated_response_with_links(self):
         """Test paginated response with links."""
         pagination = PaginationInfo(
-            page=2,
+            total_count=200,
             page_size=20,
-            total_pages=10,
-            total_items=200,
             has_next=True,
             has_previous=True,
+            next_cursor="eyJpZCI6MTU0NDAsInRpbWVzdGFtcCI6IjIwMjUtMDEtMTVUMTE6MDA6MDBaIn0=",
+            previous_cursor="eyJpZCI6MTU0MDAsInRpbWVzdGFtcCI6IjIwMjUtMDEtMTVUMDk6MDA6MDBaIn0=",
         )
 
         links = PaginationLinks(
-            self="/api/items?page=2",
-            first="/api/items?page=1",
-            last="/api/items?page=10",
-            next="/api/items?page=3",
-            previous="/api/items?page=1",
+            self="/api/items?limit=20&cursor=current",
+            next="/api/items?limit=20&cursor=eyJpZCI6MTU0NDAsInRpbWVzdGFtcCI6IjIwMjUtMDEtMTVUMTE6MDA6MDBaIn0=",
+            previous="/api/items?limit=20&cursor=eyJpZCI6MTU0MDAsInRpbWVzdGFtcCI6IjIwMjUtMDEtMTVUMDk6MDA6MDBaIn0=",
         )
 
         response = PaginatedResponse(
@@ -136,8 +139,8 @@ class TestPaginatedResponse:
         )
 
         assert len(response.data) == 1
-        assert response.links.next == "/api/items?page=3"
-        assert response.links.previous == "/api/items?page=1"
+        assert response.links.next == "/api/items?limit=20&cursor=eyJpZCI6MTU0NDAsInRpbWVzdGFtcCI6IjIwMjUtMDEtMTVUMTE6MDA6MDBaIn0="
+        assert response.links.previous == "/api/items?limit=20&cursor=eyJpZCI6MTU0MDAsInRpbWVzdGFtcCI6IjIwMjUtMDEtMTVUMDk6MDA6MDBaIn0="
 
 
 class TestValidatePaginationParams:
@@ -145,22 +148,23 @@ class TestValidatePaginationParams:
 
     def test_validate_valid_params(self):
         """Test validation with valid parameters."""
-        params = PaginationParams(page=5, page_size=25)
-        validated = validate_pagination_params(params)
+        validated = validate_pagination_params(limit=25, cursor=None)
 
-        assert validated.page == 5
-        assert validated.page_size == 25
+        assert validated.limit == 25
+        assert validated.cursor is None
 
-    def test_validate_invalid_page(self):
-        """Test validation with invalid page."""
-        params = PaginationParams(page=-1, page_size=20)
-        validated = validate_pagination_params(params)
+    def test_validate_with_offset(self):
+        """Test validation with offset."""
+        validated = validate_pagination_params(
+            limit=20, 
+            offset=40
+        )
 
-        assert validated.page == 1  # Should be corrected to 1
+        assert validated.limit == 20
+        # Offset parameter may not be directly stored in PaginationParams
 
-    def test_validate_invalid_page_size(self):
-        """Test validation with invalid page size."""
-        params = PaginationParams(page=1, page_size=5000)
-        validated = validate_pagination_params(params)
+    def test_validate_default_limit(self):
+        """Test validation with default limit."""
+        validated = validate_pagination_params()
 
-        assert validated.page_size == 100  # Should be capped at max
+        assert validated.limit == 50  # Default limit

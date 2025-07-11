@@ -1,0 +1,71 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "ECSAndECRAccess",
+      "Effect": "Allow",
+      "Action": [
+        "ecr:GetAuthorizationToken",
+        "ecr:BatchCheckLayerAvailability",
+        "ecr:GetDownloadUrlForLayer",
+        "ecr:BatchGetImage",
+        "ecr:PutImage",
+        "ecr:InitiateLayerUpload",
+        "ecr:UploadLayerPart",
+        "ecr:CompleteLayerUpload",
+        "ecs:DescribeServices",
+        "ecs:DescribeTaskDefinition",
+        "ecs:UpdateService",
+        "ecs:RegisterTaskDefinition",
+        "ecs:DescribeTasks",
+        "ecs:ListTasks"
+      ],
+      "Resource": "*",
+      "Condition": {
+        "StringEquals": {
+          "aws:RequestedRegion": "us-east-1"
+        }
+      }
+    },
+    {
+      "Sid": "IAMRoleAccess",
+      "Effect": "Allow",
+      "Action": [
+        "iam:GetRole",
+        "iam:PassRole"
+      ],
+      "Resource": [
+        "arn:aws:iam::124355672559:role/ecsTaskExecutionRole",
+        "arn:aws:iam::124355672559:role/clarity-backend-task-role"
+      ]
+    },
+    {
+      "Sid": "SecuritySmokeTestAccess",
+      "Effect": "Allow",
+      "Action": [
+        "elasticloadbalancing:DescribeLoadBalancers"
+      ],
+      "Resource": "arn:aws:elasticloadbalancing:us-east-1:124355672559:loadbalancer/app/clarity-alb/*"
+    },
+    {
+      "Sid": "WAFReadAccess",
+      "Effect": "Allow",
+      "Action": [
+        "wafv2:GetWebACLForResource"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "CloudWatchLogsAccess",
+      "Effect": "Allow",
+      "Action": [
+        "logs:CreateLogGroup",
+        "logs:CreateLogStream",
+        "logs:PutLogEvents",
+        "logs:DescribeLogGroups",
+        "logs:DescribeLogStreams"
+      ],
+      "Resource": "arn:aws:logs:us-east-1:124355672559:log-group:/ecs/clarity-backend:*"
+    }
+  ]
+} 

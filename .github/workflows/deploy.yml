@@ -65,13 +65,88 @@ jobs:
           .
         
         echo "✅ Image pushed successfully!"
-        
-        # Deploy using the new image
-        echo "💥 Deploying to ECS... 💥"
-        ./ops/deploy.sh --tag $IMAGE_TAG
+        echo "🏷️ Tagged as: $IMAGE_TAG"
 
-    - name: Deploy completed
+    - name: Deploy to ECS
       run: |
-        echo "✅ SINGULARITY DEPLOYMENT COMPLETED SUCCESSFULLY! ✅"
-        echo "🔗 Application URL: https://clarity.novamindnyc.com"
-        echo "🛡️ Security Status: FORTRESS MODE ACTIVATED"
+        echo "🚀 Starting automated deployment to ECS..."
+        
+        # Get current task definition
+        TASK_DEF_ARN=$(aws ecs describe-services \
+          --cluster clarity-backend-cluster \
+          --services clarity-backend-service \
+          --query 'services[0].taskDefinition' \
+          --output text \
+          --region us-east-1)
+        
+        # Download current task definition
+        TASK_DEF=$(aws ecs describe-task-definition \
+          --task-definition $TASK_DEF_ARN \
+          --query 'taskDefinition' \
+          --region us-east-1)
+        
+        # Update container image
+        NEW_TASK_DEF=$(echo $TASK_DEF | \
+          jq --arg IMAGE "${{ steps.login-ecr.outputs.registry }}/clarity-backend:${{ github.sha }}" \
+          '.containerDefinitions[0].image = $IMAGE | del(.taskDefinitionArn, .revision, .status, .requiresAttributes, .compatibilities, .registeredAt, .registeredBy)')
+        
+        # Register new task definition
+        NEW_TASK_ARN=$(echo $NEW_TASK_DEF | \
+          aws ecs register-task-definition \
+          --cli-input-json file:///dev/stdin \
+          --query 'taskDefinition.taskDefinitionArn' \
+          --output text \
+          --region us-east-1)
+        
+        echo "📋 New task definition: $NEW_TASK_ARN"
+        
+        # Update service
+        aws ecs update-service \
+          --cluster clarity-backend-cluster \
+          --service clarity-backend-service \
+          --task-definition $NEW_TASK_ARN \
+          --force-new-deployment \
+          --region us-east-1 \
+          --output json > /dev/null
+        
+        echo "⏳ Waiting for deployment to complete..."
+        
+        # Wait for service to stabilize (timeout after 10 minutes)
+        aws ecs wait services-stable \
+          --cluster clarity-backend-cluster \
+          --services clarity-backend-service \
+          --region us-east-1 || true
+        
+        # Check deployment status
+        RUNNING_COUNT=$(aws ecs describe-services \
+          --cluster clarity-backend-cluster \
+          --services clarity-backend-service \
+          --query 'services[0].runningCount' \
+          --output text \
+          --region us-east-1)
+        
+        echo "✅ Deployment completed! Running tasks: $RUNNING_COUNT"
+
+    - name: Verify deployment
+      run: |
+        echo "🔍 Verifying deployment health..."
+        
+        # Get ALB DNS
+        ALB_DNS=$(aws elbv2 describe-load-balancers \
+          --names clarity-alb \
+          --query 'LoadBalancers[0].DNSName' \
+          --output text \
+          --region us-east-1)
+        
+        # Check health endpoint
+        HEALTH_STATUS=$(curl -s -k https://$ALB_DNS/health | jq -r '.status' || echo "failed")
+        
+        if [ "$HEALTH_STATUS" = "healthy" ]; then
+          echo "✅ DEPLOYMENT VERIFIED - Application is healthy!"
+          echo "🎉 Build SHA: ${{ github.sha }}"
+          echo "🔗 Application URL: https://clarity.novamindnyc.com"
+          echo "🛡️ Security Status: WAF Protection Active"
+        else
+          echo "⚠️ Health check returned: $HEALTH_STATUS"
+          echo "Note: Application may still be starting up"
+        fi

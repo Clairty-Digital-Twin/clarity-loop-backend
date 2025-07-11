@@ -67,70 +67,27 @@ jobs:
         echo "✅ Image pushed successfully!"
         echo "🏷️ Tagged as: $IMAGE_TAG"
 
-    - name: Deploy to ECS
+    - name: Download task definition
+      id: task-def
       run: |
-        echo "🚀 Starting automated deployment to ECS..."
+        aws ecs describe-task-definition \
+          --task-definition clarity-backend \
+          --query taskDefinition > task-definition.json
         
-        # Get current task definition
-        TASK_DEF_ARN=$(aws ecs describe-services \
-          --cluster clarity-backend-cluster \
-          --services clarity-backend-service \
-          --query 'services[0].taskDefinition' \
-          --output text \
-          --region us-east-1)
+        # Update image in task definition
+        jq --arg IMAGE "${{ steps.login-ecr.outputs.registry }}/clarity-backend:${{ github.sha }}" \
+          '.containerDefinitions[0].image = $IMAGE | del(.taskDefinitionArn, .revision, .status, .requiresAttributes, .compatibilities, .registeredAt, .registeredBy)' \
+          task-definition.json > new-task-definition.json
         
-        # Download current task definition
-        TASK_DEF=$(aws ecs describe-task-definition \
-          --task-definition $TASK_DEF_ARN \
-          --query 'taskDefinition' \
-          --region us-east-1)
-        
-        # Update container image
-        NEW_TASK_DEF=$(echo $TASK_DEF | \
-          jq --arg IMAGE "${{ steps.login-ecr.outputs.registry }}/clarity-backend:${{ github.sha }}" \
-          '.containerDefinitions[0].image = $IMAGE | del(.taskDefinitionArn, .revision, .status, .requiresAttributes, .compatibilities, .registeredAt, .registeredBy)')
-        
-        # Save task definition to temp file
-        echo "$NEW_TASK_DEF" > /tmp/new-task-def.json
-        
-        # Register new task definition
-        NEW_TASK_ARN=$(aws ecs register-task-definition \
-          --cli-input-json file:///tmp/new-task-def.json \
-          --query 'taskDefinition.taskDefinitionArn' \
-          --output text \
-          --region us-east-1)
-        
-        # Clean up temp file
-        rm -f /tmp/new-task-def.json
-        
-        echo "📋 New task definition: $NEW_TASK_ARN"
-        
-        # Update service
-        aws ecs update-service \
-          --cluster clarity-backend-cluster \
-          --service clarity-backend-service \
-          --task-definition $NEW_TASK_ARN \
-          --force-new-deployment \
-          --region us-east-1 \
-          --output json > /dev/null
-        
-        echo "⏳ Waiting for deployment to complete..."
-        
-        # Wait for service to stabilize (timeout after 10 minutes)
-        aws ecs wait services-stable \
-          --cluster clarity-backend-cluster \
-          --services clarity-backend-service \
-          --region us-east-1 || true
-        
-        # Check deployment status
-        RUNNING_COUNT=$(aws ecs describe-services \
-          --cluster clarity-backend-cluster \
-          --services clarity-backend-service \
-          --query 'services[0].runningCount' \
-          --output text \
-          --region us-east-1)
-        
-        echo "✅ Deployment completed! Running tasks: $RUNNING_COUNT"
+        echo "task-definition=new-task-definition.json" >> $GITHUB_OUTPUT
+
+    - name: Deploy to ECS
+      uses: aws-actions/amazon-ecs-deploy-task-definition@v2
+      with:
+        task-definition: ${{ steps.task-def.outputs.task-definition }}
+        service: clarity-backend-service
+        cluster: clarity-backend-cluster
+        wait-for-service-stability: true
 
     - name: Verify deployment
       run: |

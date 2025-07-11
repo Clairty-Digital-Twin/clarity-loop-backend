@@ -308,15 +308,12 @@ class TestAuthHappyPaths:
             email_verified=True,
             display_name="Test User",
             auth_provider="cognito",
-            created_at="2024-01-01T00:00:00Z",
-            last_login="2024-01-02T00:00:00Z",
-            role="patient",
-            permissions=["read", "write"],
         )
         assert response.user_id == "123"
         assert response.email == "test@example.com"
         assert response.email_verified is True
-        assert response.permissions == ["read", "write"]
+        assert response.display_name == "Test User"
+        assert response.auth_provider == "cognito"
 
     def test_logout_response_model(self):
         """Test LogoutResponse model."""
@@ -326,7 +323,12 @@ class TestAuthHappyPaths:
     def test_user_update_response_model(self):
         """Test UserUpdateResponse model."""
         response = UserUpdateResponse(
-            message="Test update message", updated_fields=["field1", "field2"]
+            user_id="user123",
+            email="test@example.com",
+            display_name="Updated Name",
+            updated=True
         )
-        assert response.message == "Test update message"
-        assert response.updated_fields == ["field1", "field2"]
+        assert response.user_id == "user123"
+        assert response.email == "test@example.com"
+        assert response.display_name == "Updated Name"
+        assert response.updated is True

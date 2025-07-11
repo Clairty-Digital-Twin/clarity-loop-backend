@@ -357,7 +357,7 @@ def configure_test_logging(caplog: pytest.LogCaptureFixture) -> None:
     """Configure logging levels for tests to reduce noise."""
     # Set default logging level to WARNING for all loggers
     caplog.set_level(logging.WARNING)
-    
+
     # Specifically set noisy loggers to ERROR or higher
     logging.getLogger("clarity.middleware.rate_limiting").setLevel(logging.ERROR)
     logging.getLogger("clarity.ml.nhanes_stats").setLevel(logging.ERROR)
@@ -367,7 +367,7 @@ def configure_test_logging(caplog: pytest.LogCaptureFixture) -> None:
     logging.getLogger("boto3").setLevel(logging.ERROR)
     logging.getLogger("httpx").setLevel(logging.ERROR)
     logging.getLogger("httpcore").setLevel(logging.ERROR)
-    
+
     # FastAPI and Uvicorn loggers
     logging.getLogger("fastapi").setLevel(logging.ERROR)
     logging.getLogger("uvicorn").setLevel(logging.ERROR)

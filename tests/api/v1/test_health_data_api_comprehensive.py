@@ -131,7 +131,7 @@ def app_with_dependencies(
     # Include the REAL health data router
     app.include_router(router, prefix="/api/v1/health-data")
 
-    yield app
+    return app
 
 
 @pytest.fixture

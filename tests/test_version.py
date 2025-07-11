@@ -1,7 +1,9 @@
 """Test version module."""
 
 from unittest.mock import patch
+
 import pytest
+
 from clarity.version import get_version
 
 
@@ -18,6 +20,7 @@ def test_get_version_not_installed():
     with patch("clarity.version.metadata.version") as mock_version:
         # Simulate PackageNotFoundError
         from importlib import metadata
+
         mock_version.side_effect = metadata.PackageNotFoundError("clarity-loop-backend")
-        
+
         assert get_version() == "0.1.0-dev"

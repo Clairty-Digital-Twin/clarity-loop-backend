@@ -144,7 +144,7 @@ class Settings(BaseSettings):
     # Application settings
     app_name: str = "CLARITY Digital Twin Platform"
     app_version: str = "1.0.0"
-    
+
     # Health Data settings
     max_metrics_per_upload: int = Field(
         default=1000,

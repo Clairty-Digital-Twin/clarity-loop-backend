@@ -294,7 +294,7 @@ class DynamoDBConnection:
             )
         except (
             Exception
-        ) as e:  # noqa: BLE001 - Health check should catch all exceptions
+        ) as e:
             return HealthStatus(
                 is_healthy=False,
                 latency_ms=0.0,

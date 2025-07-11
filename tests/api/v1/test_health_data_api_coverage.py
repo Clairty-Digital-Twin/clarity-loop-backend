@@ -46,8 +46,10 @@ from clarity.models.health_data import (
 from clarity.ports.auth_ports import IAuthProvider
 from clarity.ports.config_ports import IConfigProvider
 from clarity.ports.data_ports import IHealthDataRepository
-from clarity.services.health_data_service import HealthDataService, HealthDataServiceError
-
+from clarity.services.health_data_service import (
+    HealthDataService,
+    HealthDataServiceError,
+)
 
 # ===== FIXTURES =====
 
@@ -104,19 +106,20 @@ def app_with_dependencies(
 ) -> Generator[FastAPI, None, None]:
     """Create FastAPI app with mocked dependencies."""
     app = FastAPI()
-    
+
     # Set up dependencies
     set_dependencies(mock_auth_provider, mock_repository, mock_config_provider)
-    
+
     # Override authentication
     from clarity.auth.dependencies import get_authenticated_user
+
     app.dependency_overrides[get_authenticated_user] = lambda: test_user
-    
+
     # Include router
     app.include_router(router, prefix="/api/v1/health-data")
-    
+
     yield app
-    
+
     # Cleanup
     _container.auth_provider = None
     _container.repository = None
@@ -159,7 +162,7 @@ class TestErrorHandlingFunctions:
         """Test _raise_not_found_error function."""
         with pytest.raises(ResourceNotFoundProblem) as exc_info:
             _raise_not_found_error("HealthData", "123")
-        
+
         assert exc_info.value.status_code == status.HTTP_404_NOT_FOUND
         assert "HealthData" in str(exc_info.value.detail)
         assert "123" in str(exc_info.value.detail)
@@ -168,7 +171,7 @@ class TestErrorHandlingFunctions:
         """Test _raise_too_many_metrics_error function."""
         with pytest.raises(ValidationProblem) as exc_info:
             _raise_too_many_metrics_error(150, 100)
-        
+
         assert exc_info.value.status_code == status.HTTP_400_BAD_REQUEST
         assert "150 exceeds maximum 100" in str(exc_info.value.detail)
         assert exc_info.value.errors[0]["field"] == "metrics"
@@ -186,14 +189,14 @@ class TestDependencyInjectionFailures:
         # Store original values
         original_repo = _container.repository
         original_config = _container.config_provider
-        
+
         try:
             _container.repository = None
             _container.config_provider = None
-            
+
             with pytest.raises(ServiceUnavailableProblem) as exc_info:
                 get_health_data_service()
-            
+
             assert exc_info.value.status_code == status.HTTP_503_SERVICE_UNAVAILABLE
         finally:
             # Restore original values
@@ -203,10 +206,10 @@ class TestDependencyInjectionFailures:
     def test_get_auth_provider_none(self):
         """Test get_auth_provider when container.auth_provider is None."""
         _container.auth_provider = None
-        
+
         with pytest.raises(ServiceUnavailableProblem) as exc_info:
             get_auth_provider()
-        
+
         assert exc_info.value.status_code == status.HTTP_503_SERVICE_UNAVAILABLE
         assert "Authentication Provider" in str(exc_info.value.detail)
         # retry_after is passed in headers, not as attribute
@@ -214,10 +217,10 @@ class TestDependencyInjectionFailures:
     def test_get_config_provider_none(self):
         """Test get_config_provider when container.config_provider is None."""
         _container.config_provider = None
-        
+
         with pytest.raises(ServiceUnavailableProblem) as exc_info:
             get_config_provider()
-        
+
         assert exc_info.value.status_code == status.HTTP_503_SERVICE_UNAVAILABLE
         assert "Configuration Provider" in str(exc_info.value.detail)
         # retry_after is passed in headers, not as attribute
@@ -239,16 +242,18 @@ class TestDeleteEndpointErrors:
         # Create mock service that returns False for not found
         mock_service = AsyncMock(spec=HealthDataService)
         mock_service.delete_health_data = AsyncMock(return_value=False)
-        
+
         # Override the service dependency
-        app_with_dependencies.dependency_overrides[get_health_data_service] = lambda: mock_service
-        
+        app_with_dependencies.dependency_overrides[get_health_data_service] = (
+            lambda: mock_service
+        )
+
         # Create client with overridden dependencies
         client = TestClient(app_with_dependencies)
-        
+
         processing_id = str(uuid.uuid4())
         response = client.delete(f"/api/v1/health-data/{processing_id}")
-        
+
         # Due to exception handling, 404 becomes 500
         assert response.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR
         data = response.json()
@@ -266,13 +271,15 @@ class TestDeleteEndpointErrors:
         mock_service.delete_health_data = AsyncMock(
             side_effect=HealthDataServiceError("Database connection failed")
         )
-        
-        app_with_dependencies.dependency_overrides[get_health_data_service] = lambda: mock_service
+
+        app_with_dependencies.dependency_overrides[get_health_data_service] = (
+            lambda: mock_service
+        )
         client = TestClient(app_with_dependencies)
-        
+
         processing_id = str(uuid.uuid4())
         response = client.delete(f"/api/v1/health-data/{processing_id}")
-        
+
         assert response.status_code == status.HTTP_400_BAD_REQUEST
         data = response.json()
         assert "Database connection failed" in data["detail"]
@@ -289,13 +296,15 @@ class TestDeleteEndpointErrors:
         mock_service.delete_health_data = AsyncMock(
             side_effect=RuntimeError("Unexpected database error")
         )
-        
-        app_with_dependencies.dependency_overrides[get_health_data_service] = lambda: mock_service
+
+        app_with_dependencies.dependency_overrides[get_health_data_service] = (
+            lambda: mock_service
+        )
         client = TestClient(app_with_dependencies)
-        
+
         processing_id = str(uuid.uuid4())
         response = client.delete(f"/api/v1/health-data/{processing_id}")
-        
+
         assert response.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR
         data = response.json()
         assert "unexpected error" in data["detail"].lower()
@@ -310,24 +319,29 @@ class TestDeleteEndpointErrors:
         # Create mock service for successful deletion
         mock_service = AsyncMock(spec=HealthDataService)
         mock_service.delete_health_data = AsyncMock(return_value=True)
-        
-        app_with_dependencies.dependency_overrides[get_health_data_service] = lambda: mock_service
+
+        app_with_dependencies.dependency_overrides[get_health_data_service] = (
+            lambda: mock_service
+        )
         client = TestClient(app_with_dependencies)
-        
+
         processing_id = str(uuid.uuid4())
-        
+
         with patch("clarity.api.v1.health_data.logger") as mock_logger:
             response = client.delete(f"/api/v1/health-data/{processing_id}")
-        
+
         assert response.status_code == status.HTTP_200_OK
         data = response.json()
         assert data["message"] == "Health data deleted successfully"
         assert data["processing_id"] == processing_id
         assert "deleted_at" in data
-        
+
         # Verify logging
         mock_logger.info.assert_called()
-        assert any("deleted successfully" in str(call) for call in mock_logger.info.call_args_list)
+        assert any(
+            "deleted successfully" in str(call)
+            for call in mock_logger.info.call_args_list
+        )
 
 
 # ===== TESTS FOR COMPLEX HEALTH CHECK LOGIC =====
@@ -339,23 +353,26 @@ class TestHealthCheckEndpoint:
     def test_health_check_all_healthy(self, client: TestClient):
         """Test health check when all dependencies are healthy."""
         response = client.get("/api/v1/health-data/health")
-        
+
         assert response.status_code == status.HTTP_200_OK
         data = response.json()
         assert data["status"] == "healthy"
         assert data["service"] == "health-data-api"
         assert "timestamp" in data
 
-    @pytest.mark.xfail(strict=True, reason="Simple health check endpoint doesn't include database status")
+    @pytest.mark.xfail(
+        strict=True,
+        reason="Simple health check endpoint doesn't include database status",
+    )
     def test_health_check_database_not_configured(self, client: TestClient):
         """Test health check when database is not configured."""
         # Temporarily set repository to None
         original_repo = _container.repository
         _container.repository = None
-        
+
         try:
             response = client.get("/api/v1/health-data/health")
-            
+
             assert response.status_code == status.HTTP_200_OK
             data = response.json()
             assert data["status"] == "degraded"
@@ -363,16 +380,18 @@ class TestHealthCheckEndpoint:
         finally:
             _container.repository = original_repo
 
-    @pytest.mark.xfail(strict=True, reason="Simple health check endpoint doesn't include auth status")
+    @pytest.mark.xfail(
+        strict=True, reason="Simple health check endpoint doesn't include auth status"
+    )
     def test_health_check_auth_not_configured(self, client: TestClient):
         """Test health check when auth is not configured."""
         # Temporarily set auth_provider to None
         original_auth = _container.auth_provider
         _container.auth_provider = None
-        
+
         try:
             response = client.get("/api/v1/health-data/health")
-            
+
             assert response.status_code == status.HTTP_200_OK
             data = response.json()
             assert data["status"] == "degraded"
@@ -380,63 +399,72 @@ class TestHealthCheckEndpoint:
         finally:
             _container.auth_provider = original_auth
 
-    @pytest.mark.xfail(strict=True, reason="Simple health check endpoint doesn't include database status")
+    @pytest.mark.xfail(
+        strict=True,
+        reason="Simple health check endpoint doesn't include database status",
+    )
     def test_health_check_database_error(self, client: TestClient):
         """Test health check when database check raises error."""
         # Create a mock that raises AttributeError when accessed
         mock_container = Mock()
         mock_container.repository = Mock(side_effect=AttributeError("DB error"))
-        
+
         with patch("clarity.api.v1.health_data._container", mock_container):
             # Set auth_provider to work normally
             mock_container.auth_provider = Mock(spec=IAuthProvider)
-            
+
             response = client.get("/api/v1/health-data/health")
-            
+
             assert response.status_code == status.HTTP_200_OK
             data = response.json()
             assert data["status"] == "degraded"
             assert data["database"] == "error"
 
-    @pytest.mark.xfail(strict=True, reason="Simple health check endpoint doesn't include auth status")
+    @pytest.mark.xfail(
+        strict=True, reason="Simple health check endpoint doesn't include auth status"
+    )
     def test_health_check_auth_error(self, client: TestClient):
         """Test health check when auth check raises error."""
         # Create a mock that raises RuntimeError for auth_provider
         mock_container = Mock()
         mock_container.repository = Mock(spec=IHealthDataRepository)
         mock_container.auth_provider = Mock(side_effect=RuntimeError("Auth error"))
-        
+
         with patch("clarity.api.v1.health_data._container", mock_container):
             response = client.get("/api/v1/health-data/health")
-            
+
             assert response.status_code == status.HTTP_200_OK
             data = response.json()
             assert data["status"] == "degraded"
             assert data["authentication"] == "error"
 
-    @pytest.mark.xfail(strict=True, reason="Simple health check endpoint doesn't catch exceptions")
+    @pytest.mark.xfail(
+        strict=True, reason="Simple health check endpoint doesn't catch exceptions"
+    )
     def test_health_check_complete_failure(self, client: TestClient):
         """Test health check when everything fails."""
         with patch("clarity.api.v1.health_data.datetime") as mock_datetime:
             # Make datetime.now() raise an exception
             mock_datetime.now.side_effect = Exception("Total failure")
-            
+
             response = client.get("/api/v1/health-data/health")
-            
+
             # Should still return 200 but with unhealthy status
             assert response.status_code == status.HTTP_200_OK
             data = response.json()
             assert data["status"] == "unhealthy"
             assert data["error"] == "Health check failed"
 
-    @pytest.mark.xfail(strict=True, reason="Simple health check endpoint doesn't have debug logging")
+    @pytest.mark.xfail(
+        strict=True, reason="Simple health check endpoint doesn't have debug logging"
+    )
     def test_health_check_with_logging(self, client: TestClient):
         """Test health check logging paths."""
         with patch("clarity.api.v1.health_data.logger") as mock_logger:
             response = client.get("/api/v1/health-data/health")
-            
+
             assert response.status_code == status.HTTP_200_OK
-            
+
             # Verify debug logging
             mock_logger.debug.assert_called_with("Health check completed successfully")
 
@@ -460,12 +488,14 @@ class TestUploadEndpointEdgeCases:
         mock_service.process_health_data = AsyncMock(
             side_effect=HealthDataServiceError("Storage quota exceeded")
         )
-        
-        app_with_dependencies.dependency_overrides[get_health_data_service] = lambda: mock_service
+
+        app_with_dependencies.dependency_overrides[get_health_data_service] = (
+            lambda: mock_service
+        )
         client = TestClient(app_with_dependencies)
-        
+
         response = client.post("/api/v1/health-data/", json=valid_upload_data)
-        
+
         assert response.status_code == status.HTTP_400_BAD_REQUEST
         data = response.json()
         assert "Storage quota exceeded" in data["detail"]
@@ -483,17 +513,21 @@ class TestUploadEndpointEdgeCases:
         mock_service.process_health_data = AsyncMock(
             side_effect=RuntimeError("Database crashed")
         )
-        
-        app_with_dependencies.dependency_overrides[get_health_data_service] = lambda: mock_service
+
+        app_with_dependencies.dependency_overrides[get_health_data_service] = (
+            lambda: mock_service
+        )
         client = TestClient(app_with_dependencies)
-        
+
         response = client.post("/api/v1/health-data/", json=valid_upload_data)
-        
+
         assert response.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR
         data = response.json()
         assert "unexpected error" in data["detail"].lower()
 
-    @pytest.mark.xfail(strict=True, reason="Test with 10000 metrics is too slow and resource intensive")
+    @pytest.mark.xfail(
+        strict=True, reason="Test with 10000 metrics is too slow and resource intensive"
+    )
     @pytest.mark.asyncio
     async def test_upload_with_exactly_max_metrics(
         self,
@@ -504,20 +538,21 @@ class TestUploadEndpointEdgeCases:
         # Create exactly 10000 metrics (max allowed)
         metrics = []
         for i in range(10000):
-            metrics.append({
-                "metric_type": "heart_rate",
-                "value": float(60 + i % 40),
-                "unit": "bpm",
-                "timestamp": datetime.now(UTC).isoformat(),
-            })
-        
+            metrics.append(
+                {
+                    "metric_type": "heart_rate",
+                    "value": float(60 + i % 40),
+                    "unit": "bpm",
+                    "timestamp": datetime.now(UTC).isoformat(),
+                }
+            )
+
         valid_upload_data["metrics"] = metrics
-        
+
         response = client.post("/api/v1/health-data/", json=valid_upload_data)
-        
+
         # Should succeed with exactly max metrics
         assert response.status_code == status.HTTP_201_CREATED
-
 
 
 # ===== TESTS FOR LIST ENDPOINT PAGINATION =====
@@ -548,12 +583,12 @@ class TestListEndpointPagination:
                 "page_size": 10,
             }
         )
-        
+
         response = client.get(
             "/api/v1/health-data/",
             params={"limit": 10, "offset": 10},  # Page 2 with size 10
         )
-        
+
         assert response.status_code == status.HTTP_200_OK
         data = response.json()
         assert "data" in data
@@ -571,7 +606,7 @@ class TestListEndpointPagination:
             "/api/v1/health-data/",
             params={"page": 0, "page_size": 1001},  # Invalid values
         )
-        
+
         assert response.status_code == status.HTTP_400_BAD_REQUEST
 
     @pytest.mark.asyncio
@@ -589,7 +624,7 @@ class TestListEndpointPagination:
                 "page_size": 20,
             }
         )
-        
+
         response = client.get(
             "/api/v1/health-data/",
             params={
@@ -597,9 +632,9 @@ class TestListEndpointPagination:
                 "end_date": "2024-12-31T23:59:59Z",
             },
         )
-        
+
         assert response.status_code == status.HTTP_200_OK
-        
+
         # Verify repository was called with date filters
         mock_repository.get_user_health_data.assert_called_once()
         call_args = mock_repository.get_user_health_data.call_args[1]
@@ -621,10 +656,10 @@ class TestProcessingStatusEndpoint:
     ):
         """Test processing status when job not found."""
         mock_repository.get_processing_status = AsyncMock(return_value=None)
-        
+
         processing_id = str(uuid.uuid4())
         response = client.get(f"/api/v1/health-data/processing/{processing_id}")
-        
+
         assert response.status_code == status.HTTP_400_BAD_REQUEST
 
     @pytest.mark.asyncio
@@ -639,16 +674,18 @@ class TestProcessingStatusEndpoint:
         mock_service.get_processing_status = AsyncMock(
             side_effect=HealthDataServiceError("Database timeout")
         )
-        
+
         # Override the service dependency
-        app_with_dependencies.dependency_overrides[get_health_data_service] = lambda: mock_service
-        
+        app_with_dependencies.dependency_overrides[get_health_data_service] = (
+            lambda: mock_service
+        )
+
         # Create client with overridden dependencies
         client = TestClient(app_with_dependencies)
-        
+
         processing_id = str(uuid.uuid4())
         response = client.get(f"/api/v1/health-data/processing/{processing_id}")
-        
+
         assert response.status_code == status.HTTP_400_BAD_REQUEST
 
     @pytest.mark.asyncio
@@ -661,10 +698,10 @@ class TestProcessingStatusEndpoint:
         mock_repository.get_processing_status = AsyncMock(
             side_effect=RuntimeError("Connection lost")
         )
-        
+
         processing_id = str(uuid.uuid4())
         response = client.get(f"/api/v1/health-data/processing/{processing_id}")
-        
+
         assert response.status_code == status.HTTP_400_BAD_REQUEST
 
 
@@ -683,16 +720,16 @@ class TestHealthDataAPIIntegration:
     ):
         """Test complete lifecycle: upload -> status -> list -> delete."""
         processing_id = str(uuid.uuid4())
-        
+
         # 1. Upload
         mock_repository.save_health_data = AsyncMock(return_value=True)
         response = client.post("/api/v1/health-data/", json=valid_upload_data)
         assert response.status_code == status.HTTP_201_CREATED
-        
+
         # Extract the processing_id from the response
         response_data = response.json()
         processing_id = response_data["processing_id"]
-        
+
         # 2. Check status
         mock_repository.get_processing_status = AsyncMock(
             return_value={
@@ -703,7 +740,7 @@ class TestHealthDataAPIIntegration:
         )
         response = client.get(f"/api/v1/health-data/processing/{processing_id}")
         assert response.status_code == status.HTTP_200_OK
-        
+
         # 3. List
         mock_repository.get_user_health_data = AsyncMock(
             return_value={
@@ -715,7 +752,7 @@ class TestHealthDataAPIIntegration:
         )
         response = client.get("/api/v1/health-data/")
         assert response.status_code == status.HTTP_200_OK
-        
+
         # 4. Delete
         mock_repository.delete_health_data = AsyncMock(return_value=True)
         response = client.delete(f"/api/v1/health-data/{processing_id}")

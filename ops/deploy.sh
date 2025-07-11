@@ -339,6 +339,8 @@ main() {
     # Run smoke tests
     echo -e "\n${YELLOW}Running smoke tests...${NC}"
     if [ -f "./scripts/smoke-test-main.sh" ]; then
+        # Export ENVIRONMENT for smoke tests to know we're testing production
+        export ENVIRONMENT="production"
         if ./scripts/smoke-test-main.sh https://clarity.novamindnyc.com; then
             echo -e "${GREEN}✅ Smoke tests passed${NC}"
         else

@@ -4,8 +4,16 @@
 # Verifies all auth endpoints return expected status codes
 # Usage: ./smoke-test-auth.sh [BASE_URL]
 # Example: ./smoke-test-auth.sh http://localhost:8000
+# 
+# Environment variable:
+#   ENVIRONMENT=production - Expects different status codes for production
+#   ENVIRONMENT=development (default) - Expects standard development status codes
 
 set -euo pipefail
+
+# Set default ENVIRONMENT if not provided
+# In production, registration endpoints return 403 (forbidden) instead of normal codes
+ENVIRONMENT="${ENVIRONMENT:-development}"
 
 # Colors for output
 GREEN='\033[0;32m'

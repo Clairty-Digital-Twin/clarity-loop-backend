@@ -289,4 +289,45 @@ class TestRegisterEndpoint:
         
         assert exc_info.value.status_code == 403
         assert "Self-registration is currently disabled" in str(exc_info.value.detail["detail"])
+
+
+class TestAuthHappyPaths:
+    """Test auth happy path scenarios."""
+    
+    def test_token_response_model(self):
+        """Test TokenResponse model."""
+        from clarity.models.auth import TokenResponse
+        
+        response = TokenResponse(
+            access_token="mock-access-token",
+            refresh_token="mock-refresh-token",
+            token_type="bearer",
+            expires_in=3600
+        )
+        
+        assert response.access_token == "mock-access-token"
+        assert response.refresh_token == "mock-refresh-token"
+        assert response.token_type == "bearer"
+        assert response.expires_in == 3600
+    
+    def test_refresh_token_request_model(self):
+        """Test RefreshTokenRequest model."""
+        from clarity.api.v1.auth import RefreshTokenRequest
+        
+        request = RefreshTokenRequest(refresh_token="test-refresh-token")
+        assert request.refresh_token == "test-refresh-token"
+    
+    def test_logout_response_model(self):
+        """Test LogoutResponse model."""
+        response = LogoutResponse(message="Test logout message")
+        assert response.message == "Test logout message"
+    
+    def test_user_update_response_model(self):
+        """Test UserUpdateResponse model."""
+        response = UserUpdateResponse(
+            message="Test update message",
+            updated_fields=["field1", "field2"]
+        )
+        assert response.message == "Test update message"
+        assert response.updated_fields == ["field1", "field2"]
     

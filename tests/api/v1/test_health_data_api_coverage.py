@@ -763,5 +763,5 @@ class TestHealthDataAPIIntegration:
         assert router.prefix == ""
         assert any(route.path == "/" for route in router.routes)
         assert any(route.path == "/health" for route in router.routes)
-        assert any(route.path == "/status/{processing_id}" for route in router.routes)
+        assert any(route.path == "/processing/{processing_id}" for route in router.routes)
         assert any(route.path == "/{processing_id}" for route in router.routes)

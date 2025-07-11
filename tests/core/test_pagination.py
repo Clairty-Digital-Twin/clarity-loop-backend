@@ -23,26 +23,24 @@ class TestPaginationParams:
     def test_default_params(self):
         """Test default pagination parameters."""
         params = PaginationParams()
-        assert params.page == 1
-        assert params.page_size == 20
+        assert params.limit == 50
         assert params.cursor is None
 
     def test_custom_params(self):
         """Test custom pagination parameters."""
-        params = PaginationParams(page=3, page_size=50, cursor="next-cursor")
-        assert params.page == 3
-        assert params.page_size == 50
+        params = PaginationParams(limit=100, cursor="next-cursor")
+        assert params.limit == 100
         assert params.cursor == "next-cursor"
 
-    def test_page_size_validation(self):
-        """Test page size validation."""
-        # Should clamp to max
-        params = PaginationParams(page_size=1000)
-        assert params.page_size == 100  # Max allowed
+    def test_limit_validation(self):
+        """Test limit validation."""
+        # Max allowed is 1000
+        params = PaginationParams(limit=1000)
+        assert params.limit == 1000
 
-        # Should clamp to min
-        params = PaginationParams(page_size=0)
-        assert params.page_size == 1  # Min allowed
+        # Should fail validation if too high
+        with pytest.raises(Exception):  # Pydantic validation error
+            PaginationParams(limit=1001)
 
 
 class TestPaginationInfo:

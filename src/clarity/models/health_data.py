@@ -13,8 +13,9 @@ from uuid import UUID, uuid4
 from pydantic import BaseModel, Field, field_validator, model_validator
 from pydantic.types import PositiveInt
 
+from clarity.core.config import get_settings
+
 # Constants for validation
-MAX_METRICS_PER_UPLOAD = 100
 MAX_SLEEP_DURATION_MINUTES = 30
 MAX_NOTES_LENGTH = 1000
 
@@ -295,7 +296,7 @@ class HealthDataUpload(BaseModel):
 
     metrics: Annotated[
         list[HealthMetric],
-        Field(description="Health metrics to upload", min_length=1, max_length=100),
+        Field(description="Health metrics to upload", min_length=1),
     ]
 
     upload_source: str = Field(
@@ -313,8 +314,10 @@ class HealthDataUpload(BaseModel):
     @classmethod
     def validate_metrics_consistency(cls, v: list[HealthMetric]) -> list[HealthMetric]:
         """Validate metrics are consistent and reasonable."""
-        if len(v) > MAX_METRICS_PER_UPLOAD:
-            msg = f"Maximum {MAX_METRICS_PER_UPLOAD} metrics per upload"
+        settings = get_settings()
+        max_metrics = settings.max_metrics_per_upload
+        if len(v) > max_metrics:
+            msg = f"Maximum {max_metrics} metrics per upload"
             raise ValueError(msg)
 
         # Check for duplicate metric IDs

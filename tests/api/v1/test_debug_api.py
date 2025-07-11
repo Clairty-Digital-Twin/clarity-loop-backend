@@ -6,16 +6,14 @@ and edge cases to achieve 95%+ coverage.
 """
 
 import json
-import logging
-from unittest.mock import patch, MagicMock
-from typing import Any
+from typing import Never
+from unittest.mock import MagicMock, patch
 
-import pytest
 from fastapi import Request
 from fastapi.responses import JSONResponse
-from fastapi.testclient import TestClient
+import pytest
 
-from clarity.api.v1.debug import router, capture_raw_request, echo_login_request
+from clarity.api.v1.debug import capture_raw_request, echo_login_request, router
 
 
 class TestDebugAPIModule:
@@ -56,11 +54,11 @@ class TestCaptureRawRequestEndpoint:
         # Arrange
         json_data = {"username": "testuser", "password": "testpass"}
         json_bytes = json.dumps(json_data).encode("utf-8")
-        
+
         # Create async mock for body() method
         async def mock_body():
             return json_bytes
-        
+
         mock_request.body = mock_body
         mock_request.headers = {"Content-Type": "application/json"}
 
@@ -81,12 +79,14 @@ class TestCaptureRawRequestEndpoint:
     async def test_capture_invalid_json_request(self, mock_request):
         """Test capturing a request with invalid JSON."""
         # Arrange
-        invalid_json = '{"username": "testuser", "password": "testpass"'  # Missing closing brace
+        invalid_json = (
+            '{"username": "testuser", "password": "testpass"'  # Missing closing brace
+        )
         json_bytes = invalid_json.encode("utf-8")
-        
+
         async def mock_body():
             return json_bytes
-        
+
         mock_request.body = mock_body
 
         # Act
@@ -103,11 +103,11 @@ class TestCaptureRawRequestEndpoint:
     async def test_capture_invalid_utf8_request(self, mock_request):
         """Test capturing a request with invalid UTF-8 encoding."""
         # Arrange
-        invalid_utf8 = b'\x80\x81\x82\x83'  # Invalid UTF-8 sequence
-        
+        invalid_utf8 = b"\x80\x81\x82\x83"  # Invalid UTF-8 sequence
+
         async def mock_body():
             return invalid_utf8
-        
+
         mock_request.body = mock_body
 
         # Act
@@ -121,10 +121,11 @@ class TestCaptureRawRequestEndpoint:
     @pytest.mark.asyncio
     async def test_capture_empty_request(self, mock_request):
         """Test capturing an empty request."""
+
         # Arrange
-        async def mock_body():
+        async def mock_body() -> bytes:
             return b""
-        
+
         mock_request.body = mock_body
 
         # Act
@@ -142,16 +143,16 @@ class TestCaptureRawRequestEndpoint:
         # Arrange
         json_data = {"data": "test"}
         json_bytes = json.dumps(json_data).encode("utf-8")
-        
+
         async def mock_body():
             return json_bytes
-        
+
         mock_request.body = mock_body
         mock_request.headers = {
             "Content-Type": "application/json; charset=utf-8",
             "Authorization": "Bearer token123",
             "X-Custom-Header": "custom-value",
-            "User-Agent": "TestClient/1.0"
+            "User-Agent": "TestClient/1.0",
         }
 
         # Act
@@ -171,17 +172,14 @@ class TestCaptureRawRequestEndpoint:
             "user": {
                 "name": "John Doe",
                 "email": "john@example.com",
-                "metadata": {
-                    "created": "2023-01-01",
-                    "tags": ["user", "active"]
-                }
+                "metadata": {"created": "2023-01-01", "tags": ["user", "active"]},
             }
         }
         json_bytes = json.dumps(json_data).encode("utf-8")
-        
+
         async def mock_body():
             return json_bytes
-        
+
         mock_request.body = mock_body
 
         # Act
@@ -191,7 +189,10 @@ class TestCaptureRawRequestEndpoint:
         assert response["body_info"]["json_valid"] is True
         assert response["body_info"]["json_data"] == json_data
         assert response["body_info"]["json_data"]["user"]["name"] == "John Doe"
-        assert response["body_info"]["json_data"]["user"]["metadata"]["tags"] == ["user", "active"]
+        assert response["body_info"]["json_data"]["user"]["metadata"]["tags"] == [
+            "user",
+            "active",
+        ]
 
     @pytest.mark.asyncio
     async def test_capture_url_encoded_data(self, mock_request):
@@ -199,10 +200,10 @@ class TestCaptureRawRequestEndpoint:
         # Arrange
         form_data = "username=testuser&password=testpass&remember=true"
         form_bytes = form_data.encode("utf-8")
-        
+
         async def mock_body():
             return form_bytes
-        
+
         mock_request.body = mock_body
         mock_request.headers = {"Content-Type": "application/x-www-form-urlencoded"}
 
@@ -218,11 +219,11 @@ class TestCaptureRawRequestEndpoint:
     async def test_capture_binary_data(self, mock_request):
         """Test capturing binary data."""
         # Arrange
-        test_data = b'\x00\x01\x02\x03\x04\x05'
-        
+        test_data = b"\x00\x01\x02\x03\x04\x05"
+
         async def mock_body():
             return test_data
-        
+
         mock_request.body = mock_body
         mock_request.headers = {"Content-Type": "application/octet-stream"}
 
@@ -243,10 +244,10 @@ class TestCaptureRawRequestEndpoint:
         # Arrange
         large_data = {"items": [f"item_{i}" for i in range(1000)]}
         json_bytes = json.dumps(large_data).encode("utf-8")
-        
+
         async def mock_body():
             return json_bytes
-        
+
         mock_request.body = mock_body
         mock_request.headers = {"Content-Type": "application/json"}
 
@@ -266,13 +267,13 @@ class TestCaptureRawRequestEndpoint:
         json_data = {
             "message": "Hello, 世界! 🌍",
             "symbols": "©®™€£¥",
-            "unicode": "\\u0041\\u0042\\u0043"
+            "unicode": "\\u0041\\u0042\\u0043",
         }
         json_bytes = json.dumps(json_data).encode("utf-8")
-        
+
         async def mock_body():
             return json_bytes
-        
+
         mock_request.body = mock_body
 
         # Act
@@ -287,11 +288,11 @@ class TestCaptureRawRequestEndpoint:
     async def test_capture_malformed_utf8_sequences(self, mock_request):
         """Test capturing request with malformed UTF-8 sequences."""
         # Arrange
-        invalid_utf8 = b'\xc0\xaf\xed\xa0\x80\xed\xbf\xbf'  # Invalid UTF-8 sequences
-        
+        invalid_utf8 = b"\xc0\xaf\xed\xa0\x80\xed\xbf\xbf"  # Invalid UTF-8 sequences
+
         async def mock_body():
             return invalid_utf8
-        
+
         mock_request.body = mock_body
 
         # Act
@@ -303,13 +304,15 @@ class TestCaptureRawRequestEndpoint:
         assert "raw_bytes" in response["body_info"]
 
     @pytest.mark.asyncio
-    @patch('clarity.api.v1.debug.logger')
+    @patch("clarity.api.v1.debug.logger")
     async def test_capture_logs_errors(self, mock_logger, mock_request):
         """Test that capture endpoint logs errors properly."""
+
         # Arrange
-        async def mock_body():
-            raise Exception("Test error")
-        
+        async def mock_body() -> Never:
+            msg = "Test error"
+            raise Exception(msg)
+
         mock_request.body = mock_body
 
         # Act
@@ -339,10 +342,10 @@ class TestEchoLoginRequestEndpoint:
         # Arrange
         login_data = {"username": "testuser", "password": "testpass"}
         login_bytes = json.dumps(login_data).encode("utf-8")
-        
+
         async def mock_body():
             return login_bytes
-        
+
         mock_request.body = mock_body
 
         # Act
@@ -361,10 +364,11 @@ class TestEchoLoginRequestEndpoint:
     @pytest.mark.asyncio
     async def test_echo_empty_request(self, mock_request):
         """Test echoing an empty request."""
+
         # Arrange
-        async def mock_body():
+        async def mock_body() -> bytes:
             return b""
-        
+
         mock_request.body = mock_body
 
         # Act
@@ -380,11 +384,11 @@ class TestEchoLoginRequestEndpoint:
     async def test_echo_invalid_utf8_request(self, mock_request):
         """Test echoing a request with invalid UTF-8."""
         # Arrange
-        invalid_utf8 = b'\x80\x81\x82\x83'
-        
+        invalid_utf8 = b"\x80\x81\x82\x83"
+
         async def mock_body():
             return invalid_utf8
-        
+
         mock_request.body = mock_body
 
         # Act
@@ -402,15 +406,15 @@ class TestEchoLoginRequestEndpoint:
         # Arrange
         login_data = {"username": "admin", "password": "secret"}
         login_bytes = json.dumps(login_data).encode("utf-8")
-        
+
         async def mock_body():
             return login_bytes
-        
+
         mock_request.body = mock_body
         mock_request.headers = {
             "Content-Type": "application/json",
             "Authorization": "Bearer token123",
-            "X-Request-ID": "req-123"
+            "X-Request-ID": "req-123",
         }
 
         # Act
@@ -430,17 +434,13 @@ class TestEchoLoginRequestEndpoint:
             "username": "testuser",
             "password": "testpass",
             "remember_me": True,
-            "metadata": {
-                "device": "mobile",
-                "app_version": "1.0.0",
-                "platform": "iOS"
-            }
+            "metadata": {"device": "mobile", "app_version": "1.0.0", "platform": "iOS"},
         }
         login_bytes = json.dumps(login_data).encode("utf-8")
-        
+
         async def mock_body():
             return login_bytes
-        
+
         mock_request.body = mock_body
 
         # Act
@@ -459,13 +459,13 @@ class TestEchoLoginRequestEndpoint:
         login_data = {
             "username": "user@example.com",
             "password": "P@ssw0rd!#$%^&*()",
-            "display_name": "John Doe 🎉"
+            "display_name": "John Doe 🎉",
         }
         login_bytes = json.dumps(login_data).encode("utf-8")
-        
+
         async def mock_body():
             return login_bytes
-        
+
         mock_request.body = mock_body
 
         # Act
@@ -484,13 +484,13 @@ class TestEchoLoginRequestEndpoint:
         login_data = {
             "username": "testuser",
             "password": "testpass",
-            "extra_data": "x" * 1000  # Large string
+            "extra_data": "x" * 1000,  # Large string
         }
         login_bytes = json.dumps(login_data).encode("utf-8")
-        
+
         async def mock_body():
             return login_bytes
-        
+
         mock_request.body = mock_body
 
         # Act
@@ -506,11 +506,11 @@ class TestEchoLoginRequestEndpoint:
     async def test_echo_binary_data_handling(self, mock_request):
         """Test echo endpoint handling binary data."""
         # Arrange
-        binary_data = b'\x00\x01\x02\x03'
-        
+        binary_data = b"\x00\x01\x02\x03"
+
         async def mock_body():
             return binary_data
-        
+
         mock_request.body = mock_body
 
         # Act
@@ -525,16 +525,16 @@ class TestEchoLoginRequestEndpoint:
         assert response_data["access_token"] == "debug_token"
 
     @pytest.mark.asyncio
-    @patch('clarity.api.v1.debug.logger')
+    @patch("clarity.api.v1.debug.logger")
     async def test_echo_logs_requests(self, mock_logger, mock_request):
         """Test that echo endpoint logs requests properly."""
         # Arrange
         login_data = {"username": "testuser", "password": "testpass"}
         login_bytes = json.dumps(login_data).encode("utf-8")
-        
+
         async def mock_body():
             return login_bytes
-        
+
         mock_request.body = mock_body
 
         # Act
@@ -551,11 +551,11 @@ class TestEchoLoginRequestEndpoint:
     async def test_echo_with_null_bytes(self, mock_request):
         """Test echo endpoint with null bytes in data."""
         # Arrange
-        data_with_nulls = b'test\x00data\x00with\x00nulls'
-        
+        data_with_nulls = b"test\x00data\x00with\x00nulls"
+
         async def mock_body():
             return data_with_nulls
-        
+
         mock_request.body = mock_body
 
         # Act
@@ -573,10 +573,10 @@ class TestEchoLoginRequestEndpoint:
         # Arrange
         long_string = "a" * 10000  # Very long string
         long_bytes = long_string.encode("utf-8")
-        
+
         async def mock_body():
             return long_bytes
-        
+
         mock_request.body = mock_body
 
         # Act
@@ -591,11 +591,11 @@ class TestEchoLoginRequestEndpoint:
     async def test_echo_json_parse_error_at_start(self, mock_request):
         """Test echo endpoint with JSON parse error at start."""
         # Arrange
-        error_at_start = '{invalid json'
-        
+        error_at_start = "{invalid json"
+
         async def mock_body():
             return error_at_start.encode("utf-8")
-        
+
         mock_request.body = mock_body
 
         # Act
@@ -604,4 +604,4 @@ class TestEchoLoginRequestEndpoint:
         # Assert
         assert isinstance(response, JSONResponse)
         response_data = json.loads(response.body)
-        assert response_data["access_token"] == "debug_token" 
+        assert response_data["access_token"] == "debug_token"

@@ -9,14 +9,11 @@ Tests the complete gemini_insights.py module including:
 - Real business logic without excessive mocking
 """
 
-import json
-import uuid
 from datetime import UTC, datetime
-from unittest.mock import AsyncMock, MagicMock, patch, PropertyMock
+from unittest.mock import AsyncMock, MagicMock, PropertyMock, patch
 
-import pytest
 from fastapi import HTTPException, status
-from pydantic import ValidationError
+import pytest
 
 from clarity.api.v1.gemini_insights import (
     ErrorDetail,
@@ -36,7 +33,6 @@ from clarity.api.v1.gemini_insights import (
     set_dependencies,
 )
 from clarity.auth.dependencies import AuthenticatedUser
-from clarity.core.config_aws import get_settings
 from clarity.ml.gemini_service import GeminiService, HealthInsightResponse
 from clarity.ports.auth_ports import IAuthProvider
 from clarity.ports.config_ports import IConfigProvider
@@ -197,7 +193,7 @@ class TestHelperFunctions:
         metadata = create_metadata(request_id)
 
         # Should be able to parse the timestamp
-        timestamp = datetime.fromisoformat(metadata["timestamp"].replace("Z", "+00:00"))
+        timestamp = datetime.fromisoformat(metadata["timestamp"])
         assert isinstance(timestamp, datetime)
 
 

@@ -144,6 +144,15 @@ class Settings(BaseSettings):
     # Application settings
     app_name: str = "CLARITY Digital Twin Platform"
     app_version: str = "1.0.0"
+    
+    # Health Data settings
+    max_metrics_per_upload: int = Field(
+        default=1000,
+        alias="MAX_METRICS_PER_UPLOAD",
+        description="Maximum number of metrics allowed in a single health data upload",
+        ge=1,
+        le=10000,
+    )
 
     # AWS settings
     aws_region: str = Field(default="us-east-1", alias="AWS_REGION")

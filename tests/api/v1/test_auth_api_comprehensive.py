@@ -14,7 +14,8 @@ import pytest
 # Import the REAL modules we want to test
 from clarity.api.v1.auth import router
 from clarity.auth.aws_cognito_provider import CognitoAuthProvider
-from clarity.auth.dependencies import get_auth_provider, get_lockout_service
+from clarity.auth.dependencies import get_auth_provider
+from clarity.auth.lockout_service import get_lockout_service
 from clarity.core.constants import (
     AUTH_HEADER_TYPE_BEARER,
     AUTH_SCOPE_FULL_ACCESS,

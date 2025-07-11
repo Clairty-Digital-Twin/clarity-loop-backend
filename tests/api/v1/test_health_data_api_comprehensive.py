@@ -58,6 +58,7 @@ def mock_config_provider() -> Mock:
     """Mock configuration provider."""
     provider = Mock(spec=IConfigProvider)
     provider.get = Mock()
+    provider.get_config = Mock(return_value={"max_metrics_per_upload": 1000})
     return provider
 
 
@@ -130,7 +131,7 @@ def app_with_dependencies(
     # Include the REAL health data router
     app.include_router(router, prefix="/api/v1/health-data")
 
-    return app
+    yield app
 
 
 @pytest.fixture

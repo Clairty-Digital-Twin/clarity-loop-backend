@@ -245,7 +245,9 @@ async def upload_health_data(
         logger.info("Health data upload requested by user: %s", current_user.user_id)
 
         # SECURITY: Validate metrics count to prevent DoS through large uploads
-        max_metrics_per_upload = 10000  # Reasonable limit for health data batches
+        config = get_config_provider()
+        settings = config.get_config()
+        max_metrics_per_upload = settings.get("max_metrics_per_upload", 1000)
         if len(health_data.metrics) > max_metrics_per_upload:
             _raise_too_many_metrics_error(
                 len(health_data.metrics), max_metrics_per_upload

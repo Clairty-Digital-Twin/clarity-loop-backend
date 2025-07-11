@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import asyncio
 from collections.abc import AsyncGenerator, Generator
+import logging
 import os
 from typing import Any
 from unittest.mock import AsyncMock, MagicMock
@@ -349,3 +350,26 @@ def pytest_configure(config: pytest.Config) -> None:
     config.addinivalue_line("markers", "slow: Slow running tests")
     config.addinivalue_line("markers", "auth: Authentication related tests")
     config.addinivalue_line("markers", "database: Database related tests")
+
+
+@pytest.fixture(autouse=True)
+def configure_test_logging(caplog: pytest.LogCaptureFixture) -> None:
+    """Configure logging levels for tests to reduce noise."""
+    # Set default logging level to WARNING for all loggers
+    caplog.set_level(logging.WARNING)
+    
+    # Specifically set noisy loggers to ERROR or higher
+    logging.getLogger("clarity.middleware.rate_limiting").setLevel(logging.ERROR)
+    logging.getLogger("clarity.ml.nhanes_stats").setLevel(logging.ERROR)
+    logging.getLogger("clarity.api.v1.router").setLevel(logging.ERROR)
+    logging.getLogger("clarity.core.config").setLevel(logging.ERROR)
+    logging.getLogger("botocore").setLevel(logging.ERROR)
+    logging.getLogger("boto3").setLevel(logging.ERROR)
+    logging.getLogger("httpx").setLevel(logging.ERROR)
+    logging.getLogger("httpcore").setLevel(logging.ERROR)
+    
+    # FastAPI and Uvicorn loggers
+    logging.getLogger("fastapi").setLevel(logging.ERROR)
+    logging.getLogger("uvicorn").setLevel(logging.ERROR)
+    logging.getLogger("uvicorn.access").setLevel(logging.ERROR)
+    logging.getLogger("uvicorn.error").setLevel(logging.ERROR)

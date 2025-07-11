@@ -71,6 +71,8 @@ def test_sanitize_for_logging_user_data():
     """Test sanitizing user data objects."""
     mock_data = Mock()
     mock_data.user_id = "user999"
+    # Ensure the object doesn't have a metrics attribute
+    del mock_data.metrics
 
     result = sanitize_for_logging(mock_data)
     assert result == "Data(user_id=user999)"

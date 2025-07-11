@@ -280,7 +280,7 @@ class TestHealthDataUploadValidator:
             metrics.append(
                 HealthMetric(
                     metric_type=HealthMetricType.HEART_RATE,
-                    biometric_data=BiometricData(heart_rate=70.0 + i),
+                    biometric_data=BiometricData(heart_rate=70.0 + (i % 50)),
                 )
             )
 
@@ -336,7 +336,7 @@ class TestHealthDataUploadValidator:
             metrics.append(
                 HealthMetric(
                     metric_type=HealthMetricType.HEART_RATE,
-                    biometric_data=BiometricData(heart_rate=70.0 + i),
+                    biometric_data=BiometricData(heart_rate=70.0 + (i % 50)),
                 )
             )
 

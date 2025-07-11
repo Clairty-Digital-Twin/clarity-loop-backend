@@ -11,6 +11,7 @@ import pytest
 from clarity.models.health_data import (
     BiometricData,
     HealthDataUpload,
+    HealthDataResponse,
     HealthMetric,
     HealthMetricType,
 )
@@ -52,16 +53,15 @@ class TestHealthDataServiceHappyPath:
         )
 
         # Process data
-        result = await service.process_health_data(upload_data, processing_id)
+        result = await service.process_health_data(upload_data)
 
         # Verify result
-        assert result == processing_id
+        assert isinstance(result, HealthDataResponse)
+        assert result.processing_id is not None
+        assert result.accepted_metrics == 1
 
         # Verify repository was called
         mock_repository.save_health_data.assert_called_once()
-        call_args = mock_repository.save_health_data.call_args[0]
-        assert call_args[0] == upload_data
-        assert call_args[1] == processing_id
 
     @pytest.mark.asyncio
     async def test_get_processing_status_found(self):

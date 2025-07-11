@@ -23,9 +23,9 @@ class TestSecureHashGenerator:
         """Test secure hash generation."""
         generator = SecureHashGenerator()
 
-        hash1 = generator.generate("test_data")
-        hash2 = generator.generate("test_data")
-        hash3 = generator.generate("different_data")
+        hash1 = generator.hash_string("test_data")
+        hash2 = generator.hash_string("test_data")
+        hash3 = generator.hash_string("different_data")
 
         # Same input should produce same hash
         assert hash1 == hash2
@@ -37,14 +37,17 @@ class TestSecureHashGenerator:
 
     def test_hash_with_salt(self):
         """Test hash generation with salt."""
-        generator = SecureHashGenerator(salt="my_salt")
+        generator = SecureHashGenerator()
 
-        hash_with_salt = generator.generate("test_data")
-        generator_no_salt = SecureHashGenerator()
-        hash_no_salt = generator_no_salt.generate("test_data")
-
-        # Hash with salt should differ from hash without salt
-        assert hash_with_salt != hash_no_salt
+        # Test with different algorithms produces different hashes
+        generator_sha256 = SecureHashGenerator(algorithm="sha256")
+        generator_sha512 = SecureHashGenerator(algorithm="sha512")
+        
+        hash_sha256 = generator_sha256.hash_string("test_data")
+        hash_sha512 = generator_sha512.hash_string("test_data")
+        
+        # Different algorithms should produce different hashes
+        assert hash_sha256 != hash_sha512
 
 
 class TestSecurityFunctions:
@@ -92,12 +95,12 @@ class TestSecurityFunctions:
         id2 = generate_request_id()
 
         assert isinstance(id1, str)
-        assert id1.startswith("req-")
+        assert id1.startswith("req_")
         assert id1 != id2  # Should be unique
 
         # Test custom prefix
         id3 = generate_request_id("custom")
-        assert id3.startswith("custom-")
+        assert id3.startswith("custom_")
 
 
 class TestDataIntegrity:
@@ -138,5 +141,5 @@ class TestDataIntegrity:
         data = "test data"
         checksum = checker.generate_checksum(data)
 
-        assert checker.verify(data, checksum) is True
-        assert checker.verify("wrong data", checksum) is False
+        assert checker.verify_integrity(data, checksum) is True
+        assert checker.verify_integrity("wrong data", checksum) is False

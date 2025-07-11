@@ -103,7 +103,7 @@ class TestHealthDataServiceHappyPath:
         # Verify result
         assert result is True
         mock_repository.delete_health_data.assert_called_once_with(
-            "test-user", "test-id"
+            user_id="test-user", processing_id="test-id"
         )
 
     @pytest.mark.asyncio
@@ -124,7 +124,7 @@ class TestHealthDataServiceHappyPath:
         service = HealthDataService(mock_repository, Mock())
 
         # List data with filters
-        result = await service.list_health_data(
+        result = await service.get_user_health_data(
             user_id="test-user",
             start_date=datetime(2024, 1, 1),
             end_date=datetime(2024, 12, 31),

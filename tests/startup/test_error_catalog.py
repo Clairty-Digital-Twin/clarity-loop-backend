@@ -16,14 +16,13 @@ class TestErrorCategory:
 
     def test_error_category_values(self):
         """Test error category enum values."""
-        assert ErrorCategory.AUTH == "auth"
-        assert ErrorCategory.DATABASE == "database"
-        assert ErrorCategory.MESSAGING == "messaging"
         assert ErrorCategory.CONFIGURATION == "configuration"
-        assert ErrorCategory.ML_SERVICE == "ml_service"
-        assert ErrorCategory.EXTERNAL_API == "external_api"
-        assert ErrorCategory.STORAGE == "storage"
-        assert ErrorCategory.UNKNOWN == "unknown"
+        assert ErrorCategory.CREDENTIALS == "credentials"
+        assert ErrorCategory.NETWORKING == "networking"
+        assert ErrorCategory.PERMISSIONS == "permissions"
+        assert ErrorCategory.RESOURCES == "resources"
+        assert ErrorCategory.DEPENDENCIES == "dependencies"
+        assert ErrorCategory.ENVIRONMENT == "environment"
 
 
 class TestErrorSeverity:
@@ -31,10 +30,10 @@ class TestErrorSeverity:
 
     def test_error_severity_values(self):
         """Test error severity enum values."""
-        assert ErrorSeverity.INFO == "info"
-        assert ErrorSeverity.WARNING == "warning"
-        assert ErrorSeverity.ERROR == "error"
         assert ErrorSeverity.CRITICAL == "critical"
+        assert ErrorSeverity.HIGH == "high"
+        assert ErrorSeverity.MEDIUM == "medium"
+        assert ErrorSeverity.LOW == "low"
 
 
 class TestErrorSolution:
@@ -67,21 +66,23 @@ class TestStartupErrorInfo:
 
         error_info = StartupErrorInfo(
             code="ERR001",
-            message="Test error message",
-            category=ErrorCategory.AUTH,
-            severity=ErrorSeverity.ERROR,
-            solution=solution,
-            retry_after=60,
-            documentation_link="https://docs.example.com/errors/ERR001",
+            title="Test Error",
+            description="Test error description",
+            category=ErrorCategory.CONFIGURATION,
+            severity=ErrorSeverity.HIGH,
+            solutions=[solution],
+            common_causes=["Test cause"],
+            related_errors=["ERR002"],
         )
 
         assert error_info.code == "ERR001"
-        assert error_info.message == "Test error message"
-        assert error_info.category == ErrorCategory.AUTH
-        assert error_info.severity == ErrorSeverity.ERROR
-        assert error_info.solution == solution
-        assert error_info.retry_after == 60
-        assert error_info.documentation_link == "https://docs.example.com/errors/ERR001"
+        assert error_info.title == "Test Error"
+        assert error_info.description == "Test error description"
+        assert error_info.category == ErrorCategory.CONFIGURATION
+        assert error_info.severity == ErrorSeverity.HIGH
+        assert error_info.solutions == [solution]
+        assert error_info.common_causes == ["Test cause"]
+        assert error_info.related_errors == ["ERR002"]
 
 
 class TestStartupErrorCatalog:
@@ -92,18 +93,18 @@ class TestStartupErrorCatalog:
         catalog = StartupErrorCatalog()
 
         # Check that some known errors are present
-        assert "COGNITO_INIT_001" in catalog.ERROR_CATALOG
-        assert "DB_INIT_001" in catalog.ERROR_CATALOG
-        assert "SQS_INIT_001" in catalog.ERROR_CATALOG
+        assert "CONFIG_001" in catalog.errors
+        assert "CRED_001" in catalog.errors
+        assert "CONFIG_002" in catalog.errors
 
     def test_get_error_info(self):
         """Test getting error info from catalog."""
         catalog = StartupErrorCatalog()
 
-        error_info = catalog.get_error_info("COGNITO_INIT_001")
+        error_info = catalog.get_error_info("CONFIG_001")
         assert error_info is not None
-        assert error_info.code == "COGNITO_INIT_001"
-        assert error_info.category == ErrorCategory.AUTH
+        assert error_info.code == "CONFIG_001"
+        assert error_info.category == ErrorCategory.CONFIGURATION
 
     def test_get_nonexistent_error(self):
         """Test getting nonexistent error returns None."""

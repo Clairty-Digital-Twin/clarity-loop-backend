@@ -19,16 +19,15 @@ class TestHealthDataEvent:
         """Test creating health data event."""
         event = HealthDataEvent(
             user_id="user123",
-            processing_id="proc456",
-            metrics_count=10,
-            upload_source="apple_health",
+            upload_id="upload456",
+            s3_path="s3://bucket/user123/upload456/data.json",
             timestamp="2024-01-01T00:00:00Z",
         )
 
         assert event.user_id == "user123"
-        assert event.processing_id == "proc456"
-        assert event.metrics_count == 10
-        assert event.upload_source == "apple_health"
+        assert event.upload_id == "upload456"
+        assert event.s3_path == "s3://bucket/user123/upload456/data.json"
+        assert event.event_type == "health_data_upload"
         assert event.timestamp == "2024-01-01T00:00:00Z"
 
 
@@ -39,16 +38,15 @@ class TestInsightRequestEvent:
         """Test creating insight request event."""
         event = InsightRequestEvent(
             user_id="user789",
-            processing_id="proc999",
-            metric_types=["heart_rate", "sleep"],
-            request_type="summary",
+            upload_id="upload999",
+            analysis_results={"heart_rate_avg": 75, "sleep_quality": "good"},
             timestamp="2024-01-02T00:00:00Z",
         )
 
         assert event.user_id == "user789"
-        assert event.processing_id == "proc999"
-        assert event.metric_types == ["heart_rate", "sleep"]
-        assert event.request_type == "summary"
+        assert event.upload_id == "upload999"
+        assert event.analysis_results == {"heart_rate_avg": 75, "sleep_quality": "good"}
+        assert event.event_type == "insight_request"
         assert event.timestamp == "2024-01-02T00:00:00Z"
 
 
@@ -58,69 +56,73 @@ class TestHealthDataPublisher:
     @pytest.mark.asyncio
     async def test_publisher_initialization(self):
         """Test HealthDataPublisher initialization."""
-        mock_sns_client = Mock()
-        mock_sqs_client = Mock()
-
-        publisher = HealthDataPublisher(
-            sns_client=mock_sns_client,
-            sqs_client=mock_sqs_client,
-            analysis_topic_arn="arn:topic:analysis",
-            insight_queue_url="https://sqs.queue.url",
-        )
-
-        assert publisher.sns_client == mock_sns_client
-        assert publisher.sqs_client == mock_sqs_client
-        assert publisher.analysis_topic_arn == "arn:topic:analysis"
-        assert publisher.insight_queue_url == "https://sqs.queue.url"
+        with patch.dict('os.environ', {
+            'AWS_REGION': 'us-east-1',
+            'CLARITY_SNS_TOPIC_ARN': 'arn:aws:sns:us-east-1:123456789012:clarity-topic',
+            'CLARITY_HEALTH_DATA_QUEUE': 'clarity-health-data-processing',
+            'CLARITY_INSIGHT_QUEUE': 'clarity-insight-generation'
+        }):
+            with patch('clarity.services.messaging.publisher.AWSMessagingService') as mock_aws_service:
+                publisher = HealthDataPublisher()
+                
+                assert publisher.aws_region == "us-east-1"
+                assert publisher.sns_topic_arn == "arn:aws:sns:us-east-1:123456789012:clarity-topic"
+                mock_aws_service.assert_called_once()
 
     @pytest.mark.asyncio
-    async def test_publish_health_data_for_analysis(self):
-        """Test publishing health data for analysis."""
-        mock_sns_client = Mock()
-        mock_sns_client.publish = AsyncMock(return_value={"MessageId": "123"})
-
-        publisher = HealthDataPublisher(
-            sns_client=mock_sns_client,
-            sqs_client=Mock(),
-            analysis_topic_arn="arn:topic:analysis",
-            insight_queue_url="https://sqs.queue.url",
-        )
-
-        event = HealthDataEvent(
-            user_id="user123",
-            processing_id="proc456",
-            metrics_count=5,
-            upload_source="apple_health",
-            timestamp="2024-01-01T00:00:00Z",
-        )
-
-        result = await publisher.publish_health_data_for_analysis(event)
-
-        assert result == {"MessageId": "123"}
-        mock_sns_client.publish.assert_called_once()
+    async def test_publish_health_data_upload(self):
+        """Test publishing health data upload."""
+        with patch.dict('os.environ', {
+            'AWS_REGION': 'us-east-1',
+            'CLARITY_SNS_TOPIC_ARN': 'arn:aws:sns:us-east-1:123456789012:clarity-topic'
+        }):
+            with patch('clarity.services.messaging.publisher.AWSMessagingService') as mock_aws_service:
+                mock_messaging_service = Mock()
+                mock_messaging_service.publish_health_data_upload = AsyncMock(return_value="msg123")
+                mock_aws_service.return_value = mock_messaging_service
+                
+                publisher = HealthDataPublisher()
+                
+                result = await publisher.publish_health_data_upload(
+                    user_id="user123",
+                    upload_id="upload456",
+                    s3_path="s3://bucket/user123/upload456/data.json",
+                    metadata={"source": "apple_health"}
+                )
+                
+                assert result == "msg123"
+                mock_messaging_service.publish_health_data_upload.assert_called_once_with(
+                    user_id="user123",
+                    upload_id="upload456",
+                    s3_path="s3://bucket/user123/upload456/data.json",
+                    metadata={"source": "apple_health"}
+                )
 
     @pytest.mark.asyncio
-    async def test_request_insights(self):
-        """Test requesting insights."""
-        mock_sqs_client = Mock()
-        mock_sqs_client.send_message = AsyncMock(return_value={"MessageId": "456"})
-
-        publisher = HealthDataPublisher(
-            sns_client=Mock(),
-            sqs_client=mock_sqs_client,
-            analysis_topic_arn="arn:topic:analysis",
-            insight_queue_url="https://sqs.queue.url",
-        )
-
-        event = InsightRequestEvent(
-            user_id="user789",
-            processing_id="proc999",
-            metric_types=["heart_rate"],
-            request_type="summary",
-            timestamp="2024-01-02T00:00:00Z",
-        )
-
-        result = await publisher.request_insights(event)
-
-        assert result == {"MessageId": "456"}
-        mock_sqs_client.send_message.assert_called_once()
+    async def test_publish_insight_request(self):
+        """Test publishing insight request."""
+        with patch.dict('os.environ', {
+            'AWS_REGION': 'us-east-1',
+            'CLARITY_SNS_TOPIC_ARN': 'arn:aws:sns:us-east-1:123456789012:clarity-topic'
+        }):
+            with patch('clarity.services.messaging.publisher.AWSMessagingService') as mock_aws_service:
+                mock_messaging_service = Mock()
+                mock_messaging_service.publish_insight_request = AsyncMock(return_value="msg456")
+                mock_aws_service.return_value = mock_messaging_service
+                
+                publisher = HealthDataPublisher()
+                
+                result = await publisher.publish_insight_request(
+                    user_id="user789",
+                    upload_id="upload999",
+                    analysis_results={"heart_rate_avg": 75, "sleep_quality": "good"},
+                    metadata={"analysis_version": "1.0"}
+                )
+                
+                assert result == "msg456"
+                mock_messaging_service.publish_insight_request.assert_called_once_with(
+                    user_id="user789",
+                    upload_id="upload999",
+                    analysis_results={"heart_rate_avg": 75, "sleep_quality": "good"},
+                    metadata={"analysis_version": "1.0"}
+                )

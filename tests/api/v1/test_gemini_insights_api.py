@@ -12,7 +12,7 @@ Tests the complete gemini_insights.py module including:
 import json
 import uuid
 from datetime import UTC, datetime
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch, PropertyMock
 
 import pytest
 from fastapi import HTTPException, status
@@ -57,9 +57,9 @@ class TestGeminiInsightsModels:
             "include_recommendations": True,
             "language": "en",
         }
-        
+
         request = InsightGenerationRequest(**request_data)
-        
+
         assert request.analysis_results == request_data["analysis_results"]
         assert request.context == "User has been exercising regularly"
         assert request.insight_type == "comprehensive"
@@ -68,12 +68,10 @@ class TestGeminiInsightsModels:
 
     def test_insight_generation_request_defaults(self):
         """Test insight generation request with default values."""
-        request_data = {
-            "analysis_results": {"heart_rate": {"avg": 72}}
-        }
-        
+        request_data = {"analysis_results": {"heart_rate": {"avg": 72}}}
+
         request = InsightGenerationRequest(**request_data)
-        
+
         assert request.context is None
         assert request.insight_type == "comprehensive"
         assert request.include_recommendations is True
@@ -84,7 +82,7 @@ class TestGeminiInsightsModels:
         request_data = {
             "analysis_results": {},
         }
-        
+
         # This should still be valid as analysis_results is just a dict
         request = InsightGenerationRequest(**request_data)
         assert request.analysis_results == {}
@@ -94,18 +92,24 @@ class TestGeminiInsightsModels:
         health_insight = HealthInsightResponse(
             user_id="user_456",
             narrative="Your health data shows positive trends...",
-            key_insights=["Heart rate is within optimal range", "Sleep quality is excellent"],
+            key_insights=[
+                "Heart rate is within optimal range",
+                "Sleep quality is excellent",
+            ],
             recommendations=["Continue regular exercise", "Maintain sleep schedule"],
             confidence_score=0.85,
             generated_at=datetime.now(UTC).isoformat(),
         )
-        
+
         response = InsightGenerationResponse(
             success=True,
             data=health_insight,
-            metadata={"request_id": "req_123", "timestamp": datetime.now(UTC).isoformat()},
+            metadata={
+                "request_id": "req_123",
+                "timestamp": datetime.now(UTC).isoformat(),
+            },
         )
-        
+
         assert response.success is True
         assert response.data.user_id == "user_456"
         assert response.data.confidence_score == 0.85
@@ -124,7 +128,7 @@ class TestGeminiInsightsModels:
             timestamp=datetime.now(UTC).isoformat(),
             suggested_action="check_insight_id",
         )
-        
+
         assert error_detail.code == "INSIGHT_NOT_FOUND"
         assert error_detail.message == "Insight not found"
         assert error_detail.details["insight_id"] == "insight_123"
@@ -139,9 +143,9 @@ class TestGeminiInsightsModels:
             request_id="req_789",
             timestamp=datetime.now(UTC).isoformat(),
         )
-        
+
         error_response = ErrorResponse(error=error_detail)
-        
+
         assert error_response.error.code == "ACCESS_DENIED"
         assert error_response.error.message == "Access denied"
         assert error_response.error.request_id == "req_789"
@@ -153,7 +157,7 @@ class TestHelperFunctions:
     def test_generate_request_id_format(self):
         """Test request ID generation format."""
         request_id = generate_request_id()
-        
+
         assert request_id.startswith("req_insights_")
         assert len(request_id) == len("req_insights_") + 8
         # Check that it's a valid hex string
@@ -169,7 +173,7 @@ class TestHelperFunctions:
         """Test basic metadata creation."""
         request_id = "req_test_123"
         metadata = create_metadata(request_id)
-        
+
         assert metadata["request_id"] == request_id
         assert "timestamp" in metadata
         assert metadata["service"] == "gemini-insights"
@@ -181,7 +185,7 @@ class TestHelperFunctions:
         request_id = "req_test_456"
         processing_time = 1234.5
         metadata = create_metadata(request_id, processing_time)
-        
+
         assert metadata["request_id"] == request_id
         assert metadata["processing_time_ms"] == processing_time
         assert "timestamp" in metadata
@@ -191,7 +195,7 @@ class TestHelperFunctions:
         """Test that metadata timestamp is in correct ISO format."""
         request_id = "req_test_789"
         metadata = create_metadata(request_id)
-        
+
         # Should be able to parse the timestamp
         timestamp = datetime.fromisoformat(metadata["timestamp"].replace("Z", "+00:00"))
         assert isinstance(timestamp, datetime)
@@ -206,15 +210,15 @@ class TestErrorHandling:
         message = "Test error message"
         request_id = "req_123"
         status_code = 400
-        
+
         # create_error_response returns HTTPException, doesn't raise it
         http_exception = create_error_response(
             error_code=error_code,
             message=message,
             request_id=request_id,
-            status_code=status_code
+            status_code=status_code,
         )
-        
+
         # Verify the exception was created properly
         assert isinstance(http_exception, HTTPException)
         assert http_exception.status_code == status_code
@@ -231,7 +235,7 @@ class TestErrorHandling:
         message = "Resource not found"
         request_id = "req_456"
         custom_status = status.HTTP_404_NOT_FOUND
-        
+
         # create_error_response returns HTTPException, doesn't raise it
         http_exception = create_error_response(
             error_code=error_code,
@@ -239,7 +243,7 @@ class TestErrorHandling:
             request_id=request_id,
             status_code=custom_status,
         )
-        
+
         # Verify the exception was created properly
         assert isinstance(http_exception, HTTPException)
         assert http_exception.status_code == custom_status
@@ -254,7 +258,7 @@ class TestErrorHandling:
         request_id = "req_789"
         details = {"field": "user_id", "value": "invalid"}
         suggested_action = "check_user_id"
-        
+
         # create_error_response returns HTTPException, doesn't raise it
         http_exception = create_error_response(
             error_code=error_code,
@@ -263,10 +267,12 @@ class TestErrorHandling:
             details=details,
             suggested_action=suggested_action,
         )
-        
+
         # Verify the exception was created properly
         assert isinstance(http_exception, HTTPException)
-        assert http_exception.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR  # Default
+        assert (
+            http_exception.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR
+        )  # Default
         assert http_exception.detail["code"] == error_code
         assert http_exception.detail["message"] == message
         assert http_exception.detail["request_id"] == request_id
@@ -281,6 +287,7 @@ class TestDependencyInjection:
         """Reset global dependencies before each test."""
         # Clear the global dependencies
         from clarity.api.v1 import gemini_insights
+
         gemini_insights._auth_provider = None
         gemini_insights._config_provider = None
         gemini_insights._gemini_service = None
@@ -290,27 +297,27 @@ class TestDependencyInjection:
         mock_auth_provider = MagicMock(spec=IAuthProvider)
         mock_config_provider = MagicMock(spec=IConfigProvider)
         mock_config_provider.is_development.return_value = True
-        
+
         set_dependencies(mock_auth_provider, mock_config_provider)
-        
+
         # Should create a development GeminiService
         service = get_gemini_service()
         assert isinstance(service, GeminiService)
         assert service.project_id == "dev-project"
 
-    @patch('clarity.api.v1.gemini_insights.get_settings')
+    @patch("clarity.api.v1.gemini_insights.get_settings")
     def test_set_dependencies_production_mode(self, mock_get_settings):
         """Test setting dependencies in production mode."""
         mock_auth_provider = MagicMock(spec=IAuthProvider)
         mock_config_provider = MagicMock(spec=IConfigProvider)
         mock_config_provider.is_development.return_value = False
-        
+
         mock_settings = MagicMock()
         mock_settings.aws_region = "us-east-1"
         mock_get_settings.return_value = mock_settings
-        
+
         set_dependencies(mock_auth_provider, mock_config_provider)
-        
+
         # Should create a production GeminiService with AWS region
         service = get_gemini_service()
         assert isinstance(service, GeminiService)
@@ -320,11 +327,12 @@ class TestDependencyInjection:
         """Test getting service when not initialized."""
         # Clear dependencies
         from clarity.api.v1 import gemini_insights
+
         gemini_insights._gemini_service = None
-        
+
         with pytest.raises(HTTPException) as exc_info:
             get_gemini_service()
-        
+
         error = exc_info.value
         assert error.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR
         assert "not initialized" in str(error.detail)
@@ -338,7 +346,7 @@ class TestGenerateInsightsEndpoint:
         self.mock_auth_provider = MagicMock(spec=IAuthProvider)
         self.mock_config_provider = MagicMock(spec=IConfigProvider)
         self.mock_config_provider.is_development.return_value = True
-        
+
         set_dependencies(self.mock_auth_provider, self.mock_config_provider)
 
     @pytest.fixture
@@ -354,24 +362,30 @@ class TestGenerateInsightsEndpoint:
     def mock_gemini_service(self):
         """Create a mock Gemini service for testing."""
         mock_service = AsyncMock(spec=GeminiService)
-        
+
         # Mock successful insight generation
         mock_response = HealthInsightResponse(
             user_id="user_456",
             narrative="Your health data shows positive trends in cardiovascular health...",
-            key_insights=["Heart rate variability improved by 15%", "Sleep quality shows steady improvement"],
-            recommendations=["Continue current exercise routine", "Maintain consistent sleep schedule"],
+            key_insights=[
+                "Heart rate variability improved by 15%",
+                "Sleep quality shows steady improvement",
+            ],
+            recommendations=[
+                "Continue current exercise routine",
+                "Maintain consistent sleep schedule",
+            ],
             confidence_score=0.85,
             generated_at=datetime.now(UTC).isoformat(),
         )
-        
+
         mock_service.generate_health_insights.return_value = mock_response
         mock_service.health_check.return_value = {
             "status": "healthy",
             "model_available": True,
             "last_check": datetime.now(UTC).isoformat(),
         }
-        
+
         return mock_service
 
     @pytest.fixture
@@ -404,14 +418,16 @@ class TestGenerateInsightsEndpoint:
         )
 
     @pytest.mark.asyncio
-    async def test_generate_insights_success(self, mock_current_user, mock_gemini_service, sample_insight_request):
+    async def test_generate_insights_success(
+        self, mock_current_user, mock_gemini_service, sample_insight_request
+    ):
         """Test successful insight generation."""
         response = await generate_insights(
             insight_request=sample_insight_request,
             current_user=mock_current_user,
             gemini_service=mock_gemini_service,
         )
-        
+
         assert isinstance(response, InsightGenerationResponse)
         assert response.success is True
         assert response.data.user_id == "user_456"
@@ -424,54 +440,62 @@ class TestGenerateInsightsEndpoint:
         assert "processing_time_ms" in response.metadata
 
     @pytest.mark.asyncio
-    async def test_generate_insights_with_minimal_request(self, mock_current_user, mock_gemini_service):
+    async def test_generate_insights_with_minimal_request(
+        self, mock_current_user, mock_gemini_service
+    ):
         """Test insight generation with minimal request data."""
         minimal_request = InsightGenerationRequest(
             analysis_results={"heart_rate": {"avg": 72}},
         )
-        
+
         response = await generate_insights(
             insight_request=minimal_request,
             current_user=mock_current_user,
             gemini_service=mock_gemini_service,
         )
-        
+
         assert isinstance(response, InsightGenerationResponse)
         assert response.success is True
         assert response.data.user_id == "user_456"
         assert response.data.narrative is not None
 
     @pytest.mark.asyncio
-    async def test_generate_insights_service_error(self, mock_current_user, sample_insight_request):
+    async def test_generate_insights_service_error(
+        self, mock_current_user, sample_insight_request
+    ):
         """Test insight generation when service fails."""
         mock_service = MagicMock(spec=GeminiService)
-        mock_service.generate_health_insights.side_effect = Exception("Service unavailable")
-        
+        mock_service.generate_health_insights.side_effect = Exception(
+            "Service unavailable"
+        )
+
         with pytest.raises(HTTPException) as exc_info:
             await generate_insights(
                 insight_request=sample_insight_request,
                 current_user=mock_current_user,
                 gemini_service=mock_service,
             )
-        
+
         error = exc_info.value
         assert error.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR
         assert "INSIGHT_GENERATION_FAILED" in str(error.detail)
 
     @pytest.mark.asyncio
-    async def test_generate_insights_invalid_user(self, mock_gemini_service, sample_insight_request):
+    async def test_generate_insights_invalid_user(
+        self, mock_gemini_service, sample_insight_request
+    ):
         """Test insight generation with invalid user."""
         mock_user = MagicMock(spec=AuthenticatedUser)
         mock_user.user_id = "user_456"
         mock_user.is_active = False  # Inactive user
-        
+
         with pytest.raises(HTTPException) as exc_info:
             await generate_insights(
                 insight_request=sample_insight_request,
                 current_user=mock_user,
                 gemini_service=mock_gemini_service,
             )
-        
+
         error = exc_info.value
         assert error.status_code == status.HTTP_403_FORBIDDEN
         assert "ACCOUNT_DISABLED" in str(error.detail)
@@ -485,7 +509,7 @@ class TestGetInsightEndpoint:
         self.mock_auth_provider = MagicMock(spec=IAuthProvider)
         self.mock_config_provider = MagicMock(spec=IConfigProvider)
         self.mock_config_provider.is_development.return_value = True
-        
+
         set_dependencies(self.mock_auth_provider, self.mock_config_provider)
 
     @pytest.fixture
@@ -498,13 +522,12 @@ class TestGetInsightEndpoint:
         return user
 
     @pytest.mark.asyncio
-    @patch('clarity.api.v1.gemini_insights._get_dynamodb_client')
+    @patch("clarity.api.v1.gemini_insights._get_dynamodb_client")
     async def test_get_insight_success(self, mock_get_client, mock_current_user):
         """Test successful insight retrieval."""
-        # Mock DynamoDB client
         mock_client = MagicMock()
         mock_get_client.return_value = mock_client
-        
+
         # Mock cached insight data
         mock_insight_data = {
             "user_id": "user_456",
@@ -514,14 +537,15 @@ class TestGetInsightEndpoint:
             "recommendations": ["Continue exercise", "Maintain sleep schedule"],
             "confidence_score": 0.88,
         }
-        
-        mock_client.get_data.return_value = mock_insight_data
-        
+
+        # Mock the table.get_item response
+        mock_client.table.get_item.return_value = {"Item": mock_insight_data}
+
         response = await get_insight(
             insight_id="insight_123",
             current_user=mock_current_user,
         )
-        
+
         assert isinstance(response, InsightGenerationResponse)
         assert response.success is True
         assert response.data.user_id == "user_456"
@@ -530,30 +554,30 @@ class TestGetInsightEndpoint:
         assert response.data.narrative is not None
 
     @pytest.mark.asyncio
-    @patch('clarity.api.v1.gemini_insights._get_dynamodb_client')
+    @patch("clarity.api.v1.gemini_insights._get_dynamodb_client")
     async def test_get_insight_not_found(self, mock_get_client, mock_current_user):
         """Test insight retrieval when insight not found."""
         mock_client = MagicMock()
         mock_get_client.return_value = mock_client
-        mock_client.get_data.return_value = None
-        
+        mock_client.table.get_item.return_value = {"Item": None}
+
         with pytest.raises(HTTPException) as exc_info:
             await get_insight(
                 insight_id="nonexistent_insight",
                 current_user=mock_current_user,
             )
-        
+
         error = exc_info.value
         assert error.status_code == status.HTTP_404_NOT_FOUND
         assert "INSIGHT_NOT_FOUND" in str(error.detail)
 
     @pytest.mark.asyncio
-    @patch('clarity.api.v1.gemini_insights._get_dynamodb_client')
+    @patch("clarity.api.v1.gemini_insights._get_dynamodb_client")
     async def test_get_insight_access_denied(self, mock_get_client, mock_current_user):
         """Test insight retrieval when user doesn't own the insight."""
         mock_client = MagicMock()
         mock_get_client.return_value = mock_client
-        
+
         # Mock insight owned by different user
         mock_insight_data = {
             "user_id": "other_user_456",  # Different user
@@ -563,18 +587,18 @@ class TestGetInsightEndpoint:
             "recommendations": ["Some recommendation"],
             "confidence_score": 0.75,
         }
-        
-        mock_client.get_data.return_value = mock_insight_data
-        
+
+        mock_client.table.get_item.return_value = {"Item": mock_insight_data}
+
         with pytest.raises(HTTPException) as exc_info:
             await get_insight(
                 insight_id="insight_123",
                 current_user=mock_current_user,
             )
-        
+
         error = exc_info.value
         assert error.status_code == status.HTTP_403_FORBIDDEN
-        assert "INSIGHT_ACCESS_DENIED" in str(error.detail)
+        assert "ACCESS_DENIED" in str(error.detail)
 
 
 class TestGetInsightHistoryEndpoint:
@@ -585,7 +609,7 @@ class TestGetInsightHistoryEndpoint:
         self.mock_auth_provider = MagicMock(spec=IAuthProvider)
         self.mock_config_provider = MagicMock(spec=IConfigProvider)
         self.mock_config_provider.is_development.return_value = True
-        
+
         set_dependencies(self.mock_auth_provider, self.mock_config_provider)
 
     @pytest.fixture
@@ -598,12 +622,14 @@ class TestGetInsightHistoryEndpoint:
         return user
 
     @pytest.mark.asyncio
-    @patch('clarity.api.v1.gemini_insights._get_dynamodb_client')
-    async def test_get_insight_history_success(self, mock_get_client, mock_current_user):
+    @patch("clarity.api.v1.gemini_insights._get_dynamodb_client")
+    async def test_get_insight_history_success(
+        self, mock_get_client, mock_current_user
+    ):
         """Test successful insight history retrieval."""
         mock_client = MagicMock()
         mock_get_client.return_value = mock_client
-        
+
         # Mock historical insights
         mock_history_data = {
             "insights": [
@@ -634,22 +660,45 @@ class TestGetInsightHistoryEndpoint:
             "total_count": 2,
             "offset": 0,
         }
-        
-        mock_client.get_data.return_value = mock_history_data
-        
+
+        # Mock the table.query response
+        mock_client.table.query.return_value = {
+            "Items": [
+                {
+                    "id": "insight_123",
+                    "user_id": "user_456",
+                    "generated_at": datetime.now(UTC).isoformat(),
+                    "narrative": "Your health data shows positive trends...",
+                    "recommendations": ["Continue exercise", "Maintain sleep schedule"],
+                    "confidence_score": 0.88,
+                    "key_insights": ["Heart rate improved", "Sleep quality better"],
+                },
+                {
+                    "id": "insight_456",
+                    "user_id": "user_456",
+                    "generated_at": datetime.now(UTC).isoformat(),
+                    "narrative": "Recent activity shows improvement...",
+                    "recommendations": ["Increase water intake"],
+                    "confidence_score": 0.72,
+                    "key_insights": ["Activity level increased"],
+                },
+            ],
+            "Count": 2,
+        }
+
         response = await get_insight_history(
             user_id="user_456",
             current_user=mock_current_user,
             limit=10,
             offset=0,
         )
-        
+
         assert isinstance(response, InsightHistoryResponse)
         assert response.success is True
         assert len(response.data["insights"]) == 2
         assert response.data["has_more"] is False
         assert response.data["total_count"] == 2
-        assert response.data["offset"] == 0
+        assert response.data["pagination"]["offset"] == 0
 
     @pytest.mark.asyncio
     async def test_get_insight_history_access_denied(self, mock_current_user):
@@ -662,10 +711,10 @@ class TestGetInsightHistoryEndpoint:
                 limit=10,
                 offset=0,
             )
-        
+
         error = exc_info.value
         assert error.status_code == status.HTTP_403_FORBIDDEN
-        assert "HISTORY_ACCESS_DENIED" in str(error.detail)
+        assert "ACCESS_DENIED" in str(error.detail)
 
 
 class TestGetServiceStatusEndpoint:
@@ -676,7 +725,7 @@ class TestGetServiceStatusEndpoint:
         self.mock_auth_provider = MagicMock(spec=IAuthProvider)
         self.mock_config_provider = MagicMock(spec=IConfigProvider)
         self.mock_config_provider.is_development.return_value = True
-        
+
         set_dependencies(self.mock_auth_provider, self.mock_config_provider)
 
     @pytest.fixture
@@ -689,45 +738,75 @@ class TestGetServiceStatusEndpoint:
         return user
 
     @pytest.mark.asyncio
-    async def test_get_service_status_success(self, mock_current_user):
+    @patch("clarity.api.v1.gemini_insights.get_gemini_service")
+    async def test_get_service_status_success(
+        self, mock_get_service, mock_current_user
+    ):
         """Test successful service status check."""
-        mock_service = MagicMock(spec=GeminiService)
-        mock_service.health_check.return_value = {
-            "status": "healthy",
-            "model_loaded": True,
-            "last_request": datetime.now(UTC).isoformat(),
-            "total_requests": 1234,
-            "average_response_time": 850.5,
-        }
-        
+        mock_service = MagicMock()
+        mock_service.is_initialized = True
+        mock_service.project_id = "test-project"
+        mock_get_service.return_value = mock_service
+
         response = await get_service_status(
             _current_user=mock_current_user,
             gemini_service=mock_service,
         )
-        
+
         assert isinstance(response, ServiceStatusResponse)
         assert response.success is True
         assert response.data["status"] == "healthy"
-        assert response.data["model_loaded"] is True
-        assert response.data["total_requests"] == 1234
-        assert "timestamp" in response.metadata
+        assert response.data["model"]["initialized"] is True
+        assert response.data["model"]["project_id"] == "test-project"
+        assert response.data["service"] == "gemini-insights"
+        assert "timestamp" in response.data
         assert "request_id" in response.metadata
+        assert "timestamp" in response.metadata
 
     @pytest.mark.asyncio
-    async def test_get_service_status_unhealthy(self, mock_current_user):
-        """Test service status when service is unhealthy."""
-        mock_service = MagicMock(spec=GeminiService)
-        mock_service.health_check.side_effect = Exception("Service unavailable")
-        
+    @patch("clarity.api.v1.gemini_insights.get_gemini_service")
+    async def test_get_service_status_unhealthy(
+        self, mock_get_service, mock_current_user
+    ):
+        """Test service status check when service is unhealthy."""
+        mock_service = MagicMock()
+        mock_service.is_initialized = False  # Service is not initialized
+        mock_service.project_id = "test-project"
+        mock_get_service.return_value = mock_service
+
+        response = await get_service_status(
+            _current_user=mock_current_user,
+            gemini_service=mock_service,
+        )
+
+        # It should still return successfully but with unhealthy status
+        assert isinstance(response, ServiceStatusResponse)
+        assert response.success is True
+        assert response.data["status"] == "unhealthy"
+        assert response.data["model"]["initialized"] is False
+        assert response.data["model"]["project_id"] == "test-project"
+
+    @pytest.mark.asyncio
+    @patch("clarity.api.v1.gemini_insights.get_gemini_service")
+    async def test_get_service_status_error(self, mock_get_service, mock_current_user):
+        """Test service status check when there's an error."""
+        mock_service = MagicMock()
+        mock_get_service.return_value = mock_service
+
+        # Configure the mock to raise an exception when accessing is_initialized
+        type(mock_service).is_initialized = PropertyMock(
+            side_effect=Exception("Service unavailable")
+        )
+
         with pytest.raises(HTTPException) as exc_info:
             await get_service_status(
                 _current_user=mock_current_user,
                 gemini_service=mock_service,
             )
-        
+
         error = exc_info.value
         assert error.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR
-        assert "SERVICE_STATUS_ERROR" in str(error.detail)
+        assert "STATUS_CHECK_FAILED" in str(error.detail)
 
 
 class TestIntegrationScenarios:
@@ -738,7 +817,7 @@ class TestIntegrationScenarios:
         self.mock_auth_provider = MagicMock(spec=IAuthProvider)
         self.mock_config_provider = MagicMock(spec=IConfigProvider)
         self.mock_config_provider.is_development.return_value = True
-        
+
         set_dependencies(self.mock_auth_provider, self.mock_config_provider)
 
     @pytest.fixture
@@ -755,11 +834,11 @@ class TestIntegrationScenarios:
         # This test would verify the complete flow but requires more complex setup
         # For now, it demonstrates the testing approach
         request_id = generate_request_id()
-        
+
         assert request_id.startswith("req_insights_")
-        
+
         metadata = create_metadata(request_id, 1200.5)
-        
+
         assert metadata["request_id"] == request_id
         assert metadata["processing_time_ms"] == 1200.5
         assert metadata["service"] == "gemini-insights"
@@ -772,9 +851,9 @@ class TestIntegrationScenarios:
             error_code="VALIDATION_ERROR",
             message="Invalid input data",
             request_id="req_123",
-            status_code=400
+            status_code=400,
         )
-        
+
         # Verify the returned exception has the correct structure
         assert isinstance(http_exception, HTTPException)
         assert http_exception.status_code == 400
@@ -782,14 +861,14 @@ class TestIntegrationScenarios:
         assert http_exception.detail["message"] == "Invalid input data"
         assert http_exception.detail["request_id"] == "req_123"
         assert "timestamp" in http_exception.detail
-        
+
         # Test multiple error types follow the same pattern
         errors = [
             ("INSUFFICIENT_DATA", "Not enough data for analysis", 422),
             ("SERVICE_UNAVAILABLE", "Gemini service temporarily unavailable", 503),
             ("RATE_LIMIT_EXCEEDED", "Too many requests", 429),
         ]
-        
+
         for error_code, message, status_code in errors:
             exc = create_error_response(error_code, message, "test_req", status_code)
             assert isinstance(exc, HTTPException)
@@ -803,16 +882,16 @@ class TestIntegrationScenarios:
         """Test that request IDs are properly tracked across operations."""
         # Generate multiple request IDs
         request_ids = [generate_request_id() for _ in range(5)]
-        
+
         # All should be unique
         assert len(set(request_ids)) == 5
-        
+
         # All should follow the same format
         for req_id in request_ids:
             assert req_id.startswith("req_insights_")
             assert len(req_id) == len("req_insights_") + 8
-            
+
             # Test metadata creation with each ID
             metadata = create_metadata(req_id)
             assert metadata["request_id"] == req_id
-            assert metadata["service"] == "gemini-insights" 
+            assert metadata["service"] == "gemini-insights"

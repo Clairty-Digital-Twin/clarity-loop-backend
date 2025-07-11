@@ -281,7 +281,9 @@ async def generate_insights(
             request_id,
         )
 
-        # No need to check is_active for User model - just proceed
+        # Validate user is active
+        if not current_user.is_active:
+            _raise_account_disabled_error(request_id, current_user.user_id)
 
         # Create Gemini service request
         gemini_request = HealthInsightRequest(
@@ -340,6 +342,8 @@ async def generate_insights(
             metadata=create_metadata(request_id, processing_time),
         )
 
+    except HTTPException:
+        raise
     except Exception as e:
         processing_time = (datetime.now(UTC) - start_time).total_seconds() * 1000
         logger.exception(

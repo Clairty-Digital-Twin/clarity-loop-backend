@@ -6,6 +6,9 @@ for our mania risk detection module based on 2024-2025 research.
 
 import pytest
 from datetime import datetime, UTC
+from pathlib import Path
+import tempfile
+import yaml
 
 from clarity.ml.processors.sleep_processor import SleepFeatures
 
@@ -38,7 +41,8 @@ class TestManiaRiskAnalyzer:
             sleep_latency=15.0,
             awakenings_count=2.0,
             consistency_score=0.8,
-            quality_score=0.85,
+            overall_quality_score=0.85,
+            data_coverage_days=7,  # Full week of data
         )
         
         result = analyzer.analyze(
@@ -67,7 +71,8 @@ class TestManiaRiskAnalyzer:
             sleep_latency=2.0,        # Falls asleep instantly
             awakenings_count=0.0,
             consistency_score=0.2,    # Very irregular schedule
-            quality_score=0.4,
+            overall_quality_score=0.4,
+            data_coverage_days=7,  # Full week of data
         )
         
         result = analyzer.analyze(
@@ -99,14 +104,15 @@ class TestManiaRiskAnalyzer:
             sleep_latency=10.0,
             awakenings_count=3.0,
             consistency_score=0.6,
-            quality_score=0.65,
+            overall_quality_score=0.65,
+            data_coverage_days=7,  # Full week of data
         )
         
         result = analyzer.analyze(
             sleep_features=borderline_sleep,
             pat_metrics={
-                "circadian_rhythm_score": 0.6,
-                "activity_fragmentation": 0.6,
+                "circadian_rhythm_score": 0.45,  # Slightly disrupted
+                "activity_fragmentation": 0.75,  # Moderate fragmentation
             }
         )
         
@@ -194,7 +200,8 @@ class TestManiaRiskAnalyzer:
                 sleep_latency=10.0,
                 awakenings_count=1.0,
                 consistency_score=0.7,
-                quality_score=0.75,
+                overall_quality_score=0.75,
+                data_coverage_days=7,  # Full week of data
             ),
             historical_baseline={
                 "avg_sleep_hours": 8.0,  # Normal is 8 hours
@@ -218,7 +225,8 @@ class TestManiaRiskAnalyzer:
                 sleep_latency=3.0,  # Very rapid
                 awakenings_count=0.0,
                 consistency_score=0.5,
-                quality_score=0.6,
+                overall_quality_score=0.6,
+                data_coverage_days=7,  # Full week of data
             )
         )
         
@@ -257,7 +265,8 @@ class TestManiaRiskAnalyzer:
                 sleep_latency=2.0,
                 awakenings_count=0.0,
                 consistency_score=0.2,
-                quality_score=0.3,
+                overall_quality_score=0.3,
+                data_coverage_days=7,  # Full week of data
             ),
             pat_metrics={
                 "circadian_rhythm_score": 0.3,
@@ -322,3 +331,129 @@ class TestManiaRiskAnalyzer:
         assert result.alert_level == "none"
         assert result.confidence == 0.5
         assert "Insufficient sleep data" in result.contributing_factors
+    
+    def test_yaml_config_parsing(self):
+        """Test that YAML configuration file is parsed correctly."""
+        from clarity.ml.mania_risk_analyzer import ManiaRiskAnalyzer
+        
+        # Test with the actual config file
+        config_path = Path("config/mania_risk_config.yaml")
+        analyzer = ManiaRiskAnalyzer(config_path)
+        
+        # Verify thresholds are loaded correctly
+        assert analyzer.config.min_sleep_hours == 5.0
+        assert analyzer.config.critical_sleep_hours == 3.0
+        assert analyzer.config.sleep_loss_percent == 0.4
+        assert analyzer.config.circadian_disruption_threshold == 0.5
+        assert analyzer.config.phase_advance_hours == 1.0
+        assert analyzer.config.activity_surge_ratio == 1.5
+        assert analyzer.config.activity_fragmentation_threshold == 0.8
+        assert analyzer.config.elevated_resting_hr == 90.0
+        assert analyzer.config.low_hrv_threshold == 20.0
+        
+        # Verify weights are loaded correctly
+        assert analyzer.config.weights["severe_sleep_loss"] == 0.40
+        assert analyzer.config.weights["acute_sleep_loss"] == 0.30
+        assert analyzer.config.weights["rapid_sleep_onset"] == 0.10
+        assert analyzer.config.weights["circadian_disruption"] == 0.25
+        assert analyzer.config.weights["sleep_inconsistency"] == 0.10
+        assert analyzer.config.weights["circadian_phase_advance"] == 0.15
+        assert analyzer.config.weights["activity_fragmentation"] == 0.20
+        assert analyzer.config.weights["activity_surge"] == 0.10
+        assert analyzer.config.weights["elevated_hr"] == 0.05
+        assert analyzer.config.weights["low_hrv"] == 0.05
+    
+    def test_custom_yaml_config_parsing(self):
+        """Test parsing of custom YAML configuration with different values."""
+        from clarity.ml.mania_risk_analyzer import ManiaRiskAnalyzer
+        
+        # Create a temporary YAML config file with custom values
+        custom_config = {
+            "min_sleep_hours": 6.0,
+            "critical_sleep_hours": 4.0,
+            "sleep_loss_percent": 0.5,
+            "circadian_disruption_threshold": 0.6,
+            "phase_advance_hours": 2.0,
+            "activity_surge_ratio": 2.0,
+            "activity_fragmentation_threshold": 0.9,
+            "elevated_resting_hr": 95.0,
+            "low_hrv_threshold": 25.0,
+            "weights": {
+                "severe_sleep_loss": 0.50,
+                "acute_sleep_loss": 0.35,
+                "rapid_sleep_onset": 0.15,
+                "circadian_disruption": 0.30,
+                "sleep_inconsistency": 0.15,
+                "circadian_phase_advance": 0.20,
+                "activity_fragmentation": 0.25,
+                "activity_surge": 0.15,
+                "elevated_hr": 0.10,
+                "low_hrv": 0.10,
+            }
+        }
+        
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.yaml', delete=False) as f:
+            yaml.dump(custom_config, f)
+            temp_path = Path(f.name)
+        
+        try:
+            # Load analyzer with custom config
+            analyzer = ManiaRiskAnalyzer(temp_path)
+            
+            # Verify custom thresholds
+            assert analyzer.config.min_sleep_hours == 6.0
+            assert analyzer.config.critical_sleep_hours == 4.0
+            assert analyzer.config.sleep_loss_percent == 0.5
+            assert analyzer.config.circadian_disruption_threshold == 0.6
+            assert analyzer.config.phase_advance_hours == 2.0
+            assert analyzer.config.activity_surge_ratio == 2.0
+            assert analyzer.config.activity_fragmentation_threshold == 0.9
+            assert analyzer.config.elevated_resting_hr == 95.0
+            assert analyzer.config.low_hrv_threshold == 25.0
+            
+            # Verify custom weights
+            assert analyzer.config.weights["severe_sleep_loss"] == 0.50
+            assert analyzer.config.weights["acute_sleep_loss"] == 0.35
+            assert analyzer.config.weights["rapid_sleep_onset"] == 0.15
+            assert analyzer.config.weights["circadian_disruption"] == 0.30
+            assert analyzer.config.weights["sleep_inconsistency"] == 0.15
+            assert analyzer.config.weights["circadian_phase_advance"] == 0.20
+            assert analyzer.config.weights["activity_fragmentation"] == 0.25
+            assert analyzer.config.weights["activity_surge"] == 0.15
+            assert analyzer.config.weights["elevated_hr"] == 0.10
+            assert analyzer.config.weights["low_hrv"] == 0.10
+            
+        finally:
+            # Clean up temp file
+            temp_path.unlink()
+    
+    def test_data_density_guardrails(self):
+        """Test that low data density prevents high alerts."""
+        from clarity.ml.mania_risk_analyzer import ManiaRiskAnalyzer
+        
+        analyzer = ManiaRiskAnalyzer()
+        
+        # Create sleep features with critically low sleep that would normally trigger high alert
+        critical_sleep = SleepFeatures(
+            total_sleep_minutes=150,  # 2.5 hours - very low
+            sleep_efficiency=0.95,
+            sleep_latency=2.0,
+            awakenings_count=0.0,
+            consistency_score=0.2,
+            overall_quality_score=0.4,
+            data_coverage_days=2,  # Only 2 days of data
+        )
+        
+        result = analyzer.analyze(
+            sleep_features=critical_sleep,
+            pat_metrics={
+                "circadian_rhythm_score": 0.3,
+                "activity_fragmentation": 0.9,
+            }
+        )
+        
+        # Should have lowered confidence due to limited data
+        assert result.confidence < 0.7
+        # Alert should be capped at moderate due to low confidence
+        assert result.alert_level == "moderate"
+        assert any("Limited data" in f for f in result.contributing_factors)

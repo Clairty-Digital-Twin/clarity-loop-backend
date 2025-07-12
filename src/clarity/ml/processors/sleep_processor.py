@@ -103,6 +103,11 @@ class SleepFeatures(BaseModel):
     overall_quality_score: float = Field(
         default=0.0, description="Overall sleep quality"
     )
+    
+    # Data coverage metrics
+    data_coverage_days: int = Field(
+        default=0, description="Number of days with sleep data in the analysis period"
+    )
 
 
 class SleepProcessor:
@@ -170,6 +175,7 @@ class SleepProcessor:
             consistency_score=self._calculate_consistency_score(
                 feature_sets["start_times"]
             ),
+            data_coverage_days=len(sleep_data_list),  # Number of nights with data
         )
 
         # Calculate overall quality score
@@ -350,6 +356,7 @@ class SleepProcessor:
             waso_minutes=0.0,
             consistency_score=0.0,
             overall_quality_score=0.0,
+            data_coverage_days=0,  # No data available
         )
 
     @staticmethod

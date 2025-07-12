@@ -161,7 +161,7 @@ class ManiaRiskAnalyzer:
         
         # Clamp score and determine alert level
         score = max(0.0, min(1.0, score))
-        alert_level = self._determine_alert_level(score)
+        alert_level = self._determine_alert_level(score, confidence)
         
         # Generate clinical insight and recommendations
         clinical_insight = self._generate_clinical_insight(
@@ -190,6 +190,7 @@ class ManiaRiskAnalyzer:
         score = 0.0
         factors = []
         confidence = 1.0
+        data_completeness = 1.0
         
         # Get sleep duration from available sources
         hours = None
@@ -198,6 +199,14 @@ class ManiaRiskAnalyzer:
         if sleep is not None:
             hours = sleep.total_sleep_minutes / 60
             data_source = "HealthKit"
+            
+            # Check data density - if we have sleep object, check for completeness
+            if hasattr(sleep, 'data_coverage_days'):
+                # If less than 3 days of data in the past week, lower confidence
+                if sleep.data_coverage_days < 3:
+                    data_completeness = 0.5
+                    factors.append(f"Limited data: only {sleep.data_coverage_days} days")
+            
         elif pat_metrics and "total_sleep_time" in pat_metrics:
             hours = pat_metrics["total_sleep_time"]
             data_source = "PAT estimation"
@@ -210,6 +219,9 @@ class ManiaRiskAnalyzer:
         # Handle edge case of 0 hours differently - might be data issue
         if hours == 0:
             return 0.0, ["Invalid sleep data: 0 hours recorded"], 0.3
+        
+        # Apply data completeness factor to confidence
+        confidence *= data_completeness
             
         # Check against absolute thresholds
         if hours <= self.config.critical_sleep_hours:
@@ -353,8 +365,20 @@ class ManiaRiskAnalyzer:
         
         return score, factors
     
-    def _determine_alert_level(self, score: float) -> str:
-        """Determine categorical alert level from risk score."""
+    def _determine_alert_level(self, score: float, confidence: float = 1.0) -> str:
+        """Determine categorical alert level from risk score.
+        
+        Args:
+            score: The risk score (0-1)
+            confidence: Confidence in the assessment (0-1)
+            
+        Returns:
+            Alert level string
+        """
+        # Apply guardrail: if confidence is low (<0.7), cap at moderate
+        if confidence < 0.7 and score >= self.high_threshold:
+            return "moderate"
+            
         if score >= self.high_threshold:
             return "high"
         elif score >= self.moderate_threshold:

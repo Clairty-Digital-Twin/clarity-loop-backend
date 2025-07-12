@@ -1,0 +1,39 @@
+# Mania Risk Detection Configuration
+# Based on 2024-2025 computational psychiatry research
+
+# Sleep duration thresholds (hours)
+min_sleep_hours: 5.0          # Below this = concerning
+critical_sleep_hours: 3.0     # Below this = high risk
+sleep_loss_percent: 0.4       # 40% reduction from baseline
+
+# Circadian rhythm thresholds
+circadian_disruption_threshold: 0.5     # Score below this = disrupted
+phase_advance_hours: 1.0                # Hours of phase shift
+
+# Activity thresholds
+activity_surge_ratio: 1.5     # 50% increase from baseline
+activity_fragmentation_threshold: 0.8   # High fragmentation threshold
+
+# Physiological thresholds
+elevated_resting_hr: 90.0       # BPM
+low_hrv_threshold: 20.0         # ms SDNN
+
+# Weights for scoring components
+weights:
+  # Sleep-related weights
+  severe_sleep_loss: 0.40       # Major contributor
+  acute_sleep_loss: 0.30        # Single night <3h
+  rapid_sleep_onset: 0.10       # <5 min latency
+  
+  # Circadian weights
+  circadian_disruption: 0.25    # Major contributor
+  sleep_inconsistency: 0.10     # Irregular schedule
+  circadian_phase_advance: 0.15 # Phase shift detected
+  
+  # Activity weights
+  activity_fragmentation: 0.20  # Disorganized patterns
+  activity_surge: 0.10          # Sudden increases
+  
+  # Physiological weights
+  elevated_hr: 0.05             # Supporting signal
+  low_hrv: 0.05                 # Supporting signal

@@ -195,34 +195,50 @@ class HealthAnalysisPipeline:
                 results.activity_features,  # 🔥 Pass activity features
             )
 
-            # Step 5: Mania risk analysis (if enabled)
+            # Step 5: Mania risk analysis (if enabled) with graceful fallback
             from clarity.core.config import get_settings
             settings = get_settings()
             
             if settings.mania_risk_enabled:
-                mania_result = await self._analyze_mania_risk(
-                    user_id,
-                    results,
-                    organized_data,
-                )
+                try:
+                    mania_result = await self._analyze_mania_risk(
+                        user_id,
+                        results,
+                        organized_data,
+                    )
 
-                # Add to summary stats
-                results.summary_stats.setdefault("health_indicators", {})
-                results.summary_stats["health_indicators"]["mania_risk"] = {
-                    "risk_score": mania_result.risk_score,
-                    "alert_level": mania_result.alert_level,
-                    "contributing_factors": mania_result.contributing_factors,
-                    "confidence": mania_result.confidence,
-                }
+                    # Add to summary stats
+                    results.summary_stats.setdefault("health_indicators", {})
+                    results.summary_stats["health_indicators"]["mania_risk"] = {
+                        "risk_score": mania_result.risk_score,
+                        "alert_level": mania_result.alert_level,
+                        "contributing_factors": mania_result.contributing_factors,
+                        "confidence": mania_result.confidence,
+                    }
 
-                # Add to clinical insights if significant
-                if mania_result.alert_level in {"moderate", "high"}:
-                    insights = results.summary_stats.setdefault("clinical_insights", [])
-                    insights.append(mania_result.clinical_insight)
+                    # Add to clinical insights if significant
+                    if mania_result.alert_level in {"moderate", "high"}:
+                        insights = results.summary_stats.setdefault("clinical_insights", [])
+                        insights.append(mania_result.clinical_insight)
 
-                    # Add recommendations
-                    if mania_result.recommendations:
-                        results.summary_stats["recommendations"] = mania_result.recommendations
+                        # Add recommendations
+                        if mania_result.recommendations:
+                            results.summary_stats["recommendations"] = mania_result.recommendations
+                            
+                except Exception as e:
+                    self.logger.warning(
+                        "Mania risk analysis failed for user %s, using default values: %s",
+                        user_id,
+                        str(e)
+                    )
+                    # Add default values to maintain API contract
+                    results.summary_stats.setdefault("health_indicators", {})
+                    results.summary_stats["health_indicators"]["mania_risk"] = {
+                        "risk_score": 0.0,
+                        "alert_level": "none",
+                        "contributing_factors": [],
+                        "confidence": 0.0,
+                    }
 
             # Step 7: Add processing metadata
             results.processing_metadata = {

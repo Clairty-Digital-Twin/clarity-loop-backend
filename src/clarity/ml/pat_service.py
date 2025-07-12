@@ -945,20 +945,35 @@ class PATModelService(IMLModelService):
         # Calculate confidence score
         confidence_score: float = float(np.mean(sleep_metrics[5:8]))
 
-        # Analyze mania risk using PAT metrics
-        mania_analyzer = ManiaRiskAnalyzer()
-        pat_metrics = {
-            "total_sleep_time": total_sleep_time,
-            "sleep_efficiency": sleep_efficiency,
-            "sleep_onset_latency": sleep_onset_latency,
-            "circadian_rhythm_score": circadian_score,
-            "activity_fragmentation": activity_fragmentation,
-        }
-        mania_result = mania_analyzer.analyze(pat_metrics=pat_metrics)
+        # Analyze mania risk using PAT metrics with graceful fallback
+        mania_risk_score = 0.0
+        mania_alert_level = "none"
         
-        # Add mania insight if risk is moderate or high
-        if mania_result.alert_level in ["moderate", "high"]:
-            insights.append(mania_result.clinical_insight)
+        try:
+            mania_analyzer = ManiaRiskAnalyzer()
+            pat_metrics = {
+                "total_sleep_time": total_sleep_time,
+                "sleep_efficiency": sleep_efficiency,
+                "sleep_onset_latency": sleep_onset_latency,
+                "circadian_rhythm_score": circadian_score,
+                "activity_fragmentation": activity_fragmentation,
+            }
+            mania_result = mania_analyzer.analyze(pat_metrics=pat_metrics)
+            
+            # Extract values from result
+            mania_risk_score = mania_result.risk_score
+            mania_alert_level = mania_result.alert_level
+            
+            # Add mania insight if risk is moderate or high
+            if mania_result.alert_level in ["moderate", "high"]:
+                insights.append(mania_result.clinical_insight)
+        except Exception as e:
+            logger.warning(
+                "Mania risk analysis failed for user %s, using default values: %s",
+                user_id,
+                str(e)
+            )
+            # Continue with default values: mania_risk_score=0.0, mania_alert_level="none"
 
         return ActigraphyAnalysis(
             user_id=user_id,
@@ -974,8 +989,8 @@ class PATModelService(IMLModelService):
             confidence_score=confidence_score,
             clinical_insights=insights,
             embedding=full_embedding,
-            mania_risk_score=mania_result.risk_score,
-            mania_alert_level=mania_result.alert_level,
+            mania_risk_score=mania_risk_score,
+            mania_alert_level=mania_alert_level,
         )
 
     @staticmethod

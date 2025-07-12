@@ -2,28 +2,9 @@
   "openapi": "3.1.0",
   "info": {
     "title": "CLARITY Digital Twin Platform",
-    "description": "Production AWS-native health data platform with comprehensive API endpoints",
-    "contact": {
-      "name": "CLARITY Support",
-      "url": "https://clarity.novamindnyc.com/",
-      "email": "support@clarity.novamindnyc.com"
-    },
-    "license": {
-      "name": "Proprietary",
-      "url": "https://clarity.novamindnyc.com/license"
-    },
-    "version": "0.2.0"
+    "description": "AI-powered health insights platform",
+    "version": "0.1.0"
   },
-  "servers": [
-    {
-      "url": "http://clarity-alb-1762715656.us-east-1.elb.amazonaws.com",
-      "description": "Production server (AWS ALB)"
-    },
-    {
-      "url": "http://localhost:8000",
-      "description": "Local development server"
-    }
-  ],
   "paths": {
     "/api/v1/auth/register": {
       "post": {
@@ -651,7 +632,7 @@
           "health-data"
         ],
         "summary": "Upload Health Data",
-        "description": "Upload health metrics for processing and analysis by the CLARITY digital twin platform.\n\n    **Features:**\n    - Supports multiple data types (heart rate, sleep, activity, etc.)\n    - Real-time validation and processing\n    - HIPAA-compliant secure storage\n    - Automatic data quality checks\n\n    **Example Request:**\n    ```json\n    {\n        \"user_id\": \"user_123\",\n        \"data_type\": \"heart_rate\",\n        \"measurements\": [\n            {\n                \"timestamp\": \"2025-01-15T10:30:00Z\",\n                \"value\": 72.5,\n                \"unit\": \"bpm\"\n            }\n        ],\n        \"source\": \"apple_watch\",\n        \"device_info\": {\n            \"model\": \"Apple Watch Series 9\",\n            \"os_version\": \"10.0\"\n        }\n    }\n    ```",
+        "description": "Upload health metrics for processing and analysis by the CLARITY\n    digital twin platform.\n\n    **Features:**\n    - Supports multiple data types (heart rate, sleep, activity, etc.)\n    - Real-time validation and processing\n    - HIPAA-compliant secure storage\n    - Automatic data quality checks\n\n    **Example Request:**\n    ```json\n    {\n        \"user_id\": \"user_123\",\n        \"data_type\": \"heart_rate\",\n        \"measurements\": [\n            {\n                \"timestamp\": \"2025-01-15T10:30:00Z\",\n                \"value\": 72.5,\n                \"unit\": \"bpm\"\n            }\n        ],\n        \"source\": \"apple_watch\",\n        \"device_info\": {\n            \"model\": \"Apple Watch Series 9\",\n            \"os_version\": \"10.0\"\n        }\n    }\n    ```",
         "operationId": "upload_health_data_api_v1_health_data__post",
         "requestBody": {
           "required": true,
@@ -2644,6 +2625,9 @@
     },
     "/": {
       "get": {
+        "tags": [
+          "Root"
+        ],
         "summary": "Root",
         "description": "Root endpoint.",
         "operationId": "root__get",
@@ -2653,6 +2637,9 @@
             "content": {
               "application/json": {
                 "schema": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
                   "type": "object",
                   "title": "Response Root  Get"
                 }
@@ -2679,8 +2666,11 @@
     },
     "/health": {
       "get": {
+        "tags": [
+          "Health"
+        ],
         "summary": "Health Check",
-        "description": "Health check endpoint.",
+        "description": "Basic health check endpoint.",
         "operationId": "health_check_health_get",
         "responses": {
           "200": {
@@ -2688,6 +2678,9 @@
             "content": {
               "application/json": {
                 "schema": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
                   "type": "object",
                   "title": "Response Health Check Health Get"
                 }
@@ -2788,6 +2781,18 @@
             "type": "array",
             "title": "Embedding",
             "description": "PAT model embedding vector (128-dim)"
+          },
+          "mania_risk_score": {
+            "type": "number",
+            "title": "Mania Risk Score",
+            "description": "Mania risk score (0-1)",
+            "default": 0.0
+          },
+          "mania_alert_level": {
+            "type": "string",
+            "title": "Mania Alert Level",
+            "description": "Mania risk level: none/low/moderate/high",
+            "default": "none"
           }
         },
         "type": "object",
@@ -3334,7 +3339,6 @@
               "$ref": "#/components/schemas/HealthMetric"
             },
             "type": "array",
-            "maxItems": 100,
             "minItems": 1,
             "title": "Metrics",
             "description": "Health metrics to upload"
@@ -4885,44 +4889,6 @@
       }
     }
   },
-  "tags": [
-    {
-      "name": "authentication",
-      "description": "User authentication and authorization endpoints"
-    },
-    {
-      "name": "health-data",
-      "description": "Health data management and retrieval"
-    },
-    {
-      "name": "healthkit",
-      "description": "Apple HealthKit data integration"
-    },
-    {
-      "name": "pat-analysis",
-      "description": "Physical Activity Test (PAT) analysis endpoints"
-    },
-    {
-      "name": "ai-insights",
-      "description": "AI-powered health insights generation"
-    },
-    {
-      "name": "metrics",
-      "description": "Health metrics and statistics"
-    },
-    {
-      "name": "websocket",
-      "description": "WebSocket real-time communication"
-    },
-    {
-      "name": "debug",
-      "description": "Debug endpoints (development only)"
-    },
-    {
-      "name": "test",
-      "description": "Test endpoints for API validation"
-    }
-  ],
   "security": [
     {
       "BearerAuth": []

@@ -98,7 +98,7 @@ PAT_CONFIGS = {
         "ff_dim": 256,
         "patch_size": 18,
         "input_size": 10080,
-        "model_path": str(_PROJECT_ROOT / "models" / "pat" / "PAT-S_29k_weight_transformer.h5"),
+        "model_path": str(_PROJECT_ROOT / "models" / "pat" / "PAT-S_29k_weights.h5"),
     },
     "medium": {
         "num_layers": 2,
@@ -108,7 +108,7 @@ PAT_CONFIGS = {
         "ff_dim": 256,
         "patch_size": 18,
         "input_size": 10080,
-        "model_path": str(_PROJECT_ROOT / "models" / "pat" / "PAT-M_29k_weight_transformer.h5"),
+        "model_path": str(_PROJECT_ROOT / "models" / "pat" / "PAT-M_29k_weights.h5"),
     },
     "large": {
         "num_layers": 4,
@@ -118,7 +118,7 @@ PAT_CONFIGS = {
         "ff_dim": 256,
         "patch_size": 9,
         "input_size": 10080,
-        "model_path": str(_PROJECT_ROOT / "models" / "pat" / "PAT-L_91k_weight_transformer.h5"),
+        "model_path": str(_PROJECT_ROOT / "models" / "pat" / "PAT-L_29k_weights.h5"),
     },
 }
 

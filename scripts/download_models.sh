@@ -14,9 +14,9 @@ AWS_REGION="${AWS_REGION:-us-east-1}"
 
 # Model configurations from environment variables
 declare -A MODELS
-MODELS["PAT-S"]="${PAT_S_MODEL_PATH:-${S3_BUCKET}/pat/PAT-S_29k_weight_transformer.h5}"
-MODELS["PAT-M"]="${PAT_M_MODEL_PATH:-${S3_BUCKET}/pat/PAT-M_29k_weight_transformer.h5}"
-MODELS["PAT-L"]="${PAT_L_MODEL_PATH:-${S3_BUCKET}/pat/PAT-L_91k_weight_transformer.h5}"
+MODELS["PAT-S"]="${PAT_S_MODEL_PATH:-${S3_BUCKET}/pat/PAT-S_29k_weights.h5}"
+MODELS["PAT-M"]="${PAT_M_MODEL_PATH:-${S3_BUCKET}/pat/PAT-M_29k_weights.h5}"
+MODELS["PAT-L"]="${PAT_L_MODEL_PATH:-${S3_BUCKET}/pat/PAT-L_29k_weights.h5}"
 
 # Checksums from environment variables
 declare -A CHECKSUMS

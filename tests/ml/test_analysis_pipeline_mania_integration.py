@@ -175,11 +175,11 @@ class TestManiaRiskIntegration:
                 "Items": [{"sleep_features": {"total_sleep_minutes": 480}}]
             }
             
-            # Create healthy metrics
+            # Create healthy metrics with good HRV
             metrics = [
                 self.create_sleep_metric(user_id, datetime.now(UTC), 7.5),  # Good sleep
                 self.create_activity_metric(user_id, datetime.now(UTC), 8500),  # Normal activity
-                self.create_heart_rate_metric(user_id, datetime.now(UTC), 65),  # Normal HR
+                self.create_heart_rate_metric(user_id, datetime.now(UTC), 65, hrv=45.0),  # Normal HR with good HRV
             ]
             
             results = await pipeline.process_health_data(

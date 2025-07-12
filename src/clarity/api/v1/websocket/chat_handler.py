@@ -37,7 +37,6 @@ from clarity.ml.gemini_service import (
     GeminiService,
     HealthInsightRequest,
 )
-from clarity.services.gcp_credentials import get_gcp_credentials_manager
 from clarity.ml.pat_service import (
     ActigraphyAnalysis,
     ActigraphyInput,
@@ -46,6 +45,7 @@ from clarity.ml.pat_service import (
 )
 from clarity.ml.preprocessing import ActigraphyDataPoint
 from clarity.models.auth import UserContext, UserRole
+from clarity.services.gcp_credentials import get_gcp_credentials_manager
 
 logger = logging.getLogger(__name__)
 settings = get_settings()

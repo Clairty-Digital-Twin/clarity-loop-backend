@@ -18,8 +18,6 @@ from boto3.dynamodb.conditions import Key
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field
 
-from clarity.services.gcp_credentials import get_gcp_credentials_manager
-
 from clarity.auth.dependencies import AuthenticatedUser
 from clarity.core.config_aws import get_settings
 from clarity.ml.gemini_service import (
@@ -29,6 +27,7 @@ from clarity.ml.gemini_service import (
 )
 from clarity.ports.auth_ports import IAuthProvider
 from clarity.ports.config_ports import IConfigProvider
+from clarity.services.gcp_credentials import get_gcp_credentials_manager
 from clarity.storage.dynamodb_client import DynamoDBHealthDataRepository
 
 logger = logging.getLogger(__name__)

@@ -26,7 +26,7 @@ def calculate_file_checksum(filepath: str) -> str:
             hashlib.sha256,
         ).hexdigest()
 
-    except (IOError, OSError) as e:
+    except OSError as e:
         print(f"Error calculating checksum for {filepath}: {e}")
         return ""
 

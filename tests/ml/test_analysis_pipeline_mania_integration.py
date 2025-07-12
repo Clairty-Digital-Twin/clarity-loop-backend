@@ -1,5 +1,6 @@
 """Integration tests for mania risk analysis in the health analysis pipeline."""
 
+import os
 from datetime import UTC, datetime, timedelta
 from unittest.mock import AsyncMock, MagicMock, patch
 

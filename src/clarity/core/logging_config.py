@@ -33,6 +33,12 @@ def setup_logging(force: bool = False) -> None:
     if _logging_configured and not force:
         return
     
+    # Clear existing handlers to prevent duplicates when forced
+    if force:
+        root_logger = logging.getLogger()
+        for handler in root_logger.handlers[:]:
+            root_logger.removeHandler(handler)
+    
     settings = get_settings()
 
     # Base configuration for structured logging
@@ -120,13 +126,25 @@ def configure_basic_logging(
     """
     global _logging_configured
     
-    # If already configured, just update the level if needed
-    if _logging_configured:
-        root_logger = logging.getLogger()
+    # Check if logging is already configured by checking for handlers
+    root_logger = logging.getLogger()
+    if root_logger.handlers and _logging_configured:
+        # Just update the level if needed
         if isinstance(level, str):
             level = getattr(logging, level.upper(), logging.INFO)
         root_logger.setLevel(level)
+        # Also update all existing handlers
+        for handler in root_logger.handlers:
+            handler.setLevel(level)
         return
     
     # Use our centralized setup
     setup_logging()
+    
+    # Update level after setup if different from default
+    if isinstance(level, str):
+        level = getattr(logging, level.upper(), logging.INFO)
+    if level != logging.INFO:
+        root_logger.setLevel(level)
+        for handler in root_logger.handlers:
+            handler.setLevel(level)

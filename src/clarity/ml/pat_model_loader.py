@@ -20,6 +20,18 @@ from torch import nn
 from clarity.ml.pat_architecture import ModelConfig as ArchModelConfig
 from clarity.ml.pat_architecture import PATModel
 from clarity.services.s3_storage_service import S3StorageService
+from clarity.monitoring import (
+    record_cache_hit,
+    record_cache_miss,
+    record_fallback_attempt,
+    record_s3_download,
+    record_validation_attempt,
+    track_checksum_verification,
+    track_model_load,
+    update_cache_metrics,
+    update_current_version,
+    update_loading_progress,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -182,53 +194,86 @@ class PATModelLoader:
             ModelLoadError: If model cannot be loaded
         """
         start_time = time.time()
+        version_str = version or "latest"
+        
+        # Track model load operation
+        async with track_model_load(size.value, version_str, "cache" if not force_reload else "local") as ctx:
+            try:
+                # Check cache first
+                cache_key = f"{size.value}:{version_str}"
+                if not force_reload:
+                    cached_model = self._cache.get(cache_key)
+                    if cached_model is not None:
+                        logger.debug("Model loaded from cache: %s", cache_key)
+                        record_cache_hit(size.value, version_str)
+                        ctx["success"] = True
+                        ctx["source"] = "cache"
+                        # Update cache metrics
+                        self._update_cache_metrics()
+                        return cast(nn.Module, cached_model)
+                    else:
+                        record_cache_miss(size.value, version_str)
 
-        try:
-            # Check cache first
-            cache_key = f"{size.value}:{version or 'latest'}"
-            if not force_reload:
-                cached_model = self._cache.get(cache_key)
-                if cached_model is not None:
-                    logger.debug("Model loaded from cache: %s", cache_key)
-                    return cast(nn.Module, cached_model)
+                # Update loading progress
+                update_loading_progress(size.value, version_str, "init", 0.1)
 
-            # Load model configuration
-            config = get_model_config(size)
+                # Load model configuration
+                config = get_model_config(size)
 
-            # Determine model path
-            if version:
-                model_path = self._get_versioned_path(size, version)
-            else:
-                model_path = self._get_latest_path(size)
+                # Determine model path
+                if version:
+                    model_path = self._get_versioned_path(size, version)
+                else:
+                    model_path = self._get_latest_path(size)
 
-            # Load from S3 if configured and file doesn't exist locally
-            if self.s3_service and not model_path.exists():
-                await self._download_from_s3(size, version, model_path)
+                # Load from S3 if configured and file doesn't exist locally
+                if self.s3_service and not model_path.exists():
+                    ctx["source"] = "s3"
+                    update_loading_progress(size.value, version_str, "download", 0.2)
+                    await self._download_from_s3(size, version, model_path)
+                    update_loading_progress(size.value, version_str, "download", 0.5)
+                else:
+                    ctx["source"] = "local"
 
-            # Load model weights
-            model = self._load_model_weights(config, model_path)
+                # Verify checksum
+                update_loading_progress(size.value, version_str, "checksum", 0.6)
+                await self._verify_checksum(size, version_str, model_path)
+                update_loading_progress(size.value, version_str, "checksum", 0.7)
 
-            # Validate model
-            self._validate_model(model, config)
+                # Load model weights
+                update_loading_progress(size.value, version_str, "load", 0.8)
+                model = self._load_model_weights(config, model_path)
 
-            # Cache the model
-            self._cache.set(cache_key, model)
+                # Validate model
+                update_loading_progress(size.value, version_str, "validate", 0.9)
+                self._validate_model(model, config)
 
-            # Update current version
-            self._update_current_version(size, version or "latest", model_path)
+                # Cache the model
+                self._cache.set(cache_key, model)
 
-            # Record metrics
-            load_time = time.time() - start_time
-            self._load_times.append(load_time)
+                # Update current version
+                self._update_current_version(size, version_str, model_path)
 
-            logger.info("Model loaded successfully: %s (%.2fs)", cache_key, load_time)
+                # Record metrics
+                load_time = time.time() - start_time
+                self._load_times.append(load_time)
 
-            return model
+                # Update cache metrics
+                self._update_cache_metrics()
 
-        except Exception as e:
-            logger.exception("Failed to load model: %s", size.value)
-            msg = f"Failed to load {size.value} model: {e}"
-            raise ModelLoadError(msg) from e
+                # Mark as successful and complete
+                ctx["success"] = True
+                update_loading_progress(size.value, version_str, "complete", 1.0)
+
+                logger.info("Model loaded successfully: %s (%.2fs)", cache_key, load_time)
+
+                return model
+
+            except Exception as e:
+                logger.exception("Failed to load model: %s", size.value)
+                ctx["error_type"] = type(e).__name__
+                msg = f"Failed to load {size.value} model: {e}"
+                raise ModelLoadError(msg) from e
 
     def _get_versioned_path(self, size: ModelSize, version: str) -> Path:
         """Get path for specific model version."""
@@ -255,6 +300,7 @@ class PATModelLoader:
             raise ModelLoadError(msg)
 
         s3_key = f"models/pat/{size.value}/v{version or 'latest'}.pth"
+        version_str = version or "latest"
 
         logger.info("Downloading model from S3: %s", s3_key)
 
@@ -262,13 +308,28 @@ class PATModelLoader:
         local_path.parent.mkdir(parents=True, exist_ok=True)
 
         # Download from S3
+        download_start = time.time()
         try:
             file_data = await self.s3_service.download_file(s3_key)
 
             # Write to local file
             local_path.write_bytes(file_data)
+            
+            # Record successful download
+            download_duration = time.time() - download_start
+            record_s3_download(
+                size.value, 
+                version_str, 
+                "success", 
+                download_duration,
+                len(file_data)
+            )
 
         except Exception as e:
+            # Record failed download
+            download_duration = time.time() - download_start
+            record_s3_download(size.value, version_str, "failed", download_duration)
+            
             msg = f"Failed to download model from S3: {s3_key}"
             raise ModelLoadError(msg) from e
 

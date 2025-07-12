@@ -39,6 +39,7 @@ except ImportError:
     _has_h5py = False
 
 from clarity.core.exceptions import DataValidationError
+from clarity.ml.mania_risk_analyzer import ManiaRiskAnalyzer
 from clarity.ml.preprocessing import ActigraphyDataPoint, HealthDataPreprocessor
 from clarity.ports.ml_ports import IMLModelService
 from clarity.services.health_data_service import MLPredictionError
@@ -125,6 +126,8 @@ class ActigraphyAnalysis(BaseModel):
     confidence_score: float = Field(description="Model confidence (0-1)")
     clinical_insights: list[str] = Field(description="Clinical interpretations")
     embedding: list[float] = Field(description="PAT model embedding vector (128-dim)")
+    mania_risk_score: float = Field(default=0.0, description="Mania risk score (0-1)")
+    mania_alert_level: str = Field(default="none", description="Mania risk level: none/low/moderate/high")
 
 
 class PATPositionalEncoding(nn.Module):
@@ -942,6 +945,21 @@ class PATModelService(IMLModelService):
         # Calculate confidence score
         confidence_score: float = float(np.mean(sleep_metrics[5:8]))
 
+        # Analyze mania risk using PAT metrics
+        mania_analyzer = ManiaRiskAnalyzer()
+        pat_metrics = {
+            "total_sleep_time": total_sleep_time,
+            "sleep_efficiency": sleep_efficiency,
+            "sleep_onset_latency": sleep_onset_latency,
+            "circadian_rhythm_score": circadian_score,
+            "activity_fragmentation": activity_fragmentation,
+        }
+        mania_result = mania_analyzer.analyze(pat_metrics=pat_metrics)
+        
+        # Add mania insight if risk is moderate or high
+        if mania_result.alert_level in ["moderate", "high"]:
+            insights.append(mania_result.clinical_insight)
+
         return ActigraphyAnalysis(
             user_id=user_id,
             analysis_timestamp=datetime.now(UTC).isoformat(),
@@ -956,6 +974,8 @@ class PATModelService(IMLModelService):
             confidence_score=confidence_score,
             clinical_insights=insights,
             embedding=full_embedding,
+            mania_risk_score=mania_result.risk_score,
+            mania_alert_level=mania_result.alert_level,
         )
 
     @staticmethod

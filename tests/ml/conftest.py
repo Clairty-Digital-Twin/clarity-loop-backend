@@ -3,7 +3,6 @@
 from unittest.mock import MagicMock, patch
 
 import pytest
-import torch
 
 from clarity.ml.pat_service import PATModelService
 

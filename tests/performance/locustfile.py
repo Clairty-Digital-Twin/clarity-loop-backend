@@ -4,7 +4,6 @@ Defines user behavior scenarios and load patterns for
 testing the CLARITY backend API performance.
 """
 
-import json
 import random
 from typing import Any
 

@@ -6,7 +6,6 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from clarity.core.config import Settings
 from clarity.ml.analysis_pipeline import HealthAnalysisPipeline
 from clarity.models.health_data import (
     ActivityData,

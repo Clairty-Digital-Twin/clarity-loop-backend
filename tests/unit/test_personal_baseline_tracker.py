@@ -1,15 +1,10 @@
 """Unit tests for PersonalBaselineTracker module."""
 
 from datetime import UTC, datetime, timedelta
-from unittest.mock import Mock
-
 import numpy as np
 import pytest
 
-from clarity.ml.personal_baseline_tracker import (
-    PersonalBaseline,
-    PersonalBaselineTracker,
-)
+from clarity.ml.personal_baseline_tracker import PersonalBaselineTracker
 from clarity.models.health_data import (
     ActivityData,
     BiometricData,

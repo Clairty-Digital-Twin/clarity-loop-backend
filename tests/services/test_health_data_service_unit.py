@@ -15,10 +15,7 @@ from clarity.models.health_data import (
     HealthMetric,
     HealthMetricType,
 )
-from clarity.services.health_data_service import (
-    HealthDataService,
-    HealthDataServiceError,
-)
+from clarity.services.health_data_service import HealthDataService
 
 
 class TestHealthDataServiceHappyPath:

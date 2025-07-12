@@ -10,7 +10,6 @@ Tests all components of the PAT predictor including:
 
 from __future__ import annotations
 
-import asyncio
 from collections import deque
 import time
 from unittest.mock import AsyncMock, MagicMock, patch

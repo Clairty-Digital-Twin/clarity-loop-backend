@@ -11,7 +11,7 @@ from pathlib import Path
 import tempfile
 
 from clarity.ml.model_integrity import ModelChecksumManager
-from clarity.ml.pat_model_loader import ModelSize, PATModelLoader
+from clarity.ml.pat_model_loader import PATModelLoader
 
 # Configure logging
 logging.basicConfig(

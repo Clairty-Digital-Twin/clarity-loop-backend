@@ -5,16 +5,14 @@ pub/sub support, circuit breaker pattern, and comprehensive metrics.
 """
 
 import asyncio
-from collections.abc import Callable, Generator
+from collections.abc import Generator
 from contextlib import contextmanager, suppress
-from datetime import datetime, timedelta
-from enum import Enum, StrEnum
-import json
+from datetime import datetime
+from enum import StrEnum
 import logging
-import os
 import threading
 import time
-from typing import Any, Dict, Optional, TypeVar
+from typing import Any, TypeVar
 
 import aioredis  # type: ignore[import-not-found]
 from circuitbreaker import CircuitBreaker, CircuitBreakerError
@@ -22,12 +20,7 @@ from prometheus_client import Counter, Gauge, Histogram
 from pydantic import BaseModel, Field
 
 from clarity.core.config_provider import ConfigProvider
-from clarity.core.exceptions import ServiceUnavailableProblem
-from clarity.core.feature_flags import (
-    FeatureFlag,
-    FeatureFlagConfig,
-    FeatureFlagStatus,
-)
+from clarity.core.feature_flags import FeatureFlagConfig
 from clarity.core.feature_flags import (
     FeatureFlagManager as BaseFeatureFlagManager,
 )

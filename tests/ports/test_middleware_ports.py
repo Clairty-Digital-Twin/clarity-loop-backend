@@ -1,6 +1,6 @@
 """Test middleware ports module."""
 
-from unittest.mock import AsyncMock, Mock
+from unittest.mock import Mock
 
 from fastapi import Request, Response
 import pytest

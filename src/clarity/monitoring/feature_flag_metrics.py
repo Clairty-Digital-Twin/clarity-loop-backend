@@ -1,27 +1,12 @@
 """Feature flag monitoring and metrics dashboard."""
 
 import time
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from fastapi import APIRouter, Response
-from prometheus_client import (
-    CONTENT_TYPE_LATEST,
-    CollectorRegistry,
-    Counter,
-    Gauge,
-    Histogram,
-    generate_latest,
-)
+from prometheus_client import CONTENT_TYPE_LATEST, generate_latest
 from pydantic import BaseModel
 
-from clarity.core.feature_flags_enhanced import (
-    FEATURE_FLAG_CIRCUIT_BREAKER_STATE,
-    FEATURE_FLAG_LAST_REFRESH,
-    FEATURE_FLAG_REFRESH_DURATION,
-    FEATURE_FLAG_REFRESH_FAILURE,
-    FEATURE_FLAG_REFRESH_SUCCESS,
-    FEATURE_FLAG_STALE_CONFIG,
-)
 from clarity.core.feature_flags_integration import get_feature_flag_health
 
 # Create router for metrics endpoints

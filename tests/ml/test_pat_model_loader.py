@@ -10,10 +10,9 @@ Tests all components of the PAT model loader including:
 
 from __future__ import annotations
 
-import asyncio
 from pathlib import Path
 import time
-from unittest.mock import AsyncMock, MagicMock, mock_open, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 import torch

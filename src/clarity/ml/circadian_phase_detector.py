@@ -9,13 +9,13 @@ This module detects these critical phase shifts from sleep timing data.
 """
 
 from dataclasses import dataclass
-from datetime import UTC, datetime, timedelta
+from datetime import timedelta
 import logging
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 import numpy as np
 
-from clarity.models.health_data import HealthMetric, SleepData
+from clarity.models.health_data import HealthMetric
 
 
 @dataclass

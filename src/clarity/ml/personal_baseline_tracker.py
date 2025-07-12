@@ -10,18 +10,12 @@ enabling detection of personal deviations rather than population norms.
 from collections import defaultdict
 from dataclasses import dataclass, field
 from datetime import UTC, datetime, timedelta
-import json
 import logging
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 import numpy as np
 
-from clarity.models.health_data import (
-    ActivityData,
-    BiometricData,
-    HealthMetric,
-    SleepData,
-)
+from clarity.models.health_data import HealthMetric
 
 
 @dataclass

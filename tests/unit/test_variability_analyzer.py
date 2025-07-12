@@ -1,11 +1,7 @@
 """Unit tests for VariabilityAnalyzer module."""
 
 from datetime import UTC, datetime, timedelta
-from unittest.mock import Mock
-
-import pytest
-
-from clarity.ml.variability_analyzer import VariabilityAnalyzer, VariabilityResult
+from clarity.ml.variability_analyzer import VariabilityAnalyzer
 from clarity.models.health_data import (
     ActivityData,
     HealthMetric,

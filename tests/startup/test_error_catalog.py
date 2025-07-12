@@ -1,7 +1,5 @@
 """Test error catalog module."""
 
-import pytest
-
 from clarity.startup.error_catalog import (
     ErrorCategory,
     ErrorSeverity,

@@ -6,7 +6,6 @@ Following Clean Code and SOLID principles:
 - Dependency Inversion: Depend on abstractions
 """
 
-import time
 from unittest.mock import MagicMock, patch
 
 from botocore.exceptions import ClientError

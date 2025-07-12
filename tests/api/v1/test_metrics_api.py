@@ -5,17 +5,9 @@ and the MetricsContext context manager to achieve 95%+ coverage.
 """
 
 import time
-from typing import Any
-from unittest.mock import MagicMock, PropertyMock, patch
+from unittest.mock import MagicMock, patch
 
 from fastapi import Response
-from prometheus_client import (
-    CollectorRegistry,
-    Counter,
-    Gauge,
-    Histogram,
-    generate_latest,
-)
 import pytest
 
 from clarity.api.v1.metrics import (

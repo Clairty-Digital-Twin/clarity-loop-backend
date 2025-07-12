@@ -1,8 +1,5 @@
 """Test security module."""
 
-from unittest.mock import Mock, patch
-
-import pytest
 
 from clarity.core.security import (
     DataIntegrityChecker,

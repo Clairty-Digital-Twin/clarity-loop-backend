@@ -11,10 +11,8 @@ and validated ML models, which we do not have.
 """
 
 from dataclasses import dataclass
-from datetime import UTC, datetime, timedelta
-import logging
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 from clarity.ml.circadian_phase_detector import (
     CircadianPhaseDetector,

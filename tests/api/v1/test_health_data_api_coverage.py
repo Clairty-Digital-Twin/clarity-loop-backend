@@ -35,14 +35,7 @@ from clarity.core.exceptions import (
     ValidationProblem,
 )
 from clarity.models.auth import Permission, UserContext, UserRole
-from clarity.models.health_data import (
-    BiometricData,
-    HealthDataResponse,
-    HealthDataUpload,
-    HealthMetric,
-    HealthMetricType,
-    ProcessingStatus,
-)
+from clarity.models.health_data import HealthMetric
 from clarity.ports.auth_ports import IAuthProvider
 from clarity.ports.config_ports import IConfigProvider
 from clarity.ports.data_ports import IHealthDataRepository

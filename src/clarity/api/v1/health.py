@@ -8,7 +8,7 @@ from datetime import UTC, datetime
 import logging
 from typing import Any
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 
 from clarity.auth.dependencies import get_current_user

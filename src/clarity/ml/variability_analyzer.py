@@ -9,14 +9,13 @@ This module calculates multi-timescale variability metrics from wearable data.
 """
 
 from dataclasses import dataclass
-from datetime import UTC, datetime, timedelta
+from datetime import datetime
 import logging
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 import numpy as np
-from scipy import stats
 
-from clarity.models.health_data import ActivityData, HealthMetric, SleepData
+from clarity.models.health_data import HealthMetric
 
 
 @dataclass

@@ -4,7 +4,6 @@ Following TDD principles, we write tests first to define expected behavior
 for our mania risk detection module based on 2024-2025 research.
 """
 
-from datetime import UTC, datetime
 from pathlib import Path
 import tempfile
 

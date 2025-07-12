@@ -23,8 +23,6 @@ from torch import nn
 
 from clarity.core.exceptions import DataValidationError
 from clarity.ml.pat_service import (
-    EXPECTED_MODEL_CHECKSUMS,
-    MODEL_SIGNATURE_KEY,
     PAT_CONFIGS,
     ActigraphyAnalysis,
     ActigraphyInput,

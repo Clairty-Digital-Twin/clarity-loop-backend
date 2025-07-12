@@ -1,18 +1,14 @@
 """Test secure logging module."""
 
-from datetime import UTC, datetime
 import logging
 from unittest.mock import Mock
-import uuid
-
-import pytest
 
 from clarity.core.secure_logging import (
     log_health_data_received,
     log_health_metrics_processed,
     sanitize_for_logging,
 )
-from clarity.models.health_data import HealthDataUpload, HealthMetric, HealthMetricType
+from clarity.models.health_data import HealthDataUpload, HealthMetric
 
 
 def test_log_health_data_received(caplog):

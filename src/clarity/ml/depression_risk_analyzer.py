@@ -7,10 +7,9 @@ Implements state-of-the-art depression prediction based on 2024-2025 research:
 """
 
 from dataclasses import dataclass
-from datetime import UTC, datetime, timedelta
 import logging
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 from clarity.ml.circadian_phase_detector import (
     CircadianPhaseDetector,

@@ -1,6 +1,5 @@
 """Test messaging publisher module."""
 
-import json
 from unittest.mock import AsyncMock, Mock, patch
 
 import pytest

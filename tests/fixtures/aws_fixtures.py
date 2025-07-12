@@ -6,11 +6,10 @@ with proper setup, teardown, and helper utilities.
 
 from __future__ import annotations
 
-from collections.abc import AsyncGenerator, Generator
+from collections.abc import Generator
 import json
 import os
 from typing import TYPE_CHECKING, Any
-from unittest.mock import patch
 
 import boto3
 from moto import mock_cognito_idp, mock_dynamodb, mock_s3

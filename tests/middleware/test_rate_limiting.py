@@ -2,9 +2,7 @@
 
 from unittest.mock import Mock
 
-from fastapi import Request, Response
-import pytest
-from starlette.datastructures import Headers
+from fastapi import Request
 
 from clarity.middleware.rate_limiting import (
     RateLimitingMiddleware,

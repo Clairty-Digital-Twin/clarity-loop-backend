@@ -3,12 +3,11 @@
 from datetime import UTC, datetime
 import os
 from pathlib import Path
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import MagicMock, patch
 
 import pytest
-import torch
 
-from clarity.ml.analysis_pipeline import AnalysisResults, HealthAnalysisPipeline
+from clarity.ml.analysis_pipeline import HealthAnalysisPipeline
 from clarity.ml.pat_service import PATModelService
 from clarity.models.health_data import BiometricData, HealthMetric, HealthMetricType
 

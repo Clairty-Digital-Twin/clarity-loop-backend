@@ -6,7 +6,7 @@ with auto-refresh capabilities in the CLARITY Digital Twin Platform.
 
 import logging
 import os
-from typing import Any, Optional
+from typing import Any
 
 from clarity.core.config_aws import Settings
 from clarity.core.config_provider import ConfigProvider

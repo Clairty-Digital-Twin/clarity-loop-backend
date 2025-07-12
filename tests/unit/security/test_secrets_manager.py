@@ -5,7 +5,6 @@ import os
 from unittest.mock import MagicMock, patch
 
 from botocore.exceptions import ClientError
-import pytest
 
 from clarity.security.secrets_manager import (
     SecretsManager,

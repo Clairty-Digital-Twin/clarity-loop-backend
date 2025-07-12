@@ -12,22 +12,17 @@ All tests are non-destructive and safe for CI/CD pipelines.
 
 import asyncio
 from datetime import UTC, datetime
-import hashlib
-import json
 import logging
 from pathlib import Path
 import tempfile
 import time
-from typing import Any, Never
+from typing import Never
 from unittest.mock import AsyncMock, MagicMock, patch
-import uuid
-
-from circuitbreaker import CircuitBreakerError
 import numpy as np
 import pytest
 import torch
 
-from clarity.core.exceptions import DataValidationError, ServiceUnavailableProblem
+from clarity.core.exceptions import ServiceUnavailableProblem
 from clarity.ml.model_integrity import (
     ModelChecksumManager,
     ModelIntegrityError,

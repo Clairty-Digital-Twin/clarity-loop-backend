@@ -248,7 +248,6 @@ class TestRegisterEndpoint:
     @pytest.mark.asyncio
     async def test_register_self_signup_disabled(self):
         """Test register when self-signup is disabled."""
-        from starlette.datastructures import Headers
         from starlette.requests import Request
 
         # Create a minimal mock request that satisfies the rate limiter

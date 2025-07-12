@@ -10,8 +10,8 @@ This module provides Prometheus metrics for production monitoring
 and alerting of the PAT (Proxy Actigraphy Transformer) model system.
 """
 
-from collections.abc import AsyncIterator, Iterator
-from contextlib import asynccontextmanager, contextmanager
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
 import logging
 import time
 from typing import Any

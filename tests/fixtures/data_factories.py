@@ -6,12 +6,11 @@ for various entities in the CLARITY system.
 
 from __future__ import annotations
 
-from datetime import UTC, datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 import random
 from typing import Any
 
 import factory
-from factory import fuzzy
 from faker import Faker
 
 fake = Faker()

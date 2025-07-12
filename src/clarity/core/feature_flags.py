@@ -5,7 +5,7 @@ with proper environment-based configuration and graceful degradation.
 """
 
 from collections.abc import Callable
-from enum import Enum, StrEnum
+from enum import StrEnum
 import logging
 import os
 from typing import Any, TypeVar, cast

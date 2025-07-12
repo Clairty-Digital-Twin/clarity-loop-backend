@@ -1,7 +1,6 @@
 """Test utilities for PAT service tests."""
 
 from contextlib import contextmanager
-import os
 from unittest.mock import MagicMock, Mock, patch
 
 

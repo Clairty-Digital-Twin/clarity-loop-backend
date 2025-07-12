@@ -268,6 +268,13 @@ def mock_environment_variables(monkeypatch: pytest.MonkeyPatch):
         "LOG_LEVEL": "DEBUG",
         "CORS_ORIGINS": '["http://localhost:3000", "http://localhost:8000"]',  # Fixed: JSON format
         "SKIP_EXTERNAL_SERVICES": "true",  # Skip external AWS services in tests
+        # Model integrity checksums for tests
+        "MODEL_SIGNATURE_KEY": "pat_model_integrity_key_2025",
+        "EXPECTED_MODEL_CHECKSUMS": """{
+            "small": "4b30d57febbbc8ef221e4b196bf6957e7c7f366f6b836fe800a43f69d24694ad",
+            "medium": "6175021ca1a43f3c834bdaa644c45f27817cf985d8ffd186fab9b5de2c4ca661",
+            "large": "c93b723f297f0d9d2ad982320b75e9212882c8f38aa40df1b600e9b2b8aa1973"
+        }""",
     }
 
     for key, value in test_env.items():

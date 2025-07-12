@@ -75,14 +75,15 @@ class TestPATServiceSecretsIntegration:
             with patch("pathlib.Path.open"), patch("pathlib.Path.exists", return_value=True):
                 # Calculate checksum should use the signature key from secrets
                 with patch("hashlib.sha256") as mock_sha256:
+                    mock_sha256.return_value.hexdigest.return_value = "test_digest"
                     with patch("hmac.new") as mock_hmac:
-                        PATModelService._calculate_file_checksum(service.model_path)
+                        mock_hmac.return_value.hexdigest.return_value = "test_signature"
+                        # Call through the instance method which has access to the signature key
+                        result = service._calculate_file_checksum(service.model_path)
                         
                         # Verify HMAC was called with our test signature key
                         mock_hmac.assert_called_once()
-                        # The signature key comes from secrets manager, not direct from env
-                        # So we need to check if new was called at all
-                        assert mock_hmac.called
+                        assert result == "test_signature"
 
     def test_pat_service_fallback_when_secrets_unavailable(self):
         """Test PAT service falls back gracefully when secrets are unavailable."""

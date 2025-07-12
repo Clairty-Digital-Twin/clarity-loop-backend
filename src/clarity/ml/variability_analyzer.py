@@ -62,6 +62,22 @@ class VariabilityAnalyzer:
         self.SPIKE_THRESHOLD_ZSCORE = 2.0  # 2 SD above baseline
         self.HIGH_SPIKE_THRESHOLD = 3.0  # 3 SD for high confidence
 
+        # Constants for magic values
+        self.MIN_SERIES_LENGTH = 2
+        self.MIN_WEEKLY_DATA_DAYS = 7
+        self.HOURS_PER_DAY = 24
+        self.MINUTES_TO_HOURS = 60.0
+        self.TREND_INCREASE_FACTOR = 1.3
+        self.TREND_DECREASE_FACTOR = 0.7
+        self.HIGH_VARIABILITY_THRESHOLD = 0.3
+        self.MODERATE_VARIABILITY_THRESHOLD = 0.25
+        self.UNCERTAIN_TIMING_DAYS = 5  # Average of 3 and 7 days
+        self.MIN_BASELINE_DAYS = 14
+        self.DATA_CONFIDENCE_WEIGHT = 0.5
+        self.HIGH_SPIKE_CONFIDENCE = 1.0
+        self.MODERATE_SPIKE_CONFIDENCE = 0.7
+        self.LOW_SPIKE_CONFIDENCE = 0.3
+
     def analyze_variability(
         self,
         activity_metrics: list[HealthMetric],
@@ -274,16 +290,16 @@ class VariabilityAnalyzer:
             return None, "none"
 
         # High activity variability → depression (7 days)
-        if activity_cv > 0.3 and trend == "increasing":
+        if activity_cv > self.HIGH_VARIABILITY_THRESHOLD and trend == "increasing":
             return self.DEPRESSION_LEAD_TIME_DAYS, "depression"
 
         # High sleep variability → hypomania (3 days)
-        if sleep_cv > 0.25 and spike_detected:
+        if sleep_cv > self.MODERATE_VARIABILITY_THRESHOLD and spike_detected:
             return self.HYPOMANIA_LEAD_TIME_DAYS, "hypomania"
 
         # Moderate changes → uncertain timing
         if trend == "increasing":
-            return 5, "uncertain"  # Average of 3 and 7 days
+            return self.UNCERTAIN_TIMING_DAYS, "uncertain"
 
         return None, "none"
 
@@ -293,16 +309,16 @@ class VariabilityAnalyzer:
         """Calculate confidence in the prediction."""
         # Base confidence on data availability
         data_confidence = (
-            min(activity_points / 14, 1.0) * 0.5 + min(sleep_points / 14, 1.0) * 0.5
+            min(activity_points / self.MIN_BASELINE_DAYS, 1.0) * self.DATA_CONFIDENCE_WEIGHT + min(sleep_points / self.MIN_BASELINE_DAYS, 1.0) * self.DATA_CONFIDENCE_WEIGHT
         )
 
         # Adjust for spike magnitude
         if spike_magnitude > self.HIGH_SPIKE_THRESHOLD:
-            spike_confidence = 1.0
+            spike_confidence = self.HIGH_SPIKE_CONFIDENCE
         elif spike_magnitude > self.SPIKE_THRESHOLD_ZSCORE:
-            spike_confidence = 0.7
+            spike_confidence = self.MODERATE_SPIKE_CONFIDENCE
         else:
-            spike_confidence = 0.3
+            spike_confidence = self.LOW_SPIKE_CONFIDENCE
 
         return data_confidence * spike_confidence
 

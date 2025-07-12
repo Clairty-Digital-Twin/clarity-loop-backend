@@ -111,8 +111,6 @@ def setup_feature_flags_for_app(app: Any, settings: Settings) -> EnhancedFeature
         config_provider = app.state.config_provider
     elif not settings.skip_external_services:
         # Create config provider if needed
-        from clarity.core.config_provider import ConfigProvider
-
         config_provider = ConfigProvider(settings)
 
     # Create enhanced manager
@@ -123,7 +121,7 @@ def setup_feature_flags_for_app(app: Any, settings: Settings) -> EnhancedFeature
 
     # Add startup/shutdown handlers
     @app.on_event("startup")  # type: ignore[misc]
-    async def feature_flag_startup() -> None:
+    def feature_flag_startup() -> None:
         """Initialize feature flag system on startup."""
         logger.info("Feature flag system started")
 
@@ -132,7 +130,7 @@ def setup_feature_flags_for_app(app: Any, settings: Settings) -> EnhancedFeature
             logger.warning("Feature flag configuration is stale at startup")
 
     @app.on_event("shutdown")  # type: ignore[misc]
-    async def feature_flag_shutdown() -> None:
+    def feature_flag_shutdown() -> None:
         """Cleanup feature flag system on shutdown."""
         logger.info("Shutting down feature flag system")
         manager.shutdown()

@@ -42,16 +42,16 @@ class CircadianPhaseDetector:
     MIN_RECENT_DAYS = 2
     MIN_BASELINE_DAYS = 5
     MIN_VARIANCE_DAYS = 3
-    
+
     # Phase shift thresholds (hours)
     PHASE_SHIFT_STABLE_THRESHOLD = 0.5
     PHASE_SHIFT_WRAPAROUND_THRESHOLD = 12
-    
+
     # Clinical significance thresholds
     CLINICAL_SIGNIFICANCE_MIN_CONFIDENCE = 0.5
     CLINICAL_SIGNIFICANCE_HIGH_THRESHOLD = 0.75
     CLINICAL_SIGNIFICANCE_MODERATE_THRESHOLD = 0.5
-    
+
     # Variability trend thresholds
     VARIABILITY_TREND_MIN_DAYS = 3
     VARIABILITY_TREND_INCREASE_FACTOR = 1.5
@@ -263,8 +263,8 @@ class CircadianPhaseDetector:
         if len(phase_changes) >= self.VARIABILITY_TREND_MIN_DAYS:
             recent_var = np.std(phase_changes[-self.VARIABILITY_TREND_MIN_DAYS:])
             older_var = (
-                np.std(phase_changes[:-self.VARIABILITY_TREND_MIN_DAYS]) 
-                if len(phase_changes) > self.VARIABILITY_TREND_MIN_DAYS 
+                np.std(phase_changes[:-self.VARIABILITY_TREND_MIN_DAYS])
+                if len(phase_changes) > self.VARIABILITY_TREND_MIN_DAYS
                 else recent_var
             )
 

@@ -98,7 +98,14 @@ class ClarityDemo:
             self.print_success(f"Demo Users: {len(users)} synthetic profiles")
 
             for user in users:
-                self.print_info(f"User: {user['name']} ({user['age']} years, {user['activity_level']})")
+                # Build display name from actual data structure
+                name = f"{user['first_name']} {user['last_name']}"
+                # Calculate age from date_of_birth
+                birth_date = datetime.strptime(user['date_of_birth'], '%Y-%m-%d')
+                age = (datetime.now() - birth_date).days // 365
+                # Use a fallback for activity_level if not present
+                activity_level = user.get('activity_level', 'moderate')
+                self.print_info(f"User: {name} ({age} years, {activity_level})")
 
         except Exception as e:
             self.print_error(f"Failed to load user data: {e}")
@@ -117,16 +124,20 @@ class ClarityDemo:
         """Demo bipolar risk detection system."""
         self.print_banner("Bipolar Risk Detection Demo")
 
-        # Load clinical scenarios
+        # Load clinical scenarios summary
         try:
             response = self.s3_client.get_object(Bucket=DEMO_BUCKET, Key='clinical/scenarios_summary.json')
-            scenarios = json.loads(response['Body'].read())
-            self.print_success(f"Clinical Scenarios: {len(scenarios)} phases loaded")
-
-            for scenario in scenarios:
-                risk_level = scenario['risk_level']
-                emoji = "🟢" if risk_level == "low" else "🟡" if risk_level == "moderate" else "🔴"
-                self.print_info(f"{emoji} {scenario['phase']}: Risk {risk_level} (Score: {scenario['risk_score']})")
+            scenarios_data = json.loads(response['Body'].read())
+            
+            # Extract scenario summary information
+            summary = scenarios_data['scenario_summary']
+            self.print_success(f"Clinical Scenarios: {summary['total_scenarios']} phases loaded")
+            
+            # Show risk detection targets
+            risk_targets = scenarios_data['risk_detection_targets']
+            for phase, target in risk_targets.items():
+                emoji = "🟢" if "low" in target else "🟡" if "increase" in target else "🔴"
+                self.print_info(f"{emoji} {phase}: {target}")
 
         except Exception as e:
             self.print_error(f"Failed to load clinical scenarios: {e}")
@@ -135,8 +146,12 @@ class ClarityDemo:
         try:
             response = self.s3_client.get_object(Bucket=DEMO_BUCKET, Key='clinical/complete_episode_scenario.json')
             episode = json.loads(response['Body'].read())
-            self.print_success(f"Complete Episode: {episode['duration_days']} days tracked")
-            self.print_info(f"Episode Pattern: {episode['description']}")
+            # Use correct field name from actual data
+            self.print_success(f"Complete Episode: {episode['total_duration_days']} days tracked")
+            # Build description from available data
+            phases = episode['phases']
+            phase_desc = f"Baseline ({phases['baseline']}d) → Prodromal ({phases['prodromal']}d) → Acute ({phases['acute_manic']}d) → Recovery ({phases['recovery']}d)"
+            self.print_info(f"Episode Pattern: {phase_desc}")
 
         except Exception as e:
             self.print_error(f"Failed to load episode data: {e}")
@@ -152,8 +167,24 @@ class ClarityDemo:
             self.print_success(f"PAT Predictions: {len(predictions)} analysis results")
 
             for i, pred in enumerate(predictions[:2]):
-                self.print_info(f"Analysis {i + 1}: {pred['analysis_type']} - Score: {pred['confidence']:.3f}")
-                self.print_info(f"  Key Finding: {pred['key_insights'][0]}")
+                # Use actual data structure
+                prediction_data = pred['predictions']
+                confidence_data = pred['confidence_scores']
+                
+                # Extract analysis type from prediction keys
+                analysis_type = "Depression Risk" if 'depression_risk' in prediction_data else "Health Analysis"
+                # Get confidence score (use depression_risk confidence as primary)
+                confidence = confidence_data.get('depression_risk', confidence_data.get('health_score', 0.0))
+                
+                self.print_info(f"Analysis {i + 1}: {analysis_type} - Score: {confidence:.3f}")
+                
+                # Show key finding from prediction data
+                if 'depression_risk' in prediction_data:
+                    risk_score = prediction_data['depression_risk']
+                    self.print_info(f"  Key Finding: Depression risk score {risk_score:.3f}")
+                elif 'health_score' in prediction_data:
+                    health_score = prediction_data['health_score']
+                    self.print_info(f"  Key Finding: Health score {health_score}")
 
         except Exception as e:
             self.print_error(f"Failed to load PAT predictions: {e}")
@@ -179,8 +210,11 @@ class ClarityDemo:
             self.print_success(f"Conversation Starters: {len(starters)} topics available")
 
             for i, starter in enumerate(starters[:3]):
-                self.print_info(f"Topic {i + 1}: {starter['topic']}")
-                self.print_info(f"  Question: \"{starter['question']}\"")
+                # Use correct field name from actual data
+                topic = starter['category']  # Use 'category' instead of 'topic'
+                question = starter['question']
+                self.print_info(f"Topic {i + 1}: {topic}")
+                self.print_info(f"  Question: \"{question}\"")
 
         except Exception as e:
             self.print_error(f"Failed to load conversation starters: {e}")

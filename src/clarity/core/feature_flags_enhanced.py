@@ -12,7 +12,7 @@ from enum import StrEnum
 import logging
 import threading
 import time
-from typing import Any, TypeVar
+from typing import TypeVar
 
 import aioredis  # type: ignore[import-not-found]
 from circuitbreaker import CircuitBreaker, CircuitBreakerError

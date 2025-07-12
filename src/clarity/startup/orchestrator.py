@@ -11,6 +11,7 @@ import logging
 import sys
 from typing import Any
 
+from clarity.core.logging_config import configure_basic_logging
 from clarity.startup.config_schema import ClarityConfig
 from clarity.startup.health_checks import ServiceHealthChecker, ServiceStatus
 from clarity.startup.progress_reporter import ProgressPhase, StartupProgressReporter
@@ -384,8 +385,6 @@ def main() -> int:
     args = parser.parse_args()
 
     # Set up logging
-    from clarity.core.logging_config import configure_basic_logging
-
     configure_basic_logging(level=logging.INFO)
 
     try:

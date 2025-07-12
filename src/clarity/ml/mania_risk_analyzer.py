@@ -115,6 +115,18 @@ class ManiaRiskAnalyzer:
         self.moderate_threshold = 0.4
         self.high_threshold = 0.7
 
+        # Constants for magic values
+        self.MIN_DATA_DAYS = 3
+        self.HOURS_IN_DAY = 24
+        self.RAPID_SLEEP_ONSET_THRESHOLD = 5  # minutes
+        self.SLEEP_CONSISTENCY_THRESHOLD = 0.4
+        self.DATA_ESTIMATION_CONFIDENCE_FACTOR = 0.8
+        self.INVALID_DATA_CONFIDENCE = 0.3
+        self.LIMITED_DATA_CONFIDENCE = 0.5
+        self.SLEEP_DEFICIT_SCALING_FACTOR = 0.6
+        self.MIN_PATTERN_DAYS = 8
+        self.USER_ID_TRUNCATE_LENGTH = 8
+
         self.logger.info(
             "ManiaRiskAnalyzer initialized",
             extra={
@@ -318,7 +330,7 @@ class ManiaRiskAnalyzer:
         # Log high-risk alerts separately for monitoring
         if alert_level in {"moderate", "high"}:
             self.logger.warning(
-                f"Elevated mania risk detected: {alert_level}",
+                "Elevated mania risk detected: %s", alert_level,
                 extra={
                     "user_id": self._sanitize_user_id(uid),
                     "alert_type": "mania_risk",
@@ -375,8 +387,8 @@ class ManiaRiskAnalyzer:
             # Check data density - if we have sleep object, check for completeness
             if hasattr(sleep, "data_coverage_days"):
                 # If less than 3 days of data in the past week, lower confidence
-                if sleep.data_coverage_days < 3:
-                    data_completeness = 0.5
+                if sleep.data_coverage_days < self.MIN_DATA_DAYS:
+                    data_completeness = self.LIMITED_DATA_CONFIDENCE
                     factors.append(
                         f"Limited data: only {sleep.data_coverage_days} days"
                     )
@@ -384,14 +396,14 @@ class ManiaRiskAnalyzer:
         elif pat_metrics and "total_sleep_time" in pat_metrics:
             hours = pat_metrics["total_sleep_time"]
             data_source = "PAT estimation"
-            confidence *= 0.8  # Lower confidence for estimated data
+            confidence *= self.DATA_ESTIMATION_CONFIDENCE_FACTOR  # Lower confidence for estimated data
             factors.append("PAT estimation")
 
         if hours is None:
             return 0.0, ["Insufficient sleep data"], 0.5
 
         # Unit conversion guardrails - bounds checking
-        if not (0 < hours <= 24):
+        if not (0 < hours <= self.HOURS_IN_DAY):
             self.logger.warning(
                 "Invalid sleep hours detected",
                 extra={
@@ -400,7 +412,7 @@ class ManiaRiskAnalyzer:
                     "data_source": data_source,
                 },
             )
-            return 0.0, [f"Invalid sleep data: {hours} hours recorded"], 0.3
+            return 0.0, [f"Invalid sleep data: {hours} hours recorded"], self.INVALID_DATA_CONFIDENCE
 
         # Apply data completeness factor to confidence
         confidence *= data_completeness
@@ -416,7 +428,7 @@ class ManiaRiskAnalyzer:
                 self.config.min_sleep_hours - hours
             ) / self.config.min_sleep_hours
             score += self.config.weights["acute_sleep_loss"] * (
-                1 + sleep_deficit_ratio * 0.6
+                1 + sleep_deficit_ratio * self.SLEEP_DEFICIT_SCALING_FACTOR
             )
             factors.append(f"Low sleep duration: {hours:.1f}h ({data_source})")
 
@@ -433,7 +445,7 @@ class ManiaRiskAnalyzer:
 
         # Check sleep latency (rapid sleep onset during mania)
         # Ensure sleep_latency is in minutes
-        if sleep and hasattr(sleep, "sleep_latency") and sleep.sleep_latency < 5:
+        if sleep and hasattr(sleep, "sleep_latency") and sleep.sleep_latency < self.RAPID_SLEEP_ONSET_THRESHOLD:
             score += self.config.weights["rapid_sleep_onset"]
             factors.append("Very rapid sleep onset (<5 min)")
 
@@ -441,7 +453,7 @@ class ManiaRiskAnalyzer:
         if (
             sleep
             and hasattr(sleep, "consistency_score")
-            and sleep.consistency_score < 0.4
+            and sleep.consistency_score < self.SLEEP_CONSISTENCY_THRESHOLD
         ):
             score += self.config.weights["sleep_inconsistency"]
             factors.append("Irregular sleep schedule")
@@ -658,7 +670,7 @@ class ManiaRiskAnalyzer:
 
         # For production, you might hash the user_id or use first/last few chars
         # For now, we'll use a simple truncation
-        if len(user_id) > 8:
+        if len(user_id) > self.USER_ID_TRUNCATE_LENGTH:
             return f"{user_id[:4]}...{user_id[-4:]}"
         return user_id
 

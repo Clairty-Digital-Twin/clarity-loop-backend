@@ -39,6 +39,7 @@ except ImportError:
     _has_h5py = False
 
 from clarity.core.exceptions import DataValidationError
+from clarity.core.feature_flags import is_feature_enabled
 from clarity.ml.mania_risk_analyzer import ManiaRiskAnalyzer
 from clarity.ml.preprocessing import ActigraphyDataPoint, HealthDataPreprocessor
 from clarity.ports.ml_ports import IMLModelService
@@ -983,8 +984,6 @@ class PATModelService(IMLModelService):
         # Analyze mania risk using PAT metrics with feature flag check
         mania_risk_score = 0.0
         mania_alert_level = "none"
-
-        from clarity.core.feature_flags import is_feature_enabled
 
         if is_feature_enabled("mania_risk_analysis", user_id=user_id):
             try:

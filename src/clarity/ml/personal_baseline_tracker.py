@@ -83,6 +83,14 @@ class PersonalBaselineTracker:
         # In production, this would use DynamoDB
         self._baselines: dict[str, PersonalBaseline] = {}
 
+        # Constants for magic values
+        self.CIRCADIAN_WRAPAROUND_THRESHOLD = 12  # hours
+        self.MINUTES_TO_HOURS = 60.0
+        self.MIN_BASELINE_DAYS = 7
+        self.MIN_PATTERN_DAYS = 7
+        self.MIN_ACTIVITY_DAYS = 7
+        self.MIN_PATTERN_DETECTION_DAYS = 8
+
     def update_baseline(
         self,
         user_id: str,
@@ -198,9 +206,9 @@ class PersonalBaselineTracker:
         if "sleep_midpoint" in current_metrics and baseline.sleep_midpoint_median > 0:
             # Handle wraparound
             diff = current_metrics["sleep_midpoint"] - baseline.sleep_midpoint_median
-            if diff > 12:
+            if diff > self.CIRCADIAN_WRAPAROUND_THRESHOLD:
                 diff -= 24
-            elif diff < -12:
+            elif diff < -self.CIRCADIAN_WRAPAROUND_THRESHOLD:
                 diff += 24
             deviations["circadian_shift_hours"] = diff
 
@@ -218,7 +226,7 @@ class PersonalBaselineTracker:
                 point = {
                     "date": metric.created_at.date(),
                     "duration_hours": (
-                        sleep.total_sleep_minutes / 60.0
+                        sleep.total_sleep_minutes / self.MINUTES_TO_HOURS
                         if sleep.total_sleep_minutes
                         else 0
                     ),
@@ -371,7 +379,7 @@ class PersonalBaselineTracker:
     ) -> None:
         """Update variability baselines."""
         # Sleep variability
-        if len(sleep_data) >= 7:
+        if len(sleep_data) >= self.MIN_BASELINE_DAYS:
             durations = [
                 s["duration_hours"] for s in sleep_data if s["duration_hours"] > 0
             ]
@@ -381,7 +389,7 @@ class PersonalBaselineTracker:
                 ))
 
         # Activity variability
-        if len(activity_data) >= 7:
+        if len(activity_data) >= self.MIN_ACTIVITY_DAYS:
             steps = [a["steps"] for a in activity_data if a["steps"] > 0]
             if steps:
                 baseline.activity_variability_baseline = float(np.std(steps) / np.mean(steps))
@@ -395,7 +403,7 @@ class PersonalBaselineTracker:
 
         midpoints = [s["midpoint"] for s in sleep_data if "midpoint" in s]
 
-        if len(midpoints) >= 7:
+        if len(midpoints) >= self.MIN_PATTERN_DAYS:
             # Typical sleep midpoint
             baseline.sleep_midpoint_median = float(np.median(midpoints))
 
@@ -445,9 +453,12 @@ class PersonalBaselineTracker:
 
         # Adjust for data recency
         days_old = (datetime.now(UTC) - baseline.last_updated).days
-        recency_factor = max(0, 1 - days_old / 30)  # Decay over 30 days
+        RECENCY_DECAY_DAYS = 30
+        RECENCY_BASE_WEIGHT = 0.7
+        RECENCY_WEIGHT_FACTOR = 0.3
+        recency_factor = max(0, 1 - days_old / RECENCY_DECAY_DAYS)
 
-        return data_confidence * (0.7 + 0.3 * recency_factor)
+        return data_confidence * (RECENCY_BASE_WEIGHT + RECENCY_WEIGHT_FACTOR * recency_factor)
 
     def _sanitize_user_id(self, user_id: str) -> str:
         """Sanitize user ID for logging."""

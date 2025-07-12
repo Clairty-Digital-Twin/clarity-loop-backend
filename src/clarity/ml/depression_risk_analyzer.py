@@ -77,7 +77,7 @@ class DepressionRiskAnalyzer:
         # Risk thresholds
         self.moderate_threshold = 0.35
         self.high_threshold = 0.65
-        
+
         # Constants for magic values
         self.MIN_RECENT_DAYS = 2
         self.SLEEP_INCREASE_THRESHOLD = 0.3  # 30% increase

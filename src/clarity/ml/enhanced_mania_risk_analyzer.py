@@ -81,6 +81,16 @@ class EnhancedManiaRiskAnalyzer(ManiaRiskAnalyzer):
         self.variability_analyzer = VariabilityAnalyzer()
         self.baseline_tracker = PersonalBaselineTracker()
 
+        # Constants for magic values
+        self.MIN_RECENT_DAYS = 2
+        self.DEVIATION_THRESHOLD = 2.0  # Standard deviations
+        self.CIRCADIAN_ADVANCE_THRESHOLD = -1.0  # hours
+        self.HIGH_RISK_SCORE_THRESHOLD = 0.7
+        self.MODERATE_RISK_SCORE_THRESHOLD = 0.5
+        self.NEXT_DAY_RISK = 1
+        self.HIGH_RISK_DAYS = 2
+        self.MODERATE_RISK_DAYS = 4
+
         self.logger.info(
             "Enhanced ManiaRiskAnalyzer initialized with advanced modules",
             extra={
@@ -231,7 +241,7 @@ class EnhancedManiaRiskAnalyzer(ManiaRiskAnalyzer):
                 else None
             )
 
-            if len(recent_sleep) < 2:
+            if len(recent_sleep) < self.MIN_RECENT_DAYS:
                 return None
 
             return self.phase_detector.detect_phase_shift(
@@ -239,7 +249,7 @@ class EnhancedManiaRiskAnalyzer(ManiaRiskAnalyzer):
             )
 
         except Exception as e:
-            self.logger.warning(f"Circadian phase analysis failed: {e}")
+            self.logger.warning("Circadian phase analysis failed: %s", e)
             return None
 
     def _analyze_variability(
@@ -269,7 +279,7 @@ class EnhancedManiaRiskAnalyzer(ManiaRiskAnalyzer):
             )
 
         except Exception as e:
-            self.logger.warning(f"Variability analysis failed: {e}")
+            self.logger.warning("Variability analysis failed: %s", e)
             return None
 
     def _score_phase_shift(
@@ -354,19 +364,19 @@ class EnhancedManiaRiskAnalyzer(ManiaRiskAnalyzer):
         # Score deviations
         if "sleep_duration_z" in deviations:
             z = deviations["sleep_duration_z"]
-            if z < -2:  # Significantly less sleep than personal norm
+            if z < -self.DEVIATION_THRESHOLD:  # Significantly less sleep than personal norm
                 score += self.config.weights["sleep_deviation"]
                 factors.append(f"Sleep {abs(z):.1f} SD below personal baseline")
 
         if "activity_z" in deviations:
             z = deviations["activity_z"]
-            if z > 2:  # Significantly more active than personal norm
+            if z > self.DEVIATION_THRESHOLD:  # Significantly more active than personal norm
                 score += self.config.weights["activity_deviation"]
                 factors.append(f"Activity {z:.1f} SD above personal baseline")
 
         if "circadian_shift_hours" in deviations:
             shift = deviations["circadian_shift_hours"]
-            if shift < -1:  # Phase advance from personal norm
+            if shift < self.CIRCADIAN_ADVANCE_THRESHOLD:  # Phase advance from personal norm
                 score += self.config.weights["circadian_deviation"]
                 factors.append(f"Sleep timing {abs(shift):.1f}h earlier than usual")
 
@@ -384,17 +394,17 @@ class EnhancedManiaRiskAnalyzer(ManiaRiskAnalyzer):
         # Phase shifts give immediate risk (next day per Lim)
         if phase_result and phase_result.clinical_significance == "high":
             if phase_result.phase_shift_direction == "advance":
-                predictions.append(1)  # Next day risk
+                predictions.append(self.NEXT_DAY_RISK)  # Next day risk
 
         # Variability gives advance warning (Ortiz)
         if var_result and var_result.days_until_risk:
             predictions.append(var_result.days_until_risk)
 
         # High risk score suggests imminent risk
-        if risk_score > 0.7:
-            predictions.append(2)
-        elif risk_score > 0.5:
-            predictions.append(4)
+        if risk_score > self.HIGH_RISK_SCORE_THRESHOLD:
+            predictions.append(self.HIGH_RISK_DAYS)
+        elif risk_score > self.MODERATE_RISK_SCORE_THRESHOLD:
+            predictions.append(self.MODERATE_RISK_DAYS)
 
         return min(predictions) if predictions else None
 

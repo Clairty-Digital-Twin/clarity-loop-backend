@@ -425,9 +425,9 @@ def with_secret(
             manager = get_secrets_manager()
 
             value: Any = None
-            if secret_type == str:
+            if secret_type is str:
                 value = manager.get_string(key, env_var=env_var, default=cast(str | None, default))
-            elif secret_type == dict:
+            elif secret_type is dict:
                 value = manager.get_json(key, env_var=env_var, default=cast(dict[str, Any] | None, default))
             else:
                 msg = f"Unsupported secret type: {secret_type}"

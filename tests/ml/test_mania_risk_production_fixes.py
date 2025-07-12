@@ -63,10 +63,12 @@ class TestManiaRiskProductionFixes:
 
             pipeline = HealthAnalysisPipeline()
 
-            # Mock the mania risk analyzer
+            # Mock the mania risk analyzer and DynamoDB access
             with patch(
                 "clarity.ml.analysis_pipeline.ManiaRiskAnalyzer"
-            ) as mock_analyzer_class:
+            ) as mock_analyzer_class, patch.object(
+                pipeline, "_get_user_baseline", return_value=None
+            ):
                 mock_analyzer = MagicMock()
                 mock_analyzer_class.return_value = mock_analyzer
 
@@ -80,7 +82,6 @@ class TestManiaRiskProductionFixes:
                     confidence=0.85,
                     clinical_insight="Moderate mania risk detected",
                     recommendations=["Monitor sleep patterns"],
-                    user_id="test_user",
                 )
                 mock_analyzer.analyze.return_value = mock_result
 

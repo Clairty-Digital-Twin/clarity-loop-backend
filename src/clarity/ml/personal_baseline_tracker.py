@@ -90,6 +90,10 @@ class PersonalBaselineTracker:
         self.MIN_PATTERN_DAYS = 7
         self.MIN_ACTIVITY_DAYS = 7
         self.MIN_PATTERN_DETECTION_DAYS = 8
+        self.USER_ID_TRUNCATE_LENGTH = 8
+        self.RECENCY_DECAY_DAYS = 30
+        self.RECENCY_BASE_WEIGHT = 0.7
+        self.RECENCY_WEIGHT_FACTOR = 0.3
 
     def update_baseline(
         self,
@@ -453,16 +457,13 @@ class PersonalBaselineTracker:
 
         # Adjust for data recency
         days_old = (datetime.now(UTC) - baseline.last_updated).days
-        RECENCY_DECAY_DAYS = 30
-        RECENCY_BASE_WEIGHT = 0.7
-        RECENCY_WEIGHT_FACTOR = 0.3
-        recency_factor = max(0, 1 - days_old / RECENCY_DECAY_DAYS)
+        recency_factor = max(0, 1 - days_old / self.RECENCY_DECAY_DAYS)
 
-        return data_confidence * (RECENCY_BASE_WEIGHT + RECENCY_WEIGHT_FACTOR * recency_factor)
+        return data_confidence * (self.RECENCY_BASE_WEIGHT + self.RECENCY_WEIGHT_FACTOR * recency_factor)
 
     def _sanitize_user_id(self, user_id: str) -> str:
         """Sanitize user ID for logging."""
-        if len(user_id) > 8:
+        if len(user_id) > self.USER_ID_TRUNCATE_LENGTH:
             return f"{user_id[:4]}...{user_id[-4:]}"
         return user_id
 

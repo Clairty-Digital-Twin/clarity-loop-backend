@@ -53,9 +53,9 @@ _PROJECT_ROOT = Path(__file__).parent.parent.parent.parent  # Go up to project r
 # SECURITY: Model integrity verification constants
 MODEL_SIGNATURE_KEY = "pat_model_integrity_key_2025"  # In production, use env var
 EXPECTED_MODEL_CHECKSUMS = {
-    "small": "a1b2c3d4e5f6789012345678901234567890abcdef",  # SHA-256 of authentic PAT-S
-    "medium": "b2c3d4e5f6789012345678901234567890abcdef12",  # SHA-256 of authentic PAT-M
-    "large": "c3d4e5f6789012345678901234567890abcdef1234",  # SHA-256 of authentic PAT-L
+    "small": "37b3c530b8d9d89416d28fddbb4545de568cc52ddf6f5c700eeb4aa78f1c3616",  # SHA-256 of authentic PAT-S
+    "medium": "c432f3f6f48cdd7817368d30fcad87708d6994c61324ae64885bb9f871dba575",  # SHA-256 of authentic PAT-M
+    "large": "19f9ad1235bdbea2636b6b40c6425536d624450f0b97302b7440bf978c3ee04f",  # SHA-256 of authentic PAT-L
 }
 
 # Model configurations matching Dartmouth specs exactly

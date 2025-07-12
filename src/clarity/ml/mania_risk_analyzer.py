@@ -215,7 +215,7 @@ class ManiaRiskAnalyzer:
             # Scale the score based on how low the sleep is
             # 4.5 hours should give more score than 4.9 hours
             sleep_deficit_ratio = (self.config.min_sleep_hours - hours) / self.config.min_sleep_hours
-            score += self.config.weights["acute_sleep_loss"] * (1 + sleep_deficit_ratio * 0.5)
+            score += self.config.weights["acute_sleep_loss"] * (1 + sleep_deficit_ratio * 0.6)
             factors.append(f"Low sleep duration: {hours:.1f}h ({data_source})")
             
         # Check against personal baseline if available

@@ -704,8 +704,8 @@ class ManiaRiskAnalyzer:
         Args:
             cutoff_time: Remove entries older than this time
         """
-        self._last_high_alert_cache = {
-            uid: alert_time
+        self._last_high_alert_cache = OrderedDict(
+            (uid, alert_time)
             for uid, alert_time in self._last_high_alert_cache.items()
             if alert_time > cutoff_time
-        }
+        )

@@ -424,6 +424,7 @@ def with_secret(
         def wrapper(*args: Any, **kwargs: Any) -> Any:
             manager = get_secrets_manager()
 
+            value: Any = None
             if secret_type == str:
                 value = manager.get_string(key, env_var=env_var, default=cast(str | None, default))
             elif secret_type == dict:

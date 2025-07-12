@@ -77,6 +77,24 @@ class DepressionRiskAnalyzer:
         # Risk thresholds
         self.moderate_threshold = 0.35
         self.high_threshold = 0.65
+        
+        # Constants for magic values
+        self.MIN_RECENT_DAYS = 2
+        self.SLEEP_INCREASE_THRESHOLD = 0.3  # 30% increase
+        self.PROLONGED_SLEEP_LATENCY_THRESHOLD = 30  # minutes
+        self.POOR_SLEEP_EFFICIENCY_THRESHOLD = 0.7
+        self.LOW_ACTIVITY_FRAGMENTATION = 0.3
+        self.LOW_HRV_THRESHOLD = 30  # ms
+        self.CIRCADIAN_FLATTENING_THRESHOLD = 0.4
+        self.LOW_CONFIDENCE_THRESHOLD = 0.7
+        self.LOW_RISK_THRESHOLD = 0.1
+        self.HIGH_SCORE_THRESHOLD = 0.65
+        self.MODERATE_SCORE_THRESHOLD = 0.4
+        self.PHASE_DELAY_EPISODE_DAYS = 3
+        self.HIGH_RISK_EPISODE_DAYS = 4
+        self.MODERATE_RISK_EPISODE_DAYS = 7
+        self.VARIABILITY_DAYS_THRESHOLD = 7
+        self.MIN_PATTERN_DAYS = 8
 
         self.logger.info(
             "DepressionRiskAnalyzer initialized",
@@ -211,7 +229,7 @@ class DepressionRiskAnalyzer:
 
             return self.phase_detector.detect_phase_shift(recent_sleep, baseline_sleep)
         except Exception as e:
-            self.logger.warning(f"Circadian phase analysis failed: {e}")
+            self.logger.warning("Circadian phase analysis failed: %s", e)
             return None
 
     def _analyze_variability(
@@ -238,7 +256,7 @@ class DepressionRiskAnalyzer:
                 activity_metrics, sleep_metrics, baseline_stats
             )
         except Exception as e:
-            self.logger.warning(f"Variability analysis failed: {e}")
+            self.logger.warning("Variability analysis failed: %s", e)
             return None
 
     def _score_phase_shift(

@@ -24,6 +24,10 @@ logger = logging.getLogger(__name__)
 # Create router
 router = APIRouter(prefix="/health", tags=["health"])
 
+# Health score thresholds
+HEALTH_SCORE_HEALTHY_THRESHOLD = 90
+HEALTH_SCORE_DEGRADED_THRESHOLD = 70
+
 
 class HealthStatus(BaseModel):
     """Overall health status response."""
@@ -149,14 +153,14 @@ async def readiness_check() -> HealthStatus:
     dependencies=[Depends(get_current_user)],
 )
 async def pat_model_health(
-    current_user: User = Depends(get_current_user),
+    _current_user: User = Depends(get_current_user),
 ) -> PATModelHealth:
     """Get detailed PAT model health status.
 
     Requires authentication.
 
     Args:
-        current_user: Authenticated user
+        _current_user: Authenticated user (unused but required for auth)
 
     Returns:
         Comprehensive PAT model health information
@@ -169,9 +173,9 @@ async def pat_model_health(
         health_score = calculate_model_health_score()
 
         # Determine overall status based on health score
-        if health_score >= 90:
+        if health_score >= HEALTH_SCORE_HEALTHY_THRESHOLD:
             status = "healthy"
-        elif health_score >= 70:
+        elif health_score >= HEALTH_SCORE_DEGRADED_THRESHOLD:
             status = "degraded"
         else:
             status = "unhealthy"
@@ -214,7 +218,7 @@ async def pat_model_health(
         alerts: list[dict[str, Any]] = []
 
         # Add critical alerts based on conditions
-        if health_score < 70:
+        if health_score < HEALTH_SCORE_DEGRADED_THRESHOLD:
             alerts.append(
                 {
                     "severity": "critical",
@@ -262,14 +266,14 @@ async def pat_model_health(
     dependencies=[Depends(get_current_user)],
 )
 async def pat_metrics_summary(
-    current_user: User = Depends(get_current_user),
+    _current_user: User = Depends(get_current_user),
 ) -> dict[str, Any]:
     """Get summary of PAT model metrics.
 
     Requires authentication.
 
     Args:
-        current_user: Authenticated user
+        _current_user: Authenticated user (unused but required for auth)
 
     Returns:
         Summary of key PAT model metrics

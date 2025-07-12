@@ -114,7 +114,7 @@ def setup_logging(force: bool = False) -> None:
 
 
 def configure_basic_logging(
-    level: str | int = logging.INFO, format: str | None = None, **kwargs: Any
+    level: str | int = logging.INFO, format: str | None = None, **kwargs: Any  # noqa: A002, ARG001
 ) -> None:
     """Configure basic logging with duplicate prevention.
 

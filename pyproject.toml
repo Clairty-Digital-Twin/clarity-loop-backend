@@ -262,11 +262,13 @@ keep-runtime-typing = true
     "S105",  # test passwords OK
     "S106",  # test passwords OK
     "NPY002",  # legacy numpy OK in tests for now
+    "PLC0415", # import inside function OK in tests
 ]
 "scripts/**/*" = [
     "S603", "S404", "ANN201", "PLR2004", "F841",
     "T201",  # print OK in scripts
     "NPY002",  # legacy numpy OK in demo scripts
+    "ANN001", # type hints optional in scripts
 ]
 "examples/**/*" = [
     "T201",  # print OK in examples

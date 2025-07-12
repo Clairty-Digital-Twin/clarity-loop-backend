@@ -120,7 +120,7 @@ class FeatureFlagManager:
             flag = self.config.flags.get(flag_name)
             if not flag:
                 logger.warning(
-                    f"Unknown feature flag: {flag_name}, using default: {default}"
+                    "Unknown feature flag: %s, using default: %s", flag_name, default
                 )
                 return default
 
@@ -146,7 +146,7 @@ class FeatureFlagManager:
             return result
 
         except Exception as e:
-            logger.exception(f"Error checking feature flag {flag_name}: {e}")
+            logger.exception("Error checking feature flag %s: %s", flag_name, e)
             return default
 
     def get_flag(self, flag_name: str) -> FeatureFlag | None:
@@ -211,7 +211,7 @@ def feature_flag(
 
             if is_feature_enabled(flag_name, user_id, default):
                 return func(*args, **kwargs)
-            logger.debug(f"Feature {flag_name} is disabled, returning fallback")
+            logger.debug("Feature %s is disabled, returning fallback", flag_name)
             if fallback_value is not None:
                 return cast(T, fallback_value)
             # Return None if no fallback specified

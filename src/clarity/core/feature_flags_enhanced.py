@@ -7,7 +7,7 @@ pub/sub support, circuit breaker pattern, and comprehensive metrics.
 import asyncio
 from collections.abc import Generator
 from contextlib import contextmanager, suppress
-from datetime import datetime
+from datetime import UTC, datetime
 from enum import StrEnum
 import logging
 import threading
@@ -129,7 +129,6 @@ class EnhancedFeatureFlagManager(BaseFeatureFlagManager):
             loop = asyncio.get_running_loop()
         except RuntimeError:
             # No event loop running, create one in a thread
-            import threading
 
             def run_event_loop() -> None:
                 new_loop = asyncio.new_event_loop()
@@ -269,7 +268,7 @@ class EnhancedFeatureFlagManager(BaseFeatureFlagManager):
                     with self._lock:
                         self.config = new_config
                         self.clear_cache()
-                        self._last_refresh_time = datetime.utcnow()
+                        self._last_refresh_time = datetime.now(UTC)
                         self._refresh_failures = 0
 
                     # Update metrics
@@ -332,7 +331,7 @@ class EnhancedFeatureFlagManager(BaseFeatureFlagManager):
 
             # Check if config is stale
             if self._last_refresh_time:
-                age = (datetime.utcnow() - self._last_refresh_time).total_seconds()
+                age = (datetime.now(UTC) - self._last_refresh_time).total_seconds()
                 if age > self._enhanced_config.stale_config_threshold_seconds:
                     FEATURE_FLAG_STALE_CONFIG.set(1)
                     logger.warning("Feature flag configuration is stale, age=%ds", age)
@@ -365,7 +364,7 @@ class EnhancedFeatureFlagManager(BaseFeatureFlagManager):
         """
         with self._lock:
             if self._last_refresh_time:
-                return (datetime.utcnow() - self._last_refresh_time).total_seconds()
+                return (datetime.now(UTC) - self._last_refresh_time).total_seconds()
             return None
 
     def is_config_stale(self) -> bool:
@@ -413,7 +412,7 @@ class EnhancedFeatureFlagManager(BaseFeatureFlagManager):
         """Context manager entry."""
         return self
 
-    def __exit__(self, exc_type: type[BaseException] | None, exc_val: BaseException | None, exc_tb: Any) -> None:
+    def __exit__(self, exc_type: type[BaseException] | None, exc_val: BaseException | None, exc_tb: object) -> None:
         """Context manager exit."""
         self.shutdown()
 

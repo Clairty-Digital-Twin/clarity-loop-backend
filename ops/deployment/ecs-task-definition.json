@@ -104,15 +104,15 @@
         },
         {
           "name": "PAT_S_MODEL_PATH",
-          "value": "s3://clarity-ml-models-124355672559/pat/PAT-S_29k_weight_transformer.h5"
+          "value": "s3://clarity-ml-models-124355672559/pat/PAT-S_29k_weights.h5"
         },
         {
           "name": "PAT_M_MODEL_PATH",
-          "value": "s3://clarity-ml-models-124355672559/pat/PAT-M_29k_weight_transformer.h5"
+          "value": "s3://clarity-ml-models-124355672559/pat/PAT-M_29k_weights.h5"
         },
         {
           "name": "PAT_L_MODEL_PATH",
-          "value": "s3://clarity-ml-models-124355672559/pat/PAT-L_91k_weight_transformer.h5"
+          "value": "s3://clarity-ml-models-124355672559/pat/PAT-L_29k_weights.h5"
         },
         {
           "name": "PAT_S_CHECKSUM",

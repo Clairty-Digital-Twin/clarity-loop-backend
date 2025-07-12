@@ -30,7 +30,7 @@ from clarity.models.health_data import HealthMetric
 class DepressionRiskConfig(ManiaRiskConfig):
     """Configuration for depression risk analysis."""
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         # Depression-specific weights based on research
         self.weights = {
             # Primary predictors

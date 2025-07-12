@@ -38,7 +38,7 @@ from clarity.models.health_data import HealthMetric
 class EnhancedRiskConfig(ManiaRiskConfig):
     """Enhanced configuration with research-based weights."""
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         # Weights based on clinical literature - see weight_rationale.md
         # NOTE: Effect sizes from papers, NOT validated on our data
         self.weights = {

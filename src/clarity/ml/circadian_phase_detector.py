@@ -11,7 +11,7 @@ This module detects these critical phase shifts from sleep timing data.
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 import logging
-from typing import Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
 

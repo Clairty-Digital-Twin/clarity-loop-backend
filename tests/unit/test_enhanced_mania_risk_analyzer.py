@@ -1,6 +1,7 @@
 """Unit tests for EnhancedManiaRiskAnalyzer module."""
 
 from datetime import UTC, datetime, timedelta
+from typing import Any
 from unittest.mock import Mock, patch
 
 import numpy as np

@@ -1,0 +1,134 @@
+# Prometheus Alert Rules for PAT Model Monitoring
+# This file should be deployed to your Prometheus/AlertManager configuration
+
+groups:
+  - name: pat_model_alerts
+    interval: 30s
+    rules:
+      # Critical: Checksum Verification Failures
+      - alert: PATModelChecksumFailure
+        expr: rate(clarity_pat_checksum_verification_failures_total[5m]) > 0
+        for: 1m
+        labels:
+          severity: critical
+          team: security
+        annotations:
+          summary: "PAT model checksum verification failed"
+          description: "Model {{ $labels.model_size }} version {{ $labels.version }} failed checksum verification. This is a potential security violation."
+          runbook_url: "https://wiki.internal/runbooks/pat-model-security"
+
+      # Critical: High Model Load Failure Rate
+      - alert: PATModelHighFailureRate
+        expr: |
+          (
+            rate(clarity_pat_model_load_failures_total[5m]) /
+            rate(clarity_pat_model_load_attempts_total[5m])
+          ) > 0.1
+        for: 5m
+        labels:
+          severity: critical
+          team: ml-platform
+        annotations:
+          summary: "High PAT model load failure rate"
+          description: "Model load failure rate is {{ $value | humanizePercentage }} for model {{ $labels.model_size }}"
+
+      # Warning: Model Load Time Degradation
+      - alert: PATModelSlowLoading
+        expr: |
+          histogram_quantile(0.95,
+            rate(clarity_pat_model_load_duration_seconds_bucket[5m])
+          ) > 30
+        for: 10m
+        labels:
+          severity: warning
+          team: ml-platform
+        annotations:
+          summary: "PAT model loading is slow"
+          description: "95th percentile model load time is {{ $value }}s (threshold: 30s)"
+
+      # Warning: Low Cache Hit Rate
+      - alert: PATModelLowCacheHitRate
+        expr: |
+          (
+            rate(clarity_pat_model_cache_hits_total[5m]) /
+            (rate(clarity_pat_model_cache_hits_total[5m]) + rate(clarity_pat_model_cache_misses_total[5m]))
+          ) < 0.7
+        for: 15m
+        labels:
+          severity: warning
+          team: ml-platform
+        annotations:
+          summary: "Low PAT model cache hit rate"
+          description: "Cache hit rate is {{ $value | humanizePercentage }} (threshold: 70%)"
+
+      # Critical: Model Health Score Low
+      - alert: PATModelUnhealthy
+        expr: clarity_pat_model_health_score < 70
+        for: 5m
+        labels:
+          severity: critical
+          team: ml-platform
+        annotations:
+          summary: "PAT model system health is degraded"
+          description: "Overall health score is {{ $value }} (threshold: 70)"
+
+      # Warning: Frequent Model Fallbacks
+      - alert: PATModelFrequentFallbacks
+        expr: rate(clarity_pat_model_fallback_attempts_total[10m]) > 0.1
+        for: 5m
+        labels:
+          severity: warning
+          team: ml-platform
+        annotations:
+          summary: "Frequent PAT model fallbacks detected"
+          description: "Model {{ $labels.model_size }} is falling back frequently from version {{ $labels.from_version }}"
+
+      # Critical: Security Violations
+      - alert: PATModelSecurityViolation
+        expr: rate(clarity_pat_security_violations_total{severity="critical"}[5m]) > 0
+        for: 1m
+        labels:
+          severity: critical
+          team: security
+          page: true
+        annotations:
+          summary: "Critical security violation in PAT model system"
+          description: "Security violation type: {{ $labels.violation_type }} for model {{ $labels.model_size }}"
+          runbook_url: "https://wiki.internal/runbooks/pat-model-security-incident"
+
+      # Warning: S3 Download Failures
+      - alert: PATModelS3DownloadFailures
+        expr: |
+          (
+            rate(clarity_pat_model_s3_downloads_total{status="failed"}[5m]) /
+            rate(clarity_pat_model_s3_downloads_total[5m])
+          ) > 0.05
+        for: 10m
+        labels:
+          severity: warning
+          team: ml-platform
+        annotations:
+          summary: "PAT model S3 downloads are failing"
+          description: "S3 download failure rate is {{ $value | humanizePercentage }} for model {{ $labels.model_size }}"
+
+      # Info: Model Version Changes
+      - alert: PATModelVersionChanged
+        expr: changes(clarity_pat_model_current_version_info[5m]) > 0
+        for: 1m
+        labels:
+          severity: info
+          team: ml-platform
+        annotations:
+          summary: "PAT model version changed"
+          description: "Model {{ $labels.model_size }} version changed to {{ $labels.version }}"
+
+      # Warning: High Memory Usage
+      - alert: PATModelHighMemoryUsage
+        expr: clarity_pat_model_cache_memory_bytes > 2147483648  # 2GB
+        for: 10m
+        labels:
+          severity: warning
+          team: ml-platform
+        annotations:
+          summary: "PAT model cache using high memory"
+          description: "Model cache is using {{ $value | humanize1024 }}B of memory"

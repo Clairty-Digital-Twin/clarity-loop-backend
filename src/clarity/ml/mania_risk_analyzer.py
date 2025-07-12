@@ -45,7 +45,7 @@ class ManiaRiskConfig:
         if not self.weights:
             self.weights = {
                 "severe_sleep_loss": 0.45,
-                "acute_sleep_loss": 0.39,
+                "acute_sleep_loss": 0.391,
                 "rapid_sleep_onset": 0.10,
                 "circadian_disruption": 0.25,
                 "sleep_inconsistency": 0.10,

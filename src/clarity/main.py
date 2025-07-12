@@ -23,13 +23,13 @@ from prometheus_client import make_asgi_app
 
 from clarity.core.config_adapter import clarity_config_to_settings
 from clarity.core.container_aws import get_container, initialize_container
+from clarity.core.logging_config import configure_basic_logging
 from clarity.core.openapi import custom_openapi
 from clarity.services.gcp_credentials import initialize_gcp_credentials
 from clarity.startup.config_schema import ClarityConfig
 from clarity.startup.orchestrator import StartupOrchestrator
 from clarity.startup.progress_reporter import StartupProgressReporter
 from clarity.version import get_version
-from clarity.core.logging_config import configure_basic_logging
 
 if TYPE_CHECKING:
     from clarity.core.container_aws import DependencyContainer

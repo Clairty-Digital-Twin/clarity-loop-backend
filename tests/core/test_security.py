@@ -42,10 +42,10 @@ class TestSecureHashGenerator:
         # Test with different algorithms produces different hashes
         generator_sha256 = SecureHashGenerator(algorithm="sha256")
         generator_sha512 = SecureHashGenerator(algorithm="sha512")
-        
+
         hash_sha256 = generator_sha256.hash_string("test_data")
         hash_sha512 = generator_sha512.hash_string("test_data")
-        
+
         # Different algorithms should produce different hashes
         assert hash_sha256 != hash_sha512
 

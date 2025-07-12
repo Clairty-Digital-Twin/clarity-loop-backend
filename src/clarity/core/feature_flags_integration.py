@@ -8,8 +8,8 @@ import logging
 import os
 from typing import Optional
 
-from clarity.core.config_provider import ConfigProvider
 from clarity.core.config_aws import Settings
+from clarity.core.config_provider import ConfigProvider
 from clarity.core.feature_flags_enhanced import (
     EnhancedFeatureFlagConfig,
     EnhancedFeatureFlagManager,
@@ -22,14 +22,14 @@ logger = logging.getLogger(__name__)
 
 def create_enhanced_feature_flag_manager(
     settings: Settings,
-    config_provider: Optional[ConfigProvider] = None,
+    config_provider: ConfigProvider | None = None,
 ) -> EnhancedFeatureFlagManager:
     """Create and configure enhanced feature flag manager for the application.
-    
+
     Args:
         settings: Application settings
         config_provider: Optional configuration provider for remote config
-        
+
     Returns:
         Configured enhanced feature flag manager
     """
@@ -46,15 +46,15 @@ def create_enhanced_feature_flag_manager(
         refresh_mode = RefreshMode.NONE  # No auto-refresh in development
         refresh_interval = 60
         stale_threshold = 3600  # 1 hour
-    
+
     # Override from environment variables if present
     if os.getenv("FEATURE_FLAG_REFRESH_MODE"):
         refresh_mode = RefreshMode(os.getenv("FEATURE_FLAG_REFRESH_MODE"))
-    
+
     refresh_interval = int(
         os.getenv("FEATURE_FLAG_REFRESH_INTERVAL", str(refresh_interval))
     )
-    
+
     # Create enhanced configuration
     enhanced_config = EnhancedFeatureFlagConfig(
         refresh_interval_seconds=refresh_interval,
@@ -66,20 +66,20 @@ def create_enhanced_feature_flag_manager(
         stale_config_threshold_seconds=stale_threshold,
         enable_metrics=settings.environment in ("production", "staging"),
     )
-    
+
     logger.info(
         "Creating enhanced feature flag manager: environment=%s, mode=%s, interval=%ds",
         settings.environment,
         refresh_mode.value,
         refresh_interval,
     )
-    
+
     # Create manager
     manager = EnhancedFeatureFlagManager(
         config_provider=config_provider,
         enhanced_config=enhanced_config,
     )
-    
+
     # Perform initial refresh if config provider is available
     if config_provider and refresh_mode != RefreshMode.NONE:
         try:
@@ -90,17 +90,17 @@ def create_enhanced_feature_flag_manager(
                 logger.warning("Initial feature flag refresh failed, using defaults")
         except Exception as e:
             logger.error("Error during initial feature flag refresh: %s", e)
-    
+
     return manager
 
 
 def setup_feature_flags_for_app(app, settings: Settings) -> EnhancedFeatureFlagManager:
     """Set up enhanced feature flags for FastAPI application.
-    
+
     Args:
         app: FastAPI application instance
         settings: Application settings
-        
+
     Returns:
         Enhanced feature flag manager instance
     """
@@ -111,64 +111,66 @@ def setup_feature_flags_for_app(app, settings: Settings) -> EnhancedFeatureFlagM
     elif not settings.skip_external_services:
         # Create config provider if needed
         from clarity.core.config_provider import ConfigProvider
+
         config_provider = ConfigProvider(settings)
-    
+
     # Create enhanced manager
     manager = create_enhanced_feature_flag_manager(settings, config_provider)
-    
+
     # Store in app state for access
     app.state.feature_flag_manager = manager
-    
+
     # Add startup/shutdown handlers
     @app.on_event("startup")
     async def feature_flag_startup():
         """Initialize feature flag system on startup."""
         logger.info("Feature flag system started")
-        
+
         # Log initial state
         if manager.is_config_stale():
             logger.warning("Feature flag configuration is stale at startup")
-    
+
     @app.on_event("shutdown")
     async def feature_flag_shutdown():
         """Cleanup feature flag system on shutdown."""
         logger.info("Shutting down feature flag system")
         manager.shutdown()
-    
+
     return manager
 
 
 # Convenience functions for common feature flag checks with auto-refresh
 
-def is_mania_risk_enabled(user_id: Optional[str] = None) -> bool:
+
+def is_mania_risk_enabled(user_id: str | None = None) -> bool:
     """Check if mania risk analysis is enabled.
-    
+
     This function uses the enhanced manager with auto-refresh capabilities.
-    
+
     Args:
         user_id: Optional user ID for personalized flags
-        
+
     Returns:
         True if mania risk analysis is enabled
     """
     manager = get_enhanced_feature_flag_manager()
-    
+
     # Check if config is stale and log warning
     if manager.is_config_stale():
         logger.warning(
             "Feature flag config is stale (age=%s seconds)",
             manager.get_config_age_seconds(),
         )
-    
+
     return manager.is_enabled("mania_risk_analysis", user_id)
 
 
-def is_pat_model_v2_enabled(user_id: Optional[str] = None) -> bool:
+def is_pat_model_v2_enabled(user_id: str | None = None) -> bool:
     """Check if PAT model v2 is enabled.
-    
+
     Args:
         user_id: Optional user ID for personalized flags
-        
+
     Returns:
         True if PAT model v2 is enabled
     """
@@ -178,7 +180,7 @@ def is_pat_model_v2_enabled(user_id: Optional[str] = None) -> bool:
 
 def is_enhanced_security_enabled() -> bool:
     """Check if enhanced security features are enabled.
-    
+
     Returns:
         True if enhanced security is enabled
     """
@@ -188,20 +190,24 @@ def is_enhanced_security_enabled() -> bool:
 
 def get_feature_flag_health() -> dict:
     """Get health status of feature flag system.
-    
+
     Returns:
         Dictionary with health information
     """
     manager = get_enhanced_feature_flag_manager()
-    
+
     config_age = manager.get_config_age_seconds()
-    
+
     return {
         "healthy": not manager.is_config_stale(),
         "config_age_seconds": config_age,
         "config_stale": manager.is_config_stale(),
         "circuit_breaker_state": manager.get_circuit_breaker_state(),
-        "last_refresh": manager._last_refresh_time.isoformat() if manager._last_refresh_time else None,
+        "last_refresh": (
+            manager._last_refresh_time.isoformat()
+            if manager._last_refresh_time
+            else None
+        ),
         "refresh_failures": manager._refresh_failures,
         "refresh_mode": manager._enhanced_config.refresh_mode.value,
         "cache_size": len(manager._cache),

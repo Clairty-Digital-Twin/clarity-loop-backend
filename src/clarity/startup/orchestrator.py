@@ -385,6 +385,7 @@ def main() -> int:
 
     # Set up logging
     from clarity.core.logging_config import configure_basic_logging
+
     configure_basic_logging(level=logging.INFO)
 
     try:

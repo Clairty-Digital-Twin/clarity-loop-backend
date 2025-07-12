@@ -61,8 +61,14 @@ class TestPaginationInfo:
         assert info.page_size == 25
         assert info.has_next is True
         assert info.has_previous is True
-        assert info.next_cursor == "eyJpZCI6MTU0MjAsInRpbWVzdGFtcCI6IjIwMjUtMDEtMTVUMTA6MzA6MDBaIn0="
-        assert info.previous_cursor == "eyJpZCI6MTUzNzAsInRpbWVzdGFtcCI6IjIwMjUtMDEtMTVUMDk6MzA6MDBaIn0="
+        assert (
+            info.next_cursor
+            == "eyJpZCI6MTU0MjAsInRpbWVzdGFtcCI6IjIwMjUtMDEtMTVUMTA6MzA6MDBaIn0="
+        )
+        assert (
+            info.previous_cursor
+            == "eyJpZCI6MTUzNzAsInRpbWVzdGFtcCI6IjIwMjUtMDEtMTVUMDk6MzA6MDBaIn0="
+        )
 
 
 class TestCursorFunctions:
@@ -71,7 +77,9 @@ class TestCursorFunctions:
     def test_create_and_decode_cursor(self):
         """Test creating and decoding cursor."""
         cursor_info = CursorInfo(
-            timestamp=datetime.now(UTC).isoformat(), id=str(uuid.uuid4()), direction="next"
+            timestamp=datetime.now(UTC).isoformat(),
+            id=str(uuid.uuid4()),
+            direction="next",
         )
 
         # Create cursor
@@ -115,7 +123,10 @@ class TestPaginatedResponse:
 
         assert len(response.data) == 2
         assert response.pagination.page_size == 10
-        assert response.links.next == "/api/items?limit=10&cursor=eyJpZCI6MTU0MjAsInRpbWVzdGFtcCI6IjIwMjUtMDEtMTVUMTA6MzA6MDBaIn0="
+        assert (
+            response.links.next
+            == "/api/items?limit=10&cursor=eyJpZCI6MTU0MjAsInRpbWVzdGFtcCI6IjIwMjUtMDEtMTVUMTA6MzA6MDBaIn0="
+        )
 
     def test_paginated_response_with_links(self):
         """Test paginated response with links."""
@@ -139,8 +150,14 @@ class TestPaginatedResponse:
         )
 
         assert len(response.data) == 1
-        assert response.links.next == "/api/items?limit=20&cursor=eyJpZCI6MTU0NDAsInRpbWVzdGFtcCI6IjIwMjUtMDEtMTVUMTE6MDA6MDBaIn0="
-        assert response.links.previous == "/api/items?limit=20&cursor=eyJpZCI6MTU0MDAsInRpbWVzdGFtcCI6IjIwMjUtMDEtMTVUMDk6MDA6MDBaIn0="
+        assert (
+            response.links.next
+            == "/api/items?limit=20&cursor=eyJpZCI6MTU0NDAsInRpbWVzdGFtcCI6IjIwMjUtMDEtMTVUMTE6MDA6MDBaIn0="
+        )
+        assert (
+            response.links.previous
+            == "/api/items?limit=20&cursor=eyJpZCI6MTU0MDAsInRpbWVzdGFtcCI6IjIwMjUtMDEtMTVUMDk6MDA6MDBaIn0="
+        )
 
 
 class TestValidatePaginationParams:
@@ -155,10 +172,7 @@ class TestValidatePaginationParams:
 
     def test_validate_with_offset(self):
         """Test validation with offset."""
-        validated = validate_pagination_params(
-            limit=20, 
-            offset=40
-        )
+        validated = validate_pagination_params(limit=20, offset=40)
 
         assert validated.limit == 20
         # Offset parameter may not be directly stored in PaginationParams

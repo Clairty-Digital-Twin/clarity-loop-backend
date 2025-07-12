@@ -10,8 +10,8 @@ import pytest
 
 from clarity.models.health_data import (
     BiometricData,
-    HealthDataUpload,
     HealthDataResponse,
+    HealthDataUpload,
     HealthMetric,
     HealthMetricType,
 )

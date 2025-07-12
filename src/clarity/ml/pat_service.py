@@ -129,7 +129,9 @@ class ActigraphyAnalysis(BaseModel):
     clinical_insights: list[str] = Field(description="Clinical interpretations")
     embedding: list[float] = Field(description="PAT model embedding vector (128-dim)")
     mania_risk_score: float = Field(default=0.0, description="Mania risk score (0-1)")
-    mania_alert_level: str = Field(default="none", description="Mania risk level: none/low/moderate/high")
+    mania_alert_level: str = Field(
+        default="none", description="Mania risk level: none/low/moderate/high"
+    )
 
 
 class PATPositionalEncoding(nn.Module):
@@ -441,7 +443,7 @@ class PATModelService(IMLModelService):
         """Load the PAT model weights asynchronously."""
         try:
             logger.info("Loading PAT model from %s", self.model_path)
-            
+
             # SECURITY: Verify model integrity BEFORE creating model
             if Path(self.model_path).exists():
                 if not self._verify_model_integrity():
@@ -471,7 +473,7 @@ class PATModelService(IMLModelService):
 
             # Load pre-trained encoder weights if available
             weights_loaded = self._load_pretrained_weights()
-            
+
             # Only fail if weights file exists but integrity check failed
             # If weights_loaded is False due to empty/incompatible file, that's ok (use random init)
 
@@ -494,7 +496,7 @@ class PATModelService(IMLModelService):
 
     def _load_pretrained_weights(self) -> bool:
         """Load pre-trained weights if available.
-        
+
         Returns:
             True if weights were loaded successfully, False otherwise
         """
@@ -545,12 +547,11 @@ class PATModelService(IMLModelService):
                     self.model_path,
                 )
                 return True
-            else:
-                logger.warning(
-                    "No compatible weights found in %s, using random initialization",
-                    self.model_path,
-                )
-                return False
+            logger.warning(
+                "No compatible weights found in %s, using random initialization",
+                self.model_path,
+            )
+            return False
         except (OSError, KeyError, ValueError) as e:
             logger.warning(
                 "Failed to load weights from %s: %s. Using random initialization.",
@@ -580,7 +581,7 @@ class PATModelService(IMLModelService):
             # Get expected checksums from secrets manager
             secrets_manager = get_secrets_manager()
             expected_model_checksums = secrets_manager.get_model_checksums()
-            
+
             # Get expected checksum for this model size
             expected_checksum = expected_model_checksums.get(self.model_size)
             if not expected_checksum:
@@ -627,11 +628,11 @@ class PATModelService(IMLModelService):
 
             # Create HMAC signature for additional security
             file_digest = sha256_hash.hexdigest()
-            
+
             # Get signature key from secrets manager
             secrets_manager = get_secrets_manager()
             model_signature_key = secrets_manager.get_model_signature_key()
-            
+
             signature = hmac.new(
                 model_signature_key.encode("utf-8"),
                 file_digest.encode("utf-8"),
@@ -982,9 +983,9 @@ class PATModelService(IMLModelService):
         # Analyze mania risk using PAT metrics with feature flag check
         mania_risk_score = 0.0
         mania_alert_level = "none"
-        
+
         from clarity.core.feature_flags import is_feature_enabled
-        
+
         if is_feature_enabled("mania_risk_analysis", user_id=user_id):
             try:
                 mania_analyzer = ManiaRiskAnalyzer()
@@ -996,11 +997,11 @@ class PATModelService(IMLModelService):
                     "activity_fragmentation": activity_fragmentation,
                 }
                 mania_result = mania_analyzer.analyze(pat_metrics=pat_metrics)
-                
+
                 # Extract values from result
                 mania_risk_score = mania_result.risk_score
                 mania_alert_level = mania_result.alert_level
-                
+
                 # Add mania insight if risk is moderate or high
                 if mania_result.alert_level in ["moderate", "high"]:
                     insights.append(mania_result.clinical_insight)
@@ -1008,11 +1009,13 @@ class PATModelService(IMLModelService):
                 logger.warning(
                     "Mania risk analysis failed for user %s, using default values: %s",
                     user_id,
-                    str(e)
+                    str(e),
                 )
                 # Continue with default values: mania_risk_score=0.0, mania_alert_level="none"
         else:
-            logger.debug("Mania risk analysis disabled for user %s via feature flag", user_id)
+            logger.debug(
+                "Mania risk analysis disabled for user %s via feature flag", user_id
+            )
 
         return ActigraphyAnalysis(
             user_id=user_id,

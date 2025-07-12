@@ -10,10 +10,11 @@ This module provides Prometheus metrics for production monitoring
 and alerting of the PAT (Proxy Actigraphy Transformer) model system.
 """
 
+from collections.abc import AsyncIterator, Iterator
+from contextlib import asynccontextmanager, contextmanager
 import logging
 import time
-from contextlib import asynccontextmanager, contextmanager
-from typing import Any, AsyncIterator, Iterator
+from typing import Any
 
 from prometheus_client import Counter, Gauge, Histogram, Summary
 
@@ -176,22 +177,22 @@ async def track_model_load(
     model_size: str, version: str, source: str
 ) -> AsyncIterator[dict[str, Any]]:
     """Async context manager to track model loading operations.
-    
+
     Args:
         model_size: Size of the model (small, medium, large)
         version: Model version being loaded
         source: Source of the model (local, s3, cache)
-        
+
     Yields:
         Context dict for storing operation results
     """
     start_time = time.time()
     context: dict[str, Any] = {"success": False, "error_type": None}
-    
+
     pat_model_load_attempts.labels(
         model_size=model_size, version=version, source=source
     ).inc()
-    
+
     try:
         yield context
     except Exception as e:
@@ -200,7 +201,7 @@ async def track_model_load(
         raise
     finally:
         duration = time.time() - start_time
-        
+
         if context["success"]:
             pat_model_load_duration.labels(
                 model_size=model_size, version=version, source=source
@@ -217,11 +218,11 @@ async def track_checksum_verification(
     model_size: str, version: str
 ) -> AsyncIterator[dict[str, Any]]:
     """Async context manager to track checksum verification.
-    
+
     Args:
         model_size: Size of the model
         version: Model version being verified
-        
+
     Yields:
         Context dict for storing verification results
     """
@@ -231,11 +232,11 @@ async def track_checksum_verification(
         "expected_checksum": None,
         "actual_checksum": None,
     }
-    
+
     pat_checksum_verification_attempts.labels(
         model_size=model_size, version=version
     ).inc()
-    
+
     try:
         yield context
     except Exception:
@@ -243,11 +244,11 @@ async def track_checksum_verification(
         raise
     finally:
         duration = time.time() - start_time
-        
+
         pat_checksum_verification_duration.labels(model_size=model_size).observe(
             duration
         )
-        
+
         if not context["success"] and context.get("expected_checksum"):
             # Record checksum failure as security violation
             pat_checksum_verification_failures.labels(
@@ -255,18 +256,16 @@ async def track_checksum_verification(
                 version=version,
                 expected_checksum=context["expected_checksum"],
             ).inc()
-            
+
             # Also record as security violation
-            record_security_violation(
-                "checksum_mismatch", model_size, "critical"
-            )
+            record_security_violation("checksum_mismatch", model_size, "critical")
 
 
 def update_loading_progress(
     model_size: str, version: str, stage: str, progress: float
 ) -> None:
     """Update model loading progress.
-    
+
     Args:
         model_size: Size of the model
         version: Model version being loaded
@@ -290,7 +289,7 @@ def record_cache_miss(model_size: str, version: str) -> None:
 
 def update_cache_metrics(cache_size: int, memory_bytes: int) -> None:
     """Update cache size metrics.
-    
+
     Args:
         cache_size: Number of models in cache
         memory_bytes: Estimated memory usage in bytes
@@ -300,11 +299,14 @@ def update_cache_metrics(cache_size: int, memory_bytes: int) -> None:
 
 
 def record_s3_download(
-    model_size: str, version: str, status: str, duration: float | None = None,
-    bytes_downloaded: int | None = None
+    model_size: str,
+    version: str,
+    status: str,
+    duration: float | None = None,
+    bytes_downloaded: int | None = None,
 ) -> None:
     """Record S3 download metrics.
-    
+
     Args:
         model_size: Size of the model
         version: Model version
@@ -315,10 +317,10 @@ def record_s3_download(
     pat_model_s3_downloads.labels(
         model_size=model_size, version=version, status=status
     ).inc()
-    
+
     if duration is not None:
         pat_model_s3_download_duration.labels(model_size=model_size).observe(duration)
-    
+
     if bytes_downloaded is not None:
         pat_model_s3_download_bytes.labels(model_size=model_size).observe(
             bytes_downloaded
@@ -329,7 +331,7 @@ def record_validation_attempt(
     model_size: str, validation_type: str, success: bool, error_type: str | None = None
 ) -> None:
     """Record model validation attempt.
-    
+
     Args:
         model_size: Size of the model
         validation_type: Type of validation (shape, forward_pass)
@@ -339,7 +341,7 @@ def record_validation_attempt(
     pat_model_validation_attempts.labels(
         model_size=model_size, validation_type=validation_type
     ).inc()
-    
+
     if not success and error_type:
         pat_model_validation_failures.labels(
             model_size=model_size,
@@ -352,7 +354,7 @@ def record_fallback_attempt(
     model_size: str, from_version: str, to_version: str, success: bool
 ) -> None:
     """Record model fallback attempt.
-    
+
     Args:
         model_size: Size of the model
         from_version: Version falling back from
@@ -362,7 +364,7 @@ def record_fallback_attempt(
     pat_model_fallback_attempts.labels(
         model_size=model_size, from_version=from_version, to_version=to_version
     ).inc()
-    
+
     if success:
         pat_model_fallback_successes.labels(
             model_size=model_size, from_version=from_version, to_version=to_version
@@ -373,7 +375,7 @@ def record_hot_swap(
     model_size: str, from_version: str, to_version: str, duration: float
 ) -> None:
     """Record model hot swap operation.
-    
+
     Args:
         model_size: Size of the model
         from_version: Version swapping from
@@ -383,7 +385,7 @@ def record_hot_swap(
     pat_model_hot_swap_attempts.labels(
         model_size=model_size, from_version=from_version, to_version=to_version
     ).inc()
-    
+
     pat_model_hot_swap_duration.labels(model_size=model_size).observe(duration)
 
 
@@ -391,7 +393,7 @@ def record_security_violation(
     violation_type: str, model_size: str, severity: str
 ) -> None:
     """Record a security violation.
-    
+
     Args:
         violation_type: Type of violation (checksum_mismatch, unauthorized_access, etc.)
         model_size: Size of the model involved
@@ -400,7 +402,7 @@ def record_security_violation(
     pat_security_violations.labels(
         violation_type=violation_type, model_size=model_size, severity=severity
     ).inc()
-    
+
     logger.error(
         "SECURITY VIOLATION: type=%s, model_size=%s, severity=%s",
         violation_type,
@@ -411,7 +413,7 @@ def record_security_violation(
 
 def update_current_version(model_size: str, version: str, checksum: str) -> None:
     """Update current model version info.
-    
+
     Args:
         model_size: Size of the model
         version: Current version
@@ -421,7 +423,7 @@ def update_current_version(model_size: str, version: str, checksum: str) -> None
     for label_values in pat_model_current_version._metrics.copy():
         if label_values[0] == model_size:
             pat_model_current_version.remove(*label_values)
-    
+
     # Set new current version
     pat_model_current_version.labels(
         model_size=model_size, version=version, checksum=checksum
@@ -430,21 +432,21 @@ def update_current_version(model_size: str, version: str, checksum: str) -> None
 
 def calculate_model_health_score() -> float:
     """Calculate overall PAT model system health score.
-    
+
     Returns:
         Health score from 0-100
     """
     # This is a simplified health score calculation
     # In production, this would incorporate multiple factors
-    
+
     # Get recent metrics (this is pseudo-code, actual implementation would query metrics)
     health_score = 100.0
-    
+
     # Deduct points for failures
     # - Each load failure: -5 points
     # - Each checksum failure: -20 points (security issue)
     # - Each validation failure: -10 points
-    
+
     # In a real implementation, you would query the actual metric values
     # For now, return a static healthy score
     return health_score

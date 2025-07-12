@@ -292,9 +292,7 @@ class DynamoDBConnection:
                 latency_ms=latency_ms,
                 last_check_time=self._last_health_check,
             )
-        except (
-            Exception
-        ) as e:
+        except Exception as e:
             return HealthStatus(
                 is_healthy=False,
                 latency_ms=0.0,

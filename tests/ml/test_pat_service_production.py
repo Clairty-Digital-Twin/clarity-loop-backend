@@ -587,9 +587,10 @@ class TestModelLoadingAndSecurity:
 
             # Step 2: Get the actual signature key from secrets manager (like the implementation does)
             from clarity.security.secrets_manager import get_secrets_manager
+
             secrets_manager = get_secrets_manager()
             model_signature_key = secrets_manager.get_model_signature_key()
-            
+
             # Step 3: Calculate HMAC signature (matching the implementation)
             expected = hmac.new(
                 model_signature_key.encode("utf-8"),
@@ -607,9 +608,10 @@ class TestModelLoadingAndSecurity:
         """Test successful model integrity verification."""
         # Get the expected checksum from secrets manager (like the implementation does)
         from clarity.security.secrets_manager import get_secrets_manager
+
         secrets_manager = get_secrets_manager()
         expected_checksums = secrets_manager.get_model_checksums()
-        
+
         mock_checksum.return_value = expected_checksums["small"]
 
         service = PATModelService(model_size="small")
@@ -889,7 +891,6 @@ class TestIntegrationScenarios:
     @pytest.fixture(autouse=True)
     def use_mock_pat(self, mock_pat_for_integration):
         """Use mocked PAT service for these tests."""
-        pass
 
     def setup_method(self, method: Any) -> None:
         """Set up test fixtures."""
@@ -999,7 +1000,6 @@ class TestGetPATServiceFunction:
     @pytest.fixture(autouse=True)
     def use_mock_pat(self, mock_pat_for_integration):
         """Use mocked PAT service for these tests."""
-        pass
 
     @pytest.mark.asyncio
     async def test_get_pat_service(self):
@@ -1027,7 +1027,6 @@ class TestResilienceAndErrorRecovery:
     @pytest.fixture(autouse=True)
     def use_mock_pat(self, mock_pat_for_integration):
         """Use mocked PAT service for these tests."""
-        pass
 
     def setup_method(self, method: Any) -> None:
         """Set up test fixtures."""
@@ -1099,7 +1098,6 @@ class TestProductionReadiness:
     @pytest.fixture(autouse=True)
     def use_mock_pat(self, mock_pat_for_integration):
         """Use mocked PAT service for these tests."""
-        pass
 
     def test_model_path_security(self):
         """Test model path security features."""

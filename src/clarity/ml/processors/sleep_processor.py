@@ -103,7 +103,7 @@ class SleepFeatures(BaseModel):
     overall_quality_score: float = Field(
         default=0.0, description="Overall sleep quality"
     )
-    
+
     # Data coverage metrics
     data_coverage_days: int = Field(
         default=0, description="Number of days with sleep data in the analysis period"

@@ -326,7 +326,7 @@ class TestAuthHappyPaths:
             user_id="user123",
             email="test@example.com",
             display_name="Updated Name",
-            updated=True
+            updated=True,
         )
         assert response.user_id == "user123"
         assert response.email == "test@example.com"

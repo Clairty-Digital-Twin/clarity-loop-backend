@@ -13,8 +13,8 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
 
-from clarity.services.messaging.insight_subscriber import insight_app
 from clarity.core.logging_config import configure_basic_logging
+from clarity.services.messaging.insight_subscriber import insight_app
 
 # Configure logging
 configure_basic_logging(level=logging.INFO)

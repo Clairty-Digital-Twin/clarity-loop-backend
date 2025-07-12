@@ -22,23 +22,23 @@ _logging_configured = False
 
 def setup_logging(force: bool = False) -> None:
     """Configure logging for the application based on environment settings.
-    
+
     Args:
         force: If True, force reconfiguration even if already configured.
                Default is False to prevent duplicate handlers.
     """
     global _logging_configured
-    
+
     # Prevent duplicate configuration unless forced
     if _logging_configured and not force:
         return
-    
+
     # Clear existing handlers to prevent duplicates when forced
     if force:
         root_logger = logging.getLogger()
         for handler in root_logger.handlers[:]:
             root_logger.removeHandler(handler)
-    
+
     settings = get_settings()
 
     # Base configuration for structured logging
@@ -98,10 +98,10 @@ def setup_logging(force: bool = False) -> None:
 
     # Track if this is the first configuration
     first_config = not _logging_configured
-    
+
     # Apply configuration
     logging.config.dictConfig(logging_config)
-    
+
     # Mark as configured
     _logging_configured = True
 
@@ -114,22 +114,20 @@ def setup_logging(force: bool = False) -> None:
 
 
 def configure_basic_logging(
-    level: str | int = logging.INFO,
-    format: str | None = None,
-    **kwargs: Any
+    level: str | int = logging.INFO, format: str | None = None, **kwargs: Any
 ) -> None:
     """Configure basic logging with duplicate prevention.
-    
+
     This is a drop-in replacement for logging.basicConfig() that prevents
     duplicate handlers and uses our centralized configuration.
-    
+
     Args:
         level: Logging level (default: INFO)
         format: Log format string (ignored - uses centralized format)
         **kwargs: Additional arguments (ignored for compatibility)
     """
     global _logging_configured
-    
+
     # Check if logging is already configured by checking for handlers
     root_logger = logging.getLogger()
     if root_logger.handlers and _logging_configured:
@@ -141,10 +139,10 @@ def configure_basic_logging(
         for handler in root_logger.handlers:
             handler.setLevel(level)
         return
-    
+
     # Use our centralized setup
     setup_logging()
-    
+
     # Update level after setup if different from default
     if isinstance(level, str):
         level = getattr(logging, level.upper(), logging.INFO)

@@ -14,6 +14,8 @@ import numpy as np
 import pytest
 import torch
 
+# Set up logging
+from clarity.core.logging_config import configure_basic_logging
 from clarity.ml.pat_service import (
     PAT_CONFIGS,
     ActigraphyAnalysis,
@@ -27,8 +29,6 @@ from clarity.ml.pat_service import (
 from clarity.ml.preprocessing import ActigraphyDataPoint
 from clarity.services.health_data_service import MLPredictionError
 
-# Set up logging
-from clarity.core.logging_config import configure_basic_logging
 configure_basic_logging(level=logging.INFO)
 logger = logging.getLogger(__name__)
 

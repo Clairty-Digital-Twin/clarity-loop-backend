@@ -197,7 +197,7 @@ class HealthAnalysisPipeline:
 
             # Step 5: Mania risk analysis - ALWAYS include in output for API consistency
             from clarity.core.feature_flags import is_feature_enabled
-            
+
             # Initialize default mania risk values
             mania_risk_data = {
                 "risk_score": 0.0,
@@ -205,7 +205,7 @@ class HealthAnalysisPipeline:
                 "contributing_factors": [],
                 "confidence": 0.0,
             }
-            
+
             # Check if mania risk analysis is enabled via feature flag
             if is_feature_enabled("mania_risk_analysis", user_id=user_id):
                 try:
@@ -225,26 +225,29 @@ class HealthAnalysisPipeline:
 
                     # Add to clinical insights if significant
                     if mania_result.alert_level in {"moderate", "high"}:
-                        insights = results.summary_stats.setdefault("clinical_insights", [])
+                        insights = results.summary_stats.setdefault(
+                            "clinical_insights", []
+                        )
                         insights.append(mania_result.clinical_insight)
 
                         # Add recommendations
                         if mania_result.recommendations:
-                            results.summary_stats["recommendations"] = mania_result.recommendations
-                            
+                            results.summary_stats["recommendations"] = (
+                                mania_result.recommendations
+                            )
+
                 except Exception as e:
                     self.logger.warning(
                         "Mania risk analysis failed for user %s, using default values: %s",
                         user_id,
-                        str(e)
+                        str(e),
                     )
                     # Keep default values on error
             else:
                 self.logger.debug(
-                    "Mania risk analysis disabled for user %s via feature flag",
-                    user_id
+                    "Mania risk analysis disabled for user %s via feature flag", user_id
                 )
-            
+
             # ALWAYS add mania_risk to health_indicators for API consistency
             results.summary_stats.setdefault("health_indicators", {})
             results.summary_stats["health_indicators"]["mania_risk"] = mania_risk_data
@@ -753,16 +756,21 @@ class HealthAnalysisPipeline:
         # Prepare PAT metrics from sleep features or other sources
         pat_metrics = {}
         if results.sleep_features:
-            pat_metrics.update({
-                "circadian_rhythm_score": results.sleep_features.get(
-                    "circadian_rhythm_score", 0.0
-                ),
-                "activity_fragmentation": results.sleep_features.get(
-                    "activity_fragmentation", 0.0
-                ),
-                # Add total sleep time for PAT estimation fallback
-                "total_sleep_time": results.sleep_features.get("total_sleep_minutes", 0) / 60.0,
-            })
+            pat_metrics.update(
+                {
+                    "circadian_rhythm_score": results.sleep_features.get(
+                        "circadian_rhythm_score", 0.0
+                    ),
+                    "activity_fragmentation": results.sleep_features.get(
+                        "activity_fragmentation", 0.0
+                    ),
+                    # Add total sleep time for PAT estimation fallback
+                    "total_sleep_time": results.sleep_features.get(
+                        "total_sleep_minutes", 0
+                    )
+                    / 60.0,
+                }
+            )
 
         # Prepare activity stats
         activity_stats = None
@@ -814,14 +822,14 @@ class HealthAnalysisPipeline:
 
             # Query for the most recent 28 days of analysis data
             response = dynamodb_client.table.query(
-                KeyConditionExpression=Key("pk").eq(f"USER#{user_id}") &
-                                     Key("sk").between(
-                                         f"ANALYSIS#{start_date.isoformat()}",
-                                         f"ANALYSIS#{end_date.isoformat()}"
-                                     ),
-                ScanIndexForward=False  # Get most recent items first (descending order)
+                KeyConditionExpression=Key("pk").eq(f"USER#{user_id}")
+                & Key("sk").between(
+                    f"ANALYSIS#{start_date.isoformat()}",
+                    f"ANALYSIS#{end_date.isoformat()}",
+                ),
+                ScanIndexForward=False,  # Get most recent items first (descending order)
             )
-            
+
             # If we got more than 28 items, take only the most recent 28
             items = response.get("Items", [])
             if len(items) > 28:
@@ -843,8 +851,12 @@ class HealthAnalysisPipeline:
                         sleep_hours.append(float(sleep_mins) / 60)
 
                 # Extract steps from activity features list
-                if "activity_features" in item and isinstance(item["activity_features"], list):
-                    daily_steps = self._extract_avg_daily_steps(item["activity_features"])
+                if "activity_features" in item and isinstance(
+                    item["activity_features"], list
+                ):
+                    daily_steps = self._extract_avg_daily_steps(
+                        item["activity_features"]
+                    )
                     if daily_steps and daily_steps > 0:
                         steps.append(float(daily_steps))
 
@@ -864,7 +876,9 @@ class HealthAnalysisPipeline:
             return None
 
     @staticmethod
-    def _extract_avg_daily_steps(activity_features: list[dict[str, Any]]) -> float | None:
+    def _extract_avg_daily_steps(
+        activity_features: list[dict[str, Any]],
+    ) -> float | None:
         """Extract average daily steps from activity features."""
         for feature in activity_features:
             if feature.get("feature_name") == "average_daily_steps":
@@ -875,7 +889,9 @@ class HealthAnalysisPipeline:
         return None
 
     @staticmethod
-    def _extract_peak_daily_steps(activity_features: list[dict[str, Any]]) -> float | None:
+    def _extract_peak_daily_steps(
+        activity_features: list[dict[str, Any]],
+    ) -> float | None:
         """Extract peak daily steps from activity features."""
         for feature in activity_features:
             if feature.get("feature_name") == "peak_daily_steps":
@@ -886,7 +902,9 @@ class HealthAnalysisPipeline:
         return None
 
     @staticmethod
-    def _extract_activity_consistency(activity_features: list[dict[str, Any]]) -> float | None:
+    def _extract_activity_consistency(
+        activity_features: list[dict[str, Any]],
+    ) -> float | None:
         """Extract activity consistency score from activity features."""
         for feature in activity_features:
             if feature.get("feature_name") == "activity_consistency_score":

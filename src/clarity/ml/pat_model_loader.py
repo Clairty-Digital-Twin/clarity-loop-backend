@@ -19,7 +19,6 @@ from torch import nn
 
 from clarity.ml.pat_architecture import ModelConfig as ArchModelConfig
 from clarity.ml.pat_architecture import PATModel
-from clarity.services.s3_storage_service import S3StorageService
 from clarity.monitoring import (
     record_cache_hit,
     record_cache_miss,
@@ -32,6 +31,7 @@ from clarity.monitoring import (
     update_current_version,
     update_loading_progress,
 )
+from clarity.services.s3_storage_service import S3StorageService
 
 logger = logging.getLogger(__name__)
 
@@ -195,9 +195,11 @@ class PATModelLoader:
         """
         start_time = time.time()
         version_str = version or "latest"
-        
+
         # Track model load operation
-        async with track_model_load(size.value, version_str, "cache" if not force_reload else "local") as ctx:
+        async with track_model_load(
+            size.value, version_str, "cache" if not force_reload else "local"
+        ) as ctx:
             try:
                 # Check cache first
                 cache_key = f"{size.value}:{version_str}"
@@ -211,8 +213,7 @@ class PATModelLoader:
                         # Update cache metrics
                         self._update_cache_metrics()
                         return cast(nn.Module, cached_model)
-                    else:
-                        record_cache_miss(size.value, version_str)
+                    record_cache_miss(size.value, version_str)
 
                 # Update loading progress
                 update_loading_progress(size.value, version_str, "init", 0.1)
@@ -265,7 +266,9 @@ class PATModelLoader:
                 ctx["success"] = True
                 update_loading_progress(size.value, version_str, "complete", 1.0)
 
-                logger.info("Model loaded successfully: %s (%.2fs)", cache_key, load_time)
+                logger.info(
+                    "Model loaded successfully: %s (%.2fs)", cache_key, load_time
+                )
 
                 return model
 
@@ -314,22 +317,18 @@ class PATModelLoader:
 
             # Write to local file
             local_path.write_bytes(file_data)
-            
+
             # Record successful download
             download_duration = time.time() - download_start
             record_s3_download(
-                size.value, 
-                version_str, 
-                "success", 
-                download_duration,
-                len(file_data)
+                size.value, version_str, "success", download_duration, len(file_data)
             )
 
         except Exception as e:
             # Record failed download
             download_duration = time.time() - download_start
             record_s3_download(size.value, version_str, "failed", download_duration)
-            
+
             msg = f"Failed to download model from S3: {s3_key}"
             raise ModelLoadError(msg) from e
 
@@ -371,43 +370,52 @@ class PATModelLoader:
                 if output.shape != (1, expected_patches, config.embed_dim):
                     msg = f"Invalid output shape: {output.shape}"
                     raise ModelLoadError(msg)
-                    
+
             # Record successful validation
-            record_validation_attempt(config.name.lower().replace("pat-", ""), "forward_pass", True)
+            record_validation_attempt(
+                config.name.lower().replace("pat-", ""), "forward_pass", True
+            )
 
         except Exception as e:
             # Record failed validation
             record_validation_attempt(
-                config.name.lower().replace("pat-", ""), 
-                "forward_pass", 
-                False, 
-                type(e).__name__
+                config.name.lower().replace("pat-", ""),
+                "forward_pass",
+                False,
+                type(e).__name__,
             )
             msg = f"Model validation failed: {e}"
             raise ModelLoadError(msg) from e
 
-    async def _verify_checksum(self, size: ModelSize, version: str, model_path: Path) -> None:
+    async def _verify_checksum(
+        self, size: ModelSize, version: str, model_path: Path
+    ) -> None:
         """Verify model checksum for security."""
         async with track_checksum_verification(size.value, version) as ctx:
             try:
                 # Calculate actual checksum
                 actual_checksum = hashlib.sha256(model_path.read_bytes()).hexdigest()
                 ctx["actual_checksum"] = actual_checksum
-                
+
                 # In a real implementation, you would fetch expected checksum from a secure source
                 # For now, we'll just log the checksum
-                logger.info("Model checksum for %s v%s: %s", size.value, version, actual_checksum)
-                
+                logger.info(
+                    "Model checksum for %s v%s: %s",
+                    size.value,
+                    version,
+                    actual_checksum,
+                )
+
                 # TODO: Implement actual checksum verification against known good values
                 # expected_checksum = await self._get_expected_checksum(size, version)
                 # ctx["expected_checksum"] = expected_checksum
-                # 
+                #
                 # if actual_checksum != expected_checksum:
                 #     ctx["success"] = False
                 #     raise ModelLoadError("Checksum verification failed")
-                
+
                 ctx["success"] = True
-                
+
             except Exception as e:
                 ctx["success"] = False
                 raise
@@ -426,7 +434,7 @@ class PATModelLoader:
             size=size,
             metrics={},  # To be populated by monitoring
         )
-        
+
         # Update metrics
         update_current_version(size.value, version, checksum)
 
@@ -451,22 +459,19 @@ class PATModelLoader:
 
             # Record fallback attempt
             record_fallback_attempt(
-                size.value, 
-                current.version, 
-                f"v{previous_version}", 
-                False  # Not yet successful
+                size.value,
+                current.version,
+                f"v{previous_version}",
+                False,  # Not yet successful
             )
 
             model = await self.load_model(size, previous_version)
-            
+
             # Record successful fallback
             record_fallback_attempt(
-                size.value, 
-                current.version, 
-                f"v{previous_version}", 
-                True
+                size.value, current.version, f"v{previous_version}", True
             )
-            
+
             return model
 
         except Exception as e:
@@ -499,12 +504,12 @@ class PATModelLoader:
     def get_current_version(self, size: ModelSize) -> ModelVersion | None:
         """Get current version info for a model size."""
         return self._current_versions.get(size)
-    
+
     def _update_cache_metrics(self) -> None:
         """Update cache-related metrics."""
         cache_size = self._cache.size()
-        
+
         # Estimate memory usage (simplified - in production would be more accurate)
         estimated_memory = cache_size * 256 * 1024 * 1024  # Assume 256MB per model
-        
+
         update_cache_metrics(cache_size, estimated_memory)

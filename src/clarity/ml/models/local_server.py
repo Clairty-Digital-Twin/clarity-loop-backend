@@ -489,6 +489,7 @@ if __name__ == "__main__":
 
     # Setup logging
     from clarity.core.logging_config import configure_basic_logging
+
     configure_basic_logging(level=getattr(logging, args.log_level.upper()))
 
     # Create placeholder models if requested

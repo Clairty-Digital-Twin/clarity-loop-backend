@@ -65,7 +65,7 @@ class TestRateLimitingMiddleware:
     def test_middleware_class_exists(self):
         """Test that RateLimitingMiddleware class exists."""
         assert RateLimitingMiddleware is not None
-        
+
     def test_create_limiter(self):
         """Test create limiter factory method."""
         limiter = RateLimitingMiddleware.create_limiter(["100/hour"])
@@ -75,7 +75,7 @@ class TestRateLimitingMiddleware:
         """Test auth limiter factory method."""
         limiter = RateLimitingMiddleware.get_auth_limiter()
         assert limiter is not None
-        
+
     def test_get_ai_limiter(self):
         """Test AI limiter factory method."""
         limiter = RateLimitingMiddleware.get_ai_limiter()

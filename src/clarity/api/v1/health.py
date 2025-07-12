@@ -4,8 +4,8 @@ Provides comprehensive health check endpoints for monitoring
 system status, dependencies, and model health.
 """
 
-import logging
 from datetime import UTC, datetime
+import logging
 from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -251,7 +251,7 @@ async def pat_model_health(
         logger.exception("Failed to get PAT model health")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to retrieve model health: {str(e)}",
+            detail=f"Failed to retrieve model health: {e!s}",
         ) from e
 
 

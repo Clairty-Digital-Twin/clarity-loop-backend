@@ -8,12 +8,12 @@ This module provides a production-ready secrets management solution with:
 - Comprehensive error handling and logging
 """
 
+from collections.abc import Callable
+from functools import lru_cache
 import json
 import logging
 import os
 import time
-from collections.abc import Callable
-from functools import lru_cache
 from typing import Any, TypeVar, cast
 
 import boto3
@@ -61,7 +61,7 @@ class SecretsCacheEntry:
 
 class SecretsManager:
     """Manages secrets from AWS SSM Parameter Store with environment variable fallback.
-    
+
     This class provides a robust secrets management solution with:
     - Primary source: AWS SSM Parameter Store
     - Fallback source: Environment variables
@@ -78,7 +78,7 @@ class SecretsManager:
         use_ssm: bool | None = None,
     ) -> None:
         """Initialize the secrets manager.
-        
+
         Args:
             ssm_prefix: Prefix for SSM parameter names (e.g., "/clarity/production")
             region: AWS region for SSM client
@@ -91,7 +91,7 @@ class SecretsManager:
         self.cache_ttl = cache_ttl_seconds or int(
             os.getenv(ENV_CACHE_TTL, str(DEFAULT_CACHE_TTL_SECONDS))
         )
-        
+
         # Determine if we should use SSM
         if use_ssm is not None:
             self.use_ssm = use_ssm
@@ -101,7 +101,7 @@ class SecretsManager:
             if not self.use_ssm:
                 # Auto-detect based on environment
                 self.use_ssm = self._is_aws_environment()
-        
+
         # Initialize SSM client if enabled
         self._ssm_client = None
         if self.use_ssm:
@@ -120,7 +120,7 @@ class SecretsManager:
                 self.use_ssm = False
         else:
             logger.info("SSM disabled, using environment variables only")
-        
+
         # Initialize cache
         self._cache: dict[str, SecretsCacheEntry] = {}
 
@@ -133,11 +133,11 @@ class SecretsManager:
             "AWS_LAMBDA_FUNCTION_NAME",  # Lambda
             "AWS_REGION",  # General AWS
         ]
-        
+
         # Check if any AWS environment variables are set
         if any(os.getenv(var) for var in aws_indicators):
             return True
-        
+
         # Check if we have AWS credentials
         try:
             boto3.client("sts").get_caller_identity()
@@ -156,18 +156,18 @@ class SecretsManager:
     )
     def _get_parameter_from_ssm(self, parameter_name: str) -> str | None:
         """Retrieve a parameter from SSM with retry logic.
-        
+
         Args:
             parameter_name: Name of the parameter (without prefix)
-            
+
         Returns:
             Parameter value or None if not found
         """
         if not self._ssm_client:
             return None
-        
+
         full_parameter_name = f"{self.ssm_prefix}/{parameter_name}"
-        
+
         try:
             response = self._ssm_client.get_parameter(
                 Name=full_parameter_name,
@@ -189,10 +189,10 @@ class SecretsManager:
 
     def _get_from_cache(self, key: str) -> Any | None:
         """Get a value from cache if not expired.
-        
+
         Args:
             key: Cache key
-            
+
         Returns:
             Cached value or None if not found or expired
         """
@@ -200,16 +200,16 @@ class SecretsManager:
         if entry and not entry.is_expired():
             logger.debug("Cache hit for key %s", key)
             return entry.value
-        
+
         if entry:
             logger.debug("Cache expired for key %s", key)
             del self._cache[key]
-        
+
         return None
 
     def _set_cache(self, key: str, value: Any) -> None:
         """Store a value in cache.
-        
+
         Args:
             key: Cache key
             value: Value to cache
@@ -224,12 +224,12 @@ class SecretsManager:
         env_var: str | None = None,
     ) -> str | None:
         """Get a string value from SSM or environment.
-        
+
         Args:
             key: Parameter key (without prefix)
             default: Default value if not found
             env_var: Environment variable name to check as fallback
-            
+
         Returns:
             String value or default
         """
@@ -237,7 +237,7 @@ class SecretsManager:
         cached_value = self._get_from_cache(key)
         if cached_value is not None:
             return str(cached_value)
-        
+
         # Try SSM if enabled
         if self.use_ssm:
             try:
@@ -251,7 +251,7 @@ class SecretsManager:
                     key,
                     e,
                 )
-        
+
         # Fall back to environment variable
         if env_var:
             value = os.getenv(env_var)
@@ -259,7 +259,7 @@ class SecretsManager:
                 logger.debug("Using environment variable %s for key %s", env_var, key)
                 self._set_cache(key, value)
                 return value
-        
+
         # Use default environment variable name based on key
         default_env_var = f"CLARITY_{key.upper()}"
         value = os.getenv(default_env_var)
@@ -271,7 +271,7 @@ class SecretsManager:
             )
             self._set_cache(key, value)
             return value
-        
+
         logger.debug("Using default value for key %s", key)
         return default
 
@@ -282,19 +282,19 @@ class SecretsManager:
         env_var: str | None = None,
     ) -> dict[str, Any] | None:
         """Get a JSON value from SSM or environment.
-        
+
         Args:
             key: Parameter key (without prefix)
             default: Default value if not found
             env_var: Environment variable name to check as fallback
-            
+
         Returns:
             Parsed JSON dict or default
         """
         value = self.get_string(key, env_var=env_var)
         if value is None:
             return default
-        
+
         try:
             return cast(dict[str, Any], json.loads(value))
         except json.JSONDecodeError as e:
@@ -307,7 +307,7 @@ class SecretsManager:
 
     def get_model_signature_key(self) -> str:
         """Get the model signature key for integrity verification.
-        
+
         Returns:
             Model signature key (never None for security)
         """
@@ -321,7 +321,7 @@ class SecretsManager:
 
     def get_model_checksums(self) -> dict[str, str]:
         """Get expected model checksums for integrity verification.
-        
+
         Returns:
             Dict mapping model size to expected checksum
         """
@@ -330,14 +330,12 @@ class SecretsManager:
             PARAM_MODEL_CHECKSUMS,
             env_var="EXPECTED_MODEL_CHECKSUMS",
         )
-        
+
         if checksums:
             return checksums
-        
+
         # Fall back to hardcoded defaults for backward compatibility
-        logger.warning(
-            "Model checksums not found in secrets store, using defaults"
-        )
+        logger.warning("Model checksums not found in secrets store, using defaults")
         return {
             "small": "4b30d57febbbc8ef221e4b196bf6957e7c7f366f6b836fe800a43f69d24694ad",
             "medium": "6175021ca1a43f3c834bdaa644c45f27817cf985d8ffd186fab9b5de2c4ca661",
@@ -346,7 +344,7 @@ class SecretsManager:
 
     def refresh_cache(self, key: str | None = None) -> None:
         """Refresh cache for a specific key or all keys.
-        
+
         Args:
             key: Specific key to refresh, or None to clear all
         """
@@ -359,7 +357,7 @@ class SecretsManager:
 
     def health_check(self) -> dict[str, Any]:
         """Perform a health check on the secrets manager.
-        
+
         Returns:
             Health check status
         """
@@ -370,7 +368,7 @@ class SecretsManager:
             "cache_size": len(self._cache),
             "cache_ttl_seconds": self.cache_ttl,
         }
-        
+
         if self.use_ssm and self._ssm_client:
             try:
                 # Try to describe parameters to test connectivity
@@ -380,7 +378,7 @@ class SecretsManager:
                 status["ssm_status"] = f"unhealthy: {e}"
         else:
             status["ssm_status"] = "disabled"
-        
+
         return status
 
 
@@ -391,16 +389,16 @@ _secrets_manager: SecretsManager | None = None
 @lru_cache(maxsize=1)
 def get_secrets_manager() -> SecretsManager:
     """Get or create the global secrets manager instance.
-    
+
     Returns:
         Global SecretsManager instance
     """
     global _secrets_manager
-    
+
     if _secrets_manager is None:
         _secrets_manager = SecretsManager()
         logger.info("Initialized global SecretsManager instance")
-    
+
     return _secrets_manager
 
 
@@ -411,31 +409,32 @@ def with_secret(
     default: T | None = None,
 ) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
     """Decorator to inject secrets into function arguments.
-    
+
     Args:
         key: Secret key to retrieve
         secret_type: Expected type of the secret
         env_var: Environment variable fallback
         default: Default value if not found
-        
+
     Returns:
         Decorator function
     """
+
     def decorator(func: Callable[..., Any]) -> Callable[..., Any]:
         def wrapper(*args: Any, **kwargs: Any) -> Any:
             manager = get_secrets_manager()
-            
+
             if secret_type == str:
                 value = manager.get_string(key, env_var=env_var, default=default)
             elif secret_type == dict:
                 value = manager.get_json(key, env_var=env_var, default=default)
             else:
                 raise ValueError(f"Unsupported secret type: {secret_type}")
-            
+
             # Inject the secret as a keyword argument
             kwargs[key] = value
             return func(*args, **kwargs)
-        
+
         return wrapper
-    
+
     return decorator

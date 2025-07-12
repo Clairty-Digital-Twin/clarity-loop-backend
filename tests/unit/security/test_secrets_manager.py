@@ -4,8 +4,8 @@ import json
 import os
 from unittest.mock import MagicMock, patch
 
-import pytest
 from botocore.exceptions import ClientError
+import pytest
 
 from clarity.security.secrets_manager import (
     SecretsManager,
@@ -21,7 +21,9 @@ class TestSecretsManager:
         """Test initialization with default values."""
         with patch("boto3.client") as mock_boto:
             # Mock the AWS environment detection to return False
-            with patch.object(SecretsManager, "_is_aws_environment", return_value=False):
+            with patch.object(
+                SecretsManager, "_is_aws_environment", return_value=False
+            ):
                 manager = SecretsManager()
                 assert manager.ssm_prefix == "/clarity/production"
                 assert manager.region == "us-east-1"
@@ -43,20 +45,22 @@ class TestSecretsManager:
 
     def test_init_from_environment(self):
         """Test initialization from environment variables."""
-        with patch.dict(
-            os.environ,
-            {
-                "CLARITY_SSM_PREFIX": "/env/prefix",
-                "AWS_DEFAULT_REGION": "ap-south-1",
-                "CLARITY_SECRETS_CACHE_TTL": "120",
-                "CLARITY_USE_SSM": "true",
-            },
+        with (
+            patch.dict(
+                os.environ,
+                {
+                    "CLARITY_SSM_PREFIX": "/env/prefix",
+                    "AWS_DEFAULT_REGION": "ap-south-1",
+                    "CLARITY_SECRETS_CACHE_TTL": "120",
+                    "CLARITY_USE_SSM": "true",
+                },
+            ),
+            patch("boto3.client") as mock_boto,
         ):
-            with patch("boto3.client") as mock_boto:
-                manager = SecretsManager()
-                assert manager.ssm_prefix == "/env/prefix"
-                assert manager.region == "ap-south-1"
-                assert manager.cache_ttl == 120
+            manager = SecretsManager()
+            assert manager.ssm_prefix == "/env/prefix"
+            assert manager.region == "ap-south-1"
+            assert manager.cache_ttl == 120
 
     def test_get_string_from_env(self):
         """Test getting string value from environment variable."""
@@ -83,16 +87,14 @@ class TestSecretsManager:
         """Test getting string value from SSM."""
         mock_ssm = MagicMock()
         mock_boto.return_value = mock_ssm
-        mock_ssm.get_parameter.return_value = {
-            "Parameter": {"Value": "ssm_value"}
-        }
+        mock_ssm.get_parameter.return_value = {"Parameter": {"Value": "ssm_value"}}
 
         manager = SecretsManager(use_ssm=True)
         manager._ssm_client = mock_ssm
-        
+
         value = manager.get_string("test_key")
         assert value == "ssm_value"
-        
+
         mock_ssm.get_parameter.assert_called_with(
             Name="/clarity/production/test_key",
             WithDecryption=True,
@@ -111,7 +113,7 @@ class TestSecretsManager:
 
         manager = SecretsManager(use_ssm=True)
         manager._ssm_client = mock_ssm
-        
+
         value = manager.get_string("test_key", default="default")
         assert value == "default"
 
@@ -179,35 +181,36 @@ class TestSecretsManager:
     def test_cache_functionality(self):
         """Test caching functionality."""
         manager = SecretsManager(use_ssm=False, cache_ttl_seconds=1)
-        
+
         with patch.dict(os.environ, {"CLARITY_TEST_KEY": "cached_value"}):
             # First call should hit environment
             value1 = manager.get_string("test_key")
             assert value1 == "cached_value"
-            
+
             # Change environment - cached value should be returned
             with patch.dict(os.environ, {"CLARITY_TEST_KEY": "new_value"}):
                 value2 = manager.get_string("test_key")
                 assert value2 == "cached_value"  # From cache
-                
+
                 # Wait for cache to expire
                 import time
+
                 time.sleep(1.1)
-                
+
                 value3 = manager.get_string("test_key")
                 assert value3 == "new_value"  # Cache expired
 
     def test_refresh_cache(self):
         """Test cache refresh functionality."""
         manager = SecretsManager(use_ssm=False)
-        
+
         with patch.dict(os.environ, {"CLARITY_TEST_KEY": "value1"}):
             value1 = manager.get_string("test_key")
             assert value1 == "value1"
-            
+
             # Refresh specific key
             manager.refresh_cache("test_key")
-            
+
             with patch.dict(os.environ, {"CLARITY_TEST_KEY": "value2"}):
                 value2 = manager.get_string("test_key")
                 assert value2 == "value2"  # Not from cache
@@ -215,7 +218,7 @@ class TestSecretsManager:
     def test_refresh_all_cache(self):
         """Test refreshing entire cache."""
         manager = SecretsManager(use_ssm=False)
-        
+
         with patch.dict(
             os.environ,
             {
@@ -226,10 +229,10 @@ class TestSecretsManager:
             # Populate cache
             manager.get_string("key1")
             manager.get_string("key2")
-            
+
             # Clear all cache
             manager.refresh_cache()
-            
+
             # Verify cache is empty
             assert len(manager._cache) == 0
 
@@ -237,7 +240,7 @@ class TestSecretsManager:
         """Test health check when SSM is disabled."""
         manager = SecretsManager(use_ssm=False)
         health = manager.health_check()
-        
+
         assert health["service"] == "SecretsManager"
         assert health["use_ssm"] is False
         assert health["ssm_status"] == "disabled"
@@ -247,10 +250,10 @@ class TestSecretsManager:
         """Test health check when SSM is healthy."""
         mock_ssm = MagicMock()
         mock_boto.return_value = mock_ssm
-        
+
         manager = SecretsManager(use_ssm=True)
         manager._ssm_client = mock_ssm
-        
+
         health = manager.health_check()
         assert health["ssm_status"] == "healthy"
 
@@ -260,10 +263,10 @@ class TestSecretsManager:
         mock_ssm = MagicMock()
         mock_boto.return_value = mock_ssm
         mock_ssm.describe_parameters.side_effect = Exception("Connection error")
-        
+
         manager = SecretsManager(use_ssm=True)
         manager._ssm_client = mock_ssm
-        
+
         health = manager.health_check()
         assert "unhealthy" in health["ssm_status"]
 
@@ -276,10 +279,11 @@ class TestSecretsManager:
     def test_with_secret_decorator_string(self):
         """Test with_secret decorator for string values."""
         with patch.dict(os.environ, {"CLARITY_API_KEY": "secret123"}):
+
             @with_secret("api_key", str)
             def test_func(api_key=None):
                 return api_key
-            
+
             result = test_func()
             assert result == "secret123"
 
@@ -290,10 +294,11 @@ class TestSecretsManager:
             os.environ,
             {"CLARITY_DB_CONFIG": json.dumps(config)},
         ):
+
             @with_secret("db_config", dict)
             def test_func(db_config=None):
                 return db_config
-            
+
             result = test_func()
             assert result == config
 
@@ -302,20 +307,22 @@ class TestSecretsManager:
         """Test retry logic for transient SSM failures."""
         mock_ssm = MagicMock()
         mock_boto.return_value = mock_ssm
-        
+
         # First two calls fail with ThrottlingException, third succeeds
         mock_ssm.get_parameter.side_effect = [
             ClientError({"Error": {"Code": "ThrottlingException"}}, "GetParameter"),
             ClientError({"Error": {"Code": "ThrottlingException"}}, "GetParameter"),
             {"Parameter": {"Value": "success"}},
         ]
-        
+
         # Need to mock the specific exception types
-        mock_ssm.exceptions.ParameterNotFound = type('ParameterNotFound', (ClientError,), {})
-        
+        mock_ssm.exceptions.ParameterNotFound = type(
+            "ParameterNotFound", (ClientError,), {}
+        )
+
         manager = SecretsManager(use_ssm=True)
         manager._ssm_client = mock_ssm
-        
+
         # The _get_parameter_from_ssm method has retry logic
         value = manager._get_parameter_from_ssm("test_key")
         assert value == "success"

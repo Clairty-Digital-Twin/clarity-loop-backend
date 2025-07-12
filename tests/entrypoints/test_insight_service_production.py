@@ -187,6 +187,7 @@ class TestInsightServiceLogging:
     def test_logging_configuration(self, mock_configure_logging: MagicMock) -> None:
         """Test that logging is properly configured on module import."""
         import logging
+
         # Reload the module to trigger logging configuration
         importlib.reload(clarity.entrypoints.insight_service)
 

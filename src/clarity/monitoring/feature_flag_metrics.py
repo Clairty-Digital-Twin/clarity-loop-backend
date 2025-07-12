@@ -3,6 +3,7 @@
 import time
 from typing import Any, Dict, List, Optional
 
+from fastapi import APIRouter, Response
 from prometheus_client import (
     CONTENT_TYPE_LATEST,
     CollectorRegistry,
@@ -11,7 +12,6 @@ from prometheus_client import (
     Histogram,
     generate_latest,
 )
-from fastapi import APIRouter, Response
 from pydantic import BaseModel
 
 from clarity.core.feature_flags_enhanced import (
@@ -30,11 +30,11 @@ router = APIRouter(prefix="/metrics/feature-flags", tags=["monitoring"])
 
 class FeatureFlagMetrics(BaseModel):
     """Feature flag metrics model."""
-    
+
     refresh_success_total: int
-    refresh_failure_total: Dict[str, int]
+    refresh_failure_total: dict[str, int]
     stale_config: bool
-    last_refresh_timestamp: Optional[float]
+    last_refresh_timestamp: float | None
     circuit_breaker_state: str
     avg_refresh_duration_seconds: float
     p95_refresh_duration_seconds: float
@@ -43,11 +43,11 @@ class FeatureFlagMetrics(BaseModel):
 
 class FeatureFlagAlert(BaseModel):
     """Feature flag alert model."""
-    
+
     severity: str  # critical, warning, info
     message: str
     timestamp: float
-    details: Dict[str, Any]
+    details: dict[str, Any]
 
 
 @router.get("/prometheus")
@@ -55,7 +55,7 @@ async def prometheus_metrics():
     """Export feature flag metrics in Prometheus format."""
     # Generate metrics in Prometheus format
     metrics_output = generate_latest()
-    
+
     return Response(
         content=metrics_output,
         media_type=CONTENT_TYPE_LATEST,
@@ -67,7 +67,7 @@ async def metrics_dashboard():
     """Get feature flag metrics dashboard data."""
     # Get current health
     health = get_feature_flag_health()
-    
+
     # Calculate metrics
     # Note: In production, these would be fetched from actual Prometheus metrics
     metrics = FeatureFlagMetrics(
@@ -84,16 +84,16 @@ async def metrics_dashboard():
         p95_refresh_duration_seconds=0.8,  # Placeholder
         p99_refresh_duration_seconds=1.2,  # Placeholder
     )
-    
+
     return metrics
 
 
-@router.get("/alerts", response_model=List[FeatureFlagAlert])
+@router.get("/alerts", response_model=list[FeatureFlagAlert])
 async def get_alerts():
     """Get active feature flag alerts."""
     alerts = []
     health = get_feature_flag_health()
-    
+
     # Check for stale configuration
     if health["config_stale"]:
         config_age = health["config_age_seconds"] or 0
@@ -108,7 +108,7 @@ async def get_alerts():
                 },
             )
         )
-    
+
     # Check circuit breaker state
     if health["circuit_breaker_state"] == "open":
         alerts.append(
@@ -134,7 +134,7 @@ async def get_alerts():
                 },
             )
         )
-    
+
     # Check refresh failures
     if health["refresh_failures"] > 5:
         alerts.append(
@@ -147,7 +147,7 @@ async def get_alerts():
                 },
             )
         )
-    
+
     return alerts
 
 

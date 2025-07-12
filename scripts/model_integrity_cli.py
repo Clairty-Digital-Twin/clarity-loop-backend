@@ -15,12 +15,12 @@ project_root = Path(__file__).parent.parent
 if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
 
+from clarity.core.logging_config import configure_basic_logging
 from clarity.ml.model_integrity import (
     ModelChecksumManager,
     ModelIntegrityError,
     verify_startup_models,
 )
-from clarity.core.logging_config import configure_basic_logging
 
 # Configure logging
 configure_basic_logging(level=logging.INFO)

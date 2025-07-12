@@ -1,11 +1,12 @@
 """Integration tests for mania risk analysis in the health analysis pipeline."""
 
-import os
 from datetime import UTC, datetime, timedelta
+import os
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
+from clarity.core.config import Settings
 from clarity.ml.analysis_pipeline import HealthAnalysisPipeline
 from clarity.models.health_data import (
     ActivityData,
@@ -14,7 +15,6 @@ from clarity.models.health_data import (
     HealthMetricType,
     SleepData,
 )
-from clarity.core.config import Settings
 from tests.helpers.pat_test_utils import mock_pat_service_for_testing
 
 
@@ -39,14 +39,21 @@ class TestManiaRiskIntegration:
         mock_client.table = MagicMock()
         return mock_client
 
-    def create_sleep_metric(self, user_id: str, timestamp: datetime, sleep_hours: float, efficiency: float = 0.85) -> HealthMetric:
+    def create_sleep_metric(
+        self,
+        user_id: str,
+        timestamp: datetime,
+        sleep_hours: float,
+        efficiency: float = 0.85,
+    ) -> HealthMetric:
         """Helper to create sleep metrics with proper data."""
         sleep_data = SleepData(
             total_sleep_minutes=int(sleep_hours * 60),
             sleep_efficiency=efficiency,
             time_to_sleep_minutes=15,
             wake_count=2,
-            sleep_start=timestamp - timedelta(hours=sleep_hours + 0.25),  # Add 15 min for sleep latency
+            sleep_start=timestamp
+            - timedelta(hours=sleep_hours + 0.25),  # Add 15 min for sleep latency
             sleep_end=timestamp,
             waso_minutes=20,  # Wake after sleep onset
             rem_percentage=0.25,  # 25% REM
@@ -62,7 +69,9 @@ class TestManiaRiskIntegration:
             metadata={"user_id": user_id},
         )
 
-    def create_activity_metric(self, user_id: str, timestamp: datetime, steps: int) -> HealthMetric:
+    def create_activity_metric(
+        self, user_id: str, timestamp: datetime, steps: int
+    ) -> HealthMetric:
         """Helper to create activity metrics."""
         activity_data = ActivityData(
             steps=steps,
@@ -79,7 +88,9 @@ class TestManiaRiskIntegration:
             metadata={"user_id": user_id},
         )
 
-    def create_heart_rate_metric(self, user_id: str, timestamp: datetime, heart_rate: int, hrv: float = None) -> HealthMetric:
+    def create_heart_rate_metric(
+        self, user_id: str, timestamp: datetime, heart_rate: int, hrv: float = None
+    ) -> HealthMetric:
         """Helper to create heart rate metrics."""
         if hrv is None:
             hrv = 40.0 if heart_rate < 80 else 25.0  # Lower HRV with higher HR
@@ -98,7 +109,9 @@ class TestManiaRiskIntegration:
         )
 
     @pytest.mark.asyncio
-    async def test_mania_risk_detected_in_pipeline(self, pipeline, mock_dynamodb_client):
+    async def test_mania_risk_detected_in_pipeline(
+        self, pipeline, mock_dynamodb_client
+    ):
         """Test that mania risk is properly detected and integrated."""
         user_id = "test-user-123"
 
@@ -106,16 +119,23 @@ class TestManiaRiskIntegration:
         with patch.dict(os.environ, {"MANIA_RISK_ENABLED": "true"}):
             # Reset feature flag manager to pick up env change
             import clarity.core.feature_flags
+
             clarity.core.feature_flags._feature_flag_manager = None
 
             # Mock DynamoDB client
-            with patch.object(pipeline, '_get_dynamodb_client', return_value=mock_dynamodb_client):
+            with patch.object(
+                pipeline, "_get_dynamodb_client", return_value=mock_dynamodb_client
+            ):
                 # Mock baseline query - return normal baseline
                 mock_dynamodb_client.table.query.return_value = {
                     "Items": [
                         {
-                            "sleep_features": {"total_sleep_minutes": 450},  # 7.5 hours baseline
-                            "activity_features": {"avg_daily_steps": 8000},  # 8k steps baseline
+                            "sleep_features": {
+                                "total_sleep_minutes": 450
+                            },  # 7.5 hours baseline
+                            "activity_features": {
+                                "avg_daily_steps": 8000
+                            },  # 8k steps baseline
                         }
                     ]
                 }
@@ -156,26 +176,32 @@ class TestManiaRiskIntegration:
                 # Verify clinical insights were added
                 if mania_risk["alert_level"] in {"moderate", "high"}:
                     assert "clinical_insights" in results.summary_stats
-                    assert any("mania" in insight.lower()
-                              for insight in results.summary_stats["clinical_insights"])
+                    assert any(
+                        "mania" in insight.lower()
+                        for insight in results.summary_stats["clinical_insights"]
+                    )
 
     @pytest.mark.asyncio
     async def test_mania_risk_with_no_baseline(self, pipeline, mock_dynamodb_client):
         """Test mania risk detection when no historical baseline exists."""
         user_id = "new-user-456"
 
-        with patch('clarity.core.config.get_settings') as mock_get_settings:
+        with patch("clarity.core.config.get_settings") as mock_get_settings:
             mock_settings = MagicMock()
             mock_settings.mania_risk_enabled = True
             mock_get_settings.return_value = mock_settings
-            
-            with patch.object(pipeline, '_get_dynamodb_client', return_value=mock_dynamodb_client):
+
+            with patch.object(
+                pipeline, "_get_dynamodb_client", return_value=mock_dynamodb_client
+            ):
                 # Mock empty baseline query
                 mock_dynamodb_client.table.query.return_value = {"Items": []}
 
                 # Create metrics with critically low sleep
                 metrics = [
-                    self.create_sleep_metric(user_id, datetime.now(UTC), 2.5),  # Very low sleep
+                    self.create_sleep_metric(
+                        user_id, datetime.now(UTC), 2.5
+                    ),  # Very low sleep
                     self.create_activity_metric(user_id, datetime.now(UTC), 12000),
                 ]
 
@@ -190,16 +216,20 @@ class TestManiaRiskIntegration:
                 assert "Critically low sleep" in str(mania_risk["contributing_factors"])
 
     @pytest.mark.asyncio
-    async def test_no_mania_risk_with_healthy_data(self, pipeline, mock_dynamodb_client):
+    async def test_no_mania_risk_with_healthy_data(
+        self, pipeline, mock_dynamodb_client
+    ):
         """Test that healthy data produces no mania risk alert."""
         user_id = "healthy-user-789"
 
-        with patch('clarity.core.config.get_settings') as mock_get_settings:
+        with patch("clarity.core.config.get_settings") as mock_get_settings:
             mock_settings = MagicMock()
             mock_settings.mania_risk_enabled = True
             mock_get_settings.return_value = mock_settings
-            
-            with patch.object(pipeline, '_get_dynamodb_client', return_value=mock_dynamodb_client):
+
+            with patch.object(
+                pipeline, "_get_dynamodb_client", return_value=mock_dynamodb_client
+            ):
                 # Mock normal baseline
                 mock_dynamodb_client.table.query.return_value = {
                     "Items": [{"sleep_features": {"total_sleep_minutes": 480}}]
@@ -212,11 +242,19 @@ class TestManiaRiskIntegration:
                 # Add 7 days of consistent healthy data
                 for i in range(7):
                     timestamp = base_time - timedelta(days=i)
-                    metrics.extend([
-                        self.create_sleep_metric(user_id, timestamp, 7.5 + (i % 2) * 0.2),  # 7.5-7.7 hours
-                        self.create_activity_metric(user_id, timestamp, 8000 + (i * 100)),  # 8000-8600 steps
-                        self.create_heart_rate_metric(user_id, timestamp, 63 + i % 3, hrv=42.0 + i % 5),  # Normal HR/HRV
-                    ])
+                    metrics.extend(
+                        [
+                            self.create_sleep_metric(
+                                user_id, timestamp, 7.5 + (i % 2) * 0.2
+                            ),  # 7.5-7.7 hours
+                            self.create_activity_metric(
+                                user_id, timestamp, 8000 + (i * 100)
+                            ),  # 8000-8600 steps
+                            self.create_heart_rate_metric(
+                                user_id, timestamp, 63 + i % 3, hrv=42.0 + i % 5
+                            ),  # Normal HR/HRV
+                        ]
+                    )
 
                 results = await pipeline.process_health_data(
                     user_id=user_id,
@@ -238,26 +276,36 @@ class TestManiaRiskIntegration:
 
                 # No clinical insights for low risk
                 if "clinical_insights" in results.summary_stats:
-                    assert not any("mania" in insight.lower()
-                                  for insight in results.summary_stats["clinical_insights"])
+                    assert not any(
+                        "mania" in insight.lower()
+                        for insight in results.summary_stats["clinical_insights"]
+                    )
 
     @pytest.mark.asyncio
-    async def test_recommendations_added_for_high_risk(self, pipeline, mock_dynamodb_client):
+    async def test_recommendations_added_for_high_risk(
+        self, pipeline, mock_dynamodb_client
+    ):
         """Test that recommendations are added when mania risk is high."""
         user_id = "high-risk-user"
 
-        with patch('clarity.core.config.get_settings') as mock_get_settings:
+        with patch("clarity.core.config.get_settings") as mock_get_settings:
             mock_settings = MagicMock()
             mock_settings.mania_risk_enabled = True
             mock_get_settings.return_value = mock_settings
-            
-            with patch.object(pipeline, '_get_dynamodb_client', return_value=mock_dynamodb_client):
+
+            with patch.object(
+                pipeline, "_get_dynamodb_client", return_value=mock_dynamodb_client
+            ):
                 mock_dynamodb_client.table.query.return_value = {"Items": []}
 
                 # Create very concerning metrics
                 metrics = [
-                    self.create_sleep_metric(user_id, datetime.now(UTC), 1.5),  # Extremely low
-                    self.create_activity_metric(user_id, datetime.now(UTC), 20000),  # Very high activity
+                    self.create_sleep_metric(
+                        user_id, datetime.now(UTC), 1.5
+                    ),  # Extremely low
+                    self.create_activity_metric(
+                        user_id, datetime.now(UTC), 20000
+                    ),  # Very high activity
                 ]
 
                 results = await pipeline.process_health_data(
@@ -278,30 +326,34 @@ class TestManiaRiskIntegration:
         """Test mania risk analysis when only PAT metrics are available."""
         user_id = "pat-only-user"
 
-        with patch('clarity.core.config.get_settings') as mock_get_settings:
+        with patch("clarity.core.config.get_settings") as mock_get_settings:
             mock_settings = MagicMock()
             mock_settings.mania_risk_enabled = True
             mock_get_settings.return_value = mock_settings
-            
+
             # Create minimal metrics that would trigger PAT analysis
             metrics = [
-                self.create_activity_metric(user_id, datetime.now(UTC) - timedelta(hours=i), 10000)
+                self.create_activity_metric(
+                    user_id, datetime.now(UTC) - timedelta(hours=i), 10000
+                )
                 for i in range(7)  # 7 days of activity data
             ]
 
             # Mock PAT service to return data with sleep estimation
-            with patch('clarity.ml.analysis_pipeline.get_pat_service') as mock_get_pat:
+            with patch("clarity.ml.analysis_pipeline.get_pat_service") as mock_get_pat:
                 mock_pat_service = AsyncMock()
-                mock_pat_service.analyze_actigraphy = AsyncMock(return_value=MagicMock(
-                    total_sleep_time=3.5,  # Low sleep from PAT estimation
-                    circadian_rhythm_score=0.4,  # Disrupted circadian rhythm
-                    activity_fragmentation=0.85,  # High fragmentation
-                    embedding=[0.1] * 128
-                ))
+                mock_pat_service.analyze_actigraphy = AsyncMock(
+                    return_value=MagicMock(
+                        total_sleep_time=3.5,  # Low sleep from PAT estimation
+                        circadian_rhythm_score=0.4,  # Disrupted circadian rhythm
+                        activity_fragmentation=0.85,  # High fragmentation
+                        embedding=[0.1] * 128,
+                    )
+                )
                 mock_get_pat.return_value = mock_pat_service
 
                 # Mock DynamoDB
-                with patch.object(pipeline, '_get_dynamodb_client') as mock_get_db:
+                with patch.object(pipeline, "_get_dynamodb_client") as mock_get_db:
                     mock_db = MagicMock()
                     mock_db.table.query.return_value = {"Items": []}
                     mock_get_db.return_value = mock_db

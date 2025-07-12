@@ -1,16 +1,16 @@
 """Tests for critical production fixes in mania risk module."""
 
+from datetime import UTC, datetime
 import os
 from pathlib import Path
-from unittest.mock import MagicMock, patch, AsyncMock
-from datetime import datetime, UTC
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 import torch
 
-from clarity.ml.analysis_pipeline import HealthAnalysisPipeline, AnalysisResults
+from clarity.ml.analysis_pipeline import AnalysisResults, HealthAnalysisPipeline
 from clarity.ml.pat_service import PATModelService
-from clarity.models.health_data import HealthMetric, HealthMetricType, BiometricData
+from clarity.models.health_data import BiometricData, HealthMetric, HealthMetricType
 
 
 class TestManiaRiskProductionFixes:
@@ -23,10 +23,11 @@ class TestManiaRiskProductionFixes:
         with patch.dict(os.environ, {"MANIA_RISK_ENABLED": "false"}, clear=True):
             # Reset feature flag manager
             import clarity.core.feature_flags
+
             clarity.core.feature_flags._feature_flag_manager = None
-            
+
             pipeline = HealthAnalysisPipeline()
-            
+
             # Create minimal test data
             test_metrics = [
                 HealthMetric(
@@ -36,17 +37,16 @@ class TestManiaRiskProductionFixes:
                     device_id="test_device",
                 )
             ]
-            
+
             # Process health data
             results = await pipeline.process_health_data(
-                user_id="test_user",
-                health_metrics=test_metrics
+                user_id="test_user", health_metrics=test_metrics
             )
-            
+
             # Verify mania_risk is present with default values
             assert "health_indicators" in results.summary_stats
             assert "mania_risk" in results.summary_stats["health_indicators"]
-            
+
             mania_data = results.summary_stats["health_indicators"]["mania_risk"]
             assert mania_data["risk_score"] == 0.0
             assert mania_data["alert_level"] == "none"
@@ -59,17 +59,21 @@ class TestManiaRiskProductionFixes:
         with patch.dict(os.environ, {"MANIA_RISK_ENABLED": "true"}):
             # Reset feature flag manager
             import clarity.core.feature_flags
+
             clarity.core.feature_flags._feature_flag_manager = None
-            
+
             pipeline = HealthAnalysisPipeline()
-            
+
             # Mock the mania risk analyzer
-            with patch('clarity.ml.analysis_pipeline.ManiaRiskAnalyzer') as mock_analyzer_class:
+            with patch(
+                "clarity.ml.analysis_pipeline.ManiaRiskAnalyzer"
+            ) as mock_analyzer_class:
                 mock_analyzer = MagicMock()
                 mock_analyzer_class.return_value = mock_analyzer
-                
+
                 # Mock the analyze method
                 from clarity.ml.mania_risk_analyzer import ManiaRiskResult
+
                 mock_result = ManiaRiskResult(
                     risk_score=0.7,
                     alert_level="moderate",
@@ -77,10 +81,10 @@ class TestManiaRiskProductionFixes:
                     confidence=0.85,
                     clinical_insight="Moderate mania risk detected",
                     recommendations=["Monitor sleep patterns"],
-                    user_id="test_user"
+                    user_id="test_user",
                 )
                 mock_analyzer.analyze.return_value = mock_result
-                
+
                 # Create test data
                 test_metrics = [
                     HealthMetric(
@@ -90,17 +94,16 @@ class TestManiaRiskProductionFixes:
                         device_id="test_device",
                     )
                 ]
-                
+
                 # Process health data
                 results = await pipeline.process_health_data(
-                    user_id="test_user",
-                    health_metrics=test_metrics
+                    user_id="test_user", health_metrics=test_metrics
                 )
-                
+
                 # Verify mania_risk is present with actual values
                 assert "health_indicators" in results.summary_stats
                 assert "mania_risk" in results.summary_stats["health_indicators"]
-                
+
                 mania_data = results.summary_stats["health_indicators"]["mania_risk"]
                 assert mania_data["risk_score"] == 0.7
                 assert mania_data["alert_level"] == "moderate"
@@ -113,16 +116,19 @@ class TestManiaRiskProductionFixes:
         with patch.dict(os.environ, {"MANIA_RISK_ENABLED": "true"}):
             # Reset feature flag manager
             import clarity.core.feature_flags
+
             clarity.core.feature_flags._feature_flag_manager = None
-            
+
             pipeline = HealthAnalysisPipeline()
-            
+
             # Mock the mania risk analyzer to raise an exception
-            with patch('clarity.ml.analysis_pipeline.ManiaRiskAnalyzer') as mock_analyzer_class:
+            with patch(
+                "clarity.ml.analysis_pipeline.ManiaRiskAnalyzer"
+            ) as mock_analyzer_class:
                 mock_analyzer = MagicMock()
                 mock_analyzer_class.return_value = mock_analyzer
                 mock_analyzer.analyze.side_effect = Exception("Mania analysis failed")
-                
+
                 # Create test data
                 test_metrics = [
                     HealthMetric(
@@ -132,17 +138,16 @@ class TestManiaRiskProductionFixes:
                         device_id="test_device",
                     )
                 ]
-                
+
                 # Process health data - should not raise exception
                 results = await pipeline.process_health_data(
-                    user_id="test_user",
-                    health_metrics=test_metrics
+                    user_id="test_user", health_metrics=test_metrics
                 )
-                
+
                 # Verify mania_risk is present with default values
                 assert "health_indicators" in results.summary_stats
                 assert "mania_risk" in results.summary_stats["health_indicators"]
-                
+
                 mania_data = results.summary_stats["health_indicators"]["mania_risk"]
                 assert mania_data["risk_score"] == 0.0
                 assert mania_data["alert_level"] == "none"
@@ -157,21 +162,25 @@ class TestManiaRiskProductionFixes:
         models_dir.mkdir(parents=True, exist_ok=True)
         test_model_path = models_dir / "test_pat_model.h5"
         test_model_path.touch()
-        
+
         try:
             # Create PAT service with test model
-            service = PATModelService(model_path=str(test_model_path), model_size="small")
-            
+            service = PATModelService(
+                model_path=str(test_model_path), model_size="small"
+            )
+
             # Mock integrity check to fail
-            with patch.object(service, '_verify_model_integrity', return_value=False):
+            with patch.object(service, "_verify_model_integrity", return_value=False):
                 # Attempt to load model - should raise RuntimeError
-                with pytest.raises(RuntimeError, match="Model integrity verification FAILED"):
+                with pytest.raises(
+                    RuntimeError, match="Model integrity verification FAILED"
+                ):
                     await service.load_model()
-                
+
                 # Verify model is not loaded
                 assert service.model is None
                 assert not service.is_loaded
-                
+
         finally:
             # Cleanup
             if test_model_path.exists():
@@ -185,21 +194,25 @@ class TestManiaRiskProductionFixes:
         models_dir.mkdir(parents=True, exist_ok=True)
         test_model_path = models_dir / "test_pat_model.h5"
         test_model_path.touch()
-        
+
         try:
             # Create PAT service with test model
-            service = PATModelService(model_path=str(test_model_path), model_size="small")
-            
+            service = PATModelService(
+                model_path=str(test_model_path), model_size="small"
+            )
+
             # Mock integrity check to pass and weights loading to succeed
-            with patch.object(service, '_verify_model_integrity', return_value=True):
-                with patch.object(service, '_load_pretrained_weights', return_value=True):
+            with patch.object(service, "_verify_model_integrity", return_value=True):
+                with patch.object(
+                    service, "_load_pretrained_weights", return_value=True
+                ):
                     # Load model - should succeed
                     await service.load_model()
-                    
+
                     # Verify model is loaded
                     assert service.model is not None
                     assert service.is_loaded
-                    
+
         finally:
             # Cleanup
             if test_model_path.exists():
@@ -210,31 +223,38 @@ class TestManiaRiskProductionFixes:
         # Test disabled state
         with patch.dict(os.environ, {"MANIA_RISK_ENABLED": "false"}, clear=True):
             import clarity.core.feature_flags
+
             clarity.core.feature_flags._feature_flag_manager = None
-            
+
             from clarity.core.feature_flags import is_feature_enabled
+
             assert not is_feature_enabled("mania_risk_analysis")
-        
+
         # Test enabled state
         with patch.dict(os.environ, {"MANIA_RISK_ENABLED": "true"}):
             clarity.core.feature_flags._feature_flag_manager = None
-            
+
             from clarity.core.feature_flags import is_feature_enabled
+
             assert is_feature_enabled("mania_risk_analysis")
 
     def test_feature_flag_production_environment(self):
         """Test feature flag behavior in production environment."""
-        with patch.dict(os.environ, {"ENVIRONMENT": "production", "MANIA_RISK_ENABLED": "true"}):
+        with patch.dict(
+            os.environ, {"ENVIRONMENT": "production", "MANIA_RISK_ENABLED": "true"}
+        ):
             import clarity.core.feature_flags
+
             clarity.core.feature_flags._feature_flag_manager = None
-            
+
             from clarity.core.feature_flags import get_feature_flag_manager
+
             manager = get_feature_flag_manager()
-            
+
             # Check production-specific flags
             assert manager.is_enabled("enhanced_security")
             assert manager.is_enabled("graceful_degradation")
-            
+
             # Check mania risk with rollout percentage
             mania_flag = manager.get_flag("mania_risk_analysis")
             assert mania_flag is not None

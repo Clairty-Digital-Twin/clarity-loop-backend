@@ -2,7 +2,6 @@
 
 from unittest.mock import Mock, patch
 
-
 from clarity.core.cloud import (
     gemini_api_key,
     get_aws_session,

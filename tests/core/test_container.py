@@ -3,7 +3,6 @@
 from unittest.mock import Mock, patch
 
 
-
 def test_create_application():
     """Test create_application returns FastAPI app."""
     # Mock the main app to avoid full initialization

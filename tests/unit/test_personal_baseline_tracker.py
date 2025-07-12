@@ -1,6 +1,7 @@
 """Unit tests for PersonalBaselineTracker module."""
 
 from datetime import UTC, datetime, timedelta
+
 import numpy as np
 import pytest
 

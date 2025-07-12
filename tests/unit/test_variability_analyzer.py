@@ -1,6 +1,7 @@
 """Unit tests for VariabilityAnalyzer module."""
 
 from datetime import UTC, datetime, timedelta
+
 from clarity.ml.variability_analyzer import VariabilityAnalyzer
 from clarity.models.health_data import (
     ActivityData,

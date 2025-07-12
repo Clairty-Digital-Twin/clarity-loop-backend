@@ -18,7 +18,6 @@ from __future__ import annotations
 import os
 from unittest.mock import patch
 
-
 from clarity.core.aws_config import AWSConfig
 
 

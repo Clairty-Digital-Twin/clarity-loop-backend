@@ -59,8 +59,9 @@ def cli(
 
     if verbose:
         import logging  # noqa: PLC0415
+        from clarity.core.logging_config import configure_basic_logging  # noqa: PLC0415
 
-        logging.basicConfig(level=logging.DEBUG)
+        configure_basic_logging(level=logging.DEBUG)
 
 
 @cli.command()

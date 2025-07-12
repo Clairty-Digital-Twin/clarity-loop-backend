@@ -1,0 +1,152 @@
+name: Model Signing and Verification
+
+on:
+  workflow_call:
+    inputs:
+      models_directory:
+        description: 'Directory containing model files to sign'
+        type: string
+        default: 'models/'
+      verify_only:
+        description: 'Only verify signatures, do not sign'
+        type: boolean
+        default: false
+    secrets:
+      MODEL_SIGNING_KEY:
+        description: 'Secret key for HMAC signing'
+        required: true
+
+  # Allow manual trigger for testing
+  workflow_dispatch:
+    inputs:
+      models_directory:
+        description: 'Directory containing model files'
+        type: string
+        default: 'models/'
+      verify_only:
+        description: 'Only verify signatures'
+        type: boolean
+        default: false
+
+jobs:
+  sign-models:
+    name: Sign and Verify Models
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          
+      - name: Cache Python dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-signing-${{ hashFiles('**/requirements*.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-signing-
+            ${{ runner.os }}-pip-
+            
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          # Install any required dependencies
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          
+      - name: Verify existing signatures
+        if: inputs.verify_only == false
+        env:
+          MODEL_SIGNING_KEY: ${{ secrets.MODEL_SIGNING_KEY }}
+        run: |
+          echo "::group::Verifying existing signatures"
+          python scripts/sign_model.py verify-all --models-dir "${{ inputs.models_directory }}" || true
+          echo "::endgroup::"
+          
+      - name: Sign models
+        if: inputs.verify_only == false
+        env:
+          MODEL_SIGNING_KEY: ${{ secrets.MODEL_SIGNING_KEY }}
+        run: |
+          echo "::group::Signing models"
+          python scripts/sign_model.py sign-all --models-dir "${{ inputs.models_directory }}"
+          echo "::endgroup::"
+          
+      - name: Verify signatures after signing
+        env:
+          MODEL_SIGNING_KEY: ${{ secrets.MODEL_SIGNING_KEY }}
+        run: |
+          echo "::group::Verifying signatures"
+          python scripts/sign_model.py verify-all --models-dir "${{ inputs.models_directory }}"
+          echo "::endgroup::"
+          
+      - name: Upload signature files
+        if: inputs.verify_only == false
+        uses: actions/upload-artifact@v4
+        with:
+          name: model-signatures
+          path: |
+            ${{ inputs.models_directory }}/**/*.sig
+            ${{ inputs.models_directory }}/model_signatures.json
+          retention-days: 90
+          
+      - name: Generate signature report
+        if: always()
+        run: |
+          echo "## Model Signature Report" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Directory:** \`${{ inputs.models_directory }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Action:** ${{ inputs.verify_only && 'Verify Only' || 'Sign and Verify' }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          # Count signature files
+          sig_count=$(find "${{ inputs.models_directory }}" -name "*.sig" -type f | wc -l)
+          echo "**Total Signatures:** $sig_count" >> $GITHUB_STEP_SUMMARY
+          
+          # List signed models
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Signed Models" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          find "${{ inputs.models_directory }}" -name "*.sig" -type f | sort >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+
+  # Separate job for verification in different environments
+  verify-signatures:
+    name: Cross-Environment Verification
+    needs: sign-models
+    if: inputs.verify_only == false
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          
+      - name: Download signature artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: model-signatures
+          path: ${{ inputs.models_directory }}
+          
+      - name: Verify signatures in clean environment
+        env:
+          MODEL_SIGNING_KEY: ${{ secrets.MODEL_SIGNING_KEY }}
+        run: |
+          echo "::group::Cross-environment verification"
+          python scripts/sign_model.py verify-all --models-dir "${{ inputs.models_directory }}"
+          echo "::endgroup::"
+          
+          # Also verify using the model integrity CLI if available
+          if [ -f scripts/model_integrity_cli.py ]; then
+            echo "::group::Model integrity verification"
+            python scripts/model_integrity_cli.py verify --models-dir "${{ inputs.models_directory }}" || true
+            echo "::endgroup::"
+          fi

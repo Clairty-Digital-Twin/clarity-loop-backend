@@ -29,15 +29,13 @@ from clarity.startup.config_schema import ClarityConfig
 from clarity.startup.orchestrator import StartupOrchestrator
 from clarity.startup.progress_reporter import StartupProgressReporter
 from clarity.version import get_version
+from clarity.core.logging_config import configure_basic_logging
 
 if TYPE_CHECKING:
     from clarity.core.container_aws import DependencyContainer
 
 # Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-)
+configure_basic_logging(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # Global state

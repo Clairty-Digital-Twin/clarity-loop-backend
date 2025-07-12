@@ -42,6 +42,7 @@ from clarity.core.exceptions import DataValidationError
 from clarity.ml.mania_risk_analyzer import ManiaRiskAnalyzer
 from clarity.ml.preprocessing import ActigraphyDataPoint, HealthDataPreprocessor
 from clarity.ports.ml_ports import IMLModelService
+from clarity.security.secrets_manager import get_secrets_manager
 from clarity.services.health_data_service import MLPredictionError
 from clarity.utils.decorators import resilient_prediction
 
@@ -50,13 +51,7 @@ logger = logging.getLogger(__name__)
 # Get project root directory for absolute paths
 _PROJECT_ROOT = Path(__file__).parent.parent.parent.parent  # Go up to project root
 
-# SECURITY: Model integrity verification constants
-MODEL_SIGNATURE_KEY = "pat_model_integrity_key_2025"  # In production, use env var
-EXPECTED_MODEL_CHECKSUMS = {
-    "small": "4b30d57febbbc8ef221e4b196bf6957e7c7f366f6b836fe800a43f69d24694ad",  # SHA-256 of authentic PAT-S
-    "medium": "6175021ca1a43f3c834bdaa644c45f27817cf985d8ffd186fab9b5de2c4ca661",  # SHA-256 of authentic PAT-M
-    "large": "c93b723f297f0d9d2ad982320b75e9212882c8f38aa40df1b600e9b2b8aa1973",  # SHA-256 of authentic PAT-L
-}
+# SECURITY: Model integrity verification will be loaded from secrets manager
 
 # Model configurations matching Dartmouth specs exactly
 PAT_CONFIGS = {
@@ -575,8 +570,12 @@ class PATModelService(IMLModelService):
             # Calculate file checksum
             file_checksum = PATModelService._calculate_file_checksum(model_path)
 
+            # Get expected checksums from secrets manager
+            secrets_manager = get_secrets_manager()
+            expected_model_checksums = secrets_manager.get_model_checksums()
+            
             # Get expected checksum for this model size
-            expected_checksum = EXPECTED_MODEL_CHECKSUMS.get(self.model_size)
+            expected_checksum = expected_model_checksums.get(self.model_size)
             if not expected_checksum:
                 logger.warning(
                     "No expected checksum found for model size: %s. Allowing load but flagging for review.",
@@ -621,8 +620,13 @@ class PATModelService(IMLModelService):
 
             # Create HMAC signature for additional security
             file_digest = sha256_hash.hexdigest()
+            
+            # Get signature key from secrets manager
+            secrets_manager = get_secrets_manager()
+            model_signature_key = secrets_manager.get_model_signature_key()
+            
             signature = hmac.new(
-                MODEL_SIGNATURE_KEY.encode("utf-8"),
+                model_signature_key.encode("utf-8"),
                 file_digest.encode("utf-8"),
                 hashlib.sha256,
             ).hexdigest()

@@ -10,17 +10,20 @@ import logging
 from pathlib import Path
 import sys
 
+# Add project root to Python path for imports
+project_root = Path(__file__).parent.parent
+if str(project_root) not in sys.path:
+    sys.path.insert(0, str(project_root))
+
 from clarity.ml.model_integrity import (
     ModelChecksumManager,
     ModelIntegrityError,
     verify_startup_models,
 )
+from clarity.core.logging_config import configure_basic_logging
 
 # Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-)
+configure_basic_logging(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 

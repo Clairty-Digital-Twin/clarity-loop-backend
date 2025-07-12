@@ -28,7 +28,8 @@ from clarity.ml.preprocessing import ActigraphyDataPoint
 from clarity.services.health_data_service import MLPredictionError
 
 # Set up logging
-logging.basicConfig(level=logging.INFO)
+from clarity.core.logging_config import configure_basic_logging
+configure_basic_logging(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # Initialize random generator

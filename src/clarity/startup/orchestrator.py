@@ -384,10 +384,8 @@ def main() -> int:
     args = parser.parse_args()
 
     # Set up logging
-    logging.basicConfig(
-        level=logging.INFO,
-        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-    )
+    from clarity.core.logging_config import configure_basic_logging
+    configure_basic_logging(level=logging.INFO)
 
     try:
         if args.config_only:

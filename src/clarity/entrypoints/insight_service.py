@@ -14,11 +14,10 @@ from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
 
 from clarity.services.messaging.insight_subscriber import insight_app
+from clarity.core.logging_config import configure_basic_logging
 
 # Configure logging
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-)
+configure_basic_logging(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # Create FastAPI app

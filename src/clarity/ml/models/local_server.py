@@ -488,10 +488,8 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     # Setup logging
-    logging.basicConfig(
-        level=getattr(logging, args.log_level.upper()),
-        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-    )
+    from clarity.core.logging_config import configure_basic_logging
+    configure_basic_logging(level=getattr(logging, args.log_level.upper()))
 
     # Create placeholder models if requested
     if args.create_placeholders:

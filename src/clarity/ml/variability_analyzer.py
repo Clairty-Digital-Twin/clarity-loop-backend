@@ -157,23 +157,13 @@ class VariabilityAnalyzer:
                 daily_steps[date].append(metric.activity_data.steps)
 
         # Average multiple readings per day
-        series: list[float] = []
-        for date in sorted(daily_steps.keys()):
-            series.append(float(np.mean(daily_steps[date])))
+        series: list[float] = [float(np.mean(daily_steps[date])) for date in sorted(daily_steps.keys())]
 
         return series
 
     def _extract_sleep_series(self, metrics: list[HealthMetric]) -> list[float]:
         """Extract sleep duration series from sleep metrics."""
-        series = []
-
-        for metric in metrics:
-            if metric.sleep_data and metric.sleep_data.total_sleep_minutes:
-                series.append(
-                    metric.sleep_data.total_sleep_minutes / 60.0
-                )  # Convert to hours
-
-        return series
+        return [metric.sleep_data.total_sleep_minutes / 60.0 for metric in metrics if metric.sleep_data and metric.sleep_data.total_sleep_minutes]  # Convert to hours
 
     def _calculate_coefficient_variation(self, series: list[float]) -> float:
         """Calculate coefficient of variation (CV = std/mean)."""
@@ -262,10 +252,7 @@ class VariabilityAnalyzer:
     def _analyze_trend(self, variability_windows: list[dict[str, float]]) -> str:
         """Analyze trend across multiple time windows."""
         # Extract activity CV values from each window
-        cv_values = []
-        for window in variability_windows:
-            if "activity_cv" in window:
-                cv_values.append(window["activity_cv"])
+        cv_values = [window["activity_cv"] for window in variability_windows if "activity_cv" in window]
 
         if len(cv_values) < 2:
             return "stable"

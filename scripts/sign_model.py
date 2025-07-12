@@ -58,7 +58,8 @@ class ModelSigner:
             secret_key: Secret key for HMAC signing
         """
         if not secret_key:
-            raise ValueError("Secret key cannot be empty")
+            msg = "Secret key cannot be empty"
+            raise ValueError(msg)
 
         self.secret_key = secret_key.encode(DEFAULT_ENCODING)
 
@@ -102,7 +103,8 @@ class ModelSigner:
             ModelSigningError: If signing fails
         """
         if not model_path.exists():
-            raise ModelSigningError(f"Model file not found: {model_path}")
+            msg = f"Model file not found: {model_path}"
+            raise ModelSigningError(msg)
 
         logger.info("Signing model: %s", model_path)
 
@@ -127,7 +129,8 @@ class ModelSigner:
             logger.info("✓ Signature saved to: %s", sig_path)
 
         except OSError as e:
-            raise ModelSigningError(f"Failed to save signature: {e}") from e
+            msg = f"Failed to save signature: {e}"
+            raise ModelSigningError(msg) from e
 
         return metadata
 
@@ -181,7 +184,8 @@ class ModelSigner:
             return False, "Signature mismatch"
 
         except (OSError, json.JSONDecodeError) as e:
-            raise ModelSigningError(f"Failed to verify signature: {e}") from e
+            msg = f"Failed to verify signature: {e}"
+            raise ModelSigningError(msg) from e
 
     def sign_directory(
         self, directory: Path, recursive: bool = True
@@ -196,7 +200,8 @@ class ModelSigner:
             Dictionary mapping file paths to signature metadata
         """
         if not directory.exists():
-            raise ModelSigningError(f"Directory not found: {directory}")
+            msg = f"Directory not found: {directory}"
+            raise ModelSigningError(msg)
 
         logger.info("Signing models in directory: %s", directory)
 
@@ -225,7 +230,7 @@ class ModelSigner:
                 signatures[str(relative_path)] = metadata
 
             except Exception as e:
-                logger.error("Failed to sign %s: %s", model_path, e)
+                logger.exception("Failed to sign %s: %s", model_path, e)
 
         # Save manifest file
         manifest_path = directory / MANIFEST_FILE
@@ -243,7 +248,7 @@ class ModelSigner:
             logger.info("✓ Manifest saved to: %s", manifest_path)
 
         except OSError as e:
-            logger.error("Failed to save manifest: %s", e)
+            logger.exception("Failed to save manifest: %s", e)
 
         logger.info("✓ Signed %d model files", len(signatures))
         return signatures
@@ -261,7 +266,8 @@ class ModelSigner:
             Tuple of (passed_count, failed_count, failed_files)
         """
         if not directory.exists():
-            raise ModelSigningError(f"Directory not found: {directory}")
+            msg = f"Directory not found: {directory}"
+            raise ModelSigningError(msg)
 
         logger.info("Verifying models in directory: %s", directory)
 
@@ -301,7 +307,7 @@ class ModelSigner:
             except Exception as e:
                 failed += 1
                 failed_files.append(str(model_path.relative_to(directory)))
-                logger.error("✗ %s: ERROR - %s", model_path.relative_to(directory), e)
+                logger.exception("✗ %s: ERROR - %s", model_path.relative_to(directory), e)
 
         return passed, failed, failed_files
 
@@ -322,14 +328,16 @@ def get_secret_key() -> str:
 
     # For CI/CD, fail if no environment variable
     if os.environ.get("CI"):
-        raise ValueError("MODEL_SIGNING_KEY environment variable not set")
+        msg = "MODEL_SIGNING_KEY environment variable not set"
+        raise ValueError(msg)
 
     # Interactive mode: prompt for key
     import getpass
 
     key = getpass.getpass("Enter signing key: ")
     if not key:
-        raise ValueError("No signing key provided")
+        msg = "No signing key provided"
+        raise ValueError(msg)
 
     return key
 
@@ -346,19 +354,19 @@ Environment Variables:
 Examples:
   # Sign a single model file
   python sign_model.py sign --model models/pat/model.pth
-  
+
   # Sign with explicit key (not recommended, use env var instead)
   python sign_model.py sign --model models/pat/model.pth --key mysecretkey
-  
+
   # Verify a model signature
   python sign_model.py verify --model models/pat/model.pth
-  
+
   # Sign all models in a directory recursively
   python sign_model.py sign-all --models-dir models/
-  
+
   # Verify all models in a directory
   python sign_model.py verify-all --models-dir models/
-  
+
   # CI/CD usage with environment variable
   export MODEL_SIGNING_KEY="your-secret-key"
   python sign_model.py sign-all --models-dir models/
@@ -440,10 +448,7 @@ def main() -> None:
 
     try:
         # Get the secret key
-        if hasattr(args, "key") and args.key:
-            secret_key = args.key
-        else:
-            secret_key = get_secret_key()
+        secret_key = args.key if hasattr(args, "key") and args.key else get_secret_key()
 
         # Create signer
         signer = ModelSigner(secret_key)
@@ -490,7 +495,7 @@ def main() -> None:
         logger.info("Operation cancelled by user")
         sys.exit(1)
     except Exception as e:
-        logger.error("Error: %s", e)
+        logger.exception("Error: %s", e)
         if args.verbose:
             logger.exception("Full traceback:")
         sys.exit(1)

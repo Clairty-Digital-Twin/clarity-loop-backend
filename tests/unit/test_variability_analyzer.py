@@ -68,7 +68,7 @@ class TestVariabilityAnalyzer:
 
         result = self.analyzer.analyze_variability(activity_metrics, [], None)
 
-        assert result.spike_detected == True
+        assert result.spike_detected
         assert result.spike_magnitude > 2.0
         assert result.risk_type == "depression"
         assert result.days_until_risk == 7
@@ -100,7 +100,7 @@ class TestVariabilityAnalyzer:
         # Current implementation may not detect this as a spike
         # Verify we get reasonable variability metrics
         assert result.sleep_variability_cv > 0.25
-        assert result.risk_type in ["hypomania", "none"]
+        assert result.risk_type in {"hypomania", "none"}
 
     def test_stable_patterns(self):
         """Test stable activity and sleep patterns."""
@@ -126,11 +126,11 @@ class TestVariabilityAnalyzer:
             activity_metrics, sleep_metrics, None
         )
 
-        assert result.spike_detected == False
+        assert not result.spike_detected
         # Low variability can still show increasing trend
-        assert result.variability_trend in ["stable", "increasing"]
+        assert result.variability_trend in {"stable", "increasing"}
         # With increasing trend, risk_type may be "uncertain" rather than "none"
-        assert result.risk_type in ["none", "uncertain"]
+        assert result.risk_type in {"none", "uncertain"}
         # Days until risk depends on risk_type
         if result.risk_type == "uncertain":
             assert result.days_until_risk == 5
@@ -177,7 +177,7 @@ class TestVariabilityAnalyzer:
 
         result = self.analyzer.analyze_variability(activity_metrics, [], None)
 
-        assert result.spike_detected == False
+        assert not result.spike_detected
         assert result.confidence < 0.5
         assert result.risk_type == "none"
 
@@ -200,7 +200,7 @@ class TestVariabilityAnalyzer:
         result = self.analyzer.analyze_variability(activity_metrics, [], baseline_stats)
 
         # Should detect spike relative to baseline
-        assert result.spike_detected == True
+        assert result.spike_detected
         assert result.spike_magnitude > 2.0
 
     def test_coefficient_variation_calculation(self):
@@ -253,20 +253,16 @@ class TestVariabilityAnalyzer:
     def test_intraday_variability(self):
         """Test within-day variability calculation."""
         # Create hourly data
-        hourly_data = []
         base_time = datetime.now(UTC).replace(hour=0, minute=0, second=0)
 
         # Morning: low activity
-        for hour in range(6, 9):
-            hourly_data.append((base_time + timedelta(hours=hour), 200.0))
+        hourly_data = [(base_time + timedelta(hours=hour), 200.0) for hour in range(6, 9)]
 
         # Day: high activity
-        for hour in range(9, 17):
-            hourly_data.append((base_time + timedelta(hours=hour), 800.0))
+        hourly_data.extend((base_time + timedelta(hours=hour), 800.0) for hour in range(9, 17))
 
         # Evening: moderate activity
-        for hour in range(17, 22):
-            hourly_data.append((base_time + timedelta(hours=hour), 400.0))
+        hourly_data.extend((base_time + timedelta(hours=hour), 400.0) for hour in range(17, 22))
 
         result = self.analyzer.calculate_intraday_variability(hourly_data, 12)
 

@@ -5,7 +5,7 @@ with proper environment-based configuration and graceful degradation.
 """
 
 from collections.abc import Callable
-from enum import Enum
+from enum import Enum, StrEnum
 import logging
 import os
 from typing import Any, TypeVar, cast
@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 T = TypeVar("T")
 
 
-class FeatureFlagStatus(str, Enum):
+class FeatureFlagStatus(StrEnum):
     """Feature flag status enum."""
 
     ENABLED = "enabled"
@@ -146,7 +146,7 @@ class FeatureFlagManager:
             return result
 
         except Exception as e:
-            logger.error(f"Error checking feature flag {flag_name}: {e}")
+            logger.exception(f"Error checking feature flag {flag_name}: {e}")
             return default
 
     def get_flag(self, flag_name: str) -> FeatureFlag | None:

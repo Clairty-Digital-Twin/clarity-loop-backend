@@ -97,7 +97,7 @@ class SecretsManager:
             self.use_ssm = use_ssm
         else:
             # Default to True if AWS credentials are available
-            self.use_ssm = os.getenv(ENV_USE_SSM, "").lower() in ("true", "1", "yes")
+            self.use_ssm = os.getenv(ENV_USE_SSM, "").lower() in {"true", "1", "yes"}
             if not self.use_ssm:
                 # Auto-detect based on environment
                 self.use_ssm = self._is_aws_environment()
@@ -180,7 +180,7 @@ class SecretsManager:
             logger.debug("Parameter %s not found in SSM", full_parameter_name)
             return None
         except (ClientError, BotoCoreError) as e:
-            logger.error(
+            logger.exception(
                 "Error retrieving parameter %s from SSM: %s",
                 full_parameter_name,
                 e,
@@ -298,7 +298,7 @@ class SecretsManager:
         try:
             return cast(dict[str, Any], json.loads(value))
         except json.JSONDecodeError as e:
-            logger.error(
+            logger.exception(
                 "Failed to parse JSON value for key %s: %s",
                 key,
                 e,
@@ -430,7 +430,8 @@ def with_secret(
             elif secret_type == dict:
                 value = manager.get_json(key, env_var=env_var, default=cast(dict[str, Any] | None, default))
             else:
-                raise ValueError(f"Unsupported secret type: {secret_type}")
+                msg = f"Unsupported secret type: {secret_type}"
+                raise ValueError(msg)
 
             # Inject the secret as a keyword argument
             kwargs[key] = value

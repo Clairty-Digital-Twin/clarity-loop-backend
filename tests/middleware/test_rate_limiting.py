@@ -1,7 +1,6 @@
 """Test rate limiting middleware."""
 
-import time
-from unittest.mock import AsyncMock, Mock, patch
+from unittest.mock import Mock
 
 from fastapi import Request, Response
 import pytest

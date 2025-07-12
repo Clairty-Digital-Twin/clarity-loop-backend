@@ -41,7 +41,7 @@ from clarity.services.health_data_service import MLPredictionError
 from tests.helpers.pat_test_utils import mock_pat_service_for_testing
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture
 def mock_pat_for_integration():
     """Mock PAT service for integration tests that don't test security."""
     with mock_pat_service_for_testing():

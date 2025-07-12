@@ -70,7 +70,7 @@ class EnhancedRiskConfig(ManiaRiskConfig):
 class EnhancedManiaRiskAnalyzer(ManiaRiskAnalyzer):
     """Enhanced analyzer with state-of-the-art bipolar monitoring."""
 
-    def __init__(self, config_path: Path | None = None, user_id: str | None = None):
+    def __init__(self, config_path: Path | None = None, user_id: str | None = None) -> None:
         """Initialize enhanced analyzer with additional modules."""
         # Initialize base analyzer with enhanced config
         super().__init__(config_path, user_id)
@@ -236,11 +236,10 @@ class EnhancedManiaRiskAnalyzer(ManiaRiskAnalyzer):
             if len(recent_sleep) < 2:
                 return None
 
-            result = self.phase_detector.detect_phase_shift(
+            return self.phase_detector.detect_phase_shift(
                 recent_sleep, baseline_sleep
             )
 
-            return result
         except Exception as e:
             self.logger.warning(f"Circadian phase analysis failed: {e}")
             return None
@@ -267,11 +266,10 @@ class EnhancedManiaRiskAnalyzer(ManiaRiskAnalyzer):
                     "sleep_variability_baseline": personal_baseline.sleep_variability_baseline,
                 }
 
-            result = self.variability_analyzer.analyze_variability(
+            return self.variability_analyzer.analyze_variability(
                 activity_metrics, sleep_metrics, baseline_stats
             )
 
-            return result
         except Exception as e:
             self.logger.warning(f"Variability analysis failed: {e}")
             return None
@@ -283,7 +281,7 @@ class EnhancedManiaRiskAnalyzer(ManiaRiskAnalyzer):
         score = 0.0
         factors = []
 
-        if phase_result.clinical_significance in ["high", "moderate"]:
+        if phase_result.clinical_significance in {"high", "moderate"}:
             if phase_result.phase_shift_direction == "advance":
                 # Phase advance predicts mania (AUC 0.98)
                 score = self.config.weights["circadian_phase_advance"]
@@ -429,37 +427,27 @@ class EnhancedManiaRiskAnalyzer(ManiaRiskAnalyzer):
         var_result: VariabilityResult | None,
     ) -> list[str]:
         """Generate enhanced recommendations based on specific patterns."""
-        recommendations = []
+        recommendations: list[str] = []
 
-        if level in ["high", "moderate"]:
+        if level in {"high", "moderate"}:
             # Immediate actions for high risk
             if level == "high":
-                recommendations.append("Contact healthcare provider within 24 hours")
-                recommendations.append("Consider activating your crisis plan")
+                recommendations.extend(("Contact healthcare provider within 24 hours", "Consider activating your crisis plan"))
 
             # Phase-specific recommendations
             if phase_result and phase_result.phase_shift_direction == "advance":
-                recommendations.append("Delay bedtime by 30 minutes tonight")
-                recommendations.append("Avoid morning bright light exposure")
-                recommendations.append(
-                    "Consider evening light therapy (consult provider)"
-                )
+                recommendations.extend(("Delay bedtime by 30 minutes tonight", "Avoid morning bright light exposure", "Consider evening light therapy (consult provider)"))
 
             # Variability-specific recommendations
             if var_result and var_result.spike_detected:
-                recommendations.append("Maintain strict daily routine")
-                recommendations.append("Set consistent sleep/wake alarms")
-                recommendations.append("Limit stimulating activities")
+                recommendations.extend(("Maintain strict daily routine", "Set consistent sleep/wake alarms", "Limit stimulating activities"))
 
             # Sleep-specific
             if any("sleep" in f.lower() for f in factors):
-                recommendations.append("Prioritize 7-8 hours sleep tonight")
-                recommendations.append("Avoid caffeine after 2 PM")
-                recommendations.append("Create calming bedtime routine")
+                recommendations.extend(("Prioritize 7-8 hours sleep tonight", "Avoid caffeine after 2 PM", "Create calming bedtime routine"))
 
             # General high-risk
             if level == "high":
-                recommendations.append("Avoid major decisions for 48 hours")
-                recommendations.append("Inform a trusted person of your risk status")
+                recommendations.extend(("Avoid major decisions for 48 hours", "Inform a trusted person of your risk status"))
 
         return recommendations

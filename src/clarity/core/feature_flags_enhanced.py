@@ -5,16 +5,16 @@ pub/sub support, circuit breaker pattern, and comprehensive metrics.
 """
 
 import asyncio
-from collections.abc import Callable
-from contextlib import contextmanager
+from collections.abc import Callable, Generator
+from contextlib import contextmanager, suppress
 from datetime import datetime, timedelta
-from enum import Enum
+from enum import Enum, StrEnum
 import json
 import logging
 import os
 import threading
 import time
-from typing import Any, Dict, Generator, Optional, TypeVar
+from typing import Any, Dict, Optional, TypeVar
 
 import aioredis  # type: ignore[import-not-found]
 from circuitbreaker import CircuitBreaker, CircuitBreakerError
@@ -64,7 +64,7 @@ FEATURE_FLAG_CIRCUIT_BREAKER_STATE = Gauge(
 )
 
 
-class RefreshMode(str, Enum):
+class RefreshMode(StrEnum):
     """Feature flag refresh modes."""
 
     PERIODIC = "periodic"
@@ -147,29 +147,29 @@ class EnhancedFeatureFlagManager(BaseFeatureFlagManager):
             thread.start()
         else:
             # Event loop is running, schedule tasks
-            if self._enhanced_config.refresh_mode in (
+            if self._enhanced_config.refresh_mode in {
                 RefreshMode.PERIODIC,
                 RefreshMode.BOTH,
-            ):
+            }:
                 self._refresh_task = loop.create_task(self._periodic_refresh_loop())
 
-            if self._enhanced_config.refresh_mode in (
+            if self._enhanced_config.refresh_mode in {
                 RefreshMode.PUBSUB,
                 RefreshMode.BOTH,
-            ):
+            }:
                 self._pubsub_task = loop.create_task(self._pubsub_listener())
 
     async def _async_background_tasks(self) -> None:
         """Run background tasks in async context."""
         tasks = []
 
-        if self._enhanced_config.refresh_mode in (
+        if self._enhanced_config.refresh_mode in {
             RefreshMode.PERIODIC,
             RefreshMode.BOTH,
-        ):
+        }:
             tasks.append(self._periodic_refresh_loop())
 
-        if self._enhanced_config.refresh_mode in (RefreshMode.PUBSUB, RefreshMode.BOTH):
+        if self._enhanced_config.refresh_mode in {RefreshMode.PUBSUB, RefreshMode.BOTH}:
             tasks.append(self._pubsub_listener())
 
         if tasks:
@@ -190,7 +190,7 @@ class EnhancedFeatureFlagManager(BaseFeatureFlagManager):
                 logger.info("Periodic refresh task cancelled")
                 break
             except Exception as e:
-                logger.error("Error in periodic refresh loop: %s", e)
+                logger.exception("Error in periodic refresh loop: %s", e)
                 await asyncio.sleep(10)  # Back off on errors
 
     async def _pubsub_listener(self) -> None:
@@ -225,7 +225,7 @@ class EnhancedFeatureFlagManager(BaseFeatureFlagManager):
                 logger.info("Pub/sub listener task cancelled")
                 break
             except Exception as e:
-                logger.error("Error in pub/sub listener: %s", e)
+                logger.exception("Error in pub/sub listener: %s", e)
                 await asyncio.sleep(10)  # Back off on errors
 
     def refresh(self) -> bool:
@@ -249,7 +249,7 @@ class EnhancedFeatureFlagManager(BaseFeatureFlagManager):
                 future = asyncio.ensure_future(self.refresh_async())
                 return loop.run_until_complete(future)
         except Exception as e:
-            logger.error("Error in synchronous refresh: %s", e)
+            logger.exception("Error in synchronous refresh: %s", e)
             return False
 
     async def refresh_async(self) -> bool:
@@ -266,7 +266,8 @@ class EnhancedFeatureFlagManager(BaseFeatureFlagManager):
                 if self._circuit_breaker.current_state == "open":
                     logger.warning("Circuit breaker is open, skipping refresh")
                     self._update_circuit_breaker_metric()
-                    raise CircuitBreakerError("Config store circuit breaker is open")
+                    msg = "Config store circuit breaker is open"
+                    raise CircuitBreakerError(msg)
 
                 # Attempt to fetch new configuration
                 new_config = await self._fetch_config_from_store()
@@ -289,20 +290,19 @@ class EnhancedFeatureFlagManager(BaseFeatureFlagManager):
                         len(new_config.flags),
                     )
                     return True
-                raise ValueError("Empty configuration received from store")
+                msg = "Empty configuration received from store"
+                raise ValueError(msg)
 
         except CircuitBreakerError:
             self._handle_refresh_failure("circuit_breaker_open")
             return False
         except Exception as e:
-            logger.error("Failed to refresh feature flags: %s", e)
+            logger.exception("Failed to refresh feature flags: %s", e)
             self._handle_refresh_failure(type(e).__name__)
 
             # Update circuit breaker
-            try:
+            with suppress(Exception):
                 self._circuit_breaker(lambda: None)()
-            except Exception:
-                pass
 
             return False
         finally:
@@ -329,7 +329,7 @@ class EnhancedFeatureFlagManager(BaseFeatureFlagManager):
             return self._load_configuration()
 
         except Exception as e:
-            logger.error("Error fetching config from store: %s", e)
+            logger.exception("Error fetching config from store: %s", e)
             raise
 
     def _handle_refresh_failure(self, error_type: str) -> None:
@@ -414,7 +414,7 @@ class EnhancedFeatureFlagManager(BaseFeatureFlagManager):
                 loop = asyncio.get_event_loop()
                 loop.run_until_complete(self._redis_client.close())
             except Exception as e:
-                logger.error("Error closing Redis connection: %s", e)
+                logger.exception("Error closing Redis connection: %s", e)
 
     def __enter__(self) -> "EnhancedFeatureFlagManager":
         """Context manager entry."""

@@ -536,16 +536,12 @@ class TestUploadEndpointEdgeCases:
     ):
         """Test upload with exactly the maximum allowed metrics."""
         # Create exactly 10000 metrics (max allowed)
-        metrics = []
-        for i in range(10000):
-            metrics.append(
-                {
+        metrics = [{
                     "metric_type": "heart_rate",
                     "value": float(60 + i % 40),
                     "unit": "bpm",
                     "timestamp": datetime.now(UTC).isoformat(),
-                }
-            )
+                } for i in range(10000)]
 
         valid_upload_data["metrics"] = metrics
 

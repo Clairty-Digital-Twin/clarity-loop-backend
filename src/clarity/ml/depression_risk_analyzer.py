@@ -64,7 +64,7 @@ class DepressionRiskAnalyzer:
     Mirror structure of ManiaRiskAnalyzer but optimized for depression detection.
     """
 
-    def __init__(self, config_path: Path | None = None, user_id: str | None = None):
+    def __init__(self, config_path: Path | None = None, user_id: str | None = None) -> None:
         """Initialize depression risk analyzer."""
         self.logger = logging.getLogger(__name__)
         self.user_id = user_id
@@ -249,7 +249,7 @@ class DepressionRiskAnalyzer:
         score = 0.0
         factors = []
 
-        if phase_result.clinical_significance in ["high", "moderate"]:
+        if phase_result.clinical_significance in {"high", "moderate"}:
             if phase_result.phase_shift_direction == "delay":
                 # Phase delay predicts depression (AUC 0.80)
                 score = self.config.weights["circadian_phase_delay"]
@@ -363,21 +363,19 @@ class DepressionRiskAnalyzer:
 
         # Check PAT metrics for social withdrawal
         if pat_metrics:
-            if "social_interaction_score" in pat_metrics:
-                if (
-                    pat_metrics["social_interaction_score"]
-                    < self.config.social_withdrawal_threshold
-                ):
-                    score += self.config.weights["social_withdrawal"]
-                    factors.append("Reduced social activity patterns")
+            if "social_interaction_score" in pat_metrics and (
+                pat_metrics["social_interaction_score"]
+                < self.config.social_withdrawal_threshold
+            ):
+                score += self.config.weights["social_withdrawal"]
+                factors.append("Reduced social activity patterns")
 
             # Activity fragmentation can indicate depression
-            if "activity_fragmentation" in pat_metrics:
-                if (
-                    pat_metrics["activity_fragmentation"] < 0.3
-                ):  # Very low fragmentation
-                    score += self.config.weights["activity_reduction"] * 0.5
-                    factors.append("Minimal activity variation")
+            if "activity_fragmentation" in pat_metrics and (
+                pat_metrics["activity_fragmentation"] < 0.3
+            ):  # Very low fragmentation
+                score += self.config.weights["activity_reduction"] * 0.5
+                factors.append("Minimal activity variation")
 
         return score, factors
 
@@ -476,33 +474,24 @@ class DepressionRiskAnalyzer:
         factors: list[str],
     ) -> list[str]:
         """Generate recommendations for depression risk."""
-        recommendations = []
+        recommendations: list[str] = []
 
-        if level in ["high", "moderate"]:
+        if level in {"high", "moderate"}:
             # Immediate recommendations
             if level == "high":
-                recommendations.append(
-                    "Schedule appointment with mental health provider"
-                )
-                recommendations.append("Reach out to support network")
+                recommendations.extend(("Schedule appointment with mental health provider", "Reach out to support network"))
 
             # Phase delay recommendations
             if any("phase delay" in f.lower() for f in factors):
-                recommendations.append("Get morning sunlight exposure (30+ minutes)")
-                recommendations.append("Avoid screens 2-3 hours before bed")
-                recommendations.append("Consider light therapy in morning")
+                recommendations.extend(("Get morning sunlight exposure (30+ minutes)", "Avoid screens 2-3 hours before bed", "Consider light therapy in morning"))
 
             # Activity recommendations
             if any("activity" in f.lower() for f in factors):
-                recommendations.append("Set small daily activity goals")
-                recommendations.append("Schedule social activities")
-                recommendations.append("Try gentle exercise (walking, yoga)")
+                recommendations.extend(("Set small daily activity goals", "Schedule social activities", "Try gentle exercise (walking, yoga)"))
 
             # Sleep recommendations
             if any("sleep" in f.lower() for f in factors):
-                recommendations.append("Maintain consistent sleep schedule")
-                recommendations.append("Limit daytime naps to 20 minutes")
-                recommendations.append("Practice sleep hygiene")
+                recommendations.extend(("Maintain consistent sleep schedule", "Limit daytime naps to 20 minutes", "Practice sleep hygiene"))
 
             # General depression prevention
             recommendations.append("Practice mindfulness or meditation")

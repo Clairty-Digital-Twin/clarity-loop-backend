@@ -70,7 +70,8 @@ async def demonstrate_circuit_breaker():
         nonlocal failure_count
         if should_fail:
             failure_count += 1
-            raise RuntimeError(f"Model failure #{failure_count}")
+            msg = f"Model failure #{failure_count}"
+            raise RuntimeError(msg)
         return {"prediction": "success"}
 
     # Trigger failures to open circuit
@@ -93,7 +94,7 @@ async def demonstrate_circuit_breaker():
         result = await flaky_model_prediction(should_fail=False)
         logger.info(f"Success: {result}")
     except Exception as e:
-        logger.error(f"Still failing: {e}")
+        logger.exception(f"Still failing: {e}")
 
 
 async def demonstrate_model_fallback():
@@ -120,14 +121,15 @@ async def demonstrate_concurrent_corruption():
     """Demonstrate handling corruption under load."""
     logger.info("\n=== Demonstrating Concurrent Corruption Handling ===")
 
-    async def simulate_model_request(request_id: int, delay: float):
+    async def simulate_model_request(request_id: int, delay: float) -> str:
         """Simulate a model request with potential corruption."""
         await asyncio.sleep(delay)
 
         # Simulate 30% corruption rate after 1 second
         if delay > 1.0 and request_id % 3 == 0:
             logger.error(f"Request {request_id}: Model corrupted!")
-            raise RuntimeError("Model corruption detected")
+            msg = "Model corruption detected"
+            raise RuntimeError(msg)
         logger.info(f"Request {request_id}: Success")
         return f"Result for request {request_id}"
 

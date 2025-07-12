@@ -17,7 +17,7 @@ class ClarityAPIUser(HttpUser):
 
     wait_time = between(1, 3)  # Wait 1-3 seconds between tasks
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self.access_token = None
         self.user_id = None
@@ -45,7 +45,7 @@ class ClarityAPIUser(HttpUser):
             response.success()
         else:
             response.failure(f"Login failed: {response.status_code}")
-            raise RescheduleTask()
+            raise RescheduleTask
 
     @property
     def auth_headers(self) -> dict[str, str]:
@@ -95,14 +95,14 @@ class ClarityAPIUser(HttpUser):
     def get_analysis(self):
         """Request health analysis."""
         if not self.health_data_ids:
-            raise RescheduleTask()
+            raise RescheduleTask
 
         with self.client.get(
             "/api/v1/analysis/latest",
             headers=self.auth_headers,
             catch_response=True,
         ) as response:
-            if response.status_code in [200, 202]:  # 202 for async processing
+            if response.status_code in {200, 202}:  # 202 for async processing
                 response.success()
             else:
                 response.failure(f"Analysis failed: {response.status_code}")
@@ -151,7 +151,7 @@ class ClarityWebSocketUser(HttpUser):
 
     wait_time = between(5, 10)
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self.ws = None
         self.access_token = None
@@ -198,7 +198,7 @@ class ClarityHeavyUser(HttpUser):
 
     wait_time = between(0.5, 2)  # More aggressive timing
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self.access_token = None
         self.batch_size = 50  # Larger batches

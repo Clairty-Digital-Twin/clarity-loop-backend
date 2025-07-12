@@ -2,8 +2,6 @@
 
 from unittest.mock import patch
 
-import pytest
-
 from clarity.version import get_version
 
 

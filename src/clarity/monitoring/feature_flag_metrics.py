@@ -70,7 +70,7 @@ async def metrics_dashboard() -> FeatureFlagMetrics:
 
     # Calculate metrics
     # Note: In production, these would be fetched from actual Prometheus metrics
-    metrics = FeatureFlagMetrics(
+    return FeatureFlagMetrics(
         refresh_success_total=100,  # Placeholder
         refresh_failure_total={
             "network_error": 5,
@@ -84,8 +84,6 @@ async def metrics_dashboard() -> FeatureFlagMetrics:
         p95_refresh_duration_seconds=0.8,  # Placeholder
         p99_refresh_duration_seconds=1.2,  # Placeholder
     )
-
-    return metrics
 
 
 @router.get("/alerts", response_model=list[FeatureFlagAlert])

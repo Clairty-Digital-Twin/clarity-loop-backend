@@ -66,8 +66,7 @@ def test_check_middleware_with_user(test_app, client):
         mock_user = Mock()
         mock_user.user_id = "test-user-123"
         request.state.user = mock_user
-        response = await call_next(request)
-        return response
+        return await call_next(request)
 
     response = client.get(
         "/test/check-middleware", headers={"Authorization": "Bearer token"}

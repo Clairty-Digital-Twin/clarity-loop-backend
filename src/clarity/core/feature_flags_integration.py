@@ -48,8 +48,9 @@ def create_enhanced_feature_flag_manager(
         stale_threshold = 3600  # 1 hour
 
     # Override from environment variables if present
-    if os.getenv("FEATURE_FLAG_REFRESH_MODE"):
-        refresh_mode = RefreshMode(os.getenv("FEATURE_FLAG_REFRESH_MODE"))
+    refresh_mode_env = os.getenv("FEATURE_FLAG_REFRESH_MODE")
+    if refresh_mode_env:
+        refresh_mode = RefreshMode(refresh_mode_env)
 
     refresh_interval = int(
         os.getenv("FEATURE_FLAG_REFRESH_INTERVAL", str(refresh_interval))
@@ -64,7 +65,7 @@ def create_enhanced_feature_flag_manager(
         circuit_breaker_failure_threshold=3,
         circuit_breaker_recovery_timeout=30,
         stale_config_threshold_seconds=stale_threshold,
-        enable_metrics=settings.environment in ("production", "staging"),
+        enable_metrics=settings.environment in {"production", "staging"},
     )
 
     logger.info(
@@ -89,7 +90,7 @@ def create_enhanced_feature_flag_manager(
             else:
                 logger.warning("Initial feature flag refresh failed, using defaults")
         except Exception as e:
-            logger.error("Error during initial feature flag refresh: %s", e)
+            logger.exception("Error during initial feature flag refresh: %s", e)
 
     return manager
 

@@ -193,7 +193,7 @@ class TestCircadianPhaseDetector:
         assert result is not None
         # Current implementation doesn't reduce confidence for variability
         # This is a limitation we should document
-        assert result.phase_shift_direction in ["advance", "delay", "stable"]
+        assert result.phase_shift_direction in {"advance", "delay", "stable"}
 
     def test_gradual_phase_shift(self):
         """Test detection of gradual phase shifts."""

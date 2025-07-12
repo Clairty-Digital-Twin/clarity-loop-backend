@@ -2,7 +2,6 @@
 
 import asyncio
 import logging
-from typing import Dict
 
 from fastapi import FastAPI, HTTPException, Response, status
 from pydantic import BaseModel
@@ -48,7 +47,7 @@ class HealthAnalysisResponse(BaseModel):
 
 
 @app.on_event("startup")
-async def startup_event():
+async def startup_event() -> None:
     """Initialize feature flag system on startup."""
     # Set up enhanced feature flags
     manager = setup_feature_flags_for_app(app, settings)
@@ -158,7 +157,7 @@ async def analyze_health_data(request: HealthAnalysisRequest):
 
 
 @app.websocket("/feature-flags/stream")
-async def feature_flag_stream(websocket):
+async def feature_flag_stream(websocket) -> None:
     """WebSocket endpoint for real-time feature flag updates."""
     await websocket.accept()
 
@@ -178,7 +177,7 @@ async def feature_flag_stream(websocket):
             )
 
     except Exception as e:
-        logger.error("WebSocket error: %s", e)
+        logger.exception("WebSocket error: %s", e)
     finally:
         await websocket.close()
 

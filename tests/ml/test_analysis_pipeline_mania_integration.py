@@ -89,7 +89,7 @@ class TestManiaRiskIntegration:
         )
 
     def create_heart_rate_metric(
-        self, user_id: str, timestamp: datetime, heart_rate: int, hrv: float = None
+        self, user_id: str, timestamp: datetime, heart_rate: int, hrv: float | None = None
     ) -> HealthMetric:
         """Helper to create heart rate metrics."""
         if hrv is None:

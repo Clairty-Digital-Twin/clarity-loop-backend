@@ -161,7 +161,7 @@ def startup_verification(
 
     # Step 2: Verify signatures (if required)
     if require_signatures and all_passed:
-        sig_passed, sig_errors = verify_model_signatures(models_dir)
+        sig_passed, _sig_errors = verify_model_signatures(models_dir)
         if not sig_passed:
             logger.error("Cannot start: Model signature verification failed")
             all_passed = False
@@ -185,7 +185,7 @@ def startup_verification(
     return all_passed
 
 
-def main():
+def main() -> None:
     """Main entry point for standalone execution."""
     import argparse
 

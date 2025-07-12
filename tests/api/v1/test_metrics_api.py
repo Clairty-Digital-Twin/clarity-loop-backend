@@ -330,7 +330,8 @@ class TestMetricsContext:
         """Test MetricsContext for PAT inference failure."""
         with pytest.raises(ValueError), MetricsContext("pat_inference"):
             time.sleep(0.01)  # Simulate work
-            raise ValueError("Test error")
+            msg = "Test error"
+            raise ValueError(msg)
 
     def test_metrics_context_insight_generation_success(self):
         """Test MetricsContext for insight generation success."""
@@ -346,7 +347,8 @@ class TestMetricsContext:
         with pytest.raises(RuntimeError):
             with MetricsContext("insight_generation", labels):
                 time.sleep(0.01)  # Simulate work
-                raise RuntimeError("Test error")
+                msg = "Test error"
+                raise RuntimeError(msg)
 
     def test_metrics_context_health_data_processing_success(self):
         """Test MetricsContext for health data processing success."""
@@ -362,7 +364,8 @@ class TestMetricsContext:
         with pytest.raises(Exception):
             with MetricsContext("health_data_processing", labels):
                 time.sleep(0.01)  # Simulate work
-                raise Exception("Processing error")
+                msg = "Processing error"
+                raise Exception(msg)
 
     def test_metrics_context_dynamodb_operation_success(self):
         """Test MetricsContext for DynamoDB operation success."""
@@ -378,7 +381,8 @@ class TestMetricsContext:
         with pytest.raises(Exception):
             with MetricsContext("dynamodb_operation", labels):
                 time.sleep(0.01)  # Simulate work
-                raise Exception("Database error")
+                msg = "Database error"
+                raise Exception(msg)
 
     def test_metrics_context_unknown_operation(self):
         """Test MetricsContext with unknown operation type."""
@@ -453,7 +457,7 @@ class TestMetricsIntegration:
         """Test concurrent metrics recording."""
         import threading
 
-        def record_metrics():
+        def record_metrics() -> None:
             for i in range(10):
                 record_http_request("GET", f"/api/v1/test/{i}", 200, 0.1)
                 record_health_metric_processed("heart_rate")
@@ -507,7 +511,8 @@ class TestMetricsEdgeCases:
 
         for exc_type in exception_types:
             with pytest.raises(exc_type), MetricsContext("pat_inference"):
-                raise exc_type("Test error")
+                msg = "Test error"
+                raise exc_type(msg)
 
     @pytest.mark.asyncio
     async def test_metrics_endpoint_integration(self):

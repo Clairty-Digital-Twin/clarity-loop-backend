@@ -53,8 +53,7 @@ class TestBaseRepository:
     @pytest.fixture
     def mock_connection(self) -> MagicMock:
         """Create a mock DynamoDB connection."""
-        connection = MagicMock(spec=DynamoDBConnection)
-        return connection
+        return MagicMock(spec=DynamoDBConnection)
 
     @pytest.fixture
     def mock_table(self) -> MagicMock:

@@ -77,7 +77,7 @@ class PersonalBaselineTracker:
     - Efficient updates without full recalculation
     """
 
-    def __init__(self, min_days_for_baseline: int = 14):
+    def __init__(self, min_days_for_baseline: int = 14) -> None:
         """Initialize the tracker.
 
         Args:
@@ -424,9 +424,7 @@ class PersonalBaselineTracker:
 
         duration = (end - start).total_seconds() / 3600
         start_hour = start.hour + start.minute / 60
-        midpoint = (start_hour + duration / 2) % 24
-
-        return midpoint
+        return (start_hour + duration / 2) % 24
 
     def _calculate_z_score(
         self, value: float, median: float, p25: float, p75: float

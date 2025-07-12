@@ -125,7 +125,7 @@ class ActivityDataFactory(factory.Factory):
 
     @factory.lazy_attribute
     def end_time(self) -> str:
-        start = datetime.fromisoformat(self.start_time.replace("Z", "+00:00"))
+        start = datetime.fromisoformat(self.start_time)
         duration = timedelta(minutes=random.randint(5, 120))
         return (start + duration).isoformat()
 
@@ -140,7 +140,7 @@ class ActivityDataFactory(factory.Factory):
             "calories_burned": random.randint(50, 500),
         }
 
-        if self.activity_type in ["walking", "running", "cycling"]:
+        if self.activity_type in {"walking", "running", "cycling"}:
             base_metrics.update(
                 {
                     "distance_km": round(random.uniform(0.5, 20), 2),
@@ -153,7 +153,7 @@ class ActivityDataFactory(factory.Factory):
                 }
             )
 
-        if self.activity_type in ["running", "cycling", "gym"]:
+        if self.activity_type in {"running", "cycling", "gym"}:
             base_metrics.update(
                 {
                     "avg_heart_rate": random.randint(100, 170),
@@ -185,7 +185,7 @@ class SleepDataFactory(factory.Factory):
 
     @factory.lazy_attribute
     def wake_time(self) -> str:
-        bedtime = datetime.fromisoformat(self.bedtime.replace("Z", "+00:00"))
+        bedtime = datetime.fromisoformat(self.bedtime)
         sleep_duration = timedelta(hours=random.uniform(5, 9))
         return (bedtime + sleep_duration).isoformat()
 
@@ -276,7 +276,7 @@ class AnalysisReportFactory(factory.Factory):
     )
     generated_at = factory.LazyFunction(lambda: datetime.now(UTC).isoformat())
     period_start = factory.LazyFunction(
-        lambda: (datetime.now(UTC) - timedelta(days=7)).isoformat()
+        (datetime.now(UTC) - timedelta(days=7)).isoformat
     )
     period_end = factory.LazyFunction(lambda: datetime.now(UTC).isoformat())
 

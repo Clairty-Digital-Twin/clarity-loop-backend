@@ -302,7 +302,7 @@ class TestManiaRiskAnalyzer:
         assert any("consistent wake/sleep times" in r.lower() for r in recommendations)
 
     @pytest.mark.parametrize(
-        "sleep_hours,expected_level",
+        ("sleep_hours", "expected_level"),
         [
             (8.0, "none"),  # Normal sleep
             (7.0, "none"),  # Good sleep
@@ -407,7 +407,7 @@ class TestManiaRiskAnalyzer:
             },
         }
 
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False, encoding="utf-8") as f:
             yaml.dump(custom_config, f)
             temp_path = Path(f.name)
 
@@ -474,7 +474,7 @@ class TestManiaRiskAnalyzer:
         assert any("Limited data" in f for f in result.contributing_factors)
 
     @pytest.mark.parametrize(
-        "test_case,expected",
+        ("test_case", "expected"),
         [
             # Sleep duration boundary tests
             (

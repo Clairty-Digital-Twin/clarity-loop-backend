@@ -18,7 +18,7 @@ import logging
 from pathlib import Path
 import tempfile
 import time
-from typing import Any
+from typing import Any, Never
 from unittest.mock import AsyncMock, MagicMock, patch
 import uuid
 
@@ -159,13 +159,14 @@ class TestModelCorruption:
         @resilient_prediction(
             failure_threshold=3, recovery_timeout=1, model_name="test_model"
         )
-        async def failing_prediction():
+        async def failing_prediction() -> Never:
             nonlocal failure_count
             failure_count += 1
-            raise RuntimeError("Model failure")
+            msg = "Model failure"
+            raise RuntimeError(msg)
 
         # First 3 calls should fail with ServiceUnavailableProblem
-        for i in range(3):
+        for _i in range(3):
             with pytest.raises(ServiceUnavailableProblem):
                 await failing_prediction()
 
@@ -187,7 +188,8 @@ class TestModelCorruption:
             nonlocal call_count
             call_count += 1
             if call_count <= 2:
-                raise RuntimeError("Model failure")
+                msg = "Model failure"
+                raise RuntimeError(msg)
             return {"prediction": "success"}
 
         # First 2 calls fail
@@ -228,7 +230,7 @@ class TestModelCorruption:
             versions.append(f"v{i}")
 
         # Measure load times for each version
-        for i, version in enumerate(versions):
+        for i in range(len(versions)):
             start_time = time.time()
 
             try:
@@ -257,7 +259,7 @@ class TestModelCorruption:
         corruption_event = asyncio.Event()
         load_results = []
 
-        async def load_with_corruption(loader, delay):
+        async def load_with_corruption(loader, delay) -> None:
             await asyncio.sleep(delay)
 
             if delay > 0.5 and not corruption_event.is_set():
@@ -403,8 +405,9 @@ class TestModelCorruption:
             @resilient_prediction(
                 failure_threshold=5, recovery_timeout=60, model_name="test_model"
             )
-            async def corrupt_model_prediction():
-                raise RuntimeError("Model corrupted")
+            async def corrupt_model_prediction() -> Never:
+                msg = "Model corrupted"
+                raise RuntimeError(msg)
 
             # Try prediction - should fail and increment failure metric
             with pytest.raises(ServiceUnavailableProblem):
@@ -549,7 +552,7 @@ class TestModelCorruptionIntegration:
             "api_gateway": True,
         }
 
-        async def check_component_health(component: str, depends_on: list[str]):
+        async def check_component_health(component: str, depends_on: list[str]) -> bool:
             # Component fails if any dependency fails
             for dep in depends_on:
                 if not service_health.get(dep, True):

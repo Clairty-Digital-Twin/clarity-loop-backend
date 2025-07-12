@@ -100,7 +100,7 @@ class TestDynamoDBConnectionBehavior:
             circuit_opened = False
 
             # Try up to 10 times to trigger circuit breaker
-            for i in range(10):
+            for _i in range(10):
                 try:
                     connection.get_resource()
                 except RetryableConnectionError:

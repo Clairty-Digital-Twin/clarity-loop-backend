@@ -1003,7 +1003,7 @@ class PATModelService(IMLModelService):
                 mania_alert_level = mania_result.alert_level
 
                 # Add mania insight if risk is moderate or high
-                if mania_result.alert_level in ["moderate", "high"]:
+                if mania_result.alert_level in {"moderate", "high"}:
                     insights.append(mania_result.clinical_insight)
             except Exception as e:
                 logger.warning(

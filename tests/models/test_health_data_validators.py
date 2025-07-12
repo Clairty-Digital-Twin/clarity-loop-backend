@@ -108,7 +108,7 @@ class TestSleepDataValidator:
         assert any(e["loc"] == ("sleep_end",) for e in errors)
 
     @pytest.mark.parametrize(
-        "hours,minutes",
+        ("hours", "minutes"),
         [
             (7, 420),  # 7 hours
             (8, 480),  # 8 hours
@@ -201,7 +201,7 @@ class TestHealthMetricValidator:
             HealthMetric(metric_type=HealthMetricType.MOOD_ASSESSMENT)
 
     @pytest.mark.parametrize(
-        "metric_type,required_field",
+        ("metric_type", "required_field"),
         [
             (HealthMetricType.HEART_RATE_VARIABILITY, "biometric_data"),
             (HealthMetricType.BLOOD_PRESSURE, "biometric_data"),
@@ -275,14 +275,10 @@ class TestHealthDataUploadValidator:
         # Create more metrics than allowed
         settings = get_settings()
         max_metrics = settings.max_metrics_per_upload
-        metrics = []
-        for i in range(max_metrics + 1):
-            metrics.append(
-                HealthMetric(
+        metrics = [HealthMetric(
                     metric_type=HealthMetricType.HEART_RATE,
                     biometric_data=BiometricData(heart_rate=70.0 + (i % 50)),
-                )
-            )
+                ) for i in range(max_metrics + 1)]
 
         with pytest.raises(ValidationError) as exc_info:
             HealthDataUpload(
@@ -331,14 +327,10 @@ class TestHealthDataUploadValidator:
         """Test validation passes with exactly MAX_METRICS_PER_UPLOAD metrics."""
         settings = get_settings()
         max_metrics = settings.max_metrics_per_upload
-        metrics = []
-        for i in range(max_metrics):
-            metrics.append(
-                HealthMetric(
+        metrics = [HealthMetric(
                     metric_type=HealthMetricType.HEART_RATE,
                     biometric_data=BiometricData(heart_rate=70.0 + (i % 50)),
-                )
-            )
+                ) for i in range(max_metrics)]
 
         # Should not raise any errors
         upload = HealthDataUpload(

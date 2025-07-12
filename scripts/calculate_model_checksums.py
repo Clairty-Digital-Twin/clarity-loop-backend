@@ -20,13 +20,12 @@ def calculate_file_checksum(filepath: str) -> str:
 
         # Create HMAC signature for additional security
         file_digest = sha256_hash.hexdigest()
-        signature = hmac.new(
+        return hmac.new(
             MODEL_SIGNATURE_KEY.encode("utf-8"),
             file_digest.encode("utf-8"),
             hashlib.sha256,
         ).hexdigest()
 
-        return signature
     except Exception as e:
         print(f"Error calculating checksum for {filepath}: {e}")
         return ""

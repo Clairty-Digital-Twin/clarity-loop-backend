@@ -1,23 +1,23 @@
 #!/usr/bin/env python3
-"""
-Chat Context Generator for Clarity Digital Twin
+"""Chat Context Generator for Clarity Digital Twin
 Generates conversation seeds and context for HealthKit chat demo.
 """
 
 import argparse
+from datetime import datetime
 import json
-import uuid
-from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Dict, List, Any
+from typing import Any
+import uuid
+
 
 class ChatContextGenerator:
     """Generate chat context and conversation seeds for demo."""
-    
-    def __init__(self, persona: str = "health_conscious"):
+
+    def __init__(self, persona: str = "health_conscious") -> None:
         self.persona = persona
         self.context_id = str(uuid.uuid4())
-        
+
         # Persona-specific characteristics
         self.personas = {
             "health_conscious": {
@@ -42,12 +42,11 @@ class ChatContextGenerator:
                 "communication_style": "performance-focused and data-driven"
             }
         }
-        
+
         self.persona_data = self.personas.get(persona, self.personas["health_conscious"])
-    
-    def generate_conversation_starters(self) -> List[Dict[str, Any]]:
+
+    def generate_conversation_starters(self) -> list[dict[str, Any]]:
         """Generate conversation starter questions."""
-        
         if self.persona == "health_conscious":
             starters = [
                 {
@@ -86,7 +85,7 @@ class ChatContextGenerator:
                     "complexity": "low"
                 }
             ]
-        
+
         elif self.persona == "clinical_patient":
             starters = [
                 {
@@ -125,7 +124,7 @@ class ChatContextGenerator:
                     "complexity": "high"
                 }
             ]
-        
+
         else:  # fitness_enthusiast
             starters = [
                 {
@@ -164,7 +163,7 @@ class ChatContextGenerator:
                     "complexity": "high"
                 }
             ]
-        
+
         # Add metadata to each starter
         for starter in starters:
             starter.update({
@@ -173,12 +172,11 @@ class ChatContextGenerator:
                 "created_date": datetime.now().isoformat(),
                 "priority": "high" if starter["complexity"] == "high" else "medium"
             })
-        
+
         return starters
-    
-    def generate_followup_questions(self) -> List[Dict[str, Any]]:
+
+    def generate_followup_questions(self) -> list[dict[str, Any]]:
         """Generate follow-up questions for conversations."""
-        
         followups = [
             {
                 "trigger": "sleep_trend_shown",
@@ -211,7 +209,7 @@ class ChatContextGenerator:
                 "expected_depth": "scientific_explanation"
             }
         ]
-        
+
         for followup in followups:
             followup.update({
                 "persona": self.persona,
@@ -219,12 +217,11 @@ class ChatContextGenerator:
                 "created_date": datetime.now().isoformat(),
                 "type": "followup"
             })
-        
+
         return followups
-    
-    def generate_response_templates(self) -> List[Dict[str, Any]]:
+
+    def generate_response_templates(self) -> list[dict[str, Any]]:
         """Generate response templates for different query types."""
-        
         templates = [
             {
                 "response_type": "trend_analysis",
@@ -263,7 +260,7 @@ class ChatContextGenerator:
                 "recommendations": True
             }
         ]
-        
+
         for template in templates:
             template.update({
                 "persona": self.persona,
@@ -271,12 +268,11 @@ class ChatContextGenerator:
                 "created_date": datetime.now().isoformat(),
                 "version": "1.0"
             })
-        
+
         return templates
-    
-    def generate_demo_conversations(self) -> List[Dict[str, Any]]:
+
+    def generate_demo_conversations(self) -> list[dict[str, Any]]:
         """Generate complete demo conversation flows."""
-        
         conversations = [
             {
                 "conversation_id": str(uuid.uuid4()),
@@ -355,23 +351,23 @@ class ChatContextGenerator:
                 "duration_minutes": 6
             }
         ]
-        
+
         for conversation in conversations:
             conversation.update({
                 "persona": self.persona,
                 "created_date": datetime.now().isoformat(),
                 "demo_ready": True
             })
-        
+
         return conversations
-    
+
     def generate_all_context(self, output_dir: str) -> None:
         """Generate all chat context and save to directory."""
         output_path = Path(output_dir)
         output_path.mkdir(parents=True, exist_ok=True)
-        
+
         print(f"Generating chat context for persona: {self.persona}")
-        
+
         # Generate all context types
         context_data = {
             "conversation_starters.json": self.generate_conversation_starters(),
@@ -379,22 +375,21 @@ class ChatContextGenerator:
             "response_templates.json": self.generate_response_templates(),
             "demo_conversations.json": self.generate_demo_conversations()
         }
-        
+
         # Save all context files
         for filename, data in context_data.items():
             filepath = output_path / filename
-            with open(filepath, 'w') as f:
+            with open(filepath, 'w', encoding="utf-8") as f:
                 json.dump(data, f, indent=2, default=str)
             print(f"✅ Saved {filename} ({len(data)} items)")
-        
+
         # Generate context metadata
         self._generate_context_metadata(output_path, context_data)
-        
+
         print(f"🎉 Chat context generation complete! Output: {output_path}")
-    
-    def _generate_context_metadata(self, output_path: Path, context_data: Dict) -> None:
+
+    def _generate_context_metadata(self, output_path: Path, context_data: dict) -> None:
         """Generate metadata for the chat context."""
-        
         metadata = {
             "context_summary": {
                 "persona": self.persona,
@@ -421,26 +416,28 @@ class ChatContextGenerator:
                 "user_experience": "Intuitive and engaging interactions"
             }
         }
-        
-        with open(output_path / "context_metadata.json", 'w') as f:
+
+        with open(output_path / "context_metadata.json", 'w', encoding="utf-8") as f:
             json.dump(metadata, f, indent=2)
-        
+
         print("📊 Generated context metadata")
 
-def main():
+
+def main() -> None:
     """Main function to run the chat context generator."""
     parser = argparse.ArgumentParser(description="Generate chat context for HealthKit demo")
-    parser.add_argument("--persona", default="health_conscious", 
+    parser.add_argument("--persona", default="health_conscious",
                        choices=["health_conscious", "clinical_patient", "fitness_enthusiast"],
                        help="User persona for context generation")
     parser.add_argument("--output", default="demo_data/conversations",
                        help="Output directory for generated context")
-    
+
     args = parser.parse_args()
-    
+
     # Create generator and run
     generator = ChatContextGenerator(persona=args.persona)
     generator.generate_all_context(args.output)
 
+
 if __name__ == "__main__":
-    main() 
+    main()

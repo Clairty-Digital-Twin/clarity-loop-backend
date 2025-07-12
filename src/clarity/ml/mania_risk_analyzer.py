@@ -104,13 +104,10 @@ class ManiaRiskAnalyzer:
         self._max_cache_size = 1000  # Maximum cache entries
 
         if config_path and config_path.exists():
-            with open(config_path) as f:
+            with open(config_path, encoding="utf-8") as f:
                 config_dict = yaml.safe_load(f)
                 # Handle nested weights if present
-                if "weights" in config_dict:
-                    weights = config_dict.pop("weights")
-                else:
-                    weights = {}
+                weights = config_dict.pop("weights") if "weights" in config_dict else {}
                 self.config = ManiaRiskConfig(**config_dict, weights=weights)
         else:
             self.config = ManiaRiskConfig()
@@ -319,7 +316,7 @@ class ManiaRiskAnalyzer:
         )
 
         # Log high-risk alerts separately for monitoring
-        if alert_level in ["moderate", "high"]:
+        if alert_level in {"moderate", "high"}:
             self.logger.warning(
                 f"Elevated mania risk detected: {alert_level}",
                 extra={
@@ -612,7 +609,7 @@ class ManiaRiskAnalyzer:
         """Generate actionable recommendations based on risk factors."""
         recommendations = []
 
-        if level in ["high", "moderate"]:
+        if level in {"high", "moderate"}:
             # General high-risk recommendations first
             if level == "high":
                 recommendations.append(

@@ -440,7 +440,7 @@ def calculate_model_health_score() -> float:
     # In production, this would incorporate multiple factors
 
     # Get recent metrics (this is pseudo-code, actual implementation would query metrics)
-    health_score = 100.0
+    return 100.0
 
     # Deduct points for failures
     # - Each load failure: -5 points
@@ -449,7 +449,6 @@ def calculate_model_health_score() -> float:
 
     # In a real implementation, you would query the actual metric values
     # For now, return a static healthy score
-    return health_score
 
 
 def update_health_score() -> None:
@@ -460,42 +459,42 @@ def update_health_score() -> None:
 
 # Export all metrics and helper functions
 __all__ = [
-    # Metrics
-    "pat_model_load_attempts",
-    "pat_model_load_failures",
-    "pat_model_load_duration",
     "pat_checksum_verification_attempts",
-    "pat_checksum_verification_failures",
     "pat_checksum_verification_duration",
+    "pat_checksum_verification_failures",
     "pat_model_cache_hits",
+    "pat_model_cache_memory_bytes",
     "pat_model_cache_misses",
     "pat_model_cache_size",
-    "pat_model_cache_memory_bytes",
-    "pat_model_loading_progress",
     "pat_model_current_version",
-    "pat_model_s3_downloads",
-    "pat_model_s3_download_duration",
-    "pat_model_s3_download_bytes",
-    "pat_model_validation_attempts",
-    "pat_model_validation_failures",
     "pat_model_fallback_attempts",
     "pat_model_fallback_successes",
+    "pat_model_health_score",
     "pat_model_hot_swap_attempts",
     "pat_model_hot_swap_duration",
+    # Metrics
+    "pat_model_load_attempts",
+    "pat_model_load_duration",
+    "pat_model_load_failures",
+    "pat_model_loading_progress",
+    "pat_model_s3_download_bytes",
+    "pat_model_s3_download_duration",
+    "pat_model_s3_downloads",
+    "pat_model_validation_attempts",
+    "pat_model_validation_failures",
     "pat_security_violations",
-    "pat_model_health_score",
-    # Helper functions
-    "track_model_load",
-    "track_checksum_verification",
-    "update_loading_progress",
     "record_cache_hit",
     "record_cache_miss",
-    "update_cache_metrics",
-    "record_s3_download",
-    "record_validation_attempt",
     "record_fallback_attempt",
     "record_hot_swap",
+    "record_s3_download",
     "record_security_violation",
+    "record_validation_attempt",
+    "track_checksum_verification",
+    # Helper functions
+    "track_model_load",
+    "update_cache_metrics",
     "update_current_version",
     "update_health_score",
+    "update_loading_progress",
 ]

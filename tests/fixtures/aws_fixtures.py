@@ -31,7 +31,7 @@ TEST_BUCKET_NAME = "test-clarity-bucket"
 TEST_TABLE_NAME = "test-clarity-table"
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture
 def aws_credentials():
     """Mock AWS credentials for testing."""
     os.environ["AWS_ACCESS_KEY_ID"] = "testing"
@@ -41,21 +41,21 @@ def aws_credentials():
     os.environ["AWS_DEFAULT_REGION"] = TEST_REGION
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture
 def dynamodb_mock(aws_credentials):
     """Create a mocked DynamoDB service."""
     with mock_dynamodb():
         yield boto3.resource("dynamodb", region_name=TEST_REGION)
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture
 def dynamodb_client(aws_credentials) -> Generator[DynamoDBClient, None, None]:
     """Create a mocked DynamoDB client."""
     with mock_dynamodb():
         yield boto3.client("dynamodb", region_name=TEST_REGION)
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture
 def dynamodb_table(dynamodb_mock: DynamoDBServiceResource) -> Table:
     """Create a test DynamoDB table with common attributes."""
     table = dynamodb_mock.create_table(
@@ -89,7 +89,7 @@ def dynamodb_table(dynamodb_mock: DynamoDBServiceResource) -> Table:
     return table
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture
 def s3_mock(aws_credentials) -> Generator[S3Client, None, None]:
     """Create a mocked S3 client."""
     with mock_s3():
@@ -99,7 +99,7 @@ def s3_mock(aws_credentials) -> Generator[S3Client, None, None]:
         yield client
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture
 def s3_bucket(s3_mock: S3Client) -> dict[str, Any]:
     """Create a test S3 bucket with common configuration."""
     # Enable versioning
@@ -139,7 +139,7 @@ def s3_bucket(s3_mock: S3Client) -> dict[str, Any]:
     }
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture
 def cognito_mock(
     aws_credentials,
 ) -> Generator[CognitoIdentityProviderClient, None, None]:
@@ -148,7 +148,7 @@ def cognito_mock(
         yield boto3.client("cognito-idp", region_name=TEST_REGION)
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture
 def cognito_user_pool(cognito_mock: CognitoIdentityProviderClient) -> dict[str, str]:
     """Create a test Cognito user pool with client."""
     # Create user pool
@@ -200,7 +200,7 @@ def cognito_user_pool(cognito_mock: CognitoIdentityProviderClient) -> dict[str, 
     }
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture
 def cognito_test_user(
     cognito_mock: CognitoIdentityProviderClient,
     cognito_user_pool: dict[str, str],

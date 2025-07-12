@@ -232,7 +232,7 @@ class HealthAnalysisPipeline:
                 "processing_id": processing_id,
             }
 
-            # Step 6: Save analysis results to DynamoDB if processing_id provided
+            # Step 8: Save analysis results to DynamoDB if processing_id provided
             if processing_id:
                 try:
                     dynamodb_client = await self._get_dynamodb_client()

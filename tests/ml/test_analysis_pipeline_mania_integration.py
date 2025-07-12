@@ -29,15 +29,19 @@ class TestManiaRiskIntegration:
         mock_client.table = MagicMock()
         return mock_client
     
-    def create_sleep_metric(self, user_id: str, timestamp: datetime, sleep_hours: float) -> HealthMetric:
-        """Helper to create sleep metrics."""
+    def create_sleep_metric(self, user_id: str, timestamp: datetime, sleep_hours: float, efficiency: float = 0.85) -> HealthMetric:
+        """Helper to create sleep metrics with proper data."""
         sleep_data = SleepData(
             total_sleep_minutes=int(sleep_hours * 60),
-            sleep_efficiency=0.85,
+            sleep_efficiency=efficiency,
             time_to_sleep_minutes=15,
             wake_count=2,
-            sleep_start=timestamp - timedelta(hours=sleep_hours),
+            sleep_start=timestamp - timedelta(hours=sleep_hours + 0.25),  # Add 15 min for sleep latency
             sleep_end=timestamp,
+            waso_minutes=20,  # Wake after sleep onset
+            rem_percentage=0.25,  # 25% REM
+            deep_percentage=0.20,  # 20% deep sleep
+            light_percentage=0.55,  # 55% light sleep
         )
         
         return HealthMetric(
@@ -175,12 +179,18 @@ class TestManiaRiskIntegration:
                 "Items": [{"sleep_features": {"total_sleep_minutes": 480}}]
             }
             
-            # Create healthy metrics with good HRV
-            metrics = [
-                self.create_sleep_metric(user_id, datetime.now(UTC), 7.5),  # Good sleep
-                self.create_activity_metric(user_id, datetime.now(UTC), 8500),  # Normal activity
-                self.create_heart_rate_metric(user_id, datetime.now(UTC), 65, hrv=45.0),  # Normal HR with good HRV
-            ]
+            # Create healthy metrics for several days
+            metrics = []
+            base_time = datetime.now(UTC)
+            
+            # Add 7 days of consistent healthy data
+            for i in range(7):
+                timestamp = base_time - timedelta(days=i)
+                metrics.extend([
+                    self.create_sleep_metric(user_id, timestamp, 7.5 + (i % 2) * 0.2),  # 7.5-7.7 hours
+                    self.create_activity_metric(user_id, timestamp, 8000 + (i * 100)),  # 8000-8600 steps
+                    self.create_heart_rate_metric(user_id, timestamp, 63 + i % 3, hrv=42.0 + i % 5),  # Normal HR/HRV
+                ])
             
             results = await pipeline.process_health_data(
                 user_id=user_id,

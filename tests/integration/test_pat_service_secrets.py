@@ -12,6 +12,15 @@ from clarity.security.secrets_manager import get_secrets_manager
 
 class TestPATServiceSecretsIntegration:
     """Test PAT service integration with secrets manager."""
+    
+    def setup_method(self):
+        """Clear cached secrets manager before each test."""
+        import clarity.security.secrets_manager
+        clarity.security.secrets_manager._secrets_manager = None
+        
+        # Also clear PAT service singleton
+        import clarity.ml.pat_service
+        clarity.ml.pat_service._pat_service = None
 
     def test_pat_service_uses_secrets_manager_for_checksums(self):
         """Test that PAT service retrieves checksums from secrets manager."""
@@ -99,26 +108,17 @@ class TestPATServiceSecretsIntegration:
 
     def test_pat_service_fallback_when_secrets_unavailable(self):
         """Test PAT service falls back gracefully when secrets are unavailable."""
-        # Clear environment to simulate no secrets available
-        env_vars_to_clear = [
-            "CLARITY_USE_SSM",
-            "MODEL_SIGNATURE_KEY",
-            "EXPECTED_MODEL_CHECKSUMS",
-            "CLARITY_MODEL_SIGNATURE_KEY",
-            "CLARITY_EXPECTED_MODEL_CHECKSUMS",
-        ]
+        # Test in a completely isolated environment
+        import clarity.security.secrets_manager
+        import clarity.ml.pat_service
         
-        # Use patch.dict to ensure clean environment isolation
-        clean_env = os.environ.copy()
-        for var in env_vars_to_clear:
-            if var in clean_env:
-                del clean_env[var]
+        # Clear all cached instances and the lru_cache
+        clarity.security.secrets_manager._secrets_manager = None
+        clarity.ml.pat_service._pat_service = None
+        clarity.security.secrets_manager.get_secrets_manager.cache_clear()
         
-        with patch.dict(os.environ, clean_env, clear=True):
-            # Clear any cached secrets manager
-            import clarity.security.secrets_manager
-            clarity.security.secrets_manager._secrets_manager = None
-            
+        # Set minimal environment for test
+        with patch.dict(os.environ, {}, clear=True):
             # Create PAT service - should use defaults
             service = PATModelService(model_size="large")
             

@@ -194,7 +194,7 @@ class Settings(BaseSettings):
 
     # Mania Risk module settings
     mania_risk_enabled: bool = Field(
-        default=True,
+        default=False,
         alias="MANIA_RISK_ENABLED",
         description="Enable mania risk analysis for users",
     )

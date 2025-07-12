@@ -16,6 +16,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 import yaml
 from pydantic import BaseModel, Field
+from collections import OrderedDict
 
 from clarity.ml.processors.sleep_processor import SleepFeatures
 
@@ -80,8 +81,11 @@ class ManiaRiskAnalyzer:
             user_id: User ID for alert tracking (optional)
         """
         self.logger = logging.getLogger(__name__)
+        self.audit_logger = logging.getLogger("clarity.audit.mania_risk")
         self.user_id = user_id
-        self._last_high_alert_cache: Dict[str, datetime] = {}  # In-memory cache for demo
+        # Use OrderedDict with max size for memory safety
+        self._last_high_alert_cache: OrderedDict[str, datetime] = OrderedDict()
+        self._max_cache_size = 1000  # Maximum cache entries
         
         if config_path and config_path.exists():
             with open(config_path) as f:
@@ -316,6 +320,20 @@ class ManiaRiskAnalyzer:
                     "clinical_action_required": alert_level == "high"
                 }
             )
+            
+            # HIPAA-compliant audit logging for high alerts
+            if alert_level == "high":
+                self.audit_logger.info(
+                    "HIGH_RISK_DETECTION",
+                    extra={
+                        "timestamp": datetime.now(UTC).isoformat(),
+                        "user_id_hash": self._sanitize_user_id(uid),
+                        "risk_score": round(score, 3),
+                        "event_type": "mania_high_risk_alert",
+                        "data_sources": list(component_scores.keys()),
+                        "confidence": round(confidence, 3)
+                    }
+                )
         
         return ManiaRiskResult(
             risk_score=score,
@@ -362,9 +380,17 @@ class ManiaRiskAnalyzer:
         if hours is None:
             return 0.0, ["Insufficient sleep data"], 0.5
         
-        # Handle edge case of 0 hours differently - might be data issue
-        if hours == 0:
-            return 0.0, ["Invalid sleep data: 0 hours recorded"], 0.3
+        # Unit conversion guardrails - bounds checking
+        if not (0 < hours <= 24):
+            self.logger.warning(
+                "Invalid sleep hours detected",
+                extra={
+                    "user_id": self._sanitize_user_id(self.user_id),
+                    "sleep_hours": hours,
+                    "data_source": data_source
+                }
+            )
+            return 0.0, [f"Invalid sleep data: {hours} hours recorded"], 0.3
         
         # Apply data completeness factor to confidence
         confidence *= data_completeness
@@ -648,11 +674,17 @@ class ManiaRiskAnalyzer:
             if last_alert_time > cutoff_time:
                 return True
         
-        # Update cache with new alert time
+        # Update cache with new alert time (with memory safety)
         self._last_high_alert_cache[user_id] = now
         
-        # Clean old entries from cache periodically
-        if len(self._last_high_alert_cache) > 1000:
+        # Enforce max cache size for memory safety
+        if len(self._last_high_alert_cache) > self._max_cache_size:
+            # Remove oldest entries (FIFO)
+            while len(self._last_high_alert_cache) > self._max_cache_size * 0.8:
+                self._last_high_alert_cache.popitem(last=False)
+        
+        # Clean expired entries periodically
+        if len(self._last_high_alert_cache) > self._max_cache_size * 0.5:
             self._cleanup_alert_cache(cutoff_time)
         
         return False

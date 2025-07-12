@@ -38,7 +38,7 @@ class CircadianPhaseDetector:
     phase shifts are the strongest predictors of next-day mood episodes.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the detector."""
         self.logger = logging.getLogger(__name__)
 

@@ -214,7 +214,7 @@ class PersonalBaselineTracker:
 
     def _extract_sleep_data(
         self, metrics: list[HealthMetric]
-    ) -> list[dict[str, float]]:
+    ) -> list[dict[str, Any]]:
         """Extract sleep data points from metrics."""
         sleep_points = []
 
@@ -245,7 +245,7 @@ class PersonalBaselineTracker:
 
     def _extract_activity_data(
         self, metrics: list[HealthMetric]
-    ) -> list[dict[str, float]]:
+    ) -> list[dict[str, Any]]:
         """Extract activity data points from metrics."""
         activity_by_date = defaultdict(list)
 
@@ -277,7 +277,7 @@ class PersonalBaselineTracker:
 
     def _extract_biometric_data(
         self, metrics: list[HealthMetric]
-    ) -> list[dict[str, float]]:
+    ) -> list[dict[str, Any]]:
         """Extract biometric data points from metrics."""
         bio_points = []
 
@@ -296,8 +296,8 @@ class PersonalBaselineTracker:
         return bio_points
 
     def _update_sleep_baseline(
-        self, baseline: PersonalBaseline, sleep_data: list[dict[str, float]]
-    ):
+        self, baseline: PersonalBaseline, sleep_data: list[dict[str, Any]]
+    ) -> None:
         """Update sleep-related baselines."""
         if not sleep_data:
             return
@@ -310,22 +310,22 @@ class PersonalBaselineTracker:
 
         # Update baselines using robust statistics
         if durations:
-            baseline.sleep_duration_median = np.median(durations)
-            baseline.sleep_duration_p25 = np.percentile(durations, 25)
-            baseline.sleep_duration_p75 = np.percentile(durations, 75)
+            baseline.sleep_duration_median = float(np.median(durations))
+            baseline.sleep_duration_p25 = float(np.percentile(durations, 25))
+            baseline.sleep_duration_p75 = float(np.percentile(durations, 75))
 
         if efficiencies:
-            baseline.sleep_efficiency_median = np.median(efficiencies)
+            baseline.sleep_efficiency_median = float(np.median(efficiencies))
 
         if latencies:
-            baseline.sleep_latency_median = np.median(latencies)
+            baseline.sleep_latency_median = float(np.median(latencies))
 
         if midpoints:
-            baseline.sleep_midpoint_median = np.median(midpoints)
+            baseline.sleep_midpoint_median = float(np.median(midpoints))
 
     def _update_activity_baseline(
-        self, baseline: PersonalBaseline, activity_data: list[dict[str, float]]
-    ):
+        self, baseline: PersonalBaseline, activity_data: list[dict[str, Any]]
+    ) -> None:
         """Update activity-related baselines."""
         if not activity_data:
             return
@@ -339,19 +339,19 @@ class PersonalBaselineTracker:
 
         # Update baselines
         if steps:
-            baseline.daily_steps_median = np.median(steps)
-            baseline.daily_steps_p25 = np.percentile(steps, 25)
-            baseline.daily_steps_p75 = np.percentile(steps, 75)
+            baseline.daily_steps_median = float(np.median(steps))
+            baseline.daily_steps_p25 = float(np.percentile(steps, 25))
+            baseline.daily_steps_p75 = float(np.percentile(steps, 75))
 
         if energy:
-            baseline.active_energy_median = np.median(energy)
+            baseline.active_energy_median = float(np.median(energy))
 
         if exercise:
-            baseline.exercise_minutes_median = np.median(exercise)
+            baseline.exercise_minutes_median = float(np.median(exercise))
 
     def _update_physiological_baseline(
-        self, baseline: PersonalBaseline, bio_data: list[dict[str, float]]
-    ):
+        self, baseline: PersonalBaseline, bio_data: list[dict[str, Any]]
+    ) -> None:
         """Update physiological baselines."""
         if not bio_data:
             return
@@ -362,19 +362,19 @@ class PersonalBaselineTracker:
 
         # Update baselines
         if hrs:
-            baseline.resting_hr_median = np.median(hrs)
-            baseline.resting_hr_p25 = np.percentile(hrs, 25)
-            baseline.resting_hr_p75 = np.percentile(hrs, 75)
+            baseline.resting_hr_median = float(np.median(hrs))
+            baseline.resting_hr_p25 = float(np.percentile(hrs, 25))
+            baseline.resting_hr_p75 = float(np.percentile(hrs, 75))
 
         if hrvs:
-            baseline.hrv_median = np.median(hrvs)
+            baseline.hrv_median = float(np.median(hrvs))
 
     def _update_variability_baseline(
         self,
         baseline: PersonalBaseline,
-        sleep_data: list[dict[str, float]],
-        activity_data: list[dict[str, float]],
-    ):
+        sleep_data: list[dict[str, Any]],
+        activity_data: list[dict[str, Any]],
+    ) -> None:
         """Update variability baselines."""
         # Sleep variability
         if len(sleep_data) >= 7:
@@ -382,19 +382,19 @@ class PersonalBaselineTracker:
                 s["duration_hours"] for s in sleep_data if s["duration_hours"] > 0
             ]
             if durations:
-                baseline.sleep_variability_baseline = np.std(durations) / np.mean(
+                baseline.sleep_variability_baseline = float(np.std(durations) / np.mean(
                     durations
-                )
+                ))
 
         # Activity variability
         if len(activity_data) >= 7:
             steps = [a["steps"] for a in activity_data if a["steps"] > 0]
             if steps:
-                baseline.activity_variability_baseline = np.std(steps) / np.mean(steps)
+                baseline.activity_variability_baseline = float(np.std(steps) / np.mean(steps))
 
     def _update_circadian_profile(
-        self, baseline: PersonalBaseline, sleep_data: list[dict[str, float]]
-    ):
+        self, baseline: PersonalBaseline, sleep_data: list[dict[str, Any]]
+    ) -> None:
         """Update circadian rhythm profile."""
         if not sleep_data:
             return
@@ -403,7 +403,7 @@ class PersonalBaselineTracker:
 
         if len(midpoints) >= 7:
             # Typical sleep midpoint
-            baseline.sleep_midpoint_median = np.median(midpoints)
+            baseline.sleep_midpoint_median = float(np.median(midpoints))
 
             # Estimate bed/wake times (rough approximation)
             avg_duration = baseline.sleep_duration_median
@@ -415,7 +415,7 @@ class PersonalBaselineTracker:
             ) % 24
 
             # Circadian consistency (lower is better)
-            baseline.circadian_consistency = np.std(midpoints)
+            baseline.circadian_consistency = float(np.std(midpoints))
 
     def _calculate_sleep_midpoint(self, start: datetime, end: datetime) -> float:
         """Calculate sleep midpoint as hours from midnight."""

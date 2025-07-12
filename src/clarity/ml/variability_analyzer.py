@@ -51,7 +51,7 @@ class VariabilityAnalyzer:
     variability changes precede mood episodes by several days.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the analyzer."""
         self.logger = logging.getLogger(__name__)
 
@@ -147,7 +147,7 @@ class VariabilityAnalyzer:
 
     def _extract_activity_series(self, metrics: list[HealthMetric]) -> list[float]:
         """Extract daily step counts from activity metrics."""
-        daily_steps = {}
+        daily_steps: dict[Any, list[float]] = {}
 
         for metric in metrics:
             if metric.activity_data and metric.activity_data.steps:
@@ -157,9 +157,9 @@ class VariabilityAnalyzer:
                 daily_steps[date].append(metric.activity_data.steps)
 
         # Average multiple readings per day
-        series = []
+        series: list[float] = []
         for date in sorted(daily_steps.keys()):
-            series.append(np.mean(daily_steps[date]))
+            series.append(float(np.mean(daily_steps[date])))
 
         return series
 
@@ -184,7 +184,7 @@ class VariabilityAnalyzer:
         if mean_val == 0:
             return 0.0
 
-        return np.std(series) / mean_val
+        return float(np.std(series) / mean_val)
 
     def _calculate_window_variability(
         self, activity_series: list[float], sleep_series: list[float], hours: int
@@ -255,9 +255,9 @@ class VariabilityAnalyzer:
         # Calculate z-score
         z_score = (current_variability - baseline_var) / baseline_var
 
-        spike_detected = z_score >= self.SPIKE_THRESHOLD_ZSCORE
+        spike_detected = bool(z_score >= self.SPIKE_THRESHOLD_ZSCORE)
 
-        return spike_detected, z_score
+        return spike_detected, float(z_score)
 
     def _analyze_trend(self, variability_windows: list[dict[str, float]]) -> str:
         """Analyze trend across multiple time windows."""
@@ -345,7 +345,7 @@ class VariabilityAnalyzer:
                 window_cvs.append(cv)
 
         # Overall metrics
-        intraday_cv = np.mean(window_cvs) if window_cvs else 0.0
+        intraday_cv = float(np.mean(window_cvs)) if window_cvs else 0.0
 
         # Peak-trough ratio
         all_values = [val for _, val in hourly_data]

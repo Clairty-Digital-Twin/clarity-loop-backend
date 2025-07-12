@@ -89,7 +89,7 @@ class ManiaRiskResult(BaseModel):
 class ManiaRiskAnalyzer:
     """Analyzes health data patterns to detect mania/hypomania risk."""
 
-    def __init__(self, config_path: Path | None = None, user_id: str | None = None):
+    def __init__(self, config_path: Path | None = None, user_id: str | None = None) -> None:
         """Initialize with configuration.
 
         Args:
@@ -517,7 +517,7 @@ class ManiaRiskAnalyzer:
     ) -> tuple[float, list[str]]:
         """Analyze physiological markers."""
         score = 0.0
-        factors = []
+        factors: list[str] = []
 
         if not cardio:
             return score, factors
@@ -546,7 +546,7 @@ class ManiaRiskAnalyzer:
     ) -> tuple[float, list[str]]:
         """Analyze temporal patterns and trends."""
         score = 0.0
-        factors = []
+        factors: list[str] = []
 
         # This is where we would implement:
         # - Trend analysis (sleep getting progressively worse)

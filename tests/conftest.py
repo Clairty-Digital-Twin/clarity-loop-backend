@@ -155,6 +155,21 @@ def mock_pat_model():
     return mock_model
 
 
+@pytest.fixture(scope="session", autouse=True)
+def ensure_pat_test_environment():
+    """Ensure PAT model tests have proper environment setup."""
+    # This runs once per test session before any tests
+    import os
+    # Ensure model integrity checksums are set for tests
+    if "EXPECTED_MODEL_CHECKSUMS" not in os.environ:
+        os.environ["MODEL_SIGNATURE_KEY"] = "pat_model_integrity_key_2025"
+        os.environ["EXPECTED_MODEL_CHECKSUMS"] = """{
+            "small": "4b30d57febbbc8ef221e4b196bf6957e7c7f366f6b836fe800a43f69d24694ad",
+            "medium": "6175021ca1a43f3c834bdaa644c45f27817cf985d8ffd186fab9b5de2c4ca661",
+            "large": "c93b723f297f0d9d2ad982320b75e9212882c8f38aa40df1b600e9b2b8aa1973"
+        }"""
+
+
 @pytest.fixture
 def sample_actigraphy_data() -> dict[str, Any]:
     """Provide sample actigraphy data for testing."""

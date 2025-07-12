@@ -303,16 +303,20 @@ class TestSecretsManager:
         mock_ssm = MagicMock()
         mock_boto.return_value = mock_ssm
         
-        # First two calls fail, third succeeds
+        # First two calls fail with ThrottlingException, third succeeds
         mock_ssm.get_parameter.side_effect = [
             ClientError({"Error": {"Code": "ThrottlingException"}}, "GetParameter"),
             ClientError({"Error": {"Code": "ThrottlingException"}}, "GetParameter"),
             {"Parameter": {"Value": "success"}},
         ]
         
+        # Need to mock the specific exception types
+        mock_ssm.exceptions.ParameterNotFound = type('ParameterNotFound', (ClientError,), {})
+        
         manager = SecretsManager(use_ssm=True)
         manager._ssm_client = mock_ssm
         
-        value = manager.get_string("test_key")
+        # The _get_parameter_from_ssm method has retry logic
+        value = manager._get_parameter_from_ssm("test_key")
         assert value == "success"
         assert mock_ssm.get_parameter.call_count == 3

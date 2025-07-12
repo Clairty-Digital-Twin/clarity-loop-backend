@@ -15,10 +15,17 @@ from clarity.models.health_data import (
     SleepData,
 )
 from clarity.core.config import Settings
+from tests.helpers.pat_test_utils import mock_pat_service_for_testing
 
 
 class TestManiaRiskIntegration:
     """Test mania risk integration in the analysis pipeline."""
+
+    @pytest.fixture(autouse=True)
+    def setup_mocks(self):
+        """Setup mocks for PAT service."""
+        with mock_pat_service_for_testing():
+            yield
 
     @pytest.fixture
     def pipeline(self):

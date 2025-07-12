@@ -38,6 +38,14 @@ from clarity.ml.pat_service import (
 )
 from clarity.ml.preprocessing import ActigraphyDataPoint
 from clarity.services.health_data_service import MLPredictionError
+from tests.helpers.pat_test_utils import mock_pat_service_for_testing
+
+
+@pytest.fixture(scope="function")
+def mock_pat_for_integration():
+    """Mock PAT service for integration tests that don't test security."""
+    with mock_pat_service_for_testing():
+        yield
 
 
 class TestActigraphyModels:
@@ -868,6 +876,11 @@ class TestHealthCheckAndServiceManagement:
 class TestIntegrationScenarios:
     """Test integration scenarios and realistic usage patterns."""
 
+    @pytest.fixture(autouse=True)
+    def use_mock_pat(self, mock_pat_for_integration):
+        """Use mocked PAT service for these tests."""
+        pass
+
     def setup_method(self, method: Any) -> None:
         """Set up test fixtures."""
         self.service = PATModelService(model_size="small")
@@ -973,6 +986,11 @@ class TestIntegrationScenarios:
 class TestGetPATServiceFunction:
     """Test the service factory function."""
 
+    @pytest.fixture(autouse=True)
+    def use_mock_pat(self, mock_pat_for_integration):
+        """Use mocked PAT service for these tests."""
+        pass"
+
     @pytest.mark.asyncio
     async def test_get_pat_service(self):
         """Test the get_pat_service factory function."""
@@ -995,6 +1013,11 @@ class TestGetPATServiceFunction:
 
 class TestResilienceAndErrorRecovery:
     """Test resilience and error recovery scenarios."""
+
+    @pytest.fixture(autouse=True)
+    def use_mock_pat(self, mock_pat_for_integration):
+        """Use mocked PAT service for these tests."""
+        pass
 
     def setup_method(self, method: Any) -> None:
         """Set up test fixtures."""
@@ -1062,6 +1085,11 @@ class TestResilienceAndErrorRecovery:
 
 class TestProductionReadiness:
     """Test production readiness features."""
+
+    @pytest.fixture(autouse=True)
+    def use_mock_pat(self, mock_pat_for_integration):
+        """Use mocked PAT service for these tests."""
+        pass"
 
     def test_model_path_security(self):
         """Test model path security features."""

@@ -37,7 +37,7 @@ from clarity.ml.pat_model_loader import (
     ModelSize,
     PATModelLoader,
 )
-from clarity.ml.pat_service import PATService
+from clarity.ml.pat_service import PATModelService
 from clarity.ml.preprocessing import ActigraphyDataPoint
 from clarity.utils.decorators import resilient_prediction
 
@@ -88,7 +88,7 @@ class TestModelCorruption:
     def pat_service(self):
         """Create a PAT service instance for testing."""
         with patch("clarity.ml.pat_service.PATService._initialize_models"):
-            service = PATService(model_size="small")
+            service = PATModelService(model_size="small")
             # Mock the model to avoid actual loading
             service.model = MagicMock()
             service.mania_analyzer = MagicMock()

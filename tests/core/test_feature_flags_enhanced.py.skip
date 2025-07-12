@@ -1,0 +1,2 @@
+# This test is temporarily disabled because it requires aioredis
+# which has Python 3.12 compatibility issues

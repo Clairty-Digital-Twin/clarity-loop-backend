@@ -52,6 +52,13 @@ logger = logging.getLogger(__name__)
 _PROJECT_ROOT = Path(__file__).parent.parent.parent.parent  # Go up to project root
 
 # SECURITY: Model integrity verification will be loaded from secrets manager
+# Fallback checksums for development/testing when secrets manager unavailable
+MODEL_SIGNATURE_KEY = "pat_model_integrity_key_2025"  # In production, use env var
+EXPECTED_MODEL_CHECKSUMS = {
+    "small": "4b30d57febbbc8ef221e4b196bf6957e7c7f366f6b836fe800a43f69d24694ad",
+    "medium": "6175021ca1a43f3c834bdaa644c45f27817cf985d8ffd186fab9b5de2c4ca661",
+    "large": "c93b723f297f0d9d2ad982320b75e9212882c8f38aa40df1b600e9b2b8aa1973",
+}
 
 # Model configurations matching Dartmouth specs exactly
 PAT_CONFIGS = {

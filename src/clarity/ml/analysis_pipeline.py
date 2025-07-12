@@ -839,6 +839,7 @@ class HealthAnalysisPipeline:
                 if "sleep_features" in item:
                     sleep_mins = item["sleep_features"].get("total_sleep_minutes", 0)
                     if sleep_mins > 0:
+                        # Convert Decimal to float if from DynamoDB
                         sleep_hours.append(float(sleep_mins) / 60)
 
                 # Extract steps from activity features list
@@ -867,7 +868,10 @@ class HealthAnalysisPipeline:
         """Extract average daily steps from activity features."""
         for feature in activity_features:
             if feature.get("feature_name") == "average_daily_steps":
-                return feature.get("value")
+                value = feature.get("value")
+                if value is not None:
+                    # Convert Decimal to float if from DynamoDB
+                    return float(value)
         return None
 
     @staticmethod
@@ -875,7 +879,10 @@ class HealthAnalysisPipeline:
         """Extract peak daily steps from activity features."""
         for feature in activity_features:
             if feature.get("feature_name") == "peak_daily_steps":
-                return feature.get("value")
+                value = feature.get("value")
+                if value is not None:
+                    # Convert Decimal to float if from DynamoDB
+                    return float(value)
         return None
 
     @staticmethod
@@ -883,7 +890,10 @@ class HealthAnalysisPipeline:
         """Extract activity consistency score from activity features."""
         for feature in activity_features:
             if feature.get("feature_name") == "activity_consistency_score":
-                return feature.get("value")
+                value = feature.get("value")
+                if value is not None:
+                    # Convert Decimal to float if from DynamoDB
+                    return float(value)
         return None
 
 

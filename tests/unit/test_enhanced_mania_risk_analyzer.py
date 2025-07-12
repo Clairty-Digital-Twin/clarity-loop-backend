@@ -1,17 +1,11 @@
 """Unit tests for EnhancedManiaRiskAnalyzer module."""
 
 from datetime import UTC, datetime, timedelta
-from typing import Any
-from unittest.mock import Mock, patch
-
-import numpy as np
-import pytest
 
 from clarity.ml.enhanced_mania_risk_analyzer import (
     EnhancedManiaRiskAnalyzer,
     EnhancedRiskConfig,
 )
-from clarity.ml.mania_risk_analyzer import ManiaRiskResult
 from clarity.ml.processors.sleep_processor import SleepFeatures
 from clarity.models.health_data import (
     ActivityData,

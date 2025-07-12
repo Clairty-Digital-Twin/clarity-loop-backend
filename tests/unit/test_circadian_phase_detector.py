@@ -1,15 +1,10 @@
 """Unit tests for CircadianPhaseDetector module."""
 
 from datetime import UTC, datetime, timedelta
-from typing import Any
-from unittest.mock import Mock
 
 import pytest
 
-from clarity.ml.circadian_phase_detector import (
-    CircadianPhaseDetector,
-    CircadianPhaseResult,
-)
+from clarity.ml.circadian_phase_detector import CircadianPhaseDetector
 from clarity.models.health_data import (
     ActivityData,
     HealthMetric,

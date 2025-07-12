@@ -13,8 +13,8 @@ import os
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
-import numpy as np
 from boto3.dynamodb.conditions import Key
+import numpy as np
 
 from clarity.ml.fusion_transformer import get_fusion_service
 from clarity.ml.pat_service import ActigraphyAnalysis, ActigraphyInput, get_pat_service
@@ -23,6 +23,7 @@ from clarity.ml.processors.sleep_processor import SleepFeatures
 if TYPE_CHECKING:
     pass  # Only for type stubs now
 
+from clarity.ml.mania_risk_analyzer import ManiaRiskAnalyzer, ManiaRiskResult
 from clarity.ml.preprocessing import HealthDataPreprocessor
 from clarity.ml.processors.activity_processor import ActivityProcessor
 from clarity.ml.processors.cardio_processor import CardioProcessor
@@ -36,7 +37,6 @@ from clarity.models.health_data import (
     SleepData,
 )
 from clarity.storage.dynamodb_client import DynamoDBHealthDataRepository
-from clarity.ml.mania_risk_analyzer import ManiaRiskAnalyzer, ManiaRiskResult
 
 # Constants
 MIN_FEATURE_VECTOR_LENGTH = 8
@@ -201,7 +201,7 @@ class HealthAnalysisPipeline:
                 results,
                 organized_data,
             )
-            
+
             # Add to summary stats
             results.summary_stats.setdefault("health_indicators", {})
             results.summary_stats["health_indicators"]["mania_risk"] = {
@@ -210,12 +210,12 @@ class HealthAnalysisPipeline:
                 "contributing_factors": mania_result.contributing_factors,
                 "confidence": mania_result.confidence,
             }
-            
+
             # Add to clinical insights if significant
-            if mania_result.alert_level in ["moderate", "high"]:
+            if mania_result.alert_level in {"moderate", "high"}:
                 insights = results.summary_stats.setdefault("clinical_insights", [])
                 insights.append(mania_result.clinical_insight)
-                
+
                 # Add recommendations
                 if mania_result.recommendations:
                     results.summary_stats["recommendations"] = mania_result.recommendations
@@ -704,6 +704,149 @@ class HealthAnalysisPipeline:
         timestamps = [metric.created_at for metric in metrics]
         time_span = (max(timestamps) - min(timestamps)).total_seconds() / 3600
         return max(1.0, time_span)  # At least 1 hour
+
+    async def _analyze_mania_risk(
+        self,
+        user_id: str,
+        results: AnalysisResults,
+        organized_data: dict[str, list[HealthMetric]],
+    ) -> ManiaRiskResult:
+        """Analyze mania risk using all available data."""
+        # Initialize analyzer
+        config_path = Path("config/mania_risk_config.yaml")
+        analyzer = ManiaRiskAnalyzer(config_path)
+
+        # Prepare sleep features
+        sleep_features = None
+        if results.sleep_features:
+            sleep_features = SleepFeatures(**results.sleep_features)
+
+        # Prepare PAT metrics from sleep features or other sources
+        pat_metrics = {}
+        if results.sleep_features:
+            pat_metrics.update({
+                "circadian_rhythm_score": results.sleep_features.get(
+                    "circadian_rhythm_score", 0.0
+                ),
+                "activity_fragmentation": results.sleep_features.get(
+                    "activity_fragmentation", 0.0
+                ),
+            })
+
+        # Prepare activity stats
+        activity_stats = None
+        if results.activity_features:
+            # Extract relevant stats from activity features
+            activity_stats = {
+                "avg_daily_steps": self._extract_avg_daily_steps(
+                    results.activity_features
+                ),
+                "peak_daily_steps": self._extract_peak_daily_steps(
+                    results.activity_features
+                ),
+                "activity_consistency": self._extract_activity_consistency(
+                    results.activity_features
+                ),
+            }
+
+        # Prepare cardio stats
+        cardio_stats = None
+        if results.cardio_features and len(results.cardio_features) >= 8:
+            cardio_stats = {
+                "avg_hr": results.cardio_features[0],
+                "resting_hr": results.cardio_features[2],
+                "avg_hrv": results.cardio_features[4],
+                "circadian_rhythm_score": results.cardio_features[7],
+            }
+
+        # Get historical baseline from DynamoDB
+        historical_baseline = await self._get_user_baseline(user_id)
+
+        # Perform mania risk analysis
+        return analyzer.analyze(
+            sleep_features=sleep_features,
+            pat_metrics=pat_metrics,
+            activity_stats=activity_stats,
+            cardio_stats=cardio_stats,
+            historical_baseline=historical_baseline,
+        )
+
+    async def _get_user_baseline(self, user_id: str) -> dict[str, float] | None:
+        """Retrieve user's historical baseline from DynamoDB."""
+        try:
+            dynamodb_client = await self._get_dynamodb_client()
+
+            # Query for past 28 days of analysis
+            end_date = datetime.now(UTC)
+            start_date = end_date - timedelta(days=28)
+
+            response = dynamodb_client.table.query(
+                KeyConditionExpression=Key("pk").eq(f"USER#{user_id}") &
+                                     Key("sk").between(
+                                         f"ANALYSIS#{start_date.isoformat()}",
+                                         f"ANALYSIS#{end_date.isoformat()}"
+                                     ),
+                Limit=28  # Maximum 28 days
+            )
+
+            if not response.get("Items"):
+                return None
+
+            # Calculate baseline averages
+            sleep_hours = []
+            steps = []
+
+            for item in response["Items"]:
+                # Extract sleep hours
+                if "sleep_features" in item:
+                    sleep_mins = item["sleep_features"].get("total_sleep_minutes", 0)
+                    if sleep_mins > 0:
+                        sleep_hours.append(float(sleep_mins) / 60)
+
+                # Extract steps
+                if "activity_features" in item:
+                    daily_steps = item["activity_features"].get("avg_daily_steps", 0)
+                    if daily_steps > 0:
+                        steps.append(float(daily_steps))
+
+            baseline = {}
+            if sleep_hours:
+                baseline["avg_sleep_hours"] = np.mean(sleep_hours)
+                baseline["std_sleep_hours"] = np.std(sleep_hours)
+
+            if steps:
+                baseline["avg_steps"] = np.mean(steps)
+                baseline["std_steps"] = np.std(steps)
+
+            return baseline
+
+        except Exception as e:
+            self.logger.warning(f"Failed to retrieve user baseline: {e}")
+            return None
+
+    @staticmethod
+    def _extract_avg_daily_steps(activity_features: list[dict[str, Any]]) -> float | None:
+        """Extract average daily steps from activity features."""
+        for feature in activity_features:
+            if feature.get("feature_name") == "average_daily_steps":
+                return feature.get("value")
+        return None
+
+    @staticmethod
+    def _extract_peak_daily_steps(activity_features: list[dict[str, Any]]) -> float | None:
+        """Extract peak daily steps from activity features."""
+        for feature in activity_features:
+            if feature.get("feature_name") == "peak_daily_steps":
+                return feature.get("value")
+        return None
+
+    @staticmethod
+    def _extract_activity_consistency(activity_features: list[dict[str, Any]]) -> float | None:
+        """Extract activity consistency score from activity features."""
+        for feature in activity_features:
+            if feature.get("feature_name") == "activity_consistency_score":
+                return feature.get("value")
+        return None
 
 
 class AnalysisPipelineSingleton:

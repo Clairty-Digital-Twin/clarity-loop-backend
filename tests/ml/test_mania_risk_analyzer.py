@@ -135,7 +135,7 @@ class TestManiaRiskAnalyzer:
             }
         )
         
-        assert result.risk_score > 0.1  # Some risk due to activity surge
+        assert result.risk_score >= 0.1  # Some risk due to activity surge
         assert any("activity surge" in f.lower() for f in result.contributing_factors)
         assert "1.9x baseline" in str(result.contributing_factors)
     

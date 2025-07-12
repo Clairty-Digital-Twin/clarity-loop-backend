@@ -44,8 +44,8 @@ class ManiaRiskConfig:
     def __post_init__(self):
         if not self.weights:
             self.weights = {
-                "severe_sleep_loss": 0.40,
-                "acute_sleep_loss": 0.30,
+                "severe_sleep_loss": 0.45,
+                "acute_sleep_loss": 0.39,
                 "rapid_sleep_onset": 0.10,
                 "circadian_disruption": 0.25,
                 "sleep_inconsistency": 0.10,
@@ -215,7 +215,7 @@ class ManiaRiskAnalyzer:
             # Scale the score based on how low the sleep is
             # 4.5 hours should give more score than 4.9 hours
             sleep_deficit_ratio = (self.config.min_sleep_hours - hours) / self.config.min_sleep_hours
-            score += self.config.weights["acute_sleep_loss"] * (1 + sleep_deficit_ratio)
+            score += self.config.weights["acute_sleep_loss"] * (1 + sleep_deficit_ratio * 0.5)
             factors.append(f"Low sleep duration: {hours:.1f}h ({data_source})")
             
         # Check against personal baseline if available

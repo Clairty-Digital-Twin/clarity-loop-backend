@@ -106,7 +106,7 @@ async def demonstrate_model_fallback():
         model_dir.mkdir()
 
         # Create model loader
-        loader = PATModelLoader(model_dir)
+        _ = PATModelLoader(model_dir)
 
         # This would normally load actual models
         logger.info("Model fallback demonstration requires actual model files")

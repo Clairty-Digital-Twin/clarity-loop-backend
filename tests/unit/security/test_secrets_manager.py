@@ -18,7 +18,7 @@ class TestSecretsManager:
 
     def test_init_with_defaults(self):
         """Test initialization with default values."""
-        with patch("boto3.client") as mock_boto:
+        with patch("boto3.client"):
             # Mock the AWS environment detection to return False
             with patch.object(
                 SecretsManager, "_is_aws_environment", return_value=False
@@ -54,7 +54,7 @@ class TestSecretsManager:
                     "CLARITY_USE_SSM": "true",
                 },
             ),
-            patch("boto3.client") as mock_boto,
+            patch("boto3.client"),
         ):
             manager = SecretsManager()
             assert manager.ssm_prefix == "/env/prefix"

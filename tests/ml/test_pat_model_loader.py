@@ -263,7 +263,7 @@ class TestPATModelLoader:
         # Setup S3 mock to return model data
         config = get_model_config(ModelSize.LARGE)
         real_model = PATModel(config)
-        model_bytes = torch.save(real_model.state_dict(), "buffer")
+        _ = torch.save(real_model.state_dict(), "buffer")
 
         # Mock the S3 download
         mock_s3_service.download_file = AsyncMock(return_value=b"fake_model_data")

@@ -349,7 +349,7 @@ class TestModelCorruption:
                 metrics={},
             )
 
-            result = await model_loader.fallback_to_previous(ModelSize.SMALL)
+            _ = await model_loader.fallback_to_previous(ModelSize.SMALL)
 
             assert mock_load.call_count >= 1
 
@@ -461,7 +461,7 @@ class TestModelCorruption:
 
         # Get original manifest
         manifest = checksum_manager.get_model_info("size_test")
-        original_size = manifest["files"]["model.pth"]["size_bytes"]
+        _ = manifest["files"]["model.pth"]["size_bytes"]
 
         # Modify file size
         model_file.write_bytes(original_data + b"extra_data")
@@ -480,7 +480,7 @@ class TestModelCorruption:
         # Load v1
         with patch.object(loader, "_load_model_weights", return_value=MagicMock()):
             with patch.object(loader, "_validate_model"):
-                model_v1 = await loader.load_model(ModelSize.SMALL, version="1")
+                _ = await loader.load_model(ModelSize.SMALL, version="1")
 
         # Create corrupted v2
         v2_path = temp_model_dir / "pat_small_v2.pth"

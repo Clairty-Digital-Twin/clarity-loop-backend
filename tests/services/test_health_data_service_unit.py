@@ -36,7 +36,7 @@ class TestHealthDataServiceHappyPath:
         service = HealthDataService(mock_repository, mock_config)
 
         # Create test data
-        processing_id = str(uuid.uuid4())
+        _ = str(uuid.uuid4())
         upload_data = HealthDataUpload(
             user_id=str(uuid.uuid4()),
             upload_source="test",

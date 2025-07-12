@@ -626,8 +626,9 @@ class TestGetInsightHistoryEndpoint:
         mock_client = MagicMock()
         mock_get_client.return_value = mock_client
 
-        # Mock historical insights
-        mock_history_data = {
+        # Mock historical insights (unused - keeping for reference)
+        # This data structure shows expected format but actual mocking is done below
+        _ = {
             "insights": [
                 {
                     "insight_id": "insight_123",

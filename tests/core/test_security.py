@@ -34,7 +34,7 @@ class TestSecureHashGenerator:
 
     def test_hash_with_salt(self):
         """Test hash generation with salt."""
-        generator = SecureHashGenerator()
+        _ = SecureHashGenerator()
 
         # Test with different algorithms produces different hashes
         generator_sha256 = SecureHashGenerator(algorithm="sha256")

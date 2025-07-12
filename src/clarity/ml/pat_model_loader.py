@@ -416,7 +416,7 @@ class PATModelLoader:
 
                 ctx["success"] = True
 
-            except Exception as e:
+            except Exception:
                 ctx["success"] = False
                 raise
 

@@ -11,7 +11,6 @@ import os
 from pathlib import Path
 import subprocess
 import sys
-from typing import List, Tuple
 
 # Configure logging
 logging.basicConfig(

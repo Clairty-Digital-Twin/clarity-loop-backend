@@ -610,8 +610,8 @@ class TestAuditTrailDecorator:
             )
             def test_func(user: object = None, resource: object = None) -> str:
                 # Use the parameters to avoid ARG001 unused argument error
-                _user_info = str(user) if user else "unknown"
-                _resource_info = str(resource) if resource else "unknown"
+                _ = str(user) if user else "unknown"
+                _ = str(resource) if resource else "unknown"
                 return "updated"
 
             result = test_func(user="user123", resource="resource456")
@@ -1001,7 +1001,7 @@ class TestDecoratorEdgeCases:
             @audit_trail("complex_data_op", user_id_param="user_data")
             def test_func(user_data: object = None) -> str:
                 # Use the parameter to avoid ARG001 unused argument error
-                _user_info = str(user_data) if user_data else "no_user"
+                _ = str(user_data) if user_data else "no_user"
                 return "processed"
 
             # Test with dict parameter

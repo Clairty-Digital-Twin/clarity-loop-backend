@@ -139,7 +139,7 @@ class TestPersonalBaselineTracker:
         """Test deviation scores for extreme values."""
         # Create baseline
         metrics = self.create_health_metrics(days=28)
-        baseline = self.tracker.update_baseline(self.user_id, metrics)
+        _ = self.tracker.update_baseline(self.user_id, metrics)
 
         # Test extreme values
         extreme_metrics = {
@@ -301,7 +301,7 @@ class TestPersonalBaselineTracker:
     def test_export_baseline(self):
         """Test baseline export functionality."""
         metrics = self.create_health_metrics(days=14)
-        baseline = self.tracker.update_baseline(self.user_id, metrics)
+        _ = self.tracker.update_baseline(self.user_id, metrics)
 
         exported = self.tracker.export_baseline(self.user_id)
 

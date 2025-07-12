@@ -280,7 +280,7 @@ class TestHealthDataUploadValidator:
                     biometric_data=BiometricData(heart_rate=70.0 + (i % 50)),
                 ) for i in range(max_metrics + 1)]
 
-        with pytest.raises(ValidationError) as exc_info:
+        with pytest.raises(ValidationError):
             HealthDataUpload(
                 user_id=uuid4(),
                 metrics=metrics,

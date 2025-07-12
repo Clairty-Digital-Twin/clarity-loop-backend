@@ -128,7 +128,7 @@ class TestDynamoDBConnectionBehavior:
 
         # Act - acquire all connections
         conn1 = connection.acquire_connection()
-        conn2 = connection.acquire_connection()
+        _ = connection.acquire_connection()
 
         # Try to acquire one more
         with pytest.raises(ConnectionPoolExhaustedError):
@@ -157,7 +157,7 @@ class TestDynamoDBConnectionBehavior:
             mock_resource.return_value = mock_dynamo
 
             # Act
-            resource = connection.get_resource()
+            _ = connection.get_resource()
             health_status = connection.check_health()
 
             # Assert
@@ -220,7 +220,7 @@ class TestDynamoDBConnectionBehavior:
 
         with patch("boto3.resource") as mock_resource:
             mock_resource.return_value = MagicMock()
-            resource = connection.get_resource()
+            _ = connection.get_resource()
 
             # Act
             connection.shutdown(grace_period_seconds=5)

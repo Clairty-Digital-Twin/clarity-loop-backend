@@ -472,7 +472,7 @@ class PATModelService(IMLModelService):
             )
 
             # Load pre-trained encoder weights if available
-            weights_loaded = self._load_pretrained_weights()
+            _ = self._load_pretrained_weights()
 
             # Only fail if weights file exists but integrity check failed
             # If weights_loaded is False due to empty/incompatible file, that's ok (use random init)

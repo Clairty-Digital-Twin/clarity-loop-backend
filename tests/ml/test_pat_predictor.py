@@ -481,7 +481,7 @@ class TestPATPredictor:
             ),
         ]
 
-        results = await predictor.predict_batch(requests)
+        _ = await predictor.predict_batch(requests)
 
         # Should load model twice (once per size)
         assert call_count >= 2  # May be more due to internal calls

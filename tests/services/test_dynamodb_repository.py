@@ -349,7 +349,7 @@ class TestHealthDataRepository:
         mock_table.query.return_value = {"Items": [{"id": "1", "data": "test"}]}
 
         # Act
-        result = await health_repo.get_by_date_range(user_id, start_date, end_date)
+        _ = await health_repo.get_by_date_range(user_id, start_date, end_date)
 
         # Assert
         mock_table.query.assert_called_once_with(
@@ -621,7 +621,7 @@ class TestAuditLogRepository:
         audit_repo.create = AsyncMock(return_value="audit-id")
 
         # Act
-        result = await audit_repo.create_audit_log(
+        _ = await audit_repo.create_audit_log(
             operation="DELETE",
             table="test_table",
             item_id="item-123",

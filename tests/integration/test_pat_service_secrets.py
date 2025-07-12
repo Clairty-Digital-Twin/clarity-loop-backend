@@ -27,7 +27,7 @@ class TestPATServiceSecretsIntegration:
     def test_pat_service_uses_secrets_manager_for_checksums(self):
         """Test that PAT service retrieves checksums from secrets manager."""
         # Set up test checksums via environment
-        test_checksums = {
+        _ = {
             "small": "test-checksum-small",
             "medium": "test-checksum-medium",
             "large": "test-checksum-large",
@@ -83,7 +83,7 @@ class TestPATServiceSecretsIntegration:
             clarity.security.secrets_manager._secrets_manager = None
 
             # Create PAT service
-            service = PATModelService(model_size="medium")
+            _ = PATModelService(model_size="medium")
 
             # Mock the file reading to avoid actual file I/O
             from pathlib import Path
@@ -132,7 +132,7 @@ class TestPATServiceSecretsIntegration:
         # Set minimal environment for test
         with patch.dict(os.environ, {}, clear=True):
             # Create PAT service - should use defaults
-            service = PATModelService(model_size="large")
+            _ = PATModelService(model_size="large")
 
             # Get secrets manager and verify defaults are used
             manager = get_secrets_manager()

@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Create a demo user in AWS Cognito for testing the live ML pipeline.
+
 This bypasses shell integration issues by using boto3 directly.
 """
 
@@ -24,7 +25,7 @@ def create_demo_user() -> bool | None:
 
     try:
         # Create user
-        response = cognito.admin_create_user(
+        cognito.admin_create_user(
             UserPoolId=USER_POOL_ID,
             Username=username,
             UserAttributes=[
@@ -49,7 +50,7 @@ def create_demo_user() -> bool | None:
         cognito.admin_set_user_password(
             UserPoolId=USER_POOL_ID,
             Username=username,
-            Password="DemoPassword123!",
+            Password="DemoPassword123!",  # noqa: S106
             Permanent=True
         )
 
@@ -65,7 +66,7 @@ def create_demo_user() -> bool | None:
         return False
 
 
-def get_jwt_token_via_api():
+def get_jwt_token_via_api() -> str | None:
     """Get JWT token using the live API login endpoint."""
     API_BASE = "https://clarity.novamindnyc.com/api/v1"
 
@@ -101,7 +102,7 @@ def get_jwt_token_via_api():
         return None
 
 
-def test_live_ml_pipeline(token):
+def test_live_ml_pipeline(token: str) -> bool:
     """Test the live ML pipeline with real authentication."""
     API_BASE = "https://clarity.novamindnyc.com/api/v1"
 
@@ -168,7 +169,7 @@ def test_live_ml_pipeline(token):
         return False
 
 
-def test_multiple_endpoints(token):
+def test_multiple_endpoints(token: str) -> None:
     """Test multiple ML endpoints to see what's available."""
     API_BASE = "https://clarity.novamindnyc.com/api/v1"
 

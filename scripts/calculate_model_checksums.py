@@ -14,7 +14,7 @@ def calculate_file_checksum(filepath: str) -> str:
         sha256_hash = hashlib.sha256()
 
         # Read file in chunks to handle large files
-        with open(filepath, "rb") as f:
+        with Path(filepath).open("rb") as f:
             for chunk in iter(lambda: f.read(8192), b""):
                 sha256_hash.update(chunk)
 
@@ -26,7 +26,7 @@ def calculate_file_checksum(filepath: str) -> str:
             hashlib.sha256,
         ).hexdigest()
 
-    except Exception as e:
+    except (IOError, OSError) as e:
         print(f"Error calculating checksum for {filepath}: {e}")
         return ""
 

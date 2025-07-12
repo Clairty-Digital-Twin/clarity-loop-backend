@@ -50,7 +50,7 @@ class HealthAnalysisResponse(BaseModel):
 async def startup_event() -> None:
     """Initialize feature flag system on startup."""
     # Set up enhanced feature flags
-    manager = setup_feature_flags_for_app(app, settings)
+    setup_feature_flags_for_app(app, settings)
     logger.info("Feature flag system initialized")
 
     # Log initial configuration
@@ -59,7 +59,7 @@ async def startup_event() -> None:
 
 
 @app.get("/health")
-async def health_check():
+async def health_check() -> dict[str, any]:
     """Health check endpoint including feature flag status."""
     ff_health = get_feature_flag_health()
 
@@ -73,13 +73,13 @@ async def health_check():
 
 
 @app.get("/feature-flags/status")
-async def feature_flag_status():
+async def feature_flag_status() -> dict[str, any]:
     """Get detailed feature flag system status."""
     return get_feature_flag_health()
 
 
 @app.post("/feature-flags/refresh")
-async def refresh_feature_flags():
+async def refresh_feature_flags() -> dict[str, any] | Response:
     """Manually trigger feature flag refresh."""
     if not hasattr(app.state, "feature_flag_manager"):
         raise HTTPException(
@@ -107,7 +107,7 @@ async def refresh_feature_flags():
 
 
 @app.post("/analyze", response_model=HealthAnalysisResponse)
-async def analyze_health_data(request: HealthAnalysisRequest):
+async def analyze_health_data(request: HealthAnalysisRequest) -> HealthAnalysisResponse:
     """Analyze health data with feature flag controlled behavior."""
     user_id = request.user_id
 
@@ -157,7 +157,7 @@ async def analyze_health_data(request: HealthAnalysisRequest):
 
 
 @app.websocket("/feature-flags/stream")
-async def feature_flag_stream(websocket) -> None:
+async def feature_flag_stream(websocket: any) -> None:
     """WebSocket endpoint for real-time feature flag updates."""
     await websocket.accept()
 

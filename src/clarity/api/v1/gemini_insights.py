@@ -51,15 +51,26 @@ def set_dependencies(
     _auth_provider = auth_provider
     _config_provider = config_provider
 
-    # Initialize Gemini service
+    # Initialize Gemini service with correct GCP project ID
+    from clarity.services.gcp_credentials import get_gcp_credentials_manager
+    
+    credentials_manager = get_gcp_credentials_manager()
+    project_id = credentials_manager.get_project_id()
+    
     if config_provider.is_development():
         logger.info("🧪 Gemini insights running in development mode")
-        # In development, we might not have real Vertex AI credentials
-        _gemini_service = GeminiService(project_id="dev-project")
+        # In development, use the actual project ID or fallback
+        _gemini_service = GeminiService(
+            project_id=project_id or "clarity-loop-backend",
+            testing=True
+        )
     else:
-        # Production setup - using AWS region instead of GCP project
+        # Production setup - use actual GCP project ID
         aws_settings = get_settings()
-        _gemini_service = GeminiService(project_id=aws_settings.aws_region)
+        _gemini_service = GeminiService(
+            project_id=project_id or getattr(aws_settings, "gcp_project_id", "clarity-loop-backend"),
+            location=getattr(aws_settings, "vertex_ai_location", "us-central1")
+        )
 
 
 def get_gemini_service() -> GeminiService:

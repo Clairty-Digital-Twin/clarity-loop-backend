@@ -28,8 +28,31 @@ class InsightSubscriber:
     def __init__(self) -> None:
         """Initialize insight subscriber."""
         self.logger = logging.getLogger(__name__)
-        self.storage_client = storage.Client()
-        self.gemini_service = GeminiService()
+        
+        # Initialize storage client only if credentials are available
+        try:
+            from clarity.services.gcp_credentials import get_gcp_credentials_manager
+            
+            credentials_manager = get_gcp_credentials_manager()
+            if credentials_manager.get_credentials_path():
+                self.storage_client = storage.Client()
+                self.logger.info("Google Cloud Storage client initialized")
+            else:
+                self.storage_client = None
+                self.logger.warning("No GCP credentials found, storage client disabled")
+        except Exception as e:
+            self.storage_client = None
+            self.logger.warning("Failed to initialize storage client: %s", e)
+        
+        # Initialize Gemini service with correct project ID
+        from clarity.services.gcp_credentials import get_gcp_credentials_manager
+        
+        credentials_manager = get_gcp_credentials_manager()
+        project_id = credentials_manager.get_project_id()
+        
+        self.gemini_service = GeminiService(
+            project_id=project_id or "clarity-loop-backend"
+        )
 
         # Environment settings
         self.environment = os.getenv("ENVIRONMENT", "development")

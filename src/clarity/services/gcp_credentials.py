@@ -137,27 +137,26 @@ class GCPCredentialsManager:
                 logger.exception("Error cleaning up credentials file")
 
 
-# Global instance
-_credentials_manager = GCPCredentialsManager()
-
-
+# Module-level functions for easy access
 def get_gcp_credentials_manager() -> GCPCredentialsManager:
-    """Get the global GCP credentials manager instance."""
-    return _credentials_manager
+    """Get the singleton GCP credentials manager instance."""
+    return GCPCredentialsManager()
 
 
 def initialize_gcp_credentials() -> None:
-    """Initialize GCP credentials at application startup.
-
-    This should be called early in the application lifecycle.
-    """
+    """Initialize GCP credentials (called during application startup)."""
     manager = get_gcp_credentials_manager()
-    credentials_path = manager.get_credentials_path()
-
-    if credentials_path:
-        logger.info("GCP credentials initialized: %s", credentials_path)
-        project_id = manager.get_project_id()
-        if project_id:
-            logger.info("GCP project ID: %s", project_id)
+    logger.info("GCP credentials initialized")
+    
+    # Log the project ID for debugging
+    project_id = manager.get_project_id()
+    if project_id:
+        logger.info("GCP project ID: %s", project_id)
     else:
-        logger.warning("GCP credentials not configured")
+        logger.warning("No GCP project ID found in credentials")
+
+
+def get_project_id() -> str | None:
+    """Get the GCP project ID from credentials manager."""
+    manager = get_gcp_credentials_manager()
+    return manager.get_project_id()

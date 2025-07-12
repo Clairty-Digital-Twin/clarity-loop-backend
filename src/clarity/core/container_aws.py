@@ -191,9 +191,21 @@ class DependencyContainer:
 
         with service_initialization_duration.labels(service=service_name).time():
             try:
+                # Get GCP project ID from credentials manager or settings
+                from clarity.services.gcp_credentials import get_gcp_credentials_manager
+                
+                credentials_manager = get_gcp_credentials_manager()
+                project_id = credentials_manager.get_project_id()
+                
+                # Fallback to settings if credentials manager doesn't have project ID
+                if not project_id:
+                    project_id = getattr(self.settings, "gcp_project_id", "clarity-loop-backend")
+                
+                logger.info("Using GCP project ID: %s", project_id)
+                
                 # Create enterprise Gemini service (Vertex AI)
                 self._gemini_service = GeminiService(
-                    project_id=getattr(self.settings, "gcp_project_id", None),
+                    project_id=project_id,
                     location=getattr(
                         self.settings, "vertex_ai_location", "us-central1"
                     ),

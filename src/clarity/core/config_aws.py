@@ -96,6 +96,18 @@ class Settings(BaseSettings):
     )
     aws_session_token: str | None = Field(default=None, alias="AWS_SESSION_TOKEN")
 
+    # GCP Settings for Vertex AI
+    gcp_project_id: str = Field(
+        default="clarity-loop-backend",
+        alias="GCP_PROJECT_ID",
+        description="Google Cloud Project ID for Vertex AI"
+    )
+    vertex_ai_location: str = Field(
+        default="us-central1",
+        alias="VERTEX_AI_LOCATION",
+        description="Vertex AI location/region"
+    )
+
     # AWS Cognito Settings
     cognito_user_pool_id: str = Field(
         default="us-east-1_efXaR5EcP", alias="COGNITO_USER_POOL_ID"

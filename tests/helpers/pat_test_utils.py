@@ -47,10 +47,16 @@ def mock_pat_service_for_testing():
                 mock_model.eval = Mock(return_value=mock_model)
                 mock_model.to = Mock(return_value=mock_model)
                 
-                # Mock model forward pass
+                # Mock model forward pass to return proper tensor
                 import torch
-                mock_output = torch.randn(1, 18)  # 18 classes
-                mock_model.return_value = mock_output
+                import numpy as np
+                
+                # Create a mock that returns proper output when called
+                def mock_forward(*args, **kwargs):
+                    # Return a tensor with proper shape for 18 classes
+                    return torch.tensor(np.random.rand(1, 18).astype(np.float32))
+                
+                mock_model.side_effect = mock_forward
                 
                 with patch("clarity.ml.pat_service.PATForMentalHealthClassification", return_value=mock_model):
                     yield

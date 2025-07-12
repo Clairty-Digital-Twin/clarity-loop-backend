@@ -9,6 +9,9 @@ References:
 - eBioMedicine (2024): Causal dynamics in bipolar disorder
 """
 
+import json
+import logging
+from datetime import datetime, timedelta, UTC
 from typing import Optional, Tuple, Dict, Any
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -70,8 +73,17 @@ class ManiaRiskResult(BaseModel):
 class ManiaRiskAnalyzer:
     """Analyzes health data patterns to detect mania/hypomania risk."""
     
-    def __init__(self, config_path: Optional[Path] = None):
-        """Initialize with configuration."""
+    def __init__(self, config_path: Optional[Path] = None, user_id: Optional[str] = None):
+        """Initialize with configuration.
+        
+        Args:
+            config_path: Path to YAML configuration file
+            user_id: User ID for alert tracking (optional)
+        """
+        self.logger = logging.getLogger(__name__)
+        self.user_id = user_id
+        self._last_high_alert_cache: Dict[str, datetime] = {}  # In-memory cache for demo
+        
         if config_path and config_path.exists():
             with open(config_path) as f:
                 config_dict = yaml.safe_load(f)
@@ -87,6 +99,18 @@ class ManiaRiskAnalyzer:
         self.moderate_threshold = 0.4
         self.high_threshold = 0.7
         
+        self.logger.info(
+            "ManiaRiskAnalyzer initialized",
+            extra={
+                "user_id": self._sanitize_user_id(user_id),
+                "config_path": str(config_path) if config_path else "default",
+                "thresholds": {
+                    "moderate": self.moderate_threshold,
+                    "high": self.high_threshold
+                }
+            }
+        )
+        
     def analyze(
         self,
         sleep_features: Optional[SleepFeatures] = None,
@@ -94,6 +118,7 @@ class ManiaRiskAnalyzer:
         activity_stats: Optional[Dict[str, Any]] = None,
         cardio_stats: Optional[Dict[str, float]] = None,
         historical_baseline: Optional[Dict[str, float]] = None,
+        user_id: Optional[str] = None,
     ) -> ManiaRiskResult:
         """
         Analyze multi-modal health data for mania risk indicators.
@@ -104,13 +129,34 @@ class ManiaRiskAnalyzer:
             activity_stats: Activity statistics from ActivityProcessor
             cardio_stats: Cardiovascular metrics from CardioProcessor
             historical_baseline: User's personal baseline (28-day averages)
+            user_id: User ID for alert tracking
             
         Returns:
             ManiaRiskResult with score, level, and clinical insights
         """
+        analysis_start = datetime.now(UTC)
         score = 0.0
         factors = []
         confidence = 1.0
+        component_scores = {}
+        
+        # Use provided user_id or instance user_id
+        uid = user_id or self.user_id
+        
+        # Log analysis start with available data sources
+        self.logger.info(
+            "Starting mania risk analysis",
+            extra={
+                "user_id": self._sanitize_user_id(uid),
+                "data_sources": {
+                    "sleep_features": sleep_features is not None,
+                    "pat_metrics": pat_metrics is not None,
+                    "activity_stats": activity_stats is not None,
+                    "cardio_stats": cardio_stats is not None,
+                    "historical_baseline": historical_baseline is not None,
+                }
+            }
+        )
         
         # 1. Sleep Analysis
         sleep_score, sleep_factors, sleep_conf = self._analyze_sleep(
@@ -119,6 +165,20 @@ class ManiaRiskAnalyzer:
         score += sleep_score
         factors.extend(sleep_factors)
         confidence *= sleep_conf
+        component_scores["sleep"] = sleep_score
+        
+        # Log sleep analysis results
+        if sleep_score > 0:
+            self.logger.info(
+                "Sleep analysis completed",
+                extra={
+                    "user_id": self._sanitize_user_id(uid),
+                    "component": "sleep",
+                    "score": round(sleep_score, 3),
+                    "factors": sleep_factors,
+                    "confidence": round(sleep_conf, 3)
+                }
+            )
         
         # 2. Circadian Rhythm Analysis
         circadian_score, circadian_factors = self._analyze_circadian(
@@ -126,6 +186,19 @@ class ManiaRiskAnalyzer:
         )
         score += circadian_score
         factors.extend(circadian_factors)
+        component_scores["circadian"] = circadian_score
+        
+        # Log circadian analysis results
+        if circadian_score > 0:
+            self.logger.info(
+                "Circadian analysis completed",
+                extra={
+                    "user_id": self._sanitize_user_id(uid),
+                    "component": "circadian",
+                    "score": round(circadian_score, 3),
+                    "factors": circadian_factors
+                }
+            )
         
         # 3. Activity Analysis
         activity_score, activity_factors = self._analyze_activity(
@@ -133,6 +206,19 @@ class ManiaRiskAnalyzer:
         )
         score += activity_score
         factors.extend(activity_factors)
+        component_scores["activity"] = activity_score
+        
+        # Log activity analysis results
+        if activity_score > 0:
+            self.logger.info(
+                "Activity analysis completed",
+                extra={
+                    "user_id": self._sanitize_user_id(uid),
+                    "component": "activity",
+                    "score": round(activity_score, 3),
+                    "factors": activity_factors
+                }
+            )
         
         # 4. Physiological Analysis
         physio_score, physio_factors = self._analyze_physiology(
@@ -140,6 +226,19 @@ class ManiaRiskAnalyzer:
         )
         score += physio_score
         factors.extend(physio_factors)
+        component_scores["physiology"] = physio_score
+        
+        # Log physiology analysis results
+        if physio_score > 0:
+            self.logger.info(
+                "Physiology analysis completed",
+                extra={
+                    "user_id": self._sanitize_user_id(uid),
+                    "component": "physiology",
+                    "score": round(physio_score, 3),
+                    "factors": physio_factors
+                }
+            )
         
         # 5. Temporal Pattern Analysis
         temporal_score, temporal_factors = self._analyze_temporal_patterns(
@@ -163,6 +262,21 @@ class ManiaRiskAnalyzer:
         score = max(0.0, min(1.0, score))
         alert_level = self._determine_alert_level(score, confidence)
         
+        # Check for rate limiting on high alerts
+        if uid and alert_level == "high":
+            is_duplicate = self._check_duplicate_high_alert(uid)
+            if is_duplicate:
+                self.logger.warning(
+                    "High alert rate limited",
+                    extra={
+                        "user_id": self._sanitize_user_id(uid),
+                        "original_level": "high",
+                        "adjusted_level": "moderate",
+                        "reason": "duplicate_high_alert_within_24h"
+                    }
+                )
+                alert_level = "moderate"  # Downgrade to prevent alert fatigue
+        
         # Generate clinical insight and recommendations
         clinical_insight = self._generate_clinical_insight(
             alert_level, factors, score
@@ -170,6 +284,39 @@ class ManiaRiskAnalyzer:
         recommendations = self._generate_recommendations(
             alert_level, factors
         )
+        
+        # Calculate analysis duration
+        analysis_duration = (datetime.now(UTC) - analysis_start).total_seconds()
+        
+        # Log final analysis results
+        self.logger.info(
+            "Mania risk analysis completed",
+            extra={
+                "user_id": self._sanitize_user_id(uid),
+                "risk_score": round(score, 3),
+                "alert_level": alert_level,
+                "confidence": round(confidence, 3),
+                "component_scores": {k: round(v, 3) for k, v in component_scores.items()},
+                "num_factors": len(factors),
+                "top_factors": factors[:3] if factors else [],
+                "analysis_duration_seconds": round(analysis_duration, 3),
+                "has_recommendations": len(recommendations) > 0
+            }
+        )
+        
+        # Log high-risk alerts separately for monitoring
+        if alert_level in ["moderate", "high"]:
+            self.logger.warning(
+                f"Elevated mania risk detected: {alert_level}",
+                extra={
+                    "user_id": self._sanitize_user_id(uid),
+                    "alert_type": "mania_risk",
+                    "severity": alert_level,
+                    "risk_score": round(score, 3),
+                    "primary_factors": factors[:2] if factors else [],
+                    "clinical_action_required": alert_level == "high"
+                }
+            )
         
         return ManiaRiskResult(
             risk_score=score,
@@ -465,3 +612,60 @@ class ManiaRiskAnalyzer:
                 )
         
         return recommendations
+    
+    def _sanitize_user_id(self, user_id: Optional[str]) -> str:
+        """Sanitize user ID for logging to protect PHI.
+        
+        Args:
+            user_id: Raw user ID
+            
+        Returns:
+            Sanitized user ID safe for logging
+        """
+        if not user_id:
+            return "anonymous"
+        
+        # For production, you might hash the user_id or use first/last few chars
+        # For now, we'll use a simple truncation
+        if len(user_id) > 8:
+            return f"{user_id[:4]}...{user_id[-4:]}"
+        return user_id
+    
+    def _check_duplicate_high_alert(self, user_id: str) -> bool:
+        """Check if user had a high alert in the last 24 hours.
+        
+        Args:
+            user_id: User identifier
+            
+        Returns:
+            True if duplicate high alert within 24 hours
+        """
+        now = datetime.now(UTC)
+        cutoff_time = now - timedelta(hours=24)
+        
+        # Check in-memory cache (for production, use DynamoDB or Redis)
+        if user_id in self._last_high_alert_cache:
+            last_alert_time = self._last_high_alert_cache[user_id]
+            if last_alert_time > cutoff_time:
+                return True
+        
+        # Update cache with new alert time
+        self._last_high_alert_cache[user_id] = now
+        
+        # Clean old entries from cache periodically
+        if len(self._last_high_alert_cache) > 1000:
+            self._cleanup_alert_cache(cutoff_time)
+        
+        return False
+    
+    def _cleanup_alert_cache(self, cutoff_time: datetime) -> None:
+        """Remove old entries from alert cache.
+        
+        Args:
+            cutoff_time: Remove entries older than this time
+        """
+        self._last_high_alert_cache = {
+            uid: alert_time
+            for uid, alert_time in self._last_high_alert_cache.items()
+            if alert_time > cutoff_time
+        }

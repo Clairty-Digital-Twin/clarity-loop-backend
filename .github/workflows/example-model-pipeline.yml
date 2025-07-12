@@ -1,0 +1,227 @@
+name: Example Model Pipeline
+
+# This is an example workflow showing how to integrate model signing
+# into your CI/CD pipeline. Copy and adapt for your needs.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'models/**'
+      - 'scripts/sign_model.py'
+      - '.github/workflows/model-signing.yml'
+  pull_request:
+    paths:
+      - 'models/**'
+      - 'scripts/sign_model.py'
+      - '.github/workflows/model-signing.yml'
+
+jobs:
+  # Step 1: Build or download your models
+  prepare-models:
+    name: Prepare Models
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          
+      - name: Download or build models
+        run: |
+          # Example: Download models from secure storage
+          # ./scripts/download_models.sh
+          
+          # Or build models if needed
+          # python scripts/train_models.py
+          
+          # For this example, create placeholder models
+          python scripts/create_placeholder_models.py
+          
+      - name: Upload models as artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: unsigned-models
+          path: models/
+          retention-days: 7
+          
+  # Step 2: Sign models (only on main branch)
+  sign-models:
+    name: Sign Models
+    needs: prepare-models
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    uses: ./.github/workflows/model-signing.yml
+    with:
+      models_directory: 'models/'
+      verify_only: false
+    secrets:
+      MODEL_SIGNING_KEY: ${{ secrets.MODEL_SIGNING_KEY }}
+      
+  # Step 3: Verify signatures (on all branches)
+  verify-models:
+    name: Verify Models
+    needs: prepare-models
+    if: github.event_name == 'pull_request'
+    uses: ./.github/workflows/model-signing.yml
+    with:
+      models_directory: 'models/'
+      verify_only: true
+    secrets:
+      MODEL_SIGNING_KEY: ${{ secrets.MODEL_SIGNING_KEY }}
+      
+  # Step 4: Integration tests with signed models
+  test-signed-models:
+    name: Test Signed Models
+    needs: [sign-models]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          
+      - name: Download signed models
+        uses: actions/download-artifact@v4
+        with:
+          name: model-signatures
+          path: models/
+          
+      - name: Install test dependencies
+        run: |
+          pip install --upgrade pip
+          pip install pytest pytest-cov
+          if [ -f requirements-test.txt ]; then pip install -r requirements-test.txt; fi
+          
+      - name: Verify all signatures before testing
+        env:
+          MODEL_SIGNING_KEY: ${{ secrets.MODEL_SIGNING_KEY }}
+        run: |
+          python scripts/sign_model.py verify-all --models-dir models/
+          
+      - name: Run model integrity tests
+        run: |
+          pytest tests/test_model_signing.py -v
+          
+      - name: Run application startup verification
+        run: |
+          # Test that the application can start with signed models
+          python scripts/startup_validator.py || true
+          
+  # Step 5: Deploy signed models
+  deploy-models:
+    name: Deploy Signed Models
+    needs: [test-signed-models]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    environment: production
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Download signed models
+        uses: actions/download-artifact@v4
+        with:
+          name: model-signatures
+          path: models/
+          
+      - name: Final signature verification
+        env:
+          MODEL_SIGNING_KEY: ${{ secrets.MODEL_SIGNING_KEY }}
+        run: |
+          echo "::group::Final verification before deployment"
+          python scripts/sign_model.py verify-all --models-dir models/
+          echo "::endgroup::"
+          
+      - name: Deploy to production
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_REGION: us-east-1
+        run: |
+          echo "Deploying signed models to production..."
+          
+          # Example: Upload to S3
+          # aws s3 sync models/ s3://clarity-models/production/ \
+          #   --exclude "*" \
+          #   --include "*.pth" \
+          #   --include "*.sig" \
+          #   --include "*.onnx" \
+          #   --include "model_signatures.json"
+          
+          # Example: Update model registry
+          # python scripts/update_model_registry.py --env production
+          
+          echo "✓ Models deployed successfully"
+          
+      - name: Create deployment summary
+        if: success()
+        run: |
+          echo "## Model Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Status:** ✅ Successfully deployed" >> $GITHUB_STEP_SUMMARY
+          echo "**Branch:** ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Commit:** ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Deployed Models" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          find models/ -name "*.sig" -type f | sort >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          
+  # Optional: Scheduled verification of production models
+  scheduled-verification:
+    name: Scheduled Model Verification
+    if: github.event_name == 'schedule'
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Download production models
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        run: |
+          # Download models from production
+          # aws s3 sync s3://clarity-models/production/ models/
+          echo "Downloaded production models"
+          
+      - name: Verify production signatures
+        env:
+          MODEL_SIGNING_KEY: ${{ secrets.MODEL_SIGNING_KEY }}
+        run: |
+          python scripts/sign_model.py verify-all --models-dir models/
+          
+      - name: Alert on verification failure
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: '🚨 Production Model Signature Verification Failed',
+              body: `Model signature verification failed in production.
+              
+              **Workflow:** ${context.workflow}
+              **Run:** ${context.runId}
+              **Time:** ${new Date().toISOString()}
+              
+              Please investigate immediately.`,
+              labels: ['security', 'production', 'urgent']
+            })

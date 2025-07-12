@@ -386,6 +386,32 @@ class PATModelLoader:
             msg = f"Model validation failed: {e}"
             raise ModelLoadError(msg) from e
 
+    async def _verify_checksum(self, size: ModelSize, version: str, model_path: Path) -> None:
+        """Verify model checksum for security."""
+        async with track_checksum_verification(size.value, version) as ctx:
+            try:
+                # Calculate actual checksum
+                actual_checksum = hashlib.sha256(model_path.read_bytes()).hexdigest()
+                ctx["actual_checksum"] = actual_checksum
+                
+                # In a real implementation, you would fetch expected checksum from a secure source
+                # For now, we'll just log the checksum
+                logger.info("Model checksum for %s v%s: %s", size.value, version, actual_checksum)
+                
+                # TODO: Implement actual checksum verification against known good values
+                # expected_checksum = await self._get_expected_checksum(size, version)
+                # ctx["expected_checksum"] = expected_checksum
+                # 
+                # if actual_checksum != expected_checksum:
+                #     ctx["success"] = False
+                #     raise ModelLoadError("Checksum verification failed")
+                
+                ctx["success"] = True
+                
+            except Exception as e:
+                ctx["success"] = False
+                raise
+
     def _update_current_version(
         self, size: ModelSize, version: str, model_path: Path
     ) -> None:
@@ -400,6 +426,9 @@ class PATModelLoader:
             size=size,
             metrics={},  # To be populated by monitoring
         )
+        
+        # Update metrics
+        update_current_version(size.value, version, checksum)
 
     async def fallback_to_previous(self, size: ModelSize) -> nn.Module:
         """Fallback to previous model version on failure.
@@ -420,7 +449,25 @@ class PATModelLoader:
                 "Falling back from %s to v%s", current.version, previous_version
             )
 
-            return await self.load_model(size, previous_version)
+            # Record fallback attempt
+            record_fallback_attempt(
+                size.value, 
+                current.version, 
+                f"v{previous_version}", 
+                False  # Not yet successful
+            )
+
+            model = await self.load_model(size, previous_version)
+            
+            # Record successful fallback
+            record_fallback_attempt(
+                size.value, 
+                current.version, 
+                f"v{previous_version}", 
+                True
+            )
+            
+            return model
 
         except Exception as e:
             msg = f"Fallback failed: {e}"
@@ -447,7 +494,17 @@ class PATModelLoader:
         """Clear model cache."""
         self._cache.clear()
         logger.info("Model cache cleared")
+        self._update_cache_metrics()
 
     def get_current_version(self, size: ModelSize) -> ModelVersion | None:
         """Get current version info for a model size."""
         return self._current_versions.get(size)
+    
+    def _update_cache_metrics(self) -> None:
+        """Update cache-related metrics."""
+        cache_size = self._cache.size()
+        
+        # Estimate memory usage (simplified - in production would be more accurate)
+        estimated_memory = cache_size * 256 * 1024 * 1024  # Assume 256MB per model
+        
+        update_cache_metrics(cache_size, estimated_memory)

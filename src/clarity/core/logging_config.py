@@ -96,14 +96,17 @@ def setup_logging(force: bool = False) -> None:
         },
     }
 
+    # Track if this is the first configuration
+    first_config = not _logging_configured
+    
     # Apply configuration
     logging.config.dictConfig(logging_config)
     
     # Mark as configured
     _logging_configured = True
 
-    # Log successful configuration only once (on first setup or force)
-    if not _logging_configured or force:
+    # Log successful configuration only on first setup
+    if first_config:
         logger = logging.getLogger(__name__)
         environment_msg = f"Logging configured for {settings.environment} environment"
         level_msg = f"with level {settings.log_level}"

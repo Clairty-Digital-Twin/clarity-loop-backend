@@ -12,8 +12,8 @@ and alerting of the PAT (Proxy Actigraphy Transformer) model system.
 
 import logging
 import time
-from contextlib import contextmanager
-from typing import Any, Iterator
+from contextlib import asynccontextmanager, contextmanager
+from typing import Any, AsyncIterator, Iterator
 
 from prometheus_client import Counter, Gauge, Histogram, Summary
 

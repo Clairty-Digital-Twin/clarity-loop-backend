@@ -1,0 +1,163 @@
+name: Chaos Tests
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - 'src/clarity/ml/**'
+      - 'tests/chaos/**'
+      - '.github/workflows/chaos-tests.yml'
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - 'src/clarity/ml/**'
+      - 'tests/chaos/**'
+  schedule:
+    # Run chaos tests daily at 2 AM UTC
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+    inputs:
+      include_slow_tests:
+        description: 'Include slow chaos tests'
+        required: false
+        type: boolean
+        default: false
+
+jobs:
+  chaos-tests:
+    name: Run Chaos Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[test]"
+          pip install pytest-timeout pytest-asyncio
+
+      - name: Create test directories
+        run: |
+          mkdir -p test-results
+          mkdir -p models/pat
+
+      - name: Run chaos tests (fast)
+        if: github.event.inputs.include_slow_tests != 'true'
+        run: |
+          pytest tests/chaos/ \
+            -m "not slow" \
+            -v \
+            --junit-xml=test-results/chaos-tests.xml \
+            --timeout=30 \
+            --timeout-method=thread
+        continue-on-error: false
+
+      - name: Run chaos tests (all)
+        if: github.event.inputs.include_slow_tests == 'true'
+        run: |
+          pytest tests/chaos/ \
+            -v \
+            --junit-xml=test-results/chaos-tests.xml \
+            --timeout=60 \
+            --timeout-method=thread
+        continue-on-error: false
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: chaos-test-results
+          path: test-results/
+          retention-days: 30
+
+      - name: Publish test results
+        if: always()
+        uses: dorny/test-reporter@v1
+        with:
+          name: Chaos Test Results
+          path: test-results/chaos-tests.xml
+          reporter: java-junit
+          fail-on-error: true
+
+      - name: Generate coverage report
+        if: github.event_name == 'pull_request'
+        run: |
+          pytest tests/chaos/ \
+            -m "not slow" \
+            --cov=clarity.ml \
+            --cov-report=xml \
+            --cov-report=term-missing
+
+      - name: Upload coverage to Codecov
+        if: github.event_name == 'pull_request'
+        uses: codecov/codecov-action@v3
+        with:
+          file: ./coverage.xml
+          flags: chaos-tests
+          name: chaos-coverage
+
+      - name: Check for performance regression
+        run: |
+          # Extract timing information from test results
+          python -c "
+          import xml.etree.ElementTree as ET
+          tree = ET.parse('test-results/chaos-tests.xml')
+          root = tree.getroot()
+          
+          total_time = float(root.get('time', 0))
+          num_tests = int(root.get('tests', 0))
+          
+          if num_tests > 0:
+              avg_time = total_time / num_tests
+              print(f'Average test time: {avg_time:.2f}s')
+              
+              # Fail if average test time exceeds threshold
+              if avg_time > 5.0:
+                  print('WARNING: Average test time exceeds 5 seconds!')
+                  exit(1)
+          "
+
+      - name: Post results to PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const xml2js = require('xml2js');
+            
+            // Parse test results
+            const xmlData = fs.readFileSync('test-results/chaos-tests.xml', 'utf8');
+            const parser = new xml2js.Parser();
+            
+            parser.parseString(xmlData, (err, result) => {
+              if (err) return;
+              
+              const testSuite = result.testsuites.testsuite[0].$;
+              const passed = parseInt(testSuite.tests) - parseInt(testSuite.failures) - parseInt(testSuite.errors);
+              
+              const comment = `## 🔥 Chaos Test Results
+              
+              - **Total Tests**: ${testSuite.tests}
+              - **Passed**: ${passed} ✅
+              - **Failed**: ${testSuite.failures} ❌
+              - **Errors**: ${testSuite.errors} 🚨
+              - **Time**: ${parseFloat(testSuite.time).toFixed(2)}s
+              
+              ${passed === parseInt(testSuite.tests) ? '### All chaos tests passed! 🎉' : '### Some chaos tests failed. Please review the logs.'}`;
+              
+              github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: comment
+              });
+            });

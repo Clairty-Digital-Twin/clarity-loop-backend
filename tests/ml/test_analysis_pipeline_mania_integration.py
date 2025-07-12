@@ -96,10 +96,10 @@ class TestManiaRiskIntegration:
         user_id = "test-user-123"
 
         # Enable mania risk feature flag for this test
-        with patch('clarity.core.config.get_settings') as mock_get_settings:
-            mock_settings = MagicMock()
-            mock_settings.mania_risk_enabled = True
-            mock_get_settings.return_value = mock_settings
+        with patch.dict(os.environ, {"MANIA_RISK_ENABLED": "true"}):
+            # Reset feature flag manager to pick up env change
+            import clarity.core.feature_flags
+            clarity.core.feature_flags._feature_flag_manager = None
 
             # Mock DynamoDB client
             with patch.object(pipeline, '_get_dynamodb_client', return_value=mock_dynamodb_client):

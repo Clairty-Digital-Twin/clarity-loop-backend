@@ -387,7 +387,7 @@ class DepressionRiskAnalyzer:
     ) -> tuple[float, list[str]]:
         """Analyze physiological markers for depression."""
         score = 0.0
-        factors = []
+        factors: list[str] = []
 
         if not cardio:
             return score, factors

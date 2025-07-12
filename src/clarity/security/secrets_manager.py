@@ -175,7 +175,7 @@ class SecretsManager:
             )
             value = response["Parameter"]["Value"]
             logger.debug("Successfully retrieved parameter %s from SSM", parameter_name)
-            return value
+            return cast(str | None, value)
         except self._ssm_client.exceptions.ParameterNotFound:
             logger.debug("Parameter %s not found in SSM", full_parameter_name)
             return None
@@ -404,7 +404,7 @@ def get_secrets_manager() -> SecretsManager:
 
 def with_secret(
     key: str,
-    secret_type: type[T] = str,
+    secret_type: type[T],
     env_var: str | None = None,
     default: T | None = None,
 ) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
@@ -425,9 +425,9 @@ def with_secret(
             manager = get_secrets_manager()
 
             if secret_type == str:
-                value = manager.get_string(key, env_var=env_var, default=default)
+                value = manager.get_string(key, env_var=env_var, default=cast(str | None, default))
             elif secret_type == dict:
-                value = manager.get_json(key, env_var=env_var, default=default)
+                value = manager.get_json(key, env_var=env_var, default=cast(dict[str, Any] | None, default))
             else:
                 raise ValueError(f"Unsupported secret type: {secret_type}")
 

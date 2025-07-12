@@ -442,7 +442,7 @@ class PersonalBaselineTracker:
 
     def _count_unique_days(self, metrics: list[HealthMetric]) -> int:
         """Count unique days in metrics."""
-        unique_days = set()
+        unique_days: set[Any] = set()
         unique_days.update(metric.created_at.date() for metric in metrics)
         return len(unique_days)
 

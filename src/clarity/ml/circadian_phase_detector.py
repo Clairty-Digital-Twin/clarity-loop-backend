@@ -76,21 +76,21 @@ class CircadianPhaseDetector:
             )
 
         # Calculate baseline midpoint
-        baseline_midpoint = None
+        baseline_midpoint: float | None = None
         if baseline_sleep_metrics:
             baseline_midpoints = self._extract_sleep_midpoints(baseline_sleep_metrics)
             if baseline_midpoints:
-                baseline_midpoint = np.median(baseline_midpoints)
+                baseline_midpoint = float(np.median(baseline_midpoints))
         # Use first half of recent data as baseline
         elif len(recent_midpoints) >= 5:
-            baseline_midpoint = np.median(
+            baseline_midpoint = float(np.median(
                 recent_midpoints[: len(recent_midpoints) // 2]
-            )
+            ))
         else:
-            baseline_midpoint = recent_midpoints[0]
+            baseline_midpoint = float(recent_midpoints[0])
 
         # Calculate current midpoint (last 3 days)
-        current_midpoint = np.median(recent_midpoints[-3:])
+        current_midpoint = float(np.median(recent_midpoints[-3:]))
 
         # Calculate phase shift
         phase_shift_hours = current_midpoint - baseline_midpoint
@@ -201,7 +201,7 @@ class CircadianPhaseDetector:
 
     def calculate_phase_variability(
         self, sleep_metrics: list[HealthMetric], window_hours: int = 12
-    ) -> dict[str, float]:
+    ) -> dict[str, Any]:
         """Calculate sleep phase variability metrics.
 
         Based on Ortiz et al. (2025) finding that 12-hour sleep pattern
@@ -235,8 +235,8 @@ class CircadianPhaseDetector:
             phase_changes.append(abs(change))
 
         # Calculate metrics
-        phase_variability = np.std(phase_changes) if phase_changes else 0.0
-        max_phase_change = max(phase_changes) if phase_changes else 0.0
+        phase_variability = float(np.std(phase_changes)) if phase_changes else 0.0
+        max_phase_change = float(max(phase_changes)) if phase_changes else 0.0
 
         # Determine trend
         if len(phase_changes) >= 3:

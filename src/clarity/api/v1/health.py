@@ -13,7 +13,7 @@ from pydantic import BaseModel, Field
 
 from clarity.auth.dependencies import get_current_user
 from clarity.ml.model_integrity import pat_model_manager
-from clarity.models.auth import User
+from clarity.models.user import User
 from clarity.monitoring.pat_metrics import (
     calculate_model_health_score,
     update_health_score,

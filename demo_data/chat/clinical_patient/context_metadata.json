@@ -1,0 +1,56 @@
+{
+  "context_summary": {
+    "persona": "clinical_patient",
+    "context_id": "1bad8173-5149-434e-931d-cce38af9a22a",
+    "generation_date": "2025-07-12T09:18:31.642977",
+    "persona_characteristics": {
+      "age_range": "30-60",
+      "activity_level": "moderate",
+      "health_goals": [
+        "mood_stability",
+        "medication_adherence",
+        "episode_prevention"
+      ],
+      "interests": [
+        "mental_health",
+        "treatment_outcomes",
+        "early_warning_signs"
+      ],
+      "communication_style": "concerned and seeking guidance"
+    },
+    "total_items": 18
+  },
+  "content_breakdown": {
+    "conversation_starters": 5,
+    "followup_questions": 5,
+    "response_templates": 5,
+    "demo_conversations": 3
+  },
+  "demo_scenarios": {
+    "complexity_levels": [
+      "low",
+      "medium",
+      "high"
+    ],
+    "data_sources": [
+      "sleep",
+      "activity",
+      "mood",
+      "stress",
+      "hrv",
+      "workouts"
+    ],
+    "interaction_types": [
+      "trend_analysis",
+      "correlation_analysis",
+      "risk_assessment",
+      "anomaly_detection"
+    ]
+  },
+  "quality_assurance": {
+    "natural_language": "Conversational and persona-appropriate",
+    "clinical_accuracy": "Medically sound recommendations",
+    "data_integration": "Multi-modal health data sources",
+    "user_experience": "Intuitive and engaging interactions"
+  }
+}

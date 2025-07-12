@@ -1,0 +1,785 @@
+[
+  {
+    "activity_id": "ACTIVITY#9fbadc52-0d67-4b2f-bf73-556658231ca3",
+    "user_id": "USER#5d2a14c4-61a3-4189-be32-4aec06b852ba",
+    "start_time": "2025-07-12T15:34:45.425978+00:00",
+    "end_time": "2025-07-12T13:34:45.425999+00:00",
+    "activity_type": "gym",
+    "metrics": {
+      "duration_minutes": 43,
+      "calories_burned": 344,
+      "avg_heart_rate": 144,
+      "max_heart_rate": 164
+    }
+  },
+  {
+    "sleep_id": "SLEEP#cd0dd26e-a52c-464a-b7b9-cf050deeeb4e",
+    "user_id": "USER#5d2a14c4-61a3-4189-be32-4aec06b852ba",
+    "bedtime": "2025-07-12T22:27:45.425978+00:00",
+    "wake_time": "2025-07-13T07:39:09.457260+00:00",
+    "sleep_stages": {
+      "deep": 1.93,
+      "rem": 1.74,
+      "light": 3.93,
+      "awake": 0.71,
+      "total": 8.31
+    },
+    "sleep_efficiency": 0.773911613230111,
+    "interruptions": 3,
+    "heart_rate_data": {
+      "avg": 63,
+      "min": 55,
+      "max": 65
+    }
+  },
+  {
+    "activity_id": "ACTIVITY#b72e7400-62a1-4ff7-bcd5-76be9b0f496b",
+    "user_id": "USER#5d2a14c4-61a3-4189-be32-4aec06b852ba",
+    "start_time": "2025-07-11T07:28:45.425978+00:00",
+    "end_time": "2025-07-12T14:42:45.426083+00:00",
+    "activity_type": "running",
+    "metrics": {
+      "duration_minutes": 81,
+      "calories_burned": 54,
+      "distance_km": 12.1,
+      "avg_speed_kmh": 5.5,
+      "steps": 1893,
+      "avg_heart_rate": 142,
+      "max_heart_rate": 161
+    }
+  },
+  {
+    "activity_id": "ACTIVITY#b003bace-5ffe-4a7e-b79b-f1a6bce6eb9e",
+    "user_id": "USER#5d2a14c4-61a3-4189-be32-4aec06b852ba",
+    "start_time": "2025-07-11T21:49:45.425978+00:00",
+    "end_time": "2025-07-12T14:09:45.426126+00:00",
+    "activity_type": "gym",
+    "metrics": {
+      "duration_minutes": 91,
+      "calories_burned": 128,
+      "avg_heart_rate": 137,
+      "max_heart_rate": 190
+    }
+  },
+  {
+    "sleep_id": "SLEEP#e485b5ad-91aa-4b54-bbe2-f79122b97607",
+    "user_id": "USER#5d2a14c4-61a3-4189-be32-4aec06b852ba",
+    "bedtime": "2025-07-11T22:16:45.425978+00:00",
+    "wake_time": "2025-07-13T09:31:52.189044+00:00",
+    "sleep_stages": {
+      "deep": 1.89,
+      "rem": 1.77,
+      "light": 3.61,
+      "awake": 0.66,
+      "total": 7.94
+    },
+    "sleep_efficiency": 0.814536139375268,
+    "interruptions": 2,
+    "heart_rate_data": {
+      "avg": 50,
+      "min": 52,
+      "max": 77
+    }
+  },
+  {
+    "activity_id": "ACTIVITY#cd7287d3-d442-4eb2-8d01-aea39645a95f",
+    "user_id": "USER#5d2a14c4-61a3-4189-be32-4aec06b852ba",
+    "start_time": "2025-07-10T19:28:45.425978+00:00",
+    "end_time": "2025-07-12T14:03:45.426233+00:00",
+    "activity_type": "swimming",
+    "metrics": {
+      "duration_minutes": 95,
+      "calories_burned": 494
+    }
+  },
+  {
+    "sleep_id": "SLEEP#5476c7ac-e56b-4784-a132-672531bcce78",
+    "user_id": "USER#5d2a14c4-61a3-4189-be32-4aec06b852ba",
+    "bedtime": "2025-07-10T22:09:45.425978+00:00",
+    "wake_time": "2025-07-13T09:14:21.878419+00:00",
+    "sleep_stages": {
+      "deep": 1.37,
+      "rem": 2.42,
+      "light": 3.66,
+      "awake": 0.63,
+      "total": 8.08
+    },
+    "sleep_efficiency": 0.930666795350692,
+    "interruptions": 4,
+    "heart_rate_data": {
+      "avg": 52,
+      "min": 40,
+      "max": 73
+    }
+  },
+  {
+    "activity_id": "ACTIVITY#eb3beb22-bb33-4411-81ee-37d7e0c9b4fe",
+    "user_id": "USER#5d2a14c4-61a3-4189-be32-4aec06b852ba",
+    "start_time": "2025-07-09T08:00:45.425978+00:00",
+    "end_time": "2025-07-12T14:45:45.426311+00:00",
+    "activity_type": "yoga",
+    "metrics": {
+      "duration_minutes": 29,
+      "calories_burned": 482
+    }
+  },
+  {
+    "activity_id": "ACTIVITY#3d02e827-e6eb-4281-8efd-fb9a4ae6273b",
+    "user_id": "USER#5d2a14c4-61a3-4189-be32-4aec06b852ba",
+    "start_time": "2025-07-09T14:43:45.425978+00:00",
+    "end_time": "2025-07-12T14:58:45.426341+00:00",
+    "activity_type": "cycling",
+    "metrics": {
+      "duration_minutes": 95,
+      "calories_burned": 213,
+      "distance_km": 11.23,
+      "avg_speed_kmh": 4.9,
+      "steps": 0,
+      "avg_heart_rate": 147,
+      "max_heart_rate": 164
+    }
+  },
+  {
+    "activity_id": "ACTIVITY#7a14e82e-af42-4308-aba8-53f89e81d117",
+    "user_id": "USER#5d2a14c4-61a3-4189-be32-4aec06b852ba",
+    "start_time": "2025-07-09T21:55:45.425978+00:00",
+    "end_time": "2025-07-12T13:43:45.426373+00:00",
+    "activity_type": "swimming",
+    "metrics": {
+      "duration_minutes": 16,
+      "calories_burned": 500
+    }
+  },
+  {
+    "sleep_id": "SLEEP#3d6e4d0f-1d6e-47d0-8b35-576d2c5894b5",
+    "user_id": "USER#5d2a14c4-61a3-4189-be32-4aec06b852ba",
+    "bedtime": "2025-07-09T22:40:45.425978+00:00",
+    "wake_time": "2025-07-13T06:32:52.588336+00:00",
+    "sleep_stages": {
+      "deep": 1.14,
+      "rem": 1.29,
+      "light": 2.23,
+      "awake": 0.78,
+      "total": 5.44
+    },
+    "sleep_efficiency": 0.935544757669672,
+    "interruptions": 2,
+    "heart_rate_data": {
+      "avg": 70,
+      "min": 47,
+      "max": 70
+    }
+  },
+  {
+    "activity_id": "ACTIVITY#13deb9d4-b59e-4497-b581-fae3fece08b0",
+    "user_id": "USER#5d2a14c4-61a3-4189-be32-4aec06b852ba",
+    "start_time": "2025-07-08T09:16:45.425978+00:00",
+    "end_time": "2025-07-12T14:54:45.426442+00:00",
+    "activity_type": "yoga",
+    "metrics": {
+      "duration_minutes": 62,
+      "calories_burned": 333
+    }
+  },
+  {
+    "activity_id": "ACTIVITY#fecfbaa9-d3e5-4af3-9a52-d491f1c911cd",
+    "user_id": "USER#5d2a14c4-61a3-4189-be32-4aec06b852ba",
+    "start_time": "2025-07-08T13:06:45.425978+00:00",
+    "end_time": "2025-07-12T14:22:45.426470+00:00",
+    "activity_type": "cycling",
+    "metrics": {
+      "duration_minutes": 39,
+      "calories_burned": 405,
+      "distance_km": 7.63,
+      "avg_speed_kmh": 3.7,
+      "steps": 0,
+      "avg_heart_rate": 139,
+      "max_heart_rate": 176
+    }
+  },
+  {
+    "sleep_id": "SLEEP#a892616e-f0f5-441a-a07d-584c418c5a6e",
+    "user_id": "USER#5d2a14c4-61a3-4189-be32-4aec06b852ba",
+    "bedtime": "2025-07-08T22:39:45.425978+00:00",
+    "wake_time": "2025-07-13T06:15:40.183216+00:00",
+    "sleep_stages": {
+      "deep": 1.64,
+      "rem": 1.54,
+      "light": 3.38,
+      "awake": 1.06,
+      "total": 7.62
+    },
+    "sleep_efficiency": 0.890236687775568,
+    "interruptions": 4,
+    "heart_rate_data": {
+      "avg": 67,
+      "min": 40,
+      "max": 72
+    }
+  },
+  {
+    "activity_id": "ACTIVITY#d269fea0-2749-497b-9144-eb895bd3f38f",
+    "user_id": "USER#5d2a14c4-61a3-4189-be32-4aec06b852ba",
+    "start_time": "2025-07-07T09:21:45.425978+00:00",
+    "end_time": "2025-07-12T14:03:45.426539+00:00",
+    "activity_type": "walking",
+    "metrics": {
+      "duration_minutes": 77,
+      "calories_burned": 245,
+      "distance_km": 8.93,
+      "avg_speed_kmh": 14.4,
+      "steps": 3466
+    }
+  },
+  {
+    "sleep_id": "SLEEP#73fdbb5e-fa16-4a08-ac0e-5cc929d7a628",
+    "user_id": "USER#5d2a14c4-61a3-4189-be32-4aec06b852ba",
+    "bedtime": "2025-07-07T22:19:45.425978+00:00",
+    "wake_time": "2025-07-13T09:52:18.930076+00:00",
+    "sleep_stages": {
+      "deep": 1.22,
+      "rem": 1.12,
+      "light": 2.2,
+      "awake": 0.57,
+      "total": 5.1
+    },
+    "sleep_efficiency": 0.904213678959371,
+    "interruptions": 5,
+    "heart_rate_data": {
+      "avg": 56,
+      "min": 51,
+      "max": 67
+    }
+  },
+  {
+    "activity_id": "ACTIVITY#01dc1ee8-e103-4e65-ae33-317b1fc190af",
+    "user_id": "USER#5d2a14c4-61a3-4189-be32-4aec06b852ba",
+    "start_time": "2025-07-06T09:33:45.425978+00:00",
+    "end_time": "2025-07-12T15:13:45.426605+00:00",
+    "activity_type": "walking",
+    "metrics": {
+      "duration_minutes": 43,
+      "calories_burned": 213,
+      "distance_km": 5.64,
+      "avg_speed_kmh": 4.4,
+      "steps": 2660
+    }
+  },
+  {
+    "sleep_id": "SLEEP#24448297-4dba-4505-9438-ffdeeab3eaf3",
+    "user_id": "USER#5d2a14c4-61a3-4189-be32-4aec06b852ba",
+    "bedtime": "2025-07-06T22:14:45.425978+00:00",
+    "wake_time": "2025-07-13T08:09:53.987720+00:00",
+    "sleep_stages": {
+      "deep": 1.16,
+      "rem": 1.69,
+      "light": 2.52,
+      "awake": 0.45,
+      "total": 5.82
+    },
+    "sleep_efficiency": 0.933498986741612,
+    "interruptions": 4,
+    "heart_rate_data": {
+      "avg": 63,
+      "min": 52,
+      "max": 78
+    }
+  },
+  {
+    "activity_id": "ACTIVITY#e1381589-e45e-4510-a02c-79f467264a79",
+    "user_id": "USER#91b48acd-9969-40fa-b03f-35671a5351b2",
+    "start_time": "2025-07-12T09:36:45.427830+00:00",
+    "end_time": "2025-07-12T13:27:45.427848+00:00",
+    "activity_type": "yoga",
+    "metrics": {
+      "duration_minutes": 50,
+      "calories_burned": 69
+    }
+  },
+  {
+    "activity_id": "ACTIVITY#4fcb72fa-0e70-4506-a89a-aaeb8cc37e8b",
+    "user_id": "USER#91b48acd-9969-40fa-b03f-35671a5351b2",
+    "start_time": "2025-07-12T15:16:45.427830+00:00",
+    "end_time": "2025-07-12T14:17:45.427879+00:00",
+    "activity_type": "walking",
+    "metrics": {
+      "duration_minutes": 100,
+      "calories_burned": 446,
+      "distance_km": 9.17,
+      "avg_speed_kmh": 7.7,
+      "steps": 6456
+    }
+  },
+  {
+    "sleep_id": "SLEEP#022c62a1-8402-4b7e-96e3-8167069a728f",
+    "user_id": "USER#91b48acd-9969-40fa-b03f-35671a5351b2",
+    "bedtime": "2025-07-12T22:24:45.427830+00:00",
+    "wake_time": "2025-07-13T03:19:46.721152+00:00",
+    "sleep_stages": {
+      "deep": 0.99,
+      "rem": 1.64,
+      "light": 3.17,
+      "awake": 0.58,
+      "total": 6.39
+    },
+    "sleep_efficiency": 0.792401554519155,
+    "interruptions": 2,
+    "heart_rate_data": {
+      "avg": 51,
+      "min": 44,
+      "max": 81
+    }
+  },
+  {
+    "sleep_id": "SLEEP#2ad2b095-2e15-4055-bc89-39f4285b3f73",
+    "user_id": "USER#91b48acd-9969-40fa-b03f-35671a5351b2",
+    "bedtime": "2025-07-11T22:25:45.427830+00:00",
+    "wake_time": "2025-07-13T07:25:34.494107+00:00",
+    "sleep_stages": {
+      "deep": 1.35,
+      "rem": 1.82,
+      "light": 3.49,
+      "awake": -0.2,
+      "total": 6.46
+    },
+    "sleep_efficiency": 0.866322793273716,
+    "interruptions": 1,
+    "heart_rate_data": {
+      "avg": 54,
+      "min": 50,
+      "max": 78
+    }
+  },
+  {
+    "activity_id": "ACTIVITY#d77ac9ee-60ef-43ca-9a92-057f58b4f44f",
+    "user_id": "USER#91b48acd-9969-40fa-b03f-35671a5351b2",
+    "start_time": "2025-07-10T08:20:45.427830+00:00",
+    "end_time": "2025-07-12T14:43:45.427985+00:00",
+    "activity_type": "running",
+    "metrics": {
+      "duration_minutes": 13,
+      "calories_burned": 123,
+      "distance_km": 15.45,
+      "avg_speed_kmh": 9.4,
+      "steps": 1795,
+      "avg_heart_rate": 130,
+      "max_heart_rate": 177
+    }
+  },
+  {
+    "activity_id": "ACTIVITY#60d7ded9-e90a-4a66-be65-406b9ced5a41",
+    "user_id": "USER#91b48acd-9969-40fa-b03f-35671a5351b2",
+    "start_time": "2025-07-10T19:55:45.427830+00:00",
+    "end_time": "2025-07-12T13:55:45.428018+00:00",
+    "activity_type": "swimming",
+    "metrics": {
+      "duration_minutes": 72,
+      "calories_burned": 482
+    }
+  },
+  {
+    "sleep_id": "SLEEP#2f6c4f49-5cb6-43b5-bdfe-f0393b9f2227",
+    "user_id": "USER#91b48acd-9969-40fa-b03f-35671a5351b2",
+    "bedtime": "2025-07-10T22:56:45.427830+00:00",
+    "wake_time": "2025-07-13T02:44:54.947010+00:00",
+    "sleep_stages": {
+      "deep": 1.23,
+      "rem": 1.28,
+      "light": 2.61,
+      "awake": 0.75,
+      "total": 5.87
+    },
+    "sleep_efficiency": 0.775358565839907,
+    "interruptions": 0,
+    "heart_rate_data": {
+      "avg": 60,
+      "min": 48,
+      "max": 71
+    }
+  },
+  {
+    "sleep_id": "SLEEP#ce5a9108-31dd-4950-9099-45f136db403c",
+    "user_id": "USER#91b48acd-9969-40fa-b03f-35671a5351b2",
+    "bedtime": "2025-07-09T22:00:45.427830+00:00",
+    "wake_time": "2025-07-13T05:52:14.557426+00:00",
+    "sleep_stages": {
+      "deep": 1.88,
+      "rem": 1.86,
+      "light": 3.4,
+      "awake": 1.3,
+      "total": 8.43
+    },
+    "sleep_efficiency": 0.813091440942531,
+    "interruptions": 2,
+    "heart_rate_data": {
+      "avg": 55,
+      "min": 52,
+      "max": 67
+    }
+  },
+  {
+    "activity_id": "ACTIVITY#607665ff-cfdb-4d75-b9f4-b2c3fbff277e",
+    "user_id": "USER#91b48acd-9969-40fa-b03f-35671a5351b2",
+    "start_time": "2025-07-08T20:31:45.427830+00:00",
+    "end_time": "2025-07-12T13:29:45.428123+00:00",
+    "activity_type": "walking",
+    "metrics": {
+      "duration_minutes": 17,
+      "calories_burned": 464,
+      "distance_km": 12.49,
+      "avg_speed_kmh": 20.3,
+      "steps": 13077
+    }
+  },
+  {
+    "sleep_id": "SLEEP#325a32d0-4f16-4002-82ce-1fe28ce9b003",
+    "user_id": "USER#91b48acd-9969-40fa-b03f-35671a5351b2",
+    "bedtime": "2025-07-08T22:40:45.427830+00:00",
+    "wake_time": "2025-07-13T07:57:10.212293+00:00",
+    "sleep_stages": {
+      "deep": 1.46,
+      "rem": 1.49,
+      "light": 3.16,
+      "awake": 0.51,
+      "total": 6.62
+    },
+    "sleep_efficiency": 0.902815568779502,
+    "interruptions": 4,
+    "heart_rate_data": {
+      "avg": 69,
+      "min": 42,
+      "max": 79
+    }
+  },
+  {
+    "activity_id": "ACTIVITY#1dba3463-0ad3-47a9-9e2d-be9f8f5b9226",
+    "user_id": "USER#91b48acd-9969-40fa-b03f-35671a5351b2",
+    "start_time": "2025-07-07T07:22:45.427830+00:00",
+    "end_time": "2025-07-12T13:23:45.428190+00:00",
+    "activity_type": "yoga",
+    "metrics": {
+      "duration_minutes": 109,
+      "calories_burned": 310
+    }
+  },
+  {
+    "sleep_id": "SLEEP#1b182689-0554-44a1-9410-5208a26a7f38",
+    "user_id": "USER#91b48acd-9969-40fa-b03f-35671a5351b2",
+    "bedtime": "2025-07-07T22:49:45.427830+00:00",
+    "wake_time": "2025-07-13T07:12:45.803651+00:00",
+    "sleep_stages": {
+      "deep": 1.51,
+      "rem": 2.05,
+      "light": 4.12,
+      "awake": 0.66,
+      "total": 8.33
+    },
+    "sleep_efficiency": 0.789033498514421,
+    "interruptions": 1,
+    "heart_rate_data": {
+      "avg": 53,
+      "min": 53,
+      "max": 85
+    }
+  },
+  {
+    "activity_id": "ACTIVITY#9f177086-9552-42ff-9854-5d980793a970",
+    "user_id": "USER#91b48acd-9969-40fa-b03f-35671a5351b2",
+    "start_time": "2025-07-06T09:43:45.427830+00:00",
+    "end_time": "2025-07-12T13:57:45.428303+00:00",
+    "activity_type": "yoga",
+    "metrics": {
+      "duration_minutes": 115,
+      "calories_burned": 114
+    }
+  },
+  {
+    "sleep_id": "SLEEP#69dec72a-4bb1-4ed5-9cec-290fc85f7eb3",
+    "user_id": "USER#91b48acd-9969-40fa-b03f-35671a5351b2",
+    "bedtime": "2025-07-06T22:32:45.427830+00:00",
+    "wake_time": "2025-07-13T06:55:05.289033+00:00",
+    "sleep_stages": {
+      "deep": 1.58,
+      "rem": 1.66,
+      "light": 3.38,
+      "awake": 0.31,
+      "total": 6.93
+    },
+    "sleep_efficiency": 0.755637188063514,
+    "interruptions": 4,
+    "heart_rate_data": {
+      "avg": 62,
+      "min": 45,
+      "max": 66
+    }
+  },
+  {
+    "activity_id": "ACTIVITY#966873c3-54e0-4c5c-ab76-7be589cceb11",
+    "user_id": "USER#eacc66df-925a-4427-895e-c5e2dd682633",
+    "start_time": "2025-07-12T06:56:45.429538+00:00",
+    "end_time": "2025-07-12T14:30:45.429555+00:00",
+    "activity_type": "yoga",
+    "metrics": {
+      "duration_minutes": 103,
+      "calories_burned": 238
+    }
+  },
+  {
+    "activity_id": "ACTIVITY#aad1c5ef-c0e4-44f3-9d70-3149ae3987f6",
+    "user_id": "USER#eacc66df-925a-4427-895e-c5e2dd682633",
+    "start_time": "2025-07-12T21:45:45.429538+00:00",
+    "end_time": "2025-07-12T14:41:45.429585+00:00",
+    "activity_type": "walking",
+    "metrics": {
+      "duration_minutes": 53,
+      "calories_burned": 173,
+      "distance_km": 15.43,
+      "avg_speed_kmh": 18.6,
+      "steps": 16480
+    }
+  },
+  {
+    "sleep_id": "SLEEP#047b8674-1edc-4beb-b319-afe71a246657",
+    "user_id": "USER#eacc66df-925a-4427-895e-c5e2dd682633",
+    "bedtime": "2025-07-12T22:00:45.429538+00:00",
+    "wake_time": "2025-07-13T02:38:58.889877+00:00",
+    "sleep_stages": {
+      "deep": 1.74,
+      "rem": 1.94,
+      "light": 4.05,
+      "awake": -0.05,
+      "total": 7.68
+    },
+    "sleep_efficiency": 0.937233716005417,
+    "interruptions": 4,
+    "heart_rate_data": {
+      "avg": 56,
+      "min": 49,
+      "max": 69
+    }
+  },
+  {
+    "activity_id": "ACTIVITY#32efca7c-83b6-47ec-b673-c8fda42a6685",
+    "user_id": "USER#eacc66df-925a-4427-895e-c5e2dd682633",
+    "start_time": "2025-07-11T07:58:45.429538+00:00",
+    "end_time": "2025-07-12T14:28:45.429653+00:00",
+    "activity_type": "yoga",
+    "metrics": {
+      "duration_minutes": 93,
+      "calories_burned": 137
+    }
+  },
+  {
+    "activity_id": "ACTIVITY#30eb5363-5742-420f-bd6e-e9dcb293ec34",
+    "user_id": "USER#eacc66df-925a-4427-895e-c5e2dd682633",
+    "start_time": "2025-07-11T18:30:45.429538+00:00",
+    "end_time": "2025-07-12T14:50:45.429681+00:00",
+    "activity_type": "walking",
+    "metrics": {
+      "duration_minutes": 42,
+      "calories_burned": 416,
+      "distance_km": 0.77,
+      "avg_speed_kmh": 21.4,
+      "steps": 7904
+    }
+  },
+  {
+    "sleep_id": "SLEEP#67d3cade-dbcd-470c-9935-0d32606ae4fd",
+    "user_id": "USER#eacc66df-925a-4427-895e-c5e2dd682633",
+    "bedtime": "2025-07-11T22:08:45.429538+00:00",
+    "wake_time": "2025-07-13T03:47:53.852587+00:00",
+    "sleep_stages": {
+      "deep": 0.91,
+      "rem": 1.1,
+      "light": 2.35,
+      "awake": 0.7,
+      "total": 5.06
+    },
+    "sleep_efficiency": 0.888590284982534,
+    "interruptions": 2,
+    "heart_rate_data": {
+      "avg": 62,
+      "min": 53,
+      "max": 76
+    }
+  },
+  {
+    "activity_id": "ACTIVITY#e485ffea-8215-4105-afdc-4ab1cdcafbe8",
+    "user_id": "USER#eacc66df-925a-4427-895e-c5e2dd682633",
+    "start_time": "2025-07-10T08:54:45.429538+00:00",
+    "end_time": "2025-07-12T13:24:45.429747+00:00",
+    "activity_type": "running",
+    "metrics": {
+      "duration_minutes": 105,
+      "calories_burned": 361,
+      "distance_km": 10.03,
+      "avg_speed_kmh": 6.7,
+      "steps": 4601,
+      "avg_heart_rate": 112,
+      "max_heart_rate": 184
+    }
+  },
+  {
+    "sleep_id": "SLEEP#7a21226b-e1d7-431e-b605-8c157109181e",
+    "user_id": "USER#eacc66df-925a-4427-895e-c5e2dd682633",
+    "bedtime": "2025-07-10T22:45:45.429538+00:00",
+    "wake_time": "2025-07-13T05:56:46.069080+00:00",
+    "sleep_stages": {
+      "deep": 1.0,
+      "rem": 1.28,
+      "light": 2.91,
+      "awake": 0.99,
+      "total": 6.18
+    },
+    "sleep_efficiency": 0.817865634321598,
+    "interruptions": 1,
+    "heart_rate_data": {
+      "avg": 66,
+      "min": 42,
+      "max": 74
+    }
+  },
+  {
+    "activity_id": "ACTIVITY#a7cb0f67-106b-4571-aa60-15484191d197",
+    "user_id": "USER#eacc66df-925a-4427-895e-c5e2dd682633",
+    "start_time": "2025-07-09T08:19:45.429538+00:00",
+    "end_time": "2025-07-12T15:05:45.429814+00:00",
+    "activity_type": "yoga",
+    "metrics": {
+      "duration_minutes": 104,
+      "calories_burned": 445
+    }
+  },
+  {
+    "activity_id": "ACTIVITY#e1d37c34-e58e-4c1e-8277-9948d6aae066",
+    "user_id": "USER#eacc66df-925a-4427-895e-c5e2dd682633",
+    "start_time": "2025-07-09T13:11:45.429538+00:00",
+    "end_time": "2025-07-12T14:12:45.429841+00:00",
+    "activity_type": "walking",
+    "metrics": {
+      "duration_minutes": 117,
+      "calories_burned": 389,
+      "distance_km": 12.26,
+      "avg_speed_kmh": 9.7,
+      "steps": 12989
+    }
+  },
+  {
+    "sleep_id": "SLEEP#48047629-865b-4775-be12-9f42d378cf6f",
+    "user_id": "USER#eacc66df-925a-4427-895e-c5e2dd682633",
+    "bedtime": "2025-07-09T22:19:45.429538+00:00",
+    "wake_time": "2025-07-13T02:12:54.058591+00:00",
+    "sleep_stages": {
+      "deep": 1.42,
+      "rem": 1.29,
+      "light": 2.86,
+      "awake": 0.22,
+      "total": 5.79
+    },
+    "sleep_efficiency": 0.948157242943689,
+    "interruptions": 4,
+    "heart_rate_data": {
+      "avg": 55,
+      "min": 46,
+      "max": 84
+    }
+  },
+  {
+    "activity_id": "ACTIVITY#3c60ec92-ec15-466c-891f-3f77770f083a",
+    "user_id": "USER#eacc66df-925a-4427-895e-c5e2dd682633",
+    "start_time": "2025-07-08T12:22:45.429538+00:00",
+    "end_time": "2025-07-12T13:54:45.429907+00:00",
+    "activity_type": "cycling",
+    "metrics": {
+      "duration_minutes": 99,
+      "calories_burned": 363,
+      "distance_km": 9.58,
+      "avg_speed_kmh": 6.1,
+      "steps": 0,
+      "avg_heart_rate": 127,
+      "max_heart_rate": 144
+    }
+  },
+  {
+    "sleep_id": "SLEEP#b40dc113-35fb-40c0-bb40-06758e9898d7",
+    "user_id": "USER#eacc66df-925a-4427-895e-c5e2dd682633",
+    "bedtime": "2025-07-08T22:36:45.429538+00:00",
+    "wake_time": "2025-07-13T03:53:02.434791+00:00",
+    "sleep_stages": {
+      "deep": 0.83,
+      "rem": 1.44,
+      "light": 2.93,
+      "awake": 0.18,
+      "total": 5.37
+    },
+    "sleep_efficiency": 0.823472041597955,
+    "interruptions": 1,
+    "heart_rate_data": {
+      "avg": 53,
+      "min": 40,
+      "max": 79
+    }
+  },
+  {
+    "activity_id": "ACTIVITY#bc31159c-a998-4930-a565-f4d905217ee2",
+    "user_id": "USER#eacc66df-925a-4427-895e-c5e2dd682633",
+    "start_time": "2025-07-07T09:38:45.429538+00:00",
+    "end_time": "2025-07-12T14:58:45.429974+00:00",
+    "activity_type": "yoga",
+    "metrics": {
+      "duration_minutes": 10,
+      "calories_burned": 122
+    }
+  },
+  {
+    "sleep_id": "SLEEP#564f2773-46fb-4c18-be25-2893e48827d8",
+    "user_id": "USER#eacc66df-925a-4427-895e-c5e2dd682633",
+    "bedtime": "2025-07-07T22:24:45.429538+00:00",
+    "wake_time": "2025-07-13T07:34:40.535193+00:00",
+    "sleep_stages": {
+      "deep": 1.61,
+      "rem": 1.38,
+      "light": 3.57,
+      "awake": 0.3,
+      "total": 6.86
+    },
+    "sleep_efficiency": 0.820940727937393,
+    "interruptions": 1,
+    "heart_rate_data": {
+      "avg": 51,
+      "min": 49,
+      "max": 69
+    }
+  },
+  {
+    "activity_id": "ACTIVITY#88c299df-2b43-41f4-b4e1-70b815100ca1",
+    "user_id": "USER#eacc66df-925a-4427-895e-c5e2dd682633",
+    "start_time": "2025-07-06T07:28:45.429538+00:00",
+    "end_time": "2025-07-12T14:35:45.430040+00:00",
+    "activity_type": "yoga",
+    "metrics": {
+      "duration_minutes": 78,
+      "calories_burned": 314
+    }
+  },
+  {
+    "sleep_id": "SLEEP#324fe6f3-916f-4f94-8c59-73f73ac57aed",
+    "user_id": "USER#eacc66df-925a-4427-895e-c5e2dd682633",
+    "bedtime": "2025-07-06T22:49:45.429538+00:00",
+    "wake_time": "2025-07-13T07:23:11.126314+00:00",
+    "sleep_stages": {
+      "deep": 1.21,
+      "rem": 1.2,
+      "light": 2.95,
+      "awake": 0.12,
+      "total": 5.48
+    },
+    "sleep_efficiency": 0.799700159150615,
+    "interruptions": 1,
+    "heart_rate_data": {
+      "avg": 70,
+      "min": 47,
+      "max": 84
+    }
+  }
+]

@@ -1,0 +1,716 @@
+[
+  {
+    "metric_id": "METRIC#3fc292c2-a76e-4979-bc37-a051fe23005c",
+    "user_id": "USER#5d2a14c4-61a3-4189-be32-4aec06b852ba",
+    "metric_type": "temperature",
+    "timestamp": "2025-07-12T15:55:45.425124+00:00",
+    "value": 36.9,
+    "unit": "\u00b0C",
+    "device_id": "DEVICE#644f7670-4b4d-4c79-a47f-0a3a3847ed71",
+    "device_name": "Fitbit Charge",
+    "confidence": 0.882881842848123
+  },
+  {
+    "metric_id": "METRIC#8c79e7c3-bdf2-4944-b8fe-dc471b340887",
+    "user_id": "USER#5d2a14c4-61a3-4189-be32-4aec06b852ba",
+    "metric_type": "sleep_duration",
+    "timestamp": "2025-07-12T04:09:45.425124+00:00",
+    "value": 9.3,
+    "unit": "hours",
+    "device_id": "DEVICE#db1e4173-2406-4463-b39b-bd9bca76c14e",
+    "device_name": "Fitbit Charge",
+    "confidence": 0.970539468785345
+  },
+  {
+    "metric_id": "METRIC#231630e6-81ae-4749-bf5d-282b9db92a26",
+    "user_id": "USER#5d2a14c4-61a3-4189-be32-4aec06b852ba",
+    "metric_type": "temperature",
+    "timestamp": "2025-07-12T15:35:45.425124+00:00",
+    "value": 36.2,
+    "unit": "\u00b0C",
+    "device_id": "DEVICE#18d48047-8356-425d-ae25-f9a5cd40c703",
+    "device_name": "Apple Watch",
+    "confidence": 0.98739233905445
+  },
+  {
+    "metric_id": "METRIC#5abbacb9-b249-4b3c-9e60-60f18c6954c7",
+    "user_id": "USER#5d2a14c4-61a3-4189-be32-4aec06b852ba",
+    "metric_type": "steps",
+    "timestamp": "2025-07-11T14:39:45.425124+00:00",
+    "value": 1955,
+    "unit": "count",
+    "device_id": "DEVICE#365da84b-861c-4170-a0f9-20ecf2eecc63",
+    "device_name": "Omron BP Monitor",
+    "confidence": 0.924866758554731
+  },
+  {
+    "metric_id": "METRIC#d79abc8b-2ba7-4f4d-82af-6fc4af1e78b2",
+    "user_id": "USER#5d2a14c4-61a3-4189-be32-4aec06b852ba",
+    "metric_type": "temperature",
+    "timestamp": "2025-07-11T13:29:45.425124+00:00",
+    "value": 37.4,
+    "unit": "\u00b0C",
+    "device_id": "DEVICE#0669a170-aa09-4bbf-9863-831130099eab",
+    "device_name": "Garmin Venu",
+    "confidence": 0.853992692810808
+  },
+  {
+    "metric_id": "METRIC#e2cddd70-91c4-4216-a8ff-c3541f8ac6d1",
+    "user_id": "USER#5d2a14c4-61a3-4189-be32-4aec06b852ba",
+    "metric_type": "glucose",
+    "timestamp": "2025-07-11T23:57:45.425124+00:00",
+    "value": 133,
+    "unit": "mg/dL",
+    "device_id": "DEVICE#9bf6ef30-c2bd-41b6-b3de-e448d64438f3",
+    "device_name": "Dexcom G6",
+    "confidence": 0.957964102996345
+  },
+  {
+    "metric_id": "METRIC#83fc4c12-041b-47c4-88d3-9f15d6bdad9c",
+    "user_id": "USER#5d2a14c4-61a3-4189-be32-4aec06b852ba",
+    "metric_type": "sleep_duration",
+    "timestamp": "2025-07-10T08:23:45.425124+00:00",
+    "value": 9.8,
+    "unit": "hours",
+    "device_id": "DEVICE#d6222518-1007-4f5a-8428-e084238d2641",
+    "device_name": "Dexcom G6",
+    "confidence": 0.839929236365731
+  },
+  {
+    "metric_id": "METRIC#d71c21c9-3393-4754-84d6-146bf1f491fd",
+    "user_id": "USER#5d2a14c4-61a3-4189-be32-4aec06b852ba",
+    "metric_type": "weight",
+    "timestamp": "2025-07-10T11:03:45.425124+00:00",
+    "value": 66.8,
+    "unit": "kg",
+    "device_id": "DEVICE#82c8608a-4c5d-4333-8592-cc3b813fdaad",
+    "device_name": "Garmin Venu",
+    "confidence": 0.891523303099655
+  },
+  {
+    "metric_id": "METRIC#eba3a4de-6e9a-4d80-9236-eff3312fd38a",
+    "user_id": "USER#5d2a14c4-61a3-4189-be32-4aec06b852ba",
+    "metric_type": "oxygen_saturation",
+    "timestamp": "2025-07-10T16:25:45.425124+00:00",
+    "value": 95,
+    "unit": "%",
+    "device_id": "DEVICE#8cbb5400-0574-48c3-b835-cad17765f0ae",
+    "device_name": "Fitbit Charge",
+    "confidence": 0.983784168061505
+  },
+  {
+    "metric_id": "METRIC#f3c54d3c-45fd-4b88-9397-40532150cbac",
+    "user_id": "USER#5d2a14c4-61a3-4189-be32-4aec06b852ba",
+    "metric_type": "weight",
+    "timestamp": "2025-07-09T18:03:45.425124+00:00",
+    "value": 113.7,
+    "unit": "kg",
+    "device_id": "DEVICE#d91332a0-6398-4a2d-9764-7cea38d3eb6e",
+    "device_name": "Apple Watch",
+    "confidence": 0.873133265525594
+  },
+  {
+    "metric_id": "METRIC#9052f116-a463-4fa3-b532-e0ae5ad3555a",
+    "user_id": "USER#5d2a14c4-61a3-4189-be32-4aec06b852ba",
+    "metric_type": "sleep_duration",
+    "timestamp": "2025-07-09T14:30:45.425124+00:00",
+    "value": 8.6,
+    "unit": "hours",
+    "device_id": "DEVICE#f1bf2069-7867-4ba0-99cb-84bd7cdbfe17",
+    "device_name": "Omron BP Monitor",
+    "confidence": 0.947485780795032
+  },
+  {
+    "metric_id": "METRIC#8508d229-b37e-44c3-a8d3-37faa35ea0d2",
+    "user_id": "USER#5d2a14c4-61a3-4189-be32-4aec06b852ba",
+    "metric_type": "blood_pressure",
+    "timestamp": "2025-07-09T02:31:45.425124+00:00",
+    "value": {
+      "systolic": 125,
+      "diastolic": 90
+    },
+    "unit": "mmHg",
+    "device_id": "DEVICE#089ae48b-303a-41d7-bdaa-58dc533208f7",
+    "device_name": "Fitbit Charge",
+    "confidence": 0.989945869387335
+  },
+  {
+    "metric_id": "METRIC#83ea8d0c-cca5-4797-a98f-b08f2d5a8f11",
+    "user_id": "USER#5d2a14c4-61a3-4189-be32-4aec06b852ba",
+    "metric_type": "oxygen_saturation",
+    "timestamp": "2025-07-08T05:07:45.425124+00:00",
+    "value": 98,
+    "unit": "%",
+    "device_id": "DEVICE#fe03ef6c-3cea-44cd-97bf-ab6be184d2c5",
+    "device_name": "Dexcom G6",
+    "confidence": 0.821777568562007
+  },
+  {
+    "metric_id": "METRIC#65451e6b-aa12-4177-8c4b-6b74518cefb8",
+    "user_id": "USER#5d2a14c4-61a3-4189-be32-4aec06b852ba",
+    "metric_type": "steps",
+    "timestamp": "2025-07-08T04:15:45.425124+00:00",
+    "value": 16006,
+    "unit": "count",
+    "device_id": "DEVICE#6945fa08-fc6f-4e0c-9ebf-8e76e81a28bf",
+    "device_name": "Garmin Venu",
+    "confidence": 0.97445545168399
+  },
+  {
+    "metric_id": "METRIC#b57fe30d-a685-4825-9cc9-ef8139945c6f",
+    "user_id": "USER#5d2a14c4-61a3-4189-be32-4aec06b852ba",
+    "metric_type": "blood_pressure",
+    "timestamp": "2025-07-08T22:59:45.425124+00:00",
+    "value": {
+      "systolic": 126,
+      "diastolic": 76
+    },
+    "unit": "mmHg",
+    "device_id": "DEVICE#6bee360b-d75c-48b6-a017-f0ac3ef734fb",
+    "device_name": "Fitbit Charge",
+    "confidence": 0.82997131583405
+  },
+  {
+    "metric_id": "METRIC#27f44446-ad0f-474f-bf18-83c2ad81e79f",
+    "user_id": "USER#5d2a14c4-61a3-4189-be32-4aec06b852ba",
+    "metric_type": "temperature",
+    "timestamp": "2025-07-07T04:43:45.425124+00:00",
+    "value": 36.3,
+    "unit": "\u00b0C",
+    "device_id": "DEVICE#addeaee1-44c3-4d88-bd0e-ea37b95a0854",
+    "device_name": "Garmin Venu",
+    "confidence": 0.913831290937916
+  },
+  {
+    "metric_id": "METRIC#cbb4ec5f-739b-42ed-998e-9f931d90b60f",
+    "user_id": "USER#5d2a14c4-61a3-4189-be32-4aec06b852ba",
+    "metric_type": "blood_pressure",
+    "timestamp": "2025-07-07T03:16:45.425124+00:00",
+    "value": {
+      "systolic": 136,
+      "diastolic": 81
+    },
+    "unit": "mmHg",
+    "device_id": "DEVICE#6600acdc-720d-4fd9-9946-9515e8f86426",
+    "device_name": "Dexcom G6",
+    "confidence": 0.952972374419418
+  },
+  {
+    "metric_id": "METRIC#d3666fc5-7c26-4179-9e8a-57a59f2990e6",
+    "user_id": "USER#5d2a14c4-61a3-4189-be32-4aec06b852ba",
+    "metric_type": "heart_rate",
+    "timestamp": "2025-07-07T07:33:45.425124+00:00",
+    "value": 69,
+    "unit": "bpm",
+    "device_id": "DEVICE#73dd88b3-b0ed-443e-a8c1-b530ed52bc2c",
+    "device_name": "Garmin Venu",
+    "confidence": 0.915135977161314
+  },
+  {
+    "metric_id": "METRIC#286ec551-0315-4599-8b3d-ba556a141ee6",
+    "user_id": "USER#5d2a14c4-61a3-4189-be32-4aec06b852ba",
+    "metric_type": "glucose",
+    "timestamp": "2025-07-06T21:45:45.425124+00:00",
+    "value": 122,
+    "unit": "mg/dL",
+    "device_id": "DEVICE#e8be93d5-f9a3-4abf-b8be-dac8dbe92b85",
+    "device_name": "Omron BP Monitor",
+    "confidence": 0.854839189183519
+  },
+  {
+    "metric_id": "METRIC#3bd80991-2719-4525-959a-866c63d8a213",
+    "user_id": "USER#5d2a14c4-61a3-4189-be32-4aec06b852ba",
+    "metric_type": "temperature",
+    "timestamp": "2025-07-06T07:59:45.425124+00:00",
+    "value": 36.4,
+    "unit": "\u00b0C",
+    "device_id": "DEVICE#dcaffcbe-f13a-4181-984c-e183c2cbb7e8",
+    "device_name": "Apple Watch",
+    "confidence": 0.826129457332771
+  },
+  {
+    "metric_id": "METRIC#e5e9b2bc-4e3d-4d1a-b35b-aec47a4dbfe4",
+    "user_id": "USER#5d2a14c4-61a3-4189-be32-4aec06b852ba",
+    "metric_type": "sleep_duration",
+    "timestamp": "2025-07-06T06:24:45.425124+00:00",
+    "value": 6.4,
+    "unit": "hours",
+    "device_id": "DEVICE#52434557-89ab-48c1-ac66-14da3394c00f",
+    "device_name": "Dexcom G6",
+    "confidence": 0.945230748768802
+  },
+  {
+    "metric_id": "METRIC#13dd8dd3-930f-47cb-b71d-2cde48b0fce8",
+    "user_id": "USER#91b48acd-9969-40fa-b03f-35671a5351b2",
+    "metric_type": "weight",
+    "timestamp": "2025-07-12T08:34:45.427040+00:00",
+    "value": 94.8,
+    "unit": "kg",
+    "device_id": "DEVICE#d80097a7-0ad8-4c7c-8b59-dd41ba077315",
+    "device_name": "Omron BP Monitor",
+    "confidence": 0.814087297908313
+  },
+  {
+    "metric_id": "METRIC#5f065adc-7b96-4b0d-a3d7-ed8b5557938b",
+    "user_id": "USER#91b48acd-9969-40fa-b03f-35671a5351b2",
+    "metric_type": "sleep_duration",
+    "timestamp": "2025-07-12T07:02:45.427040+00:00",
+    "value": 7.1,
+    "unit": "hours",
+    "device_id": "DEVICE#0548ce12-3ce2-400a-a36a-7f8daac8ab86",
+    "device_name": "Dexcom G6",
+    "confidence": 0.99492940915245
+  },
+  {
+    "metric_id": "METRIC#71e50372-7daa-4ec4-9369-3a153dd03bba",
+    "user_id": "USER#91b48acd-9969-40fa-b03f-35671a5351b2",
+    "metric_type": "weight",
+    "timestamp": "2025-07-12T21:58:45.427040+00:00",
+    "value": 73.6,
+    "unit": "kg",
+    "device_id": "DEVICE#e4cb6ae8-9723-415a-8d19-a434094df95b",
+    "device_name": "Fitbit Charge",
+    "confidence": 0.848700733128366
+  },
+  {
+    "metric_id": "METRIC#90e04873-f407-49e2-a3a7-593dd08c902d",
+    "user_id": "USER#91b48acd-9969-40fa-b03f-35671a5351b2",
+    "metric_type": "glucose",
+    "timestamp": "2025-07-11T11:08:45.427040+00:00",
+    "value": 82,
+    "unit": "mg/dL",
+    "device_id": "DEVICE#5f40c6cd-7a01-4294-9143-b013a1b61506",
+    "device_name": "Apple Watch",
+    "confidence": 0.849192498562181
+  },
+  {
+    "metric_id": "METRIC#765f96d9-049c-4c25-939f-4f7c5515a285",
+    "user_id": "USER#91b48acd-9969-40fa-b03f-35671a5351b2",
+    "metric_type": "temperature",
+    "timestamp": "2025-07-11T11:45:45.427040+00:00",
+    "value": 36.1,
+    "unit": "\u00b0C",
+    "device_id": "DEVICE#c5634227-0929-4220-af6f-3d6cd7044914",
+    "device_name": "Omron BP Monitor",
+    "confidence": 0.936979880124471
+  },
+  {
+    "metric_id": "METRIC#94117ddb-f4d6-46a5-bdeb-0fbcc14f2fdf",
+    "user_id": "USER#91b48acd-9969-40fa-b03f-35671a5351b2",
+    "metric_type": "oxygen_saturation",
+    "timestamp": "2025-07-11T23:53:45.427040+00:00",
+    "value": 95,
+    "unit": "%",
+    "device_id": "DEVICE#b0bbaeb6-51bf-44aa-91e9-4eed6b55633b",
+    "device_name": "Omron BP Monitor",
+    "confidence": 0.845196689295241
+  },
+  {
+    "metric_id": "METRIC#bfff52a7-3f62-4af7-afe6-9ea9145e1133",
+    "user_id": "USER#91b48acd-9969-40fa-b03f-35671a5351b2",
+    "metric_type": "oxygen_saturation",
+    "timestamp": "2025-07-10T20:58:45.427040+00:00",
+    "value": 98,
+    "unit": "%",
+    "device_id": "DEVICE#85424654-b298-4990-be3a-e589f480a9fd",
+    "device_name": "Garmin Venu",
+    "confidence": 0.84633465544422
+  },
+  {
+    "metric_id": "METRIC#37ebb068-09ae-41aa-98c8-71c45842d937",
+    "user_id": "USER#91b48acd-9969-40fa-b03f-35671a5351b2",
+    "metric_type": "heart_rate",
+    "timestamp": "2025-07-10T02:44:45.427040+00:00",
+    "value": 84,
+    "unit": "bpm",
+    "device_id": "DEVICE#b2850c83-915a-4bc3-9e84-365907306fe5",
+    "device_name": "Garmin Venu",
+    "confidence": 0.968491064941048
+  },
+  {
+    "metric_id": "METRIC#f2358352-d2d8-4cdd-970e-8a4092618eda",
+    "user_id": "USER#91b48acd-9969-40fa-b03f-35671a5351b2",
+    "metric_type": "heart_rate",
+    "timestamp": "2025-07-10T19:50:45.427040+00:00",
+    "value": 88,
+    "unit": "bpm",
+    "device_id": "DEVICE#aaee928b-2af1-45fe-85ae-6bb1274304f7",
+    "device_name": "Omron BP Monitor",
+    "confidence": 0.969599809889632
+  },
+  {
+    "metric_id": "METRIC#93baedf3-3b7c-4df9-bfcd-a5234726d363",
+    "user_id": "USER#91b48acd-9969-40fa-b03f-35671a5351b2",
+    "metric_type": "temperature",
+    "timestamp": "2025-07-09T21:27:45.427040+00:00",
+    "value": 36.9,
+    "unit": "\u00b0C",
+    "device_id": "DEVICE#ff74c67f-05bd-4649-bf7c-87e38f2d02e5",
+    "device_name": "Dexcom G6",
+    "confidence": 0.98945534875222
+  },
+  {
+    "metric_id": "METRIC#fbd9bfe6-8a24-4061-9106-7a775deb027a",
+    "user_id": "USER#91b48acd-9969-40fa-b03f-35671a5351b2",
+    "metric_type": "weight",
+    "timestamp": "2025-07-09T22:18:45.427040+00:00",
+    "value": 118.4,
+    "unit": "kg",
+    "device_id": "DEVICE#9877a714-4ab0-4ef5-b21f-2251bb640c2e",
+    "device_name": "Apple Watch",
+    "confidence": 0.910123316055075
+  },
+  {
+    "metric_id": "METRIC#affbb235-f5bd-4828-b56b-90ac7c9292cb",
+    "user_id": "USER#91b48acd-9969-40fa-b03f-35671a5351b2",
+    "metric_type": "oxygen_saturation",
+    "timestamp": "2025-07-09T19:16:45.427040+00:00",
+    "value": 98,
+    "unit": "%",
+    "device_id": "DEVICE#e014faa6-b285-46ff-8356-c6242fbd7e2c",
+    "device_name": "Dexcom G6",
+    "confidence": 0.800271871042557
+  },
+  {
+    "metric_id": "METRIC#bbc3cebf-40b5-4a90-a5aa-c8987c790dcb",
+    "user_id": "USER#91b48acd-9969-40fa-b03f-35671a5351b2",
+    "metric_type": "weight",
+    "timestamp": "2025-07-08T12:37:45.427040+00:00",
+    "value": 72.2,
+    "unit": "kg",
+    "device_id": "DEVICE#3accce3a-3a9c-4751-a204-f66021871fd0",
+    "device_name": "Dexcom G6",
+    "confidence": 0.955809254206062
+  },
+  {
+    "metric_id": "METRIC#d157ed38-a056-4937-b33d-db0bf2051aef",
+    "user_id": "USER#91b48acd-9969-40fa-b03f-35671a5351b2",
+    "metric_type": "temperature",
+    "timestamp": "2025-07-08T08:41:45.427040+00:00",
+    "value": 36.6,
+    "unit": "\u00b0C",
+    "device_id": "DEVICE#6c36d50b-edc4-4413-8d1b-90c546af9412",
+    "device_name": "Omron BP Monitor",
+    "confidence": 0.91223656059844
+  },
+  {
+    "metric_id": "METRIC#97f0cec9-b70b-40e7-9cff-0c16964f759c",
+    "user_id": "USER#91b48acd-9969-40fa-b03f-35671a5351b2",
+    "metric_type": "sleep_duration",
+    "timestamp": "2025-07-08T22:02:45.427040+00:00",
+    "value": 9.4,
+    "unit": "hours",
+    "device_id": "DEVICE#68e94bdc-a010-4d98-9329-78eeb716d389",
+    "device_name": "Garmin Venu",
+    "confidence": 0.916672328949217
+  },
+  {
+    "metric_id": "METRIC#63935f27-309b-4a0d-9c0f-db4ff8f4231a",
+    "user_id": "USER#91b48acd-9969-40fa-b03f-35671a5351b2",
+    "metric_type": "blood_pressure",
+    "timestamp": "2025-07-07T01:51:45.427040+00:00",
+    "value": {
+      "systolic": 128,
+      "diastolic": 87
+    },
+    "unit": "mmHg",
+    "device_id": "DEVICE#bccc915b-a2e0-40f7-9a65-e30e8285f312",
+    "device_name": "Dexcom G6",
+    "confidence": 0.840516988760209
+  },
+  {
+    "metric_id": "METRIC#b42a0973-8346-4ada-884a-9ee33fb84a65",
+    "user_id": "USER#91b48acd-9969-40fa-b03f-35671a5351b2",
+    "metric_type": "weight",
+    "timestamp": "2025-07-07T16:40:45.427040+00:00",
+    "value": 101.7,
+    "unit": "kg",
+    "device_id": "DEVICE#dfbe09a8-5842-4afd-b015-8e2142e9fb88",
+    "device_name": "Garmin Venu",
+    "confidence": 0.947385967821657
+  },
+  {
+    "metric_id": "METRIC#d0dacaff-192f-4fde-8c37-43a05a7a29a9",
+    "user_id": "USER#91b48acd-9969-40fa-b03f-35671a5351b2",
+    "metric_type": "heart_rate",
+    "timestamp": "2025-07-07T16:50:45.427040+00:00",
+    "value": 99,
+    "unit": "bpm",
+    "device_id": "DEVICE#f458b9be-2dae-409d-b7b5-e819ac869e1d",
+    "device_name": "Omron BP Monitor",
+    "confidence": 0.825441773635638
+  },
+  {
+    "metric_id": "METRIC#7b686c83-cbe2-4516-8b34-5fba1d0fceaa",
+    "user_id": "USER#91b48acd-9969-40fa-b03f-35671a5351b2",
+    "metric_type": "glucose",
+    "timestamp": "2025-07-06T18:51:45.427040+00:00",
+    "value": 103,
+    "unit": "mg/dL",
+    "device_id": "DEVICE#240fed75-a3d8-4b1a-bd66-4e89b17f1d52",
+    "device_name": "Omron BP Monitor",
+    "confidence": 0.988741620682042
+  },
+  {
+    "metric_id": "METRIC#5d0189ea-ad9f-4e2f-bb06-3bb107d92a40",
+    "user_id": "USER#91b48acd-9969-40fa-b03f-35671a5351b2",
+    "metric_type": "weight",
+    "timestamp": "2025-07-06T13:10:45.427040+00:00",
+    "value": 75.8,
+    "unit": "kg",
+    "device_id": "DEVICE#6fdc2128-4426-40ae-bca5-ac42526bded0",
+    "device_name": "Apple Watch",
+    "confidence": 0.887451464530956
+  },
+  {
+    "metric_id": "METRIC#95c97ebb-1b65-42a4-811a-8eae10285f8d",
+    "user_id": "USER#91b48acd-9969-40fa-b03f-35671a5351b2",
+    "metric_type": "steps",
+    "timestamp": "2025-07-06T22:18:45.427040+00:00",
+    "value": 1431,
+    "unit": "count",
+    "device_id": "DEVICE#24a64867-1c0e-4029-90b4-26a5207dd451",
+    "device_name": "Apple Watch",
+    "confidence": 0.813222683488261
+  },
+  {
+    "metric_id": "METRIC#41501484-c7c5-4df3-82ff-87947f33ed34",
+    "user_id": "USER#eacc66df-925a-4427-895e-c5e2dd682633",
+    "metric_type": "weight",
+    "timestamp": "2025-07-12T02:27:45.428743+00:00",
+    "value": 66.7,
+    "unit": "kg",
+    "device_id": "DEVICE#772994d3-4cb1-41e2-b9fd-da728e17f7cc",
+    "device_name": "Garmin Venu",
+    "confidence": 0.885770495787863
+  },
+  {
+    "metric_id": "METRIC#695a2706-9cf7-4dc4-a8fa-e2c855f6827a",
+    "user_id": "USER#eacc66df-925a-4427-895e-c5e2dd682633",
+    "metric_type": "steps",
+    "timestamp": "2025-07-12T07:33:45.428743+00:00",
+    "value": 8476,
+    "unit": "count",
+    "device_id": "DEVICE#a46f0f7c-9c1a-4256-b100-95629df7f301",
+    "device_name": "Apple Watch",
+    "confidence": 0.939673209432381
+  },
+  {
+    "metric_id": "METRIC#c3be98da-d924-40a4-845a-7d1bff97afc7",
+    "user_id": "USER#eacc66df-925a-4427-895e-c5e2dd682633",
+    "metric_type": "blood_pressure",
+    "timestamp": "2025-07-12T19:37:45.428743+00:00",
+    "value": {
+      "systolic": 114,
+      "diastolic": 73
+    },
+    "unit": "mmHg",
+    "device_id": "DEVICE#82d1467e-ec27-4fc1-86ce-6634ba719d73",
+    "device_name": "Omron BP Monitor",
+    "confidence": 0.97452413790938
+  },
+  {
+    "metric_id": "METRIC#f7b1cee6-1ff8-4d8b-b2bf-74d9d54e5d54",
+    "user_id": "USER#eacc66df-925a-4427-895e-c5e2dd682633",
+    "metric_type": "temperature",
+    "timestamp": "2025-07-11T15:50:45.428743+00:00",
+    "value": 36.4,
+    "unit": "\u00b0C",
+    "device_id": "DEVICE#25ecb67a-cef0-4ad7-82a5-c19dc2eabbdd",
+    "device_name": "Omron BP Monitor",
+    "confidence": 0.888076885170341
+  },
+  {
+    "metric_id": "METRIC#eca69db6-36e3-4417-842e-18e9454e4f34",
+    "user_id": "USER#eacc66df-925a-4427-895e-c5e2dd682633",
+    "metric_type": "oxygen_saturation",
+    "timestamp": "2025-07-11T18:45:45.428743+00:00",
+    "value": 96,
+    "unit": "%",
+    "device_id": "DEVICE#382e1c0f-893f-4f0b-b823-6ebca7206237",
+    "device_name": "Dexcom G6",
+    "confidence": 0.891133973394847
+  },
+  {
+    "metric_id": "METRIC#f5ec0856-9465-4d84-81b1-862889a5f182",
+    "user_id": "USER#eacc66df-925a-4427-895e-c5e2dd682633",
+    "metric_type": "heart_rate",
+    "timestamp": "2025-07-11T11:45:45.428743+00:00",
+    "value": 100,
+    "unit": "bpm",
+    "device_id": "DEVICE#0fc7afca-5490-45d8-84db-4a2cca7ed646",
+    "device_name": "Garmin Venu",
+    "confidence": 0.883871366015214
+  },
+  {
+    "metric_id": "METRIC#92c14271-b5b8-4cb4-8a26-7bcbd68bd001",
+    "user_id": "USER#eacc66df-925a-4427-895e-c5e2dd682633",
+    "metric_type": "oxygen_saturation",
+    "timestamp": "2025-07-10T23:55:45.428743+00:00",
+    "value": 99,
+    "unit": "%",
+    "device_id": "DEVICE#f5502e4a-ddad-4793-b78d-816c73ae3cfb",
+    "device_name": "Fitbit Charge",
+    "confidence": 0.900596586895351
+  },
+  {
+    "metric_id": "METRIC#e215c78d-fad3-4d97-91c7-07bd41ae3f93",
+    "user_id": "USER#eacc66df-925a-4427-895e-c5e2dd682633",
+    "metric_type": "heart_rate",
+    "timestamp": "2025-07-10T23:36:45.428743+00:00",
+    "value": 70,
+    "unit": "bpm",
+    "device_id": "DEVICE#58b1d15c-66d9-4ba4-af86-a59a78b8e8fa",
+    "device_name": "Fitbit Charge",
+    "confidence": 0.831010648680733
+  },
+  {
+    "metric_id": "METRIC#86f6dfb5-c40e-4360-9b60-dc9ffaad1a2c",
+    "user_id": "USER#eacc66df-925a-4427-895e-c5e2dd682633",
+    "metric_type": "steps",
+    "timestamp": "2025-07-10T04:55:45.428743+00:00",
+    "value": 2318,
+    "unit": "count",
+    "device_id": "DEVICE#f5556e45-8058-4009-b275-256161567a2c",
+    "device_name": "Garmin Venu",
+    "confidence": 0.828364883966594
+  },
+  {
+    "metric_id": "METRIC#da578530-c9ab-44d7-8c42-280f4f3482ca",
+    "user_id": "USER#eacc66df-925a-4427-895e-c5e2dd682633",
+    "metric_type": "weight",
+    "timestamp": "2025-07-09T08:29:45.428743+00:00",
+    "value": 107.8,
+    "unit": "kg",
+    "device_id": "DEVICE#55d120b0-fab4-41d6-9bfc-a302b679474f",
+    "device_name": "Garmin Venu",
+    "confidence": 0.889098609615665
+  },
+  {
+    "metric_id": "METRIC#917be8e7-38ea-416c-8847-85b5309e1be2",
+    "user_id": "USER#eacc66df-925a-4427-895e-c5e2dd682633",
+    "metric_type": "sleep_duration",
+    "timestamp": "2025-07-09T23:22:45.428743+00:00",
+    "value": 4.5,
+    "unit": "hours",
+    "device_id": "DEVICE#e975bd1c-5514-4a74-8286-0b8ec3ddf0a5",
+    "device_name": "Dexcom G6",
+    "confidence": 0.997054330900619
+  },
+  {
+    "metric_id": "METRIC#10aacc4a-4ea2-4dff-865e-79a81ff145bd",
+    "user_id": "USER#eacc66df-925a-4427-895e-c5e2dd682633",
+    "metric_type": "temperature",
+    "timestamp": "2025-07-09T16:39:45.428743+00:00",
+    "value": 36.4,
+    "unit": "\u00b0C",
+    "device_id": "DEVICE#3796bf8b-6c36-451d-8daf-a30e7c5c97c6",
+    "device_name": "Dexcom G6",
+    "confidence": 0.846038179043779
+  },
+  {
+    "metric_id": "METRIC#0bcbb4e3-872f-440e-abca-ea4b94c11bc7",
+    "user_id": "USER#eacc66df-925a-4427-895e-c5e2dd682633",
+    "metric_type": "glucose",
+    "timestamp": "2025-07-08T04:46:45.428743+00:00",
+    "value": 129,
+    "unit": "mg/dL",
+    "device_id": "DEVICE#2d840275-07a7-4e40-8ebc-18e1804a4a2c",
+    "device_name": "Fitbit Charge",
+    "confidence": 0.882988740990402
+  },
+  {
+    "metric_id": "METRIC#3b2f6683-7549-44bc-be27-c5c649b3ab56",
+    "user_id": "USER#eacc66df-925a-4427-895e-c5e2dd682633",
+    "metric_type": "blood_pressure",
+    "timestamp": "2025-07-08T01:43:45.428743+00:00",
+    "value": {
+      "systolic": 133,
+      "diastolic": 75
+    },
+    "unit": "mmHg",
+    "device_id": "DEVICE#93879fea-b41f-4edb-b5aa-a7bc6d38ebd1",
+    "device_name": "Fitbit Charge",
+    "confidence": 0.938971579601646
+  },
+  {
+    "metric_id": "METRIC#7a7f6281-9c5b-47c1-a55c-a63455606848",
+    "user_id": "USER#eacc66df-925a-4427-895e-c5e2dd682633",
+    "metric_type": "temperature",
+    "timestamp": "2025-07-08T07:18:45.428743+00:00",
+    "value": 36.9,
+    "unit": "\u00b0C",
+    "device_id": "DEVICE#bfe86607-7298-43df-98f0-c8d1e03dc6f9",
+    "device_name": "Garmin Venu",
+    "confidence": 0.993051704148255
+  },
+  {
+    "metric_id": "METRIC#96433b20-b397-4b21-96c7-d71f82ad4b3c",
+    "user_id": "USER#eacc66df-925a-4427-895e-c5e2dd682633",
+    "metric_type": "blood_pressure",
+    "timestamp": "2025-07-07T05:47:45.428743+00:00",
+    "value": {
+      "systolic": 130,
+      "diastolic": 85
+    },
+    "unit": "mmHg",
+    "device_id": "DEVICE#8494e249-04df-4938-9796-0e3efe0a639e",
+    "device_name": "Garmin Venu",
+    "confidence": 0.946988579915791
+  },
+  {
+    "metric_id": "METRIC#00e1b2a7-9fdd-48d5-8ba8-abc615e1e29f",
+    "user_id": "USER#eacc66df-925a-4427-895e-c5e2dd682633",
+    "metric_type": "weight",
+    "timestamp": "2025-07-07T09:06:45.428743+00:00",
+    "value": 86.9,
+    "unit": "kg",
+    "device_id": "DEVICE#a91f0411-4d8b-49f8-a556-ca92b7b10808",
+    "device_name": "Garmin Venu",
+    "confidence": 0.906832427151851
+  },
+  {
+    "metric_id": "METRIC#1b592367-5420-4fd8-a27f-6055214b2926",
+    "user_id": "USER#eacc66df-925a-4427-895e-c5e2dd682633",
+    "metric_type": "oxygen_saturation",
+    "timestamp": "2025-07-07T05:48:45.428743+00:00",
+    "value": 97,
+    "unit": "%",
+    "device_id": "DEVICE#31b7e99c-85ac-4e46-84d2-5877188653c9",
+    "device_name": "Garmin Venu",
+    "confidence": 0.858677929853026
+  },
+  {
+    "metric_id": "METRIC#c10b4e30-ac30-430b-ae72-00038185b68b",
+    "user_id": "USER#eacc66df-925a-4427-895e-c5e2dd682633",
+    "metric_type": "temperature",
+    "timestamp": "2025-07-06T01:50:45.428743+00:00",
+    "value": 37.0,
+    "unit": "\u00b0C",
+    "device_id": "DEVICE#0d8ffe18-4968-4c85-818c-ca217440c62d",
+    "device_name": "Fitbit Charge",
+    "confidence": 0.920530500678381
+  },
+  {
+    "metric_id": "METRIC#1d799345-10bc-4e7f-a36b-a1e44c6449a4",
+    "user_id": "USER#eacc66df-925a-4427-895e-c5e2dd682633",
+    "metric_type": "temperature",
+    "timestamp": "2025-07-06T18:21:45.428743+00:00",
+    "value": 37.0,
+    "unit": "\u00b0C",
+    "device_id": "DEVICE#6428b3d1-5720-4fcc-a154-e35799cebe4e",
+    "device_name": "Apple Watch",
+    "confidence": 0.998460758002971
+  },
+  {
+    "metric_id": "METRIC#1e3f6c3e-3225-4470-a9a8-0b097ed82e26",
+    "user_id": "USER#eacc66df-925a-4427-895e-c5e2dd682633",
+    "metric_type": "temperature",
+    "timestamp": "2025-07-06T16:47:45.428743+00:00",
+    "value": 36.9,
+    "unit": "\u00b0C",
+    "device_id": "DEVICE#3a831a9b-bf87-4a44-9a9e-2fa2abd6238a",
+    "device_name": "Apple Watch",
+    "confidence": 0.927883806843898
+  }
+]

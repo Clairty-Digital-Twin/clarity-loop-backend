@@ -1,0 +1,246 @@
+[
+  {
+    "prediction_id": "PREDICTION#c24e3a4b-6c38-4e97-b357-a05d5399310f",
+    "user_id": "USER#5d2a14c4-61a3-4189-be32-4aec06b852ba",
+    "model_version": "1.0",
+    "timestamp": "2025-07-12T13:18:45.426675+00:00",
+    "predictions": {
+      "depression_risk": 0.86,
+      "sleep_quality": 0.826,
+      "activity_level": "moderate",
+      "health_score": 72
+    },
+    "confidence_scores": {
+      "depression_risk": 0.887,
+      "sleep_quality": 0.937,
+      "activity_level": 0.919,
+      "health_score": 0.835
+    },
+    "features_used": [
+      "heart_rate_variability",
+      "activity_counts",
+      "sleep_efficiency",
+      "sleep_regularity",
+      "sleep_duration"
+    ]
+  },
+  {
+    "prediction_id": "PREDICTION#81de9006-504f-4a7e-8670-079faf1311d3",
+    "user_id": "USER#5d2a14c4-61a3-4189-be32-4aec06b852ba",
+    "model_version": "1.1",
+    "timestamp": "2025-07-12T13:18:45.426726+00:00",
+    "predictions": {
+      "depression_risk": 0.637,
+      "sleep_quality": 0.116,
+      "activity_level": "moderate",
+      "health_score": 83
+    },
+    "confidence_scores": {
+      "depression_risk": 0.786,
+      "sleep_quality": 0.8,
+      "activity_level": 0.897,
+      "health_score": 0.776
+    },
+    "features_used": [
+      "sleep_efficiency",
+      "heart_rate_variability",
+      "sleep_duration",
+      "sleep_regularity",
+      "activity_counts",
+      "sedentary_time",
+      "circadian_rhythm",
+      "weekend_difference"
+    ]
+  },
+  {
+    "prediction_id": "PREDICTION#358322f7-73a9-43b8-8548-e8eea552bce2",
+    "user_id": "USER#5d2a14c4-61a3-4189-be32-4aec06b852ba",
+    "model_version": "1.0",
+    "timestamp": "2025-07-12T13:18:45.426761+00:00",
+    "predictions": {
+      "depression_risk": 0.614,
+      "sleep_quality": 0.004,
+      "activity_level": "low",
+      "health_score": 90
+    },
+    "confidence_scores": {
+      "depression_risk": 0.729,
+      "sleep_quality": 0.915,
+      "activity_level": 0.981,
+      "health_score": 0.852
+    },
+    "features_used": [
+      "sleep_duration",
+      "activity_counts",
+      "weekend_difference",
+      "sleep_regularity",
+      "heart_rate_variability",
+      "step_count",
+      "sedentary_time",
+      "sleep_efficiency"
+    ]
+  },
+  {
+    "prediction_id": "PREDICTION#bf75c352-5914-4c71-ae58-a12dd38caf1d",
+    "user_id": "USER#91b48acd-9969-40fa-b03f-35671a5351b2",
+    "model_version": "2.0",
+    "timestamp": "2025-07-12T13:18:45.428375+00:00",
+    "predictions": {
+      "depression_risk": 0.077,
+      "sleep_quality": 0.651,
+      "activity_level": "low",
+      "health_score": 61
+    },
+    "confidence_scores": {
+      "depression_risk": 0.868,
+      "sleep_quality": 0.885,
+      "activity_level": 0.88,
+      "health_score": 0.821
+    },
+    "features_used": [
+      "weekend_difference",
+      "circadian_rhythm",
+      "step_count",
+      "sleep_regularity",
+      "heart_rate_variability",
+      "sleep_duration",
+      "activity_counts"
+    ]
+  },
+  {
+    "prediction_id": "PREDICTION#cbff02bf-bdcd-4bf0-b81c-add1573ab6ba",
+    "user_id": "USER#91b48acd-9969-40fa-b03f-35671a5351b2",
+    "model_version": "1.0",
+    "timestamp": "2025-07-12T13:18:45.428409+00:00",
+    "predictions": {
+      "depression_risk": 0.442,
+      "sleep_quality": 0.083,
+      "activity_level": "moderate",
+      "health_score": 74
+    },
+    "confidence_scores": {
+      "depression_risk": 0.827,
+      "sleep_quality": 0.933,
+      "activity_level": 0.91,
+      "health_score": 0.77
+    },
+    "features_used": [
+      "heart_rate_variability",
+      "sedentary_time",
+      "sleep_duration",
+      "step_count",
+      "activity_counts",
+      "sleep_efficiency",
+      "sleep_regularity",
+      "weekend_difference",
+      "circadian_rhythm"
+    ]
+  },
+  {
+    "prediction_id": "PREDICTION#fd969cb9-c28b-4976-9608-2dd23ac31f9a",
+    "user_id": "USER#91b48acd-9969-40fa-b03f-35671a5351b2",
+    "model_version": "1.0",
+    "timestamp": "2025-07-12T13:18:45.428442+00:00",
+    "predictions": {
+      "depression_risk": 0.066,
+      "sleep_quality": 0.618,
+      "activity_level": "moderate",
+      "health_score": 93
+    },
+    "confidence_scores": {
+      "depression_risk": 0.845,
+      "sleep_quality": 0.857,
+      "activity_level": 0.885,
+      "health_score": 0.773
+    },
+    "features_used": [
+      "sleep_efficiency",
+      "sleep_regularity",
+      "activity_counts",
+      "sedentary_time",
+      "circadian_rhythm",
+      "step_count",
+      "weekend_difference"
+    ]
+  },
+  {
+    "prediction_id": "PREDICTION#68c3ea58-b490-486f-927c-04270879ae57",
+    "user_id": "USER#eacc66df-925a-4427-895e-c5e2dd682633",
+    "model_version": "2.0",
+    "timestamp": "2025-07-12T13:18:45.430107+00:00",
+    "predictions": {
+      "depression_risk": 0.94,
+      "sleep_quality": 0.896,
+      "activity_level": "high",
+      "health_score": 78
+    },
+    "confidence_scores": {
+      "depression_risk": 0.841,
+      "sleep_quality": 0.86,
+      "activity_level": 0.885,
+      "health_score": 0.786
+    },
+    "features_used": [
+      "weekend_difference",
+      "sedentary_time",
+      "sleep_efficiency",
+      "activity_counts",
+      "step_count",
+      "circadian_rhythm",
+      "sleep_duration"
+    ]
+  },
+  {
+    "prediction_id": "PREDICTION#5c37220a-da72-45bb-9d07-348ae7ff5fe7",
+    "user_id": "USER#eacc66df-925a-4427-895e-c5e2dd682633",
+    "model_version": "2.0",
+    "timestamp": "2025-07-12T13:18:45.430140+00:00",
+    "predictions": {
+      "depression_risk": 0.121,
+      "sleep_quality": 0.034,
+      "activity_level": "low",
+      "health_score": 85
+    },
+    "confidence_scores": {
+      "depression_risk": 0.857,
+      "sleep_quality": 0.85,
+      "activity_level": 0.943,
+      "health_score": 0.872
+    },
+    "features_used": [
+      "step_count",
+      "activity_counts",
+      "circadian_rhythm",
+      "sleep_duration",
+      "sleep_efficiency",
+      "sedentary_time",
+      "sleep_regularity"
+    ]
+  },
+  {
+    "prediction_id": "PREDICTION#d2a96a89-199b-49ca-a84a-1bee750812da",
+    "user_id": "USER#eacc66df-925a-4427-895e-c5e2dd682633",
+    "model_version": "1.1",
+    "timestamp": "2025-07-12T13:18:45.430171+00:00",
+    "predictions": {
+      "depression_risk": 0.616,
+      "sleep_quality": 0.972,
+      "activity_level": "moderate",
+      "health_score": 61
+    },
+    "confidence_scores": {
+      "depression_risk": 0.817,
+      "sleep_quality": 0.891,
+      "activity_level": 0.954,
+      "health_score": 0.935
+    },
+    "features_used": [
+      "activity_counts",
+      "sleep_regularity",
+      "heart_rate_variability",
+      "sleep_efficiency",
+      "sedentary_time",
+      "step_count"
+    ]
+  }
+]

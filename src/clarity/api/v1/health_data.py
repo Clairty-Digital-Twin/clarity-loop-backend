@@ -246,11 +246,15 @@ async def upload_health_data(
 
         # SECURITY: Validate metrics count to prevent DoS through large uploads
         config = get_config_provider()
-        settings = config.get_config()
-        max_metrics_per_upload = settings.get("max_metrics_per_upload", 1000)
+        max_metrics_per_upload_setting = config.get_setting("max_metrics_per_upload", default=1000)
+        # Handle both real values and mocked values for tests
+        try:
+            max_metrics_per_upload = int(max_metrics_per_upload_setting or 1000)
+        except (TypeError, ValueError):
+            max_metrics_per_upload = 1000
         if len(health_data.metrics) > max_metrics_per_upload:
             _raise_too_many_metrics_error(
-                len(health_data.metrics), max_metrics_per_upload
+                len(health_data.metrics), int(max_metrics_per_upload)
             )
 
         # Validate user owns the data

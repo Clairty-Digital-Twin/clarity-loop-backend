@@ -415,7 +415,7 @@ async def get_insight(
             narrative=insight_doc.get("narrative", ""),
             key_insights=insight_doc.get("key_insights", []),
             recommendations=insight_doc.get("recommendations", []),
-            confidence_score=float(insight_doc.get("confidence_score", 0.0) or 0.0),
+            confidence_score=float(Decimal(str(insight_doc.get("confidence_score", 0.0) or 0.0))),
             generated_at=insight_doc.get("generated_at", datetime.now(UTC).isoformat()),
         )
 
@@ -526,7 +526,7 @@ async def get_insight_history(
                     else narrative
                 ),
                 "generated_at": insight.get("generated_at"),
-                "confidence_score": float(insight.get("confidence_score", 0.0) or 0.0),
+                "confidence_score": float(Decimal(str(insight.get("confidence_score", 0.0) or 0.0))),
                 "key_insights_count": (
                     len(key_insights) if isinstance(key_insights, list) else 0
                 ),

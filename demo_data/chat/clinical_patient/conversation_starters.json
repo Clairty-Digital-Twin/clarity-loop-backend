@@ -1,0 +1,78 @@
+[
+  {
+    "category": "risk_assessment",
+    "question": "Am I at risk for a mood episode based on my recent data?",
+    "expected_response_type": "risk_analysis",
+    "data_needed": [
+      "sleep_hours",
+      "mood_score",
+      "activity_level",
+      "stress_level"
+    ],
+    "complexity": "high",
+    "persona": "clinical_patient",
+    "id": "f93e3f3a-8819-4b17-b7de-73c3f286c38e",
+    "created_date": "2025-07-12T09:18:31.642039",
+    "priority": "high"
+  },
+  {
+    "category": "early_warning",
+    "question": "Have there been any concerning changes in my sleep patterns lately?",
+    "expected_response_type": "anomaly_detection",
+    "data_needed": [
+      "sleep_hours",
+      "sleep_quality",
+      "bedtime",
+      "wake_time"
+    ],
+    "complexity": "medium",
+    "persona": "clinical_patient",
+    "id": "af07631d-cce0-4834-af1a-e474fef364c7",
+    "created_date": "2025-07-12T09:18:31.642081",
+    "priority": "medium"
+  },
+  {
+    "category": "medication_correlation",
+    "question": "How has my mood stability been since starting my new medication?",
+    "expected_response_type": "intervention_analysis",
+    "data_needed": [
+      "mood_score",
+      "medication_dates",
+      "side_effects"
+    ],
+    "complexity": "high",
+    "persona": "clinical_patient",
+    "id": "e8f4c1c3-b76d-41e1-b698-03c142b8fcae",
+    "created_date": "2025-07-12T09:18:31.642088",
+    "priority": "high"
+  },
+  {
+    "category": "symptom_tracking",
+    "question": "Show me my stress levels over the past two weeks",
+    "expected_response_type": "trend_visualization",
+    "data_needed": [
+      "stress_level",
+      "anxiety_level",
+      "dates"
+    ],
+    "complexity": "low",
+    "persona": "clinical_patient",
+    "id": "ef2be96b-e6a1-4a46-9ab4-ebed0b6a90a2",
+    "created_date": "2025-07-12T09:18:31.642093",
+    "priority": "medium"
+  },
+  {
+    "category": "recovery_progress",
+    "question": "How has my overall wellness improved since my last episode?",
+    "expected_response_type": "recovery_analysis",
+    "data_needed": [
+      "all_metrics",
+      "episode_dates"
+    ],
+    "complexity": "high",
+    "persona": "clinical_patient",
+    "id": "9691418e-6c3b-43f4-90ae-8bab3ea7dcfd",
+    "created_date": "2025-07-12T09:18:31.642097",
+    "priority": "high"
+  }
+]

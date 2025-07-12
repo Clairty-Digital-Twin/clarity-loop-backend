@@ -1,0 +1,78 @@
+[
+  {
+    "response_type": "trend_analysis",
+    "template": "Based on your {data_type} data over the past {time_period}, I can see {trend_description}. Your average {metric} was {value}, which is {comparison} compared to your baseline.",
+    "visualization": "line_chart",
+    "insights": [
+      "trend_direction",
+      "statistical_significance",
+      "contextual_factors"
+    ],
+    "recommendations": true,
+    "persona": "health_conscious",
+    "id": "403384d9-d64e-423d-ab1a-62bb9d18115f",
+    "created_date": "2025-07-12T09:18:22.943699",
+    "version": "1.0"
+  },
+  {
+    "response_type": "correlation_analysis",
+    "template": "I found a {correlation_strength} correlation between your {metric1} and {metric2}. When your {metric1} is {condition}, your {metric2} tends to be {outcome}.",
+    "visualization": "scatter_plot",
+    "insights": [
+      "correlation_coefficient",
+      "clinical_significance",
+      "causation_notes"
+    ],
+    "recommendations": true,
+    "persona": "health_conscious",
+    "id": "8e9c0522-6f39-4306-9015-2cf1e44cbc4e",
+    "created_date": "2025-07-12T09:18:22.943703",
+    "version": "1.0"
+  },
+  {
+    "response_type": "risk_analysis",
+    "template": "Based on your recent patterns, your risk level is {risk_level}. Key factors contributing to this assessment include {risk_factors}. I recommend {actions}.",
+    "visualization": "risk_dashboard",
+    "insights": [
+      "risk_score",
+      "contributing_factors",
+      "confidence_level"
+    ],
+    "recommendations": true,
+    "clinical_validation": true,
+    "persona": "health_conscious",
+    "id": "cc2f03a2-a30e-41ac-a21e-c36b135a0570",
+    "created_date": "2025-07-12T09:18:22.943707",
+    "version": "1.0"
+  },
+  {
+    "response_type": "anomaly_detection",
+    "template": "I detected {anomaly_count} unusual patterns in your {data_type} data. These occurred on {dates} and were characterized by {anomaly_description}.",
+    "visualization": "anomaly_timeline",
+    "insights": [
+      "anomaly_severity",
+      "potential_causes",
+      "frequency"
+    ],
+    "recommendations": true,
+    "persona": "health_conscious",
+    "id": "b198cf92-a39a-4bc9-96ba-17eee13c9610",
+    "created_date": "2025-07-12T09:18:22.943710",
+    "version": "1.0"
+  },
+  {
+    "response_type": "comparative_analysis",
+    "template": "Comparing {period1} to {period2}, your {metric} changed by {change_amount}. This represents a {change_significance} improvement/decline in your {health_aspect}.",
+    "visualization": "comparison_chart",
+    "insights": [
+      "statistical_test",
+      "effect_size",
+      "practical_significance"
+    ],
+    "recommendations": true,
+    "persona": "health_conscious",
+    "id": "2c26b5ed-fe78-444b-9257-9fe2742ccc5f",
+    "created_date": "2025-07-12T09:18:22.943714",
+    "version": "1.0"
+  }
+]

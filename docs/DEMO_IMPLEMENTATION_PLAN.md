@@ -12,7 +12,8 @@
 
 ### 1.1 Core HealthKit Test Data Generation
 ```bash
-# Generate realistic synthetic HealthKit data
+# Leverage existing synthetic data generation + demo-specific data
+make generate-synthetic  # Uses existing Makefile target
 python scripts/generate_demo_data.py --profile=active_adult --days=90 --output=demo_data/healthkit/
 ```
 
@@ -95,7 +96,8 @@ python scripts/validate_demo_pipeline.py --bucket=clarity-demo-data --comprehens
 
 ### 3.1 PAT Model Integration
 ```bash
-# Load PAT models with demo data
+# Leverage existing PAT model infrastructure
+make download-models  # Uses existing Makefile target
 python scripts/load_pat_models.py --data-source=s3://clarity-demo-data/healthkit/ --validate
 ```
 

@@ -6,7 +6,7 @@ with auto-refresh capabilities in the CLARITY Digital Twin Platform.
 
 import logging
 import os
-from typing import Optional
+from typing import Any, Optional
 
 from clarity.core.config_aws import Settings
 from clarity.core.config_provider import ConfigProvider
@@ -94,7 +94,7 @@ def create_enhanced_feature_flag_manager(
     return manager
 
 
-def setup_feature_flags_for_app(app, settings: Settings) -> EnhancedFeatureFlagManager:
+def setup_feature_flags_for_app(app: Any, settings: Settings) -> EnhancedFeatureFlagManager:
     """Set up enhanced feature flags for FastAPI application.
 
     Args:
@@ -121,8 +121,8 @@ def setup_feature_flags_for_app(app, settings: Settings) -> EnhancedFeatureFlagM
     app.state.feature_flag_manager = manager
 
     # Add startup/shutdown handlers
-    @app.on_event("startup")
-    async def feature_flag_startup():
+    @app.on_event("startup")  # type: ignore[misc]
+    async def feature_flag_startup() -> None:
         """Initialize feature flag system on startup."""
         logger.info("Feature flag system started")
 
@@ -130,8 +130,8 @@ def setup_feature_flags_for_app(app, settings: Settings) -> EnhancedFeatureFlagM
         if manager.is_config_stale():
             logger.warning("Feature flag configuration is stale at startup")
 
-    @app.on_event("shutdown")
-    async def feature_flag_shutdown():
+    @app.on_event("shutdown")  # type: ignore[misc]
+    async def feature_flag_shutdown() -> None:
         """Cleanup feature flag system on shutdown."""
         logger.info("Shutting down feature flag system")
         manager.shutdown()
@@ -188,7 +188,7 @@ def is_enhanced_security_enabled() -> bool:
     return manager.is_enabled("enhanced_security")
 
 
-def get_feature_flag_health() -> dict:
+def get_feature_flag_health() -> dict[str, Any]:
     """Get health status of feature flag system.
 
     Returns:

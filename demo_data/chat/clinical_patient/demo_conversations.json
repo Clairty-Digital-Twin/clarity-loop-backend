@@ -1,0 +1,101 @@
+[
+  {
+    "conversation_id": "a83d7936-80be-4f81-a923-a6f051848832",
+    "title": "Sleep Quality Investigation",
+    "scenario": "User notices feeling tired despite sleeping 8 hours",
+    "flow": [
+      {
+        "turn": 1,
+        "user": "I've been sleeping 8 hours but still feel tired. What's going on?",
+        "system": "Let me analyze your sleep data. I can see you're getting adequate sleep duration, but your sleep efficiency has dropped to 78% this week compared to your usual 85%. You're also experiencing more awakenings."
+      },
+      {
+        "turn": 2,
+        "user": "What might be causing the sleep disruption?",
+        "system": "Looking at your patterns, I notice your bedtime has been inconsistent, varying by up to 2 hours nightly. Also, your stress levels have been elevated (average 6.2/10) compared to your baseline of 4.5/10."
+      },
+      {
+        "turn": 3,
+        "user": "How can I improve my sleep quality?",
+        "system": "Based on your data, I recommend: 1) Establishing a consistent bedtime routine, 2) Practicing stress-reduction techniques before bed, 3) Consider tracking your evening activities to identify specific triggers."
+      }
+    ],
+    "data_sources": [
+      "sleep_analysis",
+      "stress_tracking",
+      "bedtime_patterns"
+    ],
+    "complexity": "medium",
+    "duration_minutes": 5,
+    "persona": "clinical_patient",
+    "created_date": "2025-07-12T09:18:31.642201",
+    "demo_ready": true
+  },
+  {
+    "conversation_id": "d3f6ae28-757c-4e38-ada8-a6768c56b1f7",
+    "title": "Bipolar Risk Assessment",
+    "scenario": "User is concerned about mood episode risk",
+    "flow": [
+      {
+        "turn": 1,
+        "user": "I'm worried I might be heading toward a manic episode. What does my data show?",
+        "system": "I understand your concern. Let me analyze your recent patterns. Your risk score is currently 0.35 (moderate), up from 0.15 last month. Key factors include decreased sleep duration (5.8 hours vs 7.5 hour baseline) and increased activity variability."
+      },
+      {
+        "turn": 2,
+        "user": "What specific warning signs should I watch for?",
+        "system": "Based on your historical patterns, key warning signs include: sleep dropping below 5 hours for 3+ consecutive nights, dramatic mood swings (>3 point daily variations), and sustained high activity levels. Your current pattern shows early warning signs but hasn't reached critical thresholds."
+      },
+      {
+        "turn": 3,
+        "user": "What should I do to prevent an episode?",
+        "system": "I recommend: 1) Prioritize sleep hygiene - aim for 7+ hours nightly, 2) Contact your healthcare provider about these patterns, 3) Consider stress management techniques. I'll continue monitoring and alert you if patterns worsen."
+      }
+    ],
+    "data_sources": [
+      "bipolar_risk_model",
+      "sleep_tracking",
+      "mood_tracking",
+      "activity_patterns"
+    ],
+    "complexity": "high",
+    "duration_minutes": 8,
+    "clinical_significance": "high",
+    "persona": "clinical_patient",
+    "created_date": "2025-07-12T09:18:31.642203",
+    "demo_ready": true
+  },
+  {
+    "conversation_id": "6925dd52-282f-48df-a8a8-d7416f950e17",
+    "title": "Workout Performance Analysis",
+    "scenario": "User wants to optimize training based on data",
+    "flow": [
+      {
+        "turn": 1,
+        "user": "Which days do I perform best in my workouts?",
+        "system": "Great question! Analyzing your workout data, you perform best on Tuesdays and Thursdays. Your average power output is 15% higher, and your heart rate recovery is 25% faster on these days."
+      },
+      {
+        "turn": 2,
+        "user": "Why do I perform better on those days?",
+        "system": "Several factors align on your best days: you consistently sleep 7.5+ hours the night before, your HRV is 20% above baseline, and your stress levels are lower (3.2/10 vs 4.8/10 average). Monday rest day also contributes to Tuesday performance."
+      },
+      {
+        "turn": 3,
+        "user": "How can I optimize my other training days?",
+        "system": "To improve other days: 1) Prioritize sleep before Wednesday/Friday workouts, 2) Consider active recovery on Sundays instead of complete rest, 3) Monitor stress levels and adjust training intensity accordingly."
+      }
+    ],
+    "data_sources": [
+      "workout_performance",
+      "sleep_tracking",
+      "hrv_monitoring",
+      "stress_tracking"
+    ],
+    "complexity": "high",
+    "duration_minutes": 6,
+    "persona": "clinical_patient",
+    "created_date": "2025-07-12T09:18:31.642205",
+    "demo_ready": true
+  }
+]

@@ -1,0 +1,59 @@
+[
+  {
+    "user_id": "USER#5d2a14c4-61a3-4189-be32-4aec06b852ba",
+    "email": "blakesmith@example.net",
+    "username": "blakesmith",
+    "first_name": "Toni",
+    "last_name": "Long",
+    "phone_number": "001-566-253-7349",
+    "date_of_birth": "2004-08-30",
+    "created_at": "2025-07-12T13:18:45.423843+00:00",
+    "updated_at": "2025-07-12T13:18:45.423849+00:00",
+    "verified": true,
+    "role": "provider",
+    "attributes": {
+      "height_cm": 181,
+      "weight_kg": 98.1,
+      "gender": "male",
+      "timezone": "America/Paramaribo"
+    }
+  },
+  {
+    "user_id": "USER#91b48acd-9969-40fa-b03f-35671a5351b2",
+    "email": "jtownsend@example.net",
+    "username": "jtownsend",
+    "first_name": "Tina",
+    "last_name": "Johnson",
+    "phone_number": "557-373-4559x979",
+    "date_of_birth": "1990-02-04",
+    "created_at": "2025-07-12T13:18:45.427015+00:00",
+    "updated_at": "2025-07-12T13:18:45.427018+00:00",
+    "verified": true,
+    "role": "admin",
+    "attributes": {
+      "height_cm": 177,
+      "weight_kg": 76.2,
+      "gender": "male",
+      "timezone": "America/Panama"
+    }
+  },
+  {
+    "user_id": "USER#eacc66df-925a-4427-895e-c5e2dd682633",
+    "email": "bartonbrian@example.com",
+    "username": "bartonbrian",
+    "first_name": "Donald",
+    "last_name": "Rojas",
+    "phone_number": "001-837-541-1104",
+    "date_of_birth": "1959-05-26",
+    "created_at": "2025-07-12T13:18:45.428717+00:00",
+    "updated_at": "2025-07-12T13:18:45.428720+00:00",
+    "verified": true,
+    "role": "admin",
+    "attributes": {
+      "height_cm": 199,
+      "weight_kg": 91.1,
+      "gender": "female",
+      "timezone": "America/Antigua"
+    }
+  }
+]

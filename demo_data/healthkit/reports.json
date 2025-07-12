@@ -1,0 +1,95 @@
+[
+  {
+    "report_id": "REPORT#ea08cf0e-5423-43de-a0bf-f2a9ffebc648",
+    "user_id": "USER#5d2a14c4-61a3-4189-be32-4aec06b852ba",
+    "report_type": "health_insights",
+    "generated_at": "2025-07-12T13:18:45.426795+00:00",
+    "period_start": "2025-07-05T13:18:45.426798+00:00",
+    "period_end": "2025-07-12T13:18:45.426801+00:00",
+    "insights": [
+      {
+        "type": "suggestion",
+        "category": "activity",
+        "message": "Try to increase your step count by 1000 steps daily."
+      },
+      {
+        "type": "achievement",
+        "category": "goals",
+        "message": "You've met your activity goal 6 out of 7 days!"
+      }
+    ],
+    "summary_stats": {
+      "avg_sleep_hours": 7.2,
+      "avg_steps": 10166,
+      "active_days": 6,
+      "goal_completion_rate": 0.6
+    }
+  },
+  {
+    "report_id": "REPORT#7f768811-f6b6-4774-ba72-7f787289e3c3",
+    "user_id": "USER#91b48acd-9969-40fa-b03f-35671a5351b2",
+    "report_type": "weekly_summary",
+    "generated_at": "2025-07-12T13:18:45.428474+00:00",
+    "period_start": "2025-07-05T13:18:45.428477+00:00",
+    "period_end": "2025-07-12T13:18:45.428480+00:00",
+    "insights": [
+      {
+        "type": "warning",
+        "category": "heart_rate",
+        "message": "Your resting heart rate has been elevated recently."
+      },
+      {
+        "type": "achievement",
+        "category": "goals",
+        "message": "You've met your activity goal 6 out of 7 days!"
+      },
+      {
+        "type": "suggestion",
+        "category": "activity",
+        "message": "Try to increase your step count by 1000 steps daily."
+      },
+      {
+        "type": "positive",
+        "category": "sleep",
+        "message": "Your sleep consistency has improved by 15% this week."
+      }
+    ],
+    "summary_stats": {
+      "avg_sleep_hours": 7.5,
+      "avg_steps": 10020,
+      "active_days": 7,
+      "goal_completion_rate": 0.69
+    }
+  },
+  {
+    "report_id": "REPORT#6d077bbe-3e49-4259-ae90-a42d2f7bbd3a",
+    "user_id": "USER#eacc66df-925a-4427-895e-c5e2dd682633",
+    "report_type": "activity_analysis",
+    "generated_at": "2025-07-12T13:18:45.430203+00:00",
+    "period_start": "2025-07-05T13:18:45.430205+00:00",
+    "period_end": "2025-07-12T13:18:45.430209+00:00",
+    "insights": [
+      {
+        "type": "suggestion",
+        "category": "activity",
+        "message": "Try to increase your step count by 1000 steps daily."
+      },
+      {
+        "type": "positive",
+        "category": "sleep",
+        "message": "Your sleep consistency has improved by 15% this week."
+      },
+      {
+        "type": "warning",
+        "category": "heart_rate",
+        "message": "Your resting heart rate has been elevated recently."
+      }
+    ],
+    "summary_stats": {
+      "avg_sleep_hours": 6.4,
+      "avg_steps": 9991,
+      "active_days": 6,
+      "goal_completion_rate": 0.64
+    }
+  }
+]

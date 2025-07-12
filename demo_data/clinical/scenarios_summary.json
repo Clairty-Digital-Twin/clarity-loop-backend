@@ -1,0 +1,28 @@
+{
+  "scenario_summary": {
+    "condition": "bipolar",
+    "severity": "moderate",
+    "total_scenarios": 5,
+    "scenario_types": [
+      "baseline_scenario.json",
+      "prodromal_scenario.json",
+      "acute_manic_scenario.json",
+      "recovery_scenario.json",
+      "complete_episode_scenario.json"
+    ],
+    "total_data_points": 144
+  },
+  "risk_detection_targets": {
+    "baseline": "Should detect low risk (< 0.3)",
+    "prodromal": "Should detect gradual risk increase",
+    "acute_manic": "Should detect high risk (> 0.6)",
+    "recovery": "Should detect risk decrease",
+    "complete_episode": "Should track full clinical trajectory"
+  },
+  "validation_criteria": {
+    "temporal_consistency": "All dates in sequence",
+    "clinical_realism": "Risk scores align with clinical phases",
+    "pattern_validity": "Biomarkers correlate with risk levels",
+    "detection_sensitivity": "Early warning in prodromal phase"
+  }
+}

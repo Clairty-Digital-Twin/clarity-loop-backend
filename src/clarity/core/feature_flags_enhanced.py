@@ -14,9 +14,9 @@ import logging
 import os
 import threading
 import time
-from typing import Any, Dict, Optional, TypeVar
+from typing import Any, Dict, Generator, Optional, TypeVar
 
-import aioredis
+import aioredis  # type: ignore[import-not-found]
 from circuitbreaker import CircuitBreaker, CircuitBreakerError
 from prometheus_client import Counter, Gauge, Histogram
 from pydantic import BaseModel, Field
@@ -107,8 +107,8 @@ class EnhancedFeatureFlagManager(BaseFeatureFlagManager):
 
         # Thread safety
         self._lock = threading.RLock()
-        self._refresh_task: asyncio.Task | None = None
-        self._pubsub_task: asyncio.Task | None = None
+        self._refresh_task: asyncio.Task[None] | None = None
+        self._pubsub_task: asyncio.Task[None] | None = None
         self._shutdown_event = threading.Event()
 
         # Tracking
@@ -138,7 +138,7 @@ class EnhancedFeatureFlagManager(BaseFeatureFlagManager):
             # No event loop running, create one in a thread
             import threading
 
-            def run_event_loop():
+            def run_event_loop() -> None:
                 new_loop = asyncio.new_event_loop()
                 asyncio.set_event_loop(new_loop)
                 new_loop.run_until_complete(self._async_background_tasks())
@@ -354,7 +354,7 @@ class EnhancedFeatureFlagManager(BaseFeatureFlagManager):
         FEATURE_FLAG_CIRCUIT_BREAKER_STATE.set(state_value)
 
     @contextmanager
-    def _refresh_metrics(self):
+    def _refresh_metrics(self) -> Generator[None, None, None]:
         """Context manager for refresh metrics."""
         start_time = time.time()
         try:
@@ -392,7 +392,7 @@ class EnhancedFeatureFlagManager(BaseFeatureFlagManager):
         Returns:
             Circuit breaker state: 'closed', 'open', or 'half-open'
         """
-        return self._circuit_breaker.current_state
+        return str(self._circuit_breaker.current_state)
 
     def shutdown(self) -> None:
         """Shutdown background tasks and cleanup resources."""
@@ -416,11 +416,11 @@ class EnhancedFeatureFlagManager(BaseFeatureFlagManager):
             except Exception as e:
                 logger.error("Error closing Redis connection: %s", e)
 
-    def __enter__(self):
+    def __enter__(self) -> "EnhancedFeatureFlagManager":
         """Context manager entry."""
         return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    def __exit__(self, exc_type: type[BaseException] | None, exc_val: BaseException | None, exc_tb: Any) -> None:
         """Context manager exit."""
         self.shutdown()
 

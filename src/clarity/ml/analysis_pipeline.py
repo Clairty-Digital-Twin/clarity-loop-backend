@@ -16,6 +16,7 @@ from typing import TYPE_CHECKING, Any
 from boto3.dynamodb.conditions import Key
 import numpy as np
 
+from clarity.core.feature_flags import is_feature_enabled
 from clarity.ml.fusion_transformer import get_fusion_service
 from clarity.ml.pat_service import ActigraphyAnalysis, ActigraphyInput, get_pat_service
 from clarity.ml.processors.sleep_processor import SleepFeatures
@@ -71,6 +72,10 @@ class HealthAnalysisPipeline:
     4. Multi-modal fusion
     5. Summary statistics generation
     """
+
+    # Constants
+    MIN_CARDIO_FEATURES = 8
+    MAX_BASELINE_DAYS = 28
 
     def __init__(self) -> None:
         """Initialize the analysis pipeline with all processors."""
@@ -196,7 +201,6 @@ class HealthAnalysisPipeline:
             )
 
             # Step 5: Mania risk analysis - ALWAYS include in output for API consistency
-            from clarity.core.feature_flags import is_feature_enabled
 
             # Initialize default mania risk values
             mania_risk_data = {
@@ -236,7 +240,7 @@ class HealthAnalysisPipeline:
                                 mania_result.recommendations
                             )
 
-                except Exception as e:
+                except (ValueError, KeyError, TypeError, Exception) as e:
                     self.logger.warning(
                         "Mania risk analysis failed for user %s, using default values: %s",
                         user_id,
@@ -790,7 +794,7 @@ class HealthAnalysisPipeline:
 
         # Prepare cardio stats
         cardio_stats = None
-        if results.cardio_features and len(results.cardio_features) >= 8:
+        if results.cardio_features and len(results.cardio_features) >= self.MIN_CARDIO_FEATURES:
             cardio_stats = {
                 "avg_hr": results.cardio_features[0],
                 "resting_hr": results.cardio_features[2],
@@ -818,7 +822,7 @@ class HealthAnalysisPipeline:
 
             # Query for past 28 days of analysis
             end_date = datetime.now(UTC)
-            start_date = end_date - timedelta(days=28)
+            start_date = end_date - timedelta(days=self.MAX_BASELINE_DAYS)
 
             # Query for the most recent 28 days of analysis data
             response = dynamodb_client.table.query(
@@ -832,8 +836,8 @@ class HealthAnalysisPipeline:
 
             # If we got more than 28 items, take only the most recent 28
             items = response.get("Items", [])
-            if len(items) > 28:
-                items = items[:28]
+            if len(items) > self.MAX_BASELINE_DAYS:
+                items = items[:self.MAX_BASELINE_DAYS]
 
             if not items:
                 return None

@@ -51,7 +51,7 @@ class FeatureFlagAlert(BaseModel):
 
 
 @router.get("/prometheus")
-async def prometheus_metrics():
+async def prometheus_metrics() -> Response:
     """Export feature flag metrics in Prometheus format."""
     # Generate metrics in Prometheus format
     metrics_output = generate_latest()
@@ -63,7 +63,7 @@ async def prometheus_metrics():
 
 
 @router.get("/dashboard", response_model=FeatureFlagMetrics)
-async def metrics_dashboard():
+async def metrics_dashboard() -> FeatureFlagMetrics:
     """Get feature flag metrics dashboard data."""
     # Get current health
     health = get_feature_flag_health()
@@ -89,7 +89,7 @@ async def metrics_dashboard():
 
 
 @router.get("/alerts", response_model=list[FeatureFlagAlert])
-async def get_alerts():
+async def get_alerts() -> list[FeatureFlagAlert]:
     """Get active feature flag alerts."""
     alerts = []
     health = get_feature_flag_health()
@@ -152,7 +152,7 @@ async def get_alerts():
 
 
 @router.get("/grafana")
-async def grafana_dashboard_config():
+async def grafana_dashboard_config() -> dict[str, Any]:
     """Get Grafana dashboard configuration for feature flags."""
     return {
         "dashboard": {
@@ -246,7 +246,7 @@ async def grafana_dashboard_config():
 
 
 @router.post("/simulate-failure")
-async def simulate_failure():
+async def simulate_failure() -> dict[str, str]:
     """Simulate a config store failure for testing monitoring."""
     # This would be used in testing/staging environments
     # to verify monitoring and alerting work correctly

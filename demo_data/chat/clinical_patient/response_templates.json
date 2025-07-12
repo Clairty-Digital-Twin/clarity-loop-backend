@@ -1,0 +1,78 @@
+[
+  {
+    "response_type": "trend_analysis",
+    "template": "Based on your {data_type} data over the past {time_period}, I can see {trend_description}. Your average {metric} was {value}, which is {comparison} compared to your baseline.",
+    "visualization": "line_chart",
+    "insights": [
+      "trend_direction",
+      "statistical_significance",
+      "contextual_factors"
+    ],
+    "recommendations": true,
+    "persona": "clinical_patient",
+    "id": "5c252d98-70ab-4fdf-8999-089b6311b9e1",
+    "created_date": "2025-07-12T09:18:31.642130",
+    "version": "1.0"
+  },
+  {
+    "response_type": "correlation_analysis",
+    "template": "I found a {correlation_strength} correlation between your {metric1} and {metric2}. When your {metric1} is {condition}, your {metric2} tends to be {outcome}.",
+    "visualization": "scatter_plot",
+    "insights": [
+      "correlation_coefficient",
+      "clinical_significance",
+      "causation_notes"
+    ],
+    "recommendations": true,
+    "persona": "clinical_patient",
+    "id": "12b5ad9d-550e-4a0e-8b9e-d719bf730652",
+    "created_date": "2025-07-12T09:18:31.642137",
+    "version": "1.0"
+  },
+  {
+    "response_type": "risk_analysis",
+    "template": "Based on your recent patterns, your risk level is {risk_level}. Key factors contributing to this assessment include {risk_factors}. I recommend {actions}.",
+    "visualization": "risk_dashboard",
+    "insights": [
+      "risk_score",
+      "contributing_factors",
+      "confidence_level"
+    ],
+    "recommendations": true,
+    "clinical_validation": true,
+    "persona": "clinical_patient",
+    "id": "dbf1629a-850b-4db1-b5a4-c7e9a945e594",
+    "created_date": "2025-07-12T09:18:31.642159",
+    "version": "1.0"
+  },
+  {
+    "response_type": "anomaly_detection",
+    "template": "I detected {anomaly_count} unusual patterns in your {data_type} data. These occurred on {dates} and were characterized by {anomaly_description}.",
+    "visualization": "anomaly_timeline",
+    "insights": [
+      "anomaly_severity",
+      "potential_causes",
+      "frequency"
+    ],
+    "recommendations": true,
+    "persona": "clinical_patient",
+    "id": "74455cdf-a4f5-49a4-823d-04521a8efb76",
+    "created_date": "2025-07-12T09:18:31.642179",
+    "version": "1.0"
+  },
+  {
+    "response_type": "comparative_analysis",
+    "template": "Comparing {period1} to {period2}, your {metric} changed by {change_amount}. This represents a {change_significance} improvement/decline in your {health_aspect}.",
+    "visualization": "comparison_chart",
+    "insights": [
+      "statistical_test",
+      "effect_size",
+      "practical_significance"
+    ],
+    "recommendations": true,
+    "persona": "clinical_patient",
+    "id": "c5ea6729-4f46-4890-bf18-8d573347b0c9",
+    "created_date": "2025-07-12T09:18:31.642184",
+    "version": "1.0"
+  }
+]

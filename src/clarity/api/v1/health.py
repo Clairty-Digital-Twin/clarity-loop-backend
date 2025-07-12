@@ -196,7 +196,7 @@ async def pat_model_health(
         }
 
         # Check model integrity
-        integrity_status = {}
+        integrity_status: dict[str, Any] = {}
         try:
             for model_name in pat_model_manager.list_registered_models():
                 integrity_status[model_name] = pat_model_manager.verify_model_integrity(
@@ -250,7 +250,7 @@ async def pat_model_health(
     except Exception as e:
         logger.exception("Failed to get PAT model health")
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            status_code=500,
             detail=f"Failed to retrieve model health: {e!s}",
         ) from e
 

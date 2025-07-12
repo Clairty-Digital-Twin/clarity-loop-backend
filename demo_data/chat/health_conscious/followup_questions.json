@@ -1,0 +1,52 @@
+[
+  {
+    "trigger": "sleep_trend_shown",
+    "question": "What factors might be contributing to these sleep changes?",
+    "context": "User has seen their sleep trend data",
+    "expected_depth": "deeper_analysis",
+    "persona": "health_conscious",
+    "id": "fe44d1c1-df85-471f-998a-ca9a58ad8237",
+    "created_date": "2025-07-12T09:18:22.943677",
+    "type": "followup"
+  },
+  {
+    "trigger": "high_stress_detected",
+    "question": "Can you suggest some strategies to manage my stress levels?",
+    "context": "System detected elevated stress patterns",
+    "expected_depth": "actionable_recommendations",
+    "persona": "health_conscious",
+    "id": "94708974-b119-4e8a-acd3-4716f68565ac",
+    "created_date": "2025-07-12T09:18:22.943681",
+    "type": "followup"
+  },
+  {
+    "trigger": "workout_performance_shown",
+    "question": "How can I optimize my training based on these patterns?",
+    "context": "User reviewed workout performance data",
+    "expected_depth": "personalized_coaching",
+    "persona": "health_conscious",
+    "id": "d9266905-f889-4d0a-87bc-0a29ef6ad22c",
+    "created_date": "2025-07-12T09:18:22.943685",
+    "type": "followup"
+  },
+  {
+    "trigger": "risk_assessment_completed",
+    "question": "What specific warning signs should I watch for?",
+    "context": "System provided risk assessment",
+    "expected_depth": "clinical_guidance",
+    "persona": "health_conscious",
+    "id": "aa28ff84-338e-418b-9352-cfd419aa88bd",
+    "created_date": "2025-07-12T09:18:22.943689",
+    "type": "followup"
+  },
+  {
+    "trigger": "correlation_revealed",
+    "question": "Tell me more about why these metrics are connected",
+    "context": "System showed correlations between health metrics",
+    "expected_depth": "scientific_explanation",
+    "persona": "health_conscious",
+    "id": "729ead4b-9b2d-485d-8916-cb6abbad9344",
+    "created_date": "2025-07-12T09:18:22.943692",
+    "type": "followup"
+  }
+]

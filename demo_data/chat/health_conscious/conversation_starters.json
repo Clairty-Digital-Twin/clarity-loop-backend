@@ -1,0 +1,76 @@
+[
+  {
+    "category": "sleep_analysis",
+    "question": "How has my sleep quality changed over the past month?",
+    "expected_response_type": "trend_analysis",
+    "data_needed": [
+      "sleep_hours",
+      "sleep_quality",
+      "sleep_efficiency"
+    ],
+    "complexity": "medium",
+    "persona": "health_conscious",
+    "id": "95da7fe3-87a0-41de-a2cd-9611ff9d5934",
+    "created_date": "2025-07-12T09:18:22.943643",
+    "priority": "medium"
+  },
+  {
+    "category": "activity_patterns",
+    "question": "Show me patterns in my activity levels during stressful periods",
+    "expected_response_type": "correlation_analysis",
+    "data_needed": [
+      "steps",
+      "stress_level",
+      "activity_minutes"
+    ],
+    "complexity": "high",
+    "persona": "health_conscious",
+    "id": "7d14886e-eeed-4e49-9a62-5d82a5e10005",
+    "created_date": "2025-07-12T09:18:22.943657",
+    "priority": "high"
+  },
+  {
+    "category": "wellness_trends",
+    "question": "What's my average heart rate variability this week compared to last month?",
+    "expected_response_type": "comparative_analysis",
+    "data_needed": [
+      "hrv_rmssd",
+      "dates"
+    ],
+    "complexity": "medium",
+    "persona": "health_conscious",
+    "id": "97e0bff4-bfe5-4e24-bff3-9fb0f260d9a6",
+    "created_date": "2025-07-12T09:18:22.943663",
+    "priority": "medium"
+  },
+  {
+    "category": "holistic_health",
+    "question": "How do my sleep, activity, and mood correlate with each other?",
+    "expected_response_type": "multi_modal_analysis",
+    "data_needed": [
+      "sleep_hours",
+      "steps",
+      "mood_score"
+    ],
+    "complexity": "high",
+    "persona": "health_conscious",
+    "id": "12898159-855f-4f49-bd32-d2c572e73a0e",
+    "created_date": "2025-07-12T09:18:22.943667",
+    "priority": "high"
+  },
+  {
+    "category": "goal_tracking",
+    "question": "Am I meeting my weekly exercise goals based on my Apple Watch data?",
+    "expected_response_type": "goal_assessment",
+    "data_needed": [
+      "workout_duration",
+      "active_minutes",
+      "calories_burned"
+    ],
+    "complexity": "low",
+    "persona": "health_conscious",
+    "id": "b933e7a1-c951-472e-83b0-4b888165cfb0",
+    "created_date": "2025-07-12T09:18:22.943671",
+    "priority": "medium"
+  }
+]

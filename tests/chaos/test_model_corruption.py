@@ -137,9 +137,18 @@ class TestModelCorruption:
             for _ in range(10080)  # 7 days of data
         ]
         
-        # Should raise ServiceUnavailableProblem (503)
-        with pytest.raises(AttributeError):  # Model is None
-            await pat_service.analyze(test_data, user_id="test_user")
+        # Create actigraphy input
+        from clarity.ml.pat_service import ActigraphyInput
+        input_data = ActigraphyInput(
+            user_id="test_user",
+            data_points=test_data,
+            sampling_rate=1.0,
+            duration_hours=168
+        )
+        
+        # Should raise error since model is None
+        with pytest.raises(RuntimeError):  # Model not loaded
+            await pat_service.analyze_actigraphy(input_data)
 
     async def test_circuit_breaker_activation(self):
         """Test circuit breaker activates after repeated failures."""
@@ -501,12 +510,19 @@ class TestModelCorruptionIntegration:
         model_loader.load_model = AsyncMock(side_effect=ModelLoadError("Corrupted"))
         
         pat_service = MagicMock()
-        pat_service.analyze = AsyncMock(side_effect=ServiceUnavailableProblem("Model unavailable"))
+        pat_service.analyze_actigraphy = AsyncMock(side_effect=ServiceUnavailableProblem("Model unavailable"))
         
         # Simulate API request flow
         async def simulate_request():
             try:
-                result = await pat_service.analyze([], user_id="test")
+                from clarity.ml.pat_service import ActigraphyInput
+                input_data = ActigraphyInput(
+                    user_id="test",
+                    data_points=[],
+                    sampling_rate=1.0,
+                    duration_hours=168
+                )
+                result = await pat_service.analyze_actigraphy(input_data)
                 return {"status": "success", "result": result}
             except ServiceUnavailableProblem as e:
                 return {"status": "error", "code": 503, "message": str(e)}

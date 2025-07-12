@@ -371,8 +371,18 @@ class PATModelLoader:
                 if output.shape != (1, expected_patches, config.embed_dim):
                     msg = f"Invalid output shape: {output.shape}"
                     raise ModelLoadError(msg)
+                    
+            # Record successful validation
+            record_validation_attempt(config.name.lower().replace("pat-", ""), "forward_pass", True)
 
         except Exception as e:
+            # Record failed validation
+            record_validation_attempt(
+                config.name.lower().replace("pat-", ""), 
+                "forward_pass", 
+                False, 
+                type(e).__name__
+            )
             msg = f"Model validation failed: {e}"
             raise ModelLoadError(msg) from e
 

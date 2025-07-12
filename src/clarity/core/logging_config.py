@@ -102,11 +102,12 @@ def setup_logging(force: bool = False) -> None:
     # Mark as configured
     _logging_configured = True
 
-    # Log successful configuration
-    logger = logging.getLogger(__name__)
-    environment_msg = f"Logging configured for {settings.environment} environment"
-    level_msg = f"with level {settings.log_level}"
-    logger.info("%s %s", environment_msg, level_msg)
+    # Log successful configuration only once (on first setup or force)
+    if not _logging_configured or force:
+        logger = logging.getLogger(__name__)
+        environment_msg = f"Logging configured for {settings.environment} environment"
+        level_msg = f"with level {settings.log_level}"
+        logger.info("%s %s", environment_msg, level_msg)
 
 
 def configure_basic_logging(

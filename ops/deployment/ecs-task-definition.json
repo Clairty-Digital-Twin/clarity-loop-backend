@@ -9,7 +9,7 @@
   "containerDefinitions": [
     {
       "name": "clarity-backend",
-      "image": "IMAGE_PLACEHOLDER",
+      "image": "124355672559.dkr.ecr.us-east-1.amazonaws.com/clarity-backend:latest",
       "portMappings": [
         {
           "containerPort": 8000,

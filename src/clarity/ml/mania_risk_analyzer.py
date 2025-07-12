@@ -9,7 +9,6 @@ References:
 - eBioMedicine (2024): Causal dynamics in bipolar disorder
 """
 
-import json
 import logging
 from datetime import datetime, timedelta, UTC
 from typing import Optional, Tuple, Dict, Any

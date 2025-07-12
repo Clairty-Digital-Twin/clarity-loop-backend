@@ -87,7 +87,7 @@ class TestModelCorruption:
     @pytest.fixture
     def pat_service(self):
         """Create a PAT service instance for testing."""
-        with patch("clarity.ml.pat_service.PATService._initialize_models"):
+        with patch("clarity.ml.pat_service.PATModelService._initialize_models"):
             service = PATModelService(model_size="small")
             # Mock the model to avoid actual loading
             service.model = MagicMock()

@@ -47,14 +47,19 @@ def mock_pat_service_for_testing():
                 mock_model.eval = Mock(return_value=mock_model)
                 mock_model.to = Mock(return_value=mock_model)
                 
-                # Mock model forward pass to return proper tensor
+                # Mock model forward pass to return proper output dictionary
                 import torch
                 import numpy as np
                 
-                # Create a mock that returns proper output when called
+                # Create a mock that returns the expected output structure
                 def mock_forward(*args, **kwargs):
-                    # Return a tensor with proper shape for 18 classes
-                    return torch.tensor(np.random.rand(1, 18).astype(np.float32))
+                    # PAT model returns a dictionary with specific keys
+                    return {
+                        "sleep_metrics": torch.tensor(np.random.rand(1, 10).astype(np.float32)),  # 10 sleep metrics
+                        "circadian_score": torch.tensor(np.random.rand(1, 1).astype(np.float32)),
+                        "depression_risk": torch.tensor(np.random.rand(1, 1).astype(np.float32)),
+                        "embeddings": torch.tensor(np.random.rand(1, 96).astype(np.float32)),  # 96-dim embeddings
+                    }
                 
                 mock_model.side_effect = mock_forward
                 

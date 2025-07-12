@@ -989,7 +989,7 @@ class TestGetPATServiceFunction:
     @pytest.fixture(autouse=True)
     def use_mock_pat(self, mock_pat_for_integration):
         """Use mocked PAT service for these tests."""
-        pass"
+        pass
 
     @pytest.mark.asyncio
     async def test_get_pat_service(self):
@@ -1089,7 +1089,7 @@ class TestProductionReadiness:
     @pytest.fixture(autouse=True)
     def use_mock_pat(self, mock_pat_for_integration):
         """Use mocked PAT service for these tests."""
-        pass"
+        pass
 
     def test_model_path_security(self):
         """Test model path security features."""

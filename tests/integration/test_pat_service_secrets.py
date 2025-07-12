@@ -1,7 +1,7 @@
 """Integration tests for PAT service with secrets manager."""
 
 import os
-from unittest.mock import patch
+from unittest.mock import patch, mock_open
 
 import pytest
 
@@ -72,18 +72,29 @@ class TestPATServiceSecretsIntegration:
             service = PATModelService(model_size="medium")
             
             # Mock the file reading to avoid actual file I/O
-            with patch("pathlib.Path.open"), patch("pathlib.Path.exists", return_value=True):
-                # Calculate checksum should use the signature key from secrets
-                with patch("hashlib.sha256") as mock_sha256:
-                    mock_sha256.return_value.hexdigest.return_value = "test_digest"
-                    with patch("hmac.new") as mock_hmac:
-                        mock_hmac.return_value.hexdigest.return_value = "test_signature"
-                        # Call through the instance method which has access to the signature key
-                        result = service._calculate_file_checksum(service.model_path)
-                        
-                        # Verify HMAC was called with our test signature key
-                        mock_hmac.assert_called_once()
-                        assert result == "test_signature"
+            from pathlib import Path
+            test_path = Path("/test/model.h5")
+            
+            with patch("pathlib.Path.open", mock_open(read_data=b"test model data")):
+                with patch("pathlib.Path.exists", return_value=True):
+                    # Calculate checksum should use the signature key from secrets
+                    with patch("hashlib.sha256") as mock_sha256:
+                        mock_sha256.return_value.hexdigest.return_value = "test_digest"
+                        with patch("hmac.new") as mock_hmac:
+                            mock_hmac.return_value.hexdigest.return_value = "test_signature"
+                            # Call the static method directly
+                            result = PATModelService._calculate_file_checksum(test_path)
+                            
+                            # Verify HMAC was called (it gets called multiple times by AWS SDK)
+                            assert mock_hmac.called
+                            # Find the call that used our test signature key
+                            found_our_call = False
+                            for call in mock_hmac.call_args_list:
+                                if len(call[0]) > 0 and call[0][0] == b"test-signature-key-123":
+                                    found_our_call = True
+                                    break
+                            assert found_our_call, "HMAC was not called with our test signature key"
+                            assert result == "test_signature"
 
     def test_pat_service_fallback_when_secrets_unavailable(self):
         """Test PAT service falls back gracefully when secrets are unavailable."""

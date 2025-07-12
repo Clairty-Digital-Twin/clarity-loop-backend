@@ -329,7 +329,18 @@ class AsyncInferenceEngine:
         cache_key = self._generate_cache_key(input_data)
 
         try:
-            await self.cache.set(cache_key, analysis.dict())
+            # Convert ActigraphyAnalysis to dict for caching
+            if hasattr(analysis, 'model_dump'):
+                # Pydantic v2
+                analysis_dict = analysis.model_dump()
+            elif hasattr(analysis, 'dict'):
+                # Pydantic v1
+                analysis_dict = analysis.dict()
+            else:
+                # Fallback
+                analysis_dict = analysis
+                
+            await self.cache.set(cache_key, analysis_dict)
             logger.debug("Cached result for key %s", cache_key)
         except (KeyError, ValueError, TypeError) as e:
             logger.warning("Cache store failed: %s", str(e))
@@ -538,9 +549,21 @@ class AsyncInferenceEngine:
         Returns:
             Inference response with results
         """
+        # Convert ActigraphyInput to dict for Pydantic validation
+        # This handles cases where the model instance might not serialize properly
+        if hasattr(input_data, 'model_dump'):
+            # Pydantic v2
+            input_data_dict = input_data.model_dump()
+        elif hasattr(input_data, 'dict'):
+            # Pydantic v1
+            input_data_dict = input_data.dict()
+        else:
+            # Fallback - already a dict or compatible
+            input_data_dict = input_data
+            
         request = InferenceRequest(
             request_id=request_id,
-            input_data=input_data,
+            input_data=input_data_dict,
             timeout_seconds=timeout_seconds,
             cache_enabled=cache_enabled,
         )

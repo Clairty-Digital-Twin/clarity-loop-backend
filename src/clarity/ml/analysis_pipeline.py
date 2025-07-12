@@ -731,6 +731,8 @@ class HealthAnalysisPipeline:
                 "activity_fragmentation": results.sleep_features.get(
                     "activity_fragmentation", 0.0
                 ),
+                # Add total sleep time for PAT estimation fallback
+                "total_sleep_time": results.sleep_features.get("total_sleep_minutes", 0) / 60.0,
             })
 
         # Prepare activity stats
@@ -786,7 +788,8 @@ class HealthAnalysisPipeline:
                                          f"ANALYSIS#{start_date.isoformat()}",
                                          f"ANALYSIS#{end_date.isoformat()}"
                                      ),
-                Limit=28  # Maximum 28 days
+                Limit=28,  # Maximum 28 days
+                ScanIndexForward=False  # Get most recent items first
             )
 
             if not response.get("Items"):
@@ -803,10 +806,10 @@ class HealthAnalysisPipeline:
                     if sleep_mins > 0:
                         sleep_hours.append(float(sleep_mins) / 60)
 
-                # Extract steps
-                if "activity_features" in item:
-                    daily_steps = item["activity_features"].get("avg_daily_steps", 0)
-                    if daily_steps > 0:
+                # Extract steps from activity features list
+                if "activity_features" in item and isinstance(item["activity_features"], list):
+                    daily_steps = self._extract_avg_daily_steps(item["activity_features"])
+                    if daily_steps and daily_steps > 0:
                         steps.append(float(daily_steps))
 
             baseline = {}

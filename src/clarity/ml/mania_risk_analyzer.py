@@ -45,7 +45,7 @@ class ManiaRiskConfig:
         if not self.weights:
             self.weights = {
                 "severe_sleep_loss": 0.45,
-                "acute_sleep_loss": 0.391,
+                "acute_sleep_loss": 0.30,  # Match YAML config
                 "rapid_sleep_onset": 0.10,
                 "circadian_disruption": 0.25,
                 "sleep_inconsistency": 0.10,
@@ -204,8 +204,12 @@ class ManiaRiskAnalyzer:
             confidence *= 0.8  # Lower confidence for estimated data
             factors.append(f"PAT estimation")
             
-        if hours is None or hours == 0:
+        if hours is None:
             return 0.0, ["Insufficient sleep data"], 0.5
+        
+        # Handle edge case of 0 hours differently - might be data issue
+        if hours == 0:
+            return 0.0, ["Invalid sleep data: 0 hours recorded"], 0.3
             
         # Check against absolute thresholds
         if hours <= self.config.critical_sleep_hours:
@@ -230,7 +234,8 @@ class ManiaRiskAnalyzer:
                     )
         
         # Check sleep latency (rapid sleep onset during mania)
-        if sleep and sleep.sleep_latency < 5:
+        # Ensure sleep_latency is in minutes
+        if sleep and hasattr(sleep, 'sleep_latency') and sleep.sleep_latency < 5:
             score += self.config.weights["rapid_sleep_onset"]
             factors.append("Very rapid sleep onset (<5 min)")
             
@@ -265,12 +270,8 @@ class ManiaRiskAnalyzer:
                     f"Disrupted circadian rhythm (score: {circadian_score:.2f})"
                 )
         
-        # Check sleep consistency
-        if sleep and hasattr(sleep, 'consistency_score') and sleep.consistency_score < 0.4:
-            # Only add if not already added in sleep analysis
-            if "Irregular sleep schedule" not in factors:
-                score += self.config.weights["sleep_inconsistency"]
-                factors.append("Irregular sleep schedule")
+        # Sleep consistency is already checked in _analyze_sleep
+        # Skip it here to avoid double-counting
             
         return score, factors
     
@@ -294,9 +295,9 @@ class ManiaRiskAnalyzer:
         # Check for activity surges
         if activity and baseline:
             # Compare current vs baseline steps
-            if "avg_daily_steps" in activity and "avg_steps" in baseline:
-                current_steps = activity["avg_daily_steps"]
-                baseline_steps = baseline["avg_steps"]
+            if activity and baseline:
+                current_steps = activity.get("avg_daily_steps", 0)
+                baseline_steps = baseline.get("avg_steps", 0)
                 if baseline_steps > 0:
                     ratio = current_steps / baseline_steps
                     if ratio >= self.config.activity_surge_ratio:

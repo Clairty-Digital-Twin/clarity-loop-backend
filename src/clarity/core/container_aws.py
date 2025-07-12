@@ -23,6 +23,7 @@ from clarity.core.logging_config import setup_logging
 from clarity.ml.gemini_service import GeminiService
 from clarity.ports.auth_ports import IAuthProvider
 from clarity.ports.data_ports import IHealthDataRepository
+from clarity.services.gcp_credentials import get_gcp_credentials_manager
 from clarity.storage.dynamodb_client import DynamoDBHealthDataRepository
 from clarity.storage.mock_repository import MockHealthDataRepository
 
@@ -192,8 +193,6 @@ class DependencyContainer:
         with service_initialization_duration.labels(service=service_name).time():
             try:
                 # Get GCP project ID from credentials manager or settings
-                from clarity.services.gcp_credentials import get_gcp_credentials_manager
-
                 credentials_manager = get_gcp_credentials_manager()
                 project_id = credentials_manager.get_project_id()
 

@@ -18,6 +18,8 @@ from boto3.dynamodb.conditions import Key
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field
 
+from clarity.services.gcp_credentials import get_gcp_credentials_manager
+
 from clarity.auth.dependencies import AuthenticatedUser
 from clarity.core.config_aws import get_settings
 from clarity.ml.gemini_service import (
@@ -52,8 +54,6 @@ def set_dependencies(
     _config_provider = config_provider
 
     # Initialize Gemini service with correct GCP project ID
-    from clarity.services.gcp_credentials import get_gcp_credentials_manager
-
     credentials_manager = get_gcp_credentials_manager()
     project_id = credentials_manager.get_project_id()
 

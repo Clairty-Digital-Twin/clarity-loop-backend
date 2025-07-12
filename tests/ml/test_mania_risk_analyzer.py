@@ -457,3 +457,191 @@ class TestManiaRiskAnalyzer:
         # Alert should be capped at moderate due to low confidence
         assert result.alert_level == "moderate"
         assert any("Limited data" in f for f in result.contributing_factors)
+    
+    @pytest.mark.parametrize("test_case,expected", [
+        # Sleep duration boundary tests
+        ({"sleep_hours": 5.0, "desc": "Exactly at min_sleep_hours threshold"}, 
+         {"has_factor": False, "min_score": 0.0}),
+        ({"sleep_hours": 4.9, "desc": "Just below min_sleep_hours threshold"}, 
+         {"has_factor": True, "min_score": 0.05}),
+        ({"sleep_hours": 3.0, "desc": "Exactly at critical_sleep_hours threshold"}, 
+         {"has_factor": True, "min_score": 0.4}),
+        ({"sleep_hours": 2.9, "desc": "Just below critical_sleep_hours threshold"}, 
+         {"has_factor": True, "min_score": 0.4}),
+        
+        # Circadian rhythm boundary tests
+        ({"circadian": 0.5, "desc": "Exactly at circadian_disruption_threshold"}, 
+         {"has_circadian_factor": False}),
+        ({"circadian": 0.49, "desc": "Just below circadian_disruption_threshold"}, 
+         {"has_circadian_factor": True}),
+        
+        # Activity ratio boundary tests
+        ({"activity_ratio": 1.5, "desc": "Exactly at activity_surge_ratio"}, 
+         {"has_activity_factor": True}),
+        ({"activity_ratio": 1.49, "desc": "Just below activity_surge_ratio"}, 
+         {"has_activity_factor": False}),
+        
+        # Activity fragmentation boundary tests
+        ({"fragmentation": 0.8, "desc": "Exactly at activity_fragmentation_threshold"}, 
+         {"has_fragmentation_factor": False}),
+        ({"fragmentation": 0.81, "desc": "Just above activity_fragmentation_threshold"}, 
+         {"has_fragmentation_factor": True}),
+    ])
+    def test_exact_threshold_boundaries(self, test_case, expected):
+        """Test exact boundary values for all thresholds."""
+        from clarity.ml.mania_risk_analyzer import ManiaRiskAnalyzer
+        
+        analyzer = ManiaRiskAnalyzer()
+        
+        # Prepare test data based on test case
+        pat_metrics = {
+            "total_sleep_time": test_case.get("sleep_hours", 7.0),
+            "circadian_rhythm_score": test_case.get("circadian", 0.8),
+            "activity_fragmentation": test_case.get("fragmentation", 0.5),
+        }
+        
+        activity_stats = None
+        baseline = None
+        
+        if "activity_ratio" in test_case:
+            activity_stats = {"avg_daily_steps": 10000}
+            baseline = {"avg_steps": 10000 / test_case["activity_ratio"]}
+        
+        result = analyzer.analyze(
+            pat_metrics=pat_metrics,
+            activity_stats=activity_stats,
+            historical_baseline=baseline,
+        )
+        
+        # Check sleep factors
+        if "has_factor" in expected:
+            sleep_factors = [f for f in result.contributing_factors if "sleep" in f.lower()]
+            if expected["has_factor"]:
+                assert len(sleep_factors) > 0, f"{test_case['desc']}: Expected sleep factor"
+                if "min_score" in expected:
+                    assert result.risk_score >= expected["min_score"], \
+                        f"{test_case['desc']}: Score {result.risk_score} < {expected['min_score']}"
+            else:
+                assert len(sleep_factors) == 0, f"{test_case['desc']}: Unexpected sleep factor"
+        
+        # Check circadian factors
+        if "has_circadian_factor" in expected:
+            circadian_factors = [f for f in result.contributing_factors if "circadian" in f.lower()]
+            if expected["has_circadian_factor"]:
+                assert len(circadian_factors) > 0, f"{test_case['desc']}: Expected circadian factor"
+            else:
+                assert len(circadian_factors) == 0, f"{test_case['desc']}: Unexpected circadian factor"
+        
+        # Check activity factors
+        if "has_activity_factor" in expected:
+            activity_factors = [f for f in result.contributing_factors if "activity surge" in f.lower()]
+            if expected["has_activity_factor"]:
+                assert len(activity_factors) > 0, f"{test_case['desc']}: Expected activity factor"
+            else:
+                assert len(activity_factors) == 0, f"{test_case['desc']}: Unexpected activity factor"
+        
+        # Check fragmentation factors
+        if "has_fragmentation_factor" in expected:
+            frag_factors = [f for f in result.contributing_factors if "fragmentation" in f.lower()]
+            if expected["has_fragmentation_factor"]:
+                assert len(frag_factors) > 0, f"{test_case['desc']}: Expected fragmentation factor"
+            else:
+                assert len(frag_factors) == 0, f"{test_case['desc']}: Unexpected fragmentation factor"
+    
+    def test_actigraphy_analysis_schema_includes_mania_fields(self):
+        """Test that ActigraphyAnalysis schema includes required mania risk fields."""
+        from clarity.ml.pat_service import ActigraphyAnalysis
+        
+        # Check that the model has the required mania fields
+        model_fields = ActigraphyAnalysis.model_fields
+        
+        # Verify mania_risk_score field exists and has correct type
+        assert "mania_risk_score" in model_fields
+        mania_score_field = model_fields["mania_risk_score"]
+        assert mania_score_field.default == 0.0
+        assert "Mania risk score" in mania_score_field.description
+        
+        # Verify mania_alert_level field exists and has correct type  
+        assert "mania_alert_level" in model_fields
+        mania_level_field = model_fields["mania_alert_level"]
+        assert mania_level_field.default == "none"
+        assert "none/low/moderate/high" in mania_level_field.description
+        
+        # Test that we can instantiate with mania fields
+        analysis = ActigraphyAnalysis(
+            user_id="test_user",
+            analysis_timestamp="2024-01-01T00:00:00Z",
+            sleep_efficiency=85.0,
+            sleep_onset_latency=15.0,
+            wake_after_sleep_onset=30.0,
+            total_sleep_time=7.5,
+            circadian_rhythm_score=0.85,
+            activity_fragmentation=0.3,
+            depression_risk_score=0.2,
+            sleep_stages=["light", "deep", "rem"],
+            confidence_score=0.9,
+            clinical_insights=["Good sleep quality"],
+            embedding=[0.1] * 128,
+            mania_risk_score=0.75,  # Test setting mania score
+            mania_alert_level="high"  # Test setting mania alert
+        )
+        
+        assert analysis.mania_risk_score == 0.75
+        assert analysis.mania_alert_level == "high"
+    
+    def test_high_alert_rate_limiting(self):
+        """Test that duplicate high alerts within 24 hours are rate limited."""
+        from clarity.ml.mania_risk_analyzer import ManiaRiskAnalyzer
+        
+        user_id = "test_user_123"
+        analyzer = ManiaRiskAnalyzer(user_id=user_id)
+        
+        # First analysis with critically low sleep should trigger high alert
+        critical_sleep = SleepFeatures(
+            total_sleep_minutes=150,  # 2.5 hours
+            sleep_efficiency=0.95,
+            sleep_latency=2.0,
+            awakenings_count=0.0,
+            consistency_score=0.2,
+            overall_quality_score=0.4,
+            data_coverage_days=7,
+        )
+        
+        first_result = analyzer.analyze(
+            sleep_features=critical_sleep,
+            pat_metrics={
+                "circadian_rhythm_score": 0.3,
+                "activity_fragmentation": 0.9,
+            },
+            user_id=user_id,
+        )
+        
+        # First alert should be high
+        assert first_result.alert_level == "high"
+        assert first_result.risk_score >= 0.7
+        
+        # Second analysis with same critical conditions
+        second_result = analyzer.analyze(
+            sleep_features=critical_sleep,
+            pat_metrics={
+                "circadian_rhythm_score": 0.3,
+                "activity_fragmentation": 0.9,
+            },
+            user_id=user_id,
+        )
+        
+        # Second alert should be downgraded to moderate due to rate limiting
+        assert second_result.alert_level == "moderate"
+        assert second_result.risk_score >= 0.7  # Score is still high
+        
+        # Different user should still get high alert
+        other_user_result = analyzer.analyze(
+            sleep_features=critical_sleep,
+            pat_metrics={
+                "circadian_rhythm_score": 0.3,
+                "activity_fragmentation": 0.9,
+            },
+            user_id="different_user_456",
+        )
+        
+        assert other_user_result.alert_level == "high"

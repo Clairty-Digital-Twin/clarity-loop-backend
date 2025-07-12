@@ -722,7 +722,7 @@ class HealthAnalysisPipeline:
         
         # Initialize analyzer with config path from settings
         config_path = Path(settings.mania_config_path)
-        analyzer = ManiaRiskAnalyzer(config_path)
+        analyzer = ManiaRiskAnalyzer(config_path, user_id=user_id)
 
         # Prepare sleep features
         sleep_features = None
@@ -779,6 +779,7 @@ class HealthAnalysisPipeline:
             activity_stats=activity_stats,
             cardio_stats=cardio_stats,
             historical_baseline=historical_baseline,
+            user_id=user_id,
         )
 
     async def _get_user_baseline(self, user_id: str) -> dict[str, float] | None:

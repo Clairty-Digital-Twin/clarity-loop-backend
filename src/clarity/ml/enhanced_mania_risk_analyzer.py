@@ -1,11 +1,13 @@
-"""Enhanced Mania Risk Analyzer - State-of-the-Art Implementation.
+"""Enhanced Mania Risk Analyzer - Extended Rule-Based Implementation.
 
-This enhanced version integrates cutting-edge research from 2024-2025:
-- Circadian phase shifts (Lim et al., 2024) - 98% AUC
-- Activity variability (Ortiz et al., 2025) - 7 day advance warning
-- Personal baselines (Lipschitz et al., 2025) - 86% accuracy
+This version adds additional heuristic rules inspired by research findings:
+- Circadian phase shift detection (sleep timing changes)
+- Activity variability monitoring (day-to-day fluctuations)
+- Personal baseline tracking (individual patterns)
 
-Achieves clinical-grade bipolar episode prediction.
+IMPORTANT: This is still a RULE-BASED system. We are NOT achieving the
+accuracy reported in research papers. Those require labeled training data
+and validated ML models, which we do not have.
 """
 
 import logging
@@ -27,15 +29,19 @@ class EnhancedRiskConfig(ManiaRiskConfig):
     """Enhanced configuration with research-based weights."""
     
     def __post_init__(self):
-        # Updated weights based on 2024-2025 research
+        # Weights based on clinical literature - see weight_rationale.md
+        # NOTE: Effect sizes from papers, NOT validated on our data
         self.weights = {
-            # Primary predictors (highest AUCs)
-            "circadian_phase_advance": 0.40,    # Lim: AUC 0.98 for mania
-            "circadian_phase_delay": 0.35,      # Lim: AUC 0.80 for depression
-            "activity_variability_spike": 0.35,  # Ortiz: 7-day warning
+            # Circadian: Wehr 2018 - phase advance in 65% of mania
+            "circadian_phase_advance": 0.40,
+            # Circadian: Geoffroy 2014 - phase delay in 60% of depression
+            "circadian_phase_delay": 0.35,
+            # Activity: Ortiz 2021 (approx) - variability 7d before episodes  
+            "activity_variability_spike": 0.35,
             
             # Secondary predictors
             "severe_sleep_loss": 0.30,
+            "acute_sleep_loss": 0.25,  # Added for compatibility
             "sleep_variability_increase": 0.25,
             "activity_surge": 0.15,
             

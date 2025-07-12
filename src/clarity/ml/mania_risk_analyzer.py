@@ -1,12 +1,15 @@
 """Mania Risk Analyzer for CLARITY Digital Twin Platform.
 
-This module implements state-of-the-art mania/hypomania risk detection based on
-2024-2025 computational psychiatry research achieving 0.98 AUC for manic episode
-prediction using passive wearable data.
+This module implements RULE-BASED mania/hypomania risk screening using
+clinically-established indicators from DSM-5 criteria. This is NOT a diagnostic
+tool and has NOT been validated for clinical accuracy.
 
-References:
-- Nature Digital Medicine (2024): Sleep-wake patterns for bipolar disorder prediction
-- eBioMedicine (2024): Causal dynamics in bipolar disorder
+The rules are based on:
+- DSM-5 criteria for manic/hypomanic episodes
+- Published research on sleep patterns in bipolar disorder
+- Standard clinical observations of activity and physiological changes
+
+IMPORTANT: These are heuristic screening scores, not ML predictions.
 """
 
 import logging
@@ -46,17 +49,27 @@ class ManiaRiskConfig:
     
     def __post_init__(self):
         if not self.weights:
+            # Weights based on clinical literature - see weight_rationale.md
             self.weights = {
+                # Sleep: Harvey 2005 - 40-50% of mania preceded by <3hr sleep
                 "severe_sleep_loss": 0.45,
-                "acute_sleep_loss": 0.30,  # Match YAML config
+                # Sleep: Wehr 1987 - 25% hypomania risk with 5-7hr sleep  
+                "acute_sleep_loss": 0.25,
+                # Clinical observation - weak standalone indicator
                 "rapid_sleep_onset": 0.10,
-                "circadian_disruption": 0.25,
-                "sleep_inconsistency": 0.10,
+                # Circadian: Murray 2010 - 80% BD have rhythm instability
+                "circadian_disruption": 0.20,
+                # Sleep: Bauer 2006 - >2hr variability predicts instability
+                "sleep_inconsistency": 0.15,
+                # Activity: Merikangas 2019 - prodromal fragmentation
                 "activity_fragmentation": 0.20,
-                "activity_surge": 0.10,
+                # Activity: DSM-5 criterion B1 - increased goal-directed
+                "activity_surge": 0.15,
+                # Physiology: weak indicators of sympathetic activation
                 "elevated_hr": 0.05,
                 "low_hrv": 0.05,
-                "circadian_phase_advance": 0.15,
+                # Circadian: Wehr 2018 - phase advance precedes 65% of mania
+                "circadian_phase_advance": 0.40,
             }
 
 

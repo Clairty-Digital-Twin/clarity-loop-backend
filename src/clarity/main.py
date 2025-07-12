@@ -12,7 +12,7 @@ from contextlib import asynccontextmanager
 import logging
 import os
 import sys
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -21,10 +21,14 @@ from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from prometheus_client import make_asgi_app
 
+from clarity.api.v1.gemini_insights import set_dependencies as set_insights_deps
+from clarity.api.v1.health_data import set_dependencies as set_health_data_deps
 from clarity.core.config_adapter import clarity_config_to_settings
+from clarity.core.config_aws import MiddlewareConfig
 from clarity.core.container_aws import get_container, initialize_container
 from clarity.core.logging_config import configure_basic_logging
 from clarity.core.openapi import custom_openapi
+from clarity.ports.config_ports import IConfigProvider
 from clarity.services.gcp_credentials import initialize_gcp_credentials
 from clarity.startup.config_schema import ClarityConfig
 from clarity.startup.orchestrator import StartupOrchestrator
@@ -144,15 +148,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:  # noqa: ARG001
 
     # Configure router dependencies - THIS WAS MISSING!
     try:
-        # Import router dependency setters
         # Create config provider adapter
-        from typing import Any
-
-        from clarity.api.v1.gemini_insights import set_dependencies as set_insights_deps
-        from clarity.api.v1.health_data import set_dependencies as set_health_data_deps
-        from clarity.core.config_aws import MiddlewareConfig
-        from clarity.ports.config_ports import IConfigProvider
-
         class ConfigProviderAdapter(IConfigProvider):
             def __init__(self, settings: Any) -> None:
                 self.settings = settings

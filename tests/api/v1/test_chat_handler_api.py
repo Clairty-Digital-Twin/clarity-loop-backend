@@ -429,15 +429,20 @@ class TestWebSocketChatHandler:
 class TestServiceDependencies:
     """Test service dependency functions."""
 
-    @patch("clarity.api.v1.websocket.chat_handler.os.getenv")
-    def test_get_gemini_service(self, mock_getenv: MagicMock) -> None:
+    @patch("clarity.api.v1.websocket.chat_handler.get_gcp_credentials_manager")
+    def test_get_gemini_service(self, mock_get_credentials_manager: MagicMock) -> None:
         """Test Gemini service initialization."""
-        mock_getenv.return_value = "test-project-id"
+        # Mock the credentials manager
+        mock_credentials_manager = MagicMock()
+        mock_credentials_manager.get_project_id.return_value = "test-project-id"
+        mock_get_credentials_manager.return_value = mock_credentials_manager
 
         service = get_gemini_service()
 
         assert isinstance(service, GeminiService)
-        mock_getenv.assert_called_once_with("AWS_PROJECT_NAME", "clarity-digital-twin")
+        assert service.project_id == "test-project-id"
+        mock_get_credentials_manager.assert_called_once()
+        mock_credentials_manager.get_project_id.assert_called_once()
 
     @pytest.mark.skip(
         reason="get_pat_model_service has sync/async mismatch bug - calls async get_pat_service without await"

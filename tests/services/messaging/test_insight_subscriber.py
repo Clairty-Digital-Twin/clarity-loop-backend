@@ -78,18 +78,27 @@ def valid_pubsub_message():
 class TestInsightSubscriberInit:
     """Test InsightSubscriber initialization."""
 
+    @patch("clarity.services.messaging.insight_subscriber.get_gcp_credentials_manager")
     def test_init_default(
-        self, mock_storage_client: MagicMock, mock_gemini_service: MagicMock
+        self, mock_get_credentials_manager: MagicMock, mock_storage_client: MagicMock, mock_gemini_service: MagicMock
     ) -> None:
         """Test initialization with default values."""
+        # Mock the credentials manager to return None (no credentials)
+        mock_credentials_manager = MagicMock()
+        mock_credentials_manager.get_credentials_path.return_value = None
+        mock_credentials_manager.get_project_id.return_value = "clarity-loop-backend"
+        mock_get_credentials_manager.return_value = mock_credentials_manager
+        
         # Clear any existing environment variable
         with patch.dict("os.environ", {}, clear=True):
             subscriber = InsightSubscriber()
 
             assert subscriber.environment == "development"
             assert subscriber.pubsub_push_audience is None
-            mock_storage_client.assert_called_once()
-            mock_gemini_service.assert_called_once()
+            # Storage client should NOT be called if no credentials
+            mock_storage_client.assert_not_called()
+            # Gemini service should still be created
+            mock_gemini_service.assert_called_once_with(project_id="clarity-loop-backend")
 
     def test_init_with_environment(
         self, mock_storage_client: MagicMock, mock_gemini_service: MagicMock

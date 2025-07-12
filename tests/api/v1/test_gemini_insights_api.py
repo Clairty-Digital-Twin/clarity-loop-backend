@@ -288,36 +288,50 @@ class TestDependencyInjection:
         gemini_insights._config_provider = None
         gemini_insights._gemini_service = None
 
-    def test_set_dependencies_development_mode(self):
+    @patch("clarity.api.v1.gemini_insights.get_gcp_credentials_manager")
+    def test_set_dependencies_development_mode(self, mock_get_credentials_manager):
         """Test setting dependencies in development mode."""
+        # Mock the credentials manager
+        mock_credentials_manager = MagicMock()
+        mock_credentials_manager.get_project_id.return_value = "clarity-loop-backend"
+        mock_get_credentials_manager.return_value = mock_credentials_manager
+        
         mock_auth_provider = MagicMock(spec=IAuthProvider)
         mock_config_provider = MagicMock(spec=IConfigProvider)
         mock_config_provider.is_development.return_value = True
 
         set_dependencies(mock_auth_provider, mock_config_provider)
 
-        # Should create a development GeminiService
+        # Should create a development GeminiService with actual project ID
         service = get_gemini_service()
         assert isinstance(service, GeminiService)
-        assert service.project_id == "dev-project"
+        assert service.project_id == "clarity-loop-backend"
 
+    @patch("clarity.api.v1.gemini_insights.get_gcp_credentials_manager")
     @patch("clarity.api.v1.gemini_insights.get_settings")
-    def test_set_dependencies_production_mode(self, mock_get_settings):
+    def test_set_dependencies_production_mode(self, mock_get_settings, mock_get_credentials_manager):
         """Test setting dependencies in production mode."""
+        # Mock the credentials manager
+        mock_credentials_manager = MagicMock()
+        mock_credentials_manager.get_project_id.return_value = "clarity-loop-backend"
+        mock_get_credentials_manager.return_value = mock_credentials_manager
+        
         mock_auth_provider = MagicMock(spec=IAuthProvider)
         mock_config_provider = MagicMock(spec=IConfigProvider)
         mock_config_provider.is_development.return_value = False
 
         mock_settings = MagicMock()
-        mock_settings.aws_region = "us-east-1"
+        mock_settings.gcp_project_id = "clarity-loop-backend"
+        mock_settings.vertex_ai_location = "us-central1"
         mock_get_settings.return_value = mock_settings
 
         set_dependencies(mock_auth_provider, mock_config_provider)
 
-        # Should create a production GeminiService with AWS region
+        # Should create a production GeminiService with GCP project ID
         service = get_gemini_service()
         assert isinstance(service, GeminiService)
-        assert service.project_id == "us-east-1"
+        # Project ID comes from credentials manager or settings
+        assert service.project_id == "clarity-loop-backend"
 
     def test_get_gemini_service_not_initialized(self):
         """Test getting service when not initialized."""

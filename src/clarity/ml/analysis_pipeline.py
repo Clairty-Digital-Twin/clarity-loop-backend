@@ -10,9 +10,11 @@ from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 import logging
 import os
+from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 import numpy as np
+from boto3.dynamodb.conditions import Key
 
 from clarity.ml.fusion_transformer import get_fusion_service
 from clarity.ml.pat_service import ActigraphyAnalysis, ActigraphyInput, get_pat_service
@@ -34,6 +36,7 @@ from clarity.models.health_data import (
     SleepData,
 )
 from clarity.storage.dynamodb_client import DynamoDBHealthDataRepository
+from clarity.ml.mania_risk_analyzer import ManiaRiskAnalyzer, ManiaRiskResult
 
 # Constants
 MIN_FEATURE_VECTOR_LENGTH = 8
@@ -192,7 +195,32 @@ class HealthAnalysisPipeline:
                 results.activity_features,  # 🔥 Pass activity features
             )
 
-            # Step 5: Add processing metadata
+            # Step 5: Mania risk analysis
+            mania_result = await self._analyze_mania_risk(
+                user_id,
+                results,
+                organized_data,
+            )
+            
+            # Add to summary stats
+            results.summary_stats.setdefault("health_indicators", {})
+            results.summary_stats["health_indicators"]["mania_risk"] = {
+                "risk_score": mania_result.risk_score,
+                "alert_level": mania_result.alert_level,
+                "contributing_factors": mania_result.contributing_factors,
+                "confidence": mania_result.confidence,
+            }
+            
+            # Add to clinical insights if significant
+            if mania_result.alert_level in ["moderate", "high"]:
+                insights = results.summary_stats.setdefault("clinical_insights", [])
+                insights.append(mania_result.clinical_insight)
+                
+                # Add recommendations
+                if mania_result.recommendations:
+                    results.summary_stats["recommendations"] = mania_result.recommendations
+
+            # Step 7: Add processing metadata
             results.processing_metadata = {
                 "user_id": user_id,
                 "processed_at": datetime.now(UTC).isoformat(),

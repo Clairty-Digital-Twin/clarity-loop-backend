@@ -446,14 +446,13 @@ class PATModelService(IMLModelService):
             logger.info("Loading PAT model from %s", self.model_path)
 
             # SECURITY: Verify model integrity BEFORE creating model
-            if Path(self.model_path).exists():
-                if not self._verify_model_integrity():
-                    error_msg = (
-                        f"Model integrity verification FAILED for {self.model_path}. "
-                        f"Refusing to load potentially tampered model."
-                    )
-                    logger.error(error_msg)
-                    raise RuntimeError(error_msg)
+            if Path(self.model_path).exists() and not self._verify_model_integrity():
+                error_msg = (
+                    f"Model integrity verification FAILED for {self.model_path}. "
+                    f"Refusing to load potentially tampered model."
+                )
+                logger.error(error_msg)
+                raise RuntimeError(error_msg)
 
             # Initialize encoder with correct parameters
             config = cast("dict[str, Any]", self.config)
@@ -1004,7 +1003,7 @@ class PATModelService(IMLModelService):
                 # Add mania insight if risk is moderate or high
                 if mania_result.alert_level in {"moderate", "high"}:
                     insights.append(mania_result.clinical_insight)
-            except Exception as e:
+            except (ValueError, KeyError, AttributeError) as e:
                 logger.warning(
                     "Mania risk analysis failed for user %s, using default values: %s",
                     user_id,

@@ -10,8 +10,8 @@ This module provides Prometheus metrics for production monitoring
 and alerting of the PAT (Proxy Actigraphy Transformer) model system.
 """
 
-from collections.abc import Iterator
-from contextlib import contextmanager
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
 import logging
 import time
 from typing import Any
@@ -172,10 +172,10 @@ pat_model_health_score = Gauge(
 
 
 # Helper Functions
-@contextmanager
-def track_model_load(
+@asynccontextmanager
+async def track_model_load(
     model_size: str, version: str, source: str
-) -> Iterator[dict[str, Any]]:
+) -> AsyncIterator[dict[str, Any]]:
     """Context manager to track model loading operations.
 
     Args:
@@ -213,10 +213,10 @@ def track_model_load(
             ).inc()
 
 
-@contextmanager
-def track_checksum_verification(
+@asynccontextmanager
+async def track_checksum_verification(
     model_size: str, version: str
-) -> Iterator[dict[str, Any]]:
+) -> AsyncIterator[dict[str, Any]]:
     """Async context manager to track checksum verification.
 
     Args:

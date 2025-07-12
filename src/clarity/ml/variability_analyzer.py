@@ -182,7 +182,7 @@ class VariabilityAnalyzer:
 
     def _calculate_coefficient_variation(self, series: list[float]) -> float:
         """Calculate coefficient of variation (CV = std/mean)."""
-        if len(series) < 2:
+        if len(series) < self.MIN_SERIES_LENGTH:
             return 0.0
 
         mean_val = np.mean(series)
@@ -231,7 +231,7 @@ class VariabilityAnalyzer:
         self, series: list[float], baseline_stats: dict[str, float] | None
     ) -> tuple[bool, float]:
         """Detect significant spikes in variability using z-score method."""
-        if len(series) < 7:  # Need at least a week of data
+        if len(series) < self.MIN_WEEKLY_DATA_DAYS:  # Need at least a week of data
             return False, 0.0
 
         # Calculate rolling standard deviation
@@ -269,16 +269,16 @@ class VariabilityAnalyzer:
         # Extract activity CV values from each window
         cv_values = [window["activity_cv"] for window in variability_windows if "activity_cv" in window]
 
-        if len(cv_values) < 2:
+        if len(cv_values) < self.MIN_SERIES_LENGTH:
             return "stable"
 
         # Simple trend detection: compare recent to older
         recent = np.mean(cv_values[:2])  # More recent windows
         older = np.mean(cv_values[2:])  # Older windows
 
-        if recent > older * 1.3:
+        if recent > older * self.TREND_INCREASE_FACTOR:
             return "increasing"
-        if recent < older * 0.7:
+        if recent < older * self.TREND_DECREASE_FACTOR:
             return "decreasing"
         return "stable"
 

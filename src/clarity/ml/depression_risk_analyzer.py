@@ -95,6 +95,7 @@ class DepressionRiskAnalyzer:
         self.MODERATE_RISK_EPISODE_DAYS = 7
         self.VARIABILITY_DAYS_THRESHOLD = 7
         self.MIN_PATTERN_DAYS = 8
+        self.USER_ID_TRUNCATE_LENGTH = 8
 
         self.logger.info(
             "DepressionRiskAnalyzer initialized",
@@ -224,11 +225,11 @@ class DepressionRiskAnalyzer:
                 else None
             )
 
-            if len(recent_sleep) < 2:
+            if len(recent_sleep) < self.MIN_RECENT_DAYS:
                 return None
 
             return self.phase_detector.detect_phase_shift(recent_sleep, baseline_sleep)
-        except Exception as e:
+        except (ValueError, KeyError, AttributeError) as e:
             self.logger.warning("Circadian phase analysis failed: %s", e)
             return None
 
@@ -255,7 +256,7 @@ class DepressionRiskAnalyzer:
             return self.variability_analyzer.analyze_variability(
                 activity_metrics, sleep_metrics, baseline_stats
             )
-        except Exception as e:
+        except (ValueError, KeyError, AttributeError) as e:
             self.logger.warning("Variability analysis failed: %s", e)
             return None
 
@@ -336,7 +337,7 @@ class DepressionRiskAnalyzer:
                 baseline_hours = baseline["avg_sleep_hours"]
                 if baseline_hours > 0:
                     increase = (hours - baseline_hours) / baseline_hours
-                    if increase > 0.3:  # 30% increase
+                    if increase > self.SLEEP_INCREASE_THRESHOLD:
                         score += self.config.weights["hypersomnia"] * 0.5
                         factors.append(
                             f"Sleep increased {int(increase * 100)}% from baseline"
@@ -345,12 +346,12 @@ class DepressionRiskAnalyzer:
         # Check sleep quality indicators
         if sleep:
             # Prolonged sleep latency
-            if hasattr(sleep, "sleep_latency") and sleep.sleep_latency > 30:
+            if hasattr(sleep, "sleep_latency") and sleep.sleep_latency > self.PROLONGED_SLEEP_LATENCY_THRESHOLD:
                 score += self.config.weights["prolonged_sleep_latency"]
                 factors.append(f"Prolonged sleep onset: {sleep.sleep_latency} min")
 
             # Poor sleep efficiency
-            if hasattr(sleep, "sleep_efficiency") and sleep.sleep_efficiency < 0.7:
+            if hasattr(sleep, "sleep_efficiency") and sleep.sleep_efficiency < self.POOR_SLEEP_EFFICIENCY_THRESHOLD:
                 score += self.config.weights["sleep_fragmentation"]
                 factors.append("Poor sleep quality")
 
@@ -389,7 +390,7 @@ class DepressionRiskAnalyzer:
 
             # Activity fragmentation can indicate depression
             if "activity_fragmentation" in pat_metrics and (
-                pat_metrics["activity_fragmentation"] < 0.3
+                pat_metrics["activity_fragmentation"] < self.LOW_ACTIVITY_FRAGMENTATION
             ):  # Very low fragmentation
                 score += self.config.weights["activity_reduction"] * 0.5
                 factors.append("Minimal activity variation")
@@ -410,28 +411,27 @@ class DepressionRiskAnalyzer:
         # Decreased HRV is associated with depression
         if "avg_hrv" in cardio:
             hrv = cardio["avg_hrv"]
-            if hrv < 30:  # Low HRV
+            if hrv < self.LOW_HRV_THRESHOLD:
                 score += self.config.weights["decreased_hr_variability"]
                 factors.append(f"Reduced HRV: {int(hrv)} ms")
 
         # Circadian amplitude reduction
-        if "circadian_rhythm_score" in cardio:
-            if cardio["circadian_rhythm_score"] < 0.4:
-                score += self.config.weights["circadian_flattening"]
-                factors.append("Flattened circadian rhythm")
+        if "circadian_rhythm_score" in cardio and cardio["circadian_rhythm_score"] < self.CIRCADIAN_FLATTENING_THRESHOLD:
+            score += self.config.weights["circadian_flattening"]
+            factors.append("Flattened circadian rhythm")
 
         return score, factors
 
     def _determine_alert_level(self, score: float, confidence: float) -> str:
         """Determine depression risk alert level."""
-        if confidence < 0.7 and score >= self.high_threshold:
+        if confidence < self.LOW_CONFIDENCE_THRESHOLD and score >= self.high_threshold:
             return "moderate"
 
         if score >= self.high_threshold:
             return "high"
         if score >= self.moderate_threshold:
             return "moderate"
-        if score > 0.1:
+        if score > self.LOW_RISK_THRESHOLD:
             return "low"
         return "none"
 
@@ -445,19 +445,18 @@ class DepressionRiskAnalyzer:
         predictions = []
 
         # Phase delays give gradual onset (Lim)
-        if phase_result and phase_result.clinical_significance == "high":
-            if phase_result.phase_shift_direction == "delay":
-                predictions.append(3)  # 3-5 days typical
+        if phase_result and phase_result.clinical_significance == "high" and phase_result.phase_shift_direction == "delay":
+            predictions.append(self.PHASE_DELAY_EPISODE_DAYS)  # 3-5 days typical
 
         # Activity variability gives 7-day warning (Ortiz)
         if var_result and var_result.days_until_risk:
             predictions.append(var_result.days_until_risk)
 
         # High risk score suggests sooner onset
-        if risk_score > 0.65:
-            predictions.append(4)
-        elif risk_score > 0.4:
-            predictions.append(7)
+        if risk_score > self.HIGH_SCORE_THRESHOLD:
+            predictions.append(self.HIGH_RISK_EPISODE_DAYS)
+        elif risk_score > self.MODERATE_SCORE_THRESHOLD:
+            predictions.append(self.MODERATE_RISK_EPISODE_DAYS)
 
         return min(predictions) if predictions else None
 
@@ -522,6 +521,6 @@ class DepressionRiskAnalyzer:
         if not user_id:
             return "anonymous"
 
-        if len(user_id) > 8:
+        if len(user_id) > self.USER_ID_TRUNCATE_LENGTH:
             return f"{user_id[:4]}...{user_id[-4:]}"
         return user_id

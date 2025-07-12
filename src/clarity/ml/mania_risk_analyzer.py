@@ -104,7 +104,7 @@ class ManiaRiskAnalyzer:
         self._max_cache_size = 1000  # Maximum cache entries
 
         if config_path and config_path.exists():
-            with open(config_path, encoding="utf-8") as f:
+            with config_path.open(encoding="utf-8") as f:
                 config_dict = yaml.safe_load(f)
                 # Handle nested weights if present
                 weights = config_dict.pop("weights") if "weights" in config_dict else {}
@@ -123,9 +123,13 @@ class ManiaRiskAnalyzer:
         self.DATA_ESTIMATION_CONFIDENCE_FACTOR = 0.8
         self.INVALID_DATA_CONFIDENCE = 0.3
         self.LIMITED_DATA_CONFIDENCE = 0.5
+        self.LOW_CONFIDENCE_THRESHOLD = 0.7
+        self.LOW_RISK_THRESHOLD = 0.1
+        self.PHASE_SHIFT_FACTOR = 2
         self.SLEEP_DEFICIT_SCALING_FACTOR = 0.6
         self.MIN_PATTERN_DAYS = 8
         self.USER_ID_TRUNCATE_LENGTH = 8
+        self.PRIMARY_FACTORS_COUNT = 2
 
         self.logger.info(
             "ManiaRiskAnalyzer initialized",
@@ -385,13 +389,12 @@ class ManiaRiskAnalyzer:
             data_source = "HealthKit"
 
             # Check data density - if we have sleep object, check for completeness
-            if hasattr(sleep, "data_coverage_days"):
+            if hasattr(sleep, "data_coverage_days") and sleep.data_coverage_days < self.MIN_DATA_DAYS:
                 # If less than 3 days of data in the past week, lower confidence
-                if sleep.data_coverage_days < self.MIN_DATA_DAYS:
-                    data_completeness = self.LIMITED_DATA_CONFIDENCE
-                    factors.append(
-                        f"Limited data: only {sleep.data_coverage_days} days"
-                    )
+                data_completeness = self.LIMITED_DATA_CONFIDENCE
+                factors.append(
+                    f"Limited data: only {sleep.data_coverage_days} days"
+                )
 
         elif pat_metrics and "total_sleep_time" in pat_metrics:
             hours = pat_metrics["total_sleep_time"]
@@ -477,12 +480,11 @@ class ManiaRiskAnalyzer:
         elif cardio and "circadian_rhythm_score" in cardio:
             circadian_score = cardio["circadian_rhythm_score"]
 
-        if circadian_score is not None:
-            if circadian_score < self.config.circadian_disruption_threshold:
-                score += self.config.weights["circadian_disruption"]
-                factors.append(
-                    f"Disrupted circadian rhythm (score: {circadian_score:.2f})"
-                )
+        if circadian_score is not None and circadian_score < self.config.circadian_disruption_threshold:
+            score += self.config.weights["circadian_disruption"]
+            factors.append(
+                f"Disrupted circadian rhythm (score: {circadian_score:.2f})"
+            )
 
         # Sleep consistency is already checked in _analyze_sleep
         # Skip it here to avoid double-counting
@@ -509,14 +511,13 @@ class ManiaRiskAnalyzer:
         # Check for activity surges
         if activity and baseline:
             # Compare current vs baseline steps
-            if activity and baseline:
-                current_steps = activity.get("avg_daily_steps", 0)
-                baseline_steps = baseline.get("avg_steps", 0)
-                if baseline_steps > 0:
-                    ratio = current_steps / baseline_steps
-                    if ratio >= self.config.activity_surge_ratio:
-                        score += self.config.weights["activity_surge"]
-                        factors.append(f"Activity surge: {ratio:.1f}x baseline")
+            current_steps = activity.get("avg_daily_steps", 0)
+            baseline_steps = baseline.get("avg_steps", 0)
+            if baseline_steps > 0:
+                ratio = current_steps / baseline_steps
+                if ratio >= self.config.activity_surge_ratio:
+                    score += self.config.weights["activity_surge"]
+                    factors.append(f"Activity surge: {ratio:.1f}x baseline")
 
         return score, factors
 
@@ -575,15 +576,15 @@ class ManiaRiskAnalyzer:
         Returns:
             Alert level string
         """
-        # Apply guardrail: if confidence is low (<0.7), cap at moderate
-        if confidence < 0.7 and score >= self.high_threshold:
+        # Apply guardrail: if confidence is low, cap at moderate
+        if confidence < self.LOW_CONFIDENCE_THRESHOLD and score >= self.high_threshold:
             return "moderate"
 
         if score >= self.high_threshold:
             return "high"
         if score >= self.moderate_threshold:
             return "moderate"
-        if score > 0.1:
+        if score > self.LOW_RISK_THRESHOLD:
             return "low"
         return "none"
 
@@ -595,7 +596,7 @@ class ManiaRiskAnalyzer:
     ) -> str:
         """Generate clinical insight message."""
         if level == "high":
-            primary_factors = factors[:2] if len(factors) > 2 else factors
+            primary_factors = factors[:self.PRIMARY_FACTORS_COUNT] if len(factors) > self.PRIMARY_FACTORS_COUNT else factors
             factors_str = " and ".join(primary_factors).lower()
             return (
                 f"Elevated mania risk detected (score: {score:.2f}) - "

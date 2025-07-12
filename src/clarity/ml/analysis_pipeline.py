@@ -875,7 +875,7 @@ class HealthAnalysisPipeline:
 
             return baseline
 
-        except Exception as e:
+        except (ValueError, KeyError, AttributeError) as e:
             self.logger.warning(f"Failed to retrieve user baseline: {e}")
             return None
 

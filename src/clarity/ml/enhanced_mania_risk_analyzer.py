@@ -248,7 +248,7 @@ class EnhancedManiaRiskAnalyzer(ManiaRiskAnalyzer):
                 recent_sleep, baseline_sleep
             )
 
-        except Exception as e:
+        except (ValueError, KeyError, AttributeError) as e:
             self.logger.warning("Circadian phase analysis failed: %s", e)
             return None
 
@@ -278,7 +278,7 @@ class EnhancedManiaRiskAnalyzer(ManiaRiskAnalyzer):
                 activity_metrics, sleep_metrics, baseline_stats
             )
 
-        except Exception as e:
+        except (ValueError, KeyError, AttributeError) as e:
             self.logger.warning("Variability analysis failed: %s", e)
             return None
 
@@ -392,9 +392,8 @@ class EnhancedManiaRiskAnalyzer(ManiaRiskAnalyzer):
         predictions = []
 
         # Phase shifts give immediate risk (next day per Lim)
-        if phase_result and phase_result.clinical_significance == "high":
-            if phase_result.phase_shift_direction == "advance":
-                predictions.append(self.NEXT_DAY_RISK)  # Next day risk
+        if phase_result and phase_result.clinical_significance == "high" and phase_result.phase_shift_direction == "advance":
+            predictions.append(self.NEXT_DAY_RISK)  # Next day risk
 
         # Variability gives advance warning (Ortiz)
         if var_result and var_result.days_until_risk:

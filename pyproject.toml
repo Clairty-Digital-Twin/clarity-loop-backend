@@ -234,32 +234,14 @@ select = [
     "ANN", # flake8-annotations
 ]
 ignore = [
-    "E501",  # line too long, handled by black
-    "B008",  # do not perform function calls in argument defaults
-    "C901",  # too complex
-    "W191",  # indentation contains tabs
-    "S104",  # binding to all interfaces in example apps
-    "PLR6301",  # test methods could be functions – acceptable in test classes
-    "PLR1702",  # nested blocks – accepted for complex websocket handler
-    "PLR0912",  # too many branches – accepted for handler endpoints
-    "PLR0915",  # too many statements – accepted for handler endpoints
-    "PLW0603",  # global statement usage in lifespan for singleton pattern
-    "ANN401",   # allow use of Any in some interfaces & tests
-    "RUF029",   # allow async def without await in mock helpers
-    "PLR0913",  # Too many arguments
-    # Production code pragmatic ignores with justification
-    "PLR2004",  # Magic values - we've extracted most, remaining are clear in context
-    "BLE001",   # Bare except - needed for resilient error handling
-    "SLF001",   # Private member access - needed for framework integration
-    "FBT001",   # Boolean positional arg - public API compatibility
-    "FBT002",   # Boolean default arg - public API compatibility
-    "FBT003",   # Boolean positional in call - existing usage patterns
-    "SIM102",   # Nested if - sometimes clearer than combining
-    "ERA001",   # Commented code - useful documentation
-    "N806",     # Non-lowercase variable - for constants like UTC
-    "PTH118",   # os.path.join - compatible with Path objects
-    "PTH120",   # os.path.dirname - standard library usage
-    "PTH123",   # Path.open vs open - both are fine
+    # Essential ignores only
+    "E501",     # line too long - handled by black
+    "B008",     # function calls in argument defaults - FastAPI pattern
+    "C901",     # too complex - gradual refactoring
+    "PLR0912",  # too many branches - complex handlers
+    "PLR0913",  # too many arguments - existing APIs
+    "PLR0915",  # too many statements - complex handlers
+    "ANN401",   # Any type - needed for some interfaces
 ]
 
 [tool.ruff.lint.pyupgrade]

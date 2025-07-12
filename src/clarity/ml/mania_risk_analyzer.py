@@ -49,7 +49,7 @@ class ManiaRiskConfig:
     # Weights for scoring
     weights: dict[str, float] = field(default_factory=dict)
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if not self.weights:
             # Weights based on clinical literature - see weight_rationale.md
             self.weights = {

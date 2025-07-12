@@ -844,30 +844,30 @@ class HealthAnalysisPipeline:
 
             for item in items:
                 # Extract sleep hours
-                if "sleep_features" in item:
-                    sleep_mins = item["sleep_features"].get("total_sleep_minutes", 0)
-                    if sleep_mins > 0:
-                        # Convert Decimal to float if from DynamoDB
-                        sleep_hours.append(float(sleep_mins) / 60)
+                if isinstance(item, dict) and "sleep_features" in item:
+                    sleep_features = item.get("sleep_features")
+                    if isinstance(sleep_features, dict):
+                        sleep_mins = sleep_features.get("total_sleep_minutes", 0)
+                        if sleep_mins > 0:
+                            # Convert Decimal to float if from DynamoDB
+                            sleep_hours.append(float(sleep_mins) / 60)
 
                 # Extract steps from activity features list
-                if "activity_features" in item and isinstance(
-                    item["activity_features"], list
-                ):
-                    daily_steps = self._extract_avg_daily_steps(
-                        item["activity_features"]
-                    )
-                    if daily_steps and daily_steps > 0:
-                        steps.append(float(daily_steps))
+                if isinstance(item, dict) and "activity_features" in item:
+                    activity_features = item.get("activity_features")
+                    if isinstance(activity_features, list):
+                        daily_steps = self._extract_avg_daily_steps(activity_features)
+                        if daily_steps and daily_steps > 0:
+                            steps.append(float(daily_steps))
 
             baseline = {}
             if sleep_hours:
-                baseline["avg_sleep_hours"] = np.mean(sleep_hours)
-                baseline["std_sleep_hours"] = np.std(sleep_hours)
+                baseline["avg_sleep_hours"] = float(np.mean(sleep_hours))
+                baseline["std_sleep_hours"] = float(np.std(sleep_hours))
 
             if steps:
-                baseline["avg_steps"] = np.mean(steps)
-                baseline["std_steps"] = np.std(steps)
+                baseline["avg_steps"] = float(np.mean(steps))
+                baseline["std_steps"] = float(np.std(steps))
 
             return baseline
 

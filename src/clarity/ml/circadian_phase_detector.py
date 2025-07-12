@@ -93,6 +93,8 @@ class CircadianPhaseDetector:
         current_midpoint = float(np.median(recent_midpoints[-3:]))
 
         # Calculate phase shift
+        if baseline_midpoint is None:
+            baseline_midpoint = current_midpoint
         phase_shift_hours = current_midpoint - baseline_midpoint
 
         # Handle circadian wraparound (e.g., 23:00 to 01:00)

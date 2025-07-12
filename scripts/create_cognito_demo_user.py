@@ -15,12 +15,12 @@ CLIENT_ID = "7sm7ckrkovg78b03n1595euc71"
 REGION = "us-east-1"
 
 
-def create_demo_user():
+def create_demo_user() -> bool | None:
     """Create a demo user in Cognito user pool."""
     cognito = boto3.client('cognito-idp', region_name=REGION)
 
     username = "demo@clarity.ai"
-    temp_password = "TempDemo123!"
+    temp_password = "TempDemo123!"  # noqa: S105
 
     try:
         # Create user

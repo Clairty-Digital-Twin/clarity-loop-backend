@@ -128,11 +128,11 @@ class ClarityDemo:
         try:
             response = self.s3_client.get_object(Bucket=DEMO_BUCKET, Key='clinical/scenarios_summary.json')
             scenarios_data = json.loads(response['Body'].read())
-            
+
             # Extract scenario summary information
             summary = scenarios_data['scenario_summary']
             self.print_success(f"Clinical Scenarios: {summary['total_scenarios']} phases loaded")
-            
+
             # Show risk detection targets
             risk_targets = scenarios_data['risk_detection_targets']
             for phase, target in risk_targets.items():
@@ -170,14 +170,14 @@ class ClarityDemo:
                 # Use actual data structure
                 prediction_data = pred['predictions']
                 confidence_data = pred['confidence_scores']
-                
+
                 # Extract analysis type from prediction keys
                 analysis_type = "Depression Risk" if 'depression_risk' in prediction_data else "Health Analysis"
                 # Get confidence score (use depression_risk confidence as primary)
                 confidence = confidence_data.get('depression_risk', confidence_data.get('health_score', 0.0))
-                
+
                 self.print_info(f"Analysis {i + 1}: {analysis_type} - Score: {confidence:.3f}")
-                
+
                 # Show key finding from prediction data
                 if 'depression_risk' in prediction_data:
                     risk_score = prediction_data['depression_risk']

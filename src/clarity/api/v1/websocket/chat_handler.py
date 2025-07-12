@@ -55,10 +55,10 @@ router = APIRouter()
 def get_gemini_service() -> GeminiService:
     """Get Gemini service instance with proper GCP project ID."""
     from clarity.services.gcp_credentials import get_gcp_credentials_manager
-    
+
     credentials_manager = get_gcp_credentials_manager()
     project_id = credentials_manager.get_project_id()
-    
+
     # Direct initialization to avoid circular import
     return GeminiService(
         project_id=project_id or "clarity-loop-backend"

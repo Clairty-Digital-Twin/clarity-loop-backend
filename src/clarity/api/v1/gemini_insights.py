@@ -53,10 +53,10 @@ def set_dependencies(
 
     # Initialize Gemini service with correct GCP project ID
     from clarity.services.gcp_credentials import get_gcp_credentials_manager
-    
+
     credentials_manager = get_gcp_credentials_manager()
     project_id = credentials_manager.get_project_id()
-    
+
     if config_provider.is_development():
         logger.info("🧪 Gemini insights running in development mode")
         # In development, use the actual project ID or fallback

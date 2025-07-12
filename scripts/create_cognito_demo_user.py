@@ -1,26 +1,27 @@
 #!/usr/bin/env python3
-"""
-Create a demo user in AWS Cognito for testing the live ML pipeline.
+"""Create a demo user in AWS Cognito for testing the live ML pipeline.
 This bypasses shell integration issues by using boto3 directly.
 """
 
-import boto3
 import json
-import requests
+
+import boto3
 from botocore.exceptions import ClientError
+import requests
 
 # Configuration from ECS task definition
 USER_POOL_ID = "us-east-1_efXaR5EcP"
 CLIENT_ID = "7sm7ckrkovg78b03n1595euc71"
 REGION = "us-east-1"
 
+
 def create_demo_user():
     """Create a demo user in Cognito user pool."""
     cognito = boto3.client('cognito-idp', region_name=REGION)
-    
+
     username = "demo@clarity.ai"
     temp_password = "TempDemo123!"
-    
+
     try:
         # Create user
         response = cognito.admin_create_user(
@@ -39,11 +40,11 @@ def create_demo_user():
             TemporaryPassword=temp_password,
             MessageAction='SUPPRESS'
         )
-        
+
         print(f"✅ Demo user created: {username}")
         print(f"📧 Email: {username}")
         print(f"🔑 Temporary password: {temp_password}")
-        
+
         # Set permanent password
         cognito.admin_set_user_password(
             UserPoolId=USER_POOL_ID,
@@ -51,28 +52,28 @@ def create_demo_user():
             Password="DemoPassword123!",
             Permanent=True
         )
-        
+
         print("✅ Permanent password set: DemoPassword123!")
-        
+
         return True
-        
+
     except ClientError as e:
         if e.response['Error']['Code'] == 'UsernameExistsException':
             print(f"✅ User {username} already exists!")
             return True
-        else:
-            print(f"❌ Error creating user: {e}")
-            return False
+        print(f"❌ Error creating user: {e}")
+        return False
+
 
 def get_jwt_token_via_api():
     """Get JWT token using the live API login endpoint."""
     API_BASE = "https://clarity.novamindnyc.com/api/v1"
-    
+
     login_data = {
         "email": "demo@clarity.ai",
         "password": "DemoPassword123!"
     }
-    
+
     try:
         response = requests.post(
             f"{API_BASE}/auth/login",
@@ -80,37 +81,36 @@ def get_jwt_token_via_api():
             headers={'Content-Type': 'application/json'},
             timeout=30
         )
-        
+
         print(f"🔑 Login Response: {response.status_code}")
-        
+
         if response.status_code == 200:
             result = response.json()
             token = result.get('access_token')
             if token:
-                print(f"🎉 JWT Token obtained via API!")
+                print("🎉 JWT Token obtained via API!")
                 print(f"🔑 Token: {token[:50]}...")
                 return token
-            else:
-                print("❌ No access_token in response")
-                return None
-        else:
-            print(f"❌ Login failed: {response.text}")
+            print("❌ No access_token in response")
             return None
-            
+        print(f"❌ Login failed: {response.text}")
+        return None
+
     except Exception as e:
         print(f"❌ API login error: {e}")
         return None
 
+
 def test_live_ml_pipeline(token):
     """Test the live ML pipeline with real authentication."""
     API_BASE = "https://clarity.novamindnyc.com/api/v1"
-    
+
     # Test authenticated endpoint with REAL step data
     headers = {
         'Authorization': f'Bearer {token}',
         'Content-Type': 'application/json'
     }
-    
+
     # Real Apple HealthKit step data format (based on the API spec)
     step_data = {
         "step_counts": [
@@ -129,19 +129,19 @@ def test_live_ml_pipeline(token):
             "2024-01-15T21:00:00Z", "2024-01-15T22:00:00Z", "2024-01-15T23:00:00Z"
         ]
     }
-    
+
     try:
         print("🚀 Sending real step data to PAT ML pipeline...")
-        
+
         response = requests.post(
             f"{API_BASE}/pat/step-analysis",
             json=step_data,
             headers=headers,
             timeout=60  # ML processing can take time
         )
-        
+
         print(f"🎯 ML Pipeline Response: {response.status_code}")
-        
+
         if response.status_code == 200:
             result = response.json()
             print("🎉 LIVE ML PROCESSING SUCCESS!")
@@ -155,28 +155,28 @@ def test_live_ml_pipeline(token):
                 print(f"   PAT Predictions: {result['pat_predictions']}")
             print(f"📋 Full Result: {json.dumps(result, indent=2)}")
             return True
-        elif response.status_code == 422:
+        if response.status_code == 422:
             print("❌ Validation Error - checking data format...")
             print(f"   Response: {response.text}")
             return False
-        else:
-            print(f"❌ Error: {response.status_code}")
-            print(f"   Response: {response.text}")
-            return False
-            
+        print(f"❌ Error: {response.status_code}")
+        print(f"   Response: {response.text}")
+        return False
+
     except Exception as e:
         print(f"❌ Request error: {e}")
         return False
 
+
 def test_multiple_endpoints(token):
     """Test multiple ML endpoints to see what's available."""
     API_BASE = "https://clarity.novamindnyc.com/api/v1"
-    
+
     headers = {
         'Authorization': f'Bearer {token}',
         'Content-Type': 'application/json'
     }
-    
+
     endpoints_to_test = [
         ('/pat/health', 'GET'),
         ('/pat/step-analysis', 'POST'),
@@ -185,9 +185,9 @@ def test_multiple_endpoints(token):
         ('/insights/generate', 'POST'),
         ('/healthkit/upload', 'POST')
     ]
-    
+
     print("🔍 Testing multiple endpoints...")
-    
+
     for endpoint, method in endpoints_to_test:
         try:
             if method == 'GET':
@@ -203,43 +203,44 @@ def test_multiple_endpoints(token):
                     headers=headers,
                     timeout=10
                 )
-            
+
             print(f"  {method} {endpoint}: {response.status_code}")
-            
+
             if response.status_code == 200:
-                print(f"    ✅ Available!")
+                print("    ✅ Available!")
             elif response.status_code == 405:
-                print(f"    ⚠️ Method not allowed")
+                print("    ⚠️ Method not allowed")
             elif response.status_code == 404:
-                print(f"    ❌ Not found")
+                print("    ❌ Not found")
             elif response.status_code == 422:
-                print(f"    ⚠️ Validation error (needs proper data)")
+                print("    ⚠️ Validation error (needs proper data)")
             else:
                 print(f"    ❓ Status: {response.status_code}")
-                
+
         except Exception as e:
             print(f"    ❌ Error: {e}")
+
 
 if __name__ == "__main__":
     print("🎯 Creating Cognito Demo User for Live ML Pipeline...")
     print("=" * 60)
-    
+
     # Step 1: Create user
     if create_demo_user():
         print("\n🔑 Getting JWT Token via API...")
-        
+
         # Step 2: Get JWT token via API
         token = get_jwt_token_via_api()
-        
+
         if token:
             print("\n🚀 Testing Live ML Pipeline...")
-            
+
             # Step 3: Test multiple endpoints
             test_multiple_endpoints(token)
-            
+
             # Step 4: Test live ML pipeline
             success = test_live_ml_pipeline(token)
-            
+
             if success:
                 print("\n🎉 GOD STATUS ACHIEVED! LIVE ML PIPELINE WORKING!")
                 print("✅ Demo user created")
@@ -250,4 +251,4 @@ if __name__ == "__main__":
         else:
             print("\n❌ Could not get JWT token")
     else:
-        print("\n❌ Could not create demo user") 
+        print("\n❌ Could not create demo user")

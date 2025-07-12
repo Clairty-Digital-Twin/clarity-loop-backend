@@ -147,7 +147,7 @@ def initialize_gcp_credentials() -> None:
     """Initialize GCP credentials (called during application startup)."""
     manager = get_gcp_credentials_manager()
     logger.info("GCP credentials initialized")
-    
+
     # Log the project ID for debugging
     project_id = manager.get_project_id()
     if project_id:

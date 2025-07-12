@@ -21,6 +21,7 @@ import hashlib
 import hmac
 import logging
 import math
+import os
 from pathlib import Path
 from typing import Any, NoReturn, cast
 
@@ -50,15 +51,31 @@ from clarity.utils.decorators import resilient_prediction
 logger = logging.getLogger(__name__)
 
 # Get project root directory for absolute paths
-# In Docker, models are mounted at /models/pat/
-# In local development, use relative path from source
-import os
-if os.path.exists("/models/pat"):
-    # Docker environment - use mounted volume
+# Priority order for model paths:
+# 1. Environment variable PAT_MODEL_BASE_DIR (if set)
+# 2. /app/models/pat/ - Docker production (models downloaded here)
+# 3. /models/pat/ - Alternative Docker mount point
+# 4. Local development - relative from source
+
+# Determine the correct model base path based on environment
+if os.environ.get("PAT_MODEL_BASE_DIR"):
+    # Explicit model directory from environment
+    _PROJECT_ROOT = Path(os.environ["PAT_MODEL_BASE_DIR"]).parent.parent  # Go up from models/pat to root
+    logger.info(f"Using PAT_MODEL_BASE_DIR: {os.environ['PAT_MODEL_BASE_DIR']}")
+elif os.path.exists("/app/models/pat"):
+    # Docker production environment - models downloaded to /app/models/pat/
+    _PROJECT_ROOT = Path("/app")
+    logger.info("Using Docker production path: /app/models/pat/")
+elif os.path.exists("/models/pat"):
+    # Alternative Docker environment - models mounted at /models/pat/
     _PROJECT_ROOT = Path("/")
+    logger.info("Using alternative Docker path: /models/pat/")
 else:
-    # Local development - use project root
+    # Local development - use project root (go up from src/clarity/ml/pat_service.py)
+    # When installed as wheel, __file__ is in site-packages, so this won't work correctly
+    # But in local dev, it will correctly find the project root
     _PROJECT_ROOT = Path(__file__).parent.parent.parent.parent  # Go up to project root
+    logger.info(f"Using local development path relative to: {__file__}")
 
 # SECURITY: Model integrity verification will be loaded from secrets manager
 # Fallback checksums for development/testing when secrets manager unavailable
@@ -675,6 +692,8 @@ class PATModelService(IMLModelService):
             # Define allowed model directories (whitelist approach)
             allowed_base_dirs = [
                 _PROJECT_ROOT / "models",
+                Path("/app/models"),  # Docker production models
+                Path("/models"),  # Alternative Docker mount
                 Path.home() / ".clarity" / "models",  # User model cache
                 Path("/opt/clarity/models"),  # System-wide models
             ]

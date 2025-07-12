@@ -99,6 +99,10 @@
           "value": "clarity-ml-models-124355672559"
         },
         {
+          "name": "PAT_MODEL_BASE_DIR",
+          "value": "/app/models/pat"
+        },
+        {
           "name": "PAT_S_MODEL_PATH",
           "value": "s3://clarity-ml-models-124355672559/pat/PAT-S_29k_weight_transformer.h5"
         },

@@ -107,14 +107,13 @@ class TestPATServiceSecretsIntegration:
             "CLARITY_EXPECTED_MODEL_CHECKSUMS",
         ]
         
-        original_env = {var: os.environ.get(var) for var in env_vars_to_clear}
+        # Use patch.dict to ensure clean environment isolation
+        clean_env = os.environ.copy()
+        for var in env_vars_to_clear:
+            if var in clean_env:
+                del clean_env[var]
         
-        try:
-            # Clear environment variables
-            for var in env_vars_to_clear:
-                if var in os.environ:
-                    del os.environ[var]
-            
+        with patch.dict(os.environ, clean_env, clear=True):
             # Clear any cached secrets manager
             import clarity.security.secrets_manager
             clarity.security.secrets_manager._secrets_manager = None
@@ -132,14 +131,6 @@ class TestPATServiceSecretsIntegration:
             assert "small" in checksums
             assert "medium" in checksums
             assert "large" in checksums
-            
-        finally:
-            # Restore original environment
-            for var, value in original_env.items():
-                if value is not None:
-                    os.environ[var] = value
-                elif var in os.environ:
-                    del os.environ[var]
 
     @pytest.mark.parametrize("model_size", ["small", "medium", "large"])
     def test_pat_service_integrity_check_with_real_checksums(self, model_size):

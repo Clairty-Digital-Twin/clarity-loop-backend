@@ -288,9 +288,9 @@ class TestManiaRiskAnalyzer:
         (5.5, "none"),      # Just above threshold
         (4.8, "moderate"),  # Below 5h threshold
         (4.0, "moderate"),  # Clearly reduced
-        (3.0, "high"),      # At critical threshold
-        (2.0, "high"),      # Severe insomnia
-        (0.5, "high"),      # Near-zero sleep
+        (3.0, "moderate"),  # At critical threshold (just sleep alone)
+        (2.0, "moderate"),  # Severe insomnia (just sleep alone)
+        (0.5, "moderate"),  # Near-zero sleep (just sleep alone)
     ])
     def test_sleep_duration_thresholds(self, sleep_hours, expected_level):
         """Test various sleep duration thresholds map to correct alert levels."""

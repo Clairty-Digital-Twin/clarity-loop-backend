@@ -195,30 +195,34 @@ class HealthAnalysisPipeline:
                 results.activity_features,  # 🔥 Pass activity features
             )
 
-            # Step 5: Mania risk analysis
-            mania_result = await self._analyze_mania_risk(
-                user_id,
-                results,
-                organized_data,
-            )
+            # Step 5: Mania risk analysis (if enabled)
+            from clarity.core.config import get_settings
+            settings = get_settings()
+            
+            if settings.mania_risk_enabled:
+                mania_result = await self._analyze_mania_risk(
+                    user_id,
+                    results,
+                    organized_data,
+                )
 
-            # Add to summary stats
-            results.summary_stats.setdefault("health_indicators", {})
-            results.summary_stats["health_indicators"]["mania_risk"] = {
-                "risk_score": mania_result.risk_score,
-                "alert_level": mania_result.alert_level,
-                "contributing_factors": mania_result.contributing_factors,
-                "confidence": mania_result.confidence,
-            }
+                # Add to summary stats
+                results.summary_stats.setdefault("health_indicators", {})
+                results.summary_stats["health_indicators"]["mania_risk"] = {
+                    "risk_score": mania_result.risk_score,
+                    "alert_level": mania_result.alert_level,
+                    "contributing_factors": mania_result.contributing_factors,
+                    "confidence": mania_result.confidence,
+                }
 
-            # Add to clinical insights if significant
-            if mania_result.alert_level in {"moderate", "high"}:
-                insights = results.summary_stats.setdefault("clinical_insights", [])
-                insights.append(mania_result.clinical_insight)
+                # Add to clinical insights if significant
+                if mania_result.alert_level in {"moderate", "high"}:
+                    insights = results.summary_stats.setdefault("clinical_insights", [])
+                    insights.append(mania_result.clinical_insight)
 
-                # Add recommendations
-                if mania_result.recommendations:
-                    results.summary_stats["recommendations"] = mania_result.recommendations
+                    # Add recommendations
+                    if mania_result.recommendations:
+                        results.summary_stats["recommendations"] = mania_result.recommendations
 
             # Step 7: Add processing metadata
             results.processing_metadata = {
@@ -712,8 +716,12 @@ class HealthAnalysisPipeline:
         organized_data: dict[str, list[HealthMetric]],
     ) -> ManiaRiskResult:
         """Analyze mania risk using all available data."""
-        # Initialize analyzer
-        config_path = Path("config/mania_risk_config.yaml")
+        # Get settings
+        from clarity.core.config import get_settings
+        settings = get_settings()
+        
+        # Initialize analyzer with config path from settings
+        config_path = Path(settings.mania_config_path)
         analyzer = ManiaRiskAnalyzer(config_path)
 
         # Prepare sleep features
@@ -782,24 +790,29 @@ class HealthAnalysisPipeline:
             end_date = datetime.now(UTC)
             start_date = end_date - timedelta(days=28)
 
+            # Query for the most recent 28 days of analysis data
             response = dynamodb_client.table.query(
                 KeyConditionExpression=Key("pk").eq(f"USER#{user_id}") &
                                      Key("sk").between(
                                          f"ANALYSIS#{start_date.isoformat()}",
                                          f"ANALYSIS#{end_date.isoformat()}"
                                      ),
-                Limit=28,  # Maximum 28 days
-                ScanIndexForward=False  # Get most recent items first
+                ScanIndexForward=False  # Get most recent items first (descending order)
             )
+            
+            # If we got more than 28 items, take only the most recent 28
+            items = response.get("Items", [])
+            if len(items) > 28:
+                items = items[:28]
 
-            if not response.get("Items"):
+            if not items:
                 return None
 
             # Calculate baseline averages
             sleep_hours = []
             steps = []
 
-            for item in response["Items"]:
+            for item in items:
                 # Extract sleep hours
                 if "sleep_features" in item:
                     sleep_mins = item["sleep_features"].get("total_sleep_minutes", 0)

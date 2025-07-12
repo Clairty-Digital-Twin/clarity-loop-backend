@@ -192,6 +192,18 @@ class Settings(BaseSettings):
     # Storage settings
     cloud_storage_bucket: str = Field(default="", alias="CLOUD_STORAGE_BUCKET")
 
+    # Mania Risk module settings
+    mania_risk_enabled: bool = Field(
+        default=True,
+        alias="MANIA_RISK_ENABLED",
+        description="Enable mania risk analysis for users",
+    )
+    mania_config_path: str = Field(
+        default="config/mania_risk_config.yaml",
+        alias="MANIA_CONFIG_PATH",
+        description="Path to mania risk configuration YAML file",
+    )
+
     # Middleware configuration
     middleware_config: MiddlewareConfig = Field(default_factory=MiddlewareConfig)
 

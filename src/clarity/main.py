@@ -142,6 +142,32 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:  # noqa: ARG001
         msg = f"Container initialization failed: {e}"
         raise RuntimeError(msg) from e
 
+    # Configure router dependencies - THIS WAS MISSING!
+    try:
+        # Import router dependency setters
+        from clarity.api.v1.gemini_insights import set_dependencies as set_insights_deps
+        from clarity.api.v1.health_data import set_dependencies as set_health_data_deps
+        
+        # Create config provider adapter
+        class ConfigProviderAdapter:
+            def __init__(self, settings):
+                self.settings = settings
+            
+            def is_development(self):
+                return self.settings.environment == "development"
+        
+        config_provider = ConfigProviderAdapter(settings)
+        
+        # Set dependencies for each router
+        set_insights_deps(_container.auth_provider, config_provider)
+        set_health_data_deps(_container.auth_provider, _container.health_data_repository, config_provider)
+        
+        logger.info("✅ Router dependencies configured successfully")
+    except Exception as e:
+        logger.exception("Failed to configure router dependencies")
+        msg = f"Router dependency configuration failed: {e}"
+        raise RuntimeError(msg) from e
+
     logger.info("✅ CLARITY backend started successfully")
 
     yield

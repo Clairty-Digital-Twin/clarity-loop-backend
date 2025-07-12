@@ -1,0 +1,30 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "S3ModelAccess",
+      "Effect": "Allow",
+      "Action": [
+        "s3:GetObject",
+        "s3:ListBucket"
+      ],
+      "Resource": [
+        "arn:aws:s3:::clarity-ml-models-124355672559",
+        "arn:aws:s3:::clarity-ml-models-124355672559/pat/*"
+      ]
+    },
+    {
+      "Sid": "DynamoDBUserAccess",
+      "Effect": "Allow",
+      "Action": [
+        "dynamodb:GetItem",
+        "dynamodb:PutItem",
+        "dynamodb:UpdateItem"
+      ],
+      "Resource": [
+        "arn:aws:dynamodb:us-east-1:124355672559:table/clarity_users",
+        "arn:aws:dynamodb:us-east-1:124355672559:table/clarity-users"
+      ]
+    }
+  ]
+}

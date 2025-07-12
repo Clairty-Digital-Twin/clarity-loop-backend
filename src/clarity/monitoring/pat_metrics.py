@@ -171,11 +171,11 @@ pat_model_health_score = Gauge(
 
 
 # Helper Functions
-@contextmanager
-def track_model_load(
+@asynccontextmanager
+async def track_model_load(
     model_size: str, version: str, source: str
-) -> Iterator[dict[str, Any]]:
-    """Context manager to track model loading operations.
+) -> AsyncIterator[dict[str, Any]]:
+    """Async context manager to track model loading operations.
     
     Args:
         model_size: Size of the model (small, medium, large)
@@ -212,11 +212,11 @@ def track_model_load(
             ).inc()
 
 
-@contextmanager
-def track_checksum_verification(
+@asynccontextmanager
+async def track_checksum_verification(
     model_size: str, version: str
-) -> Iterator[dict[str, Any]]:
-    """Context manager to track checksum verification.
+) -> AsyncIterator[dict[str, Any]]:
+    """Async context manager to track checksum verification.
     
     Args:
         model_size: Size of the model

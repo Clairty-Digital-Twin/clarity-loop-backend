@@ -20,11 +20,13 @@ class TestSecretsManager:
     def test_init_with_defaults(self):
         """Test initialization with default values."""
         with patch("boto3.client") as mock_boto:
-            manager = SecretsManager()
-            assert manager.ssm_prefix == "/clarity/production"
-            assert manager.region == "us-east-1"
-            assert manager.cache_ttl == 300
-            assert manager.use_ssm is False  # Default when not in AWS
+            # Mock the AWS environment detection to return False
+            with patch.object(SecretsManager, "_is_aws_environment", return_value=False):
+                manager = SecretsManager()
+                assert manager.ssm_prefix == "/clarity/production"
+                assert manager.region == "us-east-1"
+                assert manager.cache_ttl == 300
+                assert manager.use_ssm is False  # Default when not in AWS
 
     def test_init_with_custom_values(self):
         """Test initialization with custom values."""

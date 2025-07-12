@@ -11,6 +11,7 @@ from fastapi import APIRouter, Depends
 from clarity.api.v1.auth import router as auth_router
 from clarity.api.v1.debug import router as debug_router
 from clarity.api.v1.gemini_insights import router as insights_router
+from clarity.api.v1.health import router as health_router
 from clarity.api.v1.health_data import router as health_data_router
 from clarity.api.v1.healthkit_upload import router as healthkit_router
 from clarity.api.v1.metrics import router as metrics_router
@@ -30,6 +31,11 @@ api_router.include_router(
     auth_router,
     prefix="/auth",
     tags=["authentication"],
+)
+
+api_router.include_router(
+    health_router,
+    tags=["health"],
 )
 
 api_router.include_router(
@@ -97,6 +103,7 @@ async def api_info() -> dict[str, Any]:
         "description": "CLARITY Digital Twin Platform API",
         "endpoints": {
             "auth": "/api/v1/auth",
+            "health": "/api/v1/health",
             "health_data": "/api/v1/health-data",
             "healthkit": "/api/v1/healthkit",
             "pat_analysis": "/api/v1/pat",

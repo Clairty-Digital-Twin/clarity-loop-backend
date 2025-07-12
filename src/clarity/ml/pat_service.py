@@ -439,6 +439,16 @@ class PATModelService(IMLModelService):
         """Load the PAT model weights asynchronously."""
         try:
             logger.info("Loading PAT model from %s", self.model_path)
+            
+            # SECURITY: Verify model integrity BEFORE creating model
+            if Path(self.model_path).exists():
+                if not self._verify_model_integrity():
+                    error_msg = (
+                        f"Model integrity verification FAILED for {self.model_path}. "
+                        f"Refusing to load potentially tampered model."
+                    )
+                    logger.error(error_msg)
+                    raise RuntimeError(error_msg)
 
             # Initialize encoder with correct parameters
             config = cast("dict[str, Any]", self.config)
@@ -458,7 +468,10 @@ class PATModelService(IMLModelService):
             )
 
             # Load pre-trained encoder weights if available
-            self._load_pretrained_weights()
+            weights_loaded = self._load_pretrained_weights()
+            
+            # Only fail if weights file exists but integrity check failed
+            # If weights_loaded is False due to empty/incompatible file, that's ok (use random init)
 
             # Move model to device and set to eval mode
             self.model.to(self.device)
@@ -473,31 +486,38 @@ class PATModelService(IMLModelService):
                 e,
                 exc_info=True,
             )
+            self.model = None
+            self.is_loaded = False
             raise
 
-    def _load_pretrained_weights(self) -> None:
-        """Load pre-trained weights if available."""
+    def _load_pretrained_weights(self) -> bool:
+        """Load pre-trained weights if available.
+        
+        Returns:
+            True if weights were loaded successfully, False otherwise
+        """
         if not (self.model_path and Path(self.model_path).exists()):
             logger.warning(
                 "Model weights not found at %s, using random initialization",
                 self.model_path,
             )
-            return
+            return False
 
         logger.info("Loading pre-trained PAT weights from %s", self.model_path)
 
-        # SECURITY: Verify model integrity before loading
+        # SECURITY: Integrity check already done in load_model()
+        # This is a double-check for defense in depth
         if not self._verify_model_integrity():
             logger.error(
                 "Model integrity verification FAILED for %s. Refusing to load potentially tampered model.",
                 self.model_path,
             )
-            return
+            return False
 
         if not _has_h5py:
             logger.error("h5py not available, cannot load .h5 weights")
             logger.warning("Using random initialization for PAT model")
-            return
+            return False
 
         try:
             # Load and convert TensorFlow weights to PyTorch
@@ -522,17 +542,20 @@ class PATModelService(IMLModelService):
                     len(state_dict),
                     self.model_path,
                 )
+                return True
             else:
                 logger.warning(
                     "No compatible weights found in %s, using random initialization",
                     self.model_path,
                 )
+                return False
         except (OSError, KeyError, ValueError) as e:
             logger.warning(
                 "Failed to load weights from %s: %s. Using random initialization.",
                 self.model_path,
                 e,
             )
+            return False
 
     def _verify_model_integrity(self) -> bool:
         """Verify model file integrity using cryptographic signatures.
@@ -945,35 +968,40 @@ class PATModelService(IMLModelService):
         # Calculate confidence score
         confidence_score: float = float(np.mean(sleep_metrics[5:8]))
 
-        # Analyze mania risk using PAT metrics with graceful fallback
+        # Analyze mania risk using PAT metrics with feature flag check
         mania_risk_score = 0.0
         mania_alert_level = "none"
         
-        try:
-            mania_analyzer = ManiaRiskAnalyzer()
-            pat_metrics = {
-                "total_sleep_time": total_sleep_time,
-                "sleep_efficiency": sleep_efficiency,
-                "sleep_onset_latency": sleep_onset_latency,
-                "circadian_rhythm_score": circadian_score,
-                "activity_fragmentation": activity_fragmentation,
-            }
-            mania_result = mania_analyzer.analyze(pat_metrics=pat_metrics)
-            
-            # Extract values from result
-            mania_risk_score = mania_result.risk_score
-            mania_alert_level = mania_result.alert_level
-            
-            # Add mania insight if risk is moderate or high
-            if mania_result.alert_level in ["moderate", "high"]:
-                insights.append(mania_result.clinical_insight)
-        except Exception as e:
-            logger.warning(
-                "Mania risk analysis failed for user %s, using default values: %s",
-                user_id,
-                str(e)
-            )
-            # Continue with default values: mania_risk_score=0.0, mania_alert_level="none"
+        from clarity.core.feature_flags import is_feature_enabled
+        
+        if is_feature_enabled("mania_risk_analysis", user_id=user_id):
+            try:
+                mania_analyzer = ManiaRiskAnalyzer()
+                pat_metrics = {
+                    "total_sleep_time": total_sleep_time,
+                    "sleep_efficiency": sleep_efficiency,
+                    "sleep_onset_latency": sleep_onset_latency,
+                    "circadian_rhythm_score": circadian_score,
+                    "activity_fragmentation": activity_fragmentation,
+                }
+                mania_result = mania_analyzer.analyze(pat_metrics=pat_metrics)
+                
+                # Extract values from result
+                mania_risk_score = mania_result.risk_score
+                mania_alert_level = mania_result.alert_level
+                
+                # Add mania insight if risk is moderate or high
+                if mania_result.alert_level in ["moderate", "high"]:
+                    insights.append(mania_result.clinical_insight)
+            except Exception as e:
+                logger.warning(
+                    "Mania risk analysis failed for user %s, using default values: %s",
+                    user_id,
+                    str(e)
+                )
+                # Continue with default values: mania_risk_score=0.0, mania_alert_level="none"
+        else:
+            logger.debug("Mania risk analysis disabled for user %s via feature flag", user_id)
 
         return ActigraphyAnalysis(
             user_id=user_id,

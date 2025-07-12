@@ -195,11 +195,19 @@ class HealthAnalysisPipeline:
                 results.activity_features,  # 🔥 Pass activity features
             )
 
-            # Step 5: Mania risk analysis (if enabled) with graceful fallback
-            from clarity.core.config import get_settings
-            settings = get_settings()
+            # Step 5: Mania risk analysis - ALWAYS include in output for API consistency
+            from clarity.core.feature_flags import is_feature_enabled
             
-            if settings.mania_risk_enabled:
+            # Initialize default mania risk values
+            mania_risk_data = {
+                "risk_score": 0.0,
+                "alert_level": "none",
+                "contributing_factors": [],
+                "confidence": 0.0,
+            }
+            
+            # Check if mania risk analysis is enabled via feature flag
+            if is_feature_enabled("mania_risk_analysis", user_id=user_id):
                 try:
                     mania_result = await self._analyze_mania_risk(
                         user_id,
@@ -207,9 +215,8 @@ class HealthAnalysisPipeline:
                         organized_data,
                     )
 
-                    # Add to summary stats
-                    results.summary_stats.setdefault("health_indicators", {})
-                    results.summary_stats["health_indicators"]["mania_risk"] = {
+                    # Update with actual results
+                    mania_risk_data = {
                         "risk_score": mania_result.risk_score,
                         "alert_level": mania_result.alert_level,
                         "contributing_factors": mania_result.contributing_factors,
@@ -231,14 +238,16 @@ class HealthAnalysisPipeline:
                         user_id,
                         str(e)
                     )
-                    # Add default values to maintain API contract
-                    results.summary_stats.setdefault("health_indicators", {})
-                    results.summary_stats["health_indicators"]["mania_risk"] = {
-                        "risk_score": 0.0,
-                        "alert_level": "none",
-                        "contributing_factors": [],
-                        "confidence": 0.0,
-                    }
+                    # Keep default values on error
+            else:
+                self.logger.debug(
+                    "Mania risk analysis disabled for user %s via feature flag",
+                    user_id
+                )
+            
+            # ALWAYS add mania_risk to health_indicators for API consistency
+            results.summary_stats.setdefault("health_indicators", {})
+            results.summary_stats["health_indicators"]["mania_risk"] = mania_risk_data
 
             # Step 7: Add processing metadata
             results.processing_metadata = {
@@ -732,12 +741,8 @@ class HealthAnalysisPipeline:
         organized_data: dict[str, list[HealthMetric]],
     ) -> ManiaRiskResult:
         """Analyze mania risk using all available data."""
-        # Get settings
-        from clarity.core.config import get_settings
-        settings = get_settings()
-        
-        # Initialize analyzer with config path from settings
-        config_path = Path(settings.mania_config_path)
+        # Initialize analyzer with default config path
+        config_path = Path("config/mania_risk_config.yaml")
         analyzer = ManiaRiskAnalyzer(config_path, user_id=user_id)
 
         # Prepare sleep features

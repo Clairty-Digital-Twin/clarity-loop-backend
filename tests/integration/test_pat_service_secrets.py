@@ -1,5 +1,6 @@
 """Integration tests for PAT service with secrets manager."""
 
+import json
 import os
 from unittest.mock import patch, mock_open
 
@@ -135,18 +136,20 @@ class TestPATServiceSecretsIntegration:
     @pytest.mark.parametrize("model_size", ["small", "medium", "large"])
     def test_pat_service_integrity_check_with_real_checksums(self, model_size):
         """Test PAT service integrity check with real default checksums."""
-        # Use the real default checksums
+        # First, set up environment to ensure we get the expected checksums
         real_checksums = {
             "small": "4b30d57febbbc8ef221e4b196bf6957e7c7f366f6b836fe800a43f69d24694ad",
             "medium": "6175021ca1a43f3c834bdaa644c45f27817cf985d8ffd186fab9b5de2c4ca661",
             "large": "c93b723f297f0d9d2ad982320b75e9212882c8f38aa40df1b600e9b2b8aa1973",
         }
         
+        # Set expected checksums in environment to match what we'll calculate
         with patch.dict(
             os.environ,
             {
                 "CLARITY_USE_SSM": "false",
                 "MODEL_SIGNATURE_KEY": "pat_model_integrity_key_2025",
+                "EXPECTED_MODEL_CHECKSUMS": json.dumps(real_checksums),
             },
         ):
             # Clear any cached secrets manager

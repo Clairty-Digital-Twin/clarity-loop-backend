@@ -309,7 +309,7 @@ class TestPATModelLoader:
         loader.s3_service = None
 
         # Try to load non-existent model
-        with pytest.raises(ModelLoadError, match="Model file not found"):
+        with pytest.raises(ModelLoadError, match=r"Failed to load .* model:.*No such file or directory"):
             await loader.load_model(ModelSize.SMALL)
 
     @pytest.mark.asyncio

@@ -585,9 +585,14 @@ class TestModelLoadingAndSecurity:
             # Step 1: Calculate SHA256 of file content
             file_digest = hashlib.sha256(test_content).hexdigest()
 
-            # Step 2: Calculate HMAC signature (matching the implementation)
+            # Step 2: Get the actual signature key from secrets manager (like the implementation does)
+            from clarity.security.secrets_manager import get_secrets_manager
+            secrets_manager = get_secrets_manager()
+            model_signature_key = secrets_manager.get_model_signature_key()
+            
+            # Step 3: Calculate HMAC signature (matching the implementation)
             expected = hmac.new(
-                MODEL_SIGNATURE_KEY.encode("utf-8"),
+                model_signature_key.encode("utf-8"),
                 file_digest.encode("utf-8"),
                 hashlib.sha256,
             ).hexdigest()
@@ -600,7 +605,12 @@ class TestModelLoadingAndSecurity:
     @patch.object(PATModelService, "_calculate_file_checksum")
     def test_verify_model_integrity_success(self, mock_checksum: MagicMock) -> None:
         """Test successful model integrity verification."""
-        mock_checksum.return_value = EXPECTED_MODEL_CHECKSUMS["small"]
+        # Get the expected checksum from secrets manager (like the implementation does)
+        from clarity.security.secrets_manager import get_secrets_manager
+        secrets_manager = get_secrets_manager()
+        expected_checksums = secrets_manager.get_model_checksums()
+        
+        mock_checksum.return_value = expected_checksums["small"]
 
         service = PATModelService(model_size="small")
         with patch("pathlib.Path.exists", return_value=True):

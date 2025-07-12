@@ -595,9 +595,9 @@ class TestModelLoadingAndSecurity:
         mock_checksum.return_value = EXPECTED_MODEL_CHECKSUMS["small"]
 
         service = PATModelService(model_size="small")
-        result = service._verify_model_integrity()
-
-        assert result is True
+        with patch("pathlib.Path.exists", return_value=True):
+            result = service._verify_model_integrity()
+            assert result is True
 
     @patch.object(PATModelService, "_calculate_file_checksum")
     def test_verify_model_integrity_failure(self, mock_checksum: MagicMock) -> None:

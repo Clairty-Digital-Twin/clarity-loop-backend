@@ -183,17 +183,15 @@ class TestInsightServiceMain:
 class TestInsightServiceLogging:
     """Test insight service logging configuration."""
 
-    @patch("clarity.entrypoints.insight_service.logging.basicConfig")
-    def test_logging_configuration(self, mock_basic_config: MagicMock) -> None:
+    @patch("clarity.core.logging_config.configure_basic_logging")
+    def test_logging_configuration(self, mock_configure_logging: MagicMock) -> None:
         """Test that logging is properly configured on module import."""
+        import logging
         # Reload the module to trigger logging configuration
         importlib.reload(clarity.entrypoints.insight_service)
 
-        # Verify basicConfig was called with correct parameters
-        mock_basic_config.assert_called_with(
-            level=clarity.entrypoints.insight_service.logging.INFO,
-            format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-        )
+        # Verify configure_basic_logging was called with INFO level
+        mock_configure_logging.assert_called_with(level=logging.INFO)
 
 
 class TestInsightServiceIntegration:

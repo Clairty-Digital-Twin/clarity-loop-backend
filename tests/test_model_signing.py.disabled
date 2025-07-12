@@ -72,7 +72,8 @@ class TestModelSigner:
         # Verify should fail
         result, error = signer.verify_model(test_model_file)
         assert result is False
-        assert "Signature mismatch" in error
+        # It detects file size change before signature check
+        assert "File size mismatch" in error or "Signature mismatch" in error
         
     def test_verify_model_with_wrong_key(self, test_model_file):
         """Test that verification fails with wrong key."""

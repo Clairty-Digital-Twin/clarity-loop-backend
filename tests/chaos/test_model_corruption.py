@@ -87,11 +87,12 @@ class TestModelCorruption:
     @pytest.fixture
     def pat_service(self):
         """Create a PAT service instance for testing."""
-        with patch("clarity.ml.pat_service.PATModelService._initialize_models"):
+        # Mock the model file to exist but skip actual loading
+        with patch("pathlib.Path.exists", return_value=False):
             service = PATModelService(model_size="small")
             # Mock the model to avoid actual loading
             service.model = MagicMock()
-            service.mania_analyzer = MagicMock()
+            service.is_loaded = True
             service.preprocessor = MagicMock()
             return service
 
@@ -500,7 +501,7 @@ class TestModelCorruptionIntegration:
     """Integration tests for model corruption scenarios."""
 
     @pytest.mark.slow
-    async def test_end_to_end_corruption_handling(self, temp_model_dir):
+    async def test_end_to_end_corruption_handling(self):
         """Test complete flow from corruption detection to user response."""
         # This would be an integration test with the full service
         # For now, we'll mock the key components

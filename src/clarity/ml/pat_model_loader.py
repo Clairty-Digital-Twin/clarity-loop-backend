@@ -373,7 +373,7 @@ class PATModelLoader:
 
             # Record successful validation
             record_validation_attempt(
-                config.name.lower().replace("pat-", ""), "forward_pass", True
+                config.name.lower().replace("pat-", ""), "forward_pass", success=True
             )
 
         except Exception as e:
@@ -381,8 +381,8 @@ class PATModelLoader:
             record_validation_attempt(
                 config.name.lower().replace("pat-", ""),
                 "forward_pass",
-                False,
-                type(e).__name__,
+                success=False,
+                error_type=type(e).__name__,
             )
             msg = f"Model validation failed: {e}"
             raise ModelLoadError(msg) from e
@@ -407,12 +407,6 @@ class PATModelLoader:
                 )
 
                 # TODO: Implement actual checksum verification against known good values
-                # expected_checksum = await self._get_expected_checksum(size, version)
-                # ctx["expected_checksum"] = expected_checksum
-                #
-                # if actual_checksum != expected_checksum:
-                #     ctx["success"] = False
-                #     raise ModelLoadError("Checksum verification failed")
 
                 ctx["success"] = True
 

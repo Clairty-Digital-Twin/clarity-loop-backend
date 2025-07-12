@@ -1,7 +1,9 @@
 {
   "family": "clarity-backend",
   "networkMode": "awsvpc",
-  "requiresCompatibilities": ["FARGATE"],
+  "requiresCompatibilities": [
+    "FARGATE"
+  ],
   "cpu": "1024",
   "memory": "3072",
   "containerDefinitions": [
@@ -16,32 +18,110 @@
       ],
       "essential": true,
       "environment": [
-        {"name": "PORT", "value": "8000"},
-        {"name": "ENVIRONMENT", "value": "production"},
-        {"name": "ENABLE_AUTH", "value": "true"},
-        {"name": "ENABLE_SELF_SIGNUP", "value": "false"},
-        {"name": "CORS_ALLOWED_ORIGINS", "value": "https://api.clarity.health,http://localhost:3000,http://localhost:8000,https://clarity.health,https://clarity.novamindnyc.com"},
-        {"name": "CORS_ALLOW_CREDENTIALS", "value": "true"},
-        {"name": "AWS_REGION", "value": "us-east-1"},
-        {"name": "COGNITO_REGION", "value": "us-east-1"},
-        {"name": "COGNITO_USER_POOL_ID", "value": "us-east-1_efXaR5EcP"},
-        {"name": "COGNITO_CLIENT_ID", "value": "7sm7ckrkovg78b03n1595euc71"},
-        {"name": "DYNAMODB_TABLE_NAME", "value": "clarity-health-data"},
-        {"name": "DYNAMODB_INSIGHTS_TABLE", "value": "clarity-ai-insights"},
-        {"name": "DYNAMODB_USERS_TABLE", "value": "clarity-users"},
-        {"name": "DYNAMODB_SESSIONS_TABLE", "value": "clarity-user-sessions"},
-        {"name": "S3_BUCKET_NAME", "value": "clarity-health-data-storage"},
-        {"name": "SQS_QUEUE_NAME", "value": "clarity-insights-queue"},
-        {"name": "SNS_TOPIC_ARN", "value": "arn:aws:sns:us-east-1:124355672559:clarity-insights-topic"},
-        {"name": "LOG_LEVEL", "value": "INFO"},
-        {"name": "SKIP_EXTERNAL_SERVICES", "value": "false"},
-        {"name": "S3_ML_MODELS_BUCKET", "value": "clarity-ml-models-124355672559"},
-        {"name": "PAT_S_MODEL_PATH", "value": "s3://clarity-ml-models-124355672559/pat/PAT-S_29k_weights.h5"},
-        {"name": "PAT_M_MODEL_PATH", "value": "s3://clarity-ml-models-124355672559/pat/PAT-M_29k_weights.h5"},
-        {"name": "PAT_L_MODEL_PATH", "value": "s3://clarity-ml-models-124355672559/pat/PAT-L_29k_weights.h5"},
-        {"name": "PAT_S_CHECKSUM", "value": "df8d9f0f66bab088d2d4870cb2df4342745940c732d008cd3d74687be4ee99be"},
-        {"name": "PAT_M_CHECKSUM", "value": "855e482b79707bf1b71a27c7a6a07691b49df69e40b08f54b33d178680f04ba7"},
-        {"name": "PAT_L_CHECKSUM", "value": "e8ebef52e34a6f1ea92bbe3f752afcd1ae427b9efbe0323856e873f12c989521"}
+        {
+          "name": "PORT",
+          "value": "8000"
+        },
+        {
+          "name": "ENVIRONMENT",
+          "value": "production"
+        },
+        {
+          "name": "ENABLE_AUTH",
+          "value": "true"
+        },
+        {
+          "name": "ENABLE_SELF_SIGNUP",
+          "value": "false"
+        },
+        {
+          "name": "CORS_ALLOWED_ORIGINS",
+          "value": "https://api.clarity.health,http://localhost:3000,http://localhost:8000,https://clarity.health,https://clarity.novamindnyc.com"
+        },
+        {
+          "name": "CORS_ALLOW_CREDENTIALS",
+          "value": "true"
+        },
+        {
+          "name": "AWS_REGION",
+          "value": "us-east-1"
+        },
+        {
+          "name": "COGNITO_REGION",
+          "value": "us-east-1"
+        },
+        {
+          "name": "COGNITO_USER_POOL_ID",
+          "value": "us-east-1_efXaR5EcP"
+        },
+        {
+          "name": "COGNITO_CLIENT_ID",
+          "value": "7sm7ckrkovg78b03n1595euc71"
+        },
+        {
+          "name": "DYNAMODB_TABLE_NAME",
+          "value": "clarity-health-data"
+        },
+        {
+          "name": "DYNAMODB_INSIGHTS_TABLE",
+          "value": "clarity-ai-insights"
+        },
+        {
+          "name": "DYNAMODB_USERS_TABLE",
+          "value": "clarity-users"
+        },
+        {
+          "name": "DYNAMODB_SESSIONS_TABLE",
+          "value": "clarity-user-sessions"
+        },
+        {
+          "name": "S3_BUCKET_NAME",
+          "value": "clarity-health-data-storage"
+        },
+        {
+          "name": "SQS_QUEUE_NAME",
+          "value": "clarity-insights-queue"
+        },
+        {
+          "name": "SNS_TOPIC_ARN",
+          "value": "arn:aws:sns:us-east-1:124355672559:clarity-insights-topic"
+        },
+        {
+          "name": "LOG_LEVEL",
+          "value": "INFO"
+        },
+        {
+          "name": "SKIP_EXTERNAL_SERVICES",
+          "value": "false"
+        },
+        {
+          "name": "S3_ML_MODELS_BUCKET",
+          "value": "clarity-ml-models-124355672559"
+        },
+        {
+          "name": "PAT_S_MODEL_PATH",
+          "value": "s3://clarity-ml-models-124355672559/pat/PAT-S_29k_weight_transformer.h5"
+        },
+        {
+          "name": "PAT_M_MODEL_PATH",
+          "value": "s3://clarity-ml-models-124355672559/pat/PAT-M_29k_weight_transformer.h5"
+        },
+        {
+          "name": "PAT_L_MODEL_PATH",
+          "value": "s3://clarity-ml-models-124355672559/pat/PAT-L_91k_weight_transformer.h5"
+        },
+        {
+          "name": "PAT_S_CHECKSUM",
+          "value": "df8d9f0f66bab088d2d4870cb2df4342745940c732d008cd3d74687be4ee99be"
+        },
+        {
+          "name": "PAT_M_CHECKSUM",
+          "value": "855e482b79707bf1b71a27c7a6a07691b49df69e40b08f54b33d178680f04ba7"
+        },
+        {
+          "name": "PAT_L_CHECKSUM",
+          "value": "e8ebef52e34a6f1ea92bbe3f752afcd1ae427b9efbe0323856e873f12c989521"
+        }
       ],
       "secrets": [
         {
@@ -74,7 +154,10 @@
         }
       },
       "healthCheck": {
-        "command": ["CMD-SHELL", "curl -f http://localhost:8000/health || exit 1"],
+        "command": [
+          "CMD-SHELL",
+          "curl -f http://localhost:8000/health || exit 1"
+        ],
         "interval": 30,
         "timeout": 5,
         "retries": 3

@@ -50,7 +50,15 @@ from clarity.utils.decorators import resilient_prediction
 logger = logging.getLogger(__name__)
 
 # Get project root directory for absolute paths
-_PROJECT_ROOT = Path(__file__).parent.parent.parent.parent  # Go up to project root
+# In Docker, models are mounted at /models/pat/
+# In local development, use relative path from source
+import os
+if os.path.exists("/models/pat"):
+    # Docker environment - use mounted volume
+    _PROJECT_ROOT = Path("/")
+else:
+    # Local development - use project root
+    _PROJECT_ROOT = Path(__file__).parent.parent.parent.parent  # Go up to project root
 
 # SECURITY: Model integrity verification will be loaded from secrets manager
 # Fallback checksums for development/testing when secrets manager unavailable
@@ -71,7 +79,7 @@ PAT_CONFIGS = {
         "ff_dim": 256,
         "patch_size": 18,
         "input_size": 10080,
-        "model_path": str(_PROJECT_ROOT / "models" / "pat" / "PAT-S_29k_weights.h5"),
+        "model_path": str(_PROJECT_ROOT / "models" / "pat" / "PAT-S_29k_weight_transformer.h5"),
     },
     "medium": {
         "num_layers": 2,
@@ -81,7 +89,7 @@ PAT_CONFIGS = {
         "ff_dim": 256,
         "patch_size": 18,
         "input_size": 10080,
-        "model_path": str(_PROJECT_ROOT / "models" / "pat" / "PAT-M_29k_weights.h5"),
+        "model_path": str(_PROJECT_ROOT / "models" / "pat" / "PAT-M_29k_weight_transformer.h5"),
     },
     "large": {
         "num_layers": 4,
@@ -91,7 +99,7 @@ PAT_CONFIGS = {
         "ff_dim": 256,
         "patch_size": 9,
         "input_size": 10080,
-        "model_path": str(_PROJECT_ROOT / "models" / "pat" / "PAT-L_29k_weights.h5"),
+        "model_path": str(_PROJECT_ROOT / "models" / "pat" / "PAT-L_91k_weight_transformer.h5"),
     },
 }
 

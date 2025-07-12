@@ -9,12 +9,21 @@ if [ ! -f "/app/models/pat/.models_downloaded" ]; then
     echo "Downloading ML models from S3..."
     if /app/scripts/download_models.sh; then
         echo "✅ Models downloaded successfully"
+        # Create symlinks for backward compatibility
+        if [ -f "/app/scripts/create_model_symlinks.sh" ]; then
+            echo "Creating model symlinks..."
+            /app/scripts/create_model_symlinks.sh
+        fi
     else
         echo "⚠️ Model download failed, but continuing to start the app..."
         echo "📝 ML endpoints may not be available until models are present"
     fi
 else
     echo "Models already downloaded, skipping..."
+    # Still create symlinks in case they don't exist
+    if [ -f "/app/scripts/create_model_symlinks.sh" ]; then
+        /app/scripts/create_model_symlinks.sh
+    fi
 fi
 
 # Start the application
